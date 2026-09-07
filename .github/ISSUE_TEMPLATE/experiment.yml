@@ -1,0 +1,23 @@
+name: Propose an experiment
+description: Bring a reproducible question to the Odin R&D workbench.
+title: 'Experiment: '
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: What question should we test?
+      description: Name the behavior, boundary or outcome you want to understand.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: How could someone reproduce it?
+      description: Suggest public inputs, a comparison, expected observations and what would refute the idea.
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: What would the result not establish?
+      description: Scope, limitations and any existing public evidence.
