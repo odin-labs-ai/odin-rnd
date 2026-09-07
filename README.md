@@ -33,7 +33,7 @@ The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authore
 
 The runner executes three packaged BCE recipes: TypeScript module layering, Python module layering and configuration allowlisting. Each compares a clean fixture with a deliberate violation under an unchanged authored rule. A successful discrimination records both GREEN and RED; the demo process exits zero because the experiment succeeded. Its RED outcome represents a gate that would exit one.
 
-Results include the complete transcript, its SHA-256 digest, package/version/integrity, time, execution environment, source revision and CI run URL. Selectors on the site inspect these recordings; the reproduction command runs locally. These are author-controlled mechanism tests, not measurements of agent effectiveness or production reliability.
+Results include the complete transcript, its SHA-256 digest, package/version/integrity, time, execution environment, base checkout revision, hashes of the actual experiment input files, and CI run URL. Local edits are identified by those input hashes; a base revision alone is not proof of an unchanged worktree. Selectors on the site inspect these recordings; the reproduction command runs locally. These are author-controlled mechanism tests, not measurements of agent effectiveness or production reliability.
 
 GitHub Actions runs them on main, pull requests, manual dispatch and weekly. Failed discrimination retains its report as a workflow artifact and blocks publication. The previous successful site's timestamp remains unchanged. Artifact retention is 90 days; the site serves its current published record, and the checked-in initial local record is historical evidence, not a claim of continuous liveness.
 

@@ -26,6 +26,8 @@ const report = {
   startedAt, completedAt: new Date().toISOString(), node: process.version,
   environment: process.env.GITHUB_ACTIONS === 'true' ? 'GitHub Actions' : 'local reproduction',
   revision: process.env.GITHUB_SHA || spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
+  revisionMeaning: 'Base checkout revision. inputFilesSha256 identifies the actual experiment inputs, including local edits.',
+  inputFilesSha256: Object.fromEntries(['package.json', 'pnpm-lock.yaml', 'scripts/run-experiments.mjs', 'scripts/transcript.mjs'].map(file => [file, createHash('sha256').update(readFileSync(root + file)).digest('hex')])),
   workflowRun: process.env.GITHUB_ACTIONS === 'true' ? `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}` : null,
   scope: 'Packaged, author-controlled fixtures. The demo evaluates clean and drifted trees; its overall exit 0 means the discrimination experiment succeeded. The RED gate outcome would exit 1. These runs do not measure agent effectiveness or production reliability.',
   runs,
