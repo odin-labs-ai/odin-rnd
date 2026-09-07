@@ -30,3 +30,8 @@ STORY: Explore four stations, inspect a real engine run, reproduce it, read why 
 FIRST VIEWPORT: A large condensed headline left; an interactive factory drawing fills the right. An orange entrance link and blueprint-view switch are immediately visible.
 FORM: Brief-pinned factory floor, grounded candidate 1; seed ffc0c4d3 assigned 4, superseded by the user's explicit direction. Select stations and switch the same geometry between solid and blueprint.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+
+## Brand refinement authority
+
+The owner approved the factory graphics and requested Odin website / Command Center styling on 7 September 2026. docs/brand-refinement.md and the refreshed DESIGN.md supersede this initial palette and Barlow type plan. Preserve the factory geometry and interactions; use Space Grotesk, Inter, JetBrains Mono and the emerald interface identity.
