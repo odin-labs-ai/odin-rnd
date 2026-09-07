@@ -14,7 +14,7 @@ Developers, researchers and people following Odin's work, looking to understand 
 A dedicated Odin R&D website. Translate software-factory research into understandable projects, experiments, evidence and stories. Accumulate material toward a future LinkedIn release.
 
 ## Brand Commitments
-Odin R&D; a wink to Odin's dark factory. The user explicitly wants to feel on the factory floor, with blueprints and machinery stamped with actual dates, versions and types. Reuse the earlier R&D material.
+Odin R&D; a wink to Odin's dark factory. The user explicitly wants to feel on the factory floor, with blueprints and machinery stamped with actual dates, versions and types. Reuse the earlier R&D material. On 7 September 2026 the owner explicitly approved the factory and graphics and requested closer typography and interface alignment with odin-labs.ai / Command Center. Preserve that factory while using the established Odin font stack and emerald interface identity.
 
 ## Capabilities and Constraints
 A public catalogue, an interactive factory illustration, reproducible public experiments, and readable research/build notes. Public repository and GitHub Pages publication authorized. Link existing public projects without changing the visibility of private systems. Distinguish research directions from shipped functionality. No tracker requests or fabricated operational counters. No LinkedIn publication in this task.

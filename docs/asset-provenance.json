@@ -1,27 +1,37 @@
 {
   "fonts": [
     {
-      "path": "site/assets/fonts/Barlow-Regular.ttf",
-      "sha256": "95aa02c7c43096e0dd44d787ba6216864a67157e402adab59b35572e0c1577ea",
-      "source": "https://github.com/google/fonts/tree/main/ofl/barlow",
+      "path": "site/assets/fonts/SpaceGrotesk-Variable.woff2",
+      "source": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap",
+      "fileSource": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "subset": "latin",
+      "bytes": 22288,
+      "sha256": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d",
       "license": "SIL Open Font License 1.1"
     },
     {
-      "path": "site/assets/fonts/Barlow-Medium.ttf",
-      "sha256": "f8906f762cb73dca441da034bc363b2d8e2e68bc10d5c05e58717646c20cc4b4",
-      "source": "https://github.com/google/fonts/tree/main/ofl/barlow",
+      "path": "site/assets/fonts/Inter-Variable.woff2",
+      "source": "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap",
+      "fileSource": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "subset": "latin",
+      "bytes": 48256,
+      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
       "license": "SIL Open Font License 1.1"
     },
     {
-      "path": "site/assets/fonts/BarlowCondensed-Bold.ttf",
-      "sha256": "e476562ec9c1e16cf16475895b511f08c804f438cc9a9f80a44ea50a0eeb5b65",
-      "source": "https://github.com/google/fonts/tree/main/ofl/barlowcondensed",
+      "path": "site/assets/fonts/JetBrainsMono-Variable.woff2",
+      "source": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap",
+      "fileSource": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbV2o-flEEny0FZhsfKu5WU4xD7OwE.woff2",
+      "subset": "latin",
+      "bytes": 40404,
+      "sha256": "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
       "license": "SIL Open Font License 1.1"
     }
   ],
   "drawing": {
     "path": "scripts/floor.mjs",
-    "kind": "original authored orthographic SVG geometry",
+    "kind": "original authored orthographic SVG geometry; unchanged in brand refinement",
+    "sha256": "10dfa984740df24f2c8e1840963ccc97bee553e55cabd924f3ec324f4c5e87fb",
     "raster": false
   }
 }

@@ -6,14 +6,14 @@
     "source": "https://github.com/blueprint-conformance/bce/tree/9fe4a02d39c05dbdf280b359e9b364de84e1eda8",
     "integrity": "sha512-KwWyEYOZu70xrQG5JYEyHNhz3eqTalno9d9+KUugytYBiWtHGO7Wpa+X/7xgi9xDc49V7OUchTJtN8Pu8T37iw=="
   },
-  "startedAt": "2026-09-07T02:19:51.444Z",
-  "completedAt": "2026-09-07T02:19:57.325Z",
+  "startedAt": "2026-09-07T09:50:25.173Z",
+  "completedAt": "2026-09-07T09:50:30.980Z",
   "node": "v22.22.2",
   "environment": "local reproduction",
-  "revision": "b2d9eb5ccb187bc96997f9029b955b4ed8a544ae",
+  "revision": "4b71766f06d25d5fe84c0132573a67861a74d450",
   "revisionMeaning": "Base checkout revision. inputFilesSha256 identifies the actual experiment inputs, including local edits.",
   "inputFilesSha256": {
-    "package.json": "f5a2e8c10edfce4d87db936ffef6e483ecc9fbca8440e6c60d483730d02eda2b",
+    "package.json": "ce2b3658de8831625f6560bede3008e22cbf5a02d666569c8d2de83170beccfd",
     "pnpm-lock.yaml": "af58631d7551b89f4a1819638aef590f6136b9d4af5bb4438b8a6c2547f4d9e9",
     "scripts/run-experiments.mjs": "769b59c8907352bbf1c6747aafd6753098a1979fb50743486bfd809c8a061157",
     "scripts/transcript.mjs": "ff8ed2d1081ed7c3b9c662d6351cdf5d6a30fc2587e56c394e7c4954b0021b33"
@@ -31,7 +31,7 @@
       "driftScore": 60,
       "violation": "domain-cannot-import-app",
       "processExitCode": 0,
-      "durationMs": 2387,
+      "durationMs": 1791,
       "transcript": "recipe module-layering [TypeScript/JavaScript · direct module graph] — Keep domain code below application code\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-app\n  observed forbidden direct import module:packages/domain/order.ts -> module:packages/app/checkout.ts is present\n  evidence packages/domain/order.ts#L1\nbce demo: module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "5d5cd8ba274711b3a2cde3ad9350a1becad5d5b115a73dc5ba0131f7e271f8c8"
     },
@@ -45,7 +45,7 @@
       "driftScore": 60,
       "violation": "domain-cannot-import-api",
       "processExitCode": 0,
-      "durationMs": 1739,
+      "durationMs": 1880,
       "transcript": "recipe python-module-layering [Python · structured direct graph] — Keep Python domain code below the API layer\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-api\n  observed forbidden direct import module:src/service/domain/orders.py -> module:src/service/api.py is present\n  evidence src/service/domain/orders.py#L3\nbce demo: python-module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "af57281267a7d3781cb47855d8e1141a1879a03efdb0ec00d5b224e2519fdb4f"
     },
@@ -59,7 +59,7 @@
       "driftScore": 60,
       "violation": "no-feature-beyond-the-day-one-trio",
       "processExitCode": 0,
-      "durationMs": 1752,
+      "durationMs": 2133,
       "transcript": "recipe configuration-allowlist [JSON/Markdown · real-source pattern pair] — Stop a governed manifest from silently widening\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation no-feature-beyond-the-day-one-trio\n  observed forbidden content pattern /^\\s*\"(?!(?:core|reports|search)[\"/])[^\"]+\"\\s*,?\\s*$/ matched at config/feature-manifest.json#L10\n  evidence config/feature-manifest.json#L10\nbce demo: configuration-allowlist discriminates GREEN from RED\n",
       "transcriptSha256": "f634fd9c7919d5df287840d27ae38ffccbf25a6c8ff877ef19ec5bfebd24bf9d"
     }
