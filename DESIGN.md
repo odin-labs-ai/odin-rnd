@@ -135,3 +135,6 @@ Respect `prefers-reduced-motion`, keyboard focus, native disclosure and no-JavaS
 - Keep local fonts, licenses and asset hashes together.
 - Check heading wrapping, selected states and control focus at desktop, tablet and mobile widths.
 - Avoid adding card grids, decorative motion or simulated runtime state during refinement.
+
+## Private collaboration plates
+The Factory Intelligence and Odin Gym blueprint plates lead with intended customer benefits and contact actions for private collaboration. Keep the existing drawing board, symbols and typography. Each plate has a descriptive contact link with a 44px minimum target; the footer invites early adopter partners. The audience and access discussion are visible in ordinary reading text.

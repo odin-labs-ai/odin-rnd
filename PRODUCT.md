@@ -8,7 +8,7 @@ web
 Static HTML, CSS, native JavaScript and authored SVG; a small Node 22 build using pnpm. GitHub Pages is the user's confirmed destination. Stack selected under the user's instruction to proceed autonomously; no standing tooling preference inferred.
 
 ## Users
-Developers, researchers and people following Odin's work, looking to understand the concept, inspect public experiments, and explore open-source projects. Audience emphasis inferred from the requested public R&D and release site.
+Developers, researchers and people following Odin's work, looking to understand the concept, inspect public experiments, and explore open-source projects. The owner also explicitly identifies internal teams, private customers and early adopter partners as the audience for Factory Intelligence and Odin Gym. These panels invite private collaboration and early-access discussions.
 
 ## Product Purpose
 A dedicated Odin R&D website. Translate software-factory research into understandable projects, experiments, evidence and stories. Accumulate material toward a future LinkedIn release.
@@ -24,3 +24,6 @@ Earlier August R&D proposal and catalogue supply concept provenance, not current
 
 ## Product Principles
 Show working mechanisms. Give dates and versions with results. Explain why the work matters. Label the boundary between a measured result and a research ambition.
+
+## Private collaboration positioning — 7 September 2026
+The owner requested stronger commercial positioning for Factory Intelligence and Odin Gym. Lead with customer value and a concrete conversation, preserving the factory/blueprint design. These are intended for internal use, private customers and early adopter partners. Use the verified public Odin contact page for inquiries. Do not imply public downloads, automatic access, measured savings or a completed capability rollout from this positioning instruction.
