@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101716">
+  <meta name="description" content="Step inside Odin R&D. Open-source tools, public experiments and field notes from the software factory.">
+  <meta property="og:title" content="Odin R&D — Inside the software factory">
+  <meta property="og:description" content="Open-source tools. Experiments you can reproduce. Field notes from a factory learning how to build.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/BarlowCondensed-Bold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="assets/style.css">
+  <script type="module" src="assets/app.js"></script>
+  <title>Odin R&D — Inside the software factory</title>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a href="./" class="wordmark" aria-label="Odin R&D home"><svg viewBox="0 0 34 36" width="31" height="33" aria-hidden="true"><path d="M3 10 17 2l14 8v16l-14 8L3 26Z M10 14l7-4 7 4v8l-7 4-7-4Z M17 2v8m14 0-7 4m7 12-7-4m-7 12v-8M3 26l7-4M3 10l7 4"/></svg><span>ODIN<span class="brand-divider">/</span><span class="brand-rnd">R&D</span></span></a>
+    <nav aria-label="Main navigation"><a href="#floor">The floor</a><a href="#experiments">Experiments</a><a href="#projects">Open source</a><a href="#journal">Field notes</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="hero" id="floor" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">Inside the<br>software<br><span>factory.</span></h1>
+        <p>Odin’s research & development floor.<br>We build tools for AI-built systems,<br>open the experiments, and show our work.</p>
+        <a class="button button-orange" href="#experiments">Inspect an experiment <span aria-hidden="true">↘</span></a>
+        <div class="entrance-note"><span class="crosshair" aria-hidden="true"></span><span>Open workshop. Unfinished by design.</span></div>
+      </div>
+      <div class="factory-drawing" data-view="floor">
+        <div class="drawing-toolbar"><span class="technical">ASSEMBLY / SOFTWARE SYSTEMS</span><button id="blueprint-toggle" aria-pressed="false">Blueprint view <span class="switch" aria-hidden="true"></span></button></div>
+        <div class="floor-art"><!--FLOOR--></div>
+        <div class="station-controls" role="group" aria-label="Explore the factory stations">
+          <button data-station="blueprint" aria-pressed="true"><span>01</span> Blueprint</button>
+          <button data-station="workcell" aria-pressed="false"><span>02</span> Workcell</button>
+          <button data-station="gate" aria-pressed="false"><span>03</span> Gate</button>
+          <button data-station="record" aria-pressed="false"><span>04</span> Record</button>
+        </div>
+        <div class="station-caption" aria-live="polite"><p id="station-description">Start with intent. A versioned blueprint gives a software system explicit architectural boundaries.</p><a id="station-link" href="https://blueprint-conformance.github.io/bce/">Explore BCE <span aria-hidden="true">↗</span></a></div>
+        <div class="drawing-key technical"><span>CONCEPTUAL FLOOR PLAN</span><span>SELECT A STATION TO INSPECT</span></div>
+      </div>
+      <div class="machine-plate"><span class="plate-title">ODIN LABS<span>RESEARCH & DEVELOPMENT</span></span><dl><div><dt>Machine</dt><dd>000 / Public workshop</dd></div><div><dt>Type</dt><dd>Software factory</dd></div><div><dt>Site revision</dt><dd>0.1.0</dd></div><div><dt>Issued</dt><dd><time datetime="2026-09-07">07 SEP 2026</time></dd></div></dl><span class="plate-mark" aria-hidden="true">O/R</span></div>
+    </section>
+    <section class="thesis" aria-labelledby="thesis-title">
+      <div class="thesis-heading"><h2 id="thesis-title">What if the factory<br>could learn to build<br><em>better factories?</em></h2><span class="section-arrow" aria-hidden="true">↗</span></div>
+      <div class="thesis-copy"><p>That’s the question behind Odin R&D. When agents can write the code, the interesting work moves to defining good, checking what was built, and learning from the result.</p><p>We’re opening that work here: tools you can use, experiments you can repeat, and notes that explain what changed.</p><a href="journal/why-open-the-floor.html">Read the idea behind the floor <span aria-hidden="true">↗</span></a></div>
+    </section>
+    <section class="experiments content-section" id="experiments" aria-labelledby="experiments-title">
+      <div class="section-heading"><h2 id="experiments-title">On the test bench.</h2><p>Real runs. Published results.<br>Pull up a stool and inspect one.</p></div>
+      <div class="workbench">
+        <div class="bench-menu"><div class="bench-label technical">SELECT EXPERIMENT</div><!--EXPERIMENT_BUTTONS--><a class="all-runs" href="https://github.com/odin-labs-ai/odin-rnd/actions/workflows/publish.yml">Watch the public runs <span aria-hidden="true">↗</span></a></div>
+        <div class="bench-body">
+          <div class="bench-status technical"><span id="run-id">EXP / 001</span><span id="run-badge" role="status">RECORDED EXPERIMENT</span></div>
+          <h3 id="run-title">Can a dependency cross the line?</h3>
+          <p id="run-question">A domain module imports the application layer. Does the same blueprint distinguish it from a conforming tree?</p>
+          <div class="specimen-pair"><div><span class="technical">SPECIMEN A / CONFORMING</span><strong id="clean-result">—</strong><span>The authored boundary holds.</span></div><div><span class="technical">SPECIMEN B / DRIFTED</span><strong id="drift-result">—</strong><span>A deliberate violation is detected.</span></div></div>
+          <p class="bench-explainer">One unchanged rule. Two different trees. The experiment succeeds when the engine tells them apart.</p>
+          <details class="transcript-panel"><summary>Read the engine output <span aria-hidden="true">+</span></summary><pre id="transcript" tabindex="0"><!--FIRST_TRANSCRIPT--></pre></details>
+          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.0 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy reproduction command">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
+          <div class="run-meta"><span id="run-date"><!--RUN_DATE--></span><a href="data/experiments.json">Full result & provenance <span aria-hidden="true">↗</span></a></div>
+          <p class="scope-note">Packaged fixtures, run with BCE 0.3.0. This tests the mechanism; it does not measure agent productivity or production reliability. <span id="run-origin"><!--RUN_ORIGIN--></span> Selectors inspect the recording; reproduction runs on your machine.</p>
+          <noscript><p>The first experiment’s transcript is available above. <a href="data/experiments.json">Read all three results as JSON</a>. Interactive selection needs JavaScript.</p></noscript>
+        </div>
+      </div>
+    </section>
+    <section class="projects content-section" id="projects" aria-labelledby="projects-title">
+      <div class="section-heading"><h2 id="projects-title">Tools leaving<br>the factory.</h2><p>Take them apart.<br>Make something with them.</p></div>
+      <article class="project-row project-featured"><div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine <span aria-hidden="true">↗</span></a></h3><p>Architecture rules your agents can check. Write down the boundary, let the engine inspect the code, and make drift visible before it lands.</p><div class="project-links"><a href="https://blueprint-conformance.github.io/bce/">Documentation</a><a href="https://github.com/blueprint-conformance/bce/releases/tag/v0.3.0">Release & evidence</a></div></div><dl class="project-spec"><div><dt>Release</dt><dd>v0.3.0</dd></div><div><dt>Issued</dt><dd>05 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
+      <article class="project-row"><div class="project-number">002<span>ARTIFACTS</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/bce-paper-artifacts">The evidence workbench <span aria-hidden="true">↗</span></a></h3><p>Seeded defects, fixture trees, recorded gate runs and a standalone chain verifier. Inspect the research materials behind the blueprint-conformance paper.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/bce-paper-artifacts/tree/main/verify">Run the chain verifier</a></div><p class="project-note">An earlier research archive. Its engine-availability notes predate the public BCE release linked above.</p></div><dl class="project-spec"><div><dt>Type</dt><dd>Research archive</dd></div><div><dt>Checked</dt><dd>07 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Public artifacts</dd></div></dl></article>
+      <article class="project-row"><div class="project-number">000<span>WORKSHOP</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/odin-rnd">This floor is a project, too. <span aria-hidden="true">↗</span></a></h3><p>The drawings, the website and the experiment runner are here to inspect. Propose an experiment, reproduce a result, or help shape the next machine.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Propose an experiment</a></div></div><dl class="project-spec"><div><dt>Revision</dt><dd>v0.1.0</dd></div><div><dt>Type</dt><dd>Public workshop</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
+    </section>
+    <section class="drawing-board content-section" aria-labelledby="next-title">
+      <div class="drawing-board-header"><h2 id="next-title">Still on the<br>drawing board.</h2><p>Research directions<br><span>Questions we’re working toward.</span></p></div>
+      <div class="research-directions"><article><span class="research-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 38h32M11 33V23h6v10m7 0V16h6v17m7 0V9h5v24M10 15l12-6 10 2 9-7"/><path d="m34 4 7 0 0 7"/></svg></span><h3>Factory Intelligence</h3><p>Can we measure the quality and cost of an outcome, then use that evidence to improve the next attempt?</p><span class="technical">RESEARCH DIRECTION / MEASURE WHAT MATTERS</span></article><article><span class="research-symbol gym-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M36 14a16 16 0 0 0-27 8m3 12a16 16 0 0 0 27-8M36 6v8h-8M12 42v-8h8"/><circle cx="24" cy="24" r="5"/></svg></span><h3>Odin Gym</h3><p>Can real work become an isolated, verifiable learning environment—where an agent gets practice and a meaningful result?</p><span class="technical">RESEARCH DIRECTION / LEARN THROUGH DOING</span></article></div>
+      <p class="drawing-board-note">These plates describe the direction of the research. They are not public product releases. <a href="journal/why-open-the-floor.html#next">Follow the questions <span aria-hidden="true">↗</span></a></p>
+    </section>
+    <section class="journal content-section" id="journal" aria-labelledby="journal-title">
+      <div class="section-heading"><h2 id="journal-title">Notes from the floor.</h2><p>What happened.<br>What it means. What comes next.</p></div>
+      <a class="journal-row" href="journal/a-passing-pipeline.html"><div class="journal-date"><time datetime="2026-09-07">07.09.26</time><span class="technical">BUILD NOTE / 001</span></div><div><h3>A passing pipeline was not yet<br>a verified release.</h3><p>What a missing coverage report taught us about making “done” explainable.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>
+      <a class="journal-row" href="journal/why-open-the-floor.html"><div class="journal-date"><time datetime="2026-09-07">07.09.26</time><span class="technical">RESEARCH NOTE / 001</span></div><div><h3>Why open the factory floor?</h3><p>Tools, experiments and a place to show work while it is still becoming something.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>
+    </section>
+    <section class="closing"><p>The next good question<br>might be yours.</p><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Bring it to the workbench <span aria-hidden="true">↗</span></a><span class="closing-stamp">OPEN<br>FOR R&D</span></section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="./">ODIN / R&D</a><span>From the dark factory. Out in the open.</span><div><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/LICENSE">License</a><a href="data/site.json">Site record</a></div><span class="technical">REV 0.1.0 · 2026</span></footer>
+</body>
+</html>

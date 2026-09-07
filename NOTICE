@@ -1,0 +1,17 @@
+Odin R&D
+Copyright 2026 Odin Labs contributors
+
+Original site code, editorial text and software-factory geometry are licensed under Apache-2.0.
+Odin names and marks identify the project; this license grants no trademark rights.
+
+Barlow and Barlow Condensed fonts:
+Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow).
+Licensed under the SIL Open Font License, Version 1.1.
+Source: https://github.com/google/fonts/tree/main/ofl/barlow
+Source: https://github.com/google/fonts/tree/main/ofl/barlowcondensed
+Exact notices are retained beside the self-hosted fonts.
+
+The experiment runner consumes bce-engine 0.3.0, Apache-2.0, from its public npm release.
+Source: https://github.com/blueprint-conformance/bce
+Full emitted demo transcripts are retained with package and source provenance.
+The upstream engine is a dependency, not copied into the browser or implemented here.

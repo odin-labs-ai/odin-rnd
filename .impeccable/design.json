@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T02:23:02.262901+00:00",
+  "title": "Design System: Odin R&D",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Factory graphite",
+        "tonalRamp": [
+          "oklch(15.00% 0.01073 185.66)",
+          "oklch(26.43% 0.01073 185.66)",
+          "oklch(37.86% 0.01073 185.66)",
+          "oklch(49.29% 0.01073 185.66)",
+          "oklch(60.71% 0.01073 185.66)",
+          "oklch(72.14% 0.01073 185.66)",
+          "oklch(83.57% 0.01073 185.66)",
+          "oklch(95.00% 0.01073 185.66)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Workshop panel",
+        "tonalRamp": [
+          "oklch(15.00% 0.01481 181.33)",
+          "oklch(26.43% 0.01481 181.33)",
+          "oklch(37.86% 0.01481 181.33)",
+          "oklch(49.29% 0.01481 181.33)",
+          "oklch(60.71% 0.01481 181.33)",
+          "oklch(72.14% 0.01481 181.33)",
+          "oklch(83.57% 0.01481 181.33)",
+          "oklch(95.00% 0.01481 181.33)"
+        ]
+      },
+      "blueprint": {
+        "role": "secondary",
+        "displayName": "Blueprint teal",
+        "tonalRamp": [
+          "oklch(15.00% 0.03908 205.89)",
+          "oklch(26.43% 0.03908 205.89)",
+          "oklch(37.86% 0.03908 205.89)",
+          "oklch(49.29% 0.03908 205.89)",
+          "oklch(60.71% 0.03908 205.89)",
+          "oklch(72.14% 0.03908 205.89)",
+          "oklch(83.57% 0.03908 205.89)",
+          "oklch(95.00% 0.03908 205.89)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "tonalRamp": [
+          "oklch(15.00% 0.02246 106.82)",
+          "oklch(26.43% 0.02246 106.82)",
+          "oklch(37.86% 0.02246 106.82)",
+          "oklch(49.29% 0.02246 106.82)",
+          "oklch(60.71% 0.02246 106.82)",
+          "oklch(72.14% 0.02246 106.82)",
+          "oklch(83.57% 0.02246 106.82)",
+          "oklch(95.00% 0.02246 106.82)"
+        ]
+      },
+      "steel": {
+        "role": "neutral",
+        "displayName": "Steel",
+        "tonalRamp": [
+          "oklch(15.00% 0.01872 169.90)",
+          "oklch(26.43% 0.01872 169.90)",
+          "oklch(37.86% 0.01872 169.90)",
+          "oklch(49.29% 0.01872 169.90)",
+          "oklch(60.71% 0.01872 169.90)",
+          "oklch(72.14% 0.01872 169.90)",
+          "oklch(83.57% 0.01872 169.90)",
+          "oklch(95.00% 0.01872 169.90)"
+        ]
+      },
+      "cyan": {
+        "role": "secondary",
+        "displayName": "Drafting cyan",
+        "tonalRamp": [
+          "oklch(15.00% 0.05607 218.74)",
+          "oklch(26.43% 0.05607 218.74)",
+          "oklch(37.86% 0.05607 218.74)",
+          "oklch(49.29% 0.05607 218.74)",
+          "oklch(60.71% 0.05607 218.74)",
+          "oklch(72.14% 0.05607 218.74)",
+          "oklch(83.57% 0.05607 218.74)",
+          "oklch(95.00% 0.05607 218.74)"
+        ]
+      },
+      "orange": {
+        "role": "primary",
+        "displayName": "Safety orange",
+        "tonalRamp": [
+          "oklch(15.00% 0.17572 41.20)",
+          "oklch(26.43% 0.17572 41.20)",
+          "oklch(37.86% 0.17572 41.20)",
+          "oklch(49.29% 0.17572 41.20)",
+          "oklch(60.71% 0.17572 41.20)",
+          "oklch(72.14% 0.17572 41.20)",
+          "oklch(83.57% 0.17572 41.20)",
+          "oklch(95.00% 0.17572 41.20)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Ruled edge",
+        "tonalRamp": [
+          "oklch(15.00% 0.02093 172.92)",
+          "oklch(26.43% 0.02093 172.92)",
+          "oklch(37.86% 0.02093 172.92)",
+          "oklch(49.29% 0.02093 172.92)",
+          "oklch(60.71% 0.02093 172.92)",
+          "oklch(72.14% 0.02093 172.92)",
+          "oklch(83.57% 0.02093 172.92)",
+          "oklch(95.00% 0.02093 172.92)"
+        ]
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "drawing-background",
+        "value": "background .3s ease",
+        "purpose": "Transition between drawing surface colors."
+      },
+      {
+        "name": "switch-thumb",
+        "value": "transform .25s ease",
+        "purpose": "Indicate blueprint mode."
+      },
+      {
+        "name": "station-opacity",
+        "value": "opacity .2s ease",
+        "purpose": "Declared on station geometry; current selection changes marker styling, not opacity."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Remove animations and transitions and use immediate anchor scrolling."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "wide-desktop-min",
+        "value": "1600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "description": "Square entrance link with a directional arrow.",
+      "html": "<a class=\"ds-primary\" href=\"#experiments\">Inspect an experiment <span aria-hidden=\"true\">\u2198</span></a>",
+      "css": ".ds-primary{display:inline-flex;justify-content:space-between;align-items:center;gap:40px;padding:15px 20px;border:1px solid transparent;border-radius:0;background:var(--orange,#ff7a45);color:var(--ground,#101716);font:500 15px/1.55 Barlow,sans-serif;text-decoration:none}.ds-primary span{font-size:24px;line-height:1}.ds-primary:hover{background:var(--paper,#f0f0df)}.ds-primary:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Copy command",
+      "kind": "button",
+      "description": "Outlined secondary control; the application supplies clipboard feedback.",
+      "html": "<button class=\"ds-copy\">Copy command</button>",
+      "css": ".ds-copy{font:400 11px/1.55 Barlow,sans-serif;color:var(--paper,#f0f0df);background:none;border:1px solid var(--rule,#3a4944);padding:7px;border-radius:0;cursor:pointer}.ds-copy:hover{border-color:var(--orange,#ff7a45);color:var(--orange,#ff7a45)}.ds-copy:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}",
+      "refersTo": "button-outline"
+    },
+    {
+      "name": "Station selection",
+      "kind": "button",
+      "description": "Pressed-state station control; application JavaScript changes selection.",
+      "html": "<button class=\"ds-station\" aria-pressed=\"true\"><span>01</span> Blueprint</button>",
+      "css": ".ds-station{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:13px 5px;border:1px solid var(--rule,#3a4944);border-radius:0;background:none;color:var(--paper,#f0f0df);font:400 12px/1.55 Barlow,sans-serif;cursor:pointer}.ds-station span{font:9px SFMono-Regular,Consolas,monospace;color:var(--steel,#a4b3ad)}.ds-station[aria-pressed=true]{background:var(--paper,#f0f0df);color:var(--ground,#101716)}.ds-station[aria-pressed=true] span{color:#55675c}.ds-station:hover{color:var(--orange,#ff7a45)}.ds-station[aria-pressed=true]:hover{color:var(--ground,#101716)}.ds-station:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}",
+      "refersTo": "station-selected"
+    },
+    {
+      "name": "Experiment selector",
+      "kind": "button",
+      "description": "Recorded experiment selector with inverted selected state.",
+      "html": "<button class=\"ds-experiment\" aria-pressed=\"true\"><span>EXP / 001</span>Can a dependency cross the line?</button>",
+      "css": ".ds-experiment{display:flex;flex-direction:column;gap:10px;text-align:left;min-height:125px;padding:23px 24px;border:0;border-top:1px solid var(--rule,#3a4944);border-radius:0;background:none;color:var(--paper,#f0f0df);font:400 19px/1.25 Barlow,sans-serif;cursor:pointer}.ds-experiment>span{font:10px/1.5 SFMono-Regular,Consolas,monospace;letter-spacing:.04em;color:var(--steel,#a4b3ad)}.ds-experiment[aria-pressed=true]{background:var(--paper,#f0f0df);color:var(--ground,#101716)}.ds-experiment[aria-pressed=true]>span{color:#4a5e52}.ds-experiment:hover{background:#293a31}.ds-experiment[aria-pressed=true]:hover{background:#e0e5d4}.ds-experiment:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}",
+      "refersTo": "experiment-choice"
+    },
+    {
+      "name": "Main navigation",
+      "kind": "nav",
+      "description": "Visible anchor navigation, retained as a row on mobile.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><a href=\"#floor\">The floor</a><a href=\"#experiments\">Experiments</a><a href=\"#projects\">Open source</a><a href=\"#journal\">Field notes</a></nav>",
+      "css": ".ds-nav{display:flex;gap:28px;flex-wrap:wrap}.ds-nav a{color:var(--steel,#a4b3ad);font:400 14px/1.55 Barlow,sans-serif;text-decoration:none}.ds-nav a:hover{color:var(--orange,#ff7a45)}@media(max-width:760px){.ds-nav{justify-content:space-between;gap:12px}.ds-nav a{font-size:12px;padding:5px 0}}.ds-nav a:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}"
+    },
+    {
+      "name": "Transcript disclosure",
+      "kind": "custom",
+      "description": "Native disclosure with focusable, wrapping output and a rotating plus.",
+      "html": "<details class=\"ds-transcript\"><summary>Read the engine output <span aria-hidden=\"true\">+</span></summary><pre tabindex=\"0\">Recorded output appears here.</pre></details>",
+      "css": ".ds-transcript{color:var(--paper,#f0f0df);border-block:1px solid var(--rule,#3a4944)}.ds-transcript summary{cursor:pointer;list-style:none;padding:18px 0;display:flex;justify-content:space-between;align-items:center;font:400 14px/1.55 Barlow,sans-serif}.ds-transcript summary::-webkit-details-marker{display:none}.ds-transcript summary span{font:22px SFMono-Regular,Consolas,monospace;color:var(--orange,#ff7a45)}.ds-transcript[open] summary span{transform:rotate(45deg)}.ds-transcript pre{font:11px/1.85 SFMono-Regular,Consolas,monospace;color:var(--cyan,#82b3c2);padding:12px 0 24px;margin:0;max-height:450px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}.ds-transcript pre:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}.ds-transcript summary:focus-visible{outline:2px solid var(--orange,#ff7a45);outline-offset:5px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Open Factory Floor",
+    "overview": "Odin R&D feels like an accessible research workshop: dark machinery, chalk lettering, safety-orange wayfinding, and engineering drawings carrying real identifiers. Exact authored geometry gives the software-factory metaphor a physical presence. The atmosphere is industrial and deliberate, with enough space for the reader to understand the work.\n\nThe system alternates large condensed statements with precise, ruled records. Long project and journal rows carry content; bounded panels serve experiment inspection and blueprint material. The confirmed direction rejects a neon dashboard and an interchangeable marketing-card grid. It does not require every future surface to repeat the entrance composition.",
+    "keyCharacteristics": [
+      "Dark graphite surfaces with chalk text and steel secondary copy.",
+      "Safety-orange actions and annotations; cyan for blueprint and evidence detail.",
+      "Condensed display lettering paired with readable prose and restrained technical labels.",
+      "Square controls, thin rules, stamped metadata, and exact SVG machinery."
+    ],
+    "rules": [
+      {
+        "name": "The Evidence Label Rule",
+        "body": "Pair outcome colors with explicit words and values. The built specimens say GREEN, RED, or UNVERIFIED; a colored stroke alone is not a result.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** preserve the factory-floor identity through exact SVG geometry, square controls, thin rules, and stamped metadata.",
+      "**Do** use the implemented steel token for secondary text and retain explicit labels alongside outcome colors.",
+      "**Do** keep Barlow fonts self-hosted with their OFL license files.",
+      "**Do** preserve keyboard focus, native disclosure behavior, visible mobile navigation, and reduced-motion handling.",
+      "**Do** distinguish conceptual drawings, recorded results, and research directions in the visible interface."
+    ],
+    "donts": [
+      "**Don't** replace the industrial world with neon dashboard styling or an interchangeable marketing-card grid.",
+      "**Don't** introduce decorative shadows or general pill-shaped controls into this square, ruled system.",
+      "**Don't** turn diagram stations into fabricated live telemetry or imply that selecting a recording runs an experiment.",
+      "**Don't** replace the authored interactive geometry with a raster or drop license/provenance material from shipped assets.",
+      "**Don't** treat the planned palette or an unapproved comp workflow as authority over the current built system and recorded surface brief."
+    ]
+  }
+}
