@@ -35,3 +35,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 ## Brand refinement authority
 
 The owner approved the factory graphics and requested Odin website / Command Center styling on 7 September 2026. docs/brand-refinement.md and the refreshed DESIGN.md supersede this initial palette and Barlow type plan. Preserve the factory geometry and interactions; use Space Grotesk, Inter, JetBrains Mono and the emerald interface identity.
+
+## Current identity authority
+The owner then explicitly requested Open Docs / odin-labs.ai visual alignment and the real Odin mark. docs/odin-identity.md and DESIGN.md supersede earlier surface/font choices. The factory bay remains dark, surrounded by a pale forest-ink reading floor. Open Docs supplies the unchanged public logo and Manrope/Space Grotesk reference. Factory geometry and private-partner copy are retained.

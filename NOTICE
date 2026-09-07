@@ -4,10 +4,10 @@ Copyright 2026 Odin Labs contributors
 Original site code, editorial text and software-factory geometry are licensed under Apache-2.0.
 Odin names and marks identify the project; this license grants no trademark rights.
 
-Inter, Space Grotesk and JetBrains Mono fonts:
+Manrope, Space Grotesk and JetBrains Mono fonts:
 Licensed under the SIL Open Font License, Version 1.1.
 Their complete copyright and license notices are retained beside the self-hosted fonts.
-Sources: https://github.com/google/fonts/tree/main/ofl/inter
+Sources: https://github.com/google/fonts/tree/main/ofl/manrope
          https://github.com/google/fonts/tree/main/ofl/spacegrotesk
          https://github.com/google/fonts/tree/main/ofl/jetbrainsmono
 Latin WOFF2 variable subsets are served locally. Download URLs and SHA-256 digests are recorded in docs/asset-provenance.json.
@@ -16,3 +16,7 @@ The experiment runner consumes bce-engine 0.3.0, Apache-2.0, from its public npm
 Source: https://github.com/blueprint-conformance/bce
 Full emitted demo transcripts are retained with package and source provenance.
 The upstream engine is a dependency, not copied into the browser or implemented here.
+
+The unmodified Odin logo is served from the public Odin Open Docs brand asset.
+Source: https://odin-labs-ai.github.io/open-docs/odin-logo.svg
+Odin retains rights in its names and marks; source-code licensing does not grant trademark rights.

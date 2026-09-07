@@ -17,6 +17,6 @@ html = html.replace('</body>', '<script type="application/json" id="experiment-d
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });
-writeFileSync('dist/data/site.json', JSON.stringify({ name:'Odin R&D', version:'0.1.2', issued:'2026-09-07', builtAt:new Date().toISOString(), source:'https://github.com/odin-labs-ai/odin-rnd', revision:report.revision, experimentRun:report.workflowRun, drawing:'Conceptual software-factory assembly; not a map of deployed infrastructure.' }, null, 2)+'\n');
+writeFileSync('dist/data/site.json', JSON.stringify({ name:'Odin R&D', version:'0.2.0', issued:'2026-09-07', builtAt:new Date().toISOString(), source:'https://github.com/odin-labs-ai/odin-rnd', revision:report.revision, experimentRun:report.workflowRun, drawing:'Conceptual software-factory assembly; not a map of deployed infrastructure.' }, null, 2)+'\n');
 writeFileSync('dist/.nojekyll','');
 console.log('Built static GitHub Pages site with three recorded experiments.');

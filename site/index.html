@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="theme-color" content="#102b22">
   <meta name="description" content="Step inside Odin R&D. Open-source tools, public experiments and field notes from the software factory.">
   <meta property="og:title" content="Odin R&D — Inside the software factory">
   <meta property="og:description" content="Open-source tools. Experiments you can reproduce. Field notes from a factory learning how to build.">
@@ -18,13 +18,13 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header class="site-header">
-    <a href="./" class="wordmark" aria-label="Odin R&D home"><svg viewBox="0 0 34 36" width="31" height="33" aria-hidden="true"><path d="M3 10 17 2l14 8v16l-14 8L3 26Z M10 14l7-4 7 4v8l-7 4-7-4Z M17 2v8m14 0-7 4m7 12-7-4m-7 12v-8M3 26l7-4M3 10l7 4"/></svg><span>ODIN<span class="brand-divider">/</span><span class="brand-rnd">R&D</span></span></a>
+  <header class="site-header dark-surface">
+    <a href="./" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="./assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
     <nav aria-label="Main navigation"><a href="#floor">The floor</a><a href="#experiments">Experiments</a><a href="#projects">Open source</a><a href="#journal">Field notes</a></nav>
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
-    <section class="hero" id="floor" aria-labelledby="hero-title">
+    <section class="hero dark-surface" id="floor" aria-labelledby="hero-title">
       <div class="hero-copy">
         <h1 id="hero-title">Inside the<br>software<br><span>factory.</span></h1>
         <p>Odin’s research & development floor.<br>We build tools for AI-built systems,<br>open the experiments, and show our work.</p>
@@ -43,7 +43,7 @@
         <div class="station-caption" aria-live="polite"><p id="station-description">Start with intent. A versioned blueprint gives a software system explicit architectural boundaries.</p><a id="station-link" href="https://blueprint-conformance.github.io/bce/">Explore BCE <span aria-hidden="true">↗</span></a></div>
         <div class="drawing-key technical"><span>CONCEPTUAL FLOOR PLAN</span><span>SELECT A STATION TO INSPECT</span></div>
       </div>
-      <div class="machine-plate"><span class="plate-title">ODIN LABS<span>RESEARCH & DEVELOPMENT</span></span><dl><div><dt>Machine</dt><dd>000 / Public workshop</dd></div><div><dt>Type</dt><dd>Software factory</dd></div><div><dt>Site revision</dt><dd>0.1.2</dd></div><div><dt>Issued</dt><dd><time datetime="2026-09-07">07 SEP 2026</time></dd></div></dl><span class="plate-mark" aria-hidden="true">O/R</span></div>
+      <div class="machine-plate"><span class="plate-title"><img src="assets/odin-logo.svg" width="32" height="36" alt=""><b>Odin Labs</b><span>RESEARCH &amp; DEVELOPMENT</span></span><dl><div><dt>Machine</dt><dd>000 / Public workshop</dd></div><div><dt>Type</dt><dd>Software factory</dd></div><div><dt>Site revision</dt><dd>0.2.0</dd></div><div><dt>Issued</dt><dd><time datetime="2026-09-07">07 SEP 2026</time></dd></div></dl><span class="plate-mark" aria-hidden="true">O/R</span></div>
     </section>
     <section class="thesis" aria-labelledby="thesis-title">
       <div class="thesis-heading"><h2 id="thesis-title">What if the factory<br>could learn to build<br><em>better factories?</em></h2><span class="section-arrow" aria-hidden="true">↗</span></div>
@@ -51,7 +51,7 @@
     </section>
     <section class="experiments content-section" id="experiments" aria-labelledby="experiments-title">
       <div class="section-heading"><h2 id="experiments-title">On the test bench.</h2><p>Real runs. Published results.<br>Pull up a stool and inspect one.</p></div>
-      <div class="workbench">
+      <div class="workbench dark-surface">
         <div class="bench-menu"><div class="bench-label technical">SELECT EXPERIMENT</div><!--EXPERIMENT_BUTTONS--><a class="all-runs" href="https://github.com/odin-labs-ai/odin-rnd/actions/workflows/publish.yml">Watch the public runs <span aria-hidden="true">↗</span></a></div>
         <div class="bench-body">
           <div class="bench-status technical"><span id="run-id">EXP / 001</span><span id="run-badge" role="status">RECORDED EXPERIMENT</span></div>
@@ -71,9 +71,9 @@
       <div class="section-heading"><h2 id="projects-title">Tools leaving<br>the factory.</h2><p>Take them apart.<br>Make something with them.</p></div>
       <article class="project-row project-featured"><div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine <span aria-hidden="true">↗</span></a></h3><p>Architecture rules your agents can check. Write down the boundary, let the engine inspect the code, and make drift visible before it lands.</p><div class="project-links"><a href="https://blueprint-conformance.github.io/bce/">Documentation</a><a href="https://github.com/blueprint-conformance/bce/releases/tag/v0.3.0">Release & evidence</a></div></div><dl class="project-spec"><div><dt>Release</dt><dd>v0.3.0</dd></div><div><dt>Issued</dt><dd>05 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
       <article class="project-row"><div class="project-number">002<span>ARTIFACTS</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/bce-paper-artifacts">The evidence workbench <span aria-hidden="true">↗</span></a></h3><p>Seeded defects, fixture trees, recorded gate runs and a standalone chain verifier. Inspect the research materials behind the blueprint-conformance paper.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/bce-paper-artifacts/tree/main/verify">Run the chain verifier</a></div><p class="project-note">An earlier research archive. Its engine-availability notes predate the public BCE release linked above.</p></div><dl class="project-spec"><div><dt>Type</dt><dd>Research archive</dd></div><div><dt>Checked</dt><dd>07 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Public artifacts</dd></div></dl></article>
-      <article class="project-row"><div class="project-number">000<span>WORKSHOP</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/odin-rnd">This floor is a project, too. <span aria-hidden="true">↗</span></a></h3><p>The drawings, the website and the experiment runner are here to inspect. Propose an experiment, reproduce a result, or help shape the next machine.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Propose an experiment</a></div></div><dl class="project-spec"><div><dt>Revision</dt><dd>v0.1.2</dd></div><div><dt>Type</dt><dd>Public workshop</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
+      <article class="project-row"><div class="project-number">000<span>WORKSHOP</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/odin-rnd">This floor is a project, too. <span aria-hidden="true">↗</span></a></h3><p>The drawings, the website and the experiment runner are here to inspect. Propose an experiment, reproduce a result, or help shape the next machine.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Propose an experiment</a></div></div><dl class="project-spec"><div><dt>Revision</dt><dd>v0.2.0</dd></div><div><dt>Type</dt><dd>Public workshop</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
     </section>
-    <section class="drawing-board content-section" aria-labelledby="next-title">
+    <section class="drawing-board content-section dark-surface" aria-labelledby="next-title">
       <div class="drawing-board-header"><h2 id="next-title">Better outcomes.<br>Stronger agents.</h2><p>Private collaboration<br><span>For internal teams, customers &amp; early adopter partners.</span></p></div>
       <div class="research-directions"><article><span class="research-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 38h32M11 33V23h6v10m7 0V16h6v17m7 0V9h5v24M10 15l12-6 10 2 9-7"/><path d="m34 4 7 0 0 7"/></svg></span><h3>Factory Intelligence</h3><p>Understand what good work costs—and where to improve next. Shape Factory Intelligence around the quality, cost and outcomes that matter to your team.</p><span class="technical">FOCUS / QUALITY · COST · CONTINUOUS IMPROVEMENT</span><a class="partner-link" href="https://odin-labs.ai/contact">Discuss Factory Intelligence <span aria-hidden="true">↗</span></a></article><article><span class="research-symbol gym-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M36 14a16 16 0 0 0-27 8m3 12a16 16 0 0 0 27-8M36 6v8h-8M12 42v-8h8"/><circle cx="24" cy="24" r="5"/></svg></span><h3>Odin Gym</h3><p>Give agents a place to practice on work that matters. Shape Odin Gym around your workflows, with isolated tasks and verifiable outcomes as the design goal.</p><span class="technical">FOCUS / REAL WORK · PRACTICE · EVALUATION</span><a class="partner-link" href="https://odin-labs.ai/contact">Explore Odin Gym for your team <span aria-hidden="true">↗</span></a></article></div>
       <p class="drawing-board-note">Developed for Odin’s internal use, private customers and early adopter partners. Bring your use case to discuss scope and early access. <a href="https://odin-labs.ai/contact">Become an early adopter partner <span aria-hidden="true">↗</span></a></p>
@@ -85,6 +85,6 @@
     </section>
     <section class="closing"><p>The next good question<br>might be yours.</p><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Bring it to the workbench <span aria-hidden="true">↗</span></a><span class="closing-stamp">OPEN<br>FOR R&D</span></section>
   </main>
-  <footer class="site-footer"><a class="footer-brand" href="./">ODIN / R&D</a><span>From the dark factory. Out in the open.</span><div><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/LICENSE">License</a><a href="data/site.json">Site record</a></div><span class="technical">REV 0.1.2 · 2026</span></footer>
+  <footer class="site-footer"><a href="./" class="footer-brand" aria-label="Odin Labs R&amp;D home"><img src="./assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><span>From the dark factory. Out in the open.</span><div><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/LICENSE">License</a><a href="data/site.json">Site record</a></div><span class="technical">REV 0.2.0 · 2026</span></footer>
 </body>
 </html>

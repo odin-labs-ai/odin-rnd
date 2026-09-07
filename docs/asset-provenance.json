@@ -10,21 +10,21 @@
       "license": "SIL Open Font License 1.1"
     },
     {
-      "path": "site/assets/fonts/Inter-Variable.woff2",
-      "source": "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap",
-      "fileSource": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
-      "subset": "latin",
-      "bytes": 48256,
-      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
-      "license": "SIL Open Font License 1.1"
-    },
-    {
       "path": "site/assets/fonts/JetBrainsMono-Variable.woff2",
       "source": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap",
       "fileSource": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbV2o-flEEny0FZhsfKu5WU4xD7OwE.woff2",
       "subset": "latin",
       "bytes": 40404,
       "sha256": "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
+      "path": "site/assets/fonts/Manrope-Variable.woff2",
+      "source": "https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap",
+      "fileSource": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+      "subset": "latin",
+      "bytes": 24836,
+      "sha256": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972",
       "license": "SIL Open Font License 1.1"
     }
   ],
@@ -33,5 +33,12 @@
     "kind": "original authored orthographic SVG geometry; unchanged in brand refinement",
     "sha256": "10dfa984740df24f2c8e1840963ccc97bee553e55cabd924f3ec324f4c5e87fb",
     "raster": false
+  },
+  "brand": {
+    "path": "site/assets/odin-logo.svg",
+    "source": "https://odin-labs-ai.github.io/open-docs/odin-logo.svg",
+    "retrievedAt": "2026-09-07T19:06:00.221343+00:00",
+    "sha256": "c63c7d6d1d654fd3189fb630df2a4523cd0dba6fbf7676aef96347b64fd81ef2",
+    "use": "Unmodified Odin mark from Open Docs, also used as favicon. Shape matches the live odin-labs.ai header. Odin retains trademark rights."
   }
 }

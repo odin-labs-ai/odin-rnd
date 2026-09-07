@@ -27,3 +27,6 @@ Show working mechanisms. Give dates and versions with results. Explain why the w
 
 ## Private collaboration positioning — 7 September 2026
 The owner requested stronger commercial positioning for Factory Intelligence and Odin Gym. Lead with customer value and a concrete conversation, preserving the factory/blueprint design. These are intended for internal use, private customers and early adopter partners. Use the verified public Odin contact page for inquiries. Do not imply public downloads, automatic access, measured savings or a completed capability rollout from this positioning instruction.
+
+## Public Odin identity — 7 September 2026
+The owner requested an actual design alignment with Open Docs and odin-labs.ai, including the real Odin logo, while preserving the factory feel. Use the existing public mark unchanged, Open Docs’ forest-green and pale reading surfaces, Space Grotesk / Manrope typography, and clear links across Odin’s sites. The factory bay and experimental workbench stay dark; the blueprint/private-collaboration plates and their approved copy remain.

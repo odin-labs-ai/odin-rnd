@@ -1,13 +1,13 @@
 ---
 name: Odin R&D
-description: Odin's emerald interface and typography around a dark software-factory floor.
+description: Odin's forest-green factory bay, authentic brand mark and pale public reading floor.
 colors:
-  ground: "#0a0a0f"
-  panel: "#111118"
-  paper: "#f5f5f7"
-  steel: "#a1a1aa"
-  rule: "#2a2a38"
-  brand: "#34d399"
+  ground: "#f3f6ef"
+  panel: "#e7efe3"
+  paper: "#18382d"
+  steel: "#496559"
+  rule: "#c7d7c9"
+  brand: "#236747"
   primary: "#047857"
   primary-hover: "#065f46"
   blueprint: "#18393d"
@@ -16,7 +16,7 @@ colors:
 typography:
   display:
     fontFamily: "Space Grotesk, system-ui, sans-serif"
-    fontSize: "clamp(62px,6.2vw,96px)"
+    fontSize: "clamp(62px,5.9vw,88px)"
     fontWeight: 600
     lineHeight: 1.05
     letterSpacing: "-0.04em"
@@ -32,12 +32,12 @@ typography:
     fontWeight: 600
     lineHeight: 1.25
   body:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Manrope, sans-serif"
     fontSize: "17px"
     fontWeight: 400
     lineHeight: 1.55
   article:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Manrope, sans-serif"
     fontSize: "18px"
     fontWeight: 400
     lineHeight: 1.8
@@ -59,7 +59,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
-    textColor: "{colors.paper}"
+    textColor: "#ffffff"
     rounded: "{rounded.primary-control}"
     padding: "15px 20px"
   button-primary-hover:
@@ -71,7 +71,7 @@ components:
     backgroundColor: "#12352c"
     textColor: "{colors.paper}"
   workbench:
-    backgroundColor: "{colors.panel}"
+    backgroundColor: "#142f27"
     rounded: "{rounded.record}"
 ---
 
@@ -79,62 +79,42 @@ components:
 
 ## Overview
 
-The factory is the defining graphic. Odin's established typography and emerald interface connect it to Command Center and the main website. The owner explicitly approved the floor and requested this brand refinement on 7 September 2026. Preserve the composition, drawing, interactions and stamped records.
+Odin R&D belongs visibly to the same family as Open Docs and odin-labs.ai. The user supplied those references and explicitly requested the real Odin logo on 7 September 2026. The identity pass preserves the factory geometry, blueprint interaction, content and private-partner positioning; it changes the surrounding design to forest-green navigation and pale reading surfaces.
 
-The current authority is this document plus the implemented stylesheet. The initial Barlow/orange interface plan is historical; `docs/brand-refinement.md` records the updated brief and reference observations. The live marketing homepage was observed using a system-sans stack on light surfaces. Command Center explicitly defines the three families used here; its dark theme is the stronger reference for this dark R&D surface.
+Live references and asset provenance are recorded in docs/odin-identity.md. This edition supersedes the earlier dark-only Command Center palette and Inter body font. The shared Space Grotesk heading family and JetBrains Mono records remain.
 
-## Colors
+## Colors and surfaces
 
-Use emerald for navigation feedback, primary actions, selected controls and conforming experiment results. The primary button uses dark emerald with light text; focus rings and headline emphasis use the brighter brand color.
+The reading floor uses #f3f6ef with forest ink #18382d, secondary #496559, pale panel #e7efe3, rules #c7d7c9 and links #236747. These follow Open Docs’ observed visual language. Primary actions use #047857 with white text.
 
-Blue-black page and panel tones, neutral light text and secondary gray come from the website's declared dark palette. Keep existing blueprint teal/cyan, muted machine faces and safety-orange equipment. Orange remains meaningful for machinery, the drifted specimen, disclosure marks and the stamped invitation. Do not recolor the entire factory to match the buttons.
+The header, hero and experiment workbench use a scoped dark palette: ground #102b22, panel #142f27, text #eef6ed, secondary #b8cec1, rules #3d5b4e and accents #6ee7b7. This keeps the factory bay and recorded terminal readable independently of the light page. The blueprint plates retain #18393d, their drawing grid, light text and emerald contact actions. Machine material colors and safety-orange geometry are unchanged. The orange stamp on light paper uses darker #92502d.
 
-The introductory panel is deep emerald `#102b25`, with light text and green-tinted secondary copy. Selected station and experiment fills are `#12352c`; selected label tones use `#6ee7b7` and `#a7f3d0`. Outcome colors always accompany GREEN/RED/UNVERIFIED text and values.
+The introduction is a pale green bordered panel. Projects and field notes remain spacious ruled rows on the light page. Do not add an interchangeable card grid or decorative gradients. The official logo’s original lime-to-cyan gradient is brand artwork and remains unchanged.
 
 ## Typography
 
-Use Space Grotesk at 600 for headings, Inter for prose and UI, and JetBrains Mono for identifiers, timestamps, specimen scores and code. These roles follow Command Center. The wider display face uses sentence case and more line height than the first edition's condensed lettering.
+Use Space Grotesk 600 for headings, Manrope for prose and UI (matching Open Docs), and JetBrains Mono for identifiers, timestamps, scores and code. Self-host Latin variable WOFF2 and retain the OFL notices beside them. Only Space Grotesk is preloaded.
 
-The desktop hero uses the display role; below 1100px its size is 6.2vw, and mobile uses `clamp(52px,12.7vw,82px)` with 1.06 line height. Section headings use the headline role, with local panels tuned to their width. Project and journal titles use 28px/1.25 on desktop and 23–24px on mobile. Experiment titles use 29px/1.2 and 25px on mobile.
+Desktop hero size is clamp(62px,5.9vw,88px), with 1.05 line height; tablet uses 6.2vw, mobile clamp(48px,12.7vw,72px). Section headings use the headline role. The introduction is clamp(32px,3.1vw,44px), 30px mobile. Project and journal headings preserve the existing 23–28px responsive scale.
 
-Article prose uses 18px/1.8, reducing to 16px on mobile, in a 740px column with paragraph measure at most 68ch. The article title uses `clamp(44px,5.6vw,78px)`, 19ch maximum width, and 43px on mobile. Article section headings are 30px/1.1 and 27px on mobile. Body emphasis uses weight 600.
+Articles use 18px/1.8 Manrope, 16px on mobile, in a 740px reading column; paragraph measure stays at most 68ch. The article heading keeps clamp(44px,5.6vw,78px), 43px mobile. Technical micro-annotations belong to diagrams and equipment plates, while prose and actions stay larger. Real measurement records use tabular numerals.
 
-Metadata stays tabular and compact. Small 7–9px annotations belong only to diagrams and machine plates; ordinary prose and actions use larger sizes. Fonts are self-hosted Latin WOFF2 variable subsets: Space Grotesk 300–700, Inter 100–900 and JetBrains Mono 100–800. Only the display face is preloaded. Preserve the OFL files and `docs/asset-provenance.json`; visitors make no font-CDN request.
+## Logo and navigation
 
-## Layout
+Use the unmodified public Open Docs odin-logo.svg, whose exact path matches the live odin-labs.ai header. Never redraw it as a generic geometric icon. It appears in the common header, footer, equipment plate, favicon and missing-page header, with explicit image dimensions and decorative alt text beside the named home link.
 
-Preserve the factory-first composition: headline left, large geometry right, equipment plate below; then introduction, experiment workbench, project rows, research drawing board, journal and invitation. The header exposes all navigation on mobile.
+The home lockup reads OdinLabs / R&D in sentence case, with the subdivision separated by a thin rule. The header exposes the four existing navigation destinations and source link without a hidden mobile menu. The footer adds direct Odin Labs and Open Docs links. Keep all article routes in the same brand shell.
 
-Page gutters are 4.2%, changing to 6% below 760px. Sections use 112px desktop and 66px mobile spacing. The hero changes from a 39/61 split to one column on mobile. The bench switches from side selectors to a three-column selector row. Project records, research columns and journal metadata reflow at existing breakpoints. Do not compress the drawing to make the wider type fit.
+## Layout and materials
 
-## Elevation & Depth
+A full-width forest-green entrance wraps the headline, large interactive drawing and stamped machine plate. Page gutters are 4.2%, 6% mobile; very wide hero content is capped through side padding. The hero reflows into one column on mobile without changing drawing geometry.
 
-Depth comes from the exact orthographic machinery, not decorative card shadows. UI panels use fills and thin rules. Preserve the two drawing modes and their local material palette. No new idle animation or artificial live telemetry.
+Below the dark bay, the pale introductory panel leads to the dark experiment workbench, ruled public-project records, retained blueprint partner plates and a light journal. Controls use 8–10px corners; introductory/workbench containers use 12px (8px workbench on mobile). Machinery plates remain square and ruled. Preserve four station controls, blueprint view, native transcript disclosure and copy behavior.
 
-## Shapes
+The private collaboration plates lead with intended customer benefits. Each concept has a descriptive 44px-minimum contact action; the footer invites early adopter partners. Keep their approved copy and audience intact.
 
-Interactive primary controls use 10px corners; blueprint/copy controls and the station strip use 8px. Equipment plates, specimen records and blueprint sheets stay square. Circle forms are reserved for drawing markers, crosshairs and the existing research loop symbol.
+## Accessibility and behavior
 
-## Components
+Use scoped focus colors: dark green on the light floor, light emerald inside dark surfaces. Keep keyboard use, selection, reduced motion, reading without JavaScript and native disclosure. Station and experiment focus stays inset so rounded containers do not clip it. Do not add idle animation or simulated runtime counters.
 
-- Primary actions: dark emerald fill, light text, darker hover, visible emerald focus. Native links remain links.
-- Station strip: four buttons with pressed state. Emerald selection changes the caption and selected SVG station. Focus stays visible inside the rounded strip.
-- Blueprint toggle: native pressed button changes the same geometry's materials. It does not launch or monitor a service.
-- Experiment selector: highlights a recorded recipe and changes the question, transcript and command. It does not execute the engine in the browser.
-- Specimen records: JetBrains Mono scores, explicit GREEN/RED outcomes, unchanged provenance.
-- Transcript: native details/summary; selectable, wrapping code; copy confirmation and manual-copy fallback remain intact.
-- Journal rows: type/ID with the date, descriptive title and summary, a clear linked row.
-
-Respect `prefers-reduced-motion`, keyboard focus, native disclosure and no-JavaScript reading. Theme selection and scrollbars with the same tokens.
-
-## Do's and Don'ts
-
-- Keep the factory geometry and orange equipment details intact.
-- Use Odin fonts and emerald for the interface around it.
-- Preserve factual content, public experiment provenance and research-status boundaries.
-- Keep local fonts, licenses and asset hashes together.
-- Check heading wrapping, selected states and control focus at desktop, tablet and mobile widths.
-- Avoid adding card grids, decorative motion or simulated runtime state during refinement.
-
-## Private collaboration plates
-The Factory Intelligence and Odin Gym blueprint plates lead with intended customer benefits and contact actions for private collaboration. Keep the existing drawing board, symbols and typography. Each plate has a descriptive contact link with a 44px minimum target; the footer invites early adopter partners. The audience and access discussion are visible in ordinary reading text.
+Labels and scores retain explicit GREEN/RED/UNVERIFIED text; color alone never conveys an outcome. The workbench records an experiment; it does not execute agents in the browser. The floor is conceptual geometry, not a map of deployed infrastructure.
