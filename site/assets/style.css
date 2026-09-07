@@ -36,3 +36,6 @@ body{font-feature-settings:"cv02","cv03","cv04","cv11"}
 .article-body p{max-width:68ch}
 @media(max-width:1100px){.hero-copy{padding-top:78px}.hero-copy>p{font-size:14px}.specimen-pair strong{font-size:24px}}
 @media(max-width:760px){.hero-copy{padding-top:42px}.hero-copy>p{font-size:15px}.wordmark{font-size:22px}.brand-rnd{font-size:17px}.footer-brand{font-size:20px}.specimen-pair strong{font-size:19px}.specimen-pair>div{padding:17px 10px}.project-number{font-size:27px}.project-row{grid-template-columns:43px 1fr;gap:14px}.closing-stamp{font-size:15px}.article-body{font-size:16px}.section-arrow{display:none}}
+
+/* Private collaboration invitations on the retained blueprint plates. */
+.drawing-board-header>p{max-width:38ch}.drawing-board-header>p>span{display:block;line-height:1.6}.research-directions article{display:flex;flex-direction:column;align-items:flex-start}.research-directions .partner-link{display:inline-flex;align-items:center;gap:14px;min-height:44px;margin-top:22px;font-size:14px;font-weight:600;color:#a7f3d0;text-underline-offset:5px}.partner-link:hover{color:#f5f5f7}.drawing-board-note{align-items:center}.drawing-board-note a{white-space:normal;flex-shrink:0;max-width:32ch;min-height:44px;align-content:center;color:#a7f3d0}
