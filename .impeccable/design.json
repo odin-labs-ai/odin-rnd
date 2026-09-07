@@ -1,31 +1,31 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-07T09:50:23.694716+00:00",
+  "generatedAt": "2026-09-07T19:09:01.296656+00:00",
   "title": "Design System: Odin R&D",
   "extensions": {
     "motion": {
       "policy": "Preserve existing material/state transitions; disable under reduced motion."
     },
     "focus": {
-      "outline": "2px solid #34d399",
+      "outline": "2px solid current surface brand color",
       "offset": "5px",
       "stationOffset": "-3px"
     },
     "fonts": {
       "display": "Space Grotesk",
-      "body": "Inter",
+      "body": "Manrope",
       "metadata": "JetBrains Mono",
       "delivery": "Self-hosted Latin WOFF2; OFL licensed."
     }
   },
   "narrative": {
     "northStar": "The Odin factory floor",
-    "overview": "Approved factory graphics with Command Center typography and emerald interface styling.",
+    "overview": "Authentic Odin brand with a dark factory bay and pale Open Docs reading surfaces.",
     "keyCharacteristics": [
-      "Space Grotesk headings, Inter reading, JetBrains Mono records",
-      "Emerald actions on dark Odin surfaces",
-      "Unchanged physical machinery and blueprint mode",
-      "Rounded controls around square machine records"
+      "Unmodified official Odin mark across the site",
+      "Space Grotesk headings, Manrope reading, JetBrains Mono records",
+      "Forest-green factory bay and pale reading floor",
+      "Preserved geometry, blueprint mode and private partner invitations"
     ]
   }
 }
