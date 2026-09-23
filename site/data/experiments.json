@@ -2,23 +2,26 @@
   "schemaVersion": 1,
   "engine": {
     "package": "bce-engine",
-    "version": "0.3.0",
-    "source": "https://github.com/blueprint-conformance/bce/tree/9fe4a02d39c05dbdf280b359e9b364de84e1eda8",
-    "integrity": "sha512-KwWyEYOZu70xrQG5JYEyHNhz3eqTalno9d9+KUugytYBiWtHGO7Wpa+X/7xgi9xDc49V7OUchTJtN8Pu8T37iw=="
+    "version": "0.3.1",
+    "source": "https://github.com/blueprint-conformance/bce/tree/7fc24fe24c3eb41366be990023ea37b00d2ca3b8",
+    "sourceSha": "7fc24fe24c3eb41366be990023ea37b00d2ca3b8",
+    "integrity": "sha512-hRWp4UvxWS7XnifOfrjRSxhIhUh8KB8n0I79Kyw6ffgSuH1s3aAwCVNapnsRIOH1rPXzxo/gTMMuyQewzgsrCg=="
   },
-  "startedAt": "2026-09-07T19:09:06.481Z",
-  "completedAt": "2026-09-07T19:09:11.445Z",
+  "startedAt": "2026-09-23T03:46:26.769Z",
+  "completedAt": "2026-09-23T03:46:27.489Z",
   "node": "v22.22.2",
   "environment": "local reproduction",
-  "revision": "b401d0b5000660ebdbcafb5d53ba177c21d52685",
+  "workflowRun": null,
+  "workflowAttempt": null,
+  "revision": "b5fa78d2c836e5d02c4e23f99979b08cfbf779f4",
   "revisionMeaning": "Base checkout revision. inputFilesSha256 identifies the actual experiment inputs, including local edits.",
   "inputFilesSha256": {
-    "package.json": "50d35576ecb0a0733227d329355fc1fcb9127f70caa173ff6060c90a034dab50",
-    "pnpm-lock.yaml": "af58631d7551b89f4a1819638aef590f6136b9d4af5bb4438b8a6c2547f4d9e9",
-    "scripts/run-experiments.mjs": "769b59c8907352bbf1c6747aafd6753098a1979fb50743486bfd809c8a061157",
-    "scripts/transcript.mjs": "ff8ed2d1081ed7c3b9c662d6351cdf5d6a30fc2587e56c394e7c4954b0021b33"
+    "package.json": "f6727111f219ee47f40d77bd7a5a4d2902cb2bb8062d8993ede710d31f40817d",
+    "pnpm-lock.yaml": "3d04442a268a1f5dbb0fc852ece2ff0044a229ae0e6688f5acbe8fabbb06648d",
+    "scripts/run-experiments.mjs": "00e16c106ccc23f4da8a615a0c6b0025b451d272f2796cace8936c3b3155fa00",
+    "scripts/transcript.mjs": "9da0ac9551daabdcb3949bc5235c96da858b584a535458efaeab065dc9d87e8b",
+    "scripts/recording-provenance.mjs": "916671610918ba58246ddf913aa8ed569ddaadde2ef199cc5bcee8d8ae32da1b"
   },
-  "workflowRun": null,
   "scope": "Packaged, author-controlled fixtures. The demo evaluates clean and drifted trees; its overall exit 0 means the discrimination experiment succeeded. The RED gate outcome would exit 1. These runs do not measure agent effectiveness or production reliability.",
   "runs": [
     {
@@ -31,7 +34,79 @@
       "driftScore": 60,
       "violation": "domain-cannot-import-app",
       "processExitCode": 0,
-      "durationMs": 1633,
+      "sourceBinding": {
+        "schemaVersion": 1,
+        "recipeId": "module-layering",
+        "constraintId": "domain-cannot-import-app",
+        "location": {
+          "path": "packages/domain/order.ts",
+          "line": 1
+        },
+        "package": {
+          "name": "bce-engine",
+          "version": "0.3.1",
+          "integrity": "sha512-hRWp4UvxWS7XnifOfrjRSxhIhUh8KB8n0I79Kyw6ffgSuH1s3aAwCVNapnsRIOH1rPXzxo/gTMMuyQewzgsrCg==",
+          "sourceSha": "7fc24fe24c3eb41366be990023ea37b00d2ca3b8",
+          "sourceUrl": "https://github.com/blueprint-conformance/bce/tree/7fc24fe24c3eb41366be990023ea37b00d2ca3b8"
+        },
+        "blueprint": {
+          "packagePath": "fixtures/typescript-module-layering.blueprint.json",
+          "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-layering.blueprint.json",
+          "sha256": "03eeae9010e12ae9f8a49696423091982075f05b6375cfa35c4d2ee1729650bf",
+          "text": "{\n  \"apiVersion\": \"blueprint-conformance/v1alpha1\",\n  \"kind\": \"EngineeringBlueprint\",\n  \"metadata\": {\n    \"id\": \"typescript-module-layering\",\n    \"name\": \"TypeScript module layering\",\n    \"version\": \"0.1.0\",\n    \"status\": \"approved\",\n    \"ownerRole\": \"architecture-owner\",\n    \"stewardRole\": \"blueprint-steward\"\n  },\n  \"intentRefs\": [\n    \"docs/typescript-module-graph.md#directional-layering\"\n  ],\n  \"scope\": {\n    \"repositories\": [\n      \"example-org/storefront\"\n    ],\n    \"paths\": [\n      \"packages/**/*.ts\"\n    ]\n  },\n  \"architecture\": {\n    \"components\": [\n      {\n        \"id\": \"typescriptModule\",\n        \"type\": \"typescriptModule\"\n      }\n    ],\n    \"relationships\": [\n      {\n        \"from\": \"packages/domain/**\",\n        \"to\": \"module:packages/app/**\",\n        \"type\": \"imports\",\n        \"allowed\": false\n      }\n    ]\n  },\n  \"constraints\": [\n    {\n      \"id\": \"module-surface-exists\",\n      \"type\": \"requiredComponent\",\n      \"severity\": \"critical\",\n      \"component\": \"typescriptModule\"\n    },\n    {\n      \"id\": \"domain-cannot-import-app\",\n      \"type\": \"forbiddenDependency\",\n      \"severity\": \"critical\",\n      \"from\": \"*\",\n      \"to\": \"module:packages/app/**\",\n      \"scopePaths\": [\n        \"packages/domain/**\"\n      ]\n    }\n  ],\n  \"evidenceRequirements\": [\n    {\n      \"type\": \"staticAst\",\n      \"required\": true,\n      \"onMissing\": \"block\"\n    }\n  ],\n  \"approvals\": [\n    {\n      \"role\": \"blueprint-steward\",\n      \"stage\": \"ratify\"\n    }\n  ],\n  \"minEngineVersion\": \"0.3.0\",\n  \"extraction\": {\n    \"profile\": \"typescript-module-graph\",\n    \"paths\": [\n      \"packages/**/*.ts\"\n    ],\n    \"minFiles\": 2\n  }\n}\n"
+        },
+        "clean": [
+          {
+            "path": "packages/app/checkout.ts",
+            "packagePath": "fixtures/typescript-module-surface/conformant/packages/app/checkout.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/conformant/packages/app/checkout.ts",
+            "sha256": "2f3f6a8ad32f5e57722abebe2edb82baf8b5105cafeddaffe68c4649bf44d0de",
+            "text": "import { priceOrder, type Order } from '../domain/order.js';\n\nexport function checkout(order: Order): number {\n  return priceOrder(order);\n}\n"
+          },
+          {
+            "path": "packages/app/view.ts",
+            "packagePath": "fixtures/typescript-module-surface/conformant/packages/app/view.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/conformant/packages/app/view.ts",
+            "sha256": "4b9748b7aebe0e2eee729dbf04e13b2dae18412c52653492e004ff74809a2b13",
+            "text": "export const renderOrder = (id: string): string => `order:${id}`;\n"
+          },
+          {
+            "path": "packages/domain/order.ts",
+            "packagePath": "fixtures/typescript-module-surface/conformant/packages/domain/order.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/conformant/packages/domain/order.ts",
+            "sha256": "e32d64da9c685736af8a6d25f089a102e30774c40e0328948df126f7dbab777c",
+            "text": "export interface Order {\n  total: number;\n}\n\nexport function priceOrder(order: Order): number {\n  return order.total;\n}\n"
+          }
+        ],
+        "drift": [
+          {
+            "path": "packages/app/checkout.ts",
+            "packagePath": "fixtures/typescript-module-surface/drift-reverse-layer/packages/app/checkout.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/drift-reverse-layer/packages/app/checkout.ts",
+            "sha256": "4b81efad9eba920087d82b7b50a41b28a8fd96627a40bb2051950bbc476b5292",
+            "text": "import { priceOrder, type Order } from '../domain/order.js';\n\nexport function checkoutLabel(total: number): string {\n  return `checkout:${total}`;\n}\n\nexport function checkout(order: Order): number {\n  return priceOrder(order);\n}\n"
+          },
+          {
+            "path": "packages/app/view.ts",
+            "packagePath": "fixtures/typescript-module-surface/drift-reverse-layer/packages/app/view.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/drift-reverse-layer/packages/app/view.ts",
+            "sha256": "4b9748b7aebe0e2eee729dbf04e13b2dae18412c52653492e004ff74809a2b13",
+            "text": "export const renderOrder = (id: string): string => `order:${id}`;\n"
+          },
+          {
+            "path": "packages/domain/order.ts",
+            "packagePath": "fixtures/typescript-module-surface/drift-reverse-layer/packages/domain/order.ts",
+            "sourceUrl": "https://github.com/blueprint-conformance/bce/blob/7fc24fe24c3eb41366be990023ea37b00d2ca3b8/fixtures/typescript-module-surface/drift-reverse-layer/packages/domain/order.ts",
+            "sha256": "fa925ecd8450cf92bc62a6c66fee3c4a1f09d6a07c06d67ffe2d76d7c3a43fe3",
+            "text": "import { checkoutLabel } from '../app/checkout.js';\n\nexport interface Order {\n  total: number;\n}\n\nexport function priceOrder(order: Order): number {\n  return checkoutLabel(order.total).length + order.total;\n}\n"
+          }
+        ],
+        "changedPaths": [
+          "packages/app/checkout.ts",
+          "packages/domain/order.ts"
+        ]
+      },
+      "durationMs": 253,
       "transcript": "recipe module-layering [TypeScript/JavaScript · direct module graph] — Keep domain code below application code\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-app\n  observed forbidden direct import module:packages/domain/order.ts -> module:packages/app/checkout.ts is present\n  evidence packages/domain/order.ts#L1\nbce demo: module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "5d5cd8ba274711b3a2cde3ad9350a1becad5d5b115a73dc5ba0131f7e271f8c8"
     },
@@ -45,7 +120,7 @@
       "driftScore": 60,
       "violation": "domain-cannot-import-api",
       "processExitCode": 0,
-      "durationMs": 1657,
+      "durationMs": 221,
       "transcript": "recipe python-module-layering [Python · structured direct graph] — Keep Python domain code below the API layer\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-api\n  observed forbidden direct import module:src/service/domain/orders.py -> module:src/service/api.py is present\n  evidence src/service/domain/orders.py#L3\nbce demo: python-module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "af57281267a7d3781cb47855d8e1141a1879a03efdb0ec00d5b224e2519fdb4f"
     },
@@ -59,7 +134,7 @@
       "driftScore": 60,
       "violation": "no-feature-beyond-the-day-one-trio",
       "processExitCode": 0,
-      "durationMs": 1672,
+      "durationMs": 244,
       "transcript": "recipe configuration-allowlist [JSON/Markdown · real-source pattern pair] — Stop a governed manifest from silently widening\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation no-feature-beyond-the-day-one-trio\n  observed forbidden content pattern /^\\s*\"(?!(?:core|reports|search)[\"/])[^\"]+\"\\s*,?\\s*$/ matched at config/feature-manifest.json#L10\n  evidence config/feature-manifest.json#L10\nbce demo: configuration-allowlist discriminates GREEN from RED\n",
       "transcriptSha256": "f634fd9c7919d5df287840d27ae38ffccbf25a6c8ff877ef19ec5bfebd24bf9d"
     }

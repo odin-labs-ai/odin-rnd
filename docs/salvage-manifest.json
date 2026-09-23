@@ -1,0 +1,242 @@
+{
+  "source": "odin-rnd-roi-demos-20260920",
+  "baseRevision": "b5fa78d2c836e5d02c4e23f99979b08cfbf779f4",
+  "files": [
+    {
+      "path": "demos/CONTRACT.md",
+      "sha256": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9"
+    },
+    {
+      "path": "demos/ci-witness/README.md",
+      "sha256": "2babc83fe3d0c1c699bac22cd801d504fbaca326841488b193452760350d72cc"
+    },
+    {
+      "path": "demos/ci-witness/fixtures/Witness.java",
+      "sha256": "e975a931b8cc6bc4d5e7fa43874f47443d77c839e8dcaa13010cd804286187df"
+    },
+    {
+      "path": "demos/ci-witness/fixtures/cases.json",
+      "sha256": "5020bbf8473c2740aa4e77288ef7e6e57cc41012f02efa7ee1ecca05eb70bf87"
+    },
+    {
+      "path": "demos/ci-witness/run.mjs",
+      "sha256": "e2f74d49a2b7af759cbe2111dba7fc03598a9c3383b5560c233061cc67aa22f8"
+    },
+    {
+      "path": "demos/lib.mjs",
+      "sha256": "ce111bc9472b48b5d149a3a79392f8acf150d82206491eeb0e12c97ed3412754"
+    },
+    {
+      "path": "demos/migration-witness/README.md",
+      "sha256": "6f2c8c7b561a83ae70724c719e2d5f8f96b8069bac4e8379b56cddd5e35ec378"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/AfterInvoice.java",
+      "sha256": "cf0b19c6a8b149381e77b98a9ca5c31dbbe2b958d9cf4a05a54f7663d4e35eef"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/BeforeInvoice.java",
+      "sha256": "93778a809ae283d4f8c5316075814dc86e6f050ecd52301a12d9cc597385dc87"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/BrokenInvoice.java",
+      "sha256": "e3081c431bdd7ff6bc6729b671568e553ee7db1050d642c2700caa87783907da"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/RegressionInvoice.java",
+      "sha256": "ad18fbaee7339ab523b8221d486b969d51c54f2866d059e5c9bc0a5da3231152"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/WitnessHarness.java",
+      "sha256": "9695d1118914dab2e86e06a97abb90d00f21c41cd07487f096404fb60913d358"
+    },
+    {
+      "path": "demos/migration-witness/fixtures/cases.tsv",
+      "sha256": "efd0f26174bc03c8950313707d40c48701db8a7f94194dcf8b78fc9a297ac096"
+    },
+    {
+      "path": "demos/migration-witness/run.mjs",
+      "sha256": "c07d2af69b66b9f90222998c5e7dced12b41c2143310787074889e6a18445a3a"
+    },
+    {
+      "path": "demos/test-witness/README.md",
+      "sha256": "5fabc13ec73362cad69f22e4b9791305f64bd26947b4e6a93b6abc02b3ff1175"
+    },
+    {
+      "path": "demos/test-witness/fixtures/Witness.java",
+      "sha256": "10621a725271d7be6acfc6765191ae654fcfb98589d1a5886acd8c7ed3342bad"
+    },
+    {
+      "path": "demos/test-witness/run.mjs",
+      "sha256": "c7dfef54b46176c81f17a9f4d617cd749232c21bb81482c46a111ad66cc5e503"
+    },
+    {
+      "path": "docs/company-readiness-validation.md",
+      "sha256": "092adf00c8aa7753ab53d97d7a433440221f3fe4630e1ef4072a7bad0e7de37c"
+    },
+    {
+      "path": "docs/company-readiness.md",
+      "sha256": "343f1146c6420dd3d6b53928d17d96ccdb22a7d08d90386c43215abfcf9ab615"
+    },
+    {
+      "path": "docs/pilot-delivery-runbook.md",
+      "sha256": "e2160558160f1deb7668fa1986c816d255b19cf56e2be9b4fa4bf78ba022e7ca"
+    },
+    {
+      "path": "docs/roi-projects.md",
+      "sha256": "0307c8534993ba5ef839189a5a59112d1c06fec3b163bb33b3f9bcd4cbf855c6"
+    },
+    {
+      "path": "docs/witness-visual-stories.md",
+      "sha256": "6feaa6311d18bfe0a293881c905c0f18b020b71121c4118d8bb57b57def0827b"
+    },
+    {
+      "path": "scripts/brief.test.mjs",
+      "sha256": "a685d46140727b3d9db31003a0c868d208cf6ba3c2f57c5d86a5f90599565fd4"
+    },
+    {
+      "path": "scripts/export-boundary.test.mjs",
+      "sha256": "e330025ab3a75a2e6ad072a6d4390834ac2109ae9f93cde7e7871d5fc6e57ccd"
+    },
+    {
+      "path": "scripts/roi-lib.test.mjs",
+      "sha256": "b971d09811b84c0a977e2310f54a3a648b97ae5d1dd6e7b6954d336b001305d9"
+    },
+    {
+      "path": "scripts/roi-records.test.mjs",
+      "sha256": "cb3718b35be7a857079e0d4917f59b35650195d47043da0fcf86b4caf9692817"
+    },
+    {
+      "path": "scripts/run-roi-demos.mjs",
+      "sha256": "25a8435ac15cc32c816f09f02df5a107c2b35c46fc5a7a7d7254a7cdfad38dc2"
+    },
+    {
+      "path": "scripts/witness-records.mjs",
+      "sha256": "b2d1660c7a65fea16108cb2358b47face29ef958930d07a6f1d243e2778fdea1"
+    },
+    {
+      "path": "scripts/witness-render.mjs",
+      "sha256": "f5e941699af64ea5ce7741ced080ba81f183fecaed8bfc57b2ff486901073eb4"
+    },
+    {
+      "path": "site/assets/brief.mjs",
+      "sha256": "39bfd365abff3e74dbfc5a4bd3cf2b613c448946ea5150b4b5c79e844da83cd0"
+    },
+    {
+      "path": "site/assets/company.css",
+      "sha256": "cc12b65a90b568d22de45fcc3c1c17e828afc95515d09fc5241692c41febb4d2"
+    },
+    {
+      "path": "site/assets/witness-story.css",
+      "sha256": "6905be49fcc9b3d5172ea4d32f08a63ff5b0b02b5d0b1b368d6d9c1926f54234"
+    },
+    {
+      "path": "site/assets/witness-story.mjs",
+      "sha256": "7140ff4e116954dedb70df17e2db982b6ef2c13995032d144bd9cebdae25b3a4"
+    },
+    {
+      "path": "site/assets/witness.css",
+      "sha256": "b48b6c51fae17fe664affafde420b3413e47425d9cec6c236be5030ec3bcb50e"
+    },
+    {
+      "path": "site/assets/witness.mjs",
+      "sha256": "bcd0344bfc23d6382d8341e72196ffabbe4ec676844df328e431c706ffab9799"
+    },
+    {
+      "path": "site/data/witnesses/ci-witness.json",
+      "sha256": "fb92935efc244026204ecfa56fbdf8a81cd2a126d08afb632248dec845fb3b3d"
+    },
+    {
+      "path": "site/data/witnesses/manifest.json",
+      "sha256": "ea6537c5219ef5a27484bcf2288a44a467d9838aa6ca1c89f0af6e47ceba2fa1"
+    },
+    {
+      "path": "site/data/witnesses/migration-witness.json",
+      "sha256": "5326ca7098297e727b315a88c746023b3d5f4d5901baf01886cc1babc6e73258"
+    },
+    {
+      "path": "site/data/witnesses/test-witness.json",
+      "sha256": "701cae6e0144d90bfdef9caca5e1a8a74b77186293884fe476385f031a8b3370"
+    },
+    {
+      "path": "site/projects/ci-witness/index.html",
+      "sha256": "d527ee2856ae45758324d432cc5998f8fb96073e7a049e45c7acc97acf30559a"
+    },
+    {
+      "path": "site/projects/migration-witness/index.html",
+      "sha256": "349b5f67535db184d44f0274a00cbb7c3c721cca1c29ed3a66cf4cef9e103cc5"
+    },
+    {
+      "path": "site/projects/test-witness/index.html",
+      "sha256": "feb8cf7b9a92c994b32f8fa11bfb3c3f111bae4fe52213274a6771cb7ade82ec"
+    },
+    {
+      "path": "site/resources/ci-witness-pilot.md",
+      "sha256": "4683e1f6484beb689d5747e8d548641e03f0ab79eb3f3424db9ac22ba77d7205"
+    },
+    {
+      "path": "site/resources/evaluation-report.md",
+      "sha256": "dcf8b53f43a89c59f70ce01e8c3e8efe252dad993d2da544352e3ff62a073864"
+    },
+    {
+      "path": "site/resources/migration-witness-pilot.md",
+      "sha256": "fef7225bc5cb02cb6fb220258159816061c809bdccdc6b2b79f095c57ee676d8"
+    },
+    {
+      "path": "site/resources/pilot-brief.md",
+      "sha256": "16b1e8672d48840be6736cfb0a38db7a6581269c0aecd65a9e9d15687b3c3655"
+    },
+    {
+      "path": "site/resources/pilot-charter.md",
+      "sha256": "fd8db2d335cd67921e7865c9322b7f8d5c0997dec5cb2ef7287b115b737b3a17"
+    },
+    {
+      "path": "site/resources/test-witness-pilot.md",
+      "sha256": "3b49d34eaf056fef2704ba53e92879e6d435ad002133f144761cd5c584a4125f"
+    },
+    {
+      "path": "site/work-with-us/index.html",
+      "sha256": "05624bc8013b357ef629d228bebc5a306c5a2b298751bfb8f0c5d51ab14c2776"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "sha256": "f715e2c408b57d5fa9b15974ea1619784c2ea8c3c3b056c8ec693aa904c929b8"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "c8d952db3e40dabb494b6a20d4f7bfa242725f830245c9c4d760ca3b9d54cdb2"
+    },
+    {
+      "path": "README.md",
+      "sha256": "304fff883f7676e61927494e5367081857a82f1b6563bc27f61789be5c81617c"
+    },
+    {
+      "path": "scripts/build.mjs",
+      "sha256": "a73b54bc857b23ae3337219c09039a636fc0f5a1149a7d0d56327266f08d590b"
+    },
+    {
+      "path": "scripts/check.mjs",
+      "sha256": "b59a72d8663f6a6e7241cb9974323bb6d2fa8c76d0126265b9fac04dcbc6580b"
+    },
+    {
+      "path": "scripts/serve.mjs",
+      "sha256": "93ed7d49b69332e80eb0b7d1b894777510694a542e258dcaa3be372f154ba97d"
+    },
+    {
+      "path": "site/index.html",
+      "sha256": "30706ecc49d9f20be6c25723cc753b1f56aafb208d7c963dfb2c5ea2539ab22b"
+    },
+    {
+      "path": "site/journal/a-passing-pipeline.html",
+      "sha256": "9258d0619807f359c91eeb79b91bf99bd13d8c80f97962668446693f393f4de4"
+    },
+    {
+      "path": "site/journal/why-open-the-floor.html",
+      "sha256": "70cdc5ae536b952f4a89a86517eac29aba9823463a63ce7e4bb8fd0918ca9fda"
+    },
+    {
+      "path": "site/sitemap.xml",
+      "sha256": "33af535357cc4f5b6efe168ee8ca8e49911fd1021f8b8b9e9ce34983777ff2aa"
+    }
+  ]
+}

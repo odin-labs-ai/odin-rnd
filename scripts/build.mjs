@@ -1,12 +1,25 @@
+import { renderStations, renderStationLinks } from './station-render.mjs';
+import { stations } from './station-contract.mjs';
+import { validateRecords } from './witness-records.mjs';
+import { renderWitness } from './witness-render.mjs';
+const witnesses = await validateRecords();
 import { readFileSync, writeFileSync, cpSync, mkdirSync, rmSync } from 'node:fs';
 import { factoryFloor } from './floor.mjs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { validateProvenance } from './recording-provenance.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
+validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
 const escape = value => String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 let html = readFileSync('site/index.html', 'utf8');
 html = html.replace('<!--FLOOR-->', factoryFloor());
+html = html.replace('<!--STATION_CROP-->', factoryFloor({crop:true}));
+html = html.replace('<!--STATION_LINKS-->', renderStationLinks());
+html = html.replace('<!--STATION_EXHIBITS-->', renderStations(report,witnesses.reports));
+html = html.replace('</body>', '<script type="application/json" id="station-data">'+JSON.stringify(stations).replaceAll('<','\\u003c')+'</script>\n</body>');
 html = html.replace('<!--EXPERIMENT_BUTTONS-->', report.runs.map((run,index) => '<button class="experiment-choice" data-experiment="'+index+'" aria-pressed="'+(index===0)+'"><span>EXP / '+String(index+1).padStart(3,'0')+'</span>'+escape(run.title)+'</button>').join(''));
 html = html.replace('<!--FIRST_TRANSCRIPT-->', escape(report.runs[0].transcript));
 html = html.replace('<!--RUN_DATE-->', 'RECORDED '+escape(report.completedAt));
@@ -17,6 +30,13 @@ html = html.replace('</body>', '<script type="application/json" id="experiment-d
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });
-writeFileSync('dist/data/site.json', JSON.stringify({ name:'Odin R&D', version:'0.2.0', issued:'2026-09-07', builtAt:new Date().toISOString(), source:'https://github.com/odin-labs-ai/odin-rnd', revision:report.revision, experimentRun:report.workflowRun, drawing:'Conceptual software-factory assembly; not a map of deployed infrastructure.' }, null, 2)+'\n');
+const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
+const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
+const workingTreeDirty = execFileSync('git', ['status', '--porcelain'], {encoding:'utf8'}).length > 0;
+const sourceFiles = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {encoding:'utf8'}).split('\0').filter(file => file && /^(site\/|scripts\/|demos\/|package\.json$|pnpm-lock\.yaml$|\.github\/workflows\/publish\.yml$)/.test(file));
+const sourceFilesSha256 = Object.fromEntries([...new Set(sourceFiles)].sort().map(file => [file, createHash('sha256').update(readFileSync(file)).digest('hex')]));
+writeFileSync('dist/data/site.json', JSON.stringify({ name:'Odin R&D', version:packageInfo.version, builtAt:new Date().toISOString(), source:'https://github.com/odin-labs-ai/odin-rnd', revision, workingTreeDirty, sourceFilesSha256, revisionMeaning:'Base checkout revision; sourceFilesSha256 identifies actual build inputs including local changes.', engine:report.engine, experimentRecordedAt:report.completedAt, experimentRun:report.workflowRun, witnessRun:witnesses.manifest.workflowRun, witnessRecordedAt:witnesses.manifest.completedAt, drawing:'Conceptual software-factory assembly; not a map of deployed infrastructure.' }, null, 2)+'\n');
 writeFileSync('dist/.nojekyll','');
 console.log('Built static GitHub Pages site with three recorded experiments.');
+
+for (const report of witnesses.reports) { const file = `projects/${report.project}/index.html`; writeFileSync(`dist/${file}`, renderWitness(readFileSync(`site/${file}`, 'utf8'), report)); }

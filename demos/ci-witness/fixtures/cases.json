@@ -1,0 +1,48 @@
+[
+  {
+    "id": "timezone",
+    "properties": [
+      "-Duser.timezone=Europe/Amsterdam",
+      "-Duser.language=en",
+      "-Duser.country=US"
+    ],
+    "expected": "2026-01-01",
+    "baseline": "2026-01-02",
+    "boundaryExpected": "2024-02-29"
+  },
+  {
+    "id": "locale",
+    "properties": [
+      "-Duser.timezone=UTC",
+      "-Duser.language=tr",
+      "-Duser.country=TR"
+    ],
+    "expected": "title",
+    "baseline": "tıtle",
+    "boundaryExpected": "straße"
+  },
+  {
+    "id": "order",
+    "properties": [
+      "-Duser.timezone=UTC",
+      "-Duser.language=en",
+      "-Duser.country=US",
+      "-Dfixture.order=beta,alpha"
+    ],
+    "expected": "alpha,beta",
+    "baseline": "beta,alpha",
+    "boundaryExpected": "alpha,beta,gamma"
+  },
+  {
+    "id": "config",
+    "properties": [
+      "-Duser.timezone=UTC",
+      "-Duser.language=en",
+      "-Duser.country=US",
+      "-Dfixture.mode=legacy"
+    ],
+    "expected": "strict",
+    "baseline": "legacy",
+    "boundaryExpected": "relaxed"
+  }
+]

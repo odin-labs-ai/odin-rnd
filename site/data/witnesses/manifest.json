@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "runId": "2b17952a-f0c5-4361-a747-87467f233355",
+  "startedAt": "2026-09-23T03:52:59.825Z",
+  "sourceRevision": "b5fa78d2c836e5d02c4e23f99979b08cfbf779f4",
+  "workingTree": {
+    "dirty": true,
+    "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
+  },
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null,
+  "status": "passed",
+  "generatorInputSha256": {
+    ".github/workflows/publish.yml": "2907c19848b6727a0e41e6bfd6323ce28c2dd05a99faa5948d453886e0d41857",
+    "scripts/build.mjs": "1a33e9b4f3d99faef9cde95e20425672edb38e18cb45a53d51aa255b91d0a7a1",
+    "scripts/check.mjs": "27259e36dd4b477e1415af70175ef15c79d4980a4d679d965a9b7a7e2c7c5fd3",
+    "scripts/recording-provenance.mjs": "916671610918ba58246ddf913aa8ed569ddaadde2ef199cc5bcee8d8ae32da1b",
+    "scripts/run-roi-demos.mjs": "7b6a70b7d407967857501417379c1717030f297a725952c9d1669754f34b2734",
+    "scripts/witness-records.mjs": "606b375357979c880b45fb83328eaafd6902c647b6e033d06fc3fde9ec82aa6d",
+    "scripts/witness-render.mjs": "f77bee40a6d88355c87210e90d33c61d5566f75706fe9e03cbe1e7785d50ff2f"
+  },
+  "records": {
+    "test-witness": {
+      "sha256": "de94bfeaeb66b031a5f2e68653903c1900172a5a7400d0fa05588e9f28209adc",
+      "completedAt": "2026-09-23T03:53:15.691Z"
+    },
+    "migration-witness": {
+      "sha256": "5b6638936532dec144531303010fbc10562ba596dafea9d103c9b9865176b9b6",
+      "completedAt": "2026-09-23T03:53:27.027Z"
+    },
+    "ci-witness": {
+      "sha256": "37301b3c5ba3e8f5b198754395454a9301a78d7b8ec9b72074cfd5674d675c89",
+      "completedAt": "2026-09-23T03:53:30.328Z"
+    }
+  },
+  "integrityScope": "Consistency of source inputs and raw records, not authentication against an attacker replacing all artifacts.",
+  "completedAt": "2026-09-23T03:53:30.336Z"
+}

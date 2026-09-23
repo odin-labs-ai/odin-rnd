@@ -1,0 +1,9 @@
+id	customer	amount	timestamp	beforeExpected	afterExpected	preservation
+round-half-cent	Acme	1.005	2026-09-20T12:00:00Z	Acme|1.01|2026-09-20	Acme|1.01|2026-09-20	yes
+unicode	  Café 東京  	12.5	2026-09-20T12:00:00Z	Café 東京|12.50|2026-09-20	Café 東京|12.50|2026-09-20	yes
+utc-day-boundary	Acme	0	2026-01-01T00:30:00+02:00	Acme|0.00|2025-12-31	Acme|0.00|2025-12-31	yes
+leap-day	Acme	-1.005	2024-02-29T23:00:00Z	Acme|-1.01|2024-02-29	Acme|-1.01|2024-02-29	yes
+invalid-amount	Acme	twelve	2026-09-20T12:00:00Z	ERROR_AMOUNT	ERROR_AMOUNT	yes
+empty-amount	Acme		2026-09-20T12:00:00Z	ERROR_AMOUNT	ERROR_AMOUNT	yes
+invalid-date	Acme	1	2025-02-29T12:00:00Z	ERROR_DATE	ERROR_DATE	yes
+empty-customer	   	1	2026-09-20T12:00:00Z	Guest|1.00|2026-09-20	ERROR_CUSTOMER	no

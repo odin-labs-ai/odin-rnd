@@ -2,3 +2,5 @@ node_modules/
 dist/
 .impeccable/
 .DS_Store
+
+.ai/witness-failures/
