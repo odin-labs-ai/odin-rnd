@@ -11,9 +11,11 @@ export function submissionPayload(input) {
   if (new TextEncoder().encode(JSON.stringify(body)).length > 16 * 1024) throw new Error('Your message is too large. Please shorten it.');
   return body;
 }
-export function createSubmissionClient(origin, {fetcher = globalThis.fetch, uuid = () => crypto.randomUUID()} = {}) {
+// Stop a day before the server's seven-day idempotency retention expires.
+const RETRY_WINDOW_MS = 6 * 24 * 60 * 60 * 1000;
+export function createSubmissionClient(origin, {fetcher = globalThis.fetch, uuid = () => crypto.randomUUID(), now = () => Date.now()} = {}) {
   origin = apiOrigin(origin);
-  let request = null, pending = false, accepted = null;
+  let request = null, pending = false, accepted = null, expired = false;
   return {
     get locked() { return request !== null; },
     get pending() { return pending; },
@@ -21,8 +23,18 @@ export function createSubmissionClient(origin, {fetcher = globalThis.fetch, uuid
       if (!origin) return {state:'unavailable'};
       if (pending) return {state:'pending'};
       if (accepted) return accepted;
+      if (expired) return {state:'uncertain-expired'};
+      let timestamp;
+      try { timestamp = now(); } catch { timestamp = NaN; }
+      const clockValid = Number.isSafeInteger(timestamp) && timestamp >= 0;
       const retrying = request !== null;
-      if (!request) request = {key:uuid(),payload:submissionPayload(input)};
+      if (retrying && (!clockValid || timestamp < request.observedAt || timestamp - request.startedAt >= RETRY_WINDOW_MS)) {
+        expired = true;
+        return {state:'uncertain-expired'};
+      }
+      if (!clockValid) throw new Error('We could not safely start this enquiry. Check your device clock or contact Odin by email.');
+      if (!request) request = {key:uuid(),payload:submissionPayload(input),startedAt:timestamp};
+      request.observedAt = timestamp;
       pending = true;
       try {
         const response = await fetcher(`${origin}/v1/rd/submissions`, {
@@ -69,18 +81,19 @@ export function bindIntake(doc, origin, dependencies = {}) {
     try { result = await client.submit(input); }
     catch (error) { result = {state:'invalid',message:error.message}; }
     form.setAttribute('aria-busy','false');
-    button.disabled = result.state === 'accepted' || result.state === 'conflict';
+    button.disabled = ['accepted','conflict','uncertain-expired'].includes(result.state);
     lock(client.locked);
     const messages = {
       accepted:`Enquiry received. Your reference is ${result.id}. This confirms receipt; it does not mean someone has read it yet.`,
-      uncertain:'We could not confirm receipt. Retry uses the same request key. Keep this page open until receipt is confirmed; your entries remain here.',
+      uncertain:'We could not confirm receipt. Retry uses the same request key for up to six days. Keep this page open until receipt is confirmed; your entries remain here.',
+      'uncertain-expired':'We still cannot confirm whether your enquiry was received. We can no longer safely retry, so this form will not send it again. Your entries remain here. Use the email link alongside to ask Odin to check receipt; do not submit another copy through this form.',
       conflict:'We could not reconcile this enquiry request. Please contact Odin by email. Do not send another copy through this form.',
       limited:'Too many requests. Please wait a minute before trying again. Your entries are still here.',
       rejected:'The enquiry was not accepted. Check your entries and try again, or contact Odin by email.',
       unavailable:'The enquiry service is unavailable. Your entries have not been sent.',
     };
     status.textContent = result.state === 'invalid' ? result.message : messages[result.state] ?? 'Please wait while your enquiry is sent.';
-    button.textContent = result.state === 'uncertain' ? 'Retry this enquiry' : result.state === 'accepted' ? 'Enquiry received' : 'Send enquiry';
+    button.textContent = result.state === 'uncertain' ? 'Retry this enquiry' : result.state === 'accepted' ? 'Enquiry received' : result.state === 'uncertain-expired' ? 'Retry unavailable' : 'Send enquiry';
     status.focus();
   });
 }

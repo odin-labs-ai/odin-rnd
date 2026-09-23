@@ -59,12 +59,12 @@ test('activity exports only two allowlisted enum fields and never accepted-enqui
   assert.equal(routeKey('/odin-rnd/journal/why-open-the-floor.html'),'journal-why-open-the-floor');
   assert.equal(routeKey('/odin-rnd/private-person/'),null);
 });
-function formFixture(origin,fetcher){
+function formFixture(origin,fetcher,dependencies={}){
   const nodes=new Map();const fields=Object.entries(input).map(([name,value])=>({name,value,checked:value,type:typeof value==='boolean'?'checkbox':'text',disabled:false}));
   const form={hidden:true,elements:{namedItem:name=>fields.find(f=>f.name===name)},addEventListener:(name,fn)=>{form[name]=fn;},setAttribute:(name,value)=>{form[name]=value;}};
   const status={textContent:'',focus(){this.focused=true;}};const button={disabled:false,textContent:''};
   nodes.set('enquiry-form',form);nodes.set('enquiry-status',status);nodes.set('send-enquiry',button);
-  bindIntake({getElementById:name=>nodes.get(name)},origin,{fetcher,uuid:()=>id});
+  bindIntake({getElementById:name=>nodes.get(name)},origin,{fetcher,uuid:()=>id,...dependencies});
   return {form,status,button,fields,submit:()=>form.submit({preventDefault(){}})};
 }
 test('form preserves entered values and locks ambiguous retry then exposes exact receipt with focus',async()=>{
@@ -118,4 +118,45 @@ test('uncertain request remains immutable after malformed accepted receipt and e
   for (const message of ['original','ignored change']) assert.equal((await client.submit({...input,message})).state,'uncertain');
   assert.equal((await client.submit({...input,message:'ignored again'})).state,'accepted');
   assert.equal(keys,1);assert(calls.every(c=>JSON.parse(c.body).message==='original'));
+});
+
+const sixDays = 6 * 24 * 60 * 60 * 1000;
+test('uncertain retries expire before transmission at six days and never restart after clock correction',async()=>{
+  let time=1000,calls=0,keys=0;const bodies=[];
+  const client=createSubmissionClient('https://intake.example.invalid',{now:()=>time,uuid:()=>`key-${++keys}`,fetcher:async(url,options)=>{calls++;bodies.push(options.body);throw new Error('lost receipt');}});
+  assert.equal((await client.submit(input)).state,'uncertain');
+  time+=sixDays-1;
+  assert.equal((await client.submit({...input,message:'ignored'})).state,'uncertain');
+  assert.equal(calls,2);assert.equal(bodies[0],bodies[1]);
+  time++;
+  assert.equal((await client.submit(input)).state,'uncertain-expired');
+  time=1000;
+  assert.equal((await client.submit(input)).state,'uncertain-expired');
+  assert.equal(calls,2);assert.equal(keys,1);assert.equal(client.locked,true);
+});
+test('invalid or backwards retry clocks fail closed permanently before any network request',async()=>{
+  for(const invalid of [NaN,Infinity,-1,1000.5,'1000',()=>{throw new Error('clock unavailable');},1001]){
+    let time=1000,calls=0;
+    const client=createSubmissionClient('https://intake.example.invalid',{now:()=>typeof time==='function'?time():time,uuid:()=>id,fetcher:async()=>{calls++;throw new Error('lost receipt');}});
+    await client.submit(input);time=2000;await client.submit(input);
+    time=invalid;assert.equal((await client.submit(input)).state,'uncertain-expired');
+    time=3000;assert.equal((await client.submit(input)).state,'uncertain-expired');assert.equal(calls,2);
+  }
+});
+test('invalid initial clock never starts a request and accepted receipts survive expiry',async()=>{
+  let time=NaN,calls=0;
+  const client=createSubmissionClient('https://intake.example.invalid',{now:()=>time,uuid:()=>id,fetcher:async()=>{calls++;return accepted();}});
+  await assert.rejects(client.submit(input),/device clock/);assert.equal(calls,0);assert.equal(client.locked,false);
+  time=1000;assert.deepEqual(await client.submit(input),{state:'accepted',id});
+  time+=sixDays;assert.deepEqual(await client.submit(input),{state:'accepted',id});assert.equal(calls,1);
+});
+test('expired uncertain form preserves all values, disables resend and explains email receipt reconciliation',async()=>{
+  let time=1000,calls=0;
+  const fixture=formFixture('https://intake.example.invalid',async()=>{calls++;throw new Error('lost receipt');},{now:()=>time});
+  await fixture.submit();time+=sixDays;await fixture.submit();
+  assert.equal(calls,1);assert.equal(fixture.button.disabled,true);assert.equal(fixture.button.textContent,'Retry unavailable');
+  assert(fixture.fields.every(f=>f.disabled));assert.deepEqual(Object.fromEntries(fixture.fields.map(f=>[f.name,f.value])),input);
+  assert.match(fixture.status.textContent,/cannot confirm whether.*received/);assert.match(fixture.status.textContent,/email link.*check receipt/);
+  assert.doesNotMatch(fixture.status.textContent,/not accepted|not been sent/);assert.equal(fixture.status.focused,true);assert.equal(fixture.form['aria-busy'],'false');
+  await fixture.submit();assert.equal(calls,1);assert.equal(fixture.button.disabled,true);
 });
