@@ -24,6 +24,7 @@ byId('copy-witness-command')?.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(command.textContent);
     status.textContent = 'Reproduction command copied. Run it locally from the repository root.';
+    document.dispatchEvent(new Event('rd-reproduction-copied'));
   } catch {
     const selection = window.getSelection();
     const range = document.createRange();

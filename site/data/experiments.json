@@ -7,13 +7,13 @@
     "sourceSha": "7fc24fe24c3eb41366be990023ea37b00d2ca3b8",
     "integrity": "sha512-hRWp4UvxWS7XnifOfrjRSxhIhUh8KB8n0I79Kyw6ffgSuH1s3aAwCVNapnsRIOH1rPXzxo/gTMMuyQewzgsrCg=="
   },
-  "startedAt": "2026-09-23T03:46:26.769Z",
-  "completedAt": "2026-09-23T03:46:27.489Z",
+  "startedAt": "2026-09-23T04:12:05.807Z",
+  "completedAt": "2026-09-23T04:12:06.429Z",
   "node": "v22.22.2",
   "environment": "local reproduction",
   "workflowRun": null,
   "workflowAttempt": null,
-  "revision": "b5fa78d2c836e5d02c4e23f99979b08cfbf779f4",
+  "revision": "150ec95a0f23f2e1ff73a870be7c46a3c676271a",
   "revisionMeaning": "Base checkout revision. inputFilesSha256 identifies the actual experiment inputs, including local edits.",
   "inputFilesSha256": {
     "package.json": "f6727111f219ee47f40d77bd7a5a4d2902cb2bb8062d8993ede710d31f40817d",
@@ -106,7 +106,7 @@
           "packages/domain/order.ts"
         ]
       },
-      "durationMs": 253,
+      "durationMs": 239,
       "transcript": "recipe module-layering [TypeScript/JavaScript · direct module graph] — Keep domain code below application code\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-app\n  observed forbidden direct import module:packages/domain/order.ts -> module:packages/app/checkout.ts is present\n  evidence packages/domain/order.ts#L1\nbce demo: module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "5d5cd8ba274711b3a2cde3ad9350a1becad5d5b115a73dc5ba0131f7e271f8c8"
     },
@@ -120,7 +120,7 @@
       "driftScore": 60,
       "violation": "domain-cannot-import-api",
       "processExitCode": 0,
-      "durationMs": 221,
+      "durationMs": 185,
       "transcript": "recipe python-module-layering [Python · structured direct graph] — Keep Python domain code below the API layer\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation domain-cannot-import-api\n  observed forbidden direct import module:src/service/domain/orders.py -> module:src/service/api.py is present\n  evidence src/service/domain/orders.py#L3\nbce demo: python-module-layering discriminates GREEN from RED\n",
       "transcriptSha256": "af57281267a7d3781cb47855d8e1141a1879a03efdb0ec00d5b224e2519fdb4f"
     },
@@ -134,7 +134,7 @@
       "driftScore": 60,
       "violation": "no-feature-beyond-the-day-one-trio",
       "processExitCode": 0,
-      "durationMs": 244,
+      "durationMs": 197,
       "transcript": "recipe configuration-allowlist [JSON/Markdown · real-source pattern pair] — Stop a governed manifest from silently widening\nGREEN conformant: score 100, exit 0\nRED drift: score 60, would exit 1, violation no-feature-beyond-the-day-one-trio\n  observed forbidden content pattern /^\\s*\"(?!(?:core|reports|search)[\"/])[^\"]+\"\\s*,?\\s*$/ matched at config/feature-manifest.json#L10\n  evidence config/feature-manifest.json#L10\nbce demo: configuration-allowlist discriminates GREEN from RED\n",
       "transcriptSha256": "f634fd9c7919d5df287840d27ae38ffccbf25a6c8ff877ef19ec5bfebd24bf9d"
     }

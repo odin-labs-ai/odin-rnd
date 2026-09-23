@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="../assets/company.css">
   <script type="module" src="../assets/brief.mjs"></script>
+  <script type="module" src="../assets/intake.mjs"></script>
 </head>
 <body class="company-page">
   <a class="skip" href="#main">Skip to content</a>
@@ -29,7 +30,7 @@
       <div>
         <h1 id="company-title">What would make you<br>accept an agent’s work?</h1>
         <p class="company-lead">A plausible patch and a passing job can still be wrong. Work with Odin to define what must be true, build checks that can reject the wrong result, and follow the accepted change to the outcome your team needs.</p>
-        <div class="company-actions"><a class="button button-primary" href="#brief">Start your brief</a><a href="#evidence">See the public evidence</a></div>
+        <div class="company-actions"><a class="button button-primary" href="#enquiry" data-contact-opened>Discuss a workflow</a><a href="#brief">Prepare a brief first</a></div>
       </div>
       <aside class="bench-proposal" aria-labelledby="proposal-title">
         <h2 id="proposal-title">The Agent Acceptance Bench</h2>
@@ -58,7 +59,7 @@
       <div class="company-width company-split"><div><h2 id="evidence-title">Open the record before the conversation.</h2><a class="evidence-link" href="../#experiments">Inspect the public experiments</a></div><div class="company-prose"><p>Blueprint Conformance Engine checks code against explicit architecture constraints. Our Witness experiments examine a different part of acceptance: whether a test catches a known defect, whether two implementations share a bug, and whether a correction preserves the checks that could reject it.</p><p>Inspect the concrete cases: <a href="../projects/test-witness/">a green test that misses a rounding defect</a>, <a href="../projects/migration-witness/">two versions agreeing on the wrong answer</a>, and <a href="../projects/ci-witness/">a fix that passes its target but fails a regression</a>. These are reproducible authored fixtures, not customer outcome claims.</p><p><a href="../data/experiments.json">Read the experiment data</a> and its source metadata. Agent markets and robotics remain future research directions, rather than products offered through this collaboration.</p></div></div>
     </section>
     <section class="company-section company-width company-split brief-section" id="brief" aria-labelledby="brief-title">
-      <div><h2 id="brief-title">What would you like to put on the bench?</h2><p class="section-intro">A rough description is enough to start. Prepare a brief, review it, then choose what to share with Odin.</p><p class="brief-privacy">This page does not send or save your entries. Copying or downloading creates a copy you control. Don’t enter confidential data.</p><p><a href="../resources/pilot-brief.md" download>Download the brief template</a></p><p><a href="mailto:contact@odin-labs.ai">Email Odin</a> and attach your downloaded brief, or <a href="https://odin-labs.ai/contact">use the contact page</a>. You choose what to share; preparing a brief does not send it or book a pilot.</p><p>Odin Labs Projects B.V. · Amsterdam, Netherlands. <a href="https://odin-labs.ai/contact">Company contact details</a>.</p><noscript><p class="no-script-note">The brief builder needs JavaScript. You can still download the template, fill it in yourself and contact Odin.</p></noscript></div>
+      <div><h2 id="brief-title">What would you like to put on the bench?</h2><p class="section-intro">A rough description is enough to start. Prepare a brief, review it, then choose what to share with Odin.</p><p class="brief-privacy">The brief builder does not send or save your entries. Copying or downloading creates a copy you control. Don’t enter confidential data.</p><p><a href="../resources/pilot-brief.md" download>Download the brief template</a></p><p><a href="#enquiry" data-contact-opened>Send an enquiry</a>, or <a href="mailto:contact@odin-labs.ai">email Odin</a> with your downloaded brief. Preparing a brief does not send it or book a pilot.</p><p>Odin Labs Projects B.V. · Amsterdam, Netherlands. <a href="https://odin-labs.ai/contact">Company contact details</a>.</p><noscript><p class="no-script-note">The brief builder needs JavaScript. You can still download the template, fill it in yourself and contact Odin.</p></noscript></div>
       <div class="brief-workspace">
         <form id="pilot-brief-form" hidden>
           <div class="brief-field"><label for="workflow">The workflow</label><p id="workflow-help">What recurring task do you want to evaluate? Add this to prepare a useful draft.</p><textarea id="workflow" name="workflow" rows="3" maxlength="2000" required aria-describedby="workflow-help"></textarea></div>
@@ -70,6 +71,20 @@
         </form>
         <section id="brief-result" hidden aria-labelledby="brief-output-label"><h3 id="brief-output-label"><label for="brief-output">Your brief</label></h3><textarea id="brief-output" readonly rows="16" aria-labelledby="brief-output-label"></textarea><div class="company-actions"><button type="button" id="copy-brief" class="button button-primary">Copy brief</button><a id="download-brief" download="odin-pilot-brief.md">Download brief</a></div></section>
         <p id="brief-status" role="status"></p>
+      </div>
+    </section>
+    <section class="company-section company-width company-split" id="enquiry" aria-labelledby="enquiry-title">
+      <div><h2 id="enquiry-title">Start a conversation.</h2><p class="section-intro">Tell us what you want to understand or improve. A short question is enough.</p><p id="enquiry-privacy">When you choose Send enquiry, your name, email, chosen topic and message are shared privately with Odin to respond to you. Enquiry details are kept for up to 90 days. They are not added to a mailing list or included in website activity reports. Please leave out confidential material.</p><p><a href="mailto:contact@odin-labs.ai">Email contact@odin-labs.ai</a> if you prefer, or to ask about your enquiry or its deletion. Backups expire within 35 days.</p><p>When enabled, website activity measurement counts page views and selected interactions without cookies or visitor identifiers. These counts can miss or repeat visits; they do not identify individual people.</p><noscript><p>The enquiry form needs JavaScript. You can email Odin using the link above.</p></noscript></div>
+      <div>
+        <form id="enquiry-form" hidden aria-describedby="enquiry-privacy" novalidate>
+          <div class="brief-field"><label for="enquiry-name">Name</label><input id="enquiry-name" name="name" autocomplete="name" maxlength="120" required></div>
+          <div class="brief-field"><label for="enquiry-email">Email</label><input id="enquiry-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+          <div class="brief-field"><label for="enquiry-topic">What is it about?</label><select id="enquiry-topic" name="topic" required><option value="other">A question or workflow</option><option value="test-witness">Test Witness</option><option value="migration-witness">Migration Witness</option><option value="ci-witness">CI Witness</option><option value="factory-intelligence">Factory Intelligence</option><option value="odin-gym">Odin Gym</option></select></div>
+          <div class="brief-field"><label for="enquiry-message">Your message</label><textarea id="enquiry-message" name="message" rows="7" maxlength="5000" required></textarea></div>
+          <label class="sharing-confirmation"><input type="checkbox" name="sharingAccepted" required><span>I want to share these details with Odin so the team can respond.</span></label>
+          <button type="submit" class="button button-primary" id="send-enquiry">Send enquiry</button>
+        </form>
+        <p id="enquiry-status" role="status" tabindex="-1">The enquiry form is not available yet. You can email Odin using the link alongside.</p>
       </div>
     </section>
     <section class="company-resources company-width" aria-labelledby="resources-title"><h2 id="resources-title">See the working documents.</h2><p>Public templates for discussing a scope and recording what happened.</p><div><a href="../resources/pilot-brief.md">Pilot brief</a><a href="../resources/pilot-charter.md">Pilot charter</a><a href="../resources/evaluation-report.md">Evaluation report</a></div></section>

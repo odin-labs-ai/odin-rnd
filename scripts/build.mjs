@@ -3,7 +3,9 @@ import { stations } from './station-contract.mjs';
 import { validateRecords } from './witness-records.mjs';
 import { renderWitness } from './witness-render.mjs';
 const witnesses = await validateRecords();
-import { readFileSync, writeFileSync, cpSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, cpSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
+import { relative, dirname } from 'node:path';
+import { apiOrigin } from '../site/assets/activity.mjs';
 import { factoryFloor } from './floor.mjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -14,6 +16,9 @@ if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new 
 const escape = value => String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
+const intakeConfig = JSON.parse(readFileSync('site/data/intake-config.json','utf8'));
+if (Object.keys(intakeConfig).join(',') !== 'apiOrigin') throw new Error('Unexpected intake configuration');
+apiOrigin(intakeConfig.apiOrigin);
 let html = readFileSync('site/index.html', 'utf8');
 html = html.replace('<!--FLOOR-->', factoryFloor());
 html = html.replace('<!--STATION_CROP-->', factoryFloor({crop:true}));
@@ -40,3 +45,9 @@ writeFileSync('dist/.nojekyll','');
 console.log('Built static GitHub Pages site with three recorded experiments.');
 
 for (const report of witnesses.reports) { const file = `projects/${report.project}/index.html`; writeFileSync(`dist/${file}`, renderWitness(readFileSync(`site/${file}`, 'utf8'), report)); }
+const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
+for (const file of htmlFiles('dist')) {
+  const modulePath = relative(dirname(file),'dist/assets/activity.mjs');
+  const source = readFileSync(file,'utf8');
+  writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
+}

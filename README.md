@@ -31,7 +31,9 @@ pnpm serve
 
 Open `http://127.0.0.1:4173/odin-rnd/`. The development server mirrors the GitHub Pages project prefix.
 
-The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authored SVG. There is no visitor account, tracking script, model API or hosted execution service. Engine logic comes from the released `bce-engine@0.3.1` package; this repository does not implement its own conformance engine.
+The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authored SVG. There is no visitor account, third-party tracker, model API or hosted experiment execution. Engine logic comes from the released `bce-engine@0.3.1` package; this repository does not implement its own conformance engine.
+
+The enquiry and activity modules are disabled while `site/data/intake-config.json` has `apiOrigin: null`. Enabling them requires a verified HTTPS intake service: enquiry success follows durable acceptance, retries retain one request key, and activity exports only fixed event/page labels. There are no cookies, visitor identifiers, form values or query strings in activity requests. These counts are interactions rather than unique people. The local brief builder does not submit its contents. Production checks must prove the actual service, private retrieval and reporting path before enabling the endpoint; a mock transport is only a UI test.
 
 ## Experiments
 

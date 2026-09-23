@@ -122,6 +122,7 @@ export function setupExperiments(document, environment = globalThis) {
     try {
       await environment.navigator.clipboard.writeText(document.querySelector('#reproduce-command').textContent);
       status.textContent = 'Command copied.';
+      document.dispatchEvent(new Event('rd-reproduction-copied'));
     } catch {
       status.textContent = 'Select the command above to copy it manually.';
     }
