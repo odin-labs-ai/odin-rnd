@@ -12,3 +12,24 @@ test('rejects stale recipe identity, command failure and changed transcript form
   assert.equal(parseDemo(sample, 'module-layering', 1).passed, false);
   assert.equal(parseDemo('success', 'module-layering', 0).passed, false);
 });
+
+test('rejects ambiguous duplicate output rather than selecting a convenient verdict', () => {
+  assert.equal(parseDemo(sample + sample, 'module-layering', 0).passed, false);
+  assert.equal(parseDemo(sample.replace('score 60', 'score 100'), 'module-layering', 0).passed, false);
+});
+
+test('binds the displayed rule and source to exact released fixture bytes', async () => {
+  const {captureSourceBinding,validateSourceBinding} = await import('./transcript.mjs');
+  const {fileURLToPath} = await import('node:url');
+  const {execFileSync} = await import('node:child_process');
+  const root=fileURLToPath(new URL('../node_modules/bce-engine/', import.meta.url));
+  const binding=captureSourceBinding(root);
+  const transcript=execFileSync(process.execPath,[root+'dist/cli.js','demo','--recipe','module-layering'],{encoding:'utf8'});
+  const run={id:'module-layering',...parseDemo(transcript,'module-layering',0),transcript};
+  validateSourceBinding(binding,run,root);
+  assert.deepEqual(binding.changedPaths,['packages/app/checkout.ts','packages/domain/order.ts']);
+  const altered=structuredClone(binding); altered.drift[2].text='invented source';
+  assert.throws(()=>validateSourceBinding(altered,run,root),/binding mismatch/);
+  assert.throws(()=>validateSourceBinding(binding,{...run,violation:'another-rule'},root),/claim mismatch/);
+  assert.throws(()=>validateSourceBinding(binding,{...run,transcript:transcript.replace('evidence packages/domain/order.ts#L1','evidence packages/domain/order.ts#L2')},root),/location mismatch/);
+});

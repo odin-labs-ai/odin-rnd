@@ -1,0 +1,934 @@
+{
+  "schemaVersion": 1,
+  "project": "migration-witness",
+  "projectVersion": "0.1.0",
+  "mode": "authored-fixtures",
+  "startedAt": "2026-09-23T04:11:25.116Z",
+  "completedAt": "2026-09-23T04:11:27.415Z",
+  "runtime": {
+    "node": "v22.22.2",
+    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+    "javac": "javac 21.0.12.1"
+  },
+  "inputSha256": {
+    "demos/CONTRACT.md": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9",
+    "demos/lib.mjs": "ce111bc9472b48b5d149a3a79392f8acf150d82206491eeb0e12c97ed3412754",
+    "demos/migration-witness/README.md": "6f2c8c7b561a83ae70724c719e2d5f8f96b8069bac4e8379b56cddd5e35ec378",
+    "demos/migration-witness/fixtures/AfterInvoice.java": "cf0b19c6a8b149381e77b98a9ca5c31dbbe2b958d9cf4a05a54f7663d4e35eef",
+    "demos/migration-witness/fixtures/BeforeInvoice.java": "93778a809ae283d4f8c5316075814dc86e6f050ecd52301a12d9cc597385dc87",
+    "demos/migration-witness/fixtures/BrokenInvoice.java": "e3081c431bdd7ff6bc6729b671568e553ee7db1050d642c2700caa87783907da",
+    "demos/migration-witness/fixtures/RegressionInvoice.java": "ad18fbaee7339ab523b8221d486b969d51c54f2866d059e5c9bc0a5da3231152",
+    "demos/migration-witness/fixtures/WitnessHarness.java": "9695d1118914dab2e86e06a97abb90d00f21c41cd07487f096404fb60913d358",
+    "demos/migration-witness/fixtures/cases.tsv": "efd0f26174bc03c8950313707d40c48701db8a7f94194dcf8b78fc9a297ac096",
+    "demos/migration-witness/run.mjs": "c07d2af69b66b9f90222998c5e7dced12b41c2143310787074889e6a18445a3a"
+  },
+  "scope": "Declared invoice formatting cases in authored before/after Java fixtures; no automatic transformation.",
+  "limitations": [
+    "No ROI measured; no customer code or live model calls.",
+    "Seven declared preservation cases, not general program equivalence.",
+    "Intentional blank-customer validation change excluded from preservation denominator.",
+    "Trusted bundled sources only; owned temporary directories are not a security sandbox.",
+    "Hashes establish consistency, not authenticity against malicious artifact replacement."
+  ],
+  "logsPathNormalized": true,
+  "observations": [
+    {
+      "id": "baseline:round-half-cent",
+      "caseId": "round-half-cent",
+      "role": "baseline",
+      "expected": "Acme|1.01|2026-09-20",
+      "actual": "Acme|1.01|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:unicode",
+      "caseId": "unicode",
+      "role": "baseline",
+      "expected": "Café 東京|12.50|2026-09-20",
+      "actual": "Café 東京|12.50|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:utc-day-boundary",
+      "caseId": "utc-day-boundary",
+      "role": "baseline",
+      "expected": "Acme|0.00|2025-12-31",
+      "actual": "Acme|0.00|2025-12-31",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:leap-day",
+      "caseId": "leap-day",
+      "role": "baseline",
+      "expected": "Acme|-1.01|2024-02-29",
+      "actual": "Acme|-1.01|2024-02-29",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:invalid-amount",
+      "caseId": "invalid-amount",
+      "role": "baseline",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:empty-amount",
+      "caseId": "empty-amount",
+      "role": "baseline",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:invalid-date",
+      "caseId": "invalid-date",
+      "role": "baseline",
+      "expected": "ERROR_DATE",
+      "actual": "ERROR_DATE",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "baseline:empty-customer",
+      "caseId": "empty-customer",
+      "role": "baseline",
+      "expected": "Guest|1.00|2026-09-20",
+      "actual": "Guest|1.00|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Declared intentional change: blank customer becomes ERROR_CUSTOMER; excluded from preservation.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "candidate:round-half-cent",
+      "caseId": "round-half-cent",
+      "role": "candidate",
+      "expected": "Acme|1.01|2026-09-20",
+      "actual": "Acme|1.01|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:unicode",
+      "caseId": "unicode",
+      "role": "candidate",
+      "expected": "Café 東京|12.50|2026-09-20",
+      "actual": "Café 東京|12.50|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:utc-day-boundary",
+      "caseId": "utc-day-boundary",
+      "role": "candidate",
+      "expected": "Acme|0.00|2025-12-31",
+      "actual": "Acme|0.00|2025-12-31",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:leap-day",
+      "caseId": "leap-day",
+      "role": "candidate",
+      "expected": "Acme|-1.01|2024-02-29",
+      "actual": "Acme|-1.01|2024-02-29",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:invalid-amount",
+      "caseId": "invalid-amount",
+      "role": "candidate",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:empty-amount",
+      "caseId": "empty-amount",
+      "role": "candidate",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:invalid-date",
+      "caseId": "invalid-date",
+      "role": "candidate",
+      "expected": "ERROR_DATE",
+      "actual": "ERROR_DATE",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "candidate:empty-customer",
+      "caseId": "empty-customer",
+      "role": "candidate",
+      "expected": "ERROR_CUSTOMER",
+      "actual": "ERROR_CUSTOMER",
+      "verdict": "accepted",
+      "reason": "Declared intentional change: blank customer becomes ERROR_CUSTOMER; excluded from preservation.",
+      "commandIds": [
+        "command-5",
+        "command-6"
+      ]
+    },
+    {
+      "id": "semantic-regression:round-half-cent",
+      "caseId": "round-half-cent",
+      "role": "negative-control",
+      "expected": "Acme|1.01|2026-09-20",
+      "actual": "Acme|1.00|2026-09-20",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:unicode",
+      "caseId": "unicode",
+      "role": "negative-control",
+      "expected": "Café 東京|12.50|2026-09-20",
+      "actual": "Café 東京|12.50|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:utc-day-boundary",
+      "caseId": "utc-day-boundary",
+      "role": "negative-control",
+      "expected": "Acme|0.00|2025-12-31",
+      "actual": "Acme|0.00|2025-12-31",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:leap-day",
+      "caseId": "leap-day",
+      "role": "negative-control",
+      "expected": "Acme|-1.01|2024-02-29",
+      "actual": "Acme|-1.00|2024-02-29",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:invalid-amount",
+      "caseId": "invalid-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:empty-amount",
+      "caseId": "empty-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:invalid-date",
+      "caseId": "invalid-date",
+      "role": "negative-control",
+      "expected": "ERROR_DATE",
+      "actual": "ERROR_DATE",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "semantic-regression:empty-customer",
+      "caseId": "empty-customer",
+      "role": "negative-control",
+      "expected": "ERROR_CUSTOMER",
+      "actual": "ERROR_CUSTOMER",
+      "verdict": "accepted",
+      "reason": "Declared intentional change: blank customer becomes ERROR_CUSTOMER; excluded from preservation.",
+      "commandIds": [
+        "command-7",
+        "command-8"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:round-half-cent",
+      "caseId": "round-half-cent",
+      "role": "negative-control",
+      "expected": "Acme|1.01|2026-09-20",
+      "actual": "Acme|1.00|2026-09-20",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:unicode",
+      "caseId": "unicode",
+      "role": "negative-control",
+      "expected": "Café 東京|12.50|2026-09-20",
+      "actual": "Café 東京|12.50|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:utc-day-boundary",
+      "caseId": "utc-day-boundary",
+      "role": "negative-control",
+      "expected": "Acme|0.00|2025-12-31",
+      "actual": "Acme|0.00|2025-12-31",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:leap-day",
+      "caseId": "leap-day",
+      "role": "negative-control",
+      "expected": "Acme|-1.01|2024-02-29",
+      "actual": "Acme|-1.00|2024-02-29",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:invalid-amount",
+      "caseId": "invalid-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:empty-amount",
+      "caseId": "empty-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:invalid-date",
+      "caseId": "invalid-date",
+      "role": "negative-control",
+      "expected": "ERROR_DATE",
+      "actual": "ERROR_DATE",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-baseline:empty-customer",
+      "caseId": "empty-customer",
+      "role": "negative-control",
+      "expected": "Guest|1.00|2026-09-20",
+      "actual": "Guest|1.00|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Declared intentional change: blank customer becomes ERROR_CUSTOMER; excluded from preservation.",
+      "commandIds": [
+        "command-9",
+        "command-10"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:round-half-cent",
+      "caseId": "round-half-cent",
+      "role": "negative-control",
+      "expected": "Acme|1.01|2026-09-20",
+      "actual": "Acme|1.00|2026-09-20",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:unicode",
+      "caseId": "unicode",
+      "role": "negative-control",
+      "expected": "Café 東京|12.50|2026-09-20",
+      "actual": "Café 東京|12.50|2026-09-20",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:utc-day-boundary",
+      "caseId": "utc-day-boundary",
+      "role": "negative-control",
+      "expected": "Acme|0.00|2025-12-31",
+      "actual": "Acme|0.00|2025-12-31",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:leap-day",
+      "caseId": "leap-day",
+      "role": "negative-control",
+      "expected": "Acme|-1.01|2024-02-29",
+      "actual": "Acme|-1.00|2024-02-29",
+      "verdict": "rejected",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:invalid-amount",
+      "caseId": "invalid-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:empty-amount",
+      "caseId": "empty-amount",
+      "role": "negative-control",
+      "expected": "ERROR_AMOUNT",
+      "actual": "ERROR_AMOUNT",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:invalid-date",
+      "caseId": "invalid-date",
+      "role": "negative-control",
+      "expected": "ERROR_DATE",
+      "actual": "ERROR_DATE",
+      "verdict": "accepted",
+      "reason": "Compared to declared independent expected invoice result.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "shared-bug-candidate:empty-customer",
+      "caseId": "empty-customer",
+      "role": "negative-control",
+      "expected": "ERROR_CUSTOMER",
+      "actual": "ERROR_CUSTOMER",
+      "verdict": "accepted",
+      "reason": "Declared intentional change: blank customer becomes ERROR_CUSTOMER; excluded from preservation.",
+      "commandIds": [
+        "command-11",
+        "command-12"
+      ]
+    },
+    {
+      "id": "compile-failure",
+      "caseId": "compilation",
+      "role": "negative-control",
+      "expected": "Executable Java implementation",
+      "actual": {
+        "status": "completed",
+        "exitCode": 1
+      },
+      "verdict": "inconclusive",
+      "reason": "Compilation did not produce runnable evidence; never a semantic defect.",
+      "commandIds": [
+        "command-13"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "id": "command-1",
+      "executable": "java",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
+      "durationMs": 29
+    },
+    {
+      "id": "command-2",
+      "executable": "javac",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "javac 21.0.12.1\n",
+      "stderr": "",
+      "durationMs": 75
+    },
+    {
+      "id": "command-3",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/baseline",
+        "<repo>/demos/migration-witness/fixtures/BeforeInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 309
+    },
+    {
+      "id": "command-4",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "<workdir>/baseline",
+        "WitnessHarness",
+        "BeforeInvoice",
+        "<repo>/demos/migration-witness/fixtures/cases.tsv",
+        "false",
+        "false"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT\tround-half-cent\tPASS\tQWNtZXwxLjAxfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tPASS\tQWNtZXwtMS4wMXwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tR3Vlc3R8MS4wMHwyMDI2LTA5LTIw\nSUMMARY\t8\t0\n",
+      "stderr": "",
+      "durationMs": 71
+    },
+    {
+      "id": "command-5",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/candidate",
+        "<repo>/demos/migration-witness/fixtures/AfterInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 342
+    },
+    {
+      "id": "command-6",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "<workdir>/candidate",
+        "WitnessHarness",
+        "AfterInvoice",
+        "<repo>/demos/migration-witness/fixtures/cases.tsv",
+        "true",
+        "false"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT\tround-half-cent\tPASS\tQWNtZXwxLjAxfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tPASS\tQWNtZXwtMS4wMXwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t0\n",
+      "stderr": "",
+      "durationMs": 72
+    },
+    {
+      "id": "command-7",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/semantic-regression",
+        "<repo>/demos/migration-witness/fixtures/RegressionInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 342
+    },
+    {
+      "id": "command-8",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "<workdir>/semantic-regression",
+        "WitnessHarness",
+        "RegressionInvoice",
+        "<repo>/demos/migration-witness/fixtures/cases.tsv",
+        "true",
+        "false"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t2\n",
+      "stderr": "",
+      "durationMs": 64
+    },
+    {
+      "id": "command-9",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/shared-bug-baseline",
+        "<repo>/demos/migration-witness/fixtures/BeforeInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 319
+    },
+    {
+      "id": "command-10",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "<workdir>/shared-bug-baseline",
+        "WitnessHarness",
+        "BeforeInvoice",
+        "<repo>/demos/migration-witness/fixtures/cases.tsv",
+        "false",
+        "true"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tR3Vlc3R8MS4wMHwyMDI2LTA5LTIw\nSUMMARY\t8\t2\n",
+      "stderr": "",
+      "durationMs": 64
+    },
+    {
+      "id": "command-11",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/shared-bug-candidate",
+        "<repo>/demos/migration-witness/fixtures/AfterInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 319
+    },
+    {
+      "id": "command-12",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "<workdir>/shared-bug-candidate",
+        "WitnessHarness",
+        "AfterInvoice",
+        "<repo>/demos/migration-witness/fixtures/cases.tsv",
+        "true",
+        "true"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t2\n",
+      "stderr": "",
+      "durationMs": 62
+    },
+    {
+      "id": "command-13",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>/compile-failure",
+        "<repo>/demos/migration-witness/fixtures/BrokenInvoice.java",
+        "<repo>/demos/migration-witness/fixtures/WitnessHarness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "<repo>/demos/migration-witness/fixtures/BrokenInvoice.java:1: error: illegal start of type\npublic class BrokenInvoice { public static String render( { return \"broken\"; } }\n                                                          ^\n1 error\n",
+      "durationMs": 224
+    }
+  ],
+  "runs": {
+    "baseline": {
+      "compiled": true,
+      "assertionCount": 8,
+      "failureCount": 0,
+      "actuals": {
+        "round-half-cent": "Acme|1.01|2026-09-20",
+        "unicode": "Café 東京|12.50|2026-09-20",
+        "utc-day-boundary": "Acme|0.00|2025-12-31",
+        "leap-day": "Acme|-1.01|2024-02-29",
+        "invalid-amount": "ERROR_AMOUNT",
+        "empty-amount": "ERROR_AMOUNT",
+        "invalid-date": "ERROR_DATE",
+        "empty-customer": "Guest|1.00|2026-09-20"
+      },
+      "verdict": "accepted"
+    },
+    "candidate": {
+      "compiled": true,
+      "assertionCount": 8,
+      "failureCount": 0,
+      "actuals": {
+        "round-half-cent": "Acme|1.01|2026-09-20",
+        "unicode": "Café 東京|12.50|2026-09-20",
+        "utc-day-boundary": "Acme|0.00|2025-12-31",
+        "leap-day": "Acme|-1.01|2024-02-29",
+        "invalid-amount": "ERROR_AMOUNT",
+        "empty-amount": "ERROR_AMOUNT",
+        "invalid-date": "ERROR_DATE",
+        "empty-customer": "ERROR_CUSTOMER"
+      },
+      "verdict": "accepted"
+    },
+    "semantic-regression": {
+      "compiled": true,
+      "assertionCount": 8,
+      "failureCount": 2,
+      "actuals": {
+        "round-half-cent": "Acme|1.00|2026-09-20",
+        "unicode": "Café 東京|12.50|2026-09-20",
+        "utc-day-boundary": "Acme|0.00|2025-12-31",
+        "leap-day": "Acme|-1.00|2024-02-29",
+        "invalid-amount": "ERROR_AMOUNT",
+        "empty-amount": "ERROR_AMOUNT",
+        "invalid-date": "ERROR_DATE",
+        "empty-customer": "ERROR_CUSTOMER"
+      },
+      "verdict": "rejected"
+    },
+    "shared-bug-baseline": {
+      "compiled": true,
+      "assertionCount": 8,
+      "failureCount": 2,
+      "actuals": {
+        "round-half-cent": "Acme|1.00|2026-09-20",
+        "unicode": "Café 東京|12.50|2026-09-20",
+        "utc-day-boundary": "Acme|0.00|2025-12-31",
+        "leap-day": "Acme|-1.00|2024-02-29",
+        "invalid-amount": "ERROR_AMOUNT",
+        "empty-amount": "ERROR_AMOUNT",
+        "invalid-date": "ERROR_DATE",
+        "empty-customer": "Guest|1.00|2026-09-20"
+      },
+      "verdict": "rejected"
+    },
+    "shared-bug-candidate": {
+      "compiled": true,
+      "assertionCount": 8,
+      "failureCount": 2,
+      "actuals": {
+        "round-half-cent": "Acme|1.00|2026-09-20",
+        "unicode": "Café 東京|12.50|2026-09-20",
+        "utc-day-boundary": "Acme|0.00|2025-12-31",
+        "leap-day": "Acme|-1.00|2024-02-29",
+        "invalid-amount": "ERROR_AMOUNT",
+        "empty-amount": "ERROR_AMOUNT",
+        "invalid-date": "ERROR_DATE",
+        "empty-customer": "ERROR_CUSTOMER"
+      },
+      "verdict": "rejected"
+    },
+    "compile-failure": {
+      "verdict": "inconclusive",
+      "compiled": false,
+      "compileStatus": "completed",
+      "compileExitCode": 1
+    }
+  },
+  "controls": {
+    "positiveAccepted": true,
+    "semanticRegressionRejected": true,
+    "sharedBugRejectedDespiteEquality": true,
+    "compileFailureInconclusive": true
+  },
+  "metrics": [
+    {
+      "id": "declared-preservation",
+      "numerator": 7,
+      "denominator": 7,
+      "unit": "cases",
+      "definition": "Both versions satisfy independent expected values and pairwise equality, excluding intentional change."
+    },
+    {
+      "id": "control-discrimination",
+      "numerator": 4,
+      "denominator": 4,
+      "unit": "controls",
+      "definition": "Positive acceptance, semantic rejection, shared-bug rejection and compile-inconclusive classification."
+    },
+    {
+      "id": "inconclusive-observations",
+      "numerator": 1,
+      "denominator": 41,
+      "unit": "observations",
+      "definition": "Includes deliberately invalid compilation; not counted as a detected behavior defect."
+    }
+  ],
+  "experimentVerdict": "passed",
+  "sourceRevision": "150ec95a0f23f2e1ff73a870be7c46a3c676271a",
+  "workingTree": {
+    "dirty": true,
+    "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
+  },
+  "runId": "83aaac4e-a224-4680-96a6-ac10029915b3",
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null
+}

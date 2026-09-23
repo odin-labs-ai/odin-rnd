@@ -5,14 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#102b22">
   <meta name="description" content="Step inside Odin R&D. Open-source tools, public experiments and field notes from the software factory.">
-  <meta property="og:title" content="Odin R&D — Inside the software factory">
-  <meta property="og:description" content="Open-source tools. Experiments you can reproduce. Field notes from a factory learning how to build.">
+  <meta property="og:title" content="Odin R&D — What should an agent’s work have to prove?">
+  <meta property="og:description" content="Open a factory station. Inspect authored experiments, recorded results and the source behind each claim.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/">
+  <meta property="og:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="Odin R&amp;D factory cutaway with four stations and the question: What should an agent’s work have to prove?">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Odin R&amp;D — What should an agent’s work have to prove?">
+  <meta name="twitter:description" content="Open a factory station. Inspect authored experiments, recorded results and the source behind each claim.">
+  <meta name="twitter:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png">
+  <meta name="twitter:image:alt" content="Odin R&amp;D factory cutaway with four stations and the question: What should an agent’s work have to prove?">
   <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/company.css">
   <script type="module" src="assets/app.js"></script>
   <title>Odin R&D — Inside the software factory</title>
 </head>
@@ -20,37 +31,34 @@
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header dark-surface">
     <a href="./" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="./assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
-    <nav aria-label="Main navigation"><a href="#floor">The floor</a><a href="#experiments">Experiments</a><a href="#projects">Open source</a><a href="#journal">Field notes</a></nav>
+    <nav aria-label="Main navigation"><a href="#floor">Factory</a><a href="#experiments">Experiments</a><a href="#journal">Field notes</a><a href="work-with-us/" data-contact-opened>Work with us</a></nav>
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
-    <section class="hero dark-surface" id="floor" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <h1 id="hero-title">Inside the<br>software<br><span>factory.</span></h1>
-        <p>Odin’s research & development floor.<br>We build tools for AI-built systems,<br>open the experiments, and show our work.</p>
-        <a class="button button-primary" href="#experiments">Inspect an experiment <span aria-hidden="true">↘</span></a>
-        <div class="entrance-note"><span class="crosshair" aria-hidden="true"></span><span>Open workshop. Unfinished by design.</span></div>
-      </div>
+    <section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">
+      <div class="factory-premise"><h1 id="hero-title">What should an agent’s <br>work have to prove?</h1><div><p>We build the checks around the work. <br>Open a machine to inspect an authored experiment and its recorded result.</p><a href="work-with-us/" data-contact-opened>Discuss a workflow</a></div></div>
       <div class="factory-drawing" data-view="floor">
-        <div class="drawing-toolbar"><span class="technical">ASSEMBLY / SOFTWARE SYSTEMS</span><button id="blueprint-toggle" aria-pressed="false">Blueprint view <span class="switch" aria-hidden="true"></span></button></div>
+        <div class="drawing-toolbar"><p>Open a station</p><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div>
         <div class="floor-art"><!--FLOOR--></div>
-        <div class="station-controls" role="group" aria-label="Explore the factory stations">
-          <button data-station="blueprint" aria-pressed="true"><span>01</span> Blueprint</button>
-          <button data-station="workcell" aria-pressed="false"><span>02</span> Workcell</button>
-          <button data-station="gate" aria-pressed="false"><span>03</span> Gate</button>
-          <button data-station="record" aria-pressed="false"><span>04</span> Record</button>
-        </div>
-        <div class="station-caption" aria-live="polite"><p id="station-description">Start with intent. A versioned blueprint gives a software system explicit architectural boundaries.</p><a id="station-link" href="https://blueprint-conformance.github.io/bce/">Explore BCE <span aria-hidden="true">↗</span></a></div>
-        <div class="drawing-key technical"><span>CONCEPTUAL FLOOR PLAN</span><span>SELECT A STATION TO INSPECT</span></div>
+        <nav class="station-controls" aria-label="Open a factory station"><!--STATION_LINKS--></nav>
+        <div class="drawing-key"><span>Concept drawing. Separate experiments.</span><span>Odin / R&amp;D</span></div>
       </div>
-      <div class="machine-plate"><span class="plate-title"><img src="assets/odin-logo.svg" width="32" height="36" alt=""><b>Odin Labs</b><span>RESEARCH &amp; DEVELOPMENT</span></span><dl><div><dt>Machine</dt><dd>000 / Public workshop</dd></div><div><dt>Type</dt><dd>Software factory</dd></div><div><dt>Site revision</dt><dd>0.2.0</dd></div><div><dt>Issued</dt><dd><time datetime="2026-09-07">07 SEP 2026</time></dd></div></dl><span class="plate-mark" aria-hidden="true">O/R</span></div>
-    </section>
-    <section class="thesis" aria-labelledby="thesis-title">
-      <div class="thesis-heading"><h2 id="thesis-title">What if the factory<br>could learn to build<br><em>better factories?</em></h2><span class="section-arrow" aria-hidden="true">↗</span></div>
-      <div class="thesis-copy"><p>That’s the question behind Odin R&D. When agents can write the code, the interesting work moves to defining good, checking what was built, and learning from the result.</p><p>We’re opening that work here: tools you can use, experiments you can repeat, and notes that explain what changed.</p><a href="journal/why-open-the-floor.html">Read the idea behind the floor <span aria-hidden="true">↗</span></a></div>
+      <div class="station-compartment" aria-label="Selected experiment">
+        <!--STATION_CROP-->
+        <!--STATION_EXHIBITS-->
+        <p id="station-unavailable" hidden>Station evidence is unavailable. Follow the station’s full experiment link, or <a href="https://github.com/odin-labs-ai/odin-rnd">inspect the source</a>.</p>
+        <p id="station-status" class="sr-only" role="status" aria-live="polite"></p>
+      </div>
+      <p class="factory-boundary">Four ways to question a result. These machines are a conceptual map; the records are real runs of authored fixtures. Selecting a station reads evidence. It does not run an agent.</p>
     </section>
     <section class="experiments content-section" id="experiments" aria-labelledby="experiments-title">
-      <div class="section-heading"><h2 id="experiments-title">On the test bench.</h2><p>Real runs. Published results.<br>Pull up a stool and inspect one.</p></div>
+      <div class="section-heading"><h2 id="experiments-title">Try to prove it wrong.</h2><p>A useful check has to reject a plausible failure. Inspect the input, the result and the limits.</p></div>
+      <div class="experiment-index" aria-label="Witness experiments">
+        <a href="projects/test-witness/"><h3>Would your tests notice?</h3><p>A weak suite, a precise assertion, and an always-passing impostor.</p><span>Test Witness · Authored Java fixtures</span></a>
+        <a href="projects/migration-witness/"><h3>What if both versions are wrong?</h3><p>Matching outputs tested against an independent expectation.</p><span>Migration Witness · Authored Java fixtures</span></a>
+        <a href="projects/ci-witness/"><h3>Did the correction keep the other checks?</h3><p>A repaired target with a surviving regression.</p><span>CI Witness · Authored Java fixtures</span></a>
+      </div>
+      <div class="bench-introduction"><h3>Start with an architectural boundary.</h3><p>Three published BCE recipes. The same rule, applied to a conforming tree and a deliberately drifted tree.</p></div>
       <div class="workbench dark-surface">
         <div class="bench-menu"><div class="bench-label technical">SELECT EXPERIMENT</div><!--EXPERIMENT_BUTTONS--><a class="all-runs" href="https://github.com/odin-labs-ai/odin-rnd/actions/workflows/publish.yml">Watch the public runs <span aria-hidden="true">↗</span></a></div>
         <div class="bench-body">
@@ -60,30 +68,31 @@
           <div class="specimen-pair"><div><span class="technical">SPECIMEN A / CONFORMING</span><strong id="clean-result">—</strong><span>The authored boundary holds.</span></div><div><span class="technical">SPECIMEN B / DRIFTED</span><strong id="drift-result">—</strong><span>A deliberate violation is detected.</span></div></div>
           <p class="bench-explainer">One unchanged rule. Two different trees. The experiment succeeds when the engine tells them apart.</p>
           <details class="transcript-panel"><summary>Read the engine output <span aria-hidden="true">+</span></summary><pre id="transcript" tabindex="0"><!--FIRST_TRANSCRIPT--></pre></details>
-          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.0 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy reproduction command">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
+          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.1 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy reproduction command">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
           <div class="run-meta"><span id="run-date"><!--RUN_DATE--></span><a href="data/experiments.json">Full result & provenance <span aria-hidden="true">↗</span></a></div>
-          <p class="scope-note">Packaged fixtures, run with BCE 0.3.0. This tests the mechanism; it does not measure agent productivity or production reliability. <span id="run-origin"><!--RUN_ORIGIN--></span> Selectors inspect the recording; reproduction runs on your machine.</p>
+          <p class="scope-note">Packaged fixtures, run with BCE 0.3.1. This tests the mechanism; it does not measure agent productivity or production reliability. <span id="run-origin"><!--RUN_ORIGIN--></span> Selectors inspect the recording; reproduction runs on your machine.</p>
           <noscript><p>The first experiment’s transcript is available above. <a href="data/experiments.json">Read all three results as JSON</a>. Interactive selection needs JavaScript.</p></noscript>
         </div>
       </div>
     </section>
+    <section class="research-note content-section" aria-labelledby="research-note-title"><div><h2 id="research-note-title">The check is only <br>the beginning.</h2><p>These experiments make failure visible in small, authored examples. They do not establish customer savings, independent replication or how an agent will perform on unseen work.</p></div><article><h3><a href="journal/a-passing-pipeline.html">A passing pipeline was not yet a verified release.</a></h3><p>Our internal build note follows the gap between a green pipeline and a verified user journey. An author-reported account, with its private evidence boundary stated.</p><a href="journal/a-passing-pipeline.html">Read the field note</a></article></section>
     <section class="projects content-section" id="projects" aria-labelledby="projects-title">
-      <div class="section-heading"><h2 id="projects-title">Tools leaving<br>the factory.</h2><p>Take them apart.<br>Make something with them.</p></div>
-      <article class="project-row project-featured"><div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine <span aria-hidden="true">↗</span></a></h3><p>Architecture rules your agents can check. Write down the boundary, let the engine inspect the code, and make drift visible before it lands.</p><div class="project-links"><a href="https://blueprint-conformance.github.io/bce/">Documentation</a><a href="https://github.com/blueprint-conformance/bce/releases/tag/v0.3.0">Release & evidence</a></div></div><dl class="project-spec"><div><dt>Release</dt><dd>v0.3.0</dd></div><div><dt>Issued</dt><dd>05 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
+      <div class="section-heading"><h2 id="projects-title">Tools leaving <br>the factory.</h2><p>Take them apart. <br>Make something with them.</p></div>
+      <article class="project-row project-featured"><div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine <span aria-hidden="true">↗</span></a></h3><p>Architecture rules your agents can check. Write down the boundary, let the engine inspect the code, and make drift visible before it lands.</p><div class="project-links"><a href="https://blueprint-conformance.github.io/bce/">Documentation</a><a href="https://github.com/blueprint-conformance/bce/releases/tag/v0.3.1">Release & evidence</a></div></div><dl class="project-spec"><div><dt>Release</dt><dd>v0.3.1</dd></div><div><dt>Source</dt><dd>Released tag</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
       <article class="project-row"><div class="project-number">002<span>ARTIFACTS</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/bce-paper-artifacts">The evidence workbench <span aria-hidden="true">↗</span></a></h3><p>Seeded defects, fixture trees, recorded gate runs and a standalone chain verifier. Inspect the research materials behind the blueprint-conformance paper.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/bce-paper-artifacts/tree/main/verify">Run the chain verifier</a></div><p class="project-note">An earlier research archive. Its engine-availability notes predate the public BCE release linked above.</p></div><dl class="project-spec"><div><dt>Type</dt><dd>Research archive</dd></div><div><dt>Checked</dt><dd>07 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Public artifacts</dd></div></dl></article>
       <article class="project-row"><div class="project-number">000<span>WORKSHOP</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/odin-rnd">This floor is a project, too. <span aria-hidden="true">↗</span></a></h3><p>The drawings, the website and the experiment runner are here to inspect. Propose an experiment, reproduce a result, or help shape the next machine.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Propose an experiment</a></div></div><dl class="project-spec"><div><dt>Revision</dt><dd>v0.2.0</dd></div><div><dt>Type</dt><dd>Public workshop</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
     </section>
     <section class="drawing-board content-section dark-surface" aria-labelledby="next-title">
-      <div class="drawing-board-header"><h2 id="next-title">Better outcomes.<br>Stronger agents.</h2><p>Private collaboration<br><span>For internal teams, customers &amp; early adopter partners.</span></p></div>
-      <div class="research-directions"><article><span class="research-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 38h32M11 33V23h6v10m7 0V16h6v17m7 0V9h5v24M10 15l12-6 10 2 9-7"/><path d="m34 4 7 0 0 7"/></svg></span><h3>Factory Intelligence</h3><p>Understand what good work costs—and where to improve next. Shape Factory Intelligence around the quality, cost and outcomes that matter to your team.</p><span class="technical">FOCUS / QUALITY · COST · CONTINUOUS IMPROVEMENT</span><a class="partner-link" href="https://odin-labs.ai/contact">Discuss Factory Intelligence <span aria-hidden="true">↗</span></a></article><article><span class="research-symbol gym-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M36 14a16 16 0 0 0-27 8m3 12a16 16 0 0 0 27-8M36 6v8h-8M12 42v-8h8"/><circle cx="24" cy="24" r="5"/></svg></span><h3>Odin Gym</h3><p>Give agents a place to practice on work that matters. Shape Odin Gym around your workflows, with isolated tasks and verifiable outcomes as the design goal.</p><span class="technical">FOCUS / REAL WORK · PRACTICE · EVALUATION</span><a class="partner-link" href="https://odin-labs.ai/contact">Explore Odin Gym for your team <span aria-hidden="true">↗</span></a></article></div>
-      <p class="drawing-board-note">Developed for Odin’s internal use, private customers and early adopter partners. Bring your use case to discuss scope and early access. <a href="https://odin-labs.ai/contact">Become an early adopter partner <span aria-hidden="true">↗</span></a></p>
+      <div class="drawing-board-header"><h2 id="next-title">Better outcomes. <br>Stronger agents.</h2><p>Private collaboration<br><span>For internal teams, customers &amp; early adopter partners.</span></p></div>
+      <div class="research-directions"><article><span class="research-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 38h32M11 33V23h6v10m7 0V16h6v17m7 0V9h5v24M10 15l12-6 10 2 9-7"/><path d="m34 4 7 0 0 7"/></svg></span><h3>Factory Intelligence</h3><p>Understand what good work costs—and where to improve next. Shape Factory Intelligence around the quality, cost and outcomes that matter to your team.</p><span class="technical">FOCUS / QUALITY · COST · CONTINUOUS IMPROVEMENT</span><a class="partner-link" href="work-with-us/" data-contact-opened>Discuss Factory Intelligence <span aria-hidden="true">↗</span></a></article><article><span class="research-symbol gym-symbol" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M36 14a16 16 0 0 0-27 8m3 12a16 16 0 0 0 27-8M36 6v8h-8M12 42v-8h8"/><circle cx="24" cy="24" r="5"/></svg></span><h3>Odin Gym</h3><p>Give agents a place to practice on work that matters. Shape Odin Gym around your workflows, with isolated tasks and verifiable outcomes as the design goal.</p><span class="technical">FOCUS / REAL WORK · PRACTICE · EVALUATION</span><a class="partner-link" href="work-with-us/" data-contact-opened>Explore Odin Gym for your team <span aria-hidden="true">↗</span></a></article></div>
+      <p class="drawing-board-note">Developed for Odin’s internal use, private customers and early adopter partners. Bring your use case to discuss scope and early access. <a href="work-with-us/" data-contact-opened>Become an early adopter partner <span aria-hidden="true">↗</span></a></p>
     </section>
     <section class="journal content-section" id="journal" aria-labelledby="journal-title">
-      <div class="section-heading"><h2 id="journal-title">Notes from the floor.</h2><p>What happened.<br>What it means. What comes next.</p></div>
-      <a class="journal-row" href="journal/a-passing-pipeline.html"><div class="journal-date"><time datetime="2026-09-07">07.09.26</time><span class="technical">BUILD NOTE / 001</span></div><div><h3>A passing pipeline was not yet<br>a verified release.</h3><p>What a missing coverage report taught us about making “done” explainable.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>
+      <div class="section-heading"><h2 id="journal-title">Notes from the floor.</h2><p>What happened. <br>What it means. What comes next.</p></div>
+      <a class="journal-row" href="journal/a-passing-pipeline.html"><div class="journal-date"><time datetime="2026-09-07">07.09.26</time><span class="technical">BUILD NOTE / 001</span></div><div><h3>A passing pipeline was not yet <br>a verified release.</h3><p>What a missing coverage report taught us about making “done” explainable.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>
       <a class="journal-row" href="journal/why-open-the-floor.html"><div class="journal-date"><time datetime="2026-09-07">07.09.26</time><span class="technical">RESEARCH NOTE / 001</span></div><div><h3>Why open the factory floor?</h3><p>Tools, experiments and a place to show work while it is still becoming something.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>
     </section>
-    <section class="closing"><p>The next good question<br>might be yours.</p><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Bring it to the workbench <span aria-hidden="true">↗</span></a><span class="closing-stamp">OPEN<br>FOR R&D</span></section>
+    <section class="closing"><p>The next good question <br>might be yours.</p><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Bring it to the workbench <span aria-hidden="true">↗</span></a><span class="closing-stamp">OPEN <br>FOR R&D</span></section>
   </main>
   <footer class="site-footer"><a href="./" class="footer-brand" aria-label="Odin Labs R&amp;D home"><img src="./assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><span>From the dark factory. Out in the open.</span><div><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/LICENSE">License</a><a href="data/site.json">Site record</a></div><span class="technical">REV 0.2.0 · 2026</span></footer>
 </body>

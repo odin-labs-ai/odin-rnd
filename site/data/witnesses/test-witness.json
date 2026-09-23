@@ -1,0 +1,745 @@
+{
+  "schemaVersion": 1,
+  "project": "test-witness",
+  "projectVersion": "0.1.0",
+  "mode": "authored-fixtures",
+  "startedAt": "2026-09-23T04:11:24.184Z",
+  "completedAt": "2026-09-23T04:11:25.112Z",
+  "runtime": {
+    "node": "v22.22.2",
+    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+    "javac": "javac 21.0.12.1"
+  },
+  "sourceRevision": "150ec95a0f23f2e1ff73a870be7c46a3c676271a",
+  "logsPathNormalized": true,
+  "inputSha256": {
+    "demos/CONTRACT.md": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9",
+    "demos/lib.mjs": "ce111bc9472b48b5d149a3a79392f8acf150d82206491eeb0e12c97ed3412754",
+    "demos/test-witness/README.md": "5fabc13ec73362cad69f22e4b9791305f64bd26947b4e6a93b6abc02b3ff1175",
+    "demos/test-witness/fixtures/Witness.java": "10621a725271d7be6acfc6765191ae654fcfb98589d1a5886acd8c7ed3342bad",
+    "demos/test-witness/run.mjs": "c7dfef54b46176c81f17a9f4d617cd749232c21bb81482c46a111ad66cc5e503"
+  },
+  "scope": "Five authored invoice assertions and three seeded defects; acceptance of test evidence only.",
+  "limitations": [
+    "No generated tests or held-out performance evaluation.",
+    "No measured time savings or customer ROI.",
+    "Trusted local Java fixtures; temporary execution is not a security sandbox.",
+    "Hashes establish consistency, not malicious-tamper authenticity."
+  ],
+  "observations": [
+    {
+      "id": "correct-strong",
+      "caseId": "correct",
+      "role": "baseline",
+      "expected": "All five assertions pass",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "PASS",
+            "actual": "1.01",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "PASS",
+            "actual": "90.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "PASS",
+            "actual": "rejected",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "accepted",
+      "reason": "Correct implementation must pass every declared assertion",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "rounding-weak",
+      "caseId": "rounding",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 1,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "rejected",
+      "reason": "Weak suite passes while omitting the assertion for the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-5"
+      ]
+    },
+    {
+      "id": "rounding-strong",
+      "caseId": "rounding",
+      "role": "candidate",
+      "expected": "Only rounding assertion fails",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "FAIL",
+            "actual": "1.00",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "PASS",
+            "actual": "90.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "PASS",
+            "actual": "rejected",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 1
+      },
+      "verdict": "accepted",
+      "reason": "Detection requires precisely the assertion ID assigned to the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-6"
+      ]
+    },
+    {
+      "id": "threshold-weak",
+      "caseId": "threshold",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 1,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "rejected",
+      "reason": "Weak suite passes while omitting the assertion for the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-7"
+      ]
+    },
+    {
+      "id": "threshold-strong",
+      "caseId": "threshold",
+      "role": "candidate",
+      "expected": "Only threshold assertion fails",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "PASS",
+            "actual": "1.01",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "FAIL",
+            "actual": "100.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "PASS",
+            "actual": "rejected",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 1
+      },
+      "verdict": "accepted",
+      "reason": "Detection requires precisely the assertion ID assigned to the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-8"
+      ]
+    },
+    {
+      "id": "validation-weak",
+      "caseId": "validation",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 1,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "rejected",
+      "reason": "Weak suite passes while omitting the assertion for the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-9"
+      ]
+    },
+    {
+      "id": "validation-strong",
+      "caseId": "validation",
+      "role": "candidate",
+      "expected": "Only validation assertion fails",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "PASS",
+            "actual": "1.01",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "PASS",
+            "actual": "90.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "FAIL",
+            "actual": "allowed",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 1
+      },
+      "verdict": "accepted",
+      "reason": "Detection requires precisely the assertion ID assigned to the seeded defect",
+      "commandIds": [
+        "command-3",
+        "command-10"
+      ]
+    },
+    {
+      "id": "correct-always-pass",
+      "caseId": "correct",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "PASS",
+            "actual": "1.01",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "PASS",
+            "actual": "90.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "PASS",
+            "actual": "rejected",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "rejected",
+      "reason": "Unconditional suites cannot qualify: they ignore implementation behavior",
+      "commandIds": [
+        "command-3",
+        "command-11"
+      ]
+    },
+    {
+      "id": "rounding-always-pass",
+      "caseId": "rounding",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "PASS",
+            "actual": "4.00",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "PASS",
+            "actual": "1.01",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "PASS",
+            "actual": "99.00",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "PASS",
+            "actual": "90.00",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "PASS",
+            "actual": "rejected",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 0
+      },
+      "verdict": "rejected",
+      "reason": "Unconditional suites cannot qualify: they ignore implementation behavior",
+      "commandIds": [
+        "command-3",
+        "command-12"
+      ]
+    },
+    {
+      "id": "correct-always-fail",
+      "caseId": "correct",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 5,
+        "assertions": [
+          {
+            "id": "ordinary",
+            "status": "FAIL",
+            "actual": "unconditional-failure",
+            "expected": "4.00"
+          },
+          {
+            "id": "rounding",
+            "status": "FAIL",
+            "actual": "unconditional-failure",
+            "expected": "1.01"
+          },
+          {
+            "id": "below-threshold",
+            "status": "FAIL",
+            "actual": "unconditional-failure",
+            "expected": "99.00"
+          },
+          {
+            "id": "threshold",
+            "status": "FAIL",
+            "actual": "unconditional-failure",
+            "expected": "90.00"
+          },
+          {
+            "id": "validation",
+            "status": "FAIL",
+            "actual": "unconditional-failure",
+            "expected": "rejected"
+          }
+        ],
+        "exitCode": 1
+      },
+      "verdict": "rejected",
+      "reason": "Unconditional suites cannot qualify: they ignore implementation behavior",
+      "commandIds": [
+        "command-3",
+        "command-13"
+      ]
+    },
+    {
+      "id": "correct-missing",
+      "caseId": "correct",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 0,
+        "assertions": [],
+        "exitCode": 0
+      },
+      "verdict": "inconclusive",
+      "reason": "Execution or assertion evidence missing; never a detected defect",
+      "commandIds": [
+        "command-3",
+        "command-14"
+      ]
+    },
+    {
+      "id": "correct-crash",
+      "caseId": "correct",
+      "role": "negative-control",
+      "expected": "Cannot qualify as an adequate test suite",
+      "actual": {
+        "assertionCount": 0,
+        "assertions": [],
+        "exitCode": 1
+      },
+      "verdict": "inconclusive",
+      "reason": "Execution or assertion evidence missing; never a detected defect",
+      "commandIds": [
+        "command-3",
+        "command-15"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "id": "command-1",
+      "executable": "java",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
+      "durationMs": 28
+    },
+    {
+      "id": "command-2",
+      "executable": "javac",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "javac 21.0.12.1\n",
+      "stderr": "",
+      "durationMs": 93
+    },
+    {
+      "id": "command-3",
+      "executable": "javac",
+      "args": [
+        "-d",
+        "<workdir>",
+        "<repo>demos/test-witness/fixtures/Witness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 262
+    },
+    {
+      "id": "command-4",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "correct",
+        "strong"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 42
+    },
+    {
+      "id": "command-5",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "rounding",
+        "weak"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 53
+    },
+    {
+      "id": "command-6",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "rounding",
+        "strong"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|FAIL|1.00|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|1\n",
+      "stderr": "",
+      "durationMs": 46
+    },
+    {
+      "id": "command-7",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "threshold",
+        "weak"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 44
+    },
+    {
+      "id": "command-8",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "threshold",
+        "strong"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|FAIL|100.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|1\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-9",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "validation",
+        "weak"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 63
+    },
+    {
+      "id": "command-10",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "validation",
+        "strong"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|FAIL|allowed|rejected\nSUMMARY|1\n",
+      "stderr": "",
+      "durationMs": 45
+    },
+    {
+      "id": "command-11",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "correct",
+        "always-pass"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 41
+    },
+    {
+      "id": "command-12",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "rounding",
+        "always-pass"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
+      "stderr": "",
+      "durationMs": 43
+    },
+    {
+      "id": "command-13",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "correct",
+        "always-fail"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|ordinary|FAIL|unconditional-failure|4.00\nASSERT|rounding|FAIL|unconditional-failure|1.01\nASSERT|below-threshold|FAIL|unconditional-failure|99.00\nASSERT|threshold|FAIL|unconditional-failure|90.00\nASSERT|validation|FAIL|unconditional-failure|rejected\nSUMMARY|5\n",
+      "stderr": "",
+      "durationMs": 50
+    },
+    {
+      "id": "command-14",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "correct",
+        "missing"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "No assertions executed\n",
+      "stderr": "",
+      "durationMs": 31
+    },
+    {
+      "id": "command-15",
+      "executable": "java",
+      "args": [
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "correct",
+        "crash"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.RuntimeException: unknown execution failure\n\tat Witness.main(Witness.java:14)\n",
+      "durationMs": 30
+    }
+  ],
+  "metrics": [
+    {
+      "id": "defects-detected",
+      "numerator": 3,
+      "denominator": 3,
+      "unit": "eligible seeded defects",
+      "definition": "Strong-suite assertion failures uniquely attributed to rounding, threshold or validation seeds; unresolved excluded."
+    },
+    {
+      "id": "unresolved",
+      "numerator": 2,
+      "denominator": 12,
+      "unit": "executions",
+      "definition": "Missing-assertion and unknown crash controls retained as inconclusive, never detections."
+    }
+  ],
+  "experimentVerdict": "passed",
+  "workingTree": {
+    "dirty": true,
+    "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
+  },
+  "runId": "83aaac4e-a224-4680-96a6-ac10029915b3",
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null
+}

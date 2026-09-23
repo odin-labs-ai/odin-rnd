@@ -1,5 +1,5 @@
 // Authored orthographic geometry. This is a conceptual diagram, not a runtime map.
-export function factoryFloor() {
+export function factoryFloor({crop = false} = {}) {
   const p = (x, y, z = 0) => [(x - y) * .92 + 350, (x + y) * .43 + 86 - z];
   const pts = points => points.map(v => p(...v).map(n => n.toFixed(2)).join(',')).join(' ');
   const poly = (points, cls) => '<polygon class="' + cls + '" points="' + pts(points) + '"/>';
@@ -10,7 +10,8 @@ export function factoryFloor() {
     poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],'top') + '</g>';
   const marker = (x,y,z,n) => {const [a,b]=p(x,y,z);return '<g class="station-marker"><circle cx="'+a+'" cy="'+b+'" r="12"/><text x="'+a+'" y="'+(b+.5)+'">'+n+'</text></g>'};
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 615" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate and evidence records. Use the four station buttons below to explore each part.</desc>';
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate and evidence records. Use the four station links below to explore each part.</desc>';
+  svg += '<g id="factory-geometry">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
   for(let y=0;y<=380;y+=25) svg+=line([0,y,-7],[500,y,-7],'gridline');
@@ -72,8 +73,16 @@ export function factoryFloor() {
   svg+=line([18,310,0],[375,310,0],'conduit')+line([375,310,0],[410,345,0],'conduit');
   for(let x=25;x<400;x+=18)svg+=line([x,324,0],[x+8,324,0],'dimension');
   svg+='<text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
+  svg+='</g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
   svg+=screenText(45,550,'ORTHOGRAPHIC ASSEMBLY / CONCEPT DRAWING')+screenText(662,550,'DWG. OD-000 / A');
   svg+='<path class="dimension" d="M40 565H860M40 559v12M860 559v12"/>';
   svg+=screenText(43,589,'BLUEPRINT → WORKCELL → GATE → RECORD')+screenText(703,589,'NOT TO SCALE');
-  return svg+'</svg>';
+  svg += '</svg>';
+  if (crop) return svg
+    .replace('class="factory-svg"', 'class="factory-svg station-crop"')
+    .replace('viewBox="-20 -20 865 540"', 'viewBox="210 40 270 220"')
+    .replace('role="img" aria-labelledby="floor-title floor-description"', 'aria-hidden="true"')
+    .replaceAll('id="floor-', 'id="crop-floor-')
+    .replace('id="factory-geometry"', 'id="factory-crop-geometry"');
+  return svg;
 }

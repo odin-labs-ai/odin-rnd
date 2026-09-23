@@ -18,16 +18,27 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Clear checked-in historical observation before this run
-        run: rm -f site/data/experiments.json
+        run: rm -f site/data/experiments.json site/data/witnesses/*.json
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Install pinned pnpm
         run: npm install --global pnpm@10.11.1
       - name: Install released engine
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Check transcript failure handling
-        run: pnpm test
+      - name: Re-execute all three Java fixture projects
+        run: node scripts/run-roi-demos.mjs
+      - name: Keep witness receipts including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: witness-records-${{ github.run_id }}-${{ github.run_attempt }}
+          path: site/data/witnesses/
+          retention-days: 90
       - name: Run public experiments
         run: pnpm experiment
       - name: Keep experiment record, including failed discrimination
@@ -37,6 +48,8 @@ jobs:
           name: experiment-record-${{ github.run_id }}-${{ github.run_attempt }}
           path: site/data/experiments.json
           retention-days: 90
+      - name: Check recorded evidence and interaction failure handling
+        run: pnpm test
       - name: Build and validate public site
         run: |
           pnpm build

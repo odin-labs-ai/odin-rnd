@@ -1,0 +1,1160 @@
+{
+  "schemaVersion": 1,
+  "project": "ci-witness",
+  "projectVersion": "0.1.0",
+  "mode": "authored-fixtures",
+  "startedAt": "2026-09-23T04:11:27.420Z",
+  "completedAt": "2026-09-23T04:11:29.231Z",
+  "runtime": {
+    "node": "v22.22.2",
+    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+    "javac": "javac 21.0.12.1"
+  },
+  "inputSha256": {
+    "demos/CONTRACT.md": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9",
+    "demos/ci-witness/README.md": "2babc83fe3d0c1c699bac22cd801d504fbaca326841488b193452760350d72cc",
+    "demos/ci-witness/fixtures/Witness.java": "e975a931b8cc6bc4d5e7fa43874f47443d77c839e8dcaa13010cd804286187df",
+    "demos/ci-witness/fixtures/cases.json": "5020bbf8473c2740aa4e77288ef7e6e57cc41012f02efa7ee1ecca05eb70bf87",
+    "demos/ci-witness/run.mjs": "e2f74d49a2b7af759cbe2111dba7fc03598a9c3383b5560c233061cc67aa22f8",
+    "demos/lib.mjs": "ce111bc9472b48b5d149a3a79392f8acf150d82206491eeb0e12c97ed3412754"
+  },
+  "scope": "Four deterministic authored timezone, locale, order and configuration cases; explicit fixed order, reproduced target assertions and hand-authored corrections with one case-specific boundary and two regression assertions per case.",
+  "limitations": [
+    "No statistical flaky-rate estimate or general diagnosis claim.",
+    "No AI calls, automatic repair, customer inputs or measured ROI.",
+    "Unknown failures remain inconclusive, including the expected unknown negative control.",
+    "Trusted bundled code only; temporary directories are not a security sandbox.",
+    "Hashes establish input consistency, not malicious-tamper authenticity."
+  ],
+  "logsPathNormalized": true,
+  "observations": [
+    {
+      "id": "timezone-baseline",
+      "caseId": "timezone",
+      "role": "baseline",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-4"
+      ]
+    },
+    {
+      "id": "timezone-reproducer",
+      "caseId": "timezone",
+      "role": "candidate",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-5"
+      ]
+    },
+    {
+      "id": "timezone-corrected",
+      "caseId": "timezone",
+      "role": "candidate",
+      "expected": "verified-correction",
+      "actual": "verified-correction",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-6"
+      ]
+    },
+    {
+      "id": "timezone-boundary",
+      "caseId": "timezone",
+      "role": "oracle",
+      "expected": "2024-02-29",
+      "actual": "2024-02-29",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Independent case-specific boundary assertion must execute alongside the target and regression checks.",
+      "commandIds": [
+        "command-3",
+        "command-6"
+      ]
+    },
+    {
+      "id": "timezone-unrelated",
+      "caseId": "timezone",
+      "role": "negative-control",
+      "expected": "rejected-unrelated-failure",
+      "actual": "rejected-unrelated-failure",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-7"
+      ]
+    },
+    {
+      "id": "timezone-suppressed",
+      "caseId": "timezone",
+      "role": "negative-control",
+      "expected": "rejected-missing-checks",
+      "actual": "rejected-missing-checks",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-8"
+      ]
+    },
+    {
+      "id": "timezone-regression",
+      "caseId": "timezone",
+      "role": "negative-control",
+      "expected": "rejected-surviving-regression",
+      "actual": "rejected-surviving-regression",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-9"
+      ]
+    },
+    {
+      "id": "timezone-unknown",
+      "caseId": "timezone",
+      "role": "negative-control",
+      "expected": "inconclusive",
+      "actual": "inconclusive",
+      "verdict": "inconclusive",
+      "discriminationPassed": true,
+      "reason": "Unknown failure remains unresolved; no diagnosis inferred from exception text.",
+      "commandIds": [
+        "command-3",
+        "command-10"
+      ]
+    },
+    {
+      "id": "locale-baseline",
+      "caseId": "locale",
+      "role": "baseline",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-11"
+      ]
+    },
+    {
+      "id": "locale-reproducer",
+      "caseId": "locale",
+      "role": "candidate",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-12"
+      ]
+    },
+    {
+      "id": "locale-corrected",
+      "caseId": "locale",
+      "role": "candidate",
+      "expected": "verified-correction",
+      "actual": "verified-correction",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-13"
+      ]
+    },
+    {
+      "id": "locale-boundary",
+      "caseId": "locale",
+      "role": "oracle",
+      "expected": "straße",
+      "actual": "straße",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Independent case-specific boundary assertion must execute alongside the target and regression checks.",
+      "commandIds": [
+        "command-3",
+        "command-13"
+      ]
+    },
+    {
+      "id": "locale-unrelated",
+      "caseId": "locale",
+      "role": "negative-control",
+      "expected": "rejected-unrelated-failure",
+      "actual": "rejected-unrelated-failure",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-14"
+      ]
+    },
+    {
+      "id": "locale-suppressed",
+      "caseId": "locale",
+      "role": "negative-control",
+      "expected": "rejected-missing-checks",
+      "actual": "rejected-missing-checks",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-15"
+      ]
+    },
+    {
+      "id": "locale-regression",
+      "caseId": "locale",
+      "role": "negative-control",
+      "expected": "rejected-surviving-regression",
+      "actual": "rejected-surviving-regression",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-16"
+      ]
+    },
+    {
+      "id": "locale-unknown",
+      "caseId": "locale",
+      "role": "negative-control",
+      "expected": "inconclusive",
+      "actual": "inconclusive",
+      "verdict": "inconclusive",
+      "discriminationPassed": true,
+      "reason": "Unknown failure remains unresolved; no diagnosis inferred from exception text.",
+      "commandIds": [
+        "command-3",
+        "command-17"
+      ]
+    },
+    {
+      "id": "order-baseline",
+      "caseId": "order",
+      "role": "baseline",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-18"
+      ]
+    },
+    {
+      "id": "order-reproducer",
+      "caseId": "order",
+      "role": "candidate",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-19"
+      ]
+    },
+    {
+      "id": "order-corrected",
+      "caseId": "order",
+      "role": "candidate",
+      "expected": "verified-correction",
+      "actual": "verified-correction",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-20"
+      ]
+    },
+    {
+      "id": "order-boundary",
+      "caseId": "order",
+      "role": "oracle",
+      "expected": "alpha,beta,gamma",
+      "actual": "alpha,beta,gamma",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Independent case-specific boundary assertion must execute alongside the target and regression checks.",
+      "commandIds": [
+        "command-3",
+        "command-20"
+      ]
+    },
+    {
+      "id": "order-unrelated",
+      "caseId": "order",
+      "role": "negative-control",
+      "expected": "rejected-unrelated-failure",
+      "actual": "rejected-unrelated-failure",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-21"
+      ]
+    },
+    {
+      "id": "order-suppressed",
+      "caseId": "order",
+      "role": "negative-control",
+      "expected": "rejected-missing-checks",
+      "actual": "rejected-missing-checks",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-22"
+      ]
+    },
+    {
+      "id": "order-regression",
+      "caseId": "order",
+      "role": "negative-control",
+      "expected": "rejected-surviving-regression",
+      "actual": "rejected-surviving-regression",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-23"
+      ]
+    },
+    {
+      "id": "order-unknown",
+      "caseId": "order",
+      "role": "negative-control",
+      "expected": "inconclusive",
+      "actual": "inconclusive",
+      "verdict": "inconclusive",
+      "discriminationPassed": true,
+      "reason": "Unknown failure remains unresolved; no diagnosis inferred from exception text.",
+      "commandIds": [
+        "command-3",
+        "command-24"
+      ]
+    },
+    {
+      "id": "config-baseline",
+      "caseId": "config",
+      "role": "baseline",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-25"
+      ]
+    },
+    {
+      "id": "config-reproducer",
+      "caseId": "config",
+      "role": "candidate",
+      "expected": "target-failure-reproduced",
+      "actual": "target-failure-reproduced",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-26"
+      ]
+    },
+    {
+      "id": "config-corrected",
+      "caseId": "config",
+      "role": "candidate",
+      "expected": "verified-correction",
+      "actual": "verified-correction",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-27"
+      ]
+    },
+    {
+      "id": "config-boundary",
+      "caseId": "config",
+      "role": "oracle",
+      "expected": "relaxed",
+      "actual": "relaxed",
+      "verdict": "accepted",
+      "discriminationPassed": true,
+      "reason": "Independent case-specific boundary assertion must execute alongside the target and regression checks.",
+      "commandIds": [
+        "command-3",
+        "command-27"
+      ]
+    },
+    {
+      "id": "config-unrelated",
+      "caseId": "config",
+      "role": "negative-control",
+      "expected": "rejected-unrelated-failure",
+      "actual": "rejected-unrelated-failure",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-28"
+      ]
+    },
+    {
+      "id": "config-suppressed",
+      "caseId": "config",
+      "role": "negative-control",
+      "expected": "rejected-missing-checks",
+      "actual": "rejected-missing-checks",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-29"
+      ]
+    },
+    {
+      "id": "config-regression",
+      "caseId": "config",
+      "role": "negative-control",
+      "expected": "rejected-surviving-regression",
+      "actual": "rejected-surviving-regression",
+      "verdict": "rejected",
+      "discriminationPassed": true,
+      "reason": "Exact assertion identities, values, execution count and exit agree with the declared oracle.",
+      "commandIds": [
+        "command-3",
+        "command-30"
+      ]
+    },
+    {
+      "id": "config-unknown",
+      "caseId": "config",
+      "role": "negative-control",
+      "expected": "inconclusive",
+      "actual": "inconclusive",
+      "verdict": "inconclusive",
+      "discriminationPassed": true,
+      "reason": "Unknown failure remains unresolved; no diagnosis inferred from exception text.",
+      "commandIds": [
+        "command-3",
+        "command-31"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "id": "command-1",
+      "executable": "java",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
+      "durationMs": 29
+    },
+    {
+      "id": "command-2",
+      "executable": "javac",
+      "args": [
+        "-version"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "javac 21.0.12.1\n",
+      "stderr": "",
+      "durationMs": 95
+    },
+    {
+      "id": "command-3",
+      "executable": "javac",
+      "args": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "<workdir>",
+        "<repo>/demos/ci-witness/fixtures/Witness.java"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "durationMs": 304
+    },
+    {
+      "id": "command-4",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "baseline",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.timezone|FAIL|actual=2026-01-02|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 75
+    },
+    {
+      "id": "command-5",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "reproducer",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.timezone|FAIL|actual=2026-01-02|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 65
+    },
+    {
+      "id": "command-6",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "corrected",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|target.timezone|PASS|actual=2026-01-01|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-7",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unrelated",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 44
+    },
+    {
+      "id": "command-8",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "suppressed",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "CHECKS|0|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 60
+    },
+    {
+      "id": "command-9",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "regression",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.timezone|PASS|actual=2026-01-01|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 58
+    },
+    {
+      "id": "command-10",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=Europe/Amsterdam",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unknown",
+        "timezone"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
+      "durationMs": 38
+    },
+    {
+      "id": "command-11",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "baseline",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.locale|FAIL|actual=tıtle|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 55
+    },
+    {
+      "id": "command-12",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "reproducer",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.locale|FAIL|actual=tıtle|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 62
+    },
+    {
+      "id": "command-13",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "corrected",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|target.locale|PASS|actual=title|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-14",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unrelated",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 52
+    },
+    {
+      "id": "command-15",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "suppressed",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "CHECKS|0|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 41
+    },
+    {
+      "id": "command-16",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "regression",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.locale|PASS|actual=title|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 56
+    },
+    {
+      "id": "command-17",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=tr",
+        "-Duser.country=TR",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unknown",
+        "locale"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
+      "durationMs": 34
+    },
+    {
+      "id": "command-18",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "baseline",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.order|FAIL|actual=beta,alpha|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 48
+    },
+    {
+      "id": "command-19",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "reproducer",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.order|FAIL|actual=beta,alpha|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 59
+    },
+    {
+      "id": "command-20",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "corrected",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|target.order|PASS|actual=alpha,beta|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 51
+    },
+    {
+      "id": "command-21",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unrelated",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 50
+    },
+    {
+      "id": "command-22",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "suppressed",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "CHECKS|0|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 49
+    },
+    {
+      "id": "command-23",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "regression",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.order|PASS|actual=alpha,beta|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 46
+    },
+    {
+      "id": "command-24",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.order=beta,alpha",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unknown",
+        "order"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
+      "durationMs": 31
+    },
+    {
+      "id": "command-25",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "baseline",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.config|FAIL|actual=legacy|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-26",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "reproducer",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.config|FAIL|actual=legacy|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-27",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "corrected",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "ASSERT|target.config|PASS|actual=strict|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 43
+    },
+    {
+      "id": "command-28",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unrelated",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 47
+    },
+    {
+      "id": "command-29",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "suppressed",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "CHECKS|0|FAILURES|0\n",
+      "stderr": "",
+      "durationMs": 40
+    },
+    {
+      "id": "command-30",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "regression",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "ASSERT|target.config|PASS|actual=strict|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
+      "stderr": "",
+      "durationMs": 56
+    },
+    {
+      "id": "command-31",
+      "executable": "java",
+      "args": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.timezone=UTC",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Dfixture.mode=legacy",
+        "-cp",
+        "<workdir>",
+        "Witness",
+        "unknown",
+        "config"
+      ],
+      "cwd": "<workdir>",
+      "status": "completed",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
+      "durationMs": 33
+    }
+  ],
+  "metrics": [
+    {
+      "id": "controlled-corrections",
+      "numerator": 4,
+      "denominator": 4,
+      "unit": "cases",
+      "definition": "Declared cases with all four exact assertions passing after the authored correction."
+    },
+    {
+      "id": "discrimination",
+      "numerator": 32,
+      "denominator": 32,
+      "unit": "observations",
+      "definition": "Expected outcomes matched across 28 executions and four boundary observations, including rejection and unresolved unknown controls; not a behavioral pass rate."
+    },
+    {
+      "id": "unresolved",
+      "numerator": 4,
+      "denominator": 28,
+      "unit": "executions",
+      "definition": "Unresolved executions, including four deliberately unknown failures."
+    }
+  ],
+  "experimentVerdict": "passed",
+  "sourceRevision": "150ec95a0f23f2e1ff73a870be7c46a3c676271a",
+  "workingTree": {
+    "dirty": true,
+    "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
+  },
+  "runId": "83aaac4e-a224-4680-96a6-ac10029915b3",
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null
+}

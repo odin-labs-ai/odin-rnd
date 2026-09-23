@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>Work with Odin — Bring one workflow. Leave with evidence.</title>
+  <meta name="description" content="Explore a scoped Agent Acceptance Bench with Odin: one recurring engineering workflow, an agreed baseline and evidence for your next decision.">
+  <meta property="og:title" content="Work with Odin — Bring one workflow. Leave with evidence.">
+  <meta property="og:description" content="A proposal for a scoped evaluation of an agent-assisted engineering workflow, with human review and a portable handover.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/work-with-us/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/work-with-us/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <script type="module" src="../assets/brief.mjs"></script>
+  <script type="module" src="../assets/intake.mjs"></script>
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../#floor">The floor</a><a href="../#experiments">Experiments</a><a href="../#projects">Open source</a><a href="../#journal">Field notes</a><a href="./" aria-current="page">Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="company-hero company-width" aria-labelledby="company-title">
+      <div>
+        <h1 id="company-title">What would make you<br>accept an agent’s work?</h1>
+        <p class="company-lead">A plausible patch and a passing job can still be wrong. Work with Odin to define what must be true, build checks that can reject the wrong result, and follow the accepted change to the outcome your team needs.</p>
+        <div class="company-actions"><a class="button button-primary" href="#enquiry" data-contact-opened>Discuss a workflow</a><a href="#brief">Prepare a brief first</a></div>
+      </div>
+      <aside class="bench-proposal" aria-labelledby="proposal-title">
+        <h2 id="proposal-title">The Agent Acceptance Bench</h2>
+        <p>A proposed engineering engagement around one real acceptance problem. Bring a change your team struggles to trust: generated tests, a behavior-sensitive upgrade or a repair that keeps coming back. We build the explicit contract and reproducible checks with your reviewers.</p>
+        <dl><div><dt>Start with</dt><dd>One recurring workflow</dd></div><div><dt>Bring</dt><dd>Approved samples + a named reviewer</dd></div><div><dt>Decide</dt><dd>Continue, change or stop</dd></div></dl>
+        <p class="proposal-boundary">Scope and terms agreed together. No performance outcome promised.</p>
+      </aside>
+    </section>
+    <section class="company-section company-width company-split" aria-labelledby="fit-title">
+      <h2 id="fit-title">A useful first question beats a broad rollout.</h2>
+      <div class="company-prose"><p>This is for engineering teams with a recurring task, an existing way to do it, and someone who can judge the result. A maintenance change, a test-writing task or a release review could be a starting point.</p><p>You bring approved, representative samples, a baseline and a named human reviewer. Together we choose a narrow workflow, define acceptance criteria and decide which failures would make us stop.</p><p>If the workflow or ownership is still unclear, the first conversation is about finding that boundary.</p></div>
+    </section>
+    <section class="company-section company-width" aria-labelledby="process-title">
+      <div class="company-section-heading"><h2 id="process-title">From a question to a decision.</h2><p>Three phases, with review built into the work.</p></div>
+      <ol class="bench-phases">
+        <li><span class="phase-number" aria-hidden="true">01</span><h3>Scope the work</h3><p>Agree the task, samples, acceptance criteria and reviewer. Record access boundaries, exclusions and the conditions for stopping before a run begins.</p></li>
+        <li><span class="phase-number" aria-hidden="true">02</span><h3>Compare with a baseline</h3><p>Use an agreed evaluation to compare the current approach with agent-assisted work. Review the outputs and count tool cost, human review and rework.</p></li>
+        <li><span class="phase-number" aria-hidden="true">03</span><h3>Choose what happens next</h3><p>Inspect failures and limitations alongside accepted results. Decide together whether to continue, change the approach or stop, then hand over the record.</p></li>
+      </ol>
+    </section>
+    <section class="company-section company-width company-split" aria-labelledby="handover-title">
+      <div><h2 id="handover-title">Something your team can inspect and keep.</h2><p class="section-intro">The proposed handover makes the reasoning behind the decision visible.</p></div>
+      <div><dl class="handover-list"><div><dt>A repeatable evaluation</dt><dd>The task definition, approved sample references, acceptance criteria and instructions for another run.</dd></div><div><dt>A reviewed baseline comparison</dt><dd>Results from both approaches, the reviewer’s decisions, failures and limits of the comparison.</dd></div><div><dt>A total-cost account</dt><dd>Tool use, human review and rework, with assumptions and gaps recorded.</dd></div><div><dt>A portable handover</dt><dd>A readable report and agreed artifacts that your team can use to make its next decision.</dd></div></dl><p class="terms-note">Before work starts, we jointly agree scope, price, timing, access, intellectual property and responsibilities. This page is an invitation to shape that agreement.</p></div>
+    </section>
+    <section class="company-evidence dark-surface" id="evidence" aria-labelledby="evidence-title">
+      <div class="company-width company-split"><div><h2 id="evidence-title">Open the record before the conversation.</h2><a class="evidence-link" href="../#experiments">Inspect the public experiments</a></div><div class="company-prose"><p>Blueprint Conformance Engine checks code against explicit architecture constraints. Our Witness experiments examine a different part of acceptance: whether a test catches a known defect, whether two implementations share a bug, and whether a correction preserves the checks that could reject it.</p><p>Inspect the concrete cases: <a href="../projects/test-witness/">a green test that misses a rounding defect</a>, <a href="../projects/migration-witness/">two versions agreeing on the wrong answer</a>, and <a href="../projects/ci-witness/">a fix that passes its target but fails a regression</a>. These are reproducible authored fixtures, not customer outcome claims.</p><p><a href="../data/experiments.json">Read the experiment data</a> and its source metadata. Agent markets and robotics remain future research directions, rather than products offered through this collaboration.</p></div></div>
+    </section>
+    <section class="company-section company-width company-split brief-section" id="brief" aria-labelledby="brief-title">
+      <div><h2 id="brief-title">What would you like to put on the bench?</h2><p class="section-intro">A rough description is enough to start. Prepare a brief, review it, then choose what to share with Odin.</p><p class="brief-privacy">The brief builder does not send or save your entries. Copying or downloading creates a copy you control. Don’t enter confidential data.</p><p><a href="../resources/pilot-brief.md" download>Download the brief template</a></p><p><a href="#enquiry" data-contact-opened>Send an enquiry</a>, or <a href="mailto:contact@odin-labs.ai">email Odin</a> with your downloaded brief. Preparing a brief does not send it or book a pilot.</p><p>Odin Labs Projects B.V. · Amsterdam, Netherlands. <a href="https://odin-labs.ai/contact">Company contact details</a>.</p><noscript><p class="no-script-note">The brief builder needs JavaScript. You can still download the template, fill it in yourself and contact Odin.</p></noscript></div>
+      <div class="brief-workspace">
+        <form id="pilot-brief-form" hidden>
+          <div class="brief-field"><label for="workflow">The workflow</label><p id="workflow-help">What recurring task do you want to evaluate? Add this to prepare a useful draft.</p><textarea id="workflow" name="workflow" rows="3" maxlength="2000" required aria-describedby="workflow-help"></textarea></div>
+          <div class="brief-field"><label for="outcome">What would a good result look like? <span>Optional</span></label><p id="outcome-help">Describe the outcome and who could review it.</p><textarea id="outcome" name="outcome" rows="3" maxlength="2000" aria-describedby="outcome-help"></textarea></div>
+          <div class="brief-field"><label for="baseline">How do you do it today? <span>Optional</span></label><p id="baseline-help">Describe the current approach and any known review or rework.</p><textarea id="baseline" name="baseline" rows="3" maxlength="2000" aria-describedby="baseline-help"></textarea></div>
+          <div class="brief-field"><label for="samples">What samples could be used? <span>Optional</span></label><p id="samples-help">Describe sample types only. Don’t paste private code or customer material.</p><textarea id="samples" name="samples" rows="3" maxlength="2000" aria-describedby="samples-help"></textarea></div>
+          <div class="brief-field"><label for="constraints">What are the boundaries? <span>Optional</span></label><p id="constraints-help">Note timing, access limits, exclusions or questions to agree together.</p><textarea id="constraints" name="constraints" rows="3" maxlength="2000" aria-describedby="constraints-help"></textarea></div>
+          <button type="submit" class="button button-primary">Prepare brief</button>
+        </form>
+        <section id="brief-result" hidden aria-labelledby="brief-output-label"><h3 id="brief-output-label"><label for="brief-output">Your brief</label></h3><textarea id="brief-output" readonly rows="16" aria-labelledby="brief-output-label"></textarea><div class="company-actions"><button type="button" id="copy-brief" class="button button-primary">Copy brief</button><a id="download-brief" download="odin-pilot-brief.md">Download brief</a></div></section>
+        <p id="brief-status" role="status"></p>
+      </div>
+    </section>
+    <section class="company-section company-width company-split" id="enquiry" aria-labelledby="enquiry-title">
+      <div><h2 id="enquiry-title">Start a conversation.</h2><p class="section-intro">Tell us what you want to understand or improve. A short question is enough.</p><p id="enquiry-privacy">When you choose Send enquiry, your name, email, chosen topic and message are shared privately with Odin to respond to you. Enquiry details are kept for up to 90 days. They are not added to a mailing list or included in website activity reports. Please leave out confidential material.</p><p><a href="mailto:contact@odin-labs.ai">Email contact@odin-labs.ai</a> if you prefer, or to ask about your enquiry or its deletion. Backups expire within 35 days.</p><p>When enabled, website activity measurement counts page views and selected interactions without cookies or visitor identifiers. These counts can miss or repeat visits; they do not identify individual people.</p><noscript><p>The enquiry form needs JavaScript. You can email Odin using the link above.</p></noscript></div>
+      <div>
+        <form id="enquiry-form" hidden aria-describedby="enquiry-privacy" novalidate>
+          <div class="brief-field"><label for="enquiry-name">Name</label><input id="enquiry-name" name="name" autocomplete="name" maxlength="120" required></div>
+          <div class="brief-field"><label for="enquiry-email">Email</label><input id="enquiry-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+          <div class="brief-field"><label for="enquiry-topic">What is it about?</label><select id="enquiry-topic" name="topic" required><option value="other">A question or workflow</option><option value="test-witness">Test Witness</option><option value="migration-witness">Migration Witness</option><option value="ci-witness">CI Witness</option><option value="factory-intelligence">Factory Intelligence</option><option value="odin-gym">Odin Gym</option></select></div>
+          <div class="brief-field"><label for="enquiry-message">Your message</label><textarea id="enquiry-message" name="message" rows="7" maxlength="5000" required></textarea></div>
+          <label class="sharing-confirmation"><input type="checkbox" name="sharingAccepted" required><span>I want to share these details with Odin so the team can respond.</span></label>
+          <button type="submit" class="button button-primary" id="send-enquiry">Send enquiry</button>
+        </form>
+        <p id="enquiry-status" role="status" tabindex="-1">The enquiry form is not available yet. You can email Odin using the link alongside.</p>
+      </div>
+    </section>
+    <section class="company-resources company-width" aria-labelledby="resources-title"><h2 id="resources-title">See the working documents.</h2><p>Public templates for discussing a scope and recording what happened.</p><div><a href="../resources/pilot-brief.md">Pilot brief</a><a href="../resources/pilot-charter.md">Pilot charter</a><a href="../resources/evaluation-report.md">Evaluation report</a></div></section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="../"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact">Contact Odin</a><a href="https://odin-labs.ai">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>
