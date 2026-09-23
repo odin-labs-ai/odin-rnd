@@ -2,6 +2,7 @@ import { apiOrigin, readConfig } from './activity.mjs';
 export const topics = Object.freeze(['test-witness','migration-witness','ci-witness','factory-intelligence','odin-gym','other']);
 export function submissionPayload(input) {
   const body = {name:String(input.name ?? '').trim(),email:String(input.email ?? '').trim(),topic:input.topic,message:String(input.message ?? '').trim(),sharingAccepted:input.sharingAccepted};
+  if ([body.name,body.email,body.message].some(value=>value.includes('\u0000'))) throw new Error('Remove unsupported control characters from your details.');
   if (!body.name || body.name.length > 120) throw new Error('Enter your name (up to 120 characters).');
   if (body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) throw new Error('Enter a valid email address.');
   if (!topics.includes(body.topic)) throw new Error('Choose an enquiry topic.');

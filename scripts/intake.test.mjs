@@ -7,7 +7,7 @@ const id = '7829ce89-514f-4b32-9f84-86f0f1e4aeb7';
 const accepted = () => ({status:202,json:async()=>({status:'accepted',id})});
 test('enquiry boundary validates deliberate sharing, bounded fields and actual UTF-8 body size', () => {
   assert.deepEqual(submissionPayload({...input,channel:'evil',trackingId:'no'}), input);
-  for (const invalid of [{name:''},{email:'not-email'},{topic:'unexpected'},{message:''},{message:'a'.repeat(5001)},{sharingAccepted:false},{message:'\u0000'.repeat(3000)}]) {
+  for (const invalid of [{name:''},{name:'a\u0000b'},{email:'a\u0000b@example.invalid'},{email:'not-email'},{topic:'unexpected'},{message:''},{message:'a'.repeat(5001)},{sharingAccepted:false},{message:'\u0001'.repeat(3000)}]) {
     assert.throws(()=>submissionPayload({...input,...invalid}));
   }
   assert.equal(submissionPayload({...input,message:'<script>@all</script>'}).message,'<script>@all</script>');
