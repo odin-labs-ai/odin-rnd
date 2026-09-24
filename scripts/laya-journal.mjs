@@ -76,7 +76,6 @@ const pct = x => x === null || x === undefined ? 'not run' : `${(x * 100).toFixe
 const num = (x, unit, digits = 0) => x === null || x === undefined ? '—' : `${x.toFixed(digits)} ${unit}`;
 const isJev = id => /jev/i.test(id) && !/laya/i.test(id);
 const isLaya = id => /laya/i.test(id);
-const measuredModels = r => Object.entries(r.perModel).filter(([, m]) => m.accuracy !== null);
 
 export function verdicts(r) {
   const jevEntry = Object.entries(r.perModel).find(([id]) => isJev(id));
@@ -110,7 +109,7 @@ export function renderArticle({ results, manifest, fixture = false }) {
   const measuredDay = new Date(results.measuredAt).toISOString().slice(0, 10);
   const displayDay = new Date(results.measuredAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase();
   const jevRun = results.agreement.laya_vs_jev !== null;
-  const rows = Object.entries(results.perModel).map(([id, m]) => `<tr><th scope="row"><code>${escape(id)}</code></th><td>${pct(m.accuracy)}</td><td>${pct(m.calibratedAccuracy)}</td><td>${num(m.p50Ms,'ms')} / ${num(m.p90Ms,'ms')} / ${num(m.maxMs,'ms')}</td><td>${num(m.coldLoadS,'s',1)}</td><td>${m.costPer1kUsd === null ? 'none billed' : '$' + m.costPer1kUsd.toFixed(4)}</td></tr>`).join('');
+  const rows = Object.entries(results.perModel).map(([id, m]) => `<tr><th scope="row"><code>${escape(id)}</code></th><td>${pct(m.accuracy)}</td><td>${m.accuracy !== null && m.calibratedAccuracy === null ? 'no answers ≥ 0.9' : pct(m.calibratedAccuracy)}</td><td>${num(m.p50Ms,'ms')} / ${num(m.p90Ms,'ms')} / ${num(m.maxMs,'ms')}</td><td>${num(m.coldLoadS,'s',1)}</td><td>${m.costPer1kUsd === null ? 'none billed' : '$' + m.costPer1kUsd.toFixed(4)}</td></tr>`).join('');
   const models = results.models.map(m => `<li><code>${escape(m.id)}</code>: ${escape(m.source)}${m.sha ? `, revision <code>${escape(m.sha)}</code>` : ''}; ${escape(m.license)}; backend ${escape(m.backend)}.</li>`).join('');
   const machine = Object.entries(results.machine).map(([k, v]) => `${escape(k)} ${escape(typeof v === 'object' ? JSON.stringify(v) : v)}`).join(' · ');
   const verdictItems = verdicts(results).map(v => `<li><strong>${v.label}</strong> ${escape(v.text)}</li>`).join('');
@@ -119,7 +118,7 @@ export function renderArticle({ results, manifest, fixture = false }) {
     ? '<p><strong>FIXTURE.</strong> This rendering uses invented renderer-test values. It is not a measurement and must never be published.</p>'
     : `<p>The figures above are rendered at build-authoring time from <a href="../data/laya-vs-jev/${escape(manifest.file)}"><code>${escape(manifest.file)}</code></a>, copied byte-for-byte from <code>${escape(manifest.source.path)}</code> on branch <code>${escape(manifest.source.branch)}</code> of <code>${escape(manifest.source.repository)}</code> at revision <code>${escape(manifest.source.revision)}</code>. Its sha256 is <code>${escape(manifest.sha256)}</code>; the <a href="../data/laya-vs-jev/manifest.json">copy manifest</a> records both. A repository test re-renders this page from that file and fails if they differ.</p>`;
   const sourceItems = sources.map(s => `<li><a href="${escape(s.url)}">${escape(s.label)}</a>. <em>${escape(s.kind)}</em>, accessed ${accessedOn}: ${escape(s.claim)}</li>`).join('');
-  return `${header}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1>System-1 decisions without lock-in: Jev vs open-weight Laya</h1><p class="article-meta">EXPERIMENT NOTE / 001 · MEASURED ${escape(displayDay)} · ${isFixture ? 'FIXTURE — NOT A MEASUREMENT' : 'LOCAL MEASUREMENT'}</p></header><article class="article-body">
+  return `${header}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1><span style="white-space:nowrap">System-1</span> decisions without <span style="white-space:nowrap">lock-in</span>: Jev vs open-weight Laya</h1><p class="article-meta">EXPERIMENT NOTE / 001 · MEASURED ${escape(displayDay)} · ${isFixture ? 'FIXTURE — NOT A MEASUREMENT' : 'LOCAL MEASUREMENT'}</p></header><article class="article-body">
 ${isFixture ? '<p><strong>FIXTURE — NOT A MEASUREMENT.</strong> Every number on this rendering is invented to test the page. Do not publish it.</p>\n' : ''}<p>A new kind of model answers software’s small questions directly. Instead of writing text, it takes some state and a typed question (pick one option, give a score, say whether a statement holds) and returns an answer with a probability. TypeSafe calls this a System One model; its hosted model is Jev.</p>
 <p>A decision that sits inside your control flow is a dependency. If the only model that can answer it lives behind one vendor’s API and key, the decision is locked in. So we asked a narrow question.</p>
 <h2>The question</h2>
@@ -133,7 +132,7 @@ ${isFixture ? '<p><strong>FIXTURE — NOT A MEASUREMENT.</strong> Every number o
 <p>These criteria were committed before any result reached this repository. Any one of them failing refutes the claim for this corpus.</p>
 <ul><li>Laya is more than ${refutation.accuracyMarginPoints} percentage points less accurate than Jev on the same rows.</li><li>Laya’s answers at confidence 0.9 or above are less accurate than its answers overall, so its confidence cannot be used to decide when to escalate.</li><li>The local port disagrees with the model’s reference implementation on any row, or its top probability differs by more than ${refutation.parityMaxDelta}.</li><li>Laya is slower per call on this machine than the hosted Jev call. This tests the speed claim, not the lock-in claim.</li></ul>
 <h2>What we measured</h2>
-<table><caption class="technical">${isFixture ? 'FIXTURE VALUES' : 'MEASURED ON THIS MACHINE'} · ${escape(measuredDay)} · ${results.corpus.rows} ROWS</caption><thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Accuracy at ≥ 0.9</th><th scope="col">p50 / p90 / max</th><th scope="col">Cold load</th><th scope="col">Cost / 1k calls</th></tr></thead><tbody>${rows}</tbody></table>
+<div role="region" aria-label="Measured results table" tabindex="0" style="overflow-x:auto"><table><caption class="technical">${isFixture ? 'FIXTURE VALUES' : 'MEASURED ON THIS MACHINE'} · ${escape(measuredDay)} · ${results.corpus.rows} ROWS</caption><thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Accuracy at ≥ 0.9</th><th scope="col">p50 / p90 / max</th><th scope="col">Cold load</th><th scope="col">Cost / 1k calls</th></tr></thead><tbody>${rows}</tbody></table></div>
 <p>Agreement between Laya and Jev: ${jevRun ? pct(results.agreement.laya_vs_jev) + ' of rows.' : 'not measured; Jev was not run in this recording.'}</p>
 <h2>Against the criteria</h2>
 <ul>${verdictItems}</ul>
