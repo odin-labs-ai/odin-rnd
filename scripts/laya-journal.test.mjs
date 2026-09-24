@@ -77,3 +77,14 @@ test('the published article is exactly the render of the copied measured record'
   assert(readFileSync('site/index.html', 'utf8').includes(`journal/${slug}.html`), 'Article missing from the floor');
   assert(readFileSync('site/sitemap.xml', 'utf8').includes(`journal/${slug}.html`), 'Article missing from the sitemap');
 });
+
+test('agreement counts and upstream parity shapes are read, and inconsistent counts are refused', () => {
+  const r = measured();
+  r.agreement.laya_vs_jev = { percent: 77.08, agree: 37, comparedRows: 48 };
+  r.parity = { rows: 48, sameDecision: 48, maxTopProbDelta: 0.002 };
+  const labels = Object.fromEntries(verdicts(validateResults(r)).map(v => [v.id, v.label]));
+  assert.equal(labels.parity, 'GREEN');
+  assert.match(renderArticle({ results: r, fixture: true }), /77\.1% of rows \(37 of 48 rows\)/);
+  r.agreement.laya_vs_jev.percent = 90;
+  assert.throws(() => validateResults(r), /percent/);
+});

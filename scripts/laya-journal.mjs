@@ -27,6 +27,7 @@ export const sources = [
   { id: 'laya-card', label: 'Convai Innovations, Laya model card, Hugging Face revision 55cf4c4', url: 'https://huggingface.co/convaiinnovations/laya/blob/55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851/README.md', kind: 'model-author claim', claim: 'Apache-2.0; ModernBERT-large backbone plus a decision head, 421M parameters; fine-tuned typed-decisions checkpoint 0.766 accuracy against a published Jev 1.13.0 figure of 0.727; 32.8–39.5 ms per question on a T4 GPU, 193–464 ms on CPU. The card states its Jev figures are third-party published, not measured by the authors.' },
   { id: 'laya-eval', label: 'Laya eval/results.md, Hugging Face revision 55cf4c4', url: 'https://huggingface.co/convaiinnovations/laya/blob/55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851/eval/results.md', kind: 'model-author claim', claim: 'Overall in-task accuracy 0.753 (ECE 0.030); zero-shot accuracy 0.651 (ECE 0.204) on held-out task families.' },
   { id: 'jev-ai-compare', label: 'Jev AI, “Jev vs Laya” comparison page (independently operated, not TypeSafe)', url: 'https://jev-ai.pro/compare/jev-vs-laya', kind: 'third-party claim', claim: 'JevBench v1.4.0 hard tier: Jev 74.1% against Laya 34.1%; judge tier 94.5% against 69.2%; Jev 0.65 s median on the hosted API. The bare /compare index returned HTTP 404 on the access date.' },
+  { id: 'jev-ai-pricing', label: 'Jev AI pricing page (independently operated reseller, not TypeSafe)', url: 'https://jev-ai.pro/pricing', kind: 'third-party price claim', claim: 'Annual plans list $0.124–$0.242 per million input tokens, output free. The recorded Jev cost per 1,000 calls multiplies the measured mean input tokens by the highest listed rate; it is not an invoice.' },
   { id: 'medium-raju', label: 'Sathish Raju, “What Is Jev? A Practical Look at TypeSafe’s System One Model”, Medium, Sep 2026', url: 'https://medium.com/@sathishkraju/what-is-jev-a-practical-look-at-typesafes-system-one-model-3b7c0fe34f6b', kind: 'commentary', claim: 'Background reading only. The page refused automated retrieval (HTTP 403) on the access date, so no figure here relies on it.' },
   { id: 'medium-mysore', label: 'Vishal Mysore, “Jev By TypeSafe: A model you were waiting for!”, Medium, Sep 2026', url: 'https://medium.com/@visrow/jev-by-typesafe-a-model-you-were-waiting-for-19e8fa8cb5cb', kind: 'commentary', claim: 'Background reading only. The page refused automated retrieval (HTTP 403) on the access date, so no figure here relies on it.' },
 ];
@@ -36,6 +37,14 @@ export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const isNum = x => typeof x === 'number' && Number.isFinite(x);
 const fraction = x => x === null || (isNum(x) && x >= 0 && x <= 1);
 const nonNegative = x => x === null || (isNum(x) && x >= 0);
+
+// The runner records agreement either as a fraction or as {percent, agree, comparedRows}.
+export function agreementFraction(a) {
+  if (a === null || fraction(a)) return a;
+  assert(a && Number.isInteger(a.agree) && Number.isInteger(a.comparedRows) && a.comparedRows > 0 && a.agree >= 0 && a.agree <= a.comparedRows, 'agreement.laya_vs_jev must be a fraction, null or {percent, agree, comparedRows}');
+  assert(isNum(a.percent) && Math.abs(a.percent - 100 * a.agree / a.comparedRows) < 0.01, 'agreement percent disagrees with its counts');
+  return a.agree / a.comparedRows;
+}
 
 export function validateResults(r) {
   assert(r && typeof r === 'object' && !Array.isArray(r), 'Results must be an object');
@@ -55,7 +64,8 @@ export function validateResults(r) {
     assert(fraction(m.accuracy) && fraction(m.calibratedAccuracy), `perModel ${id} accuracies must be fractions in [0,1] or null`);
     for (const key of ['p50Ms','p90Ms','maxMs','coldLoadS','costPer1kUsd']) assert(nonNegative(m[key]), `perModel ${id} ${key} must be a non-negative number or null`);
   }
-  assert(r.agreement && 'laya_vs_jev' in r.agreement && fraction(r.agreement.laya_vs_jev), 'agreement.laya_vs_jev must be a fraction or null');
+  assert(r.agreement && 'laya_vs_jev' in r.agreement, 'agreement.laya_vs_jev required (null when Jev was not run)');
+  agreementFraction(r.agreement.laya_vs_jev);
   assert(Array.isArray(r.notes) && r.notes.every(n => typeof n === 'string'), 'notes must be strings');
   assert(!/\/Users\/|\/private\/|\/home\/[^\s"]+/.test(JSON.stringify(r)), 'Private local paths in results');
   return r;
@@ -74,6 +84,7 @@ export function validateManifest(manifest, bytes) {
 
 const pct = x => x === null || x === undefined ? 'not run' : `${(x * 100).toFixed(1)}%`;
 const num = (x, unit, digits = 0) => x === null || x === undefined ? '—' : `${x.toFixed(digits)} ${unit}`;
+const highConfidence = m => Number.isInteger(m.detail?.highConfidenceAnswers) ? ` (${m.detail.highConfidenceCorrect} of ${m.detail.highConfidenceAnswers} such answers${Number.isInteger(m.detail.rows) ? `; only ${m.detail.highConfidenceAnswers} of ${m.detail.rows} answers reached that confidence` : ''})` : '';
 const isJev = id => /jev/i.test(id) && !/laya/i.test(id);
 const isLaya = id => /laya/i.test(id);
 
@@ -90,11 +101,11 @@ export function verdicts(r) {
       out.push({ id: `${id}-accuracy`, label: gap > refutation.accuracyMarginPoints ? 'RED' : 'GREEN', text: `${id}: ${pct(m.accuracy)} against Jev ${pct(jev.accuracy)} on the same rows (${gap > 0 ? gap.toFixed(1) + ' points behind' : (-gap).toFixed(1) + ' points ahead or level'}; refuted beyond ${refutation.accuracyMarginPoints}).` });
     }
     if (m.calibratedAccuracy === null) out.push({ id: `${id}-confidence`, label: 'UNVERIFIED', text: `${id}: no answers reached 0.9 confidence, so the confidence signal could not be tested.` });
-    else out.push({ id: `${id}-confidence`, label: m.calibratedAccuracy >= m.accuracy ? 'GREEN' : 'RED', text: `${id}: answers at confidence ≥ 0.9 were ${pct(m.calibratedAccuracy)} correct against ${pct(m.accuracy)} overall.` });
+    else out.push({ id: `${id}-confidence`, label: m.calibratedAccuracy >= m.accuracy ? 'GREEN' : 'RED', text: `${id}: answers at confidence ≥ 0.9 were ${pct(m.calibratedAccuracy)} correct${highConfidence(m)} against ${pct(m.accuracy)} overall.` });
     if (jev && isNum(m.p50Ms) && isNum(jev.p50Ms)) out.push({ id: `${id}-latency`, label: m.p50Ms < jev.p50Ms ? 'GREEN' : 'RED', text: `${id}: median ${num(m.p50Ms,'ms')} locally against ${num(jev.p50Ms,'ms')} for the hosted call, including network.` });
   }
-  const parity = r.parity;
-  if (parity && Number.isInteger(parity.decisionMismatches) && isNum(parity.maxTopProbDelta)) out.push({ id: 'parity', label: parity.decisionMismatches === 0 && parity.maxTopProbDelta <= refutation.parityMaxDelta ? 'GREEN' : 'RED', text: `Port parity: ${parity.decisionMismatches} decision mismatches against the reference implementation; maximum top-probability delta ${parity.maxTopProbDelta}.` });
+  const parity = r.parity && { ...r.parity, decisionMismatches: Number.isInteger(r.parity.decisionMismatches) ? r.parity.decisionMismatches : Number.isInteger(r.parity.rows) && Number.isInteger(r.parity.sameDecision) ? r.parity.rows - r.parity.sameDecision : undefined };
+  if (parity && Number.isInteger(parity.decisionMismatches) && isNum(parity.maxTopProbDelta)) out.push({ id: 'parity', label: parity.decisionMismatches === 0 && parity.maxTopProbDelta <= refutation.parityMaxDelta ? 'GREEN' : 'RED', text: `Port parity: ${parity.decisionMismatches} decision mismatches against the reference implementation${Number.isInteger(parity.rows) ? ` across ${parity.rows} rows` : ''}; maximum top-probability delta ${parity.maxTopProbDelta}.` });
   else out.push({ id: 'parity', label: 'UNVERIFIED', text: 'Port parity is not a field of this results record; see the notes below and the experiment’s own test.' });
   return out;
 }
@@ -107,16 +118,24 @@ export function renderArticle({ results, manifest, fixture = false }) {
   const isFixture = fixture || 'fixture' in results;
   if (!isFixture) assert(manifest, 'A measured article needs its copy manifest');
   const measuredDay = new Date(results.measuredAt).toISOString().slice(0, 10);
-  const displayDay = new Date(results.measuredAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase();
-  const jevRun = results.agreement.laya_vs_jev !== null;
-  const rows = Object.entries(results.perModel).map(([id, m]) => `<tr><th scope="row"><code>${escape(id)}</code></th><td>${pct(m.accuracy)}</td><td>${m.accuracy !== null && m.calibratedAccuracy === null ? 'no answers ≥ 0.9' : pct(m.calibratedAccuracy)}</td><td>${num(m.p50Ms,'ms')} / ${num(m.p90Ms,'ms')} / ${num(m.maxMs,'ms')}</td><td>${num(m.coldLoadS,'s',1)}</td><td>${m.costPer1kUsd === null ? 'none billed' : '$' + m.costPer1kUsd.toFixed(4)}</td></tr>`).join('');
+  const displayDay = `${measuredDay.slice(8, 10)} ${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][Number(measuredDay.slice(5, 7)) - 1]} ${measuredDay.slice(0, 4)}`;
+  const agreement = agreementFraction(results.agreement.laya_vs_jev);
+  const jevRun = agreement !== null;
+  const agreementCounts = results.agreement.laya_vs_jev?.comparedRows ? ` (${results.agreement.laya_vs_jev.agree} of ${results.agreement.laya_vs_jev.comparedRows} rows)` : '';
+  const typed = Object.entries(results.perModel).filter(([, m]) => m.detail?.byType);
+  const types = [...new Set(typed.flatMap(([, m]) => Object.keys(m.detail.byType)))];
+  const byType = typed.length ? `<div role="region" aria-label="Accuracy by answer type" tabindex="0" style="overflow-x:auto"><table><caption class="technical">CORRECT BY ANSWER TYPE</caption><thead><tr><th scope="col">Model</th>${types.map(t => `<th scope="col"><code>${escape(t)}</code></th>`).join('')}</tr></thead><tbody>${typed.map(([id, m]) => `<tr><th scope="row"><code>${escape(id)}</code></th>${types.map(t => `<td>${m.detail.byType[t] ? `${m.detail.byType[t].correct} / ${m.detail.byType[t].rows}` : '—'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+  const rows = Object.entries(results.perModel).map(([id, m]) => `<tr><th scope="row"><code>${escape(id)}</code></th><td>${pct(m.accuracy)}${Number.isInteger(m.detail?.correct) ? ` (${m.detail.correct}/${m.detail.rows})` : ''}</td><td>${m.accuracy !== null && m.calibratedAccuracy === null ? 'no answers ≥ 0.9' : pct(m.calibratedAccuracy) + (Number.isInteger(m.detail?.highConfidenceAnswers) ? ` (${m.detail.highConfidenceCorrect}/${m.detail.highConfidenceAnswers})` : '')}</td><td>${num(m.p50Ms,'ms')} / ${num(m.p90Ms,'ms')} / ${num(m.maxMs,'ms')}</td><td>${num(m.coldLoadS,'s',1)}</td><td>${m.costPer1kUsd === null ? 'none billed' : '$' + m.costPer1kUsd.toFixed(4)}</td></tr>`).join('');
   const models = results.models.map(m => `<li><code>${escape(m.id)}</code>: ${escape(m.source)}${m.sha ? `, revision <code>${escape(m.sha)}</code>` : ''}; ${escape(m.license)}; backend ${escape(m.backend)}.</li>`).join('');
   const machine = Object.entries(results.machine).map(([k, v]) => `${escape(k)} ${escape(typeof v === 'object' ? JSON.stringify(v) : v)}`).join(' · ');
-  const verdictItems = verdicts(results).map(v => `<li><strong>${v.label}</strong> ${escape(v.text)}</li>`).join('');
+  const judged = verdicts(results);
+  const verdictItems = judged.map(v => `<li><strong>${v.label}</strong> ${escape(v.text)}</li>`).join('');
+  const count = label => judged.filter(v => v.label === label).length;
+  const summary = count('RED') ? `On these ${results.corpus.rows} rows the claim is refuted as stated: ${count('RED')} of ${judged.length} pre-registered checks ${count('RED') === 1 ? 'is' : 'are'} RED. The result is kept as recorded, not re-scored.` : count('UNVERIFIED') ? `Not refuted on these ${results.corpus.rows} rows, but ${count('UNVERIFIED')} of ${judged.length} checks could not be made.` : `Not refuted on these ${results.corpus.rows} rows: every pre-registered check is GREEN.`;
   const notes = results.notes.length ? `<ul>${results.notes.map(n => `<li>${escape(n)}</li>`).join('')}</ul>` : '<p>The record carries no notes.</p>';
   const provenance = isFixture
     ? '<p><strong>FIXTURE.</strong> This rendering uses invented renderer-test values. It is not a measurement and must never be published.</p>'
-    : `<p>The figures above are rendered at build-authoring time from <a href="../data/laya-vs-jev/${escape(manifest.file)}"><code>${escape(manifest.file)}</code></a>, copied byte-for-byte from <code>${escape(manifest.source.path)}</code> on branch <code>${escape(manifest.source.branch)}</code> of <code>${escape(manifest.source.repository)}</code> at revision <code>${escape(manifest.source.revision)}</code>. Its sha256 is <code>${escape(manifest.sha256)}</code>; the <a href="../data/laya-vs-jev/manifest.json">copy manifest</a> records both. A repository test re-renders this page from that file and fails if they differ.</p>`;
+    : `<p>The figures above are rendered at build-authoring time from <a href="../data/laya-vs-jev/${escape(manifest.file)}"><code>${escape(manifest.file)}</code></a>, copied byte-for-byte from <code>${escape(manifest.source.path)}</code> on branch <code>${escape(manifest.source.branch)}</code> of <code>${escape(manifest.source.repository)}</code>, ${manifest.source.committedAtRevision ? 'as committed at' : 'as an uncommitted file on top of'} revision <code>${escape(manifest.source.revision)}</code>. Its sha256 is <code>${escape(manifest.sha256)}</code>; the <a href="../data/laya-vs-jev/manifest.json">copy manifest</a> records both. A repository test re-renders this page from that file and fails if they differ.</p>`;
   const sourceItems = sources.map(s => `<li><a href="${escape(s.url)}">${escape(s.label)}</a>. <em>${escape(s.kind)}</em>, accessed ${accessedOn}: ${escape(s.claim)}</li>`).join('');
   return `${header}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1><span style="white-space:nowrap">System-1</span> decisions without <span style="white-space:nowrap">lock-in</span>: Jev vs open-weight Laya</h1><p class="article-meta">EXPERIMENT NOTE / 001 · MEASURED ${escape(displayDay)} · ${isFixture ? 'FIXTURE — NOT A MEASUREMENT' : 'LOCAL MEASUREMENT'}</p></header><article class="article-body">
 ${isFixture ? '<p><strong>FIXTURE — NOT A MEASUREMENT.</strong> Every number on this rendering is invented to test the page. Do not publish it.</p>\n' : ''}<p>A new kind of model answers software’s small questions directly. Instead of writing text, it takes some state and a typed question (pick one option, give a score, say whether a statement holds) and returns an answer with a probability. TypeSafe calls this a System One model; its hosted model is Jev.</p>
@@ -125,7 +144,7 @@ ${isFixture ? '<p><strong>FIXTURE — NOT A MEASUREMENT.</strong> Every number o
 <p>Can an open-weight model answer the same typed decisions on an ordinary laptop, well enough that the hosted model becomes an optional comparison rather than a requirement?</p>
 <p>The candidate is Laya, an Apache-2.0 decision model from Convai Innovations: a ModernBERT-large encoder with a small decision head, published on Hugging Face. Its authors report beating Jev on their own benchmark. A comparison site reports the opposite on a different one. Both are claims. This note records what happened on one machine, on questions we wrote ourselves.</p>
 <h2>The method</h2>
-<ul><li>A public corpus of ${results.corpus.rows} hand-written rows, balanced over the three answer types (<code>choice</code>, <code>score</code>, <code>noul</code>), each with its expected answer written before any model ran. Corpus sha256 <code>${escape(results.corpus.sha256)}</code>.</li><li>Laya loads from a pinned Hugging Face revision and runs locally. Nothing in the local path needs a Jev key.</li><li>Jev is called only when a key is present in the environment at run time, as a comparison. Without a key the run still completes and Jev is marked not run.</li><li>Each model answers every row sequentially. We record accuracy against the expected answers, accuracy of the answers given with at least 0.9 confidence, per-call latency and cold-load time.</li></ul>
+<ul><li>A public corpus of ${results.corpus.rows} hand-written rows, balanced over the three answer types (<code>choice</code>, <code>score</code>, <code>noul</code>), each with its expected answer written before any model ran. Corpus sha256 <code>${escape(results.corpus.sha256)}</code>.</li><li>Laya loads from a pinned Hugging Face revision and runs locally.</li><li>Jev is called only when a key is present in the environment at run time, as a comparison. Without a key the run still completes and Jev is recorded as not run; the experiment’s own test (<code>test_no_key_means_not_run</code>) checks that path.</li><li>Each model answers every row sequentially. We record accuracy against the expected answers, accuracy of the answers given with at least 0.9 confidence, per-call latency and cold-load time.</li></ul>
 <p>Models in this recording:</p><ul>${models}</ul>
 <p>Machine: ${machine}. Measured ${escape(results.measuredAt)}.</p>
 <h2>What would prove it wrong</h2>
@@ -133,13 +152,15 @@ ${isFixture ? '<p><strong>FIXTURE — NOT A MEASUREMENT.</strong> Every number o
 <ul><li>Laya is more than ${refutation.accuracyMarginPoints} percentage points less accurate than Jev on the same rows.</li><li>Laya’s answers at confidence 0.9 or above are less accurate than its answers overall, so its confidence cannot be used to decide when to escalate.</li><li>The local port disagrees with the model’s reference implementation on any row, or its top probability differs by more than ${refutation.parityMaxDelta}.</li><li>Laya is slower per call on this machine than the hosted Jev call. This tests the speed claim, not the lock-in claim.</li></ul>
 <h2>What we measured</h2>
 <div role="region" aria-label="Measured results table" tabindex="0" style="overflow-x:auto"><table><caption class="technical">${isFixture ? 'FIXTURE VALUES' : 'MEASURED ON THIS MACHINE'} · ${escape(measuredDay)} · ${results.corpus.rows} ROWS</caption><thead><tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Accuracy at ≥ 0.9</th><th scope="col">p50 / p90 / max</th><th scope="col">Cold load</th><th scope="col">Cost / 1k calls</th></tr></thead><tbody>${rows}</tbody></table></div>
-<p>Agreement between Laya and Jev: ${jevRun ? pct(results.agreement.laya_vs_jev) + ' of rows.' : 'not measured; Jev was not run in this recording.'}</p>
+${byType}
+<p>Agreement between Laya and Jev: ${jevRun ? `${pct(agreement)} of rows${agreementCounts}.` : 'not measured; Jev was not run in this recording.'} Latency is one call per row, sequential, on a shared machine; Jev’s includes the public internet. Cost for Jev is computed from a listed price, not an invoice; Laya runs locally and has no per-call price (hardware and electricity were not measured).</p>
 <h2>Against the criteria</h2>
 <ul>${verdictItems}</ul>
+<p>${escape(summary)}</p>
 <h2>Notes the run recorded</h2>
 ${notes}
 <h2>What this does not establish</h2>
-<ul><li>${results.corpus.rows} authored rows are a mechanism check, not a benchmark. They do not predict accuracy on your decisions, in other languages or in other domains.</li><li>One machine, one run. The latencies describe this laptop under its load at the time; they are not a hosted-service comparison at scale.</li><li>Jev’s latency includes the network and whatever the hosted service was doing at the time. It is not Jev’s model speed.</li><li>Nothing here tests fine-tuning, long inputs beyond the model’s context, or label sets larger than the corpus uses.</li><li>Vendor, model-author and comparison-site figures below are claims. We did not reproduce them, and our numbers neither confirm nor refute them.</li></ul>
+<ul><li>${results.corpus.rows} authored rows are a mechanism check, not a benchmark. They do not predict accuracy on your decisions, in other languages or in other domains.</li><li>One machine, one run. The latencies describe this laptop under its load at the time; they are not a hosted-service comparison at scale.</li><li>Jev’s latency includes the network and whatever the hosted service was doing at the time. It is not Jev’s model speed.</li><li>Accuracy at 0.9 confidence can rest on very few answers. The counts beside each figure are its denominator; a handful of confident answers says little about calibration.</li><li>Nothing here tests fine-tuning, long inputs beyond the model’s context, or label sets larger than the corpus uses.</li><li>Vendor, model-author and comparison-site figures below are claims. We did not reproduce them, and our numbers neither confirm nor refute them.</li></ul>
 <h2>Provenance</h2>
 ${provenance}
 <h2>Sources</h2>
@@ -152,7 +173,7 @@ function importResults(sourceFile, sourceRepoRoot) {
   const bytes = readFileSync(sourceFile);
   const results = validateResults(JSON.parse(bytes));
   assert(!('fixture' in results), 'Refusing to import a fixture');
-  const git = args => execFileSync('git', ['-C', sourceRepoRoot, ...args], { encoding: 'utf8' }).trim();
+  const git = args => execFileSync('git', ['-C', sourceRepoRoot, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   const relative = git(['ls-files', '--full-name', '--others', '--cached', '--', sourceFile]) || sourceFile.slice(sourceRepoRoot.length + 1);
   const revision = git(['rev-parse', 'HEAD']);
   const committedAtRevision = (() => { try { git(['cat-file', '-e', `${revision}:${relative}`]); return git(['diff', '--quiet', revision, '--', relative]) === ''; } catch { return false; } })();
