@@ -1,0 +1,1570 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-09-24T13:34:28Z",
+  "machine": {
+    "chip": "Apple M5 Max",
+    "ramGb": 128,
+    "os": "macOS 26.6.1",
+    "arch": "arm64",
+    "python": "3.12.13",
+    "loadAverageAtStart": [
+      35.6,
+      47.3,
+      46.7
+    ],
+    "loadAverageAtEnd": [
+      43.9,
+      47.3,
+      46.8
+    ]
+  },
+  "models": [
+    {
+      "id": "laya-typed-decisions",
+      "source": "https://huggingface.co/convaiinnovations/laya/tree/55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851/typed-decisions",
+      "sha": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+      "license": "Apache-2.0",
+      "backend": "mlx 0.32.2 (Device(gpu, 0)), float32"
+    },
+    {
+      "id": "jev",
+      "source": "https://jev-ai.pro/api/v1/systemone (hosted, TypeSafe-compatible)",
+      "sha": null,
+      "license": "proprietary, hosted",
+      "backend": "hosted API, requested model jev-1.13.0"
+    }
+  ],
+  "corpus": {
+    "rows": 48,
+    "sha256": "6e7c1a4d1a12116ac2b45ccb30ae9fc46d4048dd664debd38bd6c86f0c68e029",
+    "path": "experiments/laya-vs-jev/corpus.json",
+    "byType": {
+      "choice": 16,
+      "score": 16,
+      "noul": 16
+    }
+  },
+  "perModel": {
+    "laya-typed-decisions": {
+      "accuracy": 0.8125,
+      "calibratedAccuracy": 1.0,
+      "p50Ms": 8.71,
+      "p90Ms": 10.46,
+      "maxMs": 71.77,
+      "coldLoadS": 0.805,
+      "costPer1kUsd": null,
+      "detail": {
+        "correct": 39,
+        "answered": 48,
+        "rows": 48,
+        "highConfidenceAnswers": 2,
+        "highConfidenceCorrect": 2,
+        "byType": {
+          "choice": {
+            "correct": 15,
+            "rows": 16
+          },
+          "score": {
+            "correct": 11,
+            "rows": 16
+          },
+          "noul": {
+            "correct": 13,
+            "rows": 16
+          }
+        },
+        "firstCallMs": 38.4
+      }
+    },
+    "jev": {
+      "accuracy": 0.9583,
+      "calibratedAccuracy": 1.0,
+      "p50Ms": 378.43,
+      "p90Ms": 828.31,
+      "maxMs": 1176.36,
+      "coldLoadS": null,
+      "costPer1kUsd": 0.084463,
+      "detail": {
+        "correct": 46,
+        "answered": 48,
+        "rows": 48,
+        "highConfidenceAnswers": 36,
+        "highConfidenceCorrect": 36,
+        "byType": {
+          "choice": {
+            "correct": 16,
+            "rows": 16
+          },
+          "score": {
+            "correct": 14,
+            "rows": 16
+          },
+          "noul": {
+            "correct": 16,
+            "rows": 16
+          }
+        },
+        "meanInputTokens": 349.0,
+        "failures": {},
+        "servedModels": [
+          "jev-1.13.0"
+        ]
+      }
+    }
+  },
+  "agreement": {
+    "laya_vs_jev": {
+      "percent": 77.08,
+      "agree": 37,
+      "comparedRows": 48
+    }
+  },
+  "parity": {
+    "rows": 48,
+    "sameDecision": 48,
+    "maxTopProbDelta": 0.002097,
+    "maxAnyProbDelta": 0.002097,
+    "threshold": 0.01,
+    "mismatches": [],
+    "passed": true,
+    "note": "Reference probabilities are the upstream system_one output, which rounds to 4 decimals; rounding contributes at most 0.00005 to each delta.",
+    "status": "passed",
+    "reference": {
+      "implementation": "convaiinnovations/laya@55cf4c4ebb4e rl_agent_api.RLAgent.system_one",
+      "device": "cpu",
+      "torch": "2.14.0",
+      "transformers": "5.17.0",
+      "threads": 6,
+      "coldLoadS": 62.73,
+      "p50Ms": 155.82,
+      "p90Ms": 411.43,
+      "maxMs": 538.0
+    }
+  },
+  "weights": {
+    "repo": "convaiinnovations/laya",
+    "sha": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "subdir": "typed-decisions",
+    "fileSha256": {
+      "typed-decisions/model.safetensors": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+      "typed-decisions/rl_agent_config.json": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+      "typed-decisions/encoder/config.json": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+      "typed-decisions/tokenizer/tokenizer.json": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+      "typed-decisions/tokenizer/tokenizer_config.json": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+      "rl_agent_api.py": "be3b46819c9999c3ef88e0f2ecf6d3ab1cdfed1d9a8b466fc89811e34d44031b",
+      "rl_common.py": "8d83611d480c971d640a7b7d3aa2f2219c5e8455e9cc2329fd073681bd8be23e"
+    }
+  },
+  "runtime": {
+    "mlx": "0.32.2",
+    "numpy": "2.5.3",
+    "python": "3.12.13"
+  },
+  "jevStatus": "run",
+  "rows": [
+    {
+      "id": "c01",
+      "type": "choice",
+      "expected": "billing",
+      "laya": {
+        "decision": "billing",
+        "topProb": 0.7591338924655915,
+        "confidence": 0.41332557285797955,
+        "confidenceSource": "reported",
+        "ms": 9.52,
+        "tokens": 65
+      },
+      "reference": {
+        "decision": "billing",
+        "topProb": 0.7595,
+        "confidence": 0.4139,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "billing",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 1176.36,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 366
+      }
+    },
+    {
+      "id": "c02",
+      "type": "choice",
+      "expected": "technical",
+      "laya": {
+        "decision": "technical",
+        "topProb": 0.7316081688493244,
+        "confidence": 0.3973856469682404,
+        "confidenceSource": "reported",
+        "ms": 9.62,
+        "tokens": 68
+      },
+      "reference": {
+        "decision": "technical",
+        "topProb": 0.7319,
+        "confidence": 0.3978,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "technical",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 403.51,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 371
+      }
+    },
+    {
+      "id": "c03",
+      "type": "choice",
+      "expected": "sales",
+      "laya": {
+        "decision": "sales",
+        "topProb": 0.4448032433273546,
+        "confidence": 0.10552645711877995,
+        "confidenceSource": "reported",
+        "ms": 9.8,
+        "tokens": 70
+      },
+      "reference": {
+        "decision": "sales",
+        "topProb": 0.4469,
+        "confidence": 0.1066,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "sales",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 348.36,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 373
+      }
+    },
+    {
+      "id": "c04",
+      "type": "choice",
+      "expected": "account_access",
+      "laya": {
+        "decision": "account_access",
+        "topProb": 0.6189163731718973,
+        "confidence": 0.24490415883622574,
+        "confidenceSource": "reported",
+        "ms": 9.03,
+        "tokens": 71
+      },
+      "reference": {
+        "decision": "account_access",
+        "topProb": 0.6182,
+        "confidence": 0.2441,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "account_access",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 401.82,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 375
+      }
+    },
+    {
+      "id": "c05",
+      "type": "choice",
+      "expected": "cancellation",
+      "laya": {
+        "decision": "cancellation",
+        "topProb": 0.8688251363720237,
+        "confidence": 0.619034045356931,
+        "confidenceSource": "reported",
+        "ms": 8.73,
+        "tokens": 67
+      },
+      "reference": {
+        "decision": "cancellation",
+        "topProb": 0.8688,
+        "confidence": 0.619,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "cancellation",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 778.69,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 371
+      }
+    },
+    {
+      "id": "c06",
+      "type": "choice",
+      "expected": "data_export",
+      "laya": {
+        "decision": "data_export",
+        "topProb": 0.6802907301992698,
+        "confidence": 0.30439528249582115,
+        "confidenceSource": "reported",
+        "ms": 8.4,
+        "tokens": 66
+      },
+      "reference": {
+        "decision": "data_export",
+        "topProb": 0.6801,
+        "confidence": 0.3042,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "data_export",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 365.93,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 370
+      }
+    },
+    {
+      "id": "c07",
+      "type": "choice",
+      "expected": "docs",
+      "laya": {
+        "decision": "docs",
+        "topProb": 0.37177649754785597,
+        "confidence": 0.051005899135757704,
+        "confidenceSource": "reported",
+        "ms": 9.08,
+        "tokens": 78
+      },
+      "reference": {
+        "decision": "docs",
+        "topProb": 0.372,
+        "confidence": 0.0511,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "docs",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 835.1,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 375
+      }
+    },
+    {
+      "id": "c08",
+      "type": "choice",
+      "expected": "dependency",
+      "laya": {
+        "decision": "dependency",
+        "topProb": 0.45309912690719706,
+        "confidence": 0.07745798800674286,
+        "confidenceSource": "reported",
+        "ms": 8.68,
+        "tokens": 75
+      },
+      "reference": {
+        "decision": "dependency",
+        "topProb": 0.4539,
+        "confidence": 0.0781,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "dependency",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 925.46,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 380
+      }
+    },
+    {
+      "id": "c09",
+      "type": "choice",
+      "expected": "bugfix",
+      "laya": {
+        "decision": "bugfix",
+        "topProb": 0.6884816539652869,
+        "confidence": 0.31303901291185454,
+        "confidenceSource": "reported",
+        "ms": 8.82,
+        "tokens": 73
+      },
+      "reference": {
+        "decision": "bugfix",
+        "topProb": 0.6894,
+        "confidence": 0.3142,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "bugfix",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 833.95,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 371
+      }
+    },
+    {
+      "id": "c10",
+      "type": "choice",
+      "expected": "feature",
+      "laya": {
+        "decision": "feature",
+        "topProb": 0.41584165240433424,
+        "confidence": 0.07524677438732263,
+        "confidenceSource": "reported",
+        "ms": 9.24,
+        "tokens": 62
+      },
+      "reference": {
+        "decision": "feature",
+        "topProb": 0.4158,
+        "confidence": 0.0753,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "feature",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 790.16,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 363
+      }
+    },
+    {
+      "id": "c11",
+      "type": "choice",
+      "expected": "cooking",
+      "laya": {
+        "decision": "cooking",
+        "topProb": 0.8161247988965661,
+        "confidence": 0.5106832324739915,
+        "confidenceSource": "reported",
+        "ms": 9.05,
+        "tokens": 57
+      },
+      "reference": {
+        "decision": "cooking",
+        "topProb": 0.8163,
+        "confidence": 0.511,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "cooking",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 760.66,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 366
+      }
+    },
+    {
+      "id": "c12",
+      "type": "choice",
+      "expected": "sport",
+      "laya": {
+        "decision": "sport",
+        "topProb": 0.8829538478425022,
+        "confidence": 0.6469258632784647,
+        "confidenceSource": "reported",
+        "ms": 8.31,
+        "tokens": 57
+      },
+      "reference": {
+        "decision": "sport",
+        "topProb": 0.8831,
+        "confidence": 0.6473,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "sport",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 352.68,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 362
+      }
+    },
+    {
+      "id": "c13",
+      "type": "choice",
+      "expected": "finance",
+      "laya": {
+        "decision": "finance",
+        "topProb": 0.8990096050848622,
+        "confidence": 0.6839142994955683,
+        "confidenceSource": "reported",
+        "ms": 8.68,
+        "tokens": 58
+      },
+      "reference": {
+        "decision": "finance",
+        "topProb": 0.8992,
+        "confidence": 0.6843,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "finance",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 375.24,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 361
+      }
+    },
+    {
+      "id": "c14",
+      "type": "choice",
+      "expected": "travel",
+      "laya": {
+        "decision": "travel",
+        "topProb": 0.8232304365429647,
+        "confidence": 0.5262762799452873,
+        "confidenceSource": "reported",
+        "ms": 8.82,
+        "tokens": 60
+      },
+      "reference": {
+        "decision": "travel",
+        "topProb": 0.8232,
+        "confidence": 0.5261,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "travel",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 340.65,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 367
+      }
+    },
+    {
+      "id": "c15",
+      "type": "choice",
+      "expected": "test_failure",
+      "laya": {
+        "decision": "test_failure",
+        "topProb": 0.5806502243077953,
+        "confidence": 0.20657895624392209,
+        "confidenceSource": "reported",
+        "ms": 18.37,
+        "tokens": 285
+      },
+      "reference": {
+        "decision": "test_failure",
+        "topProb": 0.581,
+        "confidence": 0.2073,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "test_failure",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 374.62,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 592
+      }
+    },
+    {
+      "id": "c16",
+      "type": "choice",
+      "expected": "network",
+      "laya": {
+        "decision": "test_failure",
+        "topProb": 0.38089800498930176,
+        "confidence": 0.0572675053268753,
+        "confidenceSource": "reported",
+        "ms": 71.77,
+        "tokens": 288
+      },
+      "reference": {
+        "decision": "test_failure",
+        "topProb": 0.3814,
+        "confidence": 0.0574,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": "network",
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 378.48,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 588
+      }
+    },
+    {
+      "id": "s01",
+      "type": "score",
+      "expected": 2,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.7341656782673387,
+        "confidence": 0.42577704347754297,
+        "confidenceSource": "reported",
+        "ms": 8.87,
+        "tokens": 53
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.7343,
+        "confidence": 0.426,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 762.46,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 321
+      }
+    },
+    {
+      "id": "s02",
+      "type": "score",
+      "expected": 0,
+      "laya": {
+        "decision": 0,
+        "topProb": 0.5098066559663468,
+        "confidence": 0.07054873829079278,
+        "confidenceSource": "reported",
+        "ms": 9.31,
+        "tokens": 58
+      },
+      "reference": {
+        "decision": 0,
+        "topProb": 0.5108,
+        "confidence": 0.071,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 0,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 340.59,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 326
+      }
+    },
+    {
+      "id": "s03",
+      "type": "score",
+      "expected": 1,
+      "laya": {
+        "decision": 1,
+        "topProb": 0.46636021955145324,
+        "confidence": 0.14482092005659752,
+        "confidenceSource": "reported",
+        "ms": 9.6,
+        "tokens": 55
+      },
+      "reference": {
+        "decision": 1,
+        "topProb": 0.4664,
+        "confidence": 0.1448,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 0.69,
+        "confidence": 0.53,
+        "confidenceSource": "reported",
+        "ms": 382.96,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 323
+      }
+    },
+    {
+      "id": "s04",
+      "type": "score",
+      "expected": 0,
+      "laya": {
+        "decision": 0,
+        "topProb": 0.9678830645196498,
+        "confidence": 0.8723766670494076,
+        "confidenceSource": "reported",
+        "ms": 9.43,
+        "tokens": 57
+      },
+      "reference": {
+        "decision": 0,
+        "topProb": 0.9679,
+        "confidence": 0.8725,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 0,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 315.05,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 326
+      }
+    },
+    {
+      "id": "s05",
+      "type": "score",
+      "expected": 3,
+      "laya": {
+        "decision": 3,
+        "topProb": 0.6964760520043237,
+        "confidence": 0.43190675411129986,
+        "confidenceSource": "reported",
+        "ms": 8.33,
+        "tokens": 55
+      },
+      "reference": {
+        "decision": 3,
+        "topProb": 0.6969,
+        "confidence": 0.4327,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 3,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 363.08,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 325
+      }
+    },
+    {
+      "id": "s06",
+      "type": "score",
+      "expected": 2,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.4009655164149344,
+        "confidence": 0.15852182214470179,
+        "confidenceSource": "reported",
+        "ms": 9.07,
+        "tokens": 60
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.4014,
+        "confidence": 0.1589,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 787.41,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 329
+      }
+    },
+    {
+      "id": "s07",
+      "type": "score",
+      "expected": 1,
+      "laya": {
+        "decision": 1,
+        "topProb": 0.4713206118893929,
+        "confidence": 0.2586716134506597,
+        "confidenceSource": "reported",
+        "ms": 8.18,
+        "tokens": 56
+      },
+      "reference": {
+        "decision": 1,
+        "topProb": 0.4716,
+        "confidence": 0.2588,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 1,
+        "topProb": 0.68,
+        "confidence": 0.67,
+        "confidenceSource": "reported",
+        "ms": 387.95,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 326
+      }
+    },
+    {
+      "id": "s08",
+      "type": "score",
+      "expected": 0,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.3529342188100105,
+        "confidence": 0.04788018761524626,
+        "confidenceSource": "reported",
+        "ms": 8.84,
+        "tokens": 56
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.3529,
+        "confidence": 0.048,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 0,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 319.21,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 327
+      }
+    },
+    {
+      "id": "s09",
+      "type": "score",
+      "expected": 3,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.3705868008525366,
+        "confidence": 0.06845622796903283,
+        "confidenceSource": "reported",
+        "ms": 8.49,
+        "tokens": 66
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.3705,
+        "confidence": 0.0685,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 3,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 342.22,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 338
+      }
+    },
+    {
+      "id": "s10",
+      "type": "score",
+      "expected": 1,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.3899733663879514,
+        "confidence": 0.116098727259209,
+        "confidenceSource": "reported",
+        "ms": 9.36,
+        "tokens": 63
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.3901,
+        "confidence": 0.1163,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 1,
+        "topProb": 0.52,
+        "confidence": 0.52,
+        "confidenceSource": "reported",
+        "ms": 326.86,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 331
+      }
+    },
+    {
+      "id": "s11",
+      "type": "score",
+      "expected": 2,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.4286091927162839,
+        "confidence": 0.05436229638210399,
+        "confidenceSource": "reported",
+        "ms": 8.36,
+        "tokens": 44
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.429,
+        "confidence": 0.0545,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 1.0,
+        "confidence": 0.99,
+        "confidenceSource": "reported",
+        "ms": 303.58,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 314
+      }
+    },
+    {
+      "id": "s12",
+      "type": "score",
+      "expected": 0,
+      "laya": {
+        "decision": 1,
+        "topProb": 0.42805178037810276,
+        "confidence": 0.02870472288338244,
+        "confidenceSource": "reported",
+        "ms": 8.59,
+        "tokens": 46
+      },
+      "reference": {
+        "decision": 1,
+        "topProb": 0.4284,
+        "confidence": 0.0287,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 0,
+        "topProb": 0.99,
+        "confidence": 0.98,
+        "confidenceSource": "reported",
+        "ms": 413.4,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 316
+      }
+    },
+    {
+      "id": "s13",
+      "type": "score",
+      "expected": 1,
+      "laya": {
+        "decision": 1,
+        "topProb": 0.3901948454321524,
+        "confidence": 0.04059721624527313,
+        "confidenceSource": "reported",
+        "ms": 9.26,
+        "tokens": 61
+      },
+      "reference": {
+        "decision": 1,
+        "topProb": 0.391,
+        "confidence": 0.041,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 0.65,
+        "confidence": 0.65,
+        "confidenceSource": "reported",
+        "ms": 429.85,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 332
+      }
+    },
+    {
+      "id": "s14",
+      "type": "score",
+      "expected": 3,
+      "laya": {
+        "decision": 3,
+        "topProb": 0.46816123523368186,
+        "confidence": 0.20583982031499182,
+        "confidenceSource": "reported",
+        "ms": 8.41,
+        "tokens": 58
+      },
+      "reference": {
+        "decision": 3,
+        "topProb": 0.4683,
+        "confidence": 0.206,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 3,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 358.11,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 328
+      }
+    },
+    {
+      "id": "s15",
+      "type": "score",
+      "expected": 2,
+      "laya": {
+        "decision": 2,
+        "topProb": 0.7901166414013114,
+        "confidence": 0.4514030559893971,
+        "confidenceSource": "reported",
+        "ms": 11.99,
+        "tokens": 193
+      },
+      "reference": {
+        "decision": 2,
+        "topProb": 0.7904,
+        "confidence": 0.4519,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 2,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 863.53,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 471
+      }
+    },
+    {
+      "id": "s16",
+      "type": "score",
+      "expected": 0,
+      "laya": {
+        "decision": 1,
+        "topProb": 0.5483554361104005,
+        "confidence": 0.1909403130361933,
+        "confidenceSource": "reported",
+        "ms": 10.89,
+        "tokens": 155
+      },
+      "reference": {
+        "decision": 1,
+        "topProb": 0.5487,
+        "confidence": 0.191,
+        "confidenceSource": "reported"
+      },
+      "jev": {
+        "decision": 0,
+        "topProb": 1.0,
+        "confidence": 1.0,
+        "confidenceSource": "reported",
+        "ms": 348.26,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 426
+      }
+    },
+    {
+      "id": "n01",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": true,
+        "topProb": 0.751625728364079,
+        "confidence": 0.19130877687067427,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.31,
+        "tokens": 54
+      },
+      "reference": {
+        "decision": true,
+        "topProb": 0.7519,
+        "confidence": 0.19174721619680957,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.98,
+        "confidence": 0.8585594574581792,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 325.44,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 294
+      }
+    },
+    {
+      "id": "n02",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.9994895203392229,
+        "confidence": 0.9936811879913687,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.04,
+        "tokens": 51
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.9995,
+        "confidence": 0.9937959407041683,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 749.74,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 291
+      }
+    },
+    {
+      "id": "n03",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": false,
+        "topProb": 0.8351702274631619,
+        "confidence": 0.35426029073015575,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.02,
+        "tokens": 53
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.8356,
+        "confidence": 0.355267396925095,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.96,
+        "confidence": 0.7577078109175851,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 404.96,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 293
+      }
+    },
+    {
+      "id": "n04",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.8306296832842431,
+        "confidence": 0.3437376990278531,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.13,
+        "tokens": 51
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.8311,
+        "confidence": 0.344817752050641,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.94,
+        "confidence": 0.6725550808455236,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 369.9,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 291
+      }
+    },
+    {
+      "id": "n05",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": true,
+        "topProb": 0.6396757898094683,
+        "confidence": 0.05704802101841677,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.15,
+        "tokens": 58
+      },
+      "reference": {
+        "decision": true,
+        "topProb": 0.6404,
+        "confidence": 0.05764934176095671,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 384.31,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 325
+      }
+    },
+    {
+      "id": "n06",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.9660439266921953,
+        "confidence": 0.7861410706589302,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.06,
+        "tokens": 56
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.9662,
+        "confidence": 0.786895495383761,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.94,
+        "confidence": 0.6725550808455236,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 825.89,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 328
+      }
+    },
+    {
+      "id": "n07",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": true,
+        "topProb": 0.6880787805682438,
+        "confidence": 0.10462125751421714,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.14,
+        "tokens": 48
+      },
+      "reference": {
+        "decision": true,
+        "topProb": 0.6882,
+        "confidence": 0.10475966580011042,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 381.11,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 288
+      }
+    },
+    {
+      "id": "n08",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.9999026871120789,
+        "confidence": 0.9985627242199436,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 7.9,
+        "tokens": 47
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.9999,
+        "confidence": 0.9985269664716718,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 378.37,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 287
+      }
+    },
+    {
+      "id": "n09",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": false,
+        "topProb": 0.6904978077426528,
+        "confidence": 0.10740201107040759,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.28,
+        "tokens": 58
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.6909000000000001,
+        "confidence": 0.10786817002315141,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.9,
+        "confidence": 0.5310044064107189,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 401.65,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 298
+      }
+    },
+    {
+      "id": "n10",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.7587729824044718,
+        "confidence": 0.2029251805325053,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.22,
+        "tokens": 54
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.759,
+        "confidence": 0.2033007066096726,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.92,
+        "confidence": 0.5978208097977271,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 386.58,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 294
+      }
+    },
+    {
+      "id": "n11",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": false,
+        "topProb": 0.5674211339670663,
+        "confidence": 0.013155894299230475,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.04,
+        "tokens": 46
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.5674,
+        "confidence": 0.013147622578773888,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.93,
+        "confidence": 0.634076349099777,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 339.2,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 286
+      }
+    },
+    {
+      "id": "n12",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.8499407254010768,
+        "confidence": 0.3900113804554042,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.27,
+        "tokens": 41
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.8503000000000001,
+        "confidence": 0.39091095485208727,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 357.1,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 281
+      }
+    },
+    {
+      "id": "n13",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": true,
+        "topProb": 0.7171702893943899,
+        "confidence": 0.140722102709136,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.18,
+        "tokens": 57
+      },
+      "reference": {
+        "decision": true,
+        "topProb": 0.7175,
+        "confidence": 0.14116508699737174,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 359.72,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 297
+      }
+    },
+    {
+      "id": "n14",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.9656931739168734,
+        "confidence": 0.7844495094191678,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 8.07,
+        "tokens": 51
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.9657,
+        "confidence": 0.7844823780056923,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 349.61,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 291
+      }
+    },
+    {
+      "id": "n15",
+      "type": "noul",
+      "expected": true,
+      "laya": {
+        "decision": true,
+        "topProb": 0.7375593534513174,
+        "confidence": 0.16959294659296786,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 11.42,
+        "tokens": 172
+      },
+      "reference": {
+        "decision": true,
+        "topProb": 0.7378,
+        "confidence": 0.16995191061473192,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": true,
+        "topProb": 0.99,
+        "confidence": 0.9192068641040888,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 325.86,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 406
+      }
+    },
+    {
+      "id": "n16",
+      "type": "noul",
+      "expected": false,
+      "laya": {
+        "decision": false,
+        "topProb": 0.6663463213981842,
+        "confidence": 0.08138415373832364,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 10.28,
+        "tokens": 156
+      },
+      "reference": {
+        "decision": false,
+        "topProb": 0.6674,
+        "confidence": 0.08243924558097626,
+        "confidenceSource": "1-normalized-entropy"
+      },
+      "jev": {
+        "decision": false,
+        "topProb": 0.98,
+        "confidence": 0.8585594574581793,
+        "confidenceSource": "1-normalized-entropy",
+        "ms": 312.3,
+        "status": "ok",
+        "servedModel": "jev-1.13.0",
+        "inputTokens": 393
+      }
+    }
+  ],
+  "notes": [
+    "Backend: every model component (ModernBERT-large encoder, decision head, scorer, act head) runs in MLX on the Apple GPU in float32; no component falls back to torch-MPS. Tokenization uses the Hugging Face `tokenizers` library (Rust, CPU), which is not a model component.",
+    "coldLoadS = reading and upcasting the pinned safetensors plus the tokenizer, after Python imports and after the one-off download. The first call (38 ms, Metal kernel compilation) is excluded from p50/p90/max, which cover one call per corpus row, batch size 1, sequential.",
+    "costPer1kUsd is null for Laya: it runs locally and no per-call price applies; electricity and hardware were not measured.",
+    "Jev: 48 sequential calls, 15 s timeout, requested jev-1.13.0; served-model labels seen: jev-1.13.0. Latency is wall time from this Mac over the public internet, including failed calls. Accuracy counts an unanswered row as wrong.",
+    "Jev costPer1kUsd = measured mean input tokens per call x $0.242 per 1M input tokens, a vendor price CLAIM (jev-ai.pro/pricing, read 2026-09-24, highest listed annual-plan rate; listed range $0.124-$0.242; output tokens free). It is not an invoice.",
+    "calibratedAccuracy = accuracy of the answers whose confidence is >= 0.9 (confidence = the model's reported value; for Laya noul answers, which carry none, 1 - normalized entropy of [1-p, p]).",
+    "Decisions: choice = top key; score = most probable level; noul = probability >= 0.5.",
+    "Corpus: 48 hand-written public rows authored before any model ran; the expected answers are the author's judgment. A small authored corpus is not a benchmark; it supports mechanism and parity claims, not general accuracy claims.",
+    "Vendor figures (Laya eval/results.md, jev-ai.pro/compare) are CLAIMS and are not reproduced here.",
+    "The Mac was shared with other work during the run (load average [35.6, 47.3, 46.7] at start, [43.9, 47.3, 46.8] at end); latencies are under that load."
+  ]
+}
