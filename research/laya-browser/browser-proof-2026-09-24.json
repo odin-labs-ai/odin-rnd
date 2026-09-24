@@ -1,0 +1,126 @@
+{
+  "what": "Headless Chromium against the locally built site: real model download, three fixed cases entered by keyboard, compared with reference-2026-09-24.json",
+  "recordedAt": "2026-09-24T13:59:48.067Z",
+  "environment": {
+    "browser": "Chromium 151.0.7922.34 (Playwright 1.62.1, headless)",
+    "machine": "Apple M5 Max, 18 cores, 128 GB, macOS 26.6.1",
+    "machineLoad": "load average 32-43 during the run (other work on the same machine)",
+    "runtime": "onnxruntime-web 1.30.0, WebAssembly, 1 thread",
+    "model": "layaForWebTrained q8e8 at dd0c52a"
+  },
+  "tolerance": 0.02,
+  "cases": [
+    {
+      "id": "route-damaged-order",
+      "type": "choice",
+      "pythonDecision": "technical",
+      "browserDecision": "technical",
+      "sameDecision": true,
+      "maxAbsDiff": 0.0008,
+      "withinTolerance": true,
+      "values": [
+        {
+          "name": "returns",
+          "python": 0.38,
+          "browser": 0.38
+        },
+        {
+          "name": "billing",
+          "python": 0.0599,
+          "browser": 0.0596
+        },
+        {
+          "name": "technical",
+          "python": 0.475,
+          "browser": 0.4745
+        },
+        {
+          "name": "sales",
+          "python": 0.0851,
+          "browser": 0.0859
+        }
+      ],
+      "browserMilliseconds": 3908,
+      "focusAfterDecide": "laya-decide"
+    },
+    {
+      "id": "urgency-broken-build",
+      "type": "score",
+      "pythonDecision": "3",
+      "browserDecision": "3",
+      "sameDecision": true,
+      "maxAbsDiff": 0.0055,
+      "withinTolerance": true,
+      "values": [
+        {
+          "name": "0",
+          "python": 0.0249,
+          "browser": 0.0246
+        },
+        {
+          "name": "1",
+          "python": 0.1022,
+          "browser": 0.0986
+        },
+        {
+          "name": "2",
+          "python": 0.2666,
+          "browser": 0.2692
+        },
+        {
+          "name": "3",
+          "python": 0.6063,
+          "browser": 0.6076
+        },
+        {
+          "name": "score",
+          "python": 2.4543,
+          "browser": 2.4598
+        }
+      ],
+      "browserMilliseconds": 3165,
+      "focusAfterDecide": "laya-decide"
+    },
+    {
+      "id": "request-thank-you",
+      "type": "noul",
+      "pythonDecision": false,
+      "browserDecision": false,
+      "sameDecision": true,
+      "maxAbsDiff": 0.0046,
+      "withinTolerance": true,
+      "values": [
+        {
+          "name": "noul",
+          "python": 0.0476,
+          "browser": 0.0522
+        }
+      ],
+      "browserMilliseconds": 3099,
+      "focusAfterDecide": "laya-decide"
+    }
+  ],
+  "loadSeconds": 21.094,
+  "privacy": {
+    "externalRequestsBeforeClick": [],
+    "requestHostsAfterClick": {
+      "127.0.0.1:4193": 13,
+      "cdn.jsdelivr.net": 3,
+      "huggingface.co": 25,
+      "us.aws.cdn.hf.co": 19,
+      "blob: (verified runtime modules)": 2
+    },
+    "nonGetRequests": 0,
+    "requestsWithBody": 0
+  },
+  "accessibility": {
+    "keyboardOnly": true,
+    "tabsToDownloadButton": 11,
+    "runningAnimationsWithReducedMotion": 0,
+    "scrollWidthAt375": 375,
+    "minFontPxAt375": 13,
+    "focusAfterLoad": "route-damaged-order"
+  },
+  "consoleErrors": [],
+  "earlierRuns": "Two earlier runs of the same script on 24 Sep 2026 (before the evidence text and focus handling were added) gave the same decisions and the same largest differences (0.0008, 0.0055, 0.0046); per-answer times were 1.7-2.5 s and load 17.6-18.8 s. Times vary with other work on the machine."
+}

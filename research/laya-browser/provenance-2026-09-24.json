@@ -1,0 +1,26 @@
+{
+  "hosted": {
+    "repo": "VishalMysore/layaForWebTrained",
+    "revision": "dd0c52a2b563bea25279e2689689061dd0a1c382",
+    "manifestSource": "convaiinnovations/laya-typed-decisions",
+    "data": "e5ac4bfe0503361dacac825a91a82ae860e3a5d38dfb021dcf0bd37369573b44",
+    "dataSize": 442221312,
+    "graph": "599756d6506db9659279f4ac7871045801f90539844fbda6cd2918b6316e2d07"
+  },
+  "rebuilt": {
+    "data": "1ef12aff05a9ff05f8b3309688f9a9d10091f56b74497345ddbf063367e05496",
+    "dataSize": 442221312,
+    "graph": "ce6819bc1198dbf936f4a78f1e45ed63dbd530c7bc692bbe746e2735245a6664"
+  },
+  "byteIdentical": false,
+  "tensors": {
+    "sameNames": true,
+    "tensors": 363,
+    "bitIdenticalTensors": 244,
+    "quantizedCodes": 369099776,
+    "differingCodes": 5259,
+    "maxCodeDifference": 1,
+    "otherDifferingTensors": []
+  },
+  "sameSource": true
+}

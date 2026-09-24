@@ -1,0 +1,37 @@
+{
+  "note": "Three hand-written public examples, fixed before any output was observed. Each case is one state and one typed question, answered alone (batch of one) in both Python and the browser.",
+  "tolerance": 0.02,
+  "cases": [
+    {
+      "id": "route-damaged-order",
+      "state": "Order 4821 arrived with the screen cracked. I would like a replacement sent before Friday.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this message?",
+        "criteria": {
+          "returns": "Damaged or wrong item",
+          "billing": "Charges, refunds or invoices",
+          "technical": "Product not working as documented",
+          "sales": "Pricing or a new purchase"
+        }
+      }
+    },
+    {
+      "id": "urgency-broken-build",
+      "state": "The nightly build has failed three times in a row and nobody can merge to main.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this for the engineering team?",
+        "criteria": ["Can wait until next sprint", "This week", "Today", "Right now"]
+      }
+    },
+    {
+      "id": "request-thank-you",
+      "state": "Thanks for the quick fix yesterday, everything works again!",
+      "question": {
+        "type": "noul",
+        "instructions": "The customer is asking for something."
+      }
+    }
+  ]
+}
