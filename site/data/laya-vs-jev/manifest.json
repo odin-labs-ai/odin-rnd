@@ -6,10 +6,10 @@
   "source": {
     "repository": "odin-labs-ai/odin-rnd",
     "branch": "exp/rnd-laya-mlx",
-    "revision": "3164de236db15190aa713496edc0598e6e00e38e",
+    "revision": "b16b3cf90eaf47675fc5e5ed239582d27cf6f3e4",
     "path": "experiments/laya-vs-jev/results/laya-mlx-2026-09-24.json",
-    "committedAtRevision": false
+    "committedAtRevision": true
   },
-  "copiedAt": "2026-09-24T13:40:08.926Z",
+  "copiedAt": "2026-09-24T18:59:40.722Z",
   "note": "Copied verbatim by scripts/laya-journal.mjs --import. The sha256 covers the copied bytes."
 }
