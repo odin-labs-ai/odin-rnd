@@ -10,7 +10,7 @@ export function factoryFloor({crop = false} = {}) {
     poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],'top') + '</g>';
   const marker = (x,y,z,n) => {const [a,b]=p(x,y,z);return '<g class="station-marker"><circle cx="'+a+'" cy="'+b+'" r="12"/><text x="'+a+'" y="'+(b+.5)+'">'+n+'</text></g>'};
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate and evidence records. Use the four station links below to explore each part.</desc>';
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records and a decision console. Use the five station links below to explore each part.</desc>';
   svg += '<g id="factory-geometry">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
@@ -72,6 +72,16 @@ export function factoryFloor({crop = false} = {}) {
   // Floor markings carry wayfinding, never pretend telemetry.
   svg+=line([18,310,0],[375,310,0],'conduit')+line([375,310,0],[410,345,0],'conduit');
   for(let x=25;x<400;x+=18)svg+=line([x,324,0],[x+8,324,0],'dimension');
+  // Decision console: typed questions in the tray, one answer out. Drawn after the floor markings it stands on.
+  svg += '<g data-floor-station="decision" class="station-geometry">';
+  svg+=line([194,328,0],[194,310,0],'conduit')+box(162,328,0,92,44,8,'machine')+box(170,334,8,46,34,50,'machine');
+  svg+=poly([[174,338,58],[212,338,58],[212,364,58],[174,364,58]],'top');
+  for(const y of [344,351,358])svg+=line([179,y,58],[207,y,58],'ghost');
+  svg+=box(176,368,36,10,2,8,'orange')+box(191,368,36,8,2,8,'machine')+box(204,368,36,8,2,8,'machine');
+  svg+=line([176,369,24],[212,369,24])+line([176,369,18],[200,369,18]);
+  svg+=box(226,336,8,24,30,12,'machine');
+  for(const z of [21,25,29])svg+=box(228,338,z,20,26,2,'machine');
+  svg+=marker(194,350,92,'05')+'</g>';
   svg+='<text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
   svg+='</g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
   svg+=screenText(45,550,'ORTHOGRAPHIC ASSEMBLY / CONCEPT DRAWING')+screenText(662,550,'DWG. OD-000 / A');

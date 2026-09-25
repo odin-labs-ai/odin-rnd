@@ -1,13 +1,19 @@
 import { stations, validateStationContracts, recordedAssertions } from './station-contract.mjs';
 import { escape } from './witness-render.mjs';
+import { readFileSync } from 'node:fs';
+import { renderLayaExhibit, loadLaya, assertBenchCurrent, pagePath } from './laya-bench.mjs';
 const pre = text => `<pre tabindex="0">${escape(text)}</pre>`;
 const row = (label, value, state='') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const receiptLink = (station,id,label) => `<a href="projects/${station.project}/#observation-${escape(id)}">${escape(label)}</a>`;
-export function renderStations(report, reports) {
+export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8')) {
   validateStationContracts(report,reports);
+  assertBenchCurrent(page, laya);
   return stations.map((station,index) => {
     let body;
-    if(index===0){
+    if(station.record==='laya'){
+      if(!laya) throw new Error('Decision station requires the committed Laya record');
+      body=renderLayaExhibit(laya);
+    }else if(index===0){
       const r=report.runs.find(r=>r.id===station.recipe), binding=r.sourceBinding;
       if(!binding) throw new Error('Opened Blueprint requires exact released fixture source binding');
       const diffs=binding.changedPaths.map(path=>{

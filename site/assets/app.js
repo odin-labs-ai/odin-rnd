@@ -130,7 +130,21 @@ export function setupExperiments(document, environment = globalThis) {
   showExperiment(0);
 }
 
+// Further benches name the command they copy; the status beside each button reports the outcome.
+export function setupCopyButtons(document, environment = globalThis) {
+  document.querySelectorAll('[data-copy-target]').forEach(button => button.addEventListener('click', async () => {
+    const status = button.nextElementSibling;
+    try {
+      await environment.navigator.clipboard.writeText(document.getElementById(button.dataset.copyTarget).textContent);
+      status.textContent = 'Command copied.';
+    } catch {
+      status.textContent = 'Select the command above to copy it manually.';
+    }
+  }));
+}
+
 if (globalThis.document) {
   setupFactory(document);
   setupExperiments(document);
+  setupCopyButtons(document);
 }

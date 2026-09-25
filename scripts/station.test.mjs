@@ -8,7 +8,8 @@ import { setupFactory, setupExperiments } from '../site/assets/app.js';
 const report = JSON.parse(readFileSync('site/data/experiments.json','utf8'));
 const reports = ['migration-witness','test-witness','ci-witness'].map(id=>JSON.parse(readFileSync(`site/data/witnesses/${id}.json`,'utf8')));
 test('station claims resolve exact observations and reject missing or contradictory evidence', () => {
-  assert.equal(validateStationContracts(report,reports).length,4);
+  assert.equal(validateStationContracts(report,reports).length,stations.length);
+  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05']);
   for (const mutate of [
     records => records[0].observations.find(o=>o.id===stations[1].observations[1]).actual = 'a different answer',
     records => records[0].observations.find(o=>o.id===stations[1].observations[0]).verdict = 'accepted',
@@ -53,11 +54,11 @@ test('keyboard station selection preserves control focus, chooses exact content 
   const f=fixture(); const event={key:' '};
   f.controls[1].fire('keydown',event);
   assert(event.prevented);assert.equal(f.controls[1].getAttribute('aria-pressed'),'true');
-  assert.deepEqual(f.exhibits.map(e=>e.hidden),[true,false,true,true]);
+  assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,i)=>i!==1));
   assert.equal(f.single.get('.station-crop').getAttribute('viewBox'),stations[1].crop);
   const firstMotion=f.geometry[1].animations[0];assert(firstMotion);
   f.controls[2].fire('click');assert(firstMotion.canceled);
-  assert.deepEqual(f.exhibits.map(e=>e.hidden),[true,true,false,true]);
+  assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,i)=>i!==2));
   const motionCount=f.geometry[2].animations.length;f.controls[2].fire('click');assert.equal(f.geometry[2].animations.length,motionCount);
   const modified={metaKey:true};f.controls[0].fire('click',modified);assert(!modified.prevented);
   assert.equal(f.controls[2].getAttribute('aria-pressed'),'true');
