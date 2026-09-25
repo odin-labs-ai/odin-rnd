@@ -1,0 +1,16 @@
+diff --git a/src/infra/db/order-repository.ts b/src/infra/db/order-repository.ts
+index 737ad0f..5357c77 100644
+--- a/src/infra/db/order-repository.ts
++++ b/src/infra/db/order-repository.ts
+@@ -10,6 +10,11 @@ export class PgOrderRepository implements OrderRepository {
+     return result.rows[0]?.body as Order | undefined;
+   }
+ 
++  async listByCustomer(customerId: string): Promise<Order[]> {
++    const result = await this.pool.query("select body from orders where body->>'customerId' = $1", [customerId]);
++    return result.rows.map(row => row.body as Order);
++  }
++
+   async save(order: Order): Promise<void> {
+     await this.pool.query(
+       'insert into orders (id, body) values ($1, $2) on conflict (id) do update set body = $2',

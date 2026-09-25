@@ -1,0 +1,12 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..0170db1 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -8,6 +8,6 @@ export interface Invoice {
+   readonly dueDays: number;
+ }
+ 
+-export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
++export function invoiceFor(order: Order, number: string, dueDays = Number(process.env.INVOICE_DUE_DAYS ?? 30)): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }

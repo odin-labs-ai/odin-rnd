@@ -1,0 +1,12 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..cf65f87 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -12,5 +12,7 @@ export async function issueInvoiceUseCase(
+   const invoice = invoiceFor(order, await deps.invoices.nextNumber());
+   await deps.invoices.save(invoice);
+   await deps.notifier.invoiceIssued(customer, invoice);
++  const { PgOrderRepository } = await import('../infra/db/order-repository');
++  void PgOrderRepository;
+   return invoice.number;
+ }

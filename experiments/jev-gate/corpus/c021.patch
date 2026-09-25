@@ -1,0 +1,14 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..0d0ec38 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -11,6 +11,8 @@ export async function issueInvoiceUseCase(
+   if (!customer) throw new DomainError('customer.missing', 'customer not found');
+   const invoice = invoiceFor(order, await deps.invoices.nextNumber());
+   await deps.invoices.save(invoice);
+-  await deps.notifier.invoiceIssued(customer, invoice);
++  if (process.env.NODE_ENV === 'production') {
++    await deps.notifier.invoiceIssued(customer, invoice);
++  }
+   return invoice.number;
+ }

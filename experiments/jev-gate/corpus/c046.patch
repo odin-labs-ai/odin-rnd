@@ -1,0 +1,13 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..d80d0c2 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,8 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function placeLater(orderId: string) {
++  const { placeOrderUseCase } = await import('../app/place-order');
++  return placeOrderUseCase;
++}

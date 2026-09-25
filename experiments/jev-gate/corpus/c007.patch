@@ -1,0 +1,24 @@
+diff --git a/src/infra/db/customer-repository.ts b/src/infra/db/customer-repository.ts
+index 0e7d353..8fe702f 100644
+--- a/src/infra/db/customer-repository.ts
++++ b/src/infra/db/customer-repository.ts
+@@ -1,6 +1,6 @@
+ import type pg from 'pg';
+ import type { CustomerRepository } from '../../app/ports';
+-import type { Customer } from '../../domain';
++import { DomainError, type Customer } from '../../domain';
+ 
+ export class PgCustomerRepository implements CustomerRepository {
+   constructor(private readonly pool: pg.Pool) {}
+@@ -11,6 +11,10 @@ export class PgCustomerRepository implements CustomerRepository {
+   }
+ 
+   async save(customer: Customer): Promise<void> {
+-    await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);
++    try {
++      await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);
++    } catch {
++      throw new DomainError('customer.exists', `customer ${customer.id} already exists`);
++    }
+   }
+ }

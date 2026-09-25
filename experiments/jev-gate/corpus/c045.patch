@@ -1,0 +1,14 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..a9faaf4 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -5,5 +5,9 @@ export async function registerCustomerUseCase(
+   customers: CustomerRepository,
+   input: { id: string; name: string; email: string },
+ ): Promise<void> {
++  const { default: pg } = await import('pg');
++  const client = new pg.Client();
++  await client.connect();
+   await customers.save(createCustomer(input.id, input.name, input.email));
++  await client.end();
+ }

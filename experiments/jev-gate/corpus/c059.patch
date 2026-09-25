@@ -1,0 +1,12 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..f6d6cf7 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -16,3 +16,7 @@ export function add(a: Money, b: Money): Money {
+ export function multiply(a: Money, factor: number): Money {
+   return money(Math.round(a.cents * factor), a.currency);
+ }
++
++export function formatMoney(a: Money): string {
++  return `${(a.cents / 100).toFixed(2)} ${a.currency}`;
++}

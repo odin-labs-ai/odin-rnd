@@ -1,0 +1,35 @@
+diff --git a/src/app/cancel-order.ts b/src/app/cancel-order.ts
+new file mode 100644
+index 0000000..0398287
+--- /dev/null
++++ b/src/app/cancel-order.ts
+@@ -0,0 +1,8 @@
++import { cancelOrder, DomainError } from '../domain';
++import type { OrderRepository } from './ports';
++
++export async function cancelOrderUseCase(orders: OrderRepository, orderId: string): Promise<void> {
++  const order = await orders.get(orderId);
++  if (!order) throw new DomainError('order.missing', `order ${orderId} not found`);
++  await orders.save(cancelOrder(order));
++}
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..2c8d141 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -1,3 +1,4 @@
++export { cancelOrderUseCase } from './cancel-order';
+ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..17f1937 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,7 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export function cancelOrder(order: Order): Order {
++  return { ...order, status: 'cancelled' };
++}

@@ -1,0 +1,25 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..2be859f 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -7,7 +7,7 @@ export interface Settings {
+   invoicePrefix: string;
+ }
+ 
+-function required(name: string, value: string | undefined): string {
++function requireSetting(name: string, value: string | undefined): string {
+   if (!value) throw new Error(`missing setting ${name}`);
+   return value;
+ }
+@@ -15,9 +15,9 @@ function required(name: string, value: string | undefined): string {
+ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),
+-    databaseUrl: required('DATABASE_URL', process.env.DATABASE_URL),
++    databaseUrl: requireSetting('DATABASE_URL', process.env.DATABASE_URL),
+     logLevel: (process.env.LOG_LEVEL ?? 'info') as Settings['logLevel'],
+-    smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),
++    smtpHost: requireSetting('SMTP_HOST', process.env.SMTP_HOST),
+     smtpFrom: process.env.SMTP_FROM ?? 'no-reply',
+     invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',
+   };

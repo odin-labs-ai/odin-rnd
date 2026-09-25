@@ -1,0 +1,50 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..d6ed0ac 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -1,4 +1,4 @@
+-import { DomainError, orderTotal, placeOrder } from '../domain';
++import { DomainError, placeOrder, totalOf } from '../domain';
+ import type { CustomerRepository, OrderRepository } from './ports';
+ 
+ export async function placeOrderUseCase(
+@@ -10,7 +10,7 @@ export async function placeOrderUseCase(
+   if (!order) throw new DomainError('order.missing', `order ${orderId} not found`);
+   const customer = await customers.get(order.customerId);
+   if (!customer) throw new DomainError('customer.missing', `customer ${order.customerId} not found`);
+-  if (orderTotal(order).cents > customer.creditLimitCents) {
++  if (totalOf(order).cents > customer.creditLimitCents) {
+     throw new DomainError('order.credit', 'order exceeds the credit limit');
+   }
+   await orders.save(placeOrder(order));
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..34d81c2 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,5 +1,5 @@
+ import type { Money } from './money';
+-import { orderTotal, type Order } from './order';
++import { totalOf, type Order } from './order';
+ 
+ export interface Invoice {
+   readonly number: string;
+@@ -9,5 +9,5 @@ export interface Invoice {
+ }
+ 
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+-  return { number, orderId: order.id, amount: orderTotal(order), dueDays };
++  return { number, orderId: order.id, amount: totalOf(order), dueDays };
+ }
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..9a9e12a 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -14,7 +14,7 @@ export interface Order {
+   readonly status: 'open' | 'placed' | 'cancelled';
+ }
+ 
+-export function orderTotal(order: Order): Money {
++export function totalOf(order: Order): Money {
+   return order.lines.reduce((sum, line) => add(sum, multiply(line.unitPrice, line.quantity)), money(0));
+ }
+ 

@@ -1,0 +1,13 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..52320e3 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -1,3 +1,8 @@
++import pg from 'pg';
++
++// numeric columns arrive as strings; parse them as cents
++pg.types.setTypeParser(1700, value => Math.round(Number(value) * 100));
++
+ export interface Money {
+   readonly cents: number;
+   readonly currency: string;

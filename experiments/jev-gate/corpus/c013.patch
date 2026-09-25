@@ -1,0 +1,13 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..87415ab 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,8 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export function cancelOrder(order: Order): Order {
++  if (order.status === 'cancelled') throw new DomainError('order.status', 'order is already cancelled');
++  return { ...order, status: 'cancelled' };
++}

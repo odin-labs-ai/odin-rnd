@@ -1,0 +1,17 @@
+diff --git a/test/settings.test.ts b/test/settings.test.ts
+new file mode 100644
+index 0000000..50ccc8d
+--- /dev/null
++++ b/test/settings.test.ts
+@@ -0,0 +1,11 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { loadSettings } from '../src/config/settings';
++
++test('settings fall back to defaults', () => {
++  process.env.DATABASE_URL = 'postgres://localhost/ledger';
++  process.env.SMTP_HOST = 'localhost';
++  process.env.STRIPE_SECRET_KEY = 'unused-in-tests';
++  assert.equal(loadSettings().port, 8080);
++  assert.equal(loadSettings().invoicePrefix, 'INV');
++});

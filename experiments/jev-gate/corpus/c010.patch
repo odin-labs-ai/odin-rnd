@@ -1,0 +1,22 @@
+diff --git a/src/infra/db/invoice-repository.ts b/src/infra/db/invoice-repository.ts
+index 061341b..10fd19e 100644
+--- a/src/infra/db/invoice-repository.ts
++++ b/src/infra/db/invoice-repository.ts
+@@ -2,12 +2,16 @@ import type pg from 'pg';
+ import type { InvoiceRepository } from '../../app/ports';
+ import type { Invoice } from '../../domain';
+ 
++function formatInvoiceNumber(prefix: string, sequence: number): string {
++  return `${prefix}-${String(sequence).padStart(6, '0')}`;
++}
++
+ export class PgInvoiceRepository implements InvoiceRepository {
+   constructor(private readonly pool: pg.Pool, private readonly prefix: string) {}
+ 
+   async nextNumber(): Promise<string> {
+     const result = await this.pool.query("select nextval('invoice_seq') as n");
+-    return `${this.prefix}-${String(result.rows[0].n).padStart(6, '0')}`;
++    return formatInvoiceNumber(this.prefix, Number(result.rows[0].n));
+   }
+ 
+   async save(invoice: Invoice): Promise<void> {

@@ -1,0 +1,19 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..ddb82f5 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -1,9 +1,13 @@
+ import { createCustomer } from '../domain';
++import { SmtpNotifier } from '../infra/mail/mailer';
+ import type { CustomerRepository } from './ports';
+ 
+ export async function registerCustomerUseCase(
+   customers: CustomerRepository,
+   input: { id: string; name: string; email: string },
+ ): Promise<void> {
+-  await customers.save(createCustomer(input.id, input.name, input.email));
++  const customer = createCustomer(input.id, input.name, input.email);
++  await customers.save(customer);
++  const mailer = new SmtpNotifier('localhost', 'no-reply');
++  await mailer.invoiceIssued(customer, { number: 'WELCOME', orderId: '-', amount: { cents: 0, currency: 'EUR' }, dueDays: 0 });
+ }

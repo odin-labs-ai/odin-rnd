@@ -1,0 +1,11 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..668eb32 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -9,5 +9,5 @@ export interface Customer {
+ 
+ export function createCustomer(id: string, name: string, email: string): Customer {
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+-  return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
++  return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: Number(process.env.CREDIT_LIMIT_CENTS ?? 50_000) };
+ }

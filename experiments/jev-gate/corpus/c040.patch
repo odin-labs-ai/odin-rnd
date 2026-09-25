@@ -1,0 +1,17 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..2fcd31f 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,5 +1,6 @@
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
++import { placeOrderUseCase } from '../app/place-order';
+ 
+ export interface OrderLine {
+   readonly sku: string;
+@@ -23,3 +24,5 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export const placeStoredOrder = placeOrderUseCase;

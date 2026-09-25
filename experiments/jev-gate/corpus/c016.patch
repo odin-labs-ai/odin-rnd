@@ -1,0 +1,21 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..a6340dc 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,5 +1,6 @@
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
++import type { PgOrderRepository } from '../infra/db/order-repository';
+ 
+ export interface OrderLine {
+   readonly sku: string;
+@@ -23,3 +24,9 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function placeAndStore(order: Order, repository: PgOrderRepository): Promise<Order> {
++  const placed = placeOrder(order);
++  await repository.save(placed);
++  return placed;
++}

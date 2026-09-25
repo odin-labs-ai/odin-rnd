@@ -1,0 +1,15 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..0e4b20b 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -1,8 +1,8 @@
+ import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from '../app';
++import { createPool } from './db/pool';
+ import { PgCustomerRepository } from './db/customer-repository';
+-import { PgInvoiceRepository } from './db/invoice-repository';
+ import { PgOrderRepository } from './db/order-repository';
+-import { createPool } from './db/pool';
++import { PgInvoiceRepository } from './db/invoice-repository';
+ import { SmtpNotifier } from './mail/mailer';
+ 
+ export interface Services {

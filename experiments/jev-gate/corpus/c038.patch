@@ -1,0 +1,11 @@
+diff --git a/test/helpers/db.ts b/test/helpers/db.ts
+new file mode 100644
+index 0000000..239dd33
+--- /dev/null
++++ b/test/helpers/db.ts
+@@ -0,0 +1,5 @@
++import { createPool } from '../../src/infra/db/pool';
++
++export function testPool() {
++  return createPool(process.env.TEST_DATABASE_URL ?? 'postgres://localhost/ledger_test');
++}

@@ -1,0 +1,18 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..52b581d 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -1,4 +1,5 @@
+ import { DomainError, orderTotal, placeOrder } from '../domain';
++import type { Services } from '../infra';
+ import type { CustomerRepository, OrderRepository } from './ports';
+ 
+ export async function placeOrderUseCase(
+@@ -15,3 +16,7 @@ export async function placeOrderUseCase(
+   }
+   await orders.save(placeOrder(order));
+ }
++
++export function placeOrderWith(services: Services, orderId: string): Promise<void> {
++  return placeOrderUseCase(services.orders, services.customers, orderId);
++}

@@ -1,0 +1,11 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..f8fde06 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -13,5 +13,6 @@ export async function placeOrderUseCase(
+   if (orderTotal(order).cents > customer.creditLimitCents) {
+     throw new DomainError('order.credit', 'order exceeds the credit limit');
+   }
++  // The repository wraps the pg query; a failed save leaves the order open.
+   await orders.save(placeOrder(order));
+ }

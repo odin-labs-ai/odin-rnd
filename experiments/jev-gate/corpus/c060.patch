@@ -1,0 +1,22 @@
+diff --git a/src/domain/discount.ts b/src/domain/discount.ts
+new file mode 100644
+index 0000000..77d042b
+--- /dev/null
++++ b/src/domain/discount.ts
+@@ -0,0 +1,6 @@
++import { money, type Money } from './money';
++
++export function applyDiscount(amount: Money, percent: number): Money {
++  if (percent < 0 || percent > 100) throw new RangeError('percent must be between 0 and 100');
++  return money(Math.round((amount.cents * (100 - percent)) / 100), amount.currency);
++}
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..477311f 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -1,4 +1,5 @@
+ export * from './customer';
++export * from './discount';
+ export * from './errors';
+ export * from './invoice';
+ export * from './money';

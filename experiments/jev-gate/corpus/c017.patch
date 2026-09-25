@@ -1,0 +1,21 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..e46fd04 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,5 +1,6 @@
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
++import type { OrderRepository } from '../app/ports';
+ 
+ export interface OrderLine {
+   readonly sku: string;
+@@ -23,3 +24,9 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function reloadOrder(repository: OrderRepository, id: string): Promise<Order> {
++  const order = await repository.get(id);
++  if (!order) throw new DomainError('order.missing', `order ${id} not found`);
++  return order;
++}
