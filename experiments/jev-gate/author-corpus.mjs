@@ -11,7 +11,7 @@ import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HERE } from './bce-contract.mjs';
-import { diffFor } from './patchlib.mjs';
+import { diffsFor } from './patchlib.mjs';
 
 export const BASE = join(HERE, 'base');
 export const CORPUS = join(HERE, 'corpus');
@@ -287,8 +287,9 @@ export function build() {
   const assigned = assignIds(ITEMS);
   const patches = {};
   const manifest = { schemaVersion: 1, note: 'Author intent only; NOT a gate input. Ground truth is labels.json.', seed: SEED, items: [] };
-  for (const { id, item } of assigned) {
-    patches[id] = diffFor(BASE, item.edits);
+  const diffs = diffsFor(BASE, assigned.map(a => a.item.edits));
+  for (const [k, { id, item }] of assigned.entries()) {
+    patches[id] = diffs[k];
     manifest.items.push({ id, family: item.family, intent: item.intent, nearMiss: item.nearMiss, targets: item.targets });
   }
   return { patches, manifest };

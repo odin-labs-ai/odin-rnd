@@ -76,11 +76,11 @@ export const PROBES = [
 
 export async function runTeeth() {
   const base = await scoreTree({ blueprint: BLUEPRINT, tree: BASE });
-  const teeth = await mapLimit(TEETH, 6, async t => {
+  const teeth = await mapLimit(TEETH, 4, async t => {
     const r = await scoreTree({ blueprint: BLUEPRINT, tree: BASE, patch: diffFor(BASE, t.edits) });
     return { rule: t.rule, label: r.label, score: r.score, rules: r.rules, discriminating: r.label === 'RED' && r.rules.length === 1 && r.rules[0] === t.rule };
   });
-  const probes = await mapLimit(PROBES, 6, async p => {
+  const probes = await mapLimit(PROBES, 4, async p => {
     const r = await scoreTree({ blueprint: BLUEPRINT, tree: BASE, patch: diffFor(BASE, p.edits) });
     return { id: p.id, family: p.family, note: p.note, label: r.label, score: r.score, rules: r.rules };
   });

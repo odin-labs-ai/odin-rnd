@@ -66,6 +66,31 @@ export function diffFor(treeDir, edits) {
   }
 }
 
+/**
+ * Diff many edit lists against one tree with a single scratch repository (fast path for the whole
+ * corpus). Gives exactly the same text as diffFor for each entry.
+ */
+export function diffsFor(treeDir, editLists) {
+  const dir = mkdtempSync(join(tmpdir(), 'exp005-diffs-'));
+  try {
+    cpSync(treeDir, dir, { recursive: true });
+    git(dir, ['init', '-q', '-b', 'main']);
+    git(dir, ['add', '-A']);
+    git(dir, ['commit', '-q', '-m', 'base']);
+    return editLists.map(edits => {
+      applyEdits(dir, edits);
+      git(dir, ['add', '-A']);
+      const diff = git(dir, ['diff', '--cached', '--no-color', '--no-ext-diff', '-M', '-U3', 'HEAD']);
+      git(dir, ['reset', '-q', '--hard', 'HEAD']);
+      git(dir, ['clean', '-fdq']);
+      if (!diff.trim()) throw new Error('edits produced an empty diff');
+      return diff;
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 /** True when `patch` applies cleanly to `treeDir` (git apply --check). */
 export function appliesTo(treeDir, patch) {
   const dir = mkdtempSync(join(tmpdir(), 'exp005-check-'));

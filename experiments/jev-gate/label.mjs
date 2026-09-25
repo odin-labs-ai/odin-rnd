@@ -33,7 +33,7 @@ export async function labelOne(id) {
 export async function buildLabels() {
   const manifest = JSON.parse(readFileSync(join(HERE, 'manifest.json'), 'utf8'));
   const intent = Object.fromEntries(manifest.items.map(i => [i.id, i]));
-  const scored = await mapLimit(patchIds(), 6, labelOne);
+  const scored = await mapLimit(patchIds(), 4, labelOne);
   const items = scored.map(s => {
     const m = intent[s.id];
     if (!m) throw new Error(`${s.id} has no manifest entry`);
