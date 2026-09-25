@@ -94,5 +94,21 @@
     "rulesTokens": 235,
     "authoringTargetDiffTokens": 700,
     "rule": "len(ids(state)) <= room (989 with this question); a patch over the room is re-authored smaller, never cut"
-  }
+  },
+  "amendments": [
+    {
+      "date": "2026-09-26",
+      "trigger": "WO-07 independent review, round 1 (FIX-NEEDED, finding F1): a keyword grep scored 0.92 with 0 missed RED items, because every RED item carried a rule keyword on an added code line and almost no GREEN item did.",
+      "quotasChanged": false,
+      "note": "Quotas, split, near-miss count and family names are unchanged. The family descriptions above are the originals and stay as committed; the lines below widen what each family may contain, so that GREEN items can use rule keywords in allowed places and RED items can break a rule without an import or code keyword.",
+      "descriptionAdds": {
+        "forbidden-config-key": "also: a comment in src/domain, src/app or src/infra that contains process.env, or a comment in src/config that names process.env.NAME outside the allowlist (bce's forbiddenPattern rules match comments; rules.txt lines 7 and 8 say so)",
+        "infra-leak": "also: the pg package imported with double quotes",
+        "feature-add": "also: a new file in a folder under src/ outside the four layers (for example src/jobs) that imports src/config and src/infra internals, and a new src/config file that reads an allowlisted variable",
+        "refactor-rename": "also: a change of import style for the pg package inside src/infra",
+        "allowed-import-near-forbidden": "also: src/app importing src/config or '../infra/index', a new src/infra/db file that imports pg, and the composition root loading an infra internal with import()",
+        "comment-or-doc-mention": "also: a trailing comment on a code line that names a forbidden module path or the pg package"
+      }
+    }
+  ]
 }
