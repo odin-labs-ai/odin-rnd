@@ -1,0 +1,119 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "ledger-service-layering",
+    "name": "Ledger service layering and configuration",
+    "version": "1.0.0",
+    "status": "approved",
+    "ownerRole": "architecture-owner",
+    "stewardRole": "blueprint-steward"
+  },
+  "intentRefs": [
+    "rules.txt"
+  ],
+  "scope": {
+    "repositories": [
+      "odin-labs-ai/odin-rnd"
+    ],
+    "paths": [
+      "src/**/*.ts"
+    ]
+  },
+  "architecture": {
+    "components": [
+      {
+        "id": "typescriptModule",
+        "type": "typescriptModule"
+      }
+    ],
+    "relationships": [
+      { "from": "src/domain/**", "to": "module:src/app/**", "type": "imports", "allowed": false },
+      { "from": "src/domain/**", "to": "module:src/infra/**", "type": "imports", "allowed": false },
+      { "from": "src/domain/**", "to": "module:src/config/**", "type": "imports", "allowed": false },
+      { "from": "src/app/**", "to": "module:src/infra/*/**", "type": "imports", "allowed": false }
+    ]
+  },
+  "constraints": [
+    {
+      "id": "domain-no-app",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "module:src/app/**",
+      "scopePaths": ["src/domain/**"]
+    },
+    {
+      "id": "domain-no-infra",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "module:src/infra/**",
+      "scopePaths": ["src/domain/**"]
+    },
+    {
+      "id": "domain-no-config",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "module:src/config/**",
+      "scopePaths": ["src/domain/**"]
+    },
+    {
+      "id": "core-no-pg",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "package:pg",
+      "scopePaths": ["src/domain/**", "src/app/**"]
+    },
+    {
+      "id": "app-no-infra-internals",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "module:src/infra/*/**",
+      "scopePaths": ["src/app/**"]
+    },
+    {
+      "id": "env-not-in-domain",
+      "type": "forbiddenPattern",
+      "severity": "high",
+      "pattern": "process\\.env",
+      "path": "src/domain/**"
+    },
+    {
+      "id": "env-not-in-app",
+      "type": "forbiddenPattern",
+      "severity": "high",
+      "pattern": "process\\.env",
+      "path": "src/app/**"
+    },
+    {
+      "id": "env-not-in-infra",
+      "type": "forbiddenPattern",
+      "severity": "high",
+      "pattern": "process\\.env",
+      "path": "src/infra/**"
+    },
+    {
+      "id": "config-env-allowlist",
+      "type": "forbiddenPattern",
+      "severity": "high",
+      "pattern": "process\\.env(?:\\[|\\.(?!(?:PORT|DATABASE_URL|LOG_LEVEL|SMTP_HOST|SMTP_FROM|INVOICE_PREFIX)\\b))",
+      "path": "src/config/**"
+    }
+  ],
+  "evidenceRequirements": [
+    { "type": "staticAst", "required": true, "onMissing": "block" }
+  ],
+  "approvals": [
+    { "role": "blueprint-steward", "stage": "ratify" }
+  ],
+  "minEngineVersion": "0.3.0",
+  "extraction": {
+    "profile": "typescript-module-graph",
+    "paths": ["src/**/*.ts"],
+    "minFiles": 10
+  }
+}

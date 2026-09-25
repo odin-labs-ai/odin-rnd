@@ -1,0 +1,152 @@
+{
+  "base": {
+    "label": "GREEN",
+    "score": 100,
+    "violations": 0
+  },
+  "teeth": [
+    {
+      "rule": "domain-no-app",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "domain-no-infra",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "domain-no-config",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "core-no-pg",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "app-no-infra-internals",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "env-not-in-domain",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "env-not-in-app",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "env-not-in-infra",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "discriminating": true
+    },
+    {
+      "rule": "config-env-allowlist",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "discriminating": true
+    }
+  ],
+  "probes": [
+    {
+      "id": "reexport-in-governed-file",
+      "family": "reexport",
+      "note": "a domain file re-exports an infra module (export ... from): the edge starts in a governed file",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "star-reexport-in-governed-file",
+      "family": "reexport",
+      "note": "a domain file star-re-exports an infra module (export * from)",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "transitive-via-ungoverned-barrel",
+      "family": "reexport",
+      "note": "a domain file imports an ungoverned barrel (src/shared) that re-exports infra: only a transitive path reaches infra",
+      "label": "GREEN",
+      "score": 100,
+      "rules": []
+    },
+    {
+      "id": "transitive-via-sanctioned-infra-barrel",
+      "family": "reexport",
+      "note": "app imports the sanctioned src/infra/index.ts, which re-exports an infra/db internal",
+      "label": "GREEN",
+      "score": 100,
+      "rules": []
+    },
+    {
+      "id": "dynamic-import-literal",
+      "family": "dynamic-import",
+      "note": "a domain function loads an infra module with a string-literal import()",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "dynamic-import-computed",
+      "family": "dynamic-import",
+      "note": "a domain function loads a module whose specifier is computed at run time",
+      "label": "RED",
+      "score": 0,
+      "rules": [
+        "core-no-pg",
+        "domain-no-app",
+        "domain-no-config",
+        "domain-no-infra"
+      ]
+    }
+  ],
+  "rulesWithoutTeeth": []
+}

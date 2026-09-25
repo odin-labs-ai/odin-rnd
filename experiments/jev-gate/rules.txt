@@ -1,0 +1,8 @@
+Architecture rules for this TypeScript service. They govern every .ts file under src/. An import is any import in the file itself: import, import type, export ... from, and import().
+Files in src/domain must not import anything from src/app.
+Files in src/domain must not import anything from src/infra.
+Files in src/domain must not import anything from src/config.
+Files in src/domain and src/app must not import the pg package.
+Files in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra.
+Only src/config may use process.env; files in src/domain, src/app and src/infra must not contain process.env anywhere.
+Files in src/config may use only these environment variables, written as process.env.NAME: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Any other process.env name, or process.env[...], is not allowed.
