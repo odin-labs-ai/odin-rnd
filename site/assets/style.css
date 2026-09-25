@@ -104,6 +104,7 @@
 .station-source[open]>summary{list-style:disclosure-open}
 .station-source h4{font:12px var(--mono);margin:22px 0 10px;overflow-wrap:anywhere}
 .station-source p{color:#b8cec1;font-size:12px;margin:8px 0}
+.station-criteria{margin:0 0 13px;padding-left:18px;font-size:12px;line-height:1.6;color:#d1e2d5}.station-criteria li+li{margin-top:5px}
 .station-provenance{font-size:11px;line-height:1.75;color:#b8cec1;margin:15px 0}
 .station-full{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;font-size:14px;font-weight:600;min-height:44px;color:#d8f7e6}
 .station-full span{font-size:22px}
@@ -145,7 +146,7 @@
 @media(prefers-reduced-motion:reduce){.cutaway .station-geometry.active{transform:none}}
 
 /* Station 05 and the second bench reuse the factory and workbench parts; only their counts and content differ. */
-.cutaway .station-controls{grid-template-columns:repeat(5,minmax(0,1fr))}
+.cutaway .station-controls{grid-template-columns:repeat(6,minmax(0,1fr))}
 .laya-introduction{margin-top:88px}
 .laya-bench .bench-entry{display:flex;flex-direction:column;gap:10px;margin:0;border-top:1px solid var(--rule);padding:23px 24px;font-size:19px;line-height:1.25;background:#12352c;color:var(--paper)}
 .laya-bench .bench-entry>span:first-child{font:10px/1.5 var(--mono);color:#6ee7b7;letter-spacing:.04em}
@@ -163,4 +164,4 @@
 .laya-checks b{color:var(--paper);font-weight:600}
 .laya-checks .verdict-green{color:#b8efcf}
 .laya-checks .verdict-red{color:#ffb899}
-@media(max-width:768px){.cutaway .station-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.cutaway .station-controls>a:nth-child(4){border-right:0}.cutaway .station-controls>a:nth-child(-n+4){border-bottom:1px solid var(--rule)}.cutaway .station-controls>a:nth-child(5){grid-column:1/-1}.laya-introduction{margin-top:56px}.laya-bench .bench-menu{grid-template-columns:1fr}.laya-bench .bench-entry{font-size:15px;padding:16px 18px;border-top:0}.laya-primer{grid-template-columns:1fr}.laya-primer>div{padding:16px 14px}.laya-primer>div+div{border-left:0;border-top:1px solid var(--rule)}.laya-checks li{grid-template-columns:54px 1fr;gap:10px;font-size:12px}}
+@media(max-width:768px){.cutaway .station-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.cutaway .station-controls>a:nth-child(2n){border-right:0}.cutaway .station-controls>a:nth-child(-n+4){border-bottom:1px solid var(--rule)}.laya-introduction{margin-top:56px}.laya-bench .bench-menu{grid-template-columns:1fr}.laya-bench .bench-entry{font-size:15px;padding:16px 18px;border-top:0}.laya-primer{grid-template-columns:1fr}.laya-primer>div{padding:16px 14px}.laya-primer>div+div{border-left:0;border-top:1px solid var(--rule)}.laya-checks li{grid-template-columns:54px 1fr;gap:10px;font-size:12px}}

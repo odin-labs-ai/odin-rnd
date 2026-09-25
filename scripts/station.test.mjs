@@ -9,7 +9,7 @@ const report = JSON.parse(readFileSync('site/data/experiments.json','utf8'));
 const reports = ['migration-witness','test-witness','ci-witness'].map(id=>JSON.parse(readFileSync(`site/data/witnesses/${id}.json`,'utf8')));
 test('station claims resolve exact observations and reject missing or contradictory evidence', () => {
   assert.equal(validateStationContracts(report,reports).length,stations.length);
-  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05']);
+  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05','06']);
   for (const mutate of [
     records => records[0].observations.find(o=>o.id===stations[1].observations[1]).actual = 'a different answer',
     records => records[0].observations.find(o=>o.id===stations[1].observations[0]).verdict = 'accepted',
@@ -25,6 +25,25 @@ test('static station links reach actual evidence; Blueprint refuses unbound sour
   assert(!links.includes('role="button"'));
   const unbound=structuredClone(report); delete unbound.runs[0].sourceBinding;
   assert.throws(()=>renderStations(unbound,reports),/exact released fixture source/);
+});
+
+test('station 06 is pre-registered, never a recorded result, and refuses a page that drifts from its record', () => {
+  const triage=stations.find(s=>s.id==='triage');
+  assert.equal(triage?.number,'06'); assert.equal(triage.record,'jev-gate');
+  assert.notEqual(stations.find(s=>s.id==='gate').record,'jev-gate','Station 03 keeps the id gate');
+  const record=JSON.parse(readFileSync('experiments/jev-gate/preregistration.json','utf8'));
+  const html=renderStations(report,reports);
+  const exhibit=html.split('id="station-triage"')[1].split('</article>')[0];
+  assert(exhibit.includes('<span>Pre-registered — not yet run</span>'));
+  assert.doesNotMatch(exhibit,/Recorded experiment/);
+  for(const c of record.criteria) assert(exhibit.includes(c.statement.replaceAll("'",'&#39;')),`Station 06 is missing ${c.id}`);
+  assert(exhibit.includes(`${record.corpus.groundTruthRed} RED / ${record.corpus.groundTruthGreen} GREEN`));
+  assert(exhibit.includes('href="data/jev-gate/preregistration.json"')&&exhibit.includes(`href="${triage.href}"`));
+  for(const mutate of [r=>{r.experiment.stationTitle+='?';},r=>{r.experiment.statusText='Recorded experiment';}]){
+    const changed=structuredClone(record); mutate(changed);
+    assert.throws(()=>renderStations(report,reports,undefined,undefined,changed),/differs from the pre-registration/);
+  }
+  assert.equal(readFileSync('site/data/jev-gate/preregistration.json','utf8'),readFileSync('experiments/jev-gate/preregistration.json','utf8'),'The published copy is the committed record');
 });
 
 // Minimal native-event surface: test behavior without a browser or a DOM dependency.

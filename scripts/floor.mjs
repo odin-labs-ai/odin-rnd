@@ -10,7 +10,7 @@ export function factoryFloor({crop = false} = {}) {
     poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],'top') + '</g>';
   const marker = (x,y,z,n) => {const [a,b]=p(x,y,z);return '<g class="station-marker"><circle cx="'+a+'" cy="'+b+'" r="12"/><text x="'+a+'" y="'+(b+.5)+'">'+n+'</text></g>'};
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records and a decision console. Use the five station links below to explore each part.</desc>';
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console and a triage bench. Use the six station links below to explore each part.</desc>';
   svg += '<g id="factory-geometry">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
@@ -37,6 +37,16 @@ export function factoryFloor({crop = false} = {}) {
   svg+=box(28,47,66,105,3,2,'orange')+box(150,50,0,28,38,78,'machine');
   svg+=line([150,89,49],[177,89,49])+line([150,89,23],[177,89,23]);
   svg+=marker(66,123,102,'01')+'</g>';
+  // Triage bench: changes arrive in the hopper, a reader sorts them into two trays. Raised so it clears the conveyor.
+  svg += '<g data-floor-station="triage" class="station-geometry">';
+  for(const [x,y] of [[30,158],[132,158],[30,190],[132,190]])svg+=box(x,y,0,6,6,36,'machine');
+  svg+=box(26,154,36,116,44,6,'machine')+box(34,160,42,26,32,30,'machine');
+  svg+=poly([[38,164,72],[56,164,72],[56,188,72],[38,188,72]],'detail');
+  svg+=box(68,160,42,6,32,40,'machine')+box(68,166,82,6,20,3,'orange');
+  for(const z of [52,60,68])svg+=line([74,163,z],[74,189,z],'ghost');
+  svg+=box(84,162,42,22,28,12,'orange')+box(112,162,42,22,28,12,'machine');
+  svg+=line([88,176,54],[102,176,54])+line([116,176,54],[130,176,54]);
+  svg+=marker(84,178,104,'06')+'</g>';
   // Central workcell, base, turntable and articulated tool arm.
   svg += '<g data-floor-station="workcell" class="station-geometry">';
   svg += box(226,102,0,126,98,8,'machine')+box(251,130,8,53,47,34,'machine');

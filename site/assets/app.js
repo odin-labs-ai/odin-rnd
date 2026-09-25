@@ -46,7 +46,7 @@ export function setupFactory(document, environment = globalThis) {
     exhibits.forEach(other => { other.hidden = other !== exhibit; });
     crop?.setAttribute('viewBox', station.crop);
     if (station.trace) trace?.setAttribute('d', station.trace);
-    status.textContent = `${station.label}: ${station.title} Recorded experiment selected.`;
+    status.textContent = `${station.label}: ${station.title} ${station.status ? `${station.status}. Selected.` : 'Recorded experiment selected.'}`;
     if (!changed) return;
     animate(geometry.find(group => group.dataset.floorStation === id), [{ transform:'translateY(0)' }, { transform:'translateY(-5px)' }], 360);
     animate(trace, [{ strokeDashoffset:1 }, { strokeDashoffset:0 }], 350);
