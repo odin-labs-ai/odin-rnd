@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "measured",
+  "file": "laya-mlx-2026-09-24.json",
+  "sha256": "42e0e7bd2ad38dc94e7ffd7dcba992ca6f636f1d990ff6ae5954241d36858e59",
+  "source": {
+    "repository": "odin-labs-ai/odin-rnd",
+    "branch": "exp/laya-vs-jev",
+    "revision": "a5fa7daf3961199125983f03c5b5cb86514bc83a",
+    "path": "experiments/laya-vs-jev/results/laya-mlx-2026-09-24.json",
+    "committedAtRevision": true
+  },
+  "copiedAt": "2026-09-24T22:50:38.534Z",
+  "note": "Copied verbatim by scripts/laya-journal.mjs --import. The sha256 covers the copied bytes."
+}

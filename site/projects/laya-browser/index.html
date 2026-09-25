@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#102b22"><title>Laya in your browser — Odin R&amp;D</title><meta name="description" content="Run Laya, an open-weight typed-decision model, entirely on your own device: type a situation and a choice, score or yes/no question and read calibrated probabilities. No server, no key."><meta property="og:title" content="Laya in your browser — A decision model that stays on your device"><meta property="og:type" content="website"><meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/projects/laya-browser/"><link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/projects/laya-browser/"><link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="../../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../../assets/style.css"><link rel="stylesheet" href="../../assets/company.css"><link rel="stylesheet" href="../../assets/witness.css"><link rel="stylesheet" href="../../assets/laya-browser.css"><script type="module" src="../../assets/laya-browser.mjs"></script></head>
+<body class="company-page witness-page"><a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../../#floor">The floor</a><a href="../../#experiments">Experiments</a><a href="../../#projects">Open source</a><a href="../../#journal">Field notes</a><a href="../../work-with-us/">Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+<main id="main">
+<section class="witness-hero company-width"><h1>Laya in your browser</h1><div><h2>A decision model that stays on your device.</h2><p class="company-lead">Laya reads a situation once and answers typed questions — pick one option, place it on a scale, or say yes or no — with calibrated probabilities instead of generated text. Here it runs entirely in this page: no server, no account, no key.</p><div class="company-actions"><a class="button button-primary" href="#bench">Try it on your own text</a><a href="#evidence">See what was checked</a></div></div></section>
+
+<section id="bench" class="laya-bench" aria-labelledby="bench-heading"><div class="company-width">
+<h2 id="bench-heading">Download once, then decide on your device.</h2>
+<p class="laya-privacy"><strong>Runs on your device. Nothing you type is sent anywhere.</strong> The model answers inside this browser tab. The only network requests are the downloads listed below, made after you press the button; the hosts serving them see a file download, not your text.</p>
+<noscript><p>This workbench needs JavaScript and WebAssembly. Everything else on this page reads without them.</p></noscript>
+<div class="laya-download">
+<table class="laya-files"><caption>What the button downloads</caption>
+<thead><tr><th scope="col">File</th><th scope="col">Pinned source</th><th scope="col">Size</th></tr></thead>
+<tbody>
+<tr><th scope="row">Laya typed-decisions, int8 weights and graph</th><td>Hugging Face · VishalMysore/layaForWebTrained at commit dd0c52a</td><td>425.1 MiB</td></tr>
+<tr><th scope="row">Tokenizer and calibration settings</th><td>Hugging Face · convaiinnovations/laya at commit 55cf4c4</td><td>3.4 MiB</td></tr>
+<tr><th scope="row">ONNX Runtime Web 1.30.0 (WebAssembly)</th><td>jsDelivr · npm package onnxruntime-web</td><td>13.6 MiB</td></tr>
+<tr><th scope="row">Tokenizers.js 0.2.0</th><td>jsDelivr · npm package @huggingface/tokenizers</td><td>0.03 MiB</td></tr>
+</tbody>
+<tfoot><tr><th scope="row" colspan="2">Total</th><td>442.2 MiB</td></tr></tfoot>
+</table>
+<div class="laya-start">
+<p>Every file comes from an address that names an exact commit or package version and is checked against a recorded SHA-256 or SHA-384 hash before use. A mismatch stops the load.</p>
+<p>Use a computer with at least 4 GB of free memory. This site stores nothing; your browser may keep the files in its ordinary cache.</p>
+<button type="button" class="button button-primary" id="laya-load">Download the model (<span id="laya-size">442 MiB</span>)</button>
+<progress id="laya-progress" max="1" value="0" hidden aria-label="Download progress"></progress>
+<p id="laya-status" role="status" aria-live="polite">Nothing has been downloaded yet.</p>
+</div>
+</div>
+
+<div class="laya-workbench">
+<h3>Ask a typed question</h3>
+<p>Write the situation the model should read, then the question. The examples fill the form with the three fixed cases used in the check below.</p>
+<form id="laya-form" class="laya-form" novalidate>
+<div class="laya-wide"><span class="laya-help" id="laya-examples-label">Examples</span><div class="laya-examples" role="group" aria-labelledby="laya-examples-label"><button type="button" data-laya-example="route-damaged-order" disabled>Choice: route a message</button><button type="button" data-laya-example="urgency-broken-build" disabled>Score: how urgent</button><button type="button" data-laya-example="request-thank-you" disabled>Yes/no: a request?</button></div></div>
+<div class="laya-wide"><label for="laya-state">State</label><p class="laya-help" id="laya-state-help">Plain text: a message, a ticket, a log line. English works best.</p><textarea id="laya-state" name="state" rows="4" maxlength="4000" aria-describedby="laya-state-help" disabled></textarea></div>
+<div><label for="laya-type">Question type</label><select id="laya-type" name="type" disabled><option value="choice">Choice — pick one option</option><option value="score">Score — place on an ordered scale</option><option value="noul">Yes/no — is the statement true?</option></select></div>
+<div><label for="laya-instructions">Question</label><input id="laya-instructions" name="instructions" maxlength="300" disabled></div>
+<div class="laya-wide" id="laya-options-field"><label for="laya-options">Options</label><p class="laya-help" id="laya-options-help">One option per line. Optionally add a description after a colon: label: description.</p><textarea id="laya-options" name="options" rows="4" maxlength="2000" aria-describedby="laya-options-help" disabled></textarea></div>
+<div class="laya-wide company-actions"><button type="submit" class="button button-primary" id="laya-decide" disabled>Decide</button></div>
+<p class="laya-wide" id="laya-form-status" role="status" aria-live="polite">Download the model to enable the form.</p>
+</form>
+<div id="laya-result" hidden></div>
+</div>
+</div></section>
+
+<section id="evidence" class="company-width company-section laya-evidence" aria-labelledby="evidence-heading">
+<h2 id="evidence-heading">What was checked, and how.</h2>
+<div class="company-split"><div class="company-prose">
+<h3>Where the weights come from</h3>
+<p>The checkpoint is <code>typed-decisions/model.safetensors</code> in <a href="https://huggingface.co/convaiinnovations/laya/tree/55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851/typed-decisions">convaiinnovations/laya at commit 55cf4c4</a>, Apache License 2.0, SHA-256 <code>4fa56de7…a24e</code>. The browser build names a base model but not a commit, so we rebuilt the int8 model ourselves from the pinned checkpoint with the same tool versions and compared it with the hosted build. <span class="technical">MEASURED · 24 SEP 2026 · ONE MAC</span></p>
+<p>The files are <strong>not byte-identical</strong>, and we keep that result. Tensor by tensor, both models have the same 363 named tensors; every scale, embedding, bias and normalization tensor is bit-identical, and 5,259 of 369,099,776 int8 weight codes (0.0014%) differ, each by exactly one step. That pattern fits rounding at exact halfway points on different machines, not a different checkpoint, which would change nearly every code. We therefore load the hosted build, pinned to its commit and hash. The hosted graph file itself differs from ours in size (3.6 MB against 4.3 MB) with the same operator counts; the browser check below is what tests its behavior.</p>
+</div><div class="company-prose">
+<h3>Does the browser agree with the original?</h3>
+<p>Three hand-written cases were fixed before any output was seen. The original float32 PyTorch model answered them with the checkpoint’s own Python code; then a headless Chromium loaded this page from a local build, downloaded the real model, and answered them using the keyboard only. The pass rule: the same decision, and every probability within 0.02. <span class="technical">MEASURED · 24 SEP 2026 · ONE RUN</span></p>
+</div></div>
+<div class="laya-table-wrap"><table><caption>Python reference (float32, PyTorch 2.14.0, CPU) against this page (int8, ONNX Runtime Web 1.30.0, WebAssembly, one thread)</caption>
+<thead><tr><th scope="col">Case</th><th scope="col">Python</th><th scope="col">Browser</th><th scope="col">Largest difference</th><th scope="col">Result</th></tr></thead>
+<tbody>
+<tr><th scope="row">Choice: route “screen arrived cracked, send a replacement”</th><td>technical · returns 0.3800, technical 0.4750</td><td>technical · returns 0.3800, technical 0.4745</td><td>0.0008</td><td>SAME DECISION · WITHIN 0.02</td></tr>
+<tr><th scope="row">Score: urgency of a build that blocks every merge</th><td>level 3 “Right now” 0.6063 · score 2.4543</td><td>level 3 “Right now” 0.6076 · score 2.4598</td><td>0.0055</td><td>SAME DECISION · WITHIN 0.02</td></tr>
+<tr><th scope="row">Yes/no: “the customer is asking for something” on a thank-you note</th><td>no · p(yes) 0.0476</td><td>no · p(yes) 0.0522</td><td>0.0046</td><td>SAME DECISION · WITHIN 0.02</td></tr>
+</tbody></table></div>
+<div class="company-split"><div class="company-prose">
+<h3>What the run also showed</h3>
+<p>Before the button was pressed the page made no request outside its own site. After it, requests went only to jsDelivr and Hugging Face, all of them downloads: no request carried a body. Across three runs, loading took 18 to 21 seconds on this network and each answer took 1.7 to 3.9 seconds in one WebAssembly thread on an Apple M5 Max that was busy with other work. These are observations on one machine, not a benchmark.</p>
+</div><div class="company-prose">
+<h3>Boundaries</h3>
+<p>Three agreeing cases show that the port and the int8 build reproduce the original on those inputs; they do not measure accuracy. The first case is a reminder: the model sends a cracked screen to “technical” rather than “returns”, with probabilities close enough (0.47 against 0.38) to say it is unsure. GitHub Pages cannot enable the cross-origin isolation that multithreading needs, so the page uses one thread, and it does not use WebGPU. The calibration temperatures were fitted on the full-precision model. English text works best.</p>
+<p><a href="https://github.com/odin-labs-ai/odin-rnd/tree/main/research/laya-browser">Recorded reference, provenance and browser results</a></p>
+</div></div>
+</section>
+
+<section class="company-width company-section company-split laya-claims" aria-labelledby="claims-heading"><h2 id="claims-heading">Claims we have not measured.</h2><div class="company-prose"><p>These statements come from the people who publish the model and the browser build. We record them with the date we read them; they are not our results.</p><ul>
+<li>Laya’s model card reports 0.766 accuracy for the typed-decisions checkpoint on its 2,000-decision typed-decisions benchmark, against 0.362 for the general English checkpoint. The card also says the fine-tune was trained on that benchmark’s own training split, across four workflows (invoices, security incidents, customer service, agent traces), and that the base checkpoints are near chance on it zero-shot. <span class="technical">VENDOR CLAIM · MODEL CARD AT 55CF4C4 · READ 24 SEP 2026</span></li>
+<li>The browser build’s author reports that the int8 build kept PyTorch’s top answer on 97.9% of 48 test questions (general checkpoint), and that a three-question call takes about 2 to 5 seconds on a 2-core machine. <span class="technical">THIRD-PARTY CLAIM · READ 24 SEP 2026</span></li>
+<li>Laya is presented by its authors as an open alternative to hosted decision APIs. We compared no hosted service here, and this page needs no key for any service. <span class="technical">POSITIONING · NOT MEASURED</span></li>
+</ul></div></section>
+
+<section class="company-width company-section company-split laya-reproduce" aria-labelledby="reproduce-heading"><h2 id="reproduce-heading">Reproduce the check.</h2><div class="company-prose"><p>From the repository root, with Python 3.12 and about 4 GB of free disk. The first command answers the three cases with the original PyTorch model; the second rebuilds the int8 model from the pinned checkpoint and compares it with the hosted build, file by file and tensor by tensor.</p><pre><code>pip install -r research/laya-browser/requirements.txt
+python research/laya-browser/reference.py --cache ~/.cache/odin-rnd-laya --out reference.json
+python research/laya-browser/convert.py --cache ~/.cache/odin-rnd-laya</code></pre><p><a href="https://github.com/odin-labs-ai/odin-rnd/tree/main/research/laya-browser">Read the scripts, pins and recorded results</a></p></div></section>
+
+<section class="company-width company-section company-split" aria-labelledby="credits-heading"><h2 id="credits-heading">Whose work this is.</h2><div class="company-prose"><p>Laya and its typed-decisions checkpoint are by ConvAI Innovations under the Apache License 2.0, built on ModernBERT-large by Answer.AI and LightOn (Apache License 2.0): <a href="https://huggingface.co/convaiinnovations/laya">convaiinnovations/laya</a>. The browser conversion is layaForWeb by vishalmysore (Apache License 2.0), an unofficial port not affiliated with ConvAI Innovations: <a href="https://huggingface.co/VishalMysore/layaForWebTrained">VishalMysore/layaForWebTrained</a>. ONNX Runtime Web is by Microsoft (MIT License); Tokenizers.js is by Hugging Face (Apache License 2.0).</p><p>This page’s sequence builder is our JavaScript port of the checkpoint’s own reference code. Odin did not train this model and makes no claim about its fitness for your decisions.</p></div></section>
+<nav class="company-width witness-related" aria-label="Related projects"><a href="../test-witness/">Test Witness</a><a href="../ci-witness/">CI Witness</a><a href="../migration-witness/">Migration Witness</a></nav></main>  <footer class="site-footer"><a class="footer-brand" href="../../"><img src="../../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact">Contact Odin</a><a href="https://odin-labs.ai">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body></html>

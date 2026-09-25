@@ -1,0 +1,67 @@
+.laya-bench{padding-block:64px;background:#142f27;color:#eef6ed}
+.laya-bench h2{font-size:clamp(32px,3.3vw,46px);line-height:1.15;letter-spacing:-.03em}
+.laya-bench h3{font:600 24px/1.35 var(--display);margin-block:0 14px}
+.laya-bench p{line-height:1.8;max-width:75ch}
+.laya-bench a{color:#a7f3d0;text-underline-offset:4px}
+.laya-bench :focus-visible{outline:2px solid #a7f3d0;outline-offset:4px}
+.laya-bench ::selection{background:#a7f3d0;color:#102b22}
+.laya-privacy{margin-block:22px;padding:18px 20px;border:1px solid #3d5b4e;border-radius:12px;background:#102b22}
+.laya-privacy strong{font-weight:600;color:#a7f3d0}
+.laya-download{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;margin-top:30px;align-items:start}
+.laya-files{width:100%;border-collapse:collapse;font-size:14px;line-height:1.6}
+.laya-files caption{text-align:left;font-weight:600;padding-bottom:10px}
+.laya-files th,.laya-files td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid #3d5b4e;overflow-wrap:anywhere}
+.laya-files td:last-child{font-family:var(--mono);font-size:13px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.laya-files tfoot th,.laya-files tfoot td{font-weight:600;border-bottom:0}
+.laya-start .button{width:100%}
+.laya-start p+p{margin-top:12px}
+.laya-start .button{margin-top:20px}
+#laya-size{font:inherit;line-height:inherit}
+.laya-start button:disabled{opacity:.65;cursor:default}
+#laya-status{min-height:3.6em;margin-top:14px;color:#b8cec1}
+#laya-progress{width:100%;height:10px;margin-top:12px;accent-color:#6ee7b7}
+.laya-workbench{margin-top:44px;padding-top:34px;border-top:1px solid #3d5b4e}
+.laya-examples{display:flex;flex-wrap:wrap;gap:10px;margin-block:12px 24px}
+.laya-examples button{min-height:44px;padding:10px 14px;border:1px solid #789381;border-radius:8px;background:#102b22;color:#eef6ed;font:500 14px/1.4 Manrope,sans-serif}
+.laya-examples button:hover:not(:disabled){border-color:#a7f3d0}
+.laya-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 32px}
+.laya-form .laya-wide{grid-column:1/-1}
+.laya-form label{display:block;font-weight:600}
+.laya-form .laya-help{font-size:13px;line-height:1.65;color:#b8cec1;margin-top:5px}
+.laya-form textarea,.laya-form input,.laya-form select{display:block;width:100%;margin-top:8px;padding:12px 14px;border:1px solid #789381;border-radius:8px;background:#102b22;color:#eef6ed;font:400 16px/1.6 Manrope,sans-serif}
+.laya-form select,.laya-form input{min-height:48px}
+.laya-form textarea{resize:vertical;min-height:110px}
+.laya-form :disabled{opacity:.6;cursor:not-allowed}
+.laya-form [aria-disabled="true"]{opacity:.65;cursor:progress}
+.laya-form .company-actions{margin-top:0}
+#laya-form-status{min-height:1.8em;font-family:var(--mono);font-size:14px;color:#a7f3d0}
+#laya-result{margin-top:30px;padding:24px;border:1px solid #3d5b4e;border-radius:12px;background:#102b22}
+.laya-probabilities{width:100%;border-collapse:collapse;font-size:15px}
+.laya-probabilities caption{text-align:left;color:#b8cec1;font-size:13px;padding-bottom:8px}
+.laya-probabilities th,.laya-probabilities td{text-align:left;padding:10px 8px;border-bottom:1px solid #3d5b4e;vertical-align:middle;overflow-wrap:anywhere}
+.laya-probabilities thead th{color:#b8cec1;font-weight:500}
+.laya-probabilities tbody th{font-weight:500;width:45%}
+.laya-top th{color:#a7f3d0}
+.laya-probabilities td{display:flex;align-items:center;gap:12px}
+.laya-bar{display:block;flex:1;height:10px;background:linear-gradient(90deg,#6ee7b7 calc(var(--p)*100%),#24463a 0);border-radius:2px;min-width:40px}
+.laya-value{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.laya-meta{margin-top:14px;font-size:13px;color:#b8cec1}
+.laya-evidence table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.6;margin-top:18px}
+.laya-evidence caption{text-align:left;font-weight:600;padding-bottom:10px}
+.laya-evidence th,.laya-evidence td{text-align:left;vertical-align:top;padding:12px 8px;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}
+.laya-evidence td{font-variant-numeric:tabular-nums}
+.laya-evidence .laya-table-wrap{overflow-x:auto}
+.laya-evidence code,.laya-reproduce code{overflow-wrap:anywhere}
+.laya-reproduce pre{font:400 13px/1.75 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;padding:18px;background:var(--panel);border:1px solid var(--rule);margin-block:12px 20px}
+.laya-claims li{margin-block:10px;line-height:1.7}
+@media(max-width:760px){
+  .laya-bench{padding-block:44px}
+  .laya-download,.laya-form{grid-template-columns:1fr;gap:22px}
+  .laya-files{font-size:13px}
+  .laya-files th,.laya-files td{padding:10px 6px}
+  #laya-result{padding:16px}
+  .laya-probabilities tbody th{width:50%}
+  .laya-probabilities td{flex-direction:column;align-items:stretch;gap:6px}
+  .laya-evidence table{min-width:560px}
+}
+@media(prefers-reduced-motion:reduce){.laya-bench *{transition:none;animation:none;scroll-behavior:auto}}

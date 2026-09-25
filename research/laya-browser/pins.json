@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-09-24",
+  "source": {
+    "repo": "convaiinnovations/laya",
+    "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "subfolder": "typed-decisions",
+    "license": "apache-2.0",
+    "files": {
+      "typed-decisions/model.safetensors": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+      "rl_common.py": "8d83611d480c971d640a7b7d3aa2f2219c5e8455e9cc2329fd073681bd8be23e",
+      "rl_agent_api.py": "be3b46819c9999c3ef88e0f2ecf6d3ab1cdfed1d9a8b466fc89811e34d44031b"
+    }
+  },
+  "browserBuild": {
+    "repo": "VishalMysore/layaForWebTrained",
+    "revision": "dd0c52a2b563bea25279e2689689061dd0a1c382",
+    "license": "apache-2.0",
+    "variant": "q8e8",
+    "producedBy": "https://github.com/vishalmysore/layaForWeb (scripts/build_model.py)"
+  },
+  "toolchain": {
+    "python": "3.12",
+    "torch": "2.14.0",
+    "transformers": "5.17.0",
+    "safetensors": "0.8.0",
+    "huggingface_hub": "1.32.0",
+    "numpy": "2.4.4",
+    "onnx": "1.23.0",
+    "onnxscript": "0.7.2",
+    "onnxruntime": "1.25.0"
+  }
+}

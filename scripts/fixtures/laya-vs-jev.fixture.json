@@ -1,0 +1,17 @@
+{
+  "fixture": "FIXTURE: invented values that exercise the renderer. Not a measurement. Never publish.",
+  "schemaVersion": 1,
+  "measuredAt": "2000-01-01T00:00:00.000Z",
+  "machine": { "chip": "FIXTURE chip", "ramGb": 0, "os": "FIXTURE" },
+  "models": [
+    { "id": "laya-typed-decisions", "source": "convaiinnovations/laya/typed-decisions", "sha": "0000000000000000000000000000000000000000", "license": "apache-2.0", "backend": "FIXTURE backend" },
+    { "id": "jev", "source": "hosted API", "sha": null, "license": "proprietary", "backend": "hosted" }
+  ],
+  "corpus": { "rows": 3, "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "perModel": {
+    "laya-typed-decisions": { "accuracy": 0.5, "calibratedAccuracy": 0.75, "p50Ms": 1, "p90Ms": 2, "maxMs": 3, "coldLoadS": 4, "costPer1kUsd": null },
+    "jev": { "accuracy": 0.5, "calibratedAccuracy": 0.5, "p50Ms": 10, "p90Ms": 20, "maxMs": 30, "coldLoadS": null, "costPer1kUsd": 0.01 }
+  },
+  "agreement": { "laya_vs_jev": 0.5 },
+  "notes": ["FIXTURE note: invented."]
+}
