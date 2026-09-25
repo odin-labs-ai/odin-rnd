@@ -6,6 +6,7 @@
     "slug": "jev-gate",
     "title": "Jev as a fast gate",
     "stationTitle": "Can a fast model gate drift from the diff alone?",
+    "stationSummary": "From the diff and the rules alone, can Jev turn away architectural drift reliably enough to be a first gate, and hand what it is unsure of to an LLM reviewer?",
     "status": "pre-registered",
     "statusText": "Pre-registered — not yet run",
     "authoredOn": "2026-09-26",
@@ -169,7 +170,7 @@
     },
     {
       "id": "accuracyAtHighConfidence",
-      "definition": "For Jev and Laya: among decided items with confidence at least the cascade confidenceThreshold, the fraction whose decision equals bce's label, with the count of such items."
+      "definition": "For Jev and Laya: among decided items with confidence at least confidenceThreshold (the cascade's threshold), the fraction whose decision equals bce's label, with the count of such items."
     },
     {
       "id": "cascade",
@@ -270,7 +271,7 @@
   "spendCap": {
     "usd": 100,
     "alreadySpentUsd": 0.3,
-    "covers": "Paid gate spend only: Jev at its listed price and the reviewer at its API-equivalent cost, including the one reviewer check already run while planning (the alreadySpentUsd). Agent time is outside the cap.",
+    "covers": "Paid gate spend only: Jev at its listed price and the reviewer at its API-equivalent cost, including the one reviewer check already run while planning (alreadySpentUsd). Agent time is outside the cap.",
     "rule": "A running ledger adds the cost of every paid call to alreadySpentUsd. Before any paid call, if the ledger plus the largest single-call cost seen so far for that gate (for the reviewer, at least alreadySpentUsd) would exceed the cap, the run stops. A stopped run is published as partial, with the ledger."
   },
   "retryProtocol": {
@@ -294,7 +295,7 @@
     "One author wrote the corpus and the rules. An independent review checked the corpus before these hashes were fixed.",
     "bce reads direct import edges. A breach that only happens through a file outside the governed scope is invisible to it, so that family is not in the corpus.",
     "One machine and one run. Latency describes that machine under its load at the time.",
-    "Confidence here is max(p, 1 - p) for both typed gates. EXP 004 used the confidence the service reported, so the two experiments' confidence figures are not comparable."
+    "Confidence here is max(p, 1 - p) for both typed gates. EXP 004 used the confidence Jev reported and, for Laya's yes/no answers, one minus the normalised entropy, so the two experiments' confidence figures are not comparable."
   ],
   "sources": [
     {

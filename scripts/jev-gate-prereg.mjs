@@ -25,7 +25,7 @@ const date = v => str(v) && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Dat
 export const required = {
   schemaVersion: v => v === 1,
   kind: v => v === 'preregistration',
-  'experiment.id': str, 'experiment.slug': v => v === 'jev-gate', 'experiment.title': str, 'experiment.stationTitle': str,
+  'experiment.id': str, 'experiment.slug': v => v === 'jev-gate', 'experiment.title': str, 'experiment.stationTitle': str, 'experiment.stationSummary': str,
   'experiment.status': v => v === 'pre-registered', 'experiment.statusText': v => v === statusText, 'experiment.authoredOn': date, 'experiment.note': str,
   question: str, framing: strings,
   'corpus.description': str, 'corpus.items': pos, 'corpus.groundTruthRed': int, 'corpus.groundTruthGreen': int,
