@@ -1,0 +1,973 @@
+{
+  "schemaVersion": 1,
+  "truth": "bce label (RED = the change breaks a blueprint rule, GREEN = it does not). intended is the author intent from manifest.json; disagree:true items are excluded from the primary metrics and reported as a sensitivity analysis.",
+  "engine": {
+    "package": "bce-engine",
+    "version": "0.3.1",
+    "extractor": "ast"
+  },
+  "blueprintSha256": "1648713fe91cfc0800ca0e20d5447476ce9cb8b7f52c060b863eeed6e382de07",
+  "counts": {
+    "total": 60,
+    "RED": 30,
+    "GREEN": 30,
+    "EXCLUDED": 0,
+    "disagree": 0,
+    "rulesDifferFromIntent": 1
+  },
+  "items": [
+    {
+      "id": "c001",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c002",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c003",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c004",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/place-order.ts#L13"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c005",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/issue-invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c006",
+      "label": "RED",
+      "score": 0,
+      "rules": [
+        "core-no-pg",
+        "domain-no-app",
+        "domain-no-config",
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/customer.ts#L16"
+        },
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/customer.ts#L16"
+        },
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/customer.ts#L16"
+        },
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/customer.ts#L16"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": false,
+      "disagree": false
+    },
+    {
+      "id": "c007",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c008",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c009",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/invoice.ts#L11"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c010",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c011",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c012",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order-events.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c013",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c014",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c015",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L24"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c016",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/order.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c017",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c018",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c019",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/index.ts#L6"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c020",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c021",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/issue-invoice.ts#L14"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c022",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c023",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/register-customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c024",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/money.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c025",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/index.ts#L6"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c026",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L24"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c027",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c028",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c029",
+      "label": "RED",
+      "score": 20,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/index.ts#L5"
+        },
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/index.ts#L6"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c030",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/invoice.ts#L16"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c031",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c032",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/db/pool.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c033",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c034",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/ports.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c035",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c036",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c037",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c038",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c039",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c040",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c041",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/http/routes.ts#L8"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c042",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/customer.ts#L12"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c043",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c044",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c045",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/register-customer.ts#L8"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c046",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.ts#L28"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c047",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c048",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c049",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/index.ts#L6"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c050",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c051",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c052",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/issue-invoice.ts#L15"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c053",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c054",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/features.ts#L8"
+        },
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/features.ts#L9"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c055",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c056",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c057",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c058",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c059",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c060",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    }
+  ]
+}
