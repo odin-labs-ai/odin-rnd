@@ -6,7 +6,7 @@ import { validateProvenance } from './recording-provenance.mjs';
 import { parseDemo, engineRelease, validateSourceBinding } from './transcript.mjs';
 const walk = dir => readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(dir+'/'+entry.name):[dir+'/'+entry.name]);
 const files=walk('dist');
-const publicRepos = new Set(['odin-labs-ai/odin-rnd','odin-labs-ai/bce-paper-artifacts','blueprint-conformance/bce']);
+const publicRepos = new Set(['odin-labs-ai/odin-rnd','odin-labs-ai/bce-paper-artifacts','blueprint-conformance/bce','v-modal/awesome-jev-tools']);
 // Preserve the exact upstream attribution URLs in the bundled OFL notices.
 const fontAttributionRepos = new Map([
   ['dist/assets/fonts/Manrope-OFL.txt', 'sharanda/manrope'],
