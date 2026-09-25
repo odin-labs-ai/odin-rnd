@@ -55,8 +55,8 @@ blueprint constraints as follows (the table is checked by `scripts/jev-gate-blue
 | 4 | Files in src/domain must not import anything from src/config. | `domain-no-config` |
 | 5 | Files in src/domain and src/app must not import the pg package. | `core-no-pg` |
 | 6 | Files in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra. | `app-no-infra-internals` |
-| 7 | Only src/config may use process.env; files in src/domain, src/app and src/infra must not contain process.env anywhere. | `env-not-in-domain`, `env-not-in-app`, `env-not-in-infra` |
-| 8 | Files in src/config may use only these environment variables, written as process.env.NAME: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Any other process.env name, or process.env[...], is not allowed. | `config-env-allowlist` |
+| 7 | Files in src/domain, src/app and src/infra must not contain process.env anywhere, comments included. | `env-not-in-domain`, `env-not-in-app`, `env-not-in-infra` |
+| 8 | In src/config, process.env.NAME is allowed only for these names: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Anywhere in a src/config file, comments included, process.env.NAME with any other name and process.env[...] are not allowed; other forms, such as destructuring or process.env?.NAME, are not covered. | `config-env-allowlist` |
 
 The five `forbiddenDependency` constraints read the AST import graph (direct edges only, including
 `import type`, `export ... from` and string-literal `import()`; an import whose target cannot be
