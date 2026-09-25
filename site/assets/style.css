@@ -143,3 +143,24 @@
 #station-unavailable{padding:24px 0;line-height:1.7;font-size:16px;color:#d1e2d5}
 @media(max-width:768px){.factory-svg .station-trace{display:none}.station-exhibit,.record-comparisons{min-width:0}.record-comparison{flex-wrap:wrap;gap:4px 12px}.record-comparison strong{max-width:100%;margin-left:auto}.station-receipts a{min-height:44px}.cutaway .factory-premise h1 br{display:none}.drawing-key{gap:16px}}
 @media(prefers-reduced-motion:reduce){.cutaway .station-geometry.active{transform:none}}
+
+/* Station 05 and the second bench reuse the factory and workbench parts; only their counts and content differ. */
+.cutaway .station-controls{grid-template-columns:repeat(5,minmax(0,1fr))}
+.laya-introduction{margin-top:88px}
+.laya-bench .bench-entry{display:flex;flex-direction:column;gap:10px;margin:0;border-top:1px solid var(--rule);padding:23px 24px;font-size:19px;line-height:1.25;background:#12352c;color:var(--paper)}
+.laya-bench .bench-entry>span:first-child{font:10px/1.5 var(--mono);color:#6ee7b7;letter-spacing:.04em}
+.laya-primer{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);margin-top:24px}
+.laya-primer>div{padding:20px 23px}
+.laya-primer>div+div{border-left:1px solid var(--rule)}
+.laya-primer .technical{display:block;color:var(--steel);font-size:9px;margin-bottom:10px}
+.laya-primer p{font-size:14px;line-height:1.65;color:#d1e2d5}
+.laya-bench .specimen-pair>div+div strong{color:var(--brand)}
+.laya-bench .specimen-pair .verdict-red{color:#ffb899}
+.laya-bench .bench-explainer strong{color:var(--paper)}
+.laya-checks{list-style:none;padding:0;margin:0 0 8px;border-top:1px solid var(--rule)}
+.laya-checks li{display:grid;grid-template-columns:78px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid var(--rule);font-size:13px;line-height:1.6;color:#d1e2d5}
+.laya-checks strong{font:500 11px/1.9 var(--mono);letter-spacing:.06em}
+.laya-checks b{color:var(--paper);font-weight:600}
+.laya-checks .verdict-green{color:#b8efcf}
+.laya-checks .verdict-red{color:#ffb899}
+@media(max-width:768px){.cutaway .station-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.cutaway .station-controls>a:nth-child(4){border-right:0}.cutaway .station-controls>a:nth-child(-n+4){border-bottom:1px solid var(--rule)}.cutaway .station-controls>a:nth-child(5){grid-column:1/-1}.laya-introduction{margin-top:56px}.laya-bench .bench-menu{grid-template-columns:1fr}.laya-bench .bench-entry{font-size:15px;padding:16px 18px;border-top:0}.laya-primer{grid-template-columns:1fr}.laya-primer>div{padding:16px 14px}.laya-primer>div+div{border-left:0;border-top:1px solid var(--rule)}.laya-checks li{grid-template-columns:54px 1fr;gap:10px;font-size:12px}}
