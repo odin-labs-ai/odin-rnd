@@ -76,7 +76,8 @@ test('station 05 exists on the floor, opens like the others and its links resolv
 
 test('project row 002 features Laya and the numbering stays consistent', () => {
   const rows = [...page.matchAll(/<article class="project-row( project-featured)?"><div class="project-number">(\d{3})<span>([A-Z]+)<\/span>/g)].map(m => [m[2], m[3], Boolean(m[1])]);
-  assert.deepEqual(rows, [['001', 'ENGINE', true], ['002', 'DECISIONS', true], ['003', 'ARTIFACTS', false], ['000', 'WORKSHOP', false]]);
+  assert.deepEqual(rows, [['001', 'ENGINE', true], ['002', 'DECISIONS', true], ['003', 'ARTIFACTS', false], ['004', 'TRIAGE', true], ['000', 'WORKSHOP', false]]);
+  assert.equal(new Set(rows.map(r => r[0])).size, rows.length, 'Project numbers are unique');
   const featured = page.split('<div class="project-number">002')[1].split('</article>')[0];
   for (const href of ['projects/laya-browser/', '#laya-bench', 'journal/system-1-decisions-without-lock-in.html']) assert(featured.includes(`href="${href}"`), `Featured row is missing ${href}`);
 });
