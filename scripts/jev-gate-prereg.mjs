@@ -46,7 +46,7 @@ export const required = {
   'gates.reviewer.model': str, 'gates.reviewer.effort': str, 'gates.reviewer.k': pos, 'gates.reviewer.allowedTools': strings,
   'gates.reviewer.command': str, 'gates.reviewer.workspace': str, 'gates.reviewer.prompt': str, 'gates.reviewer.promptAuthorship': str,
   'gates.reviewer.timeoutSeconds': pos, 'gates.reviewer.order': str, 'gates.reviewer.hangStop.fraction': fraction, 'gates.reviewer.hangStop.rule': str,
-  baselines: v => Array.isArray(v) && v.every(b => str(b.id) && str(b.script) && hex.test(b.sha256) && obj(b.results)),
+  baselines: v => Array.isArray(v) && v.every(b => str(b.id) && str(b.script) && hex.test(b.scriptSha256) && str(b.lib) && hex.test(b.libSha256) && str(b.description) && pos(b.scored) && int(b.correct) && int(b.missedRed) && int(b.falseReject)),
   baselineRule: str, baselinesSource: str, 'bestBaseline.rule': str,
   'bestBaseline.id': v => v === null || str(v), 'bestBaseline.missedRed': v => v === null || int(v),
   'decisionRules.typedDecision': str, 'decisionRules.decisionThreshold': fraction, 'decisionRules.confidence': str,
@@ -110,16 +110,28 @@ export function validateRecord(record) {
 }
 
 export const baselinesPath = `${dir}/baselines.json`;
-// The comparison baselines (deterministic scripts, no model) as baselines.json records them; [] until it exists.
-export function readBaselines(root = '.') {
+export const baselinesLib = `${dir}/baselines.mjs`;
+// The comparison baselines (deterministic scripts, no model) as baselines.json records them, keyed by name;
+// [] until the file exists. Everything the file asserts about disk is re-checked here.
+export function readBaselines(root = '.', labels = JSON.parse(readFileSync(join(root, dir, 'labels.json'), 'utf8'))) {
   if (!existsSync(join(root, baselinesPath))) return [];
-  const raw = JSON.parse(readFileSync(join(root, baselinesPath), 'utf8'));
-  const entries = Array.isArray(raw) ? raw : raw.baselines;
-  assert(Array.isArray(entries), `${baselinesPath} must hold an array of baselines`);
-  return entries.map(b => {
-    assert(str(b.id) && str(b.script) && hex.test(b.sha256) && obj(b.results), `Malformed baseline ${b.id}`);
-    assert.equal(sha256(readFileSync(join(root, b.script))), b.sha256, `Baseline script changed: ${b.script}`);
-    return { ...b };
+  const read = file => readFileSync(join(root, file));
+  const raw = JSON.parse(read(baselinesPath));
+  assert(obj(raw.baselines), `${baselinesPath} must key its baselines by name`);
+  assert.equal(raw.inputsSha256, sha256(read(`${dir}/inputs.json`)), 'Baselines were scored on different gate inputs');
+  assert.equal(raw.labelsSha256, sha256(read(`${dir}/labels.json`)), 'Baselines were scored against different labels');
+  const truth = Object.fromEntries(labels.items.filter(i => ['RED', 'GREEN'].includes(i.label)).map(i => [i.id, i.label]));
+  const ids = Object.keys(truth);
+  return Object.entries(raw.baselines).map(([id, b]) => {
+    assert.equal(sha256(read(b.script)), b.scriptSha256, `Baseline script changed: ${b.script}`);
+    assert.equal(sha256(read(baselinesLib)), b.libSha256, `Baseline library changed: ${baselinesLib}`);
+    assert(obj(b.predictions), `Baseline ${id} records no per-item predictions`);
+    const missed = ids.filter(i => truth[i] === 'RED' && b.predictions[i] !== 'RED');
+    const rejected = ids.filter(i => truth[i] === 'GREEN' && b.predictions[i] !== 'GREEN');
+    assert.deepEqual([...b.missedRed].sort(), missed.sort(), `Baseline ${id} missedRed disagrees with its predictions`);
+    assert.deepEqual([...b.falseReject].sort(), rejected.sort(), `Baseline ${id} falseReject disagrees with its predictions`);
+    assert.equal(b.correct, ids.length - missed.length - rejected.length, `Baseline ${id} correct disagrees with its predictions`);
+    return { id, script: b.script, scriptSha256: b.scriptSha256, lib: baselinesLib, libSha256: b.libSha256, description: b.description, scored: b.scored, correct: b.correct, accuracy: b.accuracy, missedRed: missed.length, falseReject: rejected.length, predictions: b.predictions };
   });
 }
 
@@ -141,11 +153,12 @@ export function derive(record, root = '.') {
   next.stateConstruction = inputs.stateConstruction;
   next.groundTruth.version = labels.engine.version;
   next.groundTruth.extractor = labels.engine.extractor;
-  next.baselines = readBaselines(root);
-  if (next.baselines.length) next.files[baselinesPath] = sha256(read(baselinesPath));
+  const baselines = readBaselines(root, labels);
+  next.baselines = baselines.map(({ predictions, ...summary }) => summary);
+  if (baselines.length) for (const file of [baselinesPath, baselinesLib]) next.files[file] = sha256(read(file));
+  for (const b of baselines) next.files[b.script] = sha256(read(b.script));
   const primary = labels.items.filter(item => !item.disagree && ['RED', 'GREEN'].includes(item.label));
-  Object.assign(next.bestBaseline, pickBestBaseline(next.baselines, { red: primary.filter(i => i.label === 'RED').map(i => i.id), green: primary.filter(i => i.label === 'GREEN').map(i => i.id) }));
-  for (const b of next.baselines) next.files[b.script] = sha256(read(b.script));
+  Object.assign(next.bestBaseline, pickBestBaseline(baselines, { red: primary.filter(i => i.label === 'RED').map(i => i.id), green: primary.filter(i => i.label === 'GREEN').map(i => i.id) }));
   const runner = read('experiments/laya-vs-jev/run.py').toString('utf8');
   next.gates.laya.revision = pyString(runner, 'HF_SHA');
   next.gates.laya.subdir = pyString(runner, 'SUBDIR');

@@ -123,32 +123,49 @@ test('no threshold is expressed anywhere in the code, only in the record', () =>
   assert.ok(forms.size > 0 && get(record, 'criteria.0.threshold') !== undefined);
 });
 
-test('baselines come from baselines.json, and their scripts are pinned by the hash on disk', () => {
+test('baselines come from baselines.json, with every script, the library and the scored files pinned from disk', () => {
   const root = mkdtempSync(join(tmpdir(), 'jev-gate-baselines-'));
   const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev']) cpSync(d, join(root, d), { recursive: true, filter: skip });
-  const script = 'scripts/jev-gate-heuristic-demo.mjs';
-  cpSync('scripts/jev-gate-prereg.mjs', join(root, script));
-  const sha = createHash('sha256').update(readFileSync(join(root, script))).digest('hex');
-  writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ schemaVersion: 1, baselines: [{ id: 'demo', script, sha256: sha, results: { correct: 50, total: 60, missedRed: 4, falseReject: 6 } }] }));
+  const hash = file => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+  const lib = 'experiments/jev-gate/baselines.mjs', script = 'scripts/jev-gate-heuristic-demo.mjs';
+  writeFileSync(join(root, lib), '// demo library\n'); cpSync('scripts/jev-gate-prereg.mjs', join(root, script));
+  const labels = JSON.parse(readFileSync(join(root, 'experiments/jev-gate/labels.json'), 'utf8')).items;
+  const red = labels.filter(i => i.label === 'RED').map(i => i.id), green = labels.filter(i => i.label === 'GREEN').map(i => i.id);
+  const entry = (flipRed, flipGreen) => {
+    const predictions = Object.fromEntries(labels.map(i => [i.id, i.label]));
+    for (const id of [...red.slice(0, flipRed)]) predictions[id] = 'GREEN';
+    for (const id of [...green.slice(0, flipGreen)]) predictions[id] = 'RED';
+    return { script, scriptSha256: hash(script), libSha256: hash(lib), description: 'demo', scored: labels.length, correct: labels.length - flipRed - flipGreen, accuracy: 0, missedRed: red.slice(0, flipRed), falseReject: green.slice(0, flipGreen), predictions };
+  };
+  const write = baselines => writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ schemaVersion: 1, inputsSha256: hash('experiments/jev-gate/inputs.json'), labelsSha256: hash('experiments/jev-gate/labels.json'), baselines }));
+  write({ 'heuristic-grep': entry(5, 13), 'heuristic-lint': entry(0, 1) });
   assert.throws(() => checkRecord(root), /differs from the files on disk/, 'A record without the recorded baselines is refused');
   const pinned = derive(committed(), root);
-  assert.deepEqual(pinned.baselines.map(b => [b.id, b.sha256]), [['demo', sha]]);
-  assert.equal(pinned.files[script], sha);
-  assert.deepEqual(pinned.bestBaseline.id, 'demo');
+  assert.deepEqual(pinned.baselines.map(b => [b.id, b.missedRed, b.falseReject]), [['heuristic-grep', 5, 13], ['heuristic-lint', 0, 1]]);
+  assert.deepEqual(pinned.bestBaseline, { ...pinned.bestBaseline, id: 'heuristic-lint', missedRed: 0 });
+  for (const file of [script, lib, 'experiments/jev-gate/baselines.json']) assert.equal(pinned.files[file], hash(file), `${file} is pinned`);
+  assert(!('predictions' in pinned.baselines[0]), 'Per-item predictions stay in baselines.json, pinned by its hash');
   assert.doesNotThrow(() => validateRecord(pinned));
-  writeFileSync(join(root, script), 'changed');
+  const lying = entry(5, 13); lying.missedRed = lying.missedRed.slice(1); write({ 'heuristic-grep': lying });
+  assert.throws(() => derive(committed(), root), /missedRed disagrees/);
+  write({ 'heuristic-grep': entry(5, 13) });
+  writeFileSync(join(root, lib), '// changed\n');
+  assert.throws(() => derive(committed(), root), /Baseline library changed/);
+  writeFileSync(join(root, lib), '// demo library\n'); writeFileSync(join(root, script), 'changed');
   assert.throws(() => derive(committed(), root), /Baseline script changed/);
+  writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ inputsSha256: '0'.repeat(64), labelsSha256: hash('experiments/jev-gate/labels.json'), baselines: {} }));
+  assert.throws(() => derive(committed(), root), /different gate inputs/);
 });
 
 test('the better baseline is picked by fewest missed RED items, and Jev is judged against it with the paired rule', () => {
   const items = { red: ['c1', 'c2', 'c3'], green: ['c4', 'c5'] };
-  const grep = { id: 'grep', results: { decisions: { c1: 'REJECT', c2: 'ACCEPT', c3: 'REJECT', c4: 'ACCEPT', c5: 'REJECT' } } };
-  const lint = { id: 'lint', results: { decisions: { c1: 'REJECT', c2: 'REJECT', c4: 'ACCEPT' } } };
+  const grep = { id: 'grep', predictions: { c1: 'RED', c2: 'GREEN', c3: 'RED', c4: 'GREEN', c5: 'RED' } };
+  const lint = { id: 'lint', predictions: { c1: 'RED', c2: 'RED', c4: 'GREEN' } };
   assert.deepEqual(baselineCounts(grep, items), { missedRed: 1, falseReject: 1 });
   assert.deepEqual(baselineCounts(lint, items), { missedRed: 1, falseReject: 1 }, 'A missing decision counts against the baseline');
   assert.deepEqual(pickBestBaseline([grep, lint], items), { id: 'grep', missedRed: 1 }, 'A full tie goes to the id that sorts first');
-  assert.deepEqual(pickBestBaseline([grep, { id: 'z', results: { missedRed: 0, falseReject: 9 } }], items), { id: 'z', missedRed: 0 });
+  assert.deepEqual(pickBestBaseline([grep, { id: 'z', predictions: { c1: 'RED', c2: 'RED', c3: 'RED', c4: 'RED', c5: 'RED' } }], items), { id: 'z', missedRed: 0 }, 'Fewest missed RED wins over fewer false rejects');
   assert.deepEqual(pickBestBaseline([], items), { id: null, missedRed: null });
   const record = committed();
   const criterion = record.criteria.find(c => c.comparedWith === 'bestBaseline');

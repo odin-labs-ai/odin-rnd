@@ -37,11 +37,12 @@ test('the note states it is pre-registered with no results, and carries the whol
 test('the baseline rows Jev has to beat are named on the note and the station', () => {
   assert(note.includes('Baselines Jev has to beat') && note.includes(html(record.baselineRule)));
   const withRows = structuredClone(record);
-  withRows.baselines = [{ id: 'keyword-grep', script: 'scripts/jev-gate-heuristic-grep.mjs', sha256: 'a'.repeat(64), results: { correct: 55, total: 60 } }, { id: 'regex-lint', script: 'scripts/jev-gate-heuristic-lint.mjs', sha256: 'b'.repeat(64), results: { correct: 60, total: 60 } }];
+  const row = (id, correct, missedRed, falseReject) => ({ id, script: `scripts/jev-gate-${id}.mjs`, scriptSha256: 'a'.repeat(64), lib: 'experiments/jev-gate/baselines.mjs', libSha256: 'b'.repeat(64), description: `the ${id} rule`, scored: 60, correct, accuracy: correct / 60, missedRed, falseReject });
+  withRows.baselines = [row('keyword-grep', 42, 5, 13), row('regex-lint', 59, 0, 1)];
   withRows.bestBaseline = { ...withRows.bestBaseline, id: 'regex-lint', missedRed: 0 };
   const rendered = renderNote(withRows, sha256);
   assert(rendered.includes('The better baseline is <strong>regex-lint</strong>, with 0 missed RED items'));
-  for (const b of withRows.baselines) assert(rendered.includes(`<strong>${b.id}</strong>`) && rendered.includes(b.script) && rendered.includes(`${b.results.correct} / ${b.results.total} agree with bce`));
+  for (const b of withRows.baselines) assert(rendered.includes(`<strong>${b.id}</strong>`) && rendered.includes(b.script) && rendered.includes(`${b.correct} / ${b.scored} agree with bce; ${b.missedRed} missed RED`));
   const exhibit = renderTriageExhibit(withRows, stations.find(s => s.id === 'triage'));
   for (const b of withRows.baselines) assert(exhibit.includes(`Baseline to beat · ${b.id}`));
   assert(exhibit.includes('Baseline to beat · regex-lint (better)'));

@@ -128,7 +128,7 @@
   },
   "baselines": [],
   "baselineRule": "Each baseline is a deterministic, committed script that decides every corpus item from inputs.json alone, with no model and no network. Its result on the pinned corpus is computed and recorded here before any gate call. The results report each baseline as a row that Jev has to beat, on the same items and metrics; a typed gate that does not do better than a script adds nothing the script could not.",
-  "baselinesSource": "experiments/jev-gate/baselines.json: each entry's id, script path, the script's sha256 and its results. The validator reads that file and every script from disk and refuses any difference.",
+  "baselinesSource": "experiments/jev-gate/baselines.json keys each baseline by its id and records its script, the sha256 of that script and of the shared library experiments/jev-gate/baselines.mjs, its per-item predictions and its scores, together with the sha256 of the inputs.json and labels.json it was scored on. The validator re-hashes all of them from disk, recomputes missed RED, false rejects and correct items from the predictions, and refuses any difference. The per-item predictions stay in baselines.json, pinned by its hash, for the paired comparison.",
   "bestBaseline": {
     "rule": "The better baseline is the one with the fewest missed RED items on the pinned corpus (primary population), computed from baselines.json before any gate call; a tie goes to fewer false rejects, then to the id that sorts first. Its id is recorded here; it is null only while no baseline is recorded.",
     "id": null,

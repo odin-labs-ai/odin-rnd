@@ -58,22 +58,18 @@ export function baselineValid(record, x, n) {
   return Boolean(interval) && !(interval.estimate > record.baselineValidity.threshold);
 }
 
-// A model-free baseline's misses and false rejects on the given items, from baselines.json results:
-// explicit counts when recorded, otherwise its per-item decisions (a missing decision counts against it).
-const rejects = decision => ['REJECT', 'REJECTED', 'RED'].includes(String(decision).toUpperCase());
-const accepts = decision => ['ACCEPT', 'ACCEPTED', 'APPROVED', 'GREEN'].includes(String(decision).toUpperCase());
+// A model-free baseline's misses and false rejects on the given items. baselines.json records per-item
+// predictions (RED = reject); an item without a prediction counts against the baseline.
 export function baselineCounts(baseline, { red, green }) {
-  const r = baseline.results, decisions = r.decisions;
-  const missedRed = Number.isInteger(r.missedRed) ? r.missedRed : decisions ? red.filter(id => !rejects(decisions[id])).length : null;
-  const falseReject = Number.isInteger(r.falseReject) ? r.falseReject : decisions ? green.filter(id => !accepts(decisions[id])).length : null;
-  assert(Number.isInteger(missedRed), `Baseline ${baseline.id} records neither missedRed nor per-item decisions`);
-  return { missedRed, falseReject };
+  const p = baseline.predictions;
+  assert(p && typeof p === 'object', `Baseline ${baseline.id} records no per-item predictions`);
+  return { missedRed: red.filter(id => p[id] !== 'RED').length, falseReject: green.filter(id => p[id] !== 'GREEN').length };
 }
 
 // The better baseline: fewest missed RED items, then fewest false rejects, then the id that sorts first.
 export function pickBestBaseline(baselines, items) {
   if (!baselines.length) return { id: null, missedRed: null };
   const ranked = baselines.map(b => ({ id: b.id, ...baselineCounts(b, items) }))
-    .sort((x, y) => x.missedRed - y.missedRed || (x.falseReject ?? Infinity) - (y.falseReject ?? Infinity) || x.id.localeCompare(y.id));
+    .sort((x, y) => x.missedRed - y.missedRed || x.falseReject - y.falseReject || x.id.localeCompare(y.id));
   return { id: ranked[0].id, missedRed: ranked[0].missedRed };
 }
