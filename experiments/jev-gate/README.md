@@ -258,6 +258,38 @@ items and to publish the simple heuristics as pre-registered baselines. Each fin
 | F7: quotas | Unchanged: 60 items, 30/30, 16 near-misses, every rule targeted at least twice. `corpus-spec.json` records two dated amendments: widened family descriptions, and the new `rules.txt` size (256 tokens, still inside the room). |
 | F8: zero disagreements | Still zero after re-labelling. The new boundary items (comments containing `process.env`, `"pg"`, `../infra/index`, `src/jobs`) agree with the author because `rules.txt` now words each boundary; they are contested by the baselines instead (18 grep errors, 1 linter error). |
 
+## Review round 2 → pre-registered analysis notes
+
+The second WO-07 review (corpus sha256 `a83b222a…`) returned SHIP. Its five non-blocking findings are
+recorded here and in `preregistration.json` before any gate runs. None of them changes a patch, a label
+or `rules.txt`, so the corpus hash stays `a83b222a…`.
+
+- **R2-1, comment-only RED items.** Four of the 30 RED items are RED only because a comment names
+  `process.env` in a governed layer or an unlisted variable in config: c009, c021, c026, c041. They are
+  fair under `rules.txt` (lines 7 and 8 cover comments), but they are not architectural drift in the
+  usual sense, and 4 of 30 is more than the 10% missed-drift threshold on its own. The primary metric
+  is unchanged. Beside it, missed drift is reported split into the 26 code-level RED items and the 4
+  comment-only ones. For each `env-not-in-*` rule, one of its two target items is a comment, so
+  per-rule results for those rules are half comment artefacts. The grep baseline's 5 misses are these
+  4 comment-only items plus c024 (R2-4); a grep that kept comments would miss none.
+- **R2-2, criterion 4 stated plainly** (founder, 2026-09-26: "Keep it, state it plainly"). The better
+  model-free baseline is the linter, and it misses 0 of the 30 RED items. So criterion 4 says: Jev
+  must miss 0 of 30 RED items, abstentions included, because the better baseline misses 0. This tests
+  whether Jev applies mechanical rules as well as a linter, not rules a linter cannot express. bce's
+  ground truth is regex-shaped by construction, so a refutation on criterion 4 alone does not
+  generalise to rules that are not mechanical; testing that needs a follow-on corpus.
+- **R2-3, `rules.txt` line 6 boundary.** See Limits. `rules.txt` is not reworded, because that would
+  move the corpus hash with no label change.
+- **R2-4, c024.** Its `"pg"` import is the only double-quoted import in the corpus. It was written
+  that way on purpose, to dodge the keyword grep, which looks for `'pg'`. The label (RED on
+  `core-no-pg`) is unaffected, because bce reads the import, not its quotes.
+- **R2-5, reviewer isolation.** `preregistration.json` pins it: the LLM reviewer runs in a scratch git
+  repository that holds only the base app at the base commit, `rules.txt`, the files `nina compose`
+  writes, and the change applied on top. No odin-rnd checkout, `labels.json`, `manifest.json`,
+  `baselines.json` or corpus file is reachable; its working directory and tools are limited to that
+  repository. The reviewer still has repository access where Jev and Laya see only the diff, and that
+  asymmetry is disclosed as a limit.
+
 ## Reproduce
 
 Node 22 and the frozen lockfile (`pnpm install --frozen-lockfile`), from the repository root:
@@ -295,6 +327,11 @@ the tokenizer, the inputs test checks the recorded counts and skips only the reb
 - The four `forbiddenPattern` rules are line matches, so a comment that contains `process.env` in a
   governed layer is RED. `rules.txt` states the rule that way, and the corpus plants that case four
   times.
+- `rules.txt` line 6 has two clauses, and bce enforces only the second: a file in `src/app` that
+  imports a file directly in `src/infra` other than `index.ts` (for example `src/infra/mail.ts`, not in
+  a subfolder) is GREEN in bce, although the first clause ("only through src/infra/index.ts") reads as
+  forbidding it. No corpus item sits on that boundary; the only app → infra-root import (c050) goes
+  through `../infra/index`. Future items stay off it.
 - All 60 patches were written by one author, who also wrote the rules. An independent review of the
   corpus against the quotas (bundle 1, WO-07) happens before the hashes are published; round 1 and
   its fixes are recorded above, and the hardened corpus goes back for a second round.
