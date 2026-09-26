@@ -109,6 +109,12 @@
         "allowed-import-near-forbidden": "also: src/app importing src/config or '../infra/index', a new src/infra/db file that imports pg, and the composition root loading an infra internal with import()",
         "comment-or-doc-mention": "also: a trailing comment on a code line that names a forbidden module path or the pg package"
       }
+    },
+    {
+      "date": "2026-09-26",
+      "trigger": "WO-07 independent review, round 1, finding F5: rules.txt lines 7 and 8 were reworded to state exactly what bce enforces.",
+      "quotasChanged": false,
+      "note": "sizeCap.rulesTokens above records rules.txt as it was when the cap was fixed (235 tokens). The reworded rules.txt measures 256 tokens with the same tokenizer (laya_count.py). The cap rule itself is unchanged: every state must fit the room of 989 tokens, and all 60 do (largest 923)."
     }
   ]
 }
