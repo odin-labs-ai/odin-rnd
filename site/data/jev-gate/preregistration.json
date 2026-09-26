@@ -25,28 +25,32 @@
     "groundTruthGreen": 30,
     "intentDisagreements": 0,
     "excluded": 0,
-    "corpusSha256": "fcf7d61b214ced984c1073abc3b8a0ba6551b489efc9e01d2104c142390a7e47",
+    "corpusSha256": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
     "corpusSha256Meaning": "sha256 of experiments/jev-gate/corpus.sha256, which lists the sha256 of every file the labels depend on: base/, corpus/, blueprint.json, rules.txt, gate-question.json, corpus-spec.json, manifest.json and labels.json.",
-    "inputsSha256": "b18397b6918542b2413425bb82fa2e0b44ad794f0dad852302e0a552e48d4dac",
+    "inputsSha256": "6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34",
     "inputsSha256Meaning": "sha256 of experiments/jev-gate/inputs.json, the one input every gate receives for each item. It carries no labels."
   },
   "files": {
-    "experiments/jev-gate/corpus.sha256": "fcf7d61b214ced984c1073abc3b8a0ba6551b489efc9e01d2104c142390a7e47",
-    "experiments/jev-gate/labels.json": "1b5c2329fab2c5968743eeb2d27a0979608f94b3a6d7a41424a5a704a05ae5b5",
-    "experiments/jev-gate/inputs.json": "b18397b6918542b2413425bb82fa2e0b44ad794f0dad852302e0a552e48d4dac",
-    "experiments/jev-gate/inputs.sha256": "3f137c04ff6286cb07eb8aada7b9629528794ee70bcbe7f9b16ec0f697767bc6",
-    "experiments/jev-gate/rules.txt": "2a79b40c8ea5cd0622620e578f8e78b52ce75a3b4e87d602d0df5cf3a91d1a7d",
+    "experiments/jev-gate/corpus.sha256": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
+    "experiments/jev-gate/labels.json": "36af1422755e56af56f4af267411a4a8e6535d08e6fc9d7aa3734aa005e4412a",
+    "experiments/jev-gate/inputs.json": "6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34",
+    "experiments/jev-gate/inputs.sha256": "74246d8c4b1f217bf4b1d3926b6413d1a7b6dfe021071f84bd105dc181076f3d",
+    "experiments/jev-gate/rules.txt": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
     "experiments/jev-gate/gate-question.json": "2a9a728d15305e19d2a39001134629297176f78749865d2512cd1a51d3e09764",
     "experiments/jev-gate/blueprint.json": "1648713fe91cfc0800ca0e20d5447476ce9cb8b7f52c060b863eeed6e382de07",
-    "experiments/jev-gate/corpus-spec.json": "bb201b6d2416532453c57258580ffd35b5f7bd3c6bbac13c827570c3806740a6",
+    "experiments/jev-gate/corpus-spec.json": "64f7ebc2d5450b6393bfbdcb9dd80b55743302d8d413216bc6e8ee1d4d0bd7e0",
     "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
     "experiments/jev-gate/gate-input.mjs": "851de6eac679c76a1c75b8d8b194c5693c8e5469ee987106b45dc24807d87587",
     "experiments/jev-gate/laya_count.py": "485a30602c525ce12fd8b1e5bc4ef9908d25e64b1ca21279a2c4c6a139734a99",
     "experiments/laya-vs-jev/run.py": "3fa346c4450a4251d8c15ce4b04b4f5a9820fb8cf5c1bf4ab65ab2fe3eabc1f9",
     "experiments/laya-vs-jev/laya_mlx.py": "b9483641ea20e1e566947369a2c2df7011ce3260f37b8755e5c67ee4507fa70e",
-    "experiments/laya-vs-jev/laya_inputs.py": "b368b2848d8a1a1d019fdb2410c0b8115deb8f97f1e92708687048baef52af85"
+    "experiments/laya-vs-jev/laya_inputs.py": "b368b2848d8a1a1d019fdb2410c0b8115deb8f97f1e92708687048baef52af85",
+    "experiments/jev-gate/baselines.json": "6267bc62d57bfff5516e440f9333aa8260075cdfdf783136d2774c0dc131cf19",
+    "experiments/jev-gate/baselines.mjs": "cd0b1a4cfbcdfd5c3e1a769271d83a40c0ce094e98430381bcd4497477bae9e8",
+    "scripts/jev-gate-heuristic-grep.mjs": "ffce62d0dcb1f6c7575d273099c8105f4f6d0a80cd977aaff8925fe00067c524",
+    "scripts/jev-gate-heuristic-lint.mjs": "b36e50d88330fa739b2fb28afe24a521400413a3a7c41ab22614a3b9886676f2"
   },
-  "rulesText": "Architecture rules for this TypeScript service. They govern every .ts file under src/. An import is any import in the file itself: import, import type, export ... from, and import().\nFiles in src/domain must not import anything from src/app.\nFiles in src/domain must not import anything from src/infra.\nFiles in src/domain must not import anything from src/config.\nFiles in src/domain and src/app must not import the pg package.\nFiles in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra.\nOnly src/config may use process.env; files in src/domain, src/app and src/infra must not contain process.env anywhere.\nFiles in src/config may use only these environment variables, written as process.env.NAME: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Any other process.env name, or process.env[...], is not allowed.\n",
+  "rulesText": "Architecture rules for this TypeScript service. They govern every .ts file under src/. An import is any import in the file itself: import, import type, export ... from, and import().\nFiles in src/domain must not import anything from src/app.\nFiles in src/domain must not import anything from src/infra.\nFiles in src/domain must not import anything from src/config.\nFiles in src/domain and src/app must not import the pg package.\nFiles in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra.\nFiles in src/domain, src/app and src/infra must not contain process.env anywhere, comments included.\nIn src/config, process.env.NAME is allowed only for these names: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Anywhere in a src/config file, comments included, process.env.NAME with any other name and process.env[...] are not allowed; other forms, such as destructuring or process.env?.NAME, are not covered.\n",
   "gateQuestion": {
     "type": "noul",
     "instructions": "Does this change break any of these rules?"
@@ -115,7 +119,7 @@
         "Bash(git log:*)"
       ],
       "command": "claude -p <prompt> --agent reviewer --model claude-opus-5-5 --effort high --output-format json --no-session-persistence --setting-sources project --permission-mode dontAsk --allowedTools Read Grep Glob \"Bash(git diff:*)\" \"Bash(git status:*)\" \"Bash(git show:*)\" \"Bash(git log:*)\"",
-      "workspace": "A fresh temporary git repository per run, composed with the nina CLI at the pinned release (nina init, nina compose). One base commit with the neutral message \"base\" holds the base tree (without node_modules), rules.txt at the repository root, the .claude/ directory and CLAUDE.md that nina compose writes, and a .gitignore that excludes run artefacts. The change is applied with git apply and left uncommitted, so git status and git diff show exactly the change. bce, the blueprint, the labels and every other experiment file are absent. No web access; no tool outside the list above.",
+      "workspace": "A fresh scratch git repository per run, outside any odin-rnd checkout, composed with the nina CLI at the pinned release (nina init, nina compose). One base commit with the neutral message \"base\" holds only the base app (without node_modules), rules.txt at the repository root, the .claude/ directory and CLAUDE.md that nina compose writes, and a .gitignore that excludes run artefacts. The change is applied with git apply and left uncommitted, so git status and git diff show exactly the change. No odin-rnd checkout, labels.json, manifest.json, baselines.json, corpus file, blueprint or bce is reachable: the working directory is that scratch repository and the tools are limited to it. No web access; no tool outside the list above.",
       "prompt": "Review the change in this repository. The change is everything that git diff shows; it has not been committed. The architecture rules this codebase must follow are in rules.txt at the repository root. Decide one thing only: does the change break any of those rules? Ignore style, naming, tests and anything else that rules.txt does not state. Do not edit any file. Explain your reasoning briefly, then write your decision on a line of its own: VERDICT: REJECTED if the change breaks at least one rule, or VERDICT: APPROVED if it breaks none.",
       "promptAuthorship": "Written for this experiment by Odin Labs. It contains no text from nina's reviewer specification.",
       "timeoutSeconds": 600,
@@ -126,13 +130,42 @@
       }
     }
   },
-  "baselines": [],
+  "baselines": [
+    {
+      "id": "heuristic-grep",
+      "script": "scripts/jev-gate-heuristic-grep.mjs",
+      "scriptSha256": "ffce62d0dcb1f6c7575d273099c8105f4f6d0a80cd977aaff8925fe00067c524",
+      "lib": "experiments/jev-gate/baselines.mjs",
+      "libSha256": "cd0b1a4cfbcdfd5c3e1a769271d83a40c0ce094e98430381bcd4497477bae9e8",
+      "description": "WO-07 heur.py H1c: an added non-comment line under src/ contains process.env, 'pg', ../infra, ../app, ../config or import(",
+      "scored": 60,
+      "correct": 42,
+      "accuracy": 0.7,
+      "missedRed": 5,
+      "falseReject": 13
+    },
+    {
+      "id": "heuristic-lint",
+      "script": "scripts/jev-gate-heuristic-lint.mjs",
+      "scriptSha256": "b36e50d88330fa739b2fb28afe24a521400413a3a7c41ab22614a3b9886676f2",
+      "lib": "experiments/jev-gate/baselines.mjs",
+      "libSha256": "cd0b1a4cfbcdfd5c3e1a769271d83a40c0ce094e98430381bcd4497477bae9e8",
+      "description": "line-regex linter of rules.txt lines 2-8 over added lines: relative specifiers resolved against the file path, comments skipped for imports only",
+      "scored": 60,
+      "correct": 59,
+      "accuracy": 0.9833,
+      "missedRed": 0,
+      "falseReject": 1
+    }
+  ],
   "baselineRule": "Each baseline is a deterministic, committed script that decides every corpus item from inputs.json alone, with no model and no network. Its result on the pinned corpus is computed and recorded here before any gate call. The results report each baseline as a row that Jev has to beat, on the same items and metrics; a typed gate that does not do better than a script adds nothing the script could not.",
   "baselinesSource": "experiments/jev-gate/baselines.json keys each baseline by its id and records its script, the sha256 of that script and of the shared library experiments/jev-gate/baselines.mjs, its per-item predictions and its scores, together with the sha256 of the inputs.json and labels.json it was scored on. The validator re-hashes all of them from disk, recomputes missed RED, false rejects and correct items from the predictions, and refuses any difference. The per-item predictions stay in baselines.json, pinned by its hash, for the paired comparison.",
   "bestBaseline": {
     "rule": "The better baseline is the one with the fewest missed RED items on the pinned corpus (primary population), computed from baselines.json before any gate call; a tie goes to fewer false rejects, then to the id that sorts first. Its id is recorded here; it is null only while no baseline is recorded.",
-    "id": null,
-    "missedRed": null
+    "id": "heuristic-lint",
+    "missedRed": 0,
+    "plainly": "Jev must miss 0 of 30 RED items, abstentions included, because the better baseline (heuristic-lint) misses 0.",
+    "scope": "This tests whether Jev applies mechanical rules as well as a linter, not rules a linter cannot express. bce's ground truth is regex-shaped by construction, so a refutation on this criterion alone does not generalise to rules that are not mechanical. (Founder, 2026-09-26: \"Keep it, state it plainly\"; corpus review round 2, R2-2.)"
   },
   "decisionRules": {
     "typedDecision": "For Jev and Laya, the decision is REJECT (the gate predicts RED) when p is at least decisionThreshold, and ACCEPT (the gate predicts GREEN) otherwise.",
@@ -155,6 +188,15 @@
     "primary": "Every corpus item whose bce label agrees with its author's intent and that bce did not exclude. The criteria are judged on this population.",
     "sensitivity": "Every corpus item that bce labelled, including items whose label disagrees with the author's intent. Reported beside the primary figures; not used for the criteria."
   },
+  "commentOnlyRed": {
+    "ids": [
+      "c009",
+      "c021",
+      "c026",
+      "c041"
+    ],
+    "note": "RED only because a comment names process.env in a governed layer, or an unlisted variable in config (rules.txt lines 7 and 8 cover comments). Fair under the rules, but not architectural drift in the usual sense. For each env-not-in-* rule, one of its two target items is a comment, so per-rule results for those rules are half comment artefacts. The grep baseline's misses are these items plus c024, whose double-quoted \"pg\" import was written on purpose to dodge the grep; a grep that kept comments would miss none of the comment-only items. (Corpus review round 2, R2-1 and R2-4.)"
+  },
   "metrics": [
     {
       "id": "agreement",
@@ -175,6 +217,10 @@
     {
       "id": "decidedOnly",
       "definition": "Missed drift and false reject with abstentions excluded: RED items ACCEPTED over RED items the gate decided, and GREEN items REJECTED over GREEN items the gate decided. Reported beside the headline figures, not used for the criteria."
+    },
+    {
+      "id": "missedDriftSplit",
+      "definition": "Headline missed drift split into the code-level RED items and the comment-only RED items listed in commentOnlyRed. Reported beside the headline for every gate and baseline; not a criterion. The primary metric is unchanged."
     },
     {
       "id": "accuracyAtHighConfidence",
@@ -308,7 +354,10 @@
   "limits": [
     "60 items (30 RED, 30 GREEN) give wide 95% intervals. A criterion can pass on its point estimate and still not be established at this N; the record says which.",
     "Headline figures count every abstention against the gate: a miss on a RED item, a false reject on a GREEN one. A gate that fails or declines often looks worse for it; the figures with abstentions excluded are published beside them.",
-    "The reviewer and the typed gates do not see the same thing. The reviewer works in a repository with read and git tools; Jev and Laya see only the diff and the rules as text. The comparison is between the two setups as they would be used, not between the models alone.",
+    "Four of the 30 RED items are RED only because of a comment (commentOnlyRed); that is more than the missed-drift threshold on its own. Missed drift is reported split into code-level and comment-only items beside the headline.",
+    "This tests whether Jev applies mechanical rules as well as a linter, not rules a linter cannot express. bce's ground truth is regex-shaped by construction, so a refutation on this criterion alone does not generalise to rules that are not mechanical.",
+    "rules.txt line 6 has two clauses and bce enforces only the second: an import from src/app of a file directly in src/infra other than index.ts is GREEN in bce. No corpus item sits on that boundary.",
+    "The reviewer and the typed gates do not see the same thing. The reviewer works in an isolated scratch repository with read and git tools; Jev and Laya see only the diff and the rules as text. The comparison is between the two setups as they would be used, not between the models alone.",
     "Jev is reached through jev-ai.pro, an independently operated reseller endpoint, not directly from TypeSafe. The served model is checked on every answer.",
     "Costs are at listed or API-equivalent prices, not invoices, and the two bases differ.",
     "One author wrote the corpus and the rules. An independent review checked the corpus before these hashes were fixed.",

@@ -21,7 +21,7 @@ export function renderTriageExhibit(record, station) {
   assert.equal(station.status, record.experiment.statusText, 'Station 06 status differs from the pre-registration');
   const { corpus, gates, cascade } = record;
   const criteria = record.criteria.map(c => `<li>${escape(c.statement)}</li>`).join('');
-  return `<p class="artifact-label">Written down before any gate runs</p><p class="station-implication">${escape(record.experiment.stationSummary)}</p><div class="record-comparisons">${row('Corpus', `${corpus.items} authored changes`)}${row(`Ground truth · ${record.groundTruth.engine} ${record.groundTruth.version}`, `${corpus.groundTruthRed} RED / ${corpus.groundTruthGreen} GREEN`)}${row('Gates', `${gates.jev.model} · Laya · LLM reviewer ×${gates.reviewer.k}`)}${row('Cascade', `final at confidence ≥ ${cascade.confidenceThreshold}, else escalate`)}${baselineRows(record)}${row('Results', 'none yet')}</div><p class="artifact-label">The claim is refuted if</p><ul class="station-criteria">${criteria}</ul><p class="station-provenance">Pre-registered ${escape(record.experiment.authoredOn)} · corpus sha256 <code>${escape(short(corpus.corpusSha256))}</code><br><a href="${dataPath}">The pre-registration record</a><br>LLM reviewer: ${record.attribution.nina.replace('github.com/xhulz/nina', `<a href="${escape(record.attribution.ninaUrl)}">github.com/xhulz/nina</a>`)}</p>`;
+  return `<p class="artifact-label">Written down before any gate runs</p><p class="station-implication">${escape(record.experiment.stationSummary)}</p><div class="record-comparisons">${row('Corpus', `${corpus.items} authored changes`)}${row(`Ground truth · ${record.groundTruth.engine} ${record.groundTruth.version}`, `${corpus.groundTruthRed} RED / ${corpus.groundTruthGreen} GREEN`)}${row('Gates', `${gates.jev.model} · Laya · LLM reviewer ×${gates.reviewer.k}`)}${row('Cascade', `final at confidence ≥ ${cascade.confidenceThreshold}, else escalate`)}${baselineRows(record)}${row('Results', 'none yet')}</div><p class="artifact-label">The claim is refuted if</p><ul class="station-criteria">${criteria}</ul>${record.bestBaseline.plainly ? `<p class="station-provenance"><strong>Stated plainly:</strong> ${escape(record.bestBaseline.plainly)}</p>` : ''}<p class="station-provenance">Pre-registered ${escape(record.experiment.authoredOn)} · corpus sha256 <code>${escape(short(corpus.corpusSha256))}</code><br><a href="${dataPath}">The pre-registration record</a><br>LLM reviewer: ${record.attribution.nina.replace('github.com/xhulz/nina', `<a href="${escape(record.attribution.ninaUrl)}">github.com/xhulz/nina</a>`)}</p>`;
 }
 
 export const slug = 'jev-as-a-fast-gate';
@@ -90,10 +90,11 @@ ${list(record.metrics.map(m => `<strong>${escape(m.id)}</strong>: ${fill(m.defin
 <p>Every rate is published with its ${escape(s.singleRate.method)} at ${escape(percent(s.confidenceLevel))} (z = ${escape(s.z)}): ${code(s.singleRate.formula)}.</p>
 <p>The cascade is compared with the reviewer on the same items with the ${escape(s.pairedDifference.method)}: ${escape(s.pairedDifference.formula)}</p>
 <p>${escape(record.populations.primary)} ${escape(record.populations.sensitivity)}</p>
+<p>Comment-only RED items (${record.commentOnlyRed.ids.map(code).join(', ')}): ${escape(record.commentOnlyRed.note)}</p>
 <h2>What would prove it wrong</h2>
 ${list(record.criteria.map(c => escape(c.statement)))}
 <p>${escape(record.claimRule)}</p>
-<p>Each criterion comes out in one of three states: ${t.states.map(x => `<em>${escape(x)}</em>`).join(', ')}. ${escape(t.singleRate)} ${escape(t.pairedDifference)} ${escape(t.publication)}</p>
+${record.bestBaseline.plainly ? `<p><strong>Stated plainly:</strong> ${escape(record.bestBaseline.plainly)} ${escape(record.bestBaseline.scope)}</p>\n` : ''}<p>Each criterion comes out in one of three states: ${t.states.map(x => `<em>${escape(x)}</em>`).join(', ')}. ${escape(t.singleRate)} ${escape(t.pairedDifference)} ${escape(t.publication)}</p>
 <p>${escape(record.baselineValidity.statement)}</p>
 <p>${escape(record.latency.role)}</p>
 <h2>Cost, the spending cap and timing</h2>

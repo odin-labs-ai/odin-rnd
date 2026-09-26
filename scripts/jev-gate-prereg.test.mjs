@@ -59,7 +59,7 @@ test('a changed hash, rules text or corpus file is refused, and --write re-deriv
   assert.notDeepEqual(derive(rules), rules);
   const root = mkdtempSync(join(tmpdir(), 'jev-gate-prereg-'));
   const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
-  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev']) cpSync(d, join(root, d), { recursive: true, filter: skip });
+  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: skip });
   assert.doesNotThrow(() => checkRecord(root));
   writeFileSync(join(root, 'experiments/jev-gate/corpus/c001.patch'), readFileSync('experiments/jev-gate/corpus/c001.patch', 'utf8') + ' ');
   assert.throws(() => checkRecord(root), /Corpus file changed: corpus\/c001\.patch/);
@@ -126,7 +126,7 @@ test('no threshold is expressed anywhere in the code, only in the record', () =>
 test('baselines come from baselines.json, with every script, the library and the scored files pinned from disk', () => {
   const root = mkdtempSync(join(tmpdir(), 'jev-gate-baselines-'));
   const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
-  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev']) cpSync(d, join(root, d), { recursive: true, filter: skip });
+  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: skip });
   const hash = file => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
   const lib = 'experiments/jev-gate/baselines.mjs', script = 'scripts/jev-gate-heuristic-demo.mjs';
   writeFileSync(join(root, lib), '// demo library\n'); cpSync('scripts/jev-gate-prereg.mjs', join(root, script));
@@ -175,7 +175,9 @@ test('the better baseline is picked by fewest missed RED items, and Jev is judge
   const without = committed(); without.criteria = without.criteria.filter(c => c !== without.criteria.find(x => x.comparedWith === 'bestBaseline'));
   assert.throws(() => validateRecord(without), /better-baseline criterion/);
   const named = committed(); named.bestBaseline.id = 'grep';
-  assert.throws(() => validateRecord(named), /null while no baseline/);
+  assert.throws(() => validateRecord(named), /bestBaseline must name a recorded baseline/);
+  const none = committed(); none.baselines = [];
+  assert.throws(() => validateRecord(none), /null while no baseline/);
 });
 
 test('headline figures count abstentions against the gate', () => {
@@ -185,4 +187,19 @@ test('headline figures count abstentions against the gate', () => {
   assert.match(def('falseReject'), /abstention on a GREEN item counts as a false reject/);
   assert.match(def('decidedOnly'), /abstentions excluded/);
   assert.match(record.claimRule, /headline \(worst-case\)/);
+});
+
+test('the pinned corpus records both baselines, the linter as the better one, and criterion 4 stated plainly', () => {
+  const record = committed();
+  assert.deepEqual(record.baselines.map(b => [b.id, b.missedRed, b.falseReject]), [['heuristic-grep', 5, 13], ['heuristic-lint', 0, 1]]);
+  assert.equal(record.bestBaseline.id, 'heuristic-lint');
+  assert.equal(record.bestBaseline.plainly, `Jev must miss 0 of ${record.corpus.groundTruthRed} RED items, abstentions included, because the better baseline (heuristic-lint) misses 0.`);
+  assert.match(record.bestBaseline.scope, /mechanical rules as well as a linter, not rules a linter cannot express/);
+  assert.deepEqual(record.commentOnlyRed.ids, ['c009', 'c021', 'c026', 'c041']);
+  assert.match(record.gates.reviewer.workspace, /No odin-rnd checkout, labels\.json, manifest\.json, baselines\.json, corpus file/);
+  const root = mkdtempSync(join(tmpdir(), 'jev-gate-split-'));
+  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: s => !/(\.venv|node_modules|results)/.test(s) });
+  const wrong = committed(); wrong.commentOnlyRed.ids = ['c001'];
+  writeFileSync(join(root, recordPath), JSON.stringify(wrong, null, 2) + '\n');
+  assert.throws(() => checkRecord(root), /commentOnlyRed item c001 is not RED/);
 });

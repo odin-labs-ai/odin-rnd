@@ -49,6 +49,14 @@ test('the baseline rows Jev has to beat are named on the note and the station', 
   assert(exhibit.includes(html(withRows.criteria.find(c => c.comparedWith === 'bestBaseline').statement)));
 });
 
+test('criterion 4 is stated plainly on the note and the station, with its scope limit', () => {
+  assert(note.includes(html(record.bestBaseline.plainly)) && note.includes(html(record.bestBaseline.scope)));
+  const exhibit = renderTriageExhibit(record, stations.find(s => s.id === 'triage'));
+  assert(exhibit.includes(html(record.bestBaseline.plainly)));
+  assert(exhibit.includes('Baseline to beat · heuristic-lint (better)') && exhibit.includes('Baseline to beat · heuristic-grep'));
+  for (const id of record.commentOnlyRed.ids) assert(note.includes(`<code>${id}</code>`));
+});
+
 test('the nina attribution is the founder wording, with its link, wherever nina is named', () => {
   const linked = record.attribution.nina.replace('github.com/xhulz/nina', '<a href="https://github.com/xhulz/nina">github.com/xhulz/nina</a>');
   assert.equal(record.attribution.nina, 'nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs');

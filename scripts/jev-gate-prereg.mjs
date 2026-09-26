@@ -49,6 +49,8 @@ export const required = {
   baselines: v => Array.isArray(v) && v.every(b => str(b.id) && str(b.script) && hex.test(b.scriptSha256) && str(b.lib) && hex.test(b.libSha256) && str(b.description) && pos(b.scored) && int(b.correct) && int(b.missedRed) && int(b.falseReject)),
   baselineRule: str, baselinesSource: str, 'bestBaseline.rule': str,
   'bestBaseline.id': v => v === null || str(v), 'bestBaseline.missedRed': v => v === null || int(v),
+  'bestBaseline.plainly': v => v === null || str(v), 'bestBaseline.scope': str,
+  'commentOnlyRed.ids': strings, 'commentOnlyRed.note': str,
   'decisionRules.typedDecision': str, 'decisionRules.decisionThreshold': fraction, 'decisionRules.confidence': str,
   'decisionRules.verdictPattern': str, 'decisionRules.verdictParse': str, 'decisionRules.reviewerMajority': str,
   'decisionRules.abstention': str, 'decisionRules.failures': str,
@@ -159,6 +161,11 @@ export function derive(record, root = '.') {
   for (const b of baselines) next.files[b.script] = sha256(read(b.script));
   const primary = labels.items.filter(item => !item.disagree && ['RED', 'GREEN'].includes(item.label));
   Object.assign(next.bestBaseline, pickBestBaseline(baselines, { red: primary.filter(i => i.label === 'RED').map(i => i.id), green: primary.filter(i => i.label === 'GREEN').map(i => i.id) }));
+  const { id, missedRed } = next.bestBaseline, red = labels.counts.RED;
+  // Criterion 4 in plain words, from the recorded numbers (founder, 2026-09-26: "Keep it, state it plainly").
+  next.bestBaseline.plainly = id === null ? null : missedRed === 0
+    ? `Jev must miss 0 of ${red} RED items, abstentions included, because the better baseline (${id}) misses 0.`
+    : `Jev must miss at most ${missedRed} of ${red} RED items, abstentions included, because the better baseline (${id}) misses ${missedRed}.`;
   const runner = read('experiments/laya-vs-jev/run.py').toString('utf8');
   next.gates.laya.revision = pyString(runner, 'HF_SHA');
   next.gates.laya.subdir = pyString(runner, 'SUBDIR');
@@ -183,6 +190,8 @@ export function assertDisk(record, root = '.') {
   assert.equal(inputs.tokenizer.hfRevision, record.gates.laya.revision, 'Gate inputs were counted with a different Laya revision');
   assert.equal(inputs.tokenizer.tokenizerSha256, record.gates.laya.fileSha256['typed-decisions/tokenizer/tokenizer.json']);
   assert.equal(inputs.question.sha256, sha256(read(`${dir}/gate-question.json`)));
+  const labels = JSON.parse(read(`${dir}/labels.json`));
+  for (const id of record.commentOnlyRed.ids) assert.equal(labels.items.find(i => i.id === id)?.label, 'RED', `commentOnlyRed item ${id} is not RED`);
   assert.equal(record.corpus.items, record.corpus.groundTruthRed + record.corpus.groundTruthGreen + record.corpus.excluded, 'Corpus counts do not add up');
 }
 
