@@ -48,7 +48,9 @@
     "experiments/jev-gate/baselines.json": "6267bc62d57bfff5516e440f9333aa8260075cdfdf783136d2774c0dc131cf19",
     "experiments/jev-gate/baselines.mjs": "cd0b1a4cfbcdfd5c3e1a769271d83a40c0ce094e98430381bcd4497477bae9e8",
     "scripts/jev-gate-heuristic-grep.mjs": "ffce62d0dcb1f6c7575d273099c8105f4f6d0a80cd977aaff8925fe00067c524",
-    "scripts/jev-gate-heuristic-lint.mjs": "b36e50d88330fa739b2fb28afe24a521400413a3a7c41ab22614a3b9886676f2"
+    "scripts/jev-gate-heuristic-lint.mjs": "b36e50d88330fa739b2fb28afe24a521400413a3a7c41ab22614a3b9886676f2",
+    "experiments/jev-gate/metrics.mjs": "80d217ab0aa65b1bc7c7ad3f0c1248d06029e5d2c17f5911dd21d375864d23c1",
+    "scripts/jev-gate-prereg.mjs": "f01c50d059f06bbc01fdc905f3a5ffe5165370151c1babae9ac3778f4b06c770"
   },
   "rulesText": "Architecture rules for this TypeScript service. They govern every .ts file under src/. An import is any import in the file itself: import, import type, export ... from, and import().\nFiles in src/domain must not import anything from src/app.\nFiles in src/domain must not import anything from src/infra.\nFiles in src/domain must not import anything from src/config.\nFiles in src/domain and src/app must not import the pg package.\nFiles in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra.\nFiles in src/domain, src/app and src/infra must not contain process.env anywhere, comments included.\nIn src/config, process.env.NAME is allowed only for these names: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Anywhere in a src/config file, comments included, process.env.NAME with any other name and process.env[...] are not allowed; other forms, such as destructuring or process.env?.NAME, are not covered.\n",
   "gateQuestion": {
@@ -126,8 +128,10 @@
       "order": "k runs per item, sequential, in id order, each in its own fresh workspace, never retried.",
       "hangStop": {
         "fraction": 0.2,
-        "rule": "If more than this fraction of the reviewer runs completed so far ended in a timeout, the run stops and the design is revisited before any further call; the stop and its count are published."
-      }
+        "minRuns": 10,
+        "rule": "Once at least minRuns reviewer runs have completed, if more than fraction of all runs so far ended in a timeout, the run stops and the design is revisited before any further call; the stop and its counts are published. Before minRuns runs, a timeout alone never stops the run."
+      },
+      "isolationProof": "Isolation is proven before any counted reviewer run. A canary file shaped like labels.json is placed outside the scratch repository, in its parent directory, and a probe run with the pinned command, tools, model and effort is asked to read it. The probe must fail to read it; its transcript is recorded. If the canary is readable, no reviewer run is counted and the design is revisited. Probe runs are paid spend under the cap and use no corpus item."
     }
   },
   "baselines": [
@@ -241,6 +245,10 @@
     {
       "id": "costPer1000",
       "definition": "Cost per 1,000 decisions per gate and for the cascade, each labelled with its basis (see cost)."
+    },
+    {
+      "id": "meanCostPerChange",
+      "definition": "Mean cost per change over the primary population, on the pinned price bases. Cascade: Jev's listed-price cost on every item plus the reviewer's API-equivalent cost of all k runs on the items it escalates. Reviewer alone: the reviewer's API-equivalent cost of all k runs on every item. A missing cost counts against the cascade: a Jev call or an escalated reviewer run without a recorded cost is costed at the largest per-call cost recorded for that gate in the run, and a reviewer-alone run without a recorded cost is costed at 0."
     }
   ],
   "statistics": {
@@ -296,18 +304,29 @@
       "refutedWhen": "greater-than",
       "threshold": 0,
       "statement": "Jev misses more drift than the better model-free baseline, on the same RED items (an abstention by Jev counts as a miss)."
+    },
+    {
+      "id": "cascade-cost",
+      "kind": "point-ratio",
+      "metric": "meanCostPerChange",
+      "gate": "cascade",
+      "comparedWith": "reviewer",
+      "refutedWhen": "not-below-fraction",
+      "threshold": 0.5,
+      "statement": "The cascade's mean cost per change is not below 50% of the reviewer-alone mean cost per change, on the same items and the pinned price bases (Jev at its listed price, the reviewer at the API-equivalent total_cost_usd it records)."
     }
   ],
-  "claimRule": "The claim is refuted if any criterion is refuted. Every criterion uses the headline (worst-case) figures. Laya is judged against the same two single-rate criteria and reported; its result does not decide the claim.",
+  "claimRule": "The claim is refuted if any of the five criteria is refuted. The drift criteria use the headline (worst-case) figures; the cost criterion uses the pinned price bases. Laya is judged against the same two single-rate criteria and reported; its result does not decide the claim.",
   "thresholdRule": {
-    "states": [
-      "refuted",
-      "passes, not established at this N",
-      "passes"
-    ],
+    "states": {
+      "refuted": "refuted",
+      "notEstablished": "passes, not established at this N",
+      "passes": "passes"
+    },
     "singleRate": "Compare the point estimate with the threshold. Refuted: the point estimate is greater than the threshold. Passes, not established at this N: the point estimate is not greater, but the upper bound of its Wilson interval is. Passes: the upper bound is not greater than the threshold either.",
     "pairedDifference": "Compare the point estimates of the headline missed drift on the same RED items. Refuted: the first (the cascade, or Jev) misses more than what it is compared with (theta greater than 0). Passes, not established at this N: it does not miss more, but the Newcombe interval of theta includes 0, as it does for a tie. Passes: it does not miss more and the interval lies entirely below 0.",
-    "publication": "All three states are published as they come out, with the counts and intervals behind them."
+    "publication": "All three states are published as they come out, with the counts and intervals behind them.",
+    "pointRatio": "The cost criterion is a deterministic calculation on recorded costs, not a sample estimate, so it has no interval and no \"not established\" state. Refuted: the cascade's mean cost per change is not below the threshold fraction of the reviewer-alone mean. Passes: it is below."
   },
   "baselineValidity": {
     "metric": "missedDrift",
@@ -363,7 +382,8 @@
     "One author wrote the corpus and the rules. An independent review checked the corpus before these hashes were fixed.",
     "bce reads direct import edges. A breach that only happens through a file outside the governed scope is invisible to it, so that family is not in the corpus.",
     "One machine and one run. Latency describes that machine under its load at the time.",
-    "Confidence here is max(p, 1 - p) for both typed gates. EXP 004 used the confidence Jev reported and, for Laya's yes/no answers, one minus the normalised entropy, so the two experiments' confidence figures are not comparable."
+    "Confidence here is max(p, 1 - p) for both typed gates. EXP 004 used the confidence Jev reported and, for Laya's yes/no answers, one minus the normalised entropy, so the two experiments' confidence figures are not comparable.",
+    "Costs are computed from listed and API-equivalent prices on one run; the cost criterion is a point comparison with no interval, and it says nothing about invoiced prices or other volumes."
   ],
   "sources": [
     {

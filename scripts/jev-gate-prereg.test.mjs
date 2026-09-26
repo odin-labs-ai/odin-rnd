@@ -4,8 +4,8 @@ import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { checkRecord, criterionFields, derive, get, ninaAttribution, recordPath, required, validateRecord } from './jev-gate-prereg.mjs';
-import { baselineCounts, baselineValid, judgePaired, judgeSingleRate, newcombePaired, pickBestBaseline, wilson } from '../experiments/jev-gate/metrics.mjs';
+import { assertDisk, checkRecord, criterionFields, criterionShapes, derive, get, ninaAttribution, pinPath, recordPath, required, requiredMetrics, validateRecord } from './jev-gate-prereg.mjs';
+import { baselineCounts, baselineValid, judgeCost, judgePaired, judgeSingleRate, newcombePaired, pickBestBaseline, wilson } from '../experiments/jev-gate/metrics.mjs';
 
 const committed = () => JSON.parse(readFileSync(recordPath, 'utf8'));
 const unset = (record, path) => { const keys = path.split('.'), last = keys.pop(); delete keys.reduce((v, k) => v[k], record)[last]; };
@@ -30,7 +30,7 @@ test('the validator refuses a record missing any required field', () => {
     assert.throws(() => validateRecord(record), /Criterion field/, `criterion ${index} without ${field} was accepted`);
   }
   const noCascade = committed(); noCascade.criteria = noCascade.criteria.filter(c => c.kind !== 'paired-difference');
-  assert.throws(() => validateRecord(noCascade), /cascade criterion/);
+  assert.throws(() => validateRecord(noCascade), /Criterion cascade-vs-reviewer is required/);
   const unpinned = committed(); delete unpinned.files['experiments/jev-gate/labels.json'];
   assert.throws(() => validateRecord(unpinned), /does not pin/);
 });
@@ -84,7 +84,7 @@ test('Wilson and Newcombe intervals match an independent hand computation', () =
 test('verdicts take three states and read every threshold from the record', () => {
   const record = committed();
   const [missed, , cascade] = record.criteria;
-  const [refuted, notEstablished, passes] = record.thresholdRule.states;
+  const { refuted, notEstablished, passes } = record.thresholdRule.states;
   assert.equal(judgeSingleRate(record, missed, 0, 30).state, notEstablished, '0 of 30: point passes, upper bound crosses');
   assert.equal(judgeSingleRate(record, missed, 30, 30).state, refuted);
   const lenient = structuredClone(record); lenient.criteria[0].threshold = 0.3;
@@ -169,11 +169,11 @@ test('the better baseline is picked by fewest missed RED items, and Jev is judge
   assert.deepEqual(pickBestBaseline([], items), { id: null, missedRed: null });
   const record = committed();
   const criterion = record.criteria.find(c => c.comparedWith === 'bestBaseline');
-  const [refuted, notEstablished] = record.thresholdRule.states;
+  const { refuted, notEstablished } = record.thresholdRule.states;
   assert.equal(judgePaired(record, criterion, { a: 0, b: 3, c: 0, d: 27 }).state, refuted, 'Jev misses more than the baseline');
   assert.equal(judgePaired(record, criterion, { a: 0, b: 0, c: 0, d: 30 }).state, notEstablished, 'A tie is not established');
   const without = committed(); without.criteria = without.criteria.filter(c => c !== without.criteria.find(x => x.comparedWith === 'bestBaseline'));
-  assert.throws(() => validateRecord(without), /better-baseline criterion/);
+  assert.throws(() => validateRecord(without), /Criterion jev-vs-best-baseline is required/);
   const named = committed(); named.bestBaseline.id = 'grep';
   assert.throws(() => validateRecord(named), /bestBaseline must name a recorded baseline/);
   const none = committed(); none.baselines = [];
@@ -200,6 +200,43 @@ test('the pinned corpus records both baselines, the linter as the better one, an
   const root = mkdtempSync(join(tmpdir(), 'jev-gate-split-'));
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: s => !/(\.venv|node_modules|results)/.test(s) });
   const wrong = committed(); wrong.commentOnlyRed.ids = ['c001'];
-  writeFileSync(join(root, recordPath), JSON.stringify(wrong, null, 2) + '\n');
-  assert.throws(() => checkRecord(root), /commentOnlyRed item c001 is not RED/);
+  assert.throws(() => assertDisk(wrong, root), /commentOnlyRed item c001 is not RED/);
+});
+
+test('the validator holds the five criteria, the metrics and the result states to their exact shape', () => {
+  const refuse = (mutate, pattern) => { const r = committed(); mutate(r); assert.throws(() => validateRecord(r), pattern); };
+  for (const id of Object.keys(criterionShapes)) refuse(r => { r.criteria = r.criteria.filter(c => c.id !== id); }, new RegExp(`Criterion ${id} is required`));
+  refuse(r => { r.criteria[0].gate = 'laya'; }, /jev-missed-drift gate must be jev/);
+  refuse(r => { r.criteria.find(c => c.id === 'cascade-vs-reviewer').comparedWith = 'heuristic-grep'; }, /comparedWith must be reviewer/);
+  refuse(r => { r.criteria.find(c => c.id === 'cascade-vs-reviewer').threshold = 0.5; }, /threshold must be 0/);
+  refuse(r => { r.criteria[1].metric = 'agreement'; }, /metric must be falseReject/);
+  refuse(r => { r.criteria[0].comparedWith = 'reviewer'; }, /compares with nothing/);
+  refuse(r => { r.criteria.push({ ...r.criteria[0], id: 'extra' }); }, /Unknown criterion extra/);
+  refuse(r => { const s = r.thresholdRule.states; r.thresholdRule.states = { refuted: s.passes, notEstablished: s.notEstablished, passes: s.refuted }; }, /thresholdRule\.states/);
+  for (const id of requiredMetrics) refuse(r => { r.metrics = r.metrics.filter(m => m.id !== id); }, new RegExp(`Metric ${id} is required`));
+  refuse(r => { r.gates.reviewer.isolationProof = 'trust the sandbox'; }, /isolationProof/);
+  refuse(r => { delete r.gates.reviewer.hangStop.minRuns; }, /hangStop\.minRuns/);
+});
+
+test('the cost criterion is a two-state point comparison read from the record', () => {
+  const record = committed();
+  const cost = record.criteria.find(c => c.id === 'cascade-cost');
+  const { refuted, passes } = record.thresholdRule.states;
+  const reviewer = 1, below = cost.threshold * reviewer * 0.99, at = cost.threshold * reviewer;
+  assert.equal(judgeCost(record, cost, below, reviewer).state, passes);
+  assert.equal(judgeCost(record, cost, at, reviewer).state, refuted, 'Not below the fraction is refuted');
+  assert.equal(judgeCost(record, cost, 2, reviewer).state, refuted);
+  assert.match(record.thresholdRule.pointRatio, /no interval/);
+  assert.match(record.claimRule, /five criteria/);
+  assert(record.files['experiments/jev-gate/metrics.mjs'] && record.files['scripts/jev-gate-prereg.mjs'], 'The verdict code is pinned');
+});
+
+test('the record is pinned by its own sha256 file, and an unpinned edit is refused', () => {
+  const pinned = readFileSync(pinPath, 'utf8');
+  assert.equal(pinned, `${checkRecord().sha256}  preregistration.json\n`);
+  const root = mkdtempSync(join(tmpdir(), 'jev-gate-pin-'));
+  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: s => !/(\.venv|node_modules|results)/.test(s) });
+  const edited = committed(); edited.question += ' Also, faster.';
+  writeFileSync(join(root, recordPath), JSON.stringify(edited, null, 2) + '\n');
+  assert.throws(() => checkRecord(root), /differs from the sha256 pinned/);
 });

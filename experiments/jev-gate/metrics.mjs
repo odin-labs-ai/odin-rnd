@@ -30,12 +30,13 @@ export function newcombePaired({ a, b, c, d }, z) {
   return { estimate: theta, lower: Math.max(-1, theta - delta), upper: Math.min(1, theta + epsilon), phi, first, second, n };
 }
 
+// Result states are read by name, never by position.
 export const states = record => record.thresholdRule.states;
 
 // Three-state verdict for a single rate against its pre-registered threshold.
 export function judgeSingleRate(record, criterion, x, n) {
   assert.equal(criterion.kind, 'single-rate'); assert.equal(criterion.refutedWhen, 'greater-than');
-  const [refuted, notEstablished, passes] = states(record);
+  const { refuted, notEstablished, passes } = states(record);
   const interval = wilson(x, n, record.statistics.z);
   if (!interval) return { state: 'no items', interval };
   const state = interval.estimate > criterion.threshold ? refuted : interval.upper > criterion.threshold ? notEstablished : passes;
@@ -45,11 +46,19 @@ export function judgeSingleRate(record, criterion, x, n) {
 // Paired comparison of point estimates on the same items; "not established" when the interval includes 0.
 export function judgePaired(record, criterion, table) {
   assert.equal(criterion.kind, 'paired-difference'); assert.equal(criterion.refutedWhen, 'greater-than');
-  const [refuted, notEstablished, passes] = states(record);
+  const { refuted, notEstablished, passes } = states(record);
   const interval = newcombePaired(table, record.statistics.z);
   if (!interval) return { state: 'no items', interval };
   const state = interval.estimate > criterion.threshold ? refuted : interval.lower <= criterion.threshold && criterion.threshold <= interval.upper ? notEstablished : passes;
   return { state, interval };
+}
+
+// The cost criterion: a deterministic point comparison on recorded costs, so two states and no interval.
+export function judgeCost(record, criterion, cascadeMean, reviewerMean) {
+  assert.equal(criterion.kind, 'point-ratio'); assert.equal(criterion.refutedWhen, 'not-below-fraction');
+  for (const v of [cascadeMean, reviewerMean]) assert(Number.isFinite(v) && v >= 0, 'Mean costs must be non-negative numbers');
+  const { refuted, passes } = states(record);
+  return { state: cascadeMean < criterion.threshold * reviewerMean ? passes : refuted, ratio: reviewerMean === 0 ? null : cascadeMean / reviewerMean };
 }
 
 // The baseline is valid unless the reviewer's own missed-drift point estimate exceeds its threshold.
