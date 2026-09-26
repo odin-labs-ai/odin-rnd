@@ -126,6 +126,9 @@
       }
     }
   },
+  "baselines": [],
+  "baselineRule": "Each baseline is a deterministic, committed script that decides every corpus item from inputs.json alone, with no model and no network. Its result on the pinned corpus is computed and recorded here before any gate call. The results report each baseline as a row that Jev has to beat, on the same items and metrics; a typed gate that does not do better than a script adds nothing the script could not.",
+  "baselinesSource": "experiments/jev-gate/baselines.json: each entry's id, script path, the script's sha256 and its results. The validator reads that file and every script from disk and refuses any difference.",
   "decisionRules": {
     "typedDecision": "For Jev and Laya, the decision is REJECT (the gate predicts RED) when p is at least decisionThreshold, and ACCEPT (the gate predicts GREEN) otherwise.",
     "decisionThreshold": 0.5,

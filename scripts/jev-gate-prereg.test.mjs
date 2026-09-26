@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { checkRecord, criterionFields, derive, get, ninaAttribution, recordPath, required, validateRecord } from './jev-gate-prereg.mjs';
 import { baselineValid, judgePaired, judgeSingleRate, newcombePaired, wilson } from '../experiments/jev-gate/metrics.mjs';
 
@@ -120,4 +121,21 @@ test('no threshold is expressed anywhere in the code, only in the record', () =>
   assert.deepEqual(states("const version = '0.3.1';"), [], 'A version string is not a threshold');
   for (const file of code) assert.deepEqual(states(readFileSync(file, 'utf8')), [], `${file} states a threshold; read it from ${recordPath}`);
   assert.ok(forms.size > 0 && get(record, 'criteria.0.threshold') !== undefined);
+});
+
+test('baselines come from baselines.json, and their scripts are pinned by the hash on disk', () => {
+  const root = mkdtempSync(join(tmpdir(), 'jev-gate-baselines-'));
+  const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
+  for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev']) cpSync(d, join(root, d), { recursive: true, filter: skip });
+  const script = 'scripts/jev-gate-heuristic-demo.mjs';
+  cpSync('scripts/jev-gate-prereg.mjs', join(root, script));
+  const sha = createHash('sha256').update(readFileSync(join(root, script))).digest('hex');
+  writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ schemaVersion: 1, baselines: [{ id: 'demo', script, sha256: sha, results: { correct: 50, total: 60 } }] }));
+  assert.throws(() => checkRecord(root), /differs from the files on disk/, 'A record without the recorded baselines is refused');
+  const pinned = derive(committed(), root);
+  assert.deepEqual(pinned.baselines.map(b => [b.id, b.sha256]), [['demo', sha]]);
+  assert.equal(pinned.files[script], sha);
+  assert.doesNotThrow(() => validateRecord(pinned));
+  writeFileSync(join(root, script), 'changed');
+  assert.throws(() => derive(committed(), root), /Baseline script changed/);
 });

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { checkRecord, validateRecord } from './jev-gate-prereg.mjs';
-import { articlePath, assertNoteCurrent, noteNumber, renderNote, slug } from './jev-gate-journal.mjs';
+import { articlePath, assertNoteCurrent, noteNumber, renderNote, renderTriageExhibit, slug } from './jev-gate-journal.mjs';
+import { stations } from './station-contract.mjs';
 
 const { record, sha256 } = checkRecord();
 const note = readFileSync(articlePath, 'utf8');
@@ -31,6 +32,16 @@ test('the note states it is pre-registered with no results, and carries the whol
   for (const source of record.sources) assert(note.includes(`href="${html(source.url)}"`), `Note is missing source ${source.id}`);
   assert(note.includes('href="../data/jev-gate/preregistration.json"'));
   assert(note.includes('diff-only triage is not a replacement for bce'));
+});
+
+test('the baseline rows Jev has to beat are named on the note and the station', () => {
+  assert(note.includes('Baselines Jev has to beat') && note.includes(html(record.baselineRule)));
+  const withRows = structuredClone(record);
+  withRows.baselines = [{ id: 'keyword-grep', script: 'scripts/jev-gate-heuristic-grep.mjs', sha256: 'a'.repeat(64), results: { correct: 55, total: 60 } }, { id: 'regex-lint', script: 'scripts/jev-gate-heuristic-lint.mjs', sha256: 'b'.repeat(64), results: { correct: 60, total: 60 } }];
+  const rendered = renderNote(withRows, sha256);
+  for (const b of withRows.baselines) assert(rendered.includes(`<strong>${b.id}</strong>`) && rendered.includes(b.script) && rendered.includes(`${b.results.correct} / ${b.results.total} agree with bce`));
+  const exhibit = renderTriageExhibit(withRows, stations.find(s => s.id === 'triage'));
+  for (const b of withRows.baselines) assert(exhibit.includes(`Baseline to beat · ${b.id}`));
 });
 
 test('the nina attribution is the founder wording, with its link, wherever nina is named', () => {

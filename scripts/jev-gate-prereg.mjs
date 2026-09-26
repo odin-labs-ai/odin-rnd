@@ -4,7 +4,7 @@
 //   node scripts/jev-gate-prereg.mjs --write   re-derive the disk-derived fields (after a corpus change), then --check
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,6 +45,8 @@ export const required = {
   'gates.reviewer.model': str, 'gates.reviewer.effort': str, 'gates.reviewer.k': pos, 'gates.reviewer.allowedTools': strings,
   'gates.reviewer.command': str, 'gates.reviewer.workspace': str, 'gates.reviewer.prompt': str, 'gates.reviewer.promptAuthorship': str,
   'gates.reviewer.timeoutSeconds': pos, 'gates.reviewer.order': str, 'gates.reviewer.hangStop.fraction': fraction, 'gates.reviewer.hangStop.rule': str,
+  baselines: v => Array.isArray(v) && v.every(b => str(b.id) && str(b.script) && hex.test(b.sha256) && obj(b.results)),
+  baselineRule: str, baselinesSource: str,
   'decisionRules.typedDecision': str, 'decisionRules.decisionThreshold': fraction, 'decisionRules.confidence': str,
   'decisionRules.verdictPattern': str, 'decisionRules.verdictParse': str, 'decisionRules.reviewerMajority': str,
   'decisionRules.abstention': str, 'decisionRules.failures': str,
@@ -102,6 +104,20 @@ export function validateRecord(record) {
   return record;
 }
 
+export const baselinesPath = `${dir}/baselines.json`;
+// The comparison baselines (deterministic scripts, no model) as baselines.json records them; [] until it exists.
+export function readBaselines(root = '.') {
+  if (!existsSync(join(root, baselinesPath))) return [];
+  const raw = JSON.parse(readFileSync(join(root, baselinesPath), 'utf8'));
+  const entries = Array.isArray(raw) ? raw : raw.baselines;
+  assert(Array.isArray(entries), `${baselinesPath} must hold an array of baselines`);
+  return entries.map(b => {
+    assert(str(b.id) && str(b.script) && hex.test(b.sha256) && obj(b.results), `Malformed baseline ${b.id}`);
+    assert.equal(sha256(readFileSync(join(root, b.script))), b.sha256, `Baseline script changed: ${b.script}`);
+    return { ...b };
+  });
+}
+
 const pyString = (source, name) => source.match(new RegExp(`^${name} = "([^"]+)"`, 'm'))?.[1];
 
 // Everything in the record that is a fact about files on disk, recomputed from those files.
@@ -120,6 +136,9 @@ export function derive(record, root = '.') {
   next.stateConstruction = inputs.stateConstruction;
   next.groundTruth.version = labels.engine.version;
   next.groundTruth.extractor = labels.engine.extractor;
+  next.baselines = readBaselines(root);
+  if (next.baselines.length) next.files[baselinesPath] = sha256(read(baselinesPath));
+  for (const b of next.baselines) next.files[b.script] = sha256(read(b.script));
   const runner = read('experiments/laya-vs-jev/run.py').toString('utf8');
   next.gates.laya.revision = pyString(runner, 'HF_SHA');
   next.gates.laya.subdir = pyString(runner, 'SUBDIR');

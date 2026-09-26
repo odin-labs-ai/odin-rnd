@@ -11,13 +11,21 @@ const escape = value => String(value).replaceAll('&','&amp;').replaceAll('<','&l
 const row = (label, value) => `<div class="record-comparison"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const short = digest => `${digest.slice(0, 12)}…`;
 
+// A baseline's recorded result in one line: its agreement with bce when the counts are there, else its fields.
+export const baselineResult = b => {
+  const r = b.results;
+  if (Number.isInteger(r.correct) && Number.isInteger(r.total)) return `${r.correct} / ${r.total} agree with bce`;
+  return Object.entries(r).filter(([, v]) => ['number', 'string'].includes(typeof v)).map(([k, v]) => `${k} ${v}`).join(', ') || 'recorded in baselines.json';
+};
+const baselineRows = record => record.baselines.length ? record.baselines.map(b => row(`Baseline to beat · ${b.id}`, baselineResult(b))).join('') : row('Baselines to beat', 'being recorded');
+
 // Station 06. The heading says it is pre-registered; it never presents a result.
 export function renderTriageExhibit(record, station) {
   assert.equal(station.title, record.experiment.stationTitle, 'Station 06 title differs from the pre-registration');
   assert.equal(station.status, record.experiment.statusText, 'Station 06 status differs from the pre-registration');
   const { corpus, gates, cascade } = record;
   const criteria = record.criteria.map(c => `<li>${escape(c.statement)}</li>`).join('');
-  return `<p class="artifact-label">Written down before any gate runs</p><p class="station-implication">${escape(record.experiment.stationSummary)}</p><div class="record-comparisons">${row('Corpus', `${corpus.items} authored changes`)}${row(`Ground truth · ${record.groundTruth.engine} ${record.groundTruth.version}`, `${corpus.groundTruthRed} RED / ${corpus.groundTruthGreen} GREEN`)}${row('Gates', `${gates.jev.model} · Laya · LLM reviewer ×${gates.reviewer.k}`)}${row('Cascade', `final at confidence ≥ ${cascade.confidenceThreshold}, else escalate`)}${row('Results', 'none yet')}</div><p class="artifact-label">The claim is refuted if</p><ul class="station-criteria">${criteria}</ul><p class="station-provenance">Pre-registered ${escape(record.experiment.authoredOn)} · corpus sha256 <code>${escape(short(corpus.corpusSha256))}</code><br><a href="${dataPath}">The pre-registration record</a><br>LLM reviewer: ${record.attribution.nina.replace('github.com/xhulz/nina', `<a href="${escape(record.attribution.ninaUrl)}">github.com/xhulz/nina</a>`)}</p>`;
+  return `<p class="artifact-label">Written down before any gate runs</p><p class="station-implication">${escape(record.experiment.stationSummary)}</p><div class="record-comparisons">${row('Corpus', `${corpus.items} authored changes`)}${row(`Ground truth · ${record.groundTruth.engine} ${record.groundTruth.version}`, `${corpus.groundTruthRed} RED / ${corpus.groundTruthGreen} GREEN`)}${row('Gates', `${gates.jev.model} · Laya · LLM reviewer ×${gates.reviewer.k}`)}${row('Cascade', `final at confidence ≥ ${cascade.confidenceThreshold}, else escalate`)}${baselineRows(record)}${row('Results', 'none yet')}</div><p class="artifact-label">The claim is refuted if</p><ul class="station-criteria">${criteria}</ul><p class="station-provenance">Pre-registered ${escape(record.experiment.authoredOn)} · corpus sha256 <code>${escape(short(corpus.corpusSha256))}</code><br><a href="${dataPath}">The pre-registration record</a><br>LLM reviewer: ${record.attribution.nina.replace('github.com/xhulz/nina', `<a href="${escape(record.attribution.ninaUrl)}">github.com/xhulz/nina</a>`)}</p>`;
 }
 
 export const slug = 'jev-as-a-fast-gate';
@@ -76,6 +84,10 @@ ${list([
 ])}
 <p>The reviewer's prompt, verbatim. ${escape(reviewer.promptAuthorship)}</p>
 <pre tabindex="0">${escape(reviewer.prompt)}</pre>
+<h2>Baselines Jev has to beat</h2>
+<p>${escape(record.baselineRule)}</p>
+${record.baselines.length ? list(record.baselines.map(b => `<strong>${escape(b.id)}</strong>: ${b.description ? `${escape(b.description)} ` : ''}Script ${code(b.script)}, sha256 ${code(b.sha256)}. Recorded result on the pinned corpus: ${escape(baselineResult(b))}.`)) : '<p>The baseline rows are being recorded and are not part of this version of the record.</p>'}
+<p>${escape(record.baselinesSource)}</p>
 <h2>What we measure</h2>
 ${list(record.metrics.map(m => `<strong>${escape(m.id)}</strong>: ${fill(m.definition)}`))}
 <p>Every rate is published with its ${escape(s.singleRate.method)} at ${escape(percent(s.confidenceLevel))} (z = ${escape(s.z)}): ${code(s.singleRate.formula)}.</p>
