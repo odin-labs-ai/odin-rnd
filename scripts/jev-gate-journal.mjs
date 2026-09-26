@@ -58,7 +58,7 @@ export function renderNote(record, recordSha256) {
 <p>${escape(record.question)}</p>
 ${record.framing.map(p => `<p>${escape(p)}</p>`).join('\n')}
 <h2>Why a diff-only triage is not a replacement for bce</h2>
-<p>bce needs a blueprint and the real tree; given both, it answers exactly and costs little. A check that sees only the diff and the rules as text, before merge, is a different setting. There the typed gate would sit in front, settle what it is sure of and pass the rest on. bce stays what every gate in this experiment is scored against.</p>
+<p>bce needs a blueprint and the real tree; given both, it answers deterministically and costs little, within the limits listed below. A check that sees only the diff and the rules as text, before merge, is a different setting. There the typed gate would sit in front, settle what it is sure of and pass the rest on. bce stays what every gate in this experiment is scored against.</p>
 <h2>The cascade</h2>
 <p>${fill(cascade.rule)}</p>
 <p>${escape(cascade.reporting)}</p>
@@ -78,6 +78,8 @@ ${list([
   `<strong>Laya</strong>, the open-weight comparison: ${link(`${gates.laya.repository}/tree/${gates.laya.revision}/${gates.laya.subdir}`, `${gates.laya.repository.replace('https://', '')}`)} at revision ${code(gates.laya.revision)}. ${escape(gates.laya.backend)} ${escape(gates.laya.sequence)}`,
   `<strong>The LLM reviewer</strong>: ${nina}. Release ${code(reviewer.release)} (commit ${code(reviewer.commit)}), agent ${code(reviewer.agent)}, run by ${escape(reviewer.client)} ${escape(reviewer.clientVersion)} with model ${code(reviewer.model)} at effort ${code(reviewer.effort)}, ${reviewer.k} runs per change. Tools: ${reviewer.allowedTools.map(code).join(', ')}. ${escape(reviewer.workspace)}`,
 ])}
+<p>${escape(reviewer.isolationProof)}</p>
+<p>Timeouts: each run has ${reviewer.timeoutSeconds} s. ${fill(reviewer.hangStop.rule.replaceAll('minRuns', String(reviewer.hangStop.minRuns)).replace('fraction of', `${percent(reviewer.hangStop.fraction)} of`))}</p>
 <p>The reviewer's prompt, verbatim. ${escape(reviewer.promptAuthorship)}</p>
 <pre tabindex="0">${escape(reviewer.prompt)}</pre>
 <h2>Baselines Jev has to beat</h2>
@@ -94,7 +96,7 @@ ${list(record.metrics.map(m => `<strong>${escape(m.id)}</strong>: ${fill(m.defin
 <h2>What would prove it wrong</h2>
 ${list(record.criteria.map(c => escape(c.statement)))}
 <p>${escape(record.claimRule)}</p>
-${record.bestBaseline.plainly ? `<p><strong>Stated plainly:</strong> ${escape(record.bestBaseline.plainly)} ${escape(record.bestBaseline.scope)}</p>\n` : ''}<p>Each criterion comes out in one of three states: ${t.states.map(x => `<em>${escape(x)}</em>`).join(', ')}. ${escape(t.singleRate)} ${escape(t.pairedDifference)} ${escape(t.publication)}</p>
+${record.bestBaseline.plainly ? `<p><strong>Stated plainly:</strong> ${escape(record.bestBaseline.plainly)} ${escape(record.bestBaseline.scope)}</p>\n` : ''}<p>Each drift criterion comes out in one of three states: ${Object.values(t.states).map(x => `<em>${escape(x)}</em>`).join(', ')}. ${escape(t.singleRate)} ${escape(t.pairedDifference)} ${escape(t.pointRatio)} ${escape(t.publication)}</p>
 <p>${escape(record.baselineValidity.statement)}</p>
 <p>${escape(record.latency.role)}</p>
 <h2>Cost, the spending cap and timing</h2>
@@ -120,6 +122,7 @@ ${list(record.limits.map(escape))}
 // The committed note must be exactly the render of the committed record; the build calls this.
 export function assertNoteCurrent(root = '.') {
   const { record, sha256 } = checkRecord(root);
+  assertIndexCurrent(readFileSync(`${root}/site/index.html`, 'utf8'), record);
   assert.equal(readFileSync(`${root}/${articlePath}`, 'utf8'), renderNote(record, sha256), `${articlePath} differs from the pre-registration: run node scripts/jev-gate-journal.mjs --write`);
   return record;
 }
@@ -129,4 +132,26 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { record, sha256 } = checkRecord();
   writeFileSync(articlePath, renderNote(record, sha256));
   console.log(`Wrote ${articlePath} from the pre-registration (${sha256}).`);
+}
+
+// The two home-page rows for this experiment, rendered from the record. The build and a test require
+// site/index.html to contain exactly these, so a hand edit (a claimed result, a changed design) fails.
+const shortDate = iso => { const [y, m, d] = iso.split('-'); return `${d}.${m}.${y.slice(2)}`; };
+export function renderJournalRow(record) {
+  const e = record.experiment;
+  return `<a class="journal-row" href="journal/${slug}.html"><div class="journal-date"><time datetime="${escape(e.authoredOn)}">${shortDate(e.authoredOn)}</time><span class="technical">EXPERIMENT NOTE / ${noteNumber}</span></div><div><h3>${escape(e.title)}: <br>the pre-registration</h3><p>${escape(e.stationSummary)} Pre-registered, no results yet.</p></div><span class="journal-arrow" aria-hidden="true">↗</span></a>`;
+}
+export function renderProjectRow(record) {
+  const { experiment: e, corpus, groundTruth: g } = record;
+  const nina = record.attribution.nina.replace('github.com/xhulz/nina', `<a href="${escape(record.attribution.ninaUrl)}">github.com/xhulz/nina</a>`);
+  return `<article class="project-row project-featured"><div class="project-number">004<span>TRIAGE</span></div><div class="project-description"><h3><a href="journal/${slug}.html">${escape(e.title)}</a></h3><p>A pre-registered test of a fast typed-decision model as the first gate against architectural drift. ${corpus.items} authored changes, scored by the blueprint engine. Jev decides from the diff alone and an LLM reviewer takes what Jev is unsure of; the open-weight Laya answers the same inputs, and ${record.baselines.length} model-free scripts set the bar. Published before any gate runs.</p><div class="project-links"><a href="journal/${slug}.html">The pre-registration</a><a href="${dataPath}">The record</a><a href="#station-triage">Station 06</a></div><p class="project-note">The LLM reviewer is ${nina}.</p></div><dl class="project-spec"><div><dt>Experiment</dt><dd>${escape(e.id)}</dd></div><div><dt>Status</dt><dd>Pre-registered</dd></div><div><dt>Ground truth</dt><dd>${escape(g.engine)} ${escape(g.version)}</dd></div><div><dt>Results</dt><dd>Not yet run</dd></div></dl></article>`;
+}
+// Words a pre-registration row may never carry.
+export const resultWords = /\b(results? show|wins?|won|beats?|outperform\w*|measured|proven|refuted|passe[sd])\b/i;
+export function assertIndexCurrent(page, record) {
+  for (const [name, row] of [['journal row', renderJournalRow(record)], ['featured row 004', renderProjectRow(record)]]) {
+    assert(!resultWords.test(row), `The ${name} renderer states a result`);
+    assert(page.includes(row), `site/index.html ${name} differs from the pre-registration: paste the output of renderJournalRow/renderProjectRow`);
+  }
+  for (const block of [page.split(`href="journal/${slug}.html"><div class="journal-date">`)[1]?.split('</a>')[0] ?? '', page.split('<div class="project-number">004')[1]?.split('</article>')[0] ?? '']) assert(!resultWords.test(block), 'An EXP 005 row on the home page states a result');
 }

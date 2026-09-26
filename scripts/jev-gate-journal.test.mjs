@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { checkRecord, validateRecord } from './jev-gate-prereg.mjs';
-import { articlePath, assertNoteCurrent, noteNumber, renderNote, renderTriageExhibit, slug } from './jev-gate-journal.mjs';
+import { articlePath, assertIndexCurrent, assertNoteCurrent, noteNumber, renderJournalRow, renderNote, renderProjectRow, renderTriageExhibit, slug } from './jev-gate-journal.mjs';
 import { stations } from './station-contract.mjs';
 
 const { record, sha256 } = checkRecord();
@@ -75,4 +75,23 @@ test('the journal row, featured row 004 and sitemap list the note, and agree wit
   for (const href of [`journal/${slug}.html`, 'data/jev-gate/preregistration.json', '#station-triage']) assert(featured.includes(`href="${href}"`), `Featured row is missing ${href}`);
   assert.doesNotMatch(featured, /Recorded|Measured/);
   assert(readFileSync('site/sitemap.xml', 'utf8').includes(`journal/${slug}.html`), 'Sitemap entry');
+});
+
+test('both home-page rows are the render of the record, and a claimed result fails', () => {
+  assert(page.includes(renderJournalRow(record)) && page.includes(renderProjectRow(record)));
+  assert.doesNotThrow(() => assertIndexCurrent(page, record));
+  assert(renderProjectRow(record).includes('an LLM reviewer takes what Jev is unsure of'));
+  for (const edit of [p => p.replace('Published before any gate runs.', 'Results show Jev wins.'), p => p.replace('Pre-registered, no results yet.', 'Measured: Jev beats the reviewer.'), p => p.replace('what Jev is unsure of', 'what they are unsure of')]) {
+    const changed = edit(page); assert.notEqual(changed, page);
+    assert.throws(() => assertIndexCurrent(changed, record), /differs from the pre-registration|states a result/);
+  }
+  const changed = structuredClone(record); changed.experiment.stationSummary += ' Jev wins.';
+  assert.throws(() => assertIndexCurrent(page, changed));
+});
+
+test('the note states the cost criterion, the isolation proof and the hang-stop floor', () => {
+  assert(note.includes(html(record.criteria.find(c => c.id === 'cascade-cost').statement)));
+  assert(note.includes(html(record.thresholdRule.pointRatio)) && note.includes(html(record.gates.reviewer.isolationProof)));
+  assert(note.includes(`Once at least ${record.gates.reviewer.hangStop.minRuns} reviewer runs`));
+  assert(!note.includes('answers exactly'));
 });
