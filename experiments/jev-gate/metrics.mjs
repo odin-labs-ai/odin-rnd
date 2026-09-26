@@ -56,8 +56,10 @@ export function judgePaired(record, criterion, table) {
 // The cost criterion: a deterministic point comparison on recorded costs, so two states and no interval.
 export function judgeCost(record, criterion, cascadeMean, reviewerMean) {
   assert.equal(criterion.kind, 'point-ratio'); assert.equal(criterion.refutedWhen, 'not-below-fraction');
-  for (const v of [cascadeMean, reviewerMean]) assert(Number.isFinite(v) && v >= 0, 'Mean costs must be non-negative numbers');
   const { refuted, passes } = states(record);
+  // A gate that recorded no cost at all leaves nothing to impute: fail closed.
+  if (cascadeMean === null || reviewerMean === null) return { state: refuted, ratio: null };
+  for (const v of [cascadeMean, reviewerMean]) assert(Number.isFinite(v) && v >= 0, 'Mean costs must be non-negative numbers');
   return { state: cascadeMean < criterion.threshold * reviewerMean ? passes : refuted, ratio: reviewerMean === 0 ? null : cascadeMean / reviewerMean };
 }
 

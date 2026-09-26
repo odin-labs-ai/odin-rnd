@@ -89,7 +89,7 @@ export const criterionShapes = {
 export const resultStates = { refuted: 'refuted', notEstablished: 'passes, not established at this N', passes: 'passes' };
 export const requiredMetrics = ['agreement', 'missedDrift', 'falseReject', 'abstentionRate', 'decidedOnly', 'missedDriftSplit', 'accuracyAtHighConfidence', 'cascade', 'reviewerVariance', 'latency', 'costPer1000', 'meanCostPerChange'];
 // Files every gate input or the verdict depends on. The record may pin more, never fewer.
-export const requiredFiles = [...['corpus.sha256', 'labels.json', 'inputs.json', 'inputs.sha256', 'rules.txt', 'gate-question.json', 'blueprint.json', 'metrics.mjs'].map(f => `${dir}/${f}`), 'scripts/jev-gate-prereg.mjs'];
+export const requiredFiles = [...['corpus.sha256', 'labels.json', 'inputs.json', 'inputs.sha256', 'rules.txt', 'gate-question.json', 'blueprint.json', 'metrics.mjs'].map(f => `${dir}/${f}`), 'scripts/jev-gate-prereg.mjs', 'scripts/jev-gate-journal.mjs'];
 // The published record's sha256, pinned in its own file. The gate runners refuse any other record.
 export const pinPath = `${dir}/preregistration.sha256`;
 export const ninaAttribution = 'nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs';

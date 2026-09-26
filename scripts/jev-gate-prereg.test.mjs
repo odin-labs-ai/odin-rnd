@@ -226,6 +226,8 @@ test('the cost criterion is a two-state point comparison read from the record', 
   assert.equal(judgeCost(record, cost, below, reviewer).state, passes);
   assert.equal(judgeCost(record, cost, at, reviewer).state, refuted, 'Not below the fraction is refuted');
   assert.equal(judgeCost(record, cost, 2, reviewer).state, refuted);
+  assert.equal(judgeCost(record, cost, null, reviewer).state, refuted, 'No recorded cost on the cascade side is refuted');
+  assert.equal(judgeCost(record, cost, below, null).state, refuted, 'No recorded cost on the reviewer side is refuted');
   assert.match(record.thresholdRule.pointRatio, /no interval/);
   assert.match(record.claimRule, /five criteria/);
   assert(record.files['experiments/jev-gate/metrics.mjs'] && record.files['scripts/jev-gate-prereg.mjs'], 'The verdict code is pinned');

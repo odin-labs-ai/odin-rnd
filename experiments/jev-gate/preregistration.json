@@ -12,7 +12,7 @@
     "authoredOn": "2026-09-26",
     "note": "Written, hashed and published before any gate (Jev, Laya or the LLM reviewer) sees a corpus item. Nothing in this record may change after publication; a later change is a new, dated pre-registration, and the results are judged against this one."
   },
-  "question": "Given only a unified diff and a plain-language statement of the architecture rules, can a System-1 typed-decision model (Jev, hosted) serve as a fast first gate that tells whether an agent-written change breaks a rule, so that a cascade which escalates its unsure calls to an LLM reviewer misses no more drift than the reviewer alone, at a fraction of the reviewer's cost?",
+  "question": "Given only a unified diff and a plain-language statement of the architecture rules, can a System-1 typed-decision model (Jev, hosted) serve as a fast first gate that tells whether an agent-written change breaks a rule, so that a cascade which escalates its unsure calls to an LLM reviewer misses no more drift than the reviewer alone, at under half of the reviewer's cost?",
   "framing": [
     "The ground truth is the blueprint engine, bce-engine 0.3.1, run on the real tree after each change. bce is deterministic and cheap wherever a blueprint and the tree are wired in.",
     "This experiment asks a different question: whether a typed-decision model can triage a change from the diff alone, before merge, where bce is not wired in, with escalation to a heavier reviewer. It does not test replacing bce, and no result here would support using a typed-decision model instead of it.",
@@ -49,8 +49,9 @@
     "experiments/jev-gate/baselines.mjs": "cd0b1a4cfbcdfd5c3e1a769271d83a40c0ce094e98430381bcd4497477bae9e8",
     "scripts/jev-gate-heuristic-grep.mjs": "ffce62d0dcb1f6c7575d273099c8105f4f6d0a80cd977aaff8925fe00067c524",
     "scripts/jev-gate-heuristic-lint.mjs": "b36e50d88330fa739b2fb28afe24a521400413a3a7c41ab22614a3b9886676f2",
-    "experiments/jev-gate/metrics.mjs": "80d217ab0aa65b1bc7c7ad3f0c1248d06029e5d2c17f5911dd21d375864d23c1",
-    "scripts/jev-gate-prereg.mjs": "f01c50d059f06bbc01fdc905f3a5ffe5165370151c1babae9ac3778f4b06c770"
+    "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
+    "scripts/jev-gate-journal.mjs": "5bfc7cd43c22203b2d11d6d75363929f246345f0837cc733eb955c5c337ffece",
+    "scripts/jev-gate-prereg.mjs": "f6fab96e293aadd7d51e672a0b90e229fb6b32c6323f9d329b9bb29a1acdfa19"
   },
   "rulesText": "Architecture rules for this TypeScript service. They govern every .ts file under src/. An import is any import in the file itself: import, import type, export ... from, and import().\nFiles in src/domain must not import anything from src/app.\nFiles in src/domain must not import anything from src/infra.\nFiles in src/domain must not import anything from src/config.\nFiles in src/domain and src/app must not import the pg package.\nFiles in src/app may use infrastructure only through src/infra/index.ts; they must not import any file in a folder inside src/infra.\nFiles in src/domain, src/app and src/infra must not contain process.env anywhere, comments included.\nIn src/config, process.env.NAME is allowed only for these names: PORT, DATABASE_URL, LOG_LEVEL, SMTP_HOST, SMTP_FROM, INVOICE_PREFIX. Anywhere in a src/config file, comments included, process.env.NAME with any other name and process.env[...] are not allowed; other forms, such as destructuring or process.env?.NAME, are not covered.\n",
   "gateQuestion": {
@@ -129,7 +130,7 @@
       "hangStop": {
         "fraction": 0.2,
         "minRuns": 10,
-        "rule": "Once at least minRuns reviewer runs have completed, if more than fraction of all runs so far ended in a timeout, the run stops and the design is revisited before any further call; the stop and its counts are published. Before minRuns runs, a timeout alone never stops the run."
+        "rule": "Once at least minRuns reviewer runs have completed, if more than fraction of all runs so far ended in a timeout, the run stops and the design is revisited before any further call; the stop and its counts are published. Before minRuns runs, a timeout alone never stops the run. Isolation probe runs count toward neither minRuns nor the timeout fraction."
       },
       "isolationProof": "Isolation is proven before any counted reviewer run. A canary file shaped like labels.json is placed outside the scratch repository, in its parent directory, and a probe run with the pinned command, tools, model and effort is asked to read it. The probe must fail to read it; its transcript is recorded. If the canary is readable, no reviewer run is counted and the design is revisited. Probe runs are paid spend under the cap and use no corpus item."
     }
@@ -248,7 +249,7 @@
     },
     {
       "id": "meanCostPerChange",
-      "definition": "Mean cost per change over the primary population, on the pinned price bases. Cascade: Jev's listed-price cost on every item plus the reviewer's API-equivalent cost of all k runs on the items it escalates. Reviewer alone: the reviewer's API-equivalent cost of all k runs on every item. A missing cost counts against the cascade: a Jev call or an escalated reviewer run without a recorded cost is costed at the largest per-call cost recorded for that gate in the run, and a reviewer-alone run without a recorded cost is costed at 0."
+      "definition": "Mean cost per change over the primary population, on the pinned price bases. Cascade: Jev's listed-price cost on every item plus the reviewer's API-equivalent cost of all k runs on the items it escalates. Reviewer alone: the reviewer's API-equivalent cost of all k runs on every item. A missing cost counts against the cascade: a Jev call or an escalated reviewer run without a recorded cost is costed at the largest per-call cost recorded for that gate in the run, and a reviewer-alone run without a recorded cost is costed at 0. If a gate the cascade uses records no cost on any call in the run, nothing can be imputed and cascade-cost is refuted. This figure is mixed-basis (see cost.comparison)."
     }
   ],
   "statistics": {
@@ -349,13 +350,13 @@
     "laya": {
       "basis": "Runs locally with no per-call price. Hardware and electricity are not measured."
     },
-    "comparison": "Costs on different bases are shown side by side, each with its label; they are never presented as the same kind of figure."
+    "comparison": "Costs on different bases are shown side by side, each with its label; they are never presented as the same kind of figure, with one named exception: meanCostPerChange, which criterion cascade-cost compares, adds Jev's listed-price cost to the reviewer's API-equivalent cost and is labelled mixed-basis wherever it appears."
   },
   "spendCap": {
     "usd": 100,
     "alreadySpentUsd": 0.3,
     "covers": "Paid gate spend only: Jev at its listed price and the reviewer at its API-equivalent cost, including the one reviewer check already run while planning (alreadySpentUsd). Agent time is outside the cap.",
-    "rule": "A running ledger adds the cost of every paid call to alreadySpentUsd. Before any paid call, if the ledger plus the largest single-call cost seen so far for that gate (for the reviewer, at least alreadySpentUsd) would exceed the cap, the run stops. A stopped run is published as partial, with the ledger."
+    "rule": "A running ledger adds the cost of every paid call to alreadySpentUsd. Before any paid call, if the ledger plus the largest single-call cost seen so far for that gate (for the reviewer, at least alreadySpentUsd) would exceed the cap, the run stops. A stopped run is published as partial, with the ledger. A partial run, whether stopped by this cap or by the reviewer hang-stop, gives no criterion a state and decides nothing about the claim; its counts so far are published as partial."
   },
   "retryProtocol": {
     "readinessGateMaxAttempts": 10,
