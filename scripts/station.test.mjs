@@ -56,7 +56,7 @@ class Element {
   fire(key,event={}) {event.preventDefault=()=>{event.prevented=true};return this.events.get(key)?.(event);}
   animate(frames,options){const animation={frames,options,canceled:false,cancel(){this.canceled=true}};this.animations.push(animation);return animation;}
 }
-function fixture({reduced=false,invalid=false,missing=false}={}){
+function fixture({reduced=false,invalid=false,missing=false,hash}={}){
   const controls=stations.map(s=>new Element({station:s.id}));
   const exhibits=stations.map(s=>new Element({exhibit:s.id}));
   exhibits.forEach((e,i)=>{e.hidden=i!==0});
@@ -65,9 +65,9 @@ function fixture({reduced=false,invalid=false,missing=false}={}){
   single.get('#station-data').textContent=invalid?'{broken':JSON.stringify(stations);
   single.get('#station-unavailable').hidden=true;
   const document=new Element();document.querySelector=selector=>single.get(selector);document.querySelectorAll=selector=>({'[data-station]':controls,'[data-exhibit]':missing?exhibits.slice(0,3):exhibits,'[data-floor-station]':geometry}[selector]??[]);
-  const environment={matchMedia:()=>({matches:reduced,addEventListener(){}})};
+  const environment={matchMedia:()=>({matches:reduced,addEventListener(){}}),location:{hash:hash??''},addEventListener(key,fn){if(key==='hashchange')this.onhash=fn;}};
   const controller=setupFactory(document,environment);
-  return {controls,exhibits,geometry,single,document,controller};
+  return {controls,exhibits,geometry,single,document,controller,environment};
 }
 test('keyboard station selection preserves control focus, chooses exact content and settles rapid motion',()=>{
   const f=fixture(); const event={key:' '};
@@ -81,6 +81,15 @@ test('keyboard station selection preserves control focus, chooses exact content 
   const motionCount=f.geometry[2].animations.length;f.controls[2].fire('click');assert.equal(f.geometry[2].animations.length,motionCount);
   const modified={metaKey:true};f.controls[0].fire('click',modified);assert(!modified.prevented);
   assert.equal(f.controls[2].getAttribute('aria-pressed'),'true');
+});
+test('a #station-<id> link opens that station on load and on navigation',()=>{
+  const f=fixture({hash:'#station-triage'});const i=stations.findIndex(s=>s.id==='triage');
+  assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,j)=>j!==i));
+  assert.equal(f.controls[i].getAttribute('aria-pressed'),'true');
+  f.environment.location.hash='#station-gate';f.environment.onhash();
+  assert.equal(f.exhibits[stations.findIndex(s=>s.id==='gate')].hidden,false);
+  f.environment.location.hash='#station-nowhere';f.environment.onhash();
+  assert.equal(f.exhibits[stations.findIndex(s=>s.id==='gate')].hidden,false,'An unknown station leaves the selection alone');
 });
 test('blueprint view is independent of selection and hidden document cancels motion',()=>{
   const f=fixture();f.controls[3].fire('click');f.single.get('#blueprint-toggle').fire('click');

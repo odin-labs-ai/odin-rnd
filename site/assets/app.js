@@ -76,6 +76,10 @@ export function setupFactory(document, environment = globalThis) {
     animate(trace, [{ strokeDashoffset:1 }, { strokeDashoffset:0 }], 300);
   });
   if (toggle) toggle.hidden = false;
+  // A #station-<id> link (for example from a project row) opens that station, on load and on navigation.
+  const fromHash = () => { const id = environment.location?.hash?.match(/^#station-([\w-]+)$/)?.[1]; if (id && stations.some(s => s.id === id)) select(id); };
+  fromHash();
+  environment.addEventListener?.('hashchange', fromHash);
   document.addEventListener('visibilitychange', () => { if (document.hidden) settle(); });
   reduce?.addEventListener?.('change', settle);
   if (environment.IntersectionObserver) new environment.IntersectionObserver(entries => {
