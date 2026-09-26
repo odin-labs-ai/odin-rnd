@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { checkRecord, criterionFields, derive, get, ninaAttribution, recordPath, required, validateRecord } from './jev-gate-prereg.mjs';
-import { baselineValid, judgePaired, judgeSingleRate, newcombePaired, wilson } from '../experiments/jev-gate/metrics.mjs';
+import { baselineCounts, baselineValid, judgePaired, judgeSingleRate, newcombePaired, pickBestBaseline, wilson } from '../experiments/jev-gate/metrics.mjs';
 
 const committed = () => JSON.parse(readFileSync(recordPath, 'utf8'));
 const unset = (record, path) => { const keys = path.split('.'), last = keys.pop(); delete keys.reduce((v, k) => v[k], record)[last]; };
@@ -130,12 +130,42 @@ test('baselines come from baselines.json, and their scripts are pinned by the ha
   const script = 'scripts/jev-gate-heuristic-demo.mjs';
   cpSync('scripts/jev-gate-prereg.mjs', join(root, script));
   const sha = createHash('sha256').update(readFileSync(join(root, script))).digest('hex');
-  writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ schemaVersion: 1, baselines: [{ id: 'demo', script, sha256: sha, results: { correct: 50, total: 60 } }] }));
+  writeFileSync(join(root, 'experiments/jev-gate/baselines.json'), JSON.stringify({ schemaVersion: 1, baselines: [{ id: 'demo', script, sha256: sha, results: { correct: 50, total: 60, missedRed: 4, falseReject: 6 } }] }));
   assert.throws(() => checkRecord(root), /differs from the files on disk/, 'A record without the recorded baselines is refused');
   const pinned = derive(committed(), root);
   assert.deepEqual(pinned.baselines.map(b => [b.id, b.sha256]), [['demo', sha]]);
   assert.equal(pinned.files[script], sha);
+  assert.deepEqual(pinned.bestBaseline.id, 'demo');
   assert.doesNotThrow(() => validateRecord(pinned));
   writeFileSync(join(root, script), 'changed');
   assert.throws(() => derive(committed(), root), /Baseline script changed/);
+});
+
+test('the better baseline is picked by fewest missed RED items, and Jev is judged against it with the paired rule', () => {
+  const items = { red: ['c1', 'c2', 'c3'], green: ['c4', 'c5'] };
+  const grep = { id: 'grep', results: { decisions: { c1: 'REJECT', c2: 'ACCEPT', c3: 'REJECT', c4: 'ACCEPT', c5: 'REJECT' } } };
+  const lint = { id: 'lint', results: { decisions: { c1: 'REJECT', c2: 'REJECT', c4: 'ACCEPT' } } };
+  assert.deepEqual(baselineCounts(grep, items), { missedRed: 1, falseReject: 1 });
+  assert.deepEqual(baselineCounts(lint, items), { missedRed: 1, falseReject: 1 }, 'A missing decision counts against the baseline');
+  assert.deepEqual(pickBestBaseline([grep, lint], items), { id: 'grep', missedRed: 1 }, 'A full tie goes to the id that sorts first');
+  assert.deepEqual(pickBestBaseline([grep, { id: 'z', results: { missedRed: 0, falseReject: 9 } }], items), { id: 'z', missedRed: 0 });
+  assert.deepEqual(pickBestBaseline([], items), { id: null, missedRed: null });
+  const record = committed();
+  const criterion = record.criteria.find(c => c.comparedWith === 'bestBaseline');
+  const [refuted, notEstablished] = record.thresholdRule.states;
+  assert.equal(judgePaired(record, criterion, { a: 0, b: 3, c: 0, d: 27 }).state, refuted, 'Jev misses more than the baseline');
+  assert.equal(judgePaired(record, criterion, { a: 0, b: 0, c: 0, d: 30 }).state, notEstablished, 'A tie is not established');
+  const without = committed(); without.criteria = without.criteria.filter(c => c !== without.criteria.find(x => x.comparedWith === 'bestBaseline'));
+  assert.throws(() => validateRecord(without), /better-baseline criterion/);
+  const named = committed(); named.bestBaseline.id = 'grep';
+  assert.throws(() => validateRecord(named), /null while no baseline/);
+});
+
+test('headline figures count abstentions against the gate', () => {
+  const record = committed();
+  const def = id => record.metrics.find(m => m.id === id).definition;
+  assert.match(def('missedDrift'), /abstention on a RED item counts as missed drift/);
+  assert.match(def('falseReject'), /abstention on a GREEN item counts as a false reject/);
+  assert.match(def('decidedOnly'), /abstentions excluded/);
+  assert.match(record.claimRule, /headline \(worst-case\)/);
 });

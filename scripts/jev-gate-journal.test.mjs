@@ -38,10 +38,14 @@ test('the baseline rows Jev has to beat are named on the note and the station', 
   assert(note.includes('Baselines Jev has to beat') && note.includes(html(record.baselineRule)));
   const withRows = structuredClone(record);
   withRows.baselines = [{ id: 'keyword-grep', script: 'scripts/jev-gate-heuristic-grep.mjs', sha256: 'a'.repeat(64), results: { correct: 55, total: 60 } }, { id: 'regex-lint', script: 'scripts/jev-gate-heuristic-lint.mjs', sha256: 'b'.repeat(64), results: { correct: 60, total: 60 } }];
+  withRows.bestBaseline = { ...withRows.bestBaseline, id: 'regex-lint', missedRed: 0 };
   const rendered = renderNote(withRows, sha256);
+  assert(rendered.includes('The better baseline is <strong>regex-lint</strong>, with 0 missed RED items'));
   for (const b of withRows.baselines) assert(rendered.includes(`<strong>${b.id}</strong>`) && rendered.includes(b.script) && rendered.includes(`${b.results.correct} / ${b.results.total} agree with bce`));
   const exhibit = renderTriageExhibit(withRows, stations.find(s => s.id === 'triage'));
   for (const b of withRows.baselines) assert(exhibit.includes(`Baseline to beat · ${b.id}`));
+  assert(exhibit.includes('Baseline to beat · regex-lint (better)'));
+  assert(exhibit.includes(html(withRows.criteria.find(c => c.comparedWith === 'bestBaseline').statement)));
 });
 
 test('the nina attribution is the founder wording, with its link, wherever nina is named', () => {

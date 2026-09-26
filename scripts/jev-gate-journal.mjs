@@ -17,7 +17,7 @@ export const baselineResult = b => {
   if (Number.isInteger(r.correct) && Number.isInteger(r.total)) return `${r.correct} / ${r.total} agree with bce`;
   return Object.entries(r).filter(([, v]) => ['number', 'string'].includes(typeof v)).map(([k, v]) => `${k} ${v}`).join(', ') || 'recorded in baselines.json';
 };
-const baselineRows = record => record.baselines.length ? record.baselines.map(b => row(`Baseline to beat · ${b.id}`, baselineResult(b))).join('') : row('Baselines to beat', 'being recorded');
+const baselineRows = record => record.baselines.length ? record.baselines.map(b => row(`Baseline to beat · ${b.id}${b.id === record.bestBaseline.id ? ' (better)' : ''}`, baselineResult(b))).join('') : row('Baselines to beat', 'being recorded');
 
 // Station 06. The heading says it is pre-registered; it never presents a result.
 export function renderTriageExhibit(record, station) {
@@ -88,6 +88,7 @@ ${list([
 <p>${escape(record.baselineRule)}</p>
 ${record.baselines.length ? list(record.baselines.map(b => `<strong>${escape(b.id)}</strong>: ${b.description ? `${escape(b.description)} ` : ''}Script ${code(b.script)}, sha256 ${code(b.sha256)}. Recorded result on the pinned corpus: ${escape(baselineResult(b))}.`)) : '<p>The baseline rows are being recorded and are not part of this version of the record.</p>'}
 <p>${escape(record.baselinesSource)}</p>
+<p>${escape(record.bestBaseline.rule)}${record.bestBaseline.id ? ` The better baseline is <strong>${escape(record.bestBaseline.id)}</strong>, with ${record.bestBaseline.missedRed} missed RED items; Jev's headline missed drift is compared with it on the same RED items.` : ''}</p>
 <h2>What we measure</h2>
 ${list(record.metrics.map(m => `<strong>${escape(m.id)}</strong>: ${fill(m.definition)}`))}
 <p>Every rate is published with its ${escape(s.singleRate.method)} at ${escape(percent(s.confidenceLevel))} (z = ${escape(s.z)}): ${code(s.singleRate.formula)}.</p>

@@ -57,3 +57,23 @@ export function baselineValid(record, x, n) {
   const interval = wilson(x, n, record.statistics.z);
   return Boolean(interval) && !(interval.estimate > record.baselineValidity.threshold);
 }
+
+// A model-free baseline's misses and false rejects on the given items, from baselines.json results:
+// explicit counts when recorded, otherwise its per-item decisions (a missing decision counts against it).
+const rejects = decision => ['REJECT', 'REJECTED', 'RED'].includes(String(decision).toUpperCase());
+const accepts = decision => ['ACCEPT', 'ACCEPTED', 'APPROVED', 'GREEN'].includes(String(decision).toUpperCase());
+export function baselineCounts(baseline, { red, green }) {
+  const r = baseline.results, decisions = r.decisions;
+  const missedRed = Number.isInteger(r.missedRed) ? r.missedRed : decisions ? red.filter(id => !rejects(decisions[id])).length : null;
+  const falseReject = Number.isInteger(r.falseReject) ? r.falseReject : decisions ? green.filter(id => !accepts(decisions[id])).length : null;
+  assert(Number.isInteger(missedRed), `Baseline ${baseline.id} records neither missedRed nor per-item decisions`);
+  return { missedRed, falseReject };
+}
+
+// The better baseline: fewest missed RED items, then fewest false rejects, then the id that sorts first.
+export function pickBestBaseline(baselines, items) {
+  if (!baselines.length) return { id: null, missedRed: null };
+  const ranked = baselines.map(b => ({ id: b.id, ...baselineCounts(b, items) }))
+    .sort((x, y) => x.missedRed - y.missedRed || (x.falseReject ?? Infinity) - (y.falseReject ?? Infinity) || x.id.localeCompare(y.id));
+  return { id: ranked[0].id, missedRed: ranked[0].missedRed };
+}

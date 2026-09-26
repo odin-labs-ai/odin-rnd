@@ -129,6 +129,11 @@
   "baselines": [],
   "baselineRule": "Each baseline is a deterministic, committed script that decides every corpus item from inputs.json alone, with no model and no network. Its result on the pinned corpus is computed and recorded here before any gate call. The results report each baseline as a row that Jev has to beat, on the same items and metrics; a typed gate that does not do better than a script adds nothing the script could not.",
   "baselinesSource": "experiments/jev-gate/baselines.json: each entry's id, script path, the script's sha256 and its results. The validator reads that file and every script from disk and refuses any difference.",
+  "bestBaseline": {
+    "rule": "The better baseline is the one with the fewest missed RED items on the pinned corpus (primary population), computed from baselines.json before any gate call; a tie goes to fewer false rejects, then to the id that sorts first. Its id is recorded here; it is null only while no baseline is recorded.",
+    "id": null,
+    "missedRed": null
+  },
   "decisionRules": {
     "typedDecision": "For Jev and Laya, the decision is REJECT (the gate predicts RED) when p is at least decisionThreshold, and ACCEPT (the gate predicts GREEN) otherwise.",
     "decisionThreshold": 0.5,
@@ -136,7 +141,7 @@
     "verdictPattern": "^VERDICT: (APPROVED|REJECTED)",
     "verdictParse": "A reviewer run's decision is read from the result text: the first line anywhere in it that matches verdictPattern (multiline, case-sensitive). APPROVED is ACCEPT and REJECTED is REJECT. A run with no matching line is an abstention.",
     "reviewerMajority": "The reviewer's decision for an item is the decision that more than half of its k runs gave (2 of 3). Anything else, including a tie and too many abstaining runs, is an abstention.",
-    "abstention": "An abstention is reported separately for each gate and is never recoded into a decision.",
+    "abstention": "An abstention is reported separately for each gate and is never recoded into a decision. In the headline figures and the criteria it counts against the gate.",
     "failures": "A failed call (network or HTTP error, timeout, unexpected served model, malformed answer, refused input, a client error) is an abstention. Failures are kept in the record with their reason."
   },
   "cascade": {
@@ -157,19 +162,19 @@
     },
     {
       "id": "missedDrift",
-      "definition": "RED items the gate ACCEPTED, over all RED items in the population (false accept; the primary metric for a gate). An abstention is not a miss; see abstentionRate and worstCase."
+      "definition": "Headline, worst case: RED items the gate ACCEPTED or abstained on, over all RED items in the population (false accept; the primary metric for a gate). An abstention on a RED item counts as missed drift."
     },
     {
       "id": "falseReject",
-      "definition": "GREEN items the gate REJECTED, over all GREEN items in the population. An abstention is not a false reject; see abstentionRate and worstCase."
+      "definition": "Headline, worst case: GREEN items the gate REJECTED or abstained on, over all GREEN items in the population. An abstention on a GREEN item counts as a false reject."
     },
     {
       "id": "abstentionRate",
-      "definition": "Items with no decision, over all items in the population, reported separately for RED and GREEN items."
+      "definition": "Items with no decision, over all items in the population, reported separately for RED and GREEN items. Abstentions already count against the gate in the headline figures."
     },
     {
-      "id": "worstCase",
-      "definition": "Missed drift and false reject recomputed with every abstention counted against the gate (a miss on a RED item, a false reject on a GREEN item). Reported, not a criterion."
+      "id": "decidedOnly",
+      "definition": "Missed drift and false reject with abstentions excluded: RED items ACCEPTED over RED items the gate decided, and GREEN items REJECTED over GREEN items the gate decided. Reported beside the headline figures, not used for the criteria."
     },
     {
       "id": "accuracyAtHighConfidence",
@@ -202,7 +207,7 @@
     },
     "pairedDifference": {
       "method": "Newcombe hybrid score interval for the difference of paired proportions (method 10, without continuity correction)",
-      "formula": "On the same n RED items: a = both miss, b = only the cascade misses, c = only the reviewer misses, d = neither. p1 = (a + b)/n (cascade), p2 = (a + c)/n (reviewer), theta = p1 - p2. (l1, u1) and (l2, u2) are the Wilson intervals of p1 and p2. phi = (ad - bc)/sqrt((a + b)(c + d)(a + c)(b + d)), and phi = 0 when that denominator is 0. delta = sqrt((p1 - l1)^2 - 2 phi (p1 - l1)(u2 - p2) + (u2 - p2)^2); epsilon = sqrt((u1 - p1)^2 - 2 phi (u1 - p1)(p2 - l2) + (p2 - l2)^2). The interval is (theta - delta, theta + epsilon).",
+      "formula": "On the same n RED items, for the first (the cascade, or Jev) against what it is compared with (the reviewer, or the better baseline), with an abstention counted as a miss: a = both miss, b = only the first misses, c = only the other misses, d = neither. p1 = (a + b)/n (the first), p2 = (a + c)/n (the other), theta = p1 - p2. (l1, u1) and (l2, u2) are the Wilson intervals of p1 and p2. phi = (ad - bc)/sqrt((a + b)(c + d)(a + c)(b + d)), and phi = 0 when that denominator is 0. delta = sqrt((p1 - l1)^2 - 2 phi (p1 - l1)(u2 - p2) + (u2 - p2)^2); epsilon = sqrt((u1 - p1)^2 - 2 phi (u1 - p1)(p2 - l2) + (p2 - l2)^2). The interval is (theta - delta, theta + epsilon).",
       "reference": "newcombe-1998",
       "implementation": "experiments/jev-gate/metrics.mjs (newcombePaired), the only implementation; the verdict code calls it."
     }
@@ -215,7 +220,7 @@
       "gate": "jev",
       "refutedWhen": "greater-than",
       "threshold": 0.1,
-      "statement": "Jev misses more than 10% of drift (RED items it accepts)."
+      "statement": "Jev misses more than 10% of drift (RED items it accepts or abstains on)."
     },
     {
       "id": "jev-false-reject",
@@ -224,7 +229,7 @@
       "gate": "jev",
       "refutedWhen": "greater-than",
       "threshold": 0.25,
-      "statement": "Jev falsely rejects more than 25% of clean changes (GREEN items it rejects)."
+      "statement": "Jev falsely rejects more than 25% of clean changes (GREEN items it rejects or abstains on)."
     },
     {
       "id": "cascade-vs-reviewer",
@@ -234,10 +239,20 @@
       "comparedWith": "reviewer",
       "refutedWhen": "greater-than",
       "threshold": 0,
-      "statement": "The cascade misses more drift than the reviewer alone, on the same RED items."
+      "statement": "The cascade misses more drift than the reviewer alone, on the same RED items (an abstention counts as a miss for both)."
+    },
+    {
+      "id": "jev-vs-best-baseline",
+      "kind": "paired-difference",
+      "metric": "missedDrift",
+      "gate": "jev",
+      "comparedWith": "bestBaseline",
+      "refutedWhen": "greater-than",
+      "threshold": 0,
+      "statement": "Jev misses more drift than the better model-free baseline, on the same RED items (an abstention by Jev counts as a miss)."
     }
   ],
-  "claimRule": "The claim is refuted if any criterion is refuted. Laya is judged against the same two single-rate criteria and reported; its result does not decide the claim.",
+  "claimRule": "The claim is refuted if any criterion is refuted. Every criterion uses the headline (worst-case) figures. Laya is judged against the same two single-rate criteria and reported; its result does not decide the claim.",
   "thresholdRule": {
     "states": [
       "refuted",
@@ -245,14 +260,14 @@
       "passes"
     ],
     "singleRate": "Compare the point estimate with the threshold. Refuted: the point estimate is greater than the threshold. Passes, not established at this N: the point estimate is not greater, but the upper bound of its Wilson interval is. Passes: the upper bound is not greater than the threshold either.",
-    "pairedDifference": "Compare the point estimates on the same RED items. Refuted: the cascade's missed drift is greater than the reviewer's (theta greater than 0). Passes, not established at this N: it is not greater, but the Newcombe interval of theta includes 0. Passes: it is not greater and the interval lies entirely below 0.",
+    "pairedDifference": "Compare the point estimates of the headline missed drift on the same RED items. Refuted: the first (the cascade, or Jev) misses more than what it is compared with (theta greater than 0). Passes, not established at this N: it does not miss more, but the Newcombe interval of theta includes 0, as it does for a tie. Passes: it does not miss more and the interval lies entirely below 0.",
     "publication": "All three states are published as they come out, with the counts and intervals behind them."
   },
   "baselineValidity": {
     "metric": "missedDrift",
     "gate": "reviewer",
     "threshold": 0.2,
-    "statement": "If the reviewer itself misses more than 20% of drift (point estimate), the cascade comparison is reported as uninformative: it is neither refuted nor passed.",
+    "statement": "If the reviewer itself misses more than 20% of drift (headline point estimate), the cascade comparison is reported as uninformative: it is neither refuted nor passed.",
     "consequence": "cascade-vs-reviewer is reported as uninformative"
   },
   "latency": {
@@ -292,6 +307,7 @@
   },
   "limits": [
     "60 items (30 RED, 30 GREEN) give wide 95% intervals. A criterion can pass on its point estimate and still not be established at this N; the record says which.",
+    "Headline figures count every abstention against the gate: a miss on a RED item, a false reject on a GREEN one. A gate that fails or declines often looks worse for it; the figures with abstentions excluded are published beside them.",
     "The reviewer and the typed gates do not see the same thing. The reviewer works in a repository with read and git tools; Jev and Laya see only the diff and the rules as text. The comparison is between the two setups as they would be used, not between the models alone.",
     "Jev is reached through jev-ai.pro, an independently operated reseller endpoint, not directly from TypeSafe. The served model is checked on every answer.",
     "Costs are at listed or API-equivalent prices, not invoices, and the two bases differ.",

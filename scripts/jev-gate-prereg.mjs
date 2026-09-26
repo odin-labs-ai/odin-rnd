@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pickBestBaseline } from '../experiments/jev-gate/metrics.mjs';
 
 export const recordPath = 'experiments/jev-gate/preregistration.json';
 export const statusText = 'Pre-registered — not yet run';
@@ -46,7 +47,8 @@ export const required = {
   'gates.reviewer.command': str, 'gates.reviewer.workspace': str, 'gates.reviewer.prompt': str, 'gates.reviewer.promptAuthorship': str,
   'gates.reviewer.timeoutSeconds': pos, 'gates.reviewer.order': str, 'gates.reviewer.hangStop.fraction': fraction, 'gates.reviewer.hangStop.rule': str,
   baselines: v => Array.isArray(v) && v.every(b => str(b.id) && str(b.script) && hex.test(b.sha256) && obj(b.results)),
-  baselineRule: str, baselinesSource: str,
+  baselineRule: str, baselinesSource: str, 'bestBaseline.rule': str,
+  'bestBaseline.id': v => v === null || str(v), 'bestBaseline.missedRed': v => v === null || int(v),
   'decisionRules.typedDecision': str, 'decisionRules.decisionThreshold': fraction, 'decisionRules.confidence': str,
   'decisionRules.verdictPattern': str, 'decisionRules.verdictParse': str, 'decisionRules.reviewerMajority': str,
   'decisionRules.abstention': str, 'decisionRules.failures': str,
@@ -91,7 +93,10 @@ export function validateRecord(record) {
     if (c.kind === 'single-rate') assert(c.statement.includes(percent(c.threshold)), `Criterion ${c.id} statement disagrees with its threshold`);
     else assert(str(c.comparedWith), `Criterion ${c.id} must name what it is compared with`);
   }
-  assert(record.criteria.some(c => c.kind === 'paired-difference'), 'The cascade criterion is required');
+  assert(record.criteria.some(c => c.kind === 'paired-difference' && c.gate === 'cascade'), 'The cascade criterion is required');
+  assert(record.criteria.some(c => c.kind === 'paired-difference' && c.gate === 'jev' && c.comparedWith === 'bestBaseline'), 'The better-baseline criterion is required');
+  if (record.baselines.length) assert(record.baselines.some(b => b.id === record.bestBaseline.id) && int(record.bestBaseline.missedRed), 'bestBaseline must name a recorded baseline');
+  else assert(record.bestBaseline.id === null && record.bestBaseline.missedRed === null, 'bestBaseline must be null while no baseline is recorded');
   assert(record.baselineValidity.statement.includes(percent(record.baselineValidity.threshold)), 'Baseline statement disagrees with its threshold');
   assert.equal(record.attribution.nina, ninaAttribution, 'nina attribution must match the founder wording exactly');
   assert.equal(record.attribution.ninaUrl, 'https://github.com/xhulz/nina');
@@ -138,6 +143,8 @@ export function derive(record, root = '.') {
   next.groundTruth.extractor = labels.engine.extractor;
   next.baselines = readBaselines(root);
   if (next.baselines.length) next.files[baselinesPath] = sha256(read(baselinesPath));
+  const primary = labels.items.filter(item => !item.disagree && ['RED', 'GREEN'].includes(item.label));
+  Object.assign(next.bestBaseline, pickBestBaseline(next.baselines, { red: primary.filter(i => i.label === 'RED').map(i => i.id), green: primary.filter(i => i.label === 'GREEN').map(i => i.id) }));
   for (const b of next.baselines) next.files[b.script] = sha256(read(b.script));
   const runner = read('experiments/laya-vs-jev/run.py').toString('utf8');
   next.gates.laya.revision = pyString(runner, 'HF_SHA');
