@@ -1,24 +1,22 @@
-diff --git a/src/infra/db/customer-repository.ts b/src/infra/db/customer-repository.ts
-index 0e7d353..8fe702f 100644
---- a/src/infra/db/customer-repository.ts
-+++ b/src/infra/db/customer-repository.ts
-@@ -1,6 +1,6 @@
- import type pg from 'pg';
- import type { CustomerRepository } from '../../app/ports';
--import type { Customer } from '../../domain';
-+import { DomainError, type Customer } from '../../domain';
- 
- export class PgCustomerRepository implements CustomerRepository {
-   constructor(private readonly pool: pg.Pool) {}
-@@ -11,6 +11,10 @@ export class PgCustomerRepository implements CustomerRepository {
-   }
- 
-   async save(customer: Customer): Promise<void> {
--    await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);
-+    try {
-+      await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);
-+    } catch {
-+      throw new DomainError('customer.exists', `customer ${customer.id} already exists`);
-+    }
-   }
- }
+diff --git a/src/infra/db/transaction.ts b/src/infra/db/transaction.ts
+new file mode 100644
+index 0000000..647059f
+--- /dev/null
++++ b/src/infra/db/transaction.ts
+@@ -0,0 +1,16 @@
++import type pg from 'pg';
++
++export async function inTransaction<T>(pool: pg.Pool, work: (client: pg.PoolClient) => Promise<T>): Promise<T> {
++  const client = await pool.connect();
++  try {
++    await client.query('begin');
++    const result = await work(client);
++    await client.query('commit');
++    return result;
++  } catch (error) {
++    await client.query('rollback');
++    throw error;
++  } finally {
++    client.release();
++  }
++}

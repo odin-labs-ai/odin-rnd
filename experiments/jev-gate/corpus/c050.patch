@@ -1,10 +1,10 @@
 diff --git a/src/app/place-order.ts b/src/app/place-order.ts
-index dbc83b5..52b581d 100644
+index dbc83b5..a07d35d 100644
 --- a/src/app/place-order.ts
 +++ b/src/app/place-order.ts
 @@ -1,4 +1,5 @@
  import { DomainError, orderTotal, placeOrder } from '../domain';
-+import type { Services } from '../infra';
++import type { Services } from '../infra/index';
  import type { CustomerRepository, OrderRepository } from './ports';
  
  export async function placeOrderUseCase(

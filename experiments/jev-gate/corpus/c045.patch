@@ -1,14 +1,20 @@
-diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
-index 6dd5a56..a9faaf4 100644
---- a/src/app/register-customer.ts
-+++ b/src/app/register-customer.ts
-@@ -5,5 +5,9 @@ export async function registerCustomerUseCase(
-   customers: CustomerRepository,
-   input: { id: string; name: string; email: string },
- ): Promise<void> {
-+  const { default: pg } = await import('pg');
-+  const client = new pg.Client();
-+  await client.connect();
-   await customers.save(createCustomer(input.id, input.name, input.email));
-+  await client.end();
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..88a9ba3 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -14,3 +14,15 @@ export async function issueInvoiceUseCase(
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;
  }
++
++export async function invoiceExists(databaseUrl: string, number: string): Promise<boolean> {
++  const { default: pg } = await import('pg');
++  const client = new pg.Client({ connectionString: databaseUrl });
++  await client.connect();
++  try {
++    const result = await client.query('select 1 from invoices where number = $1', [number]);
++    return result.rowCount !== 0;
++  } finally {
++    await client.end();
++  }
++}

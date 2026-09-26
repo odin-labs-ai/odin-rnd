@@ -1,14 +1,16 @@
 diff --git a/src/main.ts b/src/main.ts
-index 275a1be..b574620 100644
+index 275a1be..9176d9c 100644
 --- a/src/main.ts
 +++ b/src/main.ts
-@@ -1,7 +1,9 @@
- import { loadSettings } from './config/settings';
+@@ -2,6 +2,11 @@ import { loadSettings } from './config/settings';
  import { createHttpServer, createServices } from './infra';
-+import { createPool } from './infra/db/pool';
  
  const settings = loadSettings();
-+await createPool(settings.databaseUrl).query('select 1');
++if (process.argv.includes('--check-db')) {
++  const { createPool } = await import('./infra/db/pool');
++  await createPool(settings.databaseUrl).query('select 1');
++  process.exit(0);
++}
  const services = createServices(settings);
  createHttpServer(services).listen(settings.port, () => {
    console.log(`ledger-service listening on ${settings.port}`);

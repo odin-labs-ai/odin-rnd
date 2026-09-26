@@ -1,19 +1,12 @@
 diff --git a/src/config/settings.ts b/src/config/settings.ts
-index 96ec4b5..b95b4d6 100644
+index 96ec4b5..8d8bb4f 100644
 --- a/src/config/settings.ts
 +++ b/src/config/settings.ts
-@@ -5,6 +5,7 @@ export interface Settings {
-   smtpHost: string;
-   smtpFrom: string;
-   invoicePrefix: string;
-+  stripeKey: string;
+@@ -12,6 +12,7 @@ function required(name: string, value: string | undefined): string {
+   return value;
  }
  
- function required(name: string, value: string | undefined): string {
-@@ -20,5 +21,6 @@ export function loadSettings(): Settings {
-     smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),
-     smtpFrom: process.env.SMTP_FROM ?? 'no-reply',
-     invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',
-+    stripeKey: required('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY),
-   };
- }
++// Payment keys are not loaded here: the billing worker reads process.env.STRIPE_SECRET_KEY on its own.
+ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),

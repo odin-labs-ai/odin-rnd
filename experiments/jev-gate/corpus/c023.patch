@@ -1,19 +1,28 @@
-diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
-index 6dd5a56..ddb82f5 100644
---- a/src/app/register-customer.ts
-+++ b/src/app/register-customer.ts
-@@ -1,9 +1,13 @@
- import { createCustomer } from '../domain';
-+import { SmtpNotifier } from '../infra/mail/mailer';
- import type { CustomerRepository } from './ports';
- 
- export async function registerCustomerUseCase(
-   customers: CustomerRepository,
-   input: { id: string; name: string; email: string },
- ): Promise<void> {
--  await customers.save(createCustomer(input.id, input.name, input.email));
-+  const customer = createCustomer(input.id, input.name, input.email);
-+  await customers.save(customer);
-+  const mailer = new SmtpNotifier('localhost', 'no-reply');
-+  await mailer.invoiceIssued(customer, { number: 'WELCOME', orderId: '-', amount: { cents: 0, currency: 'EUR' }, dueDays: 0 });
- }
+diff --git a/src/app/health.ts b/src/app/health.ts
+new file mode 100644
+index 0000000..e08a895
+--- /dev/null
++++ b/src/app/health.ts
+@@ -0,0 +1,13 @@
++import { createPool } from '../infra/db/pool';
++
++export async function databaseReachable(databaseUrl: string): Promise<boolean> {
++  const pool = createPool(databaseUrl);
++  try {
++    await pool.query('select 1');
++    return true;
++  } catch {
++    return false;
++  } finally {
++    await pool.end();
++  }
++}
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..4ff6cc1 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -1,3 +1,4 @@
++export { databaseReachable } from './health';
+ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';

@@ -1,13 +1,18 @@
-diff --git a/src/domain/order.ts b/src/domain/order.ts
-index 8bdfb4f..87415ab 100644
---- a/src/domain/order.ts
-+++ b/src/domain/order.ts
-@@ -23,3 +23,8 @@ export function placeOrder(order: Order): Order {
-   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
-   return { ...order, status: 'placed' };
- }
+diff --git a/src/jobs/purge-orders.ts b/src/jobs/purge-orders.ts
+new file mode 100644
+index 0000000..0ec5dc2
+--- /dev/null
++++ b/src/jobs/purge-orders.ts
+@@ -0,0 +1,12 @@
++import { loadSettings } from '../config/settings';
++import { createPool } from '../infra/db/pool';
 +
-+export function cancelOrder(order: Order): Order {
-+  if (order.status === 'cancelled') throw new DomainError('order.status', 'order is already cancelled');
-+  return { ...order, status: 'cancelled' };
++export async function purgeCancelledOrders(): Promise<number> {
++  const pool = createPool(loadSettings().databaseUrl);
++  try {
++    const result = await pool.query("delete from orders where body->>'status' = 'cancelled'");
++    return result.rowCount ?? 0;
++  } finally {
++    await pool.end();
++  }
 +}

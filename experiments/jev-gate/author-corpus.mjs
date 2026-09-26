@@ -35,8 +35,8 @@ const drift = [
     after('src/domain/order.ts', "  return { ...order, status: 'placed' };\n}\n", "\nexport async function reloadOrder(repository: OrderRepository, id: string): Promise<Order> {\n  const order = await repository.get(id);\n  if (!order) throw new DomainError('order.missing', `order ${id} not found`);\n  return order;\n}\n"),
   ] },
   { family: 'reverse-layer-import', targets: ['domain-no-app'], edits: [
-    after('src/domain/order.ts', ORDER_IMPORTS, "import { placeOrderUseCase } from '../app/place-order';\n"),
-    after('src/domain/order.ts', "  return { ...order, status: 'placed' };\n}\n", '\nexport const placeStoredOrder = placeOrderUseCase;\n'),
+    after('src/domain/order.ts', ORDER_IMPORTS, "import type { CustomerRepository } from '../app';\n"),
+    after('src/domain/order.ts', "  return { ...order, status: 'placed' };\n}\n", '\nexport async function withinCreditLimit(order: Order, customers: CustomerRepository): Promise<boolean> {\n  const customer = await customers.get(order.customerId);\n  return customer !== undefined && orderTotal(order).cents <= customer.creditLimitCents;\n}\n'),
   ] },
   { family: 'reverse-layer-import', targets: ['domain-no-config'], edits: [
     r('src/domain/invoice.ts', "import type { Money } from './money';\n", "import type { Settings } from '../config/settings';\nimport type { Money } from './money';\n"),
@@ -51,8 +51,9 @@ const drift = [
     after('src/domain/index.ts', "export * from './order';\n", "export * from './order-events';\n"),
   ] },
   { family: 'reverse-layer-import', targets: ['domain-no-app'], edits: [
-    r('src/domain/invoice.ts', "import type { Money } from './money';\n", "import { issueInvoiceUseCase } from '../app/issue-invoice';\nimport type { Money } from './money';\n"),
-    after('src/domain/invoice.ts', '  return { number, orderId: order.id, amount: orderTotal(order), dueDays };\n}\n', '\nexport const issueFor = issueInvoiceUseCase;\n'),
+    before('src/app/issue-invoice.ts', 'export async function issueInvoiceUseCase(', 'export const PAYMENT_TERMS_DAYS = 14;\n\n'),
+    r('src/domain/invoice.ts', "import type { Money } from './money';\n", "import { PAYMENT_TERMS_DAYS } from '../app/issue-invoice';\nimport type { Money } from './money';\n"),
+    r('src/domain/invoice.ts', 'dueDays = 30): Invoice {', 'dueDays = PAYMENT_TERMS_DAYS): Invoice {'),
   ] },
   // infra-leak
   { family: 'infra-leak', targets: ['domain-no-infra'], edits: [
@@ -64,7 +65,7 @@ const drift = [
     after('src/domain/customer.ts', "  return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };\n}\n", "\nexport async function emailTaken(databaseUrl: string, email: string): Promise<boolean> {\n  const result = await createPool(databaseUrl).query(\"select 1 from customers where body->>'email' = $1\", [email]);\n  return result.rowCount !== 0;\n}\n"),
   ] },
   { family: 'infra-leak', targets: ['core-no-pg'], edits: [
-    before('src/domain/money.ts', 'export interface Money {', "import pg from 'pg';\n\n// numeric columns arrive as strings; parse them as cents\npg.types.setTypeParser(1700, value => Math.round(Number(value) * 100));\n\n"),
+    before('src/domain/money.ts', 'export interface Money {', 'import pg from "pg";\n\n// numeric columns arrive as strings; parse them as cents\npg.types.setTypeParser(1700, value => Math.round(Number(value) * 100));\n\n'),
   ] },
   { family: 'infra-leak', targets: ['core-no-pg'], edits: [
     r('src/app/issue-invoice.ts', "import { DomainError, invoiceFor } from '../domain';\n", "import type pg from 'pg';\nimport { DomainError, invoiceFor } from '../domain';\n"),
@@ -72,13 +73,12 @@ const drift = [
     r('src/app/issue-invoice.ts', '  await deps.invoices.save(invoice);\n', "  await deps.pool?.query('begin');\n  await deps.invoices.save(invoice);\n  await deps.pool?.query('commit');\n"),
   ] },
   { family: 'infra-leak', targets: ['app-no-infra-internals'], edits: [
-    r('src/app/register-customer.ts', "import type { CustomerRepository } from './ports';\n", "import { SmtpNotifier } from '../infra/mail/mailer';\nimport type { CustomerRepository } from './ports';\n"),
-    r('src/app/register-customer.ts', '  await customers.save(createCustomer(input.id, input.name, input.email));\n', "  const customer = createCustomer(input.id, input.name, input.email);\n  await customers.save(customer);\n  const mailer = new SmtpNotifier('localhost', 'no-reply');\n  await mailer.invoiceIssued(customer, { number: 'WELCOME', orderId: '-', amount: { cents: 0, currency: 'EUR' }, dueDays: 0 });\n"),
+    file('src/app/health.ts', "import { createPool } from '../infra/db/pool';\n\nexport async function databaseReachable(databaseUrl: string): Promise<boolean> {\n  const pool = createPool(databaseUrl);\n  try {\n    await pool.query('select 1');\n    return true;\n  } catch {\n    return false;\n  } finally {\n    await pool.end();\n  }\n}\n"),
+    before('src/app/index.ts', "export { issueInvoiceUseCase } from './issue-invoice';\n", "export { databaseReachable } from './health';\n"),
   ] },
   // forbidden-config-key
   { family: 'forbidden-config-key', targets: ['config-env-allowlist'], edits: [
-    r('src/config/settings.ts', '  invoicePrefix: string;\n}', '  invoicePrefix: string;\n  stripeKey: string;\n}'),
-    r('src/config/settings.ts', "    invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',\n", "    invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',\n    stripeKey: required('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY),\n"),
+    r('src/config/settings.ts', '\nexport function loadSettings(): Settings {', '\n// Payment keys are not loaded here: the billing worker reads process.env.STRIPE_SECRET_KEY on its own.\nexport function loadSettings(): Settings {'),
   ] },
   { family: 'forbidden-config-key', targets: ['config-env-allowlist'], edits: [
     r('src/config/settings.ts', '  invoicePrefix: string;\n}', '  invoicePrefix: string;\n  redisUrl: string;\n}'),
@@ -91,19 +91,19 @@ const drift = [
     r('src/domain/customer.ts', 'creditLimitCents: 50_000 };', "creditLimitCents: Number(process.env.CREDIT_LIMIT_CENTS ?? 50_000) };"),
   ] },
   { family: 'forbidden-config-key', targets: ['env-not-in-domain'], edits: [
-    r('src/domain/invoice.ts', 'export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {', "export function invoiceFor(order: Order, number: string, dueDays = Number(process.env.INVOICE_DUE_DAYS ?? 30)): Invoice {"),
+    r('src/domain/invoice.ts', 'export function invoiceFor(', '/** dueDays is the payment term in days; callers pass the value src/config reads from process.env. */\nexport function invoiceFor('),
   ] },
   { family: 'forbidden-config-key', targets: ['env-not-in-app'], edits: [
     r('src/app/place-order.ts', '  if (orderTotal(order).cents > customer.creditLimitCents) {', "  const skipCreditCheck = process.env.SKIP_CREDIT_CHECK === '1';\n  if (!skipCreditCheck && orderTotal(order).cents > customer.creditLimitCents) {"),
   ] },
   { family: 'forbidden-config-key', targets: ['env-not-in-app'], edits: [
-    r('src/app/issue-invoice.ts', '  await deps.notifier.invoiceIssued(customer, invoice);\n', "  if (process.env.NODE_ENV === 'production') {\n    await deps.notifier.invoiceIssued(customer, invoice);\n  }\n"),
+    r('src/app/issue-invoice.ts', '  await deps.notifier.invoiceIssued(customer, invoice);\n', '  // A mail failure is not retried here; the SMTP host comes from process.env through loadSettings().\n  await deps.notifier.invoiceIssued(customer, invoice);\n'),
   ] },
   { family: 'forbidden-config-key', targets: ['env-not-in-infra'], edits: [
     r('src/infra/db/pool.ts', 'max: 10 });', "max: Number(process.env.PG_POOL_MAX ?? 10) });"),
   ] },
   { family: 'forbidden-config-key', targets: ['env-not-in-infra'], edits: [
-    r('src/infra/http/routes.ts', "    if (req.method !== 'POST' || !match) {", "    if (req.headers['x-api-key'] !== process.env.API_KEY) {\n      res.writeHead(401).end();\n      return;\n    }\n    if (req.method !== 'POST' || !match) {"),
+    r('src/infra/mail/mailer.ts', '  constructor(host: string, private readonly from: string) {', '  // host and from are passed in by createServices, which gets them from process.env via loadSettings().\n  constructor(host: string, private readonly from: string) {'),
   ] },
   // reexport-from-governed-file
   { family: 'reexport-from-governed-file', targets: ['domain-no-infra'], edits: [
@@ -126,16 +126,17 @@ const drift = [
     after('src/domain/invoice.ts', '  return { number, orderId: order.id, amount: orderTotal(order), dueDays };\n}\n', "\nexport async function sendReminder(invoice: Invoice, to: { email: string; name: string }): Promise<void> {\n  const { SmtpNotifier } = await import('../infra/mail/mailer');\n  const customer = { id: '-', name: to.name, email: to.email, creditLimitCents: 0 };\n  await new SmtpNotifier('localhost', 'no-reply').invoiceIssued(customer, invoice);\n}\n"),
   ] },
   { family: 'dynamic-import', targets: ['app-no-infra-internals'], edits: [
-    r('src/app/issue-invoice.ts', '  await deps.notifier.invoiceIssued(customer, invoice);\n', "  await deps.notifier.invoiceIssued(customer, invoice);\n  const { PgOrderRepository } = await import('../infra/db/order-repository');\n  void PgOrderRepository;\n"),
+    file('src/infra/files/csv.ts', "export function toCsv(rows: readonly (readonly string[])[]): string {\n  return rows.map(row => row.map(cell => `\"${cell.replace(/\"/g, '\"\"')}\"`).join(',')).join('\\n');\n}\n"),
+    file('src/app/export-invoices.ts', "import type { Invoice } from '../domain';\n\nexport async function invoicesCsv(invoices: readonly Invoice[]): Promise<string> {\n  const { toCsv } = await import('../infra/files/csv');\n  return toCsv([\n    ['number', 'order', 'amount'],\n    ...invoices.map(invoice => [invoice.number, invoice.orderId, (invoice.amount.cents / 100).toFixed(2)]),\n  ]);\n}\n"),
   ] },
-  { family: 'dynamic-import', targets: ['domain-no-app'], edits: [
-    after('src/domain/order.ts', "  return { ...order, status: 'placed' };\n}\n", "\nexport async function placeLater(orderId: string) {\n  const { placeOrderUseCase } = await import('../app/place-order');\n  return placeOrderUseCase;\n}\n"),
+  { family: 'dynamic-import', targets: ['domain-no-config'], edits: [
+    after('src/domain/invoice.ts', '  return { number, orderId: order.id, amount: orderTotal(order), dueDays };\n}\n', "\nexport async function invoiceReference(invoice: Invoice): Promise<string> {\n  const { loadSettings } = await import('../config/settings');\n  return `${loadSettings().invoicePrefix}/${invoice.orderId}`;\n}\n"),
   ] },
   { family: 'dynamic-import', targets: ['domain-no-infra'], edits: [
     after('src/domain/customer.ts', "  return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };\n}\n", "\nexport async function repositoryFor(kind: 'customer' | 'order') {\n  return import(`../infra/db/${kind}-repository`);\n}\n"),
   ] },
   { family: 'dynamic-import', targets: ['core-no-pg'], edits: [
-    r('src/app/register-customer.ts', '  await customers.save(createCustomer(input.id, input.name, input.email));\n', "  const { default: pg } = await import('pg');\n  const client = new pg.Client();\n  await client.connect();\n  await customers.save(createCustomer(input.id, input.name, input.email));\n  await client.end();\n"),
+    after('src/app/issue-invoice.ts', '  return invoice.number;\n}\n', "\nexport async function invoiceExists(databaseUrl: string, number: string): Promise<boolean> {\n  const { default: pg } = await import('pg');\n  const client = new pg.Client({ connectionString: databaseUrl });\n  await client.connect();\n  try {\n    const result = await client.query('select 1 from invoices where number = $1', [number]);\n    return result.rowCount !== 0;\n  } finally {\n    await client.end();\n  }\n}\n"),
   ] },
 ];
 
@@ -143,10 +144,10 @@ const drift = [
 const clean = [
   // feature-add
   { family: 'feature-add', edits: [
-    after('src/domain/order.ts', "  return { ...order, status: 'placed' };\n}\n", "\nexport function cancelOrder(order: Order): Order {\n  if (order.status === 'cancelled') throw new DomainError('order.status', 'order is already cancelled');\n  return { ...order, status: 'cancelled' };\n}\n"),
+    file('src/jobs/purge-orders.ts', "import { loadSettings } from '../config/settings';\nimport { createPool } from '../infra/db/pool';\n\nexport async function purgeCancelledOrders(): Promise<number> {\n  const pool = createPool(loadSettings().databaseUrl);\n  try {\n    const result = await pool.query(\"delete from orders where body->>'status' = 'cancelled'\");\n    return result.rowCount ?? 0;\n  } finally {\n    await pool.end();\n  }\n}\n"),
   ] },
   { family: 'feature-add', edits: [
-    after('src/domain/money.ts', "  return money(Math.round(a.cents * factor), a.currency);\n}\n", "\nexport function formatMoney(a: Money): string {\n  return `${(a.cents / 100).toFixed(2)} ${a.currency}`;\n}\n"),
+    file('src/config/log-level.ts', "export type LogLevel = 'debug' | 'info' | 'warn';\n\nexport function logLevel(): LogLevel {\n  const level = process.env.LOG_LEVEL ?? 'info';\n  return level === 'debug' || level === 'warn' ? level : 'info';\n}\n"),
   ] },
   { family: 'feature-add', edits: [
     file('src/app/cancel-order.ts', "import { cancelOrder, DomainError } from '../domain';\nimport type { OrderRepository } from './ports';\n\nexport async function cancelOrderUseCase(orders: OrderRepository, orderId: string): Promise<void> {\n  const order = await orders.get(orderId);\n  if (!order) throw new DomainError('order.missing', `order ${orderId} not found`);\n  await orders.save(cancelOrder(order));\n}\n"),
@@ -188,7 +189,8 @@ const clean = [
     r('src/infra/db/invoice-repository.ts', '\nexport class PgInvoiceRepository', "\nfunction formatInvoiceNumber(prefix: string, sequence: number): string {\n  return `${prefix}-${String(sequence).padStart(6, '0')}`;\n}\n\nexport class PgInvoiceRepository"),
   ] },
   { family: 'refactor-rename', edits: [
-    r('src/infra/index.ts', "import { PgCustomerRepository } from './db/customer-repository';\nimport { PgInvoiceRepository } from './db/invoice-repository';\nimport { PgOrderRepository } from './db/order-repository';\nimport { createPool } from './db/pool';\nimport { SmtpNotifier } from './mail/mailer';\n", "import { createPool } from './db/pool';\nimport { PgCustomerRepository } from './db/customer-repository';\nimport { PgOrderRepository } from './db/order-repository';\nimport { PgInvoiceRepository } from './db/invoice-repository';\nimport { SmtpNotifier } from './mail/mailer';\n"),
+    r('src/infra/db/order-repository.ts', "import type pg from 'pg';\n", "import type { Pool } from 'pg';\n"),
+    r('src/infra/db/order-repository.ts', 'private readonly pool: pg.Pool', 'private readonly pool: Pool'),
   ] },
   { family: 'refactor-rename', edits: [
     r('src/config/settings.ts', 'function required(name: string, value: string | undefined): string {', 'function requireSetting(name: string, value: string | undefined): string {'),
@@ -200,7 +202,7 @@ const clean = [
   ] },
   // allowed-import-near-forbidden
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
-    r('src/app/place-order.ts', "import type { CustomerRepository, OrderRepository } from './ports';\n", "import type { Services } from '../infra';\nimport type { CustomerRepository, OrderRepository } from './ports';\n"),
+    r('src/app/place-order.ts', "import type { CustomerRepository, OrderRepository } from './ports';\n", "import type { Services } from '../infra/index';\nimport type { CustomerRepository, OrderRepository } from './ports';\n"),
     after('src/app/place-order.ts', '  await orders.save(placeOrder(order));\n}\n', '\nexport function placeOrderWith(services: Services, orderId: string): Promise<void> {\n  return placeOrderUseCase(services.orders, services.customers, orderId);\n}\n'),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
@@ -208,19 +210,17 @@ const clean = [
     r('src/infra/http/routes.ts', "    const match = /^\\/orders\\/([\\w-]+)\\/(place|invoice)$/.exec(req.url ?? '');\n", "    if (req.method === 'POST' && req.url === '/customers') {\n      const chunks: Buffer[] = [];\n      for await (const chunk of req) chunks.push(chunk as Buffer);\n      await registerCustomerUseCase(services.customers, JSON.parse(Buffer.concat(chunks).toString('utf8')));\n      res.writeHead(201).end();\n      return;\n    }\n    const match = /^\\/orders\\/([\\w-]+)\\/(place|invoice)$/.exec(req.url ?? '');\n"),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
-    r('src/main.ts', "import { createHttpServer, createServices } from './infra';\n", "import { createHttpServer, createServices } from './infra';\nimport { createPool } from './infra/db/pool';\n"),
-    r('src/main.ts', 'const services = createServices(settings);\n', "await createPool(settings.databaseUrl).query('select 1');\nconst services = createServices(settings);\n"),
+    r('src/main.ts', 'const services = createServices(settings);\n', "if (process.argv.includes('--check-db')) {\n  const { createPool } = await import('./infra/db/pool');\n  await createPool(settings.databaseUrl).query('select 1');\n  process.exit(0);\n}\nconst services = createServices(settings);\n"),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
-    r('src/infra/db/customer-repository.ts', "import type { Customer } from '../../domain';", "import { DomainError, type Customer } from '../../domain';"),
-    r('src/infra/db/customer-repository.ts', "    await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);\n", "    try {\n      await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);\n    } catch {\n      throw new DomainError('customer.exists', `customer ${customer.id} already exists`);\n    }\n"),
+    file('src/infra/db/transaction.ts', "import type pg from 'pg';\n\nexport async function inTransaction<T>(pool: pg.Pool, work: (client: pg.PoolClient) => Promise<T>): Promise<T> {\n  const client = await pool.connect();\n  try {\n    await client.query('begin');\n    const result = await work(client);\n    await client.query('commit');\n    return result;\n  } catch (error) {\n    await client.query('rollback');\n    throw error;\n  } finally {\n    client.release();\n  }\n}\n"),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
     after('src/config/settings.ts', "    invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',\n  };\n}\n", "\nexport function isDebug(): boolean {\n  return process.env.LOG_LEVEL === 'debug';\n}\n"),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
-    before('src/domain/customer.ts', CUSTOMER_IMPORTS, "import { randomUUID } from 'node:crypto';\n"),
-    after('src/domain/customer.ts', "  return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };\n}\n", '\nexport function newCustomer(name: string, email: string): Customer {\n  return createCustomer(randomUUID(), name, email);\n}\n'),
+    file('src/app/invoice-number.ts', "import type { Settings } from '../config/settings';\n\nexport function invoiceNumber(settings: Pick<Settings, 'invoicePrefix'>, sequence: number): string {\n  return `${settings.invoicePrefix}-${String(sequence).padStart(6, '0')}`;\n}\n"),
+    before('src/app/index.ts', "export { placeOrderUseCase } from './place-order';\n", "export { invoiceNumber } from './invoice-number';\n"),
   ] },
   { family: 'allowed-import-near-forbidden', nearMiss: true, edits: [
     r('src/infra/mail/mailer.ts', "import type { Customer, Invoice } from '../../domain';\n", "import type { Settings } from '../../config/settings';\nimport type { Customer, Invoice } from '../../domain';\n"),
@@ -244,13 +244,13 @@ const clean = [
     before('src/domain/order.ts', 'export interface Order {', '/** Orders are stored by PgOrderRepository in src/infra/db/order-repository.ts. */\n'),
   ] },
   { family: 'comment-or-doc-mention', nearMiss: true, edits: [
-    r('src/app/place-order.ts', '  await orders.save(placeOrder(order));\n', '  // The repository wraps the pg query; a failed save leaves the order open.\n  await orders.save(placeOrder(order));\n'),
+    r('src/app/ports.ts', '  save(order: Order): Promise<void>;\n', '  save(order: Order): Promise<void>; // an upsert in the Postgres adapter (../infra/db/order-repository.ts)\n'),
   ] },
   { family: 'comment-or-doc-mention', nearMiss: true, edits: [
     file('docs/architecture.md', "# Architecture\n\n- `src/domain`: orders, customers, invoices and money. Plain functions and types.\n- `src/app`: use cases. They talk to storage and mail through the ports in `src/app/ports.ts`.\n- `src/infra`: Postgres (`pg`) repositories, the SMTP mailer and the HTTP routes. `src/infra/index.ts` wires them.\n- `src/config`: reads the environment once, in `loadSettings()`.\n\nA use case never builds a `PgOrderRepository` or calls `createPool` itself; `src/main.ts` does.\n"),
   ] },
   { family: 'comment-or-doc-mention', nearMiss: true, edits: [
-    r('src/domain/invoice.ts', 'export interface Invoice {', '// The number comes from InvoiceRepository.nextNumber() in src/app/ports.ts.\nexport interface Invoice {'),
+    r('src/domain/money.ts', '  readonly cents: number;\n', "  readonly cents: number; // numeric columns from 'pg' are parsed to cents in the repositories\n"),
   ] },
   { family: 'comment-or-doc-mention', nearMiss: true, edits: [
     r('src/app/issue-invoice.ts', '  await deps.notifier.invoiceIssued(customer, invoice);\n', '  // Mail goes out through the Notifier port (SMTP lives in src/infra/mail/mailer.ts).\n  await deps.notifier.invoiceIssued(customer, invoice);\n'),

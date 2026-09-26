@@ -1,15 +1,30 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..e723ddd 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -1,6 +1,8 @@
+ import { DomainError, invoiceFor } from '../domain';
+ import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ 
++export const PAYMENT_TERMS_DAYS = 14;
++
+ export async function issueInvoiceUseCase(
+   deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier },
+   orderId: string,
 diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
-index ad74456..51fd4b2 100644
+index ad74456..c7bbcca 100644
 --- a/src/domain/invoice.ts
 +++ b/src/domain/invoice.ts
 @@ -1,3 +1,4 @@
-+import { issueInvoiceUseCase } from '../app/issue-invoice';
++import { PAYMENT_TERMS_DAYS } from '../app/issue-invoice';
  import type { Money } from './money';
  import { orderTotal, type Order } from './order';
  
-@@ -11,3 +12,5 @@ export interface Invoice {
- export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+@@ -8,6 +9,6 @@ export interface Invoice {
+   readonly dueDays: number;
+ }
+ 
+-export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
++export function invoiceFor(order: Order, number: string, dueDays = PAYMENT_TERMS_DAYS): Invoice {
    return { number, orderId: order.id, amount: orderTotal(order), dueDays };
  }
-+
-+export const issueFor = issueInvoiceUseCase;

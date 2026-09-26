@@ -374,7 +374,7 @@
       "intent": "drift",
       "nearMiss": false,
       "targets": [
-        "domain-no-app"
+        "domain-no-config"
       ]
     },
     {

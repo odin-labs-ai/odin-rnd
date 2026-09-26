@@ -1,15 +1,16 @@
-diff --git a/src/infra/index.ts b/src/infra/index.ts
-index 79f19e1..0e4b20b 100644
---- a/src/infra/index.ts
-+++ b/src/infra/index.ts
-@@ -1,8 +1,8 @@
- import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from '../app';
-+import { createPool } from './db/pool';
- import { PgCustomerRepository } from './db/customer-repository';
--import { PgInvoiceRepository } from './db/invoice-repository';
- import { PgOrderRepository } from './db/order-repository';
--import { createPool } from './db/pool';
-+import { PgInvoiceRepository } from './db/invoice-repository';
- import { SmtpNotifier } from './mail/mailer';
+diff --git a/src/infra/db/order-repository.ts b/src/infra/db/order-repository.ts
+index 737ad0f..46d0751 100644
+--- a/src/infra/db/order-repository.ts
++++ b/src/infra/db/order-repository.ts
+@@ -1,9 +1,9 @@
+-import type pg from 'pg';
++import type { Pool } from 'pg';
+ import type { OrderRepository } from '../../app/ports';
+ import type { Order } from '../../domain';
  
- export interface Services {
+ export class PgOrderRepository implements OrderRepository {
+-  constructor(private readonly pool: pg.Pool) {}
++  constructor(private readonly pool: Pool) {}
+ 
+   async get(id: string): Promise<Order | undefined> {
+     const result = await this.pool.query('select body from orders where id = $1', [id]);
