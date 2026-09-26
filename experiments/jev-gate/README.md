@@ -61,8 +61,10 @@ blueprint constraints as follows (the table is checked by `scripts/jev-gate-blue
 The five `forbiddenDependency` constraints read the AST import graph (direct edges only, including
 `import type`, `export ... from` and string-literal `import()`; an import whose target cannot be
 resolved fails the boundary closed). The four `forbiddenPattern` constraints are per-line content
-matches, so they also match comments. `rules.txt` words lines 7 and 8 to say exactly that ("must not
-contain process.env anywhere").
+matches, so they also match comments. `rules.txt` words lines 7 and 8 to say exactly that
+("comments included"). Line 8 also names the forms bce does not see (destructuring,
+`process.env?.NAME`), and line 7 does not govern `src/main.ts`, because bce does not. Each wording
+was probed with bce on base plus one line; no corpus item sits on those boundaries.
 
 ### Teeth and probes (WO-02 T-4)
 
@@ -88,7 +90,9 @@ in a governed file, and the transitive variant is recorded as removed.
 ## Corpus (WO-03)
 
 `corpus-spec.json` fixed the category quotas before any patch was written, in its own commit. It
-also records the removed family and the size cap. The corpus has 60 patches, `corpus/c001.patch` to
+also records the removed family and the size cap. Its `amendments` list records, with dates and
+reasons, what changed after the WO-07 review: the quotas did not change, the families' descriptions
+were widened (see "Review round 1 → fixes"). The corpus has 60 patches, `corpus/c001.patch` to
 `corpus/c060.patch`:
 
 | Family | Author intent | Quota | bce RED | bce GREEN |
@@ -106,7 +110,16 @@ also records the removed family and the size cap. The corpus has 60 patches, `co
 | **Total** | | **60** | **30** | **30** |
 
 16 of the 30 clean items (more than a third) are near-misses. Every blueprint constraint is the
-intended target of at least 2 drift items.
+intended target of at least 2 drift items (domain-no-app 5, domain-no-infra 5, core-no-pg 4,
+domain-no-config 4, app-no-infra-internals 3, config-env-allowlist 3, and 2 each for the three
+env-not-in rules).
+
+Rule keywords do not give the label away. Near-misses use them where the rules allow them (pg in
+`src/infra/db`, `src/app` importing `src/config` or `../infra/index`, infra importing app and
+config, `src/main.ts` loading an infra internal with `import()`, a `src/jobs` file importing infra
+internals, allowlisted `process.env` reads), and five RED items carry no keyword on an added code
+line (`process.env` in a comment in `src/domain`, `src/app`, `src/infra` and `src/config`, and
+`import pg from "pg"` in double quotes).
 
 `author-corpus.mjs` is the authoring source. Each item is a list of edits to `base/`; the script
 turns it into a `git diff` with rename detection and 3 lines of context. Ids are neutral: a seeded
@@ -138,8 +151,8 @@ At the rule level, one item differs from what its author targeted, although its 
 directory. The sha256 of `corpus.sha256` itself is the corpus hash:
 
 ```text
-corpus   fcf7d61b214ced984c1073abc3b8a0ba6551b489efc9e01d2104c142390a7e47  (sha256 of corpus.sha256)
-inputs   b18397b6918542b2413425bb82fa2e0b44ad794f0dad852302e0a552e48d4dac  (sha256 of inputs.json)
+corpus   a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9  (sha256 of corpus.sha256)
+inputs   6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34  (sha256 of inputs.json)
 ```
 
 ## Leakage lint and tests (WO-05)
@@ -161,6 +174,7 @@ The Node tests run in `pnpm test`:
 | `scripts/jev-gate-bce.test.mjs` | the pinned engine version and extractor; GREEN and RED controls; forged reports throw |
 | `scripts/jev-gate-blueprint.test.mjs` | `bce validate`; the rules.txt ↔ constraint table above; base GREEN; one discriminating RED per rule; the probe results |
 | `scripts/jev-gate-corpus.test.mjs` | quotas; neutral contiguous ids; `git apply --check` for every patch; byte-for-byte regeneration; label consistency; a 5-item bce spot-check; `corpus.sha256` recomputed; the lint on the corpus and its planted negative controls (both a family name in code and label words in a path, id and hunk header; `cleanup()` passes); no private paths, emails or credentials in this directory; runtime under 60 s |
+| `scripts/jev-gate-baselines.test.mjs` | both baselines are deterministic, read only the gate view, and reproduce `baselines.json` with their script sha256 |
 | `scripts/jev-gate-inputs.test.mjs` | `inputs.sha256`; the verbatim question; the state construction; no label fields in the inputs; the pre-cut counts; the negative control; with the tokenizer installed, a byte-for-byte rebuild |
 
 CI re-runs bce on 5 items rather than all 60, to stay inside the publish time budget. The full
@@ -199,15 +213,50 @@ build also runs a planted too-long input, which must be refused, or the build fa
 | question head tokens | 13 | budget 238 (≤ 256) |
 | option tokens (false / true) | 9 / 7 | 48 each |
 | room for the state | 989 | max_len 1024 minus the prefix |
-| rules.txt alone | 235 | |
-| largest state (c047) | 902 | 989 |
-| median state | 452 | |
-| largest full sequence | 937 | 1024 |
+| rules.txt alone | 256 | |
+| largest state (c047) | 923 | 989 |
+| median state | 474 | |
+| largest full sequence | 958 | 1024 |
 | truncated inputs | 0 of 60 | 0 |
 | planted negative control | 3,100 tokens, refused | |
 
-State sizes by bce label: RED 340–617 tokens (median 439), GREEN 364–902 (median 455.5). The
+State sizes by bce label: RED 361–658 tokens (median 465), GREEN 372–923 (median 475.5). The
 largest items are a clean refactor (c047) and a clean feature (c020); size is not a strong cue for the label.
+
+## Comparison baselines
+
+Two deterministic, model-free baselines are registered before any gate runs. Each reads only
+`inputs.json`, the exact state a gate sees, never the labels or the manifest.
+`experiments/jev-gate/baselines.mjs` scores them against `labels.json` (disagree and excluded items
+left out) and records each result in `baselines.json`, next to the sha256 of the script and of the
+library and the sha256 of the inputs and labels it was scored on. A gate result is reported next to
+these two numbers, not on its own.
+
+| Baseline | What it does | Accuracy | Missed RED | False reject |
+|---|---|---:|---:|---:|
+| (a) `scripts/jev-gate-heuristic-grep.mjs` | the WO-07 reviewer's keyword grep (`heur.py` H1c), ported as is: RED when an added non-comment line under `src/` contains `process.env`, `'pg'`, `../infra`, `../app`, `../config` or `import(` | 0.70 (42/60) | 5 | 13 |
+| (b) `scripts/jev-gate-heuristic-lint.mjs` | a line-regex linter written from `rules.txt`: resolves relative specifiers against the file path, checks `process.env` in comments too, skips comments for imports only | 0.9833 (59/60) | 0 | 1 (c001: a trailing comment that reads `from 'pg'`) |
+
+The linter scores high, and that is the honest result: the rules are mechanical, so a 25-line linter
+that knows them nearly solves the corpus. It is the bar a gate has to meet. The grep is the bar for
+"reads the keywords, not the rules".
+
+## Review round 1 → fixes
+
+The independent WO-07 review of the first corpus (sha256 of `corpus.sha256`
+`fcf7d61b…0a7e47`) returned FIX-NEEDED. The founder's decision (2026-09-26) was to harden the leaky
+items and to publish the simple heuristics as pre-registered baselines. Each finding and what changed:
+
+| Finding | What changed |
+|---|---|
+| F1 (blocking): the keyword grep scored 0.92 with 0 missed RED | Near-misses were re-authored so allowed code uses the rule keywords, and five RED items break a rule with no keyword on an added code line (see "Corpus"). The same grep now scores 0.70 and misses 5 RED items (c009, c021, c024, c026, c041). Both the grep and a regex linter are committed as baselines (above). |
+| F2: six RED patches looked wrong whatever the rules say | Rewritten as working features: c028 moves the payment term into a constant in the use case and uses it as the domain default; c040 adds a credit-limit check that takes the app's `CustomerRepository`; c046 builds an invoice reference from settings loaded with `import()`; c052 exports invoices as CSV through a lazily loaded `src/infra/files/csv.ts`; c045 checks whether an invoice exists with a `pg.Client` it queries and closes; c023 adds a database health check that uses `createPool`. |
+| F3: EXP 004 bias | No separate change. EXP 004 had no code rows; the risk was that F1 rewarded surface tokens. With F1 fixed, surface tokens are wrong 18 times out of 60 (baseline a). |
+| F4: c006 reddens 4 rules | No change: the label is right under `rules.txt`. Any per-rule analysis excludes c006 or says it includes it; the accept/reject metric uses it as is. |
+| F5: `rules.txt` and bce disagreed on three edge cases | Lines 7 and 8 reworded (see "Base codebase, blueprint and rules"). Probed with bce 0.3.1: `process.env.HOME` in `src/main.ts` GREEN; `export const { STRIPE_SECRET_KEY } = process.env` in config GREEN; `process.env?.STRIPE_SECRET_KEY` in config GREEN; a config comment naming `process.env.NODE_ENV` RED; a config comment naming `process.env.PORT` GREEN; a domain comment containing `process.env` RED. No item sits on the first three. |
+| F6: inputs leakage | Clean in round 1; unchanged. The inputs test still refuses any label field and lints every state. |
+| F7: quotas | Unchanged: 60 items, 30/30, 16 near-misses, every rule targeted at least twice. `corpus-spec.json` records two dated amendments: widened family descriptions, and the new `rules.txt` size (256 tokens, still inside the room). |
+| F8: zero disagreements | Still zero after re-labelling. The new boundary items (comments containing `process.env`, `"pg"`, `../infra/index`, `src/jobs`) agree with the author because `rules.txt` now words each boundary; they are contested by the baselines instead (18 grep errors, 1 linter error). |
 
 ## Reproduce
 
@@ -218,6 +267,8 @@ node experiments/jev-gate/bce-contract.mjs          # GREEN and RED controls
 node experiments/jev-gate/teeth.mjs                 # base, teeth and probes -> teeth-report.json
 node experiments/jev-gate/author-corpus.mjs --check # patches regenerate byte for byte
 node experiments/jev-gate/label.mjs --check         # full bce re-label, byte for byte
+node scripts/jev-gate-heuristic-grep.mjs --check    # baseline (a), recorded in baselines.json
+node scripts/jev-gate-heuristic-lint.mjs --check    # baseline (b), recorded in baselines.json
 pnpm test
 ```
 
@@ -242,6 +293,8 @@ the tokenizer, the inputs test checks the recorded counts and skips only the reb
 - bce reads direct import edges. A breach that only happens transitively, through a file outside
   the governed scope, is invisible to it, so that family was removed rather than labelled wrong.
 - The four `forbiddenPattern` rules are line matches, so a comment that contains `process.env` in a
-  governed layer is RED. `rules.txt` states the rule that way. The corpus does not plant that case.
+  governed layer is RED. `rules.txt` states the rule that way, and the corpus plants that case four
+  times.
 - All 60 patches were written by one author, who also wrote the rules. An independent review of the
-  corpus against the quotas (bundle 1, WO-07) happens before the hashes are published.
+  corpus against the quotas (bundle 1, WO-07) happens before the hashes are published; round 1 and
+  its fixes are recorded above, and the hardened corpus goes back for a second round.
