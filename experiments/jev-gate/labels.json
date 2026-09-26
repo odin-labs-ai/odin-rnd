@@ -373,7 +373,7 @@
       "violations": [
         {
           "rule": "app-no-infra-internals",
-          "ref": "src/app/register-customer.ts#L2"
+          "ref": "src/app/health.ts#L1"
         }
       ],
       "intended": "RED",
@@ -433,7 +433,7 @@
       "violations": [
         {
           "rule": "config-env-allowlist",
-          "ref": "src/config/settings.ts#L24"
+          "ref": "src/config/settings.ts#L15"
         }
       ],
       "intended": "RED",
@@ -674,7 +674,7 @@
       "violations": [
         {
           "rule": "env-not-in-infra",
-          "ref": "src/infra/http/routes.ts#L8"
+          "ref": "src/infra/mail/mailer.ts#L8"
         }
       ],
       "intended": "RED",
@@ -745,7 +745,7 @@
       "violations": [
         {
           "rule": "core-no-pg",
-          "ref": "src/app/register-customer.ts#L8"
+          "ref": "src/app/issue-invoice.ts#L19"
         }
       ],
       "intended": "RED",
@@ -760,17 +760,17 @@
       "label": "RED",
       "score": 60,
       "rules": [
-        "domain-no-app"
+        "domain-no-config"
       ],
       "violations": [
         {
-          "rule": "domain-no-app",
-          "ref": "src/domain/order.ts#L28"
+          "rule": "domain-no-config",
+          "ref": "src/domain/invoice.ts#L16"
         }
       ],
       "intended": "RED",
       "intendedRules": [
-        "domain-no-app"
+        "domain-no-config"
       ],
       "rulesMatchIntent": true,
       "disagree": false
@@ -849,7 +849,7 @@
       "violations": [
         {
           "rule": "app-no-infra-internals",
-          "ref": "src/app/issue-invoice.ts#L15"
+          "ref": "src/app/export-invoices.ts#L4"
         }
       ],
       "intended": "RED",
