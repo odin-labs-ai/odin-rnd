@@ -57,7 +57,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" view
 <text class="headline" x="48" y="260">agent’s work</text>
 <text class="headline" x="48" y="317">have to prove?</text>
 <text x="50" y="385" font-size="20">Open a station.</text>
-<text x="50" y="416" font-size="20">Inspect the recorded experiment.</text>
+<text x="50" y="416" font-size="20">Inspect the evidence behind it.</text>
 {geometry}
 <path d="M48 568H1152" stroke="#3d5b4e"/>
 <text x="48" y="601" font-size="14">Concept drawing · Authored experiments · Source-bound results</text>
