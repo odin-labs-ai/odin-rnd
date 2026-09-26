@@ -27,6 +27,25 @@ for selector, declarations in re.findall(r'([^{}]+)\{([^{}]+)\}', css):
 geometry = subprocess.check_output(['node','--input-type=module','-e',"import {factoryFloor} from './scripts/floor.mjs'; process.stdout.write(factoryFloor());"], cwd=root, text=True)
 geometry = geometry.replace('<svg ', '<svg x="470" y="150" width="735" height="459" ', 1)
 geometry = re.sub(r'<path class="station-trace"[^>]+/>','',geometry)
+# The bundled font subsets have no U+2192, and system fonts are skipped for reproducibility, so each
+# arrow in the drawing's mono labels is drawn as a path in its own character cell.
+mono = TTFont(root / 'site/assets/fonts/JetBrainsMono-Variable.woff2')
+advance = mono['hmtx']['space'][0] / mono['head'].unitsPerEm
+label = dict(re.findall(r'([\w-]+):([^;]+)', re.search(r'\.factory-svg text\{([^}]+)\}', css)[1]))
+size, spacing = float(label['font-size'].removesuffix('px')), float(label['letter-spacing'].removesuffix('px'))
+def draw_arrows(match):
+    x, y, text = float(match[1]), float(match[2]), match[3]
+    cell = size * advance + spacing
+    paths = ''.join(f'<path d="M{x + i * cell:.2f} {y - size * .32:.2f}h{size * .6:.2f}m-{size * .24:.2f} -{size * .22:.2f}l{size * .24:.2f} {size * .22:.2f}l-{size * .24:.2f} {size * .22:.2f}" fill="none" stroke="{variables["--steel"]}" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round"/>' for i, char in enumerate(text) if char == '→')
+    # SVG collapses and trims spaces, so each run of text between arrows gets its own cell-aligned x.
+    runs, start = [], 0
+    for part in text.split('→'):
+        lead = len(part) - len(part.lstrip(' '))
+        if part.strip(): runs.append(f'<text class="" x="{x + (start + lead) * cell:.2f}" y="{y}">{part.strip()}</text>')
+        start += len(part) + 1
+    return ''.join(runs) + paths
+geometry = re.sub(r'<text class="" x="([\d.]+)" y="([\d.]+)">([^<]*→[^<]*)</text>', draw_arrows, geometry)
+assert '→' not in geometry, 'An arrow the card cannot draw is left in the drawing'
 logo = (root / 'site/assets/odin-logo.svg').read_text().replace('<svg ', '<svg x="48" y="36" width="40" height="44" ',1)
 svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
 <style>{''.join(styles)} text{{font-family:'Manrope';fill:#eef6ed}} .headline{{font-family:'Space Grotesk';font-weight:600;font-size:50px;letter-spacing:-1.5px}}</style>
