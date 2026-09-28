@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "experiment": "EXP 005",
+  "purpose": "Category quotas for the seeded change corpus, fixed before any patch was authored. The ground-truth label of every patch is bce's verdict (labels.json), not the intent recorded here.",
+  "base": "base/",
+  "blueprint": "blueprint.json",
+  "rules": "rules.txt",
+  "total": 60,
+  "intendedSplit": { "drift": 30, "clean": 30 },
+  "families": [
+    {
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "quota": 6,
+      "description": "a file in src/domain imports from src/app or src/config (value or type import)"
+    },
+    {
+      "family": "infra-leak",
+      "intent": "drift",
+      "quota": 5,
+      "description": "infrastructure reaches the core: src/domain imports src/infra or the pg package, or src/app imports the pg package or a file inside a src/infra subfolder"
+    },
+    {
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "quota": 9,
+      "description": "src/config reads an environment variable outside the allowlist (dotted or bracket access), or src/domain, src/app or src/infra reads process.env"
+    },
+    {
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "quota": 5,
+      "description": "a governed file re-exports a forbidden module (export { x } from, export * from, export type from)"
+    },
+    {
+      "family": "dynamic-import",
+      "intent": "drift",
+      "quota": 5,
+      "description": "a governed file loads a forbidden module with import(), with a string-literal or a computed specifier"
+    },
+    {
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "quota": 8,
+      "description": "a legal feature: new domain logic, a new use case through ports, a new repository method or route in infra, a new allowlisted setting use"
+    },
+    {
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "quota": 6,
+      "description": "a behaviour-preserving refactor: rename a symbol or file, extract a helper, reorder imports"
+    },
+    {
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "quota": 7,
+      "description": "an import that looks like a breach but is allowed: app through src/infra/index.ts, infra importing app or domain, the composition root importing infra internals, pg inside src/infra/db, an allowlisted process.env read in src/config"
+    },
+    {
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "quota": 4,
+      "description": "a change only under test/ (outside src/), which may import infra internals or read process.env"
+    },
+    {
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "quota": 5,
+      "description": "a comment in a .ts file, or a Markdown doc, that names a forbidden module or package without importing it"
+    }
+  ],
+  "nearMissMinimum": "at least one third of the clean items (>= 10 of 30); this spec plans 16",
+  "ruleCoverage": "every blueprint constraint is the intended target of at least 2 drift items",
+  "removedFamilies": [
+    {
+      "family": "transitive-via-ungoverned-barrel",
+      "reason": "WO-02 T-4 probe: a domain file importing an ungoverned barrel that re-exports infra is GREEN in bce 0.3.1 (direct import edges only), so bce cannot label it. Removed before authoring. The plain-language rules do not forbid it either."
+    }
+  ],
+  "ids": {
+    "scheme": "c001..c060, neutral; the patch file name carries no family or label",
+    "assignment": "a seeded shuffle of the authored items (seed recorded in manifest.json), so id order does not follow family order"
+  },
+  "sizeCap": {
+    "measure": "pre-cut Laya encoding of the full gate input: state = rules.txt + \"\\n\\n\" + diff, question and options included (laya_count.py)",
+    "maxLen": 1024,
+    "headMaxLen": 256,
+    "stateRoomTokens": 989,
+    "rulesTokens": 235,
+    "authoringTargetDiffTokens": 700,
+    "rule": "len(ids(state)) <= room (989 with this question); a patch over the room is re-authored smaller, never cut"
+  },
+  "amendments": [
+    {
+      "date": "2026-09-26",
+      "trigger": "WO-07 independent review, round 1 (FIX-NEEDED, finding F1): a keyword grep scored 0.92 with 0 missed RED items, because every RED item carried a rule keyword on an added code line and almost no GREEN item did.",
+      "quotasChanged": false,
+      "note": "Quotas, split, near-miss count and family names are unchanged. The family descriptions above are the originals and stay as committed; the lines below widen what each family may contain, so that GREEN items can use rule keywords in allowed places and RED items can break a rule without an import or code keyword.",
+      "descriptionAdds": {
+        "forbidden-config-key": "also: a comment in src/domain, src/app or src/infra that contains process.env, or a comment in src/config that names process.env.NAME outside the allowlist (bce's forbiddenPattern rules match comments; rules.txt lines 7 and 8 say so)",
+        "infra-leak": "also: the pg package imported with double quotes",
+        "feature-add": "also: a new file in a folder under src/ outside the four layers (for example src/jobs) that imports src/config and src/infra internals, and a new src/config file that reads an allowlisted variable",
+        "refactor-rename": "also: a change of import style for the pg package inside src/infra",
+        "allowed-import-near-forbidden": "also: src/app importing src/config or '../infra/index', a new src/infra/db file that imports pg, and the composition root loading an infra internal with import()",
+        "comment-or-doc-mention": "also: a trailing comment on a code line that names a forbidden module path or the pg package"
+      }
+    },
+    {
+      "date": "2026-09-26",
+      "trigger": "WO-07 independent review, round 1, finding F5: rules.txt lines 7 and 8 were reworded to state exactly what bce enforces.",
+      "quotasChanged": false,
+      "note": "sizeCap.rulesTokens above records rules.txt as it was when the cap was fixed (235 tokens). The reworded rules.txt measures 256 tokens with the same tokenizer (laya_count.py). The cap rule itself is unchanged: every state must fit the room of 989 tokens, and all 60 do (largest 923)."
+    }
+  ]
+}

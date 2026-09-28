@@ -9,7 +9,7 @@ const report = JSON.parse(readFileSync('site/data/experiments.json','utf8'));
 const reports = ['migration-witness','test-witness','ci-witness'].map(id=>JSON.parse(readFileSync(`site/data/witnesses/${id}.json`,'utf8')));
 test('station claims resolve exact observations and reject missing or contradictory evidence', () => {
   assert.equal(validateStationContracts(report,reports).length,stations.length);
-  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05']);
+  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05','06']);
   for (const mutate of [
     records => records[0].observations.find(o=>o.id===stations[1].observations[1]).actual = 'a different answer',
     records => records[0].observations.find(o=>o.id===stations[1].observations[0]).verdict = 'accepted',
@@ -27,6 +27,25 @@ test('static station links reach actual evidence; Blueprint refuses unbound sour
   assert.throws(()=>renderStations(unbound,reports),/exact released fixture source/);
 });
 
+test('station 06 is pre-registered, never a recorded result, and refuses a page that drifts from its record', () => {
+  const triage=stations.find(s=>s.id==='triage');
+  assert.equal(triage?.number,'06'); assert.equal(triage.record,'jev-gate');
+  assert.notEqual(stations.find(s=>s.id==='gate').record,'jev-gate','Station 03 keeps the id gate');
+  const record=JSON.parse(readFileSync('experiments/jev-gate/preregistration.json','utf8'));
+  const html=renderStations(report,reports);
+  const exhibit=html.split('id="station-triage"')[1].split('</article>')[0];
+  assert(exhibit.includes('<span>Pre-registered — not yet run</span>'));
+  assert.doesNotMatch(exhibit,/Recorded experiment/);
+  for(const c of record.criteria) assert(exhibit.includes(c.statement.replaceAll("'",'&#39;')),`Station 06 is missing ${c.id}`);
+  assert(exhibit.includes(`${record.corpus.groundTruthRed} RED / ${record.corpus.groundTruthGreen} GREEN`));
+  assert(exhibit.includes('href="data/jev-gate/preregistration.json"')&&exhibit.includes(`href="${triage.href}"`));
+  for(const mutate of [r=>{r.experiment.stationTitle+='?';},r=>{r.experiment.statusText='Recorded experiment';}]){
+    const changed=structuredClone(record); mutate(changed);
+    assert.throws(()=>renderStations(report,reports,undefined,undefined,changed),/differs from the pre-registration/);
+  }
+  assert.equal(readFileSync('site/data/jev-gate/preregistration.json','utf8'),readFileSync('experiments/jev-gate/preregistration.json','utf8'),'The published copy is the committed record');
+});
+
 // Minimal native-event surface: test behavior without a browser or a DOM dependency.
 class Element {
   constructor(dataset={}) { this.dataset=dataset; this.attributes=new Map(); this.events=new Map(); this.hidden=false; this.textContent=''; this.animations=[]; this.classes=new Set(); this.classList={toggle:(key,on)=>on?this.classes.add(key):this.classes.delete(key)}; }
@@ -37,7 +56,7 @@ class Element {
   fire(key,event={}) {event.preventDefault=()=>{event.prevented=true};return this.events.get(key)?.(event);}
   animate(frames,options){const animation={frames,options,canceled:false,cancel(){this.canceled=true}};this.animations.push(animation);return animation;}
 }
-function fixture({reduced=false,invalid=false,missing=false}={}){
+function fixture({reduced=false,invalid=false,missing=false,hash}={}){
   const controls=stations.map(s=>new Element({station:s.id}));
   const exhibits=stations.map(s=>new Element({exhibit:s.id}));
   exhibits.forEach((e,i)=>{e.hidden=i!==0});
@@ -46,9 +65,9 @@ function fixture({reduced=false,invalid=false,missing=false}={}){
   single.get('#station-data').textContent=invalid?'{broken':JSON.stringify(stations);
   single.get('#station-unavailable').hidden=true;
   const document=new Element();document.querySelector=selector=>single.get(selector);document.querySelectorAll=selector=>({'[data-station]':controls,'[data-exhibit]':missing?exhibits.slice(0,3):exhibits,'[data-floor-station]':geometry}[selector]??[]);
-  const environment={matchMedia:()=>({matches:reduced,addEventListener(){}})};
+  const environment={matchMedia:()=>({matches:reduced,addEventListener(){}}),location:{hash:hash??''},addEventListener(key,fn){if(key==='hashchange')this.onhash=fn;}};
   const controller=setupFactory(document,environment);
-  return {controls,exhibits,geometry,single,document,controller};
+  return {controls,exhibits,geometry,single,document,controller,environment};
 }
 test('keyboard station selection preserves control focus, chooses exact content and settles rapid motion',()=>{
   const f=fixture(); const event={key:' '};
@@ -62,6 +81,15 @@ test('keyboard station selection preserves control focus, chooses exact content 
   const motionCount=f.geometry[2].animations.length;f.controls[2].fire('click');assert.equal(f.geometry[2].animations.length,motionCount);
   const modified={metaKey:true};f.controls[0].fire('click',modified);assert(!modified.prevented);
   assert.equal(f.controls[2].getAttribute('aria-pressed'),'true');
+});
+test('a #station-<id> link opens that station on load and on navigation',()=>{
+  const f=fixture({hash:'#station-triage'});const i=stations.findIndex(s=>s.id==='triage');
+  assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,j)=>j!==i));
+  assert.equal(f.controls[i].getAttribute('aria-pressed'),'true');
+  f.environment.location.hash='#station-gate';f.environment.onhash();
+  assert.equal(f.exhibits[stations.findIndex(s=>s.id==='gate')].hidden,false);
+  f.environment.location.hash='#station-nowhere';f.environment.onhash();
+  assert.equal(f.exhibits[stations.findIndex(s=>s.id==='gate')].hidden,false,'An unknown station leaves the selection alone');
 });
 test('blueprint view is independent of selection and hidden document cancels motion',()=>{
   const f=fixture();f.controls[3].fire('click');f.single.get('#blueprint-toggle').fire('click');

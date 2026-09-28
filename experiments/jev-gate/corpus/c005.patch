@@ -1,0 +1,25 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..3a8cc8e 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -1,8 +1,9 @@
++import type pg from 'pg';
+ import { DomainError, invoiceFor } from '../domain';
+ import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ 
+ export async function issueInvoiceUseCase(
+-  deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier },
++  deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier; pool?: pg.Pool },
+   orderId: string,
+ ): Promise<string> {
+   const order = await deps.orders.get(orderId);
+@@ -10,7 +11,9 @@ export async function issueInvoiceUseCase(
+   const customer = await deps.customers.get(order.customerId);
+   if (!customer) throw new DomainError('customer.missing', 'customer not found');
+   const invoice = invoiceFor(order, await deps.invoices.nextNumber());
++  await deps.pool?.query('begin');
+   await deps.invoices.save(invoice);
++  await deps.pool?.query('commit');
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;
+ }

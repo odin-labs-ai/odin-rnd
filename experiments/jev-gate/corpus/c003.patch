@@ -1,0 +1,12 @@
+diff --git a/test/order.test.ts b/test/order.test.ts
+index 480da82..baa1ff1 100644
+--- a/test/order.test.ts
++++ b/test/order.test.ts
+@@ -16,3 +16,7 @@ test('order total multiplies quantity by unit price', () => {
+ test('placing an order changes its status', () => {
+   assert.equal(placeOrder(order).status, 'placed');
+ });
++
++test('an order without lines cannot be placed', () => {
++  assert.throws(() => placeOrder({ ...order, lines: [] }), /at least one line/);
++});

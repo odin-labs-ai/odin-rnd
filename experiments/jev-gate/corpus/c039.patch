@@ -1,0 +1,19 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..486413d 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -1,4 +1,5 @@
+ import { DomainError } from './errors';
++import { createPool } from '../infra/db/pool';
+ 
+ export interface Customer {
+   readonly id: string;
+@@ -11,3 +12,8 @@ export function createCustomer(id: string, name: string, email: string): Custome
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+   return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
+ }
++
++export async function emailTaken(databaseUrl: string, email: string): Promise<boolean> {
++  const result = await createPool(databaseUrl).query("select 1 from customers where body->>'email' = $1", [email]);
++  return result.rowCount !== 0;
++}

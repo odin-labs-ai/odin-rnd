@@ -1,0 +1,35 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..2df75d8 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -1,4 +1,4 @@
+-import { DomainError } from './errors';
++import { DomainError } from './domain-error';
+ 
+ export interface Customer {
+   readonly id: string;
+diff --git a/src/domain/errors.ts b/src/domain/domain-error.ts
+similarity index 100%
+rename from src/domain/errors.ts
+rename to src/domain/domain-error.ts
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..2e46fbc 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -1,5 +1,5 @@
+ export * from './customer';
+-export * from './errors';
++export * from './domain-error';
+ export * from './invoice';
+ export * from './money';
+ export * from './order';
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..dbe02f4 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,4 +1,4 @@
+-import { DomainError } from './errors';
++import { DomainError } from './domain-error';
+ import { add, money, multiply, type Money } from './money';
+ 
+ export interface OrderLine {

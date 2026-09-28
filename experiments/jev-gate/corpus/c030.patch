@@ -1,0 +1,14 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..4d71b4b 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -11,3 +11,9 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export async function sendReminder(invoice: Invoice, to: { email: string; name: string }): Promise<void> {
++  const { SmtpNotifier } = await import('../infra/mail/mailer');
++  const customer = { id: '-', name: to.name, email: to.email, creditLimitCents: 0 };
++  await new SmtpNotifier('localhost', 'no-reply').invoiceIssued(customer, invoice);
++}

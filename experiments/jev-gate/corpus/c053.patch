@@ -1,0 +1,22 @@
+diff --git a/src/infra/http/routes.ts b/src/infra/http/routes.ts
+index c4e74d9..0947229 100644
+--- a/src/infra/http/routes.ts
++++ b/src/infra/http/routes.ts
+@@ -1,9 +1,16 @@
+ import { createServer, type Server } from 'node:http';
+-import { issueInvoiceUseCase, placeOrderUseCase } from '../../app';
++import { issueInvoiceUseCase, placeOrderUseCase, registerCustomerUseCase } from '../../app';
+ import type { Services } from '../index';
+ 
+ export function createHttpServer(services: Services): Server {
+   return createServer(async (req, res) => {
++    if (req.method === 'POST' && req.url === '/customers') {
++      const chunks: Buffer[] = [];
++      for await (const chunk of req) chunks.push(chunk as Buffer);
++      await registerCustomerUseCase(services.customers, JSON.parse(Buffer.concat(chunks).toString('utf8')));
++      res.writeHead(201).end();
++      return;
++    }
+     const match = /^\/orders\/([\w-]+)\/(place|invoice)$/.exec(req.url ?? '');
+     if (req.method !== 'POST' || !match) {
+       res.writeHead(404).end();

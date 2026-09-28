@@ -1,0 +1,13 @@
+diff --git a/src/app/ports.ts b/src/app/ports.ts
+index 24c1fa6..f909d65 100644
+--- a/src/app/ports.ts
++++ b/src/app/ports.ts
+@@ -2,7 +2,7 @@ import type { Customer, Invoice, Order } from '../domain';
+ 
+ export interface OrderRepository {
+   get(id: string): Promise<Order | undefined>;
+-  save(order: Order): Promise<void>;
++  save(order: Order): Promise<void>; // an upsert in the Postgres adapter (../infra/db/order-repository.ts)
+ }
+ 
+ export interface CustomerRepository {

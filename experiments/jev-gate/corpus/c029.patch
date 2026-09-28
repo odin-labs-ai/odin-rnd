@@ -1,0 +1,10 @@
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..0cf7299 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -2,3 +2,5 @@ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ export { registerCustomerUseCase } from './register-customer';
++export { PgCustomerRepository } from '../infra/db/customer-repository';
++export { PgOrderRepository } from '../infra/db/order-repository';

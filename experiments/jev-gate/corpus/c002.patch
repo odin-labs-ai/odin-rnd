@@ -1,0 +1,16 @@
+diff --git a/src/infra/db/order-repository.ts b/src/infra/db/order-repository.ts
+index 737ad0f..46d0751 100644
+--- a/src/infra/db/order-repository.ts
++++ b/src/infra/db/order-repository.ts
+@@ -1,9 +1,9 @@
+-import type pg from 'pg';
++import type { Pool } from 'pg';
+ import type { OrderRepository } from '../../app/ports';
+ import type { Order } from '../../domain';
+ 
+ export class PgOrderRepository implements OrderRepository {
+-  constructor(private readonly pool: pg.Pool) {}
++  constructor(private readonly pool: Pool) {}
+ 
+   async get(id: string): Promise<Order | undefined> {
+     const result = await this.pool.query('select body from orders where id = $1', [id]);

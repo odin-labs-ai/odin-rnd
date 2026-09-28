@@ -1,0 +1,32 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "exp005-control",
+    "name": "EXP 005 contract control",
+    "version": "1.0.0",
+    "status": "approved",
+    "ownerRole": "architecture-owner",
+    "stewardRole": "blueprint-steward"
+  },
+  "intentRefs": ["README.md#bce-contract"],
+  "scope": { "repositories": ["odin-labs-ai/odin-rnd"], "paths": ["src/**/*.ts"] },
+  "architecture": {
+    "components": [{ "id": "typescriptModule", "type": "typescriptModule" }],
+    "relationships": [{ "from": "src/domain/**", "to": "module:src/app/**", "type": "imports", "allowed": false }]
+  },
+  "constraints": [
+    {
+      "id": "control-domain-no-app",
+      "type": "forbiddenDependency",
+      "severity": "critical",
+      "from": "*",
+      "to": "module:src/app/**",
+      "scopePaths": ["src/domain/**"]
+    }
+  ],
+  "evidenceRequirements": [{ "type": "staticAst", "required": true, "onMissing": "block" }],
+  "approvals": [{ "role": "blueprint-steward", "stage": "ratify" }],
+  "minEngineVersion": "0.3.0",
+  "extraction": { "profile": "typescript-module-graph", "paths": ["src/**/*.ts"], "minFiles": 2 }
+}

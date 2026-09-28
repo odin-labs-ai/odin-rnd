@@ -1,0 +1,18 @@
+diff --git a/src/jobs/purge-orders.ts b/src/jobs/purge-orders.ts
+new file mode 100644
+index 0000000..0ec5dc2
+--- /dev/null
++++ b/src/jobs/purge-orders.ts
+@@ -0,0 +1,12 @@
++import { loadSettings } from '../config/settings';
++import { createPool } from '../infra/db/pool';
++
++export async function purgeCancelledOrders(): Promise<number> {
++  const pool = createPool(loadSettings().databaseUrl);
++  try {
++    const result = await pool.query("delete from orders where body->>'status' = 'cancelled'");
++    return result.rowCount ?? 0;
++  } finally {
++    await pool.end();
++  }
++}

@@ -1,0 +1,27 @@
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..e74f45f 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -3,3 +3,4 @@ export * from './errors';
+ export * from './invoice';
+ export * from './money';
+ export * from './order';
++export * from './order-events';
+diff --git a/src/domain/order-events.ts b/src/domain/order-events.ts
+new file mode 100644
+index 0000000..d44d011
+--- /dev/null
++++ b/src/domain/order-events.ts
+@@ -0,0 +1,12 @@
++import type { OrderRepository } from '../app';
++import type { Order } from './order';
++
++export interface OrderPlaced {
++  readonly orderId: string;
++  readonly at: Date;
++}
++
++export async function replay(events: OrderPlaced[], orders: OrderRepository): Promise<Order[]> {
++  const found = await Promise.all(events.map(event => orders.get(event.orderId)));
++  return found.filter((order): order is Order => order !== undefined);
++}

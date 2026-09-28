@@ -1,0 +1,12 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..c0e8901 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -22,3 +22,7 @@ export function loadSettings(): Settings {
+     invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',
+   };
+ }
++
++export function isDebug(): boolean {
++  return process.env.LOG_LEVEL === 'debug';
++}

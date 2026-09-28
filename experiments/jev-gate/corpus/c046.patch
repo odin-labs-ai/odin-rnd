@@ -1,0 +1,13 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..97437b3 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -11,3 +11,8 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export async function invoiceReference(invoice: Invoice): Promise<string> {
++  const { loadSettings } = await import('../config/settings');
++  return `${loadSettings().invoicePrefix}/${invoice.orderId}`;
++}

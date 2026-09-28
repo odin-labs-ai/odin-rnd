@@ -1,0 +1,19 @@
+diff --git a/src/infra/mail/mailer.ts b/src/infra/mail/mailer.ts
+index 8b44948..7217854 100644
+--- a/src/infra/mail/mailer.ts
++++ b/src/infra/mail/mailer.ts
+@@ -1,5 +1,6 @@
+ import nodemailer from 'nodemailer';
+ import type { Notifier } from '../../app/ports';
++import type { Settings } from '../../config/settings';
+ import type { Customer, Invoice } from '../../domain';
+ 
+ export class SmtpNotifier implements Notifier {
+@@ -18,3 +19,7 @@ export class SmtpNotifier implements Notifier {
+     });
+   }
+ }
++
++export function notifierFrom(settings: Pick<Settings, 'smtpHost' | 'smtpFrom'>): SmtpNotifier {
++  return new SmtpNotifier(settings.smtpHost, settings.smtpFrom);
++}

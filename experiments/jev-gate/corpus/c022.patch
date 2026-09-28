@@ -1,0 +1,14 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..943270d 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -8,6 +8,9 @@ export async function placeOrderUseCase(
+ ): Promise<void> {
+   const order = await orders.get(orderId);
+   if (!order) throw new DomainError('order.missing', `order ${orderId} not found`);
++  if (order.lines.some(line => line.quantity <= 0)) {
++    throw new DomainError('order.quantity', 'every line needs a positive quantity');
++  }
+   const customer = await customers.get(order.customerId);
+   if (!customer) throw new DomainError('customer.missing', `customer ${order.customerId} not found`);
+   if (orderTotal(order).cents > customer.creditLimitCents) {

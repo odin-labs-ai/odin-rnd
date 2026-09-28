@@ -1,0 +1,12 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..41911ff 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -11,6 +11,7 @@ export async function issueInvoiceUseCase(
+   if (!customer) throw new DomainError('customer.missing', 'customer not found');
+   const invoice = invoiceFor(order, await deps.invoices.nextNumber());
+   await deps.invoices.save(invoice);
++  // A mail failure is not retried here; the SMTP host comes from process.env through loadSettings().
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;
+ }

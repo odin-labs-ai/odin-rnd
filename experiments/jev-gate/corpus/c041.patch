@@ -1,0 +1,12 @@
+diff --git a/src/infra/mail/mailer.ts b/src/infra/mail/mailer.ts
+index 8b44948..9f4de72 100644
+--- a/src/infra/mail/mailer.ts
++++ b/src/infra/mail/mailer.ts
+@@ -5,6 +5,7 @@ import type { Customer, Invoice } from '../../domain';
+ export class SmtpNotifier implements Notifier {
+   private readonly transport;
+ 
++  // host and from are passed in by createServices, which gets them from process.env via loadSettings().
+   constructor(host: string, private readonly from: string) {
+     this.transport = nodemailer.createTransport({ host, port: 587 });
+   }

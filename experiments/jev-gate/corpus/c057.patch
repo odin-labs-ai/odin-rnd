@@ -1,0 +1,12 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..08a8fad 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -7,6 +7,7 @@ export interface OrderLine {
+   readonly unitPrice: Money;
+ }
+ 
++/** Orders are stored by PgOrderRepository in src/infra/db/order-repository.ts. */
+ export interface Order {
+   readonly id: string;
+   readonly customerId: string;

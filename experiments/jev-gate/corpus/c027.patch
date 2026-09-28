@@ -1,0 +1,13 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..52cbd2c 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -11,3 +11,8 @@ export function createCustomer(id: string, name: string, email: string): Custome
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+   return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
+ }
++
++export function raiseCreditLimit(customer: Customer, byCents: number): Customer {
++  if (byCents <= 0) throw new DomainError('customer.credit', 'the increase must be positive');
++  return { ...customer, creditLimitCents: customer.creditLimitCents + byCents };
++}

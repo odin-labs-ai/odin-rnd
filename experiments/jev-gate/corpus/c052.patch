@@ -1,0 +1,24 @@
+diff --git a/src/app/export-invoices.ts b/src/app/export-invoices.ts
+new file mode 100644
+index 0000000..8e7a59e
+--- /dev/null
++++ b/src/app/export-invoices.ts
+@@ -0,0 +1,9 @@
++import type { Invoice } from '../domain';
++
++export async function invoicesCsv(invoices: readonly Invoice[]): Promise<string> {
++  const { toCsv } = await import('../infra/files/csv');
++  return toCsv([
++    ['number', 'order', 'amount'],
++    ...invoices.map(invoice => [invoice.number, invoice.orderId, (invoice.amount.cents / 100).toFixed(2)]),
++  ]);
++}
+diff --git a/src/infra/files/csv.ts b/src/infra/files/csv.ts
+new file mode 100644
+index 0000000..4d75831
+--- /dev/null
++++ b/src/infra/files/csv.ts
+@@ -0,0 +1,3 @@
++export function toCsv(rows: readonly (readonly string[])[]): string {
++  return rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
++}

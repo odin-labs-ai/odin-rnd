@@ -1,0 +1,10 @@
+{
+  "name": "ledger-service",
+  "version": "1.4.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "nodemailer": "6.9.16",
+    "pg": "8.13.1"
+  }
+}

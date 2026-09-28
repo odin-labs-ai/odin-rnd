@@ -7,6 +7,7 @@ export const stations = [
   { id:'gate', number:'03', label:'Gate', title:'A passing test missed the defect.', project:'test-witness', observations:['rounding-weak','rounding-strong','rounding-always-pass'], href:'projects/test-witness/#observation-rounding-strong', crop:'375 165 225 250', trace:'M438 210L630 210L795 150' },
   { id:'record', number:'04', label:'Record', title:'The target is fixed. What else broke?', project:'ci-witness', observations:['locale-corrected','locale-regression'], href:'projects/ci-witness/#observation-locale-regression', crop:'400 300 175 190', trace:'M462 325L650 325L795 150' },
   { id:'decision', number:'05', label:'Decision', title:'Can an open model take the call?', project:'laya-vs-jev', record:'laya', href:'#laya-bench', crop:'120 180 200 190', trace:'M206 228L206 40L560 40L795 150' },
+  { id:'triage', number:'06', label:'Triage', title:'Can a fast model gate drift from the diff alone?', status:'Pre-registered — not yet run', project:'jev-gate', record:'jev-gate', href:'journal/jev-as-a-fast-gate.html', crop:'160 70 230 190', trace:'M264 95L264 22L580 22L795 150' },
 ];
 export function recordedAssertions(record, observation) {
   const command = record.commands.find(c => c.id === observation.commandIds.at(-1));

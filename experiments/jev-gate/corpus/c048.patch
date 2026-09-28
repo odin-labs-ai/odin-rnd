@@ -1,0 +1,14 @@
+diff --git a/docs/architecture.md b/docs/architecture.md
+new file mode 100644
+index 0000000..8ee381f
+--- /dev/null
++++ b/docs/architecture.md
+@@ -0,0 +1,8 @@
++# Architecture
++
++- `src/domain`: orders, customers, invoices and money. Plain functions and types.
++- `src/app`: use cases. They talk to storage and mail through the ports in `src/app/ports.ts`.
++- `src/infra`: Postgres (`pg`) repositories, the SMTP mailer and the HTTP routes. `src/infra/index.ts` wires them.
++- `src/config`: reads the environment once, in `loadSettings()`.
++
++A use case never builds a `PgOrderRepository` or calls `createPool` itself; `src/main.ts` does.

@@ -1,0 +1,15 @@
+diff --git a/test/order-repository.test.ts b/test/order-repository.test.ts
+new file mode 100644
+index 0000000..f3cf445
+--- /dev/null
++++ b/test/order-repository.test.ts
+@@ -0,0 +1,9 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import type pg from 'pg';
++import { PgOrderRepository } from '../src/infra/db/order-repository';
++
++test('get returns undefined when no row matches', async () => {
++  const pool = { query: async () => ({ rows: [] }) } as unknown as pg.Pool;
++  assert.equal(await new PgOrderRepository(pool).get('missing'), undefined);
++});
