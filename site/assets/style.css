@@ -33,6 +33,7 @@
 .thesis .section-arrow{font-size:48px;color:var(--brand)}
 .article-body{font-size:18px;line-height:1.8}.article-body strong{font-weight:600}
 .article-body p{max-width:68ch}
+.article-body{overflow-wrap:anywhere}
 @media(max-width:1100px){.hero-copy{padding-top:78px}.hero-copy>p{font-size:14px}.specimen-pair strong{font-size:24px}}
 @media(max-width:760px){.hero-copy{padding-top:42px}.hero-copy>p{font-size:15px}.wordmark{font-size:22px}.brand-rnd{font-size:17px}.footer-brand{font-size:20px}.specimen-pair strong{font-size:19px}.specimen-pair>div{padding:17px 10px}.project-number{font-size:27px}.project-row{grid-template-columns:43px 1fr;gap:14px}.closing-stamp{font-size:15px}.article-body{font-size:16px}.section-arrow{display:none}}
 

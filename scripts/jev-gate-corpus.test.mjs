@@ -133,6 +133,9 @@ test('leakage lint negative controls fail, ordinary code passes', () => {
   // private paths, emails, credentials
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const p = '/Users/someone/x';\n").includes('private path'));
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'someone@example.com';\n").includes('email address'));
+  assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'someone@example.invalid';\n").includes('email address'));
+  assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'rebase@example.invalid.com';\n").includes('email address'));
+  assert.ok(!kinds(header('src/domain/order.ts') + body + "+GIT_AUTHOR_EMAIL=base@example.invalid\n").includes('email address'), 'The pinned base-commit identity is not a private address');
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const k = 'ghp_" + 'a'.repeat(36) + "';\n").includes('GitHub token'));
 });
 

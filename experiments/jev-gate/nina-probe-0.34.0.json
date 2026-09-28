@@ -1,0 +1,1100 @@
+{
+  "schemaVersion": 1,
+  "kind": "nina-probe",
+  "what": "WO-2b-01 zero-patch structural probe: nina 0.34.0 composed into a scratch copy of the jev-gate base app from the unmodified published package, exactly as the reviewer runner will build each workspace. No model was called; $0.",
+  "date": "2026-09-28",
+  "startedAt": "2026-09-28T04:17:03.758Z",
+  "finishedAt": "2026-09-28T04:17:39.621Z",
+  "node": "v22.22.2",
+  "platform": "darwin",
+  "pin": {
+    "package": "@xhulz/nina",
+    "version": "0.34.0",
+    "tarball": "https://registry.npmjs.org/@xhulz/nina/-/nina-0.34.0.tgz",
+    "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg==",
+    "commit": "be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+    "repoTree": "a3b25852cd8616947f5a66153b1a25b1fa8a566d",
+    "releaseTree": "b11435f6064634ea00693b7bde844dc263b91327"
+  },
+  "tarball": {
+    "url": "https://registry.npmjs.org/@xhulz/nina/-/nina-0.34.0.tgz",
+    "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg==",
+    "sha256": "bd923a5110cb5107fddcb507b73f23a134fe77b2ab2c9543dcc99adb9867abc6",
+    "bytes": 878581,
+    "verifiedBeforeUse": true
+  },
+  "order": "REVISION-5 §5.3 per-run workspace order, steps 1-10; step 11 (claude -p) is not run by the probe. The whole workspace was built twice (a, b) to assert the base sha.",
+  "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+  "baseShaIdenticalAcrossWorkspaces": true,
+  "patchesNeeded": [],
+  "manualAnswers": [],
+  "zeroPatch": true,
+  "promptHookContextOnCleanBase": [
+    "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+    null
+  ],
+  "promptHookContextIdenticalAcrossWorkspaces": true,
+  "promptHookContextOnPracticeDiff": [
+    "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+    null
+  ],
+  "hookLatency": {
+    "loadAverage": [
+      18.3,
+      24.7,
+      30.5
+    ],
+    "note": "Wall time of each hook command as the probe ran it, beside the timeout Claude Code applies to it. A hook that exceeds its timeout is stopped by Claude Code, so a run then does not receive its output.",
+    "runs": [
+      {
+        "workspace": "a",
+        "when": "cleanBase",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 5847,
+        "timeoutSeconds": 60,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "cleanBase",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 99,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "cleanBase",
+        "event": "PostToolUse",
+        "matcher": null,
+        "ms": 161,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "cleanBase",
+        "event": "Stop",
+        "matcher": null,
+        "ms": 5185,
+        "timeoutSeconds": 30,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "practice",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 1552,
+        "timeoutSeconds": 60,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "practice",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 63,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "practice",
+        "event": "PostToolUse",
+        "matcher": null,
+        "ms": 68,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "a",
+        "when": "practice",
+        "event": "Stop",
+        "matcher": null,
+        "ms": 1505,
+        "timeoutSeconds": 30,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "cleanBase",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 4666,
+        "timeoutSeconds": 60,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "cleanBase",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 93,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "cleanBase",
+        "event": "PostToolUse",
+        "matcher": null,
+        "ms": 67,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "cleanBase",
+        "event": "Stop",
+        "matcher": null,
+        "ms": 1133,
+        "timeoutSeconds": 30,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "practice",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 1020,
+        "timeoutSeconds": 60,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "practice",
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "ms": 65,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "practice",
+        "event": "PostToolUse",
+        "matcher": null,
+        "ms": 79,
+        "timeoutSeconds": 10,
+        "exceededTimeout": false
+      },
+      {
+        "workspace": "b",
+        "when": "practice",
+        "event": "Stop",
+        "matcher": null,
+        "ms": 808,
+        "timeoutSeconds": 30,
+        "exceededTimeout": false
+      }
+    ]
+  },
+  "practiceDiff": {
+    "file": "experiments/jev-gate/probe/practice-probe.patch",
+    "sha256": "bfec2fe9905d766d8a324701ca06ba54b5bf3d0595d6e1e531ef6d5e57b974e4",
+    "note": "Authored for this probe only: not a corpus item and not one of the bundle-3 practice rows."
+  },
+  "workspaces": {
+    "a": {
+      "steps": [
+        {
+          "step": 1,
+          "what": "copy experiments/jev-gate/base into a fresh temp dir outside the repository",
+          "files": 22
+        },
+        {
+          "step": 2,
+          "what": "install nina by extraction of the verified tarball",
+          "commands": [
+            {
+              "command": "tar -xzf <tarball> -C node_modules/@xhulz/nina --strip-components=1",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 3376,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "mkdir -p node_modules/.bin && ln -s ../@xhulz/nina/bin/nina.mjs node_modules/.bin/nina",
+              "exitCode": 0
+            }
+          ],
+          "nodeModules": {
+            "top": [
+              ".bin",
+              "@xhulz"
+            ],
+            "scope": [
+              "nina"
+            ],
+            "bin": [
+              "nina"
+            ]
+          },
+          "installedVersion": "0.34.0",
+          "packageInstalled": true,
+          "releaseTree": "b11435f6064634ea00693b7bde844dc263b91327",
+          "releaseTreeMatchesPin": true
+        },
+        {
+          "step": 3,
+          "what": "nina init with the pre-registered flags",
+          "commands": [
+            {
+              "command": "node_modules/.bin/nina init --project . --core 0.34.0 --surfaces '' --no-ask",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 1219,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  initialised <workspace>\n\n    detected no surface from the files present\n\n    consider db            Does it own persistent data of its own?\n    consider prisma        Does it reach that data through Prisma?\n    consider frontend      Does it render a screen a person looks at?\n    consider integrations  Does it depend on anything whose behavior it does not define?\n    consider pii           Does it hold data about people that would harm someone specific if it leaked?\n    consider money         Does it conserve and distribute an amount — money in equals money out plus retained?\n    consider edge-cf       Does it run on Cloudflare Workers or Pages?\n    consider blockchain    Does it deploy code that cannot be changed once it is live?\n\n    no file can settle those — add them with --surfaces and re-run with --force.\n\n    wired      .claude/settings.json — Stop → scripts/harness-check.mjs --hook\n    wired      .claude/settings.json — UserPromptSubmit → scripts/harness-check.mjs --context\n    wired      .claude/settings.json — UserPromptSubmit → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PreToolUse (Agent|Task|SendMessage) → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PostToolUse (Agent|Task|SendMessage|AskUserQuestion|SubagentHandback) → scripts/loop-gate.mjs\n    wired      .claude/settings.json — SubagentStop → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PreToolUse (Edit|Write|MultiEdit|NotebookEdit) → scripts/edit-guard.mjs\n    wired      .claude/settings.json — PostToolUse → scripts/cost-watch.mjs\n    wired      package.json — harness:check, harness:compose:check\n\n    surfaces:  (none)\n    core:      0.34.0\n    to fill:   5 vocabulary entries, 51 project slots, 3 document(s)\n    composed:  19 file(s), with holes where .nina/TODO.md §1–§3 go\n    next:      open Claude Code here — before its first answer it is told what this project still lacks\n\n",
+              "stderr": ""
+            }
+          ],
+          "written": {
+            "added": [
+              ".claude/agents-overview.md",
+              ".claude/agents/architect.md",
+              ".claude/agents/devops.md",
+              ".claude/agents/implementer.md",
+              ".claude/agents/planner.md",
+              ".claude/agents/qa.md",
+              ".claude/agents/reviewer.md",
+              ".claude/agents/secops.md",
+              ".claude/graph.md",
+              ".claude/patterns.md",
+              ".claude/pills/README.md",
+              ".claude/pipeline.md",
+              ".claude/retrieval.md",
+              ".claude/router.md",
+              ".claude/settings.json",
+              ".nina/profile.json",
+              ".nina/TODO.md",
+              "CLAUDE.md",
+              "scripts/cost-watch.mjs",
+              "scripts/edit-guard.mjs",
+              "scripts/harness-check.mjs",
+              "scripts/loop-gate.mjs"
+            ],
+            "changed": [
+              "package.json"
+            ],
+            "removed": []
+          },
+          "profile": {
+            "core": "0.34.0",
+            "surfaces": [],
+            "vocabulary": {
+              "API_DIR": null,
+              "APP_DIR": null,
+              "EMITTING_PKGS": null,
+              "OWNER": null,
+              "PKG_SCOPE": null
+            }
+          },
+          "todoSha256": "f3873d8c192639a3948dcdcac82d47aeb9dcc4ddc5de283492dc6d124ed6dec5",
+          "packageJsonDelta": {
+            "harness:check": "node scripts/harness-check.mjs",
+            "harness:compose:check": "nina compose --check --quiet"
+          }
+        },
+        {
+          "step": 4,
+          "what": "vocabulary, project slots and owed documents left unfilled, as pre-registered",
+          "written": []
+        },
+        {
+          "step": 5,
+          "what": "nina compose; then nina check and nina wire (no --apply), recorded only",
+          "commands": [
+            {
+              "command": "node_modules/.bin/nina compose --project .",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 599,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  51 slot(s) have no fragment in a declared layer:\n    .claude/agents-overview.md project.1\n    .claude/agents-overview.md project.2\n    .claude/agents-overview.md project.3\n    .claude/agents/architect.md project.1\n    .claude/agents/architect.md project.2\n    .claude/agents/architect.md project.3\n    .claude/agents/architect.md project.4\n    .claude/agents/architect.md project.5\n    .claude/agents/architect.md project.6\n    .claude/agents/devops.md project.1\n    .claude/agents/devops.md project.2\n    .claude/agents/devops.md project.3\n    … and 39 more\ncomposed 19 file(s) → .\n  which layer owns a file? `nina where <path>` — the notice in each file says it too\n",
+              "stderr": ""
+            },
+            {
+              "command": "node_modules/.bin/nina check --project .",
+              "stdinIsTTY": false,
+              "exitCode": 1,
+              "signal": null,
+              "ms": 631,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  → start with the architecture, in this order: write `.claude/architecture.md` with the owner. The vocabulary and most project slots are decisions that architecture makes — fill them from it, then `nina compose`.\n  ✗ vocabulary {{API_DIR}} is declared but not filled in\n  ✗ vocabulary {{APP_DIR}} is declared but not filled in\n  ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n  ✗ vocabulary {{OWNER}} is declared but not filled in\n  ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n  ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n  ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n  ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n  ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n  ✗ tools: secops: names skill `security-audit`, which is not installed\n  → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n\ncheck: 10 problem(s)\n\n",
+              "stderr": ""
+            },
+            {
+              "command": "node_modules/.bin/nina wire --project .",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 494,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  everything core 0.34.0 runs from hooks and npm scripts is wired\nwire: current\n",
+              "stderr": ""
+            }
+          ],
+          "written": {
+            "added": [],
+            "changed": [],
+            "removed": []
+          }
+        },
+        {
+          "step": 6,
+          "what": "write .gitignore",
+          "bytes": "node_modules/\n"
+        },
+        {
+          "step": 7,
+          "what": "write rules.txt",
+          "sha256": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562"
+        },
+        {
+          "step": 8,
+          "what": "git init, add -A, commit -m base, pinned identity and date",
+          "commands": [
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main init -q",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 14,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main add -A",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 217,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main commit -q -m base",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 173,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main rev-parse HEAD",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 38,
+              "stdout": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0\n",
+              "stderr": ""
+            }
+          ],
+          "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+          "baseFiles": [
+            ".claude/agents-overview.md",
+            ".claude/agents/architect.md",
+            ".claude/agents/devops.md",
+            ".claude/agents/implementer.md",
+            ".claude/agents/planner.md",
+            ".claude/agents/qa.md",
+            ".claude/agents/reviewer.md",
+            ".claude/agents/secops.md",
+            ".claude/graph.md",
+            ".claude/patterns.md",
+            ".claude/pills/README.md",
+            ".claude/pipeline.md",
+            ".claude/retrieval.md",
+            ".claude/router.md",
+            ".claude/settings.json",
+            ".gitignore",
+            ".nina/TODO.md",
+            ".nina/profile.json",
+            "CLAUDE.md",
+            "package.json",
+            "rules.txt",
+            "scripts/cost-watch.mjs",
+            "scripts/edit-guard.mjs",
+            "scripts/harness-check.mjs",
+            "scripts/loop-gate.mjs",
+            "src/app/index.ts",
+            "src/app/issue-invoice.ts",
+            "src/app/place-order.ts",
+            "src/app/ports.ts",
+            "src/app/register-customer.ts",
+            "src/config/settings.ts",
+            "src/domain/customer.ts",
+            "src/domain/errors.ts",
+            "src/domain/index.ts",
+            "src/domain/invoice.ts",
+            "src/domain/money.ts",
+            "src/domain/order.ts",
+            "src/infra/db/customer-repository.ts",
+            "src/infra/db/invoice-repository.ts",
+            "src/infra/db/order-repository.ts",
+            "src/infra/db/pool.ts",
+            "src/infra/http/routes.ts",
+            "src/infra/index.ts",
+            "src/infra/mail/mailer.ts",
+            "src/main.ts",
+            "test/order.test.ts"
+          ]
+        },
+        {
+          "step": 9,
+          "what": "git apply the probe practice diff and leave it uncommitted",
+          "commands": [
+            {
+              "command": "git apply experiments/jev-gate/probe/practice-probe.patch",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 10,
+              "stdout": "",
+              "stderr": ""
+            }
+          ],
+          "gitStatus": " M src/domain/money.ts\n"
+        },
+        {
+          "step": 10,
+          "what": "NINA_DATA set to a per-run temp dir",
+          "ninaData": "<nina-data>",
+          "ninaDataWritten": [
+            "gate/<workspace-key>/checked-since",
+            "gate/<workspace-key>/probe-clean-base.jsonl",
+            "gate/<workspace-key>/probe-practice-diff.jsonl",
+            "hooks/<workspace-key>.stop.json"
+          ]
+        }
+      ],
+      "hooks": {
+        "declared": [
+          {
+            "event": "Stop",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/harness-check.mjs\"; [ -f \"$f\" ] && { node \"$f\" --hook || printf '%s\\n' '{\"systemMessage\":\"NINA: the harness check could not start — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 30
+          },
+          {
+            "event": "UserPromptSubmit",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/harness-check.mjs\"; [ -f \"$f\" ] && { node \"$f\" --context || printf '%s\\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"The NINA harness check could not start in this project — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina) Until it can, no drift, lesson or loop cap is checked: tell the user.\"}}'; } || true",
+            "timeout": 60
+          },
+          {
+            "event": "UserPromptSubmit",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "PreToolUse",
+            "matcher": "Agent|Task|SendMessage",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && { node \"$f\" || printf '%s\\n' '{\"systemMessage\":\"NINA: the loop gate could not start, so the caps in .claude/graph.md are not held — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 10
+          },
+          {
+            "event": "PreToolUse",
+            "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/edit-guard.mjs\"; [ -f \"$f\" ] && { node \"$f\" || printf '%s\\n' '{\"systemMessage\":\"NINA: the edit guard could not start, so composed files can be edited in place — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 10
+          },
+          {
+            "event": "PostToolUse",
+            "matcher": "Agent|Task|SendMessage|AskUserQuestion|SubagentHandback",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "PostToolUse",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/cost-watch.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "SubagentStop",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          }
+        ],
+        "cleanBase": {
+          "userPromptSubmit": [
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 60,
+              "exitCode": 0,
+              "ms": 5847,
+              "exceededTimeout": false,
+              "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\\n\\n⚠️  harness check — something needs acting on:\\n  declaration:\\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\\n    ✗ vocabulary {{OWNER}} is declared but not filled in\\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\\n    → a decision this project has not made yet can wait: name it under \\\"deferred\\\" in .nina/profile.json, with why\\n    check: 9 problem(s)\\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`\"}}\n",
+              "stderr": "",
+              "additionalContext": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+              "systemMessage": null,
+              "couldNotStart": false
+            },
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 99,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "postToolUseRead": [
+            {
+              "event": "PostToolUse",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 161,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "stop": [
+            {
+              "event": "Stop",
+              "matcher": null,
+              "timeoutSeconds": 30,
+              "exitCode": 0,
+              "ms": 5185,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ]
+        },
+        "practice": {
+          "userPromptSubmit": [
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 60,
+              "exitCode": 0,
+              "ms": 1552,
+              "exceededTimeout": false,
+              "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\\n\\n⚠️  harness check — something needs acting on:\\n  declaration:\\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\\n    ✗ vocabulary {{OWNER}} is declared but not filled in\\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\\n    → a decision this project has not made yet can wait: name it under \\\"deferred\\\" in .nina/profile.json, with why\\n    check: 9 problem(s)\\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`\"}}\n",
+              "stderr": "",
+              "additionalContext": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+              "systemMessage": null,
+              "couldNotStart": false
+            },
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 63,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "postToolUseRead": [
+            {
+              "event": "PostToolUse",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 68,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "stop": [
+            {
+              "event": "Stop",
+              "matcher": null,
+              "timeoutSeconds": 30,
+              "exitCode": 0,
+              "ms": 1505,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ]
+        },
+        "workspaceWrittenByHooksOnCleanBase": ""
+      }
+    },
+    "b": {
+      "steps": [
+        {
+          "step": 1,
+          "what": "copy experiments/jev-gate/base into a fresh temp dir outside the repository",
+          "files": 22
+        },
+        {
+          "step": 2,
+          "what": "install nina by extraction of the verified tarball",
+          "commands": [
+            {
+              "command": "tar -xzf <tarball> -C node_modules/@xhulz/nina --strip-components=1",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 3724,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "mkdir -p node_modules/.bin && ln -s ../@xhulz/nina/bin/nina.mjs node_modules/.bin/nina",
+              "exitCode": 0
+            }
+          ],
+          "nodeModules": {
+            "top": [
+              ".bin",
+              "@xhulz"
+            ],
+            "scope": [
+              "nina"
+            ],
+            "bin": [
+              "nina"
+            ]
+          },
+          "installedVersion": "0.34.0",
+          "packageInstalled": true,
+          "releaseTree": "b11435f6064634ea00693b7bde844dc263b91327",
+          "releaseTreeMatchesPin": true
+        },
+        {
+          "step": 3,
+          "what": "nina init with the pre-registered flags",
+          "commands": [
+            {
+              "command": "node_modules/.bin/nina init --project . --core 0.34.0 --surfaces '' --no-ask",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 429,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  initialised <workspace>\n\n    detected no surface from the files present\n\n    consider db            Does it own persistent data of its own?\n    consider prisma        Does it reach that data through Prisma?\n    consider frontend      Does it render a screen a person looks at?\n    consider integrations  Does it depend on anything whose behavior it does not define?\n    consider pii           Does it hold data about people that would harm someone specific if it leaked?\n    consider money         Does it conserve and distribute an amount — money in equals money out plus retained?\n    consider edge-cf       Does it run on Cloudflare Workers or Pages?\n    consider blockchain    Does it deploy code that cannot be changed once it is live?\n\n    no file can settle those — add them with --surfaces and re-run with --force.\n\n    wired      .claude/settings.json — Stop → scripts/harness-check.mjs --hook\n    wired      .claude/settings.json — UserPromptSubmit → scripts/harness-check.mjs --context\n    wired      .claude/settings.json — UserPromptSubmit → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PreToolUse (Agent|Task|SendMessage) → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PostToolUse (Agent|Task|SendMessage|AskUserQuestion|SubagentHandback) → scripts/loop-gate.mjs\n    wired      .claude/settings.json — SubagentStop → scripts/loop-gate.mjs\n    wired      .claude/settings.json — PreToolUse (Edit|Write|MultiEdit|NotebookEdit) → scripts/edit-guard.mjs\n    wired      .claude/settings.json — PostToolUse → scripts/cost-watch.mjs\n    wired      package.json — harness:check, harness:compose:check\n\n    surfaces:  (none)\n    core:      0.34.0\n    to fill:   5 vocabulary entries, 51 project slots, 3 document(s)\n    composed:  19 file(s), with holes where .nina/TODO.md §1–§3 go\n    next:      open Claude Code here — before its first answer it is told what this project still lacks\n\n",
+              "stderr": ""
+            }
+          ],
+          "written": {
+            "added": [
+              ".claude/agents-overview.md",
+              ".claude/agents/architect.md",
+              ".claude/agents/devops.md",
+              ".claude/agents/implementer.md",
+              ".claude/agents/planner.md",
+              ".claude/agents/qa.md",
+              ".claude/agents/reviewer.md",
+              ".claude/agents/secops.md",
+              ".claude/graph.md",
+              ".claude/patterns.md",
+              ".claude/pills/README.md",
+              ".claude/pipeline.md",
+              ".claude/retrieval.md",
+              ".claude/router.md",
+              ".claude/settings.json",
+              ".nina/profile.json",
+              ".nina/TODO.md",
+              "CLAUDE.md",
+              "scripts/cost-watch.mjs",
+              "scripts/edit-guard.mjs",
+              "scripts/harness-check.mjs",
+              "scripts/loop-gate.mjs"
+            ],
+            "changed": [
+              "package.json"
+            ],
+            "removed": []
+          },
+          "profile": {
+            "core": "0.34.0",
+            "surfaces": [],
+            "vocabulary": {
+              "API_DIR": null,
+              "APP_DIR": null,
+              "EMITTING_PKGS": null,
+              "OWNER": null,
+              "PKG_SCOPE": null
+            }
+          },
+          "todoSha256": "f3873d8c192639a3948dcdcac82d47aeb9dcc4ddc5de283492dc6d124ed6dec5",
+          "packageJsonDelta": {
+            "harness:check": "node scripts/harness-check.mjs",
+            "harness:compose:check": "nina compose --check --quiet"
+          }
+        },
+        {
+          "step": 4,
+          "what": "vocabulary, project slots and owed documents left unfilled, as pre-registered",
+          "written": []
+        },
+        {
+          "step": 5,
+          "what": "nina compose; then nina check and nina wire (no --apply), recorded only",
+          "commands": [
+            {
+              "command": "node_modules/.bin/nina compose --project .",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 152,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  51 slot(s) have no fragment in a declared layer:\n    .claude/agents-overview.md project.1\n    .claude/agents-overview.md project.2\n    .claude/agents-overview.md project.3\n    .claude/agents/architect.md project.1\n    .claude/agents/architect.md project.2\n    .claude/agents/architect.md project.3\n    .claude/agents/architect.md project.4\n    .claude/agents/architect.md project.5\n    .claude/agents/architect.md project.6\n    .claude/agents/devops.md project.1\n    .claude/agents/devops.md project.2\n    .claude/agents/devops.md project.3\n    … and 39 more\ncomposed 19 file(s) → .\n  which layer owns a file? `nina where <path>` — the notice in each file says it too\n",
+              "stderr": ""
+            },
+            {
+              "command": "node_modules/.bin/nina check --project .",
+              "stdinIsTTY": false,
+              "exitCode": 1,
+              "signal": null,
+              "ms": 191,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  → start with the architecture, in this order: write `.claude/architecture.md` with the owner. The vocabulary and most project slots are decisions that architecture makes — fill them from it, then `nina compose`.\n  ✗ vocabulary {{API_DIR}} is declared but not filled in\n  ✗ vocabulary {{APP_DIR}} is declared but not filled in\n  ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n  ✗ vocabulary {{OWNER}} is declared but not filled in\n  ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n  ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n  ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n  ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n  ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n  ✗ tools: secops: names skill `security-audit`, which is not installed\n  → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n\ncheck: 10 problem(s)\n\n",
+              "stderr": ""
+            },
+            {
+              "command": "node_modules/.bin/nina wire --project .",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 88,
+              "stdout": "\n ███╗   ██╗ ██╗ ███╗   ██╗  █████╗\n ████╗  ██║ ██║ ████╗  ██║ ██╔══██╗\n ██╔██╗ ██║ ██║ ██╔██╗ ██║ ███████║\n ██║╚██╗██║ ██║ ██║╚██╗██║ ██╔══██║\n ██║ ╚████║ ██║ ██║ ╚████║ ██║  ██║\n ╚═╝  ╚═══╝ ╚═╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝\n  harness orchestration · v0.34.0\n\n  everything core 0.34.0 runs from hooks and npm scripts is wired\nwire: current\n",
+              "stderr": ""
+            }
+          ],
+          "written": {
+            "added": [],
+            "changed": [],
+            "removed": []
+          }
+        },
+        {
+          "step": 6,
+          "what": "write .gitignore",
+          "bytes": "node_modules/\n"
+        },
+        {
+          "step": 7,
+          "what": "write rules.txt",
+          "sha256": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562"
+        },
+        {
+          "step": 8,
+          "what": "git init, add -A, commit -m base, pinned identity and date",
+          "commands": [
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main init -q",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 20,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main add -A",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 55,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main commit -q -m base",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 72,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": "GIT_AUTHOR_NAME=base GIT_AUTHOR_EMAIL=base@example.invalid GIT_COMMITTER_NAME=base GIT_COMMITTER_EMAIL=base@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z git -c commit.gpgsign=false -c init.defaultBranch=main rev-parse HEAD",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 5,
+              "stdout": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0\n",
+              "stderr": ""
+            }
+          ],
+          "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+          "baseFiles": [
+            ".claude/agents-overview.md",
+            ".claude/agents/architect.md",
+            ".claude/agents/devops.md",
+            ".claude/agents/implementer.md",
+            ".claude/agents/planner.md",
+            ".claude/agents/qa.md",
+            ".claude/agents/reviewer.md",
+            ".claude/agents/secops.md",
+            ".claude/graph.md",
+            ".claude/patterns.md",
+            ".claude/pills/README.md",
+            ".claude/pipeline.md",
+            ".claude/retrieval.md",
+            ".claude/router.md",
+            ".claude/settings.json",
+            ".gitignore",
+            ".nina/TODO.md",
+            ".nina/profile.json",
+            "CLAUDE.md",
+            "package.json",
+            "rules.txt",
+            "scripts/cost-watch.mjs",
+            "scripts/edit-guard.mjs",
+            "scripts/harness-check.mjs",
+            "scripts/loop-gate.mjs",
+            "src/app/index.ts",
+            "src/app/issue-invoice.ts",
+            "src/app/place-order.ts",
+            "src/app/ports.ts",
+            "src/app/register-customer.ts",
+            "src/config/settings.ts",
+            "src/domain/customer.ts",
+            "src/domain/errors.ts",
+            "src/domain/index.ts",
+            "src/domain/invoice.ts",
+            "src/domain/money.ts",
+            "src/domain/order.ts",
+            "src/infra/db/customer-repository.ts",
+            "src/infra/db/invoice-repository.ts",
+            "src/infra/db/order-repository.ts",
+            "src/infra/db/pool.ts",
+            "src/infra/http/routes.ts",
+            "src/infra/index.ts",
+            "src/infra/mail/mailer.ts",
+            "src/main.ts",
+            "test/order.test.ts"
+          ]
+        },
+        {
+          "step": 9,
+          "what": "git apply the probe practice diff and leave it uncommitted",
+          "commands": [
+            {
+              "command": "git apply experiments/jev-gate/probe/practice-probe.patch",
+              "stdinIsTTY": false,
+              "exitCode": 0,
+              "signal": null,
+              "ms": 17,
+              "stdout": "",
+              "stderr": ""
+            }
+          ],
+          "gitStatus": " M src/domain/money.ts\n"
+        },
+        {
+          "step": 10,
+          "what": "NINA_DATA set to a per-run temp dir",
+          "ninaData": "<nina-data>",
+          "ninaDataWritten": [
+            "gate/<workspace-key>/checked-since",
+            "gate/<workspace-key>/probe-clean-base.jsonl",
+            "gate/<workspace-key>/probe-practice-diff.jsonl",
+            "hooks/<workspace-key>.stop.json"
+          ]
+        }
+      ],
+      "hooks": {
+        "declared": [
+          {
+            "event": "Stop",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/harness-check.mjs\"; [ -f \"$f\" ] && { node \"$f\" --hook || printf '%s\\n' '{\"systemMessage\":\"NINA: the harness check could not start — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 30
+          },
+          {
+            "event": "UserPromptSubmit",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/harness-check.mjs\"; [ -f \"$f\" ] && { node \"$f\" --context || printf '%s\\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"The NINA harness check could not start in this project — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina) Until it can, no drift, lesson or loop cap is checked: tell the user.\"}}'; } || true",
+            "timeout": 60
+          },
+          {
+            "event": "UserPromptSubmit",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "PreToolUse",
+            "matcher": "Agent|Task|SendMessage",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && { node \"$f\" || printf '%s\\n' '{\"systemMessage\":\"NINA: the loop gate could not start, so the caps in .claude/graph.md are not held — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 10
+          },
+          {
+            "event": "PreToolUse",
+            "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/edit-guard.mjs\"; [ -f \"$f\" ] && { node \"$f\" || printf '%s\\n' '{\"systemMessage\":\"NINA: the edit guard could not start, so composed files can be edited in place — is @xhulz/nina installed in this project, and no older than the version .nina/profile.json pins? (pnpm add -D -E @xhulz/nina)\"}'; } || true",
+            "timeout": 10
+          },
+          {
+            "event": "PostToolUse",
+            "matcher": "Agent|Task|SendMessage|AskUserQuestion|SubagentHandback",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "PostToolUse",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/cost-watch.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          },
+          {
+            "event": "SubagentStop",
+            "matcher": null,
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/scripts/loop-gate.mjs\"; [ -f \"$f\" ] && node \"$f\" || true",
+            "timeout": 10
+          }
+        ],
+        "cleanBase": {
+          "userPromptSubmit": [
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 60,
+              "exitCode": 0,
+              "ms": 4666,
+              "exceededTimeout": false,
+              "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\\n\\n⚠️  harness check — something needs acting on:\\n  declaration:\\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\\n    ✗ vocabulary {{OWNER}} is declared but not filled in\\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\\n    → a decision this project has not made yet can wait: name it under \\\"deferred\\\" in .nina/profile.json, with why\\n    check: 9 problem(s)\\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`\"}}\n",
+              "stderr": "",
+              "additionalContext": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+              "systemMessage": null,
+              "couldNotStart": false
+            },
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 93,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "postToolUseRead": [
+            {
+              "event": "PostToolUse",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 67,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "stop": [
+            {
+              "event": "Stop",
+              "matcher": null,
+              "timeoutSeconds": 30,
+              "exitCode": 0,
+              "ms": 1133,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ]
+        },
+        "practice": {
+          "userPromptSubmit": [
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 60,
+              "exitCode": 0,
+              "ms": 1020,
+              "exceededTimeout": false,
+              "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\\n\\n⚠️  harness check — something needs acting on:\\n  declaration:\\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\\n    ✗ vocabulary {{OWNER}} is declared but not filled in\\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\\n    → a decision this project has not made yet can wait: name it under \\\"deferred\\\" in .nina/profile.json, with why\\n    check: 9 problem(s)\\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`\"}}\n",
+              "stderr": "",
+              "additionalContext": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+              "systemMessage": null,
+              "couldNotStart": false
+            },
+            {
+              "event": "UserPromptSubmit",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 65,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "postToolUseRead": [
+            {
+              "event": "PostToolUse",
+              "matcher": null,
+              "timeoutSeconds": 10,
+              "exitCode": 0,
+              "ms": 79,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ],
+          "stop": [
+            {
+              "event": "Stop",
+              "matcher": null,
+              "timeoutSeconds": 30,
+              "exitCode": 0,
+              "ms": 808,
+              "exceededTimeout": false,
+              "stdout": "",
+              "stderr": "",
+              "additionalContext": null,
+              "systemMessage": null,
+              "couldNotStart": false
+            }
+          ]
+        },
+        "workspaceWrittenByHooksOnCleanBase": ""
+      }
+    }
+  }
+}

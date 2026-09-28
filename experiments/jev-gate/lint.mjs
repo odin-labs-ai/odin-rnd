@@ -15,7 +15,8 @@ export const LABEL_WORDS = ['drift', 'drifted', 'clean', 'violation', 'violation
 
 const SECRET_PATTERNS = [
   ['private path', /\/Users\/|\/home\/[a-z]|[A-Za-z]:\\Users\\/],
-  ['email address', /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[A-Za-z]/],
+  // base@example.invalid is the pinned identity of the reviewer's base commit (amendment 01): .invalid is reserved and never delivers.
+  ['email address', /(?<![A-Za-z0-9._%+-])(?!base@example\.invalid(?![A-Za-z0-9.-]))[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[A-Za-z]/],
   ['GitHub token', /\bgh[pousr]_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]{20,}/],
   ['API key', /\bsk-[A-Za-z0-9_-]{20,}|\bsk_(?:live|test|ct)_[A-Za-z0-9]{10,}/],
   ['AWS key', /\bAKIA[0-9A-Z]{16}\b/],

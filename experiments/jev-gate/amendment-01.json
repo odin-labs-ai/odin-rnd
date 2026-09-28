@@ -1,0 +1,390 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "id": "amendment-01",
+  "title": "Amendment 01: nina 0.34.0 and a pre-registered spotlight bar",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+    "published": "odin-rnd main 1a5f5c5a9855d3c27438f8268f9d8d31df2bdff4, merged 2026-09-28T02:16:26Z. The parent stays byte-identical and served; this record names it and changes only what it lists under changes."
+  },
+  "date": "2026-09-28",
+  "statusText": "Pre-registered · amended 28 Sep 2026, before any counted gate run",
+  "reason": {
+    "summary": "Two decisions, made after the parent was published and before any counted gate run: the LLM reviewer moves from nina 0.28.10 to the released 0.34.0, and nina's reviewer gets a bar, fixed in advance, that it must clear before Odin R&D puts it in the spotlight. Both are written down here, hashed and published before any counted gate call.",
+    "founder": [
+      "i also want to put the harness in thr spotlight here but only ofcourse if its really good we can improve on it and open an PR if needed when we use it … bundle 3 is in scope",
+      "Spotlight bar: \"Pre-registered bar (Recommended)\"",
+      "nina version: \"Amend to 0.34.0 (Recommended)\"",
+      "Upstream PRs: \"Open autonomously\""
+    ],
+    "founderDate": "2026-09-28",
+    "paidCallsSoFar": "No gate call counts in any result. Paid calls before this amendment: G2, one reviewer check on nina 0.28.10 against nina's own eval fixture, not a corpus item, while planning ($0.30); and six nina 0.34.0 reviewer runs on corpus items c001 and c002, started by accident while the runners were being built. All are listed under priorCalls."
+  },
+  "notBefore": "No gate call (Jev, Laya or the reviewer, including isolation probes and the dry run) starts before this amendment is merged on odin-rnd main; the merge time is recorded after publication. This moves the parent's clock.notBefore forward to that time. Every other part of the parent's clock rule holds: every gate call records its start and end in UTC, every Jev call records the server's Date header, and a call that starts earlier is excluded and reported.",
+  "changes": {
+    "reviewer": {
+      "replaces": "The parent's gates.reviewer.release, gates.reviewer.commit and gates.reviewer.workspace. Every other reviewer pin (client, model, effort, k, tools, command, prompt, timeout, order, hang-stop, isolation proof) is unchanged.",
+      "nina": {
+        "package": "@xhulz/nina",
+        "release": "0.34.0",
+        "previousRelease": "0.28.10",
+        "commit": "be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+        "repoTree": "a3b25852cd8616947f5a66153b1a25b1fa8a566d",
+        "releaseTree": "b11435f6064634ea00693b7bde844dc263b91327",
+        "tarball": {
+          "url": "https://registry.npmjs.org/@xhulz/nina/-/nina-0.34.0.tgz",
+          "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg=="
+        },
+        "verification": "The tarball is downloaded once, its sha512 checked against integrity before any use, and kept as a local file. The probe hashes the package's releases/0.34.0 as a git tree and it equals releaseTree."
+      },
+      "reportFormat": "The 0.34.0 reviewer's final report still opens with the line VERDICT: APPROVED or VERDICT: REJECTED, so the parent's verdictPattern and verdict parse rule are unchanged. New in 0.34.0: an ISSUES line under a REJECTED verdict, and a Gates line naming the pipeline gates the diff triggers. Neither line is parsed; both are kept in the run record.",
+      "toolRestrictionInteraction": "The 0.34.0 reviewer spec tells the reviewer to run pnpm harness:check (and typecheck, lint and build). The parent's allowed tools (Read, Grep, Glob and read-only git) deny those commands. This is a known interaction of this setup and is not patched: the reviewer is run as the pinned command allows, and a denied command is part of the run.",
+      "install": {
+        "commands": [
+          "mkdir -p node_modules/@xhulz/nina",
+          "tar -xzf <verified local tarball> -C node_modules/@xhulz/nina --strip-components=1",
+          "mkdir -p node_modules/.bin",
+          "ln -s ../@xhulz/nina/bin/nina.mjs node_modules/.bin/nina"
+        ],
+        "assert": "node_modules holds only @xhulz/nina and .bin/nina, the installed package.json says version 0.34.0, and nina's own packageInstalled check (src/wiring.mjs, createRequire from the workspace package.json) resolves the extracted package.",
+        "rule": "Installation by extraction, not npm install: no other package, no bce and no package.json or lockfile change from the install. node_modules is never in the base commit. No package is fetched during a counted run; the reviewer's own API calls do use the network."
+      },
+      "workspace": {
+        "description": "A fresh scratch git repository per run, outside any odin-rnd checkout, built in the order below from the base app, the extracted nina 0.34.0 package and rules.txt. One base commit with the neutral message \"base\", a pinned identity and a pinned date holds the base app, rules.txt, .gitignore and every file nina init and compose write. The change is applied with git apply and left uncommitted, so git status and git diff show exactly the change. No odin-rnd checkout, labels.json, manifest.json, baselines.json, corpus file, blueprint or bce is reachable. No web access; no tool outside the parent's list. nina's hooks, which the project's .claude/settings.json declares, run as they do for a real user.",
+        "init": [
+          "init",
+          "--project",
+          ".",
+          "--core",
+          "0.34.0",
+          "--surfaces",
+          "",
+          "--no-ask"
+        ],
+        "initCommand": "node_modules/.bin/nina init --project . --core 0.34.0 --surfaces '' --no-ask, with stdin not a TTY. init also wires and composes; the probe asserts profile.surfaces is [].",
+        "compose": [
+          "compose",
+          "--project",
+          "."
+        ],
+        "wire": "Not run: init wires every hook and npm script 0.34.0 needs, and nina wire (without --apply) reports \"wire: current\".",
+        "vocabulary": null,
+        "vocabularyRule": "The five vocabulary entries init declares (API_DIR, APP_DIR, EMITTING_PKGS, OWNER, PKG_SCOPE) stay null, as init writes them, so their placeholders stay standing in the composed files (for example {{OWNER}} and {{APP_DIR}} in the reviewer spec). Nothing is written to .nina/profile.json.",
+        "fragments": {},
+        "fragmentsRule": "The 51 project slots stay empty and no owed document (.claude/architecture.md, .claude/code-map.md, .claude/code-map.generated.md) is written. .nina/TODO.md, as init writes it, goes into the base commit.",
+        "patchRule": "Writing the pre-registered values above is installation, not a patch; here there are none to write. Any other edit to a file nina wrote, to the extracted package or to its release tree is a patch, and spotlight criterion zero-patches fails.",
+        "gitignore": "node_modules/\n",
+        "files": [
+          ".claude/agents-overview.md",
+          ".claude/agents/architect.md",
+          ".claude/agents/devops.md",
+          ".claude/agents/implementer.md",
+          ".claude/agents/planner.md",
+          ".claude/agents/qa.md",
+          ".claude/agents/reviewer.md",
+          ".claude/agents/secops.md",
+          ".claude/graph.md",
+          ".claude/patterns.md",
+          ".claude/pills/README.md",
+          ".claude/pipeline.md",
+          ".claude/retrieval.md",
+          ".claude/router.md",
+          ".claude/settings.json",
+          ".nina/TODO.md",
+          ".nina/profile.json",
+          "CLAUDE.md",
+          "package.json",
+          "scripts/cost-watch.mjs",
+          "scripts/edit-guard.mjs",
+          "scripts/harness-check.mjs",
+          "scripts/loop-gate.mjs"
+        ],
+        "packageJsonScripts": {
+          "harness:check": "node scripts/harness-check.mjs",
+          "harness:compose:check": "nina compose --check --quiet"
+        },
+        "order": [
+          "Copy experiments/jev-gate/base into a fresh temp dir outside the repository.",
+          "Install nina by extraction of the verified tarball, and assert the contents of node_modules.",
+          "Run node_modules/.bin/nina init --project . --core 0.34.0 --surfaces '' --no-ask, stdin not a TTY.",
+          "Write the pre-registered vocabulary, project-slot and owed-document text: none; everything stays as init wrote it.",
+          "Run node_modules/.bin/nina compose --project .",
+          "Write .gitignore (node_modules/). Run artefacts are written outside the repository, so they need no pattern.",
+          "Write rules.txt at the repository root.",
+          "git init, git add -A, git commit -m base, with the pinned identity and date.",
+          "git apply the change, and leave it uncommitted.",
+          "Set NINA_DATA to a per-run temp dir.",
+          "Run claude -p with the parent's pinned command and flags, inside the wrapper's latency clock."
+        ],
+        "baseCommit": {
+          "env": {
+            "GIT_AUTHOR_NAME": "base",
+            "GIT_AUTHOR_EMAIL": "base@example.invalid",
+            "GIT_COMMITTER_NAME": "base",
+            "GIT_COMMITTER_EMAIL": "base@example.invalid",
+            "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+            "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+          },
+          "gitConfig": [
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "init.defaultBranch=main"
+          ],
+          "message": "base",
+          "sha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+          "rule": "The base commit is the same for every run: its sha is the one above, and a run whose base sha differs is not counted."
+        },
+        "ninaData": "NINA_DATA is set to a fresh temp dir for every run and its value is recorded. The operator's ~/.nina is never touched.",
+        "gitignoreRule": "REVISION-5.3 step 6 names node_modules/ and run artefacts. Every run artefact (the change's patch file, NINA_DATA, the isolation canary, the run record and its log) is written in the temp dir around the workspace, never inside the repository, so .gitignore holds node_modules/ only. The probe shows the hooks write nothing into the workspace, and the runner reads git status after each run, so anything a run leaves in the tree is recorded rather than hidden by an ignore pattern."
+      },
+      "hooks": {
+        "declared": "nina init writes .claude/settings.json with hooks on Stop and UserPromptSubmit (scripts/harness-check.mjs), UserPromptSubmit, PreToolUse, PostToolUse and SubagentStop (scripts/loop-gate.mjs), PreToolUse on edits (scripts/edit-guard.mjs) and PostToolUse (scripts/cost-watch.mjs).",
+        "commandsOutsideAllowedTools": "Hooks are run by Claude Code, not as the reviewer's tools, so none of them is in the allowed tool list: node scripts/harness-check.mjs --context and --hook (which run nina compose --check --drift --quiet, nina check --detector --quiet, nina learn --check --quiet and nina gate --selftest --quiet from node_modules/.bin), node scripts/loop-gate.mjs, node scripts/edit-guard.mjs and node scripts/cost-watch.mjs. The isolation canary re-runs under this workspace, hooks present, and records every such command and that none reads the canary's parent directory.",
+        "promptContextOnCleanBase": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+        "promptContextEmpty": false,
+        "promptContextSameOnPracticeDiff": true,
+        "rule": "Whatever nina's UserPromptSubmit hook hands the model is model input. On the clean base commit it is the text above, identical on the probe's practice diff, and it is quoted in limits. It is not edited, silenced or declared away.",
+        "errors": "Hook errors (a \"could not start\" message, a detector reporting an error, or a hook stopped at its timeout) are recorded per run. They are not harness failures; their rate is published."
+      },
+      "billing": "The runner strips the same billing environment keys nina eval strips (the BILLED list in src/commands/eval.mjs: ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, CLAUDE_CODE_USE_BEDROCK, CLAUDE_CODE_USE_VERTEX, CLAUDE_CODE_USE_FOUNDRY) and records which billing basis applied to each run. The cost basis stays the parent's: the API-equivalent total_cost_usd the client records.",
+      "probe": {
+        "file": "experiments/jev-gate/nina-probe-0.34.0.json",
+        "script": "experiments/jev-gate/nina-probe.mjs",
+        "summary": "Run 2026-09-28: nina 0.34.0 composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch true; a step that needed either would have stopped the probe, and none did); both base commits are 3e35e4e274932a61bc0d92f378f8d506a9bb4ce0; the package's releases/0.34.0 tree is b11435f6064634ea00693b7bde844dc263b91327. No model was called."
+      }
+    },
+    "spotlight": {
+      "appliesTo": "nina's reviewer only, at 0.34.0, over the full corpus at k=3: every corpus item, 3 runs each.",
+      "k": 3,
+      "items": 60,
+      "redItems": 30,
+      "greenItems": 30,
+      "countedRuns": 180,
+      "rule": "All four criteria must hold for a spotlight. A partial run (cap or hang-stop) gives no spotlight. Failing any one criterion means no spotlight; the results are then published neutrally with the same attribution. The spotlight describes the harness as measured, meaning its reviewer on mechanical architecture rules, and nothing it wasn't tested on.",
+      "criteria": [
+        {
+          "id": "missed-drift",
+          "metric": "missedDrift",
+          "level": "run",
+          "numerator": "RED judgments that are APPROVED or abstained",
+          "denominator": "all RED judgments: 30 RED items × 3 runs = 90",
+          "n": 90,
+          "threshold": 0.1,
+          "refutedWhen": "greater-than",
+          "statement": "Missed drift ≤ 10%: over all RED judgments (30 × 3), the share that is APPROVED or abstained."
+        },
+        {
+          "id": "false-reject",
+          "metric": "falseReject",
+          "level": "run",
+          "numerator": "GREEN judgments that are REJECTED or abstained",
+          "denominator": "all GREEN judgments: 30 GREEN items × 3 runs = 90",
+          "n": 90,
+          "threshold": 0.25,
+          "refutedWhen": "greater-than",
+          "statement": "False reject ≤ 25%: over all GREEN judgments (30 × 3), the share that is REJECTED or abstained."
+        },
+        {
+          "id": "self-agreement",
+          "metric": "selfAgreement",
+          "level": "change",
+          "numerator": "changes whose 3 runs all gave the same decided verdict",
+          "denominator": "all 60 changes",
+          "n": 60,
+          "threshold": 0.9,
+          "refutedWhen": "less-than",
+          "statement": "Self-agreement ≥ 90%: the share of changes where all 3 runs gave the same decided verdict. Any abstaining run makes the change disagree, as in the parent's reviewerVariance."
+        },
+        {
+          "id": "zero-patches",
+          "metric": "harnessFailureRate",
+          "level": "run",
+          "numerator": "counted runs that are harness failures",
+          "denominator": "all 180 counted runs; isolation probes and dry-run rows are excluded",
+          "n": 180,
+          "harnessFailureMax": 0.05,
+          "refutedWhen": "patched-or-greater-than",
+          "statement": "Zero patches: the measured run composed and ran from the unmodified 0.34.0 release with no local patch to nina. Harness failures, meaning runs that end without a report for a reason that is not the model's answer, are ≤ 5% of runs.",
+          "harnessFailure": "A counted run that ends in a timeout, a non-zero client exit, missing or unparseable JSON, is_error: true, or an empty result. A run with a completed result and no verdict line is a model abstention, not a harness failure."
+        }
+      ],
+      "supersedes": "REVISION 5.1 §3 replaced the first wording of self-agreement (\"an abstention counts as its own verdict\"): a change agrees only when all 3 runs gave the same decided verdict.",
+      "judging": "Missed drift and false reject are judged on the run-level point estimate (n = 90 each). Beside each rate the Wilson 95% interval of the item-level majority (n = 30) is published, because the 3 runs on one change are not independent, with the parent's three-state label computed on that item-level majority: its point estimate and its Wilson interval at n = 30, under the parent's thresholdRule.singleRate. The item-level majority is the parent's reviewerMajority; an abstaining majority counts against the reviewer. A spotlight needs BOTH the run-level point estimate within the threshold AND an item-level label other than \"refuted\". With 30 RED items the interval cannot establish 10% or less: 0 of 30 has a Wilson upper bound of 11.35%.",
+      "labelPhrase": "Where the item-level label is \"passes, not established at this N\", the spotlight card and the journal carry that phrase verbatim.",
+      "thresholdSource": "The spotlight verdict is computed only from this record, with its sha256 asserted; the thresholds live here and nowhere in code."
+    }
+  },
+  "unchanged": [
+    "The corpus: 60 authored changes, 30 RED and 30 GREEN, the corpus sha256, labels.json and the ground truth (bce-engine 0.3.1, extractor ast).",
+    "The gate inputs (inputs.json and its sha256), rules.txt, the gate question and the state construction.",
+    "Jev and Laya: endpoint, model, revision, pinned files, decision rule, confidence and order.",
+    "The reviewer's client, client version, model, effort, k = 3, allowed tools, command, prompt, per-run timeout, order, hang-stop and isolation proof. The canary probe re-runs under the new workspace before any counted run.",
+    "The decision rules, including verdictPattern and its parse rule, the reviewer majority, abstentions and failures.",
+    "The cascade, the populations, every metric, the statistics, the baselines and the better baseline.",
+    "The five criteria, their thresholds, the claim rule and the three-state threshold rule. The spotlight criteria add to them and change none of them.",
+    "The cost bases, the spend cap ($100) and its rule, including that a partial run decides nothing. Only the amount already spent moves, under spend.",
+    "The retry protocol: the readiness gate is retried at most 10 times per publish, and gate calls are never retried.",
+    "The attribution of nina, in the founder's wording, and every limit the parent states."
+  ],
+  "limits": [
+    "The 0.34.0 reviewer spec tells the reviewer to REJECT for missing TSDoc, dead exports, test-mutation gaps and departures from .claude/patterns.md, none of which rules.txt states, and to confirm pnpm harness:check, which this setup denies. All of this pushes false rejects on GREEN items up. A spotlight FAIL describes this restricted setup, not nina in the pipeline it was built for.",
+    "Every reviewer run receives this text from nina's UserPromptSubmit hook, before its prompt, on the clean base and on a change alike (quoted verbatim from the probe): This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+    "Wrapper latency includes nina's hooks: up to 60 s for the UserPromptSubmit harness check, plus the cost watch on each tool call. The committed probe measured the prompt hook at 1-6 s (load average 18-30, no timeout). An earlier probe run the same day, at a load average near 33, measured it at 24-69 s with one run past its 60 s timeout; that run's record was overwritten by the committed rerun and survives only in working notes, so those figures are not verifiable here. A hook stopped at its timeout hands the run nothing; each run records its hook outcomes.",
+    "The installed package, including evals/reviewer and releases/, sits in node_modules inside the workspace, and the reviewer can read it. That is nina's own material, not corpus contamination.",
+    "The vocabulary stays unfilled, so placeholders such as {{OWNER}} stay standing in the composed reviewer spec, as nina init leaves them in a new project.",
+    "The spotlight's two rates are judged on 90 runs each, but those runs come from 30 changes. Their intervals are published on the 30-item majority, and at that N a pass can be \"passes, not established at this N\".",
+    "The spotlight is about nina's reviewer on mechanical architecture rules, the only thing measured here. It says nothing about nina's other agents, its pipeline or other kinds of rules.",
+    "Six reviewer runs on two GREEN corpus items (c001, c002) happened before this amendment, and the people building the runners saw their verdicts (all five completed runs approved). They are not counted, their record is published, and no pin, prompt or criterion changed because of them."
+  ],
+  "attribution": {
+    "nina": "nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs",
+    "ninaUrl": "https://github.com/xhulz/nina"
+  },
+  "files": {
+    "experiments/jev-gate/nina-probe-0.34.0.json": "eb90d1c686a6423d0287bdb489f4e76b16aa77919697c0ddc6a5c799b2b55f54",
+    "experiments/jev-gate/nina-probe.mjs": "9f1feadfaba00788863de7410ce6bb9bcf978fc9a42aa0424a3ea3e0f471a113",
+    "experiments/jev-gate/probe/practice-probe.patch": "bfec2fe9905d766d8a324701ca06ba54b5bf3d0595d6e1e531ef6d5e57b974e4",
+    "scripts/jev-gate-amendment.mjs": "b473290a247ed9060ec2dac3c0e18c759a132d54ed56fe53dce3c343831142a4",
+    "scripts/jev-gate-amendment-note.mjs": "ecedf1e3b4c9f81743b0359e82648e52fbbc3e7df59bff2589e6e6e21582a7be",
+    "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711"
+  },
+  "sources": [
+    {
+      "id": "parent",
+      "label": "EXP 005 pre-registration (the parent record)",
+      "url": "https://odin-labs-ai.github.io/odin-rnd/data/jev-gate/preregistration.json",
+      "claim": "The record this amendment names by sha256 and changes only where stated."
+    },
+    {
+      "id": "nina-0.34.0",
+      "label": "@xhulz/nina 0.34.0 on npm",
+      "url": "https://www.npmjs.com/package/@xhulz/nina/v/0.34.0",
+      "claim": "The released package the reviewer is composed from, pinned by its dist.integrity (read 2026-09-28)."
+    },
+    {
+      "id": "nina-release-commit",
+      "label": "nina commit be546e3, \"Cut 0.34.0\"",
+      "url": "https://github.com/xhulz/nina/commit/be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+      "claim": "The source commit of release 0.34.0; its releases/0.34.0 tree is the pinned releaseTree (read 2026-09-28)."
+    }
+  ],
+  "priorCalls": {
+    "statement": "No prior call is counted in any result. Every one started before this amendment's notBefore, so the clock rule excludes it, and the counted run makes all its calls afresh.",
+    "plainly": "Before this amendment, six nina 0.34.0 reviewer runs were started by accident on two GREEN corpus items, c001 and c002, while the runners were being built; the five that finished all approved, the sixth was killed, and none of them counts in any result.",
+    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now resolves claude on the PATH and refuses a fixture run unless its realpath is the committed fake (experiments/jev-gate/fixtures/fake-claude.mjs), and refuses a counted run if it is.",
+    "criteriaTiming": "The spotlight criteria were fixed in REVISION-5, a plan file last modified at 2026-09-28T03:26:08Z, 53 minutes before the first of these runs (04:19:28Z), and were copied into this record unchanged. This record was first committed at 04:29:18Z, after the runs; the criteria in it are REVISION-5's, unchanged.",
+    "evidence": {
+      "file": "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json",
+      "sha256": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711",
+      "note": "The runner's own record of the runs, committed byte for byte. It carries the runner's fixture banner because the run used fixture pins; the calls it records were live and paid. The killed sixth run left no entry in it. Its amendmentSha256, 15dfe216…, is not any version of this record: it is the hash of the stand-in fixture amendment the runner tests used at 04:19Z, an uncommitted draft of experiments/jev-gate/fixtures/amendment-01.fixture.json on the runners branch (no committed version of that file has this hash). Its partial: null does not reflect the killed sixth run."
+    },
+    "calls": [
+      {
+        "id": "G2",
+        "gate": "reviewer",
+        "release": "0.28.10",
+        "item": null,
+        "what": "nina's own eval fixture, not a corpus item, run while planning",
+        "verdict": null,
+        "costUsd": 0.3
+      },
+      {
+        "id": "c001-run1",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 1,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:19:28.456Z",
+        "endedAt": "2026-09-28T04:20:19.596Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1931692
+      },
+      {
+        "id": "c001-run2",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 2,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:20:37.884Z",
+        "endedAt": "2026-09-28T04:21:06.381Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1025202
+      },
+      {
+        "id": "c001-run3",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 3,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:21:14.063Z",
+        "endedAt": "2026-09-28T04:21:37.674Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1051002
+      },
+      {
+        "id": "c002-run1",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 1,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:21:49.619Z",
+        "endedAt": "2026-09-28T04:22:15.593Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.11877960000000001
+      },
+      {
+        "id": "c002-run2",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 2,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:22:25.217Z",
+        "endedAt": "2026-09-28T04:22:49.652Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1156546
+      },
+      {
+        "id": "c002-run3",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 3,
+        "label": "GREEN",
+        "startedAt": null,
+        "startedAfter": "2026-09-28T04:22:49.652Z",
+        "endedBefore": "2026-09-28T04:22:55.702Z",
+        "status": "killed mid-flight",
+        "verdict": null,
+        "costUsd": null,
+        "costCharged": 0.1931692,
+        "costChargedRule": "No cost was recorded, so the largest single run seen is charged as an upper bound, never 0."
+      }
+    ],
+    "parentWording": "The parent says it was written, hashed and published before any gate saw a corpus item, and its pages say published before any gate runs. That was true when it was published (2026-09-28T02:16:26Z); these runs came two hours later. The parent and its pinned renderer cannot change, so this amendment says so here."
+  },
+  "spend": {
+    "alreadySpentUsd": 1.128393,
+    "supersedes": "The parent's spendCap.alreadySpentUsd (0.3). The cap and its rule are unchanged.",
+    "sum": "G2 0.3 + the five completed runs 0.6352238 + the killed run charged at 0.1931692 = 1.128393.",
+    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now resolves claude on the PATH and refuses a fixture run unless its realpath is the committed fake (experiments/jev-gate/fixtures/fake-claude.mjs), and refuses a counted run if it is."
+  },
+  "siteQualifier": {
+    "rule": "The parent's pages say it was published or written down before any gate runs, which was true when it was published. The build adds these lines, from this record, next to each such sentence on the home page, station 06 and the field note, and links them to the amendment section. The parent's own text is left as it is.",
+    "card": "Amended 28 Sep 2026, before any counted run: the reviewer is now nina 0.34.0, a spotlight bar was added, and 6 uncounted reviewer runs are disclosed.",
+    "station": "amended 28 Sep 2026, before any counted run; 6 uncounted reviewer runs are disclosed",
+    "note": "Amended 28 Sep 2026, before any counted run: 6 uncounted reviewer runs came after this note was published, and the amendment discloses them.",
+    "meta": "Amended 28 Sep 2026, before any counted run; 6 uncounted reviewer runs disclosed."
+  }
+}
