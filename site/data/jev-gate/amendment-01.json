@@ -272,7 +272,7 @@
   "priorCalls": {
     "statement": "No prior call is counted in any result. Every one started before this amendment's notBefore, so the clock rule excludes it, and the counted run makes all its calls afresh.",
     "plainly": "Before this amendment, six nina 0.34.0 reviewer runs were started by accident on two GREEN corpus items, c001 and c002, while the runners were being built; the five that finished all approved, the sixth was killed, and none of them counts in any result.",
-    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now refuses fixture mode unless the fake answers an identity probe.",
+    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now resolves the client on the PATH and refuses a fixture run unless it is the committed fake, and a counted run if it is.",
     "criteriaTiming": "The spotlight criteria were fixed in REVISION-5, a plan file last modified at 2026-09-28T03:26:08Z, 53 minutes before the first of these runs (04:19:28Z), and were copied into this record unchanged. This record was first committed at 04:29:18Z, after the runs, by a lane that had not seen them.",
     "evidence": {
       "file": "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json",
@@ -376,6 +376,6 @@
     "alreadySpentUsd": 1.128393,
     "supersedes": "The parent's spendCap.alreadySpentUsd (0.3). The cap and its rule are unchanged.",
     "sum": "G2 0.3 + the five completed runs 0.6352238 + the killed run charged at 0.1931692 = 1.128393.",
-    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now refuses fixture mode unless the fake answers an identity probe."
+    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now resolves the client on the PATH and refuses a fixture run unless it is the committed fake, and a counted run if it is."
   }
 }
