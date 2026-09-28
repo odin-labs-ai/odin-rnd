@@ -39,7 +39,8 @@ export const spotlightShapes = {
 export const hookLimitPrefix = "Every reviewer run receives this text from nina's UserPromptSubmit hook, before its prompt, on the clean base and on a change alike (quoted verbatim from the probe):";
 export const hookLimit = text => `${hookLimitPrefix} ${text}`;
 // Files the amendment's verdict and its pages depend on. The record may pin more, never fewer.
-export const requiredFiles = [probePath, `${dir}/nina-probe.mjs`, `${dir}/probe/practice-probe.patch`, 'scripts/jev-gate-amendment.mjs', 'scripts/jev-gate-amendment-note.mjs'];
+export const priorCallsPath = `${dir}/prior-calls/2026-09-28-accidental-reviewer-runs.json`;
+export const requiredFiles = [priorCallsPath, probePath, `${dir}/nina-probe.mjs`, `${dir}/probe/practice-probe.patch`, 'scripts/jev-gate-amendment.mjs', 'scripts/jev-gate-amendment-note.mjs'];
 
 const hex = /^[a-f0-9]{64}$/, sha1 = /^[a-f0-9]{40}$/;
 const str = v => typeof v === 'string' && v.trim().length > 0;
@@ -82,6 +83,10 @@ export const required = {
   'changes.spotlight.criteria': v => Array.isArray(v) && v.length === Object.keys(spotlightShapes).length,
   'changes.spotlight.supersedes': str, 'changes.spotlight.judging': v => str(v) && /Wilson/.test(v) && /item-level/.test(v) && /refuted/.test(v),
   'changes.spotlight.labelPhrase': v => str(v) && v.includes('passes, not established at this N'), 'changes.spotlight.thresholdSource': str,
+  'priorCalls.statement': v => str(v) && /No prior call is counted in any result/.test(v), 'priorCalls.plainly': str, 'priorCalls.cause': str, 'priorCalls.criteriaTiming': str,
+  'priorCalls.evidence.file': v => v === priorCallsPath, 'priorCalls.evidence.sha256': v => hex.test(v), 'priorCalls.evidence.note': str,
+  'priorCalls.calls': v => Array.isArray(v) && v.length > 0 && v.every(c => str(c.id) && str(c.gate) && str(c.release)),
+  'spend.alreadySpentUsd': v => typeof v === 'number' && v > 0, 'spend.supersedes': str, 'spend.sum': str, 'spend.reason': str,
   unchanged: strings, limits: strings,
   'attribution.nina': v => v === ninaAttribution, 'attribution.ninaUrl': v => v === 'https://github.com/xhulz/nina',
   files: v => obj(v) && Object.values(v).every(h => hex.test(h)),
@@ -115,6 +120,16 @@ export function validateAmendment(record, parent) {
     if (c.id === 'zero-patches') assert(str(c.harnessFailure) && /abstention/.test(c.harnessFailure) && !('threshold' in c), 'zero-patches defines harness failure and carries only harnessFailureMax');
     else assert(!('harnessFailureMax' in c), `Spotlight criterion ${c.id} carries a threshold, not harnessFailureMax`);
   }
+  const p = record.priorCalls;
+  assert.equal(p.calls[0].id, 'G2', 'The G2 planning check comes first in priorCalls');
+  if (parent) assert.equal(p.calls[0].costUsd, parent.spendCap.alreadySpentUsd, 'G2 costs what the parent already counted');
+  const charged = c => c.costUsd ?? c.costCharged;
+  for (const c of p.calls) {
+    assert(typeof charged(c) === 'number' && charged(c) > 0, `Prior call ${c.id} must charge a cost, never 0 or nothing`);
+    if (c.costUsd === null) assert(str(c.costChargedRule), `Prior call ${c.id} has no recorded cost, so it states how it is charged`);
+  }
+  assert.equal(Math.round(p.calls.reduce((sum, c) => sum + charged(c), 0) * 1e7), Math.round(record.spend.alreadySpentUsd * 1e7), 'spend.alreadySpentUsd is not the sum of the prior calls');
+  if (parent) assert(record.spend.alreadySpentUsd > parent.spendCap.alreadySpentUsd, 'The amount already spent only grows');
   const hooks = record.changes.reviewer.hooks;
   assert.equal(hooks.promptContextEmpty, hooks.promptContextOnCleanBase === '', 'promptContextEmpty disagrees with the recorded text');
   if (!hooks.promptContextEmpty) assert(record.limits.includes(hookLimit(hooks.promptContextOnCleanBase)), 'A non-empty prompt-hook context must be quoted verbatim in limits');
@@ -139,6 +154,7 @@ export function derive(record, root = '.') {
   r.hooks.promptContextOnCleanBase = context(probe.promptHookContextOnCleanBase);
   r.hooks.promptContextEmpty = r.hooks.promptContextOnCleanBase === '';
   r.hooks.promptContextSameOnPracticeDiff = context(probe.promptHookContextOnPracticeDiff) === r.hooks.promptContextOnCleanBase;
+  next.priorCalls.evidence.sha256 = sha256(read(priorCallsPath));
   r.probe.summary = `Run ${probe.date}: nina ${probe.pin.version} composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch ${probe.zeroPatch}); both base commits are ${probe.baseSha}; the package's releases/${probe.pin.version} tree is ${step(2).releaseTree}. No model was called.`;
   next.limits = next.limits.filter(l => !l.startsWith(hookLimitPrefix));
   if (!r.hooks.promptContextEmpty) next.limits.splice(1, 0, hookLimit(r.hooks.promptContextOnCleanBase));
@@ -169,6 +185,19 @@ export function assertProbe(record, root = '.') {
   }
 }
 
+// The prior reviewer runs listed in the amendment are exactly the completed runs in their committed record,
+// and a run with no recorded cost is charged the largest cost seen.
+export function assertPriorCalls(record, root = '.') {
+  const evidence = JSON.parse(readFileSync(join(root, priorCallsPath), 'utf8'));
+  const listed = record.priorCalls.calls.filter(c => c.item && c.costUsd !== null);
+  const recorded = evidence.calls.map(c => ({ item: c.id, run: c.run, startedAt: c.startedAt, endedAt: c.endedAt, verdict: c.verdictLine ?? null, costUsd: c.costUsd }));
+  assert.deepEqual(listed.map(c => ({ item: c.item, run: c.run, startedAt: c.startedAt, endedAt: c.endedAt, verdict: c.verdict, costUsd: c.costUsd })), recorded, 'priorCalls disagrees with the committed record of the runs');
+  const labels = JSON.parse(readFileSync(join(root, dir, 'labels.json'), 'utf8'));
+  for (const c of record.priorCalls.calls.filter(c => c.item)) assert.equal(c.label, labels.items.find(i => i.id === c.item)?.label, `Prior call ${c.id} states the wrong label`);
+  const largest = Math.max(...recorded.map(c => c.costUsd));
+  for (const c of record.priorCalls.calls.filter(c => c.item && c.costUsd === null)) assert.equal(c.costCharged, largest, `Prior call ${c.id} must be charged the largest single run seen`);
+}
+
 export function checkAmendment(root = '.') {
   const read = file => readFileSync(join(root, file));
   const parentBytes = read(parentPath);
@@ -180,6 +209,7 @@ export function checkAmendment(root = '.') {
   const record = validateAmendment(JSON.parse(bytes), JSON.parse(parentBytes));
   assert.deepEqual(record, derive(record, root), 'The amendment differs from the probe record or the files on disk: run node scripts/jev-gate-amendment.mjs --write, review the diff, then --check');
   assertProbe(record, root);
+  assertPriorCalls(record, root);
   return { record, sha256: sha256(bytes), bytes };
 }
 

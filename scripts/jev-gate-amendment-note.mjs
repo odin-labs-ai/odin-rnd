@@ -31,7 +31,7 @@ export function renderAmendmentSection(amendment, amendmentSha256) {
 <p><strong>${escape(amendment.statusText)}.</strong> ${escape(reason.summary)} The pre-registration below is unchanged and still served byte for byte; where this section and it differ, this section wins, and only on what it lists.</p>
 <p>Why, in the founder's words (${escape(reason.founderDate)}):</p>
 ${list(reason.founder.map(escape))}
-<p>${escape(reason.paidCallsSoFar)}</p>
+<p>${escape(reason.paidCallsSoFar)} ${escape(amendment.priorCalls.plainly)} Their record is ${code(amendment.priorCalls.evidence.file)} (sha256 ${code(amendment.priorCalls.evidence.sha256)}); the amount already spent under the cap is now $${escape(amendment.spend.alreadySpentUsd)}.</p>
 <p>${escape(amendment.notBefore)}</p>
 <h3>The reviewer: nina ${escape(r.nina.previousRelease)} → ${escape(r.nina.release)}</h3>
 <p>${nina}. Package ${code(`${r.nina.package}@${r.nina.release}`)}, tarball ${code(r.nina.tarball.url)} with integrity ${code(r.nina.tarball.integrity)}; commit ${code(r.nina.commit)}, release tree ${code(r.nina.releaseTree)}. ${escape(r.nina.verification)}</p>

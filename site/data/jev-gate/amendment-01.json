@@ -9,9 +9,9 @@
     "published": "odin-rnd main 1a5f5c5a9855d3c27438f8268f9d8d31df2bdff4, merged 2026-09-28T02:16:26Z. The parent stays byte-identical and served; this record names it and changes only what it lists under changes."
   },
   "date": "2026-09-28",
-  "statusText": "Pre-registered · amended 28 Sep 2026, before any gate ran",
+  "statusText": "Pre-registered · amended 28 Sep 2026, before any counted gate run",
   "reason": {
-    "summary": "Two decisions made after the parent was published and before any gate ran: the LLM reviewer moves from nina 0.28.10 to the released 0.34.0, and nina's reviewer gets a bar, fixed in advance, that it must clear before Odin R&D puts it in the spotlight. Both are written down here, hashed and published before any gate call.",
+    "summary": "Two decisions made after the parent was published and before any gate ran: the LLM reviewer moves from nina 0.28.10 to the released 0.34.0, and nina's reviewer gets a bar, fixed in advance, that it must clear before Odin R&D puts it in the spotlight. Both are written down here, hashed and published before any counted gate call.",
     "founder": [
       "i also want to put the harness in thr spotlight here but only ofcourse if its really good we can improve on it and open an PR if needed when we use it … bundle 3 is in scope",
       "Spotlight bar: \"Pre-registered bar (Recommended)\"",
@@ -19,7 +19,7 @@
       "Upstream PRs: \"Open autonomously\""
     ],
     "founderDate": "2026-09-28",
-    "paidCallsSoFar": "No gate has been called. The only paid call so far is G2, one reviewer check on nina 0.28.10 against nina's own eval fixture, not a corpus item, while planning ($0.30, already in the parent's spend cap)."
+    "paidCallsSoFar": "No gate call counts in any result. Paid calls before this amendment: G2, one reviewer check on nina 0.28.10 against nina's own eval fixture, not a corpus item, while planning ($0.30); and six nina 0.34.0 reviewer runs on corpus items c001 and c002, started by accident while the runners were being built. All are listed under priorCalls."
   },
   "notBefore": "No gate call (Jev, Laya or the reviewer, including isolation probes and the dry run) starts before this amendment is merged on odin-rnd main; the merge time is recorded after publication. This moves the parent's clock.notBefore forward to that time. Every other part of the parent's clock rule holds: every gate call records its start and end in UTC, every Jev call records the server's Date header, and a call that starts earlier is excluded and reported.",
   "changes": {
@@ -223,7 +223,7 @@
     "The decision rules, including verdictPattern and its parse rule, the reviewer majority, abstentions and failures.",
     "The cascade, the populations, every metric, the statistics, the baselines and the better baseline.",
     "The five criteria, their thresholds, the claim rule and the three-state threshold rule. The spotlight criteria add to them and change none of them.",
-    "The cost bases, the spend cap ($100, $0.30 already spent) and its rule, including that a partial run decides nothing.",
+    "The cost bases, the spend cap ($100) and its rule, including that a partial run decides nothing. Only the amount already spent moves, under spend.",
     "The retry protocol: the readiness gate is retried at most 10 times per publish, and gate calls are never retried.",
     "The attribution of nina, in the founder's wording, and every limit the parent states."
   ],
@@ -234,7 +234,8 @@
     "The installed package, including evals/reviewer and releases/, sits in node_modules inside the workspace, and the reviewer can read it. That is nina's own material, not corpus contamination.",
     "The vocabulary stays unfilled, so placeholders such as {{OWNER}} stay standing in the composed reviewer spec, as nina init leaves them in a new project.",
     "The spotlight's two rates are judged on 90 runs each, but those runs come from 30 changes. Their intervals are published on the 30-item majority, and at that N a pass can be \"passes, not established at this N\".",
-    "The spotlight is about nina's reviewer on mechanical architecture rules, the only thing measured here. It says nothing about nina's other agents, its pipeline or other kinds of rules."
+    "The spotlight is about nina's reviewer on mechanical architecture rules, the only thing measured here. It says nothing about nina's other agents, its pipeline or other kinds of rules.",
+    "Six reviewer runs on two GREEN corpus items (c001, c002) happened before this amendment, and the people building the runners saw their verdicts (all five completed runs approved). They are not counted, their record is published, and no pin, prompt or criterion changed because of them."
   ],
   "attribution": {
     "nina": "nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs",
@@ -244,8 +245,9 @@
     "experiments/jev-gate/nina-probe-0.34.0.json": "eb90d1c686a6423d0287bdb489f4e76b16aa77919697c0ddc6a5c799b2b55f54",
     "experiments/jev-gate/nina-probe.mjs": "9f1feadfaba00788863de7410ce6bb9bcf978fc9a42aa0424a3ea3e0f471a113",
     "experiments/jev-gate/probe/practice-probe.patch": "bfec2fe9905d766d8a324701ca06ba54b5bf3d0595d6e1e531ef6d5e57b974e4",
-    "scripts/jev-gate-amendment.mjs": "f82f62b9b4fe90a93b8fafb4727c2ffc1e9dc4aa48d36775522f6d9f7b15c97b",
-    "scripts/jev-gate-amendment-note.mjs": "733d1215304db91bf3f2ccf6b132cfe2bfa6484902047c66e66da23509c528ac"
+    "scripts/jev-gate-amendment.mjs": "cadc6f407b2d62d38725834429f64efc97b506a8154b6ddf9bb5ffb70bcaff41",
+    "scripts/jev-gate-amendment-note.mjs": "6f4b4345fb59da1e2841934a7818694b2756f0ddd60e6e7b9b2dc35d4209295b",
+    "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711"
   },
   "sources": [
     {
@@ -266,5 +268,114 @@
       "url": "https://github.com/xhulz/nina/commit/be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
       "claim": "The source commit of release 0.34.0; its releases/0.34.0 tree is the pinned releaseTree (read 2026-09-28)."
     }
-  ]
+  ],
+  "priorCalls": {
+    "statement": "No prior call is counted in any result. Every one started before this amendment's notBefore, so the clock rule excludes it, and the counted run makes all its calls afresh.",
+    "plainly": "Before this amendment, six nina 0.34.0 reviewer runs were started by accident on two GREEN corpus items, c001 and c002, while the runners were being built; the five that finished all approved, the sixth was killed, and none of them counts in any result.",
+    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now refuses fixture mode unless the fake answers an identity probe.",
+    "criteriaTiming": "The spotlight criteria were fixed in REVISION-5, a plan file last modified at 2026-09-28T03:26:08Z, 53 minutes before the first of these runs (04:19:28Z), and were copied into this record unchanged. This record was first committed at 04:29:18Z, after the runs, by a lane that had not seen them.",
+    "evidence": {
+      "file": "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json",
+      "sha256": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711",
+      "note": "The runner's own record of the runs, committed byte for byte. It carries the runner's fixture banner because the run used fixture pins; the calls it records were live and paid. The killed sixth run left no entry in it."
+    },
+    "calls": [
+      {
+        "id": "G2",
+        "gate": "reviewer",
+        "release": "0.28.10",
+        "item": null,
+        "what": "nina's own eval fixture, not a corpus item, run while planning",
+        "verdict": null,
+        "costUsd": 0.3
+      },
+      {
+        "id": "c001-run1",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 1,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:19:28.456Z",
+        "endedAt": "2026-09-28T04:20:19.596Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1931692
+      },
+      {
+        "id": "c001-run2",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 2,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:20:37.884Z",
+        "endedAt": "2026-09-28T04:21:06.381Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1025202
+      },
+      {
+        "id": "c001-run3",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c001",
+        "run": 3,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:21:14.063Z",
+        "endedAt": "2026-09-28T04:21:37.674Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1051002
+      },
+      {
+        "id": "c002-run1",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 1,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:21:49.619Z",
+        "endedAt": "2026-09-28T04:22:15.593Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.11877960000000001
+      },
+      {
+        "id": "c002-run2",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 2,
+        "label": "GREEN",
+        "startedAt": "2026-09-28T04:22:25.217Z",
+        "endedAt": "2026-09-28T04:22:49.652Z",
+        "status": "completed",
+        "verdict": "VERDICT: APPROVED",
+        "costUsd": 0.1156546
+      },
+      {
+        "id": "c002-run3",
+        "gate": "reviewer",
+        "release": "0.34.0",
+        "item": "c002",
+        "run": 3,
+        "label": "GREEN",
+        "startedAt": null,
+        "startedAfter": "2026-09-28T04:22:49.652Z",
+        "endedBefore": "2026-09-28T04:22:55.702Z",
+        "status": "killed mid-flight",
+        "verdict": null,
+        "costUsd": null,
+        "costCharged": 0.1931692,
+        "costChargedRule": "No cost was recorded, so the largest single run seen is charged as an upper bound, never 0."
+      }
+    ]
+  },
+  "spend": {
+    "alreadySpentUsd": 1.128393,
+    "supersedes": "The parent's spendCap.alreadySpentUsd (0.3). The cap and its rule are unchanged.",
+    "sum": "G2 0.3 + the five completed runs 0.6352238 + the killed run charged at 0.1931692 = 1.128393.",
+    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now refuses fixture mode unless the fake answers an identity probe."
+  }
 }

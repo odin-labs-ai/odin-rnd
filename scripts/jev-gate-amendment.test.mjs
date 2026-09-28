@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { sha256 } from './jev-gate-prereg.mjs';
-import { amendmentPath, amendmentPinPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
+import { amendmentPath, amendmentPinPath, assertPriorCalls, priorCallsPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
 import { amendNote, renderAmendmentLine, renderAmendmentSection, sectionId } from './jev-gate-amendment-note.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { renderStations } from './station-render.mjs';
@@ -97,16 +97,43 @@ test('station 06 and the built note show the dated amendment, rendered from the 
   const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
   assert(exhibit.includes(renderAmendmentLine(record)));
   assert(exhibit.includes('<span>Pre-registered — not yet run</span>'), 'The station status stays the parent status');
-  assert(exhibit.includes(html(record.statusText)) && exhibit.includes('Pre-registered · amended 28 Sep 2026, before any gate ran'));
+  assert(exhibit.includes(html(record.statusText)) && exhibit.includes('Pre-registered · amended 28 Sep 2026, before any counted gate run'));
   assert(exhibit.includes('href="data/jev-gate/amendment-01.json"') && exhibit.includes(`#${sectionId}`));
   const note = readFileSync(articlePath, 'utf8');
   const built = amendNote(note, record, digest);
   assert.match(built, /PRE-REGISTERED 26 SEP 2026 · AMENDED 28 SEP 2026 · NO RESULTS YET/);
   assert(built.includes(renderAmendmentSection(record, digest)) && built.includes(`id="${sectionId}"`));
-  for (const text of [...record.reason.founder, record.reason.paidCallsSoFar, record.notBefore, ...record.changes.spotlight.criteria.map(c => c.statement), ...record.unchanged, ...record.limits, record.changes.reviewer.nina.tarball.integrity, digest, publishedParentSha256]) assert(built.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
+  for (const text of [...record.reason.founder, record.reason.paidCallsSoFar, record.priorCalls.plainly, record.priorCalls.evidence.sha256, record.notBefore, ...record.changes.spotlight.criteria.map(c => c.statement), ...record.unchanged, ...record.limits, record.changes.reviewer.nina.tarball.integrity, digest, publishedParentSha256]) assert(built.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
   assert.throws(() => amendNote(built, record, digest), /exactly once|already amended/);
   assert.throws(() => renderAmendmentSection(record, 'abc'), /sha256/);
   const changed = copy(); changed.changes.spotlight.criteria[0].statement += ' Changed.';
   assert.notEqual(renderAmendmentSection(changed, digest), renderAmendmentSection(record, digest));
   assert.equal(readFileSync(amendmentPath, 'utf8'), bytes.toString('utf8'));
+});
+
+test('every paid call before the amendment is listed, charged, and matches its committed record', () => {
+  const p = record.priorCalls;
+  assert.equal(p.calls[0].id, 'G2'); assert.equal(p.calls[0].costUsd, parent.spendCap.alreadySpentUsd);
+  assert.equal(p.evidence.sha256, sha256(readFileSync(priorCallsPath)));
+  assert.doesNotThrow(() => assertPriorCalls(record));
+  const evidence = JSON.parse(readFileSync(priorCallsPath, 'utf8'));
+  assert.equal(p.calls.filter(c => c.item && c.costUsd !== null).length, evidence.calls.length);
+  const killed = p.calls.filter(c => c.costUsd === null);
+  assert.equal(killed.length, 1); assert.equal(killed[0].costCharged, Math.max(...evidence.calls.map(c => c.costUsd)));
+  const total = p.calls.reduce((sum, c) => sum + (c.costUsd ?? c.costCharged), 0);
+  assert.equal(Math.round(total * 1e7), Math.round(record.spend.alreadySpentUsd * 1e7));
+  assert(record.spend.alreadySpentUsd > parent.spendCap.alreadySpentUsd);
+  for (const mutate of [
+    r => { r.priorCalls.calls.find(c => c.costUsd === null).costCharged = 0; },
+    r => { r.priorCalls.calls.shift(); },
+    r => { r.spend.alreadySpentUsd = parent.spendCap.alreadySpentUsd; },
+    r => { r.priorCalls.statement = 'Some prior calls count.'; },
+  ]) { const changed = copy(); mutate(changed); assert.throws(() => validateAmendment(changed, parent)); }
+  for (const mutate of [
+    r => { r.priorCalls.calls[1].verdict = 'VERDICT: REJECTED'; },
+    r => { r.priorCalls.calls.splice(2, 1); },
+    r => { r.priorCalls.calls.find(c => c.costUsd === null).costCharged = r.priorCalls.calls[2].costUsd; },
+    r => { r.priorCalls.calls[1].label = 'RED'; },
+  ]) { const changed = copy(); mutate(changed); assert.throws(() => assertPriorCalls(changed)); }
+  assert(record.limits.some(l => l.includes('c001') && l.includes('not counted')));
 });
