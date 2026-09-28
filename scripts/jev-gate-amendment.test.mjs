@@ -103,7 +103,7 @@ test('station 06 and the built note show the dated amendment, rendered from the 
   const built = amendNote(note, record, digest);
   assert.match(built, /PRE-REGISTERED 26 SEP 2026 · AMENDED 28 SEP 2026 · NO RESULTS YET/);
   assert(built.includes(renderAmendmentSection(record, digest)) && built.includes(`id="${sectionId}"`));
-  for (const text of [...record.reason.founder, record.reason.paidCallsSoFar, record.priorCalls.plainly, record.priorCalls.evidence.sha256, record.notBefore, ...record.changes.spotlight.criteria.map(c => c.statement), ...record.unchanged, ...record.limits, record.changes.reviewer.nina.tarball.integrity, digest, publishedParentSha256]) assert(built.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
+  for (const text of [...record.reason.founder, record.reason.paidCallsSoFar, record.priorCalls.plainly, record.priorCalls.parentWording, record.changes.reviewer.workspace.gitignoreRule, record.priorCalls.evidence.sha256, record.notBefore, ...record.changes.spotlight.criteria.map(c => c.statement), ...record.unchanged, ...record.limits, record.changes.reviewer.nina.tarball.integrity, digest, publishedParentSha256]) assert(built.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
   assert.throws(() => amendNote(built, record, digest), /exactly once|already amended/);
   assert.throws(() => renderAmendmentSection(record, 'abc'), /sha256/);
   const changed = copy(); changed.changes.spotlight.criteria[0].statement += ' Changed.';
@@ -136,4 +136,32 @@ test('every paid call before the amendment is listed, charged, and matches its c
     r => { r.priorCalls.calls[1].label = 'RED'; },
   ]) { const changed = copy(); mutate(changed); assert.throws(() => assertPriorCalls(changed)); }
   assert(record.limits.some(l => l.includes('c001') && l.includes('not counted')));
+});
+
+test('the amendment never says "before any gate ran", and describes the runner guard as built', () => {
+  assert.doesNotMatch(JSON.stringify(record), /before any gate ran/);
+  const ran = copy(); ran.reason.summary = ran.reason.summary.replace('before any counted gate run', 'before any gate ran');
+  assert.throws(() => validateAmendment(ran, parent), /before any gate ran/);
+  for (const text of [record.priorCalls.cause, record.spend.reason]) {
+    assert.match(text, /realpath is the committed fake/); assert.doesNotMatch(text, /identity probe/);
+  }
+  assert.match(record.priorCalls.evidence.note, /15dfe216/);
+  assert.doesNotMatch(record.priorCalls.criteriaTiming, /had not seen/);
+});
+
+// The journal renders long unbroken runs (shas, integrity strings, URLs) that are wider than a phone column.
+// A static check, no browser: if any run outside a <pre> is wider than the 375px or 320px column at a generous
+// 0.5em per character, style.css must let the article body wrap anywhere, or the page scrolls sideways.
+test('the journal cannot scroll sideways at 375px or 320px', () => {
+  const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
+  const wraps = selector => [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes(selector) && /overflow-wrap:\s*anywhere/.test(body));
+  const built = amendNote(readFileSync(articlePath, 'utf8'), record, digest);
+  const body = built.split('<article class="article-body">')[1].split('</article>')[0].replace(/<pre[\s\S]*?<\/pre>/g, ' ');
+  const runs = body.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  assert(runs.some(t => t.length > 64), 'The note carries runs longer than a sha256, so the wrap rule is load-bearing');
+  for (const width of [375, 320]) {
+    const fits = Math.floor((width - 2 * 16) / (18 * 0.5));
+    const wide = runs.filter(t => t.length > fits);
+    assert(wide.length === 0 || wraps('.article-body'), `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap, e.g. ${wide[0]}`);
+  }
 });

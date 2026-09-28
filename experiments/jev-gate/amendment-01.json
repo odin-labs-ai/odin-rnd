@@ -11,7 +11,7 @@
   "date": "2026-09-28",
   "statusText": "Pre-registered · amended 28 Sep 2026, before any counted gate run",
   "reason": {
-    "summary": "Two decisions made after the parent was published and before any gate ran: the LLM reviewer moves from nina 0.28.10 to the released 0.34.0, and nina's reviewer gets a bar, fixed in advance, that it must clear before Odin R&D puts it in the spotlight. Both are written down here, hashed and published before any counted gate call.",
+    "summary": "Two decisions, made after the parent was published and before any counted gate run: the LLM reviewer moves from nina 0.28.10 to the released 0.34.0, and nina's reviewer gets a bar, fixed in advance, that it must clear before Odin R&D puts it in the spotlight. Both are written down here, hashed and published before any counted gate call.",
     "founder": [
       "i also want to put the harness in thr spotlight here but only ofcourse if its really good we can improve on it and open an PR if needed when we use it … bundle 3 is in scope",
       "Spotlight bar: \"Pre-registered bar (Recommended)\"",
@@ -110,7 +110,7 @@
           "Run node_modules/.bin/nina init --project . --core 0.34.0 --surfaces '' --no-ask, stdin not a TTY.",
           "Write the pre-registered vocabulary, project-slot and owed-document text: none; everything stays as init wrote it.",
           "Run node_modules/.bin/nina compose --project .",
-          "Write .gitignore (node_modules/).",
+          "Write .gitignore (node_modules/). Run artefacts are written outside the repository, so they need no pattern.",
           "Write rules.txt at the repository root.",
           "git init, git add -A, git commit -m base, with the pinned identity and date.",
           "git apply the change, and leave it uncommitted.",
@@ -136,7 +136,8 @@
           "sha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
           "rule": "The base commit is the same for every run: its sha is the one above, and a run whose base sha differs is not counted."
         },
-        "ninaData": "NINA_DATA is set to a fresh temp dir for every run and its value is recorded. The operator's ~/.nina is never touched."
+        "ninaData": "NINA_DATA is set to a fresh temp dir for every run and its value is recorded. The operator's ~/.nina is never touched.",
+        "gitignoreRule": "REVISION-5.3 step 6 names node_modules/ and run artefacts. Every run artefact (the change's patch file, NINA_DATA, the isolation canary, the run record and its log) is written in the temp dir around the workspace, never inside the repository, so .gitignore holds node_modules/ only. The probe shows the hooks write nothing into the workspace, and the runner reads git status after each run, so anything a run leaves in the tree is recorded rather than hidden by an ignore pattern."
       },
       "hooks": {
         "declared": "nina init writes .claude/settings.json with hooks on Stop and UserPromptSubmit (scripts/harness-check.mjs), UserPromptSubmit, PreToolUse, PostToolUse and SubagentStop (scripts/loop-gate.mjs), PreToolUse on edits (scripts/edit-guard.mjs) and PostToolUse (scripts/cost-watch.mjs).",
@@ -151,7 +152,7 @@
       "probe": {
         "file": "experiments/jev-gate/nina-probe-0.34.0.json",
         "script": "experiments/jev-gate/nina-probe.mjs",
-        "summary": "Run 2026-09-28: nina 0.34.0 composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch true); both base commits are 3e35e4e274932a61bc0d92f378f8d506a9bb4ce0; the package's releases/0.34.0 tree is b11435f6064634ea00693b7bde844dc263b91327. No model was called."
+        "summary": "Run 2026-09-28: nina 0.34.0 composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch true; a step that needed either would have stopped the probe, and none did); both base commits are 3e35e4e274932a61bc0d92f378f8d506a9bb4ce0; the package's releases/0.34.0 tree is b11435f6064634ea00693b7bde844dc263b91327. No model was called."
       }
     },
     "spotlight": {
@@ -230,7 +231,7 @@
   "limits": [
     "The 0.34.0 reviewer spec tells the reviewer to REJECT for missing TSDoc, dead exports, test-mutation gaps and departures from .claude/patterns.md, none of which rules.txt states, and to confirm pnpm harness:check, which this setup denies. All of this pushes false rejects on GREEN items up. A spotlight FAIL describes this restricted setup, not nina in the pipeline it was built for.",
     "Every reviewer run receives this text from nina's UserPromptSubmit hook, before its prompt, on the clean base and on a change alike (quoted verbatim from the probe): This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
-    "Wrapper latency includes nina's hooks: up to 60 s for the UserPromptSubmit harness check, plus the cost watch on each tool call. On 2026-09-28 the probe measured the prompt hook at 1-6 s on a lightly loaded run and at 24-69 s on an earlier run at a load average near 33, when one run passed its 60 s timeout. A hook stopped at its timeout hands the run nothing; each run records its hook outcomes.",
+    "Wrapper latency includes nina's hooks: up to 60 s for the UserPromptSubmit harness check, plus the cost watch on each tool call. The committed probe measured the prompt hook at 1-6 s (load average 18-30, no timeout). An earlier probe run the same day, at a load average near 33, measured it at 24-69 s with one run past its 60 s timeout; that run's record was overwritten by the committed rerun and survives only in working notes, so those figures are not verifiable here. A hook stopped at its timeout hands the run nothing; each run records its hook outcomes.",
     "The installed package, including evals/reviewer and releases/, sits in node_modules inside the workspace, and the reviewer can read it. That is nina's own material, not corpus contamination.",
     "The vocabulary stays unfilled, so placeholders such as {{OWNER}} stay standing in the composed reviewer spec, as nina init leaves them in a new project.",
     "The spotlight's two rates are judged on 90 runs each, but those runs come from 30 changes. Their intervals are published on the 30-item majority, and at that N a pass can be \"passes, not established at this N\".",
@@ -245,8 +246,8 @@
     "experiments/jev-gate/nina-probe-0.34.0.json": "eb90d1c686a6423d0287bdb489f4e76b16aa77919697c0ddc6a5c799b2b55f54",
     "experiments/jev-gate/nina-probe.mjs": "9f1feadfaba00788863de7410ce6bb9bcf978fc9a42aa0424a3ea3e0f471a113",
     "experiments/jev-gate/probe/practice-probe.patch": "bfec2fe9905d766d8a324701ca06ba54b5bf3d0595d6e1e531ef6d5e57b974e4",
-    "scripts/jev-gate-amendment.mjs": "cadc6f407b2d62d38725834429f64efc97b506a8154b6ddf9bb5ffb70bcaff41",
-    "scripts/jev-gate-amendment-note.mjs": "6f4b4345fb59da1e2841934a7818694b2756f0ddd60e6e7b9b2dc35d4209295b",
+    "scripts/jev-gate-amendment.mjs": "b9b9fb4b6ff70d56ddf79ad288896e3fd07d46fed3fa7927a7533237afe526c8",
+    "scripts/jev-gate-amendment-note.mjs": "046c16ded5a71c73220b5791d58b12ccf6c95ad1997da0bccc56200abb86671b",
     "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711"
   },
   "sources": [
@@ -272,12 +273,12 @@
   "priorCalls": {
     "statement": "No prior call is counted in any result. Every one started before this amendment's notBefore, so the clock rule excludes it, and the counted run makes all its calls afresh.",
     "plainly": "Before this amendment, six nina 0.34.0 reviewer runs were started by accident on two GREEN corpus items, c001 and c002, while the runners were being built; the five that finished all approved, the sixth was killed, and none of them counts in any result.",
-    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now resolves the client on the PATH and refuses a fixture run unless it is the committed fake, and a counted run if it is.",
-    "criteriaTiming": "The spotlight criteria were fixed in REVISION-5, a plan file last modified at 2026-09-28T03:26:08Z, 53 minutes before the first of these runs (04:19:28Z), and were copied into this record unchanged. This record was first committed at 04:29:18Z, after the runs, by a lane that had not seen them.",
+    "cause": "While the runners were being built, a fixture smoke test pointed the runner at a fake client that was not executable, so the real claude client on the PATH answered instead: live, paid runs under fixture pins. The runner now resolves claude on the PATH and refuses a fixture run unless its realpath is the committed fake (experiments/jev-gate/fixtures/fake-claude.mjs), and refuses a counted run if it is.",
+    "criteriaTiming": "The spotlight criteria were fixed in REVISION-5, a plan file last modified at 2026-09-28T03:26:08Z, 53 minutes before the first of these runs (04:19:28Z), and were copied into this record unchanged. This record was first committed at 04:29:18Z, after the runs; the criteria in it are REVISION-5's, unchanged.",
     "evidence": {
       "file": "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json",
       "sha256": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711",
-      "note": "The runner's own record of the runs, committed byte for byte. It carries the runner's fixture banner because the run used fixture pins; the calls it records were live and paid. The killed sixth run left no entry in it."
+      "note": "The runner's own record of the runs, committed byte for byte. It carries the runner's fixture banner because the run used fixture pins; the calls it records were live and paid. The killed sixth run left no entry in it. Its amendmentSha256, 15dfe216…, is not any version of this record: it is the hash of the stand-in fixture amendment the runner tests used at 04:19Z, an uncommitted draft of experiments/jev-gate/fixtures/amendment-01.fixture.json on the runners branch (no committed version of that file has this hash). Its partial: null does not reflect the killed sixth run."
     },
     "calls": [
       {
@@ -370,12 +371,13 @@
         "costCharged": 0.1931692,
         "costChargedRule": "No cost was recorded, so the largest single run seen is charged as an upper bound, never 0."
       }
-    ]
+    ],
+    "parentWording": "The parent says it was written, hashed and published before any gate saw a corpus item, and its pages say published before any gate runs. That was true when it was published (2026-09-28T02:16:26Z); these runs came two hours later. The parent and its pinned renderer cannot change, so this amendment says so here."
   },
   "spend": {
     "alreadySpentUsd": 1.128393,
     "supersedes": "The parent's spendCap.alreadySpentUsd (0.3). The cap and its rule are unchanged.",
     "sum": "G2 0.3 + the five completed runs 0.6352238 + the killed run charged at 0.1931692 = 1.128393.",
-    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now resolves the client on the PATH and refuses a fixture run unless it is the committed fake, and a counted run if it is."
+    "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now resolves claude on the PATH and refuses a fixture run unless its realpath is the committed fake (experiments/jev-gate/fixtures/fake-claude.mjs), and refuses a counted run if it is."
   }
 }

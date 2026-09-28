@@ -31,7 +31,7 @@ export function renderAmendmentSection(amendment, amendmentSha256) {
 <p><strong>${escape(amendment.statusText)}.</strong> ${escape(reason.summary)} The pre-registration below is unchanged and still served byte for byte; where this section and it differ, this section wins, and only on what it lists.</p>
 <p>Why, in the founder's words (${escape(reason.founderDate)}):</p>
 ${list(reason.founder.map(escape))}
-<p>${escape(reason.paidCallsSoFar)} ${escape(amendment.priorCalls.plainly)} Their record is ${code(amendment.priorCalls.evidence.file)} (sha256 ${code(amendment.priorCalls.evidence.sha256)}); the amount already spent under the cap is now $${escape(amendment.spend.alreadySpentUsd)}.</p>
+<p>${escape(reason.paidCallsSoFar)} ${escape(amendment.priorCalls.plainly)} ${escape(amendment.priorCalls.parentWording)} Their record is ${code(amendment.priorCalls.evidence.file)} (sha256 ${code(amendment.priorCalls.evidence.sha256)}); the amount already spent under the cap is now $${escape(amendment.spend.alreadySpentUsd)}.</p>
 <p>${escape(amendment.notBefore)}</p>
 <h3>The reviewer: nina ${escape(r.nina.previousRelease)} → ${escape(r.nina.release)}</h3>
 <p>${nina}. Package ${code(`${r.nina.package}@${r.nina.release}`)}, tarball ${code(r.nina.tarball.url)} with integrity ${code(r.nina.tarball.integrity)}; commit ${code(r.nina.commit)}, release tree ${code(r.nina.releaseTree)}. ${escape(r.nina.verification)}</p>
@@ -41,7 +41,7 @@ ${list(reason.founder.map(escape))}
 <p>${escape(w.description)}</p>
 <p>Each run's workspace, in this order:</p>
 <ol>${w.order.map(step => `<li>${escape(step)}</li>`).join('')}</ol>
-${list([escape(r.install.rule), escape(w.vocabularyRule), escape(w.fragmentsRule), escape(w.patchRule), `The base commit is ${code(w.baseCommit.sha)}. ${escape(w.baseCommit.rule)}`, escape(w.ninaData), escape(r.hooks.rule), escape(r.hooks.errors), escape(r.billing)])}
+${list([escape(r.install.rule), escape(w.vocabularyRule), escape(w.fragmentsRule), escape(w.patchRule), escape(w.gitignoreRule), `The base commit is ${code(w.baseCommit.sha)}. ${escape(w.baseCommit.rule)}`, escape(w.ninaData), escape(r.hooks.rule), escape(r.hooks.errors), escape(r.billing)])}
 <p>The probe that confirmed all of this, with no model called: ${escape(r.probe.summary)} Its record is ${code(r.probe.file)}.</p>
 <h3>The spotlight bar for nina's reviewer</h3>
 <p>Applies to ${escape(s.appliesTo)} ${escape(s.rule)}</p>

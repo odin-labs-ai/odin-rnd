@@ -66,7 +66,7 @@ export const required = {
   'changes.reviewer.workspace.vocabulary': v => v === null || (obj(v) && Object.values(v).every(x => typeof x === 'string')), 'changes.reviewer.workspace.vocabularyRule': str,
   'changes.reviewer.workspace.fragments': v => obj(v) && Object.entries(v).every(([k, x]) => k.startsWith('.nina/') && typeof x === 'string'), 'changes.reviewer.workspace.fragmentsRule': str,
   'changes.reviewer.workspace.patchRule': v => str(v) && /patch/.test(v) && /zero-patches/.test(v),
-  'changes.reviewer.workspace.gitignore': v => v === 'node_modules/\n',
+  'changes.reviewer.workspace.gitignore': v => v === 'node_modules/\n', 'changes.reviewer.workspace.gitignoreRule': v => str(v) && /run artefacts/.test(v),
   'changes.reviewer.workspace.files': strings, 'changes.reviewer.workspace.packageJsonScripts': v => obj(v) && Object.keys(v).length > 0,
   'changes.reviewer.workspace.order': v => strings(v) && v.length === 11,
   'changes.reviewer.workspace.baseCommit.env': v => JSON.stringify(v) === JSON.stringify(baseIdentity),
@@ -83,7 +83,7 @@ export const required = {
   'changes.spotlight.criteria': v => Array.isArray(v) && v.length === Object.keys(spotlightShapes).length,
   'changes.spotlight.supersedes': str, 'changes.spotlight.judging': v => str(v) && /Wilson/.test(v) && /item-level/.test(v) && /refuted/.test(v),
   'changes.spotlight.labelPhrase': v => str(v) && v.includes('passes, not established at this N'), 'changes.spotlight.thresholdSource': str,
-  'priorCalls.statement': v => str(v) && /No prior call is counted in any result/.test(v), 'priorCalls.plainly': str, 'priorCalls.cause': str, 'priorCalls.criteriaTiming': str,
+  'priorCalls.statement': v => str(v) && /No prior call is counted in any result/.test(v), 'priorCalls.plainly': str, 'priorCalls.cause': str, 'priorCalls.criteriaTiming': str, 'priorCalls.parentWording': str,
   'priorCalls.evidence.file': v => v === priorCallsPath, 'priorCalls.evidence.sha256': v => hex.test(v), 'priorCalls.evidence.note': str,
   'priorCalls.calls': v => Array.isArray(v) && v.length > 0 && v.every(c => str(c.id) && str(c.gate) && str(c.release)),
   'spend.alreadySpentUsd': v => typeof v === 'number' && v > 0, 'spend.supersedes': str, 'spend.sum': str, 'spend.reason': str,
@@ -134,6 +134,7 @@ export function validateAmendment(record, parent) {
   assert.equal(hooks.promptContextEmpty, hooks.promptContextOnCleanBase === '', 'promptContextEmpty disagrees with the recorded text');
   if (!hooks.promptContextEmpty) assert(record.limits.includes(hookLimit(hooks.promptContextOnCleanBase)), 'A non-empty prompt-hook context must be quoted verbatim in limits');
   const text = JSON.stringify(record);
+  assert(!/before any gate ran/.test(text), 'Gate runs happened before this amendment: it never says "before any gate ran"');
   assert(!/Recorded experiment/i.test(text), 'An amendment never calls itself a recorded experiment');
   assert(!/\/Users\/|\/private\/|\/home\/[^\s"]+|\/var\/folders/.test(text), 'Private local paths in the amendment');
   return record;
@@ -155,7 +156,7 @@ export function derive(record, root = '.') {
   r.hooks.promptContextEmpty = r.hooks.promptContextOnCleanBase === '';
   r.hooks.promptContextSameOnPracticeDiff = context(probe.promptHookContextOnPracticeDiff) === r.hooks.promptContextOnCleanBase;
   next.priorCalls.evidence.sha256 = sha256(read(priorCallsPath));
-  r.probe.summary = `Run ${probe.date}: nina ${probe.pin.version} composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch ${probe.zeroPatch}); both base commits are ${probe.baseSha}; the package's releases/${probe.pin.version} tree is ${step(2).releaseTree}. No model was called.`;
+  r.probe.summary = `Run ${probe.date}: nina ${probe.pin.version} composed from the unmodified tarball in two fresh workspaces, with no patch and no manual answer (zeroPatch ${probe.zeroPatch}; a step that needed either would have stopped the probe, and none did); both base commits are ${probe.baseSha}; the package's releases/${probe.pin.version} tree is ${step(2).releaseTree}. No model was called.`;
   next.limits = next.limits.filter(l => !l.startsWith(hookLimitPrefix));
   if (!r.hooks.promptContextEmpty) next.limits.splice(1, 0, hookLimit(r.hooks.promptContextOnCleanBase));
   return next;
