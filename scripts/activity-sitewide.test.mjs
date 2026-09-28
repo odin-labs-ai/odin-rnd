@@ -2,21 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { routeKey } from '../site/assets/activity.mjs';
+import { builtCopy } from './test-build.mjs';
 
 const walk = directory => readdirSync(directory, { withFileTypes: true })
   .flatMap(entry => entry.isDirectory() ? walk(`${directory}/${entry.name}`) : [`${directory}/${entry.name}`]);
-const activity = resolve('dist/assets/activity.mjs');
-let built = false;
+// The site is built in a disposable copy (test-build.mjs), never in the checkout that other tests read.
+const dist = () => join(builtCopy(), 'dist');
+const activity = resolve(dist(), 'assets/activity.mjs');
 
 function builtPages() {
-  if (!built) {
-    execFileSync(process.execPath, ['scripts/build.mjs'], { stdio: 'pipe' });
-    built = true;
-  }
-  return walk('dist').filter(file => file.endsWith('.html')).flatMap(file => {
+  return walk(dist()).filter(file => file.endsWith('.html')).flatMap(file => {
     const html = readFileSync(file, 'utf8');
     const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
     if (!canonical) return [];
@@ -75,7 +73,7 @@ test('every built canonical route loads one collector module and initializes it 
     'ci-witness', 'home', 'journal-a-passing-pipeline', 'journal-why-open-the-floor',
     'migration-witness', 'test-witness', 'work-with-us',
   ]);
-  assert.deepEqual(JSON.parse(readFileSync('dist/data/intake-config.json', 'utf8')), { apiOrigin: null });
+  assert.deepEqual(JSON.parse(readFileSync(join(dist(), 'data/intake-config.json'), 'utf8')), { apiOrigin: null });
   for (const page of pages) {
     const entries = moduleEntries(page);
     assert.equal(entries.filter(entry => entry === activity).length, 1,

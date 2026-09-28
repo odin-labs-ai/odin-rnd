@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "kind": "gate-run",
+  "gate": "jev",
+  "mode": "practice",
+  "fixture": false,
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "5ddd8df9920c71fb26a2da68a8859d95130c04f1279345da56b3fd7bf7933bbb",
+  "notBefore": "2026-09-28T12:01:15Z",
+  "code": {
+    "experiments/jev-gate/runner-guard.mjs": "9754c3544ea3ea39946ebde5ab12da4a5e64f64872dc1cbb5fab64002be18744",
+    "experiments/jev-gate/run_gates.py": "4e622e4bc2b4dd2fbf30d15c27a673a6f560475e08a066b0eb547e12c8dac2a6",
+    "experiments/jev-gate/run_reviewer.mjs": "05ce30e9ebdb9f23c7e3b9a02db75c0175fca21654d79bb83a6d0278d3f28109",
+    "experiments/jev-gate/results.mjs": "3834d75e67b4938eef6dc1e40f3eeec90812c56019aaa2da5bf1e2f76805c7d6",
+    "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
+    "experiments/jev-gate/laya_count.py": "485a30602c525ce12fd8b1e5bc4ef9908d25e64b1ca21279a2c4c6a139734a99",
+    "experiments/laya-vs-jev/run.py": "3fa346c4450a4251d8c15ce4b04b4f5a9820fb8cf5c1bf4ab65ab2fe3eabc1f9",
+    "experiments/laya-vs-jev/laya_mlx.py": "b9483641ea20e1e566947369a2c2df7011ce3260f37b8755e5c67ee4507fa70e",
+    "experiments/laya-vs-jev/laya_inputs.py": "b368b2848d8a1a1d019fdb2410c0b8115deb8f97f1e92708687048baef52af85"
+  },
+  "startedAt": "2026-09-28T12:13:28.191Z",
+  "endedAt": "2026-09-28T12:13:30.666Z",
+  "machine": {
+    "os": "macOS-26.6.1-arm64-arm-64bit",
+    "arch": "arm64",
+    "python": "3.12.13"
+  },
+  "items": [
+    "p01",
+    "p02",
+    "p03"
+  ],
+  "partial": null,
+  "calls": [
+    {
+      "id": "p01",
+      "run": 1,
+      "gate": "jev",
+      "startedAt": "2026-09-28T12:13:28.283Z",
+      "endedAt": "2026-09-28T12:13:29.245Z",
+      "latencyMs": 961.3,
+      "status": "ok",
+      "servedModel": "jev-1.13.0",
+      "dateHeader": "Mon, 28 Sep 2026 12:13:29 GMT",
+      "inputTokens": 680,
+      "costUsd": 0.00016456,
+      "costBasis": "listed-price",
+      "decision": "ACCEPT",
+      "p": 0.04,
+      "confidence": 0.96,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null
+    },
+    {
+      "id": "p02",
+      "run": 1,
+      "gate": "jev",
+      "startedAt": "2026-09-28T12:13:29.246Z",
+      "endedAt": "2026-09-28T12:13:29.770Z",
+      "latencyMs": 524.7,
+      "status": "ok",
+      "servedModel": "jev-1.13.0",
+      "dateHeader": "Mon, 28 Sep 2026 12:13:29 GMT",
+      "inputTokens": 656,
+      "costUsd": 0.00015875200000000001,
+      "costBasis": "listed-price",
+      "decision": "REJECT",
+      "p": 0.97,
+      "confidence": 0.97,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null
+    },
+    {
+      "id": "p03",
+      "run": 1,
+      "gate": "jev",
+      "startedAt": "2026-09-28T12:13:29.771Z",
+      "endedAt": "2026-09-28T12:13:30.666Z",
+      "latencyMs": 894.7,
+      "status": "ok",
+      "servedModel": "jev-1.13.0",
+      "dateHeader": "Mon, 28 Sep 2026 12:13:30 GMT",
+      "inputTokens": 644,
+      "costUsd": 0.000155848,
+      "costBasis": "listed-price",
+      "decision": "REJECT",
+      "p": 0.98,
+      "confidence": 0.98,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null
+    }
+  ],
+  "pins": {
+    "model": "jev-1.13.0",
+    "endpoint": "https://jev-ai.pro/api/v1/systemone",
+    "timeoutSeconds": 15,
+    "userAgent": "odin-rnd-laya-vs-jev/1 (+https://github.com/odin-labs-ai/odin-rnd)",
+    "priceBasis": "Listed price: the highest listed annual-plan rate on jev-ai.pro/pricing (read 2026-09-24, as in EXP 004; output tokens listed as free), multiplied by the input_tokens the response reports. Not an invoice. A response without usage has no cost figure, and the gap is reported.",
+    "spendCap": {
+      "usd": 100,
+      "alreadySpentUsd": 1.128393,
+      "covers": "Paid gate spend only: Jev at its listed price and the reviewer at its API-equivalent cost, including the one reviewer check already run while planning (alreadySpentUsd). Agent time is outside the cap.",
+      "rule": "A running ledger adds the cost of every paid call to alreadySpentUsd. Before any paid call, if the ledger plus the largest single-call cost seen so far for that gate (for the reviewer, at least alreadySpentUsd) would exceed the cap, the run stops. A stopped run is published as partial, with the ledger. A partial run, whether stopped by this cap or by the reviewer hang-stop, gives no criterion a state and decides nothing about the claim; its counts so far are published as partial.",
+      "alreadySpentFrom": "amendment-01"
+    }
+  }
+}

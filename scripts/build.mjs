@@ -14,6 +14,8 @@ import { checkRecord, recordPath, sha256 } from './jev-gate-prereg.mjs';
 import { assertNoteCurrent, articlePath } from './jev-gate-journal.mjs';
 import { checkAmendment, amendmentPath, publishedPath as amendmentPublishedPath } from './jev-gate-amendment.mjs';
 import { amendNote, qualifyHome } from './jev-gate-amendment-note.mjs';
+import { checkAmendment02, amendment02Path, published02Path } from './jev-gate-amendment-02.mjs';
+import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -26,12 +28,16 @@ copyFileSync(recordPath, 'site/data/jev-gate/preregistration.json');
 // Amendment 01 names the parent by sha256 and is published byte for byte beside it.
 const amendment = checkAmendment();
 copyFileSync(amendmentPath, amendmentPublishedPath);
+// Amendment 02 names amendment 01 and the pre-registration by sha256 and is published beside them.
+const amendment02 = checkAmendment02();
+copyFileSync(amendment02Path, published02Path);
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-01.json')) !== amendment.sha256) throw new Error('Published amendment differs from '+amendmentPath);
-// The built note is the parent's committed render plus the amendment's dated section, both from their records.
-writeFileSync(`dist/${articlePath.slice('site/'.length)}`, amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256));
+if (sha256(readFileSync('dist/data/jev-gate/amendment-02.json')) !== amendment02.sha256) throw new Error('Published amendment 02 differs from '+amendment02Path);
+// The built note is the parent's committed render plus each amendment's dated section, all from their records.
+writeFileSync(`dist/${articlePath.slice('site/'.length)}`, amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256));
 const intakeConfig = JSON.parse(readFileSync('site/data/intake-config.json','utf8'));
 if (Object.keys(intakeConfig).join(',') !== 'apiOrigin') throw new Error('Unexpected intake configuration');
 apiOrigin(intakeConfig.apiOrigin);
@@ -48,8 +54,8 @@ html = html.replace('<!--RUN_ORIGIN-->', 'Recording environment: '+escape(report
 html = html.replace('<strong id="clean-result">—</strong>', '<strong id="clean-result">GREEN / '+report.runs[0].cleanScore+'</strong>');
 html = html.replace('<strong id="drift-result">—</strong>', '<strong id="drift-result">RED / '+report.runs[0].driftScore+'</strong>');
 html = html.replace('</body>', '<script type="application/json" id="experiment-data">'+JSON.stringify(report).replaceAll('<','\\u003c')+'</script>\n</body>');
-// The parent's featured card says it was published before any gate runs; amendment 01 qualifies it in place.
-html = qualifyHome(html, amendment.record);
+// The parent's featured card says it was published before any gate runs; amendments 01 and 02 qualify it in place.
+html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });

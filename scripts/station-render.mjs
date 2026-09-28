@@ -6,16 +6,18 @@ import { loadPreregistration } from './jev-gate-prereg.mjs';
 import { renderTriageExhibit } from './jev-gate-journal.mjs';
 import { loadAmendment } from './jev-gate-amendment.mjs';
 import { renderAmendmentLine, qualifyStation } from './jev-gate-amendment-note.mjs';
+import { checkAmendment02 } from './jev-gate-amendment-02.mjs';
+import { renderAmendment02Line, qualifyStation02 } from './jev-gate-amendment-02-note.mjs';
 const pre = text => `<pre tabindex="0">${escape(text)}</pre>`;
 const row = (label, value, state='') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const receiptLink = (station,id,label) => `<a href="projects/${station.project}/#observation-${escape(id)}">${escape(label)}</a>`;
-export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8'), preregistration = loadPreregistration(), amendment = loadAmendment()) {
+export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8'), preregistration = loadPreregistration(), amendment = loadAmendment(), amendment02 = checkAmendment02().record) {
   validateStationContracts(report,reports);
   assertBenchCurrent(page, laya);
   return stations.map((station,index) => {
     let body;
     if(station.record==='jev-gate'){
-      body=qualifyStation(renderTriageExhibit(preregistration,station),amendment)+renderAmendmentLine(amendment);
+      body=qualifyStation02(qualifyStation(renderTriageExhibit(preregistration,station),amendment),amendment02)+renderAmendmentLine(amendment)+renderAmendment02Line(amendment02);
     }else if(station.record==='laya'){
       if(!laya) throw new Error('Decision station requires the committed Laya record');
       body=renderLayaExhibit(laya);

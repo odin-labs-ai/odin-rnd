@@ -1,11 +1,17 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { assertDisk, checkRecord, criterionFields, criterionShapes, derive, get, ninaAttribution, pinPath, recordPath, required, requiredMetrics, validateRecord } from './jev-gate-prereg.mjs';
 import { baselineCounts, baselineValid, judgeCost, judgePaired, judgeSingleRate, newcombePaired, pickBestBaseline, wilson } from '../experiments/jev-gate/metrics.mjs';
+
+// Scratch copies of experiments/jev-gate hold labels.json (the answer key): every one is removed when the file's
+// tests finish, pass or fail, so no copy is left in the shared temp directory (refute r4 of amendment 02, B2).
+const scratchDirs = [];
+const scratch = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); scratchDirs.push(d); return d; };
+after(() => { for (const d of scratchDirs) rmSync(d, { recursive: true, force: true }); });
 
 const committed = () => JSON.parse(readFileSync(recordPath, 'utf8'));
 const unset = (record, path) => { const keys = path.split('.'), last = keys.pop(); delete keys.reduce((v, k) => v[k], record)[last]; };
@@ -57,7 +63,7 @@ test('a changed hash, rules text or corpus file is refused, and --write re-deriv
   assert.deepEqual(derive(edited), committed(), 'Re-deriving restores the disk value');
   const rules = committed(); rules.rulesText += 'An extra rule.\n';
   assert.notDeepEqual(derive(rules), rules);
-  const root = mkdtempSync(join(tmpdir(), 'jev-gate-prereg-'));
+  const root = scratch('jev-gate-prereg-');
   const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: skip });
   assert.doesNotThrow(() => checkRecord(root));
@@ -124,7 +130,7 @@ test('no threshold is expressed anywhere in the code, only in the record', () =>
 });
 
 test('baselines come from baselines.json, with every script, the library and the scored files pinned from disk', () => {
-  const root = mkdtempSync(join(tmpdir(), 'jev-gate-baselines-'));
+  const root = scratch('jev-gate-baselines-');
   const skip = source => !/(^|\/)(\.venv|node_modules|results)(\/|$)/.test(source);
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: skip });
   const hash = file => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
@@ -197,7 +203,7 @@ test('the pinned corpus records both baselines, the linter as the better one, an
   assert.match(record.bestBaseline.scope, /mechanical rules as well as a linter, not rules a linter cannot express/);
   assert.deepEqual(record.commentOnlyRed.ids, ['c009', 'c021', 'c026', 'c041']);
   assert.match(record.gates.reviewer.workspace, /No odin-rnd checkout, labels\.json, manifest\.json, baselines\.json, corpus file/);
-  const root = mkdtempSync(join(tmpdir(), 'jev-gate-split-'));
+  const root = scratch('jev-gate-split-');
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: s => !/(\.venv|node_modules|results)/.test(s) });
   const wrong = committed(); wrong.commentOnlyRed.ids = ['c001'];
   assert.throws(() => assertDisk(wrong, root), /commentOnlyRed item c001 is not RED/);
@@ -236,7 +242,7 @@ test('the cost criterion is a two-state point comparison read from the record', 
 test('the record is pinned by its own sha256 file, and an unpinned edit is refused', () => {
   const pinned = readFileSync(pinPath, 'utf8');
   assert.equal(pinned, `${checkRecord().sha256}  preregistration.json\n`);
-  const root = mkdtempSync(join(tmpdir(), 'jev-gate-pin-'));
+  const root = scratch('jev-gate-pin-');
   for (const d of ['experiments/jev-gate', 'experiments/laya-vs-jev', 'scripts']) cpSync(d, join(root, d), { recursive: true, filter: s => !/(\.venv|node_modules|results)/.test(s) });
   const edited = committed(); edited.question += ' Also, faster.';
   writeFileSync(join(root, recordPath), JSON.stringify(edited, null, 2) + '\n');

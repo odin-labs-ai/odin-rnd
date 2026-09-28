@@ -1,6 +1,6 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { articlePath, dataDir, loadPublished, renderArticle, sha256, slug, validateResults, verdicts } from './laya-journal.mjs';
@@ -48,6 +48,7 @@ test('criteria stay UNVERIFIED without Jev and turn RED past the stated margin',
 
 test('publication refuses fixtures, changed bytes and non-measured manifests', () => {
   const root = mkdtempSync(join(tmpdir(), 'laya-journal-'));
+  after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, dataDir), { recursive: true });
   const write = (results, manifestPatch = {}) => {
     const bytes = JSON.stringify(results);

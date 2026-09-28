@@ -14,7 +14,11 @@ import { HERE } from './bce-contract.mjs';
 export const LABEL_WORDS = ['drift', 'drifted', 'clean', 'violation', 'violations', 'violates', 'violating', 'red', 'green', 'nearmiss', 'near', 'miss', 'label', 'intent', 'intended', 'allowed', 'forbidden', 'leak'];
 
 const SECRET_PATTERNS = [
-  ['private path', /\/Users\/|\/home\/[a-z]|[A-Za-z]:\\Users\\/],
+  // Home dirs, macOS per-user temp dirs, /tmp and Homebrew paths are the machine's, never a record's (refute of
+  // amendment 02, B1). Records write <ws>, <tmp>, ~ and claude instead. The isolation matrix's canary home uses
+  // the synthetic user name probe-user (the model may quote it as <ws>/home/probe-user or …/home/probe-user): it
+  // is the probe's, not a person's, and only that exact name is exempt.
+  ['private path', /\/Users\/|\/home\/(?!probe-user(?![\w-]))[a-z]|[A-Za-z]:\\Users\\|\/private\/var\/folders\/|(?<!\/private)\/var\/folders\/|\/opt\/homebrew\/|\/private\/tmp\/|(?<![\w.])\/tmp\//],
   // base@example.invalid is the pinned identity of the reviewer's base commit (amendment 01): .invalid is reserved and never delivers.
   ['email address', /(?<![A-Za-z0-9._%+-])(?!base@example\.invalid(?![A-Za-z0-9.-]))[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[A-Za-z]/],
   ['GitHub token', /\bgh[pousr]_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]{20,}/],
