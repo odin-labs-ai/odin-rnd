@@ -1,0 +1,112 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { sha256 } from './jev-gate-prereg.mjs';
+import { amendmentPath, amendmentPinPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
+import { amendNote, renderAmendmentLine, renderAmendmentSection, sectionId } from './jev-gate-amendment-note.mjs';
+import { articlePath } from './jev-gate-journal.mjs';
+import { renderStations } from './station-render.mjs';
+
+const parent = JSON.parse(readFileSync('experiments/jev-gate/preregistration.json', 'utf8'));
+const { record, sha256: digest, bytes } = checkAmendment();
+const html = text => String(text).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+const copy = () => structuredClone(record);
+
+test('the amendment is pinned, names the published parent, and the parent is untouched', () => {
+  assert.equal(readFileSync(amendmentPinPath, 'utf8').split(/\s+/)[0], digest);
+  assert.equal(sha256(readFileSync('experiments/jev-gate/preregistration.json')), publishedParentSha256, 'The parent must stay byte-identical');
+  assert.equal(record.parent.sha256, publishedParentSha256);
+  assert.equal(readFileSync(publishedPath, 'utf8'), bytes.toString('utf8'), 'The published copy is the committed amendment');
+  const wrongParent = copy(); wrongParent.parent.sha256 = 'a'.repeat(64);
+  assert.throws(() => validateAmendment(wrongParent, parent), /parent.sha256/);
+});
+
+test('every required field is enforced', () => {
+  for (const path of ['reason.paidCallsSoFar', 'notBefore', 'changes.reviewer.nina', 'changes.reviewer.workspace.init', 'changes.reviewer.workspace.order', 'changes.reviewer.workspace.baseCommit.sha', 'changes.reviewer.hooks.promptContextOnCleanBase', 'changes.reviewer.billing', 'changes.spotlight.rule', 'changes.spotlight.judging', 'unchanged', 'limits', 'files']) {
+    const changed = copy(); const keys = path.split('.'); const last = keys.pop();
+    delete keys.reduce((o, k) => o[k], changed)[last];
+    assert.throws(() => validateAmendment(changed, parent), new RegExp(`field ${path.replaceAll('.', '\\.')}`), `Deleting ${path} must be refused`);
+  }
+  for (const file of requiredFiles) { const changed = copy(); delete changed.files[file]; assert.throws(() => validateAmendment(changed, parent), /does not pin/); }
+});
+
+test('the nina pin, the exact init and the base identity cannot move', () => {
+  for (const mutate of [
+    r => { r.changes.reviewer.nina.release = '0.34.1'; },
+    r => { r.changes.reviewer.nina.tarball.integrity = r.changes.reviewer.nina.tarball.integrity.replace('M', 'N'); },
+    r => { r.changes.reviewer.nina.commit = 'f'.repeat(40); },
+    r => { r.changes.reviewer.workspace.init = r.changes.reviewer.workspace.init.filter(a => a !== '--no-ask'); },
+    r => { r.changes.reviewer.workspace.baseCommit.env.GIT_AUTHOR_DATE = '2026-09-28T00:00:00Z'; },
+    r => { r.changes.reviewer.workspace.gitignore = 'node_modules/\n.nina/\n'; },
+  ]) { const changed = copy(); mutate(changed); assert.throws(() => validateAmendment(changed, parent), /invalid/); }
+  assert.equal(nina.release, '0.34.0');
+});
+
+test('the spotlight criteria are exactly the four, over the full parent corpus, and their statements carry their thresholds', () => {
+  const s = record.changes.spotlight;
+  assert.deepEqual(s.criteria.map(c => c.id), Object.keys(spotlightShapes));
+  assert.deepEqual([s.k, s.items, s.redItems, s.greenItems, s.countedRuns], [parent.gates.reviewer.k, parent.corpus.items, parent.corpus.groundTruthRed, parent.corpus.groundTruthGreen, parent.corpus.items * parent.gates.reviewer.k]);
+  for (const mutate of [
+    r => { r.changes.spotlight.criteria[0].threshold = r.changes.spotlight.criteria[1].threshold; },
+    r => { r.changes.spotlight.criteria[2].refutedWhen = 'greater-than'; },
+    r => { r.changes.spotlight.criteria[0].n = 30; },
+    r => { r.changes.spotlight.criteria.pop(); },
+    r => { r.changes.spotlight.criteria.reverse(); },
+    r => { r.changes.spotlight.criteria[3].harnessFailureMax = r.changes.spotlight.criteria[1].threshold; },
+    r => { delete r.changes.spotlight.criteria[3].harnessFailure; },
+  ]) { const changed = copy(); mutate(changed); assert.throws(() => validateAmendment(changed, parent)); }
+  const other = structuredClone(parent); other.corpus.items += 2; other.corpus.groundTruthRed += 2;
+  assert.throws(() => validateAmendment(copy(), other), /full parent corpus/);
+  // A partial run and the three-state label are part of the pre-registered bar.
+  assert.match(s.rule, /partial run/i); assert.match(s.judging, /other than "refuted"/); assert.match(s.labelPhrase, /passes, not established at this N/);
+});
+
+test('the probe record is what the amendment relies on, and its fields are derived, not typed', () => {
+  assert.deepEqual(record, derive(record));
+  assert.doesNotThrow(() => assertProbe(record));
+  const probe = JSON.parse(readFileSync(probePath, 'utf8'));
+  assert.equal(probe.zeroPatch, true); assert.equal(probe.baseShaIdenticalAcrossWorkspaces, true);
+  assert.equal(record.changes.reviewer.workspace.baseCommit.sha, probe.baseSha);
+  assert(record.changes.reviewer.workspace.files.includes('.claude/settings.json') && record.changes.reviewer.workspace.files.includes('.nina/TODO.md'));
+  const moved = copy(); moved.changes.reviewer.workspace.baseCommit.sha = 'f'.repeat(40);
+  assert.notDeepEqual(moved, derive(moved));
+  assert(!/\/Users\/|\/private\/|\/var\/folders/.test(readFileSync(probePath, 'utf8')), 'Private paths in the probe record');
+});
+
+test('a non-empty prompt-hook context is quoted verbatim in the limits', () => {
+  const hooks = record.changes.reviewer.hooks;
+  assert.equal(hooks.promptContextEmpty, hooks.promptContextOnCleanBase === '');
+  if (!hooks.promptContextEmpty) assert(record.limits.includes(hookLimit(hooks.promptContextOnCleanBase)));
+  const unquoted = copy(); unquoted.limits = unquoted.limits.filter(l => l !== hookLimit(hooks.promptContextOnCleanBase));
+  if (!hooks.promptContextEmpty) assert.throws(() => validateAmendment(unquoted, parent), /quoted verbatim/);
+  for (const phrase of ['pnpm harness:check', 'TSDoc', 'this restricted setup', 'evals/reviewer', 'up to 60 s']) assert(record.limits.some(l => l.includes(phrase)), `Limits must state: ${phrase}`);
+});
+
+test('no spotlight threshold is written in the amendment code', () => {
+  const values = record.changes.spotlight.criteria.map(c => c.threshold ?? c.harnessFailureMax);
+  const forms = values.flatMap(v => [String(v), v.toFixed(2), `${Math.round(v * 1000) / 10}%`]);
+  for (const file of ['scripts/jev-gate-amendment.mjs', 'scripts/jev-gate-amendment-note.mjs', 'experiments/jev-gate/nina-probe.mjs']) {
+    const source = readFileSync(file, 'utf8');
+    for (const form of forms) assert(!new RegExp(`(?<![\\w.])${form.replace(/[.%]/g, m => `\\${m}`)}(?![\\w.])`).test(source), `${file} states ${form}`);
+  }
+});
+
+test('station 06 and the built note show the dated amendment, rendered from the record', () => {
+  const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
+  const reports = ['migration-witness', 'test-witness', 'ci-witness'].map(id => JSON.parse(readFileSync(`site/data/witnesses/${id}.json`, 'utf8')));
+  const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
+  assert(exhibit.includes(renderAmendmentLine(record)));
+  assert(exhibit.includes('<span>Pre-registered — not yet run</span>'), 'The station status stays the parent status');
+  assert(exhibit.includes(html(record.statusText)) && exhibit.includes('Pre-registered · amended 28 Sep 2026, before any gate ran'));
+  assert(exhibit.includes('href="data/jev-gate/amendment-01.json"') && exhibit.includes(`#${sectionId}`));
+  const note = readFileSync(articlePath, 'utf8');
+  const built = amendNote(note, record, digest);
+  assert.match(built, /PRE-REGISTERED 26 SEP 2026 · AMENDED 28 SEP 2026 · NO RESULTS YET/);
+  assert(built.includes(renderAmendmentSection(record, digest)) && built.includes(`id="${sectionId}"`));
+  for (const text of [...record.reason.founder, record.reason.paidCallsSoFar, record.notBefore, ...record.changes.spotlight.criteria.map(c => c.statement), ...record.unchanged, ...record.limits, record.changes.reviewer.nina.tarball.integrity, digest, publishedParentSha256]) assert(built.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
+  assert.throws(() => amendNote(built, record, digest), /exactly once|already amended/);
+  assert.throws(() => renderAmendmentSection(record, 'abc'), /sha256/);
+  const changed = copy(); changed.changes.spotlight.criteria[0].statement += ' Changed.';
+  assert.notEqual(renderAmendmentSection(changed, digest), renderAmendmentSection(record, digest));
+  assert.equal(readFileSync(amendmentPath, 'utf8'), bytes.toString('utf8'));
+});
