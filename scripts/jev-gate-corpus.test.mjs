@@ -132,6 +132,12 @@ test('leakage lint negative controls fail, ordinary code passes', () => {
   assert.ok(kinds(header('src/domain/order.ts') + body + '+// see domain-no-infra\n').includes('rule id'));
   // private paths, emails, credentials
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const p = '/Users/someone/x';\n").includes('private path'));
+  assert.ok(kinds(header('src/domain/order.ts') + body + "+const p = '/home/someone/x';\n").includes('private path'));
+  assert.ok(!kinds(header('src/domain/order.ts') + body + "+const p = '<ws>/home/probe-user/canary.txt';\n").includes('private path'), 'The scrubbed isolation matrix canary home is not a private path');
+  assert.ok(!kinds(header('src/domain/order.ts') + body + "+const p = '…/home/probe-user/canary.txt';\n").includes('private path'), 'The synthetic canary user is exempt however the path is quoted');
+  for (const leak of ['/private/var/folders/ab/cd/T/x', '/var/folders/ab/cd/T/x', '/opt/homebrew/bin/claude', '/tmp/x', '/private/tmp/x', '/home/someone/x', '/home/probe-users/x', '/home/probe-user-2/x']) {
+    assert.ok(kinds(header('src/domain/order.ts') + body + `+const p = '${leak}';\n`).includes('private path'), `${leak} is a local path`);
+  }
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'someone@example.com';\n").includes('email address'));
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'someone@example.invalid';\n").includes('email address'));
   assert.ok(kinds(header('src/domain/order.ts') + body + "+const to = 'rebase@example.invalid.com';\n").includes('email address'));

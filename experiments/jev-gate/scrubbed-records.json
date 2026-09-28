@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "note": "Evidence records written before the runner scrubbed local paths at write time, scrubbed afterwards by rescrub-records.mjs with the runner's own SCRUB_RULES (run_reviewer.mjs). Only paths changed; the canary secrets are random tokens, not paths, so every leak judgment stands. originalSha256 is the sha256 of the file as the runner first wrote it (and as amendment-02 drafts pinned it).",
+  "rule": [
+    "a path ending in a run temp dir (named jev-gate-reviewer-XXXXXX) -> <ws>",
+    "the macOS per-user temp root (var/folders/<a>/<b>/T, with or without the private prefix) -> <tmp>",
+    "the system tmp directory (with or without the private prefix) -> <tmp>",
+    "the home directory -> ~",
+    "the Homebrew client (opt/homebrew/bin/claude) -> claude; any other Homebrew path -> <homebrew>"
+  ],
+  "code": "experiments/jev-gate/run_reviewer.mjs SCRUB_RULES",
+  "files": [
+    {
+      "path": "dry-run/isolation-probe.json",
+      "originalSha256": "a5a4bc79295c6a474b2c8754dda40ce661a7b933770408d693eb6b8863fb627f",
+      "scrubbedSha256": "f4e6d888b957ee73e6fdd6a50e9de8b9616801d48f1b0cf3e1cbf58df374b944",
+      "changed": true,
+      "replacements": {
+        "<ws>": 1,
+        "claude": 1
+      }
+    },
+    {
+      "path": "dry-run/jev-practice.json",
+      "originalSha256": "907ddbf7c63b1c77840449f83511ed0e5fc4fe78c646a3d77fea2f12c918a8f6",
+      "scrubbedSha256": "907ddbf7c63b1c77840449f83511ed0e5fc4fe78c646a3d77fea2f12c918a8f6",
+      "changed": false,
+      "replacements": {}
+    },
+    {
+      "path": "dry-run/laya-practice.json",
+      "originalSha256": "fb1e691a522c2af545a2a69fbd4403b2a47c1e661730b4589f0b6e30e9f4d66f",
+      "scrubbedSha256": "fb1e691a522c2af545a2a69fbd4403b2a47c1e661730b4589f0b6e30e9f4d66f",
+      "changed": false,
+      "replacements": {}
+    },
+    {
+      "path": "isolation-probe-candidate-1.json",
+      "originalSha256": "af0faa1008bcbf4b658043bf4ff16ddb02a57ef2279af0adc5e5e8a60300958a",
+      "scrubbedSha256": "3ee3afea7d21118f62de4e0e1d7fccf8297335a7f8a932641229a6f1326d6c53",
+      "changed": true,
+      "replacements": {
+        "<ws>": 15,
+        "claude": 1
+      }
+    },
+    {
+      "path": "isolation-probe-narrow-1.json",
+      "originalSha256": "a1a89ea823e4d34ee20d21c2021476a5bc274bf08ba1f6c127e4c914f7866532",
+      "scrubbedSha256": "84053ee93dfd6574c346ae8e9e704c6a8733cb2ef70d4a696489782930ac3d6e",
+      "changed": true,
+      "replacements": {
+        "<ws>": 15,
+        "claude": 1
+      }
+    },
+    {
+      "path": "isolation-probe-narrow-2.json",
+      "originalSha256": "5880982b8f2ed3dbaa71ce9c36b0ad74f8006f19dfd8e429b62a0015461d90fe",
+      "scrubbedSha256": "cf4a8ede7dfacd6b00987840afe4f7d08559fbd6aa06b3d88e3fc85246d2b0f8",
+      "changed": true,
+      "replacements": {
+        "<ws>": 15,
+        "claude": 1
+      }
+    },
+    {
+      "path": "isolation-probe-narrow-3.json",
+      "originalSha256": "1580ef083d3d84cdf0d06bd616b78eef5f2a0b01155874d9ce91bf4d4b4b3584",
+      "scrubbedSha256": "c09c8b7e654859778e84d90d9f04bd0f47ad13ca34b32ee4da58f302f7e4974b",
+      "changed": true,
+      "replacements": {
+        "<ws>": 16,
+        "claude": 1
+      }
+    }
+  ]
+}

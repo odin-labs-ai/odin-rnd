@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -17,8 +18,25 @@ const fontAttributionRepos = new Map([
 // Fingerprints keep private policy terms out of the public validator source.
 // Check every window, preserving case-insensitive substring matching.
 const restrictedFingerprints = {"13": ["5731fbf840cf0bfdc5d3d933edd5c3bc5dccb89ac3f3df02fa5ec89866aaa42a"], "12": ["8b0dd65e80ec8e80c5516ad7e7814fb83a7b7f688c0da01ea03cd9ab3782686f", "db8125a5a0a5825896a37524890fe5a4b7608cfc05c1125b0791cc65a61855b4"], "8": ["a9a5126d7cca4ab5eecee72061f1e2060f6022266c74209f9fec62e986adc091", "080ac5c86e07c86491882d68ede609dd9085958b54329bfffed755c8b88cd9a3"], "9": ["94899355c63b8d585e18d8ea77b107c61696b0cc0dc99b17387b328cb4899b9c", "3f1eb95d29d5a58c4500824d9e3925726639c5e77b3cadcc90a6181d92abcfe2"], "4": ["542c6ec5c666e7ba61d6d1a4750847cd4b48fde065782e11fda0787012682f97"]};
+// A 64-hex token is exempt from the scan only when it is exactly the sha256 of a file tracked in this tree:
+// a hash of committed content, not text. Any other token, hex-shaped or not, is scanned exactly as before.
+// The hashes are of the blobs git tracks (the index), not of whatever sits in the working tree.
+const trackedFileHashes = (() => {
+  try {
+    const ids = [...new Set(execFileSync('git', ['ls-files', '--stage', '-z'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\0').filter(Boolean).map(line => line.split(/\s+/)[1]))];
+    const out = execFileSync('git', ['cat-file', '--batch'], { input: ids.join('\n') + '\n', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 1 << 30 });
+    const hashes = new Set();
+    for (let at = 0; at < out.length;) {
+      const eol = out.indexOf(10, at), [, type, size] = out.subarray(at, eol).toString().split(' ');
+      if (type === 'blob') hashes.add(createHash('sha256').update(out.subarray(eol + 1, eol + 1 + Number(size))).digest('hex'));
+      at = eol + 1 + Number(size) + 1;
+    }
+    return hashes;
+  } catch { return new Set(); }
+})();
+const withoutTrackedHashes = lower => lower.replace(/(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])/g, token => (trackedFileHashes.has(token) ? '#'.repeat(64) : token));
 const restrictedContent = text => {
-  const lower=text.toLowerCase();
+  const lower=withoutTrackedHashes(text.toLowerCase());
   for(const [size, digests] of Object.entries(restrictedFingerprints)){
     const length=Number(size), blocked=new Set(digests);
     for(let i=0;i<=lower.length-length;i++)if(blocked.has(createHash('sha256').update(lower.slice(i,i+length)).digest('hex')))return true;

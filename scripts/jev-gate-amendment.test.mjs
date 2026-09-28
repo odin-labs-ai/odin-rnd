@@ -176,7 +176,8 @@ test('the home card, station 06 and the note qualify the parent\'s "before any g
   const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
   const note = amendNote(readFileSync(articlePath, 'utf8'), record, digest);
   assert(home.includes(`Published before any gate runs.${cardQualifier(record)}</p>`));
-  assert(exhibit.includes(`Written down before any gate runs ·${stationQualifier(record)}</p>`));
+  // Later amendments add their own qualifier after this one, inside the same paragraph.
+  assert(exhibit.includes(`Written down before any gate runs ·${stationQualifier(record)}`));
   assert(note.includes(`${noteQualifier(record)}</p>`) && note.includes(html(record.siteQualifier.meta)));
   for (const q of [cardQualifier(record), stationQualifier(record)]) assert(q.includes(`href="journal/jev-as-a-fast-gate.html#${sectionId}"`));
   if (existsSync('dist/index.html')) {
