@@ -246,8 +246,8 @@
     "experiments/jev-gate/nina-probe-0.34.0.json": "eb90d1c686a6423d0287bdb489f4e76b16aa77919697c0ddc6a5c799b2b55f54",
     "experiments/jev-gate/nina-probe.mjs": "9f1feadfaba00788863de7410ce6bb9bcf978fc9a42aa0424a3ea3e0f471a113",
     "experiments/jev-gate/probe/practice-probe.patch": "bfec2fe9905d766d8a324701ca06ba54b5bf3d0595d6e1e531ef6d5e57b974e4",
-    "scripts/jev-gate-amendment.mjs": "b9b9fb4b6ff70d56ddf79ad288896e3fd07d46fed3fa7927a7533237afe526c8",
-    "scripts/jev-gate-amendment-note.mjs": "046c16ded5a71c73220b5791d58b12ccf6c95ad1997da0bccc56200abb86671b",
+    "scripts/jev-gate-amendment.mjs": "b473290a247ed9060ec2dac3c0e18c759a132d54ed56fe53dce3c343831142a4",
+    "scripts/jev-gate-amendment-note.mjs": "ecedf1e3b4c9f81743b0359e82648e52fbbc3e7df59bff2589e6e6e21582a7be",
     "experiments/jev-gate/prior-calls/2026-09-28-accidental-reviewer-runs.json": "72e6db0a6b6110ec317e4bc7dfcee1a92cd0bb3f8347455bac721bb8863e8711"
   },
   "sources": [
@@ -379,5 +379,12 @@
     "supersedes": "The parent's spendCap.alreadySpentUsd (0.3). The cap and its rule are unchanged.",
     "sum": "G2 0.3 + the five completed runs 0.6352238 + the killed run charged at 0.1931692 = 1.128393.",
     "reason": "An accidental live call from a non-executable fake binary: the real client answered in its place. The runner now resolves claude on the PATH and refuses a fixture run unless its realpath is the committed fake (experiments/jev-gate/fixtures/fake-claude.mjs), and refuses a counted run if it is."
+  },
+  "siteQualifier": {
+    "rule": "The parent's pages say it was published or written down before any gate runs, which was true when it was published. The build adds these lines, from this record, next to each such sentence on the home page, station 06 and the field note, and links them to the amendment section. The parent's own text is left as it is.",
+    "card": "Amended 28 Sep 2026, before any counted run: the reviewer is now nina 0.34.0, a spotlight bar was added, and 6 uncounted reviewer runs are disclosed.",
+    "station": "amended 28 Sep 2026, before any counted run; 6 uncounted reviewer runs are disclosed",
+    "note": "Amended 28 Sep 2026, before any counted run: 6 uncounted reviewer runs came after this note was published, and the amendment discloses them.",
+    "meta": "Amended 28 Sep 2026, before any counted run; 6 uncounted reviewer runs disclosed."
   }
 }

@@ -87,6 +87,7 @@ export const required = {
   'priorCalls.evidence.file': v => v === priorCallsPath, 'priorCalls.evidence.sha256': v => hex.test(v), 'priorCalls.evidence.note': str,
   'priorCalls.calls': v => Array.isArray(v) && v.length > 0 && v.every(c => str(c.id) && str(c.gate) && str(c.release)),
   'spend.alreadySpentUsd': v => typeof v === 'number' && v > 0, 'spend.supersedes': str, 'spend.sum': str, 'spend.reason': str,
+  'siteQualifier.rule': str, 'siteQualifier.card': str, 'siteQualifier.station': str, 'siteQualifier.note': str, 'siteQualifier.meta': v => str(v) && !/[<>"]/.test(v),
   unchanged: strings, limits: strings,
   'attribution.nina': v => v === ninaAttribution, 'attribution.ninaUrl': v => v === 'https://github.com/xhulz/nina',
   files: v => obj(v) && Object.values(v).every(h => hex.test(h)),
@@ -130,6 +131,14 @@ export function validateAmendment(record, parent) {
   }
   assert.equal(Math.round(p.calls.reduce((sum, c) => sum + charged(c), 0) * 1e7), Math.round(record.spend.alreadySpentUsd * 1e7), 'spend.alreadySpentUsd is not the sum of the prior calls');
   if (parent) assert(record.spend.alreadySpentUsd > parent.spendCap.alreadySpentUsd, 'The amount already spent only grows');
+  // The site qualifiers state the record's facts: the date, the release and how many uncounted reviewer runs there were.
+  const runs = p.calls.filter(c => c.item).length, [y, m, d] = record.date.split('-');
+  const when = `${d} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(m) - 1]} ${y}`;
+  for (const [key, text] of Object.entries(record.siteQualifier).filter(([key]) => key !== 'rule')) {
+    for (const fact of [when, 'before any counted run', `${runs} uncounted reviewer runs`]) assert(text.includes(fact), `siteQualifier.${key} must state: ${fact}`);
+  }
+  assert(record.siteQualifier.card.includes(`nina ${record.changes.reviewer.nina.release}`), 'siteQualifier.card must name the reviewer release');
+  assert(record.statusText.includes(when), 'statusText must carry the amendment date');
   const hooks = record.changes.reviewer.hooks;
   assert.equal(hooks.promptContextEmpty, hooks.promptContextOnCleanBase === '', 'promptContextEmpty disagrees with the recorded text');
   if (!hooks.promptContextEmpty) assert(record.limits.includes(hookLimit(hooks.promptContextOnCleanBase)), 'A non-empty prompt-hook context must be quoted verbatim in limits');

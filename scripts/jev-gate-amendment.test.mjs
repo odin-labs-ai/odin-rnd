@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { sha256 } from './jev-gate-prereg.mjs';
 import { amendmentPath, amendmentPinPath, assertPriorCalls, priorCallsPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
-import { amendNote, renderAmendmentLine, renderAmendmentSection, sectionId } from './jev-gate-amendment-note.mjs';
+import { amendNote, cardQualifier, noteQualifier, qualifyHome, qualifyStation, renderAmendmentLine, renderAmendmentSection, sectionId, stationQualifier } from './jev-gate-amendment-note.mjs';
+import { existsSync } from 'node:fs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { renderStations } from './station-render.mjs';
 
@@ -164,4 +165,32 @@ test('the journal cannot scroll sideways at 375px or 320px', () => {
     const wide = runs.filter(t => t.length > fits);
     assert(wide.length === 0 || wraps('.article-body'), `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap, e.g. ${wide[0]}`);
   }
+});
+
+// Every "before any gate" sentence the parent put on the site carries the amendment's qualifier, rendered from
+// the record and linked to its section. The built page is checked when it exists; a changed record fails it.
+test('the home card, station 06 and the note qualify the parent\'s "before any gate" sentences from the record', () => {
+  const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
+  const reports = ['migration-witness', 'test-witness', 'ci-witness'].map(id => JSON.parse(readFileSync(`site/data/witnesses/${id}.json`, 'utf8')));
+  const home = qualifyHome(readFileSync('site/index.html', 'utf8'), record);
+  const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
+  const note = amendNote(readFileSync(articlePath, 'utf8'), record, digest);
+  assert(home.includes(`Published before any gate runs.${cardQualifier(record)}</p>`));
+  assert(exhibit.includes(`Written down before any gate runs ·${stationQualifier(record)}</p>`));
+  assert(note.includes(`${noteQualifier(record)}</p>`) && note.includes(html(record.siteQualifier.meta)));
+  for (const q of [cardQualifier(record), stationQualifier(record)]) assert(q.includes(`href="journal/jev-as-a-fast-gate.html#${sectionId}"`));
+  if (existsSync('dist/index.html')) {
+    const built = readFileSync('dist/index.html', 'utf8');
+    assert(built.includes(cardQualifier(record)) && built.includes(stationQualifier(record)), 'dist/index.html is not qualified by the committed amendment: pnpm build');
+    assert(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8').includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment: pnpm build');
+  }
+  // A changed record changes every qualifier, and a qualifier that no longer states the record's facts is refused.
+  const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('6 uncounted', '7 uncounted');
+  assert.throws(() => validateAmendment(changed, parent), /siteQualifier.card must state/);
+  const fewer = copy(); const dropped = fewer.priorCalls.calls.pop(); fewer.spend.alreadySpentUsd -= dropped.costCharged;
+  assert.throws(() => validateAmendment(fewer, parent), /siteQualifier/);
+  const reworded = copy(); reworded.siteQualifier.station += ' (see the note)';
+  assert(!exhibit.includes(stationQualifier(reworded)), 'The station renders the committed record, not another');
+  assert(qualifyStation('<p class="artifact-label">Written down before any gate runs</p>', reworded).includes('(see the note)'));
+  assert.throws(() => qualifyHome(home.replace('Published before any gate runs.', 'Published.'), record), /exactly once/);
 });

@@ -57,11 +57,33 @@ ${list(amendment.limits.map(escape))}
 `;
 }
 
+// The parent's "before any gate" sentences, each qualified in place by a line from the record.
+export const homeSentence = 'Published before any gate runs.</p>';
+export const stationSentence = '<p class="artifact-label">Written down before any gate runs</p>';
+export const noteParagraphEnd = 'and the results are judged against this one.</p>';
+const once = (page, marker) => assert.equal(page.split(marker).length, 2, `The page must contain ${JSON.stringify(marker)} exactly once`);
+const qualifier = (href, text) => ` <a class="amendment-qualifier" href="${href}">${escape(text)}</a>`;
+export const cardQualifier = amendment => qualifier(`journal/jev-as-a-fast-gate.html#${sectionId}`, amendment.siteQualifier.card);
+export const stationQualifier = amendment => qualifier(`journal/jev-as-a-fast-gate.html#${sectionId}`, amendment.siteQualifier.station);
+export const noteQualifier = amendment => qualifier(`#${sectionId}`, amendment.siteQualifier.note);
+export function qualifyHome(page, amendment) {
+  once(page, homeSentence);
+  return page.replace(homeSentence, homeSentence.replace('</p>', `${cardQualifier(amendment)}</p>`));
+}
+export function qualifyStation(exhibit, amendment) {
+  once(exhibit, stationSentence);
+  return exhibit.replace(stationSentence, stationSentence.replace('</p>', ` ·${stationQualifier(amendment)}</p>`));
+}
+const metaEnd = 'can a fast typed-decision model gate architectural drift from the diff alone?">';
 const bodyOpen = '<article class="article-body">\n';
-const metaEnd = ' · NO RESULTS YET</p>';
-// The built note: the parent's render, with the amendment's date in the meta line and its section first in the body.
+const headerEnd = ' · NO RESULTS YET</p>';
+// The built note: the parent's render, with the amendment's date in the meta line, a qualifier after each
+// "before any gate" sentence, and its section first in the body.
 export function amendNote(note, amendment, amendmentSha256) {
-  for (const marker of [bodyOpen, metaEnd]) assert.equal(note.split(marker).length, 2, `The note must contain ${JSON.stringify(marker)} exactly once`);
+  for (const marker of [bodyOpen, headerEnd, metaEnd, noteParagraphEnd]) once(note, marker);
   assert(!note.includes(`id="${sectionId}"`), 'The note is already amended');
-  return note.replace(metaEnd, ` · AMENDED ${day(amendment.date)}${metaEnd}`).replace(bodyOpen, `${bodyOpen}${renderAmendmentSection(amendment, amendmentSha256)}`);
+  return note.replace(headerEnd, ` · AMENDED ${day(amendment.date)}${headerEnd}`)
+    .replace(metaEnd, metaEnd.replace('">', ` ${escape(amendment.siteQualifier.meta)}">`))
+    .replace(noteParagraphEnd, noteParagraphEnd.replace('</p>', `${noteQualifier(amendment)}</p>`))
+    .replace(bodyOpen, `${bodyOpen}${renderAmendmentSection(amendment, amendmentSha256)}`);
 }
