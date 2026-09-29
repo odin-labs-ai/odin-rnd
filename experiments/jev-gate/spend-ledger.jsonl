@@ -42,3 +42,244 @@
 {"ts": "2026-09-29T02:11:54.559Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
 {"ts": "2026-09-29T02:11:54.940Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
 {"ts":"2026-09-29T02:14:18.209Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.459244,"fixture":false}
+{"ts":"2026-09-29T09:05:59.690Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.43929500000000005,"fixture":false}
+{"ts": "2026-09-29T09:07:23.310Z", "gate": "jev", "kind": "counted", "id": "c001", "run": 1, "costUsd": 0.000147136, "fixture": false}
+{"ts": "2026-09-29T09:07:24.199Z", "gate": "jev", "kind": "counted", "id": "c002", "run": 1, "costUsd": 0.00017012600000000002, "fixture": false}
+{"ts": "2026-09-29T09:07:25.037Z", "gate": "jev", "kind": "counted", "id": "c003", "run": 1, "costUsd": 0.000156332, "fixture": false}
+{"ts": "2026-09-29T09:07:25.907Z", "gate": "jev", "kind": "counted", "id": "c004", "run": 1, "costUsd": 0.000180774, "fixture": false}
+{"ts": "2026-09-29T09:07:26.333Z", "gate": "jev", "kind": "counted", "id": "c005", "run": 1, "costUsd": 0.00021271799999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:27.244Z", "gate": "jev", "kind": "counted", "id": "c006", "run": 1, "costUsd": 0.000164802, "fixture": false}
+{"ts": "2026-09-29T09:07:28.108Z", "gate": "jev", "kind": "counted", "id": "c007", "run": 1, "costUsd": 0.00017206199999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:28.891Z", "gate": "jev", "kind": "counted", "id": "c008", "run": 1, "costUsd": 0.000175692, "fixture": false}
+{"ts": "2026-09-29T09:07:29.772Z", "gate": "jev", "kind": "counted", "id": "c009", "run": 1, "costUsd": 0.000157542, "fixture": false}
+{"ts": "2026-09-29T09:07:30.175Z", "gate": "jev", "kind": "counted", "id": "c010", "run": 1, "costUsd": 0.00019311599999999999, "fixture": false}
+{"ts": "2026-09-29T09:07:30.597Z", "gate": "jev", "kind": "counted", "id": "c011", "run": 1, "costUsd": 0.000178112, "fixture": false}
+{"ts": "2026-09-29T09:07:31.094Z", "gate": "jev", "kind": "counted", "id": "c012", "run": 1, "costUsd": 0.00018876, "fixture": false}
+{"ts": "2026-09-29T09:07:31.505Z", "gate": "jev", "kind": "counted", "id": "c013", "run": 1, "costUsd": 0.000168432, "fixture": false}
+{"ts": "2026-09-29T09:07:31.912Z", "gate": "jev", "kind": "counted", "id": "c014", "run": 1, "costUsd": 0.000149072, "fixture": false}
+{"ts": "2026-09-29T09:07:32.727Z", "gate": "jev", "kind": "counted", "id": "c015", "run": 1, "costUsd": 0.000172304, "fixture": false}
+{"ts": "2026-09-29T09:07:33.160Z", "gate": "jev", "kind": "counted", "id": "c016", "run": 1, "costUsd": 0.00017932200000000002, "fixture": false}
+{"ts": "2026-09-29T09:07:33.520Z", "gate": "jev", "kind": "counted", "id": "c017", "run": 1, "costUsd": 0.00018198399999999997, "fixture": false}
+{"ts": "2026-09-29T09:07:33.901Z", "gate": "jev", "kind": "counted", "id": "c018", "run": 1, "costUsd": 0.00020449, "fixture": false}
+{"ts": "2026-09-29T09:07:34.269Z", "gate": "jev", "kind": "counted", "id": "c019", "run": 1, "costUsd": 0.000146652, "fixture": false}
+{"ts": "2026-09-29T09:07:34.651Z", "gate": "jev", "kind": "counted", "id": "c020", "run": 1, "costUsd": 0.00023667599999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:35.487Z", "gate": "jev", "kind": "counted", "id": "c021", "run": 1, "costUsd": 0.000166738, "fixture": false}
+{"ts": "2026-09-29T09:07:36.316Z", "gate": "jev", "kind": "counted", "id": "c022", "run": 1, "costUsd": 0.000174482, "fixture": false}
+{"ts": "2026-09-29T09:07:36.760Z", "gate": "jev", "kind": "counted", "id": "c023", "run": 1, "costUsd": 0.00019384199999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:37.142Z", "gate": "jev", "kind": "counted", "id": "c024", "run": 1, "costUsd": 0.000153186, "fixture": false}
+{"ts": "2026-09-29T09:07:37.554Z", "gate": "jev", "kind": "counted", "id": "c025", "run": 1, "costUsd": 0.00014326400000000002, "fixture": false}
+{"ts": "2026-09-29T09:07:37.922Z", "gate": "jev", "kind": "counted", "id": "c026", "run": 1, "costUsd": 0.000153186, "fixture": false}
+{"ts": "2026-09-29T09:07:38.799Z", "gate": "jev", "kind": "counted", "id": "c027", "run": 1, "costUsd": 0.000174966, "fixture": false}
+{"ts": "2026-09-29T09:07:39.190Z", "gate": "jev", "kind": "counted", "id": "c028", "run": 1, "costUsd": 0.00021828399999999999, "fixture": false}
+{"ts": "2026-09-29T09:07:40.010Z", "gate": "jev", "kind": "counted", "id": "c029", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-29T09:07:40.406Z", "gate": "jev", "kind": "counted", "id": "c030", "run": 1, "costUsd": 0.000175692, "fixture": false}
+{"ts": "2026-09-29T09:07:40.790Z", "gate": "jev", "kind": "counted", "id": "c031", "run": 1, "costUsd": 0.00016697999999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:41.160Z", "gate": "jev", "kind": "counted", "id": "c032", "run": 1, "costUsd": 0.000158268, "fixture": false}
+{"ts": "2026-09-29T09:07:41.559Z", "gate": "jev", "kind": "counted", "id": "c033", "run": 1, "costUsd": 0.00015705799999999999, "fixture": false}
+{"ts": "2026-09-29T09:07:41.937Z", "gate": "jev", "kind": "counted", "id": "c034", "run": 1, "costUsd": 0.00014641, "fixture": false}
+{"ts": "2026-09-29T09:07:42.318Z", "gate": "jev", "kind": "counted", "id": "c035", "run": 1, "costUsd": 0.000167706, "fixture": false}
+{"ts": "2026-09-29T09:07:43.124Z", "gate": "jev", "kind": "counted", "id": "c036", "run": 1, "costUsd": 0.000168916, "fixture": false}
+{"ts": "2026-09-29T09:07:43.534Z", "gate": "jev", "kind": "counted", "id": "c037", "run": 1, "costUsd": 0.000192632, "fixture": false}
+{"ts": "2026-09-29T09:07:44.325Z", "gate": "jev", "kind": "counted", "id": "c038", "run": 1, "costUsd": 0.000149556, "fixture": false}
+{"ts": "2026-09-29T09:07:45.107Z", "gate": "jev", "kind": "counted", "id": "c039", "run": 1, "costUsd": 0.000184888, "fixture": false}
+{"ts": "2026-09-29T09:07:45.512Z", "gate": "jev", "kind": "counted", "id": "c040", "run": 1, "costUsd": 0.00018174199999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:45.903Z", "gate": "jev", "kind": "counted", "id": "c041", "run": 1, "costUsd": 0.000163108, "fixture": false}
+{"ts": "2026-09-29T09:07:46.792Z", "gate": "jev", "kind": "counted", "id": "c042", "run": 1, "costUsd": 0.00016722200000000002, "fixture": false}
+{"ts": "2026-09-29T09:07:47.197Z", "gate": "jev", "kind": "counted", "id": "c043", "run": 1, "costUsd": 0.00017424, "fixture": false}
+{"ts": "2026-09-29T09:07:47.588Z", "gate": "jev", "kind": "counted", "id": "c044", "run": 1, "costUsd": 0.000173998, "fixture": false}
+{"ts": "2026-09-29T09:07:47.981Z", "gate": "jev", "kind": "counted", "id": "c045", "run": 1, "costUsd": 0.00017666, "fixture": false}
+{"ts": "2026-09-29T09:07:48.366Z", "gate": "jev", "kind": "counted", "id": "c046", "run": 1, "costUsd": 0.000165044, "fixture": false}
+{"ts": "2026-09-29T09:07:48.737Z", "gate": "jev", "kind": "counted", "id": "c047", "run": 1, "costUsd": 0.00027781599999999996, "fixture": false}
+{"ts": "2026-09-29T09:07:49.196Z", "gate": "jev", "kind": "counted", "id": "c048", "run": 1, "costUsd": 0.00017061, "fixture": false}
+{"ts": "2026-09-29T09:07:49.587Z", "gate": "jev", "kind": "counted", "id": "c049", "run": 1, "costUsd": 0.000144958, "fixture": false}
+{"ts": "2026-09-29T09:07:49.970Z", "gate": "jev", "kind": "counted", "id": "c050", "run": 1, "costUsd": 0.000173272, "fixture": false}
+{"ts": "2026-09-29T09:07:50.385Z", "gate": "jev", "kind": "counted", "id": "c051", "run": 1, "costUsd": 0.00019722999999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:50.757Z", "gate": "jev", "kind": "counted", "id": "c052", "run": 1, "costUsd": 0.00019601999999999998, "fixture": false}
+{"ts": "2026-09-29T09:07:51.187Z", "gate": "jev", "kind": "counted", "id": "c053", "run": 1, "costUsd": 0.00020207, "fixture": false}
+{"ts": "2026-09-29T09:07:51.617Z", "gate": "jev", "kind": "counted", "id": "c054", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-29T09:07:52.022Z", "gate": "jev", "kind": "counted", "id": "c055", "run": 1, "costUsd": 0.000174966, "fixture": false}
+{"ts": "2026-09-29T09:07:52.465Z", "gate": "jev", "kind": "counted", "id": "c056", "run": 1, "costUsd": 0.000167706, "fixture": false}
+{"ts": "2026-09-29T09:07:53.309Z", "gate": "jev", "kind": "counted", "id": "c057", "run": 1, "costUsd": 0.00015004, "fixture": false}
+{"ts": "2026-09-29T09:07:53.851Z", "gate": "jev", "kind": "counted", "id": "c058", "run": 1, "costUsd": 0.000206184, "fixture": false}
+{"ts": "2026-09-29T09:07:54.328Z", "gate": "jev", "kind": "counted", "id": "c059", "run": 1, "costUsd": 0.000153186, "fixture": false}
+{"ts": "2026-09-29T09:07:54.804Z", "gate": "jev", "kind": "counted", "id": "c060", "run": 1, "costUsd": 0.00018392, "fixture": false}
+{"ts":"2026-09-29T09:11:01.133Z","gate":"reviewer","kind":"counted","id":"c001","run":1,"costUsd":0.1434926,"fixture":false}
+{"ts":"2026-09-29T09:11:37.160Z","gate":"reviewer","kind":"counted","id":"c001","run":2,"costUsd":0.218257,"fixture":false}
+{"ts":"2026-09-29T09:12:17.942Z","gate":"reviewer","kind":"counted","id":"c001","run":3,"costUsd":0.24091900000000002,"fixture":false}
+{"ts":"2026-09-29T09:13:05.649Z","gate":"reviewer","kind":"counted","id":"c002","run":1,"costUsd":0.2417856,"fixture":false}
+{"ts":"2026-09-29T09:13:47.024Z","gate":"reviewer","kind":"counted","id":"c002","run":2,"costUsd":0.23818799999999998,"fixture":false}
+{"ts":"2026-09-29T09:14:33.985Z","gate":"reviewer","kind":"counted","id":"c002","run":3,"costUsd":0.2398016,"fixture":false}
+{"ts":"2026-09-29T09:15:18.685Z","gate":"reviewer","kind":"counted","id":"c003","run":1,"costUsd":0.27696940000000003,"fixture":false}
+{"ts":"2026-09-29T09:16:14.137Z","gate":"reviewer","kind":"counted","id":"c003","run":2,"costUsd":0.2607712000000001,"fixture":false}
+{"ts":"2026-09-29T09:16:57.359Z","gate":"reviewer","kind":"counted","id":"c003","run":3,"costUsd":0.23761480000000001,"fixture":false}
+{"ts":"2026-09-29T09:17:28.640Z","gate":"reviewer","kind":"counted","id":"c004","run":1,"costUsd":0.2061038,"fixture":false}
+{"ts":"2026-09-29T09:18:06.076Z","gate":"reviewer","kind":"counted","id":"c004","run":2,"costUsd":0.22873680000000002,"fixture":false}
+{"ts":"2026-09-29T09:18:42.639Z","gate":"reviewer","kind":"counted","id":"c004","run":3,"costUsd":0.20661480000000002,"fixture":false}
+{"ts":"2026-09-29T09:19:27.187Z","gate":"reviewer","kind":"counted","id":"c005","run":1,"costUsd":0.21236020000000003,"fixture":false}
+{"ts":"2026-09-29T09:20:11.828Z","gate":"reviewer","kind":"counted","id":"c005","run":2,"costUsd":0.22783019999999998,"fixture":false}
+{"ts":"2026-09-29T09:20:55.273Z","gate":"reviewer","kind":"counted","id":"c005","run":3,"costUsd":0.2056314,"fixture":false}
+{"ts":"2026-09-29T09:21:36.578Z","gate":"reviewer","kind":"counted","id":"c006","run":1,"costUsd":0.2066248,"fixture":false}
+{"ts":"2026-09-29T09:22:32.692Z","gate":"reviewer","kind":"counted","id":"c006","run":2,"costUsd":0.2274216,"fixture":false}
+{"ts":"2026-09-29T09:23:19.790Z","gate":"reviewer","kind":"counted","id":"c006","run":3,"costUsd":0.248948,"fixture":false}
+{"ts":"2026-09-29T09:24:07.025Z","gate":"reviewer","kind":"counted","id":"c007","run":1,"costUsd":0.19404880000000002,"fixture":false}
+{"ts":"2026-09-29T09:24:59.764Z","gate":"reviewer","kind":"counted","id":"c007","run":2,"costUsd":0.24996400000000002,"fixture":false}
+{"ts":"2026-09-29T09:25:53.547Z","gate":"reviewer","kind":"counted","id":"c007","run":3,"costUsd":0.24618519999999997,"fixture":false}
+{"ts":"2026-09-29T09:26:56.416Z","gate":"reviewer","kind":"counted","id":"c008","run":1,"costUsd":0.2688358,"fixture":false}
+{"ts":"2026-09-29T09:27:56.832Z","gate":"reviewer","kind":"counted","id":"c008","run":2,"costUsd":0.2426492,"fixture":false}
+{"ts":"2026-09-29T09:28:55.039Z","gate":"reviewer","kind":"counted","id":"c008","run":3,"costUsd":0.2311598,"fixture":false}
+{"ts":"2026-09-29T09:29:45.453Z","gate":"reviewer","kind":"counted","id":"c009","run":1,"costUsd":0.27039019999999997,"fixture":false}
+{"ts":"2026-09-29T09:30:41.159Z","gate":"reviewer","kind":"counted","id":"c009","run":2,"costUsd":0.2680938,"fixture":false}
+{"ts":"2026-09-29T09:31:31.773Z","gate":"reviewer","kind":"counted","id":"c009","run":3,"costUsd":0.24124080000000003,"fixture":false}
+{"ts":"2026-09-29T09:32:38.134Z","gate":"reviewer","kind":"counted","id":"c010","run":1,"costUsd":0.2633924,"fixture":false}
+{"ts":"2026-09-29T09:33:28.067Z","gate":"reviewer","kind":"counted","id":"c010","run":2,"costUsd":0.22101120000000002,"fixture":false}
+{"ts":"2026-09-29T09:34:23.896Z","gate":"reviewer","kind":"counted","id":"c010","run":3,"costUsd":0.25553359999999997,"fixture":false}
+{"ts":"2026-09-29T09:35:01.181Z","gate":"reviewer","kind":"counted","id":"c011","run":1,"costUsd":0.1743088,"fixture":false}
+{"ts":"2026-09-29T09:35:35.165Z","gate":"reviewer","kind":"counted","id":"c011","run":2,"costUsd":0.1497538,"fixture":false}
+{"ts":"2026-09-29T09:36:26.404Z","gate":"reviewer","kind":"counted","id":"c011","run":3,"costUsd":0.261042,"fixture":false}
+{"ts":"2026-09-29T09:37:30.434Z","gate":"reviewer","kind":"counted","id":"c012","run":1,"costUsd":0.25574740000000007,"fixture":false}
+{"ts":"2026-09-29T09:38:25.235Z","gate":"reviewer","kind":"counted","id":"c012","run":2,"costUsd":0.23441680000000004,"fixture":false}
+{"ts":"2026-09-29T09:39:32.760Z","gate":"reviewer","kind":"counted","id":"c012","run":3,"costUsd":0.35532539999999996,"fixture":false}
+{"ts":"2026-09-29T09:40:17.242Z","gate":"reviewer","kind":"counted","id":"c013","run":1,"costUsd":0.29842460000000004,"fixture":false}
+{"ts":"2026-09-29T09:40:49.503Z","gate":"reviewer","kind":"counted","id":"c013","run":2,"costUsd":0.1629894,"fixture":false}
+{"ts":"2026-09-29T09:41:29.247Z","gate":"reviewer","kind":"counted","id":"c013","run":3,"costUsd":0.2415698,"fixture":false}
+{"ts":"2026-09-29T09:42:20.759Z","gate":"reviewer","kind":"counted","id":"c014","run":1,"costUsd":0.2325738,"fixture":false}
+{"ts":"2026-09-29T09:42:59.069Z","gate":"reviewer","kind":"counted","id":"c014","run":2,"costUsd":0.2261334,"fixture":false}
+{"ts":"2026-09-29T09:43:39.020Z","gate":"reviewer","kind":"counted","id":"c014","run":3,"costUsd":0.23980400000000004,"fixture":false}
+{"ts":"2026-09-29T09:44:22.347Z","gate":"reviewer","kind":"counted","id":"c015","run":1,"costUsd":0.22906379999999998,"fixture":false}
+{"ts":"2026-09-29T09:45:00.543Z","gate":"reviewer","kind":"counted","id":"c015","run":2,"costUsd":0.2596908,"fixture":false}
+{"ts":"2026-09-29T09:45:39.034Z","gate":"reviewer","kind":"counted","id":"c015","run":3,"costUsd":0.3015996,"fixture":false}
+{"ts":"2026-09-29T09:46:18.213Z","gate":"reviewer","kind":"counted","id":"c016","run":1,"costUsd":0.22125039999999999,"fixture":false}
+{"ts":"2026-09-29T09:46:53.359Z","gate":"reviewer","kind":"counted","id":"c016","run":2,"costUsd":0.222404,"fixture":false}
+{"ts":"2026-09-29T09:47:25.260Z","gate":"reviewer","kind":"counted","id":"c016","run":3,"costUsd":0.22368899999999997,"fixture":false}
+{"ts":"2026-09-29T09:48:04.653Z","gate":"reviewer","kind":"counted","id":"c017","run":1,"costUsd":0.21998819999999997,"fixture":false}
+{"ts":"2026-09-29T09:48:40.533Z","gate":"reviewer","kind":"counted","id":"c017","run":2,"costUsd":0.21602600000000002,"fixture":false}
+{"ts":"2026-09-29T09:49:14.928Z","gate":"reviewer","kind":"counted","id":"c017","run":3,"costUsd":0.213197,"fixture":false}
+{"ts":"2026-09-29T09:49:50.725Z","gate":"reviewer","kind":"counted","id":"c018","run":1,"costUsd":0.21816780000000002,"fixture":false}
+{"ts":"2026-09-29T09:50:30.926Z","gate":"reviewer","kind":"counted","id":"c018","run":2,"costUsd":0.18693279999999995,"fixture":false}
+{"ts":"2026-09-29T09:51:19.978Z","gate":"reviewer","kind":"counted","id":"c018","run":3,"costUsd":0.22557280000000002,"fixture":false}
+{"ts":"2026-09-29T09:51:49.251Z","gate":"reviewer","kind":"counted","id":"c019","run":1,"costUsd":0.1474518,"fixture":false}
+{"ts":"2026-09-29T09:52:23.339Z","gate":"reviewer","kind":"counted","id":"c019","run":2,"costUsd":0.198017,"fixture":false}
+{"ts":"2026-09-29T09:53:01.418Z","gate":"reviewer","kind":"counted","id":"c019","run":3,"costUsd":0.21598800000000004,"fixture":false}
+{"ts":"2026-09-29T09:53:42.443Z","gate":"reviewer","kind":"counted","id":"c020","run":1,"costUsd":0.2050198,"fixture":false}
+{"ts":"2026-09-29T09:54:27.890Z","gate":"reviewer","kind":"counted","id":"c020","run":2,"costUsd":0.267892,"fixture":false}
+{"ts":"2026-09-29T09:55:10.414Z","gate":"reviewer","kind":"counted","id":"c020","run":3,"costUsd":0.255168,"fixture":false}
+{"ts":"2026-09-29T09:55:51.946Z","gate":"reviewer","kind":"counted","id":"c021","run":1,"costUsd":0.2250646,"fixture":false}
+{"ts":"2026-09-29T09:56:30.113Z","gate":"reviewer","kind":"counted","id":"c021","run":2,"costUsd":0.2233808,"fixture":false}
+{"ts":"2026-09-29T09:57:05.905Z","gate":"reviewer","kind":"counted","id":"c021","run":3,"costUsd":0.14069140000000002,"fixture":false}
+{"ts":"2026-09-29T09:57:44.365Z","gate":"reviewer","kind":"counted","id":"c022","run":1,"costUsd":0.2292442,"fixture":false}
+{"ts":"2026-09-29T09:58:12.204Z","gate":"reviewer","kind":"counted","id":"c022","run":2,"costUsd":0.1430748,"fixture":false}
+{"ts":"2026-09-29T09:58:40.084Z","gate":"reviewer","kind":"counted","id":"c022","run":3,"costUsd":0.1724568,"fixture":false}
+{"ts":"2026-09-29T09:59:36.440Z","gate":"reviewer","kind":"counted","id":"c023","run":1,"costUsd":0.29137900000000005,"fixture":false}
+{"ts":"2026-09-29T10:00:16.381Z","gate":"reviewer","kind":"counted","id":"c023","run":2,"costUsd":0.21862519999999996,"fixture":false}
+{"ts":"2026-09-29T10:00:45.515Z","gate":"reviewer","kind":"counted","id":"c023","run":3,"costUsd":0.18947039999999998,"fixture":false}
+{"ts":"2026-09-29T10:01:26.078Z","gate":"reviewer","kind":"counted","id":"c024","run":1,"costUsd":0.2043464,"fixture":false}
+{"ts":"2026-09-29T10:01:47.945Z","gate":"reviewer","kind":"counted","id":"c024","run":2,"costUsd":0.1450802,"fixture":false}
+{"ts":"2026-09-29T10:02:21.236Z","gate":"reviewer","kind":"counted","id":"c024","run":3,"costUsd":0.21124799999999996,"fixture":false}
+{"ts":"2026-09-29T10:02:51.003Z","gate":"reviewer","kind":"counted","id":"c025","run":1,"costUsd":0.1897868,"fixture":false}
+{"ts":"2026-09-29T10:03:23.337Z","gate":"reviewer","kind":"counted","id":"c025","run":2,"costUsd":0.21137340000000002,"fixture":false}
+{"ts":"2026-09-29T10:04:06.124Z","gate":"reviewer","kind":"counted","id":"c025","run":3,"costUsd":0.214079,"fixture":false}
+{"ts":"2026-09-29T10:04:29.016Z","gate":"reviewer","kind":"counted","id":"c026","run":1,"costUsd":0.14690340000000002,"fixture":false}
+{"ts":"2026-09-29T10:05:01.393Z","gate":"reviewer","kind":"counted","id":"c026","run":2,"costUsd":0.20839760000000002,"fixture":false}
+{"ts":"2026-09-29T10:05:22.613Z","gate":"reviewer","kind":"counted","id":"c026","run":3,"costUsd":0.15205839999999998,"fixture":false}
+{"ts":"2026-09-29T10:05:59.386Z","gate":"reviewer","kind":"counted","id":"c027","run":1,"costUsd":0.23502240000000002,"fixture":false}
+{"ts":"2026-09-29T10:06:48.627Z","gate":"reviewer","kind":"counted","id":"c027","run":2,"costUsd":0.24341259999999998,"fixture":false}
+{"ts":"2026-09-29T10:07:17.188Z","gate":"reviewer","kind":"counted","id":"c027","run":3,"costUsd":0.141386,"fixture":false}
+{"ts":"2026-09-29T10:07:54.453Z","gate":"reviewer","kind":"counted","id":"c028","run":1,"costUsd":0.1722424,"fixture":false}
+{"ts":"2026-09-29T10:08:39.761Z","gate":"reviewer","kind":"counted","id":"c028","run":2,"costUsd":0.21985840000000004,"fixture":false}
+{"ts":"2026-09-29T10:10:02.566Z","gate":"reviewer","kind":"counted","id":"c028","run":3,"costUsd":0.2513404,"fixture":false}
+{"ts":"2026-09-29T10:11:11.706Z","gate":"reviewer","kind":"counted","id":"c029","run":1,"costUsd":0.2018238,"fixture":false}
+{"ts":"2026-09-29T10:12:45.493Z","gate":"reviewer","kind":"counted","id":"c029","run":2,"costUsd":0.17613079999999998,"fixture":false}
+{"ts":"2026-09-29T10:14:08.395Z","gate":"reviewer","kind":"counted","id":"c029","run":3,"costUsd":0.2090296,"fixture":false}
+{"ts":"2026-09-29T10:15:25.741Z","gate":"reviewer","kind":"counted","id":"c030","run":1,"costUsd":0.2152528,"fixture":false}
+{"ts":"2026-09-29T10:16:23.831Z","gate":"reviewer","kind":"counted","id":"c030","run":2,"costUsd":0.1457588,"fixture":false}
+{"ts":"2026-09-29T10:17:58.858Z","gate":"reviewer","kind":"counted","id":"c030","run":3,"costUsd":0.22856920000000006,"fixture":false}
+{"ts":"2026-09-29T10:18:19.622Z","gate":"reviewer","kind":"counted","id":"c031","run":1,"costUsd":0.1440472,"fixture":false}
+{"ts":"2026-09-29T10:19:01.301Z","gate":"reviewer","kind":"counted","id":"c031","run":2,"costUsd":0.2300026,"fixture":false}
+{"ts":"2026-09-29T10:19:28.902Z","gate":"reviewer","kind":"counted","id":"c031","run":3,"costUsd":0.1634186,"fixture":false}
+{"ts":"2026-09-29T10:19:59.388Z","gate":"reviewer","kind":"counted","id":"c032","run":1,"costUsd":0.1604454,"fixture":false}
+{"ts":"2026-09-29T10:20:30.274Z","gate":"reviewer","kind":"counted","id":"c032","run":2,"costUsd":0.1652526,"fixture":false}
+{"ts":"2026-09-29T10:21:02.288Z","gate":"reviewer","kind":"counted","id":"c032","run":3,"costUsd":0.1456512,"fixture":false}
+{"ts":"2026-09-29T10:21:25.394Z","gate":"reviewer","kind":"counted","id":"c033","run":1,"costUsd":0.158646,"fixture":false}
+{"ts":"2026-09-29T10:21:49.948Z","gate":"reviewer","kind":"counted","id":"c033","run":2,"costUsd":0.1422862,"fixture":false}
+{"ts":"2026-09-29T10:22:34.263Z","gate":"reviewer","kind":"counted","id":"c033","run":3,"costUsd":0.2637102,"fixture":false}
+{"ts":"2026-09-29T10:23:03.194Z","gate":"reviewer","kind":"counted","id":"c034","run":1,"costUsd":0.206293,"fixture":false}
+{"ts":"2026-09-29T10:23:42.101Z","gate":"reviewer","kind":"counted","id":"c034","run":2,"costUsd":0.22748800000000002,"fixture":false}
+{"ts":"2026-09-29T10:24:14.810Z","gate":"reviewer","kind":"counted","id":"c034","run":3,"costUsd":0.22137840000000003,"fixture":false}
+{"ts":"2026-09-29T10:24:54.681Z","gate":"reviewer","kind":"counted","id":"c035","run":1,"costUsd":0.2587824,"fixture":false}
+{"ts":"2026-09-29T10:25:39.061Z","gate":"reviewer","kind":"counted","id":"c035","run":2,"costUsd":0.242395,"fixture":false}
+{"ts":"2026-09-29T10:26:01.284Z","gate":"reviewer","kind":"counted","id":"c035","run":3,"costUsd":0.1593792,"fixture":false}
+{"ts":"2026-09-29T10:26:38.285Z","gate":"reviewer","kind":"counted","id":"c036","run":1,"costUsd":0.2280608,"fixture":false}
+{"ts":"2026-09-29T10:27:04.343Z","gate":"reviewer","kind":"counted","id":"c036","run":2,"costUsd":0.1900072,"fixture":false}
+{"ts":"2026-09-29T10:27:29.866Z","gate":"reviewer","kind":"counted","id":"c036","run":3,"costUsd":0.1819646,"fixture":false}
+{"ts":"2026-09-29T10:28:14.566Z","gate":"reviewer","kind":"counted","id":"c037","run":1,"costUsd":0.233978,"fixture":false}
+{"ts":"2026-09-29T10:28:35.608Z","gate":"reviewer","kind":"counted","id":"c037","run":2,"costUsd":0.1466308,"fixture":false}
+{"ts":"2026-09-29T10:29:18.853Z","gate":"reviewer","kind":"counted","id":"c037","run":3,"costUsd":0.2402782,"fixture":false}
+{"ts":"2026-09-29T10:29:48.365Z","gate":"reviewer","kind":"counted","id":"c038","run":1,"costUsd":0.1772878,"fixture":false}
+{"ts":"2026-09-29T10:30:20.028Z","gate":"reviewer","kind":"counted","id":"c038","run":2,"costUsd":0.2077966,"fixture":false}
+{"ts":"2026-09-29T10:31:09.146Z","gate":"reviewer","kind":"counted","id":"c038","run":3,"costUsd":0.248768,"fixture":false}
+{"ts":"2026-09-29T10:31:45.353Z","gate":"reviewer","kind":"counted","id":"c039","run":1,"costUsd":0.22928140000000002,"fixture":false}
+{"ts":"2026-09-29T10:32:24.799Z","gate":"reviewer","kind":"counted","id":"c039","run":2,"costUsd":0.236366,"fixture":false}
+{"ts":"2026-09-29T10:33:09.640Z","gate":"reviewer","kind":"counted","id":"c039","run":3,"costUsd":0.20877460000000003,"fixture":false}
+{"ts":"2026-09-29T10:33:43.195Z","gate":"reviewer","kind":"counted","id":"c040","run":1,"costUsd":0.2225412,"fixture":false}
+{"ts":"2026-09-29T10:34:13.954Z","gate":"reviewer","kind":"counted","id":"c040","run":2,"costUsd":0.21781540000000002,"fixture":false}
+{"ts":"2026-09-29T10:34:42.597Z","gate":"reviewer","kind":"counted","id":"c040","run":3,"costUsd":0.20785299999999998,"fixture":false}
+{"ts":"2026-09-29T10:35:06.403Z","gate":"reviewer","kind":"counted","id":"c041","run":1,"costUsd":0.17548060000000001,"fixture":false}
+{"ts":"2026-09-29T10:35:27.107Z","gate":"reviewer","kind":"counted","id":"c041","run":2,"costUsd":0.14168920000000002,"fixture":false}
+{"ts":"2026-09-29T10:36:07.238Z","gate":"reviewer","kind":"counted","id":"c041","run":3,"costUsd":0.23490560000000002,"fixture":false}
+{"ts":"2026-09-29T10:36:46.911Z","gate":"reviewer","kind":"counted","id":"c042","run":1,"costUsd":0.2363962,"fixture":false}
+{"ts":"2026-09-29T10:37:18.261Z","gate":"reviewer","kind":"counted","id":"c042","run":2,"costUsd":0.2214892,"fixture":false}
+{"ts":"2026-09-29T10:37:48.353Z","gate":"reviewer","kind":"counted","id":"c042","run":3,"costUsd":0.21242960000000002,"fixture":false}
+{"ts":"2026-09-29T10:38:22.590Z","gate":"reviewer","kind":"counted","id":"c043","run":1,"costUsd":0.23371740000000002,"fixture":false}
+{"ts":"2026-09-29T10:38:49.680Z","gate":"reviewer","kind":"counted","id":"c043","run":2,"costUsd":0.1805638,"fixture":false}
+{"ts":"2026-09-29T10:39:27.386Z","gate":"reviewer","kind":"counted","id":"c043","run":3,"costUsd":0.242395,"fixture":false}
+{"ts":"2026-09-29T10:39:58.038Z","gate":"reviewer","kind":"counted","id":"c044","run":1,"costUsd":0.1408074,"fixture":false}
+{"ts":"2026-09-29T10:40:34.902Z","gate":"reviewer","kind":"counted","id":"c044","run":2,"costUsd":0.2233168,"fixture":false}
+{"ts":"2026-09-29T10:41:16.911Z","gate":"reviewer","kind":"counted","id":"c044","run":3,"costUsd":0.22443980000000002,"fixture":false}
+{"ts":"2026-09-29T10:41:41.495Z","gate":"reviewer","kind":"counted","id":"c045","run":1,"costUsd":0.152831,"fixture":false}
+{"ts":"2026-09-29T10:42:12.518Z","gate":"reviewer","kind":"counted","id":"c045","run":2,"costUsd":0.21569760000000002,"fixture":false}
+{"ts":"2026-09-29T10:42:44.623Z","gate":"reviewer","kind":"counted","id":"c045","run":3,"costUsd":0.20305680000000004,"fixture":false}
+{"ts":"2026-09-29T10:43:03.986Z","gate":"reviewer","kind":"counted","id":"c046","run":1,"costUsd":0.1434776,"fixture":false}
+{"ts":"2026-09-29T10:43:36.217Z","gate":"reviewer","kind":"counted","id":"c046","run":2,"costUsd":0.162135,"fixture":false}
+{"ts":"2026-09-29T10:44:00.370Z","gate":"reviewer","kind":"counted","id":"c046","run":3,"costUsd":0.16110180000000002,"fixture":false}
+{"ts":"2026-09-29T10:46:14.896Z","gate":"reviewer","kind":"counted","id":"c047","run":1,"costUsd":0.1498522,"fixture":false}
+{"ts":"2026-09-29T10:49:09.234Z","gate":"reviewer","kind":"counted","id":"c047","run":2,"costUsd":0.258071,"fixture":false}
+{"ts":"2026-09-29T10:50:01.629Z","gate":"reviewer","kind":"counted","id":"c047","run":3,"costUsd":0.22353220000000001,"fixture":false}
+{"ts":"2026-09-29T10:50:52.587Z","gate":"reviewer","kind":"counted","id":"c048","run":1,"costUsd":0.28646720000000003,"fixture":false}
+{"ts":"2026-09-29T10:52:04.061Z","gate":"reviewer","kind":"counted","id":"c048","run":2,"costUsd":0.322114,"fixture":false}
+{"ts":"2026-09-29T10:53:36.004Z","gate":"reviewer","kind":"counted","id":"c048","run":3,"costUsd":0.2755946,"fixture":false}
+{"ts":"2026-09-29T10:54:42.499Z","gate":"reviewer","kind":"counted","id":"c049","run":1,"costUsd":0.15923959999999998,"fixture":false}
+{"ts":"2026-09-29T10:55:23.920Z","gate":"reviewer","kind":"counted","id":"c049","run":2,"costUsd":0.2118236,"fixture":false}
+{"ts":"2026-09-29T10:55:48.137Z","gate":"reviewer","kind":"counted","id":"c049","run":3,"costUsd":0.16532220000000003,"fixture":false}
+{"ts":"2026-09-29T10:56:30.863Z","gate":"reviewer","kind":"counted","id":"c050","run":1,"costUsd":0.2554004,"fixture":false}
+{"ts":"2026-09-29T10:56:52.557Z","gate":"reviewer","kind":"counted","id":"c050","run":2,"costUsd":0.1446224,"fixture":false}
+{"ts":"2026-09-29T10:57:37.407Z","gate":"reviewer","kind":"counted","id":"c050","run":3,"costUsd":0.25117700000000004,"fixture":false}
+{"ts":"2026-09-29T10:58:17.259Z","gate":"reviewer","kind":"counted","id":"c051","run":1,"costUsd":0.2309074,"fixture":false}
+{"ts":"2026-09-29T10:59:06.812Z","gate":"reviewer","kind":"counted","id":"c051","run":2,"costUsd":0.258753,"fixture":false}
+{"ts":"2026-09-29T11:00:29.815Z","gate":"reviewer","kind":"counted","id":"c051","run":3,"costUsd":0.2908434,"fixture":false}
+{"ts":"2026-09-29T11:01:08.983Z","gate":"reviewer","kind":"counted","id":"c052","run":1,"costUsd":0.153047,"fixture":false}
+{"ts":"2026-09-29T11:01:51.604Z","gate":"reviewer","kind":"counted","id":"c052","run":2,"costUsd":0.2030944,"fixture":false}
+{"ts":"2026-09-29T11:02:29.034Z","gate":"reviewer","kind":"counted","id":"c052","run":3,"costUsd":0.222736,"fixture":false}
+{"ts":"2026-09-29T11:03:05.809Z","gate":"reviewer","kind":"counted","id":"c053","run":1,"costUsd":0.24470300000000003,"fixture":false}
+{"ts":"2026-09-29T11:04:29.719Z","gate":"reviewer","kind":"counted","id":"c053","run":2,"costUsd":0.2476354,"fixture":false}
+{"ts":"2026-09-29T11:04:50.952Z","gate":"reviewer","kind":"counted","id":"c053","run":3,"costUsd":0.15202859999999999,"fixture":false}
+{"ts":"2026-09-29T11:05:19.469Z","gate":"reviewer","kind":"counted","id":"c054","run":1,"costUsd":0.15366559999999999,"fixture":false}
+{"ts":"2026-09-29T11:06:19.447Z","gate":"reviewer","kind":"counted","id":"c054","run":2,"costUsd":0.36728759999999994,"fixture":false}
+{"ts":"2026-09-29T11:07:37.119Z","gate":"reviewer","kind":"counted","id":"c054","run":3,"costUsd":0.33784780000000003,"fixture":false}
+{"ts":"2026-09-29T11:08:04.125Z","gate":"reviewer","kind":"counted","id":"c055","run":1,"costUsd":0.1399262,"fixture":false}
+{"ts":"2026-09-29T11:08:40.749Z","gate":"reviewer","kind":"counted","id":"c055","run":2,"costUsd":0.22366819999999998,"fixture":false}
+{"ts":"2026-09-29T11:09:19.675Z","gate":"reviewer","kind":"counted","id":"c055","run":3,"costUsd":0.2110228,"fixture":false}
+{"ts":"2026-09-29T11:09:48.831Z","gate":"reviewer","kind":"counted","id":"c056","run":1,"costUsd":0.1417698,"fixture":false}
+{"ts":"2026-09-29T11:10:40.254Z","gate":"reviewer","kind":"counted","id":"c056","run":2,"costUsd":0.2375828,"fixture":false}
+{"ts":"2026-09-29T11:11:24.702Z","gate":"reviewer","kind":"counted","id":"c056","run":3,"costUsd":0.1718758,"fixture":false}
+{"ts":"2026-09-29T11:12:18.112Z","gate":"reviewer","kind":"counted","id":"c057","run":1,"costUsd":0.2209688,"fixture":false}
+{"ts":"2026-09-29T11:13:23.476Z","gate":"reviewer","kind":"counted","id":"c057","run":2,"costUsd":0.2314702,"fixture":false}
+{"ts":"2026-09-29T11:14:27.607Z","gate":"reviewer","kind":"counted","id":"c057","run":3,"costUsd":0.24393179999999995,"fixture":false}
+{"ts":"2026-09-29T11:16:03.072Z","gate":"reviewer","kind":"counted","id":"c058","run":1,"costUsd":0.227985,"fixture":false}
+{"ts":"2026-09-29T11:17:11.803Z","gate":"reviewer","kind":"counted","id":"c058","run":2,"costUsd":0.28577600000000003,"fixture":false}
+{"ts":"2026-09-29T11:18:29.334Z","gate":"reviewer","kind":"counted","id":"c058","run":3,"costUsd":0.303842,"fixture":false}
+{"ts":"2026-09-29T11:19:20.112Z","gate":"reviewer","kind":"counted","id":"c059","run":1,"costUsd":0.2305854,"fixture":false}
+{"ts":"2026-09-29T11:20:07.802Z","gate":"reviewer","kind":"counted","id":"c059","run":2,"costUsd":0.2277648,"fixture":false}
+{"ts":"2026-09-29T11:20:47.939Z","gate":"reviewer","kind":"counted","id":"c059","run":3,"costUsd":0.15251180000000003,"fixture":false}
+{"ts":"2026-09-29T11:22:06.195Z","gate":"reviewer","kind":"counted","id":"c060","run":1,"costUsd":0.27033680000000004,"fixture":false}
+{"ts":"2026-09-29T11:23:45.114Z","gate":"reviewer","kind":"counted","id":"c060","run":2,"costUsd":0.2397822,"fixture":false}
+{"ts":"2026-09-29T11:26:01.261Z","gate":"reviewer","kind":"counted","id":"c060","run":3,"costUsd":0.2332574,"fixture":false}
