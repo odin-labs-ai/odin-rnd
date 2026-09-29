@@ -1,0 +1,44 @@
+{"ts":"2026-09-28T12:12:59.795Z","gate":"reviewer","kind":"isolation-probe","id":"isolation-probe","run":1,"costUsd":0.1950036,"fixture":false}
+{"ts": "2026-09-28T12:13:29.245Z", "gate": "jev", "kind": "practice", "id": "p01", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-28T12:13:29.770Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-28T12:13:30.666Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
+{"ts":"2026-09-28T12:22:34.123Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.1726772,"fixture":false}
+{"ts":"2026-09-28T12:23:18.097Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.17052119999999998,"fixture":false}
+{"ts":"2026-09-28T12:24:08.555Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.1687712,"fixture":false}
+{"ts":"2026-09-28T12:27:06.390Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.1754344,"fixture":false}
+{"ts":"2026-09-28T13:20:29.919Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.22526700000000002,"fixture":false}
+{"ts":"2026-09-28T13:26:00.388Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.2288048,"fixture":false}
+{"ts":"2026-09-28T13:26:56.665Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.2325892,"fixture":false}
+{"ts":"2026-09-28T14:53:39.522Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.3472386,"fixture":false}
+{"ts":"2026-09-28T14:55:41.415Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.255868,"fixture":false}
+{"ts":"2026-09-28T15:43:15.360Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.4200926,"fixture":false}
+{"ts":"2026-09-28T15:46:32.173Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.3389342000000001,"fixture":false}
+{"ts":"2026-09-28T15:48:21.202Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.33773139999999996,"fixture":false}
+{"ts":"2026-09-28T17:38:10.894Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.45851239999999993,"fixture":false}
+{"ts":"2026-09-28T17:39:17.414Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.353702,"fixture":false}
+{"ts":"2026-09-28T17:56:58.896Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.37087459999999994,"fixture":false}
+{"ts":"2026-09-28T18:56:33.070Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.3872224,"fixture":false}
+{"ts": "2026-09-28T19:04:44.371Z", "gate": "jev", "kind": "practice", "id": "p01", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-28T19:04:45.195Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-28T19:04:45.590Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
+{"ts":"2026-09-28T19:05:53.357Z","gate":"reviewer","kind":"practice","id":"p01","run":1,"costUsd":0.23674699999999999,"fixture":false}
+{"ts":"2026-09-28T19:06:11.744Z","gate":"reviewer","kind":"practice","id":"p01","run":2,"costUsd":0.1391916,"fixture":false}
+{"ts":"2026-09-28T19:06:59.349Z","gate":"reviewer","kind":"practice","id":"p01","run":3,"costUsd":0.25127639999999996,"fixture":false}
+{"ts":"2026-09-28T19:07:29.779Z","gate":"reviewer","kind":"practice","id":"p02","run":1,"costUsd":0.21130119999999997,"fixture":false}
+{"ts":"2026-09-28T19:08:04.400Z","gate":"reviewer","kind":"practice","id":"p02","run":2,"costUsd":0.215347,"fixture":false}
+{"ts":"2026-09-28T19:08:40.272Z","gate":"reviewer","kind":"practice","id":"p02","run":3,"costUsd":0.21051679999999998,"fixture":false}
+{"ts":"2026-09-28T19:09:14.102Z","gate":"reviewer","kind":"practice","id":"p03","run":1,"costUsd":0.2070846,"fixture":false}
+{"ts":"2026-09-28T19:10:00.773Z","gate":"reviewer","kind":"practice","id":"p03","run":2,"costUsd":0.21966660000000002,"fixture":false}
+{"ts":"2026-09-28T19:10:26.798Z","gate":"reviewer","kind":"practice","id":"p03","run":3,"costUsd":0.164958,"fixture":false}
+{"ts":"2026-09-28T19:22:24.856Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.4260008,"fixture":false}
+{"ts":"2026-09-28T19:27:58.317Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.3607016,"fixture":false}
+{"ts": "2026-09-29T02:04:37.335Z", "gate": "jev", "kind": "practice", "id": "p01", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-29T02:04:37.809Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-29T02:04:38.347Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
+{"ts": "2026-09-29T02:06:35.053Z", "gate": "jev", "kind": "practice", "id": "p01", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-29T02:06:35.512Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-29T02:06:35.937Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
+{"ts": "2026-09-29T02:11:53.531Z", "gate": "jev", "kind": "practice", "id": "p01", "run": 1, "costUsd": 0.00016456, "fixture": false}
+{"ts": "2026-09-29T02:11:54.559Z", "gate": "jev", "kind": "practice", "id": "p02", "run": 1, "costUsd": 0.00015875200000000001, "fixture": false}
+{"ts": "2026-09-29T02:11:54.940Z", "gate": "jev", "kind": "practice", "id": "p03", "run": 1, "costUsd": 0.000155848, "fixture": false}
+{"ts":"2026-09-29T02:14:18.209Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.459244,"fixture":false}

@@ -320,6 +320,174 @@ node experiments/jev-gate/gate-input.mjs --check
 `LAYA_TOKENIZER_PYTHON` and `LAYA_CACHE` override the interpreter and the cache location. Without
 the tokenizer, the inputs test checks the recorded counts and skips only the rebuild.
 
+## Gate runners and results (bundle 3)
+
+Every runner first runs `runner-guard.mjs --check`, which refuses unless:
+- `preregistration.json` is the published file (sha `30bdcf07…`, hard-coded);
+- `amendment-01.json`, and for a counted run `amendment-02.json`, are the published amendments;
+- every file either record pins still matches its hash, and the runner and results code matches `runners.sha256`;
+- the not-before time has passed — amendment 01's (`2026-09-28T12:01:15Z`) for a practice run, amendment 02's
+  (`2026-09-28T18:36:49Z`) for a counted run.
+
+The two amendment shas and their not-before times are constants in `runner-guard.mjs`, frozen by the freeze
+commit after each amendment merged; they were `null`, and every runner refused, until then. All four are now set.
+
+The answer-key pre-flight scans the temp roots the operator can read for a byte-for-byte copy of an answer file,
+records the root-owned roots it skips (covered by the reviewer sandbox's denyRead), and refuses on any copy, a
+real scan error, or no scannable root. It is done **once, before the run, not per runner**: the fleet's temp had
+grown so large that a per-runner scan took over an hour, past the runner's timeout, so a counted run could never
+start (bundle 4). Instead the operator runs `runner-guard.mjs --preflight --mode counted --write-record <path>`
+once — the full scan, no timeout — which writes a **self-hashed** pre-flight **record** (ok, the roots scanned and
+skipped, copies, vanished, permissionSkipped, durationMs, startedAt/endedAt, the `runners.sha256` value, the git
+HEAD, and its own sha256 over all of the above). The self-hash is an integrity and freshness check against
+mistakes, **not a signature**: the operator is trusted, and the reviewer runs in a sandbox that can neither reach
+outside its workspace nor read the temp roots, so a hand-forged record is outside the threat model. The record's
+paths are scrubbed (the per-user temp dir to `<tmp>`, home to `~`) so it can be committed with the results.
+
+Each counted runner then **requires** that record (`--preflight-record <path>`) and, at RUN time, refuses unless it
+is a counted `answer-key-preflight`, `ok` is true with an **empty copies list**, no override was used, its scrubbed
+roots equal the current default set, its `runners.sha256` and HEAD equal the current ones, and its `endedAt` is
+after amendment 02's not-before and within **2 h** of the run. Each runner then stamps its run-time HEAD, the
+scanned roots, and the record's sha and endedAt into its own run record, and the record itself is **committed with
+the results**. `computeResults` re-checks the committed record against **what the run recorded** — its self-hash,
+kind/mode/ok/no-override/empty-copies, its `runners.sha256` against the run's own code pins, its HEAD and roots
+against the run's stamps, and `endedAt` within 2 h before that gate's first call — and never against the scorer's
+live git HEAD, temp roots or a path on disk. That is what lets a committed run be re-scored after later commits, in
+a fresh checkout and under any `TMPDIR` (refute r5). A **practice** run still scans inline
+(`JEV_GATE_PREFLIGHT_ROOTS` may override its roots; refused in counted). The scan is never part of `--check`, so
+`--check` stays fast.
+
+The pre-flight is a scan **at one instant, before the run**: neither a copy created *during* the run nor one
+stranded in the **up-to-2 h gap between the scan and the run's first call** (for example by a `pnpm test`
+interrupted with SIGKILL after the record was written) is caught by it — the reviewer sandbox's denyRead of the
+temp roots is the boundary for those (that was true of the per-loop scan too), and the 2 h window keeps that gap
+short. On this machine the counted scan walks a busy `/private/tmp` and the per-user temp dir and can take **tens
+of minutes** (about 10–15 min at load 14–39, longer as the fleet's temp grows); with no timeout on the one
+record-writing scan, it always completes. A practice scan over the **default** roots would hit that same size and
+so exceed `run_gates.py`'s 600 s practice ceiling; a practice run therefore uses the recorded
+`JEV_GATE_PREFLIGHT_ROOTS` override at a small clean directory, which scans well inside the ceiling.
+
+| File | What it runs |
+|---|---|
+| `run_gates.py --gate jev\|laya` | Jev and Laya. It imports the EXP 004 call and MLX code (`../laya-vs-jev/run.py`, `laya_mlx.py`, `laya_inputs.py`) and `laya_count.py`, and asserts that their pins equal the pre-registered ones. It keeps Jev's `Date` header, never the key or any other header. An input that would be cut is refused, never cut. |
+| `run_reviewer.mjs` | nina 0.34.0's reviewer, k runs per change. It follows the REVISION-5.3 order: the base app, then nina extracted from the pinned tarball (integrity checked), `init`/`compose` with the amendment's argv, `.gitignore`, `rules.txt`, one `base` commit under the pinned identity (its sha asserted against the amendment), then the change applied and left uncommitted. After that it runs `claude -p` with the pre-registered flags, billing keys stripped as `nina eval` strips them. `--probe isolation` runs the canary probe. |
+| `results.mjs` | The run-record schema, every pre-registered metric (Wilson and paired Newcombe through `metrics.mjs`), the five criteria, and the spotlight verdict, whose thresholds are read from the amendment. `assertPublishable` refuses any record carrying the FIXTURE banner. |
+
+The runners share the spend ledger, `spend-ledger.jsonl`, one line per paid call, and its stop rule; a counted
+run appends to that committed ledger, never a fresh file, so its cap continues from the recorded total. The
+reviewer runner also applies the hang-stop, and a counted run covers the whole corpus in one invocation so its
+counters span the whole run. Both write their record after every call, with `partial` set to `in-progress` until
+the loop finishes and `null` only then; `results.mjs` also treats a run that does not cover the corpus (the
+reviewer: exactly k runs per item) as partial, so a crash or a truncated run gives no criterion a state.
+
+`fixtures/` holds a FIXTURE amendment and FIXTURE pins, used by tests only; `--pins` switches them on
+and marks everything written with the FIXTURE banner. It also holds a fake `claude`
+(`fixtures/fake-claude.mjs`) and the committed outputs of each runner against fakes
+(`fixtures/gate-runs/`). A fixture run refuses unless `claude` on PATH resolves to that fake, and a
+counted run refuses if it does. This rule exists because a fake that was not executable once let a
+smoke run fall through to the real client (mission ledger, 2026-09-28).
+
+```sh
+pnpm test                                                    # schema, metrics, guard, reviewer runner (fake claude)
+experiments/jev-gate/.venv/bin/python -m unittest experiments/jev-gate/test_run_gates.py   # fake Jev server, fake Laya model
+```
+
+The fakes prove the mechanics: staging, the pinned argv, parsing, failure classes, the spend and
+hang stops, and the fact that the tool restriction is passed and recorded. Only a live run can prove:
+- that Claude Code denies WebFetch, non-git Bash, and reads outside the repository under these flags (the isolation probe);
+- what the hooks do inside a real run;
+- that the MLX port answers these inputs.
+
+## Dry run (bundle 3 WO-04), 28–29 Sep 2026
+
+Amendment 02 (the reviewer fence) merged on odin-rnd main at 2026-09-28T18:36:49Z (#14). The runner constants
+are frozen to it, so a counted gate run now passes the guard. The dry run ran on practice rows only, in practice
+mode. `practice/practice-rows.json` holds three rows, p01 to p03, written by `practice/author-practice.mjs`;
+they are not in the corpus, not hashed into it, and never scored. No corpus id appears in any dry-run record, and
+every record validates against the run schema with `fixture: false` and carries the code hashes of the runner
+that made it.
+
+**Which runner made which record.** The dry-run records were re-made on the committed runner as the refute rounds
+corrected the code:
+- `dry-run/postmerge-matrix.json` — the post-merge isolation matrix probe, `run_reviewer.mjs 0e568a1e…`.
+- `dry-run/jev-practice-frozen.json`, `dry-run/laya-practice-frozen.json` — Jev and Laya on the practice rows,
+  `run_gates.py 7fc9e702…`. Amendment 02's pinned `dry-run/jev-practice.json` and `laya-practice.json` (the
+  12:13Z records, made by an earlier `run_gates.py` before amendment 02) are left byte-for-byte unchanged.
+- `dry-run/reviewer-practice.json` — the k=3 reviewer practice run, made during freeze-2 on the freeze commit's
+  `run_reviewer.mjs 8232fcc…`; a practice record (never scored), left as made.
+
+The bundle-3 refute round 2 (`d24a6b4`) re-pinned the runners again (the reviewer's `amendment02Sha256` field, the
+pre-flight, the rehearsal mode) under a `$0`, no-paid-call constraint, so these dry-run records were **not** re-run:
+their `code` hashes are from the previous commit, and the round-2 changes do not alter what a Jev, Laya or isolation
+matrix run measures (the reviewer command, fence settings and gate calls are unchanged).
+
+**Post-merge isolation matrix probe (pinned in amendment 02's not-before), practice mode.** The full v5 matrix
+(R1–R31 with R8B, R8C, R19B; controls C1–C8) has run several times as the runner was corrected, and every run
+passed: all 33 escape rows held, all 8 controls worked, no canary leaked, nina client `2.1.280` pinned. The
+published record is the fix round's single run (`0e568a1e`, $0.4592440), which overwrote freeze-2's third at the
+same output path. The overwritten runs are freeze-2's three (`8232fcc` $0.3872224, `e1e8d735` $0.4260008,
+`a3e40f0b` $0.3607016); their ledger lines remain as evidence, and each passed.
+
+| Gate | Practice rows | Result | Cost |
+|---|---|---|---|
+| Jev (`jev-1.13.0` served) | p01, p02, p03 | ACCEPT (p 0.04), REJECT (0.97), REJECT (0.99); Date header kept, none excluded | $0.00016 per call |
+| Laya (MLX) | p01, p02, p03 | ACCEPT on all three (confidence 0.59–0.63); local | none |
+| nina reviewer (0.34.0, fence5, k=3) | p01, p02, p03 | p01 ACCEPT ×3, p02 REJECT ×3, p03 REJECT ×3; 0 harness failures; every change's 3 runs agree | mean $0.2062, max $0.2513 per run |
+
+These are practice rows written for this dry run; they exercise the runners end to end, not any gate's accuracy.
+The fix round made three Jev practice runs (nine ledger lines, about $0.00144); only the last (`jev-practice-frozen.json`)
+survives. The first was overwritten because its record held an unscrubbed per-user temp path — which is why
+`run_gates.py` now scrubs its records — and the second was overwritten by the re-run after that scrub was re-pinned.
+
+**Spend and projection.** The spend total is what a counted run's guard computes: amendment 02's alreadySpentUsd
+($5.5808946) plus the raw `costUsd` of every ledger line after its merge, summed at full precision and rounded
+once, at the end, to 7 dp — **$9.0720692**. (Rounding once at the end is the rule. The amendment-01 path — its own
+already-rounded baseline plus the earlier lines — lands one unit lower at the 7th decimal because amendment 02
+folded three 9-dp Jev costs into its figure; the guard uses the amendment-02 figure.) The reviewer's spend
+reserve is `max(largest reviewer call, alreadySpentUsd)` = $5.5808946, so the cap trips once spend passes about
+**$94.42** — conservative, but literal to the pre-registration, which was written when that figure was cents.
+
+The full measured run (bundle 4, 60 corpus changes) projects from the dry run's per-call costs:
+- Jev: 60 × $0.00016 = $0.01. Laya: $0.
+- The reviewer: 180 runs (60 × k=3) at the dry run's mean $0.2062 (max $0.2513) → $37.1 (max $45.2), plus one
+  pre-run isolation matrix probe (about $0.4).
+- **Projected full run: about $37.6 at the mean, $45.7 at the largest**, or about **$47–55 including spend so
+  far** — under the $100 cap. A counted run appends to the committed `spend-ledger.jsonl`, so its cap continues
+  from this total, not a fresh file at $5.58.
+
+**Answer-key pre-flight.** The pre-flight scans only the temp roots the operator can read (the user's own T dir,
+`/private/tmp`, the var/tmp roots) and records the root-owned `var/folders` buckets it cannot read as skipped —
+they are covered by the reviewer sandbox's denyRead, so a counted run no longer fails closed on them. It looks for
+the answer files **under their own names** (`labels.json`, `manifest.json`, `corpus.sha256`, `inputs.json`,
+`baselines.json`), matching name and size in one `find` pass (the name test comes before `-type f`, so it stats
+only the handful of files named like an answer file, not the whole tree) and confirming each candidate by sha256.
+A copy saved under a **different** name is **not** detected here; that case rests on Layer 2, the reviewer
+sandbox's denyRead of the temp roots (see Limits). The walk prunes `node_modules`, `.git` and, to skip the bulk
+of the Claude session-scratch tool-output, `find -path '*/claude-*/*/tasks'`. Because `*` also spans `/` in
+`find -path`, this prunes **any** directory named `tasks` that lies below a `claude-*` path component, not only the
+tool-output dirs — so a repository's own `tasks/` **is** pruned when the checkout sits under a `claude-*` temp dir
+(an agent clone in the session-scratch). That over-prune is harmless here: the answer files live under
+`experiments/jev-gate/`, never in a `tasks/` dir, so pruning `tasks/` cannot hide an answer-file copy under its own
+name. A file that vanishes mid-scan (another process deleting a temp entry, `ENOENT`) and an
+unreadable subtree strictly inside a scanned root are benign — counted as `vanished` / `permissionSkipped` in the
+record, not a scan failure. But a scan that did **not finish** — `find` killed by a signal, a non-zero exit with
+no benign line to explain it, an `fts_*` traversal abort, or an error about a scanned root itself — fails closed
+and refuses, so an unfinished scan is never mistaken for a clean one. The scan's duration is recorded. It refuses
+while any answer-file copy is found, or when no root is scannable. `JEV_GATE_PREFLIGHT_ROOTS` is
+refused in a counted run and, in a practice run, must name existing dirs; the roots used are recorded, never a
+silent bypass. The frozen Jev/Laya dry-run records used a practice override pointing at a clean directory
+(recorded), so the practice pre-flight scanned only that dir. For a counted run the operator now runs this scan
+**once**, before the run, into a self-hashed pre-flight record (`--preflight --mode counted --write-record`) with no
+timeout, and each counted runner requires that record instead of scanning itself (see the runner section above);
+`run_gates.py` no longer scans in counted mode, so its old 3600 s scan ceiling is gone. On this machine the scan
+walks a busy `/private/tmp` and the per-user temp dir and takes tens of minutes (about **10–15 min** at load
+14–39, longer as the fleet's temp grows). Two earlier real counted scans found stray answer-key copies that killed
+test runs had stranded in the per-user temp dir — a `test-build.mjs` build copy and a `test_run_gates.py`
+tempfile — and correctly refused; those tests now clean up on exit and on SIGINT/SIGTERM, and the stray copies
+were purged (destructive-action emit, cycle `exp005-fix3`). At the freeze-2 scan 15 answer-key copies were
+present under `/private/tmp`, in a sibling refute session's worktrees; they were covered by the sandbox denyRead
+(the R29 proof) and have since been removed with founder approval.
+
 ## Limits
 
 - bce reads direct import edges. A breach that only happens transitively, through a file outside
@@ -335,3 +503,17 @@ the tokenizer, the inputs test checks the recorded counts and skips only the reb
 - All 60 patches were written by one author, who also wrote the rules. An independent review of the
   corpus against the quotas (bundle 1, WO-07) happens before the hashes are published; round 1 and
   its fixes are recorded above, and the hardened corpus goes back for a second round.
+- The reviewer's pre-registered allow rule `Bash(git diff:*)` matches only as a command prefix, so
+  ordinary in-workspace git forms — `git --no-pager diff`, `git -C <ws> diff`, a redirect to `$TMPDIR` —
+  are denied and the reviewer must fall back to the plain forms. Each practice run hit one to three such
+  denials. The pinned command is not changed; instead every reviewer call records `gitToolDenials`, the
+  count of ordinary git commands the rule refused, so bundle 4 can report the friction. It is not in
+  amendment 02's limits; bundle 4's limits state it.
+- The answer-key pre-flight detects a copy only when it keeps an answer file's **own name** and its exact
+  bytes (name and size in `find`, then sha256). A byte-for-byte copy saved under a different name — `labels.json`
+  as `labels-copy.json`, or `inputs.json.bak` — is **not** detected, and neither is a reformatted or
+  re-serialised file. Amendment 02 describes the pre-flight as refusing on "a byte-for-byte copy of labels.json";
+  the name-first narrowing (a size-only walk is too slow on a ~97k-entry `/private/tmp`) means it catches the
+  answer files under their own names, no more. The reviewer sandbox's denyRead of the temp roots, not the
+  pre-flight, is the boundary that stops the reviewer reading any such copy; the pre-flight is a second line.
+  Bundle 4's limits state this.

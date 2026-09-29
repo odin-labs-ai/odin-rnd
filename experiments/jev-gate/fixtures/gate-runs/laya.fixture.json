@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "kind": "gate-run",
+  "gate": "laya",
+  "mode": "counted",
+  "fixture": true,
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "152b493dcb6d1b40beaf4a28ee539cdc16ccba2dd0800adf2b0d7852a06e0a47",
+  "notBefore": "2026-09-28T02:16:26Z",
+  "startedAt": "2026-09-28T11:10:56.028Z",
+  "endedAt": "2026-09-28T11:10:56.036Z",
+  "machine": {
+    "os": "macOS-26.6.1-arm64-arm-64bit",
+    "arch": "arm64",
+    "python": "3.12.13"
+  },
+  "items": [
+    "c001",
+    "c002"
+  ],
+  "partial": null,
+  "calls": [
+    {
+      "id": "c001",
+      "run": 1,
+      "gate": "laya",
+      "startedAt": "2026-09-28T11:10:56.030Z",
+      "costUsd": null,
+      "costBasis": "local-no-price",
+      "decision": "ACCEPT",
+      "p": 0.3947963976482304,
+      "confidence": 0.6052036023517696,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null,
+      "tokens": 407,
+      "status": "ok",
+      "latencyMs": 1.8,
+      "endedAt": "2026-09-28T11:10:56.032Z"
+    },
+    {
+      "id": "c002",
+      "run": 1,
+      "gate": "laya",
+      "startedAt": "2026-09-28T11:10:56.032Z",
+      "costUsd": null,
+      "costBasis": "local-no-price",
+      "decision": "ACCEPT",
+      "p": 0.3947963976482304,
+      "confidence": 0.6052036023517696,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null,
+      "tokens": 500,
+      "status": "ok",
+      "latencyMs": 1.2,
+      "endedAt": "2026-09-28T11:10:56.033Z"
+    }
+  ],
+  "banner": "FIXTURE — produced by fake gates or fixture pins; not a measurement and never publishable",
+  "pins": {
+    "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "fileSha256": {
+      "typed-decisions/model.safetensors": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+      "typed-decisions/rl_agent_config.json": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+      "typed-decisions/encoder/config.json": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+      "typed-decisions/tokenizer/tokenizer.json": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+      "typed-decisions/tokenizer/tokenizer_config.json": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1"
+    },
+    "backend": "The EXP 004 MLX port (experiments/laya-vs-jev/laya_mlx.py) on the Apple GPU, one call at a time."
+  },
+  "laya": {
+    "firstCallMs": 1.7
+  }
+}

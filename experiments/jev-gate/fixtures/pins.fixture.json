@@ -1,0 +1,7 @@
+{
+  "note": "FIXTURE pins for runner tests and fake runs. Using them turns on fixture mode.",
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "152b493dcb6d1b40beaf4a28ee539cdc16ccba2dd0800adf2b0d7852a06e0a47",
+  "notBefore": "2026-09-28T02:16:26Z",
+  "amendmentFile": "amendment-01.fixture.json"
+}

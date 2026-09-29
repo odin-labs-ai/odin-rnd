@@ -1,17 +1,16 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { assertDisk, checkRecord, criterionFields, criterionShapes, derive, get, ninaAttribution, pinPath, recordPath, required, requiredMetrics, validateRecord } from './jev-gate-prereg.mjs';
 import { baselineCounts, baselineValid, judgeCost, judgePaired, judgeSingleRate, newcombePaired, pickBestBaseline, wilson } from '../experiments/jev-gate/metrics.mjs';
+import { scratchDir } from './jev-gate-scratch.mjs';
 
-// Scratch copies of experiments/jev-gate hold labels.json (the answer key): every one is removed when the file's
-// tests finish, pass or fail, so no copy is left in the shared temp directory (refute r4 of amendment 02, B2).
-const scratchDirs = [];
-const scratch = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); scratchDirs.push(d); return d; };
-after(() => { for (const d of scratchDirs) rmSync(d, { recursive: true, force: true }); });
+// Scratch copies of experiments/jev-gate hold labels.json (the answer key). The shared helper removes every one on
+// normal exit and on SIGINT/SIGTERM/SIGHUP, so a killed run cannot strand a copy in the shared temp directory
+// (refute r4 of amendment 02, B2, and the bundle-3 refute r4 hygiene item). The old prefix is turned into a label.
+const scratch = prefix => scratchDir(prefix.replace(/^jev-gate-|-$/g, ''));
 
 const committed = () => JSON.parse(readFileSync(recordPath, 'utf8'));
 const unset = (record, path) => { const keys = path.split('.'), last = keys.pop(); delete keys.reduce((v, k) => v[k], record)[last]; };

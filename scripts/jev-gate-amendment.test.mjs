@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { sha256 } from './jev-gate-prereg.mjs';
 import { amendmentPath, amendmentPinPath, assertPriorCalls, priorCallsPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
 import { amendNote, cardQualifier, noteQualifier, qualifyHome, qualifyStation, renderAmendmentLine, renderAmendmentSection, sectionId, stationQualifier } from './jev-gate-amendment-note.mjs';
-import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { builtCopy } from './test-build.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { renderStations } from './station-render.mjs';
 
@@ -180,11 +181,12 @@ test('the home card, station 06 and the note qualify the parent\'s "before any g
   assert(exhibit.includes(`Written down before any gate runs ·${stationQualifier(record)}`));
   assert(note.includes(`${noteQualifier(record)}</p>`) && note.includes(html(record.siteQualifier.meta)));
   for (const q of [cardQualifier(record), stationQualifier(record)]) assert(q.includes(`href="journal/jev-as-a-fast-gate.html#${sectionId}"`));
-  if (existsSync('dist/index.html')) {
-    const built = readFileSync('dist/index.html', 'utf8');
-    assert(built.includes(cardQualifier(record)) && built.includes(stationQualifier(record)), 'dist/index.html is not qualified by the committed amendment: pnpm build');
-    assert(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8').includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment: pnpm build');
-  }
+  // The built pages, from a build made for this test in a disposable copy: independent of whether and when
+  // `pnpm build` ran, and of other test files reading the checkout meanwhile (test-build.mjs).
+  const dist = join(builtCopy(), 'dist');
+  const built = readFileSync(join(dist, 'index.html'), 'utf8');
+  assert(built.includes(cardQualifier(record)) && built.includes(stationQualifier(record)), 'the built home page is not qualified by the committed amendment');
+  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment');
   // A changed record changes every qualifier, and a qualifier that no longer states the record's facts is refused.
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('6 uncounted', '7 uncounted');
   assert.throws(() => validateAmendment(changed, parent), /siteQualifier.card must state/);

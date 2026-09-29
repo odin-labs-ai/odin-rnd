@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { builtCopy } from './test-build.mjs';
 import { sha256 } from './jev-gate-prereg.mjs';
 import { amendNote, qualifyHome, cardQualifier } from './jev-gate-amendment-note.mjs';
 import { checkAmendment } from './jev-gate-amendment.mjs';
@@ -155,11 +157,12 @@ test('the home card, station 06 and the note say "amended again", from the recor
   assert(note.indexOf('id="amendment-01"') < note.indexOf(`id="${section02Id}"`), 'Amendment 02 follows amendment 01');
   for (const text of [record.reason.summary, record.reason.outputHole.what, record.changes.reviewer.command, record.changes.reviewer.isolationEvidence.howRefused, record.spend.sum, ...record.limits, ...record.unchanged, digest]) assert(note.includes(html(text)), `Section is missing: ${String(text).slice(0, 60)}`);
   assert.doesNotMatch(note.split(`id="${section02Id}"`)[1].split('</section>')[0], /\d\.\d*(?:0{6,}|9{6,})\d/, 'No float artefact on the page');
-  if (existsSync('dist/index.html')) {
-    const page = readFileSync('dist/index.html', 'utf8');
-    assert(page.includes(cardQualifier02(record)) && page.includes(stationQualifier02(record)), 'dist/index.html is not qualified by the committed amendment 02: pnpm build');
-    assert(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8').includes(noteQualifier02(record)), 'The built note is not qualified by the committed amendment 02: pnpm build');
-  }
+  // Built pages from a fresh build in a disposable copy (test-build.mjs): independent of whether ./dist exists
+  // or is stale, and of other test files reading the checkout in parallel.
+  const dist = join(builtCopy(), 'dist');
+  const page = readFileSync(join(dist, 'index.html'), 'utf8');
+  assert(page.includes(cardQualifier02(record)) && page.includes(stationQualifier02(record)), 'the built home page is not qualified by the committed amendment 02');
+  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier02(record)), 'The built note is not qualified by the committed amendment 02');
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('Amended again', 'Amended');
   assert.throws(() => validateAmendment02(changed, context), /amended again/);
   assert.throws(() => amendNote02(note, record, digest), /already carries/);
