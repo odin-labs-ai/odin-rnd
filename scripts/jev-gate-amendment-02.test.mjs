@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { builtCopy } from './test-build.mjs';
 import { sha256 } from './jev-gate-prereg.mjs';
@@ -147,7 +147,8 @@ test('the clock covers every counted gate, nothing else changes, and the limits 
 test('the home card, station 06 and the note say "amended again", from the record, beside amendment 01', () => {
   const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
   const reports = ['migration-witness', 'test-witness', 'ci-witness'].map(id => JSON.parse(readFileSync(`site/data/witnesses/${id}.json`, 'utf8')));
-  const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
+  // Pre-registration mode (results null): the measured station replaces this exhibit and has its own test.
+  const exhibit = renderStations(report, reports, undefined, undefined, undefined, undefined, undefined, null).split('id="station-triage"')[1].split('</article>')[0];
   assert(exhibit.includes(`${stationQualifier02(record)}</p>`) && exhibit.includes(renderAmendment02Line(record)));
   const home = qualifyHome02(qualifyHome(readFileSync('site/index.html', 'utf8'), a01.record), record);
   assert(home.includes(`Published before any gate runs.${cardQualifier(a01.record)}${cardQualifier02(record)}</p>`));
@@ -161,7 +162,8 @@ test('the home card, station 06 and the note say "amended again", from the recor
   // or is stale, and of other test files reading the checkout in parallel.
   const dist = join(builtCopy(), 'dist');
   const page = readFileSync(join(dist, 'index.html'), 'utf8');
-  assert(page.includes(cardQualifier02(record)) && page.includes(stationQualifier02(record)), 'the built home page is not qualified by the committed amendment 02');
+  // Once results are committed, station 06 shows the measured exhibit, which has no pre-registration sentence to qualify.
+  assert(page.includes(cardQualifier02(record)) && (existsSync('experiments/jev-gate/results/results.json') || page.includes(stationQualifier02(record))), 'the built home page is not qualified by the committed amendment 02');
   assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier02(record)), 'The built note is not qualified by the committed amendment 02');
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('Amended again', 'Amended');
   assert.throws(() => validateAmendment02(changed, context), /amended again/);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { sha256 } from './jev-gate-prereg.mjs';
 import { amendmentPath, amendmentPinPath, assertPriorCalls, priorCallsPath, assertProbe, checkAmendment, derive, hookLimit, nina, probePath, publishedParentSha256, publishedPath, requiredFiles, spotlightShapes, validateAmendment } from './jev-gate-amendment.mjs';
 import { amendNote, cardQualifier, noteQualifier, qualifyHome, qualifyStation, renderAmendmentLine, renderAmendmentSection, sectionId, stationQualifier } from './jev-gate-amendment-note.mjs';
@@ -96,7 +96,8 @@ test('no spotlight threshold is written in the amendment code', () => {
 test('station 06 and the built note show the dated amendment, rendered from the record', () => {
   const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
   const reports = ['migration-witness', 'test-witness', 'ci-witness'].map(id => JSON.parse(readFileSync(`site/data/witnesses/${id}.json`, 'utf8')));
-  const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
+  // Pre-registration mode (results null): the measured station replaces this exhibit and has its own test.
+  const exhibit = renderStations(report, reports, undefined, undefined, undefined, undefined, undefined, null).split('id="station-triage"')[1].split('</article>')[0];
   assert(exhibit.includes(renderAmendmentLine(record)));
   assert(exhibit.includes('<span>Pre-registered — not yet run</span>'), 'The station status stays the parent status');
   assert(exhibit.includes(html(record.statusText)) && exhibit.includes('Pre-registered · amended 28 Sep 2026, before any counted gate run'));
@@ -174,7 +175,8 @@ test('the home card, station 06 and the note qualify the parent\'s "before any g
   const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
   const reports = ['migration-witness', 'test-witness', 'ci-witness'].map(id => JSON.parse(readFileSync(`site/data/witnesses/${id}.json`, 'utf8')));
   const home = qualifyHome(readFileSync('site/index.html', 'utf8'), record);
-  const exhibit = renderStations(report, reports).split('id="station-triage"')[1].split('</article>')[0];
+  // Pre-registration mode (results null): the measured station replaces this exhibit and has its own test.
+  const exhibit = renderStations(report, reports, undefined, undefined, undefined, undefined, undefined, null).split('id="station-triage"')[1].split('</article>')[0];
   const note = amendNote(readFileSync(articlePath, 'utf8'), record, digest);
   assert(home.includes(`Published before any gate runs.${cardQualifier(record)}</p>`));
   // Later amendments add their own qualifier after this one, inside the same paragraph.
@@ -185,7 +187,8 @@ test('the home card, station 06 and the note qualify the parent\'s "before any g
   // `pnpm build` ran, and of other test files reading the checkout meanwhile (test-build.mjs).
   const dist = join(builtCopy(), 'dist');
   const built = readFileSync(join(dist, 'index.html'), 'utf8');
-  assert(built.includes(cardQualifier(record)) && built.includes(stationQualifier(record)), 'the built home page is not qualified by the committed amendment');
+  // Once results are committed, station 06 shows the measured exhibit, which has no pre-registration sentence to qualify.
+  assert(built.includes(cardQualifier(record)) && (existsSync('experiments/jev-gate/results/results.json') || built.includes(stationQualifier(record))), 'the built home page is not qualified by the committed amendment');
   assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment');
   // A changed record changes every qualifier, and a qualifier that no longer states the record's facts is refused.
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('6 uncounted', '7 uncounted');

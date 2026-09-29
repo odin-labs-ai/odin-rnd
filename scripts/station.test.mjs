@@ -32,7 +32,8 @@ test('station 06 is pre-registered, never a recorded result, and refuses a page 
   assert.equal(triage?.number,'06'); assert.equal(triage.record,'jev-gate');
   assert.notEqual(stations.find(s=>s.id==='gate').record,'jev-gate','Station 03 keeps the id gate');
   const record=JSON.parse(readFileSync('experiments/jev-gate/preregistration.json','utf8'));
-  const html=renderStations(report,reports);
+  // Pre-registration mode (results null); the measured mode is tested in jev-gate-results-site.test.mjs.
+  const html=renderStations(report,reports,undefined,undefined,undefined,undefined,undefined,null);
   const exhibit=html.split('id="station-triage"')[1].split('</article>')[0];
   assert(exhibit.includes('<span>Pre-registered — not yet run</span>'));
   assert.doesNotMatch(exhibit,/Recorded experiment/);
@@ -41,7 +42,7 @@ test('station 06 is pre-registered, never a recorded result, and refuses a page 
   assert(exhibit.includes('href="data/jev-gate/preregistration.json"')&&exhibit.includes(`href="${triage.href}"`));
   for(const mutate of [r=>{r.experiment.stationTitle+='?';},r=>{r.experiment.statusText='Recorded experiment';}]){
     const changed=structuredClone(record); mutate(changed);
-    assert.throws(()=>renderStations(report,reports,undefined,undefined,changed),/differs from the pre-registration/);
+    assert.throws(()=>renderStations(report,reports,undefined,undefined,changed,undefined,undefined,null),/differs from the pre-registration/);
   }
   assert.equal(readFileSync('site/data/jev-gate/preregistration.json','utf8'),readFileSync('experiments/jev-gate/preregistration.json','utf8'),'The published copy is the committed record');
 });
