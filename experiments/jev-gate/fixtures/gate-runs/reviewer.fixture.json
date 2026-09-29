@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "kind": "gate-run",
+  "gate": "reviewer",
+  "mode": "counted",
+  "fixture": true,
+  "banner": "FIXTURE — produced by fake gates or fixture pins; not a measurement and never publishable",
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "152b493dcb6d1b40beaf4a28ee539cdc16ccba2dd0800adf2b0d7852a06e0a47",
+  "notBefore": "2026-09-28T02:16:26Z",
+  "startedAt": "2026-09-28T11:10:56.246Z",
+  "endedAt": "2026-09-28T11:11:05.564Z",
+  "pins": {
+    "client": "Claude Code",
+    "clientVersion": "2.1.280",
+    "clientBinary": "FIXTURE fake-claude.mjs",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "agent": "reviewer",
+    "k": 3,
+    "timeoutSeconds": 600,
+    "allowedTools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git show:*)",
+      "Bash(git log:*)"
+    ],
+    "command": "claude -p <prompt> --agent reviewer --model claude-opus-5-5 --effort high --output-format json --no-session-persistence --setting-sources project --permission-mode dontAsk --allowedTools Read Grep Glob \"Bash(git diff:*)\" \"Bash(git status:*)\" \"Bash(git show:*)\" \"Bash(git log:*)\"",
+    "nina": {
+      "release": "0.34.0",
+      "commit": "be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+      "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg=="
+    },
+    "patches": [],
+    "spendCap": {
+      "usd": 100,
+      "alreadySpentUsd": 1.128393,
+      "covers": "Paid gate spend only: Jev at its listed price and the reviewer at its API-equivalent cost, including the one reviewer check already run while planning (alreadySpentUsd). Agent time is outside the cap.",
+      "rule": "A running ledger adds the cost of every paid call to alreadySpentUsd. Before any paid call, if the ledger plus the largest single-call cost seen so far for that gate (for the reviewer, at least alreadySpentUsd) would exceed the cap, the run stops. A stopped run is published as partial, with the ledger. A partial run, whether stopped by this cap or by the reviewer hang-stop, gives no criterion a state and decides nothing about the claim; its counts so far are published as partial.",
+      "alreadySpentFrom": "amendment-01"
+    },
+    "billing": {
+      "strippedKeysMirror": "nina 0.34.0 src/commands/eval.mjs:44 (BILLED)",
+      "basis": "API-equivalent: the total_cost_usd that the Claude Code client reports for each run, at list price. Not an invoice; the runs may be billed differently."
+    }
+  },
+  "items": [
+    "c004"
+  ],
+  "partial": null,
+  "calls": [
+    {
+      "id": "c004",
+      "run": 1,
+      "gate": "reviewer",
+      "startedAt": "2026-09-28T11:10:58.622Z",
+      "endedAt": "2026-09-28T11:10:58.720Z",
+      "latencyMs": 98,
+      "status": "ok",
+      "harnessFailure": null,
+      "exitCode": 0,
+      "decision": "REJECT",
+      "verdictLine": "VERDICT: REJECTED",
+      "abstention": null,
+      "costUsd": 0.21,
+      "costBasis": "api-equivalent",
+      "subtype": "success",
+      "isError": false,
+      "numTurns": 3,
+      "durationMs": 1234,
+      "modelUsage": [
+        "claude-opus-5-5"
+      ],
+      "permissionDenials": [],
+      "result": "Reasoning first.\n\nMore reasoning.\nVERDICT: REJECTED\nTrailing note.",
+      "resultSha256": "acbe6221c09b42bd3646ab089b1ce78acd9cd2e9aa66c7f1228281fb54f855bf",
+      "stderrTail": "",
+      "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+      "statusBefore": [
+        "src/app/place-order.ts"
+      ],
+      "treeChangedByRun": false,
+      "stagingLog": [
+        {
+          "step": "tar -xzf <tarball> -C <ws>/repo/node_modules/@xhulz/nina --strip-components=1",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina init --project . --core 0.34.0 --surfaces  --no-ask",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina compose --project .",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main init -q",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main add -A",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main commit -q --no-verify -m base",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main rev-parse HEAD",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main ls-files",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply --check <ws>/change.patch",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply <ws>/change.patch",
+          "exit": 0
+        }
+      ],
+      "billingKeysStripped": [],
+      "ninaDataIsolated": true,
+      "hook": {
+        "ran": true,
+        "timeoutSeconds": 60,
+        "exit": 0,
+        "durationMs": 1153,
+        "timedOut": false,
+        "sha256": "868c8551cf3c0c5ab73b813755c16a26e88e02ea0459bdce3c95e4a6469c46fa",
+        "text": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+        "error": false
+      }
+    },
+    {
+      "id": "c004",
+      "run": 2,
+      "gate": "reviewer",
+      "startedAt": "2026-09-28T11:11:01.684Z",
+      "endedAt": "2026-09-28T11:11:01.775Z",
+      "latencyMs": 91,
+      "status": "ok",
+      "harnessFailure": null,
+      "exitCode": 0,
+      "decision": null,
+      "verdictLine": null,
+      "abstention": "model",
+      "costUsd": 0.21,
+      "costBasis": "api-equivalent",
+      "subtype": "success",
+      "isError": false,
+      "numTurns": 3,
+      "durationMs": 1234,
+      "modelUsage": [
+        "claude-opus-5-5"
+      ],
+      "permissionDenials": [],
+      "result": "I could not decide.",
+      "resultSha256": "34f6e31c5c8a49d9cf303dd6e4f1fbff83ed3cb3f35b4f0dfec810d73497c922",
+      "stderrTail": "",
+      "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+      "statusBefore": [
+        "src/app/place-order.ts"
+      ],
+      "treeChangedByRun": false,
+      "stagingLog": [
+        {
+          "step": "tar -xzf <tarball> -C <ws>/repo/node_modules/@xhulz/nina --strip-components=1",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina init --project . --core 0.34.0 --surfaces  --no-ask",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina compose --project .",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main init -q",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main add -A",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main commit -q --no-verify -m base",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main rev-parse HEAD",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main ls-files",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply --check <ws>/change.patch",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply <ws>/change.patch",
+          "exit": 0
+        }
+      ],
+      "billingKeysStripped": [],
+      "ninaDataIsolated": true,
+      "hook": {
+        "ran": true,
+        "timeoutSeconds": 60,
+        "exit": 0,
+        "durationMs": 777,
+        "timedOut": false,
+        "sha256": "868c8551cf3c0c5ab73b813755c16a26e88e02ea0459bdce3c95e4a6469c46fa",
+        "text": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+        "error": false
+      }
+    },
+    {
+      "id": "c004",
+      "run": 3,
+      "gate": "reviewer",
+      "startedAt": "2026-09-28T11:11:04.233Z",
+      "endedAt": "2026-09-28T11:11:04.334Z",
+      "latencyMs": 100,
+      "status": "is-error",
+      "harnessFailure": "is-error",
+      "exitCode": 0,
+      "decision": null,
+      "verdictLine": null,
+      "abstention": "failure",
+      "costUsd": 0.21,
+      "costBasis": "api-equivalent",
+      "subtype": "error_max_turns",
+      "isError": true,
+      "numTurns": 3,
+      "durationMs": 1234,
+      "modelUsage": [
+        "claude-opus-5-5"
+      ],
+      "permissionDenials": [],
+      "result": "stopped",
+      "resultSha256": "8322e87d24582952e5c996da182de0eca66dd2bf58fba5ec56a325c656f21b38",
+      "stderrTail": "",
+      "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+      "statusBefore": [
+        "src/app/place-order.ts"
+      ],
+      "treeChangedByRun": false,
+      "stagingLog": [
+        {
+          "step": "tar -xzf <tarball> -C <ws>/repo/node_modules/@xhulz/nina --strip-components=1",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina init --project . --core 0.34.0 --surfaces  --no-ask",
+          "exit": 0
+        },
+        {
+          "step": "<ws>/repo/node_modules/.bin/nina compose --project .",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main init -q",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main add -A",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main commit -q --no-verify -m base",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main rev-parse HEAD",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main ls-files",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply --check <ws>/change.patch",
+          "exit": 0
+        },
+        {
+          "step": "git -c commit.gpgsign=false -c init.defaultBranch=main apply <ws>/change.patch",
+          "exit": 0
+        }
+      ],
+      "billingKeysStripped": [],
+      "ninaDataIsolated": true,
+      "hook": {
+        "ran": true,
+        "timeoutSeconds": 60,
+        "exit": 0,
+        "durationMs": 731,
+        "timedOut": false,
+        "sha256": "868c8551cf3c0c5ab73b813755c16a26e88e02ea0459bdce3c95e4a6469c46fa",
+        "text": "This project's harness check ran before this message and reported the following. Act on it where it bears on the work, or tell the user it is pending — do not pass over it in silence.\n\n⚠️  harness check — something needs acting on:\n  declaration:\n    → this project has no architecture yet, so the list below is not the conversation. Before you answer, read what the project already says about itself — its README, its code — and open with that; if there is nothing to read, ask the owner what it is for and who it serves. Then propose writing `.claude/architecture.md` together, and ask the first question it raises. Do not recite the list: it is in `.nina/TODO.md`, and most of it is decided by that architecture.\n    ✗ vocabulary {{API_DIR}} is declared but not filled in\n    ✗ vocabulary {{APP_DIR}} is declared but not filled in\n    ✗ vocabulary {{EMITTING_PKGS}} is declared but not filled in\n    ✗ vocabulary {{OWNER}} is declared but not filled in\n    ✗ vocabulary {{PKG_SCOPE}} is declared but not filled in\n    ✗ 51 project slot(s) have no fragment — see .nina/TODO.md\n    ✗ .claude/code-map.generated.md does not exist, and the chosen layers tell an agent to read it 6 time(s)\n    ✗ .claude/architecture.md does not exist, and the chosen layers tell an agent to read it 10 time(s)\n    ✗ .claude/code-map.md does not exist, and the chosen layers tell an agent to read it 7 time(s)\n    → a decision this project has not made yet can wait: name it under \"deferred\" in .nina/profile.json, with why\n    check: 9 problem(s)\n  → each line says what is missing — `.nina/TODO.md` lists the project’s own items, and `.nina/BRIEF.md`, where the interview wrote one, says what the project is; fill them, then `nina compose`",
+        "error": false
+      }
+    }
+  ],
+  "baseSha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0"
+}

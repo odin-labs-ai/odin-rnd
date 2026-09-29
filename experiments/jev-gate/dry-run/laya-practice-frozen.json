@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "kind": "gate-run",
+  "gate": "laya",
+  "mode": "practice",
+  "fixture": false,
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "5ddd8df9920c71fb26a2da68a8859d95130c04f1279345da56b3fd7bf7933bbb",
+  "amendment02Sha256": null,
+  "notBefore": "2026-09-28T12:01:15Z",
+  "code": {
+    "experiments/jev-gate/runner-guard.mjs": "de84e50cbb5fa99e168d4cc1f40ed61b56d4248d3d131fbc15ac6e3c8f342059",
+    "experiments/jev-gate/run_gates.py": "7fc9e702dbb2c818435414632b262991152c8788ebac14db571411aa446bffe1",
+    "experiments/jev-gate/run_reviewer.mjs": "0e568a1efff1e8f579d20ff149bb9b1890c2c0f00244039c2ae3fbddffc8627f",
+    "experiments/jev-gate/results.mjs": "6a16bc49176b2f051995a363dce0a11470440e618531df03ee19ce5573a0fd1c",
+    "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
+    "experiments/jev-gate/laya_count.py": "485a30602c525ce12fd8b1e5bc4ef9908d25e64b1ca21279a2c4c6a139734a99",
+    "experiments/laya-vs-jev/run.py": "3fa346c4450a4251d8c15ce4b04b4f5a9820fb8cf5c1bf4ab65ab2fe3eabc1f9",
+    "experiments/laya-vs-jev/laya_mlx.py": "b9483641ea20e1e566947369a2c2df7011ce3260f37b8755e5c67ee4507fa70e",
+    "experiments/laya-vs-jev/laya_inputs.py": "b368b2848d8a1a1d019fdb2410c0b8115deb8f97f1e92708687048baef52af85"
+  },
+  "startedAt": "2026-09-29T02:12:01.087Z",
+  "endedAt": "2026-09-29T02:12:13.660Z",
+  "machine": {
+    "os": "macOS-26.6.1-arm64-arm-64bit",
+    "arch": "arm64",
+    "python": "3.12.13"
+  },
+  "items": [
+    "p01",
+    "p02",
+    "p03"
+  ],
+  "partial": null,
+  "calls": [
+    {
+      "id": "p01",
+      "run": 1,
+      "gate": "laya",
+      "startedAt": "2026-09-29T02:12:13.043Z",
+      "costUsd": null,
+      "costBasis": "local-no-price",
+      "decision": "ACCEPT",
+      "p": 0.3730803930463498,
+      "confidence": 0.6269196069536502,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null,
+      "tokens": 492,
+      "status": "ok",
+      "latencyMs": 52.4,
+      "endedAt": "2026-09-29T02:12:13.096Z"
+    },
+    {
+      "id": "p02",
+      "run": 1,
+      "gate": "laya",
+      "startedAt": "2026-09-29T02:12:13.273Z",
+      "costUsd": null,
+      "costBasis": "local-no-price",
+      "decision": "ACCEPT",
+      "p": 0.4099671894372638,
+      "confidence": 0.5900328105627362,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null,
+      "tokens": 462,
+      "status": "ok",
+      "latencyMs": 68.5,
+      "endedAt": "2026-09-29T02:12:13.341Z"
+    },
+    {
+      "id": "p03",
+      "run": 1,
+      "gate": "laya",
+      "startedAt": "2026-09-29T02:12:13.361Z",
+      "costUsd": null,
+      "costBasis": "local-no-price",
+      "decision": "ACCEPT",
+      "p": 0.4123633686772697,
+      "confidence": 0.5876366313227304,
+      "reportedConfidence": null,
+      "abstention": null,
+      "excluded": null,
+      "tokens": 436,
+      "status": "ok",
+      "latencyMs": 297.1,
+      "endedAt": "2026-09-29T02:12:13.658Z"
+    }
+  ],
+  "preflight": {
+    "scanned": [
+      "<tmp>/tmp.EQzD8BNEO6"
+    ],
+    "skipped": [],
+    "override": "<tmp>/tmp.EQzD8BNEO6",
+    "copies": []
+  },
+  "pins": {
+    "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "fileSha256": {
+      "typed-decisions/model.safetensors": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+      "typed-decisions/rl_agent_config.json": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+      "typed-decisions/encoder/config.json": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+      "typed-decisions/tokenizer/tokenizer.json": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+      "typed-decisions/tokenizer/tokenizer_config.json": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1"
+    },
+    "backend": "The EXP 004 MLX port (experiments/laya-vs-jev/laya_mlx.py) on the Apple GPU, one call at a time."
+  },
+  "laya": {
+    "firstCallMs": 1980.0
+  }
+}

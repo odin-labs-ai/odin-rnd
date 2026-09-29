@@ -16,6 +16,7 @@ import { checkAmendment, amendmentPath, publishedPath as amendmentPublishedPath 
 import { amendNote, qualifyHome } from './jev-gate-amendment-note.mjs';
 import { checkAmendment02, amendment02Path, published02Path } from './jev-gate-amendment-02.mjs';
 import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
+import { checkResults, resultsPath, publishedResultsPath, amendNoteResults, qualifyHomeResults } from './jev-gate-results-site.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -31,13 +32,18 @@ copyFileSync(amendmentPath, amendmentPublishedPath);
 // Amendment 02 names amendment 01 and the pre-registration by sha256 and is published beside them.
 const amendment02 = checkAmendment02();
 copyFileSync(amendment02Path, published02Path);
+// The measured results, recomputed from the committed runs by the frozen results.mjs, are published beside them.
+const results = checkResults();
+if (results) copyFileSync(resultsPath, publishedResultsPath);
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-01.json')) !== amendment.sha256) throw new Error('Published amendment differs from '+amendmentPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-02.json')) !== amendment02.sha256) throw new Error('Published amendment 02 differs from '+amendment02Path);
+if (results && sha256(readFileSync('dist/data/jev-gate/results.json')) !== results.sha256) throw new Error('Published results differ from '+resultsPath);
 // The built note is the parent's committed render plus each amendment's dated section, all from their records.
-writeFileSync(`dist/${articlePath.slice('site/'.length)}`, amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256));
+const amendedNote = amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256);
+writeFileSync(`dist/${articlePath.slice('site/'.length)}`, results ? amendNoteResults(amendedNote, results) : amendedNote);
 const intakeConfig = JSON.parse(readFileSync('site/data/intake-config.json','utf8'));
 if (Object.keys(intakeConfig).join(',') !== 'apiOrigin') throw new Error('Unexpected intake configuration');
 apiOrigin(intakeConfig.apiOrigin);
@@ -56,6 +62,8 @@ html = html.replace('<strong id="drift-result">—</strong>', '<strong id="drift
 html = html.replace('</body>', '<script type="application/json" id="experiment-data">'+JSON.stringify(report).replaceAll('<','\\u003c')+'</script>\n</body>');
 // The parent's featured card says it was published before any gate runs; amendments 01 and 02 qualify it in place.
 html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
+// Once measured, row 004 and the journal row show it, and nina's card follows row 004 if its spotlight bar was met.
+if (results) html = qualifyHomeResults(html, results);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });

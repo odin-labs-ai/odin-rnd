@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "fixture": "FIXTURE — a stand-in for the real amendment-01.json, written by lane B from the shape agreed with lane A. Runner and metrics tests only; never publishable.",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a"
+  },
+  "date": "2026-09-28",
+  "reason": "fixture",
+  "notBefore": "No gate call before this amendment's merge time on odin-rnd main.",
+  "changes": {
+    "reviewer": {
+      "nina": {
+        "release": "0.34.0",
+        "commit": "be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+        "repoTree": "a3b25852cd8616947f5a66153b1a25b1fa8a566d",
+        "releaseTree": "b11435f6064634ea00693b7bde844dc263b91327",
+        "tarball": {
+          "url": "https://registry.npmjs.org/@xhulz/nina/-/nina-0.34.0.tgz",
+          "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg=="
+        }
+      },
+      "workspace": {
+        "init": [
+          "init",
+          "--project",
+          ".",
+          "--core",
+          "0.34.0",
+          "--surfaces",
+          "",
+          "--no-ask"
+        ],
+        "compose": [
+          "compose",
+          "--project",
+          "."
+        ],
+        "vocabulary": null,
+        "fragments": {},
+        "gitignore": "node_modules/\n",
+        "baseCommit": {
+          "env": {
+            "GIT_AUTHOR_NAME": "base",
+            "GIT_AUTHOR_EMAIL": "base@example.invalid",
+            "GIT_COMMITTER_NAME": "base",
+            "GIT_COMMITTER_EMAIL": "base@example.invalid",
+            "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+            "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+          },
+          "gitConfig": [
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "init.defaultBranch=main"
+          ],
+          "message": "base",
+          "sha": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0"
+        }
+      },
+      "reportFormat": "fixture",
+      "toolRestrictionInteraction": "fixture"
+    },
+    "spotlight": {
+      "criteria": [
+        {
+          "id": "missed-drift",
+          "threshold": 0.1,
+          "refutedWhen": "greater-than",
+          "n": 90
+        },
+        {
+          "id": "false-reject",
+          "threshold": 0.25,
+          "refutedWhen": "greater-than",
+          "n": 90
+        },
+        {
+          "id": "self-agreement",
+          "threshold": 0.9,
+          "refutedWhen": "less-than",
+          "n": 60
+        },
+        {
+          "id": "zero-patches",
+          "harnessFailureMax": 0.05,
+          "n": 180,
+          "refutedWhen": "patched-or-greater-than"
+        }
+      ]
+    }
+  },
+  "unchanged": [
+    "fixture"
+  ],
+  "limits": [
+    "fixture"
+  ],
+  "spend": {
+    "alreadySpentUsd": 1.128393,
+    "supersedes": "fixture: the parent's spendCap.alreadySpentUsd"
+  }
+}

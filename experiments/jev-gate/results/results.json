@@ -1,0 +1,1559 @@
+{
+  "schemaVersion": 1,
+  "kind": "results",
+  "experiment": "EXP 005",
+  "fixture": false,
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "5ddd8df9920c71fb26a2da68a8859d95130c04f1279345da56b3fd7bf7933bbb",
+  "notBefore": "2026-09-28T18:36:49Z",
+  "code": {
+    "experiments/jev-gate/runner-guard.mjs": "786925bced35c98c20d612bed3e35d391908041998524fa4e050e6ab6597d53b",
+    "experiments/jev-gate/run_gates.py": "79af928d88d0472c71ecddb6ea836f4d6e1758f07d0f97ad1b3ce5511e48aca0",
+    "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
+    "experiments/jev-gate/results.mjs": "010ca4bb6aaf9f8c5949bc0f15aa90c4a87be6b064543edb7010c9d1197cf29c",
+    "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
+    "experiments/jev-gate/laya_count.py": "485a30602c525ce12fd8b1e5bc4ef9908d25e64b1ca21279a2c4c6a139734a99",
+    "experiments/laya-vs-jev/run.py": "3fa346c4450a4251d8c15ce4b04b4f5a9820fb8cf5c1bf4ab65ab2fe3eabc1f9",
+    "experiments/laya-vs-jev/laya_mlx.py": "b9483641ea20e1e566947369a2c2df7011ce3260f37b8755e5c67ee4507fa70e",
+    "experiments/laya-vs-jev/laya_inputs.py": "b368b2848d8a1a1d019fdb2410c0b8115deb8f97f1e92708687048baef52af85"
+  },
+  "partial": null,
+  "gatesRun": {
+    "jev": true,
+    "laya": true,
+    "reviewer": true
+  },
+  "primary": {
+    "items": 60,
+    "red": 30,
+    "green": 30,
+    "gates": {
+      "jev": {
+        "agreement": {
+          "x": 52,
+          "n": 60,
+          "estimate": 0.8666666666666667,
+          "lower": 0.7583484032350039,
+          "upper": 0.9308589051941303
+        },
+        "missedDrift": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "falseReject": {
+          "x": 7,
+          "n": 30,
+          "estimate": 0.23333333333333334,
+          "lower": 0.11792388144489496,
+          "upper": 0.40928326158122164
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          },
+          "falseReject": {
+            "x": 7,
+            "n": 30,
+            "estimate": 0.23333333333333334,
+            "lower": 0.11792388144489496,
+            "upper": 0.40928326158122164
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 1,
+            "n": 4,
+            "estimate": 0.25,
+            "lower": 0.045587260809700575,
+            "upper": 0.6993581574175981
+          }
+        },
+        "missedIds": [
+          "c026"
+        ],
+        "falseRejectIds": [
+          "c001",
+          "c007",
+          "c013",
+          "c033",
+          "c038",
+          "c056",
+          "c057"
+        ],
+        "accuracyAtHighConfidence": {
+          "x": 33,
+          "n": 34,
+          "estimate": 0.9705882352941176,
+          "lower": 0.8508442670731406,
+          "upper": 0.994789093723731
+        }
+      },
+      "laya": {
+        "agreement": {
+          "x": 30,
+          "n": 60,
+          "estimate": 0.5,
+          "lower": 0.3773502424155577,
+          "upper": 0.6226497575844424
+        },
+        "missedDrift": {
+          "x": 30,
+          "n": 30,
+          "estimate": 1,
+          "lower": 0.8864866068260312,
+          "upper": 1
+        },
+        "falseReject": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 30,
+            "n": 30,
+            "estimate": 1,
+            "lower": 0.8864866068260312,
+            "upper": 1
+          },
+          "falseReject": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 26,
+            "n": 26,
+            "estimate": 1,
+            "lower": 0.8712710781407846,
+            "upper": 1
+          },
+          "commentOnly": {
+            "x": 4,
+            "n": 4,
+            "estimate": 1,
+            "lower": 0.5101091635454027,
+            "upper": 1
+          }
+        },
+        "missedIds": [
+          "c004",
+          "c005",
+          "c006",
+          "c009",
+          "c012",
+          "c015",
+          "c016",
+          "c017",
+          "c019",
+          "c021",
+          "c023",
+          "c024",
+          "c025",
+          "c026",
+          "c028",
+          "c029",
+          "c030",
+          "c032",
+          "c034",
+          "c039",
+          "c040",
+          "c041",
+          "c042",
+          "c044",
+          "c045",
+          "c046",
+          "c049",
+          "c052",
+          "c054",
+          "c055"
+        ],
+        "falseRejectIds": [],
+        "accuracyAtHighConfidence": {
+          "x": 0,
+          "n": 0,
+          "estimate": null,
+          "lower": null,
+          "upper": null
+        }
+      },
+      "reviewer": {
+        "agreement": {
+          "x": 60,
+          "n": 60,
+          "estimate": 1,
+          "lower": 0.93982814785791,
+          "upper": 0.9999999999999998
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [],
+        "reviewerVariance": {
+          "items": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          },
+          "perRunIndex": [
+            {
+              "run": 1,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            },
+            {
+              "run": 2,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            },
+            {
+              "run": 3,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            }
+          ]
+        }
+      },
+      "cascade": {
+        "agreement": {
+          "x": 59,
+          "n": 60,
+          "estimate": 0.9833333333333333,
+          "lower": 0.9114487027240993,
+          "upper": 0.9970518402052138
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [
+          "c007"
+        ],
+        "escalation": {
+          "x": 26,
+          "n": 60,
+          "estimate": 0.43333333333333335,
+          "lower": 0.31572396804686764,
+          "upper": 0.5589656122387443
+        }
+      },
+      "heuristic-grep": {
+        "agreement": {
+          "x": 42,
+          "n": 60,
+          "estimate": 0.7,
+          "lower": 0.5749129205308552,
+          "upper": 0.8010183386123088
+        },
+        "missedDrift": {
+          "x": 5,
+          "n": 30,
+          "estimate": 0.16666666666666666,
+          "lower": 0.0733654237184855,
+          "upper": 0.3356435050641603
+        },
+        "falseReject": {
+          "x": 13,
+          "n": 30,
+          "estimate": 0.43333333333333335,
+          "lower": 0.2737748557646652,
+          "upper": 0.6080269299918639
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 5,
+            "n": 30,
+            "estimate": 0.16666666666666666,
+            "lower": 0.0733654237184855,
+            "upper": 0.3356435050641603
+          },
+          "falseReject": {
+            "x": 13,
+            "n": 30,
+            "estimate": 0.43333333333333335,
+            "lower": 0.2737748557646652,
+            "upper": 0.6080269299918639
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 1,
+            "n": 26,
+            "estimate": 0.038461538461538464,
+            "lower": 0.006821984993543487,
+            "upper": 0.18892778903034757
+          },
+          "commentOnly": {
+            "x": 4,
+            "n": 4,
+            "estimate": 1,
+            "lower": 0.5101091635454027,
+            "upper": 1
+          }
+        },
+        "missedIds": [
+          "c009",
+          "c021",
+          "c024",
+          "c026",
+          "c041"
+        ],
+        "falseRejectIds": [
+          "c001",
+          "c002",
+          "c007",
+          "c008",
+          "c013",
+          "c014",
+          "c033",
+          "c037",
+          "c050",
+          "c051",
+          "c053",
+          "c056",
+          "c059"
+        ]
+      },
+      "heuristic-lint": {
+        "agreement": {
+          "x": 59,
+          "n": 60,
+          "estimate": 0.9833333333333333,
+          "lower": 0.9114487027240993,
+          "upper": 0.9970518402052138
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [
+          "c001"
+        ]
+      }
+    }
+  },
+  "sensitivity": {
+    "items": 60,
+    "gates": {
+      "jev": {
+        "agreement": {
+          "x": 52,
+          "n": 60,
+          "estimate": 0.8666666666666667,
+          "lower": 0.7583484032350039,
+          "upper": 0.9308589051941303
+        },
+        "missedDrift": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "falseReject": {
+          "x": 7,
+          "n": 30,
+          "estimate": 0.23333333333333334,
+          "lower": 0.11792388144489496,
+          "upper": 0.40928326158122164
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          },
+          "falseReject": {
+            "x": 7,
+            "n": 30,
+            "estimate": 0.23333333333333334,
+            "lower": 0.11792388144489496,
+            "upper": 0.40928326158122164
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 1,
+            "n": 4,
+            "estimate": 0.25,
+            "lower": 0.045587260809700575,
+            "upper": 0.6993581574175981
+          }
+        },
+        "missedIds": [
+          "c026"
+        ],
+        "falseRejectIds": [
+          "c001",
+          "c007",
+          "c013",
+          "c033",
+          "c038",
+          "c056",
+          "c057"
+        ],
+        "accuracyAtHighConfidence": {
+          "x": 33,
+          "n": 34,
+          "estimate": 0.9705882352941176,
+          "lower": 0.8508442670731406,
+          "upper": 0.994789093723731
+        }
+      },
+      "laya": {
+        "agreement": {
+          "x": 30,
+          "n": 60,
+          "estimate": 0.5,
+          "lower": 0.3773502424155577,
+          "upper": 0.6226497575844424
+        },
+        "missedDrift": {
+          "x": 30,
+          "n": 30,
+          "estimate": 1,
+          "lower": 0.8864866068260312,
+          "upper": 1
+        },
+        "falseReject": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 30,
+            "n": 30,
+            "estimate": 1,
+            "lower": 0.8864866068260312,
+            "upper": 1
+          },
+          "falseReject": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 26,
+            "n": 26,
+            "estimate": 1,
+            "lower": 0.8712710781407846,
+            "upper": 1
+          },
+          "commentOnly": {
+            "x": 4,
+            "n": 4,
+            "estimate": 1,
+            "lower": 0.5101091635454027,
+            "upper": 1
+          }
+        },
+        "missedIds": [
+          "c004",
+          "c005",
+          "c006",
+          "c009",
+          "c012",
+          "c015",
+          "c016",
+          "c017",
+          "c019",
+          "c021",
+          "c023",
+          "c024",
+          "c025",
+          "c026",
+          "c028",
+          "c029",
+          "c030",
+          "c032",
+          "c034",
+          "c039",
+          "c040",
+          "c041",
+          "c042",
+          "c044",
+          "c045",
+          "c046",
+          "c049",
+          "c052",
+          "c054",
+          "c055"
+        ],
+        "falseRejectIds": [],
+        "accuracyAtHighConfidence": {
+          "x": 0,
+          "n": 0,
+          "estimate": null,
+          "lower": null,
+          "upper": null
+        }
+      },
+      "reviewer": {
+        "agreement": {
+          "x": 60,
+          "n": 60,
+          "estimate": 1,
+          "lower": 0.93982814785791,
+          "upper": 0.9999999999999998
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [],
+        "reviewerVariance": {
+          "items": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          },
+          "perRunIndex": [
+            {
+              "run": 1,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            },
+            {
+              "run": 2,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            },
+            {
+              "run": 3,
+              "missedDrift": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              },
+              "falseReject": {
+                "x": 0,
+                "n": 30,
+                "estimate": 0,
+                "lower": 0,
+                "upper": 0.11351339317396876
+              }
+            }
+          ]
+        }
+      },
+      "cascade": {
+        "agreement": {
+          "x": 59,
+          "n": 60,
+          "estimate": 0.9833333333333333,
+          "lower": 0.9114487027240993,
+          "upper": 0.9970518402052138
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [
+          "c007"
+        ],
+        "escalation": {
+          "x": 26,
+          "n": 60,
+          "estimate": 0.43333333333333335,
+          "lower": 0.31572396804686764,
+          "upper": 0.5589656122387443
+        }
+      },
+      "heuristic-grep": {
+        "agreement": {
+          "x": 42,
+          "n": 60,
+          "estimate": 0.7,
+          "lower": 0.5749129205308552,
+          "upper": 0.8010183386123088
+        },
+        "missedDrift": {
+          "x": 5,
+          "n": 30,
+          "estimate": 0.16666666666666666,
+          "lower": 0.0733654237184855,
+          "upper": 0.3356435050641603
+        },
+        "falseReject": {
+          "x": 13,
+          "n": 30,
+          "estimate": 0.43333333333333335,
+          "lower": 0.2737748557646652,
+          "upper": 0.6080269299918639
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 5,
+            "n": 30,
+            "estimate": 0.16666666666666666,
+            "lower": 0.0733654237184855,
+            "upper": 0.3356435050641603
+          },
+          "falseReject": {
+            "x": 13,
+            "n": 30,
+            "estimate": 0.43333333333333335,
+            "lower": 0.2737748557646652,
+            "upper": 0.6080269299918639
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 1,
+            "n": 26,
+            "estimate": 0.038461538461538464,
+            "lower": 0.006821984993543487,
+            "upper": 0.18892778903034757
+          },
+          "commentOnly": {
+            "x": 4,
+            "n": 4,
+            "estimate": 1,
+            "lower": 0.5101091635454027,
+            "upper": 1
+          }
+        },
+        "missedIds": [
+          "c009",
+          "c021",
+          "c024",
+          "c026",
+          "c041"
+        ],
+        "falseRejectIds": [
+          "c001",
+          "c002",
+          "c007",
+          "c008",
+          "c013",
+          "c014",
+          "c033",
+          "c037",
+          "c050",
+          "c051",
+          "c053",
+          "c056",
+          "c059"
+        ]
+      },
+      "heuristic-lint": {
+        "agreement": {
+          "x": 59,
+          "n": 60,
+          "estimate": 0.9833333333333333,
+          "lower": 0.9114487027240993,
+          "upper": 0.9970518402052138
+        },
+        "missedDrift": {
+          "x": 0,
+          "n": 30,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876
+        },
+        "falseReject": {
+          "x": 1,
+          "n": 30,
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173
+        },
+        "abstentionRate": {
+          "red": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "green": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "all": {
+            "x": 0,
+            "n": 60,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.06017185214208986
+          }
+        },
+        "decidedOnly": {
+          "missedDrift": {
+            "x": 0,
+            "n": 30,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876
+          },
+          "falseReject": {
+            "x": 1,
+            "n": 30,
+            "estimate": 0.03333333333333333,
+            "lower": 0.0059085903816124465,
+            "upper": 0.16670390991409173
+          }
+        },
+        "missedDriftSplit": {
+          "codeLevel": {
+            "x": 0,
+            "n": 26,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.1287289218592153
+          },
+          "commentOnly": {
+            "x": 0,
+            "n": 4,
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.4898908364545973
+          }
+        },
+        "missedIds": [],
+        "falseRejectIds": [
+          "c001"
+        ]
+      }
+    }
+  },
+  "latency": {
+    "jev": {
+      "p50Ms": 416.75,
+      "p90Ms": 869.0200000000001,
+      "calls": 60
+    },
+    "laya": {
+      "p50Ms": 215.45,
+      "p90Ms": 623.15,
+      "calls": 60
+    },
+    "reviewer": {
+      "p50Ms": 34498.5,
+      "p90Ms": 54187.6,
+      "calls": 180
+    }
+  },
+  "costPer1000": {
+    "jev": {
+      "usd": 0.17509103333333337,
+      "basis": "Listed price: the highest listed annual-plan rate on jev-ai.pro/pricing (read 2026-09-24, as in EXP 004; output tokens listed as free), multiplied by the input_tokens the response reports. Not an invoice. A response without usage has no cost figure, and the gap is reported.",
+      "callsWithCost": 60,
+      "callsWithoutCost": 0
+    },
+    "reviewer": {
+      "usd": 649.476743333333,
+      "basis": "API-equivalent: the total_cost_usd that the Claude Code client reports for each run, at list price. Not an invoice; the runs may be billed differently.",
+      "callsWithCost": 180,
+      "callsWithoutCost": 0,
+      "note": "per decision = k runs"
+    },
+    "laya": {
+      "usd": null,
+      "basis": "Runs locally with no per-call price. Hardware and electricity are not measured."
+    },
+    "cascade": {
+      "usd": 274.3282677,
+      "basis": "mixed-basis: Jev listed price + reviewer API-equivalent"
+    }
+  },
+  "meanCostPerChange": {
+    "cascade": 0.2743282677,
+    "reviewerAlone": 0.6494767433333333,
+    "basis": "mixed-basis: Jev listed price + reviewer API-equivalent",
+    "imputedJevAt": 0.00027781599999999996,
+    "imputedReviewerAt": 0.36728759999999994
+  },
+  "criteria": [
+    {
+      "id": "jev-missed-drift",
+      "kind": "single-rate",
+      "statement": "Jev misses more than 10% of drift (RED items it accepts or abstains on).",
+      "state": "passes, not established at this N",
+      "interval": {
+        "estimate": 0.03333333333333333,
+        "lower": 0.0059085903816124465,
+        "upper": 0.16670390991409173,
+        "x": 1,
+        "n": 30
+      }
+    },
+    {
+      "id": "jev-false-reject",
+      "kind": "single-rate",
+      "statement": "Jev falsely rejects more than 25% of clean changes (GREEN items it rejects or abstains on).",
+      "state": "passes, not established at this N",
+      "interval": {
+        "estimate": 0.23333333333333334,
+        "lower": 0.11792388144489496,
+        "upper": 0.40928326158122164,
+        "x": 7,
+        "n": 30
+      }
+    },
+    {
+      "id": "cascade-vs-reviewer",
+      "kind": "paired-difference",
+      "statement": "The cascade misses more drift than the reviewer alone, on the same RED items (an abstention counts as a miss for both).",
+      "table": {
+        "a": 0,
+        "b": 0,
+        "c": 0,
+        "d": 30
+      },
+      "state": "passes, not established at this N",
+      "interval": {
+        "estimate": 0,
+        "lower": -0.11351339317396876,
+        "upper": 0.11351339317396876,
+        "phi": 0,
+        "first": {
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876,
+          "x": 0,
+          "n": 30
+        },
+        "second": {
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876,
+          "x": 0,
+          "n": 30
+        },
+        "n": 30
+      }
+    },
+    {
+      "id": "jev-vs-best-baseline",
+      "kind": "paired-difference",
+      "statement": "Jev misses more drift than the better model-free baseline, on the same RED items (an abstention by Jev counts as a miss).",
+      "table": {
+        "a": 0,
+        "b": 1,
+        "c": 0,
+        "d": 29
+      },
+      "state": "refuted",
+      "interval": {
+        "estimate": 0.03333333333333333,
+        "lower": -0.08344597543254342,
+        "upper": 0.16670390991409173,
+        "phi": 0,
+        "first": {
+          "estimate": 0.03333333333333333,
+          "lower": 0.0059085903816124465,
+          "upper": 0.16670390991409173,
+          "x": 1,
+          "n": 30
+        },
+        "second": {
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.11351339317396876,
+          "x": 0,
+          "n": 30
+        },
+        "n": 30
+      }
+    },
+    {
+      "id": "cascade-cost",
+      "kind": "point-ratio",
+      "statement": "The cascade's mean cost per change is not below 50% of the reviewer-alone mean cost per change, on the same items and the pinned price bases (Jev at its listed price, the reviewer at the API-equivalent total_cost_usd it records).",
+      "cascadeMean": 0.2743282677,
+      "reviewerMean": 0.6494767433333333,
+      "basis": "mixed-basis: Jev listed price + reviewer API-equivalent",
+      "state": "passes",
+      "ratio": 0.4223835118283913
+    }
+  ],
+  "layaCriteria": [
+    {
+      "id": "laya-missed-drift",
+      "state": "refuted",
+      "interval": {
+        "estimate": 1,
+        "lower": 0.8864866068260312,
+        "upper": 1,
+        "x": 30,
+        "n": 30
+      }
+    },
+    {
+      "id": "laya-false-reject",
+      "state": "passes",
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.11351339317396876,
+        "x": 0,
+        "n": 30
+      }
+    }
+  ],
+  "claim": {
+    "refuted": true
+  },
+  "spotlight": {
+    "verdict": "PASS",
+    "partial": false,
+    "criteria": [
+      {
+        "id": "missed-drift",
+        "threshold": 0.1,
+        "runLevel": {
+          "x": 0,
+          "n": 90,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.04093562556432678
+        },
+        "itemLevel": {
+          "state": "passes, not established at this N",
+          "interval": {
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876,
+            "x": 0,
+            "n": 30
+          }
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "false-reject",
+        "threshold": 0.25,
+        "runLevel": {
+          "x": 0,
+          "n": 90,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.04093562556432678
+        },
+        "itemLevel": {
+          "state": "passes",
+          "interval": {
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876,
+            "x": 0,
+            "n": 30
+          }
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "self-agreement",
+        "threshold": 0.9,
+        "x": 60,
+        "n": 60,
+        "estimate": 1,
+        "lower": 0.93982814785791,
+        "upper": 0.9999999999999998,
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "zero-patches",
+        "harnessFailureMax": 0.05,
+        "patches": [],
+        "harnessFailures": {
+          "x": 0,
+          "n": 180,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.02089549792161305
+        },
+        "byReason": {},
+        "hookErrors": {
+          "x": 0,
+          "n": 180,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.02089549792161305
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      }
+    ],
+    "reasons": [],
+    "notEstablishedPhrase": "passes, not established at this N"
+  }
+}

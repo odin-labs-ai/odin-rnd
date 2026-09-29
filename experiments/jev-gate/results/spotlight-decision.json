@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "spotlight-decision",
+  "resultsSha256": "7388556049b7639e2a251edcf3fb8feb782213b78e71a02cddb687f12b09dccd",
+  "decidedOn": "2026-09-29",
+  "by": "founder",
+  "decision": "Hold spotlight, measure again",
+  "held": true,
+  "reason": "The registered bar was met mechanically, but in most runs the reviewer could not read the diff because of this experiment's tool fence, not nina, and audited the clean base tree instead. The spotlight is held until a separate pre-registered experiment measures nina reviewing changes."
+}
