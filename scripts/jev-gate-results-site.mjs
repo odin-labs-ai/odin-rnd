@@ -1,6 +1,6 @@
 // Renders the measured EXP 005 results onto the public pages: station 06, the featured row on the home page,
-// the field note's results section and, only when amendment 01's spotlight bar was met, nina's card and the
-// note's "The harness we measured" section. Every figure is read from the committed results record, which is
+// the field note's results section, and the note's spotlight section. nina's featured card appears only when
+// amendment 01's bar was met AND the committed spotlight decision says, explicitly, that it is not held. Every figure is read from the committed results record, which is
 // first recomputed from the committed gate runs by the frozen experiments/jev-gate/results.mjs and must match,
 // or from the other committed records, each read or recomputed here. The pre-registration's own text and pages
 // are not edited; the build adds these beside them.
@@ -21,7 +21,8 @@ export const diffVisibilityPath = `${resultsDir}/diff-visibility.json`;
 export const publishedResultsPath = 'site/data/jev-gate/results.json';
 export const resultsDataPath = 'data/jev-gate/results.json';
 export const resultsSectionId = 'results';
-export const harnessSectionId = 'the-harness-we-measured';
+export const harnessSectionId = 'spotlight';
+export const spotlightDecisionPath = `${resultsDir}/spotlight-decision.json`;
 const notePath = 'journal/jev-as-a-fast-gate.html';
 // Upstream changes to nina, opened by Odin Labs while this experiment was being set up. They are references, not
 // measured properties: neither is in the pinned 0.34.0 release the reviewer ran (checked on GitHub, 2026-09-29).
@@ -60,7 +61,14 @@ export function checkResults(root = '.') {
   assert.deepEqual(computeResults({ ...loadRecords(), runs, preflight }), results, `${resultsPath} differs from what the frozen results.mjs computes from the committed runs`);
   const diffVisibility = json(root, diffVisibilityPath);
   assert.deepEqual(classify({ reviewer: runs.reviewer, labels: json(root, `${dir}/labels.json`) }), diffVisibility, `${diffVisibilityPath} differs from what experiments/jev-gate/diff-visibility.mjs computes`);
-  return { results, sha256: sha256(bytes), facts: facts(root, results, runs, preflight, diffVisibility) };
+  // The founder's decision on the spotlight, a committed record naming these results by sha256. Without it, nothing is featured.
+  const decision = existsSync(join(root, spotlightDecisionPath)) ? json(root, spotlightDecisionPath) : null;
+  if (decision) {
+    assert.equal(decision.kind, 'spotlight-decision');
+    assert.equal(decision.resultsSha256, sha256(bytes), `${spotlightDecisionPath} was made on another results record`);
+    assert.equal(typeof decision.held, 'boolean', `${spotlightDecisionPath} must say explicitly whether the spotlight is held`);
+  }
+  return { results, sha256: sha256(bytes), decision, facts: facts(root, results, runs, preflight, diffVisibility) };
 }
 
 // Figures the page states that live in the other committed records, each computed from them here.
@@ -153,7 +161,7 @@ export function renderMeasuredExhibit(data) {
   const { results, facts: f } = data, g = results.primary.gates;
   const row = (label, value, state = '') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
   const spot = results.spotlight, md = spot.criteria.find(c => c.id === 'missed-drift');
-  return `<p class="artifact-label">Measured ${escape(day(f.measuredOn))}, judged against the record as published</p><p class="station-implication">${escape(headline(data))} ${escape(headlineContext(data))}</p><div class="record-comparisons">${row('Jev · missed drift', rate(g.jev.missedDrift), g.jev.missedDrift.x > g[f.best.id].missedDrift.x ? 'rejected' : '')}${row(`Linter from the rules · ${f.best.id}`, rate(g[f.best.id].missedDrift), 'accepted')}${row('Jev · false reject', rate(g.jev.falseReject))}${row('Cascade · sent to the reviewer', rate(g.cascade.escalation))}${row(`Mean cost per change · ${results.meanCostPerChange.basis}`, `${usd(results.meanCostPerChange.cascade)} cascade · ${usd(results.meanCostPerChange.reviewerAlone)} reviewer alone`)}${row('LLM reviewer · spotlight bar, restricted setup', `${spot.verdict} · ${md.runLevel.x} of ${md.runLevel.n} missed · diff-blind in at least ${f.diff.blind.runs} of ${f.diff.runs} runs`, spot.verdict === 'PASS' ? 'accepted' : 'rejected')}</div><p class="artifact-label">The five criteria, as pre-registered</p><ul class="station-criteria">${results.criteria.map(c => `<li>${criterionItem(c)}</li>`).join('')}</ul><p class="station-provenance">Measured ${escape(day(f.measuredOn))} · <a href="${resultsDataPath}">The results record</a> · <a href="${notePath}#${resultsSectionId}">The results in full</a></p>`;
+  return `<p class="artifact-label">Measured ${escape(day(f.measuredOn))}, judged against the record as published</p><p class="station-implication">${escape(headline(data))} ${escape(headlineContext(data))}</p><div class="record-comparisons">${row('Jev · missed drift', rate(g.jev.missedDrift), g.jev.missedDrift.x > g[f.best.id].missedDrift.x ? 'rejected' : '')}${row(`Linter from the rules · ${f.best.id}`, rate(g[f.best.id].missedDrift), 'accepted')}${row('Jev · false reject', rate(g.jev.falseReject))}${row('Cascade · sent to the reviewer', rate(g.cascade.escalation))}${row(`Mean cost per change · ${results.meanCostPerChange.basis}`, `${usd(results.meanCostPerChange.cascade)} cascade · ${usd(results.meanCostPerChange.reviewerAlone)} reviewer alone`)}${row('LLM reviewer · spotlight bar, restricted setup', `${spot.verdict === 'PASS' ? 'bar met' : 'bar not met'}${spot.verdict === 'PASS' && !spotlightShown(data) ? ', spotlight held' : ''} · ${md.runLevel.x} of ${md.runLevel.n} missed · diff-blind in at least ${f.diff.blind.runs} of ${f.diff.runs} runs`)}</div><p class="artifact-label">The five criteria, as pre-registered</p><ul class="station-criteria">${results.criteria.map(c => `<li>${criterionItem(c)}</li>`).join('')}</ul><p class="station-provenance">Measured ${escape(day(f.measuredOn))} · <a href="${resultsDataPath}">The results record</a> · <a href="${notePath}#${resultsSectionId}">The results in full</a></p>`;
 }
 
 // Every registered figure for one gate or baseline.
@@ -213,9 +221,21 @@ ${list([
 `;
 }
 
-// Amendment 01's spotlight bar, in the note: the harness we measured, or why it was not earned.
+// The card and any featuring need BOTH the registered PASS and an explicit decision that the spotlight is not held.
+export const spotlightShown = data => data.results.spotlight.verdict === 'PASS' && data.decision?.held === false;
+
+// Amendment 01's spotlight bar, in the note: held, featured, or not met.
 export function renderHarnessSection(data) {
-  const { results } = data, spot = results.spotlight;
+  const { results, decision } = data, spot = results.spotlight;
+  if (spot.verdict === 'PASS' && !spotlightShown(data)) return `<section id="${harnessSectionId}" class="article-amendment">
+<h2>The spotlight bar: met, and held</h2>
+<p>${nina()}. Amendment 01 fixed a bar that nina 0.34.0's reviewer had to meet, on mechanical architecture rules, before Odin R&amp;D would put it in the spotlight. The registered bar was met mechanically:</p>
+${list(spotlightItems(results).map(escape))}
+<p>${escape(diffSentence(data))}</p>
+<p>So the spotlight is held${decision ? ` (${escape(decision.by)}, ${escape(decision.decidedOn)}: "${escape(decision.decision)}")` : ''} until a separate pre-registered experiment measures nina reviewing changes. Nothing about nina is featured until then.</p>
+${upstreamParagraph()}
+</section>
+`;
   if (spot.verdict !== 'PASS') return `<section id="${harnessSectionId}" class="article-amendment">\n<h2>The harness we measured</h2>\n<p>nina's reviewer did not meet the spotlight bar fixed in amendment 01 (${escape(spot.reasons.join('; ') || spot.verdict)}), so it is not featured. The results above stand as measured.</p>\n</section>\n`;
   return `<section id="${harnessSectionId}" class="article-amendment">
 <h2>The harness we measured</h2>
@@ -244,7 +264,7 @@ const upstreamParagraph = () => `<p>Opened by Odin Labs while setting up this me
 // nina's featured card on the home page, only when the spotlight bar was met.
 export function renderSpotlightCard(data) {
   const { results, facts: f } = data;
-  if (results.spotlight.verdict !== 'PASS') return '';
+  if (!spotlightShown(data)) return '';
   const c = id => results.spotlight.criteria.find(x => x.id === id);
   return `<article class="project-row project-featured" id="project-nina"><div class="project-number">005<span>HARNESS</span></div><div class="project-description"><h3><a href="${notePath}#${harnessSectionId}">nina, the harness we measured</a></h3><p>nina 0.34.0's reviewer, deciding whether a change breaks mechanical architecture rules, met the bar fixed before the counted run: ${escape(rate(c('missed-drift').runLevel))} runs missed drift (${escape(c('missed-drift').itemLevel.state)} on the items), ${escape(rate(c('false-reject').runLevel))} runs falsely rejected (${escape(c('false-reject').itemLevel.state)}), the same verdict on ${c('self-agreement').x} of ${c('self-agreement').n} changes, and no patch. In at least ${f.diff.blind.runs} of the ${f.diff.runs} runs this experiment's tool fence kept it from seeing the diff, so it audited the small repository against the rules instead; those runs were still all correct, because the base tree is clean. Nothing else about nina was measured.</p><div class="project-links"><a href="https://github.com/xhulz/nina">github.com/xhulz/nina</a><a href="${notePath}#${harnessSectionId}">What was measured</a><a href="${resultsDataPath}">The record</a></div><p class="project-note">${nina()}.</p></div><dl class="project-spec"><div><dt>Measured</dt><dd>nina 0.34.0 reviewer</dd></div><div><dt>Bar</dt><dd>${escape(results.spotlight.verdict)}</dd></div><div><dt>Runs</dt><dd>${c('zero-patches').harnessFailures.n}</dd></div></dl></article>`;
 }

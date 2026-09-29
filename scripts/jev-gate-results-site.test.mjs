@@ -7,7 +7,7 @@ import { checkAmendment } from './jev-gate-amendment.mjs';
 import { checkAmendment02 } from './jev-gate-amendment-02.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
-import { amendNoteResults, checkResults, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
+import { amendNoteResults, checkResults, spotlightShown, spotlightDecisionPath, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
 import { renderStations } from './station-render.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 
@@ -93,28 +93,46 @@ test('no result figure is typed in the renderer', () => {
   for (const figure of figures) assert(!source.includes(figure), `The renderer types ${figure}; read it from the record`);
 });
 
-test('nina is spotlighted only when the bar was met: card and section render from the record', () => {
-  assert.equal(results.spotlight.verdict, 'PASS');
-  const card = renderSpotlightCard(data);
-  assert(card.includes('id="project-nina"') && card.includes('href="https://github.com/xhulz/nina"'));
-  assert(card.includes(html(ninaAttribution.split('— ')[1])), 'The attribution is verbatim');
-  assert.match(card, /Nothing else about nina was measured/);
-  assert(card.includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} runs this experiment's tool fence kept it from seeing the diff`) && card.includes('base tree is clean'));
+test('the spotlight is held: the bar met with its figures, no card, nothing featured', () => {
+  assert.equal(results.spotlight.verdict, 'PASS', 'The registered bar was met');
+  assert.equal(data.decision.held, true); assert.equal(data.decision.decision, 'Hold spotlight, measure again');
+  assert.equal(spotlightShown(data), false);
+  assert.equal(renderSpotlightCard(data), '', 'No card while the spotlight is held');
   const section = renderHarnessSection(data);
-  for (const item of spotlightItems(results)) assert(section.includes(html(item)));
+  assert.match(section, /The spotlight bar: met, and held/);
+  for (const item of spotlightItems(results)) assert(section.includes(html(item)), 'The bar\'s figures stay visible');
   assert(section.includes(html(results.spotlight.criteria.find(c => c.id === 'missed-drift').itemLevel.state)));
+  assert(section.includes(html(diffSentence(data))) && section.includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`) && section.includes('The cause was the fence, not nina'));
+  assert.match(section, /until a separate pre-registered experiment measures nina reviewing changes/);
+  assert(section.includes(html(ninaAttribution.split('— ')[1])), 'The attribution is verbatim');
   for (const u of upstream) assert(section.includes(u.url));
-  assert.match(section, /Opened by Odin Labs while setting up this measurement, and not measured/); assert.match(section, /Neither change is in the 0\.34\.0 release the reviewer ran/);
-  assert(section.includes(html(diffSentence(data))), 'The harness section carries the diff-blind finding');
-  assert(!card.includes('pull/39') && !card.includes('pull/41'), 'The upstream changes are not on the card as properties');
-  const failed = copy(); failed.results.spotlight.verdict = 'FAIL'; failed.results.spotlight.reasons = ['missed-drift over its bar'];
-  assert.equal(renderSpotlightCard(failed), '', 'No card without a PASS');
+  assert.match(section, /Opened by Odin Labs while setting up this measurement, and not measured/);
+  assert.doesNotMatch(section, /harness we measured|featured card/i, 'Nothing promotional');
+  const page = qualifyHomeResults(readFileSync('site/index.html', 'utf8'), data);
+  assert(!page.includes('id="project-nina"') && !page.includes('HARNESS</span>'), 'The home page carries no nina card');
+  if (existsSync('dist/index.html')) assert(!readFileSync('dist/index.html', 'utf8').includes('id="project-nina"'), 'The built home page carries no nina card: pnpm build');
+});
+
+test('the card needs BOTH a registered PASS and an explicit not-held decision', () => {
+  const variant = (verdict, decision) => { const d = copy(); d.results.spotlight.verdict = verdict; d.decision = decision; return d; };
+  const open = { ...data.decision, held: false };
+  assert.notEqual(renderSpotlightCard(variant('PASS', open)), '', 'PASS and not held: the card renders');
+  assert.equal(renderSpotlightCard(variant('PASS', data.decision)), '', 'PASS but held: no card');
+  assert.equal(renderSpotlightCard(variant('PASS', null)), '', 'PASS with no decision record: no card');
+  assert.equal(renderSpotlightCard(variant('PASS', { ...open, held: 'false' })), '', 'Only an explicit boolean false opens it');
+  assert.equal(renderSpotlightCard(variant('FAIL', open)), '', 'FAIL: no card whatever the decision');
+  const failed = variant('FAIL', open); failed.results.spotlight.reasons = ['missed-drift over its bar'];
   assert.match(renderHarnessSection(failed), /did not meet the spotlight bar/);
-  const page = readFileSync('site/index.html', 'utf8');
-  assert(qualifyHomeResults(page, data).includes('id="project-nina"'));
-  assert(!qualifyHomeResults(page, failed).includes('id="project-nina"'));
-  const changed = copy(); changed.results.spotlight.criteria.find(c => c.id === 'self-agreement').x = 57;
-  assert(renderSpotlightCard(changed).includes('57 of'), 'A changed record changes the card');
+  const shown = variant('PASS', open);
+  assert(qualifyHomeResults(readFileSync('site/index.html', 'utf8'), shown).includes('id="project-nina"'));
+  assert(renderSpotlightCard(shown).includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} runs`), 'Even when shown, the card states the diff-blind count');
+});
+
+test('the spotlight decision is a committed record bound to these results', () => {
+  const decision = JSON.parse(readFileSync(spotlightDecisionPath, 'utf8'));
+  assert.equal(decision.kind, 'spotlight-decision');
+  assert.equal(decision.resultsSha256, data.sha256);
+  assert.equal(typeof decision.held, 'boolean');
 });
 
 test('the home page shows the measured state in row 004 and the journal row', () => {
@@ -139,7 +157,6 @@ test('the built note: results and the harness first, the pre-registration text o
   for (const line of extended) assert(/No results yet|no results yet|including a refutation/.test(line), `An unexpected parent line changed: ${line.slice(0, 80)}`);
   assert.throws(() => amendNoteResults(note, data), /exactly once|already carries/);
   if (existsSync('dist/journal/jev-as-a-fast-gate.html')) assert(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8').includes(renderResultsSection(data)), 'The built note is not the committed results: pnpm build');
-  if (existsSync('dist/index.html')) assert(readFileSync('dist/index.html', 'utf8').includes(renderSpotlightCard(data)), 'The built home page lacks nina\'s card: pnpm build');
 });
 
 test('the results and harness sections cannot scroll sideways at 375px or 320px', () => {
