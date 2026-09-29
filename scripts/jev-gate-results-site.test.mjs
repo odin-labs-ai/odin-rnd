@@ -7,8 +7,9 @@ import { checkAmendment } from './jev-gate-amendment.mjs';
 import { checkAmendment02 } from './jev-gate-amendment-02.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
-import { amendNoteResults, checkResults, criterionFigure, harnessSectionId, headline, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
+import { amendNoteResults, checkResults, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
 import { renderStations } from './station-render.mjs';
+import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 
 const data = checkResults();
 const { results, facts } = data;
@@ -62,7 +63,15 @@ test('the journal results section carries every criterion, Laya on its two crite
   assert(section.includes(html(rate(results.primary.gates.cascade.escalation))));
   assert(section.includes(`$${results.meanCostPerChange.cascade.toFixed(4)}`) && section.includes(`$${results.meanCostPerChange.reviewerAlone.toFixed(4)}`));
   assert(section.includes(`$${facts.spend.totalUsd.toFixed(7)}`));
-  for (const phrase of ['Mechanical rules only', 'restricted setup', `refused ${facts.gitToolDenials} times`, 'could not see or read the diff', 'pnpm harness:check', 'One machine', `amendment 01 (${facts.priorCalls.amendment01} calls)`, `amendment 02 (${facts.priorCalls.amendment02} calls)`, 'pre-flight', 'would not have been seen']) assert(section.includes(html(phrase)), `Limits must state: ${phrase}`);
+  for (const phrase of ['Mechanical rules only', 'restricted setup', `refused ${facts.gitToolDenials} times`, `In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`, 'The cause was the fence, not nina', 'rather than reviewing a change', 'compound commands or redirections', 'pnpm harness:check', 'One machine', `amendment 01 discloses ${facts.priorCalls.amendment01} calls and amendment 02 ${facts.priorCalls.amendment02}`, `there were ${facts.preCounted.calls} more (${facts.preCounted.matrices} isolation matrices, ${facts.preCounted.reviewerPractice} reviewer practice runs and ${facts.preCounted.jevPractice} Jev practice calls`, 'but not of /private/var/tmp', 'would not have been seen', 'stamped with amendment 01', 'mostly diff-blind mode']) assert(section.includes(html(phrase)), `Limits must state: ${phrase}`);
+  assert(section.includes(html(headlineContext(data))) && headlineContext(data).includes('c026') && headlineContext(data).includes('not architectural drift in the usual sense'));
+  for (const id of ['jev', 'laya', 'reviewer', 'cascade', 'heuristic-lint', 'heuristic-grep']) {
+    const g = results.primary.gates[id];
+    for (const part of [`code-level ${rate(g.missedDriftSplit.codeLevel)}, comment-only ${rate(g.missedDriftSplit.commentOnly)}`, `abstained on ${rate(g.abstentionRate.red)} RED and ${rate(g.abstentionRate.green)} GREEN`, `decided only: missed drift ${rate(g.decidedOnly.missedDrift)}`]) assert(section.includes(html(part)), `${id} lacks: ${part}`);
+  }
+  assert(section.includes(html(`accuracy at high confidence ${rate(results.primary.gates.jev.accuracyAtHighConfidence)}`)));
+  assert(section.includes(html(`runs that did not all agree ${rate(results.primary.gates.reviewer.reviewerVariance.items)}`)));
+  for (const gate of ['jev', 'reviewer', 'laya', 'cascade']) assert(section.includes(html(results.costPer1000[gate].basis)), `cost per 1,000 basis for ${gate}`);
   const changed = copy(); changed.results.latency.jev.p50Ms = 1234;
   assert(renderResultsSection(changed).includes('Jev 1234 and'), 'A changed record changes the section');
 });
@@ -80,7 +89,7 @@ test('the figures taken from the other records are computed from them', () => {
 
 test('no result figure is typed in the renderer', () => {
   const source = readFileSync('scripts/jev-gate-results-site.mjs', 'utf8');
-  const figures = [String(facts.gitToolDenials), facts.spend.totalUsd.toFixed(7), results.meanCostPerChange.cascade.toFixed(4), results.meanCostPerChange.reviewerAlone.toFixed(4), `${results.primary.gates.cascade.escalation.x} of`, String(facts.diffUnread), String(facts.harnessCheckMentioned), results.criteria.find(c => c.id === 'cascade-cost').ratio.toFixed(3)];
+  const figures = [String(facts.gitToolDenials), facts.spend.totalUsd.toFixed(7), results.meanCostPerChange.cascade.toFixed(4), results.meanCostPerChange.reviewerAlone.toFixed(4), `${results.primary.gates.cascade.escalation.x} of`, String(facts.diff.blind.runs), String(facts.harnessCheckMentioned), results.criteria.find(c => c.id === 'cascade-cost').ratio.toFixed(3), String(facts.deniedCompound), facts.preCounted.usd.toFixed(7), 'c026', '/private/var/tmp'];
   for (const figure of figures) assert(!source.includes(figure), `The renderer types ${figure}; read it from the record`);
 });
 
@@ -89,12 +98,14 @@ test('nina is spotlighted only when the bar was met: card and section render fro
   const card = renderSpotlightCard(data);
   assert(card.includes('id="project-nina"') && card.includes('href="https://github.com/xhulz/nina"'));
   assert(card.includes(html(ninaAttribution.split('— ')[1])), 'The attribution is verbatim');
-  assert.match(card, /nothing else about nina was measured/);
+  assert.match(card, /Nothing else about nina was measured/);
+  assert(card.includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} runs this experiment's tool fence kept it from seeing the diff`) && card.includes('base tree is clean'));
   const section = renderHarnessSection(data);
   for (const item of spotlightItems(results)) assert(section.includes(html(item)));
   assert(section.includes(html(results.spotlight.criteria.find(c => c.id === 'missed-drift').itemLevel.state)));
   for (const u of upstream) assert(section.includes(u.url));
-  assert.match(section, /not measured/); assert.match(section, /Neither change is in the 0\.34\.0 release the reviewer ran/);
+  assert.match(section, /Opened by Odin Labs while setting up this measurement, and not measured/); assert.match(section, /Neither change is in the 0\.34\.0 release the reviewer ran/);
+  assert(section.includes(html(diffSentence(data))), 'The harness section carries the diff-blind finding');
   assert(!card.includes('pull/39') && !card.includes('pull/41'), 'The upstream changes are not on the card as properties');
   const failed = copy(); failed.results.spotlight.verdict = 'FAIL'; failed.results.spotlight.reasons = ['missed-drift over its bar'];
   assert.equal(renderSpotlightCard(failed), '', 'No card without a PASS');
@@ -136,4 +147,24 @@ test('the results and harness sections cannot scroll sideways at 375px or 320px'
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
   const runs = (renderResultsSection(data) + renderHarnessSection(data)).replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) assert(runs.every(t => t.length <= Math.floor((width - 32) / 9)) || wraps, `An unbroken run is wider than ${width}px and nothing wraps it`);
+});
+
+test('the diff-blind classification is committed and reproducible from the reviewer record', () => {
+  const committed = JSON.parse(readFileSync(diffVisibilityPath, 'utf8'));
+  const recomputed = classify({ reviewer: JSON.parse(readFileSync('experiments/jev-gate/results/reviewer.json', 'utf8')), labels: JSON.parse(readFileSync('experiments/jev-gate/labels.json', 'utf8')) });
+  assert.deepEqual(recomputed, committed);
+  assert.equal(committed.runs.length, facts.reviewerRuns);
+  const blind = committed.runs.filter(r => r.class === 'diff-blind');
+  assert(blind.every(r => r.refusedChangeRead && r.saysNotSeen && !r.saysSaw), 'Diff-blind needs the tool evidence and the report');
+  assert(blind.every(r => r.correct), 'Every diff-blind run was correct');
+  assert.equal(committed.summary['diff-blind'].runs + committed.summary['diff-seen'].runs + committed.summary.unclear.runs, committed.runs.length);
+  assert(facts.diff.blind.meanCostUsd > facts.diff.seen.meanCostUsd && facts.diff.blind.medianLatencyMs > facts.diff.seen.medianLatencyMs);
+  assert.equal(facts.baseTree.violations, 0, 'The clean base is what makes a tree audit equal to the label');
+});
+
+test('station 06 carries the mixed-basis label on its cost row and the diff caveat on the reviewer row', () => {
+  const exhibit = renderMeasuredExhibit(data);
+  assert(exhibit.includes(html(`Mean cost per change · ${results.meanCostPerChange.basis}`)));
+  assert(exhibit.includes(html(`diff-blind in at least ${facts.diff.blind.runs} of ${facts.diff.runs} runs`)));
+  assert(exhibit.includes(html(headlineContext(data))));
 });
