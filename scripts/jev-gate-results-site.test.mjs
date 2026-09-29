@@ -7,7 +7,7 @@ import { checkAmendment } from './jev-gate-amendment.mjs';
 import { checkAmendment02 } from './jev-gate-amendment-02.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
-import { amendNoteResults, checkResults, spotlightShown, spotlightDecisionPath, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
+import { amendNoteResults, checkResults, isCompound, spotlightShown, spotlightDecisionPath, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
 import { renderStations } from './station-render.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 
@@ -63,7 +63,7 @@ test('the journal results section carries every criterion, Laya on its two crite
   assert(section.includes(html(rate(results.primary.gates.cascade.escalation))));
   assert(section.includes(`$${results.meanCostPerChange.cascade.toFixed(4)}`) && section.includes(`$${results.meanCostPerChange.reviewerAlone.toFixed(4)}`));
   assert(section.includes(`$${facts.spend.totalUsd.toFixed(7)}`));
-  for (const phrase of ['Mechanical rules only', 'restricted setup', `refused ${facts.gitToolDenials} times`, `In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`, 'The cause was the fence, not nina', 'rather than reviewing a change', 'compound commands or redirections', 'pnpm harness:check', 'One machine', `amendment 01 discloses ${facts.priorCalls.amendment01} calls and amendment 02 ${facts.priorCalls.amendment02}`, `there were ${facts.preCounted.calls} more (${facts.preCounted.matrices} isolation matrices, ${facts.preCounted.reviewerPractice} reviewer practice runs and ${facts.preCounted.jevPractice} Jev practice calls`, 'but not of /private/var/tmp', 'would not have been seen', 'stamped with amendment 01', 'mostly diff-blind mode']) assert(section.includes(html(phrase)), `Limits must state: ${phrase}`);
+  for (const phrase of ['Mechanical rules only', 'restricted setup', `refused ${facts.gitToolDenials} times`, `In ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`, 'The cause was the fence, not nina', 'rather than reviewing a change', 'compound commands or redirections', 'pnpm harness:check', 'One machine', `amendment 01 discloses ${facts.priorCalls.amendment01} calls and amendment 02 ${facts.priorCalls.amendment02}`, `there were ${facts.preCounted.calls} more (${facts.preCounted.matrices} isolation matrices, ${facts.preCounted.reviewerPractice} reviewer practice runs and ${facts.preCounted.jevPractice} Jev practice calls`, 'but not of /private/var/tmp', 'would not have been seen', 'stamped with amendment 01', 'mostly diff-blind mode']) assert(section.includes(html(phrase)), `Limits must state: ${phrase}`);
   assert(section.includes(html(headlineContext(data))) && headlineContext(data).includes('c026') && headlineContext(data).includes('not architectural drift in the usual sense'));
   for (const id of ['jev', 'laya', 'reviewer', 'cascade', 'heuristic-lint', 'heuristic-grep']) {
     const g = results.primary.gates[id];
@@ -102,7 +102,7 @@ test('the spotlight is held: the bar met with its figures, no card, nothing feat
   assert.match(section, /The spotlight bar: met, and held/);
   for (const item of spotlightItems(results)) assert(section.includes(html(item)), 'The bar\'s figures stay visible');
   assert(section.includes(html(results.spotlight.criteria.find(c => c.id === 'missed-drift').itemLevel.state)));
-  assert(section.includes(html(diffSentence(data))) && section.includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`) && section.includes('The cause was the fence, not nina'));
+  assert(section.includes(html(diffSentence(data))) && section.includes(`In ${facts.diff.blind.runs} of the ${facts.diff.runs} reviewer runs`) && section.includes('The cause was the fence, not nina'));
   assert.match(section, /until a separate pre-registered experiment measures nina reviewing changes/);
   assert(section.includes(html(ninaAttribution.split('— ')[1])), 'The attribution is verbatim');
   for (const u of upstream) assert(section.includes(u.url));
@@ -125,7 +125,7 @@ test('the card needs BOTH a registered PASS and an explicit not-held decision', 
   assert.match(renderHarnessSection(failed), /did not meet the spotlight bar/);
   const shown = variant('PASS', open);
   assert(qualifyHomeResults(readFileSync('site/index.html', 'utf8'), shown).includes('id="project-nina"'));
-  assert(renderSpotlightCard(shown).includes(`In at least ${facts.diff.blind.runs} of the ${facts.diff.runs} runs`), 'Even when shown, the card states the diff-blind count');
+  assert(renderSpotlightCard(shown).includes(`In ${facts.diff.blind.runs} of the ${facts.diff.runs} runs`), 'Even when shown, the card states the diff-blind count');
 });
 
 test('the spotlight decision is a committed record bound to these results', () => {
@@ -182,6 +182,41 @@ test('the diff-blind classification is committed and reproducible from the revie
 test('station 06 carries the mixed-basis label on its cost row and the diff caveat on the reviewer row', () => {
   const exhibit = renderMeasuredExhibit(data);
   assert(exhibit.includes(html(`Mean cost per change · ${results.meanCostPerChange.basis}`)));
-  assert(exhibit.includes(html(`diff-blind in at least ${facts.diff.blind.runs} of ${facts.diff.runs} runs`)));
+  assert(exhibit.includes(html(`diff-blind in ${facts.diff.blind.runs} of ${facts.diff.runs} runs`)));
   assert(exhibit.includes(html(headlineContext(data))));
+});
+
+// The runs the independent results refute (round 2) adjudicated by reading the reports, and five more read for this
+// fix. The classifier must place each as read; c032#2 ran git diff and printed its output, so it is never diff-blind.
+test('the diff-visibility classifier agrees with the hand-read runs', () => {
+  const expected = {
+    'c005#2': 'diff-blind', 'c012#1': 'diff-blind', 'c012#2': 'diff-blind', 'c012#3': 'diff-blind', 'c021#2': 'diff-blind',
+    'c029#2': 'diff-blind', 'c044#2': 'diff-blind', 'c047#3': 'diff-blind', 'c056#2': 'diff-blind',
+    'c032#2': 'diff-seen', 'c004#1': 'unclear',
+    'c023#3': 'diff-blind', 'c025#2': 'diff-blind', 'c027#1': 'diff-blind', 'c028#3': 'diff-blind', 'c034#2': 'diff-blind',
+  };
+  const runs = JSON.parse(readFileSync(diffVisibilityPath, 'utf8')).runs;
+  for (const [key, cls] of Object.entries(expected)) {
+    const [id, run] = key.split('#');
+    assert.equal(runs.find(r => r.id === id && r.run === Number(run)).class, cls, `${key} should be ${cls}`);
+  }
+  assert.doesNotMatch(renderResultsSection(data), /at least \d+ of the \d+ reviewer runs/, 'The count is stated exactly');
+});
+
+test('a scrubbed placeholder is not a redirection; a real shell operator is', () => {
+  assert.equal(isCompound('git -C <ws> diff'), false);
+  assert.equal(isCompound('git -C <ws>/repo status --short'), false);
+  assert.equal(isCompound('git status --short > "$TMPDIR/d.txt" 2>&1'), true);
+  assert.equal(isCompound('git status --short; git diff'), true);
+  assert.equal(isCompound('git log | head'), true);
+  const reviewer = JSON.parse(readFileSync('experiments/jev-gate/results/reviewer.json', 'utf8'));
+  const commands = reviewer.calls.flatMap(c => (c.permissionDenials ?? []).map(d => String(d.input?.command ?? '')));
+  assert.equal(facts.deniedCompound, commands.filter(cmd => /[;|&<>]/.test(cmd.split('<ws>').join('').split('<tmp>').join(''))).length);
+  assert(facts.deniedCompound < facts.deniedTotal);
+});
+
+test('an empty high-confidence set reads as none, not 0 of 0', () => {
+  const section = renderResultsSection(data);
+  assert.doesNotMatch(section, /accuracy at high confidence 0 of 0/);
+  if (results.primary.gates.laya.accuracyAtHighConfidence.n === 0) assert.match(section, /accuracy at high confidence none \(no answers at that confidence\)/);
 });
