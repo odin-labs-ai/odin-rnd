@@ -480,6 +480,18 @@ test('a scan that did not finish never passes the answer-key pre-flight (refute 
     '  root_error) printf "find: %s: No such file or directory\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
     '  vanished_inner) printf "find: %s/gone/x.txt: No such file or directory\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
     '  copy_benign) printf "%s\\0" "$FAKE_COPY"; printf "find: %s/gone: Permission denied\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
+    // GNU find (odin-rnd Linux CI) quotes the path. UTF-8 locale uses ‘ … ’; the C locale opens with a backtick
+    // and closes with an apostrophe; the shell style uses ' … '. Benign inner skips must stay benign under each.
+    '  gnu_vanished) printf "find: ‘%s/gone/x.txt’: No such file or directory\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
+    '  gnu_perm) printf "find: ‘%s/locked’: Permission denied\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
+    "  clocale_perm) printf \"find: \\`%s/locked': Permission denied\\n\" \"$FAKE_ROOT\" >&2; exit 1 ;;",
+    "  shell_perm) printf \"find: '%s/locked': Permission denied\\n\" \"$FAKE_ROOT\" >&2; exit 1 ;;",
+    '  gnu_copy) printf "%s\\0" "$FAKE_COPY"; printf "find: ‘%s/locked’: Permission denied\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
+    // Quoted forms of the refusals: an error about a scanned root itself, an fts_* traversal abort, and a
+    // non-ENOENT/permission message must all still REFUSE even though the path is quoted.
+    '  gnu_root_error) printf "find: ‘%s’: Permission denied\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
+    '  gnu_fts) printf "find: ‘fts_read’: No such file or directory\\n" >&2; exit 1 ;;',
+    '  gnu_io) printf "find: ‘%s/x’: Input/output error\\n" "$FAKE_ROOT" >&2; exit 1 ;;',
     'esac',
     '',
   ].join('\n'));
@@ -505,6 +517,19 @@ test('a scan that did not finish never passes the answer-key pre-flight (refute 
     const c = run('copy_benign');
     assert.deepEqual(c.copies, [{ path: copy, copyOf: 'experiments/jev-gate/labels.json' }]);
     assert.equal(c.permissionSkipped, 1);
+    // GNU find quoting (odin-rnd Linux CI, refute r6 linux-find): a benign inner ENOENT/permission skip is still
+    // benign whether the path is quoted ‘…’ (UTF-8), `…' (C locale) or '…' (shell); a real copy beside a quoted
+    // skip is still found; and the quoted refusals (root itself, fts_*, a non-ENOENT/permission message) still refuse.
+    const gv = run('gnu_vanished'); assert.deepEqual([gv.copies, gv.vanished], [[], 1]);
+    const gp = run('gnu_perm'); assert.deepEqual([gp.copies, gp.permissionSkipped], [[], 1]);
+    assert.equal(run('clocale_perm').permissionSkipped, 1);
+    assert.equal(run('shell_perm').permissionSkipped, 1);
+    const gc = run('gnu_copy');
+    assert.deepEqual(gc.copies, [{ path: copy, copyOf: 'experiments/jev-gate/labels.json' }]);
+    assert.equal(gc.permissionSkipped, 1);
+    assert.throws(() => run('gnu_root_error'), /real scan error/);
+    assert.throws(() => run('gnu_fts'), /real scan error/);
+    assert.throws(() => run('gnu_io'), /real scan error/);
   } finally {
     process.env.PATH = savedPath;
     delete process.env.FAKE_FIND_CASE; delete process.env.FAKE_ROOT; delete process.env.FAKE_COPY;

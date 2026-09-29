@@ -63,7 +63,17 @@ export function checkResults(root = '.') {
   assert.equal(results.partial, null, 'A partial run decides nothing and is not rendered as a result');
   const runs = { jev: json(root, `${resultsDir}/jev.json`), laya: json(root, `${resultsDir}/laya.json`), reviewer: json(root, `${resultsDir}/reviewer.json`) };
   const preflight = json(root, `${resultsDir}/preflight.json`);
-  assert.deepEqual(computeResults({ ...loadRecords(), runs, preflight }), results, `${resultsPath} differs from what the frozen results.mjs computes from the committed runs`);
+  // The measured run was made by the runner code recorded in each run's `code`, which is bound to the committed
+  // pre-flight record (the frozen results.mjs re-checks runnersSha256 against it). A dated post-measurement change —
+  // the Linux portability fix to the pre-flight classifier in runner-guard.mjs (see the README) — altered that
+  // pinned file and re-pinned runners.sha256, so the LIVE pins now differ from the run's. The measurement is frozen,
+  // so score under the code the RUN recorded, not the live file; results.json then recomputes byte-identically.
+  // This is a no-op on a checkout whose runner code still equals the run's (all three runs must agree on it).
+  const records = loadRecords();
+  assert.deepEqual(runs.jev.code, runs.reviewer.code, 'the committed jev and reviewer runs disagree on the runner code');
+  assert.deepEqual(runs.laya.code, runs.reviewer.code, 'the committed laya and reviewer runs disagree on the runner code');
+  const stamp = { ...records.stamp, code: runs.reviewer.code };
+  assert.deepEqual(computeResults({ ...records, stamp, runs, preflight }), results, `${resultsPath} differs from what the frozen results.mjs computes from the committed runs`);
   const diffVisibility = json(root, diffVisibilityPath);
   assert.deepEqual(classify({ reviewer: runs.reviewer, labels: json(root, `${dir}/labels.json`) }), diffVisibility, `${diffVisibilityPath} differs from what experiments/jev-gate/diff-visibility.mjs computes`);
   // The founder's decision on the spotlight, a committed record naming these results by sha256. Without it, nothing is featured.

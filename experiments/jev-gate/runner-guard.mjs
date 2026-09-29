@@ -248,7 +248,11 @@ export function answerKeyCopies({ roots = defaultScanRoots().scannable, root = R
   const realErrors = [];
   for (const l of String(r.stderr ?? '').split('\n').map(s => s.trim()).filter(Boolean)) {
     const m = /^find: (.+): (No such file or directory|Permission denied|Operation not permitted)$/.exec(l);
-    const path = m?.[1];
+    // BSD/macOS prints the path bare ("find: /p: ..."); GNU find (odin-rnd Linux CI) quotes it in the locale's
+    // style — C locale opens with a backtick and closes with an apostrophe, UTF-8 uses ‘ and ’, shell uses '' —
+    // so strip one surrounding quote pair before the strict inside-a-scanned-root test, or a benign Linux skip
+    // (ENOENT / permission) would read as a real error. The message is the C errno text in either build.
+    const path = m?.[1]?.replace(/^[`'‘"]/, '').replace(/['’"]$/, '');
     const insideRoot = path !== undefined && !/(^|\/)fts_[a-z]+$/.test(path) && dirs.some(d => path.startsWith(d.endsWith('/') ? d : `${d}/`));
     if (!m || !insideRoot) realErrors.push(l);
     else if (/No such file or directory$/.test(l)) vanished += 1;
