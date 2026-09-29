@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assertPublishable, computeResults, loadRecords } from '../experiments/jev-gate/results.mjs';
+import { renderRunnerPins } from '../experiments/jev-gate/runner-guard.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 import { publishedParentSha256 } from './jev-gate-amendment.mjs';
 import { amendment01Sha256 } from './jev-gate-amendment-02.mjs';
@@ -53,6 +54,25 @@ export const isCompound = cmd => /[;|&<>]/.test(cmd.replace(/<(ws|tmp|homebrew)>
 export const unplacedClause = d => `${d.seen.runs} say they saw it; the other ${d.unclear.runs} are left unclassified, and ${d.unclearSaysNotSeen === 0 ? 'none of them says' : `${d.unclearSaysNotSeen} of them say`} it did not see the diff`;
 const stateClass = state => (state === 'refuted' ? 'verdict-red' : state === 'passes' ? 'verdict-green' : 'verdict-amber');
 
+// The one pinned runner file whose LIVE bytes may differ from the code the measured run recorded. This file (and the
+// build) imports the live runner-guard.mjs, so for it alone scoring is not under the recorded code: its later changes
+// (the Linux find fix, EXP 006's additive pre-flight parameters) touch no scoring path, and this allowlist plus its
+// tests keep every other pinned file — results.mjs, metrics.mjs, the runners — exactly as the run recorded it.
+export const LIVE_CODE_MAY_DIFFER = ['experiments/jev-gate/runner-guard.mjs'];
+
+/** Refuses unless the live runners.sha256 and the run's recorded pins differ only in the allowlisted lines. */
+export function assertLiveCodeAllowed(live, recorded) {
+  const lines = code => renderRunnerPins(code).split('\n').filter(Boolean);
+  const got = lines(live), want = lines(recorded);
+  assert.equal(got.length, want.length, 'the live runner pins list other files than the run recorded');
+  const differ = got.map((line, i) => (line === want[i] ? null : { live: line, recorded: want[i] })).filter(Boolean);
+  for (const d of differ) {
+    const [, path] = d.live.split('  '), [, recordedPath] = d.recorded.split('  ');
+    assert.ok(path === recordedPath && LIVE_CODE_MAY_DIFFER.includes(path), `the live runner code differs from the run's recorded code in ${recordedPath === path ? path : `${recordedPath} / ${path}`}, which only ${LIVE_CODE_MAY_DIFFER.join(', ')} may`);
+  }
+  return differ.map(d => d.live.split('  ')[1]);
+}
+
 // The committed results record, recomputed from the committed runs and checked; null while none is committed.
 export function checkResults(root = '.') {
   if (!existsSync(join(root, resultsPath))) return null;
@@ -72,6 +92,8 @@ export function checkResults(root = '.') {
   const records = loadRecords();
   assert.deepEqual(runs.jev.code, runs.reviewer.code, 'the committed jev and reviewer runs disagree on the runner code');
   assert.deepEqual(runs.laya.code, runs.reviewer.code, 'the committed laya and reviewer runs disagree on the runner code');
+  // The live pins may differ from the run's in runner-guard.mjs only (its one runners.sha256 line); anything else refuses.
+  assertLiveCodeAllowed(records.stamp.code, runs.reviewer.code);
   const stamp = { ...records.stamp, code: runs.reviewer.code };
   assert.deepEqual(computeResults({ ...records, stamp, runs, preflight }), results, `${resultsPath} differs from what the frozen results.mjs computes from the committed runs`);
   const diffVisibility = json(root, diffVisibilityPath);
