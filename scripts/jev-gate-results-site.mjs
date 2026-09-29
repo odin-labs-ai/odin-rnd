@@ -49,6 +49,8 @@ const units = v => Math.round(Number((v * 1e7).toFixed(3)));
 // A refused command was compound or a redirection only if it holds a real shell operator; the scrubbed placeholders
 // (<ws>, <tmp>, <homebrew>) are not operators.
 export const isCompound = cmd => /[;|&<>]/.test(cmd.replace(/<(ws|tmp|homebrew)>/g, ''));
+// The runs the rule does not place, said exactly as the record has them.
+export const unplacedClause = d => `${d.seen.runs} say they saw it; the other ${d.unclear.runs} are left unclassified, and ${d.unclearSaysNotSeen === 0 ? 'none of them says' : `${d.unclearSaysNotSeen} of them say`} it did not see the diff`;
 const stateClass = state => (state === 'refuted' ? 'verdict-red' : state === 'passes' ? 'verdict-green' : 'verdict-amber');
 
 // The committed results record, recomputed from the committed runs and checked; null while none is committed.
@@ -105,7 +107,9 @@ export function facts(root, results, runs, preflight, diffVisibility) {
     deniedForms: forms.slice(0, 3),
     deniedCompound: deniedCommands.filter(isCompound).length,
     deniedTotal: deniedCommands.length,
-    diff: { blind: dv['diff-blind'], seen: dv['diff-seen'], unclear: dv.unclear, runs: diffVisibility.runsTotal, items: diffVisibility.items, allCorrect: diffVisibility.runs.every(r => r.correct) },
+    diff: { blind: dv['diff-blind'], seen: dv['diff-seen'], unclear: dv.unclear, runs: diffVisibility.runsTotal, items: diffVisibility.items, allCorrect: diffVisibility.runs.every(r => r.correct),
+      // Whether any unclassified report says, even generically, that it did not see the diff.
+      unclearSaysNotSeen: diffVisibility.runs.filter(r => r.class === 'unclear' && (r.saysDiffNotSeen || r.saysShellBlocked)).length },
     baseTree: { label: teeth.base.label, violations: teeth.base.violations },
     baseShas: [...new Set(reviewerCalls.map(c => c.baseSha))],
     spend: { previousUsd: a02.spend.alreadySpentUsd, sinceUsd: sumUnits(since) / 1e7, lines: since.length, totalUsd: totalUnits / 1e7, capUsd: prereg.spendCap.usd },
@@ -156,7 +160,7 @@ const criterionItem = c => `${escape(c.statement)} <strong class="${stateClass(c
 // The diff-blind finding, in one sentence, from the classifier's committed output.
 export function diffSentence({ facts: f }) {
   const d = f.diff;
-  return `In ${d.blind.runs} of the ${d.runs} reviewer runs the reviewer never saw the change it was asked to review: this experiment's tool fence refused the git commands it tried to read it with, and the report says it did not see the diff (${d.seen.runs} reports say they saw it, ${d.unclear.runs} say neither or both). The cause was the fence, not nina. Every one of those runs was still decided correctly (${d.blind.correct} of ${d.blind.runs}), because the base tree has ${f.baseTree.violations} violations, so checking the whole working tree against the rules decides exactly what the label decides. For most runs, then, the reviewer audited a small repository against linter-shaped rules rather than reviewing a change.`;
+  return `In ${d.blind.runs} of the ${d.runs} reviewer runs the reviewer never saw the change it was asked to review: this experiment's tool fence refused the git commands it tried to read it with, and the report says it did not see the diff. Of the other runs, ${unplacedClause(d)}. The cause was the fence, not nina. Every one of those runs was still decided correctly (${d.blind.correct} of ${d.blind.runs}), because the base tree has ${f.baseTree.violations} violations, so checking the whole working tree against the rules decides exactly what the label decides. For most runs, then, the reviewer audited a small repository against linter-shaped rules rather than reviewing a change.`;
 }
 
 // Station 06, measured.
@@ -203,7 +207,7 @@ ${list(results.layaCriteria.map(c => `${escape(c.id)} <strong class="${stateClas
 <p>Beside each headline rate, as registered: missed drift split into code-level and comment-only RED items, abstentions for RED and GREEN items, and the rates over decided items only.</p>
 ${list([gateItem(results, 'Jev', 'jev'), gateItem(results, 'Laya', 'laya'), gateItem(results, `The LLM reviewer (majority of ${f.k} runs)`, 'reviewer'), gateItem(results, 'The cascade', 'cascade'), gateItem(results, `Baseline · ${f.best.id}`, f.best.id), ...f.otherBaselines.map(id => gateItem(results, `Baseline · ${id}`, id))])}
 <p>The reviewer's ${f.k} runs gave the same decided verdict on ${spot.criteria.find(c => c.id === 'self-agreement').x} of ${spot.criteria.find(c => c.id === 'self-agreement').n} changes.</p>
-<p>Diff visibility, from ${code(diffVisibilityPath)} (computed by ${code(`${dir}/diff-visibility.mjs`)} from the reviewer record, which keeps refused tool calls and each report but not the calls that succeeded): ${d.blind.runs} runs were diff-blind, ${d.seen.runs} saw the diff, and in ${d.unclear.runs} the report says neither or both. ${d.items.majorityDiffBlind} of the ${d.items.total} majority verdicts rest on diff-blind runs, and on ${d.items.allRunsDiffBlind} items all ${f.k} runs were diff-blind. Every run was decided correctly. Diff-blind runs cost ${usd(d.blind.meanCostUsd)} on average against ${usd(d.seen.meanCostUsd)} for diff-seen runs, took ${d.blind.meanTurns.toFixed(1)} turns against ${d.seen.meanTurns.toFixed(1)}, and had a median latency of ${secs(d.blind.medianLatencyMs)} against ${secs(d.seen.medianLatencyMs)}.</p>
+<p>Diff visibility, from ${code(diffVisibilityPath)} (computed by ${code(`${dir}/diff-visibility.mjs`)} from the reviewer record, which keeps refused tool calls and each report but not the calls that succeeded): ${d.blind.runs} runs were diff-blind; of the others, ${unplacedClause(d)}. ${d.items.majorityDiffBlind} of the ${d.items.total} majority verdicts rest on diff-blind runs, and on ${d.items.allRunsDiffBlind} items all ${f.k} runs were diff-blind. Every run was decided correctly. Diff-blind runs cost ${usd(d.blind.meanCostUsd)} on average against ${usd(d.seen.meanCostUsd)} for diff-seen runs, took ${d.blind.meanTurns.toFixed(1)} turns against ${d.seen.meanTurns.toFixed(1)}, and had a median latency of ${secs(d.blind.medianLatencyMs)} against ${secs(d.seen.medianLatencyMs)}.</p>
 <p>Latency, median and 90th percentile, measured by our own wrapper: Jev ${Math.round(lat.jev.p50Ms)} and ${Math.round(lat.jev.p90Ms)} ms (including the public internet), Laya ${Math.round(lat.laya.p50Ms)} and ${Math.round(lat.laya.p90Ms)} ms, the reviewer ${Math.round(lat.reviewer.p50Ms)} and ${Math.round(lat.reviewer.p90Ms)} ms per run.</p>
 <p>Mean cost per change (${escape(results.meanCostPerChange.basis)}): the cascade ${usd(results.meanCostPerChange.cascade)}, the reviewer alone ${usd(results.meanCostPerChange.reviewerAlone)}.</p>
 ${list([perThousand('Jev', cost.jev), perThousand('The reviewer', cost.reviewer), perThousand('Laya', cost.laya), perThousand('The cascade', cost.cascade)])}

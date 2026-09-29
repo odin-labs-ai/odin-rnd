@@ -28,25 +28,43 @@ export const NOT_SEEN = new RegExp('('
   + '|haven.t (seen|read) the (diff|change)'
   + '|without (seeing )?the diff'
   + '|(`?git diff`?|the diff)[^.\\n]{0,40}(never ran|was denied|were denied|was blocked|were blocked)'
-  + '|(every|all) (bash|shell)[^.\\n]{0,30}(blocked|denied|refused)'
-  + '|bash (is|was) (blocked|denied)'
   + "|(blocked|denied|refused) `?git diff`?[^.\\n]{0,40}(so|instead)"
   + "|(wasn.t|was not|weren.t|were not) allowed to (run|use) `?git diff"
   + ')', 'i');
-export const SAW = /(plain `?git diff`?( and `?git status`?)? (worked|ran|succeeded)|i saw the whole change|the diff (shows|adds|contains|changes|is(?! part of))|`git diff` shows|git diff shows|read the diff with plain)/gi;
+// A generic statement that the shell was blocked, without saying the diff went unseen. It supports diff-blind only
+// when the report describes nothing of the diff as seen.
+export const SHELL_BLOCKED = /((every|all) (bash|shell)[^.\n]{0,30}(blocked|denied|refused)|bash (is|was) (blocked|denied))/i;
+export const SAW = new RegExp('('
+  + 'plain `?git diff`?( and `?git status`?)? (worked|ran|succeeded)|i saw the whole change|read the diff with plain'
+  + '|the diff (shows|adds|contains|changes|touches|imports|is(?! part of))|(rest|part) of the diff|nothing in the diff'
+  + '|`?git diff`?( and `?git (status|diff --cached)`?)?( itself)? (shows?|came back|are both empty|is empty|prints|printed|produced)'
+  + '|i checked `?git diff'
+  + '|`?git diff`? (against|--stat)[^.\\n]{0,40}(shows|confirmed)|diff was confirmed with `?git diff|produced (its|their) output'
+  + '|i (read|checked) (only )?the diff'
+  + ')', 'gi');
 export const STRONG_SAW = /(i ran `?git diff`?[^.\n]{0,60}(on (their|its) own|separately|directly)|both printed their full output|`?git diff`? (printed|returned) (the|its) (full )?(output|diff))/i;
-const HYPO = /\b(what|whatever|if|whether|unless|once|when)\b/i;
+// Hypothetical: a conditional word earlier in the clause ("if the diff shows…"), or what/whatever right before the phrase
+// ("what git diff shows", "whatever the diff contains"). "**What the change is:** git diff shows…" is not hypothetical.
+const CONDITIONAL = /\b(if|whether|unless|once|when)\b/i;
+const WHAT_BEFORE = /\b(what|whatever)\s+`?$/i;
 const sentenceStart = (t, i) => Math.max(t.lastIndexOf('. ', i), t.lastIndexOf('\n', i), t.lastIndexOf(': ', i)) + 1;
-const sawOutsideHypothesis = text => [...text.matchAll(SAW)].some(m => !HYPO.test(text.slice(sentenceStart(text, m.index), m.index)));
+const sawOutsideHypothesis = text => [...text.matchAll(SAW)].some(m => { const before = text.slice(sentenceStart(text, m.index), m.index); return !CONDITIONAL.test(before) && !WHAT_BEFORE.test(before); });
 const CHANGE_READING = /\bgit\b[\s\S]*\b(diff|show|status|log)\b/;
 
 const deniedCommands = call => (call.permissionDenials ?? []).map(d => String(d.input?.command ?? d.tool_input?.command ?? ''));
 export function classifyRun(call) {
   const text = call.result ?? '';
   const refusedChangeRead = deniedCommands(call).some(cmd => CHANGE_READING.test(cmd));
-  const saysNotSeen = NOT_SEEN.test(text), saysRanDiff = STRONG_SAW.test(text), saysSaw = saysRanDiff || sawOutsideHypothesis(text);
-  const cls = saysRanDiff ? 'diff-seen' : refusedChangeRead && saysNotSeen && !saysSaw ? 'diff-blind' : saysSaw && !saysNotSeen ? 'diff-seen' : 'unclear';
-  return { id: call.id, run: call.run, class: cls, refusedChangeRead, saysNotSeen, saysSaw, saysRanDiff, gitToolDenials: call.gitToolDenials ?? 0, decision: call.decision, costUsd: call.costUsd, latencyMs: call.latencyMs, numTurns: call.numTurns };
+  const saysDiffNotSeen = NOT_SEEN.test(text), saysShellBlocked = SHELL_BLOCKED.test(text);
+  const saysRanDiff = STRONG_SAW.test(text), saysSaw = saysRanDiff || sawOutsideHypothesis(text);
+  const saysNotSeen = saysDiffNotSeen || saysShellBlocked;
+  // An explicit report that git diff ran and printed wins. Otherwise an explicit, diff-specific "I did not see the
+  // diff" wins over a loose "the diff touches…" (the refute's round-2 adjudication); a generic "Bash was blocked"
+  // counts only when nothing of the diff is described as seen.
+  const cls = saysRanDiff ? 'diff-seen'
+    : refusedChangeRead && (saysDiffNotSeen || (saysShellBlocked && !saysSaw)) ? 'diff-blind'
+    : saysSaw && !saysDiffNotSeen ? 'diff-seen' : 'unclear';
+  return { id: call.id, run: call.run, class: cls, refusedChangeRead, saysNotSeen, saysDiffNotSeen, saysShellBlocked, saysSaw, saysRanDiff, gitToolDenials: call.gitToolDenials ?? 0, decision: call.decision, costUsd: call.costUsd, latencyMs: call.latencyMs, numTurns: call.numTurns };
 }
 
 const median = xs => { const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };

@@ -172,7 +172,7 @@ test('the diff-blind classification is committed and reproducible from the revie
   assert.deepEqual(recomputed, committed);
   assert.equal(committed.runs.length, facts.reviewerRuns);
   const blind = committed.runs.filter(r => r.class === 'diff-blind');
-  assert(blind.every(r => r.refusedChangeRead && r.saysNotSeen && !r.saysSaw), 'Diff-blind needs the tool evidence and the report');
+  assert(blind.every(r => r.refusedChangeRead && !r.saysRanDiff && (r.saysDiffNotSeen || (r.saysShellBlocked && !r.saysSaw))), 'Diff-blind needs the tool evidence and the report saying the diff went unseen');
   assert(blind.every(r => r.correct), 'Every diff-blind run was correct');
   assert.equal(committed.summary['diff-blind'].runs + committed.summary['diff-seen'].runs + committed.summary.unclear.runs, committed.runs.length);
   assert(facts.diff.blind.meanCostUsd > facts.diff.seen.meanCostUsd && facts.diff.blind.medianLatencyMs > facts.diff.seen.medianLatencyMs);
@@ -194,6 +194,9 @@ test('the diff-visibility classifier agrees with the hand-read runs', () => {
     'c029#2': 'diff-blind', 'c044#2': 'diff-blind', 'c047#3': 'diff-blind', 'c056#2': 'diff-blind',
     'c032#2': 'diff-seen', 'c004#1': 'unclear',
     'c023#3': 'diff-blind', 'c025#2': 'diff-blind', 'c027#1': 'diff-blind', 'c028#3': 'diff-blind', 'c034#2': 'diff-blind',
+    // Refute round 3: these reports plainly describe the diff as seen.
+    'c049#1': 'diff-seen', 'c035#3': 'diff-seen', 'c036#2': 'diff-seen', 'c036#3': 'diff-seen', 'c007#1': 'diff-seen', 'c038#1': 'diff-seen',
+    'c059#3': 'diff-seen', 'c031#1': 'diff-seen', 'c033#2': 'diff-seen', 'c037#2': 'diff-seen', 'c027#3': 'diff-seen',
   };
   const runs = JSON.parse(readFileSync(diffVisibilityPath, 'utf8')).runs;
   for (const [key, cls] of Object.entries(expected)) {
@@ -201,6 +204,11 @@ test('the diff-visibility classifier agrees with the hand-read runs', () => {
     assert.equal(runs.find(r => r.id === id && r.run === Number(run)).class, cls, `${key} should be ${cls}`);
   }
   assert.doesNotMatch(renderResultsSection(data), /at least \d+ of the \d+ reviewer runs/, 'The count is stated exactly');
+  assert.equal(facts.diff.unclearSaysNotSeen, 0, 'No unclassified report says it did not see the diff');
+  const phrase = `${facts.diff.seen.runs} say they saw it; the other ${facts.diff.unclear.runs} are left unclassified, and none of them says it did not see the diff`;
+  assert(renderResultsSection(data).includes(html(phrase)) && renderHarnessSection(data).includes(html(phrase)), 'The page says exactly what the unplaced runs say');
+  assert.doesNotMatch(renderResultsSection(data), /say neither or both/);
+  assert.deepEqual([facts.diff.blind.runs, facts.diff.items.majorityDiffBlind, facts.diff.items.allRunsDiffBlind], [131, 49, 24], 'The diff-blind figures stay');
 });
 
 test('a scrubbed placeholder is not a redirection; a real shell operator is', () => {
