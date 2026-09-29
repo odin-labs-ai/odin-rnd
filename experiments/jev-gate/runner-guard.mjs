@@ -312,7 +312,10 @@ const gitHead = (root = REPO_ROOT) => {
   if (!/^[0-9a-f]{40}$/.test(head)) refuse('the pre-flight record check could not read git HEAD');
   return head;
 };
-const runnersPinsSha = (root = REPO_ROOT) => sha256(readFileSync(join(root, RUNNER_PINS)));
+// pinsFile: EXP 005's runners.sha256 by default; EXP 006 binds its records to its own pins file (additive).
+const runnersPinsSha = (root = REPO_ROOT, pinsFile = RUNNER_PINS) => sha256(readFileSync(join(root, pinsFile)));
+// The not-before a record must end after: amendment 02's by default, or the one the caller's experiment froze.
+const notBeforeName = notBefore => (notBefore === NOT_BEFORE_02 ? "amendment 02's not-before" : `the not-before ${notBefore}`);
 // The record's self-sha covers every field except sha256 itself.
 const preflightRecordSha = rec => sha256(JSON.stringify({ ...rec, sha256: null }));
 // The record is committed with the results, so its paths are scrubbed like every other record. This MUST agree
@@ -334,7 +337,7 @@ export const scrubTempPath = s => String(s)
  * binds the result to the runner code (runners.sha256) and the commit (git HEAD). Its paths are scrubbed so it can
  * be committed with the results. Refuses to record ok:true with an override: a counted scan must be the real one.
  */
-export function writePreflightRecord({ path, mode = 'counted', root = REPO_ROOT } = {}) {
+export function writePreflightRecord({ path, mode = 'counted', root = REPO_ROOT, pinsFile = RUNNER_PINS } = {}) {
   const startedAt = new Date().toISOString();
   const pf = answerKeyPreflight({ mode, root });
   const endedAt = new Date().toISOString();
@@ -343,7 +346,7 @@ export function writePreflightRecord({ path, mode = 'counted', root = REPO_ROOT 
     kind: 'answer-key-preflight', mode, ok: pf.ok, scanned: pf.scanned.map(scrubTempPath),
     skipped: pf.skipped, copies: pf.copies.map(c => ({ path: scrubTempPath(c.path), copyOf: c.copyOf })),
     vanished: pf.vanished, permissionSkipped: pf.permissionSkipped, durationMs: pf.durationMs, override: pf.override ?? null,
-    startedAt, endedAt, runnersSha256: runnersPinsSha(root), head: gitHead(root), sha256: null,
+    startedAt, endedAt, runnersSha256: runnersPinsSha(root, pinsFile), head: gitHead(root), sha256: null,
   };
   rec.sha256 = preflightRecordSha(rec);
   writeFileSync(path, `${JSON.stringify(rec, null, 2)}\n`);
@@ -357,7 +360,7 @@ export function writePreflightRecord({ path, mode = 'counted', root = REPO_ROOT 
  * after amendment 02's not-before and within the window of `now`. Returns {sha256, endedAt, head, scanned} for the
  * runner to stamp into its run record (scoring re-checks against those stamps, not the live environment).
  */
-export function checkPreflightRecord({ path, mode = 'counted', root = REPO_ROOT, now = new Date() } = {}) {
+export function checkPreflightRecord({ path, mode = 'counted', root = REPO_ROOT, now = new Date(), pinsFile = RUNNER_PINS, notBefore = NOT_BEFORE_02 } = {}) {
   if (mode !== 'counted') refuse('a pre-flight record is required only for a counted run');
   if (!path) refuse('a counted run needs a pre-flight record (--preflight-record); run runner-guard.mjs --preflight --mode counted --write-record first');
   if (!existsSync(path)) refuse(`the pre-flight record ${path} is missing`);
@@ -371,11 +374,11 @@ export function checkPreflightRecord({ path, mode = 'counted', root = REPO_ROOT,
   if (rec.override) refuse('the pre-flight record was written with an override; a counted run needs the real scan');
   const ws = defaultScanRoots().scannable.map(scrubTempPath).sort(), gs = [...(rec.scanned ?? [])].sort();
   if (ws.length !== gs.length || ws.some((r, i) => r !== gs[i])) refuse('the pre-flight record scanned different roots than the current default scan set');
-  if (rec.runnersSha256 !== runnersPinsSha(root)) refuse('the pre-flight record was written under other runner code (runners.sha256 differs)');
+  if (rec.runnersSha256 !== runnersPinsSha(root, pinsFile)) refuse(`the pre-flight record was written under other runner code (${pinsFile === RUNNER_PINS ? 'runners.sha256' : pinsFile} differs)`);
   if (rec.head !== gitHead(root)) refuse('the pre-flight record was written on another commit (git HEAD differs)');
   const ended = Date.parse(rec.endedAt);
   if (!Number.isFinite(ended)) refuse('the pre-flight record has no valid endedAt');
-  if (!(ended > Date.parse(NOT_BEFORE_02))) refuse("the pre-flight record ended at or before amendment 02's not-before");
+  if (!(ended > Date.parse(notBefore))) refuse(`the pre-flight record ended at or before ${notBeforeName(notBefore)}`);
   const age = now.getTime() - ended;
   if (!(age >= 0 && age <= PREFLIGHT_MAX_AGE_MS)) refuse(`the pre-flight record ended ${Math.round(age / 60000)} min before the run; it must be within 2 h and not in the future`);
   return { sha256: rec.sha256, endedAt: rec.endedAt, head: rec.head, scanned: rec.scanned };
@@ -390,7 +393,7 @@ export function checkPreflightRecord({ path, mode = 'counted', root = REPO_ROOT,
  * stamped, the run committed to this record's sha and endedAt, and endedAt is after amendment 02's not-before and
  * within the window before the gate's first call. No live git HEAD, temp-root or original-path dependency.
  */
-export function checkPreflightForScoring({ record, run, firstCallStartedAt }) {
+export function checkPreflightForScoring({ record, run, firstCallStartedAt, notBefore = NOT_BEFORE_02 }) {
   const g = run?.gate ?? '?';
   const stamped = run?.pins?.preflight ?? run?.preflight;
   const roots = run?.pins?.preflightRoots ?? run?.preflightRoots;
@@ -408,7 +411,7 @@ export function checkPreflightForScoring({ record, run, firstCallStartedAt }) {
   const rs = [...(record.scanned ?? [])].sort(), gs = [...(roots ?? [])].sort();
   if (rs.length !== gs.length || rs.some((r, i) => r !== gs[i])) refuse(`${g}: the pre-flight record's roots differ from the run's stamped roots`);
   const ended = Date.parse(record.endedAt), started = Date.parse(firstCallStartedAt);
-  if (!(ended > Date.parse(NOT_BEFORE_02))) refuse(`${g}: the pre-flight record ended at or before amendment 02's not-before`);
+  if (!(ended > Date.parse(notBefore))) refuse(`${g}: the pre-flight record ended at or before ${notBeforeName(notBefore)}`);
   if (!Number.isFinite(started)) refuse(`${g}: the run has no first-call time to date the pre-flight against`);
   const age = started - ended;
   if (!(age >= 0 && age <= PREFLIGHT_MAX_AGE_MS)) refuse(`${g}: the pre-flight ended ${Math.round(age / 60000)} min before the first call; it must be within 2 h and not after it`);
@@ -428,7 +431,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     try {
       const writeTo = at('--write-record');
       if (writeTo) { // the counted pre-flight scan, written once to a record every runner then requires
-        const rec = writePreflightRecord({ path: writeTo, mode: at('--mode') ?? 'counted' });
+        const rec = writePreflightRecord({ path: writeTo, mode: at('--mode') ?? 'counted', pinsFile: at('--pins-file') ?? RUNNER_PINS });
         console.log(JSON.stringify({ ok: rec.ok, wrote: writeTo, copies: rec.copies.length, vanished: rec.vanished, permissionSkipped: rec.permissionSkipped, durationMs: rec.durationMs, sha256: rec.sha256, head: rec.head }));
         process.exit(rec.ok ? 0 : 1);
       }
@@ -442,7 +445,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   }
   if (argv.includes('--check-preflight')) {
     try {
-      const pf = checkPreflightRecord({ path: at('--check-preflight'), mode: at('--mode') ?? 'counted' });
+      const pf = checkPreflightRecord({ path: at('--check-preflight'), mode: at('--mode') ?? 'counted', pinsFile: at('--pins-file') ?? RUNNER_PINS, notBefore: at('--not-before') ?? NOT_BEFORE_02 });
       console.log(JSON.stringify({ ok: true, ...pf }));
       process.exit(0);
     } catch (error) {
@@ -450,7 +453,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       process.exit(1);
     }
   }
-  if (!argv.includes('--check')) { console.error('usage: runner-guard.mjs --check [--mode ...] [--pins <f>] | --preflight [--mode ...] [--write-record <path>] | --check-preflight <path> [--mode counted] | --write-runner-pins'); process.exit(2); }
+  if (!argv.includes('--check')) { console.error('usage: runner-guard.mjs --check [--mode ...] [--pins <f>] | --preflight [--mode ...] [--write-record <path> [--pins-file <runners.sha256>]] | --check-preflight <path> [--mode counted] [--pins-file <f>] [--not-before <iso>] | --write-runner-pins'); process.exit(2); }
   try {
     const pinsFile = at('--pins');
     const pins = pinsFile ? JSON.parse(readFileSync(pinsFile, 'utf8')) : undefined;
