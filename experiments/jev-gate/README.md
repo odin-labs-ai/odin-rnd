@@ -472,7 +472,15 @@ name. A file that vanishes mid-scan (another process deleting a temp entry, `ENO
 unreadable subtree strictly inside a scanned root are benign — counted as `vanished` / `permissionSkipped` in the
 record, not a scan failure. But a scan that did **not finish** — `find` killed by a signal, a non-zero exit with
 no benign line to explain it, an `fts_*` traversal abort, or an error about a scanned root itself — fails closed
-and refuses, so an unfinished scan is never mistaken for a clean one. The scan's duration is recorded. It refuses
+and refuses, so an unfinished scan is never mistaken for a clean one. The benign-line classifier reads find's
+`find: <path>: <message>` lines: BSD/macOS prints the path bare, while GNU find quotes it in the locale's style
+(`‘…’` in a UTF-8 locale, a backtick-and-apostrophe pair in the C locale, `'…'` shell-style), so the classifier
+strips one surrounding quote pair before its strict inside-a-scanned-root test. **Post-measurement change,
+2026-09-29:** this last clause is a Linux portability fix made *after* the counted run, so the pre-flight passes on
+the odin-rnd CI (GNU find) as well as on the macOS machine that ran the measurement. It edits a pinned runner file
+(`runner-guard.mjs`) and re-pins `runners.sha256`; it does not touch the scoring or any measurement, and the
+committed measured-run records bind their own recorded code pins (the run was made at commit `483ce36d`), so
+`results.json` still recomputes byte-identically from them under that code. The scan's duration is recorded. It refuses
 while any answer-file copy is found, or when no root is scannable. `JEV_GATE_PREFLIGHT_ROOTS` is
 refused in a counted run and, in a practice run, must name existing dirs; the roots used are recorded, never a
 silent bypass. The frozen Jev/Laya dry-run records used a practice override pointing at a clean directory
