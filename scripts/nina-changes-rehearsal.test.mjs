@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { chmodSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, readFileSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
-import { checkRecords, defaultScanRoots, REPO_ROOT, scrubTempPath, sha256 } from '../experiments/jev-gate/runner-guard.mjs';
+import { checkRecords, sha256 } from '../experiments/jev-gate/runner-guard.mjs';
 import { loadFingerprints, outFile as FINGERPRINTS_FILE } from '../experiments/nina-changes/fingerprints.mjs';
-import { checkRun6, RUNNER6_PINS } from '../experiments/nina-changes/guard6.mjs';
+import { checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { assertPublishable6, computeResults6, translateHarnessFailure } from '../experiments/nina-changes/results6.mjs';
 import { FAKE_CLAUDE6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
+import { rehearsalPins, writeSyntheticPreflight } from './nina-changes-built-reviewer.mjs';
 
 // EXP 006 rehearsal (becomes bundle 2's binding rehearsal, WO-2-02): full 60 × 3 synthetic stream-json records made by
 // the REAL record builder and loop (runReviewer6, mode rehearsal: the committed stream-json fake stands in for the
@@ -18,21 +18,8 @@ import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 // refuse. Removing any field the scorer asserts from the builder's record turns it RED. While freeze.mjs is null the
 // rehearsal runs under rehearsal pins; after the freeze, under the frozen constants.
 
-const REHEARSAL_PINS = { prereg6Sha256: sha256('EXP 006 rehearsal: not a pre-registration'), notBefore: new Date(Date.now() - 3600e3).toISOString() };
+const REHEARSAL_PINS = rehearsalPins();
 const BLIND = new Set([4, 57, 58, 121]); // call indices the fake plays diff-blind (a refused diff), to exercise the states
-
-function writeSyntheticPreflight(dir) {
-  const endedAt = new Date(Date.now() - 60e3).toISOString();
-  const rec = {
-    kind: 'answer-key-preflight', mode: 'counted', ok: true, scanned: defaultScanRoots().scannable.map(scrubTempPath), skipped: [], copies: [],
-    vanished: 0, permissionSkipped: 0, durationMs: 0, override: null, startedAt: new Date(Date.now() - 120e3).toISOString(), endedAt,
-    runnersSha256: sha256(readFileSync(join(REPO_ROOT, RUNNER6_PINS))), head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim(), sha256: null,
-  };
-  rec.sha256 = sha256(JSON.stringify({ ...rec, sha256: null }));
-  const path = join(dir, 'preflight.json');
-  writeFileSync(path, `${JSON.stringify(rec, null, 2)}\n`);
-  return { path, rec };
-}
 
 // Record-level and per-call fields the scorer asserts (validateGateRun + validateRun6 + the counted checks).
 const RECORD_FIELDS = ['experiment', 'parentSha256', 'amendmentSha256', 'prereg6Sha256', 'notBefore', 'code', 'mode', 'head', 'fixture', 'rehearsal'];

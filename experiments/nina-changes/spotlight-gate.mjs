@@ -39,6 +39,9 @@ export function checkDecision(resultsBytes, decision) {
 
 const closed = reason => ({ shown: false, reason, results: null, decision: null, measuredOn: null });
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+/** A key-order-independent rendering, for deep equality of plain JSON values. */
+const canonical = v => JSON.stringify(v, (_, x) => (isObject(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x));
 
 /**
  * The gate from the records' bytes (null for a missing file) and the frozen constants (freeze.mjs by default; tests
@@ -48,8 +51,10 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
  *     prereg6Sha256 equal to the frozen PREREG6_SHA256 (which must be set), and EXP 005's publication gate passing;
  *   the decision: a spotlight-decision naming these results bytes by sha256 AND the reviewer run record by sha256
  *     (decision.reviewerSha256 — the chosen binding), with a boolean held;
- *   the reviewer run record: bound as above, not fixture, not a rehearsal, the same prereg6Sha256, with an endedAt
- *     (the "Measured" date comes only from it);
+ *   the reviewer run record: bound as above, a complete counted EXP 006 reviewer gate-run (kind "gate-run", experiment
+ *     "EXP 006", gate "reviewer", mode "counted", partial null), not fixture, not a rehearsal, the same prereg6Sha256,
+ *     notBefore and code as the results, its calls (stage errors aside) as {id, run} exactly the results' perRun, in
+ *     order, their count the manipulation denominator, and a parseable endedAt (the "Measured" date comes only from it);
  *   and the predicate entryShown.
  * Anything else gives {shown:false, reason}. Open: {shown:true, results, decision, measuredOn}.
  */
@@ -71,10 +76,25 @@ export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = nul
   try { assertPublishable6(results); } catch (error) { return closed(`the results record is not publishable: ${error.message}`); }
   try { checkDecision(resultsBytes, decision); } catch (error) { return closed(error.message); }
   if (decision.reviewerSha256 !== sha256(reviewerBytes)) return closed('the spotlight decision does not name this reviewer run record');
-  if (run?.fixture !== false) return closed('the reviewer run record is a fixture');
+  // The bound reviewer run record: field cross-checks only, no rescoring (refute r5 B1). The field names are the ones
+  // run_reviewer6.mjs writes (kind, experiment, gate, mode, partial, endedAt, notBefore, code, calls) and results6.mjs
+  // carries over (notBefore, code, perRun {id, run}, manipulation.denominator).
+  if (run?.kind !== 'gate-run') return closed('the reviewer run record is not a gate-run record');
+  if (run.experiment !== 'EXP 006') return closed('the reviewer run record is not EXP 006\'s');
+  if (run.gate !== 'reviewer') return closed('the reviewer run record is not the reviewer gate\'s');
+  if (run.mode !== 'counted') return closed(`the reviewer run record is not a counted run (mode ${run.mode})`);
+  if (run.fixture !== false) return closed('the reviewer run record is a fixture');
   if (run.rehearsal) return closed('the reviewer run record is a rehearsal');
+  if (run.partial !== null) return closed('the reviewer run record is partial');
   if (run.prereg6Sha256 !== results.prereg6Sha256) return closed('the reviewer run record was made under another pre-registration');
-  if (!run.endedAt) return closed('no measured date in the reviewer run record');
+  if (typeof run.endedAt !== 'string' || !Number.isFinite(Date.parse(run.endedAt))) return closed('no parseable measured date (endedAt) in the reviewer run record');
+  if (typeof results.notBefore !== 'string' || run.notBefore !== results.notBefore) return closed('the reviewer run record has another not-before than the results');
+  if (!isObject(results.code) || canonical(run.code) !== canonical(results.code)) return closed('the reviewer run record was made by other code than the results name');
+  if (!Array.isArray(run.calls) || !Array.isArray(results.perRun)) return closed('the reviewer run record or the results carry no per-run list');
+  const runCalls = run.calls.filter(c => !c?.stageError).map(c => ({ id: c?.id, run: c?.run }));
+  const scored = results.perRun.map(p => ({ id: p?.id, run: p?.run }));
+  if (canonical(runCalls) !== canonical(scored)) return closed('the reviewer run record\'s calls are not the runs the results scored');
+  if (runCalls.length !== results.manipulation?.denominator) return closed(`the reviewer run record has ${runCalls.length} calls, not the denominator ${results.manipulation?.denominator}`);
   if (!entryShown({ results, decision })) return closed('the gate is closed: bar, manipulation check, eligibility or held');
   return { shown: true, reason: null, results, decision, measuredOn: run.endedAt };
 }

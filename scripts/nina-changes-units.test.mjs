@@ -1,19 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { percentile } from '../experiments/jev-gate/results.mjs';
 import { FAKE_CLAUDE, renderCommand } from '../experiments/jev-gate/run_reviewer.mjs';
-import { checkRecords, readRunnerPins } from '../experiments/jev-gate/runner-guard.mjs';
+import { checkRecords, readRunnerPins, REPO_ROOT } from '../experiments/jev-gate/runner-guard.mjs';
 import { WS_REPO } from '../experiments/nina-changes/fence6.mjs';
 import { NOT_BEFORE6, PREREG6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } from '../experiments/nina-changes/guard6.mjs';
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
-import { buildCallRecord, FAULT_STAGES, recordSpend, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { acquireRunLock6, buildCallRecord, FAULT_STAGES, LOCK6, recordSpend, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
@@ -347,4 +348,77 @@ test('refute r4 N1: an intent line precedes every paid spawn and is cleared afte
     await assert.rejects(reviewerRun6({ prereg, amendment, item, runIndex: 1, claudeBin: FAKE_CLAUDE6, variant: 'fence6', timeoutMs: 60_000, fp: null, rehearsal: true, beforeSpawn: () => B.writeIntent({ callId: 'y', kind: 'practice', id: item.id, run: 1 }) }), e => e.code === 'EINTENT');
     assert.equal(readFileSync(process.env.FAKE6_LOG, 'utf8').split('\n').filter(Boolean).length, before, 'the client was never spawned');
   } finally { for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } removeScratch(dir); }
+});
+
+test('refute r5 N1: the sidecar is gitignored and never committed; clearIntent removes only its own line, atomically', () => {
+  for (const f of ['experiments/nina-changes/spend-ledger.pending.jsonl', LOCK6]) {
+    assert.equal(spawnSync('git', ['check-ignore', '-q', f], { cwd: REPO_ROOT }).status, 0, `${f} is gitignored`);
+    assert.equal(execFileSync('git', ['ls-files', '--', f], { cwd: REPO_ROOT, encoding: 'utf8' }), '', `${f} is not in the committed tree`);
+  }
+  const dir = scratchDir('nc-clear');
+  try {
+    const L = new SpendLedger6(join(dir, 'spend-ledger.jsonl'));
+    const failed = { ts: '2026-10-01T00:00:00Z', kind: 'practice', id: 'p01', run: 1, reportedCostUsd: 0.3, ledgerWriteFailed: true };
+    L.recordPending(failed);
+    L.writeIntent({ callId: 'A', kind: 'practice', id: 'p01', run: 2 });
+    L.writeIntent({ callId: 'B', kind: 'practice', id: 'p01', run: 3 });
+    writeFileSync(L.pendingPath, `${readFileSync(L.pendingPath, 'utf8')}not json {\n`, { flag: 'w' });
+    L.recordPending({ callId: 'A', note: 'a non-intent line that carries the same call id' });
+    const inode = statSync(L.pendingPath).ino;
+    L.clearIntent('A');
+    const left = readFileSync(L.pendingPath, 'utf8').split('\n').filter(Boolean);
+    assert.equal(left.length, 4, 'only intent A went');
+    assert.deepEqual(JSON.parse(left[0]), failed, 'the earlier failed-write line survives');
+    assert.equal(JSON.parse(left[1]).callId, 'B');
+    assert.equal(left[2], 'not json {', 'an unparseable line is kept, never dropped');
+    assert.equal(JSON.parse(left[3]).note, 'a non-intent line that carries the same call id');
+    assert.notEqual(statSync(L.pendingPath).ino, inode, 'rewritten by a rename (a new file), not in place');
+    assert.deepEqual(readdirSync(dir).filter(f => f.endsWith('.tmp')), [], 'no temp file left');
+    assert.equal(L.check('practice').reason, 'pending-ledger-line');
+  } finally { removeScratch(dir); }
+});
+
+test('refute r5 N2: one runner at a time: an exclusive lock for every paid invocation; a held lock refuses', async () => {
+  const dir = scratchDir('nc-lock');
+  try {
+    const path = join(dir, 'run.lock');
+    const release = acquireRunLock6(path);
+    assert.throws(() => acquireRunLock6(path), /another EXP 006 runner holds experiments\/nina-changes\/run\.lock \(\{"pid":/);
+    release();
+    assert.equal(existsSync(path), false, 'released');
+    const r2 = acquireRunLock6(path);
+    writeFileSync(path, 'another runner\n');
+    r2();
+    assert.equal(existsSync(path), true, 'a release never removes a lock it does not hold');
+  } finally { removeScratch(dir); }
+  // The real lock: a paid invocation refuses while it exists, before anything else; a paid invocation that ends (here
+  // by a refusal) removes its own lock.
+  const real = join(REPO_ROOT, LOCK6);
+  assert.equal(existsSync(real), false, 'no runner is running');
+  writeFileSync(real, 'held by a test\n', { flag: 'wx' });
+  try {
+    for (const opts of [{ mode: 'practice', items: [] }, { mode: 'probe', probe: 'matrix' }, { mode: 'probe', probe: 'matrix', prerun: true }, { mode: 'counted', items: [] }]) {
+      await assert.rejects(runReviewer6({ out: '/dev/null', log: () => {}, ...opts }), /another EXP 006 runner holds experiments\/nina-changes\/run\.lock \(held by a test\)/, JSON.stringify(opts));
+    }
+  } finally { unlinkSync(real); }
+  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {} }), /pre-run matrix probe/);
+  assert.equal(existsSync(real), false, 'the refused invocation released its lock');
+});
+
+test('refute r5 N3: a prerun-matrix ledger line without a prereg6Sha256 counts as the current pre-run probe (fail closed)', () => {
+  const dir = scratchDir('nc-prerun-reconciled');
+  try {
+    const L = new SpendLedger6(join(dir, 'spend-ledger.jsonl'));
+    const sha = 'd'.repeat(64);
+    assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: sha }).ok, true);
+    // The README's reconcile line shape, for a prerun-matrix intent, with its sha left out.
+    writeFileSync(L.path, `${JSON.stringify({ ts: '2026-10-01T00:00:00Z', gate: 'reviewer', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, costUsd: 0.6, costBasis: 'upper-bound', reportedCostUsd: null, fixture: false, reconciled: true })}\n`);
+    assert.deepEqual([L.check(PRERUN_KIND, { prereg6Sha256: sha }).ok, L.check(PRERUN_KIND, { prereg6Sha256: sha }).reason], [false, 'prerun-already-made']);
+    assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: null }).reason, 'prerun-already-made');
+    // With a sha, only the same sha counts.
+    writeFileSync(L.path, `${JSON.stringify({ ts: '2026-10-01T00:00:00Z', gate: 'reviewer', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, costUsd: 0.6, costBasis: 'upper-bound', reportedCostUsd: null, fixture: false, reconciled: true, prereg6Sha256: 'e'.repeat(64) })}\n`);
+    assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: sha }).ok, true);
+    assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: 'e'.repeat(64) }).reason, 'prerun-already-made');
+    assert.match(readFileSync('experiments/nina-changes/README.md', 'utf8'), /A `prerun-matrix` line without a `prereg6Sha256` counts as the pre-run probe of the CURRENT frozen/);
+  } finally { removeScratch(dir); }
 });

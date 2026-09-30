@@ -24,3 +24,27 @@ Nothing here has made a paid call. The live probe (matrix v6) and the pre-regist
 | `fixtures/fake-claude-stream.mjs`, `fixtures/synthetic6.mjs` | The stream-json fake and the synthetic tool calls (tests and the rehearsal only). |
 
 Layer 1 (the text rules) is best-effort; layer 2, the OS sandbox, is the boundary.
+
+## Running the paid bundles (2 and 3): one worktree, one runner at a time
+
+- **One worktree.** Bundles 2 and 3 run from ONE worktree, `.worktrees/exp006-run` (made from odin-rnd main once
+  this record is merged), one after the other. The pending sidecar `spend-ledger.pending.jsonl` and the run lock are per
+  worktree (both are gitignored and never committed), so a second worktree would not see the first one's pending
+  calls.
+- **The run lock.** Every paid invocation (practice, probe, pre-run probe, counted) creates
+  `experiments/nina-changes/run.lock` exclusively (O_EXCL) for its whole run and removes it at the end. A second
+  runner refuses while it exists; two concurrent runners could otherwise each pass the spend check and overshoot the
+  cap by one call. A lock left by a killed runner is removed by the operator only after checking that no runner is
+  running (fail closed).
+- **Intent lines.** Before each paid spawn the runner appends an intent line to the sidecar and clears it once the
+  real ledger line is written. Any line left in the sidecar makes every later call refuse until the operator
+  reconciles it.
+- **Reconciling a leftover line.** Append ONE ledger line for the call, charged at the upper bound the intent line
+  recorded, then remove that line from the sidecar:
+
+  ```json
+  {"ts":"<intent ts>","gate":"reviewer","kind":"<intent kind>","id":"<intent id>","run":<intent run>,"costUsd":<intent upperBoundUsd>,"costBasis":"upper-bound","reportedCostUsd":null,"fixture":false,"reconciled":true,"prereg6Sha256":"<frozen sha, prerun-matrix only>"}
+  ```
+
+  A `prerun-matrix` line without a `prereg6Sha256` counts as the pre-run probe of the CURRENT frozen
+  pre-registration, so no second pre-run probe can be made (fail closed).

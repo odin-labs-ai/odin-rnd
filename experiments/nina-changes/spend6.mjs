@@ -11,7 +11,7 @@
 //     exceed it. Reaching it = STOP + ASK-FORK.
 //   - Before bundle 3: spent + 180 × p90(dry-run per-run cost) + one pre-run probe + $0.60 > $60 → ASK-FORK. p90 is
 //     results.mjs `percentile` (numpy linear interpolation), the pre-registered method.
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { percentile } from '../jev-gate/results.mjs';
 
@@ -57,9 +57,17 @@ export class SpendLedger6 {
     this.recordPending(intent);
     return intent;
   }
+  /**
+   * Removes only this call's own intent line (refute r5 N1); every other line, an earlier failed-write line or an
+   * unparseable one included, is kept. The rewrite is atomic: a temp file in the same directory, then a rename, so a
+   * crash mid-rewrite leaves either the old sidecar or the new one, never a truncated one.
+   */
   clearIntent(callId) {
-    const keep = readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).filter(l => { try { return JSON.parse(l).callId !== callId || JSON.parse(l).intent !== true; } catch { return true; } });
-    writeFileSync(this.pendingPath, keep.length ? `${keep.join('\n')}\n` : '');
+    const own = l => { try { const e = JSON.parse(l); return e?.intent === true && e.callId === callId; } catch { return false; } };
+    const keep = readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).filter(l => !own(l));
+    const tmp = `${this.pendingPath}.${process.pid}.tmp`;
+    writeFileSync(tmp, keep.length ? `${keep.join('\n')}\n` : '');
+    renameSync(tmp, this.pendingPath);
   }
   pendingLines() { return existsSync(this.pendingPath) ? readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).length : 0; }
   /** Every line, validated; a corrupt line throws (the guard then refuses: fail closed). */
@@ -81,8 +89,9 @@ export class SpendLedger6 {
     if (this.pendingLines() > 0) return { ok: false, reason: 'pending-ledger-line', askFork: true, pending: this.pendingPath };
     let entries;
     try { entries = this.entries(); } catch (error) { return { ok: false, reason: 'corrupt-ledger', askFork: true, error: error.message }; }
-    // Only ONE post-freeze pre-run probe per frozen pre-registration (refute r2 N3).
-    if (kind === PRERUN_KIND && entries.some(e => e.kind === PRERUN_KIND && e.prereg6Sha256 === prereg6Sha256)) return { ok: false, reason: 'prerun-already-made', askFork: true };
+    // Only ONE post-freeze pre-run probe per frozen pre-registration (refute r2 N3). A prerun-matrix line WITHOUT a
+    // prereg6Sha256 (an operator-reconciled line, say) counts as made under the current one: fail closed (r5 N3).
+    if (kind === PRERUN_KIND && entries.some(e => e.kind === PRERUN_KIND && (!e.prereg6Sha256 || e.prereg6Sha256 === prereg6Sha256))) return { ok: false, reason: 'prerun-already-made', askFork: true };
     const spent = this.total(), preCounted = this.preCountedTotal(), reserve = this.reserve();
     const base = { spent, preCounted, reserve, capUsd: this.limits.capUsd, preCountedCeilingUsd: this.limits.preCountedCeilingUsd };
     if (units(spent) + units(reserve) > units(this.limits.capUsd)) return { ok: false, reason: 'cap', askFork: true, ...base };

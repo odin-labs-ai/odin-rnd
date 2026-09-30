@@ -195,3 +195,11 @@ test('refute r4: the gate sentence (real counted measurement under the frozen sh
   assert.match(limits, /Untested residual: git diff --no-index given an in-workspace symlink/);
   assert.match(limits, /a dated amendment with a new not-before/);
 });
+
+test('refute r5: the gate sentence names the reviewer-record cross-checks; the one-worktree, lock and reconciled-prerun limits are stated', () => {
+  for (const p of ['a complete counted EXP 006 reviewer run (kind gate-run, experiment EXP 006, gate reviewer, mode counted, not partial', 'with the same not-before and code as the results', 'its calls exactly the runs the results scored', 'as many as the manipulation denominator', 'a parseable end time']) assert(record.spotlightArtefact.gate.includes(p), p);
+  const limits = record.limits.join('\n');
+  assert.match(limits, /bundles 2 and 3 run from ONE worktree \(named in experiments\/nina-changes\/README\.md\)/);
+  assert.match(limits, /exclusive lock file \(experiments\/nina-changes\/run\.lock, created O_EXCL\)/);
+  assert.match(limits, /A reconciled pre-run probe line without a pre-registration sha counts as made under the current one \(fail closed\)/);
+});

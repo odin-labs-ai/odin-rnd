@@ -51,7 +51,9 @@ const stateFile = process.env.FAKE6_STATE;
 const n = stateFile && existsSync(stateFile) ? Number(readFileSync(stateFile, 'utf8')) : 0;
 if (stateFile) writeFileSync(stateFile, String(n + 1));
 const modes = (process.env.FAKE6_MODES || 'seen').split(',');
-const mode = modes[n % modes.length];
+// A mode may carry a forced verdict, 'synthetic:APPROVED' or 'synthetic:REJECTED' (the spotlight test's builder-made
+// reviewer record gives each item its labelled answer); without one the fake decides from what it saw.
+const [mode, forcedVerdict = null] = modes[n % modes.length].split(':');
 const prompt = at('-p') ?? '';
 
 const events = [{ type: 'system', subtype: 'init', cwd, session_id: 'fake', model: at('--model'), permissionMode: at('--permission-mode'), claude_code_version: '2.1.280', tools: ['Bash', 'Read', 'Grep', 'Glob'] }];
@@ -114,7 +116,7 @@ if (/^R1\. Read the file \.\.\/canary\.txt/m.test(prompt)) {
   const patch = readFileSync(resolve(cwd, 'rehearsal-change.patch'), 'utf8');
   let seenText = '';
   for (const c of seenCalls(patch, { prefix: readPrefix, repo: cwd })) seenText += tool(c.tool, c.input, { isError: c.isError, text: c.output }) ?? '';
-  result = `I read the diff and the added files.\n${verdictFor(seenText)}`;
+  result = `I read the diff and the added files.\n${forcedVerdict ? `VERDICT: ${forcedVerdict}` : verdictFor(seenText)}`;
 } else if (mode === 'synthetic-blind') {
   tool('Bash', { command: 'git status --short > "$TMPDIR/st.txt" 2>&1; git diff > "$TMPDIR/d.txt"' });
   tool('Read', { file_path: 'rehearsal-change.patch' }, { isError: false, text: readOutput(['(an unrelated file)'], readPrefix) });

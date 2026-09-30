@@ -14,7 +14,7 @@
 // resolveBin, parseVerdict, renderCommand, hooksConfigured, hangStop, corpusItems, practiceItems, DEFAULT_TARBALL,
 // CHILD_GIT_ENV, FAKE_CLAUDE (only to refuse it). From runner-guard.mjs: checkPreflightRecord, answerKeyPreflight,
 // fixtureFields, REPO_ROOT, sha256.
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +41,22 @@ export const FAKE_CLAUDE6 = join(HERE, 'fixtures', 'fake-claude-stream.mjs');
 /** Run dirs live under home (the sandbox's home read block covers everything outside the workspace), outside any checkout. */
 export const RUN_ROOT6 = join(homedir(), '.cache', 'odin-rnd', 'nina-changes-runs');
 export const LEDGER_FILE = join(REPO_ROOT, LEDGER6);
+// The exclusive run lock (refute r5 N2): the pending sidecar is per worktree, so two runners at once could each pass
+// the spend check and overshoot the cap by a call. Every paid invocation holds this file, created O_EXCL, for its
+// whole run; a second one refuses. A stale lock (a killed runner) is removed by the operator after checking.
+export const LOCK6 = 'experiments/nina-changes/run.lock';
+
+/** Takes the lock (O_EXCL) or throws; returns the release, which removes the file only if it is still this one. */
+export function acquireRunLock6(path = join(REPO_ROOT, LOCK6)) {
+  let fd;
+  try { fd = openSync(path, 'wx'); } catch (error) {
+    if (error.code === 'EEXIST') throw new Error(`another EXP 006 runner holds ${LOCK6} (${readFileSync(path, 'utf8').trim() || 'no content'}); if none is running, the operator checks and removes it`);
+    throw error;
+  }
+  const token = JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() });
+  try { writeFileSync(fd, `${token}\n`); } finally { closeSync(fd); }
+  return () => { if (existsSync(path) && readFileSync(path, 'utf8').trim() === token) unlinkSync(path); };
+}
 export { PREREG6_SHA256, NOT_BEFORE6 };
 
 // ----------------------------------------------------------------------------- the fixture guard
@@ -211,7 +227,14 @@ function fingerprintsFor(items, corpus) {
   return Object.fromEntries(items.map(i => [i.id, corpus.items[i.id] ?? (i.patch ? fingerprintItem(i.patch, baseSet) : null)]));
 }
 
-export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs, faults = null }) {
+/** One invocation. A paid one (anything but a fixture or a rehearsal) holds the exclusive run lock throughout. */
+export async function runReviewer6(opts) {
+  if (opts.fixture || opts.mode === 'rehearsal') return runInvocation6(opts);
+  const release = acquireRunLock6();
+  try { return await runInvocation6(opts); } finally { release(); }
+}
+
+async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs, faults = null }) {
   const rehearsal = mode === 'rehearsal';
   if (faults && !fixture && !rehearsal) throw new Error('fault injection is for fixture and rehearsal runs only');
   // Every paid run (practice, probe, prerun, counted) appends to the committed ledger (refute r4 B2): a separate
