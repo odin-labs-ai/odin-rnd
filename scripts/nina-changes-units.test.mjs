@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, cpSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { percentile } from '../experiments/jev-gate/results.mjs';
 import { FAKE_CLAUDE, renderCommand } from '../experiments/jev-gate/run_reviewer.mjs';
@@ -125,7 +126,12 @@ test('runners.sha256 pins every EXP 006 file and every jev-gate module EXP 006 i
 test('the guard: every counted run refuses while freeze.mjs is null; a rehearsal needs pins; practice and probe pass', () => {
   assert.equal(PREREG6_SHA256, null); assert.equal(NOT_BEFORE6, null);
   assert.throws(() => checkRun6({ mode: 'counted' }), /wait for the freeze/);
-  assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: 'a'.repeat(64), NOT_BEFORE6: '2026-01-01T00:00:00Z' } }), /preregistration\.json is missing/);
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: 'a'.repeat(64), NOT_BEFORE6: '2026-01-01T00:00:00Z' } }), /hashes to [0-9a-f]{64}, not the frozen a{64}/);
+  // With the committed record's own sha frozen: refused before the not-before, accepted after it (every pin re-checked).
+  const real = createHash('sha256').update(readFileSync('experiments/nina-changes/preregistration.json')).digest('hex');
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: new Date(Date.now() + 3600e3).toISOString().replace(/\.\d+Z$/, 'Z') } }), /not after the EXP 006 not-before/);
+  const frozen = checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' } });
+  assert.deepEqual([frozen.stamp.mode, frozen.stamp.prereg6Sha256, frozen.stamp.notBefore], ['counted', real, '2026-01-01T00:00:00Z']);
   assert.throws(() => checkRun6({ mode: 'rehearsal' }), /rehearsalPins/);
   assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: new Date(Date.now() + 3600e3).toISOString() } }), /not in the past/);
   assert.throws(() => checkRun6({ mode: 'practice', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' } }), /rehearsal only/);
