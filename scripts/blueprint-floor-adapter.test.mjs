@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { resolveFiles } from 'bce-engine';
 import { materialise, scoreTree } from '../experiments/jev-gate/bce-contract.mjs';
-import { AdapterError, CustomPolicyRefusedError, MissingFlagsError, PATHS, addedByFile, headerTarget, patchPaths, unquoteGitPath, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
+import { AdapterError, CustomPolicyRefusedError, MissingFieldError, MissingFlagsError, PATHS, addedByFile, headerTarget, patchPaths, unquoteGitPath, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
 import { deriveWhitelist, loadWhitelist, serialiseWhitelist, whitelistPath } from '../experiments/blueprint-floor/whitelist.mjs';
 
 // EXP 007 WO-1-02: the adapter and teeth harness, through the real bce-engine 0.3.1. No network, no model.
@@ -35,7 +35,7 @@ test('customPolicy and every type outside the vocabulary are refused with typed 
   for (const type of ['requiredDependency', 'requiredComponent', 'forbiddenPath', 'behavioralInvariant', 'minimumMetric', 'requiredEvidence', 'madeUp']) {
     assert.throws(() => checkVocabulary([{ id: 'x', type, severity: 'high' }]), e => e instanceof RefusedConstraintError && e.type === type, type);
   }
-  assert.doesNotThrow(() => checkVocabulary([{ id: 'x', type: 'requiredDependency', severity: 'high' }], 'control'));
+  assert.doesNotThrow(() => checkVocabulary([{ id: 'x', type: 'requiredDependency', severity: 'high', to: 'module:src/a.ts', component: 'typescriptModule' }], 'control'));
   assert.throws(() => buildBlueprint({ constraints: [{ id: 'x', type: 'customPolicy', severity: 'high' }], inputKind: 'toolCall', minFiles: 2 }), CustomPolicyRefusedError);
   assert.deepEqual(VOCABULARY.plugin, ['forbiddenDependency', 'forbiddenFile', 'forbiddenPattern', 'forbiddenEgress']);
 });
@@ -206,7 +206,7 @@ test('refute r5 B2: the base tree\'s own code reddens a src/** pattern (the cont
   assert.deepEqual([src.pass, src.compliant], [false, 'RED'], 'the hidden base already has interfaces');
   const added = await teeth(pattern('^\\s*(export\\s+)?interface\\s', '.floor/added-lines.txt'), { violating, compliant }, { inputKind: 'diff', flags: null });
   assert.equal(added.pass, true, added.reason);
-  assert.match(readFileSync('experiments/blueprint-floor/contract.md', 'utf8'), /also scans the project's existing TypeScript sources under src\/, which you cannot see/);
+  assert.match(readFileSync('experiments/blueprint-floor/contract.md', 'utf8'), /also reads the project's existing TypeScript sources under src\/, which you cannot see/);
 });
 
 test('refute r6 B1: a file-scoped diff rule on .floor/added/**/*.ts is decidable: in-scope violation RED, out-of-scope file GREEN', LONG, async () => {
@@ -257,7 +257,7 @@ test('refute r7 B1: the contract, the whitelist and the limits no longer claim t
   const texts = ['experiments/blueprint-floor/contract.md', 'experiments/blueprint-floor/whitelist.json', 'experiments/blueprint-floor/preregistration.json', 'experiments/blueprint-floor/protocol.md', 'site/journal/which-rules-need-a-model.html'].map(f => readFileSync(f, 'utf8')).join('\n');
   for (const bad of ['no effect on `.floor` text files', 'no teeth on .floor', 'not on .floor text files', 'neither can decide anything about .floor']) assert(!texts.includes(bad), bad);
   const contract = readFileSync('experiments/blueprint-floor/contract.md', 'utf8');
-  assert.match(contract, /reads EVERY scanned file as TypeScript, including the `\.floor` files/);
+  assert.match(contract, /Every read file is parsed as TypeScript, the `\.floor` files included/);
   assert.match(contract, /REMOVED lines of `\.floor\/diff\.patch`/);
 });
 
@@ -273,4 +273,24 @@ test('refute r7 N2/N3: patchPaths and added lines are hunk-aware, decode C-quote
   const quoted = 'diff --git "a/src/\\303\\251.ts" "b/src/\\303\\251.ts"\nnew file mode 100644\n--- /dev/null\n+++ "b/src/\\303\\251.ts"\n@@ -0,0 +1 @@\n+x\n';
   assert.deepEqual(patchPaths(quoted), ['src/é.ts']);
   assert.deepEqual(addedByFile(quoted), [{ path: 'src/é.ts', lines: ['x'] }]);
+});
+
+test('refute r8 B1: a constraint missing the field it is graded on is refused, and a vacuous one beside a real one fails teeth', LONG, async () => {
+  for (const [c, field] of [[{ id: 'v', type: 'forbiddenDependency' }, 'to'], [{ id: 'v', type: 'forbiddenDependency', to: '' }, 'to'], [{ id: 'v', type: 'forbiddenFile' }, 'path'], [{ id: 'v', type: 'forbiddenPattern', pattern: '' }, 'pattern'], [{ id: 'v', type: 'forbiddenEgress' }, 'to or forbiddenEgressHosts or governedHosts'], [{ type: 'forbiddenFile', path: 'x' }, 'id']]) {
+    assert.throws(() => checkVocabulary([c]), e => e instanceof MissingFieldError && e.field === field, JSON.stringify(c));
+  }
+  // Even if a constraint reached the engine and made it fail for another reason (its "enforces nothing" violation), teeth only
+  // counts a RED the report attributes to that constraint's own id.
+  const real = pattern('\\bsudo\\b')[0];
+  const t = await teeth([real, { id: 'other', type: 'forbiddenPattern', pattern: 'zzz-never', path: '.floor/command.txt' }], { violating: tc('sudo ls'), compliant: tc('ls') }, { inputKind: 'toolCall', flags: null });
+  assert.deepEqual([t.pass, t.perConstraint], [false, { p: true, other: false }]);
+});
+
+test('refute r8 B2: severity is ignored; an info-severity constraint still grades, and judge fails the violating input', LONG, async () => {
+  const bp = buildBlueprint({ constraints: [{ id: 'p', type: 'forbiddenPattern', severity: 'info', pattern: 'x', path: '.floor/command.txt' }], inputKind: 'toolCall', minFiles: 2 });
+  assert.equal(bp.constraints[0].severity, 'high');
+  const info = [{ id: 'p', type: 'forbiddenPattern', severity: 'info', pattern: '\\bsudo\\b', path: '.floor/command.txt' }];
+  assert.equal((await judge({ constraints: info, inputKind: 'toolCall', input: tc('sudo ls'), finalClass: 'expressible', flags: null })).decision, 'fail');
+  const noSeverity = [{ id: 'p', type: 'forbiddenPattern', pattern: '\\bsudo\\b', path: '.floor/command.txt' }];
+  assert.equal((await teeth(noSeverity, { violating: tc('sudo ls'), compliant: tc('ls') }, { inputKind: 'toolCall', flags: null })).pass, true);
 });

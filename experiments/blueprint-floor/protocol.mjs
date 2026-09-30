@@ -103,7 +103,8 @@ export const FLAGS_QUESTION = flags => {
 //   g, d     no effect on whether one line matches from its start (g's lastIndex state and d's indices change no verdict);
 //   m, s, u, v, y and any other flag
 //            cannot be verified mechanically (the checker matches each line with a flag-free pattern): a rule with one of
-//            them can be at most partial by the mechanical rule, recorded as failedCheck "flags-unverifiable".
+//            them cannot stay expressible: an expressible answer (no residual) drops to not, and it reaches partial only when
+//            the translator answers partial with a residual; recorded as failedCheck "flags-unverifiable".
 export const FLAG_HANDLING = { i: 'folded', g: 'no-effect', d: 'no-effect' };
 export const unverifiableFlags = flags => [...new Set([...(flags ?? '')])].filter(f => !FLAG_HANDLING[f]);
 const isUpper = ch => ch !== ch.toLowerCase();
@@ -223,7 +224,7 @@ export function validateTranslatorOutput(out, rule) {
   if (Array.isArray(out.constraints)) {
     const ids = out.constraints.map(c => c?.id);
     if (ids.some(id => !str(id) || !id) || new Set(ids).size !== ids.length) errors.push('every constraint needs a unique string id');
-    if (out.constraints.some(c => !['info', 'low', 'medium', 'high', 'critical'].includes(c?.severity))) errors.push('every constraint needs a severity');
+    // severity is optional and ignored: the adapter runs every constraint at one severity (refute r8 B2).
   }
   return { ok: errors.length === 0, errors };
 }
@@ -249,7 +250,7 @@ export function downgrade(cls, residualGiven) {
 /**
  * The mechanical checks ($0, code): schema, vocabulary, the checker's own validation, for a regex rule with /i the flags
  * check (no upper-case literal; the input is folded), then teeth through the adapter (per constraint too, folded for /i);
- * a flag the checks cannot verify caps the class at partial. The
+ * a flag the checks cannot verify drops an expressible answer to not (partial needs the translator's residual). The
  * first failing check downgrades the class once and is recorded. A class that is already not is checked for schema only.
  * An answer that is not parseable JSON, or has no valid class, is a harness failure: class error (counted as not).
  */

@@ -329,3 +329,17 @@ test('refute r6 N7: every control carries an "Applies to" line matching its inpu
   const K = { diff: "Checked on one change's diff.", toolCall: 'Checked on a tool call an agent is about to make.', stopTranscript: 'Checked when the agent stops, on the transcript and its final message.', file: 'Checked on the text of one document.' };
   for (const r of allRules.filter(x => x.ruleId.startsWith('control/'))) { assert.equal(r.context, K[r.inputKind], r.ruleId); assert(buildTranslatorPrompt(r).user.includes(`Applies to: ${K[r.inputKind]}`)); }
 });
+
+test('refute r8: vacuous and info-severity answers through the mechanical checks', LONG, async () => {
+  const rule = { ruleId: 'test/todo', text: 'Do not add TODO comments.', inputKind: 'diff', flags: null, context: null };
+  const nf = (p, lines) => `diff --git a/${p} b/${p}\nnew file mode 100644\n--- /dev/null\n+++ b/${p}\n@@ -0,0 +1,${lines.length} @@\n${lines.map(l => '+' + l).join('\n')}\n`;
+  const real = { id: 'real', type: 'forbiddenPattern', severity: 'high', pattern: '\\bTODO\\b', path: '.floor/added-lines.txt' };
+  const probes = { violating: { patch: nf('src/a.ts', ['// TODO x']) }, compliant: { patch: nf('src/a.ts', ['// done']) } };
+  const ans = cs => JSON.stringify({ ruleId: opaqueId(rule.ruleId), class: 'expressible', constraints: cs, coverage: 'all', residual: null, probes, rationale: 'x' });
+  for (const extra of [{ id: 'v', type: 'forbiddenDependency', severity: 'high' }, { id: 'v', type: 'forbiddenDependency', severity: 'high', to: '' }, { id: 'v', type: 'forbiddenFile', severity: 'high' }]) {
+    const m = await mechanicalChecks(rule, ans([real, extra]));
+    assert.deepEqual([m.failedCheck, m.classAfterMechanical], ['vocabulary', 'not'], JSON.stringify(extra));
+  }
+  const info = await mechanicalChecks(rule, ans([{ ...real, severity: 'info' }]));
+  assert.deepEqual([info.failedCheck, info.classAfterMechanical], [null, 'expressible'], JSON.stringify(info.teeth));
+});

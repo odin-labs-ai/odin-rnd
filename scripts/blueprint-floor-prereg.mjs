@@ -30,7 +30,7 @@ export const WORDING_R2_7 = '"$0 / no model" in COUNCIL-VERDICT STAGE 1 and STEE
 // Files the census path depends on. The record pins exactly these; never its own validator or the site renderer.
 export const PLUGINS = ['hunch', 'jev-pref', 'abide', 'limpet', 'jev-belay', 'jev-engineering', 'pi-verdict', 'jev-axi'];
 export const PINNED = [
-  ...['adapter.mjs', 'whitelist.mjs', 'whitelist.json', 'contract.md', 'contract-module-graph.md', 'prompts/translator.md', 'prompts/adjudicator.md', 'protocol.mjs', 'protocol.md', 'scorer.mjs', 'fixtures/scorer.json', 'extract.mjs', 'rules/selection.json', 'rules/SELECTION.md', ...PLUGINS.map(p => `rules/${p}.json`), 'controls/positive.json', 'controls/negative.json'].map(f => `${D}/${f}`),
+  ...['adapter.mjs', 'whitelist.mjs', 'whitelist.json', 'contract.md', 'contract-module-graph.md', 'prompts/translator.md', 'prompts/adjudicator.md', 'protocol.mjs', 'protocol.md', 'scorer.mjs', 'fixtures/scorer.json', 'engine-matrix.json', 'matrix.mjs', 'extract.mjs', 'rules/selection.json', 'rules/SELECTION.md', ...PLUGINS.map(p => `rules/${p}.json`), 'controls/positive.json', 'controls/negative.json'].map(f => `${D}/${f}`),
   `${J}/bce-contract.mjs`, `${J}/rules.txt`, 'scripts/blueprint-floor-rules.mjs', 'package.json', 'pnpm-lock.yaml',
 ];
 export const NOT_PINNED = ['scripts/blueprint-floor-prereg.mjs', 'scripts/blueprint-floor-note.mjs', 'scripts/blueprint-floor-isolation.mjs', `${D}/preregistration.json`, `${D}/preregistration.sha256`];

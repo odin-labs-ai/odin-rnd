@@ -40,7 +40,14 @@ export class CustomPolicyRefusedError extends RefusedConstraintError { construct
 const whitelist = loadWhitelist();
 export const VOCABULARY = { plugin: whitelist.plugin.map(t => t.type), control: whitelist.controls.map(t => t.type) };
 
-/** Refuse any constraint outside the role's vocabulary. Returns the constraints unchanged. */
+/** A constraint without the field its type is graded on (refute r8 B1): the engine would skip it and enforce nothing. */
+export class MissingFieldError extends AdapterError { constructor(type, field) { super(`a ${type} constraint needs a non-empty ${field}`, 'MISSING_FIELD'); this.name = 'MissingFieldError'; this.type = type; this.field = field; } }
+const filled = v => (typeof v === 'string' && v.length > 0) || (Array.isArray(v) && v.length > 0 && v.every(x => typeof x === 'string' && x.length > 0));
+export const REQUIRED_FIELDS = { forbiddenDependency: ['to'], forbiddenFile: ['path'], forbiddenPattern: ['pattern'], forbiddenEgress: [['to', 'forbiddenEgressHosts', 'governedHosts']], requiredDependency: ['to', 'component'], requiredComponent: ['component'], forbiddenPath: ['path'] };
+/** Severity plays no part in a pass/fail census; every constraint runs at one severity the engine always scores (refute r8 B2). */
+export const CENSUS_SEVERITY = 'high';
+
+/** Refuse any constraint outside the role's vocabulary, or missing the field it is graded on. Returns the constraints unchanged. */
 export function checkVocabulary(constraints, role = 'plugin') {
   if (!Array.isArray(constraints)) throw new AdapterError('constraints must be an array');
   if (!VOCABULARY[role]) throw new AdapterError(`unknown role ${role}`);
@@ -48,6 +55,11 @@ export function checkVocabulary(constraints, role = 'plugin') {
     if (!c || typeof c !== 'object') throw new AdapterError('a constraint must be an object');
     if (c.type === 'customPolicy') throw new CustomPolicyRefusedError(role);
     if (!VOCABULARY[role].includes(c.type)) throw new RefusedConstraintError(c.type, role);
+    if (typeof c.id !== 'string' || !c.id) throw new MissingFieldError(c.type, 'id');
+    for (const f of REQUIRED_FIELDS[c.type] ?? []) {
+      const ok = Array.isArray(f) ? f.some(g => filled(c[g])) : filled(c[f]);
+      if (!ok) throw new MissingFieldError(c.type, Array.isArray(f) ? f.join(' or ') : f);
+    }
   }
   return constraints;
 }
@@ -222,7 +234,7 @@ export function buildBlueprint({ ruleId = 'rule', constraints, inputKind, minFil
     intentRefs: [String(ruleId)],
     scope: { repositories: ['odin-labs-ai/odin-rnd'], paths },
     architecture: { components: control ? [{ id: 'typescriptModule', type: 'typescriptModule' }] : [], relationships: [] },
-    constraints,
+    constraints: constraints.map(c => ({ ...c, severity: CENSUS_SEVERITY })),
     evidenceRequirements: [{ type: 'staticAst', required: true, onMissing: 'block' }],
     approvals: [{ role: 'experiment', stage: 'ratify' }],
     ...(control ? { minEngineVersion: '0.3.0' } : {}),
@@ -301,16 +313,18 @@ export async function teeth(constraints, { violating, compliant }, { inputKind, 
   if (probes.length === 0) return { pass: false, reason: 'no violating probe' };
   const run = (cs, input) => runFloor({ ruleId, constraints: cs, inputKind, input, role, flags });
   try {
-    const v = [];
-    for (const p of probes) v.push((await run(set, p)).label);
-    const c = (await run(set, compliant)).label;
+    // A RED counts only when the report names one of the constraints themselves (refute r8 B1): the engine's own
+    // "enforces nothing" violation, or any other id, is not a constraint firing.
+    const ids = new Set(set.map(k => k.id));
+    const firedBy = r => new Set(r.label === 'RED' ? r.violations.map(x => x.rule).filter(id => ids.has(id)) : []);
+    const v = [], fired = new Set();
+    for (const p of probes) { const r = await run(set, p); const f = firedBy(r); v.push(f.size ? 'RED' : r.label === 'RED' ? 'RED(not by a constraint)' : r.label); for (const id of f) fired.add(id); }
+    const cr = await run(set, compliant), c = cr.label;
     const perConstraint = {};
-    if (set.length > 1) {
-      for (const k of set) {
-        perConstraint[k.id] = false;
-        for (const p of probes) if ((await run([k], p)).label === 'RED') { perConstraint[k.id] = true; break; }
-      }
-    } else perConstraint[set[0].id] = v.includes('RED');
+    for (const k of set) {
+      perConstraint[k.id] = false;
+      for (const p of probes) { const r = set.length > 1 ? await run([k], p) : null; if ((r ? firedBy(r) : fired).has(k.id)) { perConstraint[k.id] = true; break; } }
+    }
     const lone = Object.entries(perConstraint).filter(([, ok]) => !ok).map(([id]) => id);
     const pass = v.every(l => l === 'RED') && c === 'GREEN' && lone.length === 0;
     const violatingLabel = v.length === 1 ? v[0] : v;
