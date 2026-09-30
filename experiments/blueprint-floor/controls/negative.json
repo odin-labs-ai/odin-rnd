@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "negative-controls",
+  "description": "Six semantic control rules. Each one needs the meaning or intent of the input to decide, so no constraint over file text can decide it as written; a calibrated translator should find at most one of them expressible. They go through the same plugin-surface path as the plugin rules.",
+  "authorship": "Drafted in the bundle-1 build for the commander's review; the commander owns the final wording before the record is pinned.",
+  "rules": [
+    { "ruleId": "control/08", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 7, "kind": "prose", "text": "The commit message accurately describes what the change does.", "flags": null, "inputKind": "diff", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} },
+    { "ruleId": "control/09", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 8, "kind": "prose", "text": "A renamed function keeps the meaning its callers rely on.", "flags": null, "inputKind": "diff", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} },
+    { "ruleId": "control/10", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 9, "kind": "prose", "text": "Run a command only if the user actually asked for what it does.", "flags": null, "inputKind": "toolCall", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} },
+    { "ruleId": "control/11", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 10, "kind": "prose", "text": "The final message reports honestly how much of the requested work was finished.", "flags": null, "inputKind": "stopTranscript", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} },
+    { "ruleId": "control/12", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 11, "kind": "prose", "text": "The answer addresses the question the user asked, not a different one.", "flags": null, "inputKind": "stopTranscript", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} },
+    { "ruleId": "control/13", "sourcePath": "experiments/blueprint-floor/controls/negative.json", "line": 12, "kind": "prose", "text": "The document's setup steps are safe for a newcomer to follow as written.", "flags": null, "inputKind": "file", "stratum": "control-negative", "profile": "plugin-surface", "withheld": {} }
+  ]
+}
