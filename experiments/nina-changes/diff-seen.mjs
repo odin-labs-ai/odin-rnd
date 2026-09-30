@@ -7,15 +7,16 @@
 //      first character is + or -, whose remainder trimmed equals a fingerprint of that sign (whole line, never a
 //      substring). Base-commit output (git show HEAD, git log -p) cannot match: + fingerprints exclude every base line
 //      and a root commit prints no - line.
-//  (b) for an item with added files: a non-refused Bash git output carries an untracked `?? <path>` entry naming an added
-//      path or a directory prefix of it (`?? src/jobs/`), AND a non-refused Read or Grep of THAT added path returned one
+//  (b) for an item with added files: a non-refused Bash git output carries an untracked entry naming an added path or a
+//      directory prefix of it (a short `?? src/jobs/`, or a tab-indented entry inside a long-form `Untracked files:`
+//      section; never one under "Changes not staged" / "Changes to be committed"), AND a non-refused Read or Grep of THAT added path returned one
 //      of its + fingerprint lines (Read's `N→` / `N<TAB>` line-number prefix and Grep's `path:N:` / `path-N-` prefixes
 //      are stripped first; whole trimmed line).
 // Otherwise DIFF-BLIND. A harness failure (timeout, crash, unparseable stream) is never diff-seen. Rule (c) of R2-2 is
 // dropped (R3-2): c018's rename is 100% similar and is covered by rule (a) through its modify hunks.
 import { PREREG6_SHA256 } from './freeze.mjs';
 
-export const RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists `?? <added path or a directory prefix of it>` and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
+export const RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form "Untracked files:" section, never under "Changes not staged"/"Changes to be committed") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
 /** The classifier is frozen with the pre-registration: once PREREG6_SHA256 is set, its rule text is pinned there. */
 export const FROZEN = PREREG6_SHA256 !== null;
 
@@ -58,8 +59,25 @@ export function diffLineHits(output, fp) {
   return hits;
 }
 
-/** Untracked entries in a git output (`?? path`), exactly as git prints them for --short / --porcelain. */
-export const untrackedEntries = output => output.split('\n').map(l => /^\?\? (.+)$/.exec(l)?.[1]).filter(Boolean);
+/**
+ * Untracked entries in a git output: short/porcelain `?? path` lines, and (commander decision D2, phase C) the entries
+ * INSIDE a long-form `Untracked files:` section — the tab-indented lines after that header, up to the next blank
+ * line or section header. Paths listed under "Changes not staged for commit" or "Changes to be committed" never count.
+ */
+export function untrackedEntries(output) {
+  const out = [];
+  let inUntracked = false;
+  for (const line of output.split('\n')) {
+    const short = /^\?\? (.+)$/.exec(line);
+    if (short) { out.push(short[1]); continue; }
+    if (/^Untracked files:\s*$/.test(line)) { inUntracked = true; continue; }
+    if (!inUntracked) continue;
+    if (!line.trim() || /^\S/.test(line)) { inUntracked = false; continue; } // a blank line or the next section ends it
+    const entry = /^\t(.+)$/.exec(line);
+    if (entry) out.push(entry[1]);                                      // hint lines are "  (use …)", not tab entries
+  }
+  return out;
+}
 const names = (entry, path) => entry === path || (entry.endsWith('/') && path.startsWith(entry));
 
 /**

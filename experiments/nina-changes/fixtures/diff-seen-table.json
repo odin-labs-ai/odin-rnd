@@ -76,7 +76,13 @@
       "rule": null
     },
     {
-      "case": "blind: long-form status (not a ?? entry) and a Read (c013)",
+      "case": "seen: long-form status, the new directory under \"Untracked files:\", and a Read (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "blind: long-form status naming the path only under \"Changes not staged\", and a Read (c013)",
       "id": "c013",
       "seen": false,
       "rule": null

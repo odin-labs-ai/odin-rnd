@@ -58,6 +58,8 @@ export function classifyStreamRun({ timedOut, exitCode, stdout, error = null }) 
   if (parsed.malformed.length) return { harnessFailure: 'unparseable-ndjson-line', out: null, parsed };
   if (!parsed.finalResult) return { harnessFailure: 'no-final-result-line', out: null, parsed };
   const out = parsed.finalResult;
+  // is_error here is the FINAL type:"result" line's only (D3). A tool_result's is_error (a refusal, a failed git, or the
+  // client's cwd-tracking artifact) never makes a run a harness failure.
   if (out.is_error === true) return { harnessFailure: 'is-error', out, parsed };
   if (typeof out.result !== 'string' || !out.result.trim()) return { harnessFailure: 'empty-result', out, parsed };
   return { harnessFailure: null, out, parsed };

@@ -9,7 +9,7 @@ import { gitgit } from '../experiments/nina-changes/vendored-exp005.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 import { BASE_COMMIT, deriveBaseLines, lineHash, loadBaseLines, render as renderBaseLines } from '../experiments/nina-changes/base-lines.mjs';
 import { classifyDiffSeen, diffLineHits, grepLinesFor, stripReadPrefix, untrackedEntries } from '../experiments/nina-changes/diff-seen.mjs';
-import { fingerprints, loadFingerprints, MIN_CHARS, render as renderFingerprints } from '../experiments/nina-changes/fingerprints.mjs';
+import { fingerprintItem, fingerprints, loadFingerprints, MIN_CHARS, render as renderFingerprints } from '../experiments/nina-changes/fingerprints.mjs';
 import { baseOnlyCalls, readOutput, seenCalls, workspaceView } from '../experiments/nina-changes/fixtures/synthetic6.mjs';
 
 // EXP 006 WO-1-03: change fingerprints, the base line set, and the diff-seen classifier (R2-2 as replaced by R3-2 and
@@ -129,7 +129,8 @@ const CASES = {
   'seen: dir-only status and a Read of the added file (c013)': ['c013', () => [bash('git status --short', '?? src/jobs/\n'), readAdded('c013', 'src/jobs/purge-orders.ts')]],
   'seen: dir-only status and a Read with the tab prefix (c013)': ['c013', () => [bash('git status --short', '?? src/jobs/\n'), readAdded('c013', 'src/jobs/purge-orders.ts', 'tab')]],
   'blind: the added file read, but no untracked status entry (c013)': ['c013', () => [readAdded('c013', 'src/jobs/purge-orders.ts')]],
-  'blind: long-form status (not a ?? entry) and a Read (c013)': ['c013', () => [bash('git status', 'Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n\tsrc/jobs/\n'), readAdded('c013', 'src/jobs/purge-orders.ts')]],
+  'seen: long-form status, the new directory under "Untracked files:", and a Read (c013)': ['c013', () => [bash('git status', 'On branch main\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n\tsrc/jobs/\n\nnothing added to commit but untracked files present (use "git add" to track)\n'), readAdded('c013', 'src/jobs/purge-orders.ts')]],
+  'blind: long-form status naming the path only under "Changes not staged", and a Read (c013)': ['c013', () => [bash('git status', 'On branch main\nChanges not staged for commit:\n  (use "git add <file>..." to update what will be committed)\n\tmodified:   src/jobs/purge-orders.ts\n\tsrc/jobs/\n\nno changes added to commit\n'), readAdded('c013', 'src/jobs/purge-orders.ts')]],
   'blind: status names the path, the Read is of another file (c013)': ['c013', () => [bash('git status --short', '?? src/jobs/\n'), readRules]],
   'seen: status + Grep content lines path:N: (c013)': ['c013', () => [bash('git status --short', '?? src/jobs/\n'), { tool: 'Grep', input: { pattern: '.', path: 'src', output_mode: 'content' }, isError: false, output: view('c013').added['src/jobs/purge-orders.ts'].map((l, i) => `src/jobs/purge-orders.ts:${i + 1}:${l}`).join('\n') }]],
   'seen: status + GNU grep ./path-N- context lines (c013)': ['c013', () => [bash('git status --short', '?? src/jobs/\n'), { tool: 'Grep', input: { pattern: '.', path: '.', output_mode: 'content' }, isError: false, output: view('c013').added['src/jobs/purge-orders.ts'].map((l, i) => `./src/jobs/purge-orders.ts-${i + 1}-${l}`).join('\n') }]],
@@ -175,7 +176,7 @@ test('R4-4: the classifier strips the prefixes a REAL Read and a REAL Grep (cont
   const live = JSON.parse(readFileSync('experiments/nina-changes/fixtures/live-read-grep.json', 'utf8'));
   assert.equal(live.source.sha256, sha256(readFileSync(live.source.file)), 'the fixture names its probe record by sha');
   const record = JSON.parse(readFileSync(live.source.file, 'utf8')).calls[0].toolCalls;
-  for (const k of ['read', 'readRules', 'grep']) assert.deepEqual(record[live[k].n].output, live[k].output, `${k} is the record's own output`);
+  for (const k of ['read', 'readRules', 'grep', 'statusLong']) assert.deepEqual(record[live[k].n].output, live[k].output, `${k} is the record's own output`);
   // Read: `N<TAB>text`, unpadded. Stripped, the lines are the file's (money.ts: the base file plus the probe's marker).
   const base = readFileSync(`${JEV}/base/src/domain/money.ts`, 'utf8').replace(/\n$/, '').split('\n');
   const got = live.read.output.split('\n').map(stripReadPrefix);
@@ -195,4 +196,20 @@ test('R4-4: the classifier strips the prefixes a REAL Read and a REAL Grep (cont
   assert.deepEqual(classifyDiffSeen({ calls: [status, realRead], fp: fp.items.c013 }).rule, 'b');
   assert.deepEqual(classifyDiffSeen({ calls: [status, realGrep], fp: fp.items.c013 }).rule, 'b');
   assert.equal(classifyDiffSeen({ calls: [status, { ...realRead, refused: true }], fp: fp.items.c013 }).seen, false);
+});
+
+test('D2: the LIVE long-form status (C11) yields exactly its "Untracked files:" entries, never the modified path; p04 via long form', () => {
+  const live = JSON.parse(readFileSync('experiments/nina-changes/fixtures/live-read-grep.json', 'utf8'));
+  assert.equal(live.statusLong.input.command, 'git status && git diff');
+  assert.match(live.statusLong.output, /Changes not staged for commit:[\s\S]*modified:\s+src\/domain\/money\.ts[\s\S]*Untracked files:/);
+  assert.deepEqual(untrackedEntries(live.statusLong.output), ['canary-link.txt', 'link-r43']);
+  // p04 (an added file in a new directory) seen through a long-form status in the live format, then a real-format Read.
+  const p04 = JSON.parse(readFileSync('experiments/nina-changes/practice/practice-rows.json', 'utf8')).items.find(i => i.id === 'p04');
+  const pfp = fingerprintItem(p04.patch, baseSet);
+  const longForm = live.statusLong.output.replace('\tcanary-link.txt\n\tlink-r43\n', '\tsrc/reports/\n');
+  assert.deepEqual(untrackedEntries(longForm), ['src/reports/']);
+  const lines = workspaceView(p04.patch).added['src/reports/revenue.ts'];
+  const read = { tool: 'Read', input: { file_path: '<ws>/repo/src/reports/revenue.ts' }, isError: false, refused: false, output: lines.map((l, i) => `${i + 1}\t${l}`).join('\n') };
+  assert.equal(classifyDiffSeen({ calls: [bash('git status && git diff', longForm), read], fp: pfp }).rule, 'b');
+  assert.equal(classifyDiffSeen({ calls: [bash('git status && git diff', live.statusLong.output), read], fp: pfp }).seen, false, 'the live output names other untracked paths only');
 });

@@ -13,6 +13,7 @@ import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerA
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, LIMITS6, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
+import { runState } from '../experiments/nina-changes/results6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
 const { prereg, amendment } = checkRecords({ mode: 'practice' });
@@ -192,4 +193,16 @@ test('scrub6: a home path the client truncated collapses to ~ (phase B); a refus
   assert.equal(scrubPaths6('<ws>/home/probe-user/canary.txt'), '<ws>/home/probe-user/canary.txt', 'the probe canary home is left alone');
   const users = ['', 'Users', 'someone'].join('/');
   assert.deepEqual(leakFields({ a: 'clean', b: { c: [`${users}/x`, 'ok'] } }), ['b.c.0']);
+});
+
+test('D3: a harness failure\'s is_error is the FINAL result line\'s only, never a tool_result\'s (the cwd-tracking artifact)', () => {
+  const artifact = res('a', 'Exit code 1\n M src/domain/money.ts\nzsh:1: operation not permitted: <tmp>/claude-session/cwd-0000', true);
+  const r = classifyStreamRun({ timedOut: false, exitCode: 0, stdout: stream([init, use('a', 'Bash', { command: 'git status --short' }), artifact, final()]) });
+  assert.equal(r.harnessFailure, null, 'a tool_result is_error is not a harness failure');
+  assert.equal(r.parsed.toolCalls[0].isError, true);
+  assert.equal(r.parsed.toolCalls[0].refused, false, 'and not a refusal: it is not in permission_denials');
+  const refused = classifyStreamRun({ timedOut: false, exitCode: 0, stdout: stream([init, use('b', 'Bash', { command: 'cat ../x' }), res('b', 'denied', true), final({ permission_denials: [{ tool_name: 'Bash', tool_use_id: 'b', tool_input: { command: 'cat ../x' } }] })]) });
+  assert.deepEqual([refused.harnessFailure, refused.parsed.toolCalls[0].refused], [null, true]);
+  assert.equal(classifyStreamRun({ timedOut: false, exitCode: 0, stdout: stream([init, final({ is_error: true })]) }).harnessFailure, 'is-error');
+  assert.equal(runState({ harnessFailure: null, decision: 'ACCEPT', toolCalls: [{ isError: true }] }, true), 'SEEN-DECIDED');
 });

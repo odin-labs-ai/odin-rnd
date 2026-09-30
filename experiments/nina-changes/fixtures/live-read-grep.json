@@ -6,7 +6,7 @@
     "sha256": "6f9dfcbd43d226457b18997498ff8b1dbe1724f3de04ea612e4e5ee4c89ae185",
     "field": "calls[0].toolCalls"
   },
-  "note": "Real tool_result texts from Claude Code 2.1.280 (matrix v6 discovery, practice mode, scrubbed at write time): a whole-file Read (C18), a Read (C1) and a Grep in content mode with -n (C17). The R4-4 classifier test strips these exact prefixes.",
+  "note": "Real tool_result texts from Claude Code 2.1.280 (matrix v6 discovery, practice mode, scrubbed at write time): a whole-file Read (C18), a Read (C1) and a Grep in content mode with -n (C17), and a long-form `git status && git diff` (C11) whose untracked files sit under \"Untracked files:\". The R4-4 classifier test strips these exact prefixes.",
   "read": {
     "n": 10,
     "tool": "Read",
@@ -42,5 +42,17 @@
     "refused": false,
     "outputSha256": "235f97f56693ab99ee4ec766d3a9b1c327ffcbc32620b3fe82b351842b5e08cd",
     "output": "src/config/settings.ts:22:    invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',"
+  },
+  "statusLong": {
+    "n": 62,
+    "tool": "Bash",
+    "input": {
+      "command": "git status && git diff",
+      "description": "C11 status then diff"
+    },
+    "isError": false,
+    "refused": false,
+    "outputSha256": "6b7d4fc788cf6897b9e8328858b6cf4cd2e1d6b7c2834ffa59888dee13bb4520",
+    "output": "On branch main\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   src/domain/money.ts\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\tcanary-link.txt\n\tlink-r43\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")\ndiff --git a/src/domain/money.ts b/src/domain/money.ts\nindex 011f1e4..1993c75 100644\n--- a/src/domain/money.ts\n+++ b/src/domain/money.ts\n@@ -16,3 +16,4 @@ export function add(a: Money, b: Money): Money {\n export function multiply(a: Money, factor: number): Money {\n   return money(Math.round(a.cents * factor), a.currency);\n }\n+// PROBE-DIFF-9cfd0d5f3060633a\nzsh:1: operation not permitted: <tmp>/claude-session/cwd-50ff"
   }
 }

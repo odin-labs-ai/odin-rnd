@@ -29,6 +29,7 @@ const DECISIONS = ['ACCEPT', 'REJECT'];
 /** EXP 005 amendment 01's harnessFailure with R4-2's one translation; the runner's definition must equal it. */
 export const translateHarnessFailure = text => text.replace('missing or unparseable JSON', 'no parseable final `type:"result"` line, or an unparseable NDJSON line');
 
+/** The state of one run. HARNESS-FAIL comes only from call.harnessFailure (the final result line; never a tool_result's is_error). */
 export function runState(call, seen) {
   if (call.harnessFailure) return 'HARNESS-FAIL';
   if (!seen) return 'BLIND';
