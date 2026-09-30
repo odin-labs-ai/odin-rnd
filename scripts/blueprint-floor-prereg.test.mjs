@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DISCRIMINATING_NEGATIVES_VERBATIM, KILL_CRITERIA_VERBATIM, NOT_PINNED, PINNED, WORDING_R2_7, checkRecord, derive, pinPath, publishedPath, recordPath, required, validateRecord } from './blueprint-floor-prereg.mjs';
+import { DISCRIMINATING_NEGATIVES_VERBATIM, KAPPA_DISCLOSURE, KILL_CRITERIA_VERBATIM, NOT_PINNED, PINNED, WORDING_R2_7, checkRecord, derive, pinPath, publishedPath, recordPath, required, validateRecord } from './blueprint-floor-prereg.mjs';
 import { addJournalRow, articlePath, assertNoteCurrent, exp006RowAnchor, renderJournalRow, renderNote, resultWords, slug } from './blueprint-floor-note.mjs';
 import { addJournalRow as addExp006Row } from './nina-changes-note.mjs';
 import { checkRecord as checkExp006 } from './nina-changes-prereg.mjs';
@@ -111,4 +111,19 @@ test('the note cannot scroll sideways at 375px or 320px (long tokens wrap)', () 
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
   assert(wraps, '.article-body wraps long tokens');
+});
+
+test('refute r1: the kappa disclosure, the opaque-id inputs, the controls-contract limit, and the plain gloss before the plan wording', () => {
+  assert(record.adjudicator.agreement.includes(KAPPA_DISCLOSURE));
+  assert(record.metrics.find(m => m.id === 'agreement').definition.includes(KAPPA_DISCLOSURE));
+  const bad = copy(); bad.adjudicator.agreement = 'kappa';
+  assert.throws(() => validateRecord(bad), /kappa disclosure/);
+  for (const f of ['opaque id', 'verbatim text', 'input kind', 'regex flags', 'contract', 'whitelist']) assert(record.translator.input.includes(f), f);
+  for (const f of ['opaque id', 'translator\'s answer verbatim', 'mechanical results']) assert(record.adjudicator.input.includes(f), f);
+  assert(record.limits.some(l => l.startsWith('The positive controls are shown the module-graph contract')));
+  assert.match(record.spend.plain, /^Stage 1 calls no Jev model\./);
+  const note = readFileSync(articlePath, 'utf8');
+  const outside = note.replace(/<blockquote>[\s\S]*?<\/blockquote>/g, '');
+  assert(!/STEER|COUNCIL-VERDICT/.test(outside), 'no internal jargon outside the quoted wording');
+  assert(note.indexOf(record.spend.plain) < note.indexOf('<blockquote>'), 'the plain gloss comes first');
 });

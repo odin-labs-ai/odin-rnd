@@ -29,6 +29,7 @@ test('all harness errors: every rule counts as not, the median is 0, the premise
   assert.equal(r.kill.variant, 'refuted');
   assert.deepEqual(r.errors.map(e => e.ruleId), c.expect.errors);
   assert.equal(r.agreement.n, c.expect.kappaN); assert.equal(r.agreement.kappa, null);
+  assert.match(r.agreement.rule, /ended in error are excluded; computed over all census rules including controls/);
   assert.equal(r.perPlugin.find(x => x.plugin === 'b').error, 2);
 });
 

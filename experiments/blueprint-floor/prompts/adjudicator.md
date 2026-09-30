@@ -11,7 +11,7 @@ Decide whether that class is right for the rule AS WRITTEN. Confirm it only if t
 Answer with ONE JSON object and nothing else (no prose, no code fence), with exactly these fields:
 
 {
-  "ruleId": "<the ruleId you were given>",
+  "ruleId": "<the id you were given>",
   "verdict": "confirm" | "dispute",
   "proposedClass": "expressible" | "partial" | "not",
   "reason": "<at most 80 words>"

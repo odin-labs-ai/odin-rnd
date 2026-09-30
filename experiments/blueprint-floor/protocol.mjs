@@ -1,7 +1,8 @@
 // EXP 007 WO-1-03: the census protocol as code: the prompt builders (what a translator and an adjudicator see), the
 // output schemas, and the mechanical checks that can only lower a class. protocol.md states the same in prose.
 //
-// Blindness (R2-3): a builder reads exactly four fields of a rule, {ruleId, text, inputKind, flags}. Every other field
+// Blindness (R2-3, refute r1 B2): a builder reads exactly four fields of a rule, {ruleId, text, inputKind, flags}, and the
+// prompt shows the ruleId only as an opaque id (opaqueId below). Every other field
 // (withheld, the source line, the stratum, abide's check.type, any label) is never read here, and a test proves it by
 // handing the builders a rule whose other fields throw when touched. No case, label or result reaches a prompt.
 // No model is called here; the runner that spawns one is bundle 2's.
@@ -30,8 +31,25 @@ export function promptFields(rule) {
   return { ruleId, text, inputKind, flags: typeof flags === 'string' ? flags : null };
 }
 
+// Opaque prompt ids (refute r1 B2): a prompt never carries the ruleId, which names the plugin, the source and the stratum.
+// It carries item-<first 12 hex of sha256("exp007-census-v1:" + ruleId)>; the runner maps it back with ruleIdFor.
+export const OPAQUE_PREFIX = 'exp007-census-v1:';
+export const opaqueId = ruleId => `item-${sha256(OPAQUE_PREFIX + ruleId).slice(0, 12)}`;
+/** The ruleId behind an opaque id, among `ruleIds`; throws on no match or a collision. */
+export function ruleIdFor(id, ruleIds) {
+  const hits = ruleIds.filter(r => opaqueId(r) === id);
+  if (hits.length !== 1) throw new Error(`opaque id ${id} maps to ${hits.length} rules`);
+  return hits[0];
+}
+/** Every opaque id of a census is distinct (checked before any run). */
+export function assertOpaqueIdsDistinct(ruleIds) {
+  const ids = ruleIds.map(opaqueId);
+  if (new Set(ids).size !== ids.length) throw new Error('two rules share an opaque id');
+  return ids;
+}
+
 const ruleBlock = ({ ruleId, text, inputKind, flags }) => [
-  `ruleId: ${ruleId}`,
+  `id: ${opaqueId(ruleId)}`,
   `input kind: ${inputKind}`,
   ...(flags !== null ? [`this rule is a regular expression; its flags: ${flags === '' ? '(none)' : flags}`] : []),
   'rule text (verbatim, between the markers):',
@@ -85,7 +103,7 @@ export function validateTranslatorOutput(out, rule) {
   if (!obj(out)) return { ok: false, errors: ['not an object'] };
   const extra = Object.keys(out).filter(k => !TRANSLATOR_FIELDS.includes(k));
   if (extra.length) errors.push(`unknown fields: ${extra.join(', ')}`);
-  if (out.ruleId !== rule.ruleId) errors.push('ruleId differs from the rule');
+  if (out.ruleId !== opaqueId(rule.ruleId)) errors.push('ruleId differs from the id the prompt gave');
   if (!CLASSES.includes(out.class)) errors.push('class is not expressible, partial or not');
   if (!Array.isArray(out.constraints) || !out.constraints.every(obj)) errors.push('constraints is not an array of objects');
   if (!str(out.coverage)) errors.push('coverage is not a string');
@@ -112,7 +130,7 @@ export function validateAdjudicatorOutput(out, rule) {
   if (!obj(out)) return { ok: false, errors: ['not an object'] };
   const extra = Object.keys(out).filter(k => !['ruleId', 'verdict', 'proposedClass', 'reason'].includes(k));
   if (extra.length) errors.push(`unknown fields: ${extra.join(', ')}`);
-  if (out.ruleId !== rule.ruleId) errors.push('ruleId differs from the rule');
+  if (out.ruleId !== opaqueId(rule.ruleId)) errors.push('ruleId differs from the id the prompt gave');
   if (!['confirm', 'dispute'].includes(out.verdict)) errors.push('verdict is not confirm or dispute');
   if (!CLASSES.includes(out.proposedClass)) errors.push('proposedClass is not a class');
   if (!str(out.reason) || words(out.reason) > 80) errors.push('reason is missing or over 80 words');

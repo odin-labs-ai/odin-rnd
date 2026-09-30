@@ -90,7 +90,7 @@ export function score({ rules, records, plugins }) {
       bar: `at least ${CALIBRATION.positiveMin} of ${CALIBRATION.positiveOf} positive controls final expressible or partial, and at most ${CALIBRATION.negativeMax} of ${CALIBRATION.negativeOf} negative controls final expressible`,
       calibrated: pos.length === CALIBRATION.positiveOf && neg.length === CALIBRATION.negativeOf && posHit >= CALIBRATION.positiveMin && negHit <= CALIBRATION.negativeMax,
     },
-    agreement: cohenKappa(pairs),
+    agreement: { ...cohenKappa(pairs), rule: 'rules whose translator or adjudicator call ended in error are excluded; computed over all census rules including controls' },
     disputes: all.filter(r => r.disputed).map(r => ({ ruleId: r.ruleId, from: r.preDispute, to: r.final })),
     downgrades: all.filter(r => r.downgraded).map(r => ({ ruleId: r.ruleId, failedCheck: r.failedCheck })),
     engineLimit: all.filter(r => r.engineLimit).map(r => r.ruleId),

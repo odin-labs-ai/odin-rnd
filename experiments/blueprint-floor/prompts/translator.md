@@ -11,7 +11,7 @@ Classify the rule as exactly one of:
 Then answer with ONE JSON object and nothing else (no prose, no code fence), with exactly these fields:
 
 {
-  "ruleId": "<the ruleId you were given>",
+  "ruleId": "<the id you were given>",
   "class": "expressible" | "partial" | "not",
   "constraints": [ <constraint objects, each using only the accepted types and fields of the contract; [] when class is not> ],
   "coverage": "<what part of the rule the constraints decide; empty when class is not>",

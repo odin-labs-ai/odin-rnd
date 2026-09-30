@@ -8,7 +8,7 @@ The eight plugins, their pins, what counts as one rule and what is excluded are 
 
 ## The translator (blind)
 
-One fresh process per rule. Its input is the rule's verbatim text (the one text field pinned per plugin), its input kind, its regex flags when it is a regex, and the materialisation contract (`contract.md`; `contract-module-graph.md` for the positive controls only), which lists the only accepted constraint types with one generic example each. It never sees a case, a label, a plugin evaluation file, abide's own type field, another rule's class, or any result. `protocol.mjs` builds the prompt from exactly four fields of a rule ({ruleId, text, inputKind, flags}); a test proves no other field is read.
+One fresh process per rule. Its input is the rule's verbatim text (the one text field pinned per plugin), its input kind, its regex flags when it is a regex, and the materialisation contract (`contract.md`; `contract-module-graph.md` for the positive controls only), which lists the only accepted constraint types with one generic example each. It never sees a case, a label, a plugin evaluation file, abide's own type field, another rule's class, or any result. `protocol.mjs` builds the prompt from exactly four fields of a rule ({ruleId, text, inputKind, flags}) and shows the ruleId only as an opaque id, `item-<first 12 hex of sha256("exp007-census-v1:" + ruleId)>`, which the runner maps back; no plugin name, source path, stratum or control word appears in a prompt. Tests prove both.
 
 It answers one JSON object: {ruleId, class: expressible | partial | not, constraints, coverage, residual, probes: {violating, compliant}, rationale (at most 80 words)}.
 
@@ -24,7 +24,7 @@ In order: the answer parses and matches the schema; every constraint type is in 
 
 ## The adjudicator (independent)
 
-A separate process, a different pinned model, no tools. Its input is the rule text, the translator's answer verbatim and the mechanical results; no case. It answers {ruleId, verdict: confirm | dispute, proposedClass, reason}. The final class is the class after the mechanical checks if confirmed; if disputed, the lower of the two (not < partial < expressible), so a dispute can only lower expressibility. Translator-adjudicator agreement is reported as Cohen's kappa over the three classes, with the dispute list. A harness failure of the adjudicator is class error, counted as not.
+A separate process, a different pinned model, no tools. Its input is the same opaque id, the rule text, its input kind and flags, the translator's answer verbatim and a summary of the mechanical results; no case. It answers {ruleId, verdict: confirm | dispute, proposedClass, reason}. The final class is the class after the mechanical checks if confirmed; if disputed, the lower of the two (not < partial < expressible), so a dispute can only lower expressibility. Translator-adjudicator agreement is reported as Cohen's kappa over the three classes, with its n and the dispute list; rules whose translator or adjudicator call ended in error are excluded; computed over all census rules including controls. A harness failure of the adjudicator is class error, counted as not.
 
 ## Controls (disclosed, outside every median)
 

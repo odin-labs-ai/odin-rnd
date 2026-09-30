@@ -73,7 +73,9 @@ ${list(record.metrics.map(x => `<strong>${escape(x.id)}</strong>: ${escape(x.def
 ${list([`Translator ${code(k.translatorModel)}, adjudicator ${code(k.adjudicatorModel)}, ${escape(k.client)} ${escape(k.clientVersion)}, effort ${code(k.effort)}, ${k.attempts} attempt per call.`, escape(k.workingDirectory), escape(k.environment), escape(k.modelAssertion), escape(k.canary), escape(k.billing), escape(k.bareRejected)])}
 <pre tabindex="0">${escape(k.command)}</pre>
 ${list([`A cap of $${sp.capUsd} on every metered call of ${escape(e.id)}, with a census ceiling of $${sp.censusCeilingUsd}; ledger ${code(sp.ledger)}.`, ...sp.rules.map(escape), escape(sp.unknownCost), escape(sp.bundle1), escape(record.notBefore), escape(record.runnerGuard)])}
-<p>On the wording of the plan: ${escape(sp.wording)}</p>
+<p>${escape(sp.plain)}</p>
+<p>The pre-registration's own wording of the same point, quoted verbatim from the plan:</p>
+<blockquote><p>${escape(sp.wording)}</p></blockquote>
 <h2>What this does not establish</h2>
 ${list(record.limits.map(escape))}
 <h2>Sources</h2>

@@ -22,6 +22,8 @@ export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 // COUNCIL-VERDICT.md (2026-09-30), verbatim, line breaks and indentation included. A record may not paraphrase them.
 export const KILL_CRITERIA_VERBATIM = 'Kill criteria (pre-registered, published either way): median expressible share < 25% → premise refuted, census is the result;\n  cascade adds false rejects > 2 pts over plugin-alone, or avoids < 20% of Jev calls → refuted.';
 export const DISCRIMINATING_NEGATIVES_VERBATIM = 'Discriminating negatives: sham floor must collapse to Jev-alone; floor must abstain on ≥95% of non-expressible rules;\n  lint-floor tie is published as "any deterministic floor works".';
+// Refute r1 B3: what the agreement statistic excludes and covers.
+export const KAPPA_DISCLOSURE = 'rules whose translator or adjudicator call ended in error are excluded; computed over all census rules including controls';
 // PLAN-DETAIL R2-7, verbatim.
 export const WORDING_R2_7 = '"$0 / no model" in COUNCIL-VERDICT STAGE 1 and STEER S5 = no Jev and no paid call before the stage-1 prereg is live; the census translator + adjudicator are METERED model calls under the $100 cap (council\'s cost line counts them as agent labour).';
 
@@ -67,7 +69,7 @@ export const required = {
   'calls.translatorModel': v => v === 'claude-opus-5-5', 'calls.adjudicatorModel': v => v === 'claude-sonnet-5', 'calls.client': str, 'calls.clientVersion': v => /^\d+\.\d+\.\d+$/.test(v), 'calls.effort': v => v === 'high',
   'calls.attempts': v => v === 1, 'calls.command': str, 'calls.workingDirectory': str, 'calls.environment': str, 'calls.billing': str, 'calls.modelAssertion': str, 'calls.canary': str, 'calls.bareRejected': str,
   'killCriteria.stage1': str, 'killCriteria.verbatim': v => v === KILL_CRITERIA_VERBATIM, 'killCriteria.discriminatingNegativesVerbatim': v => v === DISCRIMINATING_NEGATIVES_VERBATIM, 'killCriteria.source': str, 'killCriteria.publication': str,
-  'spend.capUsd': v => v === 100, 'spend.censusCeilingUsd': v => v === 40, 'spend.ledger': v => v === `${D}/spend-ledger.jsonl`, 'spend.rules': strings, 'spend.bundle1': str, 'spend.wording': v => v === WORDING_R2_7, 'spend.unknownCost': str,
+  'spend.capUsd': v => v === 100, 'spend.censusCeilingUsd': v => v === 40, 'spend.ledger': v => v === `${D}/spend-ledger.jsonl`, 'spend.rules': strings, 'spend.bundle1': str, 'spend.plain': v => str(v) && !/STEER|COUNCIL/.test(v), 'spend.wording': v => v === WORDING_R2_7, 'spend.unknownCost': str,
   notBefore: str, runnerGuard: str,
   limits: strings,
   sources: v => Array.isArray(v) && v.length > 0 && v.every(s => str(s.id) && str(s.label) && str(s.url) && s.url.startsWith('https://') && str(s.claim)),
@@ -86,6 +88,8 @@ export function validateRecord(record) {
   }
   assert.equal(record.census.rules, record.census.primaryRules + record.census.secondaryRules + record.census.controls, 'Census counts do not add up');
   assert.equal(record.census.calls, 2 * record.census.rules, 'Two counted calls per rule (translator, adjudicator)');
+  for (const text of [record.adjudicator.agreement, record.metrics.find(m => m.id === 'agreement')?.definition]) assert(str(text) && text.includes(KAPPA_DISCLOSURE), 'The kappa disclosure (which rules it excludes, which it covers) is stated');
+  assert(/opaque id/.test(record.translator.input) && /opaque id/.test(record.adjudicator.input), 'The prompts show an opaque id, and the record says so');
   assert(!record.engine.pluginVocabulary.includes('customPolicy') && !record.engine.controlVocabulary.includes('customPolicy'), 'customPolicy is refused');
   assert(record.calls.command.includes(`--model <pin>`) && record.calls.command.includes('--effort high') && record.calls.command.includes('--tools ""') && !record.calls.command.includes('--fallback-model'), 'The pinned command');
   const text = JSON.stringify(record);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VOCABULARY } from '../experiments/blueprint-floor/adapter.mjs';
-import { CONTRACT_FILES, PROMPT_FILES, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
+import { CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
 // EXP 007 WO-1-03: the census protocol. Blindness (R2-3), the output schemas, the downgrade rule, and the mechanical
@@ -45,6 +45,42 @@ test('blindness: no withheld field, no abide type, no case and no label reaches 
   }
 });
 
+// Words a prompt may never carry: every plugin name, every stratum or control word. And no segment of the rule's own id.
+const PLUGIN_NAMES = selection.plugins.map(p => p.plugin);
+const STRATUM_WORDS = ['primary', 'secondary', 'stratum', 'control', 'controls', 'positive', 'negative', 'calibration', 'tier'];
+// Generic words that are segments of some ruleIds but are part of the fixed, identical text every prompt of a profile carries
+// (the contract and the system prompts): they name no plugin, source or stratum. Each is listed with where it appears.
+const TEMPLATE_WORDS = { path: 'contract: path globs and file_path', bash: 'contract: the Bash tool example', verdict: 'adjudicator system prompt: its verdict field', typescript: 'contract: the base is a TypeScript service', message: 'contract: the final message file', money: 'contract: the base tree lists src/domain/money.ts' };
+
+test('blindness (refute r1 B2): every prompt of every rule shows an opaque id and no ruleId segment, plugin name or stratum word', () => {
+  const ids = assertOpaqueIdsDistinct(allRules.map(r => r.ruleId));
+  assert.equal(ids.length, 188);
+  const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, translatorClass: 'partial', classAfterMechanical: 'partial' };
+  const system = Object.values(PROMPT_FILES).map(f => readFileSync(f, 'utf8'));
+  const word = w => new RegExp(`(^|[^A-Za-z0-9])${w.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}($|[^A-Za-z0-9])`, 'i');
+  for (const r of allRules) {
+    const oid = opaqueId(r.ruleId);
+    assert.match(oid, /^item-[a-f0-9]{12}$/);
+    assert.equal(ruleIdFor(oid, allRules.map(x => x.ruleId)), r.ruleId);
+    const translator = buildTranslatorPrompt(r).user;
+    const adjudicator = buildAdjudicatorPrompt(r, JSON.stringify({ ruleId: oid, class: 'partial' }), mech).user;
+    for (const [role, msg] of [['translator', translator], ['adjudicator', adjudicator]]) {
+      assert(msg.includes(`id: ${oid}`), `${r.ruleId} ${role}: the opaque id`);
+      assert(!msg.includes(r.ruleId), `${r.ruleId} ${role}: the ruleId`);
+      // Everything shown except the rule's own verbatim text (which is the plugin's words and may use any word).
+      const shown = [msg.split(`<<<RULE\n${r.text}\nRULE>>>`).join(' '), ...system].join('\n');
+      for (const seg of r.ruleId.split('/').filter(s => s.length >= 3 && !(s.toLowerCase() in TEMPLATE_WORDS))) assert(!word(seg).test(shown), `${r.ruleId} ${role}: segment ${seg}`);
+      for (const name of PLUGIN_NAMES) assert(!word(name).test(shown), `${r.ruleId} ${role}: plugin name ${name}`);
+      for (const w of STRATUM_WORDS) assert(!word(w).test(shown), `${r.ruleId} ${role}: stratum word ${w}`);
+    }
+  }
+  // The template words are the same for every rule of a profile, so they carry nothing about the rule.
+  assert.deepEqual(Object.keys(TEMPLATE_WORDS).filter(w => !word(w).test(system.join('\n') + readFileSync(CONTRACT_FILES['plugin-surface'], 'utf8'))), [], 'every template word really is in the fixed text');
+  const plugin = allRules.filter(r => !r.ruleId.startsWith('control/0') || Number(r.ruleId.slice(8)) >= 8);
+  const template = r => buildTranslatorPrompt(r).user.split('RULE>>>')[1];
+  assert.equal(new Set(plugin.map(template)).size, 1, 'every plugin-surface rule sees the identical contract');
+});
+
 test('the prompt is the pinned system prompt file plus a user message built from the four fields and the contract', () => {
   const r = loadRules('pi-verdict').rules.find(x => x.ruleId === 'pi-verdict/bash/sudo');
   const t = buildTranslatorPrompt(r);
@@ -83,7 +119,8 @@ test('negative controls: six, one per line of the file, each on the plugin-surfa
 });
 
 const rule = { ruleId: 'test/sudo', text: 'Never run sudo.', inputKind: 'toolCall', flags: null };
-const answer = over => JSON.stringify({ ruleId: 'test/sudo', class: 'expressible', constraints: [{ id: 'no-sudo', type: 'forbiddenPattern', severity: 'high', pattern: '\\bsudo\\b', path: '.floor/command.txt' }], coverage: 'any sudo in the command', residual: null, probes: { violating: { tool_name: 'Bash', tool_input: { command: 'sudo ls' } }, compliant: { tool_name: 'Bash', tool_input: { command: 'ls' } } }, rationale: 'A literal token check.', ...over });
+const OID = opaqueId('test/sudo');
+const answer = over => JSON.stringify({ ruleId: OID, class: 'expressible', constraints: [{ id: 'no-sudo', type: 'forbiddenPattern', severity: 'high', pattern: '\\bsudo\\b', path: '.floor/command.txt' }], coverage: 'any sudo in the command', residual: null, probes: { violating: { tool_name: 'Bash', tool_input: { command: 'sudo ls' } }, compliant: { tool_name: 'Bash', tool_input: { command: 'ls' } } }, rationale: 'A literal token check.', ...over });
 
 test('the translator schema: classes, residual iff not expressible, constraints and probes iff it decides, rationale <= 80 words', () => {
   assert.deepEqual(validateTranslatorOutput(JSON.parse(answer({})), rule), { ok: true, errors: [] });
@@ -96,8 +133,9 @@ test('the translator schema: classes, residual iff not expressible, constraints 
   assert.equal(bad({ rationale: Array(81).fill('w').join(' ') }).ok, false);
   assert.equal(bad({ extra: 1 }).ok, false);
   assert.equal(bad({ ruleId: 'other' }).ok, false);
-  assert.equal(validateAdjudicatorOutput({ ruleId: 'test/sudo', verdict: 'dispute', proposedClass: 'partial', reason: 'x' }, rule).ok, true);
-  assert.equal(validateAdjudicatorOutput({ ruleId: 'test/sudo', verdict: 'maybe', proposedClass: 'partial', reason: 'x' }, rule).ok, false);
+  assert.equal(bad({ ruleId: 'test/sudo' }).ok, false, 'the answer echoes the opaque id, never the ruleId');
+  assert.equal(validateAdjudicatorOutput({ ruleId: OID, verdict: 'dispute', proposedClass: 'partial', reason: 'x' }, rule).ok, true);
+  assert.equal(validateAdjudicatorOutput({ ruleId: OID, verdict: 'maybe', proposedClass: 'partial', reason: 'x' }, rule).ok, false);
   assert.deepEqual(parseAnswer('```json\n{"a":1}\n```'), { ok: true, value: { a: 1 }, fenced: true });
   assert.equal(parseAnswer('I think {"a":1}').ok, false);
   assert.deepEqual([downgrade('expressible', true), downgrade('expressible', false), downgrade('partial', true)], ['partial', 'not', 'not']);

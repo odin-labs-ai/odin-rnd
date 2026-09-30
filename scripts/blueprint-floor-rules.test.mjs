@@ -105,6 +105,16 @@ test('SELECTION.md is exactly the render of selection.json and the rule files', 
   assert.equal(readFileSync(selectionDocPath, 'utf8'), renderSelectionDoc(selection, records));
 });
 
+test('each plugin\'s MIT license is committed verbatim, byte-identical to the LICENSE the extractor hashed at the pin (refute r1 B1)', () => {
+  for (const r of Object.values(records)) {
+    const text = readFileSync(`experiments/blueprint-floor/rules/licenses/${r.plugin}.LICENSE`, 'utf8');
+    assert.equal(sha256(text), r.sources.find(x => x.path === 'LICENSE').sha256, r.plugin);
+    assert.match(text, /^MIT License/); assert(text.includes(r.copyright), r.plugin);
+    assert(text.includes('The above copyright notice and this permission notice shall be included'), `${r.plugin}: the permission notice`);
+  }
+  assert.match(readFileSync('NOTICE', 'utf8'), /experiments\/blueprint-floor\/rules\/licenses\//);
+});
+
 test('NOTICE carries one attribution line per plugin', () => {
   const notice = readFileSync('NOTICE', 'utf8');
   for (const r of Object.values(records)) assert(notice.includes(`${r.plugin} (${r.repo}): ${r.copyright.replace(/\.$/, '')}. MIT License.`), r.plugin);

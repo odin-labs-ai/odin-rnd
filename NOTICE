@@ -31,3 +31,5 @@ jev-belay (valentynkit/jev-belay): Copyright (c) 2026 Valentyn Kit. MIT License.
 jev-engineering (eugeniughelbur/jev-engineering): Copyright (c) 2026 Eugeniu Ghelbur. MIT License.
 pi-verdict (jesset/pi-verdict): Copyright (c) 2026 Jesset. MIT License.
 jev-axi (shiftynick/jev-axi): Copyright (c) 2026 Nicholas Underwood (shiftynick). MIT License.
+Each plugin's MIT license, with its copyright and permission notice, is kept verbatim beside the rules at
+experiments/blueprint-floor/rules/licenses/<plugin>.LICENSE.
