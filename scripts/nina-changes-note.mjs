@@ -49,7 +49,7 @@ ${list(r.differences.map(escape))}
 <pre tabindex="0">${escape(r.command)}</pre>
 <p>Allowed git forms: ${f.allowPrefixes.map(code).join(', ')} with ${f.verbs.map(code).join(', ')}. ${escape(f.compound)} ${escape(f.redirections)} Every EXP 005 deny rule stays: ${f.denyRules.map(code).join(' ')}. ${escape(r.runDirectory)}</p>
 <h2>The fence, tested on canaries</h2>
-<p>${escape(iso.judgedBy)}</p>
+<p>${escape(iso.matrix.judgedBy)}</p>
 ${list(iso.runs.map(runRow))}
 <p>${escape(iso.codeStatement)}</p>
 ${list(iso.proofRuns.map(p => `<strong>${escape(p.name)}</strong> at ${code(p.commit)}: ${p.differsFromPinned.length ? p.differsFromPinned.map(d => `${code(d.file.split('/').pop())} (${escape(d.reason)})`).join('; ') : 'no pinned file differs'}`))}

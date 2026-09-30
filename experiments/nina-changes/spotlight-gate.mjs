@@ -53,8 +53,8 @@ const canonical = v => JSON.stringify(v, (_, x) => (isObject(x) ? Object.fromEnt
  *     (decision.reviewerSha256 — the chosen binding), with a boolean held;
  *   the reviewer run record: bound as above, a complete counted EXP 006 reviewer gate-run (kind "gate-run", experiment
  *     "EXP 006", gate "reviewer", mode "counted", partial null), not fixture, not a rehearsal, the same prereg6Sha256,
- *     notBefore and code as the results, its calls (stage errors aside) as {id, run} exactly the results' perRun, in
- *     order, their count the manipulation denominator, and a parseable endedAt (the "Measured" date comes only from it);
+ *     notBefore and code as the results, its calls (stage errors aside) as {id, run, decision, harnessFailure,
+ *     diffSeen rule and seen} exactly the results' perRun, in order, their count the manipulation denominator, and a parseable endedAt (the "Measured" date comes only from it);
  *   and the predicate entryShown.
  * Anything else gives {shown:false, reason}. Open: {shown:true, results, decision, measuredOn}.
  */
@@ -91,8 +91,11 @@ export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = nul
   if (typeof results.notBefore !== 'string' || run.notBefore !== results.notBefore) return closed('the reviewer run record has another not-before than the results');
   if (!isObject(results.code) || canonical(run.code) !== canonical(results.code)) return closed('the reviewer run record was made by other code than the results name');
   if (!Array.isArray(run.calls) || !Array.isArray(results.perRun)) return closed('the reviewer run record or the results carry no per-run list');
-  const runCalls = run.calls.filter(c => !c?.stageError).map(c => ({ id: c?.id, run: c?.run }));
-  const scored = results.perRun.map(p => ({ id: p?.id, run: p?.run }));
+  // Per call (refute r6 N2): id, run, decision, harness failure and the diff-visibility class. The scorer carries the
+  // class as perRun.rule, the classifier's rule ('a' or 'b' when SEEN, null when BLIND), recomputed and asserted equal
+  // to the call's recorded diffSeen.rule; the call's diffSeen.seen must agree with it (seen iff a rule matched).
+  const runCalls = run.calls.filter(c => !c?.stageError).map(c => ({ id: c?.id, run: c?.run, decision: c?.decision ?? null, harnessFailure: c?.harnessFailure ?? null, rule: c?.diffSeen?.rule ?? null, seen: c?.diffSeen?.seen }));
+  const scored = results.perRun.map(p => ({ id: p?.id, run: p?.run, decision: p?.decision ?? null, harnessFailure: p?.harnessFailure ?? null, rule: p?.rule ?? null, seen: (p?.rule ?? null) !== null }));
   if (canonical(runCalls) !== canonical(scored)) return closed('the reviewer run record\'s calls are not the runs the results scored');
   if (runCalls.length !== results.manipulation?.denominator) return closed(`the reviewer run record has ${runCalls.length} calls, not the denominator ${results.manipulation?.denominator}`);
   if (!entryShown({ results, decision })) return closed('the gate is closed: bar, manipulation check, eligibility or held');

@@ -66,6 +66,11 @@ export { PREREG6_SHA256, NOT_BEFORE6 };
  * EXP 006's committed stream-json fake and nothing else (a fake that is not executable would otherwise fall through
  * to the real client on PATH and make paid calls; EXP 005 ledger, 2026-09-28). Every other run refuses both fakes.
  */
+/** Refuses a paid call under the Node test runner, which sets NODE_TEST_CONTEXT in every test process (refute r6 B1). */
+export function refuseUnderTestRunner6(env = process.env) {
+  if (env.NODE_TEST_CONTEXT) throw new Error('a paid run is refused under the Node test runner (NODE_TEST_CONTEXT is set): tests run fixture or rehearsal only');
+}
+
 export function chooseClaude6(fake, pathVar = process.env.PATH ?? '') {
   const bin = resolveBin('claude', pathVar);
   if (!bin) throw new Error('claude is not on the PATH');
@@ -73,6 +78,7 @@ export function chooseClaude6(fake, pathVar = process.env.PATH ?? '') {
   const fakes = [realpathSync(FAKE_CLAUDE6), realpathSync(FAKE_CLAUDE)];
   if (fake && real !== fakes[0]) throw new Error(`a fixture or rehearsal run must use the EXP 006 stream-json fake (${relative(REPO_ROOT, FAKE_CLAUDE6)}); PATH resolves claude to another binary`);
   if (!fake && fakes.includes(real)) throw new Error('a practice, probe or counted run cannot use a fake claude');
+  if (!fake) refuseUnderTestRunner6();
   return bin;
 }
 
@@ -159,6 +165,8 @@ export function recordSpend(ledger, meta) {
 }
 
 export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false, beforeSpawn = null, onSpawn = null, faults = null }) {
+  // The same defence for a direct call: under the test runner only the committed fakes may be spawned.
+  if (process.env.NODE_TEST_CONTEXT && ![realpathSync(FAKE_CLAUDE6), realpathSync(FAKE_CLAUDE)].includes(realpathSync(claudeBin))) refuseUnderTestRunner6();
   mkdirSync(RUN_ROOT6, { recursive: true });
   const parent = mkdtempSync(join(RUN_ROOT6, RUN_PREFIX6));
   const runTmp = join(parent, 'tmp');
@@ -244,6 +252,10 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
   // The pre-run probe runs on the FROZEN runner: it passes the counted guard (freeze set, the pre-registration and
   // every pin intact, after the not-before), and it is charged to the $60 cap only (spend6 PRERUN_KIND).
   const { prereg, amendment, stamp } = checkRun6({ mode: probe ? (prerun ? 'counted' : 'probe') : mode, fixture, rehearsalPins });
+  // Defence in depth (refute r6 B1): a paid run never starts under the Node test runner, which sets NODE_TEST_CONTEXT
+  // in every test process. After the freeze a test that relied on the guard's refusal would otherwise make a real,
+  // paid call (and could burn the one pre-run probe). The refusal comes after the guard checks, so tests still see them.
+  if (!fixture && !rehearsal) refuseUnderTestRunner6();
   if (probe && probe !== 'matrix') throw new Error('the EXP 006 probe is the isolation matrix (--probe matrix)');
   if (fixtureTimeoutMs !== undefined && !fixture && !rehearsal) throw new Error('a timeout other than the pre-registered one is for fixture runs only');
   const timeoutMs = fixtureTimeoutMs ?? prereg.gates.reviewer.timeoutSeconds * 1000;

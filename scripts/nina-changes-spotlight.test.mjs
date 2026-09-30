@@ -12,7 +12,7 @@ import { addNinaEntry, attributionLine, entryId, loadEntryData, renderNinaEntry 
 import { entryShown, gateFromBytes, gateOpen } from '../experiments/nina-changes/spotlight-gate.mjs';
 import { builtCopy } from './test-build.mjs';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname } from 'node:path';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -51,14 +51,19 @@ const BUILT = await (async () => {
 })();
 const { stamp: STAMP } = checkRun6({ mode: 'rehearsal', rehearsalPins: BUILT.pins });
 
-/** The real scorer over the builder's record; the first `blindRuns` calls replayed with no tool output (diff-blind). */
-function passingResults({ blindRuns = 0 } = {}) {
+/** The builder's record with its first `blindRuns` calls replayed with no tool output (diff-blind). */
+function blindRun(blindRuns) {
   const run = structuredClone(BUILT.run);
   for (const c of run.calls.slice(0, blindRuns)) {
     c.toolCalls = [];
     const d = classifyDiffSeen({ calls: [], fp: fingerprints.items[c.id], harnessFailure: c.harnessFailure });
     c.diffSeen = { seen: d.seen, rule: d.rule, evidence: d.evidence };
   }
+  return run;
+}
+/** The real scorer over that record. */
+function passingResults({ blindRuns = 0 } = {}) {
+  const run = blindRun(blindRuns);
   return computeResults6({ exp005: { prereg, amendment }, bar6: prereg6.bar, labels, run, fingerprints, fingerprintsSha256: createHash('sha256').update(readFileSync(FINGERPRINTS_FILE)).digest('hex'), stamp: STAMP, preflight: BUILT.preflight });
 }
 const countedRecord = r => { const { banner: _b, rehearsal: _r, ...rest } = structuredClone(r); return { ...rest, fixture: false, prereg6Sha256: FROZEN }; };
@@ -85,7 +90,7 @@ test('PASS with an explicit held:false renders nina\'s entry, every figure from 
   assert.equal(attributionLine, 'used with the permission of its author, as confirmed by Odin Labs');
   // A figure changed in the record changes the entry: nothing is typed in the renderer.
   const blind5 = counted(passingResults({ blindRuns: 5 }));
-  assert(renderNinaEntry(data({ ...blind5, spotlight: { ...blind5.spotlight, verdict: 'PASS' }, manipulation: { ...blind5.manipulation, state: 'PASS' }, spotlightEligible: true }, open), upstream).includes('175 of 180 runs'));
+  assert(renderNinaEntry(data({ ...blind5, spotlight: { ...blind5.spotlight, verdict: 'PASS' }, manipulation: { ...blind5.manipulation, state: 'PASS' }, spotlightEligible: true }, open, { reviewer: countedRecord(blindRun(5)) }), upstream).includes('175 of 180 runs'));
   // Null-safe zero-patch wording (refute r3 N5): a record without the patch list renders, and says so.
   const noPatches = structuredClone(pass); noPatches.spotlight.criteria.find(x => x.id === 'zero-patches').patches = null;
   assert(renderNinaEntry(data(noPatches, open), upstream).includes('local patches not recorded'));
@@ -104,7 +109,8 @@ test('FAIL, held, a missing decision, a non-boolean held, or a failed manipulati
   assert.equal(renderNinaEntry(data({ ...pass, manipulation: { ...pass.manipulation, state: 'FAIL' }, spotlightEligible: false }, open)), '', 'manipulation FAIL');
   const tooBlind = counted(passingResults({ blindRuns: 19 }));
   assert.equal(tooBlind.manipulation.state, 'FAIL');
-  assert.equal(renderNinaEntry(data(tooBlind, open)), '', '19 of 180 diff-blind');
+  assert.equal(renderNinaEntry(data(tooBlind, open, { reviewer: countedRecord(blindRun(19)) })), '', '19 of 180 diff-blind');
+  assert.match(data(tooBlind, open, { reviewer: countedRecord(blindRun(19)) }).reason, /bar, manipulation check/, 'closed by the manipulation check, not by a record mismatch');
   assert.equal(renderNinaEntry(null), '');
 });
 
@@ -221,4 +227,41 @@ test('refute r5 B1: the bound reviewer record must be the complete counted EXP 0
   hidden('r5 #4: an EXP 005-shaped record (EXP 005\'s own reviewer run)', exp005, /not EXP 006/);
   hidden('r5 #5: another not-before and code', { ...REVIEWER, notBefore: '2026-09-28T18:36:49Z', code: otherCode }, /another not-before/);
   hidden('r5 #5b: the same not-before, other code', { ...REVIEWER, code: otherCode }, /other code/);
+});
+
+test('refute r6 N2: each call must match the scored run in decision, harness failure and diff-visibility class', () => {
+  const at = (i, over) => ({ ...REVIEWER, calls: REVIEWER.calls.map((c, j) => (j === i ? { ...c, ...over } : c)) });
+  const why = /not the runs the results scored/;
+  const hidden = (label, reviewer) => { const g = gate(pass, open, { reviewer }); assert.equal(g.shown, false, label); assert.match(g.reason, why, label); };
+  const c = REVIEWER.calls[3];
+  hidden('a decision flipped', at(3, { decision: c.decision === 'REJECT' ? 'ACCEPT' : 'REJECT' }));
+  hidden('a decision dropped', at(3, { decision: null }));
+  hidden('a harness failure added', at(3, { harnessFailure: 'timeout' }));
+  hidden('the diff-visibility rule changed', at(3, { diffSeen: { ...c.diffSeen, rule: c.diffSeen.rule === 'a' ? 'b' : 'a' } }));
+  hidden('seen claimed false on a SEEN run', at(3, { diffSeen: { ...c.diffSeen, seen: false } }));
+  // A diff-blind run's record and the results scored from it agree; claiming it seen does not.
+  const blind1 = counted(passingResults({ blindRuns: 1 }));
+  const rec1 = countedRecord(blindRun(1));
+  assert.equal(rec1.calls[0].diffSeen.seen, false);
+  assert.doesNotMatch(gate(blind1, open, { reviewer: rec1 }).reason ?? '', why, 'the matching record passes the call check');
+  const lie = structuredClone(rec1); lie.calls[0].diffSeen = { ...lie.calls[0].diffSeen, seen: true };
+  assert.match(gate(blind1, open, { reviewer: lie }).reason, why);
+});
+
+test('refute r6 N1: no page renders the text undefined, NaN or a bare null (the new note, home, the EXP 005 note, every built page)', { timeout: 600_000 }, () => {
+  // Prose that names null on purpose, verbatim: each is a sentence about a value, not a value rendered as text.
+  const PROSE_NULL = ['it is null only while no baseline is recorded', 'stay null, as init writes them', 'costPer1kUsd is null for Laya'];
+  const text = html => html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, '\n').replace(/&[a-z#0-9]+;/gi, ' ');
+  const pages = ['site/journal/nina-reviews-the-change.html', 'site/index.html', 'site/journal/jev-as-a-fast-gate.html'].map(f => [f, readFileSync(f, 'utf8')]);
+  const dist = join(builtCopy(), 'dist');
+  const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.html') ? [join(d, e.name)] : []));
+  for (const f of walk(dist)) pages.push([`dist${f.slice(dist.length)}`, readFileSync(f, 'utf8')]);
+  assert.ok(pages.length >= 6);
+  for (const [f, html] of pages) {
+    let t = text(html).replace(/\s+/g, ' ');
+    for (const p of PROSE_NULL) t = t.split(p).join(' ');
+    t = t.replace(/\/dev\/null/g, ' ');
+    const bad = [...t.matchAll(/\b(undefined|NaN|null)\b/g)].map(m => t.slice(Math.max(0, m.index - 40), m.index + 20));
+    assert.deepEqual(bad, [], `${f} renders a missing value as text`);
+  }
 });

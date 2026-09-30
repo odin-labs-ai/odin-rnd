@@ -36,6 +36,12 @@ Layer 1 (the text rules) is best-effort; layer 2, the OS sandbox, is the boundar
   runner refuses while it exists; two concurrent runners could otherwise each pass the spend check and overshoot the
   cap by one call. A lock left by a killed runner is removed by the operator only after checking that no runner is
   running (fail closed).
+- **A stale `run.lock`.** Any killed run, or a killed test that held the lock (the N2 lock test creates the real
+  file for a moment), can leave `run.lock` behind. It fails closed: every paid runner refuses until the operator has
+  checked that no runner is live (for example, that the pid in the file is not running) and removed it by hand.
+- **No paid call from a test.** The runner refuses a non-fixture, non-rehearsal run under the Node test runner
+  (`NODE_TEST_CONTEXT` set); every test that calls it in a paid mode also runs with an empty `PATH` and a nonexistent
+  tarball, so no client could be spawned even after the freeze.
 - **Intent lines.** Before each paid spawn the runner appends an intent line to the sidecar and clears it once the
   real ledger line is written. Any line left in the sidecar makes every later call refuse until the operator
   reconciles it.

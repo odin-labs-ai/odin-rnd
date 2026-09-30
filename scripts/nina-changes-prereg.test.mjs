@@ -203,3 +203,12 @@ test('refute r5: the gate sentence names the reviewer-record cross-checks; the o
   assert.match(limits, /exclusive lock file \(experiments\/nina-changes\/run\.lock, created O_EXCL\)/);
   assert.match(limits, /A reconciled pre-run probe line without a pre-registration sha counts as made under the current one \(fail closed\)/);
 });
+
+test('refute r6: the env-prefixed git forms are named as untested; the gate matches each call\'s decision, harness failure and class', () => {
+  const limits = record.limits.join('\n');
+  assert.match(limits, /Untested in the matrix: git forms with an environment prefix \(GIT_DIR=…, GIT_EXTERNAL_DIFF=…, GIT_CONFIG_PARAMETERS=… before git\)/);
+  assert.match(limits, /R9, R29, R30 and R45, and the sandbox-only run\)\. No live row was added/);
+  assert(record.spotlightArtefact.gate.includes('(as id, run, decision, harness failure and diff-visibility class, in order)'));
+  const note = readFileSync('site/journal/nina-reviews-the-change.html', 'utf8');
+  assert(note.includes(`<p>${record.isolationEvidence.matrix.judgedBy.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</p>`), 'the note prints how the matrix is judged');
+});

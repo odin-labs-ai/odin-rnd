@@ -14,11 +14,14 @@ import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } fro
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
-import { acquireRunLock6, buildCallRecord, FAULT_STAGES, LOCK6, recordSpend, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { acquireRunLock6, refuseUnderTestRunner6, buildCallRecord, FAULT_STAGES, LOCK6, recordSpend, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
+import { claudeFree, codeOnly, paidCallSites, testSources } from './nina-changes-claude-free.mjs';
+
+const PAID_REFUSAL = /paid run is refused under the Node test runner|claude is not on the PATH|nonexistent/;
 
 const { prereg, amendment } = checkRecords({ mode: 'practice' });
 const line = e => JSON.stringify(e);
@@ -234,9 +237,11 @@ test('B2 (D4): the post-freeze pre-run matrix probe is charged to the $60 cap on
     L.record({ ts: 't4', kind: 'counted', id: 'c001', run: 1, reportedCostUsd: 48 });
     assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: 'b'.repeat(64) }).reason, 'cap');
   } finally { removeScratch(dir); }
-  // A pre-run probe runs on the frozen runner: while freeze.mjs is null it refuses before any workspace or call.
-  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'probe', probe: 'matrix', prerun: true, log: () => {} }), /wait for the freeze/);
-  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {} }), /pre-run matrix probe/);
+  // A pre-run probe runs on the frozen runner: while freeze.mjs is null it refuses before any workspace or call. After
+  // the freeze the guard would let it through, so it runs claude-free (refute r6 B1): the runner's test-runner refusal,
+  // or else the empty PATH or the missing tarball, stops it; no client can be spawned either way.
+  await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', mode: 'probe', probe: 'matrix', prerun: true, log: () => {}, ...free }), PREREG6_SHA256 === null ? /wait for the freeze/ : PAID_REFUSAL));
+  await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {}, ...free }), /pre-run matrix probe/));
 });
 
 test('N1: the ledger line is written from the spawn result BEFORE any post-call step; a throw at any stage keeps it and marks the record', async () => {
@@ -255,7 +260,7 @@ test('N1: the ledger line is written from the spawn result BEFORE any post-call 
       assert.equal(lines.length, 1, `${stage}: the ledger line is there`);
       assert.deepEqual([lines[0].costUsd, lines[0].costBasis], [0.21, 'api-equivalent'], `${stage}: charged from the final result line`);
     }
-    await assert.rejects(runReviewer6({ out: join(dir, 'x.json'), mode: 'practice', items: [], faults: ['build'], log: () => {} }), /fault injection is for fixture and rehearsal runs only/);
+    await claudeFree(free => assert.rejects(runReviewer6({ out: join(dir, 'x.json'), mode: 'practice', items: [], faults: ['build'], log: () => {}, ...free }), /fault injection is for fixture and rehearsal runs only/));
   } finally { Object.assign(process.env, saved); if (saved.FAKE6_MODES === undefined) delete process.env.FAKE6_MODES; removeScratch(dir); }
   // The cost for that line: the final result's, or null (upper bound) on a timeout, a spawn error or a malformed line.
   assert.equal(reportedCost({ timedOut: false, stdout: stream([init, final()]) }), 0.25);
@@ -318,7 +323,7 @@ test('refute r3 N3: a matrix run keeps every call\'s output; a corpus or practic
 test('refute r4 B2: every paid run (practice, probe, pre-run probe, counted) must use the committed ledger', async () => {
   const other = join(homedir(), 'elsewhere-ledger.jsonl'); // never written: every call refuses first
   for (const opts of [{ mode: 'practice', items: [] }, { mode: 'probe', probe: 'matrix' }, { mode: 'probe', probe: 'matrix', prerun: true }, { mode: 'counted', items: [] }]) {
-    await assert.rejects(runReviewer6({ out: '/dev/null', ledgerPath: other, log: () => {}, ...opts }), /appends to the committed ledger experiments\/nina-changes\/spend-ledger\.jsonl/, JSON.stringify(opts));
+    await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', ledgerPath: other, log: () => {}, ...opts, ...free }), /appends to the committed ledger experiments\/nina-changes\/spend-ledger\.jsonl/, JSON.stringify(opts)));
   }
 });
 
@@ -398,10 +403,10 @@ test('refute r5 N2: one runner at a time: an exclusive lock for every paid invoc
   writeFileSync(real, 'held by a test\n', { flag: 'wx' });
   try {
     for (const opts of [{ mode: 'practice', items: [] }, { mode: 'probe', probe: 'matrix' }, { mode: 'probe', probe: 'matrix', prerun: true }, { mode: 'counted', items: [] }]) {
-      await assert.rejects(runReviewer6({ out: '/dev/null', log: () => {}, ...opts }), /another EXP 006 runner holds experiments\/nina-changes\/run\.lock \(held by a test\)/, JSON.stringify(opts));
+      await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', log: () => {}, ...opts, ...free }), /another EXP 006 runner holds experiments\/nina-changes\/run\.lock \(held by a test\)/, JSON.stringify(opts)));
     }
   } finally { unlinkSync(real); }
-  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {} }), /pre-run matrix probe/);
+  await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {}, ...free }), /pre-run matrix probe/));
   assert.equal(existsSync(real), false, 'the refused invocation released its lock');
 });
 
@@ -421,4 +426,32 @@ test('refute r5 N3: a prerun-matrix ledger line without a prereg6Sha256 counts a
     assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: 'e'.repeat(64) }).reason, 'prerun-already-made');
     assert.match(readFileSync('experiments/nina-changes/README.md', 'utf8'), /A `prerun-matrix` line without a `prereg6Sha256` counts as the pre-run probe of the CURRENT frozen/);
   } finally { removeScratch(dir); }
+});
+
+test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, or claude-free (structural, over every test file and helper)', () => {
+  const files = readdirSync('scripts').filter(f => f.endsWith('.test.mjs')).map(f => join('scripts', f));
+  const sites = testSources(files).flatMap(f => paidCallSites(readFileSync(f, 'utf8'), f.slice(f.indexOf('scripts/'))));
+  assert.ok(sites.length >= 15, `the scan finds the runner calls (${sites.length})`);
+  assert.deepEqual(sites.filter(s => s.kind === 'UNSAFE'), [], 'a runner call that could reach a paid client');
+  assert.ok(sites.some(s => s.kind === 'claude-free') && sites.some(s => s.kind === 'fixture') && sites.some(s => s.kind === 'rehearsal'));
+  // The check itself: an unwrapped paid call is UNSAFE; a spread named free outside claudeFree is not enough; parens and
+  // quotes in strings, regexes and comments do not confuse it.
+  const kinds = src => paidCallSites(src).map(s => s.kind);
+  assert.deepEqual(kinds("await assert.rejects(runReviewer6({ mode: 'probe', probe: 'matrix', prerun: true }), /wait (for) the freeze/);"), ['UNSAFE']);
+  assert.deepEqual(kinds("const free = {}; await runReviewer6({ mode: 'counted', ...free });"), ['UNSAFE']);
+  assert.deepEqual(kinds("await claudeFree(free => runReviewer6({ mode: 'counted', ...free })); // it's ) fine"), ['claude-free']);
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', fixture: true, note: ')' });\nawait reviewerRun6({ claudeBin: x, rehearsal: true });"), ['fixture', 'rehearsal']);
+  assert.equal(codeOnly("a('(', /\\(/, `)`) // (").split('(').length - 1, 1, 'only the real call paren is code');
+});
+
+test('refute r6 B1: the runner refuses a paid run under the Node test runner (defence in depth)', async () => {
+  assert.throws(() => refuseUnderTestRunner6({ NODE_TEST_CONTEXT: 'child-v8' }), /refused under the Node test runner/);
+  assert.doesNotThrow(() => refuseUnderTestRunner6({}));
+  if (!process.env.NODE_TEST_CONTEXT) return; // run directly with node, not node --test: the PATH/tarball wrapper still holds
+  // Past every guard check (a practice run needs none of the freeze), the runner refuses before choosing a client.
+  await claudeFree(free => assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', items: [], log: () => {}, ...free }), /paid run is refused under the Node test runner/));
+  assert.equal(existsSync(join(REPO_ROOT, LOCK6)), false, 'the lock was released');
+  // A direct call with anything but a committed fake is refused before it spawns.
+  const item = corpusItems(['c004'])[0];
+  await claudeFree(free => assert.rejects(reviewerRun6({ prereg, amendment, item, runIndex: 1, claudeBin: '/bin/echo', variant: 'fence6', timeoutMs: 1000, fp: null, ...free }), /paid run is refused under the Node test runner/));
 });
