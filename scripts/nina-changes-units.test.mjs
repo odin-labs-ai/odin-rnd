@@ -4,7 +4,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, st
 import { execFileSync, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { percentile } from '../experiments/jev-gate/results.mjs';
 import { FAKE_CLAUDE, renderCommand } from '../experiments/jev-gate/run_reviewer.mjs';
 import { checkRecords, readRunnerPins, REPO_ROOT } from '../experiments/jev-gate/runner-guard.mjs';
@@ -144,10 +144,26 @@ test('the guard: every counted run refuses while freeze.mjs is null; a rehearsal
   assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: new Date(Date.now() + 3600e3).toISOString().replace(/\.\d+Z$/, 'Z') } }), /not after the EXP 006 not-before/);
   const frozen = checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' } });
   assert.deepEqual([frozen.stamp.mode, frozen.stamp.prereg6Sha256, frozen.stamp.notBefore], ['counted', real, '2026-01-01T00:00:00Z']);
-  assert.throws(() => checkRun6({ mode: 'rehearsal' }), /rehearsalPins/);
-  assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: new Date(Date.now() + 3600e3).toISOString() } }), /not in the past/);
   assert.throws(() => checkRun6({ mode: 'practice', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' } }), /rehearsal only/);
-  const ok = checkRun6({ mode: 'rehearsal', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' } });
+  const pins = { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' };
+  const future = { prereg6Sha256: 'a'.repeat(64), notBefore: new Date(Date.now() + 3600e3).toISOString() };
+  if (PREREG6_SHA256 === null) {
+    // Before the freeze a rehearsal needs its own pins, with a not-before in the past, and runs under them.
+    assert.throws(() => checkRun6({ mode: 'rehearsal' }), /rehearsalPins/);
+    assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: future }), /not in the past/);
+    assert.deepEqual([checkRun6({ mode: 'rehearsal', rehearsalPins: pins }).stamp.prereg6Sha256, checkRun6({ mode: 'rehearsal', rehearsalPins: pins }).stamp.notBefore], [pins.prereg6Sha256, pins.notBefore]);
+  } else {
+    // After the freeze a rehearsal runs under the frozen constants; rehearsal pins, even bad ones, are ignored.
+    for (const rehearsalPins of [null, pins, future]) {
+      const st = checkRun6({ mode: 'rehearsal', rehearsalPins }).stamp;
+      assert.deepEqual([st.prereg6Sha256, st.notBefore], [PREREG6_SHA256, NOT_BEFORE6], JSON.stringify(rehearsalPins));
+    }
+  }
+  // The same two branches, forced both ways through the guard's freeze parameter (whatever freeze.mjs holds today).
+  assert.throws(() => checkRun6({ mode: 'rehearsal', freeze: { PREREG6_SHA256: null, NOT_BEFORE6: null } }), /rehearsalPins/);
+  const asFrozen = checkRun6({ mode: 'rehearsal', rehearsalPins: future, freeze: { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' } }).stamp;
+  assert.deepEqual([asFrozen.prereg6Sha256, asFrozen.notBefore], [real, '2026-01-01T00:00:00Z'], 'frozen: the rehearsal pins are ignored');
+  const ok = checkRun6({ mode: 'rehearsal', rehearsalPins: pins });
   assert.deepEqual([ok.stamp.mode, ok.stamp.rehearsal, ok.stamp.fixture, ok.stamp.codeMatchesPins], ['counted', true, false, true]);
   assert.equal(ok.stamp.corpusSha256, 'a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9');
   assert.equal(ok.stamp.baseCommit, '3e35e4e274932a61bc0d92f378f8d506a9bb4ce0');
@@ -441,7 +457,12 @@ test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, o
   assert.deepEqual(sites.filter(s => s.kind === 'UNSAFE'), [], 'a runner call that could reach a paid client');
   assert.ok(sites.some(s => s.kind === 'claude-free') && sites.some(s => s.kind === 'fixture') && sites.some(s => s.kind === 'rehearsal'));
   assert.deepEqual(Object.fromEntries(['fixture', 'rehearsal', 'claude-free'].map(k => [k, sites.filter(s => s.kind === k).length])), { fixture: 5, rehearsal: 5, 'claude-free': 8 }, 'the 18 real call sites, each classified');
-  assert.deepEqual(testSources(files).flatMap(f => importIssues(readFileSync(f, 'utf8'), f)), [], 'an import the scan could not attribute or follow');
+  // Dynamic relative imports accepted by name (refute r8): each is followed, and none of them calls the runner.
+  const ACCEPTED_DYNAMIC = { 'scripts/laya-home.test.mjs': '../site/assets/app.js', 'scripts/roi-lib.test.mjs': '../demos/test-witness/run.mjs', 'scripts/transcript.test.mjs': './transcript.mjs' };
+  const issues0 = testSources(files).flatMap(f => importIssues(readFileSync(f, 'utf8'), f.slice(f.indexOf('scripts/'))));
+  const unaccepted = issues0.filter(i => i.issue !== `a dynamic import of ${ACCEPTED_DYNAMIC[i.file]}`);
+  assert.deepEqual(unaccepted, [], 'an import the scan could not attribute or follow');
+  for (const [f, spec] of Object.entries(ACCEPTED_DYNAMIC)) assert.deepEqual(paidCallSites(readFileSync(join(dirname(f), spec), 'utf8')), [], `${spec} calls no runner`);
   // The check itself: an unwrapped paid call is UNSAFE; a spread named free outside claudeFree is not enough; parens and
   // quotes in strings, regexes and comments do not confuse it.
   const kinds = src => paidCallSites(src).map(s => s.kind);
@@ -464,6 +485,17 @@ test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, o
   assert.deepEqual(issues("const { reviewerRun6: go } = mod;"), ['aliased reviewerRun6']);
   assert.deepEqual(issues('import { x } from "./helper.mjs";'), ['a double-quoted relative import']);
   assert.deepEqual(issues("import { runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs'; // runReviewer6 as x"), []);
+  // Refute r8: only the FIRST argument counts; the last duplicate key wins; a later spread decides nothing; a dynamic
+  // import of a relative module is flagged.
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted' }, { fixture: true });"), ['UNSAFE'], 'fixture: true in a second argument');
+  assert.deepEqual(kinds("await reviewerRun6({ claudeBin: x }, { rehearsal: true });"), ['UNSAFE'], 'rehearsal: true in a second argument');
+  assert.deepEqual(kinds("await runReviewer6({ fixture: true, mode: 'counted', fixture: false });"), ['UNSAFE'], 'a later fixture: false wins');
+  assert.deepEqual(kinds("await runReviewer6({ fixture: false, fixture: true });"), ['fixture'], 'a later fixture: true wins');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'rehearsal', mode: 'counted' });"), ['UNSAFE'], 'a later mode wins');
+  assert.deepEqual(kinds("await runReviewer6({ fixture: true, ...opts });"), ['UNSAFE'], 'a spread after fixture: true could override it');
+  assert.deepEqual(kinds("await claudeFree(free => runReviewer6({ mode: 'counted', ...opts, ...free }));"), ['claude-free']);
+  assert.deepEqual(issues("const h = await import('./helper.mjs');"), ['a dynamic import of ./helper.mjs']);
+  assert.deepEqual(issues("const u = await import('node:url'); // import('./x.mjs')"), [], 'a builtin, and a comment, are not flagged');
 });
 
 test('refute r6 B1: the runner refuses a paid run under the Node test runner (defence in depth)', async () => {

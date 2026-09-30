@@ -60,18 +60,33 @@ function closing(code, open) {
   return code.length;
 }
 
-/** Offsets in `args` (code-only text of one call's parens) where `re` matches at the call's first object level. */
-function topLevel(args, re) {
+/**
+ * The call's FIRST argument (refute r8): its code-only text and, per top-level key or spread, the entries in order.
+ * `args` is the code-only text of the call's parens; only an object literal first argument has entries.
+ */
+function firstArgEntries(args) {
+  let depth = 0, end = args.length;
   const depthAt = [];
-  let depth = 0;
-  for (let i = 0; i < args.length; i += 1) { if ('([{'.includes(args[i])) depth += 1; depthAt.push(depth); if (')]}'.includes(args[i])) depth -= 1; }
-  return [...args.matchAll(re)].filter(m => depthAt[m.index] === 2).map(m => m.index);
+  for (let i = 0; i < args.length; i += 1) {
+    if ('([{'.includes(args[i])) depth += 1;
+    depthAt.push(depth);
+    if (')]}'.includes(args[i])) depth -= 1;
+    if (args[i] === ',' && depth === 1) { end = i; break; }
+  }
+  const first = args.slice(0, end);
+  if (!/^\(\s*\{/.test(first)) return { first, entries: [] };
+  const entries = [...first.matchAll(/(\.\.\.[A-Za-z_$][\w$]*|\b[A-Za-z_$][\w$]*)\s*(:)?/g)]
+    .filter(m => depthAt[m.index] === 2 && (m[1].startsWith('...') || m[2]) && /[{,]\s*$/.test(first.slice(0, m.index)))
+    .map(m => ({ key: m[1], at: m.index }));
+  return { first, entries };
 }
 
 /**
  * Every runner call site in `src`, classified from the call's code only (comments and string contents blanked, so a
- * string or comment saying "fixture: true" does not count; refute r7):
- *   'fixture'     the property fixture: true, exactly, followed by , or } at the first object level;
+ * string or comment saying "fixture: true" does not count; refute r7), and from its FIRST argument only (refute r8).
+ * For a key given twice the LAST one wins, and a spread after it (other than claudeFree's ...free) could override it,
+ * so it then decides nothing:
+ *   'fixture'     the property fixture: true, exactly, followed by , or }, at the first argument's own level;
  *   'rehearsal'   mode: 'rehearsal' there (either runner call), or rehearsal: true (reviewerRun6 only: runReviewer6
  *                 takes the mode);
  *   'claude-free' inside a claudeFree(...) call and spreading its options (...free);
@@ -88,26 +103,40 @@ export function paidCallSites(src, file = '<source>') {
     const end = closing(code, open);
     const args = code.slice(open, end), raw = src.slice(open, end);
     const line = src.slice(0, m.index).split('\n').length;
-    const fixture = topLevel(args, /\bfixture:\s*true\s*[,}]/g).length > 0;
+    const { first, entries } = firstArgEntries(args);
+    /** The last entry for `key`, if no spread (other than ...free) comes after it. */
+    const decisive = key => {
+      const i = entries.map(e => e.key).lastIndexOf(key);
+      if (i < 0) return null;
+      return entries.slice(i + 1).some(e => e.key.startsWith('...') && e.key !== '...free') ? null : entries[i];
+    };
+    const valueIs = (entry, re) => entry !== null && re.test(first.slice(entry.at));
+    const fixture = valueIs(decisive('fixture'), /^fixture\s*:\s*true\s*[,}]/);
     // The mode literal's quotes survive in the code-only text and its contents sit at the same offsets in the source.
-    const modeRehearsal = topLevel(args, /\bmode:\s*(['"])\s*\1?/g).some(i => /^mode:\s*(['"])rehearsal\1\s*[,}]/.test(raw.slice(i)));
-    const rehearsalFlag = m[1] === 'reviewerRun6' && topLevel(args, /\brehearsal:\s*true\s*[,}]/g).length > 0;
+    const mode = decisive('mode');
+    const modeRehearsal = mode !== null && /^mode\s*:\s*(['"])rehearsal\1\s*[,}]/.test(raw.slice(mode.at));
+    const rehearsalFlag = m[1] === 'reviewerRun6' && valueIs(decisive('rehearsal'), /^rehearsal\s*:\s*true\s*[,}]/);
     let kind = 'UNSAFE';
     if (fixture) kind = 'fixture';
     else if (modeRehearsal || rehearsalFlag) kind = 'rehearsal';
-    else if (topLevel(args, /\.\.\.free\s*[,}]/g).length && wrappers.some(([a, b]) => a < m.index && m.index < b)) kind = 'claude-free';
+    else if (entries.some(e => e.key === '...free') && wrappers.some(([a, b]) => a < m.index && m.index < b)) kind = 'claude-free';
     sites.push({ file, line, fn: m[1], kind });
   }
   return sites;
 }
 
-/** Imports the scan could not attribute or follow: an aliased runner name, a double-quoted relative import. */
+/**
+ * Imports the scan could not attribute or might not follow: an aliased runner name, a double-quoted relative import,
+ * and a dynamic import() of a relative module (refute r8). testSources follows literal relative dynamic imports too;
+ * the structural test lists the ones it accepts by name.
+ */
 export function importIssues(src, file = '<source>') {
   const code = codeOnly(src);
   const issues = [];
   const at = i => src.slice(0, i).split('\n').length;
   for (const m of code.matchAll(/\b(runReviewer6|reviewerRun6)\s+as\s+\w+|\b(runReviewer6|reviewerRun6)\s*:\s*[A-Za-z_$]/g)) issues.push({ file, line: at(m.index), issue: `aliased ${m[1] ?? m[2]}` });
   for (const m of src.matchAll(/\bfrom\s+"\.{1,2}\//g)) if (code.startsWith('from', m.index)) issues.push({ file, line: at(m.index), issue: 'a double-quoted relative import' });
+  for (const m of src.matchAll(/\bimport\s*\(\s*(['"`])(\.{1,2}\/[^'"`]*)\1/g)) if (code.startsWith('import', m.index)) issues.push({ file, line: at(m.index), issue: `a dynamic import of ${m[2]}` });
   return issues;
 }
 
@@ -120,6 +149,7 @@ export function testSources(files) {
     const src = readFileSync(f, 'utf8'), code = codeOnly(src);
     // Only an import in code (not one quoted inside a string or a comment); either quote style.
     for (const m of src.matchAll(/\bfrom\s+(['"])(\.\.?\/[^'"]+\.mjs)\1/g)) if (code.startsWith('from', m.index)) visit(resolve(dirname(f), m[2]));
+    for (const m of src.matchAll(/\bimport\s*\(\s*(['"`])(\.\.?\/[^'"`]+\.m?js)\1/g)) if (code.startsWith('import', m.index)) visit(resolve(dirname(f), m[2]));
   };
   for (const f of files) visit(resolve(f));
   return [...seen].filter(f => f.includes(`${join('scripts', '')}`));
