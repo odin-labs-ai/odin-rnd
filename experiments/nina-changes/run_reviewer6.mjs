@@ -142,7 +142,7 @@ export function recordSpend(ledger, meta) {
   }
 }
 
-export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false, onSpawn = null, faults = null }) {
+export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false, beforeSpawn = null, onSpawn = null, faults = null }) {
   mkdirSync(RUN_ROOT6, { recursive: true });
   const parent = mkdtempSync(join(RUN_ROOT6, RUN_PREFIX6));
   const runTmp = join(parent, 'tmp');
@@ -161,6 +161,10 @@ export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball,
     const statusBefore = rehearsal ? [] : statusOf(staged.repo);
     const { env, stripped } = childEnv(process.env, staged.ninaData, runTmp);
     const args = reviewerArgs6(prereg, { prompt: matrix ? MATRIX_PROMPT6(setup) : prereg.gates.reviewer.prompt, repo: realpathSync(staged.repo), variant });
+    // The intent line (refute r4 N1) is written before the paid call; if it cannot be written, there is no call.
+    if (beforeSpawn) {
+      try { beforeSpawn(); } catch (error) { const e = new Error(`the spend intent line could not be written, so no call was made: ${error.message}`); e.code = 'EINTENT'; throw e; }
+    }
     const spawn = await spawnTimed(claudeBin, args, { cwd: staged.repo, env, timeoutMs });
     // The paid call has happened: its ledger line is written now, from the spawn result, before any step below
     // that could throw (the caller's onSpawn). Every later step is wrapped: a throw marks the record, never loses it.
@@ -210,6 +214,9 @@ function fingerprintsFor(items, corpus) {
 export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs, faults = null }) {
   const rehearsal = mode === 'rehearsal';
   if (faults && !fixture && !rehearsal) throw new Error('fault injection is for fixture and rehearsal runs only');
+  // Every paid run (practice, probe, prerun, counted) appends to the committed ledger (refute r4 B2): a separate
+  // --ledger would silently undercount the spend. Only fixture and rehearsal runs may point elsewhere.
+  if (!fixture && !rehearsal && resolve(ledgerPath) !== LEDGER_FILE) throw new Error(`a practice, probe or counted run appends to the committed ledger ${LEDGER6} (given ${relative(REPO_ROOT, resolve(ledgerPath))})`);
   if (prerun && !probe) throw new Error('prerun is the measured run\'s pre-run matrix probe (--probe matrix --prerun)');
   // The pre-run probe runs on the FROZEN runner: it passes the counted guard (freeze set, the pre-registration and
   // every pin intact, after the not-before), and it is charged to the $60 cap only (spend6 PRERUN_KIND).
@@ -231,7 +238,6 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
     if (prereg6.reviewer?.command !== commandTemplate(prereg, iso)) throw new Error('the EXP 006 pre-registration does not pre-register the command this runner would run');
     const whole = corpusItems().map(i => i.id).sort(), got = items.map(i => i.id).sort();
     if (whole.length !== got.length || whole.some((id, i) => id !== got[i])) throw new Error('a counted run must cover the whole corpus in one invocation (the hang-stop counters are per process)');
-    if (resolve(ledgerPath) !== LEDGER_FILE) throw new Error(`a counted run appends to the committed ledger ${LEDGER6}`);
   }
   if (mode === 'practice' && items.some(i => corpusItems().some(c => c.id === i.id))) throw new Error('a practice run takes practice rows, never a corpus item');
   const ledger = rehearsal ? null : new SpendLedger6(ledgerPath);
@@ -279,8 +285,19 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
     // The spend line is written from the spawn result, the moment the call returns (refute r2 N1); if that write
     // fails it goes to the pending sidecar and the run stops (refute r3 N1).
     let ledgerFailed = false;
-    const onSpawn = ledger ? ({ spawn, reportedCostUsd }) => { ledgerFailed = recordSpend(ledger, { ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }).failed; } : null;
-    const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), onSpawn, faults });
+    const callId = `${kind}:${item.id}:${k}:${Date.now()}`;
+    const beforeSpawn = ledger ? () => ledger.writeIntent({ callId, kind, id: item.id, run: k }) : null;
+    const onSpawn = ledger ? ({ spawn, reportedCostUsd }) => {
+      ledgerFailed = recordSpend(ledger, { ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }).failed;
+      if (!ledgerFailed) ledger.clearIntent(callId); // a failed write leaves the intent (and the failed line) pending
+    } : null;
+    let rec;
+    try {
+      ({ rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), beforeSpawn, onSpawn, faults }));
+    } catch (error) {
+      if (error.code === 'EINTENT') return { stop: ['intent-write', { id: item.id, run: k, error: scrubPaths6(String(error.message)).slice(0, 200) }] };
+      throw error;
+    }
     if (rec.stageError) { record.calls.push(rec); return { stop: ['workspace', { id: item.id, run: k, error: rec.stageError }] }; }
     if (ledgerFailed) { rec.ledgerWriteFailed = true; record.calls.push({ id: item.id, run: k, gate: 'reviewer', ledgerWriteFailed: true, startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd ?? null }); return { stop: ['ledger-write', { id: item.id, run: k, pending: ledger.pendingPath.split('/').pop() }] }; }
     if (rec.postCallError) { record.calls.push(rec); return { stop: ['post-call', { id: item.id, run: k, error: rec.postCallError }] }; }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, cpSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -312,4 +312,39 @@ test('refute r3 N3: a matrix run keeps every call\'s output; a corpus or practic
   const common = { prereg, item: { id: 'isolation-matrix' }, runIndex: 1, spawn, variant: 'fence6', args: ['-p', 'x', '--agent', 'reviewer'], fp: null, staged: { baseSha: 'b', log: [] } };
   assert.equal(buildCallRecord({ ...common, keepAllOutputs: true }).rec.toolCalls[0].output, 'denied');
   assert.ok(!('output' in buildCallRecord(common).rec.toolCalls[0]));
+});
+
+test('refute r4 B2: every paid run (practice, probe, pre-run probe, counted) must use the committed ledger', async () => {
+  const other = join(homedir(), 'elsewhere-ledger.jsonl'); // never written: every call refuses first
+  for (const opts of [{ mode: 'practice', items: [] }, { mode: 'probe', probe: 'matrix' }, { mode: 'probe', probe: 'matrix', prerun: true }, { mode: 'counted', items: [] }]) {
+    await assert.rejects(runReviewer6({ out: '/dev/null', ledgerPath: other, log: () => {}, ...opts }), /appends to the committed ledger experiments\/nina-changes\/spend-ledger\.jsonl/, JSON.stringify(opts));
+  }
+});
+
+test('refute r4 N1: an intent line precedes every paid spawn and is cleared after; a leftover intent refuses; a failed intent write means no spawn', async () => {
+  const dir = scratchDir('nc-intent');
+  const saved = { FAKE6_MODES: process.env.FAKE6_MODES, FAKE6_LOG: process.env.FAKE6_LOG };
+  try {
+    chmodSync(FAKE_CLAUDE6, 0o755);
+    Object.assign(process.env, { FAKE6_MODES: 'synthetic', FAKE6_LOG: join(dir, 'fake.jsonl') });
+    const item = corpusItems(['c004'])[0];
+    const L = new SpendLedger6(join(dir, 'spend-ledger.jsonl'));
+    const seen = [];
+    const beforeSpawn = () => { L.writeIntent({ callId: 'x1', kind: 'practice', id: item.id, run: 1 }); seen.push(L.pendingLines()); };
+    const onSpawn = ({ spawn, reportedCostUsd }) => { seen.push(L.pendingLines()); if (!recordSpend(L, { ts: spawn.endedAt, kind: 'practice', id: item.id, run: 1, reportedCostUsd }).failed) L.clearIntent('x1'); };
+    await reviewerRun6({ prereg, amendment, item, runIndex: 1, claudeBin: FAKE_CLAUDE6, variant: 'fence6', timeoutMs: 60_000, fp: null, rehearsal: true, beforeSpawn, onSpawn });
+    assert.deepEqual(seen, [1, 1], 'the intent is pending during the call');
+    assert.equal(L.pendingLines(), 0, 'cleared once the real line is written');
+    assert.equal(L.entries().length, 1);
+    // A leftover intent (a process killed mid-call) refuses every later call until reconciled.
+    L.writeIntent({ callId: 'x2', kind: 'practice', id: item.id, run: 2 });
+    assert.deepEqual([L.check('practice').ok, L.check('practice').reason], [false, 'pending-ledger-line']);
+    assert.equal(JSON.parse(readFileSync(L.pendingPath, 'utf8').trim()).upperBoundUsd, 0.6, 'the intent carries its upper-bound charge');
+    // An intent that cannot be written: no spawn at all.
+    const B = new SpendLedger6(join(dir, 'b', 'spend-ledger.jsonl'));
+    mkdirSync(B.pendingPath, { recursive: true }); // a directory where the sidecar file should be: the append throws
+    const before = existsSync(process.env.FAKE6_LOG) ? readFileSync(process.env.FAKE6_LOG, 'utf8').split('\n').filter(Boolean).length : 0;
+    await assert.rejects(reviewerRun6({ prereg, amendment, item, runIndex: 1, claudeBin: FAKE_CLAUDE6, variant: 'fence6', timeoutMs: 60_000, fp: null, rehearsal: true, beforeSpawn: () => B.writeIntent({ callId: 'y', kind: 'practice', id: item.id, run: 1 }) }), e => e.code === 'EINTENT');
+    assert.equal(readFileSync(process.env.FAKE6_LOG, 'utf8').split('\n').filter(Boolean).length, before, 'the client was never spawned');
+  } finally { for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } removeScratch(dir); }
 });

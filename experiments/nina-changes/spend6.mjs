@@ -11,7 +11,7 @@
 //     exceed it. Reaching it = STOP + ASK-FORK.
 //   - Before bundle 3: spent + 180 × p90(dry-run per-run cost) + one pre-run probe + $0.60 > $60 → ASK-FORK. p90 is
 //     results.mjs `percentile` (numpy linear interpolation), the pre-registered method.
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { percentile } from '../jev-gate/results.mjs';
 
@@ -45,6 +45,21 @@ export class SpendLedger6 {
   recordPending(meta) {
     mkdirSync(dirname(this.pendingPath), { recursive: true });
     appendFileSync(this.pendingPath, `${JSON.stringify(meta)}\n`);
+  }
+  /**
+   * Crash-safe accounting (refute r4 N1): an INTENT line is appended to the pending sidecar BEFORE a paid spawn (call id,
+   * kind, the upper-bound cost it would be charged) and cleared once the real ledger line is written. A leftover intent
+   * (the process killed mid-call, or both writes failed) keeps the sidecar non-empty, so every later call refuses until
+   * the operator reconciles it at the upper bound. If this append fails, the caller must not spawn.
+   */
+  writeIntent({ callId, kind, id, run }) {
+    const intent = { intent: true, callId, kind, id, run, upperBoundUsd: round7(this.reserve()), ts: new Date().toISOString() };
+    this.recordPending(intent);
+    return intent;
+  }
+  clearIntent(callId) {
+    const keep = readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).filter(l => { try { return JSON.parse(l).callId !== callId || JSON.parse(l).intent !== true; } catch { return true; } });
+    writeFileSync(this.pendingPath, keep.length ? `${keep.join('\n')}\n` : '');
   }
   pendingLines() { return existsSync(this.pendingPath) ? readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).length : 0; }
   /** Every line, validated; a corrupt line throws (the guard then refuses: fail closed). */

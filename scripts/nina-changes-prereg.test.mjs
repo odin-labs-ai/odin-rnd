@@ -173,7 +173,7 @@ test('N1-N3: precise wording; the false-BLIND forms and the hedged is_error limi
 test('refute r2 N4/N5/N7/N8/N10/N11: the headroom rule, malformed-stream charging, -O, the sandbox wording, sub-agents and coloured status are stated', () => {
   assert.match(record.spend.headroomRule, /only while no call exceeds the current reserve/);
   const limits = record.limits.join('\n');
-  for (const phrase of ['malformed line is charged the upper bound', 'git diff -O<file>', 'reads outside the repository are denied', 'No canary sits anywhere but inside', 'Only TOP-LEVEL calls count', 'coloured git status']) assert(limits.includes(phrase), phrase);
+  for (const phrase of ['malformed line is charged the upper bound', 'git diff -O<file>', 'reads outside the repository within home and the temp roots are denied', 'Nothing is canaried anywhere else', 'Only TOP-LEVEL calls count', 'coloured git status']) assert(limits.includes(phrase), phrase);
   assert.match(record.classifier.gitCall, /FIRST token is git/);
   assert.match(record.isolationEvidence.attemptedCheck, /no verdict changed/);
   assert(PINNED.includes('experiments/nina-changes/spotlight-gate.mjs') && PINNED.includes('experiments/nina-changes/matrix6-attempts.mjs'));
@@ -185,4 +185,13 @@ test('refute r3: the gate sentence is true as built (gateOpen owns the records),
   assert.match(record.limits.join('\n'), /after the client's own normalisation only \(a 2>&1 or 2>\/dev\/null redirection stripped\)/);
   const gateSrc = readFileSync('experiments/nina-changes/spotlight-gate.mjs', 'utf8');
   for (const p of ['experiments/nina-changes/results/results.json', 'experiments/nina-changes/results/spotlight-decision.json', 'export function gateOpen']) assert(gateSrc.includes(p), p);
+});
+
+test('refute r4: the gate sentence (real counted measurement under the frozen sha), the committed-ledger and intent rules, N3 and N4 are stated', () => {
+  for (const p of ['not a fixture, not a rehearsal, not partial', 'frozen in freeze.mjs (which must be set)', 'names the results record AND the reviewer run record by sha256', 'Measured date comes only from it']) assert(record.spotlightArtefact.gate.includes(p), p);
+  assert.match(record.spend.rule, /Every paid run \(practice, probe, pre-run probe, counted\) appends to this one committed ledger/);
+  assert.match(record.spend.rule, /intent line/);
+  const limits = record.limits.join('\n');
+  assert.match(limits, /Untested residual: git diff --no-index given an in-workspace symlink/);
+  assert.match(limits, /a dated amendment with a new not-before/);
 });
