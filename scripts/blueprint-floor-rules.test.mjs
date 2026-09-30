@@ -40,7 +40,7 @@ test('each rule file re-checks: its counts, its own rules sha, unique ids across
       assert(Number.isInteger(x.line) && x.line > 0 && x.sourcePath && r.sources.some(s => s.path === x.sourcePath), x.ruleId);
       assert(typeof x.text === 'string' && x.text.trim().length > 0, x.ruleId);
       assert.equal(x.kind === 'regex', typeof x.flags === 'string', `${x.ruleId}: flags recorded exactly for regex rules`);
-      assert.deepEqual(Object.keys(x), ['ruleId', 'sourcePath', 'line', 'kind', 'text', 'flags', 'inputKind', 'stratum', 'withheld']);
+      assert.deepEqual(Object.keys(x), ['ruleId', 'sourcePath', 'line', 'kind', 'text', 'flags', 'context', 'inputKind', 'stratum', 'withheld']);
     }
     for (const e of r.excluded) assert(e.id && e.sourcePath && Number.isInteger(e.line) && e.reason, `${plugin} exclusion ${e.id}`);
   }

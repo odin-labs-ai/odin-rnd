@@ -91,7 +91,7 @@ export const SAMPLE = { size: 30, seed: 7007 };
 
 // ------------------------------------------------------------------ per-plugin extractors
 
-const rule = (r) => ({ ruleId: r.ruleId, sourcePath: r.sourcePath, line: r.line, kind: r.kind, text: r.text, flags: r.flags ?? null, inputKind: r.inputKind, stratum: r.stratum ?? 'primary', withheld: r.withheld ?? {} });
+const rule = (r) => ({ ruleId: r.ruleId, sourcePath: r.sourcePath, line: r.line, kind: r.kind, text: r.text, flags: r.flags ?? null, context: null, inputKind: r.inputKind, stratum: r.stratum ?? 'primary', withheld: r.withheld ?? {} });
 const excluded = (id, sourcePath, line, reason) => ({ id, sourcePath, line, reason });
 
 function hunch(read) {
@@ -279,11 +279,28 @@ export const EXTRACTORS = { hunch, 'jev-pref': jevPref, abide, limpet, 'jev-bela
 /** Canonical sha of the rules array: the sha256 of its JSON (no whitespace). The test recomputes it. */
 export const rulesSha256 = rules => sha256(JSON.stringify(rules));
 
+/**
+ * The rule's "Applies to" context (refute r5 B1): the factual sentences of every source group of selection.json that the
+ * rule belongs to (by ruleId prefix, and abide's `when`), then its own file globs (abide `scope`, hunch `files`). A glob
+ * containing the plugin's own name shows it as <tool>, so no prompt names a plugin. null when nothing applies.
+ */
+export function contextFor(r, sel) {
+  const mask = globs => (Array.isArray(globs) ? globs : [globs]).map(g => g.split(sel.plugin).join('<tool>')).join(', ');
+  const parts = [];
+  for (const c of sel.contexts ?? []) {
+    if (c.match && r.ruleId.startsWith(c.match) && (c.when === undefined || c.when === r.withheld.when)) parts.push(c.context);
+    else if (c.scope && r.withheld.scope !== undefined) parts.push(c.context.replace('<scope>', mask(r.withheld.scope)));
+    else if (c.files && r.withheld.files !== undefined) parts.push(c.context.replace('<files>', mask(r.withheld.files)));
+  }
+  return parts.length ? parts.join(' ') : null;
+}
+
 /** Build the vendored record for one plugin from a reader over its clone at the pin. */
 export function extractPlugin(sel, read) {
   const fn = EXTRACTORS[sel.plugin];
   if (!fn) throw new Error(`no extractor for ${sel.plugin}`);
   const out = fn(read, sel);
+  for (const r of out.rules) r.context = contextFor(r, sel);
   const license = read('LICENSE');
   const copyright = license.split('\n').find(l => /^Copyright/.test(l.trim()))?.trim();
   if (!/^MIT License/.test(license.trim()) || !copyright) throw new Error(`${sel.plugin}: LICENSE is not MIT or has no copyright line`);

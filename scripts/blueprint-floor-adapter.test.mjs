@@ -199,3 +199,12 @@ test('refute r4 N2: a plugin-rule run must say its flags; controls need not', as
   await assert.rejects(runFloor({ constraints: c, inputKind: 'toolCall', input: tc('x'), flags: 1 }), /string or null/);
   assert.deepEqual(await judge({ constraints: c, inputKind: 'toolCall', input: tc('x'), finalClass: 'not', flags: null }), { decision: 'abstain', violations: [] });
 });
+
+test('refute r5 B2: the base tree\'s own code reddens a src/** pattern (the contract says so); the added-lines form holds', LONG, async () => {
+  const violating = { patch: newFile('src/app/shape.ts', ['export interface Shape { a: number }']) }, compliant = { patch: newFile('src/app/shape.ts', ['export type Shape = { a: number };']) };
+  const src = await teeth(pattern('^\\s*(export\\s+)?interface\\s', 'src/**'), { violating, compliant }, { inputKind: 'diff', flags: null });
+  assert.deepEqual([src.pass, src.compliant], [false, 'RED'], 'the hidden base already has interfaces');
+  const added = await teeth(pattern('^\\s*(export\\s+)?interface\\s', '.floor/added-lines.txt'), { violating, compliant }, { inputKind: 'diff', flags: null });
+  assert.equal(added.pass, true, added.reason);
+  assert.match(readFileSync('experiments/blueprint-floor/contract.md', 'utf8'), /also scans the project's existing TypeScript sources under src\/, which you cannot see/);
+});

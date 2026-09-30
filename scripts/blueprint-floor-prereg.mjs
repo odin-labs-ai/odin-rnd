@@ -88,6 +88,8 @@ export function validateRecord(record) {
   }
   assert.equal(record.census.rules, record.census.primaryRules + record.census.secondaryRules + record.census.controls, 'Census counts do not add up');
   assert.equal(record.census.calls, 2 * record.census.rules, 'Two counted calls per rule (translator, adjudicator)');
+  const excluded = record.plugins.reduce((n, p) => n + p.excluded, 0);
+  assert(record.experiment.summary.includes(`(${excluded} items excluded, listed;`), 'The summary states the excluded count the rule files give');
   for (const text of [record.adjudicator.agreement, record.metrics.find(m => m.id === 'agreement')?.definition]) assert(str(text) && text.includes(KAPPA_DISCLOSURE), 'The kappa disclosure (which rules it excludes, which it covers) is stated');
   assert(/opaque id/.test(record.translator.input) && /opaque id/.test(record.adjudicator.input), 'The prompts show an opaque id, and the record says so');
   assert(!record.engine.pluginVocabulary.includes('customPolicy') && !record.engine.controlVocabulary.includes('customPolicy'), 'customPolicy is refused');

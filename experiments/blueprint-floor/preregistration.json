@@ -5,7 +5,7 @@
     "id": "EXP 007",
     "slug": "blueprint-floor",
     "title": "Which of your gate's rules need a model at all?",
-    "summary": "For every rule eight listed Jev plugins ship, how much could a deterministic checker decide on its own, before any model is asked?",
+    "summary": "For every rule the eight plugins ship that meets the inclusion test (51 items excluded, listed; hunch's 1,011 spec rules sampled 30), how much could a deterministic checker decide on its own, before any model is asked?",
     "status": "pre-registered",
     "statusText": "Pre-registered, not yet run",
     "authoredOn": "2026-09-30",
@@ -30,7 +30,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 Kelbie",
       "rulesFile": "experiments/blueprint-floor/rules/hunch.json",
-      "rulesFileSha256": "f5f37a174ce0106bbb95a4564df10eb1a03d65727638eedebc1c54cabb48f08e",
+      "rulesFileSha256": "a69224e3d3ff8d3747d1bc11870f759e15935617f12f1ec234cefd32fb4d6470",
       "primary": 8,
       "secondary": 30,
       "excluded": 0
@@ -42,7 +42,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 jev-pref contributors",
       "rulesFile": "experiments/blueprint-floor/rules/jev-pref.json",
-      "rulesFileSha256": "707510c3c8f300f9e0a36020794111f3b3ee39201b45203a96067248ba87efe5",
+      "rulesFileSha256": "8bb4d670b057a8024a3960e1366b600e5219792e234e29a66d4b08ed1204c91d",
       "primary": 4,
       "secondary": 0,
       "excluded": 0
@@ -54,7 +54,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 Coldtea AI",
       "rulesFile": "experiments/blueprint-floor/rules/abide.json",
-      "rulesFileSha256": "b5276afe6d91c93f462d3ff113926d45a60b567d6e0281072f9a334093ab05db",
+      "rulesFileSha256": "fdd1d6632cb59b3cdb4d50dab0bc7aab593127d438bbebd12fcc7599b8101726",
       "primary": 43,
       "secondary": 0,
       "excluded": 0
@@ -66,7 +66,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 no plan inc.",
       "rulesFile": "experiments/blueprint-floor/rules/limpet.json",
-      "rulesFileSha256": "5c3a8bad2403f23453e4745588e8169bcb0b2619c43e372e82b5ddea42149d6f",
+      "rulesFileSha256": "a8af3f0f738eac65dc876bb4b75918a407b2ae28b8312234496f8d83d101fc7c",
       "primary": 10,
       "secondary": 0,
       "excluded": 0
@@ -90,7 +90,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 Eugeniu Ghelbur",
       "rulesFile": "experiments/blueprint-floor/rules/jev-engineering.json",
-      "rulesFileSha256": "6ee3d88dcd6bc0fdf8278846418dcb17b8713c824770eb01298ed295c7e44435",
+      "rulesFileSha256": "b7b830714eca8b8039e3f9ad55fe3d9dd35851ddc440a1e5bab8a73a39dd57ed",
       "primary": 16,
       "secondary": 0,
       "excluded": 23
@@ -102,7 +102,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 Jesset",
       "rulesFile": "experiments/blueprint-floor/rules/pi-verdict.json",
-      "rulesFileSha256": "71c71bc7fd65b4eaa9dbfe60c297d8cf79aed05e91b84f92251fb4c14585687e",
+      "rulesFileSha256": "b3f12b75141fdc436d866eb5e8facc9457e01bca0e8bed84d3538815a547ed68",
       "primary": 41,
       "secondary": 0,
       "excluded": 4
@@ -114,7 +114,7 @@
       "license": "MIT",
       "copyright": "Copyright (c) 2026 Nicholas Underwood (shiftynick)",
       "rulesFile": "experiments/blueprint-floor/rules/jev-axi.json",
-      "rulesFileSha256": "b9adf67d03141f464531a630efe0004d93456de1cc9e4673d4caad359fb38d88",
+      "rulesFileSha256": "e846e833d3fb07625bb65fca3e1c82396a3ff838fc18939b23c71cd6e0a74f23",
       "primary": 23,
       "secondary": 0,
       "excluded": 20
@@ -147,30 +147,30 @@
     "experiments/blueprint-floor/adapter.mjs": "f24f6ca872493fd2ec48792b39bc085b69eee7fb2e0ffc8d702387eb8c2c12d3",
     "experiments/blueprint-floor/whitelist.mjs": "4222c64ea58caf4c171019e1079b04bef7f7f3f4502e5b8ae9170819efb8a76f",
     "experiments/blueprint-floor/whitelist.json": "6a7ac380715f350b16c3cbe82ff780b26bdd74be6d374fe75fc97a0740030138",
-    "experiments/blueprint-floor/contract.md": "fbc8d30f563c8e0bd3e26a8779aea75cf11b54617817871b04f47aa3acc5360a",
+    "experiments/blueprint-floor/contract.md": "4ebcf007ea1dd8507150d4f65bd009300e415d6bba453e2d09006bf6caa4a88e",
     "experiments/blueprint-floor/contract-module-graph.md": "ba244156d2bfafe6f4ecbbef734a9a6ff457f606ae1544cb5c97cd25daff06bc",
     "experiments/blueprint-floor/prompts/translator.md": "f4a58563c189e57d8672266d9e2afe43b254df5b33b2c1f6075a0a4b5c0a071b",
     "experiments/blueprint-floor/prompts/adjudicator.md": "54fdb1824c01ab5bf0bc369f81de5d14251314d575744ded0d516b3b431e8dfd",
-    "experiments/blueprint-floor/protocol.mjs": "227484b123571b89828e4320e7ba18203ffeca77ad25c476febb233594638843",
+    "experiments/blueprint-floor/protocol.mjs": "b0186bb0e4bf1ee94eca3c42ebcbe613c458cff6c571d5de747bc57d301197e1",
     "experiments/blueprint-floor/protocol.md": "1be541df90647581266dad9bcb1d11b5e5df663bdec9275ed2ed609aa6fd91fb",
-    "experiments/blueprint-floor/scorer.mjs": "9844c64cecbfe957414c43ab11e7a9a9e1669e25e610db6320379daa1da82c8a",
+    "experiments/blueprint-floor/scorer.mjs": "f2113f3666ec288aebc420750d9b16c3b2eb8fac2078296acad1afdee0d2f351",
     "experiments/blueprint-floor/fixtures/scorer.json": "6311bfd945d162906bc675c98be3e211f57d3a42f6f69e478164294a2ba304f1",
-    "experiments/blueprint-floor/extract.mjs": "c3f7fec17d8c272c10898b2f381a56d2566174e4f2956f8058ac1421af7e0287",
-    "experiments/blueprint-floor/rules/selection.json": "d9a016b3ee03db1db7ad2c8b4966aec97aa60177deb86382e6681181a1fd091d",
-    "experiments/blueprint-floor/rules/SELECTION.md": "7773fe5d0498df47a445773a25c1a549fc0ff11e6a510e5d6071e0755dd8bb8e",
-    "experiments/blueprint-floor/rules/hunch.json": "f5f37a174ce0106bbb95a4564df10eb1a03d65727638eedebc1c54cabb48f08e",
-    "experiments/blueprint-floor/rules/jev-pref.json": "707510c3c8f300f9e0a36020794111f3b3ee39201b45203a96067248ba87efe5",
-    "experiments/blueprint-floor/rules/abide.json": "b5276afe6d91c93f462d3ff113926d45a60b567d6e0281072f9a334093ab05db",
-    "experiments/blueprint-floor/rules/limpet.json": "5c3a8bad2403f23453e4745588e8169bcb0b2619c43e372e82b5ddea42149d6f",
+    "experiments/blueprint-floor/extract.mjs": "a496350baef97f9f5e085cc4456edb6ec346980328a347f6945d21484285abd9",
+    "experiments/blueprint-floor/rules/selection.json": "8c73444400ee24b6cc1386221466410f2b7e3f599fb6a8af13edb86bbf65796c",
+    "experiments/blueprint-floor/rules/SELECTION.md": "27ccd3a79affacfbc1e3ab640cb3964b84538629579acf3dba9f81cb81fe08b1",
+    "experiments/blueprint-floor/rules/hunch.json": "a69224e3d3ff8d3747d1bc11870f759e15935617f12f1ec234cefd32fb4d6470",
+    "experiments/blueprint-floor/rules/jev-pref.json": "8bb4d670b057a8024a3960e1366b600e5219792e234e29a66d4b08ed1204c91d",
+    "experiments/blueprint-floor/rules/abide.json": "fdd1d6632cb59b3cdb4d50dab0bc7aab593127d438bbebd12fcc7599b8101726",
+    "experiments/blueprint-floor/rules/limpet.json": "a8af3f0f738eac65dc876bb4b75918a407b2ae28b8312234496f8d83d101fc7c",
     "experiments/blueprint-floor/rules/jev-belay.json": "ef35a1382489f9491931c5939e33d22f0f875c9e2d085d579bc81a71c5465134",
-    "experiments/blueprint-floor/rules/jev-engineering.json": "6ee3d88dcd6bc0fdf8278846418dcb17b8713c824770eb01298ed295c7e44435",
-    "experiments/blueprint-floor/rules/pi-verdict.json": "71c71bc7fd65b4eaa9dbfe60c297d8cf79aed05e91b84f92251fb4c14585687e",
-    "experiments/blueprint-floor/rules/jev-axi.json": "b9adf67d03141f464531a630efe0004d93456de1cc9e4673d4caad359fb38d88",
+    "experiments/blueprint-floor/rules/jev-engineering.json": "b7b830714eca8b8039e3f9ad55fe3d9dd35851ddc440a1e5bab8a73a39dd57ed",
+    "experiments/blueprint-floor/rules/pi-verdict.json": "b3f12b75141fdc436d866eb5e8facc9457e01bca0e8bed84d3538815a547ed68",
+    "experiments/blueprint-floor/rules/jev-axi.json": "e846e833d3fb07625bb65fca3e1c82396a3ff838fc18939b23c71cd6e0a74f23",
     "experiments/blueprint-floor/controls/positive.json": "c3bb57a4f0472290ed3ecedfc1f5318ea888d6ed38bc69690373ef1d193e2c46",
     "experiments/blueprint-floor/controls/negative.json": "fa074fe80eaf1be84ad0a22068dc490c895ed78b952a3282e9900b93bc1c8de9",
     "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
     "experiments/jev-gate/rules.txt": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
-    "scripts/blueprint-floor-rules.mjs": "f55d0b5c1ce8d3ddbdbe7bc082b01ee6fa54691f25ebb4e2dc5361ba25826b3c",
+    "scripts/blueprint-floor-rules.mjs": "3a804effb4f762976a9228fa404ad266b6a343d7aee55854354a62670792f179",
     "package.json": "f6727111f219ee47f40d77bd7a5a4d2902cb2bb8062d8993ede710d31f40817d",
     "pnpm-lock.yaml": "3d04442a268a1f5dbb0fc852ece2ff0044a229ae0e6688f5acbe8fabbb06648d"
   },
@@ -228,10 +228,10 @@
     "not": "no whitelisted constraint decides any non-trivial part"
   },
   "translator": {
-    "input": "Exactly: an opaque id (item-<first 12 hex of sha256(\"exp007-census-v1:\" + ruleId)>, mapped back to the ruleId by the runner), the rule's verbatim text (the single text field pinned per plugin in selection.json), its input kind, its regex flags when it is a regex, and the materialisation contract with the accepted constraint types (the whitelist) and one generic example each (contract.md; contract-module-graph.md for the positive controls); plus the pinned system prompt.",
+    "input": "Exactly: an opaque id (item-<first 12 hex of sha256(\"exp007-census-v1:\" + ruleId)>, mapped back to the ruleId by the runner), the rule's verbatim text (the single text field pinned per plugin in selection.json), its input kind, its regex flags when it is a regex, the rule's match target and application condition as an 'Applies to' line where the source defines one (the context field, one factual sentence per source group plus the rule's own file globs), and the materialisation contract with the accepted constraint types (the whitelist) and one generic example each (contract.md; contract-module-graph.md for the positive controls); plus the pinned system prompt.",
     "never": "Any case, any label, any plugin evaluation file, abide's own type field, another rule's class, or any result. Every other field of a source item is stored under withheld in the rule file and never rendered into a prompt.",
     "output": "One JSON object: {ruleId, class: expressible | partial | not, constraints: [bce constraint objects], coverage, residual (a yes/no question when the class is partial or not, otherwise empty), probes: {violating, compliant} (empty when the class is not), rationale of at most 80 words}.",
-    "blindness": "The prompt builder (protocol.mjs) reads exactly four fields of a rule, {ruleId, text, inputKind, flags}, and shows the ruleId only as the opaque id. A test hands it a rule whose other fields throw when read, and renders both prompts for every rule to show that no plugin name, no stratum or control word and no segment of the ruleId appears outside the rule's own text (six generic words of the fixed contract and system prompt are listed as exceptions)."
+    "blindness": "The prompt builder (protocol.mjs) reads exactly five fields of a rule, {ruleId, text, inputKind, flags, context}, and shows the ruleId only as the opaque id. A test hands it a rule whose other fields throw when read, and renders both prompts for every rule to show that no plugin name, no stratum or control word and no segment of the ruleId appears outside the rule's own text (six generic words of the fixed contract and system prompt are listed as exceptions)."
   },
   "mechanical": {
     "checks": [
@@ -246,7 +246,7 @@
     "error": "An answer that is not a JSON object with a valid class, a timeout, a model id other than the pin, or any other harness failure is class error, counted as not (conservative) and listed."
   },
   "adjudicator": {
-    "input": "A separate process on a different pinned model, no tools. Exactly what the prompt builder sends: the pinned system prompt; the same opaque id; the input kind; the regex flags (regex rules only); the rule's verbatim text; the translator's answer verbatim; a mechanical summary with schema, vocabulary, the checker's validation, teeth, the flags check (flagged rules only), the translator's class and the class after the checks; the flag-semantics sentence (flagged rules only); and the stated class to confirm or dispute. No case.",
+    "input": "A separate process on a different pinned model, no tools. Exactly what the prompt builder sends: the pinned system prompt; the same opaque id; the input kind; the 'Applies to' line (the rule's match target and application condition, where the source defines one); the regex flags (regex rules only); the rule's verbatim text; the translator's answer verbatim; a mechanical summary with schema, vocabulary, the checker's validation, teeth, the flags check (flagged rules only), the translator's class and the class after the checks; the flag-semantics sentence (flagged rules only); and the stated class to confirm or dispute. No case.",
     "output": "{ruleId, verdict: confirm | dispute, proposedClass, reason of at most 80 words}.",
     "finalClass": "Confirmed: the class after the mechanical checks. Disputed: the lower of that class and the proposed class (not < partial < expressible), so a dispute can only lower expressibility.",
     "agreement": "Translator-adjudicator agreement is reported as Cohen's kappa over the three classes, with the number of rules it is computed on and the list of disputes: rules whose translator or adjudicator call ended in error are excluded; computed over all census rules including controls."
@@ -297,6 +297,10 @@
     {
       "id": "lists",
       "definition": "Downgrades with their failing check, engine-limit rules, and errors, each listed by ruleId."
+    },
+    {
+      "id": "breakdown",
+      "definition": "pi-verdict's command (bash), path and question rules, each with its own counts and expressible share, reported apart; not part of the median."
     }
   ],
   "census": {
@@ -360,6 +364,8 @@
     "Some plugins have few rules (jev-pref has 4), so their shares move in large steps.",
     "Which items count as rules is our application of the pinned inclusion test. At the pin jev-belay has no rule that decides by itself (its four questions feed one combined decision), so its primary stratum is empty and the median runs over the other plugins.",
     "The positive controls are shown the module-graph contract (their materialisation differs), so a translator could tell them apart from plugin rules; the controls are outside every median.",
+    "A line checker cannot join a tool's name to its path argument or resolve the working directory and real path, so a path rule that blocks only writes (pi-verdict's write-only tiers) can be at most partial; the adjudicator is told that condition in the rule's 'Applies to' line.",
+    "The positive controls run on the module-graph path, so they do not calibrate the plugin-surface diff path the plugin rules take.",
     "Blinding hides names, not families: input kind and regex-versus-prose correlate with the plugin (limpet's rules are all stopTranscript; toolCall regexes come only from pi-verdict and jev-engineering), so a translator can guess a rule's family.",
     "One rule's verbatim text names its own plugin (abide/key-write-targets); the blindness check excludes a rule's own text, which is shown verbatim by design.",
     "The negative controls were written by the experimenters; the positive controls come from EXP 005, whose rules were written for bce.",
@@ -368,7 +374,8 @@
     "jev-engineering's patterns are Python regular expressions and the checker compiles JavaScript ones; where the dialects differ, only the mechanical checks on the translator's own probes can catch it, and only when a probe exercises the difference.",
     "Probe patches can only add files, because the contract lists the base tree's files but not their contents.",
     "One translator model, one adjudicator model, one attempt per rule and one client version.",
-    "Upstream plugin labels, where stage 2 uses them, are written by each plugin's authors and are not independent."
+    "Upstream plugin labels, where stage 2 uses them, are written by each plugin's authors and are not independent.",
+    "pi-verdict's command rules and path rules are also reported apart; that breakdown does not change the median."
   ],
   "sources": [
     {

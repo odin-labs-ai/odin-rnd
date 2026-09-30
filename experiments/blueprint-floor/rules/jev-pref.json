@@ -24,7 +24,7 @@
     "secondary": 0,
     "excluded": 0
   },
-  "rulesSha256": "ea8309b9a6121a3e6ea40d8236a181e2bd086e28e52c1631d34801c680c405f3",
+  "rulesSha256": "51afa92e9eed9b5c9bdf129fe7af4c9b1ebe14f313bebbf5aa7275bf43f26dcb",
   "rules": [
     {
       "ruleId": "jev-pref/secrets/sec_leak",
@@ -33,6 +33,7 @@
       "kind": "question",
       "text": "Does `diff` introduce a hardcoded secret, API key, token, private key, password, or connection string into tracked files (excluding test fixtures and redacted examples)? Answer true only for a concrete instance in the changed lines.",
       "flags": null,
+      "context": "The question is asked about one hunk of a git diff.",
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -48,6 +49,7 @@
       "kind": "question",
       "text": "Does `diff` introduce real-looking personal data (emails, phone numbers, addresses, government IDs) outside test fixtures and docs examples? Answer true only for a concrete instance in the changed lines.",
       "flags": null,
+      "context": "The question is asked about one hunk of a git diff.",
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -63,6 +65,7 @@
       "kind": "question",
       "text": "Does this change add a real API key or token to documentation, comments, or examples?",
       "flags": null,
+      "context": "The question is asked about one hunk of a git diff.",
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -79,6 +82,7 @@
       "kind": "question",
       "text": "Does this change add a skill outside skills/<name>/ or add a skill whose SKILL.md lacks name and description frontmatter?",
       "flags": null,
+      "context": "The question is asked about one hunk of a git diff.",
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {

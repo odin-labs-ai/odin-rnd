@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VOCABULARY, judge } from '../experiments/blueprint-floor/adapter.mjs';
-import { FLAG_HANDLING, FLAGS_QUESTION, FOLDING_SENTENCE, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
+import { FLAG_HANDLING, FLAGS_QUESTION, FOLDING_SENTENCE, upperRanges, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
 // EXP 007 WO-1-03: the census protocol. Blindness (R2-3), the output schemas, the downgrade rule, and the mechanical
@@ -14,11 +14,11 @@ const allRules = [...selection.plugins.flatMap(p => loadRules(p.plugin).rules), 
 
 /** A rule whose only readable fields are the four the builders may read; touching any other field throws. */
 const guarded = rule => new Proxy(rule, { get(target, key) {
-  if (typeof key === 'symbol' || ['ruleId', 'text', 'inputKind', 'flags'].includes(key)) return target[key];
+  if (typeof key === 'symbol' || ['ruleId', 'text', 'inputKind', 'flags', 'context'].includes(key)) return target[key];
   throw new Error(`the prompt builder read the forbidden field ${String(key)}`);
 } });
 
-test('blindness: the builders read only {ruleId, text, inputKind, flags} of every census rule', () => {
+test('blindness: the builders read only {ruleId, text, inputKind, flags, context} of every census rule', () => {
   const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, translatorClass: 'partial', classAfterMechanical: 'partial' };
   for (const r of allRules) {
     const t = buildTranslatorPrompt(guarded(r));
@@ -263,4 +263,39 @@ test('refute r4 B2: every sentence about case in the translator contract and pro
     if (/lower-cased|lower case/.test(x)) assert.match(x, /i flag|flags include i|lower-cased/, x);
   }
   assert(readFileSync(CONTRACT_FILES['plugin-surface'], 'utf8').includes('"pattern": "\\\\btodo\\\\b"'), 'a lower-case example');
+});
+
+test('refute r5 B1: the "Applies to" context is shown to both models, and names no plugin, stratum or rule id', () => {
+  const withCtx = allRules.filter(r => r.context);
+  assert(withCtx.length >= 150, `${withCtx.length} rules carry a context`);
+  const scoped = loadRules('abide').rules.filter(r => r.withheld.scope !== undefined);
+  assert.equal(scoped.length, 13);
+  for (const r of scoped) assert.match(r.context, /Applies only to files matching: /, r.ruleId);
+  const s1 = pv('pi-verdict/path/S1-01'), s0 = pv('pi-verdict/path/S0-01'), bash = pv('pi-verdict/bash/sudo');
+  assert.match(s1.context, /resolved absolute path.*It blocks only when the tool writes to that path; reads are not blocked\./);
+  assert(!/writes to that path; reads/.test(s0.context), 'S0 blocks reads too');
+  assert.equal(bash.context, 'The pattern is tested against the shell command text of a bash tool call.');
+  const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, flags: { pass: true, reason: 'x' }, translatorClass: 'partial', classAfterMechanical: 'partial' };
+  assert(buildTranslatorPrompt(s1).user.includes(`Applies to: ${s1.context}`));
+  assert(buildAdjudicatorPrompt(s1, '{}', mech).user.includes(`Applies to: ${s1.context}`));
+  assert(!buildTranslatorPrompt(loadRules('abide').rules.find(r => r.context === null)).user.includes('Applies to:'));
+  const word = w => new RegExp(`(^|[^A-Za-z0-9])${w.replace(/[-]/g, '\\-')}($|[^A-Za-z0-9])`, 'i');
+  for (const r of withCtx) {
+    for (const name of PLUGIN_NAMES) assert(!word(name).test(r.context), `${r.ruleId}: plugin name in context`);
+    for (const w of STRATUM_WORDS) assert(!word(w).test(r.context), `${r.ruleId}: ${w} in context`);
+    for (const seg of r.ruleId.split('/').filter(x => x.length >= 3 && !(x.toLowerCase() in TEMPLATE_WORDS))) assert(!word(seg).test(r.context), `${r.ruleId}: segment ${seg} in context`);
+  }
+  assert(loadRules('abide').rules.some(r => (r.context ?? '').includes('<tool>-hook.ts')), 'a glob naming the plugin shows <tool>');
+});
+
+test('refute r5 adopted: a class range that reaches A-Z without covering a-z is refused; [!-~] is allowed', () => {
+  for (const p of ['[@-\\[]', '[\\x40-\\x5b]', '[a-zA-Z]', '[\\u0041-\\u005a]']) assert.equal(checkFlags([fp('a', p)]).pass, false, p);
+  for (const p of ['[!-~]', '[a-z0-9_]', '[\\d-z]', 'x[^\\]]y']) assert.equal(checkFlags([fp('a', p)]).pass, true, p);
+  assert.deepEqual(upperRanges('[@-\\[]'), [[0x40, 0x5b]]);
+});
+
+test('refute r5 adopted: an unverifiable flag with no residual caps the class at not, with a residual at partial', LONG, async () => {
+  const m = { ...sudo, ruleId: 'test/m', flags: 'm' };
+  const none = await mechanicalChecks(m, JSON.stringify({ ruleId: opaqueId('test/m'), class: 'expressible', constraints: [fp('s', '\\bsudo\\b')], coverage: 'x', residual: null, probes: { violating: tcall('sudo ls'), compliant: tcall('ls') }, rationale: 'r' }));
+  assert.deepEqual([none.failedCheck, none.classAfterMechanical], ['flags-unverifiable', 'not']);
 });

@@ -17,33 +17,92 @@
         "textField": "instructions (the first argument of concern)",
         "inputKind": "diff",
         "inputKindEvidence": "hunch reviews a pull request's diff hunks (action.yml, apps/github-app)",
-        "withheld": ["preset", "message", "files", "level", "threshold", "criteria"]
+        "withheld": [
+          "preset",
+          "message",
+          "files",
+          "level",
+          "threshold",
+          "criteria"
+        ]
       },
       "secondary": {
-        "sources": ["rules/bips-spec.json", "rules/nips-spec.json", "rules/nuts-spec.json"],
+        "sources": [
+          "rules/bips-spec.json",
+          "rules/nips-spec.json",
+          "rules/nuts-spec.json"
+        ],
         "items": "every entry of rules{} in the three spec files, in file order (bips, nips, nuts) then key order",
         "textField": "noul",
         "inputKind": "diff",
-        "sample": { "size": 30, "seed": 7007, "method": "mulberry32(seed) drives a Fisher-Yates shuffle of the population indices; the first 30 indices, re-sorted into population order, are the sample" },
-        "withheld": ["level", "criteria", "threshold", "message"],
+        "sample": {
+          "size": 30,
+          "seed": 7007,
+          "method": "mulberry32(seed) drives a Fisher-Yates shuffle of the population indices; the first 30 indices, re-sorted into population order, are the sample"
+        },
+        "withheld": [
+          "level",
+          "criteria",
+          "threshold",
+          "message"
+        ],
         "note": "Secondary stratum: reported separately, never in the median."
       },
-      "excluded": []
+      "excluded": [],
+      "contexts": [
+        {
+          "match": "hunch/",
+          "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+          "cite": "packages/core/src/context.ts:6"
+        },
+        {
+          "match": "hunch/spec/",
+          "context": "Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+          "cite": "rules/bips-spec.json, rules/nips-spec.json, rules/nuts-spec.json (include)"
+        },
+        {
+          "files": true,
+          "context": "Applies only to files matching: <files>.",
+          "cite": "packages/core/src/presets.ts:9 (the files argument of concern)"
+        }
+      ]
     },
     {
       "plugin": "jev-pref",
       "repo": "doeixd/jev-pref",
       "sha": "9d77ea6069123a0b3eedf465ec39781842722b0a",
       "primary": {
-        "sources": ["packages/jev-pref/src/suites/secrets.js", "jev-pref.json"],
+        "sources": [
+          "packages/jev-pref/src/suites/secrets.js",
+          "jev-pref.json"
+        ],
         "items": "the built-in secrets suite questions (buildQuestions) and the root jev-pref.json prefs",
         "textField": "instructions (secrets suite) / question (prefs)",
         "inputKind": "diff",
         "inputKindEvidence": "jev-pref reviews a git diff (src/commands/review.js)",
-        "withheld": ["suite", "questionType", "name", "description", "guidance", "gate"]
+        "withheld": [
+          "suite",
+          "questionType",
+          "name",
+          "description",
+          "guidance",
+          "gate"
+        ]
       },
       "excluded": [],
-      "excludedSources": [{ "source": "setup-template examples (src/commands/setup.js)", "reason": "placeholders a user edits, not rules the plugin ships" }]
+      "excludedSources": [
+        {
+          "source": "setup-template examples (src/commands/setup.js)",
+          "reason": "placeholders a user edits, not rules the plugin ships"
+        }
+      ],
+      "contexts": [
+        {
+          "match": "jev-pref/",
+          "context": "The question is asked about one hunk of a git diff.",
+          "cite": "packages/jev-pref/src/suites/secrets.js:33; packages/jev-pref/src/suites/prefs.js:12"
+        }
+      ]
     },
     {
       "plugin": "abide",
@@ -53,12 +112,42 @@
         "source": ".abide/rubric.json",
         "items": "every entry of rules[] (the repository's own compiled rubric, the dogfood file)",
         "textField": "text",
-        "inputKind": { "edit": "diff", "turn": "stopTranscript", "null": "diff" },
+        "inputKind": {
+          "edit": "diff",
+          "turn": "stopTranscript",
+          "null": "diff"
+        },
         "inputKindEvidence": "abide's own when field: edit runs on a file edit, turn at the end of a turn; an entry with when null (lint, unenforceable, deferred) is assigned diff and disclosed",
-        "withheld": ["check", "scope", "when", "status", "upstreamSource", "calibration"],
+        "withheld": [
+          "check",
+          "scope",
+          "when",
+          "status",
+          "upstreamSource",
+          "calibration"
+        ],
         "comparisonOnly": "check.type (model, lint, unenforceable, deferred) is read only by the comparison step, never by a prompt"
       },
-      "excluded": []
+      "excluded": [],
+      "contexts": [
+        {
+          "match": "abide/",
+          "when": "edit",
+          "context": "Checked after each file edit, on that edit's diff.",
+          "cite": "packages/cli/src/hooks/postToolUse.ts:41-93"
+        },
+        {
+          "match": "abide/",
+          "when": "turn",
+          "context": "Checked when the agent stops, on the diff of everything the turn changed.",
+          "cite": "packages/cli/src/hooks/stop.ts:127-131"
+        },
+        {
+          "scope": true,
+          "context": "Applies only to files matching: <scope>.",
+          "cite": ".abide/rubric.json (the rule's scope)"
+        }
+      ]
     },
     {
       "plugin": "limpet",
@@ -72,7 +161,14 @@
         "inputKindEvidence": "hooks/hooks.json registers limpet on Stop",
         "withheld": []
       },
-      "excluded": []
+      "excluded": [],
+      "contexts": [
+        {
+          "match": "limpet/",
+          "context": "Checked when the agent is about to stop, on the recent messages, this turn's tool calls and the agent's final message.",
+          "cite": "limpet.py:296-298; hooks/hooks.json (Stop)"
+        }
+      ]
     },
     {
       "plugin": "jev-belay",
@@ -84,48 +180,146 @@
         "textField": "instructions",
         "inputKind": "stopTranscript",
         "inputKindEvidence": "hooks/hooks.json registers belay on Stop",
-        "withheld": ["type", "criteria"]
+        "withheld": [
+          "type",
+          "criteria"
+        ]
       },
       "excluded": [
-        { "id": "claims_done", "reason": "score-only dial feeding a combined decision: decide() blocks only when claims_done, verification_applies, outcome and the transcript's own check evidence agree (belay.mjs decide)" },
-        { "id": "claims_verified", "reason": "score-only dial: it only sets falseClaim beside a block that decide() already made; it never blocks by itself" },
-        { "id": "verification_applies", "reason": "score-only dial feeding a combined decision: a veto inside decide(), never a block by itself" },
-        { "id": "outcome", "reason": "choice classifier (complete, partial, blocked, other) feeding a combined decision: a veto inside decide()" }
-      ]
+        {
+          "id": "claims_done",
+          "reason": "score-only dial feeding a combined decision: decide() blocks only when claims_done, verification_applies, outcome and the transcript's own check evidence agree (belay.mjs decide)"
+        },
+        {
+          "id": "claims_verified",
+          "reason": "score-only dial: it only sets falseClaim beside a block that decide() already made; it never blocks by itself"
+        },
+        {
+          "id": "verification_applies",
+          "reason": "score-only dial feeding a combined decision: a veto inside decide(), never a block by itself"
+        },
+        {
+          "id": "outcome",
+          "reason": "choice classifier (complete, partial, blocked, other) feeding a combined decision: a veto inside decide()"
+        }
+      ],
+      "contexts": []
     },
     {
       "plugin": "jev-engineering",
       "repo": "eugeniughelbur/jev-engineering",
       "sha": "82655a6d16cedf6e31c0e493cc701e20c8d06798",
       "primary": {
-        "sources": ["policy.json", "packs/data.json", "packs/message.json", "packs/money.json", "packs/publish.json", "packs/shell.json"],
+        "sources": [
+          "policy.json",
+          "packs/data.json",
+          "packs/message.json",
+          "packs/money.json",
+          "packs/publish.json",
+          "packs/shell.json"
+        ],
         "items": "policy.json hard_deny patterns and questions; each non-shell pack's verdict question",
         "textField": "pattern (hard_deny) / instructions (questions)",
         "inputKind": "toolCall",
         "inputKindEvidence": "hooks/hooks.json registers jev_gate.py on PreToolUse; packs are asked by the MCP tool check_action about a proposed action",
-        "withheld": ["reason", "type", "criteria", "pack"]
+        "withheld": [
+          "reason",
+          "type",
+          "criteria",
+          "pack"
+        ]
       },
       "excluded": [
-        { "id": "fast_path/*", "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only" },
-        { "id": "packs/shell.json:*", "reason": "never sent: check_action routes the shell pack to decide(), which asks the policy.json questions (mcp_server.py check_action); the shell pack's questions repeat them verbatim" },
-        { "id": "packs/*.json:non-verdict", "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it" }
+        {
+          "id": "fast_path/*",
+          "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+        },
+        {
+          "id": "packs/shell.json:*",
+          "reason": "never sent: check_action routes the shell pack to decide(), which asks the policy.json questions (mcp_server.py check_action); the shell pack's questions repeat them verbatim"
+        },
+        {
+          "id": "packs/*.json:non-verdict",
+          "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+        }
       ],
-      "excludedSources": [{ "source": "semgrep review-routing rules (recipes/review-router, usecases/ai-review-routing)", "reason": "a separate use case (routing a review, not gating an action); disclosed, out of scope" }]
+      "excludedSources": [
+        {
+          "source": "semgrep review-routing rules (recipes/review-router, usecases/ai-review-routing)",
+          "reason": "a separate use case (routing a review, not gating an action); disclosed, out of scope"
+        }
+      ],
+      "contexts": [
+        {
+          "match": "jev-engineering/hard-deny/",
+          "context": "The pattern is searched for in a one-line description of a tool call: its shell command, else the tool name and file path, else the tool name and its input.",
+          "cite": "jev_gate.py:106-109, 283-289"
+        },
+        {
+          "match": "jev-engineering/policy/",
+          "context": "The question is asked about a tool call, given the recent user message, the proposed tool, its command and the working directory.",
+          "cite": "jev_gate.py:146-158"
+        },
+        {
+          "match": "jev-engineering/pack/",
+          "context": "The question is asked about a proposed action, given what the human asked for.",
+          "cite": "mcp_server.py:70-71"
+        }
+      ]
     },
     {
       "plugin": "pi-verdict",
       "repo": "jesset/pi-verdict",
       "sha": "1b37e5f2dff6414f31a009592074ce528453f0e1",
       "primary": {
-        "sources": ["extensions/pi-verdict.ts", "extensions/jev-adapter.ts"],
+        "sources": [
+          "extensions/pi-verdict.ts",
+          "extensions/jev-adapter.ts"
+        ],
         "items": "BASH_DANGER_RULES (deny), the S0 secrets path rules (deny), S1 system path rules (deny on write), S3 git-metadata path rules (deny on write), and VERDICT_QUESTIONS",
         "textField": "the regex source (rules) / instructions (question)",
         "inputKind": "toolCall",
         "inputKindEvidence": "pi-verdict classifies each tool call before it runs (classifyBash, classifyPath, the jev adapter)",
-        "withheld": ["id", "reason", "tier", "type", "criteria"]
+        "withheld": [
+          "id",
+          "reason",
+          "tier",
+          "type",
+          "criteria"
+        ]
       },
       "excluded": [
-        { "id": "S2_USER_RC/*", "reason": "grades gray (hands the call to the classifier); by itself it neither blocks nor allows (classifyPath)" }
+        {
+          "id": "S2_USER_RC/*",
+          "reason": "grades gray (hands the call to the classifier); by itself it neither blocks nor allows (classifyPath)"
+        }
+      ],
+      "contexts": [
+        {
+          "match": "pi-verdict/bash/",
+          "context": "The pattern is tested against the shell command text of a bash tool call.",
+          "cite": "extensions/pi-verdict.ts:129-133, 958"
+        },
+        {
+          "match": "pi-verdict/path/",
+          "context": "The pattern is tested against the resolved absolute path of the file a file tool reads or writes (and its canonical forms).",
+          "cite": "extensions/pi-verdict.ts:470-476, 958-969"
+        },
+        {
+          "match": "pi-verdict/path/S1-",
+          "context": "It blocks only when the tool writes to that path; reads are not blocked.",
+          "cite": "extensions/pi-verdict.ts:483-487"
+        },
+        {
+          "match": "pi-verdict/path/S3-",
+          "context": "It blocks only when the tool writes to that path; reads are not blocked.",
+          "cite": "extensions/pi-verdict.ts:483-488"
+        },
+        {
+          "match": "pi-verdict/jev/",
+          "context": "The question is asked about a condensed transcript of the session whose last line is the tool call under review.",
+          "cite": "extensions/jev-adapter.ts:118"
+        }
       ]
     },
     {
@@ -136,25 +330,99 @@
         "source": "src/recipes/questions.ts",
         "items": "GUARD_QUESTIONS, COMMIT_QUESTIONS, PUSH_QUESTIONS, SAFETY_QUESTIONS and PROGRESS_WORKER's needs_human, worker_stuck and work_off_track",
         "textField": "instructions",
-        "inputKind": { "GUARD_QUESTIONS": "file", "COMMIT_QUESTIONS": "diff", "PUSH_QUESTIONS": "diff", "SAFETY_QUESTIONS": "toolCall", "PROGRESS_WORKER": "stopTranscript" },
+        "inputKind": {
+          "GUARD_QUESTIONS": "file",
+          "COMMIT_QUESTIONS": "diff",
+          "PUSH_QUESTIONS": "diff",
+          "SAFETY_QUESTIONS": "toolCall",
+          "PROGRESS_WORKER": "stopTranscript"
+        },
         "inputKindEvidence": "guard scans a document (src/commands/guard.ts); commit and pre-push read a diff (src/commands/commit.ts, githooks.ts); the safety hook reads a tool call (src/commands/hook.ts); worker supervision reads the session's recent tool events (src/supervise.ts)",
-        "withheld": ["set", "type", "criteria"]
+        "withheld": [
+          "set",
+          "type",
+          "criteria"
+        ]
       },
       "excluded": [
-        { "id": "DIFF_PER_FILE/*", "reason": "templated questions with a runtime placeholder (${id})" },
-        { "id": "DIFF_OVERALL/scope", "reason": "score-only dial (scope level) reported beside the per-file flags" },
-        { "id": "DIFF_OVERALL/kind", "reason": "kind classifier" },
-        { "id": "FILES_QUESTIONS/*", "reason": "locator questions with a runtime placeholder (${task})" },
-        { "id": "FILES_PATH_QUESTION/*", "reason": "locator question with a runtime placeholder (${task})" },
-        { "id": "TRIAGE_QUESTIONS/*", "reason": "triage: a locator (first_error), a category and a severity classifier, and failure-triage dials; none gates an action" },
-        { "id": "PROGRESS_JOB/*", "reason": "score-only dials feeding a combined decision (decideProgress)" },
-        { "id": "PROGRESS_WORKER/meaningful_progress", "reason": "score reported only: decideProgress never reads it" }
+        {
+          "id": "DIFF_PER_FILE/*",
+          "reason": "templated questions with a runtime placeholder (${id})"
+        },
+        {
+          "id": "DIFF_OVERALL/scope",
+          "reason": "score-only dial (scope level) reported beside the per-file flags"
+        },
+        {
+          "id": "DIFF_OVERALL/kind",
+          "reason": "kind classifier"
+        },
+        {
+          "id": "FILES_QUESTIONS/*",
+          "reason": "locator questions with a runtime placeholder (${task})"
+        },
+        {
+          "id": "FILES_PATH_QUESTION/*",
+          "reason": "locator question with a runtime placeholder (${task})"
+        },
+        {
+          "id": "TRIAGE_QUESTIONS/*",
+          "reason": "triage: a locator (first_error), a category and a severity classifier, and failure-triage dials; none gates an action"
+        },
+        {
+          "id": "PROGRESS_JOB/*",
+          "reason": "score-only dials feeding a combined decision (decideProgress)"
+        },
+        {
+          "id": "PROGRESS_WORKER/meaningful_progress",
+          "reason": "score reported only: decideProgress never reads it"
+        }
+      ],
+      "contexts": [
+        {
+          "match": "jev-axi/GUARD_QUESTIONS/",
+          "context": "The question is asked about the text of one document.",
+          "cite": "src/commands/guard.ts:19-21"
+        },
+        {
+          "match": "jev-axi/COMMIT_QUESTIONS/",
+          "context": "The question is asked about one commit: its subject, its body and its diff.",
+          "cite": "src/commands/commit.ts:30-31"
+        },
+        {
+          "match": "jev-axi/PUSH_QUESTIONS/",
+          "context": "The question is asked about everything a push would send: the diff, the changed files, the commit subjects and the branch.",
+          "cite": "src/recipes/questions.ts:225-229"
+        },
+        {
+          "match": "jev-axi/SAFETY_QUESTIONS/",
+          "context": "The question is asked about a tool call an agent is about to make: the tool, the working directory, and either the command (with the local scripts it runs) or the file path and an excerpt of the content.",
+          "cite": "src/recipes/questions.ts:280-282"
+        },
+        {
+          "match": "jev-axi/PROGRESS_WORKER/",
+          "context": "The question is asked about the most recent tool calls of the session, oldest first, and the job the worker was given.",
+          "cite": "src/recipes/questions.ts:358; src/supervise.ts:52-55"
+        }
       ]
     }
   ],
   "outOfScope": [
-    { "plugin": "DiffJury", "repo": "raihankhan-rk/diffjury", "reason": "no license" },
-    { "plugin": "Blink", "repo": null, "reason": "no public repository or license found" },
-    { "plugin": "jev-guard", "repo": "leepokai/jev-guard", "reason": "MIT, but not named by the council verdict; kept out to hold the council's 6 to 8 range (out of scope, not a finding)" }
-  ]
+    {
+      "plugin": "DiffJury",
+      "repo": "raihankhan-rk/diffjury",
+      "reason": "no license"
+    },
+    {
+      "plugin": "Blink",
+      "repo": null,
+      "reason": "no public repository or license found"
+    },
+    {
+      "plugin": "jev-guard",
+      "repo": "leepokai/jev-guard",
+      "reason": "MIT, but not named by the council verdict; kept out to hold the council's 6 to 8 range (out of scope, not a finding)"
+    }
+  ],
+  "contextRule": "A rule's match target and application condition are part of the rule as the plugin enforces it, not a class label, so both models see them as an 'Applies to' line: one factual sentence per source group (below, each cited at the pin), plus a rule's own file globs (abide's scope, hunch's files). A glob that contains a plugin's own name shows that name as <tool>. Rules of a group with no such sentence show no line."
 }

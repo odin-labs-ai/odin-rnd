@@ -84,6 +84,8 @@ export function score({ rules, records, plugins }) {
     median: { expressibleShare: med, preDispute: median(withRules.map(p => p.preDisputeExpressibleShare)), partialAsHalf: median(withRules.map(p => p.sensitivityShare)), plugins: withRules.length },
     kill: { threshold: KILL_THRESHOLD, rule: 'median expressible share < 25% -> premise refuted; the census is the result', median: med, refuted: med !== null && med < KILL_THRESHOLD, variant: med !== null && med < KILL_THRESHOLD ? 'refuted' : 'interim' },
     secondary: { ...tally(secondary.map(r => r.final)), expressibleShare: share(secondary.filter(r => r.final === 'expressible').length, secondary.length) },
+    // Refute r5: pi-verdict's command rules and path rules reported apart (the median is unchanged).
+    breakdown: { 'pi-verdict': Object.fromEntries(['bash', 'path', 'jev'].map(g => { const rs = of('primary').filter(r => r.ruleId.startsWith(`pi-verdict/${g}/`)); const t = tally(rs.map(r => r.final)); return [g, { ...t, expressibleShare: share(t.expressible, t.n) }]; })) },
     controls: {
       positive: { n: pos.length, expressibleOrPartial: posHit, finals: Object.fromEntries(pos.map(r => [r.ruleId, r.final])) },
       negative: { n: neg.length, expressible: negHit, finals: Object.fromEntries(neg.map(r => [r.ruleId, r.final])) },

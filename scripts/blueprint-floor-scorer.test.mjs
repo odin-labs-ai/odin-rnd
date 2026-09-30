@@ -90,6 +90,7 @@ test('the real census population: 145 primary, 30 secondary, 13 controls; abide 
   assert.equal(rules.filter(r => r.stratum.startsWith('control')).length, 13);
   const r = score({ rules, plugins, records: {} });
   assert.deepEqual(r.pluginsWithoutRules, ['jev-belay']);
+  assert.deepEqual(Object.fromEntries(Object.entries(r.breakdown['pi-verdict']).map(([g, t]) => [g, t.n])), { bash: 14, path: 26, jev: 1 });
   assert.equal(r.median.plugins, 7);
   assert.equal(r.errors.length, rules.length, 'no record: every rule is error, counted as not');
   assert.equal(r.abide.comparable, rules.filter(x => ['lint', 'model'].includes(x.abideType)).length);

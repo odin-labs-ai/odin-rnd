@@ -1,7 +1,7 @@
 // EXP 007 WO-1-03: the census protocol as code: the prompt builders (what a translator and an adjudicator see), the
 // output schemas, and the mechanical checks that can only lower a class. protocol.md states the same in prose.
 //
-// Blindness (R2-3, refute r1 B2): a builder reads exactly four fields of a rule, {ruleId, text, inputKind, flags}, and the
+// Blindness (R2-3, refute r1 B2): a builder reads exactly five fields of a rule, {ruleId, text, inputKind, flags, context}, and the
 // prompt shows the ruleId only as an opaque id (opaqueId below). Every other field
 // (withheld, the source line, the stratum, abide's check.type, any label) is never read here, and a test proves it by
 // handing the builders a rule whose other fields throw when touched. No case, label or result reaches a prompt.
@@ -24,11 +24,11 @@ const POSITIVE_CONTROL_IDS = new Set(JSON.parse(read(`${DIR}/controls/positive.j
 export const profileFor = ruleId => (POSITIVE_CONTROL_IDS.has(ruleId) ? 'typescript-module-graph' : 'plugin-surface');
 export const roleFor = ruleId => (POSITIVE_CONTROL_IDS.has(ruleId) ? 'control' : 'plugin');
 
-/** The only fields of a rule any prompt may carry. */
+/** The only fields of a rule any prompt may carry (refute r5 B1 added context: the rule's match target and application condition). */
 export function promptFields(rule) {
-  const { ruleId, text, inputKind, flags } = rule;
+  const { ruleId, text, inputKind, flags, context } = rule;
   if (typeof ruleId !== 'string' || typeof text !== 'string' || !INPUT_KINDS.includes(inputKind)) throw new Error('a rule needs ruleId, text and a known inputKind');
-  return { ruleId, text, inputKind, flags: typeof flags === 'string' ? flags : null };
+  return { ruleId, text, inputKind, flags: typeof flags === 'string' ? flags : null, context: typeof context === 'string' && context.trim() ? context : null };
 }
 
 // Opaque prompt ids (refute r1 B2): a prompt never carries the ruleId, which names the plugin, the source and the stratum.
@@ -48,9 +48,10 @@ export function assertOpaqueIdsDistinct(ruleIds) {
   return ids;
 }
 
-const ruleBlock = ({ ruleId, text, inputKind, flags }) => [
+const ruleBlock = ({ ruleId, text, inputKind, flags, context }) => [
   `id: ${opaqueId(ruleId)}`,
   `input kind: ${inputKind}`,
+  ...(context !== null ? [`Applies to: ${context}`] : []),
   ...(flags !== null ? [`this rule is a regular expression; its flags: ${flags === '' ? '(none)' : flags}`] : []),
   'rule text (verbatim, between the markers):',
   '<<<RULE',
@@ -142,9 +143,44 @@ export function upperCaseLiterals(source) {
   return found;
 }
 
+/**
+ * Character-class ranges of a regex source as [lo, hi] code points (escapes \\xHH, \\uHHHH, \\u{...} and single escaped or literal
+ * characters decoded; class escapes such as \\d or \\w end no range). Used to refuse a range that reaches upper case.
+ */
+export function classRanges(source) {
+  const ranges = [];
+  const atom = (i) => {
+    if (source[i] !== '\\') return { cp: source.codePointAt(i), end: i + String.fromCodePoint(source.codePointAt(i)).length };
+    const n = source[i + 1];
+    if (n === 'x') return { cp: parseInt(source.slice(i + 2, i + 4), 16), end: i + 4 };
+    if (n === 'u' && source[i + 2] === '{') { const e = source.indexOf('}', i); return { cp: parseInt(source.slice(i + 3, e), 16), end: e + 1 }; }
+    if (n === 'u') return { cp: parseInt(source.slice(i + 2, i + 6), 16), end: i + 6 };
+    if (/[dDwWsSpP]/.test(n)) return { cp: null, end: n === 'p' || n === 'P' ? source.indexOf('}', i) + 1 : i + 2 };
+    return { cp: n.codePointAt(0), end: i + 2 };
+  };
+  for (let i = 0; i < source.length; i++) {
+    if (source[i] === '\\') { i++; continue; }
+    if (source[i] !== '[') continue;
+    let j = i + 1;
+    if (source[j] === '^') j++;
+    while (j < source.length && source[j] !== ']') {
+      const a = atom(j);
+      if (source[a.end] === '-' && source[a.end + 1] !== ']' && a.end + 1 < source.length) {
+        const b = atom(a.end + 1);
+        if (a.cp !== null && b.cp !== null) ranges.push([a.cp, b.cp]);
+        j = b.end;
+      } else j = a.end;
+    }
+    i = j;
+  }
+  return ranges;
+}
+/** A range that reaches A-Z is refused unless it also covers all of a-z (so [!-~] is allowed, [@-\\[] is not). */
+export const upperRanges = source => classRanges(source).filter(([lo, hi]) => lo <= 0x5a && hi >= 0x41 && !(lo <= 0x61 && hi >= 0x7a));
+
 /** The /i flags check: no forbiddenPattern may carry an upper-case literal letter (the input it sees is lower-cased). */
 export function checkFlags(constraints) {
-  const bad = constraints.filter(c => c.type === 'forbiddenPattern').map(c => ({ id: c.id, upper: upperCaseLiterals(c.pattern ?? '').map(u => u.ch) })).filter(x => x.upper.length);
+  const bad = constraints.filter(c => c.type === 'forbiddenPattern').map(c => ({ id: c.id, upper: [...upperCaseLiterals(c.pattern ?? '').map(u => u.ch), ...upperRanges(c.pattern ?? '').map(([lo, hi]) => `range ${lo.toString(16)}-${hi.toString(16)}`)] })).filter(x => x.upper.length);
   return bad.length ? { pass: false, bad, reason: `upper-case literal or unverifiable escape in ${bad.map(b => `${b.id} (${b.upper.join(' ')})`).join(', ')}; the input is lower-cased, so it can never match` } : { pass: true, bad: [], reason: 'every pattern is lower case with no upper-case escape' };
 }
 
@@ -236,7 +272,7 @@ export async function mechanicalChecks(rule, raw) {
   result.teeth = await teeth(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role, flags: f.flags });
   if (!result.teeth.pass) return fail('teeth');
   const cannot = unverifiableFlags(f.flags);
-  if (cannot.length && translatorClass === 'expressible') return { ...result, failedCheck: 'flags-unverifiable', unverifiableFlags: cannot, classAfterMechanical: 'partial', engineLimit: false };
+  if (cannot.length && translatorClass === 'expressible') return { ...result, failedCheck: 'flags-unverifiable', unverifiableFlags: cannot, classAfterMechanical: typeof out.residual === 'string' && out.residual.trim() ? 'partial' : 'not', engineLimit: false };
   return { ...result, classAfterMechanical: translatorClass, engineLimit: false };
 }
 
