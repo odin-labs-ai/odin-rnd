@@ -419,7 +419,7 @@
           },
           {
             "file": "experiments/nina-changes/run_reviewer6.mjs",
-            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
+            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); a failed ledger write goes to a pending sidecar and stops the run (r3 N1); a matrix run keeps every call's output (r3 N3); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
           },
           {
             "file": "experiments/nina-changes/scrub6.mjs",
@@ -427,11 +427,11 @@
           },
           {
             "file": "experiments/nina-changes/spend6.mjs",
-            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown and a corrupt ledger line refuses every call (N1, N2)"
+            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown, a corrupt ledger line refuses every call, and so does a pending (unwritten) line (r2 N1, N2; r3 N1)"
           },
           {
             "file": "experiments/nina-changes/stream6.mjs",
-            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); the D3 comment; the stream parse and harness-failure rule are unchanged"
+            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); a matrix run keeps every call's output (r3 N3); the D3 comment; the stream parse and harness-failure rule are unchanged"
           }
         ]
       },
@@ -455,7 +455,7 @@
           },
           {
             "file": "experiments/nina-changes/run_reviewer6.mjs",
-            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
+            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); a failed ledger write goes to a pending sidecar and stops the run (r3 N1); a matrix run keeps every call's output (r3 N3); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
           },
           {
             "file": "experiments/nina-changes/scrub6.mjs",
@@ -463,11 +463,11 @@
           },
           {
             "file": "experiments/nina-changes/spend6.mjs",
-            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown and a corrupt ledger line refuses every call (N1, N2)"
+            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown, a corrupt ledger line refuses every call, and so does a pending (unwritten) line (r2 N1, N2; r3 N1)"
           },
           {
             "file": "experiments/nina-changes/stream6.mjs",
-            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); the D3 comment; the stream parse and harness-failure rule are unchanged"
+            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); a matrix run keeps every call's output (r3 N3); the D3 comment; the stream parse and harness-failure rule are unchanged"
           }
         ]
       },
@@ -491,15 +491,15 @@
           },
           {
             "file": "experiments/nina-changes/run_reviewer6.mjs",
-            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
+            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); a failed ledger write goes to a pending sidecar and stops the run (r3 N1); a matrix run keeps every call's output (r3 N3); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
           },
           {
             "file": "experiments/nina-changes/spend6.mjs",
-            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown and a corrupt ledger line refuses every call (N1, N2)"
+            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown, a corrupt ledger line refuses every call, and so does a pending (unwritten) line (r2 N1, N2; r3 N1)"
           },
           {
             "file": "experiments/nina-changes/stream6.mjs",
-            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); the D3 comment; the stream parse and harness-failure rule are unchanged"
+            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); a matrix run keeps every call's output (r3 N3); the D3 comment; the stream parse and harness-failure rule are unchanged"
           }
         ]
       },
@@ -523,15 +523,15 @@
           },
           {
             "file": "experiments/nina-changes/run_reviewer6.mjs",
-            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
+            "reason": "post-call handling only: a record refused at write time keeps its verdict and cost (00e27d7); removing a run dir never throws (bf1308a); the ledger line is written from the spawn result before anything else, and later failures mark the record (refute r2 N1); a failed ledger write goes to a pending sidecar and stops the run (r3 N1); a matrix run keeps every call's output (r3 N3); the post-freeze pre-run probe's own ledger kind (D4, N3); and the attempted-per-row check applied after the matrix judge (N6, matrix6-attempts.mjs). The argv builder is unchanged, as the command sha256 equality shows"
           },
           {
             "file": "experiments/nina-changes/spend6.mjs",
-            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown and a corrupt ledger line refuses every call (N1, N2)"
+            "reason": "the post-freeze pre-run probe has its own ledger kind, charged to the $60 cap only and made once per frozen pre-registration (D4, N3); a sub-5e-8 reported cost is charged as unknown, a corrupt ledger line refuses every call, and so does a pending (unwritten) line (r2 N1, N2; r3 N1)"
           },
           {
             "file": "experiments/nina-changes/stream6.mjs",
-            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); the D3 comment; the stream parse and harness-failure rule are unchanged"
+            "reason": "records parent_tool_use_id per call and defines a git call by its first token (N9, N10); a matrix run keeps every call's output (r3 N3); the D3 comment; the stream parse and harness-failure rule are unchanged"
           }
         ]
       }
@@ -670,8 +670,8 @@
   "spotlightArtefact": {
     "pass": "On a PASS (the bar PASSES, the manipulation check PASSES, and the committed EXP 006 spotlight decision says held: false), the home page's \"Tools leaving the factory\" list gains nina's entry, next after 002 Laya, in the same shape as the Laya entry (number and category, a title linking to the evidence, one paragraph, links, an attribution note, a spec list): nina, harness orchestration for Claude Code, by Marcos Schulz (xhulz), https://github.com/xhulz/nina, with the attribution \"used with the permission of its author, as confirmed by Odin Labs\", and links to the EXP 006 measurement, to EXP 005 (#spotlight) and to the upstream fixes opened by Odin Labs (xhulz/nina#39, merged; xhulz/nina#41, stated as its live state at publish time: merged or open). Every figure in it is rendered from the EXP 006 results record at build time. It takes the list's next free number, 005, the slot EXP 005's gated nina card held; there is only one nina entry.",
     "fail": "On a FAIL, or when the spotlight is held for any reason, there is no entry, and the results page says plainly which condition failed (the bar, the manipulation check, the refute, or a partial run).",
-    "gate": "WHETHER the entry shows is decided only by experiments/nina-changes/spotlight-gate.mjs, pinned in files below and re-checked by the counted guard: the bar PASSES AND the manipulation check PASSES AND spotlightEligible is exactly true AND the committed decision's held is the boolean false, and the decision names the results record by sha256. It carries EXP 005's card gate (spotlightShown) byte-identical, with a slice test. A missing decision record, a non-boolean held or any FAIL shows nothing.",
-    "renderer": "HOW it looks is scripts/nina-changes-spotlight.mjs, the markup, not pinned: it imports the gate and holds no gate logic, and every figure in it is read from the results record (and the PR states from the committed upstream.json), so the results can feed it without an amendment."
+    "gate": "WHETHER the entry shows is decided only by experiments/nina-changes/spotlight-gate.mjs, pinned in files below and re-checked by the counted guard. Its one entry point, gateOpen(root), owns the paths of the results record, the spotlight decision and the reviewer run record, reads them, requires the decision to name the results record by sha256, and shows the entry only when the bar PASSES AND the manipulation check PASSES AND spotlightEligible is exactly true AND the decision's held is the boolean false; a missing, unparseable or unbound record hides it. It carries EXP 005's card gate (spotlightShown) byte-identical, with a slice test.",
+    "renderer": "HOW it looks is scripts/nina-changes-spotlight.mjs, the markup, not pinned: it holds no record path and no gate logic and renders only what gateOpen returns (its figures are read from the results record gateOpen hands back, and the PR states from the committed upstream.json), so the results can feed it without an amendment."
   },
   "spend": {
     "capUsd": 60,
@@ -772,6 +772,7 @@
   "limits": [
     "Two layers: the text deny rules are best-effort (the client matches a normalised command); the OS sandbox is the boundary: reads outside the repository are denied (R9 and R45 read a file outside it and got \"Operation not permitted\"), and so are reads of the temp roots; writes are confined and there is no unsandboxed retry. No canary sits anywhere but inside the operator's home and the temp roots, so the matrix tests the sandbox where the answer files could be.",
     "git diff -O<file> (an orderfile) is allowed under the git diff rules and makes git read that file to order its output; it prints none of the file's content, so at most it is a side channel (whether an outside path exists or parses). Documented as a residual; no live row was added (no paid call).",
+    "The attempted-per-row check compares each row's recorded command with its registered step after the client's own normalisation only (a 2>&1 or 2>/dev/null redirection stripped). An honest rephrasing beyond that marks the row not attempted and fails the single pre-run probe, which then goes to the founder (ASK-FORK).",
     "A stream with a malformed line is charged the upper bound even if a final result line reported a cost (conservative: the line cannot be trusted).",
     "Sub-agents: a run can spawn a sub-agent whose own tool calls appear in the stream with a parent_tool_use_id. Only TOP-LEVEL calls count toward DIFF-SEEN (a sub-agent's calls are recorded but never make a run SEEN), so a run whose change was read only by a sub-agent counts BLIND.",
     "Reviewer only: Jev, Laya and the cascade are not re-run; this measures nina 0.34.0's reviewer on mechanical architecture rules and nothing else about nina.",
@@ -787,12 +788,12 @@
     "ninaUrl": "https://github.com/xhulz/nina"
   },
   "files": {
-    "experiments/nina-changes/run_reviewer6.mjs": "2bdcb56efccc8a12ebe726cc4c430e7283541221ff4e273ad4e90c95beb52e22",
-    "experiments/nina-changes/stream6.mjs": "7fa237d9e4c933ea1d5c1ce85c7889a3cca38e4aed2fbe918d7521227ce0483f",
+    "experiments/nina-changes/run_reviewer6.mjs": "8f1f399bc7978f980c8d392075a8ff02edfb36e9d4731659ece6827d87cc96f5",
+    "experiments/nina-changes/stream6.mjs": "09e55aab57aa276f7b6ae1d245ac45bf41cfd2b095e32fd692860bf4b7b250e1",
     "experiments/nina-changes/fence6.mjs": "a591069653a39f3d9efe00e98511b81c1f7bd83584a066e7ed6e15243d79698f",
     "experiments/nina-changes/matrix6.mjs": "2b088e6a862dd5f168a2d85237b39ab3ffa781fc457f3444f7749a39c6164030",
     "experiments/nina-changes/scrub6.mjs": "d38b4efce5346abacd6e68d19c6121c5a533410de474d0578bcdbcec75fad435",
-    "experiments/nina-changes/spend6.mjs": "bec7f1014c752f9da5b88dfd74574006bcedfc3416f279b3e4c621a556c4b9b8",
+    "experiments/nina-changes/spend6.mjs": "091266fa73b9454f107b61559182bdad1edfb2cee6101380c1808906690d6678",
     "experiments/nina-changes/guard6.mjs": "21b143f61a4aa640d158bef9e096d6bc213691c7170b13efed7cb9ddee2b55ce",
     "experiments/nina-changes/diff-seen.mjs": "c032517dca76109f1988ba641b73d6cc7618a245ce4f3ad243fcc27fff812f88",
     "experiments/nina-changes/fingerprints.mjs": "4eab13972a6c255ce264eebe935f7db16ea87b9bd48839762dfa65b056ba22ea",
@@ -801,8 +802,8 @@
     "experiments/nina-changes/base-lines.json": "92aeb23a37ce66541d3b586b006d2d04c4027e9569476c063b8e476b3a1ab2d3",
     "experiments/nina-changes/practice/practice-rows.json": "0fecd80674a7abf19cfdeaf0991dda372194769d82fde70329aa40cfe0d1f35e",
     "experiments/nina-changes/results6.mjs": "7533ee983f2891506bac2185396740199b86b94510da031df4a21c51332f7025",
-    "experiments/nina-changes/spotlight-gate.mjs": "16fd0221fcdfdc1b4879dee464c5a757afba98f79953bc68dacd8e1e8eb2eae0",
-    "experiments/nina-changes/matrix6-attempts.mjs": "fa17b94cb788321073441b0d1eace14351bbed00d19fe134436b24b99b5eb622",
+    "experiments/nina-changes/spotlight-gate.mjs": "71e165df0c68ef267511e87feb3d9ccd2fcd1fb1a9a745116ded8e5190b57cec",
+    "experiments/nina-changes/matrix6-attempts.mjs": "8b8b606a69eb763a363c76254c1355a88e15204afb5139db67d6597301a2115e",
     "experiments/nina-changes/vendored-exp005.mjs": "d4e3445f9f585a119d059e6ff8fc355afd09459d932463849f81fff738327511",
     "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
     "experiments/jev-gate/runner-guard.mjs": "1ad072329cf7f70f9c12b70e56a7fe42f06afcdcbdd84eb455fc2d014fa1bcd9",

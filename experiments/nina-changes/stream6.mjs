@@ -75,13 +75,14 @@ export const isGitCommand = call => call?.tool === 'Bash' && String(call.input?.
  * The recorded form of a run's tool calls, from already-scrubbed calls: tool, input, is_error, output sha256 + byte
  * length, the output text where kept, and a per-call boolean for a change-fingerprint hit (`hit` is injected).
  */
-export function recordToolCalls(calls, hit = () => false) {
+export function recordToolCalls(calls, hit = () => false, { keepAll = false } = {}) {
   return calls.map((c, n) => {
     const out = c.output ?? null;
     return {
       n, tool: c.tool, input: c.input, isError: c.isError, refused: c.refused === true, parentToolUseId: c.parentToolUseId ?? null,
       outputSha256: out === null ? null : sha256(out), outputBytes: out === null ? null : Buffer.byteLength(out),
-      ...(keepsOutput(c) ? { output: out } : {}),
+      // A matrix run keeps every call's output, so every row is re-checkable from the record (refute r3 N3).
+      ...(keepAll || keepsOutput(c) ? { output: out } : {}),
       fingerprintHit: hit(c),
     };
   });

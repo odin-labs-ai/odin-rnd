@@ -40,7 +40,13 @@ export function validLine(e) {
 }
 
 export class SpendLedger6 {
-  constructor(path, limits = LIMITS6) { this.path = path; this.limits = limits; }
+  constructor(path, limits = LIMITS6) { this.path = path; this.limits = limits; this.pendingPath = path.replace(/\.jsonl$/, '') + '.pending.jsonl'; }
+  /** A paid call whose ledger line could not be written (refute r3 N1): kept in the sidecar; every later call refuses. */
+  recordPending(meta) {
+    mkdirSync(dirname(this.pendingPath), { recursive: true });
+    appendFileSync(this.pendingPath, `${JSON.stringify(meta)}\n`);
+  }
+  pendingLines() { return existsSync(this.pendingPath) ? readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean).length : 0; }
   /** Every line, validated; a corrupt line throws (the guard then refuses: fail closed). */
   entries() {
     if (!existsSync(this.path)) return [];
@@ -57,6 +63,7 @@ export class SpendLedger6 {
   reserve() { return Math.max(this.largest(), this.limits.unknownCostFloorUsd); }
   /** Whether one more call of this kind may start. {ok, reason, askFork, spent, preCounted, reserve}. */
   check(kind, { prereg6Sha256 = null } = {}) {
+    if (this.pendingLines() > 0) return { ok: false, reason: 'pending-ledger-line', askFork: true, pending: this.pendingPath };
     let entries;
     try { entries = this.entries(); } catch (error) { return { ok: false, reason: 'corrupt-ledger', askFork: true, error: error.message }; }
     // Only ONE post-freeze pre-run probe per frozen pre-registration (refute r2 N3).

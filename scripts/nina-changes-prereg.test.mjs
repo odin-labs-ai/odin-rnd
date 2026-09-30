@@ -178,3 +178,11 @@ test('refute r2 N4/N5/N7/N8/N10/N11: the headroom rule, malformed-stream chargin
   assert.match(record.isolationEvidence.attemptedCheck, /no verdict changed/);
   assert(PINNED.includes('experiments/nina-changes/spotlight-gate.mjs') && PINNED.includes('experiments/nina-changes/matrix6-attempts.mjs'));
 });
+
+test('refute r3: the gate sentence is true as built (gateOpen owns the records), and the attempted-row normalisation is disclosed', () => {
+  assert.match(record.spotlightArtefact.gate, /gateOpen\(root\), owns the paths of the results record, the spotlight decision and the reviewer run record/);
+  assert.match(record.spotlightArtefact.renderer, /holds no record path and no gate logic and renders only what gateOpen returns/);
+  assert.match(record.limits.join('\n'), /after the client's own normalisation only \(a 2>&1 or 2>\/dev\/null redirection stripped\)/);
+  const gateSrc = readFileSync('experiments/nina-changes/spotlight-gate.mjs', 'utf8');
+  for (const p of ['experiments/nina-changes/results/results.json', 'experiments/nina-changes/results/spotlight-decision.json', 'export function gateOpen']) assert(gateSrc.includes(p), p);
+});

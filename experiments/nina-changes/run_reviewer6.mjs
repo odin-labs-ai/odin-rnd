@@ -85,12 +85,12 @@ const statusOf = repo => gitgit(repo)('status', '--porcelain', '--untracked-file
  * One call's record from the spawn result and its context. Pure except for hashing: it never throws on what the
  * client printed. Returns {rec, rawCalls} (rawCalls: every tool call with its full output, for the matrix judge).
  */
-export function buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra = {} }) {
+export function buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra = {}, keepAllOutputs = false }) {
   const { harnessFailure, out, parsed } = spawn.error ? { harnessFailure: 'spawn-error', out: null, parsed: parseStream('') } : classifyStreamRun(spawn);
   const text = typeof out?.result === 'string' ? out.result : null;
   const verdict = harnessFailure ? { decision: null, verdictLine: null } : parseVerdict(prereg, text);
   const scrubbedCalls = JSON.parse(scrubPaths6(JSON.stringify(parsed.toolCalls)));
-  const toolCalls = recordToolCalls(scrubbedCalls, c => callHitsFingerprint(c, fp));
+  const toolCalls = recordToolCalls(scrubbedCalls, c => callHitsFingerprint(c, fp), { keepAll: keepAllOutputs });
   const diffSeen = fp ? classifyDiffSeen({ calls: toolCalls, fp, harnessFailure }) : null;
   const rec = {
     id: item.id, run: runIndex, gate: 'reviewer',
@@ -129,6 +129,19 @@ export function reportedCost(spawn) {
 }
 export const FAULT_STAGES = ['after', 'hook', 'build', 'judge'];
 
+/**
+ * Write a paid call's ledger line; if the write throws (a corrupt ledger, an append failure), keep the line in the
+ * pending sidecar, say so on stderr and return {failed:true}: the spend guard then refuses every later call until the
+ * pending line is reconciled by hand (fail closed).
+ */
+export function recordSpend(ledger, meta) {
+  try { return { failed: false, line: ledger.record(meta) }; } catch (error) {
+    ledger.recordPending({ ...meta, error: String(error.message).slice(0, 200) });
+    process.stderr.write(`spend ledger write failed; line kept in ${ledger.pendingPath}: ${error.message}\n`);
+    return { failed: true };
+  }
+}
+
 export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false, onSpawn = null, faults = null }) {
   mkdirSync(RUN_ROOT6, { recursive: true });
   const parent = mkdtempSync(join(RUN_ROOT6, RUN_PREFIX6));
@@ -164,7 +177,7 @@ export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball,
         hook, hooksConfigured: rehearsal ? [] : hooksConfigured(staged.repo),
       };
       fault('build');
-      built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra });
+      built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra, keepAllOutputs: matrix });
       fault('judge');
       if (setup) built.rec.matrix = applyAttempts(judgeMatrix6(setup, { ...built.rec, allToolCalls: built.rawCalls }), built.rawCalls);
       return built;
@@ -263,10 +276,13 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
   const kind = probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode;
   const runOne = async (item, k) => {
     if (ledger) { const { reason, ...guard } = ledger.check(kind, { prereg6Sha256: stamp.prereg6Sha256 }); if (!guard.ok) return { stop: ['spend', { limit: reason, ...guard }] }; }
-    // The spend line is written from the spawn result, the moment the call returns (refute r2 N1).
-    const onSpawn = ledger ? ({ spawn, reportedCostUsd }) => ledger.record({ ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }) : null;
+    // The spend line is written from the spawn result, the moment the call returns (refute r2 N1); if that write
+    // fails it goes to the pending sidecar and the run stops (refute r3 N1).
+    let ledgerFailed = false;
+    const onSpawn = ledger ? ({ spawn, reportedCostUsd }) => { ledgerFailed = recordSpend(ledger, { ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }).failed; } : null;
     const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), onSpawn, faults });
     if (rec.stageError) { record.calls.push(rec); return { stop: ['workspace', { id: item.id, run: k, error: rec.stageError }] }; }
+    if (ledgerFailed) { rec.ledgerWriteFailed = true; record.calls.push({ id: item.id, run: k, gate: 'reviewer', ledgerWriteFailed: true, startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd ?? null }); return { stop: ['ledger-write', { id: item.id, run: k, pending: ledger.pendingPath.split('/').pop() }] }; }
     if (rec.postCallError) { record.calls.push(rec); return { stop: ['post-call', { id: item.id, run: k, error: rec.postCallError }] }; }
     try { record.calls.push(publicRecord6(rec, `${item.id} run ${k}`)); } catch (error) {
       // The record is not written, but the facts that carry no text are (phase B: a refused paid probe lost its

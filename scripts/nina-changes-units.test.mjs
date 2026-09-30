@@ -13,7 +13,7 @@ import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } fro
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
-import { FAULT_STAGES, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { buildCallRecord, FAULT_STAGES, recordSpend, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
@@ -284,4 +284,32 @@ test('N1/N2/N3: a sub-5e-8 cost is unknown; a corrupt ledger line fails closed; 
     assert.equal(P.check(PRERUN_KIND, { prereg6Sha256: 'b'.repeat(64) }).ok, true, 'a new frozen pre-registration (an amendment) may have its own');
     assert.throws(() => P.record({ ts: 't', kind: 'bogus', id: 'x', run: 1, reportedCostUsd: 0.5 }), /unknown ledger kind/);
   } finally { removeScratch(dir); }
+});
+
+test('refute r3 N1: a failed ledger write keeps the line in the pending sidecar, and every later call refuses (fail closed)', () => {
+  const dir = scratchDir('nc-pending');
+  try {
+    const p = join(dir, 'spend-ledger.jsonl');
+    writeFileSync(p, 'not json\n');                         // a corrupt ledger makes record() throw
+    const L = new SpendLedger6(p);
+    const meta = { ts: '2026-10-01T00:00:00Z', kind: 'practice', id: 'p04', run: 1, reportedCostUsd: 0.3 };
+    const r = recordSpend(L, meta);
+    assert.equal(r.failed, true);
+    assert.equal(L.pendingPath, join(dir, 'spend-ledger.pending.jsonl'));
+    const pending = readFileSync(L.pendingPath, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.deepEqual([pending.length, pending[0].id, pending[0].reportedCostUsd], [1, 'p04', 0.3]);
+    writeFileSync(p, '');                                    // even with the ledger repaired ...
+    assert.deepEqual([L.check('practice').ok, L.check('practice').reason], [false, 'pending-ledger-line'], '... a pending line refuses every call');
+    assert.equal(recordSpend(new SpendLedger6(join(dir, 'ok.jsonl')), meta).failed, false);
+  } finally { removeScratch(dir); }
+});
+
+test('refute r3 N3: a matrix run keeps every call\'s output; a corpus or practice run keeps git/Read/Grep/Glob only', () => {
+  const calls = [{ tool: 'Bash', input: { command: 'cat ../canary-r17.txt' }, isError: true, output: 'denied' }, { tool: 'WebFetch', input: {}, isError: true, output: 'no' }, { tool: 'Bash', input: { command: 'git diff' }, isError: false, output: '+x' }];
+  assert.deepEqual(recordToolCalls(calls, () => false, { keepAll: true }).map(c => c.output), ['denied', 'no', '+x']);
+  assert.deepEqual(recordToolCalls(calls).map(c => 'output' in c), [false, false, true]);
+  const spawn = { exitCode: 0, timedOut: false, stdout: stream([init, use('a', 'Bash', { command: 'cat ../x' }), res('a', 'denied', true), final()]), stderr: '', startedAt: 't0', endedAt: 't1', latencyMs: 1 };
+  const common = { prereg, item: { id: 'isolation-matrix' }, runIndex: 1, spawn, variant: 'fence6', args: ['-p', 'x', '--agent', 'reviewer'], fp: null, staged: { baseSha: 'b', log: [] } };
+  assert.equal(buildCallRecord({ ...common, keepAllOutputs: true }).rec.toolCalls[0].output, 'denied');
+  assert.ok(!('output' in buildCallRecord(common).rec.toolCalls[0]));
 });
