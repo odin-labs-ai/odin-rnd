@@ -77,6 +77,7 @@ ${list([`A cap of $${sp.capUsd} on every metered call of ${escape(e.id)}, with a
 <p>The pre-registration's own wording of the same point, quoted verbatim from the plan:</p>
 <blockquote><p>${escape(sp.wording)}</p></blockquote>
 <h2>What this does not establish</h2>
+<p>${escape(record.engineMatrix.statement).replace('the engine matrix', `<a href="${escape(record.engineMatrix.url)}">the engine matrix</a>`)}</p>
 ${list(record.limits.map(escape))}
 <h2>Sources</h2>
 ${list(record.sources.map(x => `<a href="${escape(x.url)}">${escape(x.label)}</a>: ${escape(x.claim)}`))}

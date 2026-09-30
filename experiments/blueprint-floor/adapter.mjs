@@ -43,7 +43,14 @@ export const VOCABULARY = { plugin: whitelist.plugin.map(t => t.type), control: 
 /** A constraint without the field its type is graded on (refute r8 B1): the engine would skip it and enforce nothing. */
 export class MissingFieldError extends AdapterError { constructor(type, field) { super(`a ${type} constraint needs a non-empty ${field}`, 'MISSING_FIELD'); this.name = 'MissingFieldError'; this.type = type; this.field = field; } }
 const filled = v => (typeof v === 'string' && v.length > 0) || (Array.isArray(v) && v.length > 0 && v.every(x => typeof x === 'string' && x.length > 0));
-export const REQUIRED_FIELDS = { forbiddenDependency: ['to'], forbiddenFile: ['path'], forbiddenPattern: ['pattern'], forbiddenEgress: [['to', 'forbiddenEgressHosts', 'governedHosts']], requiredDependency: ['to', 'component'], requiredComponent: ['component'], forbiddenPath: ['path'] };
+export const REQUIRED_FIELDS = { forbiddenDependency: ['to'], forbiddenFile: ['path'], forbiddenPattern: ['pattern'], forbiddenEgress: ['to'], requiredDependency: ['to', 'component'], requiredComponent: ['component'], forbiddenPath: ['path'] };
+/** The fields each contract documents per type (id, type, severity are common); any other field is refused (refute r9 P3). */
+export const ALLOWED_FIELDS = {
+  plugin: { forbiddenDependency: ['to', 'scopePaths'], forbiddenFile: ['path'], forbiddenPattern: ['pattern', 'path'], forbiddenEgress: ['to'] },
+  control: { forbiddenDependency: ['to', 'scopePaths', 'from'], requiredDependency: ['to', 'component', 'scopePaths'], requiredComponent: ['component'], forbiddenPath: ['path'], forbiddenFile: ['path'], forbiddenPattern: ['pattern', 'path'] },
+};
+/** A constraint field the contract does not document for its type (for example forbiddenEgress governedHosts). */
+export class UnknownFieldError extends AdapterError { constructor(type, field) { super(`a ${type} constraint may not carry the field ${field}: the contract does not document it`, 'UNKNOWN_FIELD'); this.name = 'UnknownFieldError'; this.type = type; this.field = field; } }
 /** Severity plays no part in a pass/fail census; every constraint runs at one severity the engine always scores (refute r8 B2). */
 export const CENSUS_SEVERITY = 'high';
 
@@ -56,6 +63,7 @@ export function checkVocabulary(constraints, role = 'plugin') {
     if (c.type === 'customPolicy') throw new CustomPolicyRefusedError(role);
     if (!VOCABULARY[role].includes(c.type)) throw new RefusedConstraintError(c.type, role);
     if (typeof c.id !== 'string' || !c.id) throw new MissingFieldError(c.type, 'id');
+    for (const k of Object.keys(c)) if (!['id', 'type', 'severity'].includes(k) && !(ALLOWED_FIELDS[role][c.type] ?? []).includes(k)) throw new UnknownFieldError(c.type, k);
     for (const f of REQUIRED_FIELDS[c.type] ?? []) {
       const ok = Array.isArray(f) ? f.some(g => filled(c[g])) : filled(c[f]);
       if (!ok) throw new MissingFieldError(c.type, Array.isArray(f) ? f.join(' or ') : f);

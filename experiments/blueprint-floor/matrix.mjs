@@ -6,14 +6,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mapLimit } from '../jev-gate/bce-contract.mjs';
-import { runFloor } from './adapter.mjs';
+import { buildBlueprint, runFloor, validateBlueprint } from './adapter.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 export const matrixPath = 'experiments/blueprint-floor/engine-matrix.json';
 export const loadMatrix = () => JSON.parse(readFileSync(join(HERE, 'engine-matrix.json'), 'utf8'));
 
-/** One row: RED when the report names the row's constraint, GREEN when the engine passes; anything else is reported. */
+/** One row: REFUSED when the engine's validation refuses it, RED when the report names the row's constraint, GREEN when the engine passes; anything else is reported. */
 export async function runRow(row) {
+  const v = validateBlueprint(buildBlueprint({ ruleId: row.id, constraints: row.constraints, inputKind: row.inputKind, minFiles: 1 }));
+  if (!v.ok) return { id: row.id, label: v.engineLimit ? 'REFUSED' : `INVALID(${v.message.split('\n')[0]})`, refs: [] };
   const r = await runFloor({ ruleId: row.id, constraints: row.constraints, inputKind: row.inputKind, input: row.input, flags: row.flags ?? null });
   const ids = new Set(row.constraints.map(c => c.id));
   const fired = r.violations.some(v => ids.has(v.rule));

@@ -72,6 +72,7 @@ export const required = {
   'spend.capUsd': v => v === 100, 'spend.censusCeilingUsd': v => v === 40, 'spend.ledger': v => v === `${D}/spend-ledger.jsonl`, 'spend.rules': strings, 'spend.bundle1': str, 'spend.plain': v => str(v) && !/STEER|COUNCIL/.test(v), 'spend.wording': v => v === WORDING_R2_7, 'spend.unknownCost': str,
   notBefore: str, runnerGuard: str,
   limits: strings,
+  'engineMatrix.file': v => v === `${D}/engine-matrix.json`, 'engineMatrix.url': v => v === 'https://github.com/odin-labs-ai/odin-rnd/blob/main/experiments/blueprint-floor/engine-matrix.json', 'engineMatrix.statement': str,
   sources: v => Array.isArray(v) && v.length > 0 && v.every(s => str(s.id) && str(s.label) && str(s.url) && s.url.startsWith('https://') && str(s.claim)),
 };
 

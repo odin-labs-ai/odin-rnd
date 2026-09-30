@@ -13,7 +13,7 @@ test('the matrix: unique ids m01..mNN, each row a single constraint with an expe
   assert(matrix.rows.length >= 35);
   matrix.rows.forEach((r, i) => {
     assert.equal(r.id, `m${String(i + 1).padStart(2, '0')}`);
-    assert(['RED', 'GREEN'].includes(r.expected) && typeof r.note === 'string' && r.note.length > 10, r.id);
+    assert(['RED', 'GREEN', 'REFUSED'].includes(r.expected) && typeof r.note === 'string' && r.note.length > 10, r.id);
     assert(Array.isArray(r.constraints) && r.constraints.length === 1, r.id);
   });
   assert.equal(ids.size, matrix.rows.length);
@@ -27,7 +27,7 @@ test('every row gives its expected verdict through the real adapter and bce 0.3.
 
 // An engine sentence: it names a constraint type or the checker AND says what it detects.
 const ENGINE = /\b(forbiddenDependency|forbiddenEgress|forbiddenPattern|forbiddenFile|the checker|the engine|every read file|a read file)\b/i;
-const DETECTS = /\b(fires?|FAIL when|matche[sd]|recogni[sz]es|parses|does not fire|never fires|never matches|is not matched)\b/;
+const DETECTS = /\b(fires?|FAIL when|matche[sd]|recogni[sz]es|parses|does not fire|never fires|never matches|is not matched|refuses)\b/;
 const sentences = text => text.replace(/`[^`]*`/g, m => m.replace(/[.!?]/g, '·')).split(/\n\s*\n|\n- |(?<=[.!?])\s+(?=[A-Z])/);
 const sources = () => {
   const w = JSON.parse(readFileSync('experiments/blueprint-floor/whitelist.json', 'utf8'));
@@ -35,8 +35,8 @@ const sources = () => {
   return {
     'contract.md': readFileSync('experiments/blueprint-floor/contract.md', 'utf8'),
     'protocol.md': readFileSync('experiments/blueprint-floor/protocol.md', 'utf8'),
-    'whitelist.json plugin notes': w.plugin.map(t => t.note).join('\n'),
-    'preregistration limits': r.limits.join('\n'),
+    'whitelist.json plugin notes': w.plugin.map(t => `${t.type}: ${t.note}`).join('\n\n'),
+    'preregistration limits': r.limits.join('\n\n'),
   };
 };
 
@@ -56,4 +56,24 @@ test('every engine sentence cites matrix rows, and every cited row exists', () =
 test('every matrix row is cited somewhere, so no row is dead weight', () => {
   const cited = new Set(Object.values(sources()).flatMap(citations));
   assert.deepEqual(matrix.rows.map(r => r.id).filter(id => !cited.has(id)), []);
+});
+
+// Refute r9 P2: a cited row must test the constraint type its sentence is about. A sentence's types are the types it names,
+// else the types its block (paragraph or bullet) names; a sentence with no type in sight may cite any row.
+const TYPES = ['forbiddenDependency', 'forbiddenEgress', 'forbiddenPattern', 'forbiddenFile'];
+const named = t => TYPES.filter(x => t.includes(x));
+test('refute r9 P2: every cited row tests the constraint type its sentence is about', () => {
+  const typeOf = Object.fromEntries(matrix.rows.map(r => [r.id, r.constraints[0].type]));
+  const wrong = [];
+  for (const [name, text] of Object.entries(sources())) {
+    for (const block of text.split(/\n\s*\n|\n- /)) {
+      const blockTypes = named(block);
+      for (const s of sentences(block)) {
+        const types = named(s).length ? named(s) : blockTypes;
+        if (!types.length) continue;
+        for (const c of citations(s)) if (!types.includes(typeOf[c])) wrong.push(`${name}: ${c} (${typeOf[c]}) in "${s.slice(0, 90)}"`);
+      }
+    }
+  }
+  assert.deepEqual(wrong, []);
 });

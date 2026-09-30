@@ -855,6 +855,290 @@
       "flags": null,
       "expected": "RED",
       "note": "transcript.jsonl is scanned line by line: one JSON event per line"
+    },
+    {
+      "id": "m41",
+      "name": "egress-client-folded",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenEgress",
+          "to": "evil.example"
+        }
+      ],
+      "inputKind": "toolCall",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "new Client('https://evil.example')"
+        }
+      },
+      "flags": "i",
+      "expected": "GREEN",
+      "note": "under i-flag folding the identifier becomes \"client\", which is not a recognised call"
+    },
+    {
+      "id": "m42",
+      "name": "egress-fetch-folded",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenEgress",
+          "to": "evil.example"
+        }
+      ],
+      "inputKind": "toolCall",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "FETCH('https://EVIL.example/x')"
+        }
+      },
+      "flags": "i",
+      "expected": "RED",
+      "note": "under folding FETCH and the host become lower case, and the call fires"
+    },
+    {
+      "id": "m43",
+      "name": "egress-http-request-folded",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenEgress",
+          "to": "evil.example"
+        }
+      ],
+      "inputKind": "toolCall",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "HTTP.REQUEST('https://evil.example/x')"
+        }
+      },
+      "flags": "i",
+      "expected": "RED",
+      "note": "under folding HTTP.REQUEST becomes http.request, and the call fires"
+    },
+    {
+      "id": "m44",
+      "name": "file-path-not-folded",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenFile",
+          "path": ".floor/added/**/*.env"
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/config/PROD.ENV b/config/PROD.ENV\nnew file mode 100644\n--- /dev/null\n+++ b/config/PROD.ENV\n@@ -0,0 +1,1 @@\n+A=1\n"
+      },
+      "flags": "i",
+      "expected": "GREEN",
+      "note": "file paths are not folded, so an upper-case extension does not match a lower-case glob"
+    },
+    {
+      "id": "m45",
+      "name": "pattern-folded",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenPattern",
+          "pattern": "\\bsudo\\b",
+          "path": ".floor/command.txt"
+        }
+      ],
+      "inputKind": "toolCall",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "SUDO ls"
+        }
+      },
+      "flags": "i",
+      "expected": "RED",
+      "note": "a lower-case pattern matches upper-case text once it is folded"
+    },
+    {
+      "id": "m46",
+      "name": "file-glob-question",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenFile",
+          "path": ".floor/added/config/a?.env"
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/config/ab.env b/config/ab.env\nnew file mode 100644\n--- /dev/null\n+++ b/config/ab.env\n@@ -0,0 +1,1 @@\n+A=1\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "a ? in a glob matches one character"
+    },
+    {
+      "id": "m47",
+      "name": "dep-export-from",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenDependency",
+          "to": "lodash",
+          "scopePaths": [
+            "src/**"
+          ]
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/src/x.ts b/src/x.ts\nnew file mode 100644\n--- /dev/null\n+++ b/src/x.ts\n@@ -0,0 +1,1 @@\n+export { a } from 'lodash';\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "an export ... from declaration fires"
+    },
+    {
+      "id": "m48",
+      "name": "dep-import-equals-require",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenDependency",
+          "to": "lodash",
+          "scopePaths": [
+            "src/**"
+          ]
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/src/x.ts b/src/x.ts\nnew file mode 100644\n--- /dev/null\n+++ b/src/x.ts\n@@ -0,0 +1,1 @@\n+import _ = require('lodash');\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "an import x = require(...) declaration fires"
+    },
+    {
+      "id": "m49",
+      "name": "dep-dynamic-import",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenDependency",
+          "to": "lodash",
+          "scopePaths": [
+            "src/**"
+          ]
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/src/x.ts b/src/x.ts\nnew file mode 100644\n--- /dev/null\n+++ b/src/x.ts\n@@ -0,0 +1,1 @@\n+export const m = import('lodash');\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "a dynamic import() fires"
+    },
+    {
+      "id": "m50",
+      "name": "base-console-log",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenPattern",
+          "pattern": "console\\.log",
+          "path": "src/**"
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/docs/readme.md b/docs/readme.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/readme.md\n@@ -0,0 +1,1 @@\n+hello\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "the hidden base sources contain console.log"
+    },
+    {
+      "id": "m51",
+      "name": "base-as-cast",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenPattern",
+          "pattern": "\\bas [A-Z]\\w*",
+          "path": "src/**"
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/docs/readme.md b/docs/readme.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/readme.md\n@@ -0,0 +1,1 @@\n+hello\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "the hidden base sources contain as casts"
+    },
+    {
+      "id": "m52",
+      "name": "base-process-env",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenPattern",
+          "pattern": "process\\.env",
+          "path": "src/**"
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/docs/readme.md b/docs/readme.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/readme.md\n@@ -0,0 +1,1 @@\n+hello\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "the hidden base sources read process.env"
+    },
+    {
+      "id": "m53",
+      "name": "base-node-http",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenDependency",
+          "to": "node:http",
+          "scopePaths": [
+            "src/**"
+          ]
+        }
+      ],
+      "inputKind": "diff",
+      "input": {
+        "patch": "diff --git a/docs/readme.md b/docs/readme.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/readme.md\n@@ -0,0 +1,1 @@\n+hello\n"
+      },
+      "flags": null,
+      "expected": "RED",
+      "note": "the hidden base sources import node:http"
+    },
+    {
+      "id": "m54",
+      "name": "pattern-redos-refused",
+      "constraints": [
+        {
+          "id": "c",
+          "type": "forbiddenPattern",
+          "pattern": "(a+)+$",
+          "path": ".floor/command.txt"
+        }
+      ],
+      "inputKind": "toolCall",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "ls"
+        }
+      },
+      "flags": null,
+      "expected": "REFUSED",
+      "note": "the checker refuses a pattern with nested unbounded quantifiers at validation"
     }
   ]
 }

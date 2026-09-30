@@ -144,19 +144,19 @@
     "hunchSecondary": "hunch's specification rules (rules/bips-spec.json, nips-spec.json, nuts-spec.json) are a secondary stratum: a seeded sample of 30 (seed 7007; the sampling code is committed in extract.mjs), reported separately and never in the median."
   },
   "files": {
-    "experiments/blueprint-floor/adapter.mjs": "111ac5634908a25e14904c12fa14d24c4364e93d70e956032b1527f2274a2def",
+    "experiments/blueprint-floor/adapter.mjs": "d35854970e69ff73424bff23c7a480b566a2893e4d82953635ccc835ea30cfb2",
     "experiments/blueprint-floor/whitelist.mjs": "ccdebf36d6344842de0903876ada39dbf02a228cf3a98c2ba1871bd5f05d2300",
     "experiments/blueprint-floor/whitelist.json": "bf8115d21d3c34771d7a9370e6da73141b028aa978ca0492e8a96749cbecf54d",
-    "experiments/blueprint-floor/contract.md": "82232623dcc36b7ef7b459f86ea142f05799af90fe57034555bea5fc2bcaac67",
+    "experiments/blueprint-floor/contract.md": "62a0fde91db4f74bb4ab4d1173d72f4f0469a3a67b9381bf5c01eec8b4b48178",
     "experiments/blueprint-floor/contract-module-graph.md": "ba244156d2bfafe6f4ecbbef734a9a6ff457f606ae1544cb5c97cd25daff06bc",
     "experiments/blueprint-floor/prompts/translator.md": "c2b016bf0b2f0dd81655fa57f04ad79201760058ef1fec8c772953c4af237fb6",
     "experiments/blueprint-floor/prompts/adjudicator.md": "b67fa1081ec39c3258b2139d04100cf85bde8e132c82ddf4d0ab901be64e9ee4",
     "experiments/blueprint-floor/protocol.mjs": "ec6bfe573e6eda48784cea76fc1f57d84c55f2e535845c990afbe75fce0026bf",
-    "experiments/blueprint-floor/protocol.md": "53a743fc5c182bd5173cd869b689c7a913a86283d9edc0b22bf3220863ce39c9",
+    "experiments/blueprint-floor/protocol.md": "cfb567f26f0c3c415c94b4cc298f286257c2ad0056dfed20e9c3c9dd7a9a876a",
     "experiments/blueprint-floor/scorer.mjs": "f2113f3666ec288aebc420750d9b16c3b2eb8fac2078296acad1afdee0d2f351",
     "experiments/blueprint-floor/fixtures/scorer.json": "6311bfd945d162906bc675c98be3e211f57d3a42f6f69e478164294a2ba304f1",
-    "experiments/blueprint-floor/engine-matrix.json": "af2e2446ffaee157b9cc59cf84369538fc2b2686896b904c36ea370004b8098b",
-    "experiments/blueprint-floor/matrix.mjs": "8002ad1963ab107f61fe9b79babe7160cd6ac10edd882b6b27b375cbdb073e3c",
+    "experiments/blueprint-floor/engine-matrix.json": "fdcedad2e99b562e1f0652e35daf48f143976aa2d9654b0e435b8a85a2ca5e9f",
+    "experiments/blueprint-floor/matrix.mjs": "dbf413ab7348440410585bf4c11d0575d5c21e5a0fcb32fc60710c3df0177b73",
     "experiments/blueprint-floor/extract.mjs": "62c3dc7c2d8912855b8f6350fdffc998eb4f8e406007ff040842b10f702b7164",
     "experiments/blueprint-floor/rules/selection.json": "049193ecaaee466bad0bbaaa335efb49cf5b76ddcd489d2bdf6dca6bf3e6be65",
     "experiments/blueprint-floor/rules/SELECTION.md": "cda94e533e64a48d6b8afa7c1f2806a3e3e556b997a39d936036f19a4705f1d0",
@@ -360,7 +360,7 @@
   "limits": [
     "The target language is bce-engine 0.3.1's static vocabulary and nothing more: four constraint types for plugin rules. A newer engine or a different checker may decide more.",
     "The adapter maps non-diff inputs to files (a tool call to JSON and command text, a transcript to JSON lines and a final message, a document to a file). That mapping is a choice we made; another mapping could change what is expressible.",
-    "The checker parses every read file as TypeScript, the .floor files included [m01, m03, m07, m15]. forbiddenDependency fires where that text parses as code: import, require and import() in plain prose [m01], a final message [m03], a command [m07] and the removed lines of .floor/diff.patch [m15]; not inside comments or string literals [m13, m14], so never from transcript.jsonl or tool-call.json values [m05, m06] or a quoted shell argument [m08], and not after an apostrophe earlier on a prose line [m02]; a type-only import never fires [m12]. forbiddenEgress fires on fetch, http.request, request(), axios.get, new Client() and got with a literal host [m18, m19, m20, m21, m22, m23], in prose too [m27], not on curl, lookalike hosts, string literals or non-literal hosts [m24, m26, m28, m38], and takes no file scope [m27]. A constraint that should judge only what a change adds must be scoped to post-patch src/** or .floor/added/** [m16, m17]; for tool calls, transcripts and documents, forbiddenPattern and forbiddenFile remain the precise vocabulary.",
+    "The checker parses every read file as TypeScript, the .floor files included [m01, m03, m07, m15]. forbiddenDependency fires where that text parses as code: import, require and import() in plain prose [m01], a final message [m03], a command [m07] and the removed lines of .floor/diff.patch [m15]; not inside comments or string literals [m13, m14], so never from transcript.jsonl or tool-call.json values [m05, m06] or a quoted shell argument [m08], and not after an apostrophe earlier on a prose line [m02]; a type-only import never fires [m12]. forbiddenEgress fires on fetch, http.request, request(), axios.get, new Client() and got with a literal host [m18, m19, m20, m21, m22, m23], in prose too [m27], not on curl, lookalike hosts, string literals or non-literal hosts [m24, m26, m28, m38], and takes no file scope [m27]. A constraint that should judge only what a change adds must be scoped to post-patch src/** or .floor/added/** [m16, m17]. For tool calls, transcripts and documents, forbiddenPattern and forbiddenFile remain the precise vocabulary.",
     "A partial floor still needs a model for its residual; expressible is the only class that removes the model for that rule.",
     "The translator is itself a model. The adjudicator and the mechanical checks guard it, but teeth is self-consistency (the translator writes both the constraint and its probes), not proof over every input.",
     "The dispute rule can only lower a class, which biases the census toward the kill criterion; the median before disputes is reported beside it.",
@@ -407,5 +407,10 @@
       "url": "https://odin-labs-ai.github.io/odin-rnd/journal/jev-as-a-fast-gate.html",
       "claim": "The experiment whose linter finding motivates this one, and whose base tree and controls are reused."
     }
-  ]
+  ],
+  "engineMatrix": {
+    "file": "experiments/blueprint-floor/engine-matrix.json",
+    "url": "https://github.com/odin-labs-ai/odin-rnd/blob/main/experiments/blueprint-floor/engine-matrix.json",
+    "statement": "Bracketed ids such as [m01] refer to rows of the engine matrix, each run through the real checker in the repository's tests."
+  }
 }

@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { resolveFiles } from 'bce-engine';
 import { materialise, scoreTree } from '../experiments/jev-gate/bce-contract.mjs';
-import { AdapterError, CustomPolicyRefusedError, MissingFieldError, MissingFlagsError, PATHS, addedByFile, headerTarget, patchPaths, unquoteGitPath, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
+import { AdapterError, CustomPolicyRefusedError, MissingFieldError, UnknownFieldError, MissingFlagsError, PATHS, addedByFile, headerTarget, patchPaths, unquoteGitPath, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
 import { deriveWhitelist, loadWhitelist, serialiseWhitelist, whitelistPath } from '../experiments/blueprint-floor/whitelist.mjs';
 
 // EXP 007 WO-1-02: the adapter and teeth harness, through the real bce-engine 0.3.1. No network, no model.
@@ -276,7 +276,7 @@ test('refute r7 N2/N3: patchPaths and added lines are hunk-aware, decode C-quote
 });
 
 test('refute r8 B1: a constraint missing the field it is graded on is refused, and a vacuous one beside a real one fails teeth', LONG, async () => {
-  for (const [c, field] of [[{ id: 'v', type: 'forbiddenDependency' }, 'to'], [{ id: 'v', type: 'forbiddenDependency', to: '' }, 'to'], [{ id: 'v', type: 'forbiddenFile' }, 'path'], [{ id: 'v', type: 'forbiddenPattern', pattern: '' }, 'pattern'], [{ id: 'v', type: 'forbiddenEgress' }, 'to or forbiddenEgressHosts or governedHosts'], [{ type: 'forbiddenFile', path: 'x' }, 'id']]) {
+  for (const [c, field] of [[{ id: 'v', type: 'forbiddenDependency' }, 'to'], [{ id: 'v', type: 'forbiddenDependency', to: '' }, 'to'], [{ id: 'v', type: 'forbiddenFile' }, 'path'], [{ id: 'v', type: 'forbiddenPattern', pattern: '' }, 'pattern'], [{ id: 'v', type: 'forbiddenEgress' }, 'to'], [{ type: 'forbiddenFile', path: 'x' }, 'id']]) {
     assert.throws(() => checkVocabulary([c]), e => e instanceof MissingFieldError && e.field === field, JSON.stringify(c));
   }
   // Even if a constraint reached the engine and made it fail for another reason (its "enforces nothing" violation), teeth only
@@ -293,4 +293,11 @@ test('refute r8 B2: severity is ignored; an info-severity constraint still grade
   assert.equal((await judge({ constraints: info, inputKind: 'toolCall', input: tc('sudo ls'), finalClass: 'expressible', flags: null })).decision, 'fail');
   const noSeverity = [{ id: 'p', type: 'forbiddenPattern', pattern: '\\bsudo\\b', path: '.floor/command.txt' }];
   assert.equal((await teeth(noSeverity, { violating: tc('sudo ls'), compliant: tc('ls') }, { inputKind: 'toolCall', flags: null })).pass, true);
+});
+
+test('refute r9 P3: a field the contract does not document is refused (forbiddenEgress governedHosts alone, or beside to)', () => {
+  assert.throws(() => checkVocabulary([{ id: 'e', type: 'forbiddenEgress', governedHosts: ['api.example.com'] }]), e => e instanceof UnknownFieldError && e.field === 'governedHosts');
+  assert.throws(() => checkVocabulary([{ id: 'e', type: 'forbiddenEgress', to: 'x.example', governedHosts: ['api.example.com'] }]), e => e instanceof UnknownFieldError && e.field === 'governedHosts');
+  assert.throws(() => checkVocabulary([{ id: 'p', type: 'forbiddenPattern', pattern: 'x', note: 'hi' }]), UnknownFieldError);
+  assert.doesNotThrow(() => checkVocabulary([{ id: 'd', type: 'forbiddenDependency', to: 'x', scopePaths: ['src/**'], severity: 'low' }]));
 });
