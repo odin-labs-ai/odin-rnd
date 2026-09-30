@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "engine": {
+    "package": "bce-engine",
+    "version": "0.3.1",
+    "files": {
+      "package.json": "27e9667bda7c7564924ba9f13d4c8dae086f220f207259dc7e6d12fa9b7e389a",
+      "src/report.ts": "ec4bcb7f7cca250c12caf64ace6150764267ef255a9a182ed821394079246aeb",
+      "src/schema.ts": "d7b2347570373b2291f3d179809b98f95f12b34675e0be48ab75e00bf5b04b85",
+      "src/extractors.ts": "f48047f6955d3d788a6ac4376a2ac0cd9dfcf2ee348535407df3dbf9a4fc2a8f",
+      "dist/cli.js": "6ffe4c23913a6813b9d9d4a2f4ca29b5405a65bbcec9cb4489cfef0326a52648"
+    }
+  },
+  "rule": "A type is in the vocabulary only if evaluate() implements it and grades it statically on the pinned profile. Plugin rules: plugin-surface profile, ast extractor. Positive controls: typescript-module-graph over src/**/*.ts, exactly as EXP 005.",
+  "plugin": [
+    {
+      "type": "forbiddenDependency",
+      "evaluate": "src/report.ts:306",
+      "executes": "dist/cli.js:2841",
+      "schemaEnum": "src/schema.ts:23",
+      "feedsExtractor": "src/extractors.ts:149-151",
+      "note": "Fires only on an import or export declaration whose module specifier equals `to` (or starts with `to/`) in a scanned file. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing. It has teeth on src/**/*.ts of a diff tree, not on .floor text files."
+    },
+    {
+      "type": "forbiddenFile",
+      "evaluate": "src/report.ts:480",
+      "executes": "dist/cli.js:2973",
+      "schemaEnum": "src/schema.ts:39",
+      "note": "Matches its path glob against the raw scanned-file set (coverage.scannedFiles)."
+    },
+    {
+      "type": "forbiddenPattern",
+      "evaluate": "src/report.ts:510",
+      "executes": "dist/cli.js:2994",
+      "schemaEnum": "src/schema.ts:84",
+      "compiledWithoutFlags": "src/extractors.ts:389",
+      "safeCompile": "src/schema.ts:237",
+      "note": "A per-line content regex over every scanned file (coverage.patternScan), optionally narrowed by a path glob. The engine compiles the pattern with no flags, so a flagged plugin regex is expressible only through an equivalent flag-free pattern. A pattern the engine's safe-compile guard rejects fails validation (recorded as an engine-limit downgrade)."
+    },
+    {
+      "type": "forbiddenEgress",
+      "evaluate": "src/report.ts:394",
+      "executes": "dist/cli.js:2909",
+      "schemaEnum": "src/schema.ts:54",
+      "note": "Sees only a TypeScript-syntactic network call (fetch, http(s).request, axios, got) with a literal host in a scanned source file; it has no teeth on .floor text files."
+    }
+  ],
+  "controls": [
+    {
+      "type": "forbiddenDependency",
+      "evaluate": "src/report.ts:306",
+      "executes": "dist/cli.js:2841",
+      "schemaEnum": "src/schema.ts:23",
+      "feedsExtractor": "src/extractors.ts:149-151",
+      "note": "Fires only on an import or export declaration whose module specifier equals `to` (or starts with `to/`) in a scanned file. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing. It has teeth on src/**/*.ts of a diff tree, not on .floor text files."
+    },
+    {
+      "type": "requiredDependency",
+      "evaluate": "src/report.ts:217",
+      "executes": "dist/cli.js:2763",
+      "schemaEnum": "src/schema.ts:24",
+      "pluginSurfaceFailClosed": "src/report.ts:260-277",
+      "note": "Controls only (typescript-module-graph). Under plugin-surface it grades provides edges on name-detected components and fails closed when there is no target component, so it cannot grade a .floor tree."
+    },
+    {
+      "type": "requiredComponent",
+      "evaluate": "src/report.ts:293",
+      "executes": "dist/cli.js:2828",
+      "schemaEnum": "src/schema.ts:25",
+      "note": "Controls only: under plugin-surface a component is name-detected, a heuristic."
+    },
+    {
+      "type": "forbiddenPath",
+      "evaluate": "src/report.ts:464",
+      "executes": "dist/cli.js:2957",
+      "schemaEnum": "src/schema.ts:26",
+      "note": "Controls only: it matches extracted components, which plugin-surface detects by name, a heuristic."
+    },
+    {
+      "type": "forbiddenFile",
+      "evaluate": "src/report.ts:480",
+      "executes": "dist/cli.js:2973",
+      "schemaEnum": "src/schema.ts:39",
+      "note": "Matches its path glob against the raw scanned-file set (coverage.scannedFiles)."
+    },
+    {
+      "type": "forbiddenPattern",
+      "evaluate": "src/report.ts:510",
+      "executes": "dist/cli.js:2994",
+      "schemaEnum": "src/schema.ts:84",
+      "compiledWithoutFlags": "src/extractors.ts:389",
+      "safeCompile": "src/schema.ts:237",
+      "note": "A per-line content regex over every scanned file (coverage.patternScan), optionally narrowed by a path glob. The engine compiles the pattern with no flags, so a flagged plugin regex is expressible only through an equivalent flag-free pattern. A pattern the engine's safe-compile guard rejects fails validation (recorded as an engine-limit downgrade)."
+    }
+  ],
+  "controlsNote": "forbiddenEgress is not in the controls vocabulary: the engine's schema refuses it under typescript-module-graph (src/schema.ts:523).",
+  "excluded": [
+    {
+      "type": "behavioralInvariant",
+      "reason": "runtime: graded from served-runtime observations, never statically",
+      "evaluate": "src/report.ts:543",
+      "schemaEnum": "src/schema.ts:67"
+    },
+    {
+      "type": "requiredEvidence",
+      "reason": "declared in the schema, but evaluate() has no branch for it: it falls to the skipped arm and enforces nothing",
+      "schemaEnum": "src/schema.ts:55",
+      "evaluate": "src/report.ts:620 (the skipped arm)"
+    },
+    {
+      "type": "minimumMetric",
+      "reason": "declared in the schema, but evaluate() has no branch for it: it falls to the skipped arm and enforces nothing",
+      "schemaEnum": "src/schema.ts:56",
+      "evaluate": "src/report.ts:620 (the skipped arm)"
+    },
+    {
+      "type": "customPolicy",
+      "reason": "declared in the schema, but evaluate() has no branch for it: it falls to the skipped arm and enforces nothing",
+      "schemaEnum": "src/schema.ts:57",
+      "evaluate": "src/report.ts:620 (the skipped arm)"
+    }
+  ],
+  "refusal": "A constraint of any type outside the vocabulary is refused by the adapter with a typed error; customPolicy has its own error class because 0.3.1 declares it but does not enforce it.",
+  "flags": "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags, so a flagged rule is expressible only if the translator emits an equivalent flag-free pattern (for /i, e.g. (?:[Ss][Uu][Dd][Oo]) or a character class per letter); the teeth check decides."
+}
