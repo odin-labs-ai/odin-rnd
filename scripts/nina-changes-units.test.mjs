@@ -19,7 +19,7 @@ import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
-import { claudeFree, codeOnly, paidCallSites, testSources } from './nina-changes-claude-free.mjs';
+import { claudeFree, codeOnly, importIssues, paidCallSites, testSources } from './nina-changes-claude-free.mjs';
 
 const PAID_REFUSAL = /paid run is refused under the Node test runner|claude is not on the PATH|nonexistent/;
 
@@ -130,8 +130,14 @@ test('runners.sha256 pins every EXP 006 file and every jev-gate module EXP 006 i
 });
 
 test('the guard: every counted run refuses while freeze.mjs is null; a rehearsal needs pins; practice and probe pass', () => {
-  assert.equal(PREREG6_SHA256, null); assert.equal(NOT_BEFORE6, null);
-  assert.throws(() => checkRun6({ mode: 'counted' }), /wait for the freeze/);
+  // Branches on the committed freeze (as the pre-run probe test does), so WO-2-01's freeze keeps the suite green.
+  if (PREREG6_SHA256 === null) {
+    assert.equal(NOT_BEFORE6, null, 'freeze.mjs sets both constants or neither');
+    assert.throws(() => checkRun6({ mode: 'counted' }), /wait for the freeze/);
+  } else {
+    assert.match(PREREG6_SHA256, /^[0-9a-f]{64}$/);
+    assert.ok(Number.isFinite(Date.parse(NOT_BEFORE6)), 'a frozen not-before is a time');
+  }
   assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: 'a'.repeat(64), NOT_BEFORE6: '2026-01-01T00:00:00Z' } }), /hashes to [0-9a-f]{64}, not the frozen a{64}/);
   // With the committed record's own sha frozen: refused before the not-before, accepted after it (every pin re-checked).
   const real = createHash('sha256').update(readFileSync('experiments/nina-changes/preregistration.json')).digest('hex');
@@ -434,6 +440,8 @@ test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, o
   assert.ok(sites.length >= 15, `the scan finds the runner calls (${sites.length})`);
   assert.deepEqual(sites.filter(s => s.kind === 'UNSAFE'), [], 'a runner call that could reach a paid client');
   assert.ok(sites.some(s => s.kind === 'claude-free') && sites.some(s => s.kind === 'fixture') && sites.some(s => s.kind === 'rehearsal'));
+  assert.deepEqual(Object.fromEntries(['fixture', 'rehearsal', 'claude-free'].map(k => [k, sites.filter(s => s.kind === k).length])), { fixture: 5, rehearsal: 5, 'claude-free': 8 }, 'the 18 real call sites, each classified');
+  assert.deepEqual(testSources(files).flatMap(f => importIssues(readFileSync(f, 'utf8'), f)), [], 'an import the scan could not attribute or follow');
   // The check itself: an unwrapped paid call is UNSAFE; a spread named free outside claudeFree is not enough; parens and
   // quotes in strings, regexes and comments do not confuse it.
   const kinds = src => paidCallSites(src).map(s => s.kind);
@@ -442,6 +450,20 @@ test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, o
   assert.deepEqual(kinds("await claudeFree(free => runReviewer6({ mode: 'counted', ...free })); // it's ) fine"), ['claude-free']);
   assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', fixture: true, note: ')' });\nawait reviewerRun6({ claudeBin: x, rehearsal: true });"), ['fixture', 'rehearsal']);
   assert.equal(codeOnly("a('(', /\\(/, `)`) // (").split('(').length - 1, 1, 'only the real call paren is code');
+  // Refute r7's probes: the property must be real code, exact, at the call's own object level; rehearsal: true only
+  // counts for reviewerRun6; aliased runner names and double-quoted relative imports are flagged.
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', note: 'fixture: true' });"), ['UNSAFE'], 'a string');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted' /* fixture: true, */ });"), ['UNSAFE'], 'a comment');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', rehearsal: true });"), ['UNSAFE'], 'rehearsal: true on runReviewer6');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', fixture: true && false });"), ['UNSAFE'], 'fixture: true && false');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'counted', opts: { fixture: true } });"), ['UNSAFE'], 'a nested fixture: true');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'rehearsals' });"), ['UNSAFE'], 'another mode');
+  assert.deepEqual(kinds("await runReviewer6({ mode: 'rehearsal', items });\nawait runReviewer6({ fixture: true });"), ['rehearsal', 'fixture']);
+  const issues = src => importIssues(src).map(i => i.issue);
+  assert.deepEqual(issues("import { runReviewer6 as go } from '../experiments/nina-changes/run_reviewer6.mjs';"), ['aliased runReviewer6']);
+  assert.deepEqual(issues("const { reviewerRun6: go } = mod;"), ['aliased reviewerRun6']);
+  assert.deepEqual(issues('import { x } from "./helper.mjs";'), ['a double-quoted relative import']);
+  assert.deepEqual(issues("import { runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs'; // runReviewer6 as x"), []);
 });
 
 test('refute r6 B1: the runner refuses a paid run under the Node test runner (defence in depth)', async () => {

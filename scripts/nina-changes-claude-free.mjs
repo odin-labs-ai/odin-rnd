@@ -60,9 +60,22 @@ function closing(code, open) {
   return code.length;
 }
 
+/** Offsets in `args` (code-only text of one call's parens) where `re` matches at the call's first object level. */
+function topLevel(args, re) {
+  const depthAt = [];
+  let depth = 0;
+  for (let i = 0; i < args.length; i += 1) { if ('([{'.includes(args[i])) depth += 1; depthAt.push(depth); if (')]}'.includes(args[i])) depth -= 1; }
+  return [...args.matchAll(re)].filter(m => depthAt[m.index] === 2).map(m => m.index);
+}
+
 /**
- * Every runner call site in `src`, classified: 'fixture' (fixture: true), 'rehearsal' (mode 'rehearsal' or
- * rehearsal: true), 'claude-free' (inside a claudeFree(...) call and spreading its options), or 'UNSAFE'.
+ * Every runner call site in `src`, classified from the call's code only (comments and string contents blanked, so a
+ * string or comment saying "fixture: true" does not count; refute r7):
+ *   'fixture'     the property fixture: true, exactly, followed by , or } at the first object level;
+ *   'rehearsal'   mode: 'rehearsal' there (either runner call), or rehearsal: true (reviewerRun6 only: runReviewer6
+ *                 takes the mode);
+ *   'claude-free' inside a claudeFree(...) call and spreading its options (...free);
+ *   'UNSAFE'      anything else.
  */
 export function paidCallSites(src, file = '<source>') {
   const code = codeOnly(src);
@@ -72,15 +85,30 @@ export function paidCallSites(src, file = '<source>') {
   for (const m of code.matchAll(RUNNER_CALL)) {
     const open = m.index + m[0].length - 1;
     if (/function\s*$|async\s+function\s*$/.test(code.slice(Math.max(0, m.index - 20), m.index))) continue; // a definition
-    const args = src.slice(open, closing(code, open));
+    const end = closing(code, open);
+    const args = code.slice(open, end), raw = src.slice(open, end);
     const line = src.slice(0, m.index).split('\n').length;
+    const fixture = topLevel(args, /\bfixture:\s*true\s*[,}]/g).length > 0;
+    // The mode literal's quotes survive in the code-only text and its contents sit at the same offsets in the source.
+    const modeRehearsal = topLevel(args, /\bmode:\s*(['"])\s*\1?/g).some(i => /^mode:\s*(['"])rehearsal\1\s*[,}]/.test(raw.slice(i)));
+    const rehearsalFlag = m[1] === 'reviewerRun6' && topLevel(args, /\brehearsal:\s*true\s*[,}]/g).length > 0;
     let kind = 'UNSAFE';
-    if (/\bfixture:\s*true\b/.test(args)) kind = 'fixture';
-    else if (/\bmode:\s*'rehearsal'|\brehearsal:\s*true\b/.test(args)) kind = 'rehearsal';
-    else if (/\.\.\.free\b/.test(args) && wrappers.some(([a, b]) => a < m.index && m.index < b)) kind = 'claude-free';
+    if (fixture) kind = 'fixture';
+    else if (modeRehearsal || rehearsalFlag) kind = 'rehearsal';
+    else if (topLevel(args, /\.\.\.free\s*[,}]/g).length && wrappers.some(([a, b]) => a < m.index && m.index < b)) kind = 'claude-free';
     sites.push({ file, line, fn: m[1], kind });
   }
   return sites;
+}
+
+/** Imports the scan could not attribute or follow: an aliased runner name, a double-quoted relative import. */
+export function importIssues(src, file = '<source>') {
+  const code = codeOnly(src);
+  const issues = [];
+  const at = i => src.slice(0, i).split('\n').length;
+  for (const m of code.matchAll(/\b(runReviewer6|reviewerRun6)\s+as\s+\w+|\b(runReviewer6|reviewerRun6)\s*:\s*[A-Za-z_$]/g)) issues.push({ file, line: at(m.index), issue: `aliased ${m[1] ?? m[2]}` });
+  for (const m of src.matchAll(/\bfrom\s+"\.{1,2}\//g)) if (code.startsWith('from', m.index)) issues.push({ file, line: at(m.index), issue: 'a double-quoted relative import' });
+  return issues;
 }
 
 /** The test files and the local helper modules they import (transitively, under scripts/). */
@@ -89,8 +117,9 @@ export function testSources(files) {
   const visit = f => {
     if (seen.has(f)) return;
     seen.add(f);
-    const src = readFileSync(f, 'utf8');
-    for (const m of src.matchAll(/from '(\.\/[^']+\.mjs)'/g)) visit(resolve(dirname(f), m[1]));
+    const src = readFileSync(f, 'utf8'), code = codeOnly(src);
+    // Only an import in code (not one quoted inside a string or a comment); either quote style.
+    for (const m of src.matchAll(/\bfrom\s+(['"])(\.\.?\/[^'"]+\.mjs)\1/g)) if (code.startsWith('from', m.index)) visit(resolve(dirname(f), m[2]));
   };
   for (const f of files) visit(resolve(f));
   return [...seen].filter(f => f.includes(`${join('scripts', '')}`));
