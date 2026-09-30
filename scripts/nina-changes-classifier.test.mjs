@@ -213,3 +213,17 @@ test('D2: the LIVE long-form status (C11) yields exactly its "Untracked files:" 
   assert.equal(classifyDiffSeen({ calls: [bash('git status && git diff', longForm), read], fp: pfp }).rule, 'b');
   assert.equal(classifyDiffSeen({ calls: [bash('git status && git diff', live.statusLong.output), read], fp: pfp }).seen, false, 'the live output names other untracked paths only');
 });
+
+test('N2: the known false-BLIND forms are pinned BLIND (documented behaviour, not a silent gap)', () => {
+  const d = view('c004').diff, esc = String.fromCharCode(27);
+  const forms = {
+    'git diff --color=always': d.split('\n').map(l => (/^[+-]/.test(l) ? `${esc}[3${l[0] === '+' ? 2 : 1}m${l}${esc}[m` : l)).join('\n'),
+    'git diff --word-diff': d.split('\n').map(l => (l.startsWith('+') && !l.startsWith('+++') ? `{+${l.slice(1)}+}` : l.startsWith('-') && !l.startsWith('---') ? `[-${l.slice(1)}-]` : l)).join('\n'),
+    'git diff -R': d.split('\n').map(l => (l.startsWith('+') && !l.startsWith('+++') ? `-${l.slice(1)}` : l.startsWith('-') && !l.startsWith('---') ? `+${l.slice(1)}` : l)).join('\n'),
+  };
+  for (const [command, output] of Object.entries(forms)) assert.equal(classifyDiffSeen({ calls: [bash(command, output)], fp: fp.items.c004 }).seen, false, command);
+  // Untracked entries in forms rule (b) does not read: porcelain v2, NUL-separated -z, long-form from a subdirectory.
+  for (const [command, output] of [['git status --porcelain=v2', '? src/jobs/\n'], ['git status --short -z', '?? src/jobs/\0'], ['git status (from test/)', 'On branch main\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n\t../src/jobs/\n\n']]) {
+    assert.equal(classifyDiffSeen({ calls: [bash(command, output), readAdded('c013', 'src/jobs/purge-orders.ts')], fp: fp.items.c013 }).seen, false, command);
+  }
+});

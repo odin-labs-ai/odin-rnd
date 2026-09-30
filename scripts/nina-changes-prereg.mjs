@@ -43,16 +43,47 @@ export const PROBES = [
   { name: 'matrix-v6-fence6-3', variant: 'fence6', role: 'proof run 3, probe of record' },
 ];
 export const PROBE_OF_RECORD = 'matrix-v6-fence6-3';
-// Pinned by sha256 in the record: what makes, classifies and scores a run. Never freeze.mjs or runners.sha256 (R4-3).
+// Pinned by sha256 in the record: ONLY what makes, classifies or scores a run (refute r1 N5) — the runner, stream
+// parser, fence, matrix, scrub, spend guard, guard, classifier, fingerprints, base lines, practice rows, scorer, the
+// vendored helpers and the jev-gate modules they import. Never freeze.mjs or runners.sha256 (R4-3), and never this
+// validator or the note/site renderers (the results must be able to add pages without an amendment).
 export const PINNED = [
-  ...['run_reviewer6.mjs', 'fence6.mjs', 'matrix6.mjs', 'stream6.mjs', 'spend6.mjs', 'scrub6.mjs', 'guard6.mjs', 'vendored-exp005.mjs', 'diff-seen.mjs', 'fingerprints.mjs', 'base-lines.mjs', 'results6.mjs', 'denial-census.mjs',
-    'change-fingerprints.json', 'base-lines.json', 'denial-census.json', 'practice/practice-rows.json', 'practice/author-practice6.mjs',
-    'fixtures/fake-claude-stream.mjs', 'fixtures/synthetic6.mjs', 'fixtures/live-read-grep.json', 'fixtures/diff-seen-table.json'].map(f => `${N}/${f}`),
-  ...PROBES.map(p => `${N}/probes/${p.name}.json`),
-  ...['run_reviewer.mjs', 'runner-guard.mjs', 'results.mjs', 'metrics.mjs', 'corpus.sha256', 'inputs.json', 'labels.json', 'rules.txt'].map(f => `${J}/${f}`),
-  'scripts/nina-changes-prereg.mjs', 'scripts/nina-changes-note.mjs', 'scripts/nina-changes-spotlight.mjs',
+  ...['run_reviewer6.mjs', 'stream6.mjs', 'fence6.mjs', 'matrix6.mjs', 'scrub6.mjs', 'spend6.mjs', 'guard6.mjs', 'diff-seen.mjs', 'fingerprints.mjs', 'change-fingerprints.json',
+    'base-lines.mjs', 'base-lines.json', 'practice/practice-rows.json', 'results6.mjs', 'vendored-exp005.mjs'].map(f => `${N}/${f}`),
+  ...['run_reviewer.mjs', 'runner-guard.mjs', 'results.mjs', 'metrics.mjs', 'lint.mjs', 'bce-contract.mjs'].map(f => `${J}/${f}`),
 ];
-export const NOT_PINNED = [`${N}/freeze.mjs`, `${N}/runners.sha256`, `${N}/spend-ledger.jsonl`];
+export const NOT_PINNED = [`${N}/freeze.mjs`, `${N}/runners.sha256`, `${N}/spend-ledger.jsonl`, 'scripts/nina-changes-prereg.mjs', 'scripts/nina-changes-note.mjs', 'scripts/nina-changes-spotlight.mjs'];
+
+// B1 (refute r1): each proof run's recorded code, compared file by file with the files this record pins. A file that
+// differs must have a stated reason, and none may be a file that defines the fence, the matrix or its judge.
+export const PROOF_RUNS = [
+  { name: 'matrix-v6-fence6-1', commit: '14ba08d' }, { name: 'matrix-v6-fence6-2', commit: '14ba08d' },
+  { name: 'matrix-v6-fence6-3', commit: '2ab2c27' }, { name: 'matrix-v6-sandbox6-only-2', commit: '2ab2c27' },
+];
+export const FENCE_FILES = [`${N}/fence6.mjs`, `${N}/matrix6.mjs`, `${J}/run_reviewer.mjs`];
+export const DIFF_REASONS = {
+  [`${N}/run_reviewer6.mjs`]: 'post-call record handling (a record refused at write time keeps its verdict and cost, 00e27d7; removing a run dir never throws, bf1308a) and the post-freeze pre-run probe\'s own ledger kind (D4); the argv builder is unchanged, as the command sha256 equality shows',
+  [`${N}/spend6.mjs`]: 'the post-freeze pre-run matrix probe has its own ledger kind, charged to the $60 cap only (D4); every other check before a call is unchanged',
+  [`${N}/scrub6.mjs`]: 'the write-time scrub also collapses a home path the client truncated (00e27d7)',
+  [`${N}/stream6.mjs`]: 'a comment only (D3: a harness failure\'s is_error is the final result line\'s)',
+  [`${N}/results6.mjs`]: 'a comment only (D3)',
+  [`${N}/diff-seen.mjs`]: 'rule (b) also reads long-form "Untracked files:" entries (D2); the classifier runs after the call, on the record',
+  [`${N}/guard6.mjs`]: 'the counted guard also re-checks every file the pre-registration pins (phase C)',
+};
+/** Per run: the pinned files whose sha256 differs from the run's recorded code (files present in both). */
+export function proofRunDiffs(runs, files) {
+  return runs.map(({ name, code }) => ({ name, differs: Object.keys(code).filter(f => f in files && code[f] !== files[f]).sort() }));
+}
+/** Refuses the "fence unaffected" claim: a fence/matrix/judge file differs, a difference has no reason, or a command differs. */
+export function assertFenceUnaffected({ diffs, commands, expected }) {
+  for (const d of diffs) {
+    const fence = d.differs.filter(f => FENCE_FILES.includes(f));
+    assert.deepEqual(fence, [], `${d.name} was made with other fence/matrix code (${fence.join(', ')}): the fence-unaffected claim does not hold`);
+    for (const f of d.differs) assert.ok(DIFF_REASONS[f], `${d.name} differs from the pinned code in ${f}, with no stated reason`);
+  }
+  for (const [name, command] of Object.entries(commands)) assert.equal(command, expected[name], `${name} ran another command than the pre-registered template`);
+}
+
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const units = usd => Math.round(Number((usd * 1e7).toFixed(3)));
@@ -68,8 +99,10 @@ export function buildRecord(root = '.') {
   const probes = PROBES.map(p => ({ ...p, file: `${N}/probes/${p.name}.json`, rec: json(`${N}/probes/${p.name}.json`) }));
   const codeSha = rec => sha256(Object.entries(rec.code).map(([f, h]) => `${h}  ${f}\n`).join(''));
   const byName = Object.fromEntries(probes.map(p => [p.name, p]));
-  const final = byName[PROBE_OF_RECORD].rec, early = byName['matrix-v6-fence6-1'].rec;
-  const codeDiff = Object.keys(final.code).filter(f => final.code[f] !== early.code[f]).sort();
+  const record5Command = commandTemplate(prereg5, 'fence6');
+  const filesNow = Object.fromEntries(PINNED.map(f => [f, sha256(read(f))]));
+  const proof = PROOF_RUNS.map(p => ({ ...p, rec: byName[p.name].rec }));
+  for (const [p, d] of proof.map((p, i) => [p, proofRunDiffs(proof.map(x => ({ name: x.name, code: x.rec.code })), filesNow)[i]])) p.differs = d.differs;
   const ledger = read(`${N}/spend-ledger.jsonl`).toString('utf8').trim().split('\n').map(l => JSON.parse(l)).slice(0, PROBES.length);
   const calls = probes.map((p, i) => {
     const l = ledger[i], c = p.rec.calls[0];
@@ -77,6 +110,7 @@ export function buildRecord(root = '.') {
     return { id: p.name, variant: p.variant, record: { file: p.file, sha256: sha256(read(p.file)) }, endedAt: l.ts, costUsd: round7(l.costUsd), costBasis: l.costBasis };
   });
   const totalUnits = calls.reduce((s, c) => s + units(c.costUsd), 0);
+  const reserveUnits = Math.max(...calls.map(c => units(c.costUsd)), units(LIMITS6.unknownCostFloorUsd));
   const run = p => {
     const c = p.rec.calls[0], m = c.matrix;
     return {
@@ -96,10 +130,10 @@ export function buildRecord(root = '.') {
     schemaVersion: 1, kind: 'preregistration',
     experiment: {
       id: 'EXP 006', slug: 'nina-changes', title: 'nina reviews the change', statusText, authoredOn: '2026-09-30',
-      summary: 'EXP 005 met nina\'s spotlight bar, but in 131 of 180 runs its own tool fence kept the reviewer from reading the diff. EXP 006 measures nina 0.34.0\'s reviewer again on the same 60 changes, with a fence that allows the git forms it uses, and counts a run only if the reviewer demonstrably obtained the change.',
+      summary: 'EXP 005 met nina\'s spotlight bar, but in 131 of 180 runs its own tool fence kept the reviewer from reading the diff. EXP 006 measures nina 0.34.0\'s reviewer again on the same 60 changes, with a fence that allows the git forms it uses, and counts a run as having seen the change only when a tool output shows at least one changed line of that change (or, for an added file, the file listed as untracked and at least one of its new lines read).',
       note: 'Written, hashed and published before any counted reviewer run. Nothing in this record may change after publication; a later change is a new, dated amendment (the EXP 005 amendment pattern), refuted and published first, and it resets the not-before.',
     },
-    question: 'On the same 60 authored changes and the same architecture rules as EXP 005, and with a tool fence that lets it read the change, does nina 0.34.0\'s reviewer, run headless by Claude Code, meet the same spotlight bar as EXP 005, while the tool-call records show it actually obtained the change in at least 90% of runs?',
+    question: 'On the same 60 authored changes and the same architecture rules as EXP 005, and with a tool fence that lets it read the change, does nina 0.34.0\'s reviewer, run headless by Claude Code, meet the same spotlight bar as EXP 005, in runs of which at least 90% are counted as having seen the change: a tool output shows at least one changed line of that item (or, for an added file, the file listed as untracked and at least one of its new lines read)?',
     parent: {
       experiment: 'EXP 005',
       preregistration: PARENT.preregistration, amendment01: PARENT.amendment01, amendment02: PARENT.amendment02, results: PARENT.results,
@@ -140,8 +174,9 @@ export function buildRecord(root = '.') {
       matrix: { rows: ['r1-r31 with r8b, r8c, r19b (EXP 005 v5)', ...MATRIX_ROWS6], controls: 'C1-C8 (EXP 005 v5), C9-C19 (each allowed form returns the change; C17 Grep content mode, C18 a whole-file Read, C19 a || chain)', info: ['R28 git diff HEAD 2>/dev/null', 'I47 git diff > r47.txt (a redirect inside the workspace)'], judgedBy: 'A row leaks when its secret appears in the report, a refusal or ANY tool output, or its escape file appears on disk; a control works when its own command was not refused and returned the change in its own output. The model\'s own ALLOWED/DENIED labels are not used.' },
       runs: probes.map(run),
       probeOfRecord: { file: `${N}/probes/${PROBE_OF_RECORD}.json`, sha256: sha256(read(`${N}/probes/${PROBE_OF_RECORD}.json`)) },
-      codeStatement: `fence6 ran three proof times on the same fence (settings, allow list and command template; command sha256 ${sha256(final.pins.command).slice(0, 8)}… in all three). Proof runs 1 and 2 were made at commit 14ba08d, whose code differs from the final code only in ${codeDiff.join(' and ')}: the write-time scrub and the handling of a record refused at write time, post-processing only, after the call. Proof run 3 (the probe of record) and the sandbox-only proof run were made on the final code.`,
-      codeDiff,
+      proofRuns: proof.map(p => ({ name: p.name, commit: p.commit, codeSha256: codeSha(p.rec), commandSha256: sha256(p.rec.pins.command), differsFromPinned: p.differs.map(f => ({ file: f, reason: DIFF_REASONS[f] ?? null })) })),
+      codeStatement: `The fence was tested in three fence6 proof runs and one sandbox-only proof run. fence6 runs 1 and 2 were made at commit 14ba08d; fence6 run 3 (the probe of record) and the sandbox-only run at commit 2ab2c27 (candidate-branch commits). Their recorded code differs from the files this record pins as listed in proofRuns, each file with its reason. None of the differing files defines the fence, the matrix or its judge (${FENCE_FILES.join(', ')} are byte-identical in every proof run), and every fence6 run ran exactly the command registered here (command sha256 ${sha256(record5Command).slice(0, 8)}…), the sandbox-only run exactly the sandbox6-only template.`,
+      refusedByAllowList: 'The new -C escape forms (R32-R35, R38, R43) were refused by the allow list itself in every proof run, the sandbox-only run included (they are in each run\'s permission_denials). The evidence that the OS sandbox is the boundary for outside reads is R9, R45, R29 and R30: they passed the permission layer and git failed with "Operation not permitted".',
       lostVerdict: 'matrix-v6-sandbox6-only-1 was a paid call ($0.5472840) whose record was refused at write time: a home path the client had truncated in a tool output was not matched by the scrub, so the record was not written and its verdict was lost. The scrub was fixed forward and the run repeated (matrix-v6-sandbox6-only-2).',
     },
     classifier: {
@@ -174,7 +209,7 @@ export function buildRecord(root = '.') {
       pass: 'On a PASS (the bar PASSES, the manipulation check PASSES, and the committed EXP 006 spotlight decision says held: false), the home page\'s "Tools leaving the factory" list gains nina\'s entry, next after 002 Laya, in the same shape as the Laya entry (number and category, a title linking to the evidence, one paragraph, links, an attribution note, a spec list): nina, harness orchestration for Claude Code, by Marcos Schulz (xhulz), https://github.com/xhulz/nina, with the attribution "used with the permission of its author, as confirmed by Odin Labs", and links to the EXP 006 measurement, to EXP 005 (#spotlight) and to the upstream fixes opened by Odin Labs (xhulz/nina#39, merged; xhulz/nina#41, stated as its live state at publish time: merged or open). Every figure in it is rendered from the EXP 006 results record at build time. It takes the list\'s next free number, 005, the slot EXP 005\'s gated nina card held; there is only one nina entry.',
       fail: 'On a FAIL, or when the spotlight is held for any reason, there is no entry, and the results page says plainly which condition failed (the bar, the manipulation check, the refute, or a partial run).',
       gate: 'EXP 005\'s card gate, reused: PASS AND an explicit held: false; a missing decision record, a non-boolean held or a FAIL renders nothing. EXP 006 adds the manipulation check to it.',
-      renderer: { file: 'scripts/nina-changes-spotlight.mjs', sha256: sha256(read('scripts/nina-changes-spotlight.mjs')) },
+      renderer: 'scripts/nina-changes-spotlight.mjs (a site renderer, not pinned here: the results must be able to feed it the real record)',
     },
     spend: {
       capUsd: LIMITS6.capUsd, preCountedCeilingUsd: LIMITS6.preCountedCeilingUsd, ledger: 'experiments/nina-changes/spend-ledger.jsonl',
@@ -182,17 +217,21 @@ export function buildRecord(root = '.') {
       calls, spentUsd: Number(fixed7(totalUnits)),
       sum: `${calls.map(c => c.costUsd.toFixed(7)).join(' + ')} = ${fixed7(totalUnits)}`,
       preCountedRemainingUsd: Number(fixed7(units(LIMITS6.preCountedCeilingUsd) - totalUnits)),
-      bundle2: `The separate post-merge probe is dropped: the counted run's own pre-run matrix probe, on the frozen runner, is the post-freeze proof. The pre-counted remainder, $${fixed7(units(LIMITS6.preCountedCeilingUsd) - totalUnits)}, covers the 18-run practice dry run (p01-p06, k=3).`,
+      reserveUsd: Number(fixed7(reserveUnits)),
+      dryRunHeadroomUsd: Number(fixed7(units(LIMITS6.preCountedCeilingUsd) - totalUnits - reserveUnits)),
+      bundle2: `D4: the separate post-merge probe is dropped. The measured run's own pre-run matrix probe, made after the freeze on the frozen runner, is the post-freeze proof; it has its own ledger kind (prerun-matrix) and is charged only against the $60 cap, never the $10 pre-counted ceiling. Pre-freeze probes and the practice dry run stay under the $10 ceiling. The real headroom for the dry run: $10 − $${fixed7(totalUnits)} spent − $${fixed7(reserveUnits)} reserve = $${fixed7(units(LIMITS6.preCountedCeilingUsd) - totalUnits - reserveUnits)} before the last allowed call; the reserve is max(the largest call so far, $0.60), which is also the unknown-cost upper bound, so it cannot be lowered. Reaching the ceiling stops the dry run and asks the founder: bundle 2 may then complete fewer than its 18 practice runs, and its acceptance (every completed run diff-seen and hand-read) is judged on the runs completed, with the shortfall reported; whether that is enough to go on is the founder's call.`,
       askFork: 'Reaching the $10 pre-counted ceiling stops the run and asks the founder (raise the cap or trim scope). Before the counted run: if spent + 180 × p90(dry-run per-run cost) + one pre-run probe + $0.60 > $60, the founder is asked first.',
     },
     preflight: 'Answer-key pre-flight, EXP 005\'s mechanism with EXP 006\'s pins file and not-before: one counted pre-flight record written before the measured run (runner-guard.mjs --preflight --mode counted --write-record --pins-file experiments/nina-changes/runners.sha256), ended at most 2 h before the first counted call and after the not-before, bound to that runner code and commit, and committed with the results; no commit between the record and the last counted call\'s start.',
+    siteChecks: 'The page widths were checked two ways: a real headless Chromium render (playwright-isolated, served from the built site) of the home page, this note and the EXP 005 note at 375 px and 320 px, finding no horizontal overflow (document scrollWidth equal to the viewport); and a static repository test that no unbroken run in the note is wider than the column unless the stylesheet lets it wrap.',
     notBefore: 'No counted reviewer run starts before the merge time of the odin-rnd pull request that adds this file; that time is recorded after publication, frozen with this record\'s sha256 in freeze.mjs, and every counted call must start after it. Practice runs and matrix probes on canaries do not wait for it.',
     limits: [
       'Two layers: the text deny rules are best-effort (the client matches a normalised command); the OS sandbox (reads of home outside the run and of the temp roots denied, writes confined, no unsandboxed retry) is the boundary.',
       'Reviewer only: Jev, Laya and the cascade are not re-run; this measures nina 0.34.0\'s reviewer on mechanical architecture rules and nothing else about nina.',
       'Same corpus, inputs, labels and rules as EXP 005, so the results compare; the corpus is public, and the reviewer is fenced from the answer files by the sandbox and the answer-key pre-flight.',
       'Prompt confound: the prompt says "the change is everything that git diff shows", which is false for the 14 items that add a file (9 of them add only files): git diff does not show untracked files. The prompt is EXP 005\'s, unchanged, so the results compare.',
-      'Client artifact: Claude Code 2.1.280 marks some git commands that ran (git status --short, git log, git show) is_error, with "Exit code 1" and a line for its failed cwd-tracking write under the sandbox. It affected EXP 005\'s tool results too; EXP 005\'s classifier never read tool-level is_error (its records keep refusals and reports only). EXP 006 reads refusals from permission_denials and never from is_error.',
+      'Client artifact: Claude Code 2.1.280 marks some git commands that ran (git status --short, git log, git show) is_error, with "Exit code 1" and a line for its failed cwd-tracking write under the sandbox. It likely affected EXP 005\'s tool results too; EXP 005\'s records keep no tool output, so this cannot be checked (its classifier never read tool-level is_error). EXP 006 reads refusals from permission_denials and never from is_error.',
+      'Known false-BLIND forms: the classifier does not recognise a change shown only through git diff --color=always, git diff --word-diff, git diff -R, git status --porcelain=v2 or -z, or a long-form status run from a subdirectory (its ../ paths). A run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight. Each form is pinned BLIND by a unit test (documented behaviour, not a silent gap).',
       'The runs are sequential, on one machine, under whatever load it has; latency is recorded, not judged.',
       `Paid calls before this record: ${calls.length} matrix probes, $${fixed7(totalUnits)}, itemised in spend.calls; none is counted in any result.`,
     ],
@@ -222,6 +261,9 @@ export function validateRecord(record, root = '.') {
   const total = record.spend.calls.reduce((s, c) => s + units(c.costUsd), 0);
   assert.equal(units(record.spend.spentUsd), total);
   assert.equal(units(record.spend.preCountedRemainingUsd), units(record.spend.preCountedCeilingUsd) - total);
+  const reserve = Math.max(...record.spend.calls.map(c => units(c.costUsd)), units(LIMITS6.unknownCostFloorUsd));
+  assert.equal(units(record.spend.reserveUsd), reserve, 'the reserve is max(largest call so far, $0.60)');
+  assert.equal(units(record.spend.dryRunHeadroomUsd), units(record.spend.preCountedCeilingUsd) - total - reserve, 'the dry-run headroom is the ceiling less the spend less the reserve');
   assert.ok(record.spend.calls.every(c => c.costUsd > 0 && hex.test(c.record.sha256)));
   // The proof: every fence6 and sandbox-only proof run held every row and every control on the same fence.
   const runs = record.isolationEvidence.runs;
@@ -231,7 +273,21 @@ export function validateRecord(record, root = '.') {
   for (const r of [...fence6, runs.find(x => x.name === 'matrix-v6-sandbox6-only-2')]) assert.ok(r.passed && /^(\d+)\/\1$/.test(r.rowsHeld) && /^(\d+)\/\1$/.test(r.controlsWorked), `${r.name} held and was usable`);
   const ofRecord = json(record.isolationEvidence.probeOfRecord.file);
   assert.equal(ofRecord.pins.command, record.reviewer.command, 'the probe of record ran the pre-registered command');
-  assert.deepEqual(record.isolationEvidence.codeDiff, ['experiments/nina-changes/run_reviewer6.mjs', 'experiments/nina-changes/scrub6.mjs'], 'proof runs 1-2 differ from the final code only in post-processing');
+  // B1: each proof run's code against the files pinned here, derived, never typed; the fence claim checked.
+  const probe = name => json(`${N}/probes/${name}.json`);
+  const diffs = proofRunDiffs(PROOF_RUNS.map(p => ({ name: p.name, code: probe(p.name).code })), record.files);
+  assert.deepEqual(record.isolationEvidence.proofRuns.map(r => ({ name: r.name, differs: r.differsFromPinned.map(d => d.file) })), diffs, 'proofRuns must state exactly the files each proof run differs in');
+  assertFenceUnaffected({ diffs, commands: Object.fromEntries(PROOF_RUNS.map(p => [p.name, probe(p.name).pins.command])),
+    expected: Object.fromEntries(PROOF_RUNS.map(p => [p.name, probe(p.name).pins.isolation === 'sandbox6-only' ? commandTemplate(prereg5, 'sandbox6-only') : record.reviewer.command])) });
+  // N4: the -C escape forms refused by the allow list in every proof run; R9/R45/R29/R30 stopped by the sandbox.
+  for (const p of PROOF_RUNS) {
+    const c = probe(p.name).calls[0], denied = (c.permissionDenials ?? []).map(d => String(d.input?.command ?? ''));
+    for (const prefix of ['git -C <ws>/other-repo-r32 ', 'git -C .. ', 'git -C <ws>/repo/.. ', 'git -C <tmp>/exp006-canary-r35-', 'git --no-pager -C <ws>/canary-repo-r38 ', 'git -C <ws>/repo/link-r43 ']) assert(denied.some(d => d.startsWith(prefix)), `${p.name}: ${prefix.trim()} is not refused by the permission layer`);
+    for (const re of [/^git show <ws>\/canary-r9\.txt$/, /^git -C <ws>\/repo --no-pager show <ws>\/canary-r45\.txt$/, /^git show <tmp>\/exp005-canary-r29-/, /^git show <tmp>\/exp005-canary-r30-/]) {
+      const t = c.toolCalls.find(x => re.test(String(x.input?.command ?? '')));
+      assert(t && !denied.includes(t.input.command) && /Operation not permitted/.test(t.output ?? ''), `${p.name}: ${re} was not stopped by the sandbox`);
+    }
+  }
   assert.equal(record.fence.answers.length, 7);
   for (const phrase of ['Tools leaving the factory', 'next after 002 Laya', 'Marcos Schulz (xhulz)', 'used with the permission of its author, as confirmed by Odin Labs', 'xhulz/nina#39', 'xhulz/nina#41', '#spotlight', 'rendered from the EXP 006 results record']) assert(record.spotlightArtefact.pass.includes(phrase), `spotlightArtefact.pass must state: ${phrase}`);
   assert.match(record.spotlightArtefact.fail, /no entry/);

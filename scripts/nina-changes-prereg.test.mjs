@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { checkRecords } from '../experiments/jev-gate/runner-guard.mjs';
 import { commandTemplate } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { computeResults6 } from '../experiments/nina-changes/results6.mjs';
-import { buildRecord, checkRecord, NOT_PINNED, PARENT, pinPath, recordPath, units, validateRecord } from './nina-changes-prereg.mjs';
+import { assertFenceUnaffected, buildRecord, checkRecord, FENCE_FILES, NOT_PINNED, PARENT, PINNED, PROOF_RUNS, pinPath, proofRunDiffs, recordPath, units, validateRecord } from './nina-changes-prereg.mjs';
 import { addJournalRow, articlePath, assertNoteCurrent, exp005SpotlightHref, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { exp006NoteHref, renderHarnessSection, checkResults } from './jev-gate-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -60,7 +60,10 @@ test('the spend is itemised to the 7th decimal and the pre-counted remainder is 
   assert.equal(s.calls.length, 7);
   assert.equal(units(s.spentUsd), 40821826);
   assert.equal(units(s.preCountedRemainingUsd), 59178174);
-  assert.match(s.bundle2, /post-merge probe is dropped/);
+  assert.equal(units(s.reserveUsd), 6545558);
+  assert.equal(units(s.dryRunHeadroomUsd), 52632616, 'B2: $10 - $4.0821826 - $0.6545558 = $5.2632616');
+  assert.match(s.bundle2, /prerun-matrix/); assert.match(s.bundle2, /fewer than its 18 practice runs/);
+  assert.match(s.bundle2, /post-merge probe is dropped/i);
   for (const c of s.calls) assert.equal(sha256(readFileSync(c.record.file)), c.record.sha256);
   const bad = copy(); bad.spend.spentUsd = 4.1;
   assert.throws(() => validateRecord(bad));
@@ -69,8 +72,13 @@ test('the spend is itemised to the 7th decimal and the pre-counted remainder is 
 test('the fence proof: fence6 x3 on one command, the D1 statement, the lost-verdict run disclosed', () => {
   const iso = record.isolationEvidence;
   assert.equal(iso.probeOfRecord.file, 'experiments/nina-changes/probes/matrix-v6-fence6-3.json');
-  assert.deepEqual(iso.codeDiff, ['experiments/nina-changes/run_reviewer6.mjs', 'experiments/nina-changes/scrub6.mjs']);
-  assert.match(iso.codeStatement, /14ba08d/);
+  const N = 'experiments/nina-changes';
+  const early = ['diff-seen.mjs', 'guard6.mjs', 'results6.mjs', 'run_reviewer6.mjs', 'scrub6.mjs', 'spend6.mjs', 'stream6.mjs'].map(f => `${N}/${f}`);
+  const late = early.filter(f => !f.endsWith('scrub6.mjs'));
+  assert.deepEqual(iso.proofRuns.map(r => [r.name, r.commit, r.differsFromPinned.map(d => d.file)]), [['matrix-v6-fence6-1', '14ba08d', early], ['matrix-v6-fence6-2', '14ba08d', early], ['matrix-v6-fence6-3', '2ab2c27', late], ['matrix-v6-sandbox6-only-2', '2ab2c27', late]]);
+  assert.ok(iso.proofRuns.every(r => r.differsFromPinned.every(d => d.reason)), 'every difference has a reason');
+  assert.match(iso.codeStatement, /14ba08d/); assert.match(iso.codeStatement, /2ab2c27/);
+  assert.match(iso.refusedByAllowList, /R32-R35, R38, R43/);
   assert.match(iso.lostVerdict, /\$0\.5472840/);
   const fence6 = iso.runs.filter(r => r.variant === 'fence6' && !r.name.includes('discovery'));
   assert.deepEqual(fence6.map(r => [r.rowsHeld, r.controlsWorked]), [['48/48', '19/19'], ['48/48', '19/19'], ['48/48', '19/19']]);
@@ -126,4 +134,38 @@ test('the EXP 006 note cannot scroll sideways at 375px or 320px (long tokens wra
     const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
     assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);
   }
+});
+
+test('B1: the per-run diff is derived against the pinned files; an extra difference is reported, a fence change refuses', () => {
+  const runs = PROOF_RUNS.map(p => ({ name: p.name, code: JSON.parse(readFileSync(`experiments/nina-changes/probes/${p.name}.json`, 'utf8')).code }));
+  const diffs = proofRunDiffs(runs, record.files);
+  assert.deepEqual(diffs.map(d => d.differs), record.isolationEvidence.proofRuns.map(r => r.differsFromPinned.map(d => d.file)));
+  // A synthetic extra difference in a pinned file is reported, and refused while it has no reason.
+  const extra = structuredClone(runs); extra[3].code['experiments/nina-changes/base-lines.json'] = '0'.repeat(64);
+  const extraDiffs = proofRunDiffs(extra, record.files);
+  assert(extraDiffs[3].differs.includes('experiments/nina-changes/base-lines.json'));
+  const commands = Object.fromEntries(PROOF_RUNS.map(p => [p.name, 'c'])), expected = { ...commands };
+  assert.throws(() => assertFenceUnaffected({ diffs: extraDiffs, commands, expected }), /no stated reason/);
+  // A difference in a fence / matrix / judge file refuses the fence-unaffected claim.
+  for (const f of FENCE_FILES) {
+    const fence = structuredClone(runs); fence[0].code[f] = '0'.repeat(64);
+    assert.throws(() => assertFenceUnaffected({ diffs: proofRunDiffs(fence, record.files), commands, expected }), /fence-unaffected claim does not hold/);
+  }
+  // A proof run with another command refuses too.
+  assert.throws(() => assertFenceUnaffected({ diffs, commands: { ...commands, 'matrix-v6-fence6-3': 'other' }, expected }), /another command/);
+  assert.doesNotThrow(() => assertFenceUnaffected({ diffs, commands, expected }));
+});
+
+test('N5: the record pins exactly what makes, classifies or scores a run; never the validator or the site renderers', () => {
+  assert.deepEqual(Object.keys(record.files), PINNED);
+  for (const f of ['scripts/nina-changes-prereg.mjs', 'scripts/nina-changes-note.mjs', 'scripts/nina-changes-spotlight.mjs', 'experiments/nina-changes/freeze.mjs', 'experiments/nina-changes/runners.sha256']) assert(!(f in record.files), f);
+  assert.match(record.siteChecks, /headless Chromium/); assert.match(record.siteChecks, /static repository test/);
+});
+
+test('N1-N3: precise wording; the false-BLIND forms and the hedged is_error limit are stated', () => {
+  const text = JSON.stringify(record);
+  for (const phrase of ['demonstrably', 'actually obtained', 'proven on canaries', 'It affected EXP 005']) assert(!text.includes(phrase), phrase);
+  assert.match(record.question, /a tool output shows at least one changed line of that item/);
+  const limits = record.limits.join('\n');
+  for (const f of ['--color=always', '--word-diff', 'git diff -R', '--porcelain=v2', '-z', '../ paths', 'likely affected', 'cannot be checked']) assert(limits.includes(f), f);
 });

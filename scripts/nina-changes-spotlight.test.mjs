@@ -47,7 +47,7 @@ test('PASS with an explicit held:false renders nina\'s entry, every figure from 
   assert.equal(pass.spotlight.verdict, 'PASS'); assert.equal(pass.manipulation.state, 'PASS');
   const entry = renderNinaEntry(data(pass, open));
   assert.match(entry, /^<article class="project-row project-featured" id="project-nina"><div class="project-number">005<span>HARNESS<\/span><\/div>/);
-  for (const part of ['nina: harness orchestration for Claude Code', 'Marcos Schulz (xhulz)', 'github.com/xhulz/nina', `— ${attributionLine}.`, 'journal/nina-reviews-the-change.html#results', 'journal/jev-as-a-fast-gate.html#spotlight', 'xhulz/nina#39 (merged)', 'xhulz/nina#41 (open)', '0 of 90 runs missed drift', '0 of 90 runs falsely rejected', 'the same verdict on 60 of 60 changes', 'read the change in 180 of 180 runs', '02 OCT 2026', '<div class="project-links">', '<p class="project-note">', '<dl class="project-spec">']) assert(entry.includes(part), part);
+  for (const part of ['nina: harness orchestration for Claude Code', 'Marcos Schulz (xhulz)', 'github.com/xhulz/nina', `— ${attributionLine}.`, 'journal/nina-reviews-the-change.html#results', 'journal/jev-as-a-fast-gate.html#spotlight', 'xhulz/nina#39 (merged)', 'xhulz/nina#41 (open)', '0 of 90 runs missed drift', '0 of 90 runs falsely rejected', 'the same verdict on 60 of 60 changes', 'in 180 of 180 runs a tool output showed it at least one line of the change', '02 OCT 2026', '<div class="project-links">', '<p class="project-note">', '<dl class="project-spec">']) assert(entry.includes(part), part);
   assert.equal(attributionLine, 'used with the permission of its author, as confirmed by Odin Labs');
   // A figure changed in the record changes the entry: nothing is typed in the renderer.
   const blind5 = passingResults({ blindRuns: 5 });
@@ -84,9 +84,9 @@ test('the live site renders no nina entry: no EXP 006 results exist yet (fresh b
   assert(!page.includes(`id="${entryId}"`) && !page.includes('HARNESS</span>'));
 });
 
-test('the pre-registration states what a PASS and a FAIL publish, and pins the renderer', () => {
+test('the pre-registration states what a PASS and a FAIL publish, and names the (unpinned) renderer', () => {
   assert.match(prereg6.spotlightArtefact.pass, /Tools leaving the factory/);
   assert.match(prereg6.spotlightArtefact.fail, /no entry/);
-  assert.equal(prereg6.spotlightArtefact.renderer.file, 'scripts/nina-changes-spotlight.mjs');
-  assert.ok('scripts/nina-changes-spotlight.mjs' in prereg6.files);
+  assert.match(prereg6.spotlightArtefact.renderer, /^scripts\/nina-changes-spotlight\.mjs/);
+  assert.ok(!('scripts/nina-changes-spotlight.mjs' in prereg6.files), 'a site renderer is not pinned (N5)');
 });

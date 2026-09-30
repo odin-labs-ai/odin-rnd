@@ -7,10 +7,10 @@
     "title": "nina reviews the change",
     "statusText": "Pre-registered — not yet run",
     "authoredOn": "2026-09-30",
-    "summary": "EXP 005 met nina's spotlight bar, but in 131 of 180 runs its own tool fence kept the reviewer from reading the diff. EXP 006 measures nina 0.34.0's reviewer again on the same 60 changes, with a fence that allows the git forms it uses, and counts a run only if the reviewer demonstrably obtained the change.",
+    "summary": "EXP 005 met nina's spotlight bar, but in 131 of 180 runs its own tool fence kept the reviewer from reading the diff. EXP 006 measures nina 0.34.0's reviewer again on the same 60 changes, with a fence that allows the git forms it uses, and counts a run as having seen the change only when a tool output shows at least one changed line of that change (or, for an added file, the file listed as untracked and at least one of its new lines read).",
     "note": "Written, hashed and published before any counted reviewer run. Nothing in this record may change after publication; a later change is a new, dated amendment (the EXP 005 amendment pattern), refuted and published first, and it resets the not-before."
   },
-  "question": "On the same 60 authored changes and the same architecture rules as EXP 005, and with a tool fence that lets it read the change, does nina 0.34.0's reviewer, run headless by Claude Code, meet the same spotlight bar as EXP 005, while the tool-call records show it actually obtained the change in at least 90% of runs?",
+  "question": "On the same 60 authored changes and the same architecture rules as EXP 005, and with a tool fence that lets it read the change, does nina 0.34.0's reviewer, run headless by Claude Code, meet the same spotlight bar as EXP 005, in runs of which at least 90% are counted as having seen the change: a tool output shows at least one changed line of that item (or, for an added file, the file listed as untracked and at least one of its new lines read)?",
   "parent": {
     "experiment": "EXP 005",
     "preregistration": {
@@ -398,11 +398,146 @@
       "file": "experiments/nina-changes/probes/matrix-v6-fence6-3.json",
       "sha256": "04861e1b0cfd63edc50d009df94060d071b866ebc78c0f642f432f775743af0c"
     },
-    "codeStatement": "fence6 ran three proof times on the same fence (settings, allow list and command template; command sha256 ea845d19… in all three). Proof runs 1 and 2 were made at commit 14ba08d, whose code differs from the final code only in experiments/nina-changes/run_reviewer6.mjs and experiments/nina-changes/scrub6.mjs: the write-time scrub and the handling of a record refused at write time, post-processing only, after the call. Proof run 3 (the probe of record) and the sandbox-only proof run were made on the final code.",
-    "codeDiff": [
-      "experiments/nina-changes/run_reviewer6.mjs",
-      "experiments/nina-changes/scrub6.mjs"
+    "proofRuns": [
+      {
+        "name": "matrix-v6-fence6-1",
+        "commit": "14ba08d",
+        "codeSha256": "3abf1c7ea80e6caf79c7e2dd4d8bf4bf55f953b7fb4cf06d2f759725ce4c1ea0",
+        "commandSha256": "ea845d1955f2a7ca6dcbaf4fc68c6bc32a6da5442fe99fb24c4bce697045d986",
+        "differsFromPinned": [
+          {
+            "file": "experiments/nina-changes/diff-seen.mjs",
+            "reason": "rule (b) also reads long-form \"Untracked files:\" entries (D2); the classifier runs after the call, on the record"
+          },
+          {
+            "file": "experiments/nina-changes/guard6.mjs",
+            "reason": "the counted guard also re-checks every file the pre-registration pins (phase C)"
+          },
+          {
+            "file": "experiments/nina-changes/results6.mjs",
+            "reason": "a comment only (D3)"
+          },
+          {
+            "file": "experiments/nina-changes/run_reviewer6.mjs",
+            "reason": "post-call record handling (a record refused at write time keeps its verdict and cost, 00e27d7; removing a run dir never throws, bf1308a) and the post-freeze pre-run probe's own ledger kind (D4); the argv builder is unchanged, as the command sha256 equality shows"
+          },
+          {
+            "file": "experiments/nina-changes/scrub6.mjs",
+            "reason": "the write-time scrub also collapses a home path the client truncated (00e27d7)"
+          },
+          {
+            "file": "experiments/nina-changes/spend6.mjs",
+            "reason": "the post-freeze pre-run matrix probe has its own ledger kind, charged to the $60 cap only (D4); every other check before a call is unchanged"
+          },
+          {
+            "file": "experiments/nina-changes/stream6.mjs",
+            "reason": "a comment only (D3: a harness failure's is_error is the final result line's)"
+          }
+        ]
+      },
+      {
+        "name": "matrix-v6-fence6-2",
+        "commit": "14ba08d",
+        "codeSha256": "3abf1c7ea80e6caf79c7e2dd4d8bf4bf55f953b7fb4cf06d2f759725ce4c1ea0",
+        "commandSha256": "ea845d1955f2a7ca6dcbaf4fc68c6bc32a6da5442fe99fb24c4bce697045d986",
+        "differsFromPinned": [
+          {
+            "file": "experiments/nina-changes/diff-seen.mjs",
+            "reason": "rule (b) also reads long-form \"Untracked files:\" entries (D2); the classifier runs after the call, on the record"
+          },
+          {
+            "file": "experiments/nina-changes/guard6.mjs",
+            "reason": "the counted guard also re-checks every file the pre-registration pins (phase C)"
+          },
+          {
+            "file": "experiments/nina-changes/results6.mjs",
+            "reason": "a comment only (D3)"
+          },
+          {
+            "file": "experiments/nina-changes/run_reviewer6.mjs",
+            "reason": "post-call record handling (a record refused at write time keeps its verdict and cost, 00e27d7; removing a run dir never throws, bf1308a) and the post-freeze pre-run probe's own ledger kind (D4); the argv builder is unchanged, as the command sha256 equality shows"
+          },
+          {
+            "file": "experiments/nina-changes/scrub6.mjs",
+            "reason": "the write-time scrub also collapses a home path the client truncated (00e27d7)"
+          },
+          {
+            "file": "experiments/nina-changes/spend6.mjs",
+            "reason": "the post-freeze pre-run matrix probe has its own ledger kind, charged to the $60 cap only (D4); every other check before a call is unchanged"
+          },
+          {
+            "file": "experiments/nina-changes/stream6.mjs",
+            "reason": "a comment only (D3: a harness failure's is_error is the final result line's)"
+          }
+        ]
+      },
+      {
+        "name": "matrix-v6-fence6-3",
+        "commit": "2ab2c27",
+        "codeSha256": "0cda8a9cae73d336f8b79252342626bf760891eccb3f2111d6a30c0b6b8fab15",
+        "commandSha256": "ea845d1955f2a7ca6dcbaf4fc68c6bc32a6da5442fe99fb24c4bce697045d986",
+        "differsFromPinned": [
+          {
+            "file": "experiments/nina-changes/diff-seen.mjs",
+            "reason": "rule (b) also reads long-form \"Untracked files:\" entries (D2); the classifier runs after the call, on the record"
+          },
+          {
+            "file": "experiments/nina-changes/guard6.mjs",
+            "reason": "the counted guard also re-checks every file the pre-registration pins (phase C)"
+          },
+          {
+            "file": "experiments/nina-changes/results6.mjs",
+            "reason": "a comment only (D3)"
+          },
+          {
+            "file": "experiments/nina-changes/run_reviewer6.mjs",
+            "reason": "post-call record handling (a record refused at write time keeps its verdict and cost, 00e27d7; removing a run dir never throws, bf1308a) and the post-freeze pre-run probe's own ledger kind (D4); the argv builder is unchanged, as the command sha256 equality shows"
+          },
+          {
+            "file": "experiments/nina-changes/spend6.mjs",
+            "reason": "the post-freeze pre-run matrix probe has its own ledger kind, charged to the $60 cap only (D4); every other check before a call is unchanged"
+          },
+          {
+            "file": "experiments/nina-changes/stream6.mjs",
+            "reason": "a comment only (D3: a harness failure's is_error is the final result line's)"
+          }
+        ]
+      },
+      {
+        "name": "matrix-v6-sandbox6-only-2",
+        "commit": "2ab2c27",
+        "codeSha256": "0cda8a9cae73d336f8b79252342626bf760891eccb3f2111d6a30c0b6b8fab15",
+        "commandSha256": "313a374d232bddab6c201d2f879aa8cfbf6dfc8fdc6f5d1a5fdc149269919ef3",
+        "differsFromPinned": [
+          {
+            "file": "experiments/nina-changes/diff-seen.mjs",
+            "reason": "rule (b) also reads long-form \"Untracked files:\" entries (D2); the classifier runs after the call, on the record"
+          },
+          {
+            "file": "experiments/nina-changes/guard6.mjs",
+            "reason": "the counted guard also re-checks every file the pre-registration pins (phase C)"
+          },
+          {
+            "file": "experiments/nina-changes/results6.mjs",
+            "reason": "a comment only (D3)"
+          },
+          {
+            "file": "experiments/nina-changes/run_reviewer6.mjs",
+            "reason": "post-call record handling (a record refused at write time keeps its verdict and cost, 00e27d7; removing a run dir never throws, bf1308a) and the post-freeze pre-run probe's own ledger kind (D4); the argv builder is unchanged, as the command sha256 equality shows"
+          },
+          {
+            "file": "experiments/nina-changes/spend6.mjs",
+            "reason": "the post-freeze pre-run matrix probe has its own ledger kind, charged to the $60 cap only (D4); every other check before a call is unchanged"
+          },
+          {
+            "file": "experiments/nina-changes/stream6.mjs",
+            "reason": "a comment only (D3: a harness failure's is_error is the final result line's)"
+          }
+        ]
+      }
     ],
+    "codeStatement": "The fence was tested in three fence6 proof runs and one sandbox-only proof run. fence6 runs 1 and 2 were made at commit 14ba08d; fence6 run 3 (the probe of record) and the sandbox-only run at commit 2ab2c27 (candidate-branch commits). Their recorded code differs from the files this record pins as listed in proofRuns, each file with its reason. None of the differing files defines the fence, the matrix or its judge (experiments/nina-changes/fence6.mjs, experiments/nina-changes/matrix6.mjs, experiments/jev-gate/run_reviewer.mjs are byte-identical in every proof run), and every fence6 run ran exactly the command registered here (command sha256 ea845d19…), the sandbox-only run exactly the sandbox6-only template.",
+    "refusedByAllowList": "The new -C escape forms (R32-R35, R38, R43) were refused by the allow list itself in every proof run, the sandbox-only run included (they are in each run's permission_denials). The evidence that the OS sandbox is the boundary for outside reads is R9, R45, R29 and R30: they passed the permission layer and git failed with \"Operation not permitted\".",
     "lostVerdict": "matrix-v6-sandbox6-only-1 was a paid call ($0.5472840) whose record was refused at write time: a home path the client had truncated in a tool output was not matched by the scrub, so the record was not written and its verdict was lost. The scrub was fixed forward and the run repeated (matrix-v6-sandbox6-only-2)."
   },
   "classifier": {
@@ -534,10 +669,7 @@
     "pass": "On a PASS (the bar PASSES, the manipulation check PASSES, and the committed EXP 006 spotlight decision says held: false), the home page's \"Tools leaving the factory\" list gains nina's entry, next after 002 Laya, in the same shape as the Laya entry (number and category, a title linking to the evidence, one paragraph, links, an attribution note, a spec list): nina, harness orchestration for Claude Code, by Marcos Schulz (xhulz), https://github.com/xhulz/nina, with the attribution \"used with the permission of its author, as confirmed by Odin Labs\", and links to the EXP 006 measurement, to EXP 005 (#spotlight) and to the upstream fixes opened by Odin Labs (xhulz/nina#39, merged; xhulz/nina#41, stated as its live state at publish time: merged or open). Every figure in it is rendered from the EXP 006 results record at build time. It takes the list's next free number, 005, the slot EXP 005's gated nina card held; there is only one nina entry.",
     "fail": "On a FAIL, or when the spotlight is held for any reason, there is no entry, and the results page says plainly which condition failed (the bar, the manipulation check, the refute, or a partial run).",
     "gate": "EXP 005's card gate, reused: PASS AND an explicit held: false; a missing decision record, a non-boolean held or a FAIL renders nothing. EXP 006 adds the manipulation check to it.",
-    "renderer": {
-      "file": "scripts/nina-changes-spotlight.mjs",
-      "sha256": "7055ab17d5d09a2eaa668701d6174b0cb46bd6d8b3eeec901701f9078da286e3"
-    }
+    "renderer": "scripts/nina-changes-spotlight.mjs (a site renderer, not pinned here: the results must be able to feed it the real record)"
   },
   "spend": {
     "capUsd": 60,
@@ -626,17 +758,21 @@
     "spentUsd": 4.0821826,
     "sum": "0.6545558 + 0.5596686 + 0.6258170 + 0.5681038 + 0.5472840 + 0.5811820 + 0.5455714 = 4.0821826",
     "preCountedRemainingUsd": 5.9178174,
-    "bundle2": "The separate post-merge probe is dropped: the counted run's own pre-run matrix probe, on the frozen runner, is the post-freeze proof. The pre-counted remainder, $5.9178174, covers the 18-run practice dry run (p01-p06, k=3).",
+    "reserveUsd": 0.6545558,
+    "dryRunHeadroomUsd": 5.2632616,
+    "bundle2": "D4: the separate post-merge probe is dropped. The measured run's own pre-run matrix probe, made after the freeze on the frozen runner, is the post-freeze proof; it has its own ledger kind (prerun-matrix) and is charged only against the $60 cap, never the $10 pre-counted ceiling. Pre-freeze probes and the practice dry run stay under the $10 ceiling. The real headroom for the dry run: $10 − $4.0821826 spent − $0.6545558 reserve = $5.2632616 before the last allowed call; the reserve is max(the largest call so far, $0.60), which is also the unknown-cost upper bound, so it cannot be lowered. Reaching the ceiling stops the dry run and asks the founder: bundle 2 may then complete fewer than its 18 practice runs, and its acceptance (every completed run diff-seen and hand-read) is judged on the runs completed, with the shortfall reported; whether that is enough to go on is the founder's call.",
     "askFork": "Reaching the $10 pre-counted ceiling stops the run and asks the founder (raise the cap or trim scope). Before the counted run: if spent + 180 × p90(dry-run per-run cost) + one pre-run probe + $0.60 > $60, the founder is asked first."
   },
   "preflight": "Answer-key pre-flight, EXP 005's mechanism with EXP 006's pins file and not-before: one counted pre-flight record written before the measured run (runner-guard.mjs --preflight --mode counted --write-record --pins-file experiments/nina-changes/runners.sha256), ended at most 2 h before the first counted call and after the not-before, bound to that runner code and commit, and committed with the results; no commit between the record and the last counted call's start.",
+  "siteChecks": "The page widths were checked two ways: a real headless Chromium render (playwright-isolated, served from the built site) of the home page, this note and the EXP 005 note at 375 px and 320 px, finding no horizontal overflow (document scrollWidth equal to the viewport); and a static repository test that no unbroken run in the note is wider than the column unless the stylesheet lets it wrap.",
   "notBefore": "No counted reviewer run starts before the merge time of the odin-rnd pull request that adds this file; that time is recorded after publication, frozen with this record's sha256 in freeze.mjs, and every counted call must start after it. Practice runs and matrix probes on canaries do not wait for it.",
   "limits": [
     "Two layers: the text deny rules are best-effort (the client matches a normalised command); the OS sandbox (reads of home outside the run and of the temp roots denied, writes confined, no unsandboxed retry) is the boundary.",
     "Reviewer only: Jev, Laya and the cascade are not re-run; this measures nina 0.34.0's reviewer on mechanical architecture rules and nothing else about nina.",
     "Same corpus, inputs, labels and rules as EXP 005, so the results compare; the corpus is public, and the reviewer is fenced from the answer files by the sandbox and the answer-key pre-flight.",
     "Prompt confound: the prompt says \"the change is everything that git diff shows\", which is false for the 14 items that add a file (9 of them add only files): git diff does not show untracked files. The prompt is EXP 005's, unchanged, so the results compare.",
-    "Client artifact: Claude Code 2.1.280 marks some git commands that ran (git status --short, git log, git show) is_error, with \"Exit code 1\" and a line for its failed cwd-tracking write under the sandbox. It affected EXP 005's tool results too; EXP 005's classifier never read tool-level is_error (its records keep refusals and reports only). EXP 006 reads refusals from permission_denials and never from is_error.",
+    "Client artifact: Claude Code 2.1.280 marks some git commands that ran (git status --short, git log, git show) is_error, with \"Exit code 1\" and a line for its failed cwd-tracking write under the sandbox. It likely affected EXP 005's tool results too; EXP 005's records keep no tool output, so this cannot be checked (its classifier never read tool-level is_error). EXP 006 reads refusals from permission_denials and never from is_error.",
+    "Known false-BLIND forms: the classifier does not recognise a change shown only through git diff --color=always, git diff --word-diff, git diff -R, git status --porcelain=v2 or -z, or a long-form status run from a subdirectory (its ../ paths). A run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight. Each form is pinned BLIND by a unit test (documented behaviour, not a silent gap).",
     "The runs are sequential, on one machine, under whatever load it has; latency is recorded, not judged.",
     "Paid calls before this record: 7 matrix probes, $4.0821826, itemised in spend.calls; none is counted in any result."
   ],
@@ -645,45 +781,26 @@
     "ninaUrl": "https://github.com/xhulz/nina"
   },
   "files": {
-    "experiments/nina-changes/run_reviewer6.mjs": "80799b27c8feb9453d4f7e8a9e9ad8c7b1bb062d613acff0f15cbe66b5c4a49c",
+    "experiments/nina-changes/run_reviewer6.mjs": "f388bc9888657349a51f1cfc2c896a6c5dc8eba3ac6f20c774ead383690f2079",
+    "experiments/nina-changes/stream6.mjs": "af6f9a7b83b14558c58e54aac53ced1ba8017f522f53fbd1e754e30a2b2096e4",
     "experiments/nina-changes/fence6.mjs": "a591069653a39f3d9efe00e98511b81c1f7bd83584a066e7ed6e15243d79698f",
     "experiments/nina-changes/matrix6.mjs": "2b088e6a862dd5f168a2d85237b39ab3ffa781fc457f3444f7749a39c6164030",
-    "experiments/nina-changes/stream6.mjs": "af6f9a7b83b14558c58e54aac53ced1ba8017f522f53fbd1e754e30a2b2096e4",
-    "experiments/nina-changes/spend6.mjs": "b6816140a02f76357b3c9529b0444316e8046d33432be2744cadb6fc7bada50b",
     "experiments/nina-changes/scrub6.mjs": "d38b4efce5346abacd6e68d19c6121c5a533410de474d0578bcdbcec75fad435",
+    "experiments/nina-changes/spend6.mjs": "ed15a622e53ec13bee8fe4b6df1c30b5260c481f0d1ca81b5375a71d32706027",
     "experiments/nina-changes/guard6.mjs": "ad47b267137b2a6259d67dbe151795c978fde2d9dce5416bb61034797d650f4a",
-    "experiments/nina-changes/vendored-exp005.mjs": "d4e3445f9f585a119d059e6ff8fc355afd09459d932463849f81fff738327511",
     "experiments/nina-changes/diff-seen.mjs": "c0e3a31da4b36d853156a53df30d29a013c1a02e1f230d92f0139e851e151564",
     "experiments/nina-changes/fingerprints.mjs": "4eab13972a6c255ce264eebe935f7db16ea87b9bd48839762dfa65b056ba22ea",
-    "experiments/nina-changes/base-lines.mjs": "0b034c6cfedb766c7136178a1cb4a4e2839ed30d4b8db00c241eae966b484970",
-    "experiments/nina-changes/results6.mjs": "7533ee983f2891506bac2185396740199b86b94510da031df4a21c51332f7025",
-    "experiments/nina-changes/denial-census.mjs": "dd2391c55a56f41ec447cff2c54c77de16a356aaa9011af2b057f2429c6ee2c5",
     "experiments/nina-changes/change-fingerprints.json": "54833bc6f93314539a10aa4f78b280ca1e2d4c5c72fa1ea9a4730288f55dab69",
+    "experiments/nina-changes/base-lines.mjs": "0b034c6cfedb766c7136178a1cb4a4e2839ed30d4b8db00c241eae966b484970",
     "experiments/nina-changes/base-lines.json": "92aeb23a37ce66541d3b586b006d2d04c4027e9569476c063b8e476b3a1ab2d3",
-    "experiments/nina-changes/denial-census.json": "dd1b4fa52a1bc0aa18d670113d81efa1a2fe72e3453a82bd82503fb77a29cd18",
     "experiments/nina-changes/practice/practice-rows.json": "0fecd80674a7abf19cfdeaf0991dda372194769d82fde70329aa40cfe0d1f35e",
-    "experiments/nina-changes/practice/author-practice6.mjs": "6707a204c5e159d401905326f675a8384b4dc9064aab5ca289ec8543b5ab1b93",
-    "experiments/nina-changes/fixtures/fake-claude-stream.mjs": "60e4bf61287673655e1d437661f99a85c2887d602026abdfcc0953272a9f9226",
-    "experiments/nina-changes/fixtures/synthetic6.mjs": "cf7197db976317695c26fe7516e96d762f77ec223d3984b3440e5b29b9db3a43",
-    "experiments/nina-changes/fixtures/live-read-grep.json": "89a19c913ae23f2c01b4c519993a734f9b0278600512955a202a18746bb8707e",
-    "experiments/nina-changes/fixtures/diff-seen-table.json": "1e4856681224cec163353cf69c3b03114d962e732b0eff5555cfd864f1e78a44",
-    "experiments/nina-changes/probes/matrix-v6-discovery-fence6-1.json": "e7deb80a7b5cf3c6d748999068be3a2f66ff51eba0f6b4277a2f1c10f1d01bc0",
-    "experiments/nina-changes/probes/matrix-v6-discovery-fence6-2.json": "6f9dfcbd43d226457b18997498ff8b1dbe1724f3de04ea612e4e5ee4c89ae185",
-    "experiments/nina-changes/probes/matrix-v6-fence6-1.json": "7faf564ed642fa674a65e7eea021bc2dd8f2541cac6908f15ca62d5e11bd1147",
-    "experiments/nina-changes/probes/matrix-v6-fence6-2.json": "7bf8dc8a050783382704464799e4e64809604a9556f58294c13e9b1abbeeb4ce",
-    "experiments/nina-changes/probes/matrix-v6-sandbox6-only-1.json": "bafb7ae1a7e51b299fbfd5ca49afd44387a800ef96e065c1cc374cda154d8f64",
-    "experiments/nina-changes/probes/matrix-v6-sandbox6-only-2.json": "5a7b528c724de9e7d6cebad0def0a6d9b970dbf2374c18c88906fc5055bf5c0f",
-    "experiments/nina-changes/probes/matrix-v6-fence6-3.json": "04861e1b0cfd63edc50d009df94060d071b866ebc78c0f642f432f775743af0c",
+    "experiments/nina-changes/results6.mjs": "7533ee983f2891506bac2185396740199b86b94510da031df4a21c51332f7025",
+    "experiments/nina-changes/vendored-exp005.mjs": "d4e3445f9f585a119d059e6ff8fc355afd09459d932463849f81fff738327511",
     "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
     "experiments/jev-gate/runner-guard.mjs": "1ad072329cf7f70f9c12b70e56a7fe42f06afcdcbdd84eb455fc2d014fa1bcd9",
     "experiments/jev-gate/results.mjs": "010ca4bb6aaf9f8c5949bc0f15aa90c4a87be6b064543edb7010c9d1197cf29c",
     "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
-    "experiments/jev-gate/corpus.sha256": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
-    "experiments/jev-gate/inputs.json": "6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34",
-    "experiments/jev-gate/labels.json": "36af1422755e56af56f4af267411a4a8e6535d08e6fc9d7aa3734aa005e4412a",
-    "experiments/jev-gate/rules.txt": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
-    "scripts/nina-changes-prereg.mjs": "04d37f7d0fc28c9fdc88d63d0a2f4c79748adabe33dd51e346e253065abace23",
-    "scripts/nina-changes-note.mjs": "a6cd78f6e2d65892ba87fb79ebcf2a195bc969089a5d552e1335a42107162401",
-    "scripts/nina-changes-spotlight.mjs": "7055ab17d5d09a2eaa668701d6174b0cb46bd6d8b3eeec901701f9078da286e3"
+    "experiments/jev-gate/lint.mjs": "df4485c7c7c7f515c5a484ec10df3400c59e2558c9cc67d1956aa6d40f9f38c9",
+    "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004"
   }
 }

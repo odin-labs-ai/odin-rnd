@@ -31,7 +31,7 @@ import { NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
 import { checkRun6, PREREG6, RUNNER6_PINS } from './guard6.mjs';
 import { judgeMatrix6, MATRIX_PROMPT6, matrixSetup6 } from './matrix6.mjs';
 import { leakFields, publicRecord6, scrubPaths6, scrubRecord6, RUN_PREFIX6 } from './scrub6.mjs';
-import { LEDGER6, LIMITS6, SpendLedger6 } from './spend6.mjs';
+import { LEDGER6, LIMITS6, PRERUN_KIND, SpendLedger6 } from './spend6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, parseStream, recordToolCalls } from './stream6.mjs';
 import { gitgit, hookContext, run, spawnTimed } from './vendored-exp005.mjs';
 
@@ -167,9 +167,12 @@ function fingerprintsFor(items, corpus) {
   return Object.fromEntries(items.map(i => [i.id, corpus.items[i.id] ?? (i.patch ? fingerprintItem(i.patch, baseSet) : null)]));
 }
 
-export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs }) {
+export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs }) {
   const rehearsal = mode === 'rehearsal';
-  const { prereg, amendment, stamp } = checkRun6({ mode: probe ? 'probe' : mode, fixture, rehearsalPins });
+  if (prerun && !probe) throw new Error('prerun is the measured run\'s pre-run matrix probe (--probe matrix --prerun)');
+  // The pre-run probe runs on the FROZEN runner: it passes the counted guard (freeze set, the pre-registration and
+  // every pin intact, after the not-before), and it is charged to the $60 cap only (spend6 PRERUN_KIND).
+  const { prereg, amendment, stamp } = checkRun6({ mode: probe ? (prerun ? 'counted' : 'probe') : mode, fixture, rehearsalPins });
   if (probe && probe !== 'matrix') throw new Error('the EXP 006 probe is the isolation matrix (--probe matrix)');
   if (fixtureTimeoutMs !== undefined && !fixture && !rehearsal) throw new Error('a timeout other than the pre-registered one is for fixture runs only');
   const timeoutMs = fixtureTimeoutMs ?? prereg.gates.reviewer.timeoutSeconds * 1000;
@@ -180,7 +183,7 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
   if (version !== r.clientVersion) throw new Error(`claude --version is ${version}, not the pinned ${r.clientVersion}`);
   if (variant !== undefined && !probe) throw new Error('only a probe may choose a variant');
   const iso = probe ? (variant ?? ISOLATION6) : ISOLATION6;
-  const counted = stamp.mode === 'counted';
+  const counted = stamp.mode === 'counted' && !probe;
   if (counted && !fixture && !rehearsal) {
     // The EXP 006 pre-registration (checked by sha in the guard) must pre-register exactly this command template.
     const prereg6 = JSON.parse(readFileSync(join(REPO_ROOT, PREREG6), 'utf8'));
@@ -195,7 +198,7 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
   const fps = fingerprintsFor(items, corpus);
   const record = publicRecord6({
     schemaVersion: 1, kind: 'gate-run', gate: 'reviewer', experiment: 'EXP 006',
-    mode: probe ? 'isolation-matrix' : stamp.mode, ...fixtureFields(fixture), ...(rehearsal ? { rehearsal: true } : {}),
+    mode: probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode, ...fixtureFields(fixture), ...(rehearsal ? { rehearsal: true } : {}),
     parentSha256: stamp.parentSha256, amendmentSha256: stamp.amendmentSha256, amendment02Sha256: stamp.amendment02Sha256,
     prereg6Sha256: stamp.prereg6Sha256, notBefore: stamp.notBefore ?? amendment.notBefore, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins,
     corpusSha256: stamp.corpusSha256, baseCommit: stamp.baseCommit,
@@ -229,7 +232,7 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
     save();
   }
 
-  const kind = probe ? 'isolation-matrix' : stamp.mode;
+  const kind = probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode;
   const runOne = async (item, k) => {
     if (ledger) { const { reason, ...guard } = ledger.check(kind); if (!guard.ok) return { stop: ['spend', { limit: reason, ...guard }] }; }
     const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe) });
@@ -291,8 +294,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!out || !mode || !['counted', 'practice', 'probe'].includes(mode)) { console.error('usage: run_reviewer6.mjs --out <run.json> --mode counted|practice|probe [--ledger f] [--items ids | --practice file] [--probe matrix [--isolation fence6|sandbox6-only]] [--tarball f] [--preflight-record f]'); process.exit(2); }
   try {
     const probe = mode === 'probe' ? 'matrix' : null;
+    const prerun = argv.includes('--prerun');
     const items = probe ? [] : at('--practice') ? practiceItems(at('--practice')) : corpusItems(at('--items')?.split(','));
-    const record = await runReviewer6({ out, ledgerPath: at('--ledger') ?? LEDGER_FILE, items, mode, probe, variant: at('--isolation'), tarball: at('--tarball') ?? DEFAULT_TARBALL, preflightRecord: at('--preflight-record') });
+    const record = await runReviewer6({ out, ledgerPath: at('--ledger') ?? LEDGER_FILE, items, mode, probe, prerun, variant: at('--isolation'), tarball: at('--tarball') ?? DEFAULT_TARBALL, preflightRecord: at('--preflight-record') });
     console.log(`wrote ${relative(process.cwd(), out)}${record.partial ? ` (partial: ${record.partial.reason})` : ''}`);
     process.exit(record.partial ? 3 : 0);
   } catch (error) {

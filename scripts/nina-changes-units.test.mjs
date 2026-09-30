@@ -12,7 +12,8 @@ import { NOT_BEFORE6, PREREG6_SHA256 } from '../experiments/nina-changes/freeze.
 import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } from '../experiments/nina-changes/guard6.mjs';
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
-import { countedProjection, LIMITS6, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
+import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
+import { runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -211,4 +212,27 @@ test('D3: a harness failure\'s is_error is the FINAL result line\'s only, never 
   assert.deepEqual([refused.harnessFailure, refused.parsed.toolCalls[0].refused], [null, true]);
   assert.equal(classifyStreamRun({ timedOut: false, exitCode: 0, stdout: stream([init, final({ is_error: true })]) }).harnessFailure, 'is-error');
   assert.equal(runState({ harnessFailure: null, decision: 'ACCEPT', toolCalls: [{ isError: true }] }, true), 'SEEN-DECIDED');
+});
+
+test('B2 (D4): the post-freeze pre-run matrix probe is charged to the $60 cap only; pre-freeze probes and practice stay under $10', async () => {
+  assert.deepEqual([isPreCounted('isolation-matrix'), isPreCounted('practice'), isPreCounted(PRERUN_KIND), isPreCounted('counted')], [true, true, false, false]);
+  const dir = scratchDir('nc-prerun');
+  try {
+    const L = new SpendLedger6(join(dir, 'ledger.jsonl'));
+    L.record({ ts: 't1', kind: 'isolation-matrix', id: 'm', run: 1, reportedCostUsd: 4.0821826 });
+    L.record({ ts: 't2', kind: 'practice', id: 'p01', run: 1, reportedCostUsd: 5.3 });
+    // 9.3821826 + reserve 5.3 > 10: a practice call and a pre-freeze probe are refused (STOP + ASK-FORK) ...
+    assert.deepEqual([L.check('practice').reason, L.check('isolation-matrix').reason], ['pre-counted-ceiling', 'pre-counted-ceiling']);
+    // ... the post-freeze pre-run probe is not, because it is charged to the $60 cap only ...
+    assert.equal(L.check(PRERUN_KIND).ok, true);
+    const line = L.record({ ts: 't3', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, reportedCostUsd: 0.6 });
+    assert.equal(line.kind, PRERUN_KIND);
+    assert.equal(L.preCountedTotal(), round7(4.0821826 + 5.3), 'the pre-run probe is not pre-counted');
+    // ... and it is refused at the $60 cap like any counted call.
+    L.record({ ts: 't4', kind: 'counted', id: 'c001', run: 1, reportedCostUsd: 48 });
+    assert.equal(L.check(PRERUN_KIND).reason, 'cap');
+  } finally { removeScratch(dir); }
+  // A pre-run probe runs on the frozen runner: while freeze.mjs is null it refuses before any workspace or call.
+  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'probe', probe: 'matrix', prerun: true, log: () => {} }), /wait for the freeze/);
+  await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {} }), /pre-run matrix probe/);
 });

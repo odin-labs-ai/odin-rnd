@@ -1,7 +1,9 @@
 // Renders the public EXP 006 pages from experiments/nina-changes/preregistration.json: the pre-registration field note
 // (site/journal/nina-reviews-the-change.html) and its row in the home page's field notes. Every figure is read from
 // the record; the build and the tests re-render both and fail if a page drifts from it. It adds pages beside EXP 005's
-// and edits none of EXP 005's renderers (their files are pinned by EXP 005's records).
+// and leaves EXP 005's pinned renderers (jev-gate-prereg.mjs, jev-gate-journal.mjs) untouched; EXP 005's results-site
+// renderer (jev-gate-results-site.mjs, not pinned by its records) WAS edited: the recorded-code allowlist and the
+// #exp006 link in its held-spotlight section.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -46,10 +48,12 @@ ${list(r.differences.map(escape))}
 <p>${escape(r.commandRule)}</p>
 <pre tabindex="0">${escape(r.command)}</pre>
 <p>Allowed git forms: ${f.allowPrefixes.map(code).join(', ')} with ${f.verbs.map(code).join(', ')}. ${escape(f.compound)} ${escape(f.redirections)} Every EXP 005 deny rule stays: ${f.denyRules.map(code).join(' ')}. ${escape(r.runDirectory)}</p>
-<h2>The fence, proven on canaries</h2>
+<h2>The fence, tested on canaries</h2>
 <p>${escape(iso.judgedBy)}</p>
 ${list(iso.runs.map(runRow))}
-<p>${escape(iso.codeStatement)} ${escape(iso.lostVerdict)} The probe of record is ${code(iso.probeOfRecord.file.split('/').pop())} (sha256 ${code(iso.probeOfRecord.sha256)}).</p>
+<p>${escape(iso.codeStatement)}</p>
+${list(iso.proofRuns.map(p => `<strong>${escape(p.name)}</strong> at ${code(p.commit)}: ${p.differsFromPinned.length ? p.differsFromPinned.map(d => `${code(d.file.split('/').pop())} (${escape(d.reason)})`).join('; ') : 'no pinned file differs'}`))}
+<p>${escape(iso.refusedByAllowList)} ${escape(iso.lostVerdict)} The probe of record is ${code(iso.probeOfRecord.file.split('/').pop())} (sha256 ${code(iso.probeOfRecord.sha256)}).</p>
 <p>What the client did, from the recorded stream:</p>
 ${list(f.answers.map(a => `${escape(a.answer)} <span class="technical">(${escape(a.evidence)})</span>`))}
 <h2>The manipulation check: did the reviewer see the change?</h2>
@@ -67,9 +71,10 @@ ${list([escape(b.hookErrors), escape(b.diffSeenOnly), escape(b.partial), escape(
 <p>${escape(record.spotlightDecision)}</p>
 <p id="spotlight-artefact"><strong>What a PASS publishes.</strong> ${escape(record.spotlightArtefact.pass)} <strong>What a FAIL publishes.</strong> ${escape(record.spotlightArtefact.fail)} ${escape(record.spotlightArtefact.gate)}</p>
 <h2>Spend, the pre-flight and the clock</h2>
-${list([`A cap of $${s.capUsd} on every paid call of ${escape(e.id)}, with a $${s.preCountedCeilingUsd} ceiling on everything before the counted run. ${escape(s.rule)}`, `Paid so far (${s.calls.length} matrix probes, none counted): ${escape(s.sum)} dollars.`, escape(s.bundle2), escape(s.askFork), escape(record.preflight), escape(record.notBefore)])}
+${list([`A cap of $${s.capUsd} on every paid call of ${escape(e.id)}, with a $${s.preCountedCeilingUsd} ceiling on everything before the counted run. ${escape(s.rule)}`, `Paid so far (${s.calls.length} matrix probes, none counted): ${escape(s.sum)} dollars.`, `Reserve $${escape(s.reserveUsd.toFixed(7))}; dry-run headroom $${escape(s.dryRunHeadroomUsd.toFixed(7))}.`, escape(s.bundle2), escape(s.askFork), escape(record.preflight), escape(record.notBefore)])}
 <h2>What this does not establish</h2>
 ${list(record.limits.map(escape))}
+<p>${escape(record.siteChecks)}</p>
 <h2>Provenance</h2>
 <p>This page is rendered from <a href="../${dataPath}"><code>preregistration.json</code></a>, the committed record at ${code('experiments/nina-changes/preregistration.json')}, whose sha256 is ${code(recordSha256)}. The build publishes that file byte for byte, and a repository test re-renders this page from it and fails if they differ. A validator rebuilds the record from the files on disk.</p>
 <p class="article-note">No counted run has started. The results, when they exist, will be judged against this record as published, and reported as they come out.</p>
