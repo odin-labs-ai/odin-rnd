@@ -1,0 +1,3638 @@
+{
+  "schemaVersion": 1,
+  "kind": "denial-census",
+  "source": {
+    "file": "experiments/jev-gate/results/reviewer.json",
+    "sha256": "2248a8abab5acf1941c266e37e363ec2ae8ec9d75a97684a6e7d4862babfcd1c"
+  },
+  "diffVisibility": {
+    "file": "experiments/jev-gate/results/diff-visibility.json",
+    "sha256": "8acda3cf347fba65f08efcc22431baa30bdeb26e20223d2f3af337aadc4a9856"
+  },
+  "rule": "Every refused Bash git command in the committed EXP 005 reviewer record, as the record has it (the run dir scrubbed to <ws>), grouped by exact command text. Category: one of the plan's forms, by priority compound > redirection > quoting > -C + --no-pager > git -C <ws> <verb> > git --no-pager <verb> > other. fence6: the decision of fence6.mjs's offline client model (every part of a compound must match an allow rule; redirections to /dev/null and 2>&1 are stripped before matching; a redirect to a file, a non-git part, a quote, a $ and every fence5 deny rule stay refused). It models the client; the live probe proves it.",
+  "fence6": {
+    "allowPrefixes": [
+      "git",
+      "git --no-pager",
+      "git -C <ws>/repo",
+      "git -C <ws>/repo --no-pager"
+    ],
+    "verbs": [
+      "diff",
+      "status",
+      "show",
+      "log"
+    ]
+  },
+  "totals": {
+    "denials": 317,
+    "gitDenials": 317,
+    "distinctCommands": 58,
+    "reports": 180,
+    "runsWithGitDenials": 153,
+    "allowInFence6": 184,
+    "staysDenied": 133
+  },
+  "categories": [
+    {
+      "category": "compound",
+      "denials": 158,
+      "commands": 51,
+      "allowInFence6": 25
+    },
+    {
+      "category": "redirection",
+      "denials": 0,
+      "commands": 0,
+      "allowInFence6": 0
+    },
+    {
+      "category": "quoting",
+      "denials": 0,
+      "commands": 0,
+      "allowInFence6": 0
+    },
+    {
+      "category": "-C + --no-pager",
+      "denials": 29,
+      "commands": 2,
+      "allowInFence6": 29
+    },
+    {
+      "category": "git -C <ws> <verb>",
+      "denials": 103,
+      "commands": 3,
+      "allowInFence6": 103
+    },
+    {
+      "category": "git --no-pager <verb>",
+      "denials": 27,
+      "commands": 2,
+      "allowInFence6": 27
+    },
+    {
+      "category": "other",
+      "denials": 0,
+      "commands": 0,
+      "allowInFence6": 0
+    }
+  ],
+  "staysDeniedReasons": {
+    "redirect to a file (fence6 never allows > to a file)": 127,
+    "not a git command (head): no allow rule, and no blanket rule": 2,
+    "no allow rule matches (verb or prefix not allowed)": 1,
+    "not a git command (cat): no allow rule, and no blanket rule": 1,
+    "not a git command (echo): no allow rule, and no blanket rule": 1,
+    "not a git command (ls): no allow rule, and no blanket rule": 1
+  },
+  "blindRuns": {
+    "runs": 131,
+    "firstAttemptStillDenied": 123,
+    "firstAttemptAllowed": 8,
+    "firstAttemptDeniedReasons": {
+      "redirect to a file (fence6 never allows > to a file)": 121,
+      "not a git command (head): no allow rule, and no blanket rule": 1,
+      "not a git command (ls): no allow rule, and no blanket rule": 1
+    },
+    "laterAllowedFallback": 127,
+    "anyAllowedInFence6": 130,
+    "expectedMechanism": "first attempt denied, then a fallback form fence6 allows; a blind run with no allowed fallback is data, not a fence failure"
+  },
+  "commands": [
+    {
+      "command": "git -C <ws>/repo status --short",
+      "count": 53,
+      "category": "git -C <ws> <verb>",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git -C <ws>/repo diff",
+      "count": 47,
+      "category": "git -C <ws> <verb>",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+      "count": 36,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git -C <ws>/repo --no-pager diff",
+      "count": 26,
+      "category": "-C + --no-pager",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git --no-pager diff --stat",
+      "count": 15,
+      "category": "git --no-pager <verb>",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git --no-pager diff",
+      "count": 12,
+      "category": "git --no-pager <verb>",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+      "count": 12,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git --no-pager diff",
+      "count": 11,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+      "count": 10,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+      "count": 7,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+      "count": 7,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+      "count": 6,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+      "count": 6,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+      "count": 5,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+      "count": 4,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo $TMPDIR",
+      "count": 4,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short > \"$TMPDIR/s.txt\" 2>&1; echo done",
+      "count": 3,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager status --short 2>&1; git --no-pager diff 2>&1",
+      "count": 3,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git -C <ws>/repo --no-pager diff --stat",
+      "count": 3,
+      "category": "-C + --no-pager",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git -C <ws>/repo diff --stat",
+      "count": 3,
+      "category": "git -C <ws> <verb>",
+      "features": {
+        "compound": false,
+        "operators": [],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; ls -la \"$TMPDIR\"",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/d.txt 2>&1; echo $TMPDIR",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; echo $TMPDIR",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; wc -l $TMPDIR/diff.txt",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short 2>&1; git --no-pager diff 2>&1 | head -500",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";",
+          "|"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "not a git command (head): no allow rule, and no blanket rule"
+    },
+    {
+      "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; ls .claude/pills/reviewer .claude/pills/shared 2>&1",
+      "count": 2,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager diff --stat > \"$TMPDIR/d.txt\" 2>&1; git --no-pager diff >> \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo done",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager diff --stat > \"$TMPDIR/stat.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; git status --short > \"$TMPDIR/status.txt\" 2>&1; echo done",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager diff --stat; git --no-pager diff --cached --stat; echo \"exit=$?\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "not a git command (echo): no allow rule, and no blanket rule"
+    },
+    {
+      "command": "git --no-pager diff --stat; git --no-pager status --porcelain",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git --no-pager diff --stat; git --no-pager status --short",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; ls -la \"$TMPDIR\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager status --short 2>&1; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git --no-pager status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git -C <ws>/repo --no-pager diff --no-color 2>&1 | cat",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          "|"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "not a git command (cat): no allow rule, and no blanket rule"
+    },
+    {
+      "command": "git -C <ws>/repo diff --stat HEAD 2>&1; git -C <ws>/repo ls-files 2>&1",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "no allow rule matches (verb or prefix not allowed)"
+    },
+    {
+      "command": "git -C <ws>/repo diff --stat HEAD; git -C <ws>/repo status --porcelain",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git -C <ws>/repo diff > \"$TMPDIR/d.txt\" 2>&1; git -C <ws>/repo status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": true,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short && git --no-pager diff",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          "&&"
+        ],
+        "redirection": false,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short && git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          "&&",
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"; wc -l \"$TMPDIR/st.txt\" \"$TMPDIR/d.txt\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo done; ls \"$TMPDIR\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; wc -l \"$TMPDIR/diff.txt\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/d.txt 2>&1; echo done; wc -l $TMPDIR/d.txt $TMPDIR/st.txt",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo $TMPDIR; ls .claude/pills 2>&1",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; ls $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short 2>&1; git --no-pager diff 2>&1",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": false
+      },
+      "fence5": "DENIED",
+      "fence6": "ALLOW-IN-FENCE6",
+      "reason": null
+    },
+    {
+      "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; ls .claude/pills 2>&1",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git --no-pager diff > $TMPDIR/d.txt 2>&1; wc -l $TMPDIR/d.txt",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    },
+    {
+      "command": "git status --short; git --no-pager diff; ls .claude/pills 2>&1",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": false,
+        "quoting": false,
+        "dashC": false,
+        "noPager": true,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "not a git command (ls): no allow rule, and no blanket rule"
+    },
+    {
+      "command": "git status --short; git diff --no-color > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo \"$TMPDIR\"",
+      "count": 1,
+      "category": "compound",
+      "features": {
+        "compound": true,
+        "operators": [
+          ";"
+        ],
+        "redirection": true,
+        "redirectToFile": true,
+        "quoting": true,
+        "dashC": false,
+        "noPager": false,
+        "nonGitPart": true
+      },
+      "fence5": "DENIED",
+      "fence6": "STAYS-DENIED",
+      "reason": "redirect to a file (fence6 never allows > to a file)"
+    }
+  ],
+  "runs": [
+    {
+      "id": "c001",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c001",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c001",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c002",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c002",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c002",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c003",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c003",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c003",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c004",
+      "run": 1,
+      "diffVisibility": "unclear",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff --stat > \"$TMPDIR/d.txt\" 2>&1; git --no-pager diff >> \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c004",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; wc -l \"$TMPDIR/diff.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c004",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; wc -l $TMPDIR/diff.txt",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c005",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c005",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; ls .claude/pills/reviewer .claude/pills/shared 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c005",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager status --short 2>&1; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c006",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c006",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c006",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c007",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c007",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c007",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; ls $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c008",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c008",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c008",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c009",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short > \"$TMPDIR/s.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c009",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c009",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c010",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > $TMPDIR/d.txt 2>&1; wc -l $TMPDIR/d.txt",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c010",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c010",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c011",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git --no-pager status --short 2>&1; git --no-pager diff 2>&1",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c011",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c011",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c012",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c012",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c012",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c013",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short && git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c013",
+      "run": 2,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c013",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c014",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c014",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c014",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c015",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c015",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c015",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c016",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; ls .claude/pills 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c016",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo done; ls \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c016",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c017",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c017",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c017",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c018",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c018",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c018",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c019",
+      "run": 1,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c019",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c019",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c020",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git --no-pager status --short 2>&1; git --no-pager diff 2>&1",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c020",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c020",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; ls .claude/pills/reviewer .claude/pills/shared 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c021",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c021",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c021",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c022",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c022",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c022",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short && git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c023",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c023",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c023",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c024",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c024",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c024",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c025",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c025",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c025",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c026",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c026",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff --stat > \"$TMPDIR/stat.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; git status --short > \"$TMPDIR/status.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c026",
+      "run": 3,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c027",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c027",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c027",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c028",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c028",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c028",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c029",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c029",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c029",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c030",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c030",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c030",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c031",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c031",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c031",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c032",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c032",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c032",
+      "run": 3,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c033",
+      "run": 1,
+      "diffVisibility": "unclear",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c033",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c033",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c034",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c034",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c034",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c035",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c035",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c035",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c036",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c036",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git -C <ws>/repo diff --stat HEAD; git -C <ws>/repo status --porcelain",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c036",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c037",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c037",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c037",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff --no-color > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c038",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c038",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git --no-pager status --short 2>&1; git --no-pager diff 2>&1",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c038",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c039",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c039",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c039",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; ls -la \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c040",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c040",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c040",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c041",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c041",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c041",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; wc -l $TMPDIR/diff.txt",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c042",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c042",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c042",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c043",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short 2>&1; git --no-pager diff 2>&1 | head -500",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "not a git command (head): no allow rule, and no blanket rule"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c043",
+      "run": 2,
+      "diffVisibility": "unclear",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c043",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c044",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c044",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c044",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; ls -la \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c045",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c045",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c045",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff; ls .claude/pills 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "not a git command (ls): no allow rule, and no blanket rule"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c046",
+      "run": 1,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c046",
+      "run": 2,
+      "diffVisibility": "unclear",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/d.txt 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c046",
+      "run": 3,
+      "diffVisibility": "unclear",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short 2>&1; git --no-pager diff 2>&1 | head -500",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "not a git command (head): no allow rule, and no blanket rule"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c047",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c047",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c047",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c048",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c048",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/d.txt 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c048",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c049",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c049",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c049",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c050",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c050",
+      "run": 2,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c050",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c051",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short > \"$TMPDIR/s.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c051",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c051",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo $TMPDIR; ls .claude/pills 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c052",
+      "run": 1,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c052",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/d.txt 2>&1; echo done; wc -l $TMPDIR/d.txt $TMPDIR/st.txt",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c052",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c053",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c053",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c053",
+      "run": 3,
+      "diffVisibility": "unclear",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c054",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo diff --stat HEAD 2>&1; git -C <ws>/repo ls-files 2>&1",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "no allow rule matches (verb or prefix not allowed)"
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c054",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager status --short > \"$TMPDIR/st.txt\" 2>&1; git --no-pager diff > \"$TMPDIR/diff.txt\" 2>&1; echo done; ls -la \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c054",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git -C <ws>/repo diff > \"$TMPDIR/d.txt\" 2>&1; git -C <ws>/repo status --short >> \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c055",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c055",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c055",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; wc -l \"$TMPDIR/d.txt\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c056",
+      "run": 1,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c056",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git --no-pager diff > \"$TMPDIR/d.txt\" 2>&1; git status --short > \"$TMPDIR/s.txt\" 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c056",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 1,
+      "firstDenied": {
+        "command": "git -C <ws>/repo status --short; git -C <ws>/repo diff",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c057",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c057",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short; git --no-pager diff > \"$TMPDIR/d.txt\"; wc -l \"$TMPDIR/d.txt\"; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c057",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c058",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo $TMPDIR",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c058",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c058",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c059",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short 2>&1; git --no-pager diff 2>&1",
+        "category": "compound",
+        "fence6": "ALLOW-IN-FENCE6",
+        "reason": null
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c059",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/diff.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c059",
+      "run": 3,
+      "diffVisibility": "diff-seen",
+      "gitDenials": 0,
+      "firstDenied": null,
+      "laterAllowedFallback": false,
+      "anyAllowedInFence6": false
+    },
+    {
+      "id": "c060",
+      "run": 1,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > $TMPDIR/st.txt 2>&1; git diff > $TMPDIR/diff.txt 2>&1; echo done",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c060",
+      "run": 2,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 3,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    },
+    {
+      "id": "c060",
+      "run": 3,
+      "diffVisibility": "diff-blind",
+      "gitDenials": 2,
+      "firstDenied": {
+        "command": "git status --short > \"$TMPDIR/st.txt\" 2>&1; git diff > \"$TMPDIR/d.txt\" 2>&1; echo \"$TMPDIR\"",
+        "category": "compound",
+        "fence6": "STAYS-DENIED",
+        "reason": "redirect to a file (fence6 never allows > to a file)"
+      },
+      "laterAllowedFallback": true,
+      "anyAllowedInFence6": true
+    }
+  ]
+}
