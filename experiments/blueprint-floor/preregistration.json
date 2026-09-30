@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "kind": "preregistration",
+  "experiment": {
+    "id": "EXP 007",
+    "slug": "blueprint-floor",
+    "title": "Which of your gate's rules need a model at all?",
+    "summary": "For every rule eight listed Jev plugins ship, how much could a deterministic checker decide on its own, before any model is asked?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-09-30",
+    "note": "This record fixes stage 1, the census, before any census call is made: the rules, the translator's inputs and its output, the checks that can only lower its answer, the scorer, the controls and the bar that would refute the premise. Stage 2, the cascade with Jev, is pre-registered by a dated amendment before any paid Jev call."
+  },
+  "question": "Take the rules that eight listed Jev plugins ship with their own code. For each rule, can a deterministic static checker (bce-engine 0.3.1, no model) decide it as written (expressible), decide a strict part of it and leave the rest to a model (partial), or decide no non-trivial part of it (not)? Per plugin, what share of its rules is expressible, and what is the median share across the plugins?",
+  "stage": "1 of 2 (census); stage 2 pre-registered by amendment before any paid Jev call",
+  "lineage": {
+    "exp005": {
+      "resultsSha256": "7388556049b7639e2a251edcf3fb8feb782213b78e71a02cddb687f12b09dccd",
+      "lintMissedRed": 0,
+      "redItems": 30,
+      "finding": "In EXP 005 a model-free line linter written from the same seven architecture rules missed none of the 30 drift items, and Jev missed one, so its criterion against the better model-free baseline was refuted. Those rules were ones a static check can decide."
+    },
+    "motivation": "If many of the rules a gate asks a model about are decidable by a static check, a gate could settle those first, for nothing, and ask the model only about the rest. EXP 007 first counts how many such rules the gates people actually ship contain."
+  },
+  "plugins": [
+    {
+      "plugin": "hunch",
+      "repo": "Kelbie/hunch",
+      "sha": "c2c680ed2c12c42c8a1b668a4b0b0858c5f463a6",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Kelbie",
+      "rulesFile": "experiments/blueprint-floor/rules/hunch.json",
+      "rulesFileSha256": "f5f37a174ce0106bbb95a4564df10eb1a03d65727638eedebc1c54cabb48f08e",
+      "primary": 8,
+      "secondary": 30,
+      "excluded": 0
+    },
+    {
+      "plugin": "jev-pref",
+      "repo": "doeixd/jev-pref",
+      "sha": "9d77ea6069123a0b3eedf465ec39781842722b0a",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 jev-pref contributors",
+      "rulesFile": "experiments/blueprint-floor/rules/jev-pref.json",
+      "rulesFileSha256": "707510c3c8f300f9e0a36020794111f3b3ee39201b45203a96067248ba87efe5",
+      "primary": 4,
+      "secondary": 0,
+      "excluded": 0
+    },
+    {
+      "plugin": "abide",
+      "repo": "coldteadotai/abide",
+      "sha": "ea6d0976a0cbac70f71a460ece348bd68d777350",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Coldtea AI",
+      "rulesFile": "experiments/blueprint-floor/rules/abide.json",
+      "rulesFileSha256": "b5276afe6d91c93f462d3ff113926d45a60b567d6e0281072f9a334093ab05db",
+      "primary": 43,
+      "secondary": 0,
+      "excluded": 0
+    },
+    {
+      "plugin": "limpet",
+      "repo": "noplan-inc/limpet",
+      "sha": "7a841b006900cb48df74ad68167dbed17afc504f",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 no plan inc.",
+      "rulesFile": "experiments/blueprint-floor/rules/limpet.json",
+      "rulesFileSha256": "5c3a8bad2403f23453e4745588e8169bcb0b2619c43e372e82b5ddea42149d6f",
+      "primary": 10,
+      "secondary": 0,
+      "excluded": 0
+    },
+    {
+      "plugin": "jev-belay",
+      "repo": "valentynkit/jev-belay",
+      "sha": "ef719db7eaadc56aa4def86c4da4ffff5bcbca35",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Valentyn Kit",
+      "rulesFile": "experiments/blueprint-floor/rules/jev-belay.json",
+      "rulesFileSha256": "ef35a1382489f9491931c5939e33d22f0f875c9e2d085d579bc81a71c5465134",
+      "primary": 0,
+      "secondary": 0,
+      "excluded": 4
+    },
+    {
+      "plugin": "jev-engineering",
+      "repo": "eugeniughelbur/jev-engineering",
+      "sha": "82655a6d16cedf6e31c0e493cc701e20c8d06798",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Eugeniu Ghelbur",
+      "rulesFile": "experiments/blueprint-floor/rules/jev-engineering.json",
+      "rulesFileSha256": "6ee3d88dcd6bc0fdf8278846418dcb17b8713c824770eb01298ed295c7e44435",
+      "primary": 16,
+      "secondary": 0,
+      "excluded": 23
+    },
+    {
+      "plugin": "pi-verdict",
+      "repo": "jesset/pi-verdict",
+      "sha": "1b37e5f2dff6414f31a009592074ce528453f0e1",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Jesset",
+      "rulesFile": "experiments/blueprint-floor/rules/pi-verdict.json",
+      "rulesFileSha256": "71c71bc7fd65b4eaa9dbfe60c297d8cf79aed05e91b84f92251fb4c14585687e",
+      "primary": 41,
+      "secondary": 0,
+      "excluded": 4
+    },
+    {
+      "plugin": "jev-axi",
+      "repo": "shiftynick/jev-axi",
+      "sha": "044fae73a05d5699c4b5c47073f1ffc29d9aa82d",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Nicholas Underwood (shiftynick)",
+      "rulesFile": "experiments/blueprint-floor/rules/jev-axi.json",
+      "rulesFileSha256": "b9adf67d03141f464531a630efe0004d93456de1cc9e4673d4caad359fb38d88",
+      "primary": 23,
+      "secondary": 0,
+      "excluded": 20
+    }
+  ],
+  "excludedPlugins": [
+    {
+      "plugin": "DiffJury",
+      "reason": "no license"
+    },
+    {
+      "plugin": "Blink",
+      "reason": "no public repository or license found"
+    },
+    {
+      "plugin": "jev-guard",
+      "reason": "MIT, but not named by the council verdict; kept out to hold the council's 6 to 8 range (out of scope, not a finding)"
+    }
+  ],
+  "selection": {
+    "file": "experiments/blueprint-floor/rules/selection.json",
+    "inclusionTest": "An item is a rule of the primary stratum when its answer by itself gates, blocks, flags or denies an action or a change. Locators, triage, category, severity and kind classifiers, score-only dials that feed a combined decision, and templated questions with runtime placeholders are excluded and listed with their reasons. Allow-rules (fast paths, allowlists) are excluded: the bce vocabulary is forbid-only and an allow-rule is a different decision.",
+    "granularity": "One regex, one question, one prose line or one rubric entry is one rule.",
+    "textField": "The translator sees one field per rule: the field named textField for its source. Every other field of the source item is stored under withheld and never reaches a translator or adjudicator prompt.",
+    "inputKinds": "The input kind is assigned per source hook or event, never per rule: a pull-request or commit diff is diff, a pre-tool-use call is toolCall, a stop hook or a session transcript slice is stopTranscript, a document handed to a scanner is file.",
+    "regexFlags": "The flags of a regex rule are recorded in flags. bce forbiddenPattern compiles its pattern without flags, so a flagged regex is expressible only if the translator emits an equivalent flag-free pattern; the teeth check decides.",
+    "hunchSecondary": "hunch's specification rules (rules/bips-spec.json, nips-spec.json, nuts-spec.json) are a secondary stratum: a seeded sample of 30 (seed 7007; the sampling code is committed in extract.mjs), reported separately and never in the median."
+  },
+  "files": {
+    "experiments/blueprint-floor/adapter.mjs": "0078e3d06eb58b3783da95278985c7f57bba1404aa53ff23edda00d48d7bd6b5",
+    "experiments/blueprint-floor/whitelist.mjs": "8a143efee8a44bccc1f4b132a5505304504fdf604986e32fac4eff1b5ccf622b",
+    "experiments/blueprint-floor/whitelist.json": "cbe08a73729748b077184fc26839acd2ac3aa368107d12adbd6eb0d061cb122f",
+    "experiments/blueprint-floor/contract.md": "b8dfe940916774b5d889b5da28e88b859890de6e7b798ddb266df13cc87c31b0",
+    "experiments/blueprint-floor/contract-module-graph.md": "ce5dbf402a3a9c85e326e28a9877ebd0a4cc69f6102ff5621f5f11cc03f420fa",
+    "experiments/blueprint-floor/prompts/translator.md": "c1a49480b0aed4c59889a9897318f6a6c29491552c42e7f458acedc221b8a9ca",
+    "experiments/blueprint-floor/prompts/adjudicator.md": "df71eb6a10b49c2ba057da088e1a870cc23d1046b39801923f14bf96686d3336",
+    "experiments/blueprint-floor/protocol.mjs": "0cc0e57408ca5329625f812539a2b5d7a176e3a52412020d831770b87c12bc3b",
+    "experiments/blueprint-floor/protocol.md": "7730c5a802a6410d12bc9ffaaf9d10fe75de5df567cec8aa48ed3ff833c35a85",
+    "experiments/blueprint-floor/scorer.mjs": "a940d34965ff3e6483dd31322d617ba54ad00de9053d2e64f550041cfe094667",
+    "experiments/blueprint-floor/fixtures/scorer.json": "6311bfd945d162906bc675c98be3e211f57d3a42f6f69e478164294a2ba304f1",
+    "experiments/blueprint-floor/extract.mjs": "c3f7fec17d8c272c10898b2f381a56d2566174e4f2956f8058ac1421af7e0287",
+    "experiments/blueprint-floor/rules/selection.json": "847e14fea2d713c8f64c3e310e711f9b0ea688208488f8afa917d1e5014ea6f3",
+    "experiments/blueprint-floor/rules/SELECTION.md": "bb6e692403b9e1de324f19cc7cf5429954aac5e78806041ec363bdf82cd537d2",
+    "experiments/blueprint-floor/rules/hunch.json": "f5f37a174ce0106bbb95a4564df10eb1a03d65727638eedebc1c54cabb48f08e",
+    "experiments/blueprint-floor/rules/jev-pref.json": "707510c3c8f300f9e0a36020794111f3b3ee39201b45203a96067248ba87efe5",
+    "experiments/blueprint-floor/rules/abide.json": "b5276afe6d91c93f462d3ff113926d45a60b567d6e0281072f9a334093ab05db",
+    "experiments/blueprint-floor/rules/limpet.json": "5c3a8bad2403f23453e4745588e8169bcb0b2619c43e372e82b5ddea42149d6f",
+    "experiments/blueprint-floor/rules/jev-belay.json": "ef35a1382489f9491931c5939e33d22f0f875c9e2d085d579bc81a71c5465134",
+    "experiments/blueprint-floor/rules/jev-engineering.json": "6ee3d88dcd6bc0fdf8278846418dcb17b8713c824770eb01298ed295c7e44435",
+    "experiments/blueprint-floor/rules/pi-verdict.json": "71c71bc7fd65b4eaa9dbfe60c297d8cf79aed05e91b84f92251fb4c14585687e",
+    "experiments/blueprint-floor/rules/jev-axi.json": "b9adf67d03141f464531a630efe0004d93456de1cc9e4673d4caad359fb38d88",
+    "experiments/blueprint-floor/controls/positive.json": "c3bb57a4f0472290ed3ecedfc1f5318ea888d6ed38bc69690373ef1d193e2c46",
+    "experiments/blueprint-floor/controls/negative.json": "b4e25358def8b26685f0bf3708a4762578a5f88b17d102d743ebaea1a55dc619",
+    "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
+    "experiments/jev-gate/rules.txt": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
+    "scripts/blueprint-floor-rules.mjs": "f55d0b5c1ce8d3ddbdbe7bc082b01ee6fa54691f25ebb4e2dc5361ba25826b3c",
+    "package.json": "f6727111f219ee47f40d77bd7a5a4d2902cb2bb8062d8993ede710d31f40817d",
+    "pnpm-lock.yaml": "3d04442a268a1f5dbb0fc852ece2ff0044a229ae0e6688f5acbe8fabbb06648d"
+  },
+  "engine": {
+    "package": "bce-engine",
+    "version": "0.3.1",
+    "files": {
+      "package.json": "27e9667bda7c7564924ba9f13d4c8dae086f220f207259dc7e6d12fa9b7e389a",
+      "src/report.ts": "ec4bcb7f7cca250c12caf64ace6150764267ef255a9a182ed821394079246aeb",
+      "src/schema.ts": "d7b2347570373b2291f3d179809b98f95f12b34675e0be48ab75e00bf5b04b85",
+      "src/extractors.ts": "f48047f6955d3d788a6ac4376a2ac0cd9dfcf2ee348535407df3dbf9a4fc2a8f",
+      "dist/cli.js": "6ffe4c23913a6813b9d9d4a2f4ca29b5405a65bbcec9cb4489cfef0326a52648"
+    },
+    "pluginVocabulary": [
+      "forbiddenDependency",
+      "forbiddenFile",
+      "forbiddenPattern",
+      "forbiddenEgress"
+    ],
+    "controlVocabulary": [
+      "forbiddenDependency",
+      "requiredDependency",
+      "requiredComponent",
+      "forbiddenPath",
+      "forbiddenFile",
+      "forbiddenPattern"
+    ],
+    "excludedTypes": [
+      "behavioralInvariant",
+      "requiredEvidence",
+      "minimumMetric",
+      "customPolicy"
+    ],
+    "rule": "The vocabulary is the constraint types bce-engine 0.3.1's evaluate() implements and grades statically on the pinned profile, derived from the installed engine source and cited by file and line in whitelist.json with the engine files' sha256. package.json and the lockfile pin 0.3.1 and are unchanged; any engine change is an operator decision.",
+    "customPolicy": "customPolicy is declared by 0.3.1's schema but evaluate() has no branch for it, so it enforces nothing; the adapter refuses it (and every other type outside the vocabulary) with a typed error."
+  },
+  "adapter": {
+    "profiles": "Plugin rules run on the plugin-surface profile with the ast extractor, scanning .floor/** and src/**/*.ts for diff inputs and .floor/** otherwise, with minFiles equal to the files the engine resolves for the materialised input. The positive controls run as EXP 005 ran them: typescript-module-graph over src/**/*.ts. Scoring reuses EXP 005's contract (bce-contract.mjs: materialise, run, interpret), imported, not copied.",
+    "inputs": [
+      "diff: EXP 005's base tree after the patch, plus .floor/diff.patch (verbatim) and .floor/added-lines.txt (the added lines with a +++ <path> header per file).",
+      "toolCall: .floor/tool-call.json (the hook input, pretty-printed) and .floor/command.txt (tool_input.command verbatim, else empty).",
+      "stopTranscript: .floor/transcript.jsonl (one event per line) and .floor/final-message.txt.",
+      "file: the document at .floor/files/<path>."
+    ],
+    "judge": "judge() takes the rule's final class: expressible gives pass or fail from the engine; partial gives fail from the engine and otherwise abstains; not always abstains. A rule with an empty constraint set abstains.",
+    "teeth": "teeth(constraints, {violating, compliant}) passes only if the violating probe makes the constraints FAIL and the compliant probe makes them PASS, through the adapter and the real engine. A vacuous constraint fails teeth.",
+    "base": "Every diff input is a patch against EXP 005's base tree (experiments/jev-gate/base), committed as EXP 005's scoring contract commits a tree (baseCommit; baseTree is its git tree id). Its file list, not its contents, is in the translator's contract, so probes add files.",
+    "baseCommit": "2c55f16e20ccc27e60d5c53e25661acafb82133f",
+    "baseTree": "957b5e10c099ef2c86bb4543a8560aba59290d62"
+  },
+  "classes": {
+    "expressible": "the constraints alone decide the rule as written on every input of its kind (no residual)",
+    "partial": "the constraints decide a strict, non-empty subset (e.g. the flagrant forms) and a residual question is required for the rest",
+    "not": "no whitelisted constraint decides any non-trivial part"
+  },
+  "translator": {
+    "input": "One rule's verbatim text (the single text field pinned per plugin in selection.json), its input kind, its regex flags when it is a regex, and the materialisation contract with the accepted constraint types and one generic example each (contract.md; contract-module-graph.md for the positive controls).",
+    "never": "Any case, any label, any plugin evaluation file, abide's own type field, another rule's class, or any result. Every other field of a source item is stored under withheld in the rule file and never rendered into a prompt.",
+    "output": "One JSON object: {ruleId, class: expressible | partial | not, constraints: [bce constraint objects], coverage, residual (a yes/no question, or null exactly when expressible), probes: {violating, compliant} (null for not), rationale of at most 80 words}.",
+    "blindness": "The prompt builder (protocol.mjs) reads exactly four fields of a rule, {ruleId, text, inputKind, flags}; a test hands it a rule whose other fields throw when read."
+  },
+  "mechanical": {
+    "checks": [
+      "the answer is one JSON object with a valid class, matching the output schema",
+      "every constraint type is in the vocabulary",
+      "bce validate passes on a blueprint holding the constraints",
+      "teeth passes through the adapter"
+    ],
+    "downgrade": "The first failing check lowers the class once: expressible becomes partial if a residual was given, else not; partial becomes not. Each downgrade is recorded with the failing check.",
+    "engineLimit": "A pattern the engine's safe-compile guard refuses fails validation and is counted in a separate engine-limit category.",
+    "error": "An answer that is not a JSON object with a valid class, a timeout, a model id other than the pin, or any other harness failure is class error, counted as not (conservative) and listed."
+  },
+  "adjudicator": {
+    "input": "A separate process on a different pinned model, no tools: the rule text, the translator's answer verbatim and the mechanical results. No case.",
+    "output": "{ruleId, verdict: confirm | dispute, proposedClass, reason of at most 80 words}.",
+    "finalClass": "Confirmed: the class after the mechanical checks. Disputed: the lower of that class and the proposed class (not < partial < expressible), so a dispute can only lower expressibility.",
+    "agreement": "Translator-adjudicator agreement is reported as Cohen's kappa over the three classes, with the list of disputes."
+  },
+  "controls": {
+    "positive": "EXP 005 rules.txt rules 2 to 8, verbatim (controls/positive.json): the EXP 005 blueprint enforces each of them with bce 0.3.1.",
+    "negative": "Six semantic control rules, each needing the meaning or intent of the input (controls/negative.json), graded on the same path as the plugin rules.",
+    "calibrationBar": "At least 6 of 7 positive controls final expressible or partial, and at most 1 of 6 negative controls final expressible.",
+    "miss": "A miss is published and the census reported as \"translator uncalibrated\"; the run continues and nothing is silently re-run. Controls are outside every median.",
+    "counts": {
+      "positive": 7,
+      "negative": 6
+    }
+  },
+  "metrics": [
+    {
+      "id": "expressibleShare",
+      "definition": "Per plugin: final expressible / rules in its primary stratum, with n."
+    },
+    {
+      "id": "partialShare",
+      "definition": "Per plugin: final partial / rules in its primary stratum, reported beside the expressible share."
+    },
+    {
+      "id": "headline",
+      "definition": "The median across plugins of the expressible share (strict). A plugin whose primary stratum is empty has no share: it is listed and not counted."
+    },
+    {
+      "id": "preDisputeMedian",
+      "definition": "The same median computed on the classes after the mechanical checks and before the adjudicator, reported because disputes can only lower."
+    },
+    {
+      "id": "sensitivity",
+      "definition": "The median with partial counted as 0.5; reported, not decisive."
+    },
+    {
+      "id": "secondary",
+      "definition": "hunch's secondary sample: its class counts and expressible share, reported separately."
+    },
+    {
+      "id": "agreement",
+      "definition": "Cohen's kappa between the translator's class after the mechanical checks and the adjudicator's class, over the three classes, and the dispute list."
+    },
+    {
+      "id": "abideComparison",
+      "definition": "For abide's rules, agreement of the final class with abide's own type field (lint ~ expressible, model ~ partial or not); unenforceable and deferred reported as they are. The type field is read only by this comparison."
+    },
+    {
+      "id": "lists",
+      "definition": "Downgrades with their failing check, engine-limit rules, and errors, each listed by ruleId."
+    }
+  ],
+  "census": {
+    "primaryRules": 145,
+    "secondaryRules": 30,
+    "secondaryPopulation": 1011,
+    "controls": 13,
+    "rules": 188,
+    "calls": 376,
+    "pluginsInMedian": 7,
+    "pluginsWithoutRules": [
+      "jev-belay"
+    ]
+  },
+  "calls": {
+    "translatorModel": "claude-opus-5-5",
+    "adjudicatorModel": "claude-sonnet-5",
+    "client": "Claude Code",
+    "clientVersion": "2.1.280",
+    "effort": "high",
+    "attempts": 1,
+    "command": "claude -p --model <pin> --effort high --tools \"\" --strict-mcp-config --setting-sources project --no-session-persistence --system-prompt-file <pinned prompt file> --output-format json",
+    "workingDirectory": "A fresh empty temporary directory outside any repository (no CLAUDE.md in its ancestors), which is also the child's TMPDIR.",
+    "environment": "Built from an allowlist: HOME, PATH, USER, LOGNAME, LANG, LC_*, SHELL, TERM and TMPDIR; nothing else (no CLAUDE_*, CLAUDECODE, ODIN_*, *_KEY, *_TOKEN or *_SECRET). No fallback model. API-billing environment variables are refused.",
+    "billing": "Calls run under subscription auth. total_cost_usd is then an API-equivalent figure, and the $100 cap applies to that figure, not to cash (the convention of EXP 005 and EXP 006).",
+    "modelAssertion": "The runner asserts that the result's modelUsage has exactly one key and that it equals the pin; otherwise the call is an error (charged its cost, class error, counted as not).",
+    "canary": "Before any counted call, one practice call per model asks what experiment, repository, rule set, label or prior conversation is in its context; an answer naming a pinned term fails the canary and stops the run.",
+    "bareRejected": "The client's --bare mode is not used: it forces API-key authentication, which this setup does not use."
+  },
+  "killCriteria": {
+    "stage1": "Median expressible share below 25%: the premise is refuted, stage 2 is cancelled, and the census is the result.",
+    "verbatim": "Kill criteria (pre-registered, published either way): median expressible share < 25% → premise refuted, census is the result;\n  cascade adds false rejects > 2 pts over plugin-alone, or avoids < 20% of Jev calls → refuted.",
+    "discriminatingNegativesVerbatim": "Discriminating negatives: sham floor must collapse to Jev-alone; floor must abstain on ≥95% of non-expressible rules;\n  lint-floor tie is published as \"any deterministic floor works\".",
+    "source": "The council verdict adopted by the founder on 2026-09-30, quoted verbatim, line break included. The stage-2 criteria and negatives are stated now and bind the stage-2 amendment.",
+    "publication": "Every outcome is published, including \"premise refuted\" and \"translator uncalibrated\"."
+  },
+  "spend": {
+    "capUsd": 100,
+    "censusCeilingUsd": 40,
+    "ledger": "experiments/blueprint-floor/spend-ledger.jsonl",
+    "rules": [
+      "Every metered paid call of EXP 007 (census translator and adjudicator, labellers, Jev, probes, canaries, dry runs) appends one line to the ledger, in dollars to 7 decimal places.",
+      "A call whose cost is unknown is charged its upper bound; there is never a $0 line; an unpaid round gets no line.",
+      "The census runner refuses a call when the spend so far plus the reserve would exceed the $40 census ceiling; exceeding the $100 cap is an operator decision.",
+      "Session sub-agent labour (implementers, refuters) is not metered per call; it is disclosed with token counts and never presented as $0."
+    ],
+    "bundle1": "This record was built with no model call and no paid call: spend $0.0000000, and no ledger line.",
+    "wording": "\"$0 / no model\" in COUNCIL-VERDICT STAGE 1 and STEER S5 = no Jev and no paid call before the stage-1 prereg is live; the census translator + adjudicator are METERED model calls under the $100 cap (council's cost line counts them as agent labour).",
+    "unknownCost": "The unknown-cost bound is three times the largest observed cost per role, at least $0.5000000."
+  },
+  "notBefore": "No counted call before the merge time of the odin-rnd pull request that adds this file (gh pr view <n> -R odin-labs-ai/odin-rnd --json mergedAt, UTC), and only while the site serves this record byte for byte.",
+  "runnerGuard": "Every counted-call runner refuses unless the pre-registration on disk has the sha256 frozen at run start, which must equal the one published.",
+  "limits": [
+    "The target language is bce-engine 0.3.1's static vocabulary and nothing more: four constraint types for plugin rules. A newer engine or a different checker may decide more.",
+    "The adapter maps non-diff inputs to files (a tool call to JSON and command text, a transcript to JSON lines and a final message, a document to a file). That mapping is a choice we made; another mapping could change what is expressible.",
+    "forbiddenDependency fires only on import declarations and forbiddenEgress only on TypeScript network calls, so neither can decide anything about .floor text files; for tool calls, transcripts and documents, forbiddenPattern and forbiddenFile are the working vocabulary.",
+    "A partial floor still needs a model for its residual; expressible is the only class that removes the model for that rule.",
+    "The translator is itself a model. The adjudicator and the mechanical checks guard it, but teeth is self-consistency (the translator writes both the constraint and its probes), not proof over every input.",
+    "The dispute rule can only lower a class, which biases the census toward the kill criterion; the median before disputes is reported beside it.",
+    "Some plugins have few rules (jev-pref has 4), so their shares move in large steps.",
+    "Which items count as rules is our application of the pinned inclusion test. At the pin jev-belay has no rule that decides by itself (its four questions feed one combined decision), so its primary stratum is empty and the median runs over the other plugins.",
+    "The negative controls were written by the experimenters; the positive controls come from EXP 005, whose rules were written for bce.",
+    "jev-engineering's patterns are Python regular expressions and the checker compiles JavaScript ones; where the dialects differ, only teeth decides.",
+    "Probe patches can only add files, because the contract lists the base tree's files but not their contents.",
+    "One translator model, one adjudicator model, one attempt per rule and one client version.",
+    "Upstream plugin labels, where stage 2 uses them, are written by each plugin's authors and are not independent."
+  ],
+  "sources": [
+    {
+      "id": "awesome",
+      "label": "awesome-jev-tools",
+      "url": "https://github.com/v-modal/awesome-jev-tools",
+      "claim": "The list the eight plugins were taken from."
+    },
+    {
+      "id": "bce",
+      "label": "bce (blueprint-conformance/bce)",
+      "url": "https://github.com/blueprint-conformance/bce",
+      "claim": "The checker whose 0.3.1 release is the target vocabulary."
+    },
+    {
+      "id": "bce-npm",
+      "label": "bce-engine 0.3.1 on npm",
+      "url": "https://www.npmjs.com/package/bce-engine/v/0.3.1",
+      "claim": "The released package this repository pins."
+    },
+    {
+      "id": "exp005",
+      "label": "EXP 005, Jev as a fast gate",
+      "url": "https://odin-labs-ai.github.io/odin-rnd/journal/jev-as-a-fast-gate.html",
+      "claim": "The experiment whose linter finding motivates this one, and whose base tree and controls are reused."
+    }
+  ]
+}
