@@ -228,10 +228,12 @@ test('N2: the known false-BLIND forms are pinned BLIND (documented behaviour, no
   }
 });
 
-test('N9: a git call is a Bash command whose first token is git; N10: only top-level calls count (sub-agent calls do not)', () => {
+test('N9 (as amended by EXP 006 amendment 01, A2): a git call starts with git or has an allowed git form as a sub-command; N10: only top-level calls count', () => {
   const lines = fp.items.c004.plus.map(l => `+${l}`).join('\n');
   assert.equal(classifyDiffSeen({ calls: [bash('git diff', lines)], fp: fp.items.c004 }).seen, true);
-  for (const command of ['echo git diff', 'cat x; git diff', 'digit diff', 'sh -c "git diff"']) assert.equal(classifyDiffSeen({ calls: [bash(command, lines)], fp: fp.items.c004 }).seen, false, command);
+  // A2: `cat x; git diff` was BLIND under the registered rule (first token cat); its git sub-command now makes it a git call.
+  assert.equal(classifyDiffSeen({ calls: [bash('cat x; git diff', lines)], fp: fp.items.c004 }).seen, true, 'cat x; git diff');
+  for (const command of ['echo git diff', 'echo "x; git diff"', 'digit diff', 'sh -c "git diff"', 'cat x; git branch', 'cat x\ngit diff']) assert.equal(classifyDiffSeen({ calls: [bash(command, lines)], fp: fp.items.c004 }).seen, false, command);
   assert.equal(classifyDiffSeen({ calls: [{ ...bash('git diff', lines), parentToolUseId: 'toolu_task_1' }], fp: fp.items.c004 }).seen, false, 'a sub-agent call never makes a run SEEN');
   assert.equal(classifyDiffSeen({ calls: [{ ...bash('git diff', lines), parentToolUseId: null }], fp: fp.items.c004 }).seen, true);
 });

@@ -9,8 +9,8 @@ import { percentile } from '../experiments/jev-gate/results.mjs';
 import { FAKE_CLAUDE, renderCommand } from '../experiments/jev-gate/run_reviewer.mjs';
 import { checkRecords, readRunnerPins, REPO_ROOT } from '../experiments/jev-gate/runner-guard.mjs';
 import { WS_REPO } from '../experiments/nina-changes/fence6.mjs';
-import { NOT_BEFORE6, PREREG6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
-import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } from '../experiments/nina-changes/guard6.mjs';
+import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256, NOT_BEFORE6, PREREG6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
+import { amendedPins6, checkPinned6, checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } from '../experiments/nina-changes/guard6.mjs';
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
@@ -131,44 +131,65 @@ test('runners.sha256 pins every EXP 006 file and every jev-gate module EXP 006 i
 
 test('the guard: every counted run refuses while freeze.mjs is null; a rehearsal needs pins; practice and probe pass', () => {
   // Branches on the committed freeze (as the pre-run probe test does), so WO-2-01's freeze keeps the suite green.
-  if (PREREG6_SHA256 === null) {
-    assert.equal(NOT_BEFORE6, null, 'freeze.mjs sets both constants or neither');
-    assert.throws(() => checkRun6({ mode: 'counted' }), /wait for the freeze/);
-  } else {
-    assert.match(PREREG6_SHA256, /^[0-9a-f]{64}$/);
-    assert.ok(Number.isFinite(Date.parse(NOT_BEFORE6)), 'a frozen not-before is a time');
-  }
-  assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: 'a'.repeat(64), NOT_BEFORE6: '2026-01-01T00:00:00Z' } }), /hashes to [0-9a-f]{64}, not the frozen a{64}/);
-  // With the committed record's own sha frozen: refused before the not-before, accepted after it (every pin re-checked).
-  const real = createHash('sha256').update(readFileSync('experiments/nina-changes/preregistration.json')).digest('hex');
-  assert.throws(() => checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: new Date(Date.now() + 3600e3).toISOString().replace(/\.\d+Z$/, 'Z') } }), /not after the EXP 006 not-before/);
-  const frozen = checkRun6({ mode: 'counted', freeze: { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' } });
-  assert.deepEqual([frozen.stamp.mode, frozen.stamp.prereg6Sha256, frozen.stamp.notBefore], ['counted', real, '2026-01-01T00:00:00Z']);
-  assert.throws(() => checkRun6({ mode: 'practice', rehearsalPins: { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' } }), /rehearsal only/);
-  const pins = { prereg6Sha256: 'a'.repeat(64), notBefore: '2026-01-01T00:00:00Z' };
-  const future = { prereg6Sha256: 'a'.repeat(64), notBefore: new Date(Date.now() + 3600e3).toISOString() };
-  if (PREREG6_SHA256 === null) {
-    // Before the freeze a rehearsal needs its own pins, with a not-before in the past, and runs under them.
+  const frozenAll = [PREREG6_SHA256, NOT_BEFORE6, AMENDMENT6_SHA256, AMENDMENT6_NOT_BEFORE].every(Boolean);
+  if (PREREG6_SHA256 === null) assert.equal(NOT_BEFORE6, null, 'freeze.mjs sets both constants or neither');
+  else { assert.match(PREREG6_SHA256, /^[0-9a-f]{64}$/); assert.ok(Number.isFinite(Date.parse(NOT_BEFORE6)), 'a frozen not-before is a time'); }
+  if (AMENDMENT6_SHA256 === null) assert.equal(AMENDMENT6_NOT_BEFORE, null, 'freeze.mjs sets both amendment constants or neither');
+  else { assert.match(AMENDMENT6_SHA256, /^[0-9a-f]{64}$/); assert.ok(Number.isFinite(Date.parse(AMENDMENT6_NOT_BEFORE)), 'a frozen amendment not-before is a time'); }
+  if (!frozenAll) assert.throws(() => checkRun6({ mode: 'counted' }), /wait for the freeze/);
+  const hash = f => createHash('sha256').update(readFileSync(f)).digest('hex');
+  const real = hash('experiments/nina-changes/preregistration.json'), realA = hash('experiments/nina-changes/amendment-01.json');
+  const P = { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' }, A = { AMENDMENT6_SHA256: realA, AMENDMENT6_NOT_BEFORE: '2026-01-02T00:00:00Z' };
+  // EXP 006 amendment 01 (A5): the pre-registration frozen alone is not enough; the amendment must be frozen too.
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { ...P, AMENDMENT6_SHA256: null, AMENDMENT6_NOT_BEFORE: null } }), /wait for the freeze of EXP 006 amendment 01/);
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { ...P, PREREG6_SHA256: 'a'.repeat(64), ...A } }), /hashes to [0-9a-f]{64}, not the frozen a{64}/);
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { ...P, ...A, AMENDMENT6_SHA256: 'b'.repeat(64) } }), /amendment-01\.json hashes to [0-9a-f]{64}, not the frozen b{64}/);
+  // With the committed records' own shas frozen: refused before either not-before, accepted after both (every pin re-checked).
+  const future = new Date(Date.now() + 3600e3).toISOString().replace(/\.\d+Z$/, 'Z');
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { ...P, NOT_BEFORE6: '2026-01-01T00:00:00Z', ...A, AMENDMENT6_NOT_BEFORE: future } }), /not after the EXP 006 amendment 01 not-before/);
+  assert.throws(() => checkRun6({ mode: 'counted', freeze: { ...P, ...A, AMENDMENT6_NOT_BEFORE: '2025-12-31T00:00:00Z' } }), /amendment not-before .* is not after the pre-registration's/);
+  const frozen = checkRun6({ mode: 'counted', freeze: { ...P, ...A } });
+  assert.deepEqual([frozen.stamp.mode, frozen.stamp.prereg6Sha256, frozen.stamp.amendment6Sha256, frozen.stamp.notBefore], ['counted', real, realA, A.AMENDMENT6_NOT_BEFORE], 'the clock is the amendment\'s not-before');
+  const pins = { prereg6Sha256: 'a'.repeat(64), amendment6Sha256: 'b'.repeat(64), notBefore: '2026-01-01T00:00:00Z' };
+  const futurePins = { ...pins, notBefore: new Date(Date.now() + 3600e3).toISOString() };
+  assert.throws(() => checkRun6({ mode: 'practice', rehearsalPins: pins }), /rehearsal only/);
+  if (!frozenAll) {
+    // Before the freeze a rehearsal needs its own pins (an amendment sha included), with a not-before in the past.
     assert.throws(() => checkRun6({ mode: 'rehearsal' }), /rehearsalPins/);
-    assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: future }), /not in the past/);
-    assert.deepEqual([checkRun6({ mode: 'rehearsal', rehearsalPins: pins }).stamp.prereg6Sha256, checkRun6({ mode: 'rehearsal', rehearsalPins: pins }).stamp.notBefore], [pins.prereg6Sha256, pins.notBefore]);
+    assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: { prereg6Sha256: pins.prereg6Sha256, notBefore: pins.notBefore } }), /amendment6Sha256/);
+    assert.throws(() => checkRun6({ mode: 'rehearsal', rehearsalPins: futurePins }), /not in the past/);
+    const st = checkRun6({ mode: 'rehearsal', rehearsalPins: pins }).stamp;
+    assert.deepEqual([st.prereg6Sha256, st.amendment6Sha256, st.notBefore], [pins.prereg6Sha256, pins.amendment6Sha256, pins.notBefore]);
   } else {
     // After the freeze a rehearsal runs under the frozen constants; rehearsal pins, even bad ones, are ignored.
-    for (const rehearsalPins of [null, pins, future]) {
+    for (const rehearsalPins of [null, pins, futurePins]) {
       const st = checkRun6({ mode: 'rehearsal', rehearsalPins }).stamp;
-      assert.deepEqual([st.prereg6Sha256, st.notBefore], [PREREG6_SHA256, NOT_BEFORE6], JSON.stringify(rehearsalPins));
+      assert.deepEqual([st.prereg6Sha256, st.amendment6Sha256, st.notBefore], [PREREG6_SHA256, AMENDMENT6_SHA256, AMENDMENT6_NOT_BEFORE], JSON.stringify(rehearsalPins));
     }
   }
   // The same two branches, forced both ways through the guard's freeze parameter (whatever freeze.mjs holds today).
-  assert.throws(() => checkRun6({ mode: 'rehearsal', freeze: { PREREG6_SHA256: null, NOT_BEFORE6: null } }), /rehearsalPins/);
-  const asFrozen = checkRun6({ mode: 'rehearsal', rehearsalPins: future, freeze: { PREREG6_SHA256: real, NOT_BEFORE6: '2026-01-01T00:00:00Z' } }).stamp;
-  assert.deepEqual([asFrozen.prereg6Sha256, asFrozen.notBefore], [real, '2026-01-01T00:00:00Z'], 'frozen: the rehearsal pins are ignored');
+  assert.throws(() => checkRun6({ mode: 'rehearsal', freeze: { PREREG6_SHA256: null, NOT_BEFORE6: null, AMENDMENT6_SHA256: null, AMENDMENT6_NOT_BEFORE: null } }), /rehearsalPins/);
+  assert.throws(() => checkRun6({ mode: 'rehearsal', freeze: { ...P, AMENDMENT6_SHA256: null, AMENDMENT6_NOT_BEFORE: null } }), /rehearsalPins/, 'the pre-registration frozen alone does not freeze a rehearsal');
+  const asFrozen = checkRun6({ mode: 'rehearsal', rehearsalPins: futurePins, freeze: { ...P, ...A } }).stamp;
+  assert.deepEqual([asFrozen.prereg6Sha256, asFrozen.amendment6Sha256, asFrozen.notBefore], [real, realA, A.AMENDMENT6_NOT_BEFORE], 'frozen: the rehearsal pins are ignored');
   const ok = checkRun6({ mode: 'rehearsal', rehearsalPins: pins });
   assert.deepEqual([ok.stamp.mode, ok.stamp.rehearsal, ok.stamp.fixture, ok.stamp.codeMatchesPins], ['counted', true, false, true]);
   assert.equal(ok.stamp.corpusSha256, 'a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9');
   assert.equal(ok.stamp.baseCommit, '3e35e4e274932a61bc0d92f378f8d506a9bb4ce0');
   assert.equal(checkRun6({ mode: 'practice' }).stamp.mode, 'practice');
   assert.equal(checkRun6({ mode: 'probe' }).stamp.prereg6Sha256, null);
+});
+
+test('A5: the counted guard applies amendment 01\'s re-pins: from must be the pre-registration\'s pin, and an unlisted change refuses', () => {
+  const prereg = JSON.parse(readFileSync('experiments/nina-changes/preregistration.json', 'utf8'));
+  const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
+  const pinned = amendedPins6(prereg.files, amendment);
+  for (const [f, want] of Object.entries(pinned)) assert.equal(createHash('sha256').update(readFileSync(f)).digest('hex'), want, f);
+  const [f] = Object.keys(amendment.pins);
+  assert.throws(() => amendedPins6(prereg.files, { pins: { [f]: { ...amendment.pins[f], from: 'c'.repeat(64) } } }), /the pre-registration pins it at/);
+  assert.throws(() => amendedPins6(prereg.files, { pins: { 'experiments/nina-changes/not-pinned.mjs': { from: 'c'.repeat(64), to: 'd'.repeat(64) } } }), /does not pin/);
+  // Without the amendment the re-pinned files no longer match the pre-registration's pins.
+  assert.throws(() => checkPinned6(prereg.files), /it hashes to/);
 });
 
 test('the fixture guard: fixture/rehearsal runs use ONLY the EXP 006 stream-json fake; real runs refuse both fakes', () => {

@@ -13,13 +13,15 @@
 // criterion (as in EXP 005). The manipulation check: BLIND runs (harness failures included) at most the pre-registered
 // maximum of the fixed denominator, else FAIL. Diff-seen-only figures are reported BESIDE the primary, never in its
 // place. A partial run decides nothing. Thresholds come only from the records passed in (bar6 = the EXP 006
-// pre-registration's bar, which must equal EXP 005 amendment 01's criteria).
+// pre-registration's bar, which must equal EXP 005 amendment 01's criteria). EXP 006 amendment 01 (A5): a counted
+// scoring also binds the EXP 006 amendment: the run and the stamp name the same amendment6Sha256 (the frozen
+// AMENDMENT6_SHA256 outside a rehearsal), the not-before is the amendment's, and the results record carries the sha.
 import assert from 'node:assert/strict';
 import { assertPublishable, percentile, population, spotlightVerdict, validateGateRun } from '../jev-gate/results.mjs';
 import { wilson } from '../jev-gate/metrics.mjs';
 import { checkPreflightForScoring } from '../jev-gate/runner-guard.mjs';
 import { classifyDiffSeen } from './diff-seen.mjs';
-import { NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
+import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256, PREREG6_SHA256 } from './freeze.mjs';
 import { HARNESS_FAILURE_DEFINITION } from './stream6.mjs';
 import { coverageGap } from './vendored-exp005.mjs';
 
@@ -61,7 +63,8 @@ const rate = (x, n, z) => ({ x, n, ...(wilson(x, n, z) ?? { estimate: null, lowe
 /**
  * exp005: {prereg, amendment} (EXP 005's records, as the guard loaded them). bar6: the EXP 006 bar {criteria,
  * harnessFailure, manipulation: {maxBlindRuns, countedRuns}}. stamp: what the run must have been made under
- * ({fixture, rehearsal, prereg6Sha256, notBefore, code, parentSha256, amendmentSha256}). fingerprints + its sha.
+ * ({fixture, rehearsal, prereg6Sha256, amendment6Sha256, notBefore, code, parentSha256, amendmentSha256}). fingerprints
+ * + its sha.
  */
 export function computeResults6({ exp005, bar6, labels, run, fingerprints, fingerprintsSha256, stamp, preflight }) {
   const { prereg, amendment } = exp005;
@@ -83,12 +86,15 @@ export function computeResults6({ exp005, bar6, labels, run, fingerprints, finge
     // A counted scoring re-checks what the runner enforced: frozen code, counted mode, the EXP 006 pre-registration
     // and not-before, every call after it, and the committed pre-flight record against what the RUN stamped.
     if (!stamp.rehearsal) {
-      assert(PREREG6_SHA256 && NOT_BEFORE6, 'counted scoring waits for the freeze (freeze.mjs)');
+      assert(PREREG6_SHA256 && AMENDMENT6_SHA256 && AMENDMENT6_NOT_BEFORE, 'counted scoring waits for the freeze (freeze.mjs)');
       assert.equal(stamp.prereg6Sha256, PREREG6_SHA256, 'scored against another EXP 006 pre-registration');
-      assert.equal(stamp.notBefore, NOT_BEFORE6, 'scored against another not-before');
+      assert.equal(stamp.amendment6Sha256, AMENDMENT6_SHA256, 'scored against another EXP 006 amendment 01');
+      assert.equal(stamp.notBefore, AMENDMENT6_NOT_BEFORE, 'scored against another not-before');
     }
     assert.match(run.prereg6Sha256 ?? '', /^[0-9a-f]{64}$/, 'the run names its EXP 006 pre-registration');
     assert.equal(run.prereg6Sha256, stamp.prereg6Sha256, 'the run was made under another EXP 006 pre-registration');
+    assert.match(run.amendment6Sha256 ?? '', /^[0-9a-f]{64}$/, 'the run names its EXP 006 amendment 01');
+    assert.equal(run.amendment6Sha256, stamp.amendment6Sha256, 'the run was made under another EXP 006 amendment 01');
     assert.equal(run.notBefore, stamp.notBefore, 'the run has a different not-before time');
     assert.deepEqual(run.code, stamp.code, 'the run was made by other code than the frozen one');
     assert.equal(run.mode, 'counted', `the run is not a counted run (mode ${run.mode})`);
@@ -158,7 +164,7 @@ export function computeResults6({ exp005, bar6, labels, run, fingerprints, finge
   const record = {
     schemaVersion: 1, kind: 'results', experiment: 'EXP 006',
     fixture: stamp.fixture, ...(stamp.fixture ? { banner: run.banner } : {}), ...(run.rehearsal ? { rehearsal: true } : {}),
-    prereg6Sha256: run.prereg6Sha256 ?? null, parentSha256: run.parentSha256, amendmentSha256: run.amendmentSha256, notBefore: run.notBefore, code: run.code,
+    prereg6Sha256: run.prereg6Sha256 ?? null, amendment6Sha256: run.amendment6Sha256 ?? null, parentSha256: run.parentSha256, amendmentSha256: run.amendmentSha256, notBefore: run.notBefore, code: run.code,
     partial: partial ? partialReasons : null,
     runStates: counts, manipulation, spotlight, diffSeenOnly, cost,
     // The spotlight decision record (held true/false) is written at results time by the pre-registered rule:

@@ -10,6 +10,7 @@ import { assertFenceUnaffected, buildRecord, checkRecord, FENCE_FILES, NOT_PINNE
 import { addJournalRow, articlePath, assertNoteCurrent, exp005SpotlightHref, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { exp006NoteHref, renderHarnessSection, checkResults } from './jev-gate-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
+import { qualifyRow } from './nina-changes-amendment-note.mjs';
 
 // EXP 006 WO-1-04 and WO-1-05: the pre-registration record, its validator, and its public pages.
 
@@ -21,7 +22,10 @@ test('the record is pinned, and it is exactly the build of the committed files',
   assert.equal(readFileSync(pinPath, 'utf8').split(/\s+/)[0], sha256(readFileSync(recordPath)));
   assert.equal(digest, sha256(readFileSync(recordPath)));
   assert.deepEqual(record, buildRecord());
-  for (const [file, want] of Object.entries(record.files)) assert.equal(sha256(readFileSync(file)), want, file);
+  // Each pinned file hashes to its pin, or, for a file EXP 006 amendment 01 re-pins, to the amendment's new pin.
+  const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
+  for (const [file, want] of Object.entries(record.files)) assert.equal(sha256(readFileSync(file)), amendment.pins[file] ? amendment.pins[file].to : want, file);
+  for (const [file, p] of Object.entries(amendment.pins)) assert.equal(record.files[file], p.from, `${file}: the amendment re-pins it from this record's pin`);
   for (const f of NOT_PINNED) assert(!(f in record.files), `${f} is never pinned in the pre-registration`);
 });
 
@@ -120,7 +124,9 @@ test('EXP 005\'s held-spotlight section links to EXP 006, and the home row is ad
 test('the built site publishes the record byte for byte and carries the row and the links (fresh build copy)', { timeout: 600_000 }, () => {
   const dist = join(builtCopy(), 'dist');
   assert.equal(sha256(readFileSync(join(dist, 'data/nina-changes/preregistration.json'))), digest);
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(renderJournalRow(record)));
+  // The row as built: the pre-registration's row, qualified in place by EXP 006 amendment 01.
+  const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(qualifyRow(renderJournalRow(record), amendment)));
   assert(existsSync(join(dist, `journal/${slug}.html`)));
   assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(`href="${exp006NoteHref}"`));
 });

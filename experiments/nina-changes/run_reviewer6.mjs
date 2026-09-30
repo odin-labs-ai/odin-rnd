@@ -282,7 +282,7 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
     schemaVersion: 1, kind: 'gate-run', gate: 'reviewer', experiment: 'EXP 006',
     mode: probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode, ...fixtureFields(fixture), ...(rehearsal ? { rehearsal: true } : {}),
     parentSha256: stamp.parentSha256, amendmentSha256: stamp.amendmentSha256, amendment02Sha256: stamp.amendment02Sha256,
-    prereg6Sha256: stamp.prereg6Sha256, notBefore: stamp.notBefore ?? amendment.notBefore, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins,
+    prereg6Sha256: stamp.prereg6Sha256, amendment6Sha256: stamp.amendment6Sha256, notBefore: stamp.notBefore ?? amendment.notBefore, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins,
     corpusSha256: stamp.corpusSha256, baseCommit: stamp.baseCommit,
     startedAt: new Date().toISOString(), endedAt: null,
     pins: {

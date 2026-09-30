@@ -19,7 +19,7 @@ import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 import { spotlightShown } from '../experiments/nina-changes/spotlight-gate.mjs';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { outFile as FINGERPRINTS_FILE } from '../experiments/nina-changes/fingerprints.mjs';
-import { checkPinned6, checkRun6 } from '../experiments/nina-changes/guard6.mjs';
+import { amendedPins6, checkPinned6, checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { buildReviewerRun } from './nina-changes-built-reviewer.mjs';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -66,13 +66,15 @@ function passingResults({ blindRuns = 0 } = {}) {
   const run = blindRun(blindRuns);
   return computeResults6({ exp005: { prereg, amendment }, bar6: prereg6.bar, labels, run, fingerprints, fingerprintsSha256: createHash('sha256').update(readFileSync(FINGERPRINTS_FILE)).digest('hex'), stamp: STAMP, preflight: BUILT.preflight });
 }
-const countedRecord = r => { const { banner: _b, rehearsal: _r, ...rest } = structuredClone(r); return { ...rest, fixture: false, prereg6Sha256: FROZEN }; };
+// EXP 006 amendment 01 (A5): the synthetic freeze names an amendment too, the one the builder's rehearsal pins carry.
+const FROZEN_A6 = BUILT.pins.amendment6Sha256;
+const countedRecord = r => { const { banner: _b, rehearsal: _r, ...rest } = structuredClone(r); return { ...rest, fixture: false, prereg6Sha256: FROZEN, amendment6Sha256: FROZEN_A6 }; };
 const counted = countedRecord;
 const pass = counted(passingResults());
 const open = { kind: 'spotlight-decision', held: false };
 const REVIEWER = countedRecord(BUILT.run);
 /** The gate from records: the decision binds these results bytes and this reviewer record unless told otherwise. */
-function gate(results, decision, { bind = true, bindReviewer = true, rawDecision = null, reviewer = REVIEWER, freeze = { PREREG6_SHA256: FROZEN } } = {}) {
+function gate(results, decision, { bind = true, bindReviewer = true, rawDecision = null, reviewer = REVIEWER, freeze = { PREREG6_SHA256: FROZEN, AMENDMENT6_SHA256: FROZEN_A6 } } = {}) {
   const resultsBytes = Buffer.from(JSON.stringify(results));
   const reviewerBytes = reviewer ? Buffer.from(JSON.stringify(reviewer)) : null;
   const sha = b => createHash('sha256').update(b).digest('hex');
@@ -137,15 +139,16 @@ test('the gate is pinned (an edit makes the guard refuse), the markup renderer i
   assert.match(prereg6.spotlightArtefact.renderer, /scripts\/nina-changes-spotlight\.mjs, the markup, not pinned/);
   assert.match(prereg6.spotlightArtefact.gate, /experiments\/nina-changes\/spotlight-gate\.mjs, pinned/);
   assert.ok(!('scripts/nina-changes-spotlight.mjs' in prereg6.files), 'the markup renderer is not pinned (N5)');
-  // Refute r2 B1: the GATE is pinned, and an edit to it makes the counted guard refuse.
-  assert.equal(prereg6.files[GATE], createHash('sha256').update(readFileSync(GATE)).digest('hex'));
+  // Refute r2 B1: the GATE is pinned (as EXP 006 amendment 01 re-pins it), and an edit to it makes the counted guard refuse.
+  const pinned = amendedPins6(prereg6.files, JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8')));
+  assert.equal(pinned[GATE], createHash('sha256').update(readFileSync(GATE)).digest('hex'));
   const root = scratchDir('nc-gate');
   try {
     mkdirSync(join(root, 'experiments/nina-changes'), { recursive: true });
     writeFileSync(join(root, GATE), readFileSync(GATE, 'utf8').replace("data.results.manipulation?.state === 'PASS'", 'true'));
-    assert.throws(() => checkPinned6({ [GATE]: prereg6.files[GATE] }, root), /spotlight-gate\.mjs at [0-9a-f]{64}; it hashes to/);
+    assert.throws(() => checkPinned6({ [GATE]: pinned[GATE] }, root), /spotlight-gate\.mjs at [0-9a-f]{64}; it hashes to/);
     writeFileSync(join(root, GATE), readFileSync(GATE));
-    assert.doesNotThrow(() => checkPinned6({ [GATE]: prereg6.files[GATE] }, root));
+    assert.doesNotThrow(() => checkPinned6({ [GATE]: pinned[GATE] }, root));
   } finally { removeScratch(root); }
   // The renderer holds no gate logic: it imports the pinned gate.
   const renderer = readFileSync('scripts/nina-changes-spotlight.mjs', 'utf8');
@@ -172,7 +175,7 @@ test('a synthetic edit of the gate makes the build refuse (the pre-registration 
     writeFileSync(join(root, GATE), readFileSync(GATE, 'utf8').replace("data.results.manipulation?.state === 'PASS'", 'true'));
     const r = spawnSync(process.execPath, ['scripts/build.mjs'], { cwd: root, encoding: 'utf8' });
     assert.notEqual(r.status, 0, 'the build must refuse');
-    assert.match(r.stderr, /differs from its build/);
+    assert.match(r.stderr, /differs from its build|not amendment 01's pin/);
   } finally { removeScratch(root); }
 });
 
@@ -187,6 +190,10 @@ test('refute r4 B1: the gate opens only for a real, complete, counted EXP 006 me
   hidden('another pre-registration sha', { ...pass, prereg6Sha256: 'a'.repeat(64) }, {}, /another pre-registration/);
   hidden('no pre-registration sha', { ...pass, prereg6Sha256: null }, {}, /another pre-registration/);
   hidden('a null freeze (not frozen yet)', pass, { freeze: { PREREG6_SHA256: null } }, /not frozen/);
+  hidden('amendment 01 not frozen yet', pass, { freeze: { PREREG6_SHA256: FROZEN, AMENDMENT6_SHA256: null } }, /amendment 01 is not frozen/);
+  hidden('another amendment sha', { ...pass, amendment6Sha256: 'c'.repeat(64) }, {}, /another EXP 006 amendment 01/);
+  hidden('no amendment sha', { ...pass, amendment6Sha256: null }, {}, /another EXP 006 amendment 01/);
+  hidden('a reviewer record under another amendment', pass, { reviewer: { ...REVIEWER, amendment6Sha256: 'd'.repeat(64) } }, /another EXP 006 amendment 01/);
   hidden('the decision does not name the reviewer record', pass, { bindReviewer: false }, /reviewer run record/);
   hidden('a fixture reviewer record', pass, { reviewer: { ...REVIEWER, fixture: true } }, /reviewer run record is a fixture/);
   hidden('a rehearsal reviewer record', pass, { reviewer: { ...REVIEWER, rehearsal: true } }, /rehearsal/);

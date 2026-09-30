@@ -5,6 +5,7 @@
 // blocks, `user` events whose content holds `tool_result` blocks (tool_use_id, content, is_error), and a final
 // `result` event (subtype, is_error, result, total_cost_usd, num_turns, duration_ms, permission_denials, modelUsage).
 import { createHash } from 'node:crypto';
+import { FENCE6_PREFIXES, GIT_VERBS, WS_REPO } from './fence6.mjs';
 
 /**
  * EXP 005 amendment-01 zero-patches `harnessFailure`, VERBATIM except the one translation R4-2 states ("missing or
@@ -68,8 +69,44 @@ export function classifyStreamRun({ timedOut, exitCode, stdout, error = null }) 
 
 /** Which tool outputs a record keeps as text (R2-5): git Bash calls and Read/Grep/Glob. Others keep sha + length only. */
 export const keepsOutput = call => ['Read', 'Grep', 'Glob'].includes(call.tool) || isGitCommand(call);
-/** A git call (refute r2 N9): a Bash command whose FIRST token is git — not any command that merely contains "git". */
-export const isGitCommand = call => call?.tool === 'Bash' && String(call.input?.command ?? '').trim().split(/\s+/)[0] === 'git';
+
+/**
+ * The sub-commands of a Bash command: split on the UNQUOTED control operators &&, ||, ; and | (amendment 01, A2).
+ * Text inside single or double quotes, and a backslash-escaped character, never splits; `2>&1` is not `&&`. Each
+ * part is trimmed with its runs of whitespace collapsed; empty parts are dropped. Nothing else is parsed: a newline,
+ * a lone `&`, `$(…)` and backticks are not separators here, so a git command reached only that way is not a git call.
+ */
+export function subCommands(command) {
+  const text = String(command ?? ''), parts = [];
+  let cur = '', quote = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) { cur += ch; if (ch === '\\' && quote === '"' && i + 1 < text.length) cur += text[++i]; else if (ch === quote) quote = null; continue; }
+    if (ch === '\\' && i + 1 < text.length) { cur += ch + text[++i]; continue; }
+    if (ch === "'" || ch === '"') { quote = ch; cur += ch; continue; }
+    const two = text.slice(i, i + 2);
+    if (two === '&&' || two === '||') { parts.push(cur); cur = ''; i += 1; continue; }
+    if (ch === ';' || ch === '|') { parts.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  parts.push(cur);
+  return parts.map(p => p.trim().replace(/\s+/g, ' ')).filter(Boolean);
+}
+/** The allowed fence6 git forms as a record shows them: `<prefix> <verb>` with <ws>/repo for the repository. */
+export const GIT_FORMS6 = FENCE6_PREFIXES.flatMap(p => GIT_VERBS.map(v => `${p.replace('{ws}', WS_REPO)} ${v}`));
+/** A sub-command in an allowed fence6 git form: exactly `<prefix> <verb>`, or that followed by a space and arguments. */
+export const isAllowedGitForm6 = part => GIT_FORMS6.some(f => part === f || part.startsWith(`${f} `));
+/**
+ * A git call (refute r2 N9, as amended by amendment 01, A2): a Bash command whose FIRST token is git (as registered),
+ * or one in which ANY sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git form (git, git
+ * --no-pager, git -C <ws>/repo or git -C <ws>/repo --no-pager, then diff, status, show or log). `cat rules.txt; git
+ * status --short; git diff` is a git call; `echo git; cat f` is not; a command that merely contains "git" is not.
+ */
+export const isGitCommand = call => {
+  if (call?.tool !== 'Bash') return false;
+  const command = String(call.input?.command ?? '');
+  return command.trim().split(/\s+/)[0] === 'git' || subCommands(command).some(isAllowedGitForm6);
+};
 
 /**
  * The recorded form of a run's tool calls, from already-scrubbed calls: tool, input, is_error, output sha256 + byte
