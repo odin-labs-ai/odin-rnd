@@ -28,7 +28,19 @@
       "rule": "a"
     },
     {
-      "case": "blind: the diff call is_error (c004)",
+      "case": "seen: the diff ran but the client set is_error (its cwd-tracking write under the sandbox, observed live) (c004)",
+      "id": "c004",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "blind: the diff call refused (listed in permission_denials) (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: a refusal text on an is_error call, no refused flag (c004)",
       "id": "c004",
       "seen": false,
       "rule": null

@@ -96,3 +96,14 @@ test('matrix v6 under fence6: every row held and every control worked (fake clie
     assert.equal(leak.calls[0].probePassed, false);
   });
 });
+
+test('a git call that ran but came back is_error (the live cwd-tracking artifact) still counts; a refusal does not', e2e, async () => {
+  await withFake('cwd-artifact', async dir => {
+    const run = await runReviewer6({ out: join(dir, 'run.json'), ledgerPath: join(dir, 'l.jsonl'), mode: 'counted', fixture: true, items: corpusItems(['c013']), log: () => {} });
+    for (const c of run.calls) {
+      const bash = c.toolCalls.filter(t => t.tool === 'Bash');
+      assert.ok(bash.length && bash.every(t => t.isError === true && t.refused === false), 'is_error set, not refused');
+      assert.deepEqual([c.diffSeen.seen, c.diffSeen.rule, c.harnessFailure], [true, 'b', null], `${c.id} run ${c.run}`);
+    }
+  });
+});

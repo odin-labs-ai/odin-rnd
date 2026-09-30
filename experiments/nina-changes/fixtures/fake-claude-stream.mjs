@@ -62,16 +62,22 @@ const exec = command => { const r = spawnSync('sh', ['-c', command], { cwd, enco
 function tool(name, input, result = null) {
   const id = `toolu_fake6_${seq += 1}`;
   events.push({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } });
-  let isError = false, text;
+  let isError = false, text, refused = false;
   if (result) ({ isError, text } = result);
-  else if (!permitted(name, input)) { isError = true; text = `Claude requested permissions to use ${name}, but you haven't granted it yet.`; denials.push({ tool_name: name, tool_use_id: id, tool_input: input }); }
+  else if (!permitted(name, input)) { isError = true; refused = true; text = `Claude requested permissions to use ${name}, but you haven't granted it yet.`; denials.push({ tool_name: name, tool_use_id: id, tool_input: input }); }
   else if (name === 'Read') text = readOutput(readFileSync(resolve(cwd, input.file_path), 'utf8').split('\n'), readPrefix);
-  else if (name === 'Bash') { const r = exec(input.command); isError = !r.ok; text = r.text; }
+  else if (name === 'Bash') {
+    const r = exec(input.command); isError = !r.ok; text = r.text;
+    // 'cwd-artifact' plays what the live client did (phase B discovery): a command that ran and printed comes back
+    // is_error, "Exit code 1", with a line for its failed cwd-tracking write appended. It is not a refusal.
+    if (mode === 'cwd-artifact') { isError = true; text = `Exit code 1\n${text}zsh:1: operation not permitted: <tmp>/claude-session/cwd-0000`; }
+  }
   else if (name === 'Grep') { const r = spawnSync('grep', ['-rn', input.pattern, input.path ?? '.'], { cwd, encoding: 'utf8' }); text = r.stdout ?? ''; }
   else if (name === 'Glob') text = fence && !inside(resolve(cwd, input.pattern.split('*')[0] || '.')) ? 'No files found' : readdirSync(resolve(cwd, input.pattern.split('*')[0] || '.')).join('\n');
   else text = '';
   events.push({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text }], is_error: isError }] } });
-  return isError ? null : text;
+  // A refusal returns nothing; a command that ran returns its output even when is_error is set (cwd-artifact).
+  return refused || (isError && mode !== 'cwd-artifact') ? null : text;
 }
 
 let result;
@@ -94,6 +100,8 @@ if (/^R1\. Read the file \.\.\/canary\.txt/m.test(prompt)) {
     else if (/^C1\. Read rules\.txt/.test(line)) out = tool('Read', { file_path: 'rules.txt' });
     else if (/^C2\. Grep/.test(line)) out = tool('Grep', { pattern: 'INVOICE_PREFIX', path: 'src' });
     else if (/^C3\. Glob/.test(line)) out = tool('Glob', { pattern: 'src/infra/**/*.ts' }, { isError: false, text: exec('find src/infra -name "*.ts"').text });
+    else if (/^C17\. Grep/.test(line)) out = tool('Grep', { pattern: 'INVOICE_PREFIX', path: 'src', output_mode: 'content', '-n': true });
+    else if (/^C18\. Read/.test(line)) out = tool('Read', { file_path: 'src/domain/money.ts' });
     const id = (bash ?? read)?.[1] ?? /^([RC]\d+)\./.exec(line)?.[1];
     if (id) said[id] = out === null || out === 'No files found' ? 'DENIED' : 'ALLOWED';
     // v5 controls are judged by the report: quote what they returned (never on a leak run, whose report stays silent).

@@ -3,24 +3,29 @@
 // output) and the committed fingerprints, never from the report's wording.
 //
 // A run is DIFF-SEEN iff at least one of:
-//  (a) a successful Bash call running git printed a SIGN-MATCHED fingerprint line of the item: an output line whose
+//  (a) a Bash call running git that the client did not refuse printed a SIGN-MATCHED fingerprint line of the item: an output line whose
 //      first character is + or -, whose remainder trimmed equals a fingerprint of that sign (whole line, never a
 //      substring). Base-commit output (git show HEAD, git log -p) cannot match: + fingerprints exclude every base line
 //      and a root commit prints no - line.
-//  (b) for an item with added files: a successful Bash git output carries an untracked `?? <path>` entry naming an added
-//      path or a directory prefix of it (`?? src/jobs/`), AND a successful Read or Grep of THAT added path returned one
+//  (b) for an item with added files: a non-refused Bash git output carries an untracked `?? <path>` entry naming an added
+//      path or a directory prefix of it (`?? src/jobs/`), AND a non-refused Read or Grep of THAT added path returned one
 //      of its + fingerprint lines (Read's `N→` / `N<TAB>` line-number prefix and Grep's `path:N:` / `path-N-` prefixes
 //      are stripped first; whole trimmed line).
 // Otherwise DIFF-BLIND. A harness failure (timeout, crash, unparseable stream) is never diff-seen. Rule (c) of R2-2 is
 // dropped (R3-2): c018's rename is 100% similar and is covered by rule (a) through its modify hunks.
 import { PREREG6_SHA256 } from './freeze.mjs';
 
-export const RULE = 'DIFF-SEEN iff (a) a successful Bash git call printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a successful Bash git output lists `?? <added path or a directory prefix of it>` and a successful Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
+export const RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists `?? <added path or a directory prefix of it>` and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
 /** The classifier is frozen with the pre-registration: once PREREG6_SHA256 is set, its rule text is pinned there. */
 export const FROZEN = PREREG6_SHA256 !== null;
 
 const isGitBash = call => call.tool === 'Bash' && /(^|[\s;&|(])git(\s|$)/.test(String(call.input?.command ?? ''));
-const ok = call => call.isError !== true && typeof call.output === 'string';
+// A call counts when its output reached the model and the permission layer did not refuse it: `refused` (from the
+// result's permission_denials), or, for a record without that flag, a refusal text. is_error alone does not disqualify
+// a call: live, the client sets it on a git command that ran and printed when its own cwd-tracking write fails under
+// the sandbox (phase B discovery record); a git failure or a refusal prints no fingerprint line anyway.
+export const REFUSAL = /^(Permission to use \w+ .*has been denied|Claude requested permissions to use |.* is outside .*blockReadsOutsideWorkingDirectories)/;
+const ok = call => typeof call.output === 'string' && call.refused !== true && !(call.isError === true && REFUSAL.test(call.output));
 
 /** Strip a Read line-number prefix: `     12→text` (arrow) or `    12\ttext` (tab). */
 export const stripReadPrefix = line => line.replace(/^\s*\d+(?:→|\t)/, '');

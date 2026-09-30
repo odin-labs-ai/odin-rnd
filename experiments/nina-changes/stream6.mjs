@@ -38,7 +38,11 @@ export function parseStream(stdout) {
       if (b?.type === 'tool_result' && uses.has(b.tool_use_id)) uses.get(b.tool_use_id).result = { isError: b.is_error === true, text: resultText(b.content) };
     }
   }
-  const toolCalls = order.map(id => uses.get(id)).map(u => ({ id: u.id, tool: u.tool, input: u.input, isError: u.result ? u.result.isError : null, output: u.result ? u.result.text : null }));
+  // A call the permission layer refused is listed in the final result's permission_denials by its tool_use_id.
+  // is_error alone is not a refusal: live (phase B discovery) the client also sets it on a git command that ran and
+  // printed, when its own cwd-tracking write under the sandbox fails ("Exit code 1 … zsh: operation not permitted").
+  const refusedIds = new Set((Array.isArray(finalResult?.permission_denials) ? finalResult.permission_denials : []).map(d => d?.tool_use_id).filter(Boolean));
+  const toolCalls = order.map(id => uses.get(id)).map(u => ({ id: u.id, tool: u.tool, input: u.input, isError: u.result ? u.result.isError : null, refused: refusedIds.has(u.id), output: u.result ? u.result.text : null }));
   return { lineCount: lines.length, malformed, events: events.length, init, finalResult, toolCalls };
 }
 
@@ -70,7 +74,7 @@ export function recordToolCalls(calls, hit = () => false) {
   return calls.map((c, n) => {
     const out = c.output ?? null;
     return {
-      n, tool: c.tool, input: c.input, isError: c.isError,
+      n, tool: c.tool, input: c.input, isError: c.isError, refused: c.refused === true,
       outputSha256: out === null ? null : sha256(out), outputBytes: out === null ? null : Buffer.byteLength(out),
       ...(keepsOutput(c) ? { output: out } : {}),
       fingerprintHit: hit(c),
