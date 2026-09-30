@@ -11,11 +11,12 @@ Every path below is relative to the tree root. The checker scans only the files 
 Probe input: `{"patch": "<a unified diff>"}`. The patch is applied with `git apply` to a fixed base repository (below). The tree is the base AFTER the patch, plus:
 
 - `.floor/diff.patch`: the patch text, verbatim.
-- `.floor/added-lines.txt`: the added lines only. For each file the patch changes there is a header line `+++ <path>` (without an `a/` or `b/` prefix), followed by each added line of that file, one per line, without its leading `+`.
+- `.floor/added-lines.txt`: the added lines only. For each file the patch changes there is a header line `+++ <path>` (the post-change path, without a `b/` prefix or any tab-separated date), followed by each added line of that file, one per line, without its leading `+`. A deleted file contributes nothing.
+- `.floor/added/<path>`: for each file the patch changes (not a deleted one), that file's added lines alone, one per line, without the `+`, at its post-change path under `.floor/added/`. Use this to scope a rule to some files: for example `{"id": "scoped-example", "type": "forbiddenPattern", "severity": "high", "pattern": "^\\s*(export\\s+)?interface\\s", "path": ".floor/added/**/*.ts"}` checks only what the change adds to TypeScript files.
 
 Scanned: `.floor/**` and `src/**/*.ts` (the post-patch TypeScript sources). Other files in the tree (package.json, test/) exist but are not scanned.
 
-For a change (diff) rule the checker also scans the project's existing TypeScript sources under src/, which you cannot see and which contain ordinary code (interfaces, `as` casts, console.log, process.env reads, node:http imports). To judge only what the change adds, target `.floor/added-lines.txt`.
+For a change (diff) rule the checker also scans the project's existing TypeScript sources under src/, which you cannot see and which contain ordinary code (interfaces, `as` casts, console.log, process.env reads, node:http imports). To judge only what the change adds, target `.floor/added-lines.txt`, or `.floor/added/**` with a file glob for a rule that applies to some files only. Each line is matched on its own, so a construct spread over several lines cannot be matched as one.
 
 The base repository (a small TypeScript service), file list:
 

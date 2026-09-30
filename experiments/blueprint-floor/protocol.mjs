@@ -184,6 +184,7 @@ export function checkFlags(constraints) {
   return bad.length ? { pass: false, bad, reason: `upper-case literal or unverifiable escape in ${bad.map(b => `${b.id} (${b.upper.join(' ')})`).join(', ')}; the input is lower-cased, so it can never match` } : { pass: true, bad: [], reason: 'every pattern is lower case with no upper-case escape' };
 }
 
+const ORDER_OF = c => ['not', 'partial', 'expressible'].indexOf(c);
 const str = v => typeof v === 'string';
 const obj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const TRANSLATOR_FIELDS = ['ruleId', 'class', 'constraints', 'coverage', 'residual', 'probes', 'rationale'];
@@ -271,6 +272,8 @@ export async function mechanicalChecks(rule, raw) {
   }
   result.teeth = await teeth(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role, flags: f.flags });
   if (!result.teeth.pass) return fail('teeth');
+  // A pinned cap from the rule's source group (refute r6 N4: pi-verdict's write-only path tiers are at most partial).
+  if (rule.maxClass && ORDER_OF(translatorClass) > ORDER_OF(rule.maxClass)) return { ...result, failedCheck: 'max-class', maxClass: rule.maxClass, classAfterMechanical: rule.maxClass === 'partial' && typeof out.residual === 'string' && out.residual.trim() ? 'partial' : 'not', engineLimit: false };
   const cannot = unverifiableFlags(f.flags);
   if (cannot.length && translatorClass === 'expressible') return { ...result, failedCheck: 'flags-unverifiable', unverifiableFlags: cannot, classAfterMechanical: typeof out.residual === 'string' && out.residual.trim() ? 'partial' : 'not', engineLimit: false };
   return { ...result, classAfterMechanical: translatorClass, engineLimit: false };

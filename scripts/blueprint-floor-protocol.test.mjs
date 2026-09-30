@@ -81,7 +81,7 @@ test('blindness (refute r1 B2): every prompt of every rule shows an opaque id an
   assert.equal(new Set(plugin.map(template)).size, 1, 'every plugin-surface rule sees the identical contract');
 });
 
-test('the prompt is the pinned system prompt file plus a user message built from the four fields and the contract', () => {
+test('the prompt is the pinned system prompt file plus a user message built from the five fields and the contract', () => {
   const r = loadRules('pi-verdict').rules.find(x => x.ruleId === 'pi-verdict/bash/sudo');
   const t = buildTranslatorPrompt(r);
   assert.equal(t.systemPromptFile, PROMPT_FILES.translator);
@@ -274,7 +274,7 @@ test('refute r5 B1: the "Applies to" context is shown to both models, and names 
   const s1 = pv('pi-verdict/path/S1-01'), s0 = pv('pi-verdict/path/S0-01'), bash = pv('pi-verdict/bash/sudo');
   assert.match(s1.context, /resolved absolute path.*It blocks only when the tool writes to that path; reads are not blocked\./);
   assert(!/writes to that path; reads/.test(s0.context), 'S0 blocks reads too');
-  assert.equal(bash.context, 'The pattern is tested against the shell command text of a bash tool call.');
+  assert.equal(bash.context, 'The pattern is tested against the command text of a bash or powershell tool call, up to its first 8192 characters.');
   const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, flags: { pass: true, reason: 'x' }, translatorClass: 'partial', classAfterMechanical: 'partial' };
   assert(buildTranslatorPrompt(s1).user.includes(`Applies to: ${s1.context}`));
   assert(buildAdjudicatorPrompt(s1, '{}', mech).user.includes(`Applies to: ${s1.context}`));
@@ -298,4 +298,33 @@ test('refute r5 adopted: an unverifiable flag with no residual caps the class at
   const m = { ...sudo, ruleId: 'test/m', flags: 'm' };
   const none = await mechanicalChecks(m, JSON.stringify({ ruleId: opaqueId('test/m'), class: 'expressible', constraints: [fp('s', '\\bsudo\\b')], coverage: 'x', residual: null, probes: { violating: tcall('sudo ls'), compliant: tcall('ls') }, rationale: 'r' }));
   assert.deepEqual([none.failedCheck, none.classAfterMechanical], ['flags-unverifiable', 'not']);
+});
+
+test('refute r6 B2: protocol.md and both system prompts name exactly the parts the builders send', () => {
+  const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, flags: { pass: true, reason: 'x' }, translatorClass: 'partial', classAfterMechanical: 'partial' };
+  const t = buildTranslatorPrompt(sudo).user, a = buildAdjudicatorPrompt(sudo, '{}', mech).user;
+  const translatorParts = { 'id: item-': 'opaque id', 'input kind:': 'input', 'Applies to:': 'Applies to', 'its flags:': 'flags', '<<<RULE': 'verbatim', '# How an input reaches the checker': 'contract' };
+  const adjudicatorParts = { ...translatorParts, 'Translator answer (verbatim)': "translator's answer", 'Mechanical checks:': 'mechanical', [FOLDING_SENTENCE]: 'flags mean', 'The stated class to confirm or dispute': 'stated class' };
+  delete adjudicatorParts['# How an input reaches the checker'];
+  const tp = readFileSync(PROMPT_FILES.translator, 'utf8'), ap = readFileSync(PROMPT_FILES.adjudicator, 'utf8'), pm = readFileSync('experiments/blueprint-floor/protocol.md', 'utf8');
+  for (const [marker, words] of Object.entries(translatorParts)) { assert(t.includes(marker), marker); assert(tp.includes(words), `translator prompt: ${words}`); }
+  for (const [marker, words] of Object.entries(adjudicatorParts)) { assert(a.includes(marker), marker); assert(ap.includes(words), `adjudicator prompt: ${words}`); }
+  for (const w of ['exactly five fields', 'opaque id', 'input kind', '"Applies to"', 'regex flags', 'verbatim text', 'materialisation contract', "translator's answer verbatim", 'mechanical results', 'flag-semantics sentence', 'stated class']) assert(pm.includes(w), `protocol.md: ${w}`);
+  assert(!/four fields/.test(pm + tp + ap));
+  for (const p of [tp, ap]) assert(!/You are given nothing else\./.test(p), 'the old untrue sentence is gone');
+});
+
+test('refute r6 N4: a rule above its pinned cap is lowered mechanically (failedCheck max-class)', LONG, async () => {
+  const s1 = pv('pi-verdict/path/S1-01');
+  assert.equal(s1.maxClass, 'partial');
+  const ans = over => JSON.stringify({ ruleId: opaqueId(s1.ruleId), class: 'expressible', constraints: [{ id: 'etc', type: 'forbiddenPattern', severity: 'high', pattern: '"file_path": "/etc/', path: '.floor/tool-call.json' }], coverage: 'x', residual: null, probes: { violating: { tool_name: 'Write', tool_input: { file_path: '/etc/hosts', content: 'x' } }, compliant: { tool_name: 'Write', tool_input: { file_path: 'src/a.ts', content: 'x' } } }, rationale: 'r', ...over });
+  const none = await mechanicalChecks(s1, ans({}));
+  assert.deepEqual([none.failedCheck, none.classAfterMechanical], ['max-class', 'not'], JSON.stringify(none.teeth ?? none.errors));
+  const withResidual = await mechanicalChecks(s1, ans({ class: 'partial', residual: 'Does the tool write to that path?' }));
+  assert.deepEqual([withResidual.failedCheck, withResidual.classAfterMechanical], [null, 'partial']);
+});
+
+test('refute r6 N7: every control carries an "Applies to" line matching its input kind', () => {
+  const K = { diff: "Checked on one change's diff.", toolCall: 'Checked on a tool call an agent is about to make.', stopTranscript: 'Checked when the agent stops, on the transcript and its final message.', file: 'Checked on the text of one document.' };
+  for (const r of allRules.filter(x => x.ruleId.startsWith('control/'))) { assert.equal(r.context, K[r.inputKind], r.ruleId); assert(buildTranslatorPrompt(r).user.includes(`Applies to: ${K[r.inputKind]}`)); }
 });

@@ -40,7 +40,7 @@ test('each rule file re-checks: its counts, its own rules sha, unique ids across
       assert(Number.isInteger(x.line) && x.line > 0 && x.sourcePath && r.sources.some(s => s.path === x.sourcePath), x.ruleId);
       assert(typeof x.text === 'string' && x.text.trim().length > 0, x.ruleId);
       assert.equal(x.kind === 'regex', typeof x.flags === 'string', `${x.ruleId}: flags recorded exactly for regex rules`);
-      assert.deepEqual(Object.keys(x), ['ruleId', 'sourcePath', 'line', 'kind', 'text', 'flags', 'context', 'inputKind', 'stratum', 'withheld']);
+      assert.deepEqual(Object.keys(x), ['ruleId', 'sourcePath', 'line', 'kind', 'text', 'flags', 'context', 'maxClass', 'inputKind', 'stratum', 'withheld']);
     }
     for (const e of r.excluded) assert(e.id && e.sourcePath && Number.isInteger(e.line) && e.reason, `${plugin} exclusion ${e.id}`);
   }
@@ -137,4 +137,11 @@ test('extractor: an item that is neither a rule nor excluded stops the extractio
   assert.deepEqual(r.rules.map(x => [x.ruleId, x.line, x.text]), [['limpet/r0', 3, 'Rule one'], ['limpet/r1', 4, 'Rule two']]);
   assert.equal(r.sources.find(s => s.path === 'rules.md').sha256, sha256(read('rules.md')));
   assert.throws(() => extractPlugin(limpet, f => (f === 'LICENSE' ? 'Apache License\n' : read(f))), /not MIT/);
+});
+
+test('refute r6 N4: pi-verdict\'s write-only path tiers (S1, S3) carry the pinned cap partial; nothing else is capped', () => {
+  const capped = Object.values(records).flatMap(r => r.rules).filter(r => r.maxClass !== null);
+  assert.deepEqual(capped.map(r => r.ruleId).sort(), records['pi-verdict'].rules.filter(r => /\/path\/S[13]-/.test(r.ruleId)).map(r => r.ruleId).sort());
+  assert.equal(capped.length, 8);
+  assert(capped.every(r => r.maxClass === 'partial'));
 });

@@ -91,7 +91,7 @@ export const SAMPLE = { size: 30, seed: 7007 };
 
 // ------------------------------------------------------------------ per-plugin extractors
 
-const rule = (r) => ({ ruleId: r.ruleId, sourcePath: r.sourcePath, line: r.line, kind: r.kind, text: r.text, flags: r.flags ?? null, context: null, inputKind: r.inputKind, stratum: r.stratum ?? 'primary', withheld: r.withheld ?? {} });
+const rule = (r) => ({ ruleId: r.ruleId, sourcePath: r.sourcePath, line: r.line, kind: r.kind, text: r.text, flags: r.flags ?? null, context: null, maxClass: null, inputKind: r.inputKind, stratum: r.stratum ?? 'primary', withheld: r.withheld ?? {} });
 const excluded = (id, sourcePath, line, reason) => ({ id, sourcePath, line, reason });
 
 function hunch(read) {
@@ -296,12 +296,18 @@ export function contextFor(r, sel) {
   return parts.length ? parts.join(' ') : null;
 }
 
+/** The pinned cap on a rule's class from its source group (refute r6 N4), or null. */
+export function maxClassFor(r, sel) {
+  const caps = (sel.contexts ?? []).filter(c => c.maxClass && c.match && r.ruleId.startsWith(c.match)).map(c => c.maxClass);
+  return caps.length ? caps.sort((a, b) => ['not', 'partial', 'expressible'].indexOf(a) - ['not', 'partial', 'expressible'].indexOf(b))[0] : null;
+}
+
 /** Build the vendored record for one plugin from a reader over its clone at the pin. */
 export function extractPlugin(sel, read) {
   const fn = EXTRACTORS[sel.plugin];
   if (!fn) throw new Error(`no extractor for ${sel.plugin}`);
   const out = fn(read, sel);
-  for (const r of out.rules) r.context = contextFor(r, sel);
+  for (const r of out.rules) { r.context = contextFor(r, sel); r.maxClass = maxClassFor(r, sel); }
   const license = read('LICENSE');
   const copyright = license.split('\n').find(l => /^Copyright/.test(l.trim()))?.trim();
   if (!/^MIT License/.test(license.trim()) || !copyright) throw new Error(`${sel.plugin}: LICENSE is not MIT or has no copyright line`);

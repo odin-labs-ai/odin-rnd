@@ -32,7 +32,7 @@
     "secondary": 30,
     "excluded": 0
   },
-  "rulesSha256": "765572b4ec61dab4fd00c8f30d6b4ac70da01922ee523ebc33e0089a39558fbf",
+  "rulesSha256": "e7b0a896660230bdea99525039366b117b78ddf64f9773fb2752199016f79cc7",
   "rules": [
     {
       "ruleId": "hunch/failures/misleading-success",
@@ -42,6 +42,7 @@
       "text": "Does the change turn a failed operation into a result or state that the caller will interpret as successful completion? Exclude explicitly supported fallbacks and best-effort operations whose failure is allowed by the visible contract.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -63,6 +64,7 @@
       "text": "Does the change break a previously supported empty, missing, zero, or boundary-value case? Require evidence in the removed behavior, a visible caller, or an explicit contract that this case must remain supported. Do not flag an intentional contract change consistently implemented in the visible code.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -84,6 +86,7 @@
       "text": "Does an edited test stop detecting a specific incorrect behavior that it previously rejected, while that behavior remains incorrect under the visible contract? Judge the behavior still tested, not the assertion method name. Exclude equivalent assertions, replacement coverage visible in the hunk, and tests updated for an intentional contract change.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -105,6 +108,7 @@
       "text": "Does a code or comment change leave a factual comment or API description in the hunk contradicting the implementation visible there? Do not judge prose style or demand extra comments.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -126,6 +130,7 @@
       "text": "Does changed JavaScript or TypeScript asynchronous code allow a concrete stale result, duplicate side effect, or out-of-order state update? Identify the overlapping operations and incorrect outcome in the visible code. Merely finding an unawaited promise, async callback, or missing cancellation is insufficient.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -150,6 +155,7 @@
       "text": "Does changed JavaScript or TypeScript conversion between runtime values and serialized or persisted data lose meaning that a visible consumer requires, such as Date/timezone meaning, Map/Set entries, or the distinction between absent and null? Require both the changed conversion and evidence of the affected contract. Do not flag serialization or type assertions by themselves.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -174,6 +180,7 @@
       "text": "Does changed Rust code introduce a reachable panic for an ordinary malformed external input or recoverable runtime failure that the visible caller contract expects to receive as an error? Show why the panic is reachable from that input. Do not flag unwrap/expect/panic syntax alone, proven internal invariants, tests, or intentional fail-fast startup behavior.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.rs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -198,6 +205,7 @@
       "text": "Does a changed Rust error conversion merge distinct failures whose differences a visible caller or documented recovery path needs for retry, recovery, or user action? Require evidence of the distinction and its consumer. Do not enforce any error library, forbid the ? operator, or require context on every conversion.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.rs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
@@ -222,6 +230,7 @@
       "text": "BIP-47. Requirement: a notification transaction carries a standard OP_RETURN output with an 80-byte payload whose first byte identifies the version, and a receiver examines only transactions paying its notification address that match that shape. Does the code in `hunk` emit or accept a notification payload of a different length, without the version byte, or in a place other than an OP_RETURN output? Answer false if `hunk` does not build or read a notification payload.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -242,6 +251,7 @@
       "text": "BIP-78. Requirement: before signing, the sender must verify that the proposal's absolute fee is at least that of the original PSBT, and, once signed, that the fee rate is not below any `minfeerate` it asked for. Does the code in `hunk` accept a payjoin proposal without comparing its absolute fee to the original, or without honouring minfeerate? Answer false if `hunk` does not validate a payjoin proposal.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -262,6 +272,7 @@
       "text": "BIP-133. Requirement: feefilter tells a peer the minimum fee rate, in satoshis per kilobyte as a 64-bit integer, of transactions it wants announced; it is a relay optimisation, not a rule, so a node must still accept and validate a transaction that arrives below the advertised rate. Does the code in `hunk` reject or ban a peer for announcing a transaction below its feefilter value? Answer false if `hunk` does not handle feefilter.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -282,6 +293,7 @@
       "text": "BIP-137 and BIP-322. Requirement: the legacy signed-message format, a compact recoverable ECDSA signature over a hash of the `Bitcoin Signed Message:` prefixed message, is defined for P2PKH; new proofs SHOULD use BIP-322 for all address types, and the legacy format MUST be restricted to P2PKH invoice addresses. Does the code in `hunk` sign or verify messages with the legacy format for segwit or taproot addresses, or use it for a newly written signing path? Answer false if `hunk` does not sign or verify messages.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -302,6 +314,7 @@
       "text": "BIP-158. Requirement: items are hashed with SipHash using c = 2 and d = 4, that is SipHash-2-4, and the key k MUST be the first 16 bytes of the block hash in its standard little-endian representation. Does the code in `hunk` use different SipHash rounds, a different key, or the byte-reversed block hash? Answer false if `hunk` does not hash items for a block filter.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -322,6 +335,7 @@
       "text": "BIP-322. Requirement: `to_sign` spends `to_spend` output 0, and has exactly one output of value 0 whose scriptPubKey is OP_RETURN; outside the full format, nVersion, nLockTime and nSequence are 0. Does the code in `hunk` build `to_sign` with a different output, more than one output, or an input that does not spend the computed to_spend txid? Answer false if `hunk` does not build the to_sign transaction.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -342,6 +356,7 @@
       "text": "BIP-339. Requirement: after receiving wtxidrelay from a peer, a node MUST announce transactions to that peer with the MSG_WTX inv type, value 5, whose hash is the wtxid; a getdata with MSG_WTX also means the transaction must be serialized with witness data. Does the code in `hunk` keep announcing with MSG_TX to a wtxid-relay peer, or send a MSG_WTX inv carrying a txid? Answer false if `hunk` does not announce transactions to peers.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -362,6 +377,7 @@
       "text": "BIP-340 security. Requirement: however rand is generated, it must be a fresh 32-byte value that is not even partially predictable to an attacker, and the same inputs must not be presented in another signing context; reusing a key across schemes, for example with RFC6979 ECDSA, can leak the secret key through nonce reuse. Does the code in `hunk` derive a Schnorr nonce from a weak or predictable source, from the message alone, from a counter that can repeat, or from the same deterministic construction used for another scheme with the same key? Answer false if `hunk` does not derive a signing nonce.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -382,6 +398,7 @@
       "text": "BIP-342. Requirement: MINIMALIF is consensus-enforced in tapscript, so the argument to OP_IF and OP_NOTIF must be exactly the empty vector or the one-byte vector 0x01; in P2WSH this was only a relay policy. Does the code in `hunk` satisfy a tapscript branch with any other truthy value, such as a 32-byte preimage or a multi-byte number? Answer false if `hunk` does not build a tapscript witness for a conditional.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -402,6 +419,7 @@
       "text": "BIP-352. Requirement: only inputs on the Inputs For Shared Secret Derivation list may contribute to the shared secret; inputs with conditional branches or several public keys, such as CHECKMULTISIG, are excluded because a malicious participant in a collaborative transaction could re-sign with a different key set after the output was derived. Does the code in `hunk` derive the shared secret from every input, or from a multisig or script-path input's inner keys? Answer false if `hunk` does not select inputs for silent payment derivation.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -422,6 +440,7 @@
       "text": "BIP-370. Requirement: the transaction's nLockTime is computed from the inputs' required locktimes: if none specify one, PSBT_GLOBAL_FALLBACK_LOCKTIME is used, defaulting to 0; if some do, the chosen kind must be one every such input supports; and if both kinds are possible, the height-based locktime must be chosen. Does the code in `hunk` compute a PSBTv2 locktime by taking the fallback regardless, taking the maximum of mixed kinds, or preferring the time-based one? Answer false if `hunk` does not compute a PSBTv2 locktime.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -442,6 +461,7 @@
       "text": "BIP-380 output script descriptors. Requirement: a descriptor may be followed by `#` and an 8-character checksum, and although parsing without one is allowed, an application may reject descriptors that lack it; the checksum is what catches a mistyped key or path before funds are watched or spent against the wrong script. Does the code in `hunk` accept a descriptor from a user, a file or a peer without verifying its checksum when one is present, or emit a descriptor with no checksum? Answer false if `hunk` does not parse or emit descriptors.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -462,6 +482,7 @@
       "text": "Nostr NIP-01. Requirement: an `a` tag's value is the coordinate `<kind>:<32-byte lowercase hex pubkey>:<d tag value>`, and for a non-addressable replaceable event the trailing colon is still included with an empty `d` value. Does the code in `hunk` build or parse that coordinate with a different separator, a different field order, or by omitting the trailing colon when the `d` value is empty? Answer false if `hunk` does not build or parse an `a` tag coordinate.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -482,6 +503,7 @@
       "text": "Nostr NIP-18. Requirement: a repost MUST include an `e` tag with the reposted note's id, and that tag MUST include a relay URL as its third entry so the note can be fetched; a `p` tag with the reposted author's pubkey SHOULD also be present. Does the code in `hunk` build a repost whose `e` tag has no relay URL in third position, or which omits the `e` tag entirely? Answer false if `hunk` does not build a repost.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -502,6 +524,7 @@
       "text": "Nostr NIP-22. Requirement: a `kind:1111` comment's `.content` is plaintext, with no HTML, Markdown or other formatting, and pubkeys mentioned inline SHOULD appear as `p` tags while quoted events use `q` tags. Does the code in `hunk` generate comment content containing markup, or record an inline quote as an `e` tag? Answer false if `hunk` does not compose kind 1111 content.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -522,6 +545,7 @@
       "text": "Nostr NIP-44 version 2. Requirement: the padded length is 32 for any plaintext of 32 bytes or fewer; otherwise the next power of two above `unpadded_len - 1` selects a chunk of 32 when that power is at most 256 and of `next_power / 8` otherwise, and the result is that chunk rounded up to cover the plaintext. Does the padding computation in `hunk` use a different bucket scheme, a fixed block size, or a different minimum than 32 bytes? Answer false if `hunk` does not compute a NIP-44 padded length.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -542,6 +566,7 @@
       "text": "Nostr NIP-44 version 2. Requirement: plaintext length is validated before padding, with a minimum of 1 byte and a maximum of 4294967295 bytes; an empty plaintext is invalid. Does the code in `hunk` pad or encrypt without that validation, so an empty or oversized plaintext is accepted? Answer false if `hunk` does not pad or encrypt a NIP-44 plaintext.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -562,6 +587,7 @@
       "text": "Nostr NIP-47. Requirement: a request SHOULD carry a `p` tag naming the wallet service, a response a `p` tag naming the client plus an `e` tag with the request event's id; a request MAY carry an `expiration` tag whose Unix timestamp, once passed, means the request is ignored. Does the code in `hunk` omit the response's `e` tag, p-tag the wrong party, or execute a request whose expiration has already passed? Answer false if `hunk` does not build or dispatch NWC messages.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -582,6 +608,7 @@
       "text": "Nostr NIP-75. Requirement: when zapping a goal event, the client MUST include the goal's `relays` tag values in the zap request's own `relays` tag, so the receipt lands where the goal is tallied; when zapping an addressable event carrying a `goal` tag, the client SHOULD also `e` tag the goal event in the zap request. Does the code in `hunk` zap a goal using only the client's default relays, so the receipt never reaches the tallying relays? Answer false if `hunk` does not zap goals.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -602,6 +629,7 @@
       "text": "Cashu NUT-00 model. Requirement: a `Proof` (an input) is `{ \"amount\": int, \"id\": hex_str, \"secret\": str, \"C\": hex_str }`, where `secret` is a UTF-8 string and `C` the unblinded signature. Does the type, serialisation or request construction in `hunk` name these fields differently, omit one, or give one the wrong type on the wire (for example treating `secret` as bytes or as an object rather than a string)? Answer false if `hunk` does not define or build proofs.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -622,6 +650,7 @@
       "text": "Cashu NUT-00 V3 tokens. Requirement: a V3 token has version character `A`, and its body is the token JSON serialized with base64-urlsafe (`/`->`_`, `+`->`-`). Does the code in `hunk` use a different version character for V3, use standard base64 instead of the URL-safe alphabet, or leave whitespace in the JSON before encoding? Answer false if `hunk` does not handle V3 tokens.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -642,6 +671,7 @@
       "text": "Cashu NUT-00. Requirement: the mint is unaware of short keyset ids; ALL mint API endpoints use the FULL keyset id. Does the code in `hunk` send a short (8-byte / 16-hex) keyset id to a mint endpoint, for example in a `BlindedMessage.id`, a `Proof.id`, or a `/v1/keys/{keyset_id}` path? Answer false if `hunk` does not build mint requests.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -662,6 +692,7 @@
       "text": "Cashu NUT-02. Requirement: `GET /v1/keysets` returns `{ \"keysets\": [ { \"id\", \"unit\", \"active\", \"input_fee_ppk\", \"final_expiry\" } ] }` — every keyset, active and inactive, without the keys. Does the code in `hunk` serve or consume this endpoint with a different path, different field names, or only the active keysets? Answer false if `hunk` does not touch the keysets endpoint.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -682,6 +713,7 @@
       "text": "Cashu NUT-03. Requirement: a received token is only settled once the receiver has swapped the proofs for new outputs; until then the sender can still double-spend them. Does the code in `hunk` mark an incoming Cashu token as received, credited or final without performing (or confirming) the swap that invalidates the sender's proofs? Answer false if `hunk` does not receive tokens.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -702,6 +734,7 @@
       "text": "Cashu NUT-11. Requirement: `SIG_INPUTS` is enforced ONLY IF no input is `SIG_ALL`; once `SIG_ALL` applies, the transaction is authorised by the aggregate signature on the first input, not by per-input signatures. Does the code in `hunk` require per-input witnesses on every input of a `SIG_ALL` transaction, or apply both schemes at once? Answer false if `hunk` does not verify P2PK signature flags.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -722,6 +755,7 @@
       "text": "Cashu NUT-15. Requirement: a mint MUST indicate EACH `method` and `unit` pair that supports MPP, as an array of `{ method, unit }` objects under `nuts[\"15\"].methods`; support is per pair, not mint-wide. Does the code in `hunk` advertise or check MPP support as a single boolean for the mint, or ignore the method-unit pairing? Answer false if `hunk` does not handle MPP settings.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -742,6 +776,7 @@
       "text": "Cashu NUT-21. Requirement: the OIDC service MUST allow redirects to `http://localhost:33388/callback`, and MUST allow redirect URLs corresponding to the wallets it supports. Does the code in `hunk` use a different localhost port or callback path for the Cashu OIDC loopback redirect? Answer false if `hunk` does not configure OIDC redirect URLs.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -762,6 +797,7 @@
       "text": "Cashu NUT-21. Requirement: the setting is `nuts[\"21\"] = { \"openid_discovery\": <url>, \"client_id\": <str>, \"protected_endpoints\": [{ \"method\", \"path\" }] }`. Does the code in `hunk` publish or read these with different field names, or hardcode an OIDC discovery URL or client id rather than taking them from the mint's info response? Answer false if `hunk` does not handle NUT-21 settings.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -782,6 +818,7 @@
       "text": "Cashu NUT-22. Requirement: a BAT is a SINGLE `AuthProof` JSON serialized as base64url with the prefix `authA`, and mints MUST accept both padded and unpadded forms. Does the code in `hunk` serialize a BAT with a different prefix, wrap several auth proofs in one token, or use the `cashu` token format instead? Answer false if `hunk` does not serialize BATs.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {
@@ -802,6 +839,7 @@
       "text": "Cashu NUT-25. Requirement: unlike bolt11 invoices, a bolt12 OFFER can be paid MULTIPLE TIMES, so the wallet can mint repeatedly against one quote; wallets MAY mint any amount UP TO `amount_paid - amount_issued`, including less, and mints MUST accept mint requests whose total output amount is LESS THAN OR EQUAL to that difference. Does the code in `hunk` close a bolt12 quote after the first mint, require the full mintable amount to be taken at once, or reject a smaller request? Answer false if `hunk` does not handle bolt12 minting.",
       "flags": null,
       "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.py, **/*.rs, **/*.go, **/*.kt, **/*.java, **/*.swift, **/*.dart, **/*.cs, **/*.rb, **/*.ex, **/*.exs.",
+      "maxClass": null,
       "inputKind": "diff",
       "stratum": "secondary",
       "withheld": {

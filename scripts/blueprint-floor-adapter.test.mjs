@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { resolveFiles } from 'bce-engine';
 import { materialise, scoreTree } from '../experiments/jev-gate/bce-contract.mjs';
-import { AdapterError, CustomPolicyRefusedError, MissingFlagsError, PATHS, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
+import { AdapterError, CustomPolicyRefusedError, MissingFlagsError, PATHS, addedByFile, headerTarget, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
 import { deriveWhitelist, loadWhitelist, serialiseWhitelist, whitelistPath } from '../experiments/blueprint-floor/whitelist.mjs';
 
 // EXP 007 WO-1-02: the adapter and teeth harness, through the real bce-engine 0.3.1. No network, no model.
@@ -65,7 +65,7 @@ test('each input kind stages the files the contract names (no engine run)', () =
     assert(existsSync(join(d.dir, 'src/domain/order.ts')), 'the base tree is staged; the patch applies at materialise');
     assert.equal(d.patch, patch);
   } finally { rmSync(d.dir, { recursive: true, force: true }); }
-  assert.equal(addedLines('--- a/f\n+++ b/f\n@@\n-old\n+new\n context\n'), '+++ f\nnew\n');
+  assert.equal(addedLines('--- a/f\n+++ b/f\n@@ -1,2 +1,2 @@\n-old\n+new\n context\n'), '+++ f\nnew\n');
 });
 
 test('paths: GNU and macOS spellings normalise, escapes are refused', () => {
@@ -207,4 +207,26 @@ test('refute r5 B2: the base tree\'s own code reddens a src/** pattern (the cont
   const added = await teeth(pattern('^\\s*(export\\s+)?interface\\s', '.floor/added-lines.txt'), { violating, compliant }, { inputKind: 'diff', flags: null });
   assert.equal(added.pass, true, added.reason);
   assert.match(readFileSync('experiments/blueprint-floor/contract.md', 'utf8'), /also scans the project's existing TypeScript sources under src\/, which you cannot see/);
+});
+
+test('refute r6 B1: a file-scoped diff rule on .floor/added/**/*.ts is decidable: in-scope violation RED, out-of-scope file GREEN', LONG, async () => {
+  const c = pattern('^\\s*(export\\s+)?interface\\s', '.floor/added/**/*.ts');
+  const violating = { patch: newFile('src/app/shape.ts', ['export interface Shape { a: number }']) };
+  const compliant = { patch: newFile('docs/Shape.java', ['interface Shape { int a(); }']) };
+  const t = await teeth(c, { violating, compliant }, { inputKind: 'diff', flags: null });
+  assert.deepEqual([t.pass, t.violating, t.compliant], [true, 'RED', 'GREEN'], t.reason);
+  const s = stageInput({ inputKind: 'diff', input: violating });
+  try { assert.equal(readFileSync(join(s.dir, '.floor/added/src/app/shape.ts'), 'utf8'), 'export interface Shape { a: number }\n'); } finally { rmSync(s.dir, { recursive: true, force: true }); }
+});
+
+test('refute r6 N5: added-lines headers drop b/ and tab-dates; deleted files contribute nothing; GNU and git forms; hunk-aware', () => {
+  assert.equal(headerTarget('b/src/x.ts'), 'src/x.ts');
+  assert.equal(headerTarget('src/x.ts\t2026-01-01 00:00:00.000000000 +0000'), 'src/x.ts');
+  assert.equal(headerTarget('/dev/null'), null);
+  const gnu = '--- src/y.ts\t2026-01-01 00:00:00.000 +0000\n+++ src/y.ts\t2026-01-01 00:00:01.000 +0000\n@@ -1 +1,2 @@\n ctx\n+hi\n';
+  const git = 'diff --git a/src/x.ts b/src/x.ts\n--- a/src/x.ts\n+++ b/src/x.ts\n@@ -1,2 +1,3 @@\n ctx\n-old\n+new\n++++ looks like a header\n\\ No newline at end of file\n';
+  const del = 'diff --git a/gone.ts b/gone.ts\ndeleted file mode 100644\n--- a/gone.ts\n+++ /dev/null\n@@ -1 +0,0 @@\n-bye\n';
+  assert.deepEqual(addedByFile(gnu + git + del), [{ path: 'src/y.ts', lines: ['hi'] }, { path: 'src/x.ts', lines: ['new', '+++ looks like a header'] }]);
+  assert.equal(addedLines(del), '');
+  assert.equal(addedLines(gnu), '+++ src/y.ts\nhi\n');
 });

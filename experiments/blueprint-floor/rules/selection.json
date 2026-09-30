@@ -133,14 +133,14 @@
         {
           "match": "abide/",
           "when": "edit",
-          "context": "Checked after each file edit, on that edit's diff.",
-          "cite": "packages/cli/src/hooks/postToolUse.ts:41-93"
+          "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+          "cite": "packages/cli/src/hooks/postToolUse.ts:41-93, 84; packages/cli/src/lib/checkRunner.ts:104"
         },
         {
           "match": "abide/",
           "when": "turn",
-          "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-          "cite": "packages/cli/src/hooks/stop.ts:127-131"
+          "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+          "cite": "packages/cli/src/hooks/stop.ts:127-131, 265; packages/cli/src/lib/checkRunner.ts:104"
         },
         {
           "scope": true,
@@ -297,8 +297,8 @@
       "contexts": [
         {
           "match": "pi-verdict/bash/",
-          "context": "The pattern is tested against the shell command text of a bash tool call.",
-          "cite": "extensions/pi-verdict.ts:129-133, 958"
+          "context": "The pattern is tested against the command text of a bash or powershell tool call, up to its first 8192 characters.",
+          "cite": "extensions/pi-verdict.ts:127-133, 505-509, 957-958"
         },
         {
           "match": "pi-verdict/path/",
@@ -308,12 +308,16 @@
         {
           "match": "pi-verdict/path/S1-",
           "context": "It blocks only when the tool writes to that path; reads are not blocked.",
-          "cite": "extensions/pi-verdict.ts:483-487"
+          "cite": "extensions/pi-verdict.ts:483-487",
+          "maxClass": "partial",
+          "maxClassReason": "tool name and path cannot be joined by a line checker"
         },
         {
           "match": "pi-verdict/path/S3-",
           "context": "It blocks only when the tool writes to that path; reads are not blocked.",
-          "cite": "extensions/pi-verdict.ts:483-488"
+          "cite": "extensions/pi-verdict.ts:483-488",
+          "maxClass": "partial",
+          "maxClassReason": "tool name and path cannot be joined by a line checker"
         },
         {
           "match": "pi-verdict/jev/",
@@ -391,12 +395,12 @@
         },
         {
           "match": "jev-axi/PUSH_QUESTIONS/",
-          "context": "The question is asked about everything a push would send: the diff, the changed files, the commit subjects and the branch.",
+          "context": "The question is asked about everything a push would send: the diff (with credentials redacted), the changed files, the commit subjects and the branch.",
           "cite": "src/recipes/questions.ts:225-229"
         },
         {
           "match": "jev-axi/SAFETY_QUESTIONS/",
-          "context": "The question is asked about a tool call an agent is about to make: the tool, the working directory, and either the command (with the local scripts it runs) or the file path and an excerpt of the content.",
+          "context": "The question is asked about a tool call an agent is about to make, with secrets redacted: the tool, the working directory, and either the command (with the local scripts it runs) or the file path and an excerpt of the content.",
           "cite": "src/recipes/questions.ts:280-282"
         },
         {
@@ -424,5 +428,6 @@
       "reason": "MIT, but not named by the council verdict; kept out to hold the council's 6 to 8 range (out of scope, not a finding)"
     }
   ],
-  "contextRule": "A rule's match target and application condition are part of the rule as the plugin enforces it, not a class label, so both models see them as an 'Applies to' line: one factual sentence per source group (below, each cited at the pin), plus a rule's own file globs (abide's scope, hunch's files). A glob that contains a plugin's own name shows that name as <tool>. Rules of a group with no such sentence show no line."
+  "contextRule": "A rule's match target and application condition are part of the rule as the plugin enforces it, not a class label, so both models see them as an 'Applies to' line: one factual sentence per source group (below, each cited at the pin), plus a rule's own file globs (abide's scope, hunch's files). A glob that contains a plugin's own name shows that name as <tool>. Rules of a group with no such sentence show no line.",
+  "maxClassRule": "A source group may carry maxClass: a pinned mechanical cap on the class, with its reason (pi-verdict's write-only path tiers: at most partial, because a line checker cannot join a tool's name to its path). Above the cap the class drops to partial if a residual was given, else to not (failedCheck max-class)."
 }

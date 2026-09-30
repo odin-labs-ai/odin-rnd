@@ -61,13 +61,34 @@ export function safeRelPath(p) {
   return n.replace(/^\.\//, '');
 }
 
-/** The added lines of a unified diff: a `+++ <path>` header per file, then each added line without its `+`. */
-export function addedLines(patch) {
-  const out = [];
+/** A `+++ ` header's target: tab/date suffix removed, a `b/` prefix stripped; null for a deleted file (/dev/null). */
+export const headerTarget = rest => { const p = rest.split('\t')[0].trim(); return p === '/dev/null' ? null : p.replace(/^b\//, ''); };
+
+/**
+ * The added lines of a unified diff, per post-image path, hunk-aware (a `+++`-looking added line inside a hunk is content,
+ * not a header). Deleted files contribute nothing. Returns [{ path, lines }] in patch order (refute r6 B1, N5).
+ */
+export function addedByFile(patch) {
+  const files = [];
+  let cur = null, oldLeft = 0, newLeft = 0;
   for (const line of patch.split('\n')) {
-    if (line.startsWith('+++ ')) { out.push(`+++ ${line.slice(4).replace(/^b\//, '')}`); continue; }
-    if (line.startsWith('+')) out.push(line.slice(1));
+    if (oldLeft > 0 || newLeft > 0) {
+      if (line.startsWith('\\')) continue;
+      const c = line[0];
+      if (c === '+') { newLeft--; if (cur) cur.lines.push(line.slice(1)); }
+      else if (c === '-') oldLeft--;
+      else { oldLeft--; newLeft--; }
+      continue;
+    }
+    if (line.startsWith('+++ ')) { const t = headerTarget(line.slice(4)); cur = t === null ? null : { path: t, lines: [] }; if (cur) files.push(cur); continue; }
+    const h = /^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@/.exec(line);
+    if (h) { oldLeft = h[1] === undefined ? 1 : Number(h[1]); newLeft = h[2] === undefined ? 1 : Number(h[2]); }
   }
+  return files;
+}
+/** .floor/added-lines.txt: a `+++ <path>` header per changed (not deleted) file, then its added lines without the `+`. */
+export function addedLines(patch) {
+  const out = addedByFile(patch).flatMap(f => [`+++ ${f.path}`, ...f.lines]);
   return out.join('\n') + (out.length ? '\n' : '');
 }
 /** The paths a unified diff touches (both sides), without a/ b/ prefixes. */
@@ -81,7 +102,7 @@ export function patchPaths(patch) {
 /**
  * Write one input into a fresh staging directory. Returns { dir, patch, files } where `patch` is set for diff inputs (it is
  * applied by the engine contract's materialise step) and `files` lists the .floor files written. The caller removes `dir`.
- *   diff           { patch }                       base tree + .floor/diff.patch + .floor/added-lines.txt; the patch applies to the base
+ *   diff           { patch }                       base tree + .floor/diff.patch + .floor/added-lines.txt + .floor/added/<path>; the patch applies to the base
  *   toolCall       { tool_name, tool_input }       .floor/tool-call.json (the input, pretty-printed) + .floor/command.txt
  *   stopTranscript { transcript: [...], final_message } .floor/transcript.jsonl + .floor/final-message.txt
  *   file           { path, content }               the file at .floor/files/<path>
@@ -101,6 +122,8 @@ export function stageInput({ inputKind, input }) {
       touched.forEach(safeRelPath);
       cpSync(BASE, dir, { recursive: true });
       files.push(put('.floor/diff.patch', input.patch), put('.floor/added-lines.txt', addedLines(input.patch)));
+      // Each changed file's added lines alone, at .floor/added/<post-image path>, so a file-scoped rule can glob them (r6 B1).
+      for (const f of addedByFile(input.patch)) files.push(put(`.floor/added/${safeRelPath(f.path)}`, f.lines.join('\n') + (f.lines.length ? '\n' : '')));
       patch = input.patch.endsWith('\n') ? input.patch : input.patch + '\n';
     } else if (inputKind === 'toolCall') {
       if (typeof input.tool_name !== 'string' || !input.tool_input || typeof input.tool_input !== 'object') throw new AdapterError('a toolCall input needs tool_name and a tool_input object');
