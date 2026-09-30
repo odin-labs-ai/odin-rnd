@@ -30,6 +30,7 @@ import { loadBaseLines, outFile as BASE_LINES_FILE } from './base-lines.mjs';
 import { NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
 import { checkRun6, PREREG6, RUNNER6_PINS } from './guard6.mjs';
 import { judgeMatrix6, MATRIX_PROMPT6, matrixSetup6 } from './matrix6.mjs';
+import { applyAttempts } from './matrix6-attempts.mjs';
 import { leakFields, publicRecord6, scrubPaths6, scrubRecord6, RUN_PREFIX6 } from './scrub6.mjs';
 import { LEDGER6, LIMITS6, PRERUN_KIND, SpendLedger6 } from './spend6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, parseStream, recordToolCalls } from './stream6.mjs';
@@ -116,7 +117,19 @@ export function buildCallRecord({ prereg, item, runIndex, spawn, variant, args, 
 // ----------------------------------------------------------------------------- one headless run
 
 /** One reviewer run in a fresh workspace (or, in a rehearsal, a bare dir holding the patch for the fake). */
-export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false }) {
+/**
+ * The cost a spawn result reports, for the ledger line written BEFORE anything else (refute r2 N1): the final result
+ * line's total_cost_usd, or null (charged the upper bound) after a timeout, a spawn error or any malformed stream line
+ * (conservative: a malformed stream charges the upper bound even if a final line reported a cost).
+ */
+export function reportedCost(spawn) {
+  if (spawn.timedOut || spawn.error) return null;
+  const p = parseStream(spawn.stdout);
+  return p.malformed.length ? null : (typeof p.finalResult?.total_cost_usd === 'number' ? p.finalResult.total_cost_usd : null);
+}
+export const FAULT_STAGES = ['after', 'hook', 'build', 'judge'];
+
+export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball, claudeBin, variant, timeoutMs, fp, rehearsal = false, matrix = false, onSpawn = null, faults = null }) {
   mkdirSync(RUN_ROOT6, { recursive: true });
   const parent = mkdtempSync(join(RUN_ROOT6, RUN_PREFIX6));
   const runTmp = join(parent, 'tmp');
@@ -136,15 +149,29 @@ export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball,
     const { env, stripped } = childEnv(process.env, staged.ninaData, runTmp);
     const args = reviewerArgs6(prereg, { prompt: matrix ? MATRIX_PROMPT6(setup) : prereg.gates.reviewer.prompt, repo: realpathSync(staged.repo), variant });
     const spawn = await spawnTimed(claudeBin, args, { cwd: staged.repo, env, timeoutMs });
-    const after = rehearsal ? [] : statusOf(staged.repo);
-    const hook = rehearsal ? { ran: false, rehearsal: true, error: false } : hookContext(staged.repo, parent);
-    const extra = {
-      statusBefore, treeChangedByRun: JSON.stringify(after) !== JSON.stringify(statusBefore), billingKeysStripped: stripped, childTmpdir: env.TMPDIR,
-      hook, hooksConfigured: rehearsal ? [] : hooksConfigured(staged.repo),
-    };
-    built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra });
-    if (setup) built.rec.matrix = judgeMatrix6(setup, { ...built.rec, allToolCalls: built.rawCalls });
-    return built;
+    // The paid call has happened: its ledger line is written now, from the spawn result, before any step below
+    // that could throw (the caller's onSpawn). Every later step is wrapped: a throw marks the record, never loses it.
+    const cost = reportedCost(spawn);
+    if (onSpawn) onSpawn({ spawn, reportedCostUsd: cost });
+    const fault = stage => { if (faults?.includes(stage)) throw new Error(`injected fault at ${stage}`); };
+    try {
+      fault('after');
+      const after = rehearsal ? [] : statusOf(staged.repo);
+      fault('hook');
+      const hook = rehearsal ? { ran: false, rehearsal: true, error: false } : hookContext(staged.repo, parent);
+      const extra = {
+        statusBefore, treeChangedByRun: JSON.stringify(after) !== JSON.stringify(statusBefore), billingKeysStripped: stripped, childTmpdir: env.TMPDIR,
+        hook, hooksConfigured: rehearsal ? [] : hooksConfigured(staged.repo),
+      };
+      fault('build');
+      built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra });
+      fault('judge');
+      if (setup) built.rec.matrix = applyAttempts(judgeMatrix6(setup, { ...built.rec, allToolCalls: built.rawCalls }), built.rawCalls);
+      return built;
+    } catch (error) {
+      built = { rec: { id: item.id, run: runIndex, gate: 'reviewer', startedAt: spawn.startedAt, endedAt: spawn.endedAt, costUsd: cost, postCallError: scrubPaths6(error.message).slice(0, 300) }, rawCalls: [] };
+      return built;
+    }
   } finally {
     // The matrix canaries and escape files outside the run dir are removed too (a temp-root repo is a dir).
     for (const p of [...(setup?.external ?? []), ...Object.values(setup?.writes ?? {})]) { try { rmSync(p, { recursive: true, force: true }); } catch { /* gone */ } }
@@ -167,8 +194,9 @@ function fingerprintsFor(items, corpus) {
   return Object.fromEntries(items.map(i => [i.id, corpus.items[i.id] ?? (i.patch ? fingerprintItem(i.patch, baseSet) : null)]));
 }
 
-export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs }) {
+export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], mode, probe = null, prerun = false, variant, tarball = DEFAULT_TARBALL, fixture = false, rehearsalPins = null, preflightRecord, log = console.log, fixtureTimeoutMs, faults = null }) {
   const rehearsal = mode === 'rehearsal';
+  if (faults && !fixture && !rehearsal) throw new Error('fault injection is for fixture and rehearsal runs only');
   if (prerun && !probe) throw new Error('prerun is the measured run\'s pre-run matrix probe (--probe matrix --prerun)');
   // The pre-run probe runs on the FROZEN runner: it passes the counted guard (freeze set, the pre-registration and
   // every pin intact, after the not-before), and it is charged to the $60 cap only (spend6 PRERUN_KIND).
@@ -234,11 +262,12 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
 
   const kind = probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode;
   const runOne = async (item, k) => {
-    if (ledger) { const { reason, ...guard } = ledger.check(kind); if (!guard.ok) return { stop: ['spend', { limit: reason, ...guard }] }; }
-    const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe) });
+    if (ledger) { const { reason, ...guard } = ledger.check(kind, { prereg6Sha256: stamp.prereg6Sha256 }); if (!guard.ok) return { stop: ['spend', { limit: reason, ...guard }] }; }
+    // The spend line is written from the spawn result, the moment the call returns (refute r2 N1).
+    const onSpawn = ledger ? ({ spawn, reportedCostUsd }) => ledger.record({ ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }) : null;
+    const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), onSpawn, faults });
     if (rec.stageError) { record.calls.push(rec); return { stop: ['workspace', { id: item.id, run: k, error: rec.stageError }] }; }
-    // The spend line is written BEFORE anything that could refuse the record, so a paid call is never unrecorded.
-    if (ledger) ledger.record({ ts: rec.endedAt, kind, id: item.id, run: k, reportedCostUsd: rec.costUsd, fixture });
+    if (rec.postCallError) { record.calls.push(rec); return { stop: ['post-call', { id: item.id, run: k, error: rec.postCallError }] }; }
     try { record.calls.push(publicRecord6(rec, `${item.id} run ${k}`)); } catch (error) {
       // The record is not written, but the facts that carry no text are (phase B: a refused paid probe lost its
       // verdict): which fields still leaked, the cost, the harness state, and the matrix verdict when it is clean.

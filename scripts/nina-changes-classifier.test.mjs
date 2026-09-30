@@ -227,3 +227,17 @@ test('N2: the known false-BLIND forms are pinned BLIND (documented behaviour, no
     assert.equal(classifyDiffSeen({ calls: [bash(command, output), readAdded('c013', 'src/jobs/purge-orders.ts')], fp: fp.items.c013 }).seen, false, command);
   }
 });
+
+test('N9: a git call is a Bash command whose first token is git; N10: only top-level calls count (sub-agent calls do not)', () => {
+  const lines = fp.items.c004.plus.map(l => `+${l}`).join('\n');
+  assert.equal(classifyDiffSeen({ calls: [bash('git diff', lines)], fp: fp.items.c004 }).seen, true);
+  for (const command of ['echo git diff', 'cat x; git diff', 'digit diff', 'sh -c "git diff"']) assert.equal(classifyDiffSeen({ calls: [bash(command, lines)], fp: fp.items.c004 }).seen, false, command);
+  assert.equal(classifyDiffSeen({ calls: [{ ...bash('git diff', lines), parentToolUseId: 'toolu_task_1' }], fp: fp.items.c004 }).seen, false, 'a sub-agent call never makes a run SEEN');
+  assert.equal(classifyDiffSeen({ calls: [{ ...bash('git diff', lines), parentToolUseId: null }], fp: fp.items.c004 }).seen, true);
+});
+
+test('N11: a coloured git status is a known false-BLIND form (pinned BLIND)', () => {
+  const esc = String.fromCharCode(27);
+  const coloured = `${esc}[31m??${esc}[m src/jobs/\n`;
+  assert.equal(classifyDiffSeen({ calls: [bash('git -c color.status=always status --short', coloured), readAdded('c013', 'src/jobs/purge-orders.ts')], fp: fp.items.c013 }).seen, false);
+});

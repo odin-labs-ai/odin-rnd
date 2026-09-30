@@ -28,20 +28,39 @@ export const round7 = v => Number(v.toFixed(LIMITS6.decimals));
 // Sums are made in integer units of 1e-7 USD so 7-dp figures add exactly.
 const units = v => Math.round(v * 1e7);
 const fromUnits = u => u / 1e7;
-const known = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
+// A reported cost counts only if it survives rounding to 7 dp (refute r2 N1): a sub-5e-8 cost is charged as unknown.
+const known = v => typeof v === 'number' && Number.isFinite(v) && round7(v) > 0;
+export const KINDS6 = Object.freeze(['isolation-matrix', 'practice', 'counted', PRERUN_KIND]);
+
+/** A ledger line as spend6 writes it; anything else makes the ledger corrupt (refute r2 N2: fail closed, never NaN). */
+export function validLine(e) {
+  return e !== null && typeof e === 'object' && typeof e.ts === 'string' && KINDS6.includes(e.kind)
+    && typeof e.costUsd === 'number' && Number.isFinite(e.costUsd) && e.costUsd > 0 && e.costUsd === round7(e.costUsd)
+    && ['api-equivalent', 'upper-bound'].includes(e.costBasis);
+}
 
 export class SpendLedger6 {
   constructor(path, limits = LIMITS6) { this.path = path; this.limits = limits; }
+  /** Every line, validated; a corrupt line throws (the guard then refuses: fail closed). */
   entries() {
     if (!existsSync(this.path)) return [];
-    return readFileSync(this.path, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+    return readFileSync(this.path, 'utf8').split('\n').filter(Boolean).map((l, i) => {
+      let e = null;
+      try { e = JSON.parse(l); } catch { /* invalid below */ }
+      if (!validLine(e)) throw new Error(`spend ledger line ${i + 1} is corrupt: the spend guard refuses every call until it is repaired`);
+      return e;
+    });
   }
   total(filter = () => true) { return fromUnits(this.entries().filter(filter).reduce((s, e) => s + units(e.costUsd), 0)); }
   preCountedTotal() { return this.total(e => isPreCounted(e.kind)); }
   largest() { return this.entries().reduce((m, e) => Math.max(m, e.costUsd), 0); }
   reserve() { return Math.max(this.largest(), this.limits.unknownCostFloorUsd); }
   /** Whether one more call of this kind may start. {ok, reason, askFork, spent, preCounted, reserve}. */
-  check(kind) {
+  check(kind, { prereg6Sha256 = null } = {}) {
+    let entries;
+    try { entries = this.entries(); } catch (error) { return { ok: false, reason: 'corrupt-ledger', askFork: true, error: error.message }; }
+    // Only ONE post-freeze pre-run probe per frozen pre-registration (refute r2 N3).
+    if (kind === PRERUN_KIND && entries.some(e => e.kind === PRERUN_KIND && e.prereg6Sha256 === prereg6Sha256)) return { ok: false, reason: 'prerun-already-made', askFork: true };
     const spent = this.total(), preCounted = this.preCountedTotal(), reserve = this.reserve();
     const base = { spent, preCounted, reserve, capUsd: this.limits.capUsd, preCountedCeilingUsd: this.limits.preCountedCeilingUsd };
     if (units(spent) + units(reserve) > units(this.limits.capUsd)) return { ok: false, reason: 'cap', askFork: true, ...base };
@@ -49,12 +68,14 @@ export class SpendLedger6 {
     return { ok: true, reason: null, askFork: false, ...base };
   }
   /** The ledger line for one paid call; an unknown cost is charged the upper bound. Returns the line written. */
-  record({ ts, kind, id, run, reportedCostUsd, fixture = false, recordSha256 = null }) {
+  record({ ts, kind, id, run, reportedCostUsd, fixture = false, recordSha256 = null, prereg6Sha256 = null }) {
+    if (!KINDS6.includes(kind)) throw new Error(`unknown ledger kind ${kind}`);
     const upper = this.reserve();
     const line = known(reportedCostUsd)
       ? { ts, gate: 'reviewer', kind, id, run, costUsd: round7(reportedCostUsd), costBasis: 'api-equivalent', reportedCostUsd, fixture }
       : { ts, gate: 'reviewer', kind, id, run, costUsd: round7(upper), costBasis: 'upper-bound', reportedCostUsd: reportedCostUsd ?? null, fixture };
     if (recordSha256) line.recordSha256 = recordSha256;
+    if (kind === PRERUN_KIND) line.prereg6Sha256 = prereg6Sha256;
     if (!(line.costUsd > 0)) throw new Error('a ledger line is never $0');
     mkdirSync(dirname(this.path), { recursive: true });
     appendFileSync(this.path, `${JSON.stringify(line)}\n`);

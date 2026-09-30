@@ -13,7 +13,8 @@ import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } fro
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, isPreCounted, LIMITS6, PRERUN_KIND, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
-import { runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { FAULT_STAGES, reportedCost, reviewerRun6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { runState } from '../experiments/nina-changes/results6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -225,14 +226,62 @@ test('B2 (D4): the post-freeze pre-run matrix probe is charged to the $60 cap on
     assert.deepEqual([L.check('practice').reason, L.check('isolation-matrix').reason], ['pre-counted-ceiling', 'pre-counted-ceiling']);
     // ... the post-freeze pre-run probe is not, because it is charged to the $60 cap only ...
     assert.equal(L.check(PRERUN_KIND).ok, true);
-    const line = L.record({ ts: 't3', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, reportedCostUsd: 0.6 });
+    const line = L.record({ ts: 't3', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, reportedCostUsd: 0.6, prereg6Sha256: 'a'.repeat(64) });
     assert.equal(line.kind, PRERUN_KIND);
     assert.equal(L.preCountedTotal(), round7(4.0821826 + 5.3), 'the pre-run probe is not pre-counted');
     // ... and it is refused at the $60 cap like any counted call.
     L.record({ ts: 't4', kind: 'counted', id: 'c001', run: 1, reportedCostUsd: 48 });
-    assert.equal(L.check(PRERUN_KIND).reason, 'cap');
+    assert.equal(L.check(PRERUN_KIND, { prereg6Sha256: 'b'.repeat(64) }).reason, 'cap');
   } finally { removeScratch(dir); }
   // A pre-run probe runs on the frozen runner: while freeze.mjs is null it refuses before any workspace or call.
   await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'probe', probe: 'matrix', prerun: true, log: () => {} }), /wait for the freeze/);
   await assert.rejects(runReviewer6({ out: '/dev/null', mode: 'practice', prerun: true, log: () => {} }), /pre-run matrix probe/);
+});
+
+test('N1: the ledger line is written from the spawn result BEFORE any post-call step; a throw at any stage keeps it and marks the record', async () => {
+  const dir = scratchDir('nc-n1');
+  const saved = { FAKE6_MODES: process.env.FAKE6_MODES };
+  try {
+    chmodSync(FAKE_CLAUDE6, 0o755);
+    process.env.FAKE6_MODES = 'synthetic';
+    const item = corpusItems(['c004'])[0];
+    for (const stage of FAULT_STAGES) {
+      const L = new SpendLedger6(join(dir, `ledger-${stage}.jsonl`));
+      const { rec } = await reviewerRun6({ prereg, amendment, item, runIndex: 1, claudeBin: FAKE_CLAUDE6, variant: 'fence6', timeoutMs: 60_000, fp: null, rehearsal: true,
+        onSpawn: ({ spawn, reportedCostUsd }) => L.record({ ts: spawn.endedAt, kind: 'practice', id: item.id, run: 1, reportedCostUsd }), faults: [stage] });
+      assert.match(rec.postCallError, new RegExp(`injected fault at ${stage}`), stage);
+      const lines = L.entries();
+      assert.equal(lines.length, 1, `${stage}: the ledger line is there`);
+      assert.deepEqual([lines[0].costUsd, lines[0].costBasis], [0.21, 'api-equivalent'], `${stage}: charged from the final result line`);
+    }
+    await assert.rejects(runReviewer6({ out: join(dir, 'x.json'), mode: 'practice', items: [], faults: ['build'], log: () => {} }), /fault injection is for fixture and rehearsal runs only/);
+  } finally { Object.assign(process.env, saved); if (saved.FAKE6_MODES === undefined) delete process.env.FAKE6_MODES; removeScratch(dir); }
+  // The cost for that line: the final result's, or null (upper bound) on a timeout, a spawn error or a malformed line.
+  assert.equal(reportedCost({ timedOut: false, stdout: stream([init, final()]) }), 0.25);
+  assert.equal(reportedCost({ timedOut: true, stdout: stream([init, final()]) }), null);
+  assert.equal(reportedCost({ timedOut: false, error: 'ENOENT', stdout: '' }), null);
+  assert.equal(reportedCost({ timedOut: false, stdout: `${line(init)}\nnot json\n${line(final())}\n` }), null, 'N5: a malformed stream charges the upper bound');
+});
+
+test('N1/N2/N3: a sub-5e-8 cost is unknown; a corrupt ledger line fails closed; one pre-run probe per frozen pre-registration', () => {
+  const dir = scratchDir('nc-n2');
+  try {
+    const L = new SpendLedger6(join(dir, 'a.jsonl'));
+    const tiny = L.record({ ts: 't', kind: 'practice', id: 'p', run: 1, reportedCostUsd: 4e-8 });
+    assert.deepEqual([tiny.costBasis, tiny.costUsd], ['upper-bound', 0.6], 'rounds to $0 at 7 dp: charged as unknown');
+    for (const bad of ['{"ts":"t","kind":"practice","costUsd":"0.5","costBasis":"api-equivalent"}', '{"ts":"t","kind":"practice","costUsd":0,"costBasis":"api-equivalent"}', '{"ts":"t","kind":"practice","costUsd":0.123456789,"costBasis":"api-equivalent"}', '{"ts":"t","kind":"weird","costUsd":0.5,"costBasis":"api-equivalent"}', 'not json']) {
+      const p = join(dir, 'b.jsonl');
+      writeFileSync(p, `${JSON.stringify({ ts: 't', kind: 'practice', costUsd: 0.5, costBasis: 'api-equivalent' })}\n${bad}\n`);
+      const g = new SpendLedger6(p).check('practice');
+      assert.deepEqual([g.ok, g.reason], [false, 'corrupt-ledger'], bad);
+      assert.throws(() => new SpendLedger6(p).entries(), /corrupt/);
+    }
+    const P = new SpendLedger6(join(dir, 'c.jsonl'));
+    const sha = 'a'.repeat(64);
+    assert.equal(P.check(PRERUN_KIND, { prereg6Sha256: sha }).ok, true);
+    assert.equal(P.record({ ts: 't', kind: PRERUN_KIND, id: 'isolation-matrix', run: 1, reportedCostUsd: 0.5, prereg6Sha256: sha }).prereg6Sha256, sha);
+    assert.deepEqual([P.check(PRERUN_KIND, { prereg6Sha256: sha }).ok, P.check(PRERUN_KIND, { prereg6Sha256: sha }).reason], [false, 'prerun-already-made']);
+    assert.equal(P.check(PRERUN_KIND, { prereg6Sha256: 'b'.repeat(64) }).ok, true, 'a new frozen pre-registration (an amendment) may have its own');
+    assert.throws(() => P.record({ ts: 't', kind: 'bogus', id: 'x', run: 1, reportedCostUsd: 0.5 }), /unknown ledger kind/);
+  } finally { removeScratch(dir); }
 });

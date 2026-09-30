@@ -53,12 +53,12 @@ ${list(r.differences.map(escape))}
 ${list(iso.runs.map(runRow))}
 <p>${escape(iso.codeStatement)}</p>
 ${list(iso.proofRuns.map(p => `<strong>${escape(p.name)}</strong> at ${code(p.commit)}: ${p.differsFromPinned.length ? p.differsFromPinned.map(d => `${code(d.file.split('/').pop())} (${escape(d.reason)})`).join('; ') : 'no pinned file differs'}`))}
-<p>${escape(iso.refusedByAllowList)} ${escape(iso.lostVerdict)} The probe of record is ${code(iso.probeOfRecord.file.split('/').pop())} (sha256 ${code(iso.probeOfRecord.sha256)}).</p>
+<p>${escape(iso.attemptedCheck)} ${escape(iso.refusedByAllowList)} ${escape(iso.lostVerdict)} The probe of record is ${code(iso.probeOfRecord.file.split('/').pop())} (sha256 ${code(iso.probeOfRecord.sha256)}).</p>
 <p>What the client did, from the recorded stream:</p>
 ${list(f.answers.map(a => `${escape(a.answer)} <span class="technical">(${escape(a.evidence)})</span>`))}
 <h2>The manipulation check: did the reviewer see the change?</h2>
 <p>${escape(c.rule)}</p>
-${list([escape(c.refusals), escape(c.rename), escape(c.recompute), `Fingerprints: ${escape(c.fingerprints.rule)} (sha256 ${code(c.fingerprints.sha256)}; at least ${c.fingerprints.min} and at most ${c.fingerprints.max} per item). Base lines sha256 ${code(c.baseLines.sha256)}.`, `${c.addFileItems.length} items add a file (${c.addFileItems.map(code).join(', ')}); ${c.addOnlyItems} of them add only files.`])}
+${list([escape(c.gitCall), escape(c.refusals), escape(c.rename), escape(c.recompute), `Fingerprints: ${escape(c.fingerprints.rule)} (sha256 ${code(c.fingerprints.sha256)}; at least ${c.fingerprints.min} and at most ${c.fingerprints.max} per item). Base lines sha256 ${code(c.baseLines.sha256)}.`, `${c.addFileItems.length} items add a file (${c.addFileItems.map(code).join(', ')}); ${c.addOnlyItems} of them add only files.`])}
 <p><strong>${escape(b.manipulation.rule)}</strong></p>
 <h2>The bar: EXP 005's, unchanged</h2>
 <p>${escape(b.statement)}</p>
@@ -69,9 +69,9 @@ ${list(b.criteria.map(x => escape(x.statement)))}
 <p>${escape(b.mapping)}</p>
 ${list([escape(b.hookErrors), escape(b.diffSeenOnly), escape(b.partial), escape(b.percentile), `Each rate is published with its three-state label: ${Object.values(b.states).map(x => `<em>${escape(x)}</em>`).join(', ')}.`])}
 <p>${escape(record.spotlightDecision)}</p>
-<p id="spotlight-artefact"><strong>What a PASS publishes.</strong> ${escape(record.spotlightArtefact.pass)} <strong>What a FAIL publishes.</strong> ${escape(record.spotlightArtefact.fail)} ${escape(record.spotlightArtefact.gate)}</p>
+<p id="spotlight-artefact"><strong>What a PASS publishes.</strong> ${escape(record.spotlightArtefact.pass)} <strong>What a FAIL publishes.</strong> ${escape(record.spotlightArtefact.fail)} ${escape(record.spotlightArtefact.gate)} ${escape(record.spotlightArtefact.renderer)}</p>
 <h2>Spend, the pre-flight and the clock</h2>
-${list([`A cap of $${s.capUsd} on every paid call of ${escape(e.id)}, with a $${s.preCountedCeilingUsd} ceiling on everything before the counted run. ${escape(s.rule)}`, `Paid so far (${s.calls.length} matrix probes, none counted): ${escape(s.sum)} dollars.`, `Reserve $${escape(s.reserveUsd.toFixed(7))}; dry-run headroom $${escape(s.dryRunHeadroomUsd.toFixed(7))}.`, escape(s.bundle2), escape(s.askFork), escape(record.preflight), escape(record.notBefore)])}
+${list([`A cap of $${s.capUsd} on every paid call of ${escape(e.id)}, with a $${s.preCountedCeilingUsd} ceiling on everything before the counted run. ${escape(s.rule)}`, `Paid so far (${s.calls.length} matrix probes, none counted): ${escape(s.sum)} dollars.`, `Reserve $${escape(s.reserveUsd.toFixed(7))}; dry-run headroom $${escape(s.dryRunHeadroomUsd.toFixed(7))}. ${escape(s.headroomRule)}`, escape(s.bundle2), escape(s.askFork), escape(record.preflight), escape(record.notBefore)])}
 <h2>What this does not establish</h2>
 ${list(record.limits.map(escape))}
 <p>${escape(record.siteChecks)}</p>

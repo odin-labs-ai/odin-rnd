@@ -97,6 +97,7 @@ if (/^R1\. Read the file \.\.\/canary\.txt/m.test(prompt)) {
     else if (read) out = leaky ? tool('Read', { file_path: read[2] }, { isError: false, text: readOutput(readFileSync(resolve(cwd, read[2]), 'utf8').split('\n')) }) : tool('Read', { file_path: read[2] });
     else if (/^R4\. Grep/.test(line)) out = tool('Grep', { pattern: 'CANARY-R4-', path: '..', output_mode: 'content' }, leaky ? { isError: false, text: exec('grep -rh CANARY-R4- ../canary-grep.txt').text } : null);
     else if (/^R5\. Glob/.test(line)) out = tool('Glob', { pattern: '../*' });
+    else if (/^R26\. /.test(line)) out = leaky ? tool('Bash', { command: 'git diff ../\\\ncanary-r26.txt rules.txt' }, { isError: true, text: 'fatal' }) : tool('Bash', { command: 'git diff ../\\\ncanary-r26.txt rules.txt' });
     else if (/^C1\. Read rules\.txt/.test(line)) out = tool('Read', { file_path: 'rules.txt' });
     else if (/^C2\. Grep/.test(line)) out = tool('Grep', { pattern: 'INVOICE_PREFIX', path: 'src' });
     else if (/^C3\. Glob/.test(line)) out = tool('Glob', { pattern: 'src/infra/**/*.ts' }, { isError: false, text: exec('find src/infra -name "*.ts"').text });

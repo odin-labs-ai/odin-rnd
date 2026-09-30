@@ -24,7 +24,7 @@ export const RUNNER6_FILES = [
   'experiments/nina-changes/stream6.mjs', 'experiments/nina-changes/spend6.mjs', 'experiments/nina-changes/scrub6.mjs',
   'experiments/nina-changes/guard6.mjs', 'experiments/nina-changes/freeze.mjs', 'experiments/nina-changes/vendored-exp005.mjs',
   'experiments/nina-changes/diff-seen.mjs', 'experiments/nina-changes/fingerprints.mjs', 'experiments/nina-changes/base-lines.mjs',
-  'experiments/nina-changes/change-fingerprints.json', 'experiments/nina-changes/base-lines.json', 'experiments/nina-changes/results6.mjs',
+  'experiments/nina-changes/change-fingerprints.json', 'experiments/nina-changes/base-lines.json', 'experiments/nina-changes/results6.mjs', 'experiments/nina-changes/spotlight-gate.mjs', 'experiments/nina-changes/matrix6-attempts.mjs',
   'experiments/nina-changes/denial-census.mjs', 'experiments/nina-changes/fixtures/fake-claude-stream.mjs',
   'experiments/jev-gate/run_reviewer.mjs', 'experiments/jev-gate/runner-guard.mjs', 'experiments/jev-gate/results.mjs',
   'experiments/jev-gate/metrics.mjs', 'experiments/jev-gate/lint.mjs', 'experiments/jev-gate/bce-contract.mjs',
@@ -93,18 +93,22 @@ export function checkRun6({ mode, root = REPO_ROOT, now = new Date(), fixture = 
   };
 }
 
+/** Refuses unless every pinned file exists under `root` and hashes to its pin. */
+export function checkPinned6(files, root = REPO_ROOT) {
+  for (const [rel, want] of Object.entries(files)) {
+    if (!existsSync(join(root, rel))) refuse(`the EXP 006 pre-registration pins ${rel}, which is missing`);
+    const have = sha256(readFileSync(join(root, rel)));
+    if (have !== want) refuse(`the EXP 006 pre-registration pins ${rel} at ${want}; it hashes to ${have}`);
+  }
+}
+
 function checkFrozen(root, now, freeze) {
   const path = join(root, PREREG6);
   if (!existsSync(path)) refuse(`${PREREG6} is missing`);
   const got = sha256(readFileSync(path));
   if (got !== freeze.PREREG6_SHA256) refuse(`${PREREG6} hashes to ${got}, not the frozen ${freeze.PREREG6_SHA256}`);
-  // Every file the pre-registration pins must still hash to its pin (the classifier, scorer, runner, fingerprints…).
-  const prereg6 = JSON.parse(readFileSync(path, 'utf8'));
-  for (const [rel, want] of Object.entries(prereg6.files ?? {})) {
-    if (!existsSync(join(root, rel))) refuse(`the EXP 006 pre-registration pins ${rel}, which is missing`);
-    const have = sha256(readFileSync(join(root, rel)));
-    if (have !== want) refuse(`the EXP 006 pre-registration pins ${rel} at ${want}; it hashes to ${have}`);
-  }
+  // Every file the pre-registration pins must still hash to its pin (the classifier, scorer, runner, spotlight gate…).
+  checkPinned6(JSON.parse(readFileSync(path, 'utf8')).files ?? {}, root);
   const nb = Date.parse(freeze.NOT_BEFORE6);
   if (!Number.isFinite(nb) || !/Z$/.test(freeze.NOT_BEFORE6)) refuse(`NOT_BEFORE6 ${freeze.NOT_BEFORE6} is not an ISO 8601 UTC time`);
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the EXP 006 not-before ${freeze.NOT_BEFORE6}`);

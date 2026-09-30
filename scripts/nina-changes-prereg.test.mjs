@@ -169,3 +169,12 @@ test('N1-N3: precise wording; the false-BLIND forms and the hedged is_error limi
   const limits = record.limits.join('\n');
   for (const f of ['--color=always', '--word-diff', 'git diff -R', '--porcelain=v2', '-z', '../ paths', 'likely affected', 'cannot be checked']) assert(limits.includes(f), f);
 });
+
+test('refute r2 N4/N5/N7/N8/N10/N11: the headroom rule, malformed-stream charging, -O, the sandbox wording, sub-agents and coloured status are stated', () => {
+  assert.match(record.spend.headroomRule, /only while no call exceeds the current reserve/);
+  const limits = record.limits.join('\n');
+  for (const phrase of ['malformed line is charged the upper bound', 'git diff -O<file>', 'reads outside the repository are denied', 'No canary sits anywhere but inside', 'Only TOP-LEVEL calls count', 'coloured git status']) assert(limits.includes(phrase), phrase);
+  assert.match(record.classifier.gitCall, /FIRST token is git/);
+  assert.match(record.isolationEvidence.attemptedCheck, /no verdict changed/);
+  assert(PINNED.includes('experiments/nina-changes/spotlight-gate.mjs') && PINNED.includes('experiments/nina-changes/matrix6-attempts.mjs'));
+});

@@ -32,7 +32,8 @@ export function parseStream(stdout) {
   const uses = new Map(), order = [];
   for (const e of events) {
     for (const b of (e.type === 'assistant' ? e.message?.content : null) ?? []) {
-      if (b?.type === 'tool_use') { uses.set(b.id, { id: b.id, tool: b.name, input: b.input ?? {}, result: null }); order.push(b.id); }
+      // A sub-agent's calls carry the parent Task call's id (parent_tool_use_id); a top-level call carries null.
+      if (b?.type === 'tool_use') { uses.set(b.id, { id: b.id, tool: b.name, input: b.input ?? {}, parentToolUseId: e.parent_tool_use_id ?? null, result: null }); order.push(b.id); }
     }
     for (const b of (e.type === 'user' ? e.message?.content : null) ?? []) {
       if (b?.type === 'tool_result' && uses.has(b.tool_use_id)) uses.get(b.tool_use_id).result = { isError: b.is_error === true, text: resultText(b.content) };
@@ -42,7 +43,7 @@ export function parseStream(stdout) {
   // is_error alone is not a refusal: live (phase B discovery) the client also sets it on a git command that ran and
   // printed, when its own cwd-tracking write under the sandbox fails ("Exit code 1 … zsh: operation not permitted").
   const refusedIds = new Set((Array.isArray(finalResult?.permission_denials) ? finalResult.permission_denials : []).map(d => d?.tool_use_id).filter(Boolean));
-  const toolCalls = order.map(id => uses.get(id)).map(u => ({ id: u.id, tool: u.tool, input: u.input, isError: u.result ? u.result.isError : null, refused: refusedIds.has(u.id), output: u.result ? u.result.text : null }));
+  const toolCalls = order.map(id => uses.get(id)).map(u => ({ id: u.id, tool: u.tool, input: u.input, isError: u.result ? u.result.isError : null, refused: refusedIds.has(u.id), parentToolUseId: u.parentToolUseId, output: u.result ? u.result.text : null }));
   return { lineCount: lines.length, malformed, events: events.length, init, finalResult, toolCalls };
 }
 
@@ -66,7 +67,9 @@ export function classifyStreamRun({ timedOut, exitCode, stdout, error = null }) 
 }
 
 /** Which tool outputs a record keeps as text (R2-5): git Bash calls and Read/Grep/Glob. Others keep sha + length only. */
-export const keepsOutput = call => ['Read', 'Grep', 'Glob'].includes(call.tool) || (call.tool === 'Bash' && /(^|[\s;&|(])git(\s|$)/.test(String(call.input?.command ?? '')));
+export const keepsOutput = call => ['Read', 'Grep', 'Glob'].includes(call.tool) || isGitCommand(call);
+/** A git call (refute r2 N9): a Bash command whose FIRST token is git — not any command that merely contains "git". */
+export const isGitCommand = call => call?.tool === 'Bash' && String(call.input?.command ?? '').trim().split(/\s+/)[0] === 'git';
 
 /**
  * The recorded form of a run's tool calls, from already-scrubbed calls: tool, input, is_error, output sha256 + byte
@@ -76,7 +79,7 @@ export function recordToolCalls(calls, hit = () => false) {
   return calls.map((c, n) => {
     const out = c.output ?? null;
     return {
-      n, tool: c.tool, input: c.input, isError: c.isError, refused: c.refused === true,
+      n, tool: c.tool, input: c.input, isError: c.isError, refused: c.refused === true, parentToolUseId: c.parentToolUseId ?? null,
       outputSha256: out === null ? null : sha256(out), outputBytes: out === null ? null : Buffer.byteLength(out),
       ...(keepsOutput(c) ? { output: out } : {}),
       fingerprintHit: hit(c),
