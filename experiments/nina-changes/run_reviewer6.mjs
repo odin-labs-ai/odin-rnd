@@ -30,7 +30,7 @@ import { loadBaseLines, outFile as BASE_LINES_FILE } from './base-lines.mjs';
 import { NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
 import { checkRun6, PREREG6, RUNNER6_PINS } from './guard6.mjs';
 import { judgeMatrix6, MATRIX_PROMPT6, matrixSetup6 } from './matrix6.mjs';
-import { publicRecord6, scrubPaths6, RUN_PREFIX6 } from './scrub6.mjs';
+import { leakFields, publicRecord6, scrubPaths6, scrubRecord6, RUN_PREFIX6 } from './scrub6.mjs';
 import { LEDGER6, LIMITS6, SpendLedger6 } from './spend6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, parseStream, recordToolCalls } from './stream6.mjs';
 import { gitgit, hookContext, run, spawnTimed } from './vendored-exp005.mjs';
@@ -232,7 +232,11 @@ export async function runReviewer6({ out, ledgerPath = LEDGER_FILE, items = [], 
     // The spend line is written BEFORE anything that could refuse the record, so a paid call is never unrecorded.
     if (ledger) ledger.record({ ts: rec.endedAt, kind, id: item.id, run: k, reportedCostUsd: rec.costUsd, fixture });
     try { record.calls.push(publicRecord6(rec, `${item.id} run ${k}`)); } catch (error) {
-      record.calls.push({ id: item.id, run: k, gate: 'reviewer', lintRefused: true, startedAt: rec.startedAt, endedAt: rec.endedAt });
+      // The record is not written, but the facts that carry no text are (phase B: a refused paid probe lost its
+      // verdict): which fields still leaked, the cost, the harness state, and the matrix verdict when it is clean.
+      const scrubbed = scrubRecord6(rec);
+      const matrix = rec.matrix && !leakFields(rec.matrix).length ? rec.matrix : null;
+      record.calls.push({ id: item.id, run: k, gate: 'reviewer', lintRefused: true, leakFields: leakFields(scrubbed), startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd, harnessFailure: rec.harnessFailure, matrix });
       return { stop: ['lint', { id: item.id, run: k, error: error.message.slice(0, 200) }] };
     }
     return { rec };

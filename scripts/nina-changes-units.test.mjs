@@ -10,7 +10,7 @@ import { WS_REPO } from '../experiments/nina-changes/fence6.mjs';
 import { NOT_BEFORE6, PREREG6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { checkRun6, readPins6, renderPins6, RUNNER6_FILES, runner6CodeShas } from '../experiments/nina-changes/guard6.mjs';
 import { chooseClaude6, commandTemplate, FAKE_CLAUDE6, renderCommand6, reviewerArgs6, RUN_ROOT6 } from '../experiments/nina-changes/run_reviewer6.mjs';
-import { lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
+import { leakFields, lint6, publicRecord6, scrubPaths6 } from '../experiments/nina-changes/scrub6.mjs';
 import { countedProjection, LIMITS6, round7, SpendLedger6 } from '../experiments/nina-changes/spend6.mjs';
 import { classifyStreamRun, HARNESS_FAILURE_DEFINITION, keepsOutput, parseStream, recordToolCalls } from '../experiments/nina-changes/stream6.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -179,6 +179,17 @@ test('scrub6: the EXP 006 run-dir prefix collapses to <ws>, then EXP 005\'s rule
   assert.deepEqual(lint6('clean <ws>/repo text'), []);
   assert.ok(lint6(`${'/'}Users/someone/x`).length > 0, 'a home path');
   assert.ok(lint6(`<tmp>/claude-${'5'.repeat(3)}/x`).some(f => /uid/.test(f)), 'a session uid');
-  assert.throws(() => publicRecord6({ a: `${'/'}Users/x` }, 't'), /leaks/);
+  assert.throws(() => publicRecord6({ a: `session claude-${'5'.repeat(3)} x` }, 't'), /leaks/);
+  assert.deepEqual(publicRecord6({ a: `${'/'}Users/x/y` }, 't'), { a: '~/y' }, 'any home prefix scrubs to ~');
   assert.deepEqual(publicRecord6({ a: `${home}/.cache/odin-rnd/nina-changes-runs/nina-changes-reviewer-Xy12Ab/repo` }, 't'), { a: '<ws>/repo' });
+});
+
+test('scrub6: a home path the client truncated collapses to ~ (phase B); a refused record names its leaking fields only', () => {
+  const home = homedir();
+  const truncated = `fatal: '${home.slice(0, home.length - 3)}`; // …/Users/<part of the name>, as a truncated output
+  assert.doesNotMatch(scrubPaths6(truncated), /\/Users\//);
+  assert.deepEqual(lint6(scrubPaths6(`${truncated}\n${home}/x`)), []);
+  assert.equal(scrubPaths6('<ws>/home/probe-user/canary.txt'), '<ws>/home/probe-user/canary.txt', 'the probe canary home is left alone');
+  const users = ['', 'Users', 'someone'].join('/');
+  assert.deepEqual(leakFields({ a: 'clean', b: { c: [`${users}/x`, 'ok'] } }), ['b.c.0']);
 });
