@@ -10,7 +10,7 @@ import { join } from 'node:path';
 // makes temp dirs only in two places, each removed in a finally and on signals.
 
 test('the EXP 006 tests leave nothing in a private TMPDIR', { timeout: 600_000 }, () => {
-  const files = ['census', 'vendored', 'classifier', 'units', 'results6'].map(f => join('scripts', `nina-changes-${f}.test.mjs`));
+  const files = ['census', 'vendored', 'classifier', 'units', 'results6', 'practice'].map(f => join('scripts', `nina-changes-${f}.test.mjs`));
   const tmp = mkdtempSync(join(tmpdir(), 'nina-changes-tempdirs-'));
   const { NODE_TEST_CONTEXT: _, ...env } = process.env;
   try {

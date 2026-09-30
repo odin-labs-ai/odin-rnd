@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "kind": "practice-rows",
+  "note": "EXP 006 practice rows for the dry run (R2-3): a new directory, a rename, a mixed change. Not corpus items, never scored; intent is the author's, not a bce label.",
+  "items": [
+    {
+      "id": "p04",
+      "intent": "GREEN",
+      "patch": "diff --git a/src/reports/revenue.ts b/src/reports/revenue.ts\nnew file mode 100644\nindex 0000000..a6fe72f\n--- /dev/null\n+++ b/src/reports/revenue.ts\n@@ -0,0 +1,7 @@\n+import type { Invoice } from '../domain';\n+import { add, money, type Money } from '../domain';\n+\n+/** Total revenue over a set of invoices, in one currency. */\n+export function totalRevenue(invoices: readonly Invoice[], currency = 'EUR'): Money {\n+  return invoices.reduce((sum, invoice) => add(sum, invoice.total), money(0, currency));\n+}\n"
+    },
+    {
+      "id": "p05",
+      "intent": "GREEN",
+      "patch": "diff --git a/src/infra/index.ts b/src/infra/index.ts\nindex 79f19e1..3666124 100644\n--- a/src/infra/index.ts\n+++ b/src/infra/index.ts\n@@ -3,7 +3,7 @@ import { PgCustomerRepository } from './db/customer-repository';\n import { PgInvoiceRepository } from './db/invoice-repository';\n import { PgOrderRepository } from './db/order-repository';\n import { createPool } from './db/pool';\n-import { SmtpNotifier } from './mail/mailer';\n+import { SmtpNotifier } from './mail/smtp-mailer';\n \n export interface Services {\n   orders: OrderRepository;\ndiff --git a/src/infra/mail/mailer.ts b/src/infra/mail/smtp-mailer.ts\nsimilarity index 100%\nrename from src/infra/mail/mailer.ts\nrename to src/infra/mail/smtp-mailer.ts\n"
+    },
+    {
+      "id": "p06",
+      "intent": "GREEN",
+      "patch": "diff --git a/src/domain/index.ts b/src/domain/index.ts\nindex b1faaab..a8f2bc3 100644\n--- a/src/domain/index.ts\n+++ b/src/domain/index.ts\n@@ -3,3 +3,4 @@ export * from './errors';\n export * from './invoice';\n export * from './money';\n export * from './order';\n+export * from './refund';\ndiff --git a/src/domain/refund.ts b/src/domain/refund.ts\nnew file mode 100644\nindex 0000000..b42bb86\n--- /dev/null\n+++ b/src/domain/refund.ts\n@@ -0,0 +1,6 @@\n+import { money, type Money } from './money';\n+\n+/** A refund is never larger than what was paid. */\n+export function refundAmount(paid: Money, requestedCents: number): Money {\n+  return money(Math.min(paid.cents, Math.max(0, requestedCents)), paid.currency);\n+}\n"
+    }
+  ]
+}
