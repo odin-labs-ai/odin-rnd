@@ -50,7 +50,7 @@ export const PINNED = [
     'fixtures/fake-claude-stream.mjs', 'fixtures/synthetic6.mjs', 'fixtures/live-read-grep.json', 'fixtures/diff-seen-table.json'].map(f => `${N}/${f}`),
   ...PROBES.map(p => `${N}/probes/${p.name}.json`),
   ...['run_reviewer.mjs', 'runner-guard.mjs', 'results.mjs', 'metrics.mjs', 'corpus.sha256', 'inputs.json', 'labels.json', 'rules.txt'].map(f => `${J}/${f}`),
-  'scripts/nina-changes-prereg.mjs', 'scripts/nina-changes-note.mjs',
+  'scripts/nina-changes-prereg.mjs', 'scripts/nina-changes-note.mjs', 'scripts/nina-changes-spotlight.mjs',
 ];
 export const NOT_PINNED = [`${N}/freeze.mjs`, `${N}/runners.sha256`, `${N}/spend-ledger.jsonl`];
 
@@ -170,6 +170,12 @@ export function buildRecord(root = '.') {
       scorer: { file: `${N}/results6.mjs`, sha256: sha256(read(`${N}/results6.mjs`)) },
     },
     spotlightDecision: 'Automatic and pre-registered: a spotlight-decision record with held: false is committed if and only if the bar PASSES, the manipulation check PASSES, and the independent results refute SHIPs; otherwise held: true, naming the condition that failed. A founder decision is asked only if a refute raises a doubt this rule does not decide.',
+    spotlightArtefact: {
+      pass: 'On a PASS (the bar PASSES, the manipulation check PASSES, and the committed EXP 006 spotlight decision says held: false), the home page\'s "Tools leaving the factory" list gains nina\'s entry, next after 002 Laya, in the same shape as the Laya entry (number and category, a title linking to the evidence, one paragraph, links, an attribution note, a spec list): nina, harness orchestration for Claude Code, by Marcos Schulz (xhulz), https://github.com/xhulz/nina, with the attribution "used with the permission of its author, as confirmed by Odin Labs", and links to the EXP 006 measurement, to EXP 005 (#spotlight) and to the upstream fixes opened by Odin Labs (xhulz/nina#39, merged; xhulz/nina#41, stated as its live state at publish time: merged or open). Every figure in it is rendered from the EXP 006 results record at build time. It takes the list\'s next free number, 005, the slot EXP 005\'s gated nina card held; there is only one nina entry.',
+      fail: 'On a FAIL, or when the spotlight is held for any reason, there is no entry, and the results page says plainly which condition failed (the bar, the manipulation check, the refute, or a partial run).',
+      gate: 'EXP 005\'s card gate, reused: PASS AND an explicit held: false; a missing decision record, a non-boolean held or a FAIL renders nothing. EXP 006 adds the manipulation check to it.',
+      renderer: { file: 'scripts/nina-changes-spotlight.mjs', sha256: sha256(read('scripts/nina-changes-spotlight.mjs')) },
+    },
     spend: {
       capUsd: LIMITS6.capUsd, preCountedCeilingUsd: LIMITS6.preCountedCeilingUsd, ledger: 'experiments/nina-changes/spend-ledger.jsonl',
       rule: 'Every paid call of EXP 006 (matrix probes, the dry run, the counted run) appends one ledger line, cost to 7 decimals from the client\'s total_cost_usd (API-equivalent). A call whose cost is unknown is charged its upper bound, max(the largest EXP 006 call so far, $0.60), marked upper-bound; never a $0 line. Before a call the runner refuses it when the recorded total plus a reserve of max(largest call so far, $0.60) would exceed $60, and a pre-counted call when the pre-counted total plus that reserve would exceed $10: enforced in code (spend6.mjs).',
@@ -227,6 +233,8 @@ export function validateRecord(record, root = '.') {
   assert.equal(ofRecord.pins.command, record.reviewer.command, 'the probe of record ran the pre-registered command');
   assert.deepEqual(record.isolationEvidence.codeDiff, ['experiments/nina-changes/run_reviewer6.mjs', 'experiments/nina-changes/scrub6.mjs'], 'proof runs 1-2 differ from the final code only in post-processing');
   assert.equal(record.fence.answers.length, 7);
+  for (const phrase of ['Tools leaving the factory', 'next after 002 Laya', 'Marcos Schulz (xhulz)', 'used with the permission of its author, as confirmed by Odin Labs', 'xhulz/nina#39', 'xhulz/nina#41', '#spotlight', 'rendered from the EXP 006 results record']) assert(record.spotlightArtefact.pass.includes(phrase), `spotlightArtefact.pass must state: ${phrase}`);
+  assert.match(record.spotlightArtefact.fail, /no entry/);
   for (const f of NOT_PINNED) assert(!(f in record.files), `${f} is never pinned in the pre-registration (R4-3)`);
   assert.equal(record.attribution.nina, ninaAttribution);
   const text = JSON.stringify(record);

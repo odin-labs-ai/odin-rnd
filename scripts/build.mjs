@@ -19,6 +19,7 @@ import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
 import { checkResults, resultsPath, publishedResultsPath, amendNoteResults, qualifyHomeResults } from './jev-gate-results-site.mjs';
 import { publishedPath as exp006PublishedPath, recordPath as exp006RecordPath } from './nina-changes-prereg.mjs';
 import { addJournalRow as addExp006Row, assertNoteCurrent as assertExp006NoteCurrent } from './nina-changes-note.mjs';
+import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -73,6 +74,8 @@ html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
 if (results) html = qualifyHomeResults(html, results);
 // EXP 006's field note leads the notes: its row, rendered from the record.
 html = addExp006Row(html, exp006.record);
+// nina's entry in the tools list: only on an EXP 006 PASS with an explicit held:false (nothing while no results exist).
+html = addNinaEntry(html, loadEntryData());
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });
