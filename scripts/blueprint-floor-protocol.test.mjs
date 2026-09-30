@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { VOCABULARY } from '../experiments/blueprint-floor/adapter.mjs';
+import { VOCABULARY, judge } from '../experiments/blueprint-floor/adapter.mjs';
 import { FLAG_HANDLING, FLAGS_QUESTION, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
@@ -196,7 +196,6 @@ test('refute r3 B1 (a): two lower-case halves, each reddened alone by its own vi
   const ok = await mechanicalChecks(gpf, expressible(gpf, halves, [tcall(`${G} -f origin a`), tcall(`${G} --force origin b`)], tcall(`${G} origin main`)));
   assert.deepEqual([ok.failedCheck, ok.classAfterMechanical], [null, 'expressible'], JSON.stringify(ok.teeth));
   assert.deepEqual(ok.teeth.perConstraint, { f: true, force: true });
-  const { judge } = await import('../experiments/blueprint-floor/adapter.mjs');
   for (const cmd of [`${G.toUpperCase()} -F origin a`, `${G} --FORCE origin b`]) assert.equal((await judge({ constraints: halves, inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: 'i' })).decision, 'fail', cmd);
   const upper = await mechanicalChecks(gpf, expressible(gpf, [fp('f', '\\bgit\\s+push\\b[^;|&]*\\s-F\\b')], tcall(`${G} -F x`), tcall(`${G} x`)));
   assert.deepEqual([upper.failedCheck, upper.classAfterMechanical], ['flags', 'not']);
@@ -209,7 +208,6 @@ test('refute r3 N2: a vacuous constraint beside a real one is downgraded by per-
 });
 
 test('refute r3 B1: judge on an /i rule folds the input: "SuDo ls" and "sUDO ls" fail an expressible \\bsudo\\b; without i they pass', LONG, async () => {
-  const { judge } = await import('../experiments/blueprint-floor/adapter.mjs');
   for (const cmd of ['SuDo ls', 'sUDO ls']) {
     assert.equal((await judge({ constraints: [fp('s', '\\bsudo\\b')], inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: 'i' })).decision, 'fail', cmd);
     assert.equal((await judge({ constraints: [fp('s', '\\bsudo\\b')], inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: '' })).decision, 'pass', cmd);

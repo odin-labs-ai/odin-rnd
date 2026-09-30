@@ -119,7 +119,7 @@ test('refute r1: the kappa disclosure, the opaque-id inputs, the controls-contra
   const bad = copy(); bad.adjudicator.agreement = 'kappa';
   assert.throws(() => validateRecord(bad), /kappa disclosure/);
   for (const f of ['opaque id', 'verbatim text', 'input kind', 'regex flags', 'contract', 'whitelist']) assert(record.translator.input.includes(f), f);
-  for (const f of ['opaque id', 'translator\'s answer verbatim', 'mechanical results']) assert(record.adjudicator.input.includes(f), f);
+  for (const f of ['opaque id', 'translator\'s answer verbatim', 'mechanical summary']) assert(record.adjudicator.input.includes(f), f);
   assert(record.limits.some(l => l.startsWith('The positive controls are shown the module-graph contract')));
   assert.match(record.spend.plain, /^Stage 1 calls no Jev model\./);
   const note = readFileSync(articlePath, 'utf8');
