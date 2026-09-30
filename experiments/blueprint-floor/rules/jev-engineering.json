@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "plugin": "jev-engineering",
+  "repo": "eugeniughelbur/jev-engineering",
+  "sha": "82655a6d16cedf6e31c0e493cc701e20c8d06798",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Eugeniu Ghelbur",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "sha256": "94b7323d498415382c2bb5c36f6a0d0d530d0ab3f4a096b2260d5dce5aeb1b50"
+    },
+    {
+      "path": "policy.json",
+      "sha256": "d60d72bf5615d29c9d34b51b1ecc24f7bbb60f685ef92d815fd2dc329aefa5d7"
+    },
+    {
+      "path": "packs/data.json",
+      "sha256": "8c930c65e5e4e4f9dcad438387d3160c0412d549b4ff9e3d791b4cce80b5454a"
+    },
+    {
+      "path": "packs/message.json",
+      "sha256": "5c1449e0ef9d408a6b16e18f77594ee27b81d57076acebcfba1794c6ba393596"
+    },
+    {
+      "path": "packs/money.json",
+      "sha256": "ba5480ee64eca9993ba5f9d13e36a7a7ce4cd3d27217fb2813c09fb888402df0"
+    },
+    {
+      "path": "packs/publish.json",
+      "sha256": "2e615169a25c5b9925dc53f252ff288d6d54ff6558393366c5cc814f5276d54e"
+    },
+    {
+      "path": "packs/shell.json",
+      "sha256": "5693428e7039a17b966e40e1d9ce147fbe4ab3be6f4747dde4ea2cc7e4f55564"
+    }
+  ],
+  "counts": {
+    "primary": 16,
+    "secondary": 0,
+    "excluded": 23
+  },
+  "rulesSha256": "de6fb3b63261b96b0d00eb0c01083f3d325ad85f5b466b4e61d53d8adea4a6a5",
+  "rules": [
+    {
+      "ruleId": "jev-engineering/hard-deny/01",
+      "sourcePath": "policy.json",
+      "line": 22,
+      "kind": "regex",
+      "text": "\\bgit\\s+stash\\s+clear\\b",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "unrecoverable, and classifiers score it inconsistently",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/02",
+      "sourcePath": "policy.json",
+      "line": 26,
+      "kind": "regex",
+      "text": "~/\\.ssh/id_|/\\.ssh/id_",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "reads a private key",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/03",
+      "sourcePath": "policy.json",
+      "line": 30,
+      "kind": "regex",
+      "text": "\\b(sk|rk)_live_[A-Za-z0-9]",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "live secret on the command line",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/04",
+      "sourcePath": "policy.json",
+      "line": 34,
+      "kind": "regex",
+      "text": "\\brm\\s+-rf\\s+/(?:\\s|$)",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "deletes the filesystem root",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/05",
+      "sourcePath": "policy.json",
+      "line": 38,
+      "kind": "regex",
+      "text": "\\bdd\\s+if=.*\\bof=/dev/",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "writes directly to a device",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/06",
+      "sourcePath": "policy.json",
+      "line": 42,
+      "kind": "regex",
+      "text": ":\\(\\)\\s*\\{\\s*:\\|:&\\s*\\}\\s*;:",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "fork bomb",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/07",
+      "sourcePath": "policy.json",
+      "line": 46,
+      "kind": "regex",
+      "text": "\\bhistory\\b.*\\|\\s*(curl|wget|nc)\\b",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "exfiltrates shell history",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/08",
+      "sourcePath": "policy.json",
+      "line": 50,
+      "kind": "regex",
+      "text": "\\bcurl\\b[^|]*\\|\\s*(ba)?sh\\b",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "pipes a remote script into a shell",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/09",
+      "sourcePath": "policy.json",
+      "line": 54,
+      "kind": "regex",
+      "text": "(~|\\$HOME|/Users/[^/\\s]+|/home/[^/\\s]+)/\\.(aws/credentials|config/gcloud/|kube/config|docker/config\\.json|netrc|git-credentials)",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "reads cloud or registry credentials",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/hard-deny/10",
+      "sourcePath": "policy.json",
+      "line": 58,
+      "kind": "regex",
+      "text": "\\b(env|printenv)\\b[^|;&]*\\|\\s*(curl|wget|nc|ncat)\\b",
+      "flags": "",
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "reason": "sends your environment, and every secret in it, over the network",
+        "engine": "python re.search"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/policy/destructive",
+      "sourcePath": "policy.json",
+      "line": 65,
+      "kind": "question",
+      "text": "Running this command would destroy data, leak a secret, or cause an effect that is hard to undo.",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "type": "noul"
+      }
+    },
+    {
+      "ruleId": "jev-engineering/policy/verdict",
+      "sourcePath": "policy.json",
+      "line": 69,
+      "kind": "question",
+      "text": "What should the gate do with this tool call?",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "type": "choice",
+        "criteria": {
+          "allow": "Clearly safe. Run it without asking the human.",
+          "ask": "Consequential or unclear. Stop and ask the human first.",
+          "deny": "Clearly dangerous or outside what the human asked for. Refuse."
+        }
+      }
+    },
+    {
+      "ruleId": "jev-engineering/pack/data/verdict",
+      "sourcePath": "packs/data.json",
+      "line": 19,
+      "kind": "question",
+      "text": "What should the gate do with this data operation?",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "pack": "data",
+        "type": "choice",
+        "criteria": {
+          "allow": "Run it. The scope matches the request and it is recoverable.",
+          "ask": "Confirm the scope with a human first.",
+          "deny": "Refuse. Too broad, or unrecoverable, or never asked for."
+        }
+      }
+    },
+    {
+      "ruleId": "jev-engineering/pack/message/verdict",
+      "sourcePath": "packs/message.json",
+      "line": 29,
+      "kind": "question",
+      "text": "What should the gate do with this message?",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "pack": "message",
+        "type": "choice",
+        "criteria": {
+          "allow": "Send it.",
+          "ask": "Show the human the draft first.",
+          "deny": "Do not send. It leaks something or was never asked for."
+        }
+      }
+    },
+    {
+      "ruleId": "jev-engineering/pack/money/verdict",
+      "sourcePath": "packs/money.json",
+      "line": 19,
+      "kind": "question",
+      "text": "What should the gate do with this transaction?",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "pack": "money",
+        "type": "choice",
+        "criteria": {
+          "allow": "Process it. It matches what was asked and is routine.",
+          "ask": "A human signs this one off before it moves.",
+          "deny": "Refuse. It was not authorised or does not match the request."
+        }
+      }
+    },
+    {
+      "ruleId": "jev-engineering/pack/publish/verdict",
+      "sourcePath": "packs/publish.json",
+      "line": 19,
+      "kind": "question",
+      "text": "What should the gate do with this release?",
+      "flags": null,
+      "inputKind": "toolCall",
+      "stratum": "primary",
+      "withheld": {
+        "pack": "publish",
+        "type": "choice",
+        "criteria": {
+          "allow": "Ship it. Low blast radius and easy to roll back.",
+          "ask": "A human approves before this goes live.",
+          "deny": "Refuse. Production, hard to reverse, or never asked for."
+        }
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "id": "jev-engineering/fast-path/01",
+      "sourcePath": "policy.json",
+      "line": 11,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/02",
+      "sourcePath": "policy.json",
+      "line": 12,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/03",
+      "sourcePath": "policy.json",
+      "line": 13,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/04",
+      "sourcePath": "policy.json",
+      "line": 14,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/05",
+      "sourcePath": "policy.json",
+      "line": 15,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/06",
+      "sourcePath": "policy.json",
+      "line": 16,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/07",
+      "sourcePath": "policy.json",
+      "line": 17,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/fast-path/08",
+      "sourcePath": "policy.json",
+      "line": 18,
+      "reason": "allow-rules (fast_path regexes allow a command without asking): a different decision, and the bce vocabulary is forbid-only"
+    },
+    {
+      "id": "jev-engineering/pack/data/scope",
+      "sourcePath": "packs/data.json",
+      "line": 7,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/data/irreversible",
+      "sourcePath": "packs/data.json",
+      "line": 11,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/data/personal_data",
+      "sourcePath": "packs/data.json",
+      "line": 15,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/message/embarrassing",
+      "sourcePath": "packs/message.json",
+      "line": 7,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/message/private_data",
+      "sourcePath": "packs/message.json",
+      "line": 11,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/message/off_request",
+      "sourcePath": "packs/message.json",
+      "line": 15,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/message/tone",
+      "sourcePath": "packs/message.json",
+      "line": 19,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/money/authorised",
+      "sourcePath": "packs/money.json",
+      "line": 7,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/money/amount_unusual",
+      "sourcePath": "packs/money.json",
+      "line": 11,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/money/irreversible",
+      "sourcePath": "packs/money.json",
+      "line": 15,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/publish/production",
+      "sourcePath": "packs/publish.json",
+      "line": 7,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/publish/reversible",
+      "sourcePath": "packs/publish.json",
+      "line": 11,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/publish/off_request",
+      "sourcePath": "packs/publish.json",
+      "line": 15,
+      "reason": "score-only dials: check_action returns the raw probability beside the pack's verdict and no shipped code gates on it"
+    },
+    {
+      "id": "jev-engineering/pack/shell/destructive",
+      "sourcePath": "packs/shell.json",
+      "line": 7,
+      "reason": "never sent: check_action routes the shell pack to decide(), which asks the policy.json questions (mcp_server.py check_action); the shell pack's questions repeat them verbatim"
+    },
+    {
+      "id": "jev-engineering/pack/shell/verdict",
+      "sourcePath": "packs/shell.json",
+      "line": 11,
+      "reason": "never sent: check_action routes the shell pack to decide(), which asks the policy.json questions (mcp_server.py check_action); the shell pack's questions repeat them verbatim"
+    }
+  ]
+}

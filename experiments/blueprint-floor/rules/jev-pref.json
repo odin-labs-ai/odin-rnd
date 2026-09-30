@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "plugin": "jev-pref",
+  "repo": "doeixd/jev-pref",
+  "sha": "9d77ea6069123a0b3eedf465ec39781842722b0a",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 jev-pref contributors",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "sha256": "f91f5a12951e0078f9178b1a18a43e9f6b9ce059146ece1aa595c586f9dd396c"
+    },
+    {
+      "path": "packages/jev-pref/src/suites/secrets.js",
+      "sha256": "f4a56622f6e9757699f36ea49be4035d74981eaf149252bd03653bb0aaf50958"
+    },
+    {
+      "path": "jev-pref.json",
+      "sha256": "c24e240c9dc5944c213c3f625525838cf96757a5f3fdbaf832bacb47a1c0b95f"
+    }
+  ],
+  "counts": {
+    "primary": 4,
+    "secondary": 0,
+    "excluded": 0
+  },
+  "rulesSha256": "ea8309b9a6121a3e6ea40d8236a181e2bd086e28e52c1631d34801c680c405f3",
+  "rules": [
+    {
+      "ruleId": "jev-pref/secrets/sec_leak",
+      "sourcePath": "packages/jev-pref/src/suites/secrets.js",
+      "line": 9,
+      "kind": "question",
+      "text": "Does `diff` introduce a hardcoded secret, API key, token, private key, password, or connection string into tracked files (excluding test fixtures and redacted examples)? Answer true only for a concrete instance in the changed lines.",
+      "flags": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "suite": "secrets",
+        "questionType": "noul",
+        "gate": true
+      }
+    },
+    {
+      "ruleId": "jev-pref/secrets/sec_pii",
+      "sourcePath": "packages/jev-pref/src/suites/secrets.js",
+      "line": 14,
+      "kind": "question",
+      "text": "Does `diff` introduce real-looking personal data (emails, phone numbers, addresses, government IDs) outside test fixtures and docs examples? Answer true only for a concrete instance in the changed lines.",
+      "flags": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "suite": "secrets",
+        "questionType": "noul",
+        "gate": true
+      }
+    },
+    {
+      "ruleId": "jev-pref/prefs/no_real_keys",
+      "sourcePath": "jev-pref.json",
+      "line": 13,
+      "kind": "question",
+      "text": "Does this change add a real API key or token to documentation, comments, or examples?",
+      "flags": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "name": "No real keys",
+        "description": "Flags concrete API keys or tokens added to docs, comments, or examples.",
+        "gate": false,
+        "guidance": "Count concrete credential values. Do not count environment-variable names, redacted values, or obvious placeholders."
+      }
+    },
+    {
+      "ruleId": "jev-pref/prefs/skill_layout",
+      "sourcePath": "jev-pref.json",
+      "line": 21,
+      "kind": "question",
+      "text": "Does this change add a skill outside skills/<name>/ or add a skill whose SKILL.md lacks name and description frontmatter?",
+      "flags": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "name": "Skill layout",
+        "description": "Skills live under skills/<name>/ with name and description frontmatter.",
+        "gate": false,
+        "guidance": "Only evaluate newly added or relocated skills visible in the change."
+      }
+    }
+  ],
+  "excluded": []
+}

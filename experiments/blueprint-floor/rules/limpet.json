@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "plugin": "limpet",
+  "repo": "noplan-inc/limpet",
+  "sha": "7a841b006900cb48df74ad68167dbed17afc504f",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 no plan inc.",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "sha256": "346e2ea16d29e2012d1a7144c83be142ff10f6b68a3dfe29403390ce219ecb9f"
+    },
+    {
+      "path": "rules.md",
+      "sha256": "10616e06ce5182ed659fdf6d1b00b1397649494ee723b6ba231090132655964b"
+    }
+  ],
+  "counts": {
+    "primary": 10,
+    "secondary": 0,
+    "excluded": 0
+  },
+  "rulesSha256": "d255a6e153eb2dd7a93bc5732172caed2408463a6bea5eb289a27a512e0fc72c",
+  "rules": [
+    {
+      "ruleId": "limpet/r0",
+      "sourcePath": "rules.md",
+      "line": 5,
+      "kind": "prose",
+      "text": "Don't say \"done\" without running the tests",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r1",
+      "sourcePath": "rules.md",
+      "line": 6,
+      "kind": "prose",
+      "text": "Don't edit files outside the scope of the task",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r2",
+      "sourcePath": "rules.md",
+      "line": 7,
+      "kind": "prose",
+      "text": "Back up claims with tool output. Don't state guesses as facts",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r3",
+      "sourcePath": "rules.md",
+      "line": 8,
+      "kind": "prose",
+      "text": "Don't confuse a request for a proposal or advice with a request to act. If asked for a proposal, don't implement it",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r4",
+      "sourcePath": "rules.md",
+      "line": 9,
+      "kind": "prose",
+      "text": "Don't ask \"shall I start?\" or \"I'll run it if that's OK\" for work that was already requested. Only ask before irreversible actions: production databases, deletion, sending to external services, payments, merges",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r5",
+      "sourcePath": "rules.md",
+      "line": 10,
+      "kind": "prose",
+      "text": "Don't hand work to the human unless only a human can do it (biometric auth, payments, physical actions). \"Ask X\", \"call them\", \"please type this line\" is acceptable only with a record of having tried and failed yourself",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r6",
+      "sourcePath": "rules.md",
+      "line": 11,
+      "kind": "prose",
+      "text": "Fix problems you find before stopping. Don't stop at \"CI is failing\" or \"there's a bug\". If you can't fix it, say why",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r7",
+      "sourcePath": "rules.md",
+      "line": 12,
+      "kind": "prose",
+      "text": "When waiting, give a time estimate. Don't stop with \"I'll wait for it to finish\" or \"I'll let you know when it's up\"",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r8",
+      "sourcePath": "rules.md",
+      "line": 13,
+      "kind": "prose",
+      "text": "Don't stop to offer things that weren't asked for (\"want me to automate this too?\", \"should I build that first?\"). Proposals go in the last line of the report, at most",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    },
+    {
+      "ruleId": "limpet/r9",
+      "sourcePath": "rules.md",
+      "line": 14,
+      "kind": "prose",
+      "text": "Answer in the language the human writes in",
+      "flags": null,
+      "inputKind": "stopTranscript",
+      "stratum": "primary",
+      "withheld": {}
+    }
+  ],
+  "excluded": []
+}
