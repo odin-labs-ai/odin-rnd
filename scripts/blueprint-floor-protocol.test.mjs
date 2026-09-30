@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VOCABULARY } from '../experiments/blueprint-floor/adapter.mjs';
-import { CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
+import { CASE_VARIANTS, FLAG_HANDLING, FLAGS_QUESTION, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
 // EXP 007 WO-1-03: the census protocol. Blindness (R2-3), the output schemas, the downgrade rule, and the mechanical
@@ -158,4 +158,36 @@ test('mechanical checks on canned answers: a sound answer stays; vacuous teeth, 
   assert.deepEqual([not.classAfterMechanical, not.teeth, not.validate], ['not', null, null]);
   const schema = await mechanicalChecks(rule, answer({ residual: 'Q?' }));
   assert.deepEqual([schema.classAfterMechanical, schema.failedCheck], ['partial', 'schema']);
+});
+
+// Refute r2 B1: a flagged regex (/i) must not lose its flag silently.
+const sudo = loadRules('pi-verdict').rules.find(x => x.ruleId === 'pi-verdict/bash/sudo');
+const sudoAnswer = (pattern, over = {}) => JSON.stringify({ ruleId: opaqueId(sudo.ruleId), class: 'expressible', constraints: [{ id: 'no-sudo', type: 'forbiddenPattern', severity: 'high', pattern, path: '.floor/command.txt' }], coverage: 'sudo anywhere in the command', residual: null, probes: { violating: { tool_name: 'Bash', tool_input: { command: 'sudo ls' } }, compliant: { tool_name: 'Bash', tool_input: { command: 'ls' } } }, rationale: 'A literal token check.', ...over });
+
+test('refute r2 B1: the /i rule with a flag-free \\bsudo\\b is downgraded by the flags check; a case-class equivalent passes', LONG, async () => {
+  assert.equal(sudo.flags, 'i');
+  const lost = await mechanicalChecks(sudo, sudoAnswer('\\bsudo\\b'));
+  assert.deepEqual([lost.teeth.pass, lost.failedCheck, lost.classAfterMechanical], [true, 'flags', 'not'], JSON.stringify(lost.flags));
+  const withResidual = await mechanicalChecks(sudo, sudoAnswer('\\bsudo\\b', { class: 'partial', residual: 'Is privilege raised another way?' }));
+  assert.deepEqual([withResidual.failedCheck, withResidual.classAfterMechanical], ['flags', 'not']);
+  const kept = await mechanicalChecks(sudo, sudoAnswer('\\b[sS][uU][dD][oO]\\b'));
+  assert.deepEqual([kept.failedCheck, kept.classAfterMechanical, kept.flags.pass], [null, 'expressible', true], JSON.stringify(kept.flags));
+  assert.deepEqual(kept.flags.runs.map(r => [r.probe, r.label]), [['violating-upper', 'RED'], ['violating-mixed', 'RED'], ['compliant-swapped', 'GREEN']]);
+  // The adjudicator sees the flags, the flags check and the one sentence on flag semantics.
+  const adj = buildAdjudicatorPrompt(sudo, sudoAnswer('\\bsudo\\b'), lost).user;
+  assert(adj.includes('its flags: i') && adj.includes(FLAGS_QUESTION('i')) && /"flags": "fail/.test(adj));
+  assert(!buildAdjudicatorPrompt(loadRules('limpet').rules[0], '{}', lost).user.includes('checker compiles every pattern without flags: say'));
+});
+
+test('refute r2 B1: each flag has a stated handling; any flag that cannot be verified caps the class at partial', LONG, async () => {
+  assert.deepEqual(FLAG_HANDLING, { i: 'checked', g: 'no-effect', d: 'no-effect' });
+  assert.deepEqual(unverifiableFlags('gimsuy'), ['m', 's', 'u', 'y']);
+  assert.deepEqual(unverifiableFlags(''), []); assert.deepEqual(unverifiableFlags(null), []);
+  assert.deepEqual([CASE_VARIANTS.upper('sudo'), CASE_VARIANTS.mixed('sudo ls'), CASE_VARIANTS.swap('Ls')], ['SUDO', 'SuDo Ls', 'lS']);
+  const multiline = { ...sudo, ruleId: 'test/m', flags: 'm' };
+  const capped = await mechanicalChecks(multiline, sudoAnswer('\\bsudo\\b', { ruleId: opaqueId('test/m') }));
+  assert.deepEqual([capped.failedCheck, capped.classAfterMechanical, capped.unverifiableFlags], ['flags-unverifiable', 'partial', ['m']]);
+  // Every flag that occurs among the vendored rules is either checked or has no effect.
+  const flags = new Set(allRules.flatMap(r => [...(r.flags ?? '')]));
+  assert.deepEqual([...flags].filter(f => !FLAG_HANDLING[f]), []);
 });

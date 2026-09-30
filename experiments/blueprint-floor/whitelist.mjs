@@ -74,7 +74,7 @@ export function deriveWhitelist(engineDir = ENGINE_DIR) {
     controlsNote: `forbiddenEgress is not in the controls vocabulary: the engine's schema refuses it under typescript-module-graph (${moduleGraphRefusesEgress}).`,
     excluded,
     refusal: 'A constraint of any type outside the vocabulary is refused by the adapter with a typed error; customPolicy has its own error class because 0.3.1 declares it but does not enforce it.',
-    flags: 'A regex rule\'s flags are recorded per rule. forbiddenPattern compiles without flags, so a flagged rule is expressible only if the translator emits an equivalent flag-free pattern (for /i, e.g. (?:[Ss][Uu][Dd][Oo]) or a character class per letter); the teeth check decides.',
+    flags: "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags (see compiledWithoutFlags), so the census's mechanical checks stand in for them: for /i, each forbiddenPattern must still fail the violating probe with its matched text upper-cased and in mixed case, and still pass the compliant probe with its case swapped; g and d change no verdict; any other flag cannot be verified mechanically and caps the rule at partial (protocol.mjs FLAG_HANDLING)."
   };
 }
 

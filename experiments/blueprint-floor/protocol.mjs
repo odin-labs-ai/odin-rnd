@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLASSES, INPUT_KINDS, VOCABULARY, buildBlueprint, checkVocabulary, teeth, validateBlueprint } from './adapter.mjs';
+import { CLASSES, INPUT_KINDS, VOCABULARY, buildBlueprint, checkVocabulary, runFloor, teeth, validateBlueprint } from './adapter.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 export const DIR = 'experiments/blueprint-floor';
@@ -74,13 +74,60 @@ export function buildAdjudicatorPrompt(rule, translatorRaw, mechanical) {
     typesInVocabulary: mechanical.vocabularyOk,
     checkerValidation: mechanical.validate ? (mechanical.validate.ok ? 'pass' : mechanical.validate.engineLimit ? 'refused by the checker\'s regex guard' : 'fail') : 'not run',
     teeth: mechanical.teeth ? (mechanical.teeth.pass ? 'pass' : `fail (${mechanical.teeth.reason})`) : 'not run',
+    ...(f.flags ? { flags: mechanical.flags ? (mechanical.flags.pass ? 'pass' : `fail (${mechanical.flags.reason})`) : 'not run' } : {}),
     translatorClass: mechanical.translatorClass,
     classAfterMechanicalChecks: mechanical.classAfterMechanical,
   };
   return {
     systemPromptFile: PROMPT_FILES.adjudicator,
-    user: `${ruleBlock(f)}\n\nTranslator answer (verbatim):\n<<<ANSWER\n${translatorRaw}\nANSWER>>>\n\nMechanical checks:\n${JSON.stringify(m, null, 2)}\n\nThe stated class to confirm or dispute: ${m.classAfterMechanicalChecks}`,
+    user: `${ruleBlock(f)}\n\nTranslator answer (verbatim):\n<<<ANSWER\n${translatorRaw}\nANSWER>>>\n\nMechanical checks:\n${JSON.stringify(m, null, 2)}\n\n${f.flags ? `${FLAGS_QUESTION(f.flags)}\n\n` : ''}The stated class to confirm or dispute: ${m.classAfterMechanicalChecks}`,
   };
+}
+
+/** The adjudicator's one sentence on flags, shown only for a regex rule that has flags. */
+export const FLAGS_QUESTION = flags => `The rule's regular expression has the flags "${flags}", and the checker compiles every pattern without flags: say whether the constraints preserve what those flags mean on every input, and dispute the class if they do not.`;
+
+// Regex flags (refute r2 B1). How each flag of a source regex is handled by the mechanical checks:
+//   i        checked: every forbiddenPattern must still fail the violating probe with its matched text upper-cased and in
+//            mixed case, and must still pass the compliant probe with every string's case swapped (checkFlags below);
+//   g, d     no effect on whether one line matches from its start (g's lastIndex state and d's indices change no verdict);
+//   m, s, u, v, y and any other flag
+//            cannot be verified mechanically (the checker matches each line with a flag-free pattern): a rule with one of
+//            them can be at most partial by the mechanical rule, recorded as failedCheck "flags-unverifiable".
+export const FLAG_HANDLING = { i: 'checked', g: 'no-effect', d: 'no-effect' };
+export const unverifiableFlags = flags => [...new Set([...(flags ?? '')])].filter(f => !FLAG_HANDLING[f]);
+
+const upper = s => s.toUpperCase();
+const mixed = s => { let k = 0; return [...s].map(ch => (ch.toLowerCase() !== ch.toUpperCase() ? (k++ % 2 ? ch.toLowerCase() : ch.toUpperCase()) : ch)).join(''); };
+const swap = s => [...s].map(ch => (ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase())).join('');
+/** Apply `fn` to every string VALUE in a probe (keys untouched). */
+export const mapStrings = (v, fn) => (typeof v === 'string' ? fn(v) : Array.isArray(v) ? v.map(x => mapStrings(x, fn)) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, fn)])) : v);
+/** Re-case only the text a pattern matches, in every string of the probe. */
+export const recaseMatches = (probe, pattern, fn) => mapStrings(probe, s => s.replace(new RegExp(pattern, 'g'), m => fn(m)));
+export const CASE_VARIANTS = { upper, mixed, swap };
+
+/**
+ * The /i check. For each forbiddenPattern constraint: the violating probe with that pattern's matched text upper-cased, and
+ * again in mixed case, must still make the constraint set FAIL; the compliant probe with every string's case swapped must
+ * still PASS. Real adapter, real bce 0.3.1.
+ */
+export async function checkFlags(constraints, probes, { inputKind, ruleId, role }) {
+  const runs = [];
+  try {
+    for (const c of constraints.filter(x => x.type === 'forbiddenPattern')) {
+      for (const [name, fn] of [['upper', upper], ['mixed', mixed]]) {
+        const r = await runFloor({ ruleId, constraints, inputKind, input: recaseMatches(probes.violating, c.pattern, fn), role });
+        runs.push({ constraint: c.id, probe: `violating-${name}`, label: r.label });
+        if (r.label !== 'RED') return { pass: false, runs, reason: `violating probe with /${c.pattern}/'s match in ${name} case is ${r.label}` };
+      }
+    }
+    const r = await runFloor({ ruleId, constraints, inputKind, input: mapStrings(probes.compliant, swap), role });
+    runs.push({ probe: 'compliant-swapped', label: r.label });
+    if (r.label !== 'GREEN') return { pass: false, runs, reason: `compliant probe with its case swapped is ${r.label}` };
+    return { pass: true, runs, reason: 'case variants hold' };
+  } catch (e) {
+    return { pass: false, runs, reason: `${e.name ?? 'Error'}: ${String(e.message).split('\n')[0]}` };
+  }
 }
 
 const str = v => typeof v === 'string';
@@ -144,7 +191,8 @@ export function downgrade(cls, residualGiven) {
 }
 
 /**
- * The mechanical checks ($0, code): schema, vocabulary, the checker's own validation, teeth through the adapter. The
+ * The mechanical checks ($0, code): schema, vocabulary, the checker's own validation, teeth through the adapter, and for a
+ * regex rule with /i the case check (checkFlags); a flag the checks cannot verify caps the class at partial. The
  * first failing check downgrades the class once and is recorded. A class that is already not is checked for schema only.
  * An answer that is not parseable JSON, or has no valid class, is a harness failure: class error (counted as not).
  */
@@ -154,7 +202,7 @@ export async function mechanicalChecks(rule, raw) {
   if (!parsed.ok || !CLASSES.includes(parsed.value.class)) return { translatorClass: 'error', classAfterMechanical: 'error', schemaOk: false, errors: [parsed.ok ? 'no valid class' : parsed.error], failedCheck: 'parse' };
   const out = parsed.value, translatorClass = out.class, role = roleFor(f.ruleId);
   const schema = validateTranslatorOutput(out, f);
-  const result = { translatorClass, schemaOk: schema.ok, errors: schema.errors, fenced: parsed.fenced, vocabularyOk: null, validate: null, teeth: null, failedCheck: null };
+  const result = { translatorClass, schemaOk: schema.ok, errors: schema.errors, fenced: parsed.fenced, vocabularyOk: null, validate: null, teeth: null, flags: null, failedCheck: null };
   const fail = check => ({ ...result, failedCheck: check, classAfterMechanical: translatorClass === 'not' ? 'not' : downgrade(translatorClass, typeof out.residual === 'string' && out.residual.trim().length > 0), engineLimit: check === 'validate' && Boolean(result.validate?.engineLimit) });
   if (!schema.ok) return fail('schema');
   if (translatorClass === 'not') return { ...result, classAfterMechanical: 'not', engineLimit: false };
@@ -163,6 +211,12 @@ export async function mechanicalChecks(rule, raw) {
   if (!result.validate.ok) return fail('validate');
   result.teeth = await teeth(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role });
   if (!result.teeth.pass) return fail('teeth');
+  if (f.flags && f.flags.includes('i')) {
+    result.flags = await checkFlags(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role });
+    if (!result.flags.pass) return fail('flags');
+  }
+  const cannot = unverifiableFlags(f.flags);
+  if (cannot.length && translatorClass === 'expressible') return { ...result, failedCheck: 'flags-unverifiable', unverifiableFlags: cannot, classAfterMechanical: 'partial', engineLimit: false };
   return { ...result, classAfterMechanical: translatorClass, engineLimit: false };
 }
 
