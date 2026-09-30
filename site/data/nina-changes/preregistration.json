@@ -530,6 +530,15 @@
     }
   },
   "spotlightDecision": "Automatic and pre-registered: a spotlight-decision record with held: false is committed if and only if the bar PASSES, the manipulation check PASSES, and the independent results refute SHIPs; otherwise held: true, naming the condition that failed. A founder decision is asked only if a refute raises a doubt this rule does not decide.",
+  "spotlightArtefact": {
+    "pass": "On a PASS (the bar PASSES, the manipulation check PASSES, and the committed EXP 006 spotlight decision says held: false), the home page's \"Tools leaving the factory\" list gains nina's entry, next after 002 Laya, in the same shape as the Laya entry (number and category, a title linking to the evidence, one paragraph, links, an attribution note, a spec list): nina, harness orchestration for Claude Code, by Marcos Schulz (xhulz), https://github.com/xhulz/nina, with the attribution \"used with the permission of its author, as confirmed by Odin Labs\", and links to the EXP 006 measurement, to EXP 005 (#spotlight) and to the upstream fixes opened by Odin Labs (xhulz/nina#39, merged; xhulz/nina#41, stated as its live state at publish time: merged or open). Every figure in it is rendered from the EXP 006 results record at build time. It takes the list's next free number, 005, the slot EXP 005's gated nina card held; there is only one nina entry.",
+    "fail": "On a FAIL, or when the spotlight is held for any reason, there is no entry, and the results page says plainly which condition failed (the bar, the manipulation check, the refute, or a partial run).",
+    "gate": "EXP 005's card gate, reused: PASS AND an explicit held: false; a missing decision record, a non-boolean held or a FAIL renders nothing. EXP 006 adds the manipulation check to it.",
+    "renderer": {
+      "file": "scripts/nina-changes-spotlight.mjs",
+      "sha256": "7055ab17d5d09a2eaa668701d6174b0cb46bd6d8b3eeec901701f9078da286e3"
+    }
+  },
   "spend": {
     "capUsd": 60,
     "preCountedCeilingUsd": 10,
@@ -673,7 +682,8 @@
     "experiments/jev-gate/inputs.json": "6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34",
     "experiments/jev-gate/labels.json": "36af1422755e56af56f4af267411a4a8e6535d08e6fc9d7aa3734aa005e4412a",
     "experiments/jev-gate/rules.txt": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
-    "scripts/nina-changes-prereg.mjs": "de37b62b1947c70868bd214000d7d6d8d40994fb715307b96c4d91740f395153",
-    "scripts/nina-changes-note.mjs": "c427f47f7b959a50e25e9952e43b76a8799258283db3d3fea60f3eaf23b6b773"
+    "scripts/nina-changes-prereg.mjs": "04d37f7d0fc28c9fdc88d63d0a2f4c79748adabe33dd51e346e253065abace23",
+    "scripts/nina-changes-note.mjs": "a6cd78f6e2d65892ba87fb79ebcf2a195bc969089a5d552e1335a42107162401",
+    "scripts/nina-changes-spotlight.mjs": "7055ab17d5d09a2eaa668701d6174b0cb46bd6d8b3eeec901701f9078da286e3"
   }
 }
