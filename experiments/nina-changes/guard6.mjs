@@ -98,6 +98,13 @@ function checkFrozen(root, now, freeze) {
   if (!existsSync(path)) refuse(`${PREREG6} is missing`);
   const got = sha256(readFileSync(path));
   if (got !== freeze.PREREG6_SHA256) refuse(`${PREREG6} hashes to ${got}, not the frozen ${freeze.PREREG6_SHA256}`);
+  // Every file the pre-registration pins must still hash to its pin (the classifier, scorer, runner, fingerprints…).
+  const prereg6 = JSON.parse(readFileSync(path, 'utf8'));
+  for (const [rel, want] of Object.entries(prereg6.files ?? {})) {
+    if (!existsSync(join(root, rel))) refuse(`the EXP 006 pre-registration pins ${rel}, which is missing`);
+    const have = sha256(readFileSync(join(root, rel)));
+    if (have !== want) refuse(`the EXP 006 pre-registration pins ${rel} at ${want}; it hashes to ${have}`);
+  }
   const nb = Date.parse(freeze.NOT_BEFORE6);
   if (!Number.isFinite(nb) || !/Z$/.test(freeze.NOT_BEFORE6)) refuse(`NOT_BEFORE6 ${freeze.NOT_BEFORE6} is not an ISO 8601 UTC time`);
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the EXP 006 not-before ${freeze.NOT_BEFORE6}`);

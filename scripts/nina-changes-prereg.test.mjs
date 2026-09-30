@@ -1,0 +1,129 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { checkRecords } from '../experiments/jev-gate/runner-guard.mjs';
+import { commandTemplate } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { computeResults6 } from '../experiments/nina-changes/results6.mjs';
+import { buildRecord, checkRecord, NOT_PINNED, PARENT, pinPath, recordPath, units, validateRecord } from './nina-changes-prereg.mjs';
+import { addJournalRow, articlePath, assertNoteCurrent, exp005SpotlightHref, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
+import { exp006NoteHref, renderHarnessSection, checkResults } from './jev-gate-results-site.mjs';
+import { builtCopy } from './test-build.mjs';
+
+// EXP 006 WO-1-04 and WO-1-05: the pre-registration record, its validator, and its public pages.
+
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const { record, sha256: digest } = checkRecord();
+const copy = () => structuredClone(record);
+
+test('the record is pinned, and it is exactly the build of the committed files', () => {
+  assert.equal(readFileSync(pinPath, 'utf8').split(/\s+/)[0], sha256(readFileSync(recordPath)));
+  assert.equal(digest, sha256(readFileSync(recordPath)));
+  assert.deepEqual(record, buildRecord());
+  for (const [file, want] of Object.entries(record.files)) assert.equal(sha256(readFileSync(file)), want, file);
+  for (const f of NOT_PINNED) assert(!(f in record.files), `${f} is never pinned in the pre-registration`);
+});
+
+test('the command is the runner\'s own scrubbed render, in the field the runner reads', () => {
+  const { prereg } = checkRecords({ mode: 'practice' });
+  assert.equal(record.reviewer.command, commandTemplate(prereg, 'fence6'));
+  assert.match(record.reviewer.command, /--output-format stream-json --verbose/);
+  assert.match(record.reviewer.command, /Bash\(git -C <ws>\/repo --no-pager diff:\*\)/);
+  const bad = copy(); bad.reviewer.command = bad.reviewer.command.replace('--verbose ', '');
+  assert.throws(() => validateRecord(bad), /reviewer\.command/);
+});
+
+test('the parent, the reused inputs and the bar are EXP 005\'s, verbatim', () => {
+  for (const [k, v] of Object.entries(PARENT)) assert.equal(record.parent[k].sha256, v.sha256);
+  assert.equal(record.reused.corpusSha256, 'a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9');
+  assert.equal(record.reused.baseCommit, '3e35e4e274932a61bc0d92f378f8d506a9bb4ce0');
+  assert.deepEqual([record.reused.k, record.reused.timeoutSeconds, record.reused.clientVersion, record.reused.model, record.reused.effort], [3, 600, '2.1.280', 'claude-opus-5-5', 'high']);
+  const a01 = JSON.parse(readFileSync(PARENT.amendment01.file, 'utf8'));
+  assert.deepEqual(record.bar.criteria, a01.changes.spotlight.criteria);
+  assert.equal(record.bar.judging, a01.changes.spotlight.judging);
+  assert.deepEqual([record.bar.manipulation.maxBlindRuns, record.bar.manipulation.countedRuns], [18, 180]);
+  const changed = copy(); changed.bar.criteria[0].threshold = 0.2;
+  assert.throws(() => validateRecord(changed), /amendment 01/);
+  assert.match(record.parent.finding, /131 of 180/);
+  assert.equal(record.attribution.nina, 'nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs');
+});
+
+test('the scorer takes its bar from this record (bar.criteria, bar.harnessFailure, bar.manipulation)', () => {
+  const { prereg, amendment } = checkRecords({ mode: 'practice' });
+  // An empty fixture run is refused on shape, not on the bar: the bar the record carries is accepted as the scorer's.
+  assert.throws(() => computeResults6({ exp005: { prereg, amendment }, bar6: record.bar, labels: { items: [] }, run: {}, fingerprints: {}, fingerprintsSha256: '', stamp: {} }), /schemaVersion|gate run/);
+});
+
+test('the spend is itemised to the 7th decimal and the pre-counted remainder is stated (D4)', () => {
+  const s = record.spend;
+  assert.equal(s.calls.length, 7);
+  assert.equal(units(s.spentUsd), 40821826);
+  assert.equal(units(s.preCountedRemainingUsd), 59178174);
+  assert.match(s.bundle2, /post-merge probe is dropped/);
+  for (const c of s.calls) assert.equal(sha256(readFileSync(c.record.file)), c.record.sha256);
+  const bad = copy(); bad.spend.spentUsd = 4.1;
+  assert.throws(() => validateRecord(bad));
+});
+
+test('the fence proof: fence6 x3 on one command, the D1 statement, the lost-verdict run disclosed', () => {
+  const iso = record.isolationEvidence;
+  assert.equal(iso.probeOfRecord.file, 'experiments/nina-changes/probes/matrix-v6-fence6-3.json');
+  assert.deepEqual(iso.codeDiff, ['experiments/nina-changes/run_reviewer6.mjs', 'experiments/nina-changes/scrub6.mjs']);
+  assert.match(iso.codeStatement, /14ba08d/);
+  assert.match(iso.lostVerdict, /\$0\.5472840/);
+  const fence6 = iso.runs.filter(r => r.variant === 'fence6' && !r.name.includes('discovery'));
+  assert.deepEqual(fence6.map(r => [r.rowsHeld, r.controlsWorked]), [['48/48', '19/19'], ['48/48', '19/19'], ['48/48', '19/19']]);
+  assert.equal(record.fence.answers.length, 7);
+});
+
+test('the limits state the two layers, the prompt confound, the is_error artifact and the machine', () => {
+  const text = record.limits.join('\n');
+  for (const phrase of ['best-effort', 'the OS sandbox', 'Reviewer only', 'the corpus is public', '14 items that add a file', '9 of them add only files', 'is_error', 'never read tool-level is_error', 'one machine']) assert(text.includes(phrase), phrase);
+  // D3's claim is true of EXP 005's classifier: it never reads tool-level is_error.
+  assert.doesNotMatch(readFileSync('experiments/jev-gate/diff-visibility.mjs', 'utf8'), /is_error|isError|tool_result/);
+  assert.match(record.notBefore, /merge time of the odin-rnd pull request that adds this file/);
+});
+
+test('the field note is exactly the render of the record, links to EXP 005\'s held spotlight, and states no result', () => {
+  assert.doesNotThrow(() => assertNoteCurrent());
+  const note = readFileSync(articlePath, 'utf8');
+  assert.equal(note, renderNote(record, digest));
+  assert(note.includes(`href="${exp005SpotlightHref}"`));
+  assert(note.includes(digest));
+  assert.match(note, /PRE-REGISTERED 30 SEP 2026 · NOT YET RUN/);
+  assert(readFileSync('site/sitemap.xml', 'utf8').includes(`journal/${slug}.html`));
+  assert(!/(?<!\w)\/(?:Users|private\/tmp)\//.test(note), 'no local path on the page');
+});
+
+test('EXP 005\'s held-spotlight section links to EXP 006, and the home row is added above EXP 005\'s', () => {
+  const data = checkResults();
+  const section = renderHarnessSection(data);
+  assert(section.includes(`<a href="${exp006NoteHref}">EXP 006, nina reviews the change</a>`));
+  assert.equal(exp006NoteHref, `${slug}.html`);
+  const home = readFileSync('site/index.html', 'utf8');
+  const built = addJournalRow(home, record);
+  const row = name => built.indexOf(`<a class="journal-row" href="journal/${name}.html">`);
+  assert(row(slug) > 0 && row(slug) < row('jev-as-a-fast-gate'), 'the EXP 006 row leads the field notes');
+  assert(built.includes(renderJournalRow(record)));
+  assert.throws(() => addJournalRow(built, record), /already there/);
+});
+
+test('the built site publishes the record byte for byte and carries the row and the links (fresh build copy)', { timeout: 600_000 }, () => {
+  const dist = join(builtCopy(), 'dist');
+  assert.equal(sha256(readFileSync(join(dist, 'data/nina-changes/preregistration.json'))), digest);
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(renderJournalRow(record)));
+  assert(existsSync(join(dist, `journal/${slug}.html`)));
+  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(`href="${exp006NoteHref}"`));
+});
+
+test('the EXP 006 note cannot scroll sideways at 375px or 320px (long tokens wrap)', () => {
+  const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
+  const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
+  const body = readFileSync(articlePath, 'utf8').split('<article class="article-body">')[1].split('</article>')[0].replace(/<pre[\s\S]*?<\/pre>/g, ' ');
+  const runs = body.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  for (const width of [375, 320]) {
+    const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
+    assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);
+  }
+});

@@ -261,6 +261,8 @@ ${list([
 }
 
 // The card and any featuring need BOTH the registered PASS and an explicit decision that the spotlight is not held.
+// EXP 006, the re-measure the held spotlight waits for (its note sits beside this one in journal/).
+export const exp006NoteHref = 'nina-reviews-the-change.html';
 export const spotlightShown = data => data.results.spotlight.verdict === 'PASS' && data.decision?.held === false;
 
 // Amendment 01's spotlight bar, in the note: held, featured, or not met.
@@ -272,6 +274,7 @@ export function renderHarnessSection(data) {
 ${list(spotlightItems(results).map(escape))}
 <p>${escape(diffSentence(data))}</p>
 <p>So the spotlight is held${decision ? ` (${escape(decision.by)}, ${escape(decision.decidedOn)}: "${escape(decision.decision)}")` : ''} until a separate pre-registered experiment measures nina reviewing changes. Nothing about nina is featured until then.</p>
+<p id="exp006">That experiment is pre-registered: <a href="${exp006NoteHref}">EXP 006, nina reviews the change</a>.</p>
 ${upstreamParagraph()}
 </section>
 `;
