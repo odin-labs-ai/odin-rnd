@@ -65,7 +65,7 @@ test('the census counts and the plugin table come from the rule files; jev-belay
 
 test('the limits the plan requires are stated', () => {
   const text = record.limits.join('\n');
-  for (const phrase of ['bce-engine 0.3.1', 'a choice we made', 'A partial floor still needs a model', 'The translator is itself a model', 'self-consistency', 'biases the census toward the kill criterion', 'jev-pref has 4', 'not independent', 'forbiddenDependency fires only on import declarations']) assert(text.includes(phrase), phrase);
+  for (const phrase of ['bce-engine 0.3.1', 'a choice we made', 'A partial floor still needs a model', 'The translator is itself a model', 'self-consistency', 'biases the census toward the kill criterion', 'jev-pref has 4', 'not independent', 'parses every scanned file as TypeScript']) assert(text.includes(phrase), phrase);
 });
 
 test('no local path, no result words, and the site copy is the record byte for byte', () => {

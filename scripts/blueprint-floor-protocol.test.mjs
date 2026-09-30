@@ -321,6 +321,7 @@ test('refute r6 N4: a rule above its pinned cap is lowered mechanically (failedC
   const none = await mechanicalChecks(s1, ans({}));
   assert.deepEqual([none.failedCheck, none.classAfterMechanical], ['max-class', 'not'], JSON.stringify(none.teeth ?? none.errors));
   const withResidual = await mechanicalChecks(s1, ans({ class: 'partial', residual: 'Does the tool write to that path?' }));
+  assert.match(readFileSync('experiments/blueprint-floor/rules/SELECTION.md', 'utf8'), /drops to not \(failedCheck max-class\), so a capped rule reaches partial only when the translator itself answers partial/);
   assert.deepEqual([withResidual.failedCheck, withResidual.classAfterMechanical], [null, 'partial']);
 });
 

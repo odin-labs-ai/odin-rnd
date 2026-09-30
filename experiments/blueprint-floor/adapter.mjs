@@ -61,41 +61,76 @@ export function safeRelPath(p) {
   return n.replace(/^\.\//, '');
 }
 
-/** A `+++ ` header's target: tab/date suffix removed, a `b/` prefix stripped; null for a deleted file (/dev/null). */
-export const headerTarget = rest => { const p = rest.split('\t')[0].trim(); return p === '/dev/null' ? null : p.replace(/^b\//, ''); };
+/** Decode a git C-quoted path ("b/src/\303\251.ts" -> b/src/é.ts): octal byte escapes as UTF-8, and \t \n \" \\. */
+export function unquoteGitPath(p) {
+  if (!(p.startsWith('"') && p.endsWith('"') && p.length >= 2)) return p;
+  const bytes = [];
+  const body = p.slice(1, -1);
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (c !== '\\') { bytes.push(...Buffer.from(c, 'utf8')); continue; }
+    const n = body[i + 1];
+    if (/[0-7]/.test(n)) { bytes.push(parseInt(body.slice(i + 1, i + 4), 8)); i += 3; continue; }
+    const map = { t: 9, n: 10, r: 13, '"': 34, '\\': 92, a: 7, b: 8, f: 12, v: 11 };
+    bytes.push(map[n] ?? n.charCodeAt(0)); i += 1;
+  }
+  return Buffer.from(bytes).toString('utf8');
+}
+/** A `---`/`+++ ` header's path: tab/date suffix removed, C-quoting decoded, an `a/` or `b/` prefix stripped; null for /dev/null. */
+export const headerTarget = rest => {
+  let p = rest.replace(/\r$/, '');
+  p = p.startsWith('"') ? unquoteGitPath(p.slice(0, p.lastIndexOf('"') + 1)) : p.split('\t')[0].trim();
+  return p === '/dev/null' ? null : p.replace(/^[ab]\//, '');
+};
 
 /**
- * The added lines of a unified diff, per post-image path, hunk-aware (a `+++`-looking added line inside a hunk is content,
- * not a header). Deleted files contribute nothing. Returns [{ path, lines }] in patch order (refute r6 B1, N5).
+ * Walk a unified diff, hunk-aware: header lines are read only outside hunks, so an added or removed line whose content looks
+ * like a header ("+++ x", "--- x") stays content. CRLF line ends are tolerated. Calls onHeader(kind, path) for "---"/"+++"
+ * headers, and onLine(sign, text) for each hunk line.
  */
-export function addedByFile(patch) {
-  const files = [];
-  let cur = null, oldLeft = 0, newLeft = 0;
-  for (const line of patch.split('\n')) {
+function walkPatch(patch, { onHeader = () => {}, onLine = () => {}, onGit = () => {} } = {}) {
+  let oldLeft = 0, newLeft = 0;
+  for (const raw of patch.split('\n')) {
+    const line = raw.replace(/\r$/, '');
     if (oldLeft > 0 || newLeft > 0) {
       if (line.startsWith('\\')) continue;
       const c = line[0];
-      if (c === '+') { newLeft--; if (cur) cur.lines.push(line.slice(1)); }
-      else if (c === '-') oldLeft--;
-      else { oldLeft--; newLeft--; }
+      if (c === '+') newLeft--; else if (c === '-') oldLeft--; else { oldLeft--; newLeft--; }
+      onLine(c === '+' || c === '-' ? c : ' ', line.slice(1));
       continue;
     }
-    if (line.startsWith('+++ ')) { const t = headerTarget(line.slice(4)); cur = t === null ? null : { path: t, lines: [] }; if (cur) files.push(cur); continue; }
+    if (line.startsWith('+++ ') || line.startsWith('--- ')) { onHeader(line.slice(0, 3), headerTarget(line.slice(4))); continue; }
+    if (line.startsWith('diff --git ')) { onGit(line.slice(11)); continue; }
     const h = /^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@/.exec(line);
     if (h) { oldLeft = h[1] === undefined ? 1 : Number(h[1]); newLeft = h[2] === undefined ? 1 : Number(h[2]); }
   }
-  return files;
+}
+
+/**
+ * The added lines of a unified diff, per post-image path (refute r6 B1, N5; r7 N3). Deleted files contribute nothing; the
+ * same path in two diff sections is one entry, its lines appended in patch order. Returns [{ path, lines }].
+ */
+export function addedByFile(patch) {
+  const files = new Map();
+  let cur = null;
+  walkPatch(patch, {
+    onHeader: (kind, path) => { if (kind === '+++') { cur = path === null ? null : (files.get(path) ?? files.set(path, { path, lines: [] }).get(path)); } },
+    onLine: (sign, text) => { if (sign === '+' && cur) cur.lines.push(text); },
+  });
+  return [...files.values()];
 }
 /** .floor/added-lines.txt: a `+++ <path>` header per changed (not deleted) file, then its added lines without the `+`. */
 export function addedLines(patch) {
   const out = addedByFile(patch).flatMap(f => [`+++ ${f.path}`, ...f.lines]);
   return out.join('\n') + (out.length ? '\n' : '');
 }
-/** The paths a unified diff touches (both sides), without a/ b/ prefixes. */
+/** The paths a unified diff touches (both sides), hunk-aware, C-quoting decoded, without a/ b/ prefixes. */
 export function patchPaths(patch) {
   const paths = new Set();
-  for (const m of patch.matchAll(/^(?:---|\+\+\+) (?:[ab]\/)?(\S+)/gm)) if (m[1] !== '/dev/null') paths.add(m[1]);
-  for (const m of patch.matchAll(/^diff --git a\/(\S+) b\/(\S+)/gm)) { paths.add(m[1]); paths.add(m[2]); }
+  walkPatch(patch, {
+    onHeader: (kind, path) => { if (path !== null) paths.add(path); },
+    onGit: rest => { const m = /^(?:"a\/(.*?)"|a\/(\S+)) (?:"b\/(.*?)"|b\/(\S+))$/.exec(rest); if (m) { paths.add(unquoteGitPath(m[1] !== undefined ? `"${m[1]}"` : m[2])); paths.add(unquoteGitPath(m[3] !== undefined ? `"${m[3]}"` : m[4])); } },
+  });
   return [...paths];
 }
 

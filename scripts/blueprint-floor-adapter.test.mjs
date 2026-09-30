@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { resolveFiles } from 'bce-engine';
 import { materialise, scoreTree } from '../experiments/jev-gate/bce-contract.mjs';
-import { AdapterError, CustomPolicyRefusedError, MissingFlagsError, PATHS, addedByFile, headerTarget, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
+import { AdapterError, CustomPolicyRefusedError, MissingFlagsError, PATHS, addedByFile, headerTarget, patchPaths, unquoteGitPath, runFloor, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
 import { deriveWhitelist, loadWhitelist, serialiseWhitelist, whitelistPath } from '../experiments/blueprint-floor/whitelist.mjs';
 
 // EXP 007 WO-1-02: the adapter and teeth harness, through the real bce-engine 0.3.1. No network, no model.
@@ -229,4 +229,48 @@ test('refute r6 N5: added-lines headers drop b/ and tab-dates; deleted files con
   assert.deepEqual(addedByFile(gnu + git + del), [{ path: 'src/y.ts', lines: ['hi'] }, { path: 'src/x.ts', lines: ['new', '+++ looks like a header'] }]);
   assert.equal(addedLines(del), '');
   assert.equal(addedLines(gnu), '+++ src/y.ts\nhi\n');
+});
+
+const deleted = (path, lines) => `diff --git a/${path} b/${path}\ndeleted file mode 100644\n--- a/${path}\n+++ /dev/null\n@@ -1,${lines.length} +0,0 @@\n${lines.map(l => `-${l}`).join('\n')}\n`;
+
+test('refute r7 B1: every scanned file is parsed as TypeScript, so forbiddenDependency and forbiddenEgress see .floor text', LONG, async () => {
+  const dep = to => [{ id: 'd', type: 'forbiddenDependency', severity: 'high', to }];
+  const md = { patch: newFile('docs/a.md', ["We do not use require('lodash') here."]) };
+  const r1 = await runFloor({ constraints: dep('lodash'), inputKind: 'diff', input: md, flags: null });
+  assert.equal(r1.label, 'RED', 'prose require in a markdown file');
+  assert(r1.violations.some(v => v.ref.startsWith('.floor/added-lines.txt')) && r1.violations.some(v => v.ref.startsWith('.floor/added/docs/a.md')) && r1.violations.some(v => v.ref.startsWith('.floor/diff.patch')), JSON.stringify(r1.violations));
+  const r2 = await runFloor({ constraints: dep('lodash'), inputKind: 'stopTranscript', input: { transcript: [], final_message: "import x from 'lodash';" }, flags: null });
+  assert.equal(r2.label, 'RED', 'an import in the final message');
+  const r3 = await runFloor({ constraints: [{ id: 'e', type: 'forbiddenEgress', severity: 'high', to: 'evil.example' }], inputKind: 'diff', input: { patch: newFile('docs/a.md', ["see fetch('https://evil.example/x') in the old docs"]) }, flags: null });
+  assert.equal(r3.label, 'RED', 'a fetch written in prose');
+  const routes = readFileSync('experiments/jev-gate/base/src/infra/http/routes.ts', 'utf8').replace(/\n$/, '').split('\n');
+  assert(routes.some(l => l.includes('node:http')), 'the base file imports node:http');
+  const del = { patch: deleted('src/infra/http/routes.ts', routes) };
+  const r4 = await runFloor({ constraints: dep('node:http'), inputKind: 'diff', input: del, flags: null });
+  assert.equal(r4.label, 'RED', 'the REMOVED import line in .floor/diff.patch');
+  assert(r4.violations.every(v => v.ref.startsWith('.floor/diff.patch')), JSON.stringify(r4.violations));
+  const r5 = await runFloor({ constraints: [{ ...dep('node:http')[0], scopePaths: ['src/**'] }], inputKind: 'diff', input: del, flags: null });
+  assert.equal(r5.label, 'GREEN', 'scoped to src/**, the deletion is not a violation');
+});
+
+test('refute r7 B1: the contract, the whitelist and the limits no longer claim these constraints ignore .floor files', () => {
+  const texts = ['experiments/blueprint-floor/contract.md', 'experiments/blueprint-floor/whitelist.json', 'experiments/blueprint-floor/preregistration.json', 'experiments/blueprint-floor/protocol.md', 'site/journal/which-rules-need-a-model.html'].map(f => readFileSync(f, 'utf8')).join('\n');
+  for (const bad of ['no effect on `.floor` text files', 'no teeth on .floor', 'not on .floor text files', 'neither can decide anything about .floor']) assert(!texts.includes(bad), bad);
+  const contract = readFileSync('experiments/blueprint-floor/contract.md', 'utf8');
+  assert.match(contract, /reads EVERY scanned file as TypeScript, including the `\.floor` files/);
+  assert.match(contract, /REMOVED lines of `\.floor\/diff\.patch`/);
+});
+
+test('refute r7 N2/N3: patchPaths and added lines are hunk-aware, decode C-quoted paths, tolerate CRLF, and append a repeated path', () => {
+  assert.equal(unquoteGitPath('"b/src/\\303\\251.ts"'), 'b/src/é.ts');
+  assert.equal(headerTarget('"b/src/\\303\\251.ts"'), 'src/é.ts');
+  const inHunk = newFile('src/a.ts', ['++ not a header', '-- nor this']);
+  assert.deepEqual(patchPaths(inHunk), ['src/a.ts']);
+  const crlf = newFile('src/c.ts', ['one', 'two']).replace(/\n/g, '\r\n');
+  assert.deepEqual(addedByFile(crlf), [{ path: 'src/c.ts', lines: ['one', 'two'] }]);
+  const twice = 'diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1 +1 @@\n-o\n+p\ndiff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -5 +5 @@\n-q\n+r\n';
+  assert.deepEqual(addedByFile(twice), [{ path: 'a.ts', lines: ['p', 'r'] }]);
+  const quoted = 'diff --git "a/src/\\303\\251.ts" "b/src/\\303\\251.ts"\nnew file mode 100644\n--- /dev/null\n+++ "b/src/\\303\\251.ts"\n@@ -0,0 +1 @@\n+x\n';
+  assert.deepEqual(patchPaths(quoted), ['src/é.ts']);
+  assert.deepEqual(addedByFile(quoted), [{ path: 'src/é.ts', lines: ['x'] }]);
 });

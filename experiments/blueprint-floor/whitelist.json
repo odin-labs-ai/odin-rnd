@@ -19,7 +19,9 @@
       "executes": "dist/cli.js:2841",
       "schemaEnum": "src/schema.ts:23",
       "feedsExtractor": "src/extractors.ts:149-151",
-      "note": "Fires only on an import or export declaration whose module specifier equals `to` (or starts with `to/`) in a scanned file. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing. It has teeth on src/**/*.ts of a diff tree, not on .floor text files."
+      "parsesEveryScannedFile": "src/extractors.ts:785",
+      "importForms": "src/extractors.ts:1289",
+      "note": "Fires on an import or export declaration, an import-equals-require, a dynamic import() or a require() whose module specifier equals `to` (or starts with `to/`) in any scanned file. The ast extractor parses EVERY scanned file as TypeScript, the .floor files included, so it also fires on such text in prose, a transcript, a command or the removed lines of .floor/diff.patch; scopePaths must narrow it to post-patch src/** or .floor/added/** to judge only what a change adds. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing."
     },
     {
       "type": "forbiddenFile",
@@ -42,7 +44,7 @@
       "evaluate": "src/report.ts:394",
       "executes": "dist/cli.js:2909",
       "schemaEnum": "src/schema.ts:54",
-      "note": "Sees only a TypeScript-syntactic network call (fetch, http(s).request, axios, got) with a literal host in a scanned source file; it has no teeth on .floor text files."
+      "note": "Fires on a network call (fetch, http(s).request, axios, got) with a literal host in any scanned file; because every scanned file, .floor files included, is parsed as TypeScript, that includes such a call written in prose, a transcript, a command or the removed lines of .floor/diff.patch. It takes no file scope."
     }
   ],
   "controls": [
@@ -52,7 +54,9 @@
       "executes": "dist/cli.js:2841",
       "schemaEnum": "src/schema.ts:23",
       "feedsExtractor": "src/extractors.ts:149-151",
-      "note": "Fires only on an import or export declaration whose module specifier equals `to` (or starts with `to/`) in a scanned file. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing. It has teeth on src/**/*.ts of a diff tree, not on .floor text files."
+      "parsesEveryScannedFile": "src/extractors.ts:785",
+      "importForms": "src/extractors.ts:1289",
+      "note": "Fires on an import or export declaration, an import-equals-require, a dynamic import() or a require() whose module specifier equals `to` (or starts with `to/`) in any scanned file. The ast extractor parses EVERY scanned file as TypeScript, the .floor files included, so it also fires on such text in prose, a transcript, a command or the removed lines of .floor/diff.patch; scopePaths must narrow it to post-patch src/** or .floor/added/** to judge only what a change adds. The engine itself feeds every forbiddenDependency.to into the extractor's forbiddenImports; the adapter adds nothing."
     },
     {
       "type": "requiredDependency",
