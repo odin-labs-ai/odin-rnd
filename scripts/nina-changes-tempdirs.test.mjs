@@ -30,5 +30,5 @@ test('EXP 006 code makes temp dirs only where it removes them, on exit and on si
   assert.match(base, /\['SIGINT', 'SIGTERM', 'SIGHUP'\]/);
   const runner = readFileSync(join(dir, 'run_reviewer6.mjs'), 'utf8');
   assert.match(runner, /mkdtempSync\(join\(RUN_ROOT6, RUN_PREFIX6\)\)/, 'run dirs live under home, not in the shared temp root');
-  assert.match(runner, /rmSync\(parent, \{ recursive: true, force: true \}\);\s*\}\s*\}/, 'every run dir is removed in a finally');
+  assert.match(runner, /try \{ rmSync\(parent, \{ recursive: true, force: true, maxRetries: 10, retryDelay: 200 \}\); \} catch/, 'every run dir is removed in a finally, retried, and a failure never throws away a finished call');
 });

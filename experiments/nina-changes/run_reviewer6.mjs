@@ -121,7 +121,7 @@ export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball,
   const parent = mkdtempSync(join(RUN_ROOT6, RUN_PREFIX6));
   const runTmp = join(parent, 'tmp');
   mkdirSync(runTmp);
-  let setup = null;
+  let setup = null, built = null;
   try {
     let staged;
     if (rehearsal) {
@@ -142,13 +142,18 @@ export async function reviewerRun6({ prereg, amendment, item, runIndex, tarball,
       statusBefore, treeChangedByRun: JSON.stringify(after) !== JSON.stringify(statusBefore), billingKeysStripped: stripped, childTmpdir: env.TMPDIR,
       hook, hooksConfigured: rehearsal ? [] : hooksConfigured(staged.repo),
     };
-    const built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra });
+    built = buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra });
     if (setup) built.rec.matrix = judgeMatrix6(setup, { ...built.rec, allToolCalls: built.rawCalls });
     return built;
   } finally {
     // The matrix canaries and escape files outside the run dir are removed too (a temp-root repo is a dir).
     for (const p of [...(setup?.external ?? []), ...Object.values(setup?.writes ?? {})]) { try { rmSync(p, { recursive: true, force: true }); } catch { /* gone */ } }
-    rmSync(parent, { recursive: true, force: true });
+    // Removal must never throw away a finished call (its cost is recorded by the caller after this returns): a
+    // process still writing into the run dir under heavy load made rmSync fail with ENOTEMPTY (phase C2 rerun). Retry,
+    // and if the dir still cannot be removed, say so on the record instead of throwing.
+    try { rmSync(parent, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch (error) {
+      if (built) built.rec.runDirNotRemoved = scrubPaths6(error.code ?? error.message);
+    }
   }
 }
 
