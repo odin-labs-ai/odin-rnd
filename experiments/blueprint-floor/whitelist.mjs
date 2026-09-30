@@ -74,7 +74,7 @@ export function deriveWhitelist(engineDir = ENGINE_DIR) {
     controlsNote: `forbiddenEgress is not in the controls vocabulary: the engine's schema refuses it under typescript-module-graph (${moduleGraphRefusesEgress}).`,
     excluded,
     refusal: 'A constraint of any type outside the vocabulary is refused by the adapter with a typed error; customPolicy has its own error class because 0.3.1 declares it but does not enforce it.',
-    flags: "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags (see compiledWithoutFlags), so the adapter and the census's mechanical checks stand in for them: an /i rule's input is lower-cased before the checker runs, and a pattern with an upper-case literal letter is refused; g and d change no verdict; any other flag cannot be verified mechanically and caps the rule at partial (protocol.mjs FLAG_HANDLING)."
+    flags: "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags (see compiledWithoutFlags), so the adapter and the census's mechanical checks stand in for them: an /i rule's input is lower-cased before the checker runs, and a pattern with an upper-case letter, literal or escaped, or an unverifiable escape is refused; g and d change no verdict; any other flag cannot be verified mechanically and caps the rule at partial (protocol.mjs FLAG_HANDLING)."
   };
 }
 

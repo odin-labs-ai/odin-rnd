@@ -74,7 +74,7 @@ export function buildAdjudicatorPrompt(rule, translatorRaw, mechanical) {
     typesInVocabulary: mechanical.vocabularyOk,
     checkerValidation: mechanical.validate ? (mechanical.validate.ok ? 'pass' : mechanical.validate.engineLimit ? 'refused by the checker\'s regex guard' : 'fail') : 'not run',
     teeth: mechanical.teeth ? (mechanical.teeth.pass ? 'pass' : `fail (${mechanical.teeth.reason})`) : 'not run',
-    ...(f.flags ? { flags: mechanical.flags ? (mechanical.flags.pass ? 'pass' : `fail (${mechanical.flags.reason})`) : 'not run' } : {}),
+    ...(f.flags ? { flags: mechanical.flags ? `${mechanical.flags.pass ? 'pass' : 'fail'} (${mechanical.flags.reason})` : 'not run' } : {}),
     translatorClass: mechanical.translatorClass,
     classAfterMechanicalChecks: mechanical.classAfterMechanical,
   };
@@ -84,8 +84,16 @@ export function buildAdjudicatorPrompt(rule, translatorRaw, mechanical) {
   };
 }
 
-/** The adjudicator's one sentence on flags, shown only for a regex rule that has flags. */
-export const FLAGS_QUESTION = flags => `The rule's regular expression has the flags "${flags}", and the checker compiles every pattern without flags: say whether the constraints preserve what those flags mean on every input, and dispute the class if they do not.`;
+/** The adjudicator's sentence on flags, shown only for a regex rule that has flags (refute r4 B1). For i it states the
+ * construction; for any other flag present it asks whether the constraints preserve that flag's meaning. */
+export const FOLDING_SENTENCE = 'For this rule the input is lower-cased before the checker runs, and any pattern containing an upper-case letter was already refused; judge the constraints against lower-cased input.';
+export const FLAGS_QUESTION = flags => {
+  const others = [...new Set([...flags])].filter(f => f !== 'i').join('');
+  return [
+    ...(flags.includes('i') ? [FOLDING_SENTENCE] : []),
+    ...(others ? [`The rule's regular expression ${flags.includes('i') ? 'also has' : 'has'} the flags "${others}", and the checker compiles every pattern without flags: say whether the constraints preserve what those flags mean on every input, and dispute the class if they do not.`] : []),
+  ].join(' ');
+};
 
 // Regex flags (refute r2 B1, redesigned after refute r3 B1). How each flag of a source regex is handled:
 //   i        case-insensitive BY CONSTRUCTION: the adapter lower-cases an /i rule's input before the checker runs (foldsCase in
@@ -100,24 +108,36 @@ export const unverifiableFlags = flags => [...new Set([...(flags ?? '')])].filte
 const isUpper = ch => ch !== ch.toLowerCase();
 
 /**
- * The upper-case literal letters of a regex source: every letter that the pattern would have to match in upper case. Skipped:
- * escape sequences (\B \W \S \D \b \p{...} \P{...} \u.... \u{...} \x.. \cX \k<name> and any other \X), and group names
- * ((?<Name>...)). Everything else counts, inside or outside a character class, so [A-Z] and [sS] are refused too.
+ * What an /i rule's pattern may not contain (refute r3 B1, widened in refute r4 N1), because it could never match lower-cased
+ * input or cannot be shown not to: every upper-case literal letter, inside or outside a character class (so [A-Z] and [sS]
+ * too); a \\x.., \\u.... or \\u{...} escape that decodes to an upper-case letter; an identity escape of a letter (\\R, \\M, ...:
+ * any backslash + letter other than the classes and assertions \\b \\B \\d \\D \\w \\W \\s \\S, the controls \\n \\r \\t \\f \\v,
+ * \\0, and the code escapes \\x \\u \\c); and any \\p, \\P or \\k escape. Group names ((?<Name>...)) are not literals.
  */
+const ESCAPE_OK = new Set([...'bBdDwWsSnrtfv0']);
 export function upperCaseLiterals(source) {
   const found = [];
+  const hit = (at, ch, why) => found.push({ at, ch, why });
   for (let i = 0; i < source.length; i++) {
     const ch = source[i];
     if (ch === '\\') {
       const n = source[i + 1];
-      if ((n === 'p' || n === 'P' || n === 'u' || n === 'k') && (source[i + 2] === '{' || source[i + 2] === '<')) { i = source.indexOf(source[i + 2] === '{' ? '}' : '>', i + 2); if (i < 0) break; continue; }
-      if (n === 'u') { i += 5; continue; }
-      if (n === 'x') { i += 3; continue; }
+      if (n === undefined) break;
+      if (n === 'p' || n === 'P' || n === 'k') { hit(i, `\\${n}`, 'property or named-reference escape'); i += 1; continue; }
+      if (n === 'x') { const cp = parseInt(source.slice(i + 2, i + 4), 16); if (isUpper(String.fromCodePoint(cp || 0))) hit(i, source.slice(i, i + 4), 'escape decodes to an upper-case letter'); i += 3; continue; }
+      if (n === 'u') {
+        const braced = source[i + 2] === '{';
+        const end = braced ? source.indexOf('}', i + 2) : i + 5;
+        const cp = parseInt(braced ? source.slice(i + 3, end) : source.slice(i + 2, i + 6), 16);
+        if (Number.isFinite(cp) && isUpper(String.fromCodePoint(cp))) hit(i, source.slice(i, end + 1), 'escape decodes to an upper-case letter');
+        i = end; continue;
+      }
       if (n === 'c') { i += 2; continue; }
+      if (/[A-Za-z]/.test(n) && !ESCAPE_OK.has(n)) { hit(i, `\\${n}`, 'identity escape of a letter'); i += 1; continue; }
       i += 1; continue;
     }
     if (ch === '(' && source.startsWith('(?<', i) && !source.startsWith('(?<=', i) && !source.startsWith('(?<!', i)) { i = source.indexOf('>', i); if (i < 0) break; continue; }
-    if (isUpper(ch)) found.push({ at: i, ch });
+    if (isUpper(ch)) hit(i, ch, 'upper-case literal');
   }
   return found;
 }
@@ -125,7 +145,7 @@ export function upperCaseLiterals(source) {
 /** The /i flags check: no forbiddenPattern may carry an upper-case literal letter (the input it sees is lower-cased). */
 export function checkFlags(constraints) {
   const bad = constraints.filter(c => c.type === 'forbiddenPattern').map(c => ({ id: c.id, upper: upperCaseLiterals(c.pattern ?? '').map(u => u.ch) })).filter(x => x.upper.length);
-  return bad.length ? { pass: false, bad, reason: `upper-case literal letters in ${bad.map(b => `${b.id} (${b.upper.join('')})`).join(', ')}; the input is lower-cased, so they can never match` } : { pass: true, bad: [], reason: 'every pattern is lower case' };
+  return bad.length ? { pass: false, bad, reason: `upper-case literal or unverifiable escape in ${bad.map(b => `${b.id} (${b.upper.join(' ')})`).join(', ')}; the input is lower-cased, so it can never match` } : { pass: true, bad: [], reason: 'every pattern is lower case with no upper-case escape' };
 }
 
 const str = v => typeof v === 'string';

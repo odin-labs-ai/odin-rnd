@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VOCABULARY, judge } from '../experiments/blueprint-floor/adapter.mjs';
-import { FLAG_HANDLING, FLAGS_QUESTION, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
+import { FLAG_HANDLING, FLAGS_QUESTION, FOLDING_SENTENCE, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
 // EXP 007 WO-1-03: the census protocol. Blindness (R2-3), the output schemas, the downgrade rule, and the mechanical
@@ -173,10 +173,10 @@ test('refute r3 B1: the flags check refuses any upper-case literal letter; escap
   assert.deepEqual(FLAG_HANDLING, { i: 'folded', g: 'no-effect', d: 'no-effect' });
   assert.deepEqual(unverifiableFlags('gimsuy'), ['m', 's', 'u', 'y']);
   assert.deepEqual(upperCaseLiterals('\\bsudo\\b'), []);
-  assert.deepEqual(upperCaseLiterals('\\B\\W\\S\\D\\p{Lu}\\P{Ll}\\u00C9\\u{1F600}\\x4A\\cM(?<Name>a)(?<=b)(?<!c)'), []);
+  assert.deepEqual(upperCaseLiterals('\\B\\W\\S\\D\\b\\d\\w\\s\\n\\r\\t\\f\\v\\0\\x61\\u00e9\\u{1F600}\\cM(?<Name>a)(?<=b)(?<!c)'), []);
   for (const bad of ['\\bS[uU]D[oO]\\b', '\\b(?:sudo|SUDO|SuDo)\\b', '[A-Z]+', '[sS]udo', 'SUDO']) assert(upperCaseLiterals(bad).length > 0, bad);
   assert.equal(checkFlags([fp('a', 'sudo'), { id: 'f', type: 'forbiddenFile', severity: 'high', path: 'X/**' }]).pass, true, 'only patterns are checked');
-  assert.match(checkFlags([fp('a', 'SuDo')]).reason, /a \(SD\)/);
+  assert.match(checkFlags([fp('a', 'SuDo')]).reason, /a \(S D\)/);
 });
 
 test('refute r3 B1: r2\'s \\bsudo\\b now holds for an upper-case violating probe (folded); r3 attacks (b) and (c) are downgraded', LONG, async () => {
@@ -229,4 +229,38 @@ test('refute r3 B2: the record\'s adjudicator.input names every part the prompt 
   assert.deepEqual(Object.keys(summary).sort(), Object.keys(keyWords).sort(), 'a new summary field must be named in the record');
   for (const w of Object.values(keyWords)) assert(rec.includes(w), w);
   assert(rec.includes('system prompt'));
+});
+
+test('refute r4 N1: dead alternatives that decode to or name upper case are refused (\\R\\M, \\p{Lu}, \\x44..., Doas)', LONG, async () => {
+  for (const p of ['\\bsudo\\b|\\R\\M', '\\bsudo\\b|\\p{Lu}x', '\\bsudo\\b|\\x44\\x4f\\x41\\x53', '\\bsudo\\b|Doas', '\\bsudo\\b|\\u0044', '\\bsudo\\b|\\u{44}', '\\bsudo\\b|\\k<x>']) {
+    assert(upperCaseLiterals(p).length > 0, p);
+  }
+  for (const p of ['\\bsudo\\b|\\R\\M', '\\bsudo\\b|\\p{Lu}x', '\\bsudo\\b|\\x44\\x4f\\x41\\x53', '\\bsudo\\b|Doas']) {
+    const m = await mechanicalChecks(sudo, expressible(sudo, [fp('s', p)], tcall('sudo ls'), tcall('ls')));
+    assert.deepEqual([m.failedCheck, m.classAfterMechanical], ['flags', 'not'], p);
+  }
+});
+
+test('refute r4 B1: the /i adjudicator prompt states the folding; a rule with other flags only is asked about them; the reason is shown', () => {
+  const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, flags: { pass: true, reason: 'every pattern is lower case with no upper-case escape' }, translatorClass: 'expressible', classAfterMechanical: 'expressible' };
+  const i = buildAdjudicatorPrompt(sudo, '{}', mech).user;
+  assert(i.includes(FOLDING_SENTENCE));
+  assert(i.includes('"flags": "pass (every pattern is lower case with no upper-case escape)"'));
+  const m = buildAdjudicatorPrompt({ ...sudo, ruleId: 'test/m', flags: 'm' }, '{}', mech).user;
+  assert(!m.includes(FOLDING_SENTENCE));
+  assert.match(m, /has the flags "m"/);
+  assert(!buildAdjudicatorPrompt(loadRules('limpet').rules[0], '{}', mech).user.includes(FOLDING_SENTENCE));
+});
+
+test('refute r4 B2: every sentence about case in the translator contract and prompt agrees with the flags check', () => {
+  const texts = [CONTRACT_FILES['plugin-surface'], CONTRACT_FILES['typescript-module-graph'], PROMPT_FILES.translator].map(f => readFileSync(f, 'utf8'));
+  const all = texts.join('\n');
+  assert(!/so write case variants into the pattern itself\)/.test(all), 'the unconditional wording is gone');
+  const sentences = all.split(/(?<=\.)\s+/).filter(x => /\bcase\b|lower-cased|upper-case|lower case/i.test(x));
+  assert(sentences.length >= 3);
+  for (const x of sentences) {
+    if (/case variants/.test(x)) assert.match(x, /WITHOUT the i flag/, x);
+    if (/lower-cased|lower case/.test(x)) assert.match(x, /i flag|flags include i|lower-cased/, x);
+  }
+  assert(readFileSync(CONTRACT_FILES['plugin-surface'], 'utf8').includes('"pattern": "\\\\btodo\\\\b"'), 'a lower-case example');
 });

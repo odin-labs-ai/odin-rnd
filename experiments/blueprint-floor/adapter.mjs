@@ -32,6 +32,8 @@ export const CLASSES = ['expressible', 'partial', 'not'];
 export class AdapterError extends Error { constructor(message, code = 'ADAPTER') { super(message); this.name = 'AdapterError'; this.code = code; } }
 /** A constraint whose type is outside the vocabulary. */
 export class RefusedConstraintError extends AdapterError { constructor(type, role) { super(`constraint type ${JSON.stringify(type)} is not in the ${role} vocabulary (whitelist.json)`, 'REFUSED_CONSTRAINT'); this.name = 'RefusedConstraintError'; this.type = type; this.role = role; } }
+/** A plugin-role call that did not say which flags its rule has (refute r4 N2): folding must never be skipped by omission. */
+export class MissingFlagsError extends AdapterError { constructor() { super('a plugin-rule run must pass the rule\'s recorded flags (a string, or null for a rule with none)', 'MISSING_FLAGS'); this.name = 'MissingFlagsError'; } }
 /** customPolicy: bce 0.3.1 declares it but evaluate() does not enforce it. */
 export class CustomPolicyRefusedError extends RefusedConstraintError { constructor(role) { super('customPolicy', role); this.name = 'CustomPolicyRefusedError'; this.code = 'CUSTOM_POLICY_REFUSED'; this.message = 'customPolicy is refused: bce-engine 0.3.1 declares it but evaluate() does not enforce it'; } }
 
@@ -196,8 +198,10 @@ export function validateBlueprint(blueprint) {
 }
 
 /** Run the engine on one input. Returns EXP 005's interpretation { label: GREEN|RED, violations, ... } plus minFiles. */
-export async function runFloor({ ruleId, constraints, inputKind, input, role = 'plugin', flags = null }) {
+export async function runFloor({ ruleId, constraints, inputKind, input, role = 'plugin', flags }) {
   checkVocabulary(constraints, role);
+  if (role === 'plugin' && flags === undefined) throw new MissingFlagsError();
+  if (flags !== undefined && flags !== null && typeof flags !== 'string') throw new AdapterError('flags must be a string or null');
   let staged = stageInput({ inputKind, input });
   if (foldsCase(flags)) staged = foldStaged(staged);
   try {
@@ -216,8 +220,9 @@ export async function runFloor({ ruleId, constraints, inputKind, input, role = '
  *   expressible -> pass | fail from the engine;  partial -> fail from the engine, else abstain;  not -> abstain always.
  * A rule whose constraint set is empty abstains.
  */
-export async function judge({ ruleId, constraints, inputKind, input, finalClass, role = 'plugin', flags = null }) {
+export async function judge({ ruleId, constraints, inputKind, input, finalClass, role = 'plugin', flags }) {
   if (!CLASSES.includes(finalClass)) throw new AdapterError(`unknown class ${JSON.stringify(finalClass)}`);
+  if (role === 'plugin' && flags === undefined) throw new MissingFlagsError();
   if (finalClass === 'not' || !Array.isArray(constraints) || constraints.length === 0) return { decision: 'abstain', violations: [] };
   const r = await runFloor({ ruleId, constraints, inputKind, input, role, flags });
   if (r.label === 'RED') return { decision: 'fail', violations: r.violations };
@@ -230,7 +235,8 @@ export async function judge({ ruleId, constraints, inputKind, input, finalClass,
  * one). `violating` is one probe or a non-empty array of probes. Runs through this adapter and the real engine, on the
  * folded input for an /i rule. Any error fails, with its reason.
  */
-export async function teeth(constraints, { violating, compliant }, { inputKind, ruleId = 'teeth', role = 'plugin', flags = null } = {}) {
+export async function teeth(constraints, { violating, compliant }, { inputKind, ruleId = 'teeth', role = 'plugin', flags } = {}) {
+  if (role === 'plugin' && flags === undefined) throw new MissingFlagsError();
   const set = Array.isArray(constraints) ? constraints : [constraints];
   if (set.length === 0) return { pass: false, reason: 'empty constraint set' };
   const probes = Array.isArray(violating) ? violating : [violating];
