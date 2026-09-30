@@ -3,3 +3,5 @@
 {"ts":"2026-09-30T00:51:28.226Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.625817,"costBasis":"api-equivalent","reportedCostUsd":0.625817,"fixture":false}
 {"ts":"2026-09-30T00:53:27.879Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.5681038,"costBasis":"api-equivalent","reportedCostUsd":0.5681038,"fixture":false}
 {"ts":"2026-09-30T00:55:34.553Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.547284,"costBasis":"api-equivalent","reportedCostUsd":0.547284,"fixture":false}
+{"ts":"2026-09-30T01:01:58.110Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.581182,"costBasis":"api-equivalent","reportedCostUsd":0.581182,"fixture":false}
+{"ts":"2026-09-30T01:03:59.698Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.5455714,"costBasis":"api-equivalent","reportedCostUsd":0.5455713999999999,"fixture":false}
