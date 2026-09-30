@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "kind": "diff-seen-table",
+  "note": "Synthetic per-run records (scripts/nina-changes-classifier.test.mjs CASES) and the class the committed classifier gives each. Built from the corpus patches, not from a live run; the phase-B probe adds live Read and Grep fixtures.",
+  "runs": [
+    {
+      "case": "seen: plain git diff (c004)",
+      "id": "c004",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "seen: git -C <ws> --no-pager diff (c004)",
+      "id": "c004",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "blind: the diff refused, the base tree read (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind-then-seen: refused first, then a fallback (c004)",
+      "id": "c004",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "seen: the diff ran but the client set is_error (its cwd-tracking write under the sandbox, observed live) (c004)",
+      "id": "c004",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "blind: the diff call refused (listed in permission_denials) (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: a refusal text on an is_error call, no refused flag (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: harness failure despite a seen diff (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: empty git diff on an add-only change, nothing read (c013)",
+      "id": "c013",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "seen: dir-only status and a Read of the added file (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "seen: dir-only status and a Read with the tab prefix (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "blind: the added file read, but no untracked status entry (c013)",
+      "id": "c013",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "seen: long-form status, the new directory under \"Untracked files:\", and a Read (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "blind: long-form status naming the path only under \"Changes not staged\", and a Read (c013)",
+      "id": "c013",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: status names the path, the Read is of another file (c013)",
+      "id": "c013",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "seen: status + Grep content lines path:N: (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "seen: status + GNU grep ./path-N- context lines (c013)",
+      "id": "c013",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "seen: rename item through its modify hunks (c018)",
+      "id": "c018",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "seen: mixed modify + add, by the diff alone (c012)",
+      "id": "c012",
+      "seen": true,
+      "rule": "a"
+    },
+    {
+      "case": "seen: two added files, status + one Read (c052)",
+      "id": "c052",
+      "seen": true,
+      "rule": "b"
+    },
+    {
+      "case": "blind: sign mismatch, a - fingerprint printed with + (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: a fingerprint as a substring of a longer line (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: the fingerprint in a non-git Bash output (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    },
+    {
+      "case": "blind: base commit shown (c004)",
+      "id": "c004",
+      "seen": false,
+      "rule": null
+    }
+  ]
+}

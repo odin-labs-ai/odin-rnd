@@ -4,3 +4,8 @@ dist/
 .DS_Store
 
 .ai/witness-failures/
+
+# EXP 006 runner state, per worktree, never committed: the pending-spend sidecar and the exclusive run lock.
+experiments/nina-changes/spend-ledger.pending.jsonl
+experiments/nina-changes/spend-ledger.pending.jsonl.*.tmp
+experiments/nina-changes/run.lock

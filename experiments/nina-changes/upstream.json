@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "kind": "upstream-prs",
+  "note": "Upstream changes to nina opened by Odin Labs, and their live state. Refreshed from GitHub by scripts/nina-changes-upstream.mjs --refresh (run by the commander before each publish, never in CI or the build); checked offline by --check.",
+  "checkedAt": "2026-09-30T06:03:42Z",
+  "prs": [
+    {
+      "repo": "xhulz/nina",
+      "pr": 39,
+      "title": "Print the usage for a command asked with --help, and run nothing",
+      "state": "MERGED",
+      "mergedAt": "2026-09-28"
+    },
+    {
+      "repo": "xhulz/nina",
+      "pr": 41,
+      "title": "Keep eval's reviewer from reading outside the staged project",
+      "state": "OPEN",
+      "mergedAt": null
+    }
+  ]
+}

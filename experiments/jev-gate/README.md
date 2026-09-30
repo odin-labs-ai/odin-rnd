@@ -480,7 +480,12 @@ strips one surrounding quote pair before its strict inside-a-scanned-root test. 
 the odin-rnd CI (GNU find) as well as on the macOS machine that ran the measurement. It edits a pinned runner file
 (`runner-guard.mjs`) and re-pins `runners.sha256`; it does not touch the scoring or any measurement, and the
 committed measured-run records bind their own recorded code pins (the run was made at commit `483ce36d`), so
-`results.json` still recomputes byte-identically from them under that code. The scan's duration is recorded. It refuses
+`results.json` still recomputes byte-identically from them under that code. That holds for every pinned file but one:
+the results build imports the LIVE `runner-guard.mjs`, so for `runner-guard.mjs` specifically scoring is not under
+the recorded code; the build therefore allows the live pins to differ from the run's recorded pins ONLY in
+`runner-guard.mjs` and its `runners.sha256` line, refuses any other difference, and tests that `results.json` still
+recomputes byte-identically. The fix landed after odin-rnd #15 was merged with a red check (this GNU find test) and
+was fixed forward in #16. The scan's duration is recorded. It refuses
 while any answer-file copy is found, or when no root is scannable. `JEV_GATE_PREFLIGHT_ROOTS` is
 refused in a counted run and, in a practice run, must name existing dirs; the roots used are recorded, never a
 silent bypass. The frozen Jev/Laya dry-run records used a practice override pointing at a clean directory

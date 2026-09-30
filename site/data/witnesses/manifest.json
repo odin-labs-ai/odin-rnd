@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "runId": "03bd7e45-cb4e-414d-9b22-a46699ad7c16",
-  "startedAt": "2026-09-29T11:42:56.656Z",
-  "sourceRevision": "369695d7c2107c36df66e52fbc8dc1a7c7247690",
+  "runId": "41f086aa-014c-43b3-8b7b-174c43dedee8",
+  "startedAt": "2026-09-30T01:31:39.741Z",
+  "sourceRevision": "ac84801b4957b4c0e233ad2f14db3c56b552b253",
   "workingTree": {
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
@@ -13,7 +13,7 @@
   "status": "passed",
   "generatorInputSha256": {
     ".github/workflows/publish.yml": "2907c19848b6727a0e41e6bfd6323ce28c2dd05a99faa5948d453886e0d41857",
-    "scripts/build.mjs": "47204b70e5c3c6fcdb2bb89021673806d6101da695f578f834fe7532884cb45d",
+    "scripts/build.mjs": "e6f97fecc93134f1359079e72e46b7e56942a1805f381e27db368dd0d027f70a",
     "scripts/check.mjs": "dddfb7303567badd6efe198757443785528bf9190fdb6a21c04b1b3e3e03706f",
     "scripts/recording-provenance.mjs": "916671610918ba58246ddf913aa8ed569ddaadde2ef199cc5bcee8d8ae32da1b",
     "scripts/run-roi-demos.mjs": "7b6a70b7d407967857501417379c1717030f297a725952c9d1669754f34b2734",
@@ -22,18 +22,18 @@
   },
   "records": {
     "test-witness": {
-      "sha256": "eac91ab38eb0a6cb25b3de6dded2f7c46bc9852a7e74dbbbd06d758cdbc7ef18",
-      "completedAt": "2026-09-29T11:43:03.367Z"
+      "sha256": "866a5921d5e8d803587d9bed36296083c724cd897f708ecef3fbbf7e6a0235db",
+      "completedAt": "2026-09-30T01:31:53.338Z"
     },
     "migration-witness": {
-      "sha256": "689becb9328758793b8641e65fd4e2f11dce1f8259cbb4851b7fd69618255b92",
-      "completedAt": "2026-09-29T11:43:08.419Z"
+      "sha256": "9d09e16ab7319d9c10aaacd2d2ff12f8ce607a0fbf17e23047719d00be3d75a9",
+      "completedAt": "2026-09-30T01:32:03.450Z"
     },
     "ci-witness": {
-      "sha256": "785d94f9b13d6d7d75d5faee74ee9acb421d5b1813d8ba2d6cdab78a88a4cd4e",
-      "completedAt": "2026-09-29T11:43:14.934Z"
+      "sha256": "be43e09b426f8131a189b0ebb86cbf2b849f93ef60c29c013c6edbd5b9b86da3",
+      "completedAt": "2026-09-30T01:32:10.752Z"
     }
   },
   "integrityScope": "Consistency of source inputs and raw records, not authentication against an attacker replacing all artifacts.",
-  "completedAt": "2026-09-29T11:43:15.004Z"
+  "completedAt": "2026-09-30T01:32:10.799Z"
 }

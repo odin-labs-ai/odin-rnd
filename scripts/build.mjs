@@ -17,6 +17,9 @@ import { amendNote, qualifyHome } from './jev-gate-amendment-note.mjs';
 import { checkAmendment02, amendment02Path, published02Path } from './jev-gate-amendment-02.mjs';
 import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
 import { checkResults, resultsPath, publishedResultsPath, amendNoteResults, qualifyHomeResults } from './jev-gate-results-site.mjs';
+import { publishedPath as exp006PublishedPath, recordPath as exp006RecordPath } from './nina-changes-prereg.mjs';
+import { addJournalRow as addExp006Row, assertNoteCurrent as assertExp006NoteCurrent } from './nina-changes-note.mjs';
+import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -35,12 +38,17 @@ copyFileSync(amendment02Path, published02Path);
 // The measured results, recomputed from the committed runs by the frozen results.mjs, are published beside them.
 const results = checkResults();
 if (results) copyFileSync(resultsPath, publishedResultsPath);
+// EXP 006's pre-registration: validated and rebuilt from the files, its note checked against it, published byte for byte.
+const exp006 = assertExp006NoteCurrent();
+mkdirSync('site/data/nina-changes', { recursive: true });
+copyFileSync(exp006RecordPath, exp006PublishedPath);
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-01.json')) !== amendment.sha256) throw new Error('Published amendment differs from '+amendmentPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-02.json')) !== amendment02.sha256) throw new Error('Published amendment 02 differs from '+amendment02Path);
 if (results && sha256(readFileSync('dist/data/jev-gate/results.json')) !== results.sha256) throw new Error('Published results differ from '+resultsPath);
+if (sha256(readFileSync(`dist/${exp006PublishedPath.slice('site/'.length)}`)) !== exp006.sha256) throw new Error('Published EXP 006 pre-registration differs from '+exp006RecordPath);
 // The built note is the parent's committed render plus each amendment's dated section, all from their records.
 const amendedNote = amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256);
 writeFileSync(`dist/${articlePath.slice('site/'.length)}`, results ? amendNoteResults(amendedNote, results) : amendedNote);
@@ -64,6 +72,10 @@ html = html.replace('</body>', '<script type="application/json" id="experiment-d
 html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
 // Once measured, row 004 and the journal row show it, and nina's card follows row 004 if its spotlight bar was met.
 if (results) html = qualifyHomeResults(html, results);
+// EXP 006's field note leads the notes: its row, rendered from the record.
+html = addExp006Row(html, exp006.record);
+// nina's entry in the tools list: only on an EXP 006 PASS with an explicit held:false (nothing while no results exist).
+html = addNinaEntry(html, loadEntryData());
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });
