@@ -60,11 +60,11 @@ test('the hunch secondary stratum is the seeded sample of 30 from the recorded p
   assert.notDeepEqual(sampleIndices(1011, 30, 7007), sampleIndices(1011, 30, 7008));
 });
 
-test('abide: text is the rule text; check.type, scope and when are withheld; inputKind follows when (null -> diff)', () => {
+test('abide: text is the rule text; check.type, scope and when are withheld; every rule is a diff (edit, turn and null)', () => {
   const a = records.abide.rules;
   for (const r of a) {
     assert(r.withheld.check && ['model', 'lint', 'unenforceable', 'deferred'].includes(r.withheld.check.type), r.ruleId);
-    assert.equal(r.inputKind, r.withheld.when === 'turn' ? 'stopTranscript' : 'diff', r.ruleId);
+    assert.equal(r.inputKind, 'diff', `${r.ruleId}: edit, turn and null all check a diff`);
     assert(!r.text.includes(r.withheld.check.type === 'model' ? r.withheld.check.question.instructions : '\u0000'), `${r.ruleId}: the text is not the model question`);
   }
   assert.equal(a.filter(r => r.withheld.when === null).length, 18);

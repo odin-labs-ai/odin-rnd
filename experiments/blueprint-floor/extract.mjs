@@ -155,7 +155,8 @@ function jevPref(read) {
 
 function abide(read) {
   const A = '.abide/rubric.json', text = read(A), rubric = JSON.parse(text), rules = [];
-  const kinds = { edit: 'diff', turn: 'stopTranscript' };
+  // Both hooks check a diff: edit the edit's diff, turn (at Stop) the diff of the whole turn (postToolUse.ts, stop.ts).
+  const kinds = { edit: 'diff', turn: 'diff' };
   for (const r of rubric.rules) {
     const { id, text: ruleText, source, when, ...rest } = r;
     const inputKind = when === null || when === undefined ? 'diff' : kinds[when];

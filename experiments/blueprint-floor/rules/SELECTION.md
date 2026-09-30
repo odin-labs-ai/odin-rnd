@@ -55,7 +55,7 @@ Repository `coldteadotai/abide` at `ea6d0976a0cbac70f71a460ece348bd68d777350`, M
 
 - Items: every entry of rules[] (the repository's own compiled rubric, the dogfood file).
 - Text field: text.
-- Input kind: edit → diff, turn → stopTranscript, null → diff (abide's own when field: edit runs on a file edit, turn at the end of a turn; an entry with when null (lint, unenforceable, deferred) is assigned diff and disclosed).
+- Input kind: edit → diff, turn → diff, null → diff (abide's own when field: edit runs after a file edit on that edit's diff (packages/cli/src/hooks/postToolUse.ts), turn runs when the agent stops on the diff of everything the turn changed (packages/cli/src/hooks/stop.ts); both are diffs. An entry with when null (lint, unenforceable, deferred) is assigned diff and disclosed).
 - Comparison only: check.type (model, lint, unenforceable, deferred) is read only by the comparison step, never by a prompt.
 - Rules with when = null, assigned diff: 18 of 43 (41.9%).
 - Applies to (abide/, when edit): "Checked after each file edit, on that edit's diff." (packages/cli/src/hooks/postToolUse.ts:41-93).

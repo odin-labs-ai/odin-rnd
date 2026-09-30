@@ -114,10 +114,10 @@
         "textField": "text",
         "inputKind": {
           "edit": "diff",
-          "turn": "stopTranscript",
+          "turn": "diff",
           "null": "diff"
         },
-        "inputKindEvidence": "abide's own when field: edit runs on a file edit, turn at the end of a turn; an entry with when null (lint, unenforceable, deferred) is assigned diff and disclosed",
+        "inputKindEvidence": "abide's own when field: edit runs after a file edit on that edit's diff (packages/cli/src/hooks/postToolUse.ts), turn runs when the agent stops on the diff of everything the turn changed (packages/cli/src/hooks/stop.ts); both are diffs. An entry with when null (lint, unenforceable, deferred) is assigned diff and disclosed",
         "withheld": [
           "check",
           "scope",

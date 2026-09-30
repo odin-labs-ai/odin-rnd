@@ -20,7 +20,7 @@
     "secondary": 0,
     "excluded": 0
   },
-  "rulesSha256": "7b328ec9afc2da49d6226e5749eddbb22c602606dc26640b6135be235f35f1e9",
+  "rulesSha256": "edd41aae3983d65c2e2525285af904391015827691ea2428477fc525715fa530",
   "rules": [
     {
       "ruleId": "abide/hook-never-breaks-agent",
@@ -353,7 +353,7 @@
       "text": "Minimum code that solves the problem. Nothing speculative. If you write 200 lines and it could be 50, rewrite it.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -395,7 +395,7 @@
       "text": "No features beyond what was asked. The test: Every changed line should trace directly to the user's request.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -430,7 +430,7 @@
       "text": "No abstractions for single-use code.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -469,7 +469,7 @@
       "text": "No \"flexibility\" or \"configurability\" that wasn't requested.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -547,7 +547,7 @@
       "text": "Don't \"improve\" adjacent code, comments, or formatting.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -625,7 +625,7 @@
       "text": "Don't refactor things that aren't broken.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
@@ -687,7 +687,7 @@
       "text": "If you notice unrelated dead code, mention it - don't delete it. Don't remove pre-existing dead code unless asked.",
       "flags": null,
       "context": "Checked when the agent stops, on the diff of everything the turn changed.",
-      "inputKind": "stopTranscript",
+      "inputKind": "diff",
       "stratum": "primary",
       "withheld": {
         "check": {
