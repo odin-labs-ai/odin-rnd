@@ -229,7 +229,7 @@
   "translator": {
     "input": "One rule's verbatim text (the single text field pinned per plugin in selection.json), its input kind, its regex flags when it is a regex, and the materialisation contract with the accepted constraint types and one generic example each (contract.md; contract-module-graph.md for the positive controls).",
     "never": "Any case, any label, any plugin evaluation file, abide's own type field, another rule's class, or any result. Every other field of a source item is stored under withheld in the rule file and never rendered into a prompt.",
-    "output": "One JSON object: {ruleId, class: expressible | partial | not, constraints: [bce constraint objects], coverage, residual (a yes/no question, or null exactly when expressible), probes: {violating, compliant} (null for not), rationale of at most 80 words}.",
+    "output": "One JSON object: {ruleId, class: expressible | partial | not, constraints: [bce constraint objects], coverage, residual (a yes/no question when the class is partial or not, otherwise empty), probes: {violating, compliant} (empty when the class is not), rationale of at most 80 words}.",
     "blindness": "The prompt builder (protocol.mjs) reads exactly four fields of a rule, {ruleId, text, inputKind, flags}; a test hands it a rule whose other fields throw when read."
   },
   "mechanical": {
