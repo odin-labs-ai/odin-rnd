@@ -1,1 +1,2 @@
 {"ts":"2026-09-30T00:34:28.580Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.6545558,"costBasis":"api-equivalent","reportedCostUsd":0.6545558000000001,"fixture":false}
+{"ts":"2026-09-30T00:47:20.410Z","gate":"reviewer","kind":"isolation-matrix","id":"isolation-matrix","run":1,"costUsd":0.5596686,"costBasis":"api-equivalent","reportedCostUsd":0.5596686000000001,"fixture":false}

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ALLOW, CATEGORIES, compute, DENY, formOf, render } from '../experiments/nina-changes/denial-census.mjs';
-import { decideBash, decideFence5, decideFence6, fence6Tools, FENCE6_SETTINGS, OPEN_QUESTIONS, SANDBOX6_ONLY_SETTINGS, splitCompound } from '../experiments/nina-changes/fence6.mjs';
+import { ANSWERS, decideBash, decideFence5, decideFence6, fence6Tools, FENCE6_SETTINGS, OPEN_QUESTIONS, SANDBOX6_ONLY_SETTINGS, splitCompound } from '../experiments/nina-changes/fence6.mjs';
+import { createHash } from 'node:crypto';
 import { FENCE5_SETTINGS } from '../experiments/jev-gate/run_reviewer.mjs';
 
 // EXP 006 WO-1-01: the census of EXP 005's 317 refused git commands, recomputed from the committed records.
@@ -85,4 +86,14 @@ test('formOf puts each command in one category by the plan\'s priority', () => {
   assert.equal(formOf('git log --format="%H"').category, 'quoting');
   assert.equal(formOf('git status && git diff').category, 'compound');
   assert.equal(formOf('git diff').category, 'other');
+});
+
+test('every open question has a live answer citing the committed discovery records by sha', () => {
+  assert.deepEqual(ANSWERS.map(a => a.q), OPEN_QUESTIONS.map((_, i) => i + 1));
+  const src = readFileSync('experiments/nina-changes/fence6.mjs', 'utf8');
+  for (const [name, prefix] of [['matrix-v6-discovery-fence6-1', 'e7deb80a'], ['matrix-v6-discovery-fence6-2', '6f9dfcbd']]) {
+    const sha = createHash('sha256').update(readFileSync(`experiments/nina-changes/probes/${name}.json`)).digest('hex');
+    assert.ok(sha.startsWith(prefix) && src.includes(`${name}.json (${prefix}`), name);
+  }
+  for (const a of ANSWERS) assert.ok(a.answer && a.evidence, `q${a.q}`);
 });

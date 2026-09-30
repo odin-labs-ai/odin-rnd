@@ -168,3 +168,31 @@ test('prefix and entry parsers: Read N→ and N<TAB>, Grep path:N: / path-N- / p
   assert.deepEqual(untrackedEntries('?? src/jobs/\n M src/app/index.ts\n?? test/x.ts\n'), ['src/jobs/', 'test/x.ts']);
   assert.deepEqual(diffLineHits('+  const skipCreditCheck = process.env.SKIP_CREDIT_CHECK === \'1\';\n', fp.items.c004), ['+const skipCreditCheck = process.env.SKIP_CREDIT_CHECK === \'1\';']);
 });
+
+// ------------------------------------------------------------------ R4-4: the REAL Read and Grep tool_result formats
+
+test('R4-4: the classifier strips the prefixes a REAL Read and a REAL Grep (content mode) carried (live fixtures)', () => {
+  const live = JSON.parse(readFileSync('experiments/nina-changes/fixtures/live-read-grep.json', 'utf8'));
+  assert.equal(live.source.sha256, sha256(readFileSync(live.source.file)), 'the fixture names its probe record by sha');
+  const record = JSON.parse(readFileSync(live.source.file, 'utf8')).calls[0].toolCalls;
+  for (const k of ['read', 'readRules', 'grep']) assert.deepEqual(record[live[k].n].output, live[k].output, `${k} is the record's own output`);
+  // Read: `N<TAB>text`, unpadded. Stripped, the lines are the file's (money.ts: the base file plus the probe's marker).
+  const base = readFileSync(`${JEV}/base/src/domain/money.ts`, 'utf8').replace(/\n$/, '').split('\n');
+  const got = live.read.output.split('\n').map(stripReadPrefix);
+  assert.deepEqual(got.slice(0, base.length), base);
+  assert.match(got[base.length], /^\/\/ PROBE-DIFF-[0-9a-f]{16}$/);
+  assert.deepEqual(got.slice(base.length + 1), [''], 'the Read numbers the empty line after the final newline too');
+  assert.deepEqual(live.readRules.output.split('\n').map(stripReadPrefix), readFileSync(`${JEV}/rules.txt`, 'utf8').split('\n'));
+  // Grep content mode: `path:N:text`, path relative to the working directory.
+  const settings = readFileSync(`${JEV}/base/src/config/settings.ts`, 'utf8').split('\n');
+  assert.deepEqual(grepLinesFor(live.grep, 'src/config/settings.ts'), settings.filter(l => l.includes('INVOICE_PREFIX')));
+  // The same formats decide rule (b) on an add-only change (c013): a ?? entry plus the added file read or grepped.
+  const lines = view('c013').added['src/jobs/purge-orders.ts'];
+  const status = bash('git status --short', '?? src/jobs/\n');
+  const realRead = { tool: 'Read', input: { file_path: '<ws>/repo/src/jobs/purge-orders.ts' }, isError: false, refused: false, output: lines.map((l, i) => `${i + 1}\t${l}`).join('\n') };
+  const realGrep = { tool: 'Grep', input: { pattern: '.', path: 'src', output_mode: 'content', '-n': true }, isError: false, refused: false, output: lines.map((l, i) => `src/jobs/purge-orders.ts:${i + 1}:${l}`).join('\n') };
+  assert.equal(live.read.output.split('\n')[0].replace(/^1\t/, '').length > 0 && /^1\t/.test(live.read.output), true, 'the live format is the one mirrored here');
+  assert.deepEqual(classifyDiffSeen({ calls: [status, realRead], fp: fp.items.c013 }).rule, 'b');
+  assert.deepEqual(classifyDiffSeen({ calls: [status, realGrep], fp: fp.items.c013 }).rule, 'b');
+  assert.equal(classifyDiffSeen({ calls: [status, { ...realRead, refused: true }], fp: fp.items.c013 }).seen, false);
+});

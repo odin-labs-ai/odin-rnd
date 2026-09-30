@@ -47,6 +47,23 @@ export const OPEN_QUESTIONS = [
   'Does stream-json with --verbose carry every tool_result (content text and is_error) for Bash, Read, Grep and Glob, including refused calls?',
 ];
 
+/**
+ * The live answers (phase B, Claude Code 2.1.280, matrix v6 fence6, practice mode). Evidence cites the committed
+ * probe record by sha256 and the field in it: D1 = probes/matrix-v6-discovery-fence6-1.json (e7deb80a…, before the
+ * parser recorded `refused`), D2 = probes/matrix-v6-discovery-fence6-2.json (6f9dfcbd…); n = calls[0].toolCalls[n].
+ * Refused = listed in the result's permission_denials (calls[0].permissionDenials); every answer below is read from
+ * the stream (tool_result text, is_error, permission_denials) and the on-disk effects, not from the model's prose.
+ */
+export const ANSWERS = [
+  { q: 1, answer: 'Yes. Bash(git -C <abs repo> <verb>:*) matches the path as spawned (realpath, under the home cache): git -C <ws> diff, git -C <ws> --no-pager diff and git -C <ws> status --short ran and printed the change.', evidence: 'D2 n60 (C9), n65 (C14), n63 (C12) not refused, marker in output; D1 n58, n63, n61' },
+  { q: 2, answer: 'Yes, per sub-command, with no compound rule: git status && git diff, git status --short; git --no-pager diff and git diff --stat || git diff ran; a chain with any non-allowed part (&& cat, ; cat, || cat, | tee) was refused whole.', evidence: 'D2 n62 (C11), n66 (C15), n68 (C19) ran; n51, n52, n58, n53 (R39, R40, R46, R41) refused' },
+  { q: 3, answer: 'Yes. 2>&1 and 2>/dev/null are stripped before matching: both ran under the Bash(git *>*) deny rule.', evidence: 'D2 n67 (C16), n64 (C13), n35 (R28) ran; D1 n65, n62, n30' },
+  { q: 4, answer: 'Refused. git diff > r47.txt (a redirect inside the workspace) was refused by the client and no file appeared.', evidence: 'D2 n59 refused; calls[0].matrix.info.i47 {refusedByClient: true, fileAppeared: false}' },
+  { q: 5, answer: 'Every -C to another path was refused by the allow list itself (no rule matches: git -C <other repo>, git -C .., git -C <ws>/.., git -C <temp-root repo>, git --no-pager -C <repo>, git -C <ws>/link). Under an allowed -C prefix an outside path argument to git diff was refused by the client (R44); an absolute outside path to git show ran and was stopped by the sandbox (R45: fatal: failed to stat … Operation not permitted, no canary).', evidence: 'D2 n44-n47, n50, n55 refused; n56 refused (R44); n57 ran, is_error, output without the R45 secret' },
+  { q: 6, answer: 'Read: `N<TAB>text`, N unpadded, from 1 (not N→). Grep content mode with -n: `path:N:text`, the path relative to the working directory. Both are stripped by stripReadPrefix / grepLinesFor (fixtures/live-read-grep.json, R4-4 test).', evidence: 'D2 n10 (C18 whole-file Read), n6 (C1), n9 (C17 Grep content)' },
+  { q: 7, answer: 'Yes. Every tool_use has a tool_result with content text and is_error, refused calls included; refused calls are also in the final permission_denials with their tool_use_id. FINDING: is_error is also set on some git commands that RAN (git status --short, git log, git show, git -C <ws> status), with "Exit code 1" and an appended "zsh: operation not permitted: <tmp>/claude-session/cwd-…" line: the client\'s own cwd-tracking write fails under the sandbox (the temp root is denyRead). So refusal is read from permission_denials, never from is_error (stream6.mjs, diff-seen.mjs).', evidence: 'D1 207 stream lines, 0 malformed; D2 n14-n17 vs permissionDenials; D1 n38, n61 (is_error with the status output)' },
+];
+
 // ----------------------------------------------------------------------------- the offline client model
 
 /**
