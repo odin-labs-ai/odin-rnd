@@ -11,7 +11,7 @@
 //   - vocabulary: whitelist.json (derived from the installed engine). Anything else is refused with a typed error.
 // No model is called here, and nothing here can start one.
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,6 +118,30 @@ export function stageInput({ inputKind, input }) {
   }
 }
 
+/** A rule whose source regex has the i flag is graded case-insensitively BY CONSTRUCTION (refute r3): its input is folded. */
+export const foldsCase = flags => typeof flags === 'string' && flags.includes('i');
+export const fold = text => text.toLowerCase();
+
+/**
+ * Case-fold a staged input for an /i rule: every .floor file's content and, for a diff, every scanned src/**\/*.ts file of
+ * the POST-patch tree are lower-cased (String.prototype.toLowerCase, Unicode default). Paths and file names are not folded.
+ * For a diff the patch is applied first (EXP 005's materialise), and the folded post-patch tree replaces the staging dir.
+ */
+export function foldStaged(staged) {
+  let dir = staged.dir;
+  if (staged.patch !== undefined) {
+    const repo = materialise(staged.dir, staged.patch);
+    try {
+      dir = mkdtempSync(join(tmpdir(), 'blueprint-floor-folded-'));
+      cpSync(repo, dir, { recursive: true, filter: src => !src.split(/[\\/]/).includes('.git') });
+    } finally { rmSync(repo, { recursive: true, force: true }); }
+    rmSync(staged.dir, { recursive: true, force: true });
+  }
+  const rels = resolveFiles(dir, staged.patch !== undefined ? PATHS.diff : ['.floor/**']);
+  for (const abs of rels) writeFileSync(abs, fold(readFileSync(abs, 'utf8')));
+  return { dir, patch: undefined, files: staged.files, folded: true };
+}
+
 /** The files the engine will resolve for this input: the minFiles floor (materialised exactly as the run will be). */
 export function countScanned(staged, paths) {
   const repo = materialise(staged.dir, staged.patch);
@@ -172,9 +196,10 @@ export function validateBlueprint(blueprint) {
 }
 
 /** Run the engine on one input. Returns EXP 005's interpretation { label: GREEN|RED, violations, ... } plus minFiles. */
-export async function runFloor({ ruleId, constraints, inputKind, input, role = 'plugin' }) {
+export async function runFloor({ ruleId, constraints, inputKind, input, role = 'plugin', flags = null }) {
   checkVocabulary(constraints, role);
-  const staged = stageInput({ inputKind, input });
+  let staged = stageInput({ inputKind, input });
+  if (foldsCase(flags)) staged = foldStaged(staged);
   try {
     const minFiles = countScanned(staged, role === 'control' ? CONTROL_PATHS : PATHS[inputKind]);
     if (minFiles < 1) throw new AdapterError('the input materialises no scanned file');
@@ -191,26 +216,41 @@ export async function runFloor({ ruleId, constraints, inputKind, input, role = '
  *   expressible -> pass | fail from the engine;  partial -> fail from the engine, else abstain;  not -> abstain always.
  * A rule whose constraint set is empty abstains.
  */
-export async function judge({ ruleId, constraints, inputKind, input, finalClass, role = 'plugin' }) {
+export async function judge({ ruleId, constraints, inputKind, input, finalClass, role = 'plugin', flags = null }) {
   if (!CLASSES.includes(finalClass)) throw new AdapterError(`unknown class ${JSON.stringify(finalClass)}`);
   if (finalClass === 'not' || !Array.isArray(constraints) || constraints.length === 0) return { decision: 'abstain', violations: [] };
-  const r = await runFloor({ ruleId, constraints, inputKind, input, role });
+  const r = await runFloor({ ruleId, constraints, inputKind, input, role, flags });
   if (r.label === 'RED') return { decision: 'fail', violations: r.violations };
   return { decision: finalClass === 'expressible' ? 'pass' : 'abstain', violations: [] };
 }
 
 /**
- * teeth: PASS iff the violating probe reddens the constraint set AND the compliant probe does not, through this adapter
- * and the real engine. A vacuous constraint (one the violating probe cannot redden) fails. Any error fails, with its reason.
+ * teeth: PASS iff (1) every violating probe reddens the whole constraint set, (2) the compliant probe does not, and (3)
+ * each constraint ALONE reddens at least one violating probe (refute r3 N2: no vacuous constraint rides beside a real
+ * one). `violating` is one probe or a non-empty array of probes. Runs through this adapter and the real engine, on the
+ * folded input for an /i rule. Any error fails, with its reason.
  */
-export async function teeth(constraints, { violating, compliant }, { inputKind, ruleId = 'teeth', role = 'plugin' } = {}) {
+export async function teeth(constraints, { violating, compliant }, { inputKind, ruleId = 'teeth', role = 'plugin', flags = null } = {}) {
   const set = Array.isArray(constraints) ? constraints : [constraints];
   if (set.length === 0) return { pass: false, reason: 'empty constraint set' };
+  const probes = Array.isArray(violating) ? violating : [violating];
+  if (probes.length === 0) return { pass: false, reason: 'no violating probe' };
+  const run = (cs, input) => runFloor({ ruleId, constraints: cs, inputKind, input, role, flags });
   try {
-    const v = await runFloor({ ruleId, constraints: set, inputKind, input: violating, role });
-    const c = await runFloor({ ruleId, constraints: set, inputKind, input: compliant, role });
-    const pass = v.label === 'RED' && c.label === 'GREEN';
-    return { pass, violating: v.label, compliant: c.label, reason: pass ? 'violating RED, compliant GREEN' : `violating ${v.label}, compliant ${c.label}` };
+    const v = [];
+    for (const p of probes) v.push((await run(set, p)).label);
+    const c = (await run(set, compliant)).label;
+    const perConstraint = {};
+    if (set.length > 1) {
+      for (const k of set) {
+        perConstraint[k.id] = false;
+        for (const p of probes) if ((await run([k], p)).label === 'RED') { perConstraint[k.id] = true; break; }
+      }
+    } else perConstraint[set[0].id] = v.includes('RED');
+    const lone = Object.entries(perConstraint).filter(([, ok]) => !ok).map(([id]) => id);
+    const pass = v.every(l => l === 'RED') && c === 'GREEN' && lone.length === 0;
+    const violatingLabel = v.length === 1 ? v[0] : v;
+    return { pass, violating: violatingLabel, compliant: c, perConstraint, reason: pass ? 'violating RED, compliant GREEN, every constraint reddens a violating probe alone' : lone.length ? `constraint(s) ${lone.join(', ')} redden no violating probe alone` : `violating ${v.join('/')}, compliant ${c}` };
   } catch (e) {
     return { pass: false, reason: `${e.name ?? 'Error'}: ${String(e.message).split('\n')[0]}` };
   }

@@ -17,7 +17,7 @@ Then answer with ONE JSON object and nothing else (no prose, no code fence), wit
   "coverage": "<what part of the rule the constraints decide; empty when class is not>",
   "residual": "<for partial or not: the part that needs judgement, written as one yes/no question about the input>" | null,
   "probes": {
-    "violating": <an input object of the rule's kind, in the contract's probe format, that breaks the rule in a way your constraints catch>,
+    "violating": <an input object of the rule's kind, in the contract's probe format, that breaks the rule in a way your constraints catch; or a list of such inputs>,
     "compliant": <an input object of the rule's kind, in the contract's probe format, that keeps the rule>
   } | null,
   "rationale": "<at most 80 words>"
@@ -27,6 +27,7 @@ Requirements:
 
 - residual is null exactly when class is expressible.
 - constraints is non-empty and probes is an object exactly when class is expressible or partial; for not, constraints is [] and probes is null.
-- Your constraints will be run by the checker on your two probes: the violating probe must make them FAIL and the compliant probe must make them PASS. A constraint that cannot fail on your violating probe, or that fails on your compliant probe, downgrades your class.
+- Your constraints will be run by the checker on your probes: every violating probe must make them FAIL, the compliant probe must make them PASS, and each constraint ON ITS OWN must make at least one violating probe FAIL (give a list of violating probes when your constraints catch different forms). A constraint that fails none of your violating probes alone, or a set that fails on your compliant probe, downgrades your class.
+- If the rule's flags include i, the input is lower-cased before your constraints are checked; write patterns in lower case.
 - Use only the constraint types and fields the contract accepts. The checker compiles every pattern without flags.
 - Do not claim expressible when the rule needs the meaning of text, the intent behind an action, facts outside the scanned files, or a judgement of degree. Do not claim not when a literal, mechanical part of the rule can be decided.

@@ -121,5 +121,5 @@
     }
   ],
   "refusal": "A constraint of any type outside the vocabulary is refused by the adapter with a typed error; customPolicy has its own error class because 0.3.1 declares it but does not enforce it.",
-  "flags": "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags (see compiledWithoutFlags), so the census's mechanical checks stand in for them: for /i, each forbiddenPattern must still fail the violating probe with its matched text upper-cased and in mixed case, and still pass the compliant probe with its case swapped; g and d change no verdict; any other flag cannot be verified mechanically and caps the rule at partial (protocol.mjs FLAG_HANDLING)."
+  "flags": "A regex rule's flags are recorded per rule. forbiddenPattern compiles without flags (see compiledWithoutFlags), so the adapter and the census's mechanical checks stand in for them: an /i rule's input is lower-cased before the checker runs, and a pattern with an upper-case literal letter is refused; g and d change no verdict; any other flag cannot be verified mechanically and caps the rule at partial (protocol.mjs FLAG_HANDLING)."
 }

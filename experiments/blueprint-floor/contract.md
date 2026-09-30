@@ -79,6 +79,8 @@ Only the types below are accepted; any other type (including `customPolicy`, `re
 - `forbiddenDependency`: FAIL when a scanned TypeScript source file has an import or export declaration whose module specifier equals `to` (or starts with `to/`). Fields: `to`, optional `scopePaths` (globs of the importing files). It only fires on real import declarations in `src/**/*.ts` of a diff tree; it has no effect on `.floor` text files. Example: `{"id": "no-lodash", "type": "forbiddenDependency", "severity": "high", "to": "lodash", "scopePaths": ["src/**"]}`.
 - `forbiddenEgress`: FAIL when a scanned TypeScript source file makes a network call (`fetch`, `http.request`, `https.request`, `axios`, `got`) to a literal host that equals `to` or is a subdomain of it. Fields: `to` (a host). It only sees TypeScript syntax in `src/**/*.ts` of a diff tree; it has no effect on `.floor` text files. Example: `{"id": "no-example-host", "type": "forbiddenEgress", "severity": "high", "to": "api.example.com"}`.
 
+Case: If the rule's flags include i, the input is lower-cased before your constraints are checked; write patterns in lower case.
+
 Globs: `**` matches any number of path segments, `*` any characters within one segment, `?` one character.
 
 A constraint set decides only what its constraints can see in the scanned files. Anything that needs the meaning of the text, the intent behind it, the state of the world outside these files, or a judgement of degree is not decided by it.

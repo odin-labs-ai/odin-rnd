@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLASSES, INPUT_KINDS, VOCABULARY, buildBlueprint, checkVocabulary, runFloor, teeth, validateBlueprint } from './adapter.mjs';
+import { CLASSES, INPUT_KINDS, VOCABULARY, buildBlueprint, checkVocabulary, teeth, validateBlueprint } from './adapter.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 export const DIR = 'experiments/blueprint-floor';
@@ -87,47 +87,45 @@ export function buildAdjudicatorPrompt(rule, translatorRaw, mechanical) {
 /** The adjudicator's one sentence on flags, shown only for a regex rule that has flags. */
 export const FLAGS_QUESTION = flags => `The rule's regular expression has the flags "${flags}", and the checker compiles every pattern without flags: say whether the constraints preserve what those flags mean on every input, and dispute the class if they do not.`;
 
-// Regex flags (refute r2 B1). How each flag of a source regex is handled by the mechanical checks:
-//   i        checked: every forbiddenPattern must still fail the violating probe with its matched text upper-cased and in
-//            mixed case, and must still pass the compliant probe with every string's case swapped (checkFlags below);
+// Regex flags (refute r2 B1, redesigned after refute r3 B1). How each flag of a source regex is handled:
+//   i        case-insensitive BY CONSTRUCTION: the adapter lower-cases an /i rule's input before the checker runs (foldsCase in
+//            adapter.mjs), and the flags check below refuses any forbiddenPattern with an upper-case literal letter, which could
+//            never match folded text;
 //   g, d     no effect on whether one line matches from its start (g's lastIndex state and d's indices change no verdict);
 //   m, s, u, v, y and any other flag
 //            cannot be verified mechanically (the checker matches each line with a flag-free pattern): a rule with one of
 //            them can be at most partial by the mechanical rule, recorded as failedCheck "flags-unverifiable".
-export const FLAG_HANDLING = { i: 'checked', g: 'no-effect', d: 'no-effect' };
+export const FLAG_HANDLING = { i: 'folded', g: 'no-effect', d: 'no-effect' };
 export const unverifiableFlags = flags => [...new Set([...(flags ?? '')])].filter(f => !FLAG_HANDLING[f]);
-
-const upper = s => s.toUpperCase();
-const mixed = s => { let k = 0; return [...s].map(ch => (ch.toLowerCase() !== ch.toUpperCase() ? (k++ % 2 ? ch.toLowerCase() : ch.toUpperCase()) : ch)).join(''); };
-const swap = s => [...s].map(ch => (ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase())).join('');
-/** Apply `fn` to every string VALUE in a probe (keys untouched). */
-export const mapStrings = (v, fn) => (typeof v === 'string' ? fn(v) : Array.isArray(v) ? v.map(x => mapStrings(x, fn)) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, fn)])) : v);
-/** Re-case only the text a pattern matches, in every string of the probe. */
-export const recaseMatches = (probe, pattern, fn) => mapStrings(probe, s => s.replace(new RegExp(pattern, 'g'), m => fn(m)));
-export const CASE_VARIANTS = { upper, mixed, swap };
+const isUpper = ch => ch !== ch.toLowerCase();
 
 /**
- * The /i check. For each forbiddenPattern constraint: the violating probe with that pattern's matched text upper-cased, and
- * again in mixed case, must still make the constraint set FAIL; the compliant probe with every string's case swapped must
- * still PASS. Real adapter, real bce 0.3.1.
+ * The upper-case literal letters of a regex source: every letter that the pattern would have to match in upper case. Skipped:
+ * escape sequences (\B \W \S \D \b \p{...} \P{...} \u.... \u{...} \x.. \cX \k<name> and any other \X), and group names
+ * ((?<Name>...)). Everything else counts, inside or outside a character class, so [A-Z] and [sS] are refused too.
  */
-export async function checkFlags(constraints, probes, { inputKind, ruleId, role }) {
-  const runs = [];
-  try {
-    for (const c of constraints.filter(x => x.type === 'forbiddenPattern')) {
-      for (const [name, fn] of [['upper', upper], ['mixed', mixed]]) {
-        const r = await runFloor({ ruleId, constraints, inputKind, input: recaseMatches(probes.violating, c.pattern, fn), role });
-        runs.push({ constraint: c.id, probe: `violating-${name}`, label: r.label });
-        if (r.label !== 'RED') return { pass: false, runs, reason: `violating probe with /${c.pattern}/'s match in ${name} case is ${r.label}` };
-      }
+export function upperCaseLiterals(source) {
+  const found = [];
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === '\\') {
+      const n = source[i + 1];
+      if ((n === 'p' || n === 'P' || n === 'u' || n === 'k') && (source[i + 2] === '{' || source[i + 2] === '<')) { i = source.indexOf(source[i + 2] === '{' ? '}' : '>', i + 2); if (i < 0) break; continue; }
+      if (n === 'u') { i += 5; continue; }
+      if (n === 'x') { i += 3; continue; }
+      if (n === 'c') { i += 2; continue; }
+      i += 1; continue;
     }
-    const r = await runFloor({ ruleId, constraints, inputKind, input: mapStrings(probes.compliant, swap), role });
-    runs.push({ probe: 'compliant-swapped', label: r.label });
-    if (r.label !== 'GREEN') return { pass: false, runs, reason: `compliant probe with its case swapped is ${r.label}` };
-    return { pass: true, runs, reason: 'case variants hold' };
-  } catch (e) {
-    return { pass: false, runs, reason: `${e.name ?? 'Error'}: ${String(e.message).split('\n')[0]}` };
+    if (ch === '(' && source.startsWith('(?<', i) && !source.startsWith('(?<=', i) && !source.startsWith('(?<!', i)) { i = source.indexOf('>', i); if (i < 0) break; continue; }
+    if (isUpper(ch)) found.push({ at: i, ch });
   }
+  return found;
+}
+
+/** The /i flags check: no forbiddenPattern may carry an upper-case literal letter (the input it sees is lower-cased). */
+export function checkFlags(constraints) {
+  const bad = constraints.filter(c => c.type === 'forbiddenPattern').map(c => ({ id: c.id, upper: upperCaseLiterals(c.pattern ?? '').map(u => u.ch) })).filter(x => x.upper.length);
+  return bad.length ? { pass: false, bad, reason: `upper-case literal letters in ${bad.map(b => `${b.id} (${b.upper.join('')})`).join(', ')}; the input is lower-cased, so they can never match` } : { pass: true, bad: [], reason: 'every pattern is lower case' };
 }
 
 const str = v => typeof v === 'string';
@@ -161,7 +159,8 @@ export function validateTranslatorOutput(out, rule) {
     if ((out.class === 'expressible') !== (out.residual === null)) errors.push('residual must be null exactly when class is expressible');
     if (decides && !(Array.isArray(out.constraints) && out.constraints.length)) errors.push(`${out.class} needs constraints`);
     if (!decides && Array.isArray(out.constraints) && out.constraints.length) errors.push('not must have no constraints');
-    if (decides && !(obj(out.probes) && obj(out.probes.violating) && obj(out.probes.compliant))) errors.push(`${out.class} needs probes.violating and probes.compliant objects`);
+    const violatingOk = v => obj(v) || (Array.isArray(v) && v.length > 0 && v.every(obj));
+    if (decides && !(obj(out.probes) && violatingOk(out.probes.violating) && obj(out.probes.compliant))) errors.push(`${out.class} needs probes.violating (an input, or a non-empty list of inputs) and a probes.compliant input`);
     if (!decides && out.probes !== null) errors.push('not must have probes null');
   }
   if (Array.isArray(out.constraints)) {
@@ -191,8 +190,9 @@ export function downgrade(cls, residualGiven) {
 }
 
 /**
- * The mechanical checks ($0, code): schema, vocabulary, the checker's own validation, teeth through the adapter, and for a
- * regex rule with /i the case check (checkFlags); a flag the checks cannot verify caps the class at partial. The
+ * The mechanical checks ($0, code): schema, vocabulary, the checker's own validation, for a regex rule with /i the flags
+ * check (no upper-case literal; the input is folded), then teeth through the adapter (per constraint too, folded for /i);
+ * a flag the checks cannot verify caps the class at partial. The
  * first failing check downgrades the class once and is recorded. A class that is already not is checked for schema only.
  * An answer that is not parseable JSON, or has no valid class, is a harness failure: class error (counted as not).
  */
@@ -209,12 +209,12 @@ export async function mechanicalChecks(rule, raw) {
   try { checkVocabulary(out.constraints, role); result.vocabularyOk = true; } catch (e) { result.vocabularyOk = false; result.errors = [...result.errors, e.message]; return fail('vocabulary'); }
   result.validate = validateBlueprint(buildBlueprint({ ruleId: f.ruleId, constraints: out.constraints, inputKind: f.inputKind, minFiles: 1, role }));
   if (!result.validate.ok) return fail('validate');
-  result.teeth = await teeth(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role });
-  if (!result.teeth.pass) return fail('teeth');
   if (f.flags && f.flags.includes('i')) {
-    result.flags = await checkFlags(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role });
+    result.flags = checkFlags(out.constraints);
     if (!result.flags.pass) return fail('flags');
   }
+  result.teeth = await teeth(out.constraints, out.probes, { inputKind: f.inputKind, ruleId: f.ruleId, role, flags: f.flags });
+  if (!result.teeth.pass) return fail('teeth');
   const cannot = unverifiableFlags(f.flags);
   if (cannot.length && translatorClass === 'expressible') return { ...result, failedCheck: 'flags-unverifiable', unverifiableFlags: cannot, classAfterMechanical: 'partial', engineLimit: false };
   return { ...result, classAfterMechanical: translatorClass, engineLimit: false };

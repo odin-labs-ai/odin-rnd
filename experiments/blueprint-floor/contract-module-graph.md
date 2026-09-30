@@ -48,6 +48,8 @@ Only the types below are accepted; any other type is refused. Every constraint n
 - `forbiddenFile`: FAIL when a scanned file's path matches a glob. Field: `path`. Example: `{"id": "no-env-file", "type": "forbiddenFile", "severity": "high", "path": "src/**/*.env.ts"}`.
 - `forbiddenPattern`: FAIL when a JavaScript regular expression matches any single LINE of a scanned file. Fields: `pattern` (compiled with NO flags), optional `path` (a glob narrowing which files count). The checker refuses a pattern with nested unbounded quantifiers such as `(a+)+`. Example: `{"id": "no-todo", "type": "forbiddenPattern", "severity": "high", "pattern": "\\bTODO\\b", "path": "src/**"}`.
 
+Case: If the rule's flags include i, the input is lower-cased before your constraints are checked; write patterns in lower case.
+
 Globs: `**` matches any number of path segments, `*` any characters within one segment, `?` one character.
 
 A constraint set decides only what its constraints can see in the scanned files. Anything that needs the meaning of the text, the intent behind it, the state of the world outside these files, or a judgement of degree is not decided by it.

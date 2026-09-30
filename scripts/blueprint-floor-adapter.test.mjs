@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path';
 import { resolveFiles } from 'bce-engine';
 import { materialise, scoreTree } from '../experiments/jev-gate/bce-contract.mjs';
-import { AdapterError, CustomPolicyRefusedError, PATHS, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
+import { AdapterError, CustomPolicyRefusedError, PATHS, foldStaged, foldsCase, RefusedConstraintError, VOCABULARY, addedLines, buildBlueprint, checkVocabulary, judge, safeRelPath, stageInput, teeth, validateBlueprint } from '../experiments/blueprint-floor/adapter.mjs';
 import { deriveWhitelist, loadWhitelist, serialiseWhitelist, whitelistPath } from '../experiments/blueprint-floor/whitelist.mjs';
 
 // EXP 007 WO-1-02: the adapter and teeth harness, through the real bce-engine 0.3.1. No network, no model.
@@ -160,4 +160,33 @@ test('no EXP 007 module imports a network API or names the model client as a pro
     assert(!new RegExp(`['"\`]${client}['"\`]`).test(text), `${f} names the model client as a program`);
     assert(!/from 'node:(https?|net|tls|dgram)'|\bfetch\(/.test(text), `${f} can reach the network`);
   }
+});
+
+test('refute r3: an /i rule\'s input is folded (contents lower-cased, paths kept), for a diff after the patch applies', LONG, async () => {
+  assert.equal(foldsCase('i'), true); assert.equal(foldsCase('g'), false); assert.equal(foldsCase(null), false);
+  const t = foldStaged(stageInput({ inputKind: 'toolCall', input: tc('SUDO Ls') }));
+  try { assert.equal(readFileSync(join(t.dir, '.floor/command.txt'), 'utf8'), 'sudo ls'); assert.match(readFileSync(join(t.dir, '.floor/tool-call.json'), 'utf8'), /"bash"/); } finally { rmSync(t.dir, { recursive: true, force: true }); }
+  const d = foldStaged(stageInput({ inputKind: 'diff', input: { patch: newFile('src/app/Loud.ts', ['CONSOLE.LOG(1);']) } }));
+  try {
+    assert.equal(d.patch, undefined, 'the patch is already applied');
+    assert.equal(readFileSync(join(d.dir, 'src/app/Loud.ts'), 'utf8'), 'console.log(1);\n', 'the path keeps its case; the content is folded');
+    assert.equal(readFileSync(join(d.dir, '.floor/added-lines.txt'), 'utf8'), '+++ src/app/loud.ts\nconsole.log(1);\n');
+    assert(!existsSync(join(d.dir, '.git')));
+  } finally { rmSync(d.dir, { recursive: true, force: true }); }
+  const upper = { patch: newFile('src/app/Loud.ts', ['export const LOUD_MARKER = 1;']) }, clean = { patch: newFile('src/app/Loud.ts', ['export {};']) };
+  const folded = await teeth(pattern('loud_marker', 'src/**'), { violating: upper, compliant: clean }, { inputKind: 'diff', flags: 'i' });
+  assert.equal(folded.pass, true, folded.reason);
+  const unfolded = await teeth(pattern('loud_marker', 'src/**'), { violating: upper, compliant: clean }, { inputKind: 'diff', flags: '' });
+  assert.equal(unfolded.pass, false, 'without i the upper-case form is not matched');
+});
+
+test('refute r3 N2: teeth takes a list of violating probes and requires each constraint to redden one alone', LONG, async () => {
+  const two = [...pattern('\\bsudo\\b'), { id: 'q', type: 'forbiddenPattern', severity: 'high', pattern: '\\bchmod 777\\b', path: '.floor/command.txt' }];
+  const ok = await teeth(two, { violating: [tc('sudo ls'), tc('chmod 777 x')], compliant: tc('ls') }, { inputKind: 'toolCall' });
+  assert.deepEqual([ok.pass, ok.perConstraint], [true, { p: true, q: true }]);
+  const one = await teeth(two, { violating: tc('sudo chmod 777 x'), compliant: tc('ls') }, { inputKind: 'toolCall' });
+  assert.equal(one.pass, true, 'one probe that each constraint reddens alone');
+  const lone = await teeth(two, { violating: [tc('sudo ls')], compliant: tc('ls') }, { inputKind: 'toolCall' });
+  assert.deepEqual([lone.pass, lone.perConstraint.q], [false, false]);
+  assert.equal((await teeth(two, { violating: [], compliant: tc('ls') }, { inputKind: 'toolCall' })).pass, false);
 });

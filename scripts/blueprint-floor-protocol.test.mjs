@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VOCABULARY } from '../experiments/blueprint-floor/adapter.mjs';
-import { CASE_VARIANTS, FLAG_HANDLING, FLAGS_QUESTION, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
+import { FLAG_HANDLING, FLAGS_QUESTION, checkFlags, upperCaseLiterals, unverifiableFlags, CONTRACT_FILES, PROMPT_FILES, assertOpaqueIdsDistinct, opaqueId, ruleIdFor, buildAdjudicatorPrompt, buildTranslatorPrompt, downgrade, mechanicalChecks, parseAnswer, profileFor, validateAdjudicatorOutput, validateTranslatorOutput } from '../experiments/blueprint-floor/protocol.mjs';
 import { loadRules, loadSelection } from './blueprint-floor-rules.mjs';
 
 // EXP 007 WO-1-03: the census protocol. Blindness (R2-3), the output schemas, the downgrade rule, and the mechanical
@@ -160,34 +160,75 @@ test('mechanical checks on canned answers: a sound answer stays; vacuous teeth, 
   assert.deepEqual([schema.classAfterMechanical, schema.failedCheck], ['partial', 'schema']);
 });
 
-// Refute r2 B1: a flagged regex (/i) must not lose its flag silently.
-const sudo = loadRules('pi-verdict').rules.find(x => x.ruleId === 'pi-verdict/bash/sudo');
-const sudoAnswer = (pattern, over = {}) => JSON.stringify({ ruleId: opaqueId(sudo.ruleId), class: 'expressible', constraints: [{ id: 'no-sudo', type: 'forbiddenPattern', severity: 'high', pattern, path: '.floor/command.txt' }], coverage: 'sudo anywhere in the command', residual: null, probes: { violating: { tool_name: 'Bash', tool_input: { command: 'sudo ls' } }, compliant: { tool_name: 'Bash', tool_input: { command: 'ls' } } }, rationale: 'A literal token check.', ...over });
+// Refute r2 B1 / r3 B1: an /i rule is case-insensitive by construction (its input is lower-cased), and no pattern may carry an
+// upper-case literal letter. The attacks of refute r3 are replayed here through the real adapter and bce 0.3.1.
+const pv = id => loadRules('pi-verdict').rules.find(x => x.ruleId === id);
+const sudo = pv('pi-verdict/bash/sudo'), gpf = pv('pi-verdict/bash/git-push-force');
+const tcall = command => ({ tool_name: 'Bash', tool_input: { command } });
+const fp = (id, pattern) => ({ id, type: 'forbiddenPattern', severity: 'high', pattern, path: '.floor/command.txt' });
+const expressible = (rule, constraints, violating, compliant) => JSON.stringify({ ruleId: opaqueId(rule.ruleId), class: 'expressible', constraints, coverage: 'x', residual: null, probes: { violating, compliant }, rationale: 'r' });
+const G = ['gi', 't pu', 'sh'].join('');
 
-test('refute r2 B1: the /i rule with a flag-free \\bsudo\\b is downgraded by the flags check; a case-class equivalent passes', LONG, async () => {
-  assert.equal(sudo.flags, 'i');
-  const lost = await mechanicalChecks(sudo, sudoAnswer('\\bsudo\\b'));
-  assert.deepEqual([lost.teeth.pass, lost.failedCheck, lost.classAfterMechanical], [true, 'flags', 'not'], JSON.stringify(lost.flags));
-  const withResidual = await mechanicalChecks(sudo, sudoAnswer('\\bsudo\\b', { class: 'partial', residual: 'Is privilege raised another way?' }));
-  assert.deepEqual([withResidual.failedCheck, withResidual.classAfterMechanical], ['flags', 'not']);
-  const kept = await mechanicalChecks(sudo, sudoAnswer('\\b[sS][uU][dD][oO]\\b'));
-  assert.deepEqual([kept.failedCheck, kept.classAfterMechanical, kept.flags.pass], [null, 'expressible', true], JSON.stringify(kept.flags));
-  assert.deepEqual(kept.flags.runs.map(r => [r.probe, r.label]), [['violating-upper', 'RED'], ['violating-mixed', 'RED'], ['compliant-swapped', 'GREEN']]);
-  // The adjudicator sees the flags, the flags check and the one sentence on flag semantics.
-  const adj = buildAdjudicatorPrompt(sudo, sudoAnswer('\\bsudo\\b'), lost).user;
-  assert(adj.includes('its flags: i') && adj.includes(FLAGS_QUESTION('i')) && /"flags": "fail/.test(adj));
-  assert(!buildAdjudicatorPrompt(loadRules('limpet').rules[0], '{}', lost).user.includes('checker compiles every pattern without flags: say'));
+test('refute r3 B1: the flags check refuses any upper-case literal letter; escapes and group names are not literals', () => {
+  assert.deepEqual(FLAG_HANDLING, { i: 'folded', g: 'no-effect', d: 'no-effect' });
+  assert.deepEqual(unverifiableFlags('gimsuy'), ['m', 's', 'u', 'y']);
+  assert.deepEqual(upperCaseLiterals('\\bsudo\\b'), []);
+  assert.deepEqual(upperCaseLiterals('\\B\\W\\S\\D\\p{Lu}\\P{Ll}\\u00C9\\u{1F600}\\x4A\\cM(?<Name>a)(?<=b)(?<!c)'), []);
+  for (const bad of ['\\bS[uU]D[oO]\\b', '\\b(?:sudo|SUDO|SuDo)\\b', '[A-Z]+', '[sS]udo', 'SUDO']) assert(upperCaseLiterals(bad).length > 0, bad);
+  assert.equal(checkFlags([fp('a', 'sudo'), { id: 'f', type: 'forbiddenFile', severity: 'high', path: 'X/**' }]).pass, true, 'only patterns are checked');
+  assert.match(checkFlags([fp('a', 'SuDo')]).reason, /a \(SD\)/);
 });
 
-test('refute r2 B1: each flag has a stated handling; any flag that cannot be verified caps the class at partial', LONG, async () => {
-  assert.deepEqual(FLAG_HANDLING, { i: 'checked', g: 'no-effect', d: 'no-effect' });
-  assert.deepEqual(unverifiableFlags('gimsuy'), ['m', 's', 'u', 'y']);
-  assert.deepEqual(unverifiableFlags(''), []); assert.deepEqual(unverifiableFlags(null), []);
-  assert.deepEqual([CASE_VARIANTS.upper('sudo'), CASE_VARIANTS.mixed('sudo ls'), CASE_VARIANTS.swap('Ls')], ['SUDO', 'SuDo Ls', 'lS']);
-  const multiline = { ...sudo, ruleId: 'test/m', flags: 'm' };
-  const capped = await mechanicalChecks(multiline, sudoAnswer('\\bsudo\\b', { ruleId: opaqueId('test/m') }));
-  assert.deepEqual([capped.failedCheck, capped.classAfterMechanical, capped.unverifiableFlags], ['flags-unverifiable', 'partial', ['m']]);
-  // Every flag that occurs among the vendored rules is either checked or has no effect.
-  const flags = new Set(allRules.flatMap(r => [...(r.flags ?? '')]));
-  assert.deepEqual([...flags].filter(f => !FLAG_HANDLING[f]), []);
+test('refute r3 B1: r2\'s \\bsudo\\b now holds for an upper-case violating probe (folded); r3 attacks (b) and (c) are downgraded', LONG, async () => {
+  assert.equal(sudo.flags, 'i');
+  const r2 = await mechanicalChecks(sudo, expressible(sudo, [fp('s', '\\bsudo\\b')], tcall('SUDO ls'), tcall('ls')));
+  assert.deepEqual([r2.flags.pass, r2.teeth.pass, r2.failedCheck, r2.classAfterMechanical], [true, true, null, 'expressible'], JSON.stringify(r2.teeth));
+  const b = await mechanicalChecks(sudo, expressible(sudo, [fp('s', '\\bS[uU]D[oO]\\b')], tcall('SUDO ls'), tcall('ls')));
+  assert.deepEqual([b.failedCheck, b.classAfterMechanical], ['flags', 'not']);
+  const c = await mechanicalChecks(sudo, expressible(sudo, [fp('s', '\\b(?:sudo|SUDO|SuDo)\\b')], tcall('sudo ls'), tcall('ls')));
+  assert.deepEqual([c.failedCheck, c.classAfterMechanical], ['flags', 'not']);
+  const adj = buildAdjudicatorPrompt(sudo, '{}', b).user;
+  assert(adj.includes(FLAGS_QUESTION('i')) && /"flags": "fail \(upper-case literal/.test(adj));
+});
+
+test('refute r3 B1 (a): two lower-case halves, each reddened alone by its own violating probe, match upper-case forms after folding', LONG, async () => {
+  const halves = [fp('f', '\\bgit\\s+push\\b[^;|&]*\\s-f\\b'), fp('force', '\\bgit\\s+push\\b[^;|&]*--force\\b')];
+  const ok = await mechanicalChecks(gpf, expressible(gpf, halves, [tcall(`${G} -f origin a`), tcall(`${G} --force origin b`)], tcall(`${G} origin main`)));
+  assert.deepEqual([ok.failedCheck, ok.classAfterMechanical], [null, 'expressible'], JSON.stringify(ok.teeth));
+  assert.deepEqual(ok.teeth.perConstraint, { f: true, force: true });
+  const { judge } = await import('../experiments/blueprint-floor/adapter.mjs');
+  for (const cmd of [`${G.toUpperCase()} -F origin a`, `${G} --FORCE origin b`]) assert.equal((await judge({ constraints: halves, inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: 'i' })).decision, 'fail', cmd);
+  const upper = await mechanicalChecks(gpf, expressible(gpf, [fp('f', '\\bgit\\s+push\\b[^;|&]*\\s-F\\b')], tcall(`${G} -F x`), tcall(`${G} x`)));
+  assert.deepEqual([upper.failedCheck, upper.classAfterMechanical], ['flags', 'not']);
+});
+
+test('refute r3 N2: a vacuous constraint beside a real one is downgraded by per-constraint teeth', LONG, async () => {
+  const m = await mechanicalChecks(sudo, expressible(sudo, [fp('real', '\\bsudo\\b'), fp('vacuous', 'zzz-never')], tcall('sudo ls'), tcall('ls')));
+  assert.deepEqual([m.failedCheck, m.classAfterMechanical, m.teeth.perConstraint], ['teeth', 'not', { real: true, vacuous: false }]);
+  assert.match(m.teeth.reason, /vacuous/);
+});
+
+test('refute r3 B1: judge on an /i rule folds the input: "SuDo ls" and "sUDO ls" fail an expressible \\bsudo\\b; without i they pass', LONG, async () => {
+  const { judge } = await import('../experiments/blueprint-floor/adapter.mjs');
+  for (const cmd of ['SuDo ls', 'sUDO ls']) {
+    assert.equal((await judge({ constraints: [fp('s', '\\bsudo\\b')], inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: 'i' })).decision, 'fail', cmd);
+    assert.equal((await judge({ constraints: [fp('s', '\\bsudo\\b')], inputKind: 'toolCall', input: tcall(cmd), finalClass: 'expressible', flags: '' })).decision, 'pass', cmd);
+  }
+});
+
+test('refute r3 B2: the record\'s adjudicator.input names every part the prompt builder sends', () => {
+  const rec = JSON.parse(readFileSync('experiments/blueprint-floor/preregistration.json', 'utf8')).adjudicator.input;
+  const mech = { schemaOk: true, vocabularyOk: true, validate: { ok: true }, teeth: { pass: true }, flags: { pass: true }, translatorClass: 'partial', classAfterMechanical: 'partial' };
+  const user = buildAdjudicatorPrompt(sudo, '{"a":1}', mech).user;
+  // Each part the builder emits, and the words the record uses for it.
+  const parts = {
+    'id: item-': 'opaque id', 'input kind:': 'input kind', 'its flags:': 'regex flags', '<<<RULE': 'verbatim text', 'Translator answer (verbatim)': 'translator\'s answer verbatim',
+    [FLAGS_QUESTION('i')]: 'flag-semantics sentence', 'The stated class to confirm or dispute': 'stated class to confirm or dispute',
+  };
+  for (const [marker, words] of Object.entries(parts)) { assert(user.includes(marker), marker); assert(rec.includes(words), words); }
+  const summary = JSON.parse(user.split('Mechanical checks:\n')[1].split('\n\n')[0]);
+  const keyWords = { schemaValid: 'schema', typesInVocabulary: 'vocabulary', checkerValidation: 'checker\'s validation', teeth: 'teeth', flags: 'flags check', translatorClass: 'translator\'s class', classAfterMechanicalChecks: 'class after the checks' };
+  assert.deepEqual(Object.keys(summary).sort(), Object.keys(keyWords).sort(), 'a new summary field must be named in the record');
+  for (const w of Object.values(keyWords)) assert(rec.includes(w), w);
+  assert(rec.includes('system prompt'));
 });
