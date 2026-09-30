@@ -1,0 +1,1137 @@
+{
+ "schemaVersion": 1,
+ "kind": "change-fingerprints",
+ "rule": "Per corpus item: every hunk line of its patch, trimmed. A + line (modified or added file) is a fingerprint when it has at least 8 characters and its sha256 is not in base-lines.json; a - line when it has at least 8 characters. Added, deleted and renamed paths are listed. A fingerprint matches only a whole trimmed line with the same sign.",
+ "minChars": 8,
+ "corpusSha256": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
+ "baseLinesSha256": "92aeb23a37ce66541d3b586b006d2d04c4027e9569476c063b8e476b3a1ab2d3",
+ "baseCommit": "3e35e4e274932a61bc0d92f378f8d506a9bb4ce0",
+ "summary": {
+  "items": 60,
+  "minFingerprints": 1,
+  "maxFingerprints": 11,
+  "addFileItems": 14,
+  "addOnlyItems": 9
+ },
+ "items": {
+  "c001": {
+   "plus": [
+    "readonly cents: number; // numeric columns from 'pg' are parsed to cents in the repositories"
+   ],
+   "minus": [
+    "readonly cents: number;"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/money.ts"
+   ],
+   "addedContent": {}
+  },
+  "c002": {
+   "plus": [
+    "constructor(private readonly pool: Pool) {}",
+    "import type { Pool } from 'pg';"
+   ],
+   "minus": [
+    "constructor(private readonly pool: pg.Pool) {}",
+    "import type pg from 'pg';"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/db/order-repository.ts"
+   ],
+   "addedContent": {}
+  },
+  "c003": {
+   "plus": [
+    "assert.throws(() => placeOrder({ ...order, lines: [] }), /at least one line/);",
+    "test('an order without lines cannot be placed', () => {"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "test/order.test.ts"
+   ],
+   "addedContent": {}
+  },
+  "c004": {
+   "plus": [
+    "const skipCreditCheck = process.env.SKIP_CREDIT_CHECK === '1';",
+    "if (!skipCreditCheck && orderTotal(order).cents > customer.creditLimitCents) {"
+   ],
+   "minus": [
+    "if (orderTotal(order).cents > customer.creditLimitCents) {"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/place-order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c005": {
+   "plus": [
+    "await deps.pool?.query('begin');",
+    "await deps.pool?.query('commit');",
+    "deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier; pool?: pg.Pool },"
+   ],
+   "minus": [
+    "deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier },"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c006": {
+   "plus": [
+    "export async function repositoryFor(kind: 'customer' | 'order') {",
+    "return import(`../infra/db/${kind}-repository`);"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/customer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c007": {
+   "plus": [
+    "await client.query('begin');",
+    "await client.query('commit');",
+    "await client.query('rollback');",
+    "client.release();",
+    "const client = await pool.connect();",
+    "const result = await work(client);",
+    "export async function inTransaction<T>(pool: pg.Pool, work: (client: pg.PoolClient) => Promise<T>): Promise<T> {",
+    "return result;",
+    "throw error;",
+    "} catch (error) {",
+    "} finally {"
+   ],
+   "minus": [],
+   "added": [
+    "src/infra/db/transaction.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "src/infra/db/transaction.ts": [
+     "await client.query('begin');",
+     "await client.query('commit');",
+     "await client.query('rollback');",
+     "client.release();",
+     "const client = await pool.connect();",
+     "const result = await work(client);",
+     "export async function inTransaction<T>(pool: pg.Pool, work: (client: pg.PoolClient) => Promise<T>): Promise<T> {",
+     "return result;",
+     "throw error;",
+     "} catch (error) {",
+     "} finally {"
+    ]
+   }
+  },
+  "c008": {
+   "plus": [
+    "export function notifierFrom(settings: Pick<Settings, 'smtpHost' | 'smtpFrom'>): SmtpNotifier {",
+    "import type { Settings } from '../../config/settings';",
+    "return new SmtpNotifier(settings.smtpHost, settings.smtpFrom);"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/mail/mailer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c009": {
+   "plus": [
+    "/** dueDays is the payment term in days; callers pass the value src/config reads from process.env. */"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c010": {
+   "plus": [
+    "function formatInvoiceNumber(prefix: string, sequence: number): string {",
+    "return `${prefix}-${String(sequence).padStart(6, '0')}`;",
+    "return formatInvoiceNumber(this.prefix, Number(result.rows[0].n));"
+   ],
+   "minus": [
+    "return `${this.prefix}-${String(result.rows[0].n).padStart(6, '0')}`;"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/db/invoice-repository.ts"
+   ],
+   "addedContent": {}
+  },
+  "c011": {
+   "plus": [
+    "async listByCustomer(customerId: string): Promise<Order[]> {",
+    "const result = await this.pool.query(\"select body from orders where body->>'customerId' = $1\", [customerId]);",
+    "return result.rows.map(row => row.body as Order);"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/db/order-repository.ts"
+   ],
+   "addedContent": {}
+  },
+  "c012": {
+   "plus": [
+    "const found = await Promise.all(events.map(event => orders.get(event.orderId)));",
+    "export * from './order-events';",
+    "export async function replay(events: OrderPlaced[], orders: OrderRepository): Promise<Order[]> {",
+    "export interface OrderPlaced {",
+    "import type { Order } from './order';",
+    "import type { OrderRepository } from '../app';",
+    "readonly at: Date;",
+    "return found.filter((order): order is Order => order !== undefined);"
+   ],
+   "minus": [],
+   "added": [
+    "src/domain/order-events.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/index.ts"
+   ],
+   "addedContent": {
+    "src/domain/order-events.ts": [
+     "const found = await Promise.all(events.map(event => orders.get(event.orderId)));",
+     "export async function replay(events: OrderPlaced[], orders: OrderRepository): Promise<Order[]> {",
+     "export interface OrderPlaced {",
+     "import type { Order } from './order';",
+     "import type { OrderRepository } from '../app';",
+     "readonly at: Date;",
+     "return found.filter((order): order is Order => order !== undefined);"
+    ]
+   }
+  },
+  "c013": {
+   "plus": [
+    "await pool.end();",
+    "const pool = createPool(loadSettings().databaseUrl);",
+    "const result = await pool.query(\"delete from orders where body->>'status' = 'cancelled'\");",
+    "export async function purgeCancelledOrders(): Promise<number> {",
+    "import { createPool } from '../infra/db/pool';",
+    "import { loadSettings } from '../config/settings';",
+    "return result.rowCount ?? 0;",
+    "} finally {"
+   ],
+   "minus": [],
+   "added": [
+    "src/jobs/purge-orders.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "src/jobs/purge-orders.ts": [
+     "await pool.end();",
+     "const pool = createPool(loadSettings().databaseUrl);",
+     "const result = await pool.query(\"delete from orders where body->>'status' = 'cancelled'\");",
+     "export async function purgeCancelledOrders(): Promise<number> {",
+     "import { createPool } from '../infra/db/pool';",
+     "import { loadSettings } from '../config/settings';",
+     "return result.rowCount ?? 0;",
+     "} finally {"
+    ]
+   }
+  },
+  "c014": {
+   "plus": [
+    "export function isDebug(): boolean {",
+    "return process.env.LOG_LEVEL === 'debug';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/config/settings.ts"
+   ],
+   "addedContent": {}
+  },
+  "c015": {
+   "plus": [
+    "redisUrl: process.env['REDIS_URL'] ?? 'redis://localhost:6379',",
+    "redisUrl: string;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/config/settings.ts"
+   ],
+   "addedContent": {}
+  },
+  "c016": {
+   "plus": [
+    "await repository.save(placed);",
+    "const placed = placeOrder(order);",
+    "export async function placeAndStore(order: Order, repository: PgOrderRepository): Promise<Order> {",
+    "import type { PgOrderRepository } from '../infra/db/order-repository';",
+    "return placed;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c017": {
+   "plus": [
+    "const order = await repository.get(id);",
+    "export async function reloadOrder(repository: OrderRepository, id: string): Promise<Order> {",
+    "if (!order) throw new DomainError('order.missing', `order ${id} not found`);",
+    "import type { OrderRepository } from '../app/ports';",
+    "return order;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c018": {
+   "plus": [
+    "export * from './domain-error';",
+    "import { DomainError } from './domain-error';"
+   ],
+   "minus": [
+    "export * from './errors';",
+    "import { DomainError } from './errors';"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [
+    {
+     "from": "src/domain/errors.ts",
+     "to": "src/domain/domain-error.ts"
+    }
+   ],
+   "modified": [
+    "src/domain/customer.ts",
+    "src/domain/index.ts",
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c019": {
+   "plus": [
+    "export type { CustomerRepository, OrderRepository } from '../app/ports';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/index.ts"
+   ],
+   "addedContent": {}
+  },
+  "c020": {
+   "plus": [
+    "await orders.save(cancelOrder(order));",
+    "export async function cancelOrderUseCase(orders: OrderRepository, orderId: string): Promise<void> {",
+    "export function cancelOrder(order: Order): Order {",
+    "export { cancelOrderUseCase } from './cancel-order';",
+    "import type { OrderRepository } from './ports';",
+    "import { cancelOrder, DomainError } from '../domain';",
+    "return { ...order, status: 'cancelled' };"
+   ],
+   "minus": [],
+   "added": [
+    "src/app/cancel-order.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/index.ts",
+    "src/domain/order.ts"
+   ],
+   "addedContent": {
+    "src/app/cancel-order.ts": [
+     "await orders.save(cancelOrder(order));",
+     "export async function cancelOrderUseCase(orders: OrderRepository, orderId: string): Promise<void> {",
+     "import type { OrderRepository } from './ports';",
+     "import { cancelOrder, DomainError } from '../domain';"
+    ]
+   }
+  },
+  "c021": {
+   "plus": [
+    "// A mail failure is not retried here; the SMTP host comes from process.env through loadSettings()."
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c022": {
+   "plus": [
+    "if (order.lines.some(line => line.quantity <= 0)) {",
+    "throw new DomainError('order.quantity', 'every line needs a positive quantity');"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/place-order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c023": {
+   "plus": [
+    "await pool.end();",
+    "await pool.query('select 1');",
+    "const pool = createPool(databaseUrl);",
+    "export async function databaseReachable(databaseUrl: string): Promise<boolean> {",
+    "export { databaseReachable } from './health';",
+    "import { createPool } from '../infra/db/pool';",
+    "return false;",
+    "return true;",
+    "} catch {",
+    "} finally {"
+   ],
+   "minus": [],
+   "added": [
+    "src/app/health.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/index.ts"
+   ],
+   "addedContent": {
+    "src/app/health.ts": [
+     "await pool.end();",
+     "await pool.query('select 1');",
+     "const pool = createPool(databaseUrl);",
+     "export async function databaseReachable(databaseUrl: string): Promise<boolean> {",
+     "import { createPool } from '../infra/db/pool';",
+     "return false;",
+     "return true;",
+     "} catch {",
+     "} finally {"
+    ]
+   }
+  },
+  "c024": {
+   "plus": [
+    "// numeric columns arrive as strings; parse them as cents",
+    "import pg from \"pg\";",
+    "pg.types.setTypeParser(1700, value => Math.round(Number(value) * 100));"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/money.ts"
+   ],
+   "addedContent": {}
+  },
+  "c025": {
+   "plus": [
+    "export * from '../config/settings';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/index.ts"
+   ],
+   "addedContent": {}
+  },
+  "c026": {
+   "plus": [
+    "// Payment keys are not loaded here: the billing worker reads process.env.STRIPE_SECRET_KEY on its own."
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/config/settings.ts"
+   ],
+   "addedContent": {}
+  },
+  "c027": {
+   "plus": [
+    "export function raiseCreditLimit(customer: Customer, byCents: number): Customer {",
+    "if (byCents <= 0) throw new DomainError('customer.credit', 'the increase must be positive');",
+    "return { ...customer, creditLimitCents: customer.creditLimitCents + byCents };"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/customer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c028": {
+   "plus": [
+    "export const PAYMENT_TERMS_DAYS = 14;",
+    "export function invoiceFor(order: Order, number: string, dueDays = PAYMENT_TERMS_DAYS): Invoice {",
+    "import { PAYMENT_TERMS_DAYS } from '../app/issue-invoice';"
+   ],
+   "minus": [
+    "export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts",
+    "src/domain/invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c029": {
+   "plus": [
+    "export { PgCustomerRepository } from '../infra/db/customer-repository';",
+    "export { PgOrderRepository } from '../infra/db/order-repository';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/index.ts"
+   ],
+   "addedContent": {}
+  },
+  "c030": {
+   "plus": [
+    "await new SmtpNotifier('localhost', 'no-reply').invoiceIssued(customer, invoice);",
+    "const customer = { id: '-', name: to.name, email: to.email, creditLimitCents: 0 };",
+    "const { SmtpNotifier } = await import('../infra/mail/mailer');",
+    "export async function sendReminder(invoice: Invoice, to: { email: string; name: string }): Promise<void> {"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c031": {
+   "plus": [
+    "// Mail goes out through the Notifier port (SMTP lives in src/infra/mail/mailer.ts)."
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c032": {
+   "plus": [
+    "return new pg.Pool({ connectionString, max: Number(process.env.PG_POOL_MAX ?? 10) });"
+   ],
+   "minus": [
+    "return new pg.Pool({ connectionString, max: 10 });"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/db/pool.ts"
+   ],
+   "addedContent": {}
+  },
+  "c033": {
+   "plus": [
+    "save(order: Order): Promise<void>; // an upsert in the Postgres adapter (../infra/db/order-repository.ts)"
+   ],
+   "minus": [
+    "save(order: Order): Promise<void>;"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/ports.ts"
+   ],
+   "addedContent": {}
+  },
+  "c034": {
+   "plus": [
+    "export type { Pool, PoolClient } from 'pg';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/ports.ts"
+   ],
+   "addedContent": {}
+  },
+  "c035": {
+   "plus": [
+    "assert.equal(await new PgOrderRepository(pool).get('missing'), undefined);",
+    "const pool = { query: async () => ({ rows: [] }) } as unknown as pg.Pool;",
+    "import { PgOrderRepository } from '../src/infra/db/order-repository';",
+    "test('get returns undefined when no row matches', async () => {"
+   ],
+   "minus": [],
+   "added": [
+    "test/order-repository.test.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "test/order-repository.test.ts": [
+     "assert.equal(await new PgOrderRepository(pool).get('missing'), undefined);",
+     "const pool = { query: async () => ({ rows: [] }) } as unknown as pg.Pool;",
+     "import { PgOrderRepository } from '../src/infra/db/order-repository';",
+     "test('get returns undefined when no row matches', async () => {"
+    ]
+   }
+  },
+  "c036": {
+   "plus": [
+    "assert.equal(loadSettings().invoicePrefix, 'INV');",
+    "assert.equal(loadSettings().port, 8080);",
+    "import { loadSettings } from '../src/config/settings';",
+    "process.env.DATABASE_URL = 'postgres://localhost/ledger';",
+    "process.env.SMTP_HOST = 'localhost';",
+    "process.env.STRIPE_SECRET_KEY = 'unused-in-tests';",
+    "test('settings fall back to defaults', () => {"
+   ],
+   "minus": [],
+   "added": [
+    "test/settings.test.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "test/settings.test.ts": [
+     "assert.equal(loadSettings().invoicePrefix, 'INV');",
+     "assert.equal(loadSettings().port, 8080);",
+     "import { loadSettings } from '../src/config/settings';",
+     "process.env.DATABASE_URL = 'postgres://localhost/ledger';",
+     "process.env.SMTP_HOST = 'localhost';",
+     "process.env.STRIPE_SECRET_KEY = 'unused-in-tests';",
+     "test('settings fall back to defaults', () => {"
+    ]
+   }
+  },
+  "c037": {
+   "plus": [
+    "export function invoiceNumber(settings: Pick<Settings, 'invoicePrefix'>, sequence: number): string {",
+    "export { invoiceNumber } from './invoice-number';",
+    "import type { Settings } from '../config/settings';",
+    "return `${settings.invoicePrefix}-${String(sequence).padStart(6, '0')}`;"
+   ],
+   "minus": [],
+   "added": [
+    "src/app/invoice-number.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/index.ts"
+   ],
+   "addedContent": {
+    "src/app/invoice-number.ts": [
+     "export function invoiceNumber(settings: Pick<Settings, 'invoicePrefix'>, sequence: number): string {",
+     "import type { Settings } from '../config/settings';",
+     "return `${settings.invoicePrefix}-${String(sequence).padStart(6, '0')}`;"
+    ]
+   }
+  },
+  "c038": {
+   "plus": [
+    "export function testPool() {",
+    "import { createPool } from '../../src/infra/db/pool';",
+    "return createPool(process.env.TEST_DATABASE_URL ?? 'postgres://localhost/ledger_test');"
+   ],
+   "minus": [],
+   "added": [
+    "test/helpers/db.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "test/helpers/db.ts": [
+     "export function testPool() {",
+     "import { createPool } from '../../src/infra/db/pool';",
+     "return createPool(process.env.TEST_DATABASE_URL ?? 'postgres://localhost/ledger_test');"
+    ]
+   }
+  },
+  "c039": {
+   "plus": [
+    "const result = await createPool(databaseUrl).query(\"select 1 from customers where body->>'email' = $1\", [email]);",
+    "export async function emailTaken(databaseUrl: string, email: string): Promise<boolean> {",
+    "import { createPool } from '../infra/db/pool';",
+    "return result.rowCount !== 0;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/customer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c040": {
+   "plus": [
+    "export async function withinCreditLimit(order: Order, customers: CustomerRepository): Promise<boolean> {",
+    "import type { CustomerRepository } from '../app';",
+    "return customer !== undefined && orderTotal(order).cents <= customer.creditLimitCents;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c041": {
+   "plus": [
+    "// host and from are passed in by createServices, which gets them from process.env via loadSettings()."
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/mail/mailer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c042": {
+   "plus": [
+    "return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: Number(process.env.CREDIT_LIMIT_CENTS ?? 50_000) };"
+   ],
+   "minus": [
+    "return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/customer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c043": {
+   "plus": [
+    "if (req.method === 'GET' && req.url === '/health') {",
+    "res.writeHead(200, { 'content-type': 'text/plain' }).end('ok');"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/http/routes.ts"
+   ],
+   "addedContent": {}
+  },
+  "c044": {
+   "plus": [
+    "export function welcomeSender(): string {",
+    "import { loadSettings } from '../config/settings';",
+    "return loadSettings().smtpFrom;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/customer.ts"
+   ],
+   "addedContent": {}
+  },
+  "c045": {
+   "plus": [
+    "await client.connect();",
+    "await client.end();",
+    "const client = new pg.Client({ connectionString: databaseUrl });",
+    "const result = await client.query('select 1 from invoices where number = $1', [number]);",
+    "const { default: pg } = await import('pg');",
+    "export async function invoiceExists(databaseUrl: string, number: string): Promise<boolean> {",
+    "return result.rowCount !== 0;",
+    "} finally {"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c046": {
+   "plus": [
+    "const { loadSettings } = await import('../config/settings');",
+    "export async function invoiceReference(invoice: Invoice): Promise<string> {",
+    "return `${loadSettings().invoicePrefix}/${invoice.orderId}`;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c047": {
+   "plus": [
+    "export function totalOf(order: Order): Money {",
+    "if (totalOf(order).cents > customer.creditLimitCents) {",
+    "import { DomainError, placeOrder, totalOf } from '../domain';",
+    "import { totalOf, type Order } from './order';",
+    "return { number, orderId: order.id, amount: totalOf(order), dueDays };"
+   ],
+   "minus": [
+    "export function orderTotal(order: Order): Money {",
+    "if (orderTotal(order).cents > customer.creditLimitCents) {",
+    "import { DomainError, orderTotal, placeOrder } from '../domain';",
+    "import { orderTotal, type Order } from './order';",
+    "return { number, orderId: order.id, amount: orderTotal(order), dueDays };"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/place-order.ts",
+    "src/domain/invoice.ts",
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c048": {
+   "plus": [
+    "# Architecture",
+    "- `src/app`: use cases. They talk to storage and mail through the ports in `src/app/ports.ts`.",
+    "- `src/config`: reads the environment once, in `loadSettings()`.",
+    "- `src/domain`: orders, customers, invoices and money. Plain functions and types.",
+    "- `src/infra`: Postgres (`pg`) repositories, the SMTP mailer and the HTTP routes. `src/infra/index.ts` wires them.",
+    "A use case never builds a `PgOrderRepository` or calls `createPool` itself; `src/main.ts` does."
+   ],
+   "minus": [],
+   "added": [
+    "docs/architecture.md"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "docs/architecture.md": [
+     "# Architecture",
+     "- `src/app`: use cases. They talk to storage and mail through the ports in `src/app/ports.ts`.",
+     "- `src/config`: reads the environment once, in `loadSettings()`.",
+     "- `src/domain`: orders, customers, invoices and money. Plain functions and types.",
+     "- `src/infra`: Postgres (`pg`) repositories, the SMTP mailer and the HTTP routes. `src/infra/index.ts` wires them.",
+     "A use case never builds a `PgOrderRepository` or calls `createPool` itself; `src/main.ts` does."
+    ]
+   }
+  },
+  "c049": {
+   "plus": [
+    "export { createPool } from '../infra/db/pool';"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/index.ts"
+   ],
+   "addedContent": {}
+  },
+  "c050": {
+   "plus": [
+    "export function placeOrderWith(services: Services, orderId: string): Promise<void> {",
+    "import type { Services } from '../infra/index';",
+    "return placeOrderUseCase(services.orders, services.customers, orderId);"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/place-order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c051": {
+   "plus": [
+    "databaseUrl: requireSetting('DATABASE_URL', process.env.DATABASE_URL),",
+    "function requireSetting(name: string, value: string | undefined): string {",
+    "smtpHost: requireSetting('SMTP_HOST', process.env.SMTP_HOST),"
+   ],
+   "minus": [
+    "databaseUrl: required('DATABASE_URL', process.env.DATABASE_URL),",
+    "function required(name: string, value: string | undefined): string {",
+    "smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/config/settings.ts"
+   ],
+   "addedContent": {}
+  },
+  "c052": {
+   "plus": [
+    "...invoices.map(invoice => [invoice.number, invoice.orderId, (invoice.amount.cents / 100).toFixed(2)]),",
+    "['number', 'order', 'amount'],",
+    "const { toCsv } = await import('../infra/files/csv');",
+    "export async function invoicesCsv(invoices: readonly Invoice[]): Promise<string> {",
+    "export function toCsv(rows: readonly (readonly string[])[]): string {",
+    "import type { Invoice } from '../domain';",
+    "return rows.map(row => row.map(cell => `\"${cell.replace(/\"/g, '\"\"')}\"`).join(',')).join('\\n');",
+    "return toCsv(["
+   ],
+   "minus": [],
+   "added": [
+    "src/app/export-invoices.ts",
+    "src/infra/files/csv.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "src/app/export-invoices.ts": [
+     "...invoices.map(invoice => [invoice.number, invoice.orderId, (invoice.amount.cents / 100).toFixed(2)]),",
+     "['number', 'order', 'amount'],",
+     "const { toCsv } = await import('../infra/files/csv');",
+     "export async function invoicesCsv(invoices: readonly Invoice[]): Promise<string> {",
+     "import type { Invoice } from '../domain';",
+     "return toCsv(["
+    ],
+    "src/infra/files/csv.ts": [
+     "export function toCsv(rows: readonly (readonly string[])[]): string {",
+     "return rows.map(row => row.map(cell => `\"${cell.replace(/\"/g, '\"\"')}\"`).join(',')).join('\\n');"
+    ]
+   }
+  },
+  "c053": {
+   "plus": [
+    "await registerCustomerUseCase(services.customers, JSON.parse(Buffer.concat(chunks).toString('utf8')));",
+    "const chunks: Buffer[] = [];",
+    "for await (const chunk of req) chunks.push(chunk as Buffer);",
+    "if (req.method === 'POST' && req.url === '/customers') {",
+    "import { issueInvoiceUseCase, placeOrderUseCase, registerCustomerUseCase } from '../../app';",
+    "res.writeHead(201).end();"
+   ],
+   "minus": [
+    "import { issueInvoiceUseCase, placeOrderUseCase } from '../../app';"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/infra/http/routes.ts"
+   ],
+   "addedContent": {}
+  },
+  "c054": {
+   "plus": [
+    "export function loadFeatures(): Features {",
+    "export interface Features {",
+    "fastCheckout: boolean;",
+    "fastCheckout: process.env.FEATURE_FAST_CHECKOUT === '1',",
+    "pdfInvoices: boolean;",
+    "pdfInvoices: process.env.FEATURE_PDF_INVOICES === '1',"
+   ],
+   "minus": [],
+   "added": [
+    "src/config/features.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "src/config/features.ts": [
+     "export function loadFeatures(): Features {",
+     "export interface Features {",
+     "fastCheckout: boolean;",
+     "fastCheckout: process.env.FEATURE_FAST_CHECKOUT === '1',",
+     "pdfInvoices: boolean;",
+     "pdfInvoices: process.env.FEATURE_PDF_INVOICES === '1',"
+    ]
+   }
+  },
+  "c055": {
+   "plus": [
+    "export function invoiceNumber(settings: Pick<Settings, 'invoicePrefix'>, sequence: number): string {",
+    "import type { Settings } from '../config/settings';",
+    "return `${settings.invoicePrefix}-${String(sequence).padStart(6, '0')}`;"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c056": {
+   "plus": [
+    "await createPool(settings.databaseUrl).query('select 1');",
+    "const { createPool } = await import('./infra/db/pool');",
+    "if (process.argv.includes('--check-db')) {",
+    "process.exit(0);"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/main.ts"
+   ],
+   "addedContent": {}
+  },
+  "c057": {
+   "plus": [
+    "/** Orders are stored by PgOrderRepository in src/infra/db/order-repository.ts. */"
+   ],
+   "minus": [],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/order.ts"
+   ],
+   "addedContent": {}
+  },
+  "c058": {
+   "plus": [
+    "await invoices.save(invoice);",
+    "await notifier.invoiceIssued(customer, invoice);",
+    "const invoice = invoiceFor(order, await invoices.nextNumber());",
+    "const { orders, customers, invoices, notifier } = deps;"
+   ],
+   "minus": [
+    "await deps.invoices.save(invoice);",
+    "await deps.notifier.invoiceIssued(customer, invoice);",
+    "const customer = await deps.customers.get(order.customerId);",
+    "const invoice = invoiceFor(order, await deps.invoices.nextNumber());",
+    "const order = await deps.orders.get(orderId);"
+   ],
+   "added": [],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/app/issue-invoice.ts"
+   ],
+   "addedContent": {}
+  },
+  "c059": {
+   "plus": [
+    "const level = process.env.LOG_LEVEL ?? 'info';",
+    "export function logLevel(): LogLevel {",
+    "export type LogLevel = 'debug' | 'info' | 'warn';",
+    "return level === 'debug' || level === 'warn' ? level : 'info';"
+   ],
+   "minus": [],
+   "added": [
+    "src/config/log-level.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [],
+   "addedContent": {
+    "src/config/log-level.ts": [
+     "const level = process.env.LOG_LEVEL ?? 'info';",
+     "export function logLevel(): LogLevel {",
+     "export type LogLevel = 'debug' | 'info' | 'warn';",
+     "return level === 'debug' || level === 'warn' ? level : 'info';"
+    ]
+   }
+  },
+  "c060": {
+   "plus": [
+    "export * from './discount';",
+    "export function applyDiscount(amount: Money, percent: number): Money {",
+    "if (percent < 0 || percent > 100) throw new RangeError('percent must be between 0 and 100');",
+    "import { money, type Money } from './money';",
+    "return money(Math.round((amount.cents * (100 - percent)) / 100), amount.currency);"
+   ],
+   "minus": [],
+   "added": [
+    "src/domain/discount.ts"
+   ],
+   "deleted": [],
+   "renames": [],
+   "modified": [
+    "src/domain/index.ts"
+   ],
+   "addedContent": {
+    "src/domain/discount.ts": [
+     "export function applyDiscount(amount: Money, percent: number): Money {",
+     "if (percent < 0 || percent > 100) throw new RangeError('percent must be between 0 and 100');",
+     "import { money, type Money } from './money';",
+     "return money(Math.round((amount.cents * (100 - percent)) / 100), amount.currency);"
+    ]
+   }
+  }
+ }
+}
