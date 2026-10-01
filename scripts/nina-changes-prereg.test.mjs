@@ -12,6 +12,8 @@ import { checkAmendment } from './nina-changes-amendment.mjs';
 import { exp006NoteHref, renderHarnessSection, checkResults } from './jev-gate-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
 import { qualifyRow } from './nina-changes-amendment-note.mjs';
+import { checkResults6, qualifyHome6 } from './nina-changes-results-site.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 // EXP 006 WO-1-04 and WO-1-05: the pre-registration record, its validator, and its public pages.
 
@@ -128,16 +130,19 @@ test('the built site publishes the record byte for byte and carries the row and 
   assert.equal(sha256(readFileSync(join(dist, 'data/nina-changes/preregistration.json'))), digest);
   // The row as built: the pre-registration's row, qualified in place by EXP 006 amendment 01.
   const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(qualifyRow(renderJournalRow(record), amendment)));
+  // Once EXP 006's results are committed, the results renderer also switches the row's lead and the EXP 005 #exp006
+  // line to the measured status (linked to the results section).
+  const measured = checkResults6(), row = qualifyRow(renderJournalRow(record), amendment);
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(measured ? qualifyHome6(row, measured) : row));
   assert(existsSync(join(dist, `journal/${slug}.html`)));
-  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(`href="${exp006NoteHref}"`));
+  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(`href="${exp006NoteHref}${measured ? '#results' : ''}"`));
 });
 
 test('the EXP 006 note cannot scroll sideways at 375px or 320px (long tokens wrap)', () => {
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
-  const body = readFileSync(articlePath, 'utf8').split('<article class="article-body">')[1].split('</article>')[0].replace(/<pre[\s\S]*?<\/pre>/g, ' ');
-  const runs = body.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  const body = stripBlocks(readFileSync(articlePath, 'utf8').split('<article class="article-body">')[1].split('</article>')[0], ['pre'], ' ');
+  const runs = stripTags(body, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) {
     const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
     assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);

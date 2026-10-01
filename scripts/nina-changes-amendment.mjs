@@ -17,6 +17,7 @@ import { practiceItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { loadBaseLines } from '../experiments/nina-changes/base-lines.mjs';
 import { fingerprintItem } from '../experiments/nina-changes/fingerprints.mjs';
 import { REGISTERED_RULE, RULE } from '../experiments/nina-changes/diff-seen.mjs';
+import { AMENDMENT6_NOT_BEFORE } from '../experiments/nina-changes/freeze.mjs';
 import { LIMITS6 } from '../experiments/nina-changes/spend6.mjs';
 import { GIT_FORMS6, subCommands } from '../experiments/nina-changes/stream6.mjs';
 import { fixed7, localPath, PINNED, pinPath as preregPinPath, recordPath as preregPath, units } from './nina-changes-prereg.mjs';
@@ -56,13 +57,20 @@ const pct = (n, d) => `${(Math.round((n / d) * 1000) / 10).toFixed(1)}%`;
 
 /** The ledger lines, numbered from 1. */
 export const ledgerLines = (root = '.') => readFileSync(join(root, LEDGER), 'utf8').trim().split('\n').map((l, i) => ({ line: i + 1, ...JSON.parse(l) }));
+/**
+ * The ledger as it stood when this amendment was published: the ledger is append-only and keeps growing after it (the
+ * post-freeze practice re-check, the pre-run probe, the counted run), so once its not-before is frozen
+ * (freeze.mjs AMENDMENT6_NOT_BEFORE) the record is rebuilt from the lines before that time only. Before the freeze,
+ * every line.
+ */
+export const amendmentLedger = (root = '.', notBefore = AMENDMENT6_NOT_BEFORE) => ledgerLines(root).filter(l => !notBefore || Date.parse(l.ts) < Date.parse(notBefore));
 
 /** The record, built from the files under `root`. */
 export function buildAmendment(root = '.') {
   const read = file => readFileSync(join(root, file));
   const json = file => JSON.parse(read(file));
   const prereg = json(preregPath);
-  const ledger = ledgerLines(root);
+  const ledger = amendmentLedger(root);
   const lineFor = c => ledger.find(l => l.ts === c.endedAt && l.id === c.id && l.run === c.run);
   const records = Object.fromEntries(DRY_RUN.map(d => [d.name, json(d.file)]));
   const calls = DRY_RUN.flatMap(d => records[d.name].calls.map(c => ({ ...c, record: d.name })));

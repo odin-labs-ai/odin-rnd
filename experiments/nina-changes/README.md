@@ -23,6 +23,9 @@ Nothing here has made a paid call. The live probe (matrix v6) and the pre-regist
 | `results6.mjs` | The scorer: EXP 005's bar verbatim (its own `spotlightVerdict`), BLIND scored as an error, the manipulation check, diff-seen-only figures beside. |
 | `vendored-exp005.mjs` | Byte-identical copies of the EXP 005 private helpers EXP 006 needs (slice-tested against `fixtures/exp005-b2dbb1fd/`). |
 | `fixtures/fake-claude-stream.mjs`, `fixtures/synthetic6.mjs` | The stream-json fake and the synthetic tool calls (tests and the rehearsal only). |
+| `write-results6.mjs` | Bundle 3, not pinned: scores `results/reviewer.json` with the frozen `results6.mjs` and writes `results/results.json` plus `results/preflight.json` (the pre-flight copy the scorer bound); `--check` recomputes byte for byte (the build runs the same check). Refuses a fixture always, a rehearsal without `--rehearsal` (never into `results/`), a partial run without `--partial`. |
+| `rescrub-records6.mjs`, `results/scrubbed-records.json` | After the run, not pinned: re-scrubs the local account name (an `ls -la` owner column) out of `results/reviewer.json`, read at run time and never written down; the side record gives the original and new sha256, the rule, every changed field and the one digest that no longer reproduces. `--check` in the results-site test. |
+| `write-decision6.mjs` | Bundle 3, not pinned: the automatic spotlight decision. `held: false` only for bar PASS + manipulation PASS + `--refute-ship <id>`; otherwise `held: true`, naming what failed. Whether nina's entry shows is still decided only by the pinned `spotlight-gate.mjs`. |
 
 Layer 1 (the text rules) is best-effort; layer 2, the OS sandbox, is the boundary.
 
@@ -55,3 +58,17 @@ Layer 1 (the text rules) is best-effort; layer 2, the OS sandbox, is the boundar
 
   A `prerun-matrix` line without a `prereg6Sha256` counts as the pre-run probe of the CURRENT frozen
   pre-registration, so no second pre-run probe can be made (fail closed).
+
+## Writing the results (bundle 3, after the counted run)
+
+```sh
+node experiments/nina-changes/write-results6.mjs --preflight <the committed counted pre-flight record>
+node experiments/nina-changes/write-results6.mjs --check
+node experiments/nina-changes/write-decision6.mjs                          # held: true until a results refute SHIPs
+node experiments/nina-changes/write-decision6.mjs --refute-ship <report sha or id>
+```
+
+The run record goes in `results/reviewer.json` first. The build then recomputes the results, publishes `results.json`,
+`reviewer.json`, `preflight.json` and `spotlight-decision.json` under `site/data/nina-changes/`, adds the note's
+results section, and switches the home row and the EXP 005 `#exp006` line to the measured status. With no
+`results/results.json` it changes nothing.

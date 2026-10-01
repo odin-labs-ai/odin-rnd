@@ -21,6 +21,7 @@ import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { outFile as FINGERPRINTS_FILE } from '../experiments/nina-changes/fingerprints.mjs';
 import { amendedPins6, checkPinned6, checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { buildReviewerRun } from './nina-changes-built-reviewer.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const day = iso => `${iso.slice(8, 10)} ${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
@@ -127,9 +128,24 @@ test('the entry goes next after 002 Laya, and there is only ever one nina entry'
   assert.equal(renderSpotlightCard(checkResults()), '');
 });
 
-test('the live site renders no nina entry: no EXP 006 results exist yet (fresh build copy)', { timeout: 600_000 }, () => {
-  assert.deepEqual([gateOpen().shown, gateOpen().reason, loadEntryData().shown], [false, 'no results record', false]);
+test('the live site renders nina\'s entry exactly when the committed records open the pinned gate (fresh build copy)', { timeout: 600_000 }, () => {
+  // Three committed states: no results record (closed); results with a held decision (closed); results with the
+  // pre-registered held:false decision (open: the entry renders, from the records).
+  const R = 'experiments/nina-changes/results/';
+  const decision = existsSync(`${R}spotlight-decision.json`) ? JSON.parse(readFileSync(`${R}spotlight-decision.json`, 'utf8')) : null;
   const page = readFileSync(join(builtCopy(), 'dist', 'index.html'), 'utf8');
+  const g = gateOpen();
+  assert.equal(loadEntryData().shown, g.shown);
+  if (!existsSync(`${R}results.json`)) assert.deepEqual([g.shown, g.reason], [false, 'no results record']);
+  else if (decision?.held !== false) assert.deepEqual([g.shown, g.reason], [false, 'the gate is closed: bar, manipulation check, eligibility or held']);
+  else {
+    assert.equal(g.shown, true, g.reason);
+    assert(page.includes(renderNinaEntry(g, upstream)), 'the built home page carries the entry the gate opens, as rendered from the records');
+    const at = s => page.indexOf(s);
+    assert(at('<div class="project-number">002') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('<div class="project-number">003'), 'next after 002 Laya');
+    assert.equal(page.split(`id="${entryId}"`).length, 2, 'one nina entry');
+    return;
+  }
   assert(!page.includes(`id="${entryId}"`) && !page.includes('HARNESS</span>'));
 });
 
@@ -200,8 +216,10 @@ test('refute r4 B1: the gate opens only for a real, complete, counted EXP 006 me
   hidden('a reviewer record under another pre-registration', pass, { reviewer: { ...REVIEWER, prereg6Sha256: 'b'.repeat(64) } }, /another pre-registration/);
   hidden('no reviewer record', pass, { reviewer: null }, /no reviewer run record/);
   hidden('EXP 005\'s publication check fails', { ...pass, note: 'FIXTURE' }, {}, /not publishable/);
-  // The committed tree today: freeze.mjs is null and no results exist, so the live gate is closed.
-  assert.equal(gateOpen().shown, false);
+  // The committed tree: the live gate opens only with results and the pre-registered held:false decision (the live-site
+  // test covers each committed state).
+  const committed = 'experiments/nina-changes/results/spotlight-decision.json';
+  assert.equal(gateOpen().shown, existsSync(committed) && JSON.parse(readFileSync(committed, 'utf8')).held === false);
 });
 
 test('refute r5 B1: the bound reviewer record must be the complete counted EXP 006 reviewer run the results scored', () => {
@@ -258,7 +276,7 @@ test('refute r6 N2: each call must match the scored run in decision, harness fai
 test('refute r6 N1: no page renders the text undefined, NaN or a bare null (the new note, home, the EXP 005 note, every built page)', { timeout: 600_000 }, () => {
   // Prose that names null on purpose, verbatim: each is a sentence about a value, not a value rendered as text.
   const PROSE_NULL = ['it is null only while no baseline is recorded', 'stay null, as init writes them', 'costPer1kUsd is null for Laya'];
-  const text = html => html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, '\n').replace(/&[a-z#0-9]+;/gi, ' ');
+  const text = html => stripTags(stripBlocks(html, ['script', 'style'], ''), '\n').replace(/&[a-z#0-9]+;/gi, ' ');
   const pages = ['site/journal/nina-reviews-the-change.html', 'site/index.html', 'site/journal/jev-as-a-fast-gate.html'].map(f => [f, readFileSync(f, 'utf8')]);
   const dist = join(builtCopy(), 'dist');
   const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.html') ? [join(d, e.name)] : []));
@@ -271,4 +289,20 @@ test('refute r6 N1: no page renders the text undefined, NaN or a bare null (the 
     const bad = [...t.matchAll(/\b(undefined|NaN|null)\b/g)].map(m => t.slice(Math.max(0, m.index - 40), m.index + 20));
     assert.deepEqual(bad, [], `${f} renders a missing value as text`);
   }
+});
+
+test('results refute B1: the entry carries each item-level label beside its rate, "passes, not established at this N" verbatim', () => {
+  const NOT_ESTABLISHED = prereg6.bar.states.notEstablished;
+  assert.equal(NOT_ESTABLISHED, 'passes, not established at this N');
+  assert.match(prereg6.bar.labelPhrase, /carry that phrase verbatim/);
+  const md = pass.spotlight.criteria.find(x => x.id === 'missed-drift'), fr = pass.spotlight.criteria.find(x => x.id === 'false-reject');
+  assert.deepEqual([md.itemLevel.state, fr.itemLevel.state], [NOT_ESTABLISHED, prereg6.bar.states.passes], '0 of 30 items: not established at the 10% bar, passes at 25%');
+  const entry = renderNinaEntry(data(pass, open), upstream);
+  assert(entry.includes(`runs missed drift (${NOT_ESTABLISHED} on the items)`));
+  assert(entry.includes(`runs falsely rejected (${prereg6.bar.states.passes} on the items)`));
+  // When no criterion's label is "not established", the phrase is absent: the label comes from the record, not the markup.
+  const established = structuredClone(pass); established.spotlight.criteria.find(x => x.id === 'missed-drift').itemLevel.state = prereg6.bar.states.passes;
+  const plain = renderNinaEntry(data(established, open), upstream);
+  assert(!plain.includes(NOT_ESTABLISHED), 'no not-established phrase when no label says so');
+  assert(plain.includes(`runs missed drift (${prereg6.bar.states.passes} on the items)`));
 });

@@ -12,11 +12,13 @@ import { isRunnerDigest6, leakFields, lint6, lintRecord6, maskDigests6, publicRe
 import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { isGitCommand, keepsOutput, recordToolCalls, subCommands } from '../experiments/nina-changes/stream6.mjs';
-import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, ENCODED_TERM_LIMIT, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
+import { amendmentLedger, amendmentPath, amendmentPinPath, buildAmendment, ledgerLines, checkAmendment, ENCODED_TERM_LIMIT, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
 import { amendNote, qualifyRow, renderAmendmentSection, sectionId } from './nina-changes-amendment-note.mjs';
 import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
+import { checkResults6, qualifyHome6 } from './nina-changes-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 // EXP 006 amendment 01 (WO-1-09): A1 the record lint and digests, A2 the git call, A3-A4 the record, A5 the guard
 // (its tests sit with the guard's in nina-changes-units.test.mjs and nina-changes-spotlight.test.mjs), A6 the pages.
@@ -248,7 +250,7 @@ test('A6: the EXP 006 note carries the dated amendment section; the home row car
   assert.match(built, / · AMENDED 01 OCT 2026 · NOT YET RUN<\/p>/);
   assert(built.includes(`href="#${sectionId}">${amendment.siteQualifier.note.replaceAll("'", '&#39;')}</a>`));
   assert(built.includes(amendmentSha) && built.includes(PARENT.sha256));
-  assert(!/undefined|NaN|\bnull\b/.test(renderAmendmentSection(amendment, amendmentSha).replace(/<[^>]+>/g, ' ')), 'no undefined, NaN or bare null');
+  assert(!/undefined|NaN|\bnull\b/.test(stripTags(renderAmendmentSection(amendment, amendmentSha), ' ')), 'no undefined, NaN or bare null');
   assert.throws(() => amendNote(built, amendment, amendmentSha), /exactly once|already amended/);
   const row = qualifyRow(renderJournalRow(checkRecord().record), amendment);
   assert(row.includes(`href="journal/nina-reviews-the-change.html#${sectionId}"`));
@@ -258,8 +260,8 @@ test('A6: the EXP 006 note carries the dated amendment section; the home row car
 test('A6: the amended note cannot scroll sideways at 375px or 320px (long tokens wrap)', () => {
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
-  const section = renderAmendmentSection(amendment, amendmentSha).replace(/<pre[\s\S]*?<\/pre>/g, ' ');
-  const runs = section.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  const section = stripBlocks(renderAmendmentSection(amendment, amendmentSha), ['pre'], ' ');
+  const runs = stripTags(section, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) {
     const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
     assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);
@@ -272,6 +274,20 @@ test('A6: the built site publishes the amendment byte for byte, the amended note
   assert.equal(sha256(readFileSync(publishedPath)), amendmentSha, 'the committed site copy is the record');
   const note = readFileSync(join(dist, articlePath.slice('site/'.length)), 'utf8');
   assert(note.includes(renderAmendmentSection(amendment, amendmentSha)));
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(qualifyRow(renderJournalRow(checkRecord().record), amendment)));
+  // The qualified row; once EXP 006's results are committed, the results renderer also switches its lead to measured.
+  const row = qualifyRow(renderJournalRow(checkRecord().record), amendment), measured = checkResults6();
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(measured ? qualifyHome6(row, measured) : row));
   assert(existsSync(join(dist, 'data/nina-changes/preregistration.json')));
+});
+
+test('the amendment is rebuilt from the ledger as it stood at its not-before: later lines (re-check, pre-run probe, counted run) do not change it', () => {
+  const all = ledgerLines();
+  const before = amendmentLedger('.', AMENDMENT6_NOT_BEFORE);
+  if (AMENDMENT6_NOT_BEFORE) {
+    assert.ok(before.every(l => Date.parse(l.ts) < Date.parse(AMENDMENT6_NOT_BEFORE)));
+    assert.deepEqual(before, all.slice(0, before.length), 'a prefix of the append-only ledger');
+    assert.deepEqual(before.map(l => l.line), checkAmendment().record.spend.calls.map(c => c.line), 'exactly the lines the published amendment itemises');
+  }
+  assert.deepEqual(amendmentLedger('.', null), all, 'before the freeze: every line');
+  assert.deepEqual(amendmentLedger('.', '2000-01-01T00:00:00Z'), [], 'a not-before before every line keeps none');
 });

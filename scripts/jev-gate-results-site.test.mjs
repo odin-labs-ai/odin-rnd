@@ -10,6 +10,7 @@ import { ninaAttribution } from './jev-gate-prereg.mjs';
 import { amendNoteResults, checkResults, isCompound, spotlightShown, spotlightDecisionPath, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
 import { renderStations } from './station-render.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 const data = checkResults();
 const { results, facts } = data;
@@ -110,7 +111,14 @@ test('the spotlight is held: the bar met with its figures, no card, nothing feat
   assert.doesNotMatch(section, /harness we measured|featured card/i, 'Nothing promotional');
   const page = qualifyHomeResults(readFileSync('site/index.html', 'utf8'), data);
   assert(!page.includes('id="project-nina"') && !page.includes('HARNESS</span>'), 'The home page carries no nina card');
-  if (existsSync('dist/index.html')) assert(!readFileSync('dist/index.html', 'utf8').includes('id="project-nina"'), 'The built home page carries no nina card: pnpm build');
+  // The built page: no EXP 005 card. EXP 006's entry takes the same slot (005, id project-nina) once its own pinned gate
+  // opens (EXP 006 REVISION 5: one nina entry only), so the slot may hold that entry and nothing else.
+  if (existsSync('dist/index.html')) {
+    const built = readFileSync('dist/index.html', 'utf8');
+    assert(!built.includes('nina, the harness we measured'), 'The built home page carries no EXP 005 nina card: pnpm build');
+    assert(built.split('id="project-nina"').length <= 2, 'one nina entry at most');
+    if (built.includes('id="project-nina"')) assert(built.includes('nina: harness orchestration for Claude Code'), 'the only nina entry is EXP 006\'s');
+  }
 });
 
 test('the card needs BOTH a registered PASS and an explicit not-held decision', () => {
@@ -162,7 +170,7 @@ test('the built note: results and the harness first, the pre-registration text o
 test('the results and harness sections cannot scroll sideways at 375px or 320px', () => {
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
-  const runs = (renderResultsSection(data) + renderHarnessSection(data)).replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  const runs = stripTags(stripBlocks(renderResultsSection(data) + renderHarnessSection(data), ['pre'], ' '), ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) assert(runs.every(t => t.length <= Math.floor((width - 32) / 9)) || wraps, `An unbroken run is wider than ${width}px and nothing wraps it`);
 });
 

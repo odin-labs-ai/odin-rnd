@@ -18,8 +18,7 @@ import { checkAmendment02, amendment02Path, published02Path } from './jev-gate-a
 import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
 import { checkResults, resultsPath, publishedResultsPath, amendNoteResults, qualifyHomeResults } from './jev-gate-results-site.mjs';
 import { publishedPath as exp006PublishedPath, recordPath as exp006RecordPath } from './nina-changes-prereg.mjs';
-import { addJournalRow as addExp006Row, articlePath as exp006ArticlePath, assertNoteCurrent as assertExp006NoteCurrent } from './nina-changes-note.mjs';
-import { amendNote6, checkResults6, publishResults6, publishedDir as exp006DataDir, qualifyExp005Note, qualifyHome6 } from './nina-changes-results-site.mjs';
+import { addJournalRow as addExp006Row, assertNoteCurrent as assertExp006NoteCurrent } from './nina-changes-note.mjs';
 import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
@@ -43,9 +42,6 @@ if (results) copyFileSync(resultsPath, publishedResultsPath);
 const exp006 = assertExp006NoteCurrent();
 mkdirSync('site/data/nina-changes', { recursive: true });
 copyFileSync(exp006RecordPath, exp006PublishedPath);
-// EXP 006's results, once measured: recomputed from the committed run by the frozen scorer, then published byte for byte.
-const exp006Results = checkResults6();
-const exp006Published = exp006Results ? publishResults6() : [];
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
@@ -53,13 +49,9 @@ if (sha256(readFileSync('dist/data/jev-gate/amendment-01.json')) !== amendment.s
 if (sha256(readFileSync('dist/data/jev-gate/amendment-02.json')) !== amendment02.sha256) throw new Error('Published amendment 02 differs from '+amendment02Path);
 if (results && sha256(readFileSync('dist/data/jev-gate/results.json')) !== results.sha256) throw new Error('Published results differ from '+resultsPath);
 if (sha256(readFileSync(`dist/${exp006PublishedPath.slice('site/'.length)}`)) !== exp006.sha256) throw new Error('Published EXP 006 pre-registration differs from '+exp006RecordPath);
-for (const { file, sha256: want } of exp006Published) if (sha256(readFileSync(`dist/${exp006DataDir.slice('site/'.length)}/${file}`)) !== want) throw new Error('Published EXP 006 '+file+' differs from the committed record');
 // The built note is the parent's committed render plus each amendment's dated section, all from their records.
 const amendedNote = amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256);
-const measuredNote = results ? amendNoteResults(amendedNote, results) : amendedNote;
-writeFileSync(`dist/${articlePath.slice('site/'.length)}`, exp006Results ? qualifyExp005Note(measuredNote, exp006Results) : measuredNote);
-// The EXP 006 note: the pre-registration's committed render, plus the results section once measured.
-if (exp006Results) writeFileSync(`dist/${exp006ArticlePath.slice('site/'.length)}`, amendNote6(readFileSync(exp006ArticlePath, 'utf8'), exp006Results));
+writeFileSync(`dist/${articlePath.slice('site/'.length)}`, results ? amendNoteResults(amendedNote, results) : amendedNote);
 const intakeConfig = JSON.parse(readFileSync('site/data/intake-config.json','utf8'));
 if (Object.keys(intakeConfig).join(',') !== 'apiOrigin') throw new Error('Unexpected intake configuration');
 apiOrigin(intakeConfig.apiOrigin);
@@ -82,7 +74,6 @@ html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
 if (results) html = qualifyHomeResults(html, results);
 // EXP 006's field note leads the notes: its row, rendered from the record.
 html = addExp006Row(html, exp006.record);
-if (exp006Results) html = qualifyHome6(html, exp006Results);
 // nina's entry in the tools list: only on an EXP 006 PASS with an explicit held:false (nothing while no results exist).
 html = addNinaEntry(html, loadEntryData());
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
