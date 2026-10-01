@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DISCRIMINATING_NEGATIVES_VERBATIM, KAPPA_DISCLOSURE, KILL_CRITERIA_VERBATIM, NOT_PINNED, PINNED, WORDING_R2_7, checkRecord, derive, pinPath, publishedPath, recordPath, required, validateRecord } from './blueprint-floor-prereg.mjs';
-import { addJournalRow, articlePath, assertNoteCurrent, exp006RowAnchor, renderJournalRow, renderNote, resultWords, slug } from './blueprint-floor-note.mjs';
+import { addJournalRow, articlePath, assertNoteCurrent, exp006RowOpenings, renderJournalRow, renderNote, resultWords, slug } from './blueprint-floor-note.mjs';
 import { addJournalRow as addExp006Row } from './nina-changes-note.mjs';
 import { checkRecord as checkExp006 } from './nina-changes-prereg.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -92,12 +92,12 @@ test('the home row goes directly above EXP 006\'s, is rendered from the record, 
   const home = readFileSync('site/index.html', 'utf8');
   assert.throws(() => addJournalRow(home, record), /EXP 006 field-note row exactly once/, 'EXP 006\'s row is added first');
   const built = addJournalRow(addExp006Row(home, checkExp006().record), record);
-  const at = name => built.indexOf(`<a class="journal-row" href="journal/${name}.html">`);
+  const at = name => built.search(new RegExp(`<a class="journal-row" href="journal/${name}\\.html(?:#[^"]*)?">`));
   assert(at(slug) > 0 && at(slug) < at('nina-reviews-the-change') && at('nina-reviews-the-change') < at('jev-as-a-fast-gate'));
   assert(built.includes(renderJournalRow(record)));
   assert(!resultWords.test(renderJournalRow(record)));
   assert.throws(() => addJournalRow(built, record), /already there/);
-  assert.equal(built.split(exp006RowAnchor).length, 2);
+  assert.equal(exp006RowOpenings(built).length, 1);
 });
 
 test('the built site publishes the record byte for byte and carries the row and the note (fresh build copy)', LONG, () => {
@@ -126,4 +126,21 @@ test('refute r1: the kappa disclosure, the opaque-id inputs, the controls-contra
   const outside = note.replace(/<blockquote>[\s\S]*?<\/blockquote>/g, '');
   assert(!/STEER|COUNCIL-VERDICT/.test(outside), 'no internal jargon outside the quoted wording');
   assert(note.indexOf(record.spend.plain) < note.indexOf('<blockquote>'), 'the plain gloss comes first');
+});
+
+test('rebase onto EXP 006 amendment 01: the row anchors on EXP 006\'s row structure, so a rewritten EXP 006 row text or fragment still works', () => {
+  const ours = renderJournalRow(record);
+  const at = html => html.indexOf(ours);
+  const rowOf = (href, text) => `<a class="journal-row" href="${href}"><div><h3>EXP 006</h3><p>${text}</p></div></a>`;
+  for (const [href, text] of [['journal/nina-reviews-the-change.html', 'Pre-registered, not yet run.'], ['journal/nina-reviews-the-change.html#amendment-01', 'Pre-registered, not yet run. <span class="amendment-qualifier">Amended.</span>'], ['journal/nina-reviews-the-change.html#a-later-section', 'Entirely new wording from a later amendment.']]) {
+    const page = `<main>\n      ${rowOf(href, text)}\n      <a class="journal-row" href="journal/jev-as-a-fast-gate.html">x</a></main>`;
+    const built = addJournalRow(page, record);
+    assert(at(built) > 0 && at(built) < built.indexOf(`href="${href}"`), href);
+    assert.equal(built.split(ours).length, 2, 'exactly once');
+    assert.throws(() => addJournalRow(built, record), /already there/);
+  }
+  assert.throws(() => addJournalRow('<main>no EXP 006 row</main>', record), /exactly once/);
+  const home = readFileSync('site/index.html', 'utf8');
+  const built = addJournalRow(addExp006Row(home, checkExp006().record), record);
+  assert.match(built, new RegExp(`${ours.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n\\s*<a class="journal-row" href="journal/nina-reviews-the-change\\.html#`), 'directly above the amended EXP 006 row');
 });

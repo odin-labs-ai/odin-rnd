@@ -12,7 +12,12 @@ export const articlePath = `site/journal/${slug}.html`;
 export const dataPath = 'data/blueprint-floor/preregistration.json';
 export const noteNumber = '004';
 export const exp005Href = 'jev-as-a-fast-gate.html';
-export const exp006RowAnchor = '<a class="journal-row" href="journal/nina-reviews-the-change.html">';
+/**
+ * EXP 006's home row, found by its structure, not its text: the opening tag of the journal-row link to its note, with or
+ * without a #section fragment (EXP 006 amendment 01 points the row at its amendment section and qualifies the row text).
+ */
+export const exp006RowPattern = /<a class="journal-row" href="journal\/nina-reviews-the-change\.html(?:#[^"]*)?">/g;
+export const exp006RowOpenings = html => [...html.matchAll(exp006RowPattern)];
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const code = value => `<code>${escape(value)}</code>`;
 const list = items => `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
@@ -97,11 +102,13 @@ export const resultWords = /\b(results? show|wins?|won|beats?|outperform\w*|prov
 
 /** The built home page with the EXP 007 row inserted directly above EXP 006's row (the newest note leads). */
 export function addJournalRow(html, record) {
-  assert.equal(html.split(exp006RowAnchor).length, 2, 'the home page carries the EXP 006 field-note row exactly once (add it first)');
+  const openings = exp006RowOpenings(html);
+  assert.equal(openings.length, 1, 'the home page carries the EXP 006 field-note row exactly once (add it first)');
   assert(!html.includes(`href="journal/${slug}.html"><div class="journal-date">`), 'the EXP 007 row is already there');
   const row = renderJournalRow(record);
   assert(!resultWords.test(row), 'the EXP 007 row states a result');
-  return html.replace(exp006RowAnchor, `${row}\n      ${exp006RowAnchor}`);
+  const at = openings[0].index;
+  return `${html.slice(0, at)}${row}\n      ${html.slice(at)}`;
 }
 
 /** The committed note must be exactly the render of the committed record; the build calls this. */
