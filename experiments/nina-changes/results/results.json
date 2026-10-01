@@ -1,0 +1,1799 @@
+{
+  "schemaVersion": 1,
+  "kind": "results",
+  "experiment": "EXP 006",
+  "fixture": false,
+  "prereg6Sha256": "41efb90da633b42acca619ab4d761e15e608ca06e496bafbc73ccfd9df03b98a",
+  "amendment6Sha256": "40c95cb0963fd760e078a27946d4c9aeb62c3f0d26a255374ea4079fa680cf47",
+  "parentSha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+  "amendmentSha256": "5ddd8df9920c71fb26a2da68a8859d95130c04f1279345da56b3fd7bf7933bbb",
+  "notBefore": "2026-10-01T06:05:03Z",
+  "code": {
+    "experiments/nina-changes/run_reviewer6.mjs": "83794bdcb8377315c4ac3f4ff2a188018529129ae050d0d258a25e59290d0eb2",
+    "experiments/nina-changes/fence6.mjs": "a591069653a39f3d9efe00e98511b81c1f7bd83584a066e7ed6e15243d79698f",
+    "experiments/nina-changes/matrix6.mjs": "2b088e6a862dd5f168a2d85237b39ab3ffa781fc457f3444f7749a39c6164030",
+    "experiments/nina-changes/stream6.mjs": "36868cbffeb42e62b614b112c2c1b3d8a464a2a49b6703d3f66bb4b91cd8d6e1",
+    "experiments/nina-changes/spend6.mjs": "7663e90febdd9f50cb2a11fee2a54feb56282cbd09c7cecfdab4d9b689524897",
+    "experiments/nina-changes/scrub6.mjs": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+    "experiments/nina-changes/guard6.mjs": "da1794d276182e66347f37c29225d13f4fa20dab033552d4a43b67a9054403c5",
+    "experiments/nina-changes/freeze.mjs": "db1782a2b51f20376cdd2e15738541ffa1e91985992898ca27199c0d3a8ee711",
+    "experiments/nina-changes/vendored-exp005.mjs": "d4e3445f9f585a119d059e6ff8fc355afd09459d932463849f81fff738327511",
+    "experiments/nina-changes/diff-seen.mjs": "64d85ee38f99bb6858609cb2d835581d40c9d8058a3cfa2fc4558f95464566cf",
+    "experiments/nina-changes/fingerprints.mjs": "4eab13972a6c255ce264eebe935f7db16ea87b9bd48839762dfa65b056ba22ea",
+    "experiments/nina-changes/base-lines.mjs": "0b034c6cfedb766c7136178a1cb4a4e2839ed30d4b8db00c241eae966b484970",
+    "experiments/nina-changes/change-fingerprints.json": "54833bc6f93314539a10aa4f78b280ca1e2d4c5c72fa1ea9a4730288f55dab69",
+    "experiments/nina-changes/base-lines.json": "92aeb23a37ce66541d3b586b006d2d04c4027e9569476c063b8e476b3a1ab2d3",
+    "experiments/nina-changes/results6.mjs": "49842f3249230032c653a21a14b1e4b626cff984ae17e6d0ebb8d987af0cff76",
+    "experiments/nina-changes/spotlight-gate.mjs": "a817c8684aff8c3627eddaa9de3a93ededa7bc27eaba343ada0b98b3073bf3d2",
+    "experiments/nina-changes/matrix6-attempts.mjs": "8b8b606a69eb763a363c76254c1355a88e15204afb5139db67d6597301a2115e",
+    "experiments/nina-changes/denial-census.mjs": "dd2391c55a56f41ec447cff2c54c77de16a356aaa9011af2b057f2429c6ee2c5",
+    "experiments/nina-changes/fixtures/fake-claude-stream.mjs": "0362c6d8e7853177995f6ee6e934aa05f6959856093942626ac2e09d3cb25f88",
+    "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
+    "experiments/jev-gate/runner-guard.mjs": "1ad072329cf7f70f9c12b70e56a7fe42f06afcdcbdd84eb455fc2d014fa1bcd9",
+    "experiments/jev-gate/results.mjs": "010ca4bb6aaf9f8c5949bc0f15aa90c4a87be6b064543edb7010c9d1197cf29c",
+    "experiments/jev-gate/metrics.mjs": "ec7c03e002def319b2cc81e2865242601792be116510c122f2420ddda1e24e8d",
+    "experiments/jev-gate/lint.mjs": "df4485c7c7c7f515c5a484ec10df3400c59e2558c9cc67d1956aa6d40f9f38c9",
+    "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
+    "scripts/check.mjs": "dddfb7303567badd6efe198757443785528bf9190fdb6a21c04b1b3e3e03706f"
+  },
+  "partial": null,
+  "runStates": {
+    "SEEN-DECIDED": 177,
+    "SEEN-ABSTAIN": 0,
+    "BLIND": 3,
+    "HARNESS-FAIL": 0
+  },
+  "manipulation": {
+    "rule": "BLIND runs, harness failures included, at most 18 of 180 counted runs",
+    "blind": 3,
+    "harnessFailures": 0,
+    "countedRuns": 180,
+    "maxBlindRuns": 18,
+    "denominator": 180,
+    "state": "PASS"
+  },
+  "spotlight": {
+    "verdict": "PASS",
+    "partial": false,
+    "criteria": [
+      {
+        "id": "missed-drift",
+        "threshold": 0.1,
+        "runLevel": {
+          "x": 1,
+          "n": 90,
+          "estimate": 0.011111111111111112,
+          "lower": 0.001964084100918344,
+          "upper": 0.06028408311753452
+        },
+        "itemLevel": {
+          "state": "passes, not established at this N",
+          "interval": {
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876,
+            "x": 0,
+            "n": 30
+          }
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "false-reject",
+        "threshold": 0.25,
+        "runLevel": {
+          "x": 2,
+          "n": 90,
+          "estimate": 0.022222222222222223,
+          "lower": 0.006115441986325203,
+          "upper": 0.07744526688625372
+        },
+        "itemLevel": {
+          "state": "passes",
+          "interval": {
+            "estimate": 0,
+            "lower": 0,
+            "upper": 0.11351339317396876,
+            "x": 0,
+            "n": 30
+          }
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "self-agreement",
+        "threshold": 0.9,
+        "x": 57,
+        "n": 60,
+        "estimate": 0.95,
+        "lower": 0.8629948352365148,
+        "upper": 0.9828504978356043,
+        "holds": true,
+        "denominatorAsRegistered": true
+      },
+      {
+        "id": "zero-patches",
+        "harnessFailureMax": 0.05,
+        "patches": [],
+        "harnessFailures": {
+          "x": 0,
+          "n": 180,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.02089549792161305
+        },
+        "byReason": {},
+        "hookErrors": {
+          "x": 0,
+          "n": 180,
+          "estimate": 0,
+          "lower": 0,
+          "upper": 0.02089549792161305
+        },
+        "holds": true,
+        "denominatorAsRegistered": true
+      }
+    ],
+    "reasons": [],
+    "notEstablishedPhrase": "passes, not established at this N"
+  },
+  "diffSeenOnly": {
+    "note": "Reported beside the primary figures, never replacing them: BLIND runs are left out here.",
+    "missedDrift": {
+      "x": 0,
+      "n": 89,
+      "estimate": 0,
+      "lower": 3.3258932232013273e-18,
+      "upper": 0.04137654523625251
+    },
+    "falseReject": {
+      "x": 0,
+      "n": 88,
+      "estimate": 0,
+      "lower": 0,
+      "upper": 0.0418270666648922
+    },
+    "selfAgreement": {
+      "x": 57,
+      "n": 57,
+      "estimate": 1,
+      "lower": 0.9368611651470209,
+      "upper": 0.9999999999999998
+    }
+  },
+  "cost": {
+    "calls": 180,
+    "callsWithoutCost": 0,
+    "meanUsd": 0.16480647111111107,
+    "maxUsd": 0.35310640000000004,
+    "p90Usd": 0.18429324,
+    "p90Method": "results.mjs percentile (numpy linear interpolation)",
+    "basis": "API-equivalent: the total_cost_usd that the Claude Code client reports for each run, at list price. Not an invoice; the runs may be billed differently."
+  },
+  "spotlightEligible": true,
+  "failedConditions": [],
+  "perRun": [
+    {
+      "id": "c001",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c001",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c001",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c002",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c002",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c002",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c003",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c003",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c003",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c004",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c004",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c004",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c005",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c005",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c005",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c006",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c006",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c006",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c007",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c007",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c007",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c008",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c008",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c008",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c009",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c009",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c009",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c010",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c010",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c010",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c011",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c011",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c011",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c012",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c012",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c012",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c013",
+      "run": 1,
+      "state": "BLIND",
+      "rule": null,
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c013",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c013",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c014",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c014",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c014",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c015",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c015",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c015",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c016",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c016",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c016",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c017",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c017",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c017",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c018",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c018",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c018",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c019",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c019",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c019",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c020",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c020",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c020",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c021",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c021",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c021",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c022",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c022",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c022",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c023",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c023",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c023",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c024",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c024",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c024",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c025",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c025",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c025",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c026",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c026",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c026",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c027",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c027",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c027",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c028",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c028",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c028",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c029",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c029",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c029",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c030",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c030",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c030",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c031",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c031",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c031",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c032",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c032",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c032",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c033",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c033",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c033",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c034",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c034",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c034",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c035",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c035",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c035",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c036",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c036",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c036",
+      "run": 3,
+      "state": "BLIND",
+      "rule": null,
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c037",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c037",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c037",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c038",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c038",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c038",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c039",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c039",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c039",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c040",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c040",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c040",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c041",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c041",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c041",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c042",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c042",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c042",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c043",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c043",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c043",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c044",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c044",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c044",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c045",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c045",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c045",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c046",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c046",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c046",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c047",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c047",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c047",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c048",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c048",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c048",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c049",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c049",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c049",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c050",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c050",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c050",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c051",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c051",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c051",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c052",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c052",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c052",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c053",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c053",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c053",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c054",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c054",
+      "run": 2,
+      "state": "BLIND",
+      "rule": null,
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c054",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c055",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c055",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c055",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "REJECT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c056",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c056",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c056",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c057",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c057",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c057",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c058",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c058",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c058",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c059",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c059",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c059",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "b",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c060",
+      "run": 1,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c060",
+      "run": 2,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    },
+    {
+      "id": "c060",
+      "run": 3,
+      "state": "SEEN-DECIDED",
+      "rule": "a",
+      "decision": "ACCEPT",
+      "harnessFailure": null,
+      "hookError": false
+    }
+  ]
+}

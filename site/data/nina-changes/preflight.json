@@ -1,0 +1,27 @@
+{
+  "kind": "answer-key-preflight",
+  "mode": "counted",
+  "ok": true,
+  "scanned": [
+    "<tmp>",
+    "<tmp>",
+    "/private/var/tmp"
+  ],
+  "skipped": [
+    {
+      "base": "/private/var/folders",
+      "unreadableBuckets": 35,
+      "reason": "unreadable (root-owned); covered by the reviewer sandbox denyRead of /private/var/folders and /var/folders"
+    }
+  ],
+  "copies": [],
+  "vanished": 8,
+  "permissionSkipped": 42,
+  "durationMs": 2691947,
+  "override": null,
+  "startedAt": "2026-10-01T09:32:28.282Z",
+  "endedAt": "2026-10-01T10:18:03.664Z",
+  "runnersSha256": "eb9f2dcc32dfc1f504bfcf3611d1d29b7076cc5f6fb695fabe24016bfe6c886d",
+  "head": "c33b2a247462739cb52eb0a740f22641cbbe555f",
+  "sha256": "0a4edebdd491a64dcfd4ee22ca1ecd5c903eb69abe0ee714b472c5de2e3b2e57"
+}

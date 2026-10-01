@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "scrubbed-records",
+  "note": "The committed EXP 006 counted run record, re-scrubbed after the run (results refute N1): an ls -la output printed the local account name as its file owner, which the runner's write-time scrub (scrub6.mjs) does not collapse (it collapses paths). Only that name changed. originalSha256 is the record as the runner wrote it, the bytes the measured run produced; sha256 is the published record. The scorer reads the published record and every figure is unchanged.",
+  "rule": "the local account name (read at run time from the operating system's user record and $USER, never written down), as a whole word (not inside a longer run of letters, digits, '_' or '-', and not followed by a '.' that continues a name, as in a file name), in any string value of the record -> <user>",
+  "files": [
+    {
+      "path": "experiments/nina-changes/results/reviewer.json",
+      "originalSha256": "23e6adaff25b34fd9fae10eb67e8dc39f8c3c6a01decf0d47f3a03076a812ded",
+      "sha256": "6326e98d28f5840c3c65ec10bd611fbdbb56a1bfd80019589882955e889d8c76",
+      "replacements": 6,
+      "fields": [
+        {
+          "path": "calls.149.toolCalls.4.output",
+          "replacements": 6
+        }
+      ],
+      "digestsNoLongerReproduced": [
+        {
+          "path": "calls.149.toolCalls.4.outputSha256",
+          "call": "c050 run 3"
+        }
+      ]
+    }
+  ]
+}

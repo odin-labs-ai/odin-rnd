@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "spotlight-decision",
+  "resultsSha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c",
+  "reviewerSha256": "6326e98d28f5840c3c65ec10bd611fbdbb56a1bfd80019589882955e889d8c76",
+  "held": true,
+  "reason": "Held by the pre-registered rule: no independent results refute SHIP is named yet.",
+  "decidedOn": "2026-10-01",
+  "refute": null
+}

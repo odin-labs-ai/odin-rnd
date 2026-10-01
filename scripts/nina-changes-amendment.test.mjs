@@ -12,10 +12,11 @@ import { isRunnerDigest6, leakFields, lint6, lintRecord6, maskDigests6, publicRe
 import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { isGitCommand, keepsOutput, recordToolCalls, subCommands } from '../experiments/nina-changes/stream6.mjs';
-import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, ENCODED_TERM_LIMIT, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
+import { amendmentLedger, amendmentPath, amendmentPinPath, buildAmendment, ledgerLines, checkAmendment, ENCODED_TERM_LIMIT, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
 import { amendNote, qualifyRow, renderAmendmentSection, sectionId } from './nina-changes-amendment-note.mjs';
 import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
+import { checkResults6, qualifyHome6 } from './nina-changes-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
 
 // EXP 006 amendment 01 (WO-1-09): A1 the record lint and digests, A2 the git call, A3-A4 the record, A5 the guard
@@ -272,6 +273,20 @@ test('A6: the built site publishes the amendment byte for byte, the amended note
   assert.equal(sha256(readFileSync(publishedPath)), amendmentSha, 'the committed site copy is the record');
   const note = readFileSync(join(dist, articlePath.slice('site/'.length)), 'utf8');
   assert(note.includes(renderAmendmentSection(amendment, amendmentSha)));
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(qualifyRow(renderJournalRow(checkRecord().record), amendment)));
+  // The qualified row; once EXP 006's results are committed, the results renderer also switches its lead to measured.
+  const row = qualifyRow(renderJournalRow(checkRecord().record), amendment), measured = checkResults6();
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(measured ? qualifyHome6(row, measured) : row));
   assert(existsSync(join(dist, 'data/nina-changes/preregistration.json')));
+});
+
+test('the amendment is rebuilt from the ledger as it stood at its not-before: later lines (re-check, pre-run probe, counted run) do not change it', () => {
+  const all = ledgerLines();
+  const before = amendmentLedger('.', AMENDMENT6_NOT_BEFORE);
+  if (AMENDMENT6_NOT_BEFORE) {
+    assert.ok(before.every(l => Date.parse(l.ts) < Date.parse(AMENDMENT6_NOT_BEFORE)));
+    assert.deepEqual(before, all.slice(0, before.length), 'a prefix of the append-only ledger');
+    assert.deepEqual(before.map(l => l.line), checkAmendment().record.spend.calls.map(c => c.line), 'exactly the lines the published amendment itemises');
+  }
+  assert.deepEqual(amendmentLedger('.', null), all, 'before the freeze: every line');
+  assert.deepEqual(amendmentLedger('.', '2000-01-01T00:00:00Z'), [], 'a not-before before every line keeps none');
 });

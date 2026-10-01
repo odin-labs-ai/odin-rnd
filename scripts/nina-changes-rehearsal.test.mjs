@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { checkRecords, sha256 } from '../experiments/jev-gate/runner-guard.mjs';
 import { loadFingerprints, outFile as FINGERPRINTS_FILE } from '../experiments/nina-changes/fingerprints.mjs';
+import { AMENDMENT6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { assertPublishable6, computeResults6, translateHarnessFailure } from '../experiments/nina-changes/results6.mjs';
 import { FAKE_CLAUDE6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
@@ -64,7 +65,9 @@ test('rehearsal: 180 stream-json records → diff-seen → results6 → unpublis
 
     const result = computeResults6(args());
     assert.equal(result.rehearsal, true);
-    assert.deepEqual([run.amendment6Sha256, result.amendment6Sha256], [REHEARSAL_PINS.amendment6Sha256, REHEARSAL_PINS.amendment6Sha256], 'EXP 006 amendment 01 (A5): the run and the results carry the amendment sha');
+    // Before the freeze the rehearsal runs under its rehearsal pins; after it, under the frozen constants (guard6).
+    const a6 = AMENDMENT6_SHA256 ?? REHEARSAL_PINS.amendment6Sha256;
+    assert.deepEqual([run.amendment6Sha256, result.amendment6Sha256], [a6, a6], 'EXP 006 amendment 01 (A5): the run and the results carry the amendment sha');
     const otherAmendment = structuredClone(run); otherAmendment.amendment6Sha256 = 'c'.repeat(64);
     assert.throws(() => computeResults6(args({ run: otherAmendment })), /another EXP 006 amendment 01/);
     assert.equal(result.partial, null);
