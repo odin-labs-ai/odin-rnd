@@ -8,11 +8,12 @@ import { loadBaseLines } from '../experiments/nina-changes/base-lines.mjs';
 import { classifyDiffSeen } from '../experiments/nina-changes/diff-seen.mjs';
 import { fingerprintItem, loadFingerprints } from '../experiments/nina-changes/fingerprints.mjs';
 import { baseOnlyCalls, seenCalls, workspaceView } from '../experiments/nina-changes/fixtures/synthetic6.mjs';
-import { isDigestField6, leakFields, lint6, lintRecord6, maskDigests6, publicRecord6 } from '../experiments/nina-changes/scrub6.mjs';
+import { isRunnerDigest6, leakFields, lint6, lintRecord6, maskDigests6, publicRecord6 } from '../experiments/nina-changes/scrub6.mjs';
+import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { isGitCommand, keepsOutput, recordToolCalls, subCommands } from '../experiments/nina-changes/stream6.mjs';
 import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
 import { amendNote, qualifyRow, renderAmendmentSection, sectionId } from './nina-changes-amendment-note.mjs';
-import { articlePath, renderJournalRow } from './nina-changes-note.mjs';
+import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
 import { builtCopy } from './test-build.mjs';
 
@@ -23,50 +24,74 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const { record: amendment, sha256: amendmentSha } = checkAmendment();
 const bash = (command, output, over = {}) => ({ tool: 'Bash', input: { command }, isError: false, refused: false, parentToolUseId: null, output, ...over });
 
-// A digest that contains a restricted-term window, found at run time (check.mjs keeps the terms only as fingerprints,
-// so no such digest, and no term, is ever written into the repository).
+// A tool output whose sha256 contains a restricted-term window, found at run time (check.mjs keeps the terms only as
+// fingerprints, so no such digest, and no term, is ever written into the repository).
 const RESTRICTED = (() => {
   for (let i = 0; i < 2_000_000; i += 1) {
-    const d = sha256(`EXP 006 amendment 01 digest probe ${i}`);
+    const output = `EXP 006 amendment 01 digest probe ${i}\n`, d = sha256(output);
     if (!lint6(d).includes('a restricted term')) continue;
     for (const len of [4, 8, 9, 12, 13]) for (let at = 0; at + len <= 64; at += 1) {
       const w = d.slice(at, at + len);
-      if (lint6(w).includes('a restricted term')) return { digest: d, window: w };
+      if (lint6(w).includes('a restricted term')) return { output, digest: d, window: w };
     }
   }
   throw new Error('no digest with a restricted window found');
 })();
 
-// ------------------------------------------------------------------ A1: the record lint
+// ------------------------------------------------------------------ A1: the record lint (runner digests only)
 
-test('A1: a digest field that contains a restricted window passes; the same window elsewhere is still refused', () => {
-  const { digest: d, window: w } = RESTRICTED;
-  assert.ok(lint6(d).includes('a restricted term'), 'the probe digest carries a restricted window (the F1 condition)');
-  // The dry run's exact field, and the other digest fields a run record carries.
-  for (const rec of [{ toolCalls: [{ n: 4, outputSha256: d }] }, { resultSha256: d }, { hook: { sha256: d } }, { pins: { promptSha256: d } }, { code: { 'experiments/nina-changes/run_reviewer6.mjs': d } }]) {
-    assert.deepEqual(publicRecord6(rec, 't'), rec, JSON.stringify(Object.keys(rec)));
-    assert.deepEqual(leakFields(rec), []);
-    assert.deepEqual(lintRecord6(rec), []);
-  }
-  // Still refused: the window in prose, the digest under a key that is not a digest key, a digest-shaped value that is
-  // not exactly 64 lowercase hex, and a `code` map that is not the record's top-level one.
-  for (const rec of [{ result: `the reviewer wrote ${w} here` }, { output: d }, { outputSha256x: d }, { outputSha256: d.toUpperCase() }, { outputSha256: `${d}0` }, { outputSha256: ` ${d}` }, { x: { code: { f: d } } }, { toolCalls: [{ input: { command: `echo ${w}` } }] }]) {
-    assert.throws(() => publicRecord6(rec, 't'), /a restricted term/, JSON.stringify(rec).slice(0, 60));
-    assert.ok(leakFields(rec).length > 0, JSON.stringify(rec).slice(0, 60));
-  }
-  // A digest field is still linted for everything else a 64-hex value could carry (nothing, by its form).
-  assert.equal(isDigestField6(['toolCalls', '4', 'outputSha256'], d), true);
-  assert.equal(isDigestField6(['toolCalls', '4', 'output'], d), false);
-  assert.equal(isDigestField6(['code', 'a.mjs'], d), true);
-  assert.equal(isDigestField6(['x', 'code', 'a.mjs'], d), false);
-  assert.deepEqual(maskDigests6({ outputSha256: d, output: d }), { outputSha256: '<sha256>', output: d });
+test('A1: a genuine runner-computed outputSha256 that contains a restricted window passes (the F1 case)', () => {
+  const { output, digest: d } = RESTRICTED;
+  assert.ok(lint6(d).includes('a restricted term'), 'the digest carries a restricted window (the F1 condition)');
+  // The real record path: the stream's tool calls, recorded by recordToolCalls, digests from callDigests6.
+  const calls = [{ tool: 'Bash', input: { command: 'wc -l x' }, isError: false, refused: false, output: 'ok\n' }, { tool: 'Bash', input: { command: 'ls' }, isError: false, refused: false, output }];
+  const rec = { id: 'p06', run: 2, toolCalls: recordToolCalls(calls), result: 'fine', resultSha256: sha256('fine') };
+  assert.equal(rec.toolCalls[1].outputSha256, d);
+  assert.equal('output' in rec.toolCalls[1], false, 'a non-git call keeps no output text: only the digest is in the record');
+  const digests = callDigests6(calls, 'fine', null);
+  assert.deepEqual(publicRecord6(rec, 't', digests), rec);
+  assert.deepEqual(leakFields(rec, digests), []);
+  // Without the runner's digests it is refused, exactly as the dry run's p06 run 2 was.
+  assert.throws(() => publicRecord6(rec, 't'), /a restricted term/);
+  assert.deepEqual(leakFields(rec), ['toolCalls.1.outputSha256']);
+  // The header: a code sha the guard computed is exempt at its own path only.
+  assert.deepEqual(publicRecord6({ code: { 'a.mjs': d } }, 't', [[['code', 'a.mjs'], d]]), { code: { 'a.mjs': d } });
+  assert.throws(() => publicRecord6({ code: { 'b.mjs': d } }, 't', [[['code', 'a.mjs'], d]]), /a restricted term/, 'another path is not exempt');
 });
 
-test('A1: every other refusal still holds (home path, session uid, credential shapes), in and out of digest keys', () => {
+test('A1: a 64-hex value carrying a restricted term that the runner did not compute is refused, under a hash key or anywhere else', () => {
+  const { output, window: w } = RESTRICTED;
+  // The restricted term hex-encoded into exactly 64 lowercase hex characters (model-produced, not the runner's sha).
+  const forged = `${w}${'0'.repeat(64 - w.length)}`;
+  assert.match(forged, /^[0-9a-f]{64}$/);
+  const calls = [{ tool: 'Bash', input: { command: 'ls' }, isError: false, refused: false, output }];
+  const digests = callDigests6(calls, 'fine', null);
+  const forgedRec = { toolCalls: [{ ...recordToolCalls(calls)[0], outputSha256: forged }] };
+  assert.notEqual(forged, sha256(output));
+  assert.throws(() => publicRecord6(forgedRec, 't', digests), /a restricted term/, 'under outputSha256 but not equal to sha256(output)');
+  assert.deepEqual(leakFields(forgedRec, digests), ['toolCalls.0.outputSha256']);
+  for (const rec of [
+    { result: `the reviewer quoted ${forged}`, resultSha256: sha256(`the reviewer quoted ${forged}`) },
+    { result: forged },
+    { toolCalls: [{ tool: 'Bash', input: { command: `git show ${forged}` } }] },
+    { toolCalls: [{ tool: 'Read', output: forged }] },
+    { hook: { text: 'x', sha256: forged } },
+    { resultSha256: forged },
+  ]) {
+    assert.throws(() => publicRecord6(rec, 't', digests), /a restricted term/, JSON.stringify(rec).slice(0, 70));
+    assert.ok(leakFields(rec, digests).length > 0, JSON.stringify(rec).slice(0, 70));
+  }
+  // A runner digest pair is honoured only for exactly 64 lowercase hex and only for an equal value.
+  assert.equal(isRunnerDigest6(['resultSha256'], forged, [[['resultSha256'], forged.toUpperCase()]]), false);
+  assert.equal(isRunnerDigest6(['resultSha256'], forged, [[['resultSha256'], sha256('fine')]]), false);
+  assert.deepEqual(maskDigests6({ resultSha256: sha256('fine'), output: sha256('fine') }, [[['resultSha256'], sha256('fine')]]), { resultSha256: '<sha256>', output: sha256('fine') });
+});
+
+test('A1: every other refusal still holds (home path, session uid, credential shapes), runner digest or not', () => {
   const home = ['', 'Users', 'someone', 'x'].join('/'), uid = `claude-${'5'.repeat(3)}`;
   assert.ok(lintRecord6({ output: home }).some(f => /home path|private path/.test(f)), 'a home path (publicRecord6 scrubs it to ~ first)');
   assert.throws(() => publicRecord6({ output: `session ${uid}` }, 't'), /uid/);
-  assert.throws(() => publicRecord6({ outputSha256: uid }, 't'), /uid/, 'not a digest: linted in full');
+  assert.throws(() => publicRecord6({ outputSha256: uid }, 't', [[['outputSha256'], uid]]), /uid/, 'not 64 hex: never exempt');
   assert.deepEqual(leakFields({ a: 'clean', b: { c: [home, 'ok'] }, outputSha256: uid }), ['b.c.0', 'outputSha256']);
 });
 
@@ -199,9 +224,13 @@ test('A5: freeze.mjs carries the amendment constants, null until the re-freeze',
 
 // ------------------------------------------------------------------ A6: the pages
 
-test('A6: the built EXP 006 note carries the dated amendment section; the home row carries its line, linked #amendment-01', () => {
-  const note = readFileSync(articlePath, 'utf8');
-  const built = amendNote(note, amendment, amendmentSha);
+test('A6: the EXP 006 note carries the dated amendment section; the home row carries its line, linked #amendment-01', () => {
+  const { record: prereg, sha256: preregSha } = checkRecord();
+  assert.doesNotThrow(() => assertNoteCurrent(), 'the committed note is the amended render, and the site copy the record');
+  const built = readFileSync(articlePath, 'utf8');
+  assert.equal(built, amendNote(renderNote(prereg, preregSha), amendment, amendmentSha));
+  assert.equal(built, renderAmendedNote(prereg, preregSha, { record: amendment, sha256: amendmentSha }));
+  assert.equal(slug, 'nina-reviews-the-change');
   assert(built.includes(`<section id="${sectionId}" class="article-amendment">`));
   assert(built.includes(renderAmendmentSection(amendment, amendmentSha)));
   assert.match(built, / · AMENDED 01 OCT 2026 · NOT YET RUN<\/p>/);

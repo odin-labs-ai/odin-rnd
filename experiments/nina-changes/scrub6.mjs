@@ -3,13 +3,14 @@
 // run-dir prefix: any path ending in a run dir `…/nina-changes-reviewer-XXXXXX` collapses to <ws>, as EXP 005's rule 1
 // does for `jev-gate-reviewer-`. lint6 then refuses a record that still carries a home path, a macOS temp bucket, the
 // operator's session uid, or a restricted term (the fingerprints check.mjs keeps, read from its source, never copied).
-// EXP 006 amendment 01 (A1): a DIGEST FIELD is not scanned for restricted terms, because a random sha256 can contain
+// EXP 006 amendment 01 (A1): a RUNNER DIGEST is not scanned for restricted terms, because a random sha256 can contain
 // one of check.mjs's short fingerprint windows by chance (the dry run's p06 run 2 was refused for exactly that, in
-// toolCalls.4.outputSha256). A digest field is a value of exactly 64 lowercase hex characters under a key named
-// `sha256` or ending in `Sha256` (outputSha256, resultSha256, promptSha256, fingerprintsSha256, baseLinesSha256,
-// prereg6Sha256, parentSha256, amendmentSha256, amendment02Sha256, corpusSha256, hook.sha256, …), or a value of the
-// record's top-level `code` map (file -> sha256). Such a value can carry no path, uid or credential shape, and it is
-// still linted for those; everything else (keys, prose, outputs, a 64-hex value under any other key) is scanned as before.
+// toolCalls.4.outputSha256). The exemption is structural, never by key name: the runner hands publicRecord6 the
+// digests it computed itself from bytes it holds, as [path, sha256] pairs (runnerDigests). A field is exempt only if
+// it sits at exactly such a path AND its value equals the runner's own sha256 for it (exactly 64 lowercase hex). Any
+// other value, including a 64-hex string the model wrote (in a tool output, the result text, a tool input) or one
+// placed under a hash-named key without being the runner's recomputation, is scanned as before. An exempt value is
+// still linted for paths, the session uid and credential shapes (none can occur in 64 hex).
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -50,44 +51,50 @@ export function lint6(text, name = 'record', { restricted: scanRestricted = true
 }
 
 export const DIGEST6 = /^[0-9a-f]{64}$/;
-export const DIGEST_KEY6 = /^sha256$|Sha256$/;
-/** A digest field (amendment 01, A1): 64 hex under a sha256-named key, or a value of the top-level `code` map. */
-export const isDigestField6 = (path, value) => typeof value === 'string' && DIGEST6.test(value)
-  && (DIGEST_KEY6.test(String(path.at(-1) ?? '')) || (path.length === 2 && path[0] === 'code'));
-/** The record with every digest field replaced by a placeholder that holds no hex, for the whole-text lint. */
+const pathKey = path => JSON.stringify(path.map(String));
+/** The runner's digests as a lookup: path -> its own sha256 (pairs whose value is not exactly 64 hex are dropped). */
+const digestIndex = runnerDigests => new Map((runnerDigests ?? []).filter(([, h]) => typeof h === 'string' && DIGEST6.test(h)).map(([path, h]) => [pathKey(path), h]));
+/** Is the value at `path` a runner digest: the runner's own sha256 for exactly that path, and equal to it? */
+export const isRunnerDigest6 = (path, value, runnerDigests) => typeof value === 'string' && digestIndex(runnerDigests).get(pathKey(path)) === value;
+/** The record with every runner digest replaced by a placeholder that holds no hex, for the whole-text lint. */
 export const DIGEST_PLACEHOLDER6 = '<sha256>';
-export function maskDigests6(value, path = []) {
-  if (isDigestField6(path, value)) return DIGEST_PLACEHOLDER6;
-  if (Array.isArray(value)) return value.map((v, i) => maskDigests6(v, [...path, String(i)]));
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, maskDigests6(v, [...path, k])]));
-  return value;
+export function maskDigests6(value, runnerDigests = []) {
+  const index = digestIndex(runnerDigests);
+  const walk = (v, path) => {
+    if (typeof v === 'string' && index.get(pathKey(path)) === v) return DIGEST_PLACEHOLDER6;
+    if (Array.isArray(v)) return v.map((x, i) => walk(x, [...path, String(i)]));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, [...path, k])]));
+    return v;
+  };
+  return walk(value, []);
 }
-/** Every digest field's value, each linted without the restricted-term scan. */
-const digestValues = (value, path = []) => {
-  if (isDigestField6(path, value)) return [value];
-  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => digestValues(v, [...path, k]));
-  return [];
-};
 
-/** Findings for a whole record: the text lint on the record with its digest fields masked, and each digest's own lint. */
-export function lintRecord6(value, name = 'record') {
-  return [...lint6(JSON.stringify(maskDigests6(value), null, 2), name), ...digestValues(value).flatMap(d => lint6(d, name, { restricted: false }))];
+/** Findings for a whole record: the text lint with its runner digests masked, and each runner digest's own lint. */
+export function lintRecord6(value, name = 'record', runnerDigests = []) {
+  const index = digestIndex(runnerDigests), exempt = [];
+  const collect = (v, path) => {
+    if (typeof v === 'string' && index.get(pathKey(path)) === v) exempt.push(v);
+    else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) collect(x, [...path, k]);
+  };
+  collect(value, []);
+  return [...lint6(JSON.stringify(maskDigests6(value, runnerDigests), null, 2), name), ...exempt.flatMap(d => lint6(d, name, { restricted: false }))];
 }
 
 /** The JSON paths of the string fields that still leak (names only, never the text), for a refused record. */
-export function leakFields(value, path = '') {
+export function leakFields(value, runnerDigests = []) {
+  const index = digestIndex(runnerDigests);
   const walk = (v, parts) => {
-    if (typeof v === 'string') return (isDigestField6(parts, v) ? lint6(v, 'record', { restricted: false }) : lint6(v)).length ? [parts.join('.') || '(root)'] : [];
+    if (typeof v === 'string') return (index.get(pathKey(parts)) === v ? lint6(v, 'record', { restricted: false }) : lint6(v)).length ? [parts.join('.') || '(root)'] : [];
     if (v && typeof v === 'object') return Object.entries(v).flatMap(([k, x]) => walk(x, [...parts, k]));
     return [];
   };
-  return walk(value, path ? path.split('.') : []);
+  return walk(value, []);
 }
 
-/** Scrub, lint, and refuse to return a record that still leaks. */
-export function publicRecord6(value, name) {
+/** Scrub, lint (runnerDigests: the runner's own [path, sha256] pairs, A1), and refuse to return a record that still leaks. */
+export function publicRecord6(value, name, runnerDigests = []) {
   const scrubbed = scrubRecord6(value);
-  const findings = lintRecord6(scrubbed, name);
+  const findings = lintRecord6(scrubbed, name, runnerDigests);
   if (findings.length) throw new Error(`${name}: refusing to write a record that leaks: ${[...new Set(findings)].slice(0, 5).join('; ')}`);
   return scrubbed;
 }

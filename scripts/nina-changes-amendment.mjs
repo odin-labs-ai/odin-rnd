@@ -17,7 +17,6 @@ import { practiceItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { loadBaseLines } from '../experiments/nina-changes/base-lines.mjs';
 import { fingerprintItem } from '../experiments/nina-changes/fingerprints.mjs';
 import { REGISTERED_RULE, RULE } from '../experiments/nina-changes/diff-seen.mjs';
-import { DIGEST_KEY6 } from '../experiments/nina-changes/scrub6.mjs';
 import { LIMITS6 } from '../experiments/nina-changes/spend6.mjs';
 import { GIT_FORMS6, subCommands } from '../experiments/nina-changes/stream6.mjs';
 import { fixed7, localPath, PINNED, pinPath as preregPinPath, recordPath as preregPath, units } from './nina-changes-prereg.mjs';
@@ -36,13 +35,13 @@ export const LEDGER = `${N}/spend-ledger.jsonl`;
 export const PROBE_OF_RECORD = `${N}/probes/matrix-v6-fence6-3.json`;
 /** Why each pre-registered file this amendment re-pins changed. A re-pinned file without a reason here is refused. */
 export const PIN_REASONS = {
-  [`${N}/scrub6.mjs`]: 'A1: the write-time lint no longer scans a digest field (64 hex under a sha256-named key, or a value of the record\'s code map) for restricted terms; everything else is linted as before',
+  [`${N}/scrub6.mjs`]: 'A1: the write-time lint does not scan a runner digest for restricted terms: a field at a path the runner names, whose value equals the sha256 the runner computed itself for it; every other value is linted as before',
   [`${N}/stream6.mjs`]: 'A2: a git call is also a Bash call in which any sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git form; such a call\'s output is kept',
   [`${N}/diff-seen.mjs`]: 'A2: the classifier uses the amended git call; its rule text is amended (RULE) and the registered text is kept verbatim (REGISTERED_RULE); rules (a) and (b) are otherwise unchanged',
   [`${N}/guard6.mjs`]: 'A5: a counted run also needs this amendment: its sha256 frozen as AMENDMENT6_SHA256, every pin as re-pinned here, and a start after AMENDMENT6_NOT_BEFORE',
   [`${N}/results6.mjs`]: 'A5: the scorer checks the run\'s amendment6Sha256 against the stamp (and the frozen AMENDMENT6_SHA256), uses the amendment\'s not-before, and carries the sha in the results record',
   [`${N}/spotlight-gate.mjs`]: 'A5: the gate also requires the results\' amendment6Sha256 to equal the frozen AMENDMENT6_SHA256 and the reviewer run record to name the same one; the predicate and every other check are unchanged',
-  [`${N}/run_reviewer6.mjs`]: 'A5: the run record carries the guard\'s amendment6Sha256; the argv builder is unchanged',
+  [`${N}/run_reviewer6.mjs`]: 'A1: the record builder hands the lint the digests it computed itself (callDigests6, headerDigests6); A5: the run record carries the guard\'s amendment6Sha256; the argv builder is unchanged',
 };
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -153,9 +152,11 @@ export function buildAmendment(root = '.') {
     changes: {
       lint: {
         id: 'A1', file: `${N}/scrub6.mjs`,
-        rule: 'A digest field is not scanned for restricted terms: a value of exactly 64 lowercase hex characters under a key named sha256 or ending in Sha256, or a value of the record\'s top-level code map (file to sha256). The record is linted with every digest field masked, and each digest value is still linted for paths, the session uid and credential shapes. Everything else is scanned as before: keys, prose, tool outputs, and a 64-hex value under any other key.',
-        digestKeyPattern: DIGEST_KEY6.source,
-        digestFields: ['toolCalls.N.outputSha256', 'resultSha256', 'hook.sha256', 'pins.promptSha256', 'pins.fingerprintsSha256', 'pins.baseLinesSha256', 'prereg6Sha256', 'amendment6Sha256', 'parentSha256', 'amendmentSha256', 'amendment02Sha256', 'corpusSha256', 'code.<file>'],
+        rule: 'Only a runner digest is exempt from the restricted-term scan: a digest the runner computed itself, at write time, from bytes it holds. The runner passes the write-time lint a list of (path, sha256) pairs it computed; a field is exempt only if it sits at exactly one of those paths AND its value equals the runner\'s own sha256 for that path (exactly 64 lowercase hex characters). The exemption is never by key name and never taken from a record or from model text: a 64-hex value the model produced (in a tool output, the result text or a tool input), or one placed under a hash-named key without being the runner\'s recomputation, is scanned like any other value. The record is linted with its runner digests masked, and each runner digest is still linted for paths, the session uid and credential shapes. Everything else (keys, prose, tool outputs, tool inputs) is scanned as before.',
+        runnerDigests: {
+          perCall: 'toolCalls.N.outputSha256 = sha256 of call N\'s scrubbed output; resultSha256 = sha256 of the result text; hook.sha256 = sha256 of the hook text the record keeps (run_reviewer6.mjs callDigests6, from the parsed stream the runner holds)',
+          header: 'parentSha256, amendmentSha256, amendment02Sha256, prereg6Sha256, amendment6Sha256, corpusSha256 and code.<file> from the guard\'s own hashes of the files it read; pins.promptSha256, pins.fingerprintsSha256, pins.baseLinesSha256 from the prompt and files (run_reviewer6.mjs headerDigests6)',
+        },
       },
       gitCall: {
         id: 'A2', files: [`${N}/stream6.mjs`, `${N}/diff-seen.mjs`],
@@ -212,12 +213,12 @@ export function buildAmendment(root = '.') {
       'The two dry-run runs counted BLIND kept no tool output (that was the defect), so they are not re-classified here; the amended rule is shown on synthetic outputs built from the same two commands and a real p01 and p02 diff, and the base-only and synthetic-seen checks over all 60 items still hold.',
       'A git command reached only through a newline, a lone &, $(…) or backticks is not split out, so such a call is not a git call and a run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight.',
       'A git call\'s whole scrubbed output is kept, including the output of its other parts (the dry run\'s cat of rules.txt): it is scrubbed and linted like every other kept output, and the rules.txt text is EXP 005\'s public rules file.',
-      'A digest field is recognised by its key and its exact form only; a 64-hex value under any other key is still scanned, so a chance match there would still refuse a record.',
+      'Only the runner\'s own digests are exempt; a 64-hex value anywhere else (a commit id in a tool output, a hash the model quoted) is still scanned, so a chance match there would still refuse a record and stop the run.',
       'The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call.',
     ],
     siteQualifier: {
-      rule: 'The build adds these lines, from this record, to the EXP 006 field note and to its row on the home page, linked to this amendment\'s section (#amendment-01).',
-      note: `${statusText}: the record lint no longer mistakes a digest for a restricted term, a compound git call now counts as a git call, and the client's built-in reads are disclosed.`,
+      rule: 'These lines, from this record, are added to the EXP 006 field note (committed as the pre-registration\'s render amended by this record) and to its row on the home page (linked to this amendment\'s section, #amendment-01).',
+      note: `${statusText}: the record lint no longer mistakes the runner's own digests for a restricted term, a compound git call now counts as a git call, and the client's built-in reads are disclosed.`,
       row: `${statusText}.`,
       meta: `${statusText}.`,
     },

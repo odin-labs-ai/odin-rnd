@@ -1,9 +1,12 @@
 // Renders EXP 006 amendment 01 onto the public pages: a dated line in the EXP 006 row of the home page, and a dated
 // amendment section in the EXP 006 field note. Both come from experiments/nina-changes/amendment-01.json; nothing
-// here is typed by hand. The note is committed byte-identical to the pre-registration's render, so the section is
-// added to the built copy of the note, and the build asserts the result.
+// here is typed by hand. scripts/nina-changes-note.mjs applies them: the committed note is the pre-registration's
+// render amended by amendNote below (so scripts/build.mjs, a witness generator input, is unchanged), and the home row
+// is qualified when the build inserts it.
 import assert from 'node:assert/strict';
-import { slug } from './nina-changes-note.mjs';
+
+// The EXP 006 note's slug (scripts/nina-changes-note.mjs, which imports this module; a test asserts they agree).
+export const slug = 'nina-reviews-the-change';
 
 export const amendmentDataPath = 'data/nina-changes/amendment-01.json';
 export const sectionId = 'amendment-01';
@@ -46,7 +49,7 @@ ${list([
 ${list(amendment.unchanged.map(escape))}
 <h3>What the amendment adds to the limits</h3>
 ${list(amendment.limits.map(escape))}
-<p>This section is rendered from <a href="../${amendmentDataPath}"><code>amendment-01.json</code></a>, the committed record at ${code('experiments/nina-changes/amendment-01.json')}, whose sha256 is ${code(amendmentSha256)}. It names its parent by sha256 ${code(amendment.parent.sha256)}. The build validates the record, publishes it byte for byte and writes this section from it; a repository test re-renders the section from the record.</p>
+<p>This section is rendered from <a href="../${amendmentDataPath}"><code>amendment-01.json</code></a>, the committed record at ${code('experiments/nina-changes/amendment-01.json')}, whose sha256 is ${code(amendmentSha256)}. It names its parent by sha256 ${code(amendment.parent.sha256)}. The build validates the record and this page against it and publishes both byte for byte; a repository test re-renders the page from the two records and fails if they differ.</p>
 </section>
 `;
 }

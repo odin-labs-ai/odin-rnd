@@ -8,8 +8,11 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkRecord } from './nina-changes-prereg.mjs';
+import { checkAmendment, amendmentPath, publishedPath as amendmentPublishedPath } from './nina-changes-amendment.mjs';
+import { amendNote, qualifyRow, slug as amendmentNoteSlug } from './nina-changes-amendment-note.mjs';
 
 export const slug = 'nina-reviews-the-change';
+assert.equal(amendmentNoteSlug, slug, 'the amendment renderer names this note');
 export const articlePath = `site/journal/${slug}.html`;
 export const dataPath = 'data/nina-changes/preregistration.json';
 export const noteNumber = '003';
@@ -89,26 +92,39 @@ export function renderJournalRow(record) {
 }
 export const resultWords = /\b(results? show|wins?|won|beats?|outperform\w*|proven|passe[sd])\b/i;
 
-/** The built home page with the EXP 006 row as the first field note. */
-export function addJournalRow(html, record) {
+/**
+ * The built home page with the EXP 006 row as the first field note, qualified by EXP 006 amendment 01 (its line in the
+ * row, the row linked to the amendment's section). `amendment` defaults to the committed, validated record.
+ */
+export function addJournalRow(html, record, amendment = checkAmendment().record) {
   const anchor = '<a class="journal-row" href="journal/jev-as-a-fast-gate.html">';
   assert.equal(html.split(anchor).length, 2, 'the home page carries the EXP 005 field-note row exactly once');
-  assert(!html.includes(`href="journal/${slug}.html"><div class="journal-date">`), 'the EXP 006 row is already there');
-  const row = renderJournalRow(record);
+  assert(!html.includes(`<a class="journal-row" href="journal/${slug}.html`), 'the EXP 006 row is already there');
+  const row = qualifyRow(renderJournalRow(record), amendment);
   assert(!resultWords.test(row), 'the EXP 006 row states a result');
   return html.replace(anchor, `${row}\n      ${anchor}`);
 }
 
-/** The committed note must be exactly the render of the committed record; the build calls this. */
+/** The note as committed: the render of the pre-registration, amended by EXP 006 amendment 01. */
+export const renderAmendedNote = (record, sha256, amendment) => amendNote(renderNote(record, sha256), amendment.record, amendment.sha256);
+
+/**
+ * The committed note must be exactly the render of the committed pre-registration amended by the committed
+ * amendment, and the site's copy of the amendment its bytes (the build publishes site/ as is); the build calls this.
+ */
 export function assertNoteCurrent(root = '.') {
   const { record, sha256 } = checkRecord(root);
-  assert.equal(readFileSync(`${root}/${articlePath}`, 'utf8'), renderNote(record, sha256), `${articlePath} differs from the pre-registration: run node scripts/nina-changes-note.mjs --write`);
-  return { record, sha256 };
+  const amendment = checkAmendment(root);
+  assert.equal(readFileSync(`${root}/${articlePath}`, 'utf8'), renderAmendedNote(record, sha256, amendment), `${articlePath} differs from the pre-registration and its amendment: run node scripts/nina-changes-note.mjs --write`);
+  assert(readFileSync(`${root}/${amendmentPublishedPath}`).equals(amendment.bytes), `${amendmentPublishedPath} is not ${amendmentPath}, byte for byte: run node scripts/nina-changes-note.mjs --write`);
+  return { record, sha256, amendment };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv[2] !== '--write') { console.error('usage: node scripts/nina-changes-note.mjs --write'); process.exit(2); }
   const { record, sha256 } = checkRecord();
-  writeFileSync(articlePath, renderNote(record, sha256));
-  console.log(`Wrote ${articlePath} from the pre-registration (${sha256}).`);
+  const amendment = checkAmendment();
+  writeFileSync(articlePath, renderAmendedNote(record, sha256, amendment));
+  writeFileSync(amendmentPublishedPath, amendment.bytes);
+  console.log(`Wrote ${articlePath} from the pre-registration (${sha256}) and amendment 01 (${amendment.sha256}), and ${amendmentPublishedPath}.`);
 }

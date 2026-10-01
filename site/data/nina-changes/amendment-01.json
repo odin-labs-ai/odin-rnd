@@ -159,23 +159,11 @@
     "lint": {
       "id": "A1",
       "file": "experiments/nina-changes/scrub6.mjs",
-      "rule": "A digest field is not scanned for restricted terms: a value of exactly 64 lowercase hex characters under a key named sha256 or ending in Sha256, or a value of the record's top-level code map (file to sha256). The record is linted with every digest field masked, and each digest value is still linted for paths, the session uid and credential shapes. Everything else is scanned as before: keys, prose, tool outputs, and a 64-hex value under any other key.",
-      "digestKeyPattern": "^sha256$|Sha256$",
-      "digestFields": [
-        "toolCalls.N.outputSha256",
-        "resultSha256",
-        "hook.sha256",
-        "pins.promptSha256",
-        "pins.fingerprintsSha256",
-        "pins.baseLinesSha256",
-        "prereg6Sha256",
-        "amendment6Sha256",
-        "parentSha256",
-        "amendmentSha256",
-        "amendment02Sha256",
-        "corpusSha256",
-        "code.<file>"
-      ]
+      "rule": "Only a runner digest is exempt from the restricted-term scan: a digest the runner computed itself, at write time, from bytes it holds. The runner passes the write-time lint a list of (path, sha256) pairs it computed; a field is exempt only if it sits at exactly one of those paths AND its value equals the runner's own sha256 for that path (exactly 64 lowercase hex characters). The exemption is never by key name and never taken from a record or from model text: a 64-hex value the model produced (in a tool output, the result text or a tool input), or one placed under a hash-named key without being the runner's recomputation, is scanned like any other value. The record is linted with its runner digests masked, and each runner digest is still linted for paths, the session uid and credential shapes. Everything else (keys, prose, tool outputs, tool inputs) is scanned as before.",
+      "runnerDigests": {
+        "perCall": "toolCalls.N.outputSha256 = sha256 of call N's scrubbed output; resultSha256 = sha256 of the result text; hook.sha256 = sha256 of the hook text the record keeps (run_reviewer6.mjs callDigests6, from the parsed stream the runner holds)",
+        "header": "parentSha256, amendmentSha256, amendment02Sha256, prereg6Sha256, amendment6Sha256, corpusSha256 and code.<file> from the guard's own hashes of the files it read; pins.promptSha256, pins.fingerprintsSha256, pins.baseLinesSha256 from the prompt and files (run_reviewer6.mjs headerDigests6)"
+      }
     },
     "gitCall": {
       "id": "A2",
@@ -241,8 +229,8 @@
   "pins": {
     "experiments/nina-changes/run_reviewer6.mjs": {
       "from": "13cc7b59de017530194c258e9c47fc3b59d268399d1d5b1da59298dbbdcecf5c",
-      "to": "767b45ab8aae183b88a97db950d78ad8c2df9deceea4fc728f95aaad6132ccc5",
-      "reason": "A5: the run record carries the guard's amendment6Sha256; the argv builder is unchanged"
+      "to": "83794bdcb8377315c4ac3f4ff2a188018529129ae050d0d258a25e59290d0eb2",
+      "reason": "A1: the record builder hands the lint the digests it computed itself (callDigests6, headerDigests6); A5: the run record carries the guard's amendment6Sha256; the argv builder is unchanged"
     },
     "experiments/nina-changes/stream6.mjs": {
       "from": "09e55aab57aa276f7b6ae1d245ac45bf41cfd2b095e32fd692860bf4b7b250e1",
@@ -251,8 +239,8 @@
     },
     "experiments/nina-changes/scrub6.mjs": {
       "from": "d38b4efce5346abacd6e68d19c6121c5a533410de474d0578bcdbcec75fad435",
-      "to": "4236088df581427520470f53d37d96e0941bde19294766ce6cfdb7e3fa7ea0e9",
-      "reason": "A1: the write-time lint no longer scans a digest field (64 hex under a sha256-named key, or a value of the record's code map) for restricted terms; everything else is linted as before"
+      "to": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+      "reason": "A1: the write-time lint does not scan a runner digest for restricted terms: a field at a path the runner names, whose value equals the sha256 the runner computed itself for it; every other value is linted as before"
     },
     "experiments/nina-changes/guard6.mjs": {
       "from": "21b143f61a4aa640d158bef9e096d6bc213691c7170b13efed7cb9ddee2b55ce",
@@ -537,12 +525,12 @@
     "The two dry-run runs counted BLIND kept no tool output (that was the defect), so they are not re-classified here; the amended rule is shown on synthetic outputs built from the same two commands and a real p01 and p02 diff, and the base-only and synthetic-seen checks over all 60 items still hold.",
     "A git command reached only through a newline, a lone &, $(…) or backticks is not split out, so such a call is not a git call and a run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight.",
     "A git call's whole scrubbed output is kept, including the output of its other parts (the dry run's cat of rules.txt): it is scrubbed and linted like every other kept output, and the rules.txt text is EXP 005's public rules file.",
-    "A digest field is recognised by its key and its exact form only; a 64-hex value under any other key is still scanned, so a chance match there would still refuse a record.",
+    "Only the runner's own digests are exempt; a 64-hex value anywhere else (a commit id in a tool output, a hash the model quoted) is still scanned, so a chance match there would still refuse a record and stop the run.",
     "The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call."
   ],
   "siteQualifier": {
-    "rule": "The build adds these lines, from this record, to the EXP 006 field note and to its row on the home page, linked to this amendment's section (#amendment-01).",
-    "note": "Amended 01 Oct 2026, before any counted run: the record lint no longer mistakes a digest for a restricted term, a compound git call now counts as a git call, and the client's built-in reads are disclosed.",
+    "rule": "These lines, from this record, are added to the EXP 006 field note (committed as the pre-registration's render amended by this record) and to its row on the home page (linked to this amendment's section, #amendment-01).",
+    "note": "Amended 01 Oct 2026, before any counted run: the record lint no longer mistakes the runner's own digests for a restricted term, a compound git call now counts as a git call, and the client's built-in reads are disclosed.",
     "row": "Amended 01 Oct 2026, before any counted run.",
     "meta": "Amended 01 Oct 2026, before any counted run."
   },

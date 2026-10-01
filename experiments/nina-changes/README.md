@@ -14,7 +14,8 @@ Nothing here has made a paid call. The live probe (matrix v6) and the pre-regist
 | `run_reviewer6.mjs` | The runner (own argv with `--output-format stream-json --verbose`, loop, record builder, fixture guard). |
 | `stream6.mjs` | NDJSON parser and the harness-failure rule (EXP 005 amendment 01's, translated only for stream-json). |
 | `spend6.mjs` | $60 cap and $10 pre-counted ceiling enforced in code; unknown cost charged the upper bound; never a $0 line. |
-| `guard6.mjs`, `freeze.mjs`, `runners.sha256` | The counted-run guard. `freeze.mjs` holds null until the freeze, and every counted run refuses while it does. |
+| `guard6.mjs`, `freeze.mjs`, `runners.sha256` | The counted-run guard. `freeze.mjs` holds null until the freeze, and every counted run refuses while it does. Since amendment 01 a counted run also needs `AMENDMENT6_SHA256` and `AMENDMENT6_NOT_BEFORE` (null until the re-freeze), every pin as the amendment re-pins it, and a start after the amendment's not-before. |
+| `amendment-01.json`, `amendment-01.sha256`, `dry-run/` | EXP 006 amendment 01 (WO-1-09), dated before any counted run: the record lint skips digest fields (A1), a compound Bash call with an allowed git sub-command is a git call (A2), the client's built-in reads on workspace paths are disclosed (A3), and counted runs bind the amendment (A5). Built and checked by `scripts/nina-changes-amendment.mjs --write / --pin / --check` from the bundle-2 dry-run records in `dry-run/` and the ledger; the pre-registration stays byte-identical. |
 | `matrix6.mjs` | Isolation matrix v6: v5's rows plus R32–R46 (the new forms), controls C9–C16, info row I47; the judge scans every tool output. |
 | `base-lines.mjs`, `base-lines.json` | The sha256 of every trimmed line of the real staged base commit (3e35e4e2…), nina's files included. |
 | `fingerprints.mjs`, `change-fingerprints.json` | Per item: `+` lines not in the base, `-` lines, added/deleted/renamed paths. |
