@@ -3,8 +3,8 @@
 // output) and the committed fingerprints, never from the report's wording.
 //
 // A run is DIFF-SEEN iff at least one of:
-//  (a) a Bash call running git that the client did not refuse printed a SIGN-MATCHED fingerprint line of the item: an output line whose
-//      first character is + or -, whose remainder trimmed equals a fingerprint of that sign (whole line, never a
+//  (a) a git call (as amended below) that the client did not refuse printed a SIGN-MATCHED fingerprint line of the
+//      item: an output line whose first character is + or -, whose remainder trimmed equals a fingerprint of that sign (whole line, never a
 //      substring). Base-commit output (git show HEAD, git log -p) cannot match: + fingerprints exclude every base line
 //      and a root commit prints no - line.
 //  (b) for an item with added files: a non-refused Bash git output carries an untracked entry naming an added path or a
@@ -14,15 +14,27 @@
 //      are stripped first; whole trimmed line).
 // Otherwise DIFF-BLIND. A harness failure (timeout, crash, unparseable stream) is never diff-seen. Rule (c) of R2-2 is
 // dropped (R3-2): c018's rename is 100% similar and is covered by rule (a) through its modify hunks.
+//
+// EXP 006 amendment 01 (A2) widens only what a "git call" is (stream6.mjs isGitCommand): a Bash call whose first token
+// is git, as registered, OR one in which any sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git
+// form. The dry run's `cat rules.txt; git status --short; git diff` ran, printed the change, and was counted BLIND
+// because its first token is cat. Such a call's scrubbed output is now kept, and rules (a) and (b) read it exactly as
+// before: rule (a) still needs a SIGN-MATCHED whole diff line (a `cat` of a file prints no +/- prefix, so file content
+// cannot pass for a diff line), and rule (b)'s untracked entry may come from such an output. REGISTERED_RULE is the
+// text the pre-registration pins, byte for byte; RULE is the amended text every run record now carries.
 import { PREREG6_SHA256 } from './freeze.mjs';
 import { isGitCommand } from './stream6.mjs';
 
-export const RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form "Untracked files:" section, never under "Changes not staged"/"Changes to be committed") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). A git call is a Bash command whose first token is git; only top-level calls count (a sub-agent\'s calls never make a run SEEN). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
+/** The rule as the EXP 006 pre-registration pins it (classifier.rule), unchanged. */
+export const REGISTERED_RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form "Untracked files:" section, never under "Changes not staged"/"Changes to be committed") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). A git call is a Bash command whose first token is git; only top-level calls count (a sub-agent\'s calls never make a run SEEN). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
+/** The rule as amended by EXP 006 amendment 01 (A2): what every run record carries as pins.diffSeenRule. */
+export const RULE = 'DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item\'s fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form "Untracked files:" section, never under "Changes not staged"/"Changes to be committed") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). A git call is a Bash command whose first token is git, or one in which any sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git form (git, git --no-pager, git -C <ws>/repo or git -C <ws>/repo --no-pager, then diff, status, show or log), as amended by EXP 006 amendment 01; its whole scrubbed output is kept and read, and a `cat` of a file cannot supply a sign-matched diff line; only top-level calls count (a sub-agent\'s calls never make a run SEEN). Refused = listed in the result\'s permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.';
 /** The classifier is frozen with the pre-registration: once PREREG6_SHA256 is set, its rule text is pinned there. */
 export const FROZEN = PREREG6_SHA256 !== null;
 
-// A git call: a Bash command whose first token is git (N9). Only TOP-LEVEL calls count (N10): a sub-agent's call
-// (parentToolUseId set) never makes a run SEEN; the pre-registration discloses this.
+// A git call: a Bash command whose first token is git (N9), or with an allowed fence6 git form as any sub-command
+// (amendment 01, A2). Only TOP-LEVEL calls count (N10): a sub-agent's call (parentToolUseId set) never makes a run
+// SEEN; the pre-registration discloses this.
 const isGitBash = call => isGitCommand(call);
 const topLevel = call => call.parentToolUseId == null;
 // A call counts when its output reached the model and the permission layer did not refuse it: `refused` (from the

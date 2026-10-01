@@ -22,7 +22,7 @@ const REHEARSAL_PINS = rehearsalPins();
 const BLIND = new Set([4, 57, 58, 121]); // call indices the fake plays diff-blind (a refused diff), to exercise the states
 
 // Record-level and per-call fields the scorer asserts (validateGateRun + validateRun6 + the counted checks).
-const RECORD_FIELDS = ['experiment', 'parentSha256', 'amendmentSha256', 'prereg6Sha256', 'notBefore', 'code', 'mode', 'head', 'fixture', 'rehearsal'];
+const RECORD_FIELDS = ['experiment', 'parentSha256', 'amendmentSha256', 'prereg6Sha256', 'amendment6Sha256', 'notBefore', 'code', 'mode', 'head', 'fixture', 'rehearsal'];
 const PIN_FIELDS = ['preflight', 'preflightRoots', 'patches', 'fingerprintsSha256'];
 const CALL_FIELDS = ['startedAt', 'endedAt', 'decision', 'abstention', 'costUsd', 'costBasis', 'harnessFailure', 'toolCalls', 'diffSeen', 'stream', 'gate'];
 
@@ -64,6 +64,9 @@ test('rehearsal: 180 stream-json records → diff-seen → results6 → unpublis
 
     const result = computeResults6(args());
     assert.equal(result.rehearsal, true);
+    assert.deepEqual([run.amendment6Sha256, result.amendment6Sha256], [REHEARSAL_PINS.amendment6Sha256, REHEARSAL_PINS.amendment6Sha256], 'EXP 006 amendment 01 (A5): the run and the results carry the amendment sha');
+    const otherAmendment = structuredClone(run); otherAmendment.amendment6Sha256 = 'c'.repeat(64);
+    assert.throws(() => computeResults6(args({ run: otherAmendment })), /another EXP 006 amendment 01/);
     assert.equal(result.partial, null);
     assert.deepEqual([result.runStates.BLIND, result.manipulation.blind, result.manipulation.state], [4, 4, 'PASS']);
     assert.throws(() => assertPublishable6(result), /rehearsal/, 'a rehearsal result is never publishable');

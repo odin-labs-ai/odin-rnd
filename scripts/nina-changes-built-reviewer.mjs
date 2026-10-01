@@ -8,8 +8,8 @@ import { defaultScanRoots, REPO_ROOT, scrubTempPath, sha256 } from '../experimen
 import { RUNNER6_PINS } from '../experiments/nina-changes/guard6.mjs';
 import { FAKE_CLAUDE6, runReviewer6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 
-/** Rehearsal pins: a synthetic pre-registration sha and a not-before an hour ago (freeze.mjs stays null). */
-export const rehearsalPins = () => ({ prereg6Sha256: sha256('EXP 006 rehearsal: not a pre-registration'), notBefore: new Date(Date.now() - 3600e3).toISOString() });
+/** Rehearsal pins: synthetic pre-registration and amendment shas and a not-before an hour ago (freeze.mjs stays null). */
+export const rehearsalPins = () => ({ prereg6Sha256: sha256('EXP 006 rehearsal: not a pre-registration'), amendment6Sha256: sha256('EXP 006 rehearsal: not an amendment'), notBefore: new Date(Date.now() - 3600e3).toISOString() });
 
 /** A counted pre-flight record for the rehearsal, bound to the committed pins file and this commit. */
 export function writeSyntheticPreflight(dir) {

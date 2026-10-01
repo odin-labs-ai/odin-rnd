@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
 import { ANSWERS, FENCE6_PREFIXES, FENCE6_SETTINGS, GIT_VERBS, SANDBOX6_ONLY_SETTINGS, WS_REPO, fence6Tools } from '../experiments/nina-changes/fence6.mjs';
-import { RULE as DIFF_SEEN_RULE } from '../experiments/nina-changes/diff-seen.mjs';
+import { REGISTERED_RULE as DIFF_SEEN_RULE } from '../experiments/nina-changes/diff-seen.mjs';
 import { MATRIX_ROWS6 } from '../experiments/nina-changes/matrix6.mjs';
 import { applyAttempts } from '../experiments/nina-changes/matrix6-attempts.mjs';
 import { commandTemplate } from '../experiments/nina-changes/run_reviewer6.mjs';
@@ -87,6 +87,29 @@ export function assertFenceUnaffected({ diffs, commands, expected }) {
 
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+
+// EXP 006 amendment 01 re-pins some of the files this record pins (amendment.pins[file] = {from, to}). The record
+// stays byte-identical, so it is rebuilt from the files AS REGISTERED: a re-pinned file must hash to the amendment's
+// `to`, and the build uses its `from`, which must be the pin this record carries. Any other difference still refuses.
+export const amendment01Path = `${N}/amendment-01.json`;
+export const amendment01PinPath = `${N}/amendment-01.sha256`;
+export function registeredFiles(root = '.') {
+  const read = file => readFileSync(join(root, file));
+  const files = Object.fromEntries(PINNED.map(f => [f, sha256(read(f))]));
+  if (!existsSync(join(root, amendment01Path))) return files;
+  const bytes = read(amendment01Path);
+  const pinned = existsSync(join(root, amendment01PinPath)) ? read(amendment01PinPath).toString('utf8').split(/\s+/)[0] : null;
+  assert.equal(pinned, sha256(bytes), `${amendment01Path} differs from the sha256 pinned in ${amendment01PinPath}`);
+  const amendment = JSON.parse(bytes);
+  assert.equal(amendment.parent?.sha256, existsSync(join(root, pinPath)) ? read(pinPath).toString('utf8').split(/\s+/)[0] : null, `${amendment01Path} does not name this pre-registration as its parent`);
+  for (const [f, { from, to } = {}] of Object.entries(amendment.pins ?? {})) {
+    assert(f in files, `amendment 01 re-pins ${f}, which this record does not pin`);
+    assert.equal(files[f], to, `${f} hashes to ${files[f]}, not amendment 01's pin ${to}`);
+    files[f] = from;
+  }
+  return files;
+}
+
 export const units = usd => Math.round(Number((usd * 1e7).toFixed(3)));
 export const fixed7 = n => (n / 1e7).toFixed(7);
 const round7 = usd => Number(fixed7(units(usd)));
@@ -101,7 +124,7 @@ export function buildRecord(root = '.') {
   const codeSha = rec => sha256(Object.entries(rec.code).map(([f, h]) => `${h}  ${f}\n`).join(''));
   const byName = Object.fromEntries(probes.map(p => [p.name, p]));
   const record5Command = commandTemplate(prereg5, 'fence6');
-  const filesNow = Object.fromEntries(PINNED.map(f => [f, sha256(read(f))]));
+  const filesNow = registeredFiles(root);
   const proof = PROOF_RUNS.map(p => ({ ...p, rec: byName[p.name].rec }));
   for (const [p, d] of proof.map((p, i) => [p, proofRunDiffs(proof.map(x => ({ name: x.name, code: x.rec.code })), filesNow)[i]])) p.differs = d.differs;
   const ledger = read(`${N}/spend-ledger.jsonl`).toString('utf8').trim().split('\n').map(l => JSON.parse(l)).slice(0, PROBES.length);
@@ -125,7 +148,7 @@ export function buildRecord(root = '.') {
       costUsd: calls.find(x => x.id === p.name).costUsd,
     };
   };
-  const files = Object.fromEntries(PINNED.map(f => [f, sha256(read(f))]));
+  const files = filesNow;
   const addFile = Object.keys(fp.items).filter(id => fp.items[id].added.length);
   return {
     schemaVersion: 1, kind: 'preregistration',
@@ -205,7 +228,7 @@ export function buildRecord(root = '.') {
       diffSeenOnly: 'The same rates over the diff-seen runs only are reported beside the primary figures, never in their place.',
       partial: 'A partial run (the spend cap, the hang-stop, a crash, or coverage other than exactly runs 1..3 of all 60 items) decides nothing.',
       percentile: 'p90 (and any percentile) is results.mjs percentile: numpy\'s linear interpolation.',
-      scorer: { file: `${N}/results6.mjs`, sha256: sha256(read(`${N}/results6.mjs`)) },
+      scorer: { file: `${N}/results6.mjs`, sha256: filesNow[`${N}/results6.mjs`] },
     },
     spotlightDecision: 'Automatic and pre-registered: a spotlight-decision record with held: false is committed if and only if the bar PASSES, the manipulation check PASSES, and the independent results refute SHIPs; otherwise held: true, naming the condition that failed. A founder decision is asked only if a refute raises a doubt this rule does not decide.',
     spotlightArtefact: {

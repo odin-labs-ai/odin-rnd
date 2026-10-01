@@ -1,0 +1,547 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "id": "amendment-01",
+  "experiment": "EXP 006",
+  "title": "Amendment 01: a digest is not a restricted term, a compound git call counts, and the client's built-in reads are disclosed",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "41efb90da633b42acca619ab4d761e15e608ca06e496bafbc73ccfd9df03b98a",
+    "notBefore": "2026-09-30T19:26:46Z",
+    "published": "odin-rnd #17, merged 2026-09-30T19:26:46Z (GitHub mergedAt), the pre-registration's not-before. It stays byte-identical and is still served as published; where this amendment and it differ, this amendment wins, and only on what it lists."
+  },
+  "date": "2026-10-01",
+  "statusText": "Amended 01 Oct 2026, before any counted run",
+  "reason": {
+    "summary": "The bundle-2 dry run (practice rows only, never scored; 2026-09-30 22:00-22:10 UTC, 17 paid calls) found two defects in the pre-registered record pipeline and one statement in the pre-registration that the client's behaviour contradicts. Left as registered, the first would very likely void a counted run by chance and the second would fail the manipulation check on a classifier artefact. None concerns the bar, the corpus, the prompt, the command, or the fence's settings and allow list. Each is fixed forward here, before any counted call.",
+    "dryRun": {
+      "records": [
+        {
+          "file": "experiments/nina-changes/dry-run/practice-a.json",
+          "sha256": "450dde3dd20a76d56624361b6aac2e6c94aefe76ff21b4e15e4dd4dac6379fc6",
+          "rows": "p01-p03 (the EXP 005 practice rows, experiments/jev-gate/practice/practice-rows.json)",
+          "mode": "practice",
+          "calls": 9,
+          "partial": null
+        },
+        {
+          "file": "experiments/nina-changes/dry-run/practice-b.json",
+          "sha256": "df7a12750a2b09f2428f2a8b006f668311b02f8e5a271cde1c81eeda15aef05d",
+          "rows": "p04-p06 (experiments/nina-changes/practice/practice-rows.json)",
+          "mode": "practice",
+          "calls": 8,
+          "partial": "lint"
+        }
+      ],
+      "ledgerLines": "8-24 of experiments/nina-changes/spend-ledger.jsonl (kind practice, one per completed call, the refused one included)",
+      "completedCalls": 17,
+      "recordedCalls": 16
+    },
+    "findings": [
+      {
+        "id": "F1",
+        "title": "A false-positive lint refusal",
+        "what": "p06 run 2's record was refused at write time (\"a restricted term\"), and the run stopped partial. The only leaking field was toolCalls.4.outputSha256: a random sha256 digest of a tool output that happened to contain one of check.mjs's short restricted-term fingerprint windows. With about a hundred digests in each run record, a 180-run counted run would very likely be stopped, and so voided, by chance.",
+        "evidence": {
+          "record": {
+            "file": "experiments/nina-changes/dry-run/practice-b.json",
+            "sha256": "df7a12750a2b09f2428f2a8b006f668311b02f8e5a271cde1c81eeda15aef05d"
+          },
+          "partial": "lint",
+          "id": "p06",
+          "run": 2,
+          "leakFields": [
+            "toolCalls.4.outputSha256"
+          ],
+          "ledgerLine": 24,
+          "costUsd": 0.170155
+        },
+        "fix": "A1"
+      },
+      {
+        "id": "F2",
+        "title": "A false-BLIND classification",
+        "what": "p01 run 2 and p02 run 1 ran `cat rules.txt; git status --short; git diff` and `cat rules.txt; echo ----; git status --short; git diff`. The client ran each (687 bytes of output, 648 bytes of output; not refused), each report names the changed file and 1 of 2 quote a changed line verbatim, but the registered classifier treats a Bash call as a git call only when its FIRST token is git (refute r2 N9), so the output was not kept and the run was classified BLIND. That is 2 of 17 completed calls (11.8%), above the manipulation check's 10% limit.",
+        "evidence": {
+          "blindRuns": [
+            {
+              "record": {
+                "file": "experiments/nina-changes/dry-run/practice-a.json",
+                "sha256": "450dde3dd20a76d56624361b6aac2e6c94aefe76ff21b4e15e4dd4dac6379fc6"
+              },
+              "id": "p01",
+              "run": 2,
+              "decision": "ACCEPT",
+              "toolCall": 0,
+              "command": "cat rules.txt; git status --short; git diff",
+              "subCommands": [
+                "cat rules.txt",
+                "git status --short",
+                "git diff"
+              ],
+              "outputBytes": 687,
+              "outputKept": false,
+              "refused": false,
+              "ledgerLine": 9,
+              "costUsd": 0.1421056,
+              "reportNamesChangedFiles": true,
+              "reportQuotesChangedLine": false
+            },
+            {
+              "record": {
+                "file": "experiments/nina-changes/dry-run/practice-a.json",
+                "sha256": "450dde3dd20a76d56624361b6aac2e6c94aefe76ff21b4e15e4dd4dac6379fc6"
+              },
+              "id": "p02",
+              "run": 1,
+              "decision": "REJECT",
+              "toolCall": 0,
+              "command": "cat rules.txt; echo ----; git status --short; git diff",
+              "subCommands": [
+                "cat rules.txt",
+                "echo ----",
+                "git status --short",
+                "git diff"
+              ],
+              "outputBytes": 648,
+              "outputKept": false,
+              "refused": false,
+              "ledgerLine": 11,
+              "costUsd": 0.140614,
+              "reportNamesChangedFiles": true,
+              "reportQuotesChangedLine": true
+            }
+          ]
+        },
+        "fix": "A2"
+      },
+      {
+        "id": "F3",
+        "title": "A fence fact the pre-registration states wrongly",
+        "what": "The client ran cat on files inside the workspace with no allow rule for cat (16 top-level Bash calls in the dry run, 0 refused): Claude Code runs its built-in read-only commands on workspace paths without an allow rule. The pre-registration says only Read, Grep, Glob and the four git verbs are allowed, and that a chain with any other part is refused whole. Outside reads stayed closed: in the probe of record 7 commands that cat a file outside the workspace (R17, a bare cat ../canary-r17.txt, and the chains and command substitutions R18, R19, R19b, R39, R40, R46) were refused by the permission layer, and R9, R45, R29, R30 were stopped by the OS sandbox.",
+        "evidence": {
+          "dryRunCatCalls": 16,
+          "dryRunCatCallsRefused": 0,
+          "probeOfRecord": {
+            "file": "experiments/nina-changes/probes/matrix-v6-fence6-3.json",
+            "sha256": "04861e1b0cfd63edc50d009df94060d071b866ebc78c0f642f432f775743af0c"
+          },
+          "outsideCatRefused": [
+            "cat ../canary-r17.txt",
+            "git log -1 && cat ../canary-r18.txt",
+            "git log -1 --format=\"$(cat ../canary-r19.txt)\"",
+            "git log -1 --format=`cat ../canary-r19b.txt`",
+            "git diff && cat ../canary-r39.txt",
+            "git diff; cat ../canary-r40.txt",
+            "git diff || cat ../canary-r46.txt"
+          ],
+          "outsideCatRows": [
+            "R17",
+            "R18",
+            "R19",
+            "R19b",
+            "R39",
+            "R40",
+            "R46"
+          ],
+          "sandboxStopped": [
+            "R9",
+            "R45",
+            "R29",
+            "R30"
+          ]
+        },
+        "fix": "A3"
+      }
+    ]
+  },
+  "changes": {
+    "lint": {
+      "id": "A1",
+      "file": "experiments/nina-changes/scrub6.mjs",
+      "rule": "Only a runner digest is exempt from the restricted-term scan: a digest the runner computed itself, at write time, from bytes it holds. The runner passes the write-time lint a list of (path, sha256) pairs it computed; a field is exempt only if it sits at exactly one of those paths AND its value equals the runner's own sha256 for that path (exactly 64 lowercase hex characters). The exemption is never by key name and never taken from a record or from model text: a 64-hex value the model produced (in a tool output, the result text or a tool input), or one placed under a hash-named key without being the runner's recomputation, is scanned like any other value. The record is linted with its runner digests masked, and each runner digest is still linted for paths, the session uid and credential shapes. Everything else (keys, prose, tool outputs, tool inputs) is scanned as before.",
+      "runnerDigests": {
+        "perCall": "toolCalls.N.outputSha256 = sha256 of call N's scrubbed output; resultSha256 = sha256 of the result text; hook.sha256 = sha256 of the hook text the record keeps (run_reviewer6.mjs callDigests6, from the parsed stream the runner holds)",
+        "header": "parentSha256, amendmentSha256, amendment02Sha256, prereg6Sha256, amendment6Sha256, corpusSha256 and code.<file> from the guard's own hashes of the files it read; pins.promptSha256, pins.fingerprintsSha256, pins.baseLinesSha256 from the prompt and files (run_reviewer6.mjs headerDigests6)"
+      }
+    },
+    "gitCall": {
+      "id": "A2",
+      "files": [
+        "experiments/nina-changes/stream6.mjs",
+        "experiments/nina-changes/diff-seen.mjs"
+      ],
+      "definition": "A git call is a top-level (not sub-agent) Bash call whose first token is git, as registered, or one in which ANY sub-command, split on the unquoted control operators &&, ||, ; and |, is an allowed fence6 git form. Its full scrubbed output is kept in the record and read by the classifier. Rule (a) still needs a sign-matched whole diff line of the item in that output: a cat of a file prints no + or - prefix, so file content cannot pass for a diff line. Rule (b)'s untracked entry may come from such an output, and still needs a Read or Grep of the added file.",
+      "allowedForms": [
+        "git diff",
+        "git status",
+        "git show",
+        "git log",
+        "git --no-pager diff",
+        "git --no-pager status",
+        "git --no-pager show",
+        "git --no-pager log",
+        "git -C <ws>/repo diff",
+        "git -C <ws>/repo status",
+        "git -C <ws>/repo show",
+        "git -C <ws>/repo log",
+        "git -C <ws>/repo --no-pager diff",
+        "git -C <ws>/repo --no-pager status",
+        "git -C <ws>/repo --no-pager show",
+        "git -C <ws>/repo --no-pager log"
+      ],
+      "separators": [
+        "&&",
+        "||",
+        ";",
+        "|"
+      ],
+      "examples": {
+        "gitCall": [
+          "cat rules.txt; git status --short; git diff",
+          "cat rules.txt; echo ----; git status --short; git diff"
+        ],
+        "notGitCall": [
+          "echo git; cat f",
+          "cat a && git branch"
+        ]
+      },
+      "registeredRule": "DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item's fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form \"Untracked files:\" section, never under \"Changes not staged\"/\"Changes to be committed\") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). A git call is a Bash command whose first token is git; only top-level calls count (a sub-agent's calls never make a run SEEN). Refused = listed in the result's permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN.",
+      "rule": "DIFF-SEEN iff (a) a Bash git call the client did not refuse printed a whole diff line +<fp> or -<fp> equal to one of the item's fingerprints of that sign; or (b) for an item with added files, a non-refused Bash git output lists the added path or a directory prefix of it as untracked (a short `??` entry, or an entry inside a long-form \"Untracked files:\" section, never under \"Changes not staged\"/\"Changes to be committed\") and a non-refused Read/Grep of that added path returned one of its + fingerprint lines (line-number and path prefixes stripped). A git call is a Bash command whose first token is git, or one in which any sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git form (git, git --no-pager, git -C <ws>/repo or git -C <ws>/repo --no-pager, then diff, status, show or log), as amended by EXP 006 amendment 01; its whole scrubbed output is kept and read, and a `cat` of a file cannot supply a sign-matched diff line; only top-level calls count (a sub-agent's calls never make a run SEEN). Refused = listed in the result's permission_denials; is_error alone is not a refusal (the client sets it on a command that ran when its own cwd-tracking write fails under the sandbox). Otherwise DIFF-BLIND. A harness failure is never DIFF-SEEN."
+    },
+    "fence": {
+      "id": "A3",
+      "correction": "The pre-registration's fence statements (fence.compound and answer 2) are corrected: besides Read, Grep, Glob and the allowed git forms, the client runs its built-in read-only commands (cat, for example) on workspace paths without an allow rule: observed as part of a chain (every one of the dry run's cat calls was); a lone built-in read was not observed, and is believed to behave the same. A chain that reads outside the workspace is refused whole (R18, R39, R40, R46), a bare outside read is refused (R17), and reads outside the repository that pass the permission layer are stopped by the OS sandbox (R9, R29, R30, R45). The sandbox remains the boundary.",
+      "unchanged": "fence6's settings, deny rules and allow list, matrix6, its rows and its judge are unchanged; no escape row's verdict changed; no new paid matrix run was made."
+    },
+    "guard": {
+      "id": "A5",
+      "files": [
+        "experiments/nina-changes/guard6.mjs",
+        "experiments/nina-changes/results6.mjs",
+        "experiments/nina-changes/spotlight-gate.mjs",
+        "experiments/nina-changes/run_reviewer6.mjs",
+        "experiments/nina-changes/freeze.mjs"
+      ],
+      "rule": "Counted runs require this amendment too. freeze.mjs gains AMENDMENT6_SHA256 (this file's sha256) and AMENDMENT6_NOT_BEFORE (the merge time of the pull request that adds it), both left unset until the re-freeze. The counted guard refuses unless the pre-registration hashes to PREREG6_SHA256, this file hashes to AMENDMENT6_SHA256 and names that pre-registration as its parent, every pre-registered file hashes to its pin as re-pinned below, every file this amendment pins hashes to its pin, and the call starts after AMENDMENT6_NOT_BEFORE (which the run records as its notBefore). The run record and the results record carry amendment6Sha256; the scorer checks it; the spotlight gate opens only when the results and the bound reviewer run record name the frozen AMENDMENT6_SHA256. The gate's predicate and every other check are unchanged."
+    }
+  },
+  "pins": {
+    "experiments/nina-changes/run_reviewer6.mjs": {
+      "from": "13cc7b59de017530194c258e9c47fc3b59d268399d1d5b1da59298dbbdcecf5c",
+      "to": "83794bdcb8377315c4ac3f4ff2a188018529129ae050d0d258a25e59290d0eb2",
+      "reason": "A1: the record builder hands the lint the digests it computed itself (callDigests6, headerDigests6); A5: the run record carries the guard's amendment6Sha256; the argv builder is unchanged"
+    },
+    "experiments/nina-changes/stream6.mjs": {
+      "from": "09e55aab57aa276f7b6ae1d245ac45bf41cfd2b095e32fd692860bf4b7b250e1",
+      "to": "36868cbffeb42e62b614b112c2c1b3d8a464a2a49b6703d3f66bb4b91cd8d6e1",
+      "reason": "A2: a git call is also a Bash call in which any sub-command (split on unquoted &&, ||, ; and |) is an allowed fence6 git form; such a call's output is kept"
+    },
+    "experiments/nina-changes/scrub6.mjs": {
+      "from": "d38b4efce5346abacd6e68d19c6121c5a533410de474d0578bcdbcec75fad435",
+      "to": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+      "reason": "A1: the write-time lint does not scan a runner digest for restricted terms: a field at a path the runner names, whose value equals the sha256 the runner computed itself for it; every other value is linted as before"
+    },
+    "experiments/nina-changes/guard6.mjs": {
+      "from": "21b143f61a4aa640d158bef9e096d6bc213691c7170b13efed7cb9ddee2b55ce",
+      "to": "da1794d276182e66347f37c29225d13f4fa20dab033552d4a43b67a9054403c5",
+      "reason": "A5: a counted run also needs this amendment: its sha256 frozen as AMENDMENT6_SHA256, every pin as re-pinned here, and a start after AMENDMENT6_NOT_BEFORE"
+    },
+    "experiments/nina-changes/diff-seen.mjs": {
+      "from": "c032517dca76109f1988ba641b73d6cc7618a245ce4f3ad243fcc27fff812f88",
+      "to": "64d85ee38f99bb6858609cb2d835581d40c9d8058a3cfa2fc4558f95464566cf",
+      "reason": "A2: the classifier uses the amended git call; its rule text is amended (RULE) and the registered text is kept verbatim (REGISTERED_RULE); rules (a) and (b) are otherwise unchanged"
+    },
+    "experiments/nina-changes/results6.mjs": {
+      "from": "7533ee983f2891506bac2185396740199b86b94510da031df4a21c51332f7025",
+      "to": "49842f3249230032c653a21a14b1e4b626cff984ae17e6d0ebb8d987af0cff76",
+      "reason": "A5: the scorer checks the run's amendment6Sha256 against the stamp (and the frozen AMENDMENT6_SHA256), uses the amendment's not-before, and carries the sha in the results record"
+    },
+    "experiments/nina-changes/spotlight-gate.mjs": {
+      "from": "df7006754a965479640f86c9eb1b661a75d0db5ac46d632b86fe68e5ebe029a3",
+      "to": "a817c8684aff8c3627eddaa9de3a93ededa7bc27eaba343ada0b98b3073bf3d2",
+      "reason": "A5: the gate also requires the results' amendment6Sha256 to equal the frozen AMENDMENT6_SHA256 and the reviewer run record to name the same one; the predicate and every other check are unchanged"
+    }
+  },
+  "runnersPins": "experiments/nina-changes/runners.sha256 is re-pinned for the 7 files above and freeze.mjs (which the re-freeze changes again); every other pin in it is unchanged.",
+  "spend": {
+    "capUsd": 60,
+    "preCountedCeilingUsd": 10,
+    "ledger": "experiments/nina-changes/spend-ledger.jsonl",
+    "calls": [
+      {
+        "line": 1,
+        "ts": "2026-09-30T00:34:28.580Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.6545558,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 2,
+        "ts": "2026-09-30T00:47:20.410Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.5596686,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 3,
+        "ts": "2026-09-30T00:51:28.226Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.625817,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 4,
+        "ts": "2026-09-30T00:53:27.879Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.5681038,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 5,
+        "ts": "2026-09-30T00:55:34.553Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.547284,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 6,
+        "ts": "2026-09-30T01:01:58.110Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.581182,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 7,
+        "ts": "2026-09-30T01:03:59.698Z",
+        "kind": "isolation-matrix",
+        "id": "isolation-matrix",
+        "run": 1,
+        "costUsd": 0.5455714,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 8,
+        "ts": "2026-09-30T22:01:02.170Z",
+        "kind": "practice",
+        "id": "p01",
+        "run": 1,
+        "costUsd": 0.2279082,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 9,
+        "ts": "2026-09-30T22:01:35.711Z",
+        "kind": "practice",
+        "id": "p01",
+        "run": 2,
+        "costUsd": 0.1421056,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 10,
+        "ts": "2026-09-30T22:02:07.988Z",
+        "kind": "practice",
+        "id": "p01",
+        "run": 3,
+        "costUsd": 0.1655532,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 11,
+        "ts": "2026-09-30T22:02:32.047Z",
+        "kind": "practice",
+        "id": "p02",
+        "run": 1,
+        "costUsd": 0.140614,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 12,
+        "ts": "2026-09-30T22:03:03.662Z",
+        "kind": "practice",
+        "id": "p02",
+        "run": 2,
+        "costUsd": 0.1735076,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 13,
+        "ts": "2026-09-30T22:03:39.064Z",
+        "kind": "practice",
+        "id": "p02",
+        "run": 3,
+        "costUsd": 0.1778046,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 14,
+        "ts": "2026-09-30T22:04:11.315Z",
+        "kind": "practice",
+        "id": "p03",
+        "run": 1,
+        "costUsd": 0.1721522,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 15,
+        "ts": "2026-09-30T22:04:45.610Z",
+        "kind": "practice",
+        "id": "p03",
+        "run": 2,
+        "costUsd": 0.1561346,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 16,
+        "ts": "2026-09-30T22:05:13.694Z",
+        "kind": "practice",
+        "id": "p03",
+        "run": 3,
+        "costUsd": 0.161227,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 17,
+        "ts": "2026-09-30T22:05:54.629Z",
+        "kind": "practice",
+        "id": "p04",
+        "run": 1,
+        "costUsd": 0.1733334,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 18,
+        "ts": "2026-09-30T22:06:38.245Z",
+        "kind": "practice",
+        "id": "p04",
+        "run": 2,
+        "costUsd": 0.1862652,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 19,
+        "ts": "2026-09-30T22:07:19.282Z",
+        "kind": "practice",
+        "id": "p04",
+        "run": 3,
+        "costUsd": 0.1891036,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 20,
+        "ts": "2026-09-30T22:08:08.174Z",
+        "kind": "practice",
+        "id": "p05",
+        "run": 1,
+        "costUsd": 0.2030512,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 21,
+        "ts": "2026-09-30T22:08:49.780Z",
+        "kind": "practice",
+        "id": "p05",
+        "run": 2,
+        "costUsd": 0.1963182,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 22,
+        "ts": "2026-09-30T22:09:26.259Z",
+        "kind": "practice",
+        "id": "p05",
+        "run": 3,
+        "costUsd": 0.2075832,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 23,
+        "ts": "2026-09-30T22:09:58.248Z",
+        "kind": "practice",
+        "id": "p06",
+        "run": 1,
+        "costUsd": 0.1753168,
+        "costBasis": "api-equivalent"
+      },
+      {
+        "line": 24,
+        "ts": "2026-09-30T22:10:25.294Z",
+        "kind": "practice",
+        "id": "p06",
+        "run": 2,
+        "costUsd": 0.170155,
+        "costBasis": "api-equivalent"
+      }
+    ],
+    "spentUsd": 7.1003162,
+    "matrixUsd": 4.0821826,
+    "practiceUsd": 3.0181336,
+    "sum": "4.0821826 (7 isolation-matrix lines, the pre-registration's) + 3.0181336 (17 practice lines, the dry run) = 7.1003162",
+    "preCountedRemainingUsd": 2.8996838,
+    "reserveUsd": 0.6545558,
+    "preCountedHeadroomUsd": 2.245128
+  },
+  "projection": {
+    "dryRunRuns": 17,
+    "meanUsd": 0.1775373,
+    "p90Usd": 0.204864,
+    "maxUsd": 0.2279082,
+    "method": "per-run cost of the dry run's practice lines; p90 by results.mjs percentile (numpy linear interpolation)",
+    "prerunProbeUsd": 0.6545558,
+    "prerunProbeRule": "the largest isolation-matrix line so far, as the estimate of the measured run's one pre-run matrix probe",
+    "countedRuns": 180,
+    "formula": "spent + 180 × per-run cost + pre-run probe + reserve",
+    "projectedMeanUsd": 40.3661365,
+    "projectedP90Usd": 45.2849478,
+    "projectedMaxUsd": 49.4329038,
+    "withinCap": true,
+    "statement": "Projected counted spend at the dry run's p90: $7.1003162 + 180 × $0.2048640 + $0.6545558 + $0.6545558 = $45.2849478, within the $60 cap (at the mean $40.3661365, at the max $49.4329038)."
+  },
+  "countedCalls": "No counted call has been made: the ledger holds 7 isolation-matrix lines and 17 practice lines, and no counted or pre-run line.",
+  "notBefore": "No counted reviewer run starts before the merge time of the odin-rnd pull request that adds this file; that time is recorded after publication, frozen with this file's sha256 in freeze.mjs (AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256), and every counted call must start after it. It replaces the pre-registration's not-before as the counted clock. The answer-key pre-flight record must end after it.",
+  "unchanged": [
+    "The pre-registration, byte for byte (sha256 41efb90d…), and everything in it this amendment does not list.",
+    "The question, the bar (EXP 005 amendment 01's four criteria, thresholds, denominators, hold rule and labels), the run-state mapping and the manipulation limit (at most 18 of 180 runs BLIND).",
+    "The corpus, inputs, labels, rules, base commit, prompt, reviewer (nina 0.34.0), client, model, effort, k and timeout, and the registered command (its sha256 is unchanged).",
+    "fence6 (settings, deny rules, sandbox and allow list), matrix6 and its judge, the attempted-per-row check, and every escape row's verdict.",
+    "The change fingerprints, the base lines, the practice rows and the harness-failure definition.",
+    "The spend cap ($60), the pre-counted ceiling ($10), the unknown-cost upper bound and the ledger rule.",
+    "The spotlight decision rule, the artefact a PASS publishes, and the spotlight gate's predicate."
+  ],
+  "limits": [
+    "The two dry-run runs counted BLIND kept no tool output (that was the defect), so they are not re-classified here; the amended rule is shown on synthetic outputs built from the same two commands and a real p01 and p02 diff, and the base-only and synthetic-seen checks over all 60 items still hold.",
+    "A git command reached only through a newline, a lone &, $(…) or backticks is not split out, so such a call is not a git call and a run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight.",
+    "A git call's whole scrubbed output is kept, including the output of its other parts (the dry run's cat of rules.txt): it is scrubbed and linted like every other kept output, and the rules.txt text is EXP 005's public rules file.",
+    "Only the runner's own digests are exempt; a 64-hex value anywhere else (a commit id in a tool output, a hash the model quoted) is still scanned, so a chance match there would still refuse a record and stop the run.",
+    "The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call.",
+    "The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: the pre-registered lint6 (EXP 006, scrub6.mjs) and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan."
+  ],
+  "siteQualifier": {
+    "rule": "These lines, from this record, are added to the EXP 006 field note (committed as the pre-registration's render amended by this record) and to its row on the home page (linked to this amendment's section, #amendment-01).",
+    "note": "Amended 01 Oct 2026, before any counted run: the record lint no longer mistakes the runner's own digests for a restricted term, a compound git call now counts as a git call, and the client's built-in reads are disclosed.",
+    "row": "Amended 01 Oct 2026, before any counted run.",
+    "meta": "Amended 01 Oct 2026, before any counted run."
+  },
+  "attribution": {
+    "nina": "nina (github.com/xhulz/nina) — used with the permission of its author, as confirmed by Odin Labs",
+    "ninaUrl": "https://github.com/xhulz/nina"
+  },
+  "files": {
+    "experiments/nina-changes/dry-run/practice-a.json": "450dde3dd20a76d56624361b6aac2e6c94aefe76ff21b4e15e4dd4dac6379fc6",
+    "experiments/nina-changes/dry-run/practice-b.json": "df7a12750a2b09f2428f2a8b006f668311b02f8e5a271cde1c81eeda15aef05d",
+    "experiments/nina-changes/probes/matrix-v6-fence6-3.json": "04861e1b0cfd63edc50d009df94060d071b866ebc78c0f642f432f775743af0c"
+  }
+}

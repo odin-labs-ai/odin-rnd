@@ -9,7 +9,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PREREG6_SHA256 } from './freeze.mjs';
+import { AMENDMENT6_SHA256, PREREG6_SHA256 } from './freeze.mjs';
 import { assertPublishable6 } from './results6.mjs';
 
 export const RESULTS_PATH = 'experiments/nina-changes/results/results.json';
@@ -48,17 +48,18 @@ const canonical = v => JSON.stringify(v, (_, x) => (isObject(x) ? Object.fromEnt
  * inject a synthetic freeze the way the rehearsal does, never by committing one). It opens only for a REAL, COMPLETE,
  * COUNTED EXP 006 measurement under THIS frozen pre-registration (refute r4 B1), all of:
  *   the results record: kind "results", experiment "EXP 006", fixture false, not a rehearsal, partial null, its
- *     prereg6Sha256 equal to the frozen PREREG6_SHA256 (which must be set), and EXP 005's publication gate passing;
+ *     prereg6Sha256 equal to the frozen PREREG6_SHA256 (which must be set), its amendment6Sha256 equal to the frozen
+ *     AMENDMENT6_SHA256 (which must be set; EXP 006 amendment 01, A5), and EXP 005's publication gate passing;
  *   the decision: a spotlight-decision naming these results bytes by sha256 AND the reviewer run record by sha256
  *     (decision.reviewerSha256 — the chosen binding), with a boolean held;
  *   the reviewer run record: bound as above, a complete counted EXP 006 reviewer gate-run (kind "gate-run", experiment
  *     "EXP 006", gate "reviewer", mode "counted", partial null), not fixture, not a rehearsal, the same prereg6Sha256,
- *     notBefore and code as the results, its calls (stage errors aside) as {id, run, decision, harnessFailure,
+ *     amendment6Sha256, notBefore and code as the results, its calls (stage errors aside) as {id, run, decision, harnessFailure,
  *     diffSeen rule and seen} exactly the results' perRun, in order, their count the manipulation denominator, and a parseable endedAt (the "Measured" date comes only from it);
  *   and the predicate entryShown.
  * Anything else gives {shown:false, reason}. Open: {shown:true, results, decision, measuredOn}.
  */
-export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = null, freeze = { PREREG6_SHA256 } }) {
+export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = null, freeze = { PREREG6_SHA256, AMENDMENT6_SHA256 } }) {
   if (!resultsBytes) return closed('no results record');
   if (!decisionBytes) return closed('no spotlight decision record');
   if (!reviewerBytes) return closed('no reviewer run record');
@@ -73,6 +74,8 @@ export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = nul
   if (results.partial !== null) return closed('the results record is partial');
   if (!freeze?.PREREG6_SHA256) return closed('the pre-registration is not frozen (freeze.mjs PREREG6_SHA256 is null)');
   if (results.prereg6Sha256 !== freeze.PREREG6_SHA256) return closed('the results were made under another pre-registration than the frozen one');
+  if (!freeze?.AMENDMENT6_SHA256) return closed('EXP 006 amendment 01 is not frozen (freeze.mjs AMENDMENT6_SHA256 is null)');
+  if (results.amendment6Sha256 !== freeze.AMENDMENT6_SHA256) return closed('the results were made under another EXP 006 amendment 01 than the frozen one');
   try { assertPublishable6(results); } catch (error) { return closed(`the results record is not publishable: ${error.message}`); }
   try { checkDecision(resultsBytes, decision); } catch (error) { return closed(error.message); }
   if (decision.reviewerSha256 !== sha256(reviewerBytes)) return closed('the spotlight decision does not name this reviewer run record');
@@ -87,6 +90,7 @@ export function gateFromBytes({ resultsBytes, decisionBytes, reviewerBytes = nul
   if (run.rehearsal) return closed('the reviewer run record is a rehearsal');
   if (run.partial !== null) return closed('the reviewer run record is partial');
   if (run.prereg6Sha256 !== results.prereg6Sha256) return closed('the reviewer run record was made under another pre-registration');
+  if (run.amendment6Sha256 !== results.amendment6Sha256) return closed('the reviewer run record was made under another EXP 006 amendment 01');
   if (typeof run.endedAt !== 'string' || !Number.isFinite(Date.parse(run.endedAt))) return closed('no parseable measured date (endedAt) in the reviewer run record');
   if (typeof results.notBefore !== 'string' || run.notBefore !== results.notBefore) return closed('the reviewer run record has another not-before than the results');
   if (!isObject(results.code) || canonical(run.code) !== canonical(results.code)) return closed('the reviewer run record was made by other code than the results name');

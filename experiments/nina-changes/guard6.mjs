@@ -6,17 +6,23 @@
 //     module EXP 006 imports) — a counted run refuses on any difference, a probe/practice/fixture run records it;
 //   - for a COUNTED run: the frozen constants in freeze.mjs are set, the EXP 006 pre-registration on disk hashes to
 //     PREREG6_SHA256, and now is after NOT_BEFORE6. While freeze.mjs holds null, every counted run refuses.
+//   - and (EXP 006 amendment 01, A5) for a COUNTED run: amendment-01.json hashes to AMENDMENT6_SHA256 and names that
+//     pre-registration as its parent; every file the pre-registration pins hashes to its pin, or, for a file the
+//     amendment re-pins, to the amendment's new pin (its old pin must be the pre-registration's); every file the
+//     amendment itself pins hashes to its pin; and now is after AMENDMENT6_NOT_BEFORE, which is the clock the run
+//     records as notBefore. While any of the four frozen constants is null, every counted run refuses.
 // A REHEARSAL (the model call stubbed by the committed stream-json fake) runs the counted record builder and scorer
 // under supplied rehearsal pins when the freeze is still null; its record is marked rehearsal and never publishable.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AMENDMENT_02_SHA256, checkRecords, REPO_ROOT, sha256 } from '../jev-gate/runner-guard.mjs';
-import { NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
+import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256, NOT_BEFORE6, PREREG6_SHA256 } from './freeze.mjs';
 
 export const CORPUS_SHA256 = 'a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9';
 export const BASE_COMMIT = '3e35e4e274932a61bc0d92f378f8d506a9bb4ce0';
 export const PREREG6 = 'experiments/nina-changes/preregistration.json';
+export const AMENDMENT6 = 'experiments/nina-changes/amendment-01.json';
 export const RUNNER6_PINS = 'experiments/nina-changes/runners.sha256';
 /** EXP 006's own files, then every jev-gate module it imports (directly or through another), then check.mjs (read by scrub6). */
 export const RUNNER6_FILES = [
@@ -49,9 +55,9 @@ export const MODES6 = ['counted', 'practice', 'probe', 'rehearsal'];
 
 /**
  * Returns {prereg, amendment, amendment02, stamp}. `fixture` (tests) records fixture:true and skips the pin and freeze
- * checks; `rehearsalPins` {prereg6Sha256, notBefore} stand in for a null freeze in a rehearsal only.
+ * checks; `rehearsalPins` {prereg6Sha256, amendment6Sha256, notBefore} stand in for a null freeze in a rehearsal only.
  */
-export function checkRun6({ mode, root = REPO_ROOT, now = new Date(), fixture = false, rehearsalPins = null, freeze = { PREREG6_SHA256, NOT_BEFORE6 } } = {}) {
+export function checkRun6({ mode, root = REPO_ROOT, now = new Date(), fixture = false, rehearsalPins = null, freeze = { PREREG6_SHA256, NOT_BEFORE6, AMENDMENT6_SHA256, AMENDMENT6_NOT_BEFORE } } = {}) {
   if (!MODES6.includes(mode)) refuse(`unknown mode ${mode}`);
   if (rehearsalPins && mode !== 'rehearsal') refuse('rehearsal pins are for a rehearsal only');
   if (fixture && mode === 'rehearsal') refuse('a rehearsal is a non-fixture dry check; do not combine it with fixture mode');
@@ -70,23 +76,25 @@ export function checkRun6({ mode, root = REPO_ROOT, now = new Date(), fixture = 
   if (!fixture && mode === 'counted' && !codeMatches) refuse(`the EXP 006 code differs from ${RUNNER6_PINS} (${Object.keys(code).filter(k => pinned[k] !== code[k]).join(', ') || 'file list'})`);
   if (mode === 'rehearsal' && !codeMatches) refuse(`a rehearsal runs the pinned code: the EXP 006 code differs from ${RUNNER6_PINS}`);
 
-  let prereg6Sha256 = null, notBefore = null, rehearsal = false;
+  let prereg6Sha256 = null, amendment6Sha256 = null, notBefore = null, rehearsal = false;
+  const frozen = FROZEN_KEYS.every(k => freeze?.[k]);
   if (mode === 'counted' && !fixture) {
     if (!freeze.PREREG6_SHA256 || !freeze.NOT_BEFORE6) refuse('counted runs wait for the freeze: PREREG6_SHA256 and NOT_BEFORE6 in freeze.mjs are null');
-    ({ prereg6Sha256, notBefore } = checkFrozen(root, now, freeze));
+    if (!frozen) refuse('counted runs wait for the freeze of EXP 006 amendment 01: AMENDMENT6_SHA256 and AMENDMENT6_NOT_BEFORE in freeze.mjs are null');
+    ({ prereg6Sha256, amendment6Sha256, notBefore } = checkFrozen(root, now, freeze));
   } else if (mode === 'rehearsal') {
     rehearsal = true;
-    if (freeze.PREREG6_SHA256 && freeze.NOT_BEFORE6) ({ prereg6Sha256, notBefore } = checkFrozen(root, now, freeze));
+    if (frozen) ({ prereg6Sha256, amendment6Sha256, notBefore } = checkFrozen(root, now, freeze));
     else {
-      if (!/^[0-9a-f]{64}$/.test(rehearsalPins?.prereg6Sha256 ?? '') || !Number.isFinite(Date.parse(rehearsalPins?.notBefore))) refuse('a rehearsal before the freeze needs rehearsalPins {prereg6Sha256, notBefore}');
-      ({ prereg6Sha256, notBefore } = rehearsalPins);
+      if (!/^[0-9a-f]{64}$/.test(rehearsalPins?.prereg6Sha256 ?? '') || !/^[0-9a-f]{64}$/.test(rehearsalPins?.amendment6Sha256 ?? '') || !Number.isFinite(Date.parse(rehearsalPins?.notBefore))) refuse('a rehearsal before the freeze needs rehearsalPins {prereg6Sha256, amendment6Sha256, notBefore}');
+      ({ prereg6Sha256, amendment6Sha256, notBefore } = rehearsalPins);
       if (!(now.getTime() > Date.parse(notBefore))) refuse('the rehearsal not-before is not in the past');
     }
   }
   return {
     prereg, amendment, amendment02,
     stamp: {
-      fixture, rehearsal, mode: mode === 'rehearsal' ? 'counted' : mode, prereg6Sha256, notBefore, code, codeMatchesPins: codeMatches,
+      fixture, rehearsal, mode: mode === 'rehearsal' ? 'counted' : mode, prereg6Sha256, amendment6Sha256, notBefore, code, codeMatchesPins: codeMatches,
       parentSha256: s5.parentSha256, amendmentSha256: s5.amendmentSha256, amendment02Sha256: AMENDMENT_02_SHA256,
       corpusSha256: CORPUS_SHA256, baseCommit: BASE_COMMIT,
     },
@@ -94,25 +102,56 @@ export function checkRun6({ mode, root = REPO_ROOT, now = new Date(), fixture = 
 }
 
 /** Refuses unless every pinned file exists under `root` and hashes to its pin. */
-export function checkPinned6(files, root = REPO_ROOT) {
+export function checkPinned6(files, root = REPO_ROOT, by = 'the EXP 006 pre-registration') {
   for (const [rel, want] of Object.entries(files)) {
-    if (!existsSync(join(root, rel))) refuse(`the EXP 006 pre-registration pins ${rel}, which is missing`);
+    if (!existsSync(join(root, rel))) refuse(`${by} pins ${rel}, which is missing`);
     const have = sha256(readFileSync(join(root, rel)));
-    if (have !== want) refuse(`the EXP 006 pre-registration pins ${rel} at ${want}; it hashes to ${have}`);
+    if (have !== want) refuse(`${by} pins ${rel} at ${want}; it hashes to ${have}`);
   }
 }
+
+/**
+ * The pins in force under amendment 01: the pre-registration's `files`, with each file the amendment re-pins
+ * (amendment.pins[file] = {from, to}) moved from `from` (which must be the pre-registration's pin) to `to`.
+ */
+export function amendedPins6(preregFiles, amendment) {
+  const pins = { ...preregFiles };
+  for (const [rel, { from, to } = {}] of Object.entries(amendment?.pins ?? {})) {
+    if (!(rel in preregFiles)) refuse(`amendment 01 re-pins ${rel}, which the pre-registration does not pin`);
+    if (preregFiles[rel] !== from) refuse(`amendment 01 re-pins ${rel} from ${from}, but the pre-registration pins it at ${preregFiles[rel]}`);
+    if (!/^[0-9a-f]{64}$/.test(to ?? '')) refuse(`amendment 01 re-pins ${rel} to no sha256`);
+    pins[rel] = to;
+  }
+  return pins;
+}
+
+export const FROZEN_KEYS = ['PREREG6_SHA256', 'NOT_BEFORE6', 'AMENDMENT6_SHA256', 'AMENDMENT6_NOT_BEFORE'];
+const utc = (name, value) => {
+  const t = Date.parse(value);
+  if (!Number.isFinite(t) || !/Z$/.test(value)) refuse(`${name} ${value} is not an ISO 8601 UTC time`);
+  return t;
+};
 
 function checkFrozen(root, now, freeze) {
   const path = join(root, PREREG6);
   if (!existsSync(path)) refuse(`${PREREG6} is missing`);
   const got = sha256(readFileSync(path));
   if (got !== freeze.PREREG6_SHA256) refuse(`${PREREG6} hashes to ${got}, not the frozen ${freeze.PREREG6_SHA256}`);
-  // Every file the pre-registration pins must still hash to its pin (the classifier, scorer, runner, spotlight gate…).
-  checkPinned6(JSON.parse(readFileSync(path, 'utf8')).files ?? {}, root);
-  const nb = Date.parse(freeze.NOT_BEFORE6);
-  if (!Number.isFinite(nb) || !/Z$/.test(freeze.NOT_BEFORE6)) refuse(`NOT_BEFORE6 ${freeze.NOT_BEFORE6} is not an ISO 8601 UTC time`);
+  const apath = join(root, AMENDMENT6);
+  if (!existsSync(apath)) refuse(`${AMENDMENT6} is missing`);
+  const agot = sha256(readFileSync(apath));
+  if (agot !== freeze.AMENDMENT6_SHA256) refuse(`${AMENDMENT6} hashes to ${agot}, not the frozen ${freeze.AMENDMENT6_SHA256}`);
+  const amendment6 = JSON.parse(readFileSync(apath, 'utf8'));
+  if (amendment6.parent?.sha256 !== got) refuse(`${AMENDMENT6} does not name the frozen pre-registration ${got} as its parent`);
+  // Every file the pre-registration pins must still hash to its pin, as amendment 01 re-pinned it (the classifier,
+  // scorer, runner, spotlight gate…), and every file the amendment itself pins to the amendment's pin.
+  checkPinned6(amendedPins6(JSON.parse(readFileSync(path, 'utf8')).files ?? {}, amendment6), root, 'the EXP 006 pre-registration (as amendment 01 re-pins it)');
+  checkPinned6(amendment6.files ?? {}, root, 'EXP 006 amendment 01');
+  const nb = utc('NOT_BEFORE6', freeze.NOT_BEFORE6), anb = utc('AMENDMENT6_NOT_BEFORE', freeze.AMENDMENT6_NOT_BEFORE);
+  if (!(anb > nb)) refuse(`the amendment not-before ${freeze.AMENDMENT6_NOT_BEFORE} is not after the pre-registration's ${freeze.NOT_BEFORE6}`);
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the EXP 006 not-before ${freeze.NOT_BEFORE6}`);
-  return { prereg6Sha256: got, notBefore: freeze.NOT_BEFORE6 };
+  if (!(now.getTime() > anb)) refuse(`it is ${now.toISOString()}, not after the EXP 006 amendment 01 not-before ${freeze.AMENDMENT6_NOT_BEFORE}`);
+  return { prereg6Sha256: got, amendment6Sha256: agot, notBefore: freeze.AMENDMENT6_NOT_BEFORE };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

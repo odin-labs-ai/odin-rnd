@@ -7,9 +7,11 @@ import { checkRecords } from '../experiments/jev-gate/runner-guard.mjs';
 import { commandTemplate } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { computeResults6 } from '../experiments/nina-changes/results6.mjs';
 import { assertFenceUnaffected, buildRecord, checkRecord, FENCE_FILES, NOT_PINNED, PARENT, PINNED, PROOF_RUNS, pinPath, proofRunDiffs, recordPath, units, validateRecord } from './nina-changes-prereg.mjs';
-import { addJournalRow, articlePath, assertNoteCurrent, exp005SpotlightHref, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
+import { addJournalRow, articlePath, assertNoteCurrent, exp005SpotlightHref, renderAmendedNote, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
+import { checkAmendment } from './nina-changes-amendment.mjs';
 import { exp006NoteHref, renderHarnessSection, checkResults } from './jev-gate-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
+import { qualifyRow } from './nina-changes-amendment-note.mjs';
 
 // EXP 006 WO-1-04 and WO-1-05: the pre-registration record, its validator, and its public pages.
 
@@ -21,7 +23,10 @@ test('the record is pinned, and it is exactly the build of the committed files',
   assert.equal(readFileSync(pinPath, 'utf8').split(/\s+/)[0], sha256(readFileSync(recordPath)));
   assert.equal(digest, sha256(readFileSync(recordPath)));
   assert.deepEqual(record, buildRecord());
-  for (const [file, want] of Object.entries(record.files)) assert.equal(sha256(readFileSync(file)), want, file);
+  // Each pinned file hashes to its pin, or, for a file EXP 006 amendment 01 re-pins, to the amendment's new pin.
+  const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
+  for (const [file, want] of Object.entries(record.files)) assert.equal(sha256(readFileSync(file)), amendment.pins[file] ? amendment.pins[file].to : want, file);
+  for (const [file, p] of Object.entries(amendment.pins)) assert.equal(record.files[file], p.from, `${file}: the amendment re-pins it from this record's pin`);
   for (const f of NOT_PINNED) assert(!(f in record.files), `${f} is never pinned in the pre-registration`);
 });
 
@@ -93,13 +98,14 @@ test('the limits state the two layers, the prompt confound, the is_error artifac
   assert.match(record.notBefore, /merge time of the odin-rnd pull request that adds this file/);
 });
 
-test('the field note is exactly the render of the record, links to EXP 005\'s held spotlight, and states no result', () => {
+test('the field note is exactly the render of the record (amended by amendment 01), links to EXP 005\'s held spotlight, and states no result', () => {
   assert.doesNotThrow(() => assertNoteCurrent());
   const note = readFileSync(articlePath, 'utf8');
-  assert.equal(note, renderNote(record, digest));
+  assert.equal(note, renderAmendedNote(record, digest, checkAmendment()));
+  assert(note.startsWith(renderNote(record, digest).split(' · NOT YET RUN</p>')[0].split('<meta name="description"')[0]), 'the pre-registration\'s render, amended in place');
   assert(note.includes(`href="${exp005SpotlightHref}"`));
   assert(note.includes(digest));
-  assert.match(note, /PRE-REGISTERED 30 SEP 2026 · NOT YET RUN/);
+  assert.match(note, /PRE-REGISTERED 30 SEP 2026 · AMENDED 01 OCT 2026 · NOT YET RUN/);
   assert(readFileSync('site/sitemap.xml', 'utf8').includes(`journal/${slug}.html`));
   assert(!/(?<!\w)\/(?:Users|private\/tmp)\//.test(note), 'no local path on the page');
 });
@@ -111,16 +117,18 @@ test('EXP 005\'s held-spotlight section links to EXP 006, and the home row is ad
   assert.equal(exp006NoteHref, `${slug}.html`);
   const home = readFileSync('site/index.html', 'utf8');
   const built = addJournalRow(home, record);
-  const row = name => built.indexOf(`<a class="journal-row" href="journal/${name}.html">`);
+  const row = name => built.indexOf(`<a class="journal-row" href="journal/${name}.html`);
   assert(row(slug) > 0 && row(slug) < row('jev-as-a-fast-gate'), 'the EXP 006 row leads the field notes');
-  assert(built.includes(renderJournalRow(record)));
+  assert(built.includes(qualifyRow(renderJournalRow(record), checkAmendment().record)));
   assert.throws(() => addJournalRow(built, record), /already there/);
 });
 
 test('the built site publishes the record byte for byte and carries the row and the links (fresh build copy)', { timeout: 600_000 }, () => {
   const dist = join(builtCopy(), 'dist');
   assert.equal(sha256(readFileSync(join(dist, 'data/nina-changes/preregistration.json'))), digest);
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(renderJournalRow(record)));
+  // The row as built: the pre-registration's row, qualified in place by EXP 006 amendment 01.
+  const amendment = JSON.parse(readFileSync('experiments/nina-changes/amendment-01.json', 'utf8'));
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(qualifyRow(renderJournalRow(record), amendment)));
   assert(existsSync(join(dist, `journal/${slug}.html`)));
   assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(`href="${exp006NoteHref}"`));
 });

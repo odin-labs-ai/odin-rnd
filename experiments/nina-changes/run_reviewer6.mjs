@@ -105,7 +105,9 @@ const statusOf = repo => gitgit(repo)('status', '--porcelain', '--untracked-file
 
 /**
  * One call's record from the spawn result and its context. Pure except for hashing: it never throws on what the
- * client printed. Returns {rec, rawCalls} (rawCalls: every tool call with its full output, for the matrix judge).
+ * client printed. Returns {rec, rawCalls, digests} (rawCalls: every tool call with its full output, for the matrix
+ * judge; digests: the [path, sha256] pairs this builder computed itself, the only digests the write-time lint exempts,
+ * EXP 006 amendment 01 A1).
  */
 export function buildCallRecord({ prereg, item, runIndex, spawn, variant, args, fp, staged, extra = {}, keepAllOutputs = false }) {
   const { harnessFailure, out, parsed } = spawn.error ? { harnessFailure: 'spawn-error', out: null, parsed: parseStream('') } : classifyStreamRun(spawn);
@@ -133,7 +135,20 @@ export function buildCallRecord({ prereg, item, runIndex, spawn, variant, args, 
     ...extra,
   };
   rec.gitToolDenials = (rec.permissionDenials ?? []).filter(d => d.tool === 'Bash' && /(^|\s)git(\s|$)/.test(String(d.input?.command ?? ''))).length;
-  return { rec, rawCalls: parsed.toolCalls };
+  return { rec, rawCalls: parsed.toolCalls, digests: callDigests6(scrubbedCalls, text, rec.hook) };
+}
+
+/**
+ * EXP 006 amendment 01 (A1): the digests a call record holds that the runner computed itself, recomputed here from the
+ * bytes it holds (never copied from a record or from model text): each tool call's outputSha256 from its scrubbed
+ * output, resultSha256 from the result text, and hook.sha256 from the hook text the record keeps.
+ */
+export function callDigests6(scrubbedCalls, text, hook) {
+  return [
+    ...scrubbedCalls.flatMap((c, n) => (typeof c.output === 'string' ? [[['toolCalls', String(n), 'outputSha256'], sha256(c.output)]] : [])),
+    ...(typeof text === 'string' ? [[['resultSha256'], sha256(text)]] : []),
+    ...(typeof hook?.text === 'string' ? [[['hook', 'sha256'], sha256(hook.text)]] : []),
+  ];
 }
 
 // ----------------------------------------------------------------------------- one headless run
@@ -235,6 +250,19 @@ function fingerprintsFor(items, corpus) {
   return Object.fromEntries(items.map(i => [i.id, corpus.items[i.id] ?? (i.patch ? fingerprintItem(i.patch, baseSet) : null)]));
 }
 
+/**
+ * EXP 006 amendment 01 (A1): the digests the run record's header holds that the runner computed itself: the guard's
+ * record and code shas (from the files it read), the prompt's, and the fingerprints and base-lines files'.
+ */
+export function headerDigests6(stamp, prereg) {
+  return [
+    ...['parentSha256', 'amendmentSha256', 'amendment02Sha256', 'prereg6Sha256', 'amendment6Sha256', 'corpusSha256'].map(k => [[k], stamp[k]]),
+    ...Object.entries(stamp.code ?? {}).map(([f, h]) => [['code', f], h]),
+    [['pins', 'promptSha256'], sha256(prereg.gates.reviewer.prompt)],
+    [['pins', 'fingerprintsSha256'], fileSha(FINGERPRINTS_FILE)], [['pins', 'baseLinesSha256'], fileSha(BASE_LINES_FILE)],
+  ];
+}
+
 /** One invocation. A paid one (anything but a fixture or a rehearsal) holds the exclusive run lock throughout. */
 export async function runReviewer6(opts) {
   if (opts.fixture || opts.mode === 'rehearsal') return runInvocation6(opts);
@@ -282,7 +310,7 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
     schemaVersion: 1, kind: 'gate-run', gate: 'reviewer', experiment: 'EXP 006',
     mode: probe ? (prerun ? PRERUN_KIND : 'isolation-matrix') : stamp.mode, ...fixtureFields(fixture), ...(rehearsal ? { rehearsal: true } : {}),
     parentSha256: stamp.parentSha256, amendmentSha256: stamp.amendmentSha256, amendment02Sha256: stamp.amendment02Sha256,
-    prereg6Sha256: stamp.prereg6Sha256, notBefore: stamp.notBefore ?? amendment.notBefore, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins,
+    prereg6Sha256: stamp.prereg6Sha256, amendment6Sha256: stamp.amendment6Sha256, notBefore: stamp.notBefore ?? amendment.notBefore, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins,
     corpusSha256: stamp.corpusSha256, baseCommit: stamp.baseCommit,
     startedAt: new Date().toISOString(), endedAt: null,
     pins: {
@@ -295,7 +323,7 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
       billing: { strippedKeysMirror: 'nina 0.34.0 src/commands/eval.mjs:44 (BILLED)', basis: prereg.cost.reviewer.basis },
     },
     items: items.map(i => i.id), partial: { reason: 'in-progress' }, calls: [],
-  }, 'run record');
+  }, 'run record', headerDigests6(stamp, prereg));
   const save = () => { record.endedAt = new Date().toISOString(); writeFileSync(out, `${JSON.stringify(record, null, 2)}\n`); };
   const stopFor = (reason, detail) => { record.partial = { reason, ...detail }; log(`STOP: ${reason} ${JSON.stringify(detail)}`); save(); return record; };
 
@@ -326,9 +354,9 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
       ledgerFailed = recordSpend(ledger, { ts: spawn.endedAt, kind, id: item.id, run: k, reportedCostUsd, fixture, prereg6Sha256: stamp.prereg6Sha256 }).failed;
       if (!ledgerFailed) ledger.clearIntent(callId); // a failed write leaves the intent (and the failed line) pending
     } : null;
-    let rec;
+    let rec, digests;
     try {
-      ({ rec } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), beforeSpawn, onSpawn, faults }));
+      ({ rec, digests } = await reviewerRun6({ prereg, amendment, item, runIndex: k, tarball, claudeBin, variant: iso, timeoutMs, fp: fps[item.id] ?? null, rehearsal, matrix: Boolean(probe), beforeSpawn, onSpawn, faults }));
     } catch (error) {
       if (error.code === 'EINTENT') return { stop: ['intent-write', { id: item.id, run: k, error: scrubPaths6(String(error.message)).slice(0, 200) }] };
       throw error;
@@ -336,12 +364,12 @@ async function runInvocation6({ out, ledgerPath = LEDGER_FILE, items = [], mode,
     if (rec.stageError) { record.calls.push(rec); return { stop: ['workspace', { id: item.id, run: k, error: rec.stageError }] }; }
     if (ledgerFailed) { rec.ledgerWriteFailed = true; record.calls.push({ id: item.id, run: k, gate: 'reviewer', ledgerWriteFailed: true, startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd ?? null }); return { stop: ['ledger-write', { id: item.id, run: k, pending: ledger.pendingPath.split('/').pop() }] }; }
     if (rec.postCallError) { record.calls.push(rec); return { stop: ['post-call', { id: item.id, run: k, error: rec.postCallError }] }; }
-    try { record.calls.push(publicRecord6(rec, `${item.id} run ${k}`)); } catch (error) {
+    try { record.calls.push(publicRecord6(rec, `${item.id} run ${k}`, digests)); } catch (error) {
       // The record is not written, but the facts that carry no text are (phase B: a refused paid probe lost its
       // verdict): which fields still leaked, the cost, the harness state, and the matrix verdict when it is clean.
       const scrubbed = scrubRecord6(rec);
       const matrix = rec.matrix && !leakFields(rec.matrix).length ? rec.matrix : null;
-      record.calls.push({ id: item.id, run: k, gate: 'reviewer', lintRefused: true, leakFields: leakFields(scrubbed), startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd, harnessFailure: rec.harnessFailure, matrix });
+      record.calls.push({ id: item.id, run: k, gate: 'reviewer', lintRefused: true, leakFields: leakFields(scrubbed, digests), startedAt: rec.startedAt, endedAt: rec.endedAt, costUsd: rec.costUsd, harnessFailure: rec.harnessFailure, matrix });
       return { stop: ['lint', { id: item.id, run: k, error: error.message.slice(0, 200) }] };
     }
     return { rec };
