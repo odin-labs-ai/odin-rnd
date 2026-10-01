@@ -327,6 +327,13 @@ test('the published reviewer record masks exactly the per-call digests its own t
   const tampered = structuredClone(run); tampered.calls[0].resultSha256 = 'a'.repeat(64);
   assert.equal(JSON.parse(publicReviewer6(Buffer.from(JSON.stringify(tampered)))).calls[0].resultSha256, 'a'.repeat(64));
   assert.equal(JSON.parse(publicReviewer6(src)).calls[0].resultSha256, '<sha256>');
+  // Bounded confirm N-a: a digest the side record names as superseded by the re-scrub is masked too, and only it.
+  const t2 = structuredClone(run); t2.calls[2].toolCalls[0].outputSha256 = 'b'.repeat(64);
+  const t2b = Buffer.from(JSON.stringify(t2));
+  const p2 = JSON.parse(publicReviewer6(t2b, ['calls.2.toolCalls.0.outputSha256']));
+  assert.equal(p2.calls[2].toolCalls[0].outputSha256, '<sha256>');
+  assert.equal(maskedDigests6(t2b, ['calls.2.toolCalls.0.outputSha256']), maskedDigests6(t2b) + 1);
+  assert.equal(JSON.parse(publicReviewer6(t2b)).calls[2].toolCalls[0].outputSha256, 'b'.repeat(64), 'without the side record it stays');
 });
 
 test('results refute N2, N3: the practice pre-flight override and the pre-scrub result digests are stated, from the records', () => {

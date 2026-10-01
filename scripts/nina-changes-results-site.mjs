@@ -71,7 +71,7 @@ export function resultsData({ resultsBytes, reviewerBytes, decisionBytes = null,
   const scrubbedFile = join(root, RESULTS_DIR, SCRUBBED);
   const rescrub = existsSync(scrubbedFile) ? JSON.parse(readFileSync(scrubbedFile, 'utf8')) : null;
   const preScrubDigests = calls.filter(c => typeof c.result === 'string' && typeof c.resultSha256 === 'string' && sha256(c.result) !== c.resultSha256).map(c => `${c.id} run ${c.run}`);
-  return { results, sha256: sha256(resultsBytes), reviewerSha256: sha256(reviewerBytes), maskedDigests: maskedDigests6(reviewerBytes), practiceOverrides, countedOverride, preScrubDigests, rescrub, resultDigestCalls: calls.filter(c => typeof c.resultSha256 === 'string').length, decision, gate, spend, prereg6: loadPrereg6(root).record, amendment6: checkAmendment(root), confidence: `${Math.round(exp005.statistics.confidenceLevel * 100)}%`, measuredOn: reviewer.endedAt };
+  return { results, sha256: sha256(resultsBytes), reviewerSha256: sha256(reviewerBytes), maskedDigests: maskedDigests6(reviewerBytes), supersededMasked: maskedDigests6(reviewerBytes, supersededDigests6(root)) - maskedDigests6(reviewerBytes), practiceOverrides, countedOverride, preScrubDigests, rescrub, resultDigestCalls: calls.filter(c => typeof c.resultSha256 === 'string').length, decision, gate, spend, prereg6: loadPrereg6(root).record, amendment6: checkAmendment(root), confidence: `${Math.round(exp005.statistics.confidenceLevel * 100)}%`, measuredOn: reviewer.endedAt };
 }
 
 /** The committed EXP 006 results, recomputed and checked; null while none is committed. */
@@ -92,13 +92,28 @@ export function checkResults6(root = '.') {
  * file loses nothing. A digest the text does not reproduce stays as recorded, and is scanned. The committed record
  * (results/reviewer.json, which the scorer and the gate read) is never altered; the page names its sha256.
  */
-export function publicReviewer6(bytes) {
+//
+// `superseded` (bounded confirm N-a): the digests the post-run re-scrub left over text as first recorded, named by the
+// side record (scrubbed-records.json digestsNoLongerReproduced, e.g. calls.149.toolCalls.4.outputSha256). Their preimage
+// held the local account name, so the published copy masks them too; the committed record keeps them.
+export function publicReviewer6(bytes, superseded = []) {
   const run = JSON.parse(bytes);
-  const calls = run.calls.map(c => (c && !c.stageError ? maskDigests6(c, callDigests6(c.toolCalls ?? [], c.result, c.hook)) : c));
+  const own = new Set(superseded);
+  const calls = run.calls.map((c, i) => {
+    if (!c || c.stageError) return c;
+    const extra = [...own].map(p => p.split('.')).filter(([k, n]) => k === 'calls' && Number(n) === i).map(([, , ...rest]) => [rest, rest.reduce((o, k) => o?.[k], c)]);
+    return maskDigests6(c, [...callDigests6(c.toolCalls ?? [], c.result, c.hook), ...extra]);
+  });
   return Buffer.from(`${JSON.stringify({ ...run, calls }, null, 2)}\n`);
 }
+const placeholders = text => (text.match(new RegExp(`"${DIGEST_PLACEHOLDER6}"`, 'g')) ?? []).length;
 /** How many digests the published copy masks (stated on the page, from the bytes). */
-export const maskedDigests6 = bytes => (publicReviewer6(bytes).toString('utf8').match(new RegExp(`"${DIGEST_PLACEHOLDER6}"`, 'g')) ?? []).length - (bytes.toString('utf8').match(new RegExp(`"${DIGEST_PLACEHOLDER6}"`, 'g')) ?? []).length;
+export const maskedDigests6 = (bytes, superseded = []) => placeholders(publicReviewer6(bytes, superseded).toString('utf8')) - placeholders(bytes.toString('utf8'));
+/** The superseded digest paths the side record names (none when there is no side record under `root`). */
+export const supersededDigests6 = (root = '.') => {
+  const file = join(root, RESULTS_DIR, SCRUBBED);
+  return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')).files.flatMap(f => (f.path === `${RESULTS_DIR}/${FILES.reviewer}` ? (f.digestsNoLongerReproduced ?? []).map(d => d.path) : [])) : [];
+};
 
 /**
  * Publishes the committed records into site/data/nina-changes/ (the reviewer run record as publicReviewer6's copy, the
@@ -108,7 +123,7 @@ export function publishResults6(root = '.') {
   mkdirSync(join(root, publishedDir), { recursive: true });
   return PUBLISHED.filter(f => existsSync(join(root, RESULTS_DIR, f))).map(f => {
     const src = readFileSync(join(root, RESULTS_DIR, f));
-    const out = f === FILES.reviewer ? publicReviewer6(src) : src;
+    const out = f === FILES.reviewer ? publicReviewer6(src, supersededDigests6(root)) : src;
     writeFileSync(join(root, publishedDir, f), out);
     return { file: f, sha256: sha256(out) };
   });
@@ -188,7 +203,7 @@ ${list([escape(p.bar.mapping), ...p.limits.map(escape), ...a.record.limits.map(x
 <pre tabindex="0">pnpm install --frozen-lockfile
 node experiments/nina-changes/write-results6.mjs --check</pre>
 <p>It recomputes ${code(`${RESULTS_DIR}/${FILES.results}`)} from the committed run record with the frozen scorer, including every run's diff visibility from its committed tool outputs and fingerprints, and fails unless the bytes match. The build runs the same check.</p>
-<p>This section is rendered from <a href="${dataHref(FILES.results)}"><code>results.json</code></a> (sha256 ${code(digest)}), made from <a href="${dataHref(FILES.reviewer)}"><code>reviewer.json</code></a>, the counted run record (the committed record's sha256 is ${code(reviewerSha256)}; the published copy replaces the ${data.maskedDigests} per-call digests that its own text reproduces with ${code('<sha256>')}, so a random digest cannot trip the site's restricted-term check, and is otherwise the same record), and the answer-key <a href="${dataHref(FILES.preflight)}">pre-flight record</a>${data.decision ? `, with the <a href="${dataHref(FILES.decision)}">spotlight decision</a>` : ''}. The run and the results name the pre-registration (sha256 ${code(r.prereg6Sha256 ?? 'not recorded')}) and <a href="#${amendmentSectionId}">amendment 01</a> (sha256 ${code(r.amendment6Sha256 ?? 'not recorded')}; the committed amendment is ${code(a.sha256)}).</p>
+<p>This section is rendered from <a href="${dataHref(FILES.results)}"><code>results.json</code></a> (sha256 ${code(digest)}), made from <a href="${dataHref(FILES.reviewer)}"><code>reviewer.json</code></a>, the counted run record (the committed record's sha256 is ${code(reviewerSha256)}; the published copy replaces the ${data.maskedDigests} per-call digests that its own text reproduces${data.supersededMasked ? `, and the ${data.supersededMasked} digest${data.supersededMasked === 1 ? '' : 's'} the re-scrub superseded,` : ''} with ${code('<sha256>')}, so a random digest cannot trip the site's restricted-term check, and is otherwise the same record), and the answer-key <a href="${dataHref(FILES.preflight)}">pre-flight record</a>${data.decision ? `, with the <a href="${dataHref(FILES.decision)}">spotlight decision</a>` : ''}. The run and the results name the pre-registration (sha256 ${code(r.prereg6Sha256 ?? 'not recorded')}) and <a href="#${amendmentSectionId}">amendment 01</a> (sha256 ${code(r.amendment6Sha256 ?? 'not recorded')}; the committed amendment is ${code(a.sha256)}).</p>
 </section>
 `;
 }
@@ -202,7 +217,7 @@ export function runLimits(data) {
   const f = rescrub?.files?.[0];
   const later = f?.digestsNoLongerReproduced ?? [];
   const rescrubText = f ? ` After the run the committed record was re-scrubbed (${SCRUBBED}: ${rescrub.rule}; ${f.replacements} replacements in ${f.fields.length} field${f.fields.length === 1 ? '' : 's'}; the record was ${f.originalSha256} as the runner wrote it and is ${f.sha256} as published). ${later.length ? `For ${later.length === 1 ? 'that tool output' : `those ${later.length} tool outputs`} (${later.map(d => `${d.call}, ${d.path}`).join('; ')}) the outputSha256 is the digest of the output as first recorded, so it no longer reproduces from the published text either.` : ''}` : '';
-  out.push(`resultSha256 is the sha256 of the result text as the client returned it, before the write-time scrub; amendment 01 calls it "the sha256 of the result text". For ${ps.length} of the ${n} calls${ps.length ? ` (${ps.join(', ')})` : ''} the scrub changed the result text, so the published text does not reproduce that digest.${rescrubText} The published copy keeps every such digest as recorded.`);
+  out.push(`resultSha256 is the sha256 of the result text as the client returned it, before the write-time scrub; amendment 01 calls it "the sha256 of the result text". For ${ps.length} of the ${n} calls${ps.length ? ` (${ps.join(', ')})` : ''} the scrub changed the result text, so the published text does not reproduce that digest.${rescrubText} ${later.length ? `The published copy keeps the result digest${ps.length === 1 ? '' : 's'} above as recorded, and masks ${later.length === 1 ? 'that superseded output digest' : 'those superseded output digests'} (it is the digest of text that held the local account name); the committed record keeps ${later.length === 1 ? 'it' : 'them'}.` : 'The published copy keeps every such digest as recorded.'}`);
   return out;
 }
 

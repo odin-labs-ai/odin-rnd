@@ -127,12 +127,24 @@ test('the entry goes next after 002 Laya, and there is only ever one nina entry'
   assert.equal(renderSpotlightCard(checkResults()), '');
 });
 
-test('the live site renders no nina entry while the committed records keep the gate closed (fresh build copy)', { timeout: 600_000 }, () => {
-  // Before the measured run: no results record. After it, until a results refute SHIPs: the committed decision holds it.
-  const held = existsSync('experiments/nina-changes/results/spotlight-decision.json') && JSON.parse(readFileSync('experiments/nina-changes/results/spotlight-decision.json', 'utf8')).held === true;
-  assert.deepEqual([gateOpen().shown, gateOpen().reason, loadEntryData().shown], [false, existsSync('experiments/nina-changes/results/results.json') ? (held ? 'the gate is closed: bar, manipulation check, eligibility or held' : gateOpen().reason) : 'no results record', false]);
-  assert(!existsSync('experiments/nina-changes/results/results.json') || held, 'this test covers the closed states only: once the decision is held:false, the open entry is asserted elsewhere');
+test('the live site renders nina\'s entry exactly when the committed records open the pinned gate (fresh build copy)', { timeout: 600_000 }, () => {
+  // Three committed states: no results record (closed); results with a held decision (closed); results with the
+  // pre-registered held:false decision (open: the entry renders, from the records).
+  const R = 'experiments/nina-changes/results/';
+  const decision = existsSync(`${R}spotlight-decision.json`) ? JSON.parse(readFileSync(`${R}spotlight-decision.json`, 'utf8')) : null;
   const page = readFileSync(join(builtCopy(), 'dist', 'index.html'), 'utf8');
+  const g = gateOpen();
+  assert.equal(loadEntryData().shown, g.shown);
+  if (!existsSync(`${R}results.json`)) assert.deepEqual([g.shown, g.reason], [false, 'no results record']);
+  else if (decision?.held !== false) assert.deepEqual([g.shown, g.reason], [false, 'the gate is closed: bar, manipulation check, eligibility or held']);
+  else {
+    assert.equal(g.shown, true, g.reason);
+    assert(page.includes(renderNinaEntry(g, upstream)), 'the built home page carries the entry the gate opens, as rendered from the records');
+    const at = s => page.indexOf(s);
+    assert(at('<div class="project-number">002') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('<div class="project-number">003'), 'next after 002 Laya');
+    assert.equal(page.split(`id="${entryId}"`).length, 2, 'one nina entry');
+    return;
+  }
   assert(!page.includes(`id="${entryId}"`) && !page.includes('HARNESS</span>'));
 });
 
@@ -203,8 +215,10 @@ test('refute r4 B1: the gate opens only for a real, complete, counted EXP 006 me
   hidden('a reviewer record under another pre-registration', pass, { reviewer: { ...REVIEWER, prereg6Sha256: 'b'.repeat(64) } }, /another pre-registration/);
   hidden('no reviewer record', pass, { reviewer: null }, /no reviewer run record/);
   hidden('EXP 005\'s publication check fails', { ...pass, note: 'FIXTURE' }, {}, /not publishable/);
-  // The committed tree today: freeze.mjs is null and no results exist, so the live gate is closed.
-  assert.equal(gateOpen().shown, false);
+  // The committed tree: the live gate opens only with results and the pre-registered held:false decision (the live-site
+  // test covers each committed state).
+  const committed = 'experiments/nina-changes/results/spotlight-decision.json';
+  assert.equal(gateOpen().shown, existsSync(committed) && JSON.parse(readFileSync(committed, 'utf8')).held === false);
 });
 
 test('refute r5 B1: the bound reviewer record must be the complete counted EXP 006 reviewer run the results scored', () => {

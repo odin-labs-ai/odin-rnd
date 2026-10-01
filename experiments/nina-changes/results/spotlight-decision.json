@@ -3,8 +3,11 @@
   "kind": "spotlight-decision",
   "resultsSha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c",
   "reviewerSha256": "6326e98d28f5840c3c65ec10bd611fbdbb56a1bfd80019589882955e889d8c76",
-  "held": true,
-  "reason": "Held by the pre-registered rule: no independent results refute SHIP is named yet.",
+  "held": false,
+  "reason": "Not held, by the pre-registered rule: the bar PASSES, the manipulation check PASSES (3 of 180 runs diff-blind, at most 18 allowed), and the independent results refute SHIPped (refute-results-r1#4646e83:REJECT-B1-fixed-ff4be6a/bounded-confirm-r2#e142b29:SHIP).",
   "decidedOn": "2026-10-01",
-  "refute": null
+  "refute": {
+    "verdict": "SHIP",
+    "ref": "refute-results-r1#4646e83:REJECT-B1-fixed-ff4be6a/bounded-confirm-r2#e142b29:SHIP"
+  }
 }

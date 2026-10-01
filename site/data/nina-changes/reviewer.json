@@ -36567,7 +36567,7 @@
           "isError": true,
           "refused": false,
           "parentToolUseId": null,
-          "outputSha256": "d95504331ffb173d229adad19df8a36a91350ecfdd739a750c1715be7a1b1839",
+          "outputSha256": "<sha256>",
           "outputBytes": 476,
           "output": "Exit code 1\n M src/app/place-order.ts\ntotal 8\ndrwxr-xr-x  6 <user>  staff   192 Oct  1 13:27 .\ndrwxr-xr-x  7 <user>  staff   224 Oct  1 13:27 ..\ndrwxr-xr-x  6 <user>  staff   192 Oct  1 13:27 db\ndrwxr-xr-x  3 <user>  staff    96 Oct  1 13:27 http\n-rw-r--r--  1 <user>  staff  1005 Oct  1 13:27 index.ts\ndrwxr-xr-x  3 <user>  staff    96 Oct  1 13:27 mail\nzsh:1: operation not permitted: <tmp>/claude-session/cwd-a63b",
           "fingerprintHit": false
