@@ -21,6 +21,7 @@ import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
 import { outFile as FINGERPRINTS_FILE } from '../experiments/nina-changes/fingerprints.mjs';
 import { amendedPins6, checkPinned6, checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { buildReviewerRun } from './nina-changes-built-reviewer.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const day = iso => `${iso.slice(8, 10)} ${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
@@ -275,7 +276,7 @@ test('refute r6 N2: each call must match the scored run in decision, harness fai
 test('refute r6 N1: no page renders the text undefined, NaN or a bare null (the new note, home, the EXP 005 note, every built page)', { timeout: 600_000 }, () => {
   // Prose that names null on purpose, verbatim: each is a sentence about a value, not a value rendered as text.
   const PROSE_NULL = ['it is null only while no baseline is recorded', 'stay null, as init writes them', 'costPer1kUsd is null for Laya'];
-  const text = html => html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, '\n').replace(/&[a-z#0-9]+;/gi, ' ');
+  const text = html => stripTags(stripBlocks(html, ['script', 'style'], ''), '\n').replace(/&[a-z#0-9]+;/gi, ' ');
   const pages = ['site/journal/nina-reviews-the-change.html', 'site/index.html', 'site/journal/jev-as-a-fast-gate.html'].map(f => [f, readFileSync(f, 'utf8')]);
   const dist = join(builtCopy(), 'dist');
   const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.html') ? [join(d, e.name)] : []));

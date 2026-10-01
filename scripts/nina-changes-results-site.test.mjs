@@ -22,6 +22,7 @@ import { amendNote6, checkResults6, maskedDigests6, runLimits, measuredStatus6, 
 import { addNinaEntry, entryId, renderNinaEntry } from './nina-changes-spotlight.mjs';
 import { builtCopy } from './test-build.mjs';
 import { generatorInputs } from './witness-records.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 // EXP 006 bundle 3 prep (WO-3-02/03, REVISION 5), built before the measured run and tested with no paid call: the
 // results writer and --check, the automatic spotlight decision, the note's results section, the measured home row and
@@ -80,7 +81,7 @@ const FAIL_BAR = pair({ flip: 10 });           // 10 of 90 RED runs approved: mi
 const FAIL_MANIP = pair({ blind: 19 });        // 19 of 180 diff-blind: more than the 18 allowed
 const note = () => readFileSync(articlePath, 'utf8');
 const home = () => readFileSync('site/index.html', 'utf8');
-const text = html => html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, '\n').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ');
+const text = html => stripTags(stripBlocks(html, ['script', 'style'], ''), '\n').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ');
 /** No missing value rendered as text: undefined, NaN, or a bare null (the prose /dev/null aside). */
 const noMissing = (html, label) => {
   const t = text(html).replace(/\/dev\/null/g, ' ');
@@ -247,7 +248,7 @@ test('a partial run renders "decides nothing" and no entry; the note\'s tables f
   for (const html of [amendNote6(note(), page(PASS, { refute: 'refute-r1-ship' })), amendNote6(note(), page(FAIL_MANIP)), out]) {
     const body = html.split('<article class="article-body">')[1].split('</article>')[0];
     for (const t of body.match(/<table>[\s\S]*?<\/table>/g) ?? []) assert((t.match(/<tr>[\s\S]*?<\/tr>/)[0].match(/<t[hd]>/g) ?? []).length <= 4, 'a results table has at most four columns');
-    const runs = body.replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+    const runs = stripTags(stripBlocks(body, ['pre'], ' '), ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
     for (const width of [375, 320]) {
       const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
       assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);

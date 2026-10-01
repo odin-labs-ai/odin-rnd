@@ -18,6 +18,7 @@ import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, re
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
 import { checkResults6, qualifyHome6 } from './nina-changes-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 // EXP 006 amendment 01 (WO-1-09): A1 the record lint and digests, A2 the git call, A3-A4 the record, A5 the guard
 // (its tests sit with the guard's in nina-changes-units.test.mjs and nina-changes-spotlight.test.mjs), A6 the pages.
@@ -249,7 +250,7 @@ test('A6: the EXP 006 note carries the dated amendment section; the home row car
   assert.match(built, / · AMENDED 01 OCT 2026 · NOT YET RUN<\/p>/);
   assert(built.includes(`href="#${sectionId}">${amendment.siteQualifier.note.replaceAll("'", '&#39;')}</a>`));
   assert(built.includes(amendmentSha) && built.includes(PARENT.sha256));
-  assert(!/undefined|NaN|\bnull\b/.test(renderAmendmentSection(amendment, amendmentSha).replace(/<[^>]+>/g, ' ')), 'no undefined, NaN or bare null');
+  assert(!/undefined|NaN|\bnull\b/.test(stripTags(renderAmendmentSection(amendment, amendmentSha), ' ')), 'no undefined, NaN or bare null');
   assert.throws(() => amendNote(built, amendment, amendmentSha), /exactly once|already amended/);
   const row = qualifyRow(renderJournalRow(checkRecord().record), amendment);
   assert(row.includes(`href="journal/nina-reviews-the-change.html#${sectionId}"`));
@@ -259,8 +260,8 @@ test('A6: the EXP 006 note carries the dated amendment section; the home row car
 test('A6: the amended note cannot scroll sideways at 375px or 320px (long tokens wrap)', () => {
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
-  const section = renderAmendmentSection(amendment, amendmentSha).replace(/<pre[\s\S]*?<\/pre>/g, ' ');
-  const runs = section.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  const section = stripBlocks(renderAmendmentSection(amendment, amendmentSha), ['pre'], ' ');
+  const runs = stripTags(section, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) {
     const wide = runs.filter(t => t.length > Math.floor((width - 32) / 9));
     assert(wide.length === 0 || wraps, `At ${width}px, ${wide.length} unbroken runs are wider than the column and nothing lets them wrap`);

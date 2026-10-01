@@ -10,6 +10,7 @@ import { ninaAttribution } from './jev-gate-prereg.mjs';
 import { amendNoteResults, checkResults, isCompound, spotlightShown, spotlightDecisionPath, criterionFigure, diffSentence, diffVisibilityPath, harnessSectionId, headline, headlineContext, interval, measuredStatus, qualifyHomeResults, rate, renderHarnessSection, renderMeasuredExhibit, renderResultsSection, renderSpotlightCard, resultsSectionId, spotlightItems, upstream } from './jev-gate-results-site.mjs';
 import { renderStations } from './station-render.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
+import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 const data = checkResults();
 const { results, facts } = data;
@@ -169,7 +170,7 @@ test('the built note: results and the harness first, the pre-registration text o
 test('the results and harness sections cannot scroll sideways at 375px or 320px', () => {
   const css = readFileSync('site/assets/style.css', 'utf8').replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
   const wraps = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].some(([, sel, body]) => sel.split(',').map(x => x.trim()).includes('.article-body') && /overflow-wrap:\s*anywhere/.test(body));
-  const runs = (renderResultsSection(data) + renderHarnessSection(data)).replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
+  const runs = stripTags(stripBlocks(renderResultsSection(data) + renderHarnessSection(data), ['pre'], ' '), ' ').replace(/&[a-z0-9#]+;/g, 'x').split(/\s+/);
   for (const width of [375, 320]) assert(runs.every(t => t.length <= Math.floor((width - 32) / 9)) || wraps, `An unbroken run is wider than ${width}px and nothing wraps it`);
 });
 
