@@ -211,7 +211,7 @@
     },
     "fence": {
       "id": "A3",
-      "correction": "The pre-registration's fence statements (fence.compound and answer 2) are corrected: besides Read, Grep, Glob and the allowed git forms, the client runs its built-in read-only commands (cat, for example) on workspace paths without an allow rule, alone or as a part of a chain. A chain that reads outside the workspace is refused whole (R18, R39, R40, R46), a bare outside read is refused (R17), and reads outside the repository that pass the permission layer are stopped by the OS sandbox (R9, R29, R30, R45). The sandbox remains the boundary.",
+      "correction": "The pre-registration's fence statements (fence.compound and answer 2) are corrected: besides Read, Grep, Glob and the allowed git forms, the client runs its built-in read-only commands (cat, for example) on workspace paths without an allow rule: observed as part of a chain (every one of the dry run's cat calls was); a lone built-in read was not observed, and is believed to behave the same. A chain that reads outside the workspace is refused whole (R18, R39, R40, R46), a bare outside read is refused (R17), and reads outside the repository that pass the permission layer are stopped by the OS sandbox (R9, R29, R30, R45). The sandbox remains the boundary.",
       "unchanged": "fence6's settings, deny rules and allow list, matrix6, its rows and its judge are unchanged; no escape row's verdict changed; no new paid matrix run was made."
     },
     "guard": {
@@ -504,11 +504,11 @@
     "prerunProbeRule": "the largest isolation-matrix line so far, as the estimate of the measured run's one pre-run matrix probe",
     "countedRuns": 180,
     "formula": "spent + 180 × per-run cost + pre-run probe + reserve",
-    "projectedMeanUsd": 40.3661418,
+    "projectedMeanUsd": 40.3661365,
     "projectedP90Usd": 45.2849478,
     "projectedMaxUsd": 49.4329038,
     "withinCap": true,
-    "statement": "Projected counted spend at the dry run's p90: $7.1003162 + 180 × $0.2048640 + $0.6545558 + $0.6545558 = $45.2849478, within the $60 cap (at the mean $40.3661418, at the max $49.4329038)."
+    "statement": "Projected counted spend at the dry run's p90: $7.1003162 + 180 × $0.2048640 + $0.6545558 + $0.6545558 = $45.2849478, within the $60 cap (at the mean $40.3661365, at the max $49.4329038)."
   },
   "countedCalls": "No counted call has been made: the ledger holds 7 isolation-matrix lines and 17 practice lines, and no counted or pre-run line.",
   "notBefore": "No counted reviewer run starts before the merge time of the odin-rnd pull request that adds this file; that time is recorded after publication, frozen with this file's sha256 in freeze.mjs (AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256), and every counted call must start after it. It replaces the pre-registration's not-before as the counted clock. The answer-key pre-flight record must end after it.",

@@ -87,6 +87,7 @@ export function buildAmendment(root = '.') {
   });
   // F3: every top-level Bash call of the dry run that ran `cat` on a workspace path, and whether any was refused.
   const catCalls = calls.flatMap(c => (c.toolCalls ?? []).filter(t => t.tool === 'Bash' && subCommands(t.input.command).some(p => /^cat (?!\.\.\/|\/)/.test(p))));
+  assert(catCalls.every(t => subCommands(t.input.command).length > 1), 'A3 says every observed cat call was part of a chain');
   const probe = json(PROBE_OF_RECORD).calls[0];
   const denied = (probe.permissionDenials ?? []).map(d => String(d.input?.command ?? ''));
   const outsideCatRefused = denied.filter(d => /(^|[;&|`(]\s*|\$\()cat \.\.\//.test(d));
@@ -109,7 +110,8 @@ export function buildAmendment(root = '.') {
   const largest = Math.max(...spend.map(l => units(l.costUsd)));
   const reserve = Math.max(largest, units(LIMITS6.unknownCostFloorUsd));
   const prerun = Math.max(...matrix.map(l => units(l.costUsd)));
-  const mean = Math.round(practice.reduce((s, c) => s + units(c), 0) / practice.length), p90 = units(percentile(practice, 90)), max = Math.max(...practice.map(units));
+  // The mean is kept unrounded for the projection and rounded once, at the end (as the p90 and max figures are).
+  const meanRaw = practice.reduce((s, c) => s + units(c), 0) / practice.length, mean = Math.round(meanRaw), p90 = units(percentile(practice, 90)), max = Math.max(...practice.map(units));
   const project = per => total + LIMITS6.countedRuns * per + prerun + reserve;
   const completed = recorded.length + refused.length;
 
@@ -169,7 +171,7 @@ export function buildAmendment(root = '.') {
       },
       fence: {
         id: 'A3',
-        correction: 'The pre-registration\'s fence statements (fence.compound and answer 2) are corrected: besides Read, Grep, Glob and the allowed git forms, the client runs its built-in read-only commands (cat, for example) on workspace paths without an allow rule, alone or as a part of a chain. A chain that reads outside the workspace is refused whole (R18, R39, R40, R46), a bare outside read is refused (R17), and reads outside the repository that pass the permission layer are stopped by the OS sandbox (R9, R29, R30, R45). The sandbox remains the boundary.',
+        correction: 'The pre-registration\'s fence statements (fence.compound and answer 2) are corrected: besides Read, Grep, Glob and the allowed git forms, the client runs its built-in read-only commands (cat, for example) on workspace paths without an allow rule: observed as part of a chain (every one of the dry run\'s cat calls was); a lone built-in read was not observed, and is believed to behave the same. A chain that reads outside the workspace is refused whole (R18, R39, R40, R46), a bare outside read is refused (R17), and reads outside the repository that pass the permission layer are stopped by the OS sandbox (R9, R29, R30, R45). The sandbox remains the boundary.',
         unchanged: 'fence6\'s settings, deny rules and allow list, matrix6, its rows and its judge are unchanged; no escape row\'s verdict changed; no new paid matrix run was made.',
       },
       guard: {
@@ -194,9 +196,9 @@ export function buildAmendment(root = '.') {
       prerunProbeUsd: Number(fixed7(prerun)), prerunProbeRule: 'the largest isolation-matrix line so far, as the estimate of the measured run\'s one pre-run matrix probe',
       countedRuns: LIMITS6.countedRuns,
       formula: 'spent + 180 × per-run cost + pre-run probe + reserve',
-      projectedMeanUsd: Number(fixed7(project(mean))), projectedP90Usd: Number(fixed7(project(p90))), projectedMaxUsd: Number(fixed7(project(max))),
+      projectedMeanUsd: Number(fixed7(Math.round(project(meanRaw)))), projectedP90Usd: Number(fixed7(project(p90))), projectedMaxUsd: Number(fixed7(project(max))),
       withinCap: project(p90) <= units(LIMITS6.capUsd),
-      statement: `Projected counted spend at the dry run's p90: $${fixed7(total)} + 180 × $${fixed7(p90)} + $${fixed7(prerun)} + $${fixed7(reserve)} = $${fixed7(project(p90))}, within the $${LIMITS6.capUsd} cap (at the mean $${fixed7(project(mean))}, at the max $${fixed7(project(max))}).`,
+      statement: `Projected counted spend at the dry run's p90: $${fixed7(total)} + 180 × $${fixed7(p90)} + $${fixed7(prerun)} + $${fixed7(reserve)} = $${fixed7(project(p90))}, within the $${LIMITS6.capUsd} cap (at the mean $${fixed7(Math.round(project(meanRaw)))}, at the max $${fixed7(project(max))}).`,
     },
     countedCalls: `No counted call has been made: the ledger holds ${matrix.length} isolation-matrix lines and ${byKind('practice').length} practice lines, and no counted or pre-run line.`,
     notBefore: 'No counted reviewer run starts before the merge time of the odin-rnd pull request that adds this file; that time is recorded after publication, frozen with this file\'s sha256 in freeze.mjs (AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256), and every counted call must start after it. It replaces the pre-registration\'s not-before as the counted clock. The answer-key pre-flight record must end after it.',

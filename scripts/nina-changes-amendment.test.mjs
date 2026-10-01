@@ -10,6 +10,7 @@ import { fingerprintItem, loadFingerprints } from '../experiments/nina-changes/f
 import { baseOnlyCalls, seenCalls, workspaceView } from '../experiments/nina-changes/fixtures/synthetic6.mjs';
 import { isRunnerDigest6, leakFields, lint6, lintRecord6, maskDigests6, publicRecord6 } from '../experiments/nina-changes/scrub6.mjs';
 import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
+import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { isGitCommand, keepsOutput, recordToolCalls, subCommands } from '../experiments/nina-changes/stream6.mjs';
 import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
 import { amendNote, qualifyRow, renderAmendmentSection, sectionId } from './nina-changes-amendment-note.mjs';
@@ -197,7 +198,7 @@ test('A4: the spend is itemised to the 7th decimal ($7.1003162: 7 matrix + 17 pr
   const s = amendment.spend, p = amendment.projection;
   assert.deepEqual([s.calls.length, s.spentUsd, s.matrixUsd, s.practiceUsd], [24, 7.1003162, 4.0821826, 3.0181336]);
   assert.deepEqual([s.calls.filter(c => c.kind === 'isolation-matrix').length, s.calls.filter(c => c.kind === 'practice').length], [7, 17]);
-  assert.deepEqual([p.meanUsd, p.p90Usd, p.maxUsd, p.projectedP90Usd, p.withinCap], [0.1775373, 0.204864, 0.2279082, 45.2849478, true]);
+  assert.deepEqual([p.meanUsd, p.p90Usd, p.maxUsd, p.projectedMeanUsd, p.projectedP90Usd, p.withinCap], [0.1775373, 0.204864, 0.2279082, 40.3661365, 45.2849478, true], "the mean projection from the unrounded mean, rounded once");
   assert.match(amendment.countedCalls, /No counted call has been made/);
   assert.match(amendment.notBefore, /merge time of the odin-rnd pull request that adds this file/);
 });
@@ -215,11 +216,15 @@ test('the validator refuses a re-pin without a reason, a wrong old pin, a spend 
   assert.throws(() => validateAmendment(bad(r => { r.changes.gitCall.registeredRule = 'x'; })), /verbatim/);
 });
 
-test('A5: freeze.mjs carries the amendment constants, null until the re-freeze', () => {
+test('A5: freeze.mjs carries the amendment constants: both null until the re-freeze, then this amendment\'s sha and a later not-before', () => {
   const src = readFileSync('experiments/nina-changes/freeze.mjs', 'utf8');
   assert.deepEqual([...src.matchAll(/^export const (\w+) = /gm)].map(m => m[1]), ['PREREG6_SHA256', 'NOT_BEFORE6', 'AMENDMENT6_SHA256', 'AMENDMENT6_NOT_BEFORE']);
-  assert.match(src, /^export const AMENDMENT6_SHA256 = null;$/m, 'null here: the re-freeze sets it after publication');
-  assert.match(src, /^export const AMENDMENT6_NOT_BEFORE = null;$/m);
+  // Branches on the committed freeze (as the units guard test does), so the re-freeze keeps the suite green.
+  if (AMENDMENT6_SHA256 === null) assert.equal(AMENDMENT6_NOT_BEFORE, null, 'both amendment constants or neither');
+  else {
+    assert.equal(AMENDMENT6_SHA256, amendmentSha, 'the frozen amendment is this one');
+    assert.ok(Date.parse(AMENDMENT6_NOT_BEFORE) > Date.parse(amendment.parent.notBefore), 'its not-before is after the pre-registration\'s');
+  }
 });
 
 // ------------------------------------------------------------------ A6: the pages
