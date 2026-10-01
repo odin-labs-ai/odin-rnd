@@ -19,6 +19,7 @@ import { check6, FILES, loadPrereg6, RESULTS_DIR, sha256 } from '../experiments/
 import { checkAmendment } from './nina-changes-amendment.mjs';
 import { sectionId as amendmentSectionId } from './nina-changes-amendment-note.mjs';
 import { slug } from './nina-changes-note.mjs';
+import { replaceHead } from './page-head.mjs';
 import { entryId } from './nina-changes-spotlight.mjs';
 
 export const resultsSectionId = 'results';
@@ -236,7 +237,27 @@ export function amendNote6(note, data) {
   out = out.replace(meta, ` · ${data.results.rehearsal ? 'REHEARSAL, NOT A MEASUREMENT' : 'MEASURED'} ${day(data.measuredOn)}</p>`)
     .replace(tail, `reported as they come out.${qualifier}</p>`)
     .replace(bodyOpen, `${bodyOpen}${renderResultsSection6(data)}`);
-  return out;
+  return replaceHead(out, measuredHead6(data));
+}
+
+const sentenceDay = iso => { const [y, m, d] = iso.slice(0, 10).split('-'); return `${Number(d)} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m) - 1]} ${y}`; };
+/**
+ * The note's <head> once measured (or rehearsed): the title and description state the outcome, not that the page was
+ * published before any counted run (the body keeps the pre-registration as published). Every phrase is from the results
+ * record, the pinned gate's verdict and the dated records.
+ */
+export function measuredHead6(data) {
+  const { results: r, gate, prereg6: p, amendment6: a, measuredOn } = data, m = r.manipulation, e = p.experiment;
+  const verb = r.rehearsal ? 'rehearsed, not measured' : 'measured';
+  const outcome = r.partial !== null
+    ? 'a partial run, which decides nothing'
+    : [r.spotlight.verdict === 'PASS' ? 'the bar was met' : 'the bar was not met',
+      `the manipulation check ${m.state === 'PASS' ? 'passed' : 'failed'} (${m.blind} of ${m.countedRuns} runs diff-blind)`,
+      gate.shown ? 'nina is in the spotlight' : r.spotlightEligible ? 'the spotlight is held' : 'there is no spotlight'].reduce((t, x, i, xs) => (i === 0 ? x : `${t}${i === xs.length - 1 ? ', and ' : ', '}${x}`), '');
+  return {
+    title: `${e.id}: ${e.title}, ${verb}`,
+    description: `Field notes from Odin R&D. ${e.id}, ${e.title}, ${verb} ${sentenceDay(measuredOn)}: ${outcome}. Pre-registered ${sentenceDay(e.authoredOn)}; amendment 01 ${sentenceDay(a.record.date)}.`,
+  };
 }
 
 /** The built home page: the EXP 006 field-note row says it was measured, and how. */

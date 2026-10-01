@@ -14,6 +14,7 @@ import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 import { publishedParentSha256 } from './jev-gate-amendment.mjs';
 import { amendment01Sha256 } from './jev-gate-amendment-02.mjs';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
+import { replaceHead } from './page-head.mjs';
 
 const dir = 'experiments/jev-gate';
 export const resultsDir = `${dir}/results`;
@@ -344,5 +345,21 @@ export function amendNoteResults(note, data) {
   out = out.replace(' · NO RESULTS YET</p>', ` · MEASURED ${day(f.measuredOn).toUpperCase()}</p>`)
     .replace('including a refutation.</p>', `including a refutation.${qualifier}</p>`)
     .replace(bodyOpen, `${bodyOpen}${renderResultsSection(data)}${renderHarnessSection(data)}`);
-  return out;
+  return replaceHead(out, measuredHead(data));
+}
+
+/**
+ * The note's <head> once measured: the title and description say what the results say, not that the page was published
+ * before any gate ran (the body keeps the pre-registration as published). Every phrase comes from the results record,
+ * the spotlight decision and the dated records.
+ */
+export function measuredHead(data, root = '.') {
+  const { results, facts: f } = data, spot = results.spotlight;
+  const prereg = json(root, `${dir}/preregistration.json`), a01 = json(root, `${dir}/amendment-01.json`), a02 = json(root, `${dir}/amendment-02.json`);
+  const e = prereg.experiment;
+  const nina = spot.verdict === 'PASS' ? `nina's reviewer met the spotlight bar, and the spotlight ${spotlightShown(data) ? 'is featured' : 'is held'}` : 'nina\'s reviewer did not meet the spotlight bar';
+  return {
+    title: `${e.title}: measured`,
+    description: `Field notes from Odin R&D. ${e.id}, ${e.title}, measured ${day(f.measuredOn)}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}; ${nina}. Pre-registered ${day(e.authoredOn)}; amendment 01 ${day(a01.date)}, amendment 02 ${day(a02.date)}.`,
+  };
 }
