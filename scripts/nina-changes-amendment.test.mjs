@@ -204,7 +204,7 @@ test('A4: the spend is itemised to the 7th decimal ($7.1003162: 7 matrix + 17 pr
 });
 
 test('the record discloses that the lint does not decode hex or base64 (an encoded term passes it), and the validator requires it', () => {
-  assert.equal(ENCODED_TERM_LIMIT, 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: EXP 005\'s lint6 and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.');
+  assert.equal(ENCODED_TERM_LIMIT, 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: the pre-registered lint6 (EXP 006, scrub6.mjs) and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.');
   assert(amendment.limits.includes(ENCODED_TERM_LIMIT));
   const r = structuredClone(amendment); r.limits = r.limits.filter(l => l !== ENCODED_TERM_LIMIT);
   assert.throws(() => validateAmendment(r), /encoded-term gap/);

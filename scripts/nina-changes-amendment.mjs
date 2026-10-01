@@ -51,7 +51,7 @@ export const longDate = iso => { const [y, m, d] = iso.split('-'); return `${d} 
 export const DATE = '2026-10-01';
 export const statusText = `Amended ${longDate(DATE)}, before any counted run`;
 /** The encoded-term disclosure (commander decision, option 1), verbatim; the validator asserts it is in limits. */
-export const ENCODED_TERM_LIMIT = 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: EXP 005\'s lint6 and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.';
+export const ENCODED_TERM_LIMIT = 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: the pre-registered lint6 (EXP 006, scrub6.mjs) and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.';
 const pct = (n, d) => `${(Math.round((n / d) * 1000) / 10).toFixed(1)}%`;
 
 /** The ledger lines, numbered from 1. */
