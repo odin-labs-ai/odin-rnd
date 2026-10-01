@@ -7,9 +7,8 @@ import { stripBlocks, stripTags, untilStable } from './test-html-text.mjs';
 const tagLike = /<|>|script|style/i;
 
 test('nested and overlapping script/style blocks leave no script or tag behind', () => {
-  // A single pass of /<(script|style)[\s\S]*?<\/\1>/ over this leaves "<scr" + "x" … ; the fixed point does not.
+  // A single regex pass over this leaves '<scralert(1)</script>after' (the alert's case); the fixed point leaves nothing tag-like.
   const nested = '<scr<script>ipt>x</script>alert(1)</script>after';
-  assert.equal(nested.replace(/<(script|style)[\s\S]*?<\/\1>/g, ''), '<scralert(1)</script>after', 'what one pass leaves (the alert\'s case)');
   const out = stripTags(stripBlocks(nested, ['script', 'style'], ''), ' ');
   assert(!/[<>]/.test(out), out);
   assert.doesNotMatch(out, /<script/i);
