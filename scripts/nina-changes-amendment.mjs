@@ -50,6 +50,8 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export const longDate = iso => { const [y, m, d] = iso.split('-'); return `${d} ${months[Number(m) - 1]} ${y}`; };
 export const DATE = '2026-10-01';
 export const statusText = `Amended ${longDate(DATE)}, before any counted run`;
+/** The encoded-term disclosure (commander decision, option 1), verbatim; the validator asserts it is in limits. */
+export const ENCODED_TERM_LIMIT = 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: EXP 005\'s lint6 and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.';
 const pct = (n, d) => `${(Math.round((n / d) * 1000) / 10).toFixed(1)}%`;
 
 /** The ledger lines, numbered from 1. */
@@ -217,6 +219,7 @@ export function buildAmendment(root = '.') {
       'A git call\'s whole scrubbed output is kept, including the output of its other parts (the dry run\'s cat of rules.txt): it is scrubbed and linted like every other kept output, and the rules.txt text is EXP 005\'s public rules file.',
       'Only the runner\'s own digests are exempt; a 64-hex value anywhere else (a commit id in a tool output, a hash the model quoted) is still scanned, so a chance match there would still refuse a record and stop the run.',
       'The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call.',
+      ENCODED_TERM_LIMIT,
     ],
     siteQualifier: {
       rule: 'These lines, from this record, are added to the EXP 006 field note (committed as the pre-registration\'s render amended by this record) and to its row on the home page (linked to this amendment\'s section, #amendment-01).',
@@ -262,6 +265,7 @@ export function validateAmendment(record, root = '.') {
   assert.equal(record.changes.gitCall.registeredRule, prereg.classifier.rule, 'the registered rule is the pre-registration\'s, verbatim');
   assert.equal(record.changes.gitCall.rule, RULE, 'the amended rule is the one the runner stamps');
   for (const f of Object.keys(record.files)) assert(hex.test(record.files[f]), `${f} pin`);
+  assert(record.limits.includes(ENCODED_TERM_LIMIT), 'the encoded-term gap of the record lint is disclosed, verbatim');
   const text = JSON.stringify(record);
   assert(!localPath.test(text), 'a local machine path in the amendment');
   assert(!/\d\.\d*(?:0{6,}|9{6,})\d/.test(text), 'a float artefact in the amendment');

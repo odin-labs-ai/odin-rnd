@@ -12,7 +12,7 @@ import { isRunnerDigest6, leakFields, lint6, lintRecord6, maskDigests6, publicRe
 import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { AMENDMENT6_NOT_BEFORE, AMENDMENT6_SHA256 } from '../experiments/nina-changes/freeze.mjs';
 import { isGitCommand, keepsOutput, recordToolCalls, subCommands } from '../experiments/nina-changes/stream6.mjs';
-import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
+import { amendmentPath, amendmentPinPath, buildAmendment, checkAmendment, ENCODED_TERM_LIMIT, PARENT, PIN_REASONS, publishedPath, validateAmendment } from './nina-changes-amendment.mjs';
 import { amendNote, qualifyRow, renderAmendmentSection, sectionId } from './nina-changes-amendment-note.mjs';
 import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, renderNote, slug } from './nina-changes-note.mjs';
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
@@ -201,6 +201,13 @@ test('A4: the spend is itemised to the 7th decimal ($7.1003162: 7 matrix + 17 pr
   assert.deepEqual([p.meanUsd, p.p90Usd, p.maxUsd, p.projectedMeanUsd, p.projectedP90Usd, p.withinCap], [0.1775373, 0.204864, 0.2279082, 40.3661365, 45.2849478, true], "the mean projection from the unrounded mean, rounded once");
   assert.match(amendment.countedCalls, /No counted call has been made/);
   assert.match(amendment.notBefore, /merge time of the odin-rnd pull request that adds this file/);
+});
+
+test('the record discloses that the lint does not decode hex or base64 (an encoded term passes it), and the validator requires it', () => {
+  assert.equal(ENCODED_TERM_LIMIT, 'The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: EXP 005\'s lint6 and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan.');
+  assert(amendment.limits.includes(ENCODED_TERM_LIMIT));
+  const r = structuredClone(amendment); r.limits = r.limits.filter(l => l !== ENCODED_TERM_LIMIT);
+  assert.throws(() => validateAmendment(r), /encoded-term gap/);
 });
 
 test('the validator refuses a re-pin without a reason, a wrong old pin, a spend that does not add up, a counted line', () => {

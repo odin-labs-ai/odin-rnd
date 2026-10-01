@@ -526,7 +526,8 @@
     "A git command reached only through a newline, a lone &, $(…) or backticks is not split out, so such a call is not a git call and a run that saw the change only that way is counted BLIND: an error against the bar and the manipulation check, never toward a spotlight.",
     "A git call's whole scrubbed output is kept, including the output of its other parts (the dry run's cat of rules.txt): it is scrubbed and linted like every other kept output, and the rules.txt text is EXP 005's public rules file.",
     "Only the runner's own digests are exempt; a 64-hex value anywhere else (a commit id in a tool output, a hash the model quoted) is still scanned, so a chance match there would still refuse a record and stop the run.",
-    "The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call."
+    "The projection assumes the counted runs cost like the 17 practice runs; the spend guard, not the projection, enforces the cap before every call.",
+    "The record lint compares text fingerprints and does not decode hex or base64, so a restricted term encoded byte by byte (or in base64) would pass it. This gap predates this amendment: EXP 005's lint6 and the site-wide check.mjs behave the same way. The answer-key files are not protected by the lint. They are protected by the OS sandbox (reads of the temp roots and of home outside the run are denied) and by the counted pre-flight scan."
   ],
   "siteQualifier": {
     "rule": "These lines, from this record, are added to the EXP 006 field note (committed as the pre-registration's render amended by this record) and to its row on the home page (linked to this amendment's section, #amendment-01).",
