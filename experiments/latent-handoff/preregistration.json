@@ -1,0 +1,763 @@
+{
+  "schemaVersion": 1,
+  "kind": "preregistration",
+  "experiment": {
+    "id": "EXP 008",
+    "slug": "latent-handoff",
+    "title": "Hand over the cache, not the text",
+    "statusText": "Pre-registered — not yet run",
+    "authoredOn": "2026-10-01",
+    "summary": "Two small open-weight models from different families, with different tokenizers. The sender reads a change and the rules once; the receiver must make the EXP 005 gate decision from the sender's KV cache, mapped into its own, without a forward pass over that context. EXP 008 measures whether that matches text re-prefill closely enough, and fast enough, to be worth having, on public baselines only.",
+    "note": "Written, hashed and published before the counted run. Nothing in this record may change after publication; a later change is a new, dated amendment, refuted and published first, and it resets the not-before."
+  },
+  "freeze": {
+    "status": "frozen",
+    "rule": "A draft may carry TO-FREEZE fields and names no not-before. Every TO-FREEZE field is filled from the harness's committed records before the record is cut for publication; only a record with status \"frozen\" and no TO-FREEZE field is the pre-registration.",
+    "toFreeze": [],
+    "frozenOn": "2026-10-02"
+  },
+  "question": "On the 60 EXP 005 changes and 140 new EXP 008-X changes, can a receiver model from another family, with another tokenizer, make the EXP 005 gate decision from a sender's mapped KV cache, with no forward pass over the context, nearly as accurately as text re-prefill, and faster once the mapping time is counted?",
+  "framing": "A lab handoff the factory could adopt, not a measurement of the factory: no KV-compatible sender-receiver pair is deployed on the floor today. The local decoders the factory runs are hybrids (some layers attention, some recurrent or feed-forward only), and their non-attention state has no published mapping.",
+  "corpus": {
+    "exp005": {
+      "statement": "Reused by sha256 assertion only: the builder refuses any other corpus, inputs, labels or rules on disk.",
+      "corpusSumsSha256": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
+      "inputsSha256": "6bfb2b8d52376cbd22c8a34f5f986fe67ad68a0c587da862ba6b56e77e966a34",
+      "labelsSha256": "36af1422755e56af56f4af267411a4a8e6535d08e6fc9d7aa3734aa005e4412a",
+      "rulesSha256": "87186d652a7cf8a4c8e71966236c4fe6837c4bd22799fc49a15d437a083b2562",
+      "items": 60,
+      "red": 30,
+      "green": 30,
+      "ids": "c001..c060"
+    },
+    "exp008x": {
+      "statement": "Authored to the EXP 005 family quotas, labelled by bce, with a blind second pass and an overlap fence against EXP 005; hashed before this record.",
+      "sumsFile": "experiments/latent-handoff/corpus-x/corpus-x.sha256",
+      "sumsSha256": "f0199c9d0209900012c25c28fe1e2ef755de725e09cc3411b6260d923e47b77e",
+      "labelsSha256": "5068ef5ea06aafe7ec508d313779ba1705f2362356bc3b51ac39c4b148883d62",
+      "items": 140,
+      "red": 70,
+      "green": 70,
+      "ids": "c061..c200"
+    },
+    "n": 200,
+    "analysed": "Every claim and validity gate is computed on the 175 items not seen before this record (136 of the 140 EXP 008-X items and 39 of EXP 005's c021–c060). c001–c020 and c029, c081, c097, c112, c144 were seen (see exposures and limits): they are run in the counted run but excluded from P1, S1–S3 and every gate, and reported separately.",
+    "exposedItems": [
+      "c001",
+      "c002",
+      "c003",
+      "c004",
+      "c005",
+      "c006",
+      "c007",
+      "c008",
+      "c009",
+      "c010",
+      "c011",
+      "c012",
+      "c013",
+      "c014",
+      "c015",
+      "c016",
+      "c017",
+      "c018",
+      "c019",
+      "c020",
+      "c029",
+      "c081",
+      "c097",
+      "c112",
+      "c144"
+    ],
+    "exposures": [
+      {
+        "items": "c001–c005",
+        "reason": "run end to end in the harness smoke test (pair D1, strata S and L, arms A0, A1 and C1–C3) to check the plumbing, C1 against A0; their mapper readouts (A2a and A2b probabilities, unlabelled and unscored) were also viewed during port debugging; and c001 was run in the memory-footprint runs (D1 A2a and A2b; D1′ every arm), stratum L"
+      },
+      {
+        "items": "c006–c020",
+        "reason": "mapper readouts (A2a and A2b probabilities, unlabelled and unscored) viewed during port debugging, before freeze"
+      },
+      {
+        "items": "c029, c081, c097, c112, c144",
+        "reason": "used as the C2 donors of c001–c005 in the harness smoke test (pair D1, strata S and L) and of c001 in the D1′ memory-footprint run (c081). C2 reads the receiver out on the donor's own context with the question, so a receiver readout (p(YES) and decision, unlabelled and unscored) on each of them was recorded before this record. The stratum S smoke rows were not committed; their donors follow from the 200-item strata manifest and are the same five"
+      }
+    ],
+    "preRecordScan": {
+      "files": [
+        "experiments/latent-handoff/calib-sources.json",
+        "experiments/latent-handoff/evidence/bf16-decision-stability-D1.json",
+        "experiments/latent-handoff/evidence/bf16-decision-stability-D1p.json",
+        "experiments/latent-handoff/evidence/footprint-d1-L-c001-a2.rows.jsonl",
+        "experiments/latent-handoff/evidence/footprint-d1p-L-c001-a2.rows.jsonl",
+        "experiments/latent-handoff/evidence/footprint-d1p-L-c001.rows.jsonl",
+        "experiments/latent-handoff/evidence/mappers-D1-attempt1-gpu-reduced-precision.json",
+        "experiments/latent-handoff/evidence/pairlock-d1-L-01.rows.jsonl",
+        "experiments/latent-handoff/evidence/parity-D1-attempt1-gpu-reduced-precision.json",
+        "experiments/latent-handoff/evidence/practice-d1-L-01.rows.jsonl",
+        "experiments/latent-handoff/footprints.json",
+        "experiments/latent-handoff/mapper-freeze.json",
+        "experiments/latent-handoff/mappers-D1.json",
+        "experiments/latent-handoff/mappers-D1p.json",
+        "experiments/latent-handoff/parity-D1.json",
+        "experiments/latent-handoff/parity-D1p.json"
+      ],
+      "rule": "Every item id in these committed files (rows, donors, parity and footprint records from before this record, and the post-record pair-lock rows) is an excluded (seen) item; the build refuses the record otherwise."
+    },
+    "exposureEvidence": [
+      {
+        "file": "experiments/latent-handoff/evidence/footprint-d1-L-c001-a2.rows.jsonl",
+        "sha256": "cfbfd04072a9ff194d2a07f4930e74f0d86820cfba6a31331e66c5960ba9fd4d",
+        "pairs": [
+          "D1"
+        ],
+        "arms": [
+          "A2a",
+          "A2b"
+        ],
+        "strata": [
+          "L"
+        ],
+        "items": [
+          "c001"
+        ],
+        "donors": []
+      },
+      {
+        "file": "experiments/latent-handoff/evidence/practice-d1-L-01.rows.jsonl",
+        "sha256": "a6722c76c44011faff4bdc15214b98a18f4172ac258bec7582fa71fd8b30da97",
+        "pairs": [
+          "D1"
+        ],
+        "arms": [
+          "A0",
+          "A1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "strata": [
+          "L"
+        ],
+        "items": [
+          "c001",
+          "c002",
+          "c003",
+          "c004",
+          "c005"
+        ],
+        "donors": [
+          "c029",
+          "c081",
+          "c097",
+          "c112",
+          "c144"
+        ]
+      },
+      {
+        "file": "experiments/latent-handoff/evidence/footprint-d1p-L-c001-a2.rows.jsonl",
+        "sha256": "4be0b4fbdce39fdb680b5c9fd0c7a76ff7c93dee025f01b7cfe34f5b8ba20632",
+        "pairs": [
+          "D1p"
+        ],
+        "arms": [
+          "A2a",
+          "A2b"
+        ],
+        "strata": [
+          "L"
+        ],
+        "items": [
+          "c001"
+        ],
+        "donors": []
+      },
+      {
+        "file": "experiments/latent-handoff/evidence/footprint-d1p-L-c001.rows.jsonl",
+        "sha256": "2d6b73592f62e84786d498f90d9371c30b617f436937daa60bc12800f670f83b",
+        "pairs": [
+          "D1p"
+        ],
+        "arms": [
+          "A0",
+          "A1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "strata": [
+          "L"
+        ],
+        "items": [
+          "c001"
+        ],
+        "donors": [
+          "c081"
+        ]
+      }
+    ],
+    "fallback": "If the refute of this record (or a dated amendment before the not-before) finds EXP 008-X invalid, by a label error or a leak through the overlap fence, the run uses the 60 EXP 005 items alone and is refute-only: a P1 that holds on the 39 analysed EXP 005 items (c021–c060 without c029) is reported as \"not refuted\", never as met."
+  },
+  "strata": {
+    "manifest": {
+      "file": "experiments/latent-handoff/strata-manifest.json",
+      "sha256": "2b8746a8491a5e644ff470658c11afbe8ff86e79c9b7a1b3af67379655ae3ae5"
+    },
+    "layout": {
+      "S": "rules + \"\\n\\n\" + diff",
+      "M": "rules + \"\\n\\n\" + base/ + \"\\n\\n\" + diff",
+      "L": "rules + \"\\n\\n\" + base/ + \"\\n\\n\" + distractor header + distractor lines + \"\\n\\n\" + diff"
+    },
+    "target": {
+      "tokens": 16000,
+      "tolerance": 0.1,
+      "rule": "largest distractor line count with mean(qwen3, llama3) <= target"
+    },
+    "tokensRange": {
+      "S": [
+        276,
+        796
+      ],
+      "M": [
+        3159,
+        3704
+      ],
+      "L": [
+        15744,
+        16245
+      ]
+    },
+    "primary": "L",
+    "distractor": {
+      "file": "distractor/lodash-4.17.21-head2500.js",
+      "sha256": "52f2358d3c8eccc8f030fab6acf868f46b8b88045898589391f1630d2e1ed95c",
+      "source": "https://raw.githubusercontent.com/lodash/lodash/f299b52f39486275a9e6483b60a410e06520c538/lodash.js",
+      "license": "MIT",
+      "excerpt": "the first 2500 lines of the upstream file, unmodified"
+    },
+    "paddingShareRange": [
+      0.768,
+      0.8025
+    ],
+    "paddingDisclosure": "L is padding: each L context is M plus the first lines of a public, lint-clean library file, sized to 16K tokens. The padding is 77–80% of every L context. L tests the mechanism at length, not a real factory context of that size.",
+    "lint": {
+      "contexts": 600,
+      "findings": 0
+    }
+  },
+  "pins": {
+    "file": "experiments/latent-handoff/models.json",
+    "sha256": "e485cbc114f859f4931f250acce73738597570e7f4d916e4cc0ce7aa9e2d84bb",
+    "toolchain": {
+      "mlxLm": "0.31.3",
+      "mlx": "0.31.2"
+    },
+    "rule": "Every model is pinned by Hugging Face revision and by the sha256 of every source and converted (BF16, MLX) file; pins.mjs --verify recomputes every hash before a run.",
+    "vocabAssertion": "Within every pair the sender and receiver vocabularies must differ (sha256 of the vocabulary): pins.mjs --verify throws otherwise, and its output is committed with the results of the counted run. A control pair that shares Llama-3 ids (SmolLM3-3B and Llama-3.2-3B) must make it throw.",
+    "mirrors": [
+      "Byte-identity to the upstream weights cannot be verified: the gated upstream repos (meta-llama, google) mask its LFS sha256s. Only model.safetensors.index.json matches the upstream git oid. Llama-3.2-3B, Llama-3.1-8B and Gemma-3-1B are pinned from unsloth mirrors (2026-10-01)."
+    ]
+  },
+  "pairs": {
+    "D1": {
+      "id": "D1",
+      "sender": {
+        "key": "qwen3-1.7b",
+        "repo": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "source": "upstream",
+        "geometry": {
+          "layers": 28,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 28,
+        "vocabSha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "chatTemplateSha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+        "weightsGB": 3.205
+      },
+      "receiver": {
+        "key": "llama-3.2-3b",
+        "repo": "unsloth/Llama-3.2-3B-Instruct",
+        "revision": "006f5dcd1393c3add266de40994ba96225e9689d",
+        "source": "unsloth mirror (approved 2026-10-01)",
+        "geometry": {
+          "layers": 28,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 28,
+        "vocabSha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "chatTemplateSha256": "5816fce10444e03c2e9ee1ef8a4a1ea61ae7e69e438613f3b17b69d0426223a4",
+        "weightsGB": 5.984
+      },
+      "role": "primary",
+      "use": "primary"
+    },
+    "D1p": {
+      "id": "D1p",
+      "sender": {
+        "key": "qwen3-4b",
+        "repo": "Qwen/Qwen3-4B",
+        "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+        "source": "upstream",
+        "geometry": {
+          "layers": 36,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 36,
+        "vocabSha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "chatTemplateSha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+        "weightsGB": 7.492
+      },
+      "receiver": {
+        "key": "llama-3.1-8b",
+        "repo": "unsloth/Llama-3.1-8B-Instruct",
+        "revision": "4699cc75b550f9c6f3173fb80f4703b62d946aa5",
+        "source": "unsloth mirror (approved 2026-10-01)",
+        "geometry": {
+          "layers": 32,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 32,
+        "vocabSha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "chatTemplateSha256": "e10ca381b1ccc5cf9db52e371f3b6651576caee0a630b452e2816b2d404d4b65",
+        "weightsGB": 14.958
+      },
+      "role": "pre-stated fallback (D1′)",
+      "use": "pre-stated fallback; replaces D1 only by the pair-lock rule"
+    },
+    "D2": {
+      "id": "D2",
+      "sender": {
+        "key": "llama-3.2-3b",
+        "repo": "unsloth/Llama-3.2-3B-Instruct",
+        "revision": "006f5dcd1393c3add266de40994ba96225e9689d",
+        "source": "unsloth mirror (approved 2026-10-01)",
+        "geometry": {
+          "layers": 28,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 28,
+        "vocabSha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "chatTemplateSha256": "5816fce10444e03c2e9ee1ef8a4a1ea61ae7e69e438613f3b17b69d0426223a4",
+        "weightsGB": 5.984
+      },
+      "receiver": {
+        "key": "qwen3-1.7b",
+        "repo": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "source": "upstream",
+        "geometry": {
+          "layers": 28,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 28,
+        "vocabSha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "chatTemplateSha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+        "weightsGB": 3.205
+      },
+      "role": "reported only (reverse of D1)",
+      "use": "reported only"
+    },
+    "D3": {
+      "id": "D3",
+      "sender": {
+        "key": "qwen3-1.7b",
+        "repo": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "source": "upstream",
+        "geometry": {
+          "layers": 28,
+          "kvHeads": 8,
+          "headDim": 128
+        },
+        "attentionLayers": 28,
+        "vocabSha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "chatTemplateSha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+        "weightsGB": 3.205
+      },
+      "receiver": {
+        "key": "gemma-3-1b",
+        "repo": "unsloth/gemma-3-1b-it",
+        "revision": "5b11413a10db4e486ef16a20101fd028f8f2499c",
+        "source": "unsloth mirror (approved 2026-10-01)",
+        "geometry": {
+          "layers": 26,
+          "kvHeads": 1,
+          "headDim": 256
+        },
+        "attentionLayers": 26,
+        "vocabSha256": "c1f61698445190691e3a3f22f2f9a4f6df59c889c6598c327efe21196b799d92",
+        "chatTemplateSha256": "7de1c58e208eda46e9c7f86397df37ec49883aeece39fb961e0a6b24088dd3c4",
+        "weightsGB": 1.862
+      },
+      "role": "reported only",
+      "use": "reported only"
+    }
+  },
+  "pairLock": "After this record is frozen and before the not-before, A0 is measured for D1 on stratum L, with the frozen readout and the current render, on the practice set c001–c020 (seen items, excluded from every claim and gate). If D1's A0 gets fewer than 15 of the 20 right (accuracy below 0.75), D1′ (Qwen3-4B → Llama-3.1-8B) replaces D1, mechanically; otherwise D1 stays. The decision and its rows are written to pair-lock.json before the not-before. No other rule chooses the pair.",
+  "pairLockEarlierPractice": "An earlier 5-item D1 practice run (stratum L, an older render, c001, c002, c003, c004, c005) is not the lock test: its A0 answered ACCEPT on all 5 (3 of 5 correct).",
+  "pairLockResult": {
+    "decision": "D1p",
+    "correct": 11,
+    "of": 20,
+    "abstentions": 0,
+    "rows": {
+      "file": "experiments/latent-handoff/evidence/pairlock-d1-L-01.rows.jsonl",
+      "sha256": "fce6ba35e7538323a3c31fb28b4e6e8c13a158ff114becf2f6152aededa7fd67"
+    },
+    "statement": "Applied after this record was frozen: D1's A0 on stratum L got 11 of 20 practice items (c001–c020) right, with 0 abstentions, below the bar of 15, so D1′ (Qwen3-4B → Llama-3.1-8B) is the counted pair. The rows and the decision are in experiments/latent-handoff/pair-lock.json."
+  },
+  "hardware": {
+    "D1": "One Apple-silicon Mac (128 GB unified memory), MLX, BF16. Every arm of a pair runs on the same machine, so the TTFT ratios are within-hardware.",
+    "D1p": "The same Mac. No rented GPU is provisioned for EXP 008; if the Mac cannot run D1′, the run is reported as uninformative (pair lock failed), not run elsewhere.",
+    "footprints": {
+      "file": "experiments/latent-handoff/footprints.json",
+      "designBoundGB": 24,
+      "measured": {
+        "D1": {
+          "peakGB": 21.91,
+          "weightsGB": 9.189,
+          "boundGB": 24,
+          "armsMeasured": [
+            "A0",
+            "A1",
+            "A2a",
+            "A2b",
+            "C1",
+            "C2",
+            "C3"
+          ]
+        },
+        "D1p": {
+          "peakGB": 36.89,
+          "weightsGB": 22.45,
+          "boundGB": 48,
+          "armsMeasured": [
+            "A0",
+            "A1",
+            "A2a",
+            "A2b",
+            "C1",
+            "C2",
+            "C3"
+          ]
+        }
+      },
+      "statement": "Measured peak memory on practice items c001–c020 only (and their C2 donors), per pair: D1 21.91 GB over A0, A1, A2a, A2b, C1, C2, C3, under the 24 GB design bound; D1′ 36.89 GB over A0, A1, A2a, A2b, C1, C2, C3, so its bound was raised to 48 GB on that measurement, before this record (24 GB would rule D1′ out by construction; 48 GB is the most the gate admits consistently: at 50% free a 128 GB Mac has 64 GB available, and peak + 16 GB must fit)."
+    }
+  },
+  "readout": {
+    "file": "experiments/latent-handoff/readout.json",
+    "sha256": "8c4c78285bb6c09ec5ce3c560344a20985013fadef57faaf3e7dc5e4cab74f24",
+    "question": "Does this change break any of these rules?",
+    "answerInstruction": "Answer with exactly one word: YES or NO.",
+    "answers": [
+      "YES",
+      "NO"
+    ],
+    "rejectThreshold": 0.5,
+    "rule": "The gate question in the receiver's own chat template. The decision is the softmax over the two single-token answers at the first assistant position: REJECT when p(YES) / (p(YES) + p(NO)) ≥ 0.5. No sampling. An out-of-memory error, or a probability that is not a number, is an abstention and counts as a wrong answer for its arm.",
+    "chatTemplates": {
+      "llama-3.2-3b": "5816fce10444e03c2e9ee1ef8a4a1ea61ae7e69e438613f3b17b69d0426223a4",
+      "llama-3.1-8b": "e10ca381b1ccc5cf9db52e371f3b6651576caee0a630b452e2816b2d404d4b65",
+      "qwen3-1.7b": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+      "gemma-3-1b": "7de1c58e208eda46e9c7f86397df37ec49883aeece39fb961e0a6b24088dd3c4"
+    },
+    "summaryPrompt": "Summarise the following material for a colleague who will decide on it. Do not judge it and do not give a verdict.",
+    "summaryMaxTokens": 256,
+    "derangementSeed": 8008
+  },
+  "interface": {
+    "signature": "transfer(senderCache, senderTokenOffsets, contextText) → receiverCache",
+    "rule": "A transfer may read the context text to align tokens; it may not run any forward pass over the context. The zero-prefill counter wraps the receiver: in a KV arm the receiver forwards exactly the suffix (the question and the chat-template tail) and nothing else, or the run fails."
+  },
+  "arms": [
+    {
+      "id": "A0",
+      "kind": "text",
+      "what": "text re-prefill of the whole prompt"
+    },
+    {
+      "id": "A1",
+      "kind": "text",
+      "what": "sender summary (<= 256 tokens, frozen prompt, lint-checked) as the context"
+    },
+    {
+      "id": "A2a",
+      "kind": "kv",
+      "what": "Char-boundary token alignment plus a per-layer ridge map from sender to receiver K and V. Our extension of arXiv 2608.03893, labelled as ours wherever it appears."
+    },
+    {
+      "id": "A2b",
+      "kind": "kv",
+      "what": "Procrustes alignment, our simplified reimplementation of HeteroFold (arXiv 2609.32259), closed-form fit, without its output-aware calibration stage. Built from the paper's description: the authors released no code, so no authors' mappers were available at the freeze and none are used."
+    },
+    {
+      "id": "A3",
+      "kind": "kv",
+      "what": "Reserved: a slot for any further transfer method behind the same interface. No method is assigned to it, and this record makes no claim about one. Using it needs a dated amendment."
+    },
+    {
+      "id": "C1",
+      "kind": "kv",
+      "what": "the receiver's own prefix cache through the transfer plumbing; must match A0 at KL < 1e-3"
+    },
+    {
+      "id": "C2",
+      "kind": "kv",
+      "what": "a deranged cache: the receiver's prefix cache of another item (seed 8008)"
+    },
+    {
+      "id": "C3",
+      "kind": "text",
+      "what": "no context: the question alone"
+    },
+    {
+      "id": "B",
+      "kind": "baseline",
+      "what": "EXP 005's model-free baselines, run unchanged: heuristic lint 0.9833 and heuristic grep 0.7 accuracy on EXP 005's 60 items; on EXP 008-X by corpus-x/baselines-x.mjs."
+    }
+  ],
+  "mappers": {
+    "label": "A2a and A2b are our own implementations: A2a is our extension of one published method; A2b is our simplified reimplementation of HeteroFold (arXiv 2609.32259), closed-form fit, without its output-aware calibration stage. No authors' mappers were available for either. A weak result from ours says nothing about the published methods themselves.",
+    "implementations": {
+      "A2a": "our extension of arXiv 2608.03893 (per-head ridge, RoPE-stripped keys) to a cross-tokenizer pair",
+      "A2b": "Our simplified reimplementation of HeteroFold (arXiv 2609.32259), closed-form fit, without its output-aware calibration stage; built from the paper's description, the authors' repository had no released code, so no authors' mappers were available at freeze"
+    },
+    "transfer": "transfer() is Engine.transfer in runner.py; its maths is kvmap.py (an MLX port of a torch reference).",
+    "freezeRecord": {
+      "file": "experiments/latent-handoff/mapper-freeze.json",
+      "sha256": "d9ed0d6f3dd33c69478051c1fbdb4be1b4d7a1ba36641b0f125954fc0310e30b",
+      "producedBy": "experiments/latent-handoff/mapper_freeze.py",
+      "rule": "mapper_freeze.py refuses to write it unless the binding parity gate passes on the pinned mapper weights."
+    },
+    "calibration": "Calibration runs on the Mac (MLX, BF16) on public, MIT-licensed code text fetched by URL at pinned commits and checked by sha256, disjoint from EXP 005, EXP 008-X and the L distractor. No rented GPU (the pre-stated fallback when none is available); disclosed in limits.",
+    "code": {
+      "experiments/latent-handoff/kvmap.py": "6725630bc5c7150c47b0cd82bd3436d3d1ce0f0cc78182431e68de25d33ab1c5",
+      "experiments/latent-handoff/calibrate.py": "501beee874d2403040430b76745c6c19046fb4455adc5caefb51b5ea1ce291b8",
+      "experiments/latent-handoff/parity.py": "9943fd2afbb5c3d3c061fd2edc4f4a536dcd948fe5219b5f45ec88a54179c3fe",
+      "experiments/latent-handoff/calib-sources.json": "2f9998352768492952665bb2a8b4594d6a8365fde03ccb8067ca453d4ef456b3",
+      "experiments/latent-handoff/mapper_freeze.py": "dad71286cfc3ddf13d43a67b2ea8426122a5a493fa047393bd18a7481ea6836b",
+      "experiments/latent-handoff/mapper-freeze.json": "d9ed0d6f3dd33c69478051c1fbdb4be1b4d7a1ba36641b0f125954fc0310e30b",
+      "experiments/latent-handoff/footprints.py": "6cbe3fac05d7fc7d42376411a8f7998b17b19f3920818005d89c68837946ee35",
+      "experiments/latent-handoff/footprints.json": "886cab9ddfed1189bcd05ab3c9b1fb1705d682ded3c512f69f45f7907c8bbe3e",
+      "experiments/latent-handoff/served.py": "8e3c891d473e333c92dfde69403e3c3c2293d5904d087e3aaa9ef787c42d778f",
+      "experiments/latent-handoff/mappers-D1.json": "a3f94751214dbd8e34787eb026f2bc951c381f43224fe412e45c3dd149b38605",
+      "experiments/latent-handoff/parity-D1.json": "29a33e3d1f96a8a4d6fac3a6a87f6b014cd1a9bd05e3f0c6ff2996ab5e71a76a",
+      "experiments/latent-handoff/evidence/bf16-decision-stability-D1.json": "3c0d84d5fb4a0c0fbbd7d5444be7f28124dcccce3952b33636670e4396588005",
+      "experiments/latent-handoff/mappers-D1p.json": "a5078a3bfaca7e0696054490baf75842849732466ec945e3602cdb8add659853",
+      "experiments/latent-handoff/parity-D1p.json": "c761d42bbc95d15071c05308d64ff52665f930fbf7ca8400208281f5a0a31af5",
+      "experiments/latent-handoff/evidence/bf16-decision-stability-D1p.json": "fdd3ef0bd4a476d4a8f423531dd9a26ed1e108a62acb66ea9551c78b2ff8d51b"
+    },
+    "calibrationTextSha256": "7b856f5100c972446d129096b0dd51e8c6aa5a9c3b359b8984245bcd6a8986e2",
+    "calibrationWhere": "Mac-only calibration (no GPU account), per pre-stated fallback; Apple M5 Max, 128 GB; 125176 receiver tokens",
+    "pairs": {
+      "D1": {
+        "mapperRecordSha256": "a3f94751214dbd8e34787eb026f2bc951c381f43224fe412e45c3dd149b38605",
+        "mapperWeightsSha256": "73548d54c23c0dc954261adb64e1a2cfe1c0f270418acbefb87f6f07eeedb876",
+        "parityRecordSha256": "29a33e3d1f96a8a4d6fac3a6a87f6b014cd1a9bd05e3f0c6ff2996ab5e71a76a",
+        "parityBinding": {
+          "A2a": {
+            "items": 20,
+            "agree": 20,
+            "maxDp": 0.000008284784579731808,
+            "pass": true
+          },
+          "A2b": {
+            "items": 20,
+            "agree": 20,
+            "maxDp": 0.000013340116775895083,
+            "pass": true
+          }
+        },
+        "calibrationWallSeconds": 145.9
+      },
+      "D1p": {
+        "mapperRecordSha256": "a5078a3bfaca7e0696054490baf75842849732466ec945e3602cdb8add659853",
+        "mapperWeightsSha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+        "parityRecordSha256": "c761d42bbc95d15071c05308d64ff52665f930fbf7ca8400208281f5a0a31af5",
+        "parityBinding": {
+          "A2a": {
+            "items": 20,
+            "agree": 20,
+            "maxDp": 0.000005032682453512405,
+            "pass": true
+          },
+          "A2b": {
+            "items": 20,
+            "agree": 20,
+            "maxDp": 0.000008255717453331535,
+            "pass": true
+          }
+        },
+        "calibrationWallSeconds": 132.9
+      }
+    },
+    "parity": {
+      "items": "p01–p20",
+      "itemsAre": "segments of the pinned held-out public file in calib-sources.json parityHeldOut, minus every calibration and evaluation line; never an EXP 005 / 008-X item",
+      "mapping": "kvmap MLX port on the GPU (split-precision float32 matmul) vs kvmap torch reference, float32 CPU",
+      "readout": "receiver and cache in float32 on MLX's CPU stream (true float32)",
+      "pass": "decision agreement 20/20 AND max |p_mlx - p_torch| <= 1e-3, for each mapper; any mismatch fails the run",
+      "maxDp": 0.001,
+      "rationale": "The gate proves the PORT is correct. A float32 readout removes the receiver's own rounding noise (bf16 activations, reduced-precision GPU float32 matmul), which would otherwise dominate a 1e-3 bar regardless of the port; the run-time bf16 sensitivity is recorded separately as a descriptive property of the arms, never as a gate."
+    },
+    "notes": [
+      "calib-sources.json gained only its parityHeldOut entry between the D1 and D1' calibrations; the calibration text (textSha256) is identical for both pairs.",
+      "Footprint bounds (footprints.json): D1 at the 24 GB design bound (measured 21.9 GB); D1' alone raised to 48 GB on measurement (measured 36.9 GB with A2b on L).",
+      "The shorter A2b labels in arms.mjs, calibrate.py, kvmap.py and mapper-freeze.json are hash-bound by the mapper freeze and stay as they are; the label above supersedes them."
+    ],
+    "parityRule": "Both pairs passed this gate before this record was frozen; whichever pair the pair lock chooses is read out with the mappers bound here.",
+    "weights": "Mapper weights are hashed, not published (v1)."
+  },
+  "primary": {
+    "P1": {
+      "on": "arm A2b, stratum L, the locked pair (D1, or D1′ by the pair-lock rule)",
+      "criteria": [
+        {
+          "id": "agreement",
+          "statement": "Decision agreement with A0, item by item over the analysed items, has a two-sided 95% Wilson score interval whose lower bound is ≥ 0.90. An item where either arm abstains counts as a disagreement; the denominator is every analysed item."
+        },
+        {
+          "id": "ttft",
+          "statement": "The ratio median(A2b receiver TTFT, mapping time included) / median(A0 TTFT), over the items where both arms answered and neither is timing-unstable, has a 95% percentile-bootstrap interval (10,000 paired item resamples, seed 8008) whose upper bound is ≤ 0.5. The sender's own prefill is excluded (in a handoff the sender has already read the context for its own work) and reported separately. Timing follows the protocol below. The excluded items are counted and reported; if more than 10% of the analysed items are excluded, the TTFT criterion is uninformative."
+        }
+      ],
+      "rule": "P1 holds only if both criteria hold and every validity gate passes. Refuting P1 is the expected outcome, and it is published the same way."
+    }
+  },
+  "secondary": [
+    {
+      "id": "S1",
+      "statement": "On stratum S, neither A2a nor A2b reaches a 1.2× TTFT speed-up over A0 (median A0 TTFT / median arm TTFT, mapping included). Predicted to hold; it locates the crossover."
+    },
+    {
+      "id": "S2",
+      "statement": "Round trip, on D1 and its reverse D2 only (A → B → A; not estimable if D1′ is locked, since its reverse is not pinned): decision agreement with A0 after the round trip is below the product of the two one-hop agreements."
+    },
+    {
+      "id": "S3",
+      "statement": "An intrinsic signal (next-token KL, cycle-consistency error or attention-output cosine) predicts disagreement with A0 at AUROC ≥ 0.70 and beats KV cosine by ≥ 0.05. Recorded as \"not estimable\" if there are fewer than 15 disagreements."
+    }
+  ],
+  "secondaryRule": "Secondary claims are directional and decide nothing.",
+  "descriptive": [
+    {
+      "id": "R1",
+      "statement": "Decision stability under bf16 rounding, reported for A2a and A2b on the locked pair, never a gate. At run time the receiver computes in bf16, where near p = 0.5 one logit step moves p by about 0.03. On the held-out parity items, float32-level cache differences (largest key difference 1.4e-4 on D1) left D1: A2a 20/20, A2b 20/20 decisions unchanged (max Δp 0.030 and 0.031); D1′: A2a 20/20, A2b 20/20 decisions unchanged (max Δp 0.019 and 0.025). The larger cache differences of a superseded reduced-precision D1 port attempt (largest key difference 0.025, read out on c001–c020) gave 19/20 (A2a) and 18/20 (A2b). The counted run reports, per arm, how many decisions sit within 0.03 of the threshold.",
+      "evidence": [
+        {
+          "file": "experiments/latent-handoff/evidence/bf16-decision-stability-D1.json",
+          "sha256": "3c0d84d5fb4a0c0fbbd7d5444be7f28124dcccce3952b33636670e4396588005"
+        },
+        {
+          "file": "experiments/latent-handoff/evidence/bf16-decision-stability-D1p.json",
+          "sha256": "fdd3ef0bd4a476d4a8f423531dd9a26ed1e108a62acb66ea9551c78b2ff8d51b"
+        }
+      ]
+    }
+  ],
+  "validityGates": [
+    "Global: A0 accuracy ≥ 0.75 on stratum L of the locked pair. Below it the receiver cannot do the gate, and the result is \"small receivers cannot do this gate\", not a test of transfer.",
+    "Global: C1 matches A0, KL < 0.001 on every item; a C1 abstention counts as a mismatch. Otherwise the run stops.",
+    "Global: zero prefill, the receiver's forwarded-token count equals the suffix length on every KV-arm item.",
+    "Global: the seeded 10% re-run is byte-identical (see leakage fences).",
+    "Per arm: MLX-vs-CPU-torch parity for that arm's ported mapper (above).",
+    "Per arm: manipulation check, (arm accuracy − C2 accuracy) ≥ 0.15 on the stratum claimed, and |C2 − C3| ≤ 0.10 there."
+  ],
+  "analysis": "score.mjs scores rows; the confirmatory analysis (the exclusions, Wilson interval, paired bootstrap, A2b-vs-A0 agreement, gates and the re-run comparison) is a script written after this record, before the not-before, that implements exactly the definitions here. It is added by a dated amendment that changes no other field, is refuted and published before any counted item runs, and resets the not-before.",
+  "validityRule": "Failing a global gate makes every result uninformative; failing a per-arm gate makes that arm's results uninformative. P1 needs every global gate and A2b's per-arm gates. Uninformative is never a pass.",
+  "leakageFences": [
+    "The runner reads only the contexts and the readout; an audit hook refuses any label, manifest, adjudication or second-pass file. score.mjs is the only step that reads labels.",
+    "No calibration text shares a line with an EXP 005 or EXP 008-X base file or change (overlap-x.mjs --calibration).",
+    "Iteration happens on practice items only. There is one counted run, append-only.",
+    "A seeded 10% re-run: the 18 analysed items with the smallest sha256(\"8008:\" + item id), run again on the locked pair, every stratum and every arm (c027, c034, c038, c054, c089, c096, c103, c111, c136, c153, c168, c177, c181, c184, c191, c192, c196, c198). Under the 39-item fallback the set is the 4 analysed EXP 005 items picked the same way (c027, c034, c038, c054). Decisions and readout probabilities (to 6 decimals) must be byte-identical. Timings are excluded from byte identity and reported separately. A difference makes the run uninformative.",
+    "lint.mjs (EXP 005's) checks every context and every A1 summary; a summary that fails it is an abstention."
+  ],
+  "memoryGate": {
+    "constants": {
+      "minFreePct": 50,
+      "headroomGB": 16,
+      "maxLoad1": 12,
+      "maxFootprintGB": 24,
+      "backoffStartMs": 30000,
+      "backoffMaxMs": 600000,
+      "swapBaselineMs": 5000
+    },
+    "rule": "Checked before every invocation and every item. It proceeds only when memory_pressure reports ≥ 50% free, available memory ≥ the practice peak + 16 GB, swap has not grown, no mlx_lm.server is resident, the 1-minute load is below the bound, and the pair footprint is within the bound. Otherwise it waits, backing off from 30 s to 10 min. It never stops or re-prioritises another process."
+  },
+  "timing": {
+    "protocol": {
+      "warmups": 1,
+      "reps": 5,
+      "maxRequeues": 2
+    },
+    "rule": "Per item, the arm order is a seeded random permutation; each arm gets 1 warm-up and 5 timed repetitions and reports the median. The gate is read before and after each item; an item whose readings drifted is re-queued at most twice, then marked timing-unstable. TTFT includes the mapping time."
+  },
+  "telemetry": {
+    "schema": "ffr.v1@ad3aec7c87bc",
+    "rule": "Every arm row is also emitted as an ffr.v1 handoff event, validated against the vendored schema. Local compute is unpriced: its cost is recorded as unknown, with the reason local-unpriced, never as zero."
+  },
+  "spend": {
+    "capUsd": 100,
+    "minReserveUsd": 5,
+    "rule": "Every paid call (a refute round, an API call, rented compute) is reserved before it is made; a reservation is refused when the committed total plus max(the largest call so far, $5, this call) would exceed $100. Never a $0 line; an unknown cost stays charged at its upper bound. Enforced in code (spend8.mjs).",
+    "stage1BudgetUsd": 40,
+    "stage1Split": "Pre-registration refute $2, results refute $26, publication $2, and $10 held back that EXP 008 does not plan to spend: D1′ runs on the Mac or not at all.",
+    "local": "The counted run is local and unpriced."
+  },
+  "notBefore": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this record as frozen. That time is recorded after publication; every counted item must start after it. Practice items do not wait for it.",
+  "limits": [
+    "L is padding (see strata): it tests the mechanism at 16K tokens, not a real factory context of that size.",
+    "The mapper calibration runs on one Mac, not on a rented GPU; the torch reference for the parity gate is CPU torch on the same machine.",
+    "Llama-3.2-3B, Llama-3.1-8B and Gemma-3-1B come from public unsloth mirrors. Their byte-identity to the gated upstream weights cannot be verified (the upstream repositories mask their file hashes); only model.safetensors.index.json matches an upstream git object id.",
+    "200 items are run and 175 analysed; 39 and refute-only if EXP 008-X is set aside (see corpus).",
+    "A lab handoff the factory could adopt: no KV-compatible pair is deployed on the factory floor today, so nothing here measures the factory itself.",
+    "Two small models on authored changes and mechanical architecture rules; nothing here generalises to other tasks, larger models or other hardware.",
+    "A2a is our extension of a published method and A2b is our simplified reimplementation of HeteroFold (arXiv 2609.32259), closed-form fit, without its output-aware calibration stage; no authors' mappers were available. A weak A2a or A2b result is ours and does not show that the cited methods fail.",
+    "c001–c005 were seen before this record: run end to end in the harness smoke test (pair D1, strata S and L, arms A0, A1 and C1–C3) to check the plumbing, C1 against A0; their mapper readouts (A2a and A2b probabilities, unlabelled and unscored) were also viewed during port debugging; and c001 was run in the memory-footprint runs (D1 A2a and A2b; D1′ every arm), stratum L. They are excluded from every claim and gate (see corpus) and serve as the pair-lock practice set.",
+    "c006–c020 were seen before this record: mapper readouts (A2a and A2b probabilities, unlabelled and unscored) viewed during port debugging, before freeze. They are excluded from every claim and gate (see corpus) and serve as the pair-lock practice set.",
+    "c029, c081, c097, c112, c144 were seen before this record: used as the C2 donors of c001–c005 in the harness smoke test (pair D1, strata S and L) and of c001 in the D1′ memory-footprint run (c081). C2 reads the receiver out on the donor's own context with the question, so a receiver readout (p(YES) and decision, unlabelled and unscored) on each of them was recorded before this record. The stratum S smoke rows were not committed; their donors follow from the 200-item strata manifest and are the same five. They are excluded from every claim and gate (see corpus).",
+    "Under bf16 at run time, cache differences at the level of one rounding step can move p(YES) by about 0.03 near the threshold, enough to flip a borderline decision; this is reported as a descriptive property (R1), not hidden and not gated.",
+    "The parity gate is judged in float32 (a float32 CPU readout of the MLX port against a float32 torch reference) because it tests the port, not the run-time precision; MLX's float32 GPU matmul runs at reduced precision, which made the first attempt fail at about 2e-3, and the port now uses a split-precision matmul, with a regression test.",
+    "The timings come from one machine under whatever load the memory gate admits; they are recorded with the gate readings, and their ratios are within-hardware only."
+  ],
+  "files": {
+    "experiments/latent-handoff/README.md": "f8369b0a3ea1989ac46627e1c7851cbb253d9b141bba6dead48beb71ae6b7721",
+    "experiments/latent-handoff/models.json": "e485cbc114f859f4931f250acce73738597570e7f4d916e4cc0ce7aa9e2d84bb",
+    "experiments/latent-handoff/pins.mjs": "6dd86d20026114bef83c8e360efd251c52a9d77780c331648042eee30e78c8a6",
+    "experiments/latent-handoff/strata.mjs": "f6c61167109db289a59927558997e181f93b6b05673bfa744fa760c840936ce4",
+    "experiments/latent-handoff/count_tokens.py": "3d02a536c18068d7dcb65e9ac2c092b809139c3394256197d3fdd0c334f9266b",
+    "experiments/latent-handoff/strata-manifest.json": "2b8746a8491a5e644ff470658c11afbe8ff86e79c9b7a1b3af67379655ae3ae5",
+    "experiments/latent-handoff/readout.json": "8c4c78285bb6c09ec5ce3c560344a20985013fadef57faaf3e7dc5e4cab74f24",
+    "experiments/latent-handoff/runner.py": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+    "experiments/latent-handoff/arms.mjs": "e4ae8d1afde49889b6a5886601ee1c13021cbde0781cdac20c8dd416df6c7642",
+    "experiments/latent-handoff/score.mjs": "9df5a67ccd0f661e500266b7818cfd621f78e0e62ccd3fb74199f4dbb04b962d",
+    "experiments/latent-handoff/counter.py": "7e1c48c556cf9d053c7595a6daa46caa54cda64616a2e6c30e1a390d3478c52b",
+    "experiments/latent-handoff/mem-gate.mjs": "e1f7f15b32612523fc172ed86b2df1cd28c1d5bbae497d07f99339bc526aabfc",
+    "experiments/latent-handoff/timing.mjs": "d06edccfc028170bfa48e803c1b569d94530b0bd036408872ffbfd7252ff3e44",
+    "experiments/latent-handoff/spend8.mjs": "5817d9bb045cc84fe4286314ca4ebc49ce087b1092aa97ed2673a69d27af4038",
+    "experiments/latent-handoff/ffr8.mjs": "73258c412926e5d2e205e5c1df0368b75a8a69cba9eb20ffe553eff1a9745d0d",
+    "experiments/latent-handoff/lint-stdin.mjs": "7f9dde4b3031bcbe176a2a167ed2f86a68445c361035a32cccabee9a0c36ca28",
+    "experiments/latent-handoff/vendor/ffr/ffr.v1.schema.json": "ad3aec7c87bc43fef79d2e9fd8ae91b8df2898a5bb177e8064f4f7b72b48a8fe",
+    "experiments/latent-handoff/vendor/ffr/ffr-model-family.json": "b49786fcd2caf9e5042a1fa2668253973aa021701b2fa8414766f38ddd9228fd",
+    "experiments/latent-handoff/vendor/ffr/validate.mjs": "20d95bc8d4a442e0de21028868b1399ef996af9d6c4d863d2254fc104428098f",
+    "experiments/latent-handoff/vendor/ffr/vendor.json": "9bcfc5fce66ee59f15f56abaee068af4fc03e0ec0e115f1c762277ba3cb44635",
+    "experiments/latent-handoff/distractor/lodash-4.17.21-head2500.js": "52f2358d3c8eccc8f030fab6acf868f46b8b88045898589391f1630d2e1ed95c",
+    "experiments/latent-handoff/distractor/LICENSE": "f71e8ed126b46346494aad5486874cd8f0aafe95092ed67d2e3cb6110f939abc",
+    "experiments/latent-handoff/corpus-x/corpus-x.json": "92e6e2ec12515ef91081e5d26f340bc6c5e82d2f2927b705b8627e9f2e8a38e8",
+    "experiments/latent-handoff/corpus-x/corpus-x.sha256": "f0199c9d0209900012c25c28fe1e2ef755de725e09cc3411b6260d923e47b77e",
+    "experiments/latent-handoff/corpus-x/labels-x.json": "5068ef5ea06aafe7ec508d313779ba1705f2362356bc3b51ac39c4b148883d62",
+    "experiments/latent-handoff/corpus-x/baselines-x.mjs": "301dc24e61dd9b39ce8efc9df3313b8cdabe7a8ce3ab931375055ea590a2af92",
+    "experiments/latent-handoff/corpus-x/overlap-x.mjs": "e9c6c0ee8e0f42927febaa3a10e9ccd54d67e5958b38d9c792a36366acb0b7b2",
+    "experiments/jev-gate/lint.mjs": "df4485c7c7c7f515c5a484ec10df3400c59e2558c9cc67d1956aa6d40f9f38c9",
+    "experiments/jev-gate/gate-question.json": "2a9a728d15305e19d2a39001134629297176f78749865d2512cd1a51d3e09764",
+    "experiments/jev-gate/baselines.json": "6267bc62d57bfff5516e440f9333aa8260075cdfdf783136d2774c0dc131cf19"
+  }
+}

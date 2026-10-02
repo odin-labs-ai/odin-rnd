@@ -1,0 +1,13 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..f95f98a 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -18,7 +18,7 @@ export function createServices(settings: {
+   smtpFrom: string;
+   invoicePrefix: string;
+ }): Services {
+-  const pool = createPool(settings.databaseUrl);
++  const pool = createPool(process.env.DATABASE_URL ?? settings.databaseUrl);
+   return {
+     orders: new PgOrderRepository(pool),
+     customers: new PgCustomerRepository(pool),

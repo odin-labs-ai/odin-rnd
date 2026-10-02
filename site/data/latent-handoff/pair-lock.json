@@ -1,0 +1,226 @@
+{
+  "rule": "After this record is frozen and before the not-before, A0 is measured for D1 on stratum L, with the frozen readout and the current render, on the practice set c001–c020 (seen items, excluded from every claim and gate). If D1's A0 gets fewer than 15 of the 20 right (accuracy below 0.75), D1′ (Qwen3-4B → Llama-3.1-8B) replaces D1, mechanically; otherwise D1 stays. The decision and its rows are written to pair-lock.json before the not-before. No other rule chooses the pair.",
+  "record": {
+    "file": "experiments/latent-handoff/preregistration.json",
+    "sha256": "638d1dda53e8ae6c9c129d34e6b83fa6642f7ef60b30de8da71e7660082f7f6c"
+  },
+  "run": {
+    "runId": "pairlock-d1-L-01",
+    "rows": {
+      "file": "experiments/latent-handoff/evidence/pairlock-d1-L-01.rows.jsonl",
+      "sha256": "fce6ba35e7538323a3c31fb28b4e6e8c13a158ff114becf2f6152aededa7fd67",
+      "lines": 20
+    },
+    "code": {
+      "experiments/latent-handoff/runner.py": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+      "experiments/latent-handoff/arms.mjs": "e4ae8d1afde49889b6a5886601ee1c13021cbde0781cdac20c8dd416df6c7642",
+      "experiments/latent-handoff/score.mjs": "9df5a67ccd0f661e500266b7818cfd621f78e0e62ccd3fb74199f4dbb04b962d",
+      "experiments/latent-handoff/readout.json": "8c4c78285bb6c09ec5ce3c560344a20985013fadef57faaf3e7dc5e4cab74f24",
+      "experiments/latent-handoff/strata-manifest.json": "2b8746a8491a5e644ff470658c11afbe8ff86e79c9b7a1b3af67379655ae3ae5",
+      "experiments/latent-handoff/models.json": "e485cbc114f859f4931f250acce73738597570e7f4d916e4cc0ce7aa9e2d84bb",
+      "experiments/latent-handoff/mem-gate.mjs": "e1f7f15b32612523fc172ed86b2df1cd28c1d5bbae497d07f99339bc526aabfc",
+      "experiments/latent-handoff/timing.mjs": "d06edccfc028170bfa48e803c1b569d94530b0bd036408872ffbfd7252ff3e44"
+    }
+  },
+  "bar": "15 of 20",
+  "result": {
+    "correct": 11,
+    "of": 20,
+    "abstentions": 0,
+    "accuracy": 0.55
+  },
+  "alwaysAccept": "The practice set is 11 GREEN and 9 RED, so a receiver that always answers ACCEPT scores 11 of 20. Computed here, after the lock run, not part of the frozen record.",
+  "decision": "D1p",
+  "decisionText": "D1′ replaces D1: A0 got 11 of 20 right, below the bar of 15.",
+  "notes": [
+    "Run pairlock-d1-L-01 (A0 only, timing protocol: 1 warm-up, 5 reps) started 2026-10-02T05:05:50Z, 7 s after the record was frozen at b5543ab; c001-c015 wrote rows by 05:15:49Z, then the driving session ended and the run was killed while c016 was in progress (c016 had written no row). It was resumed at about 05:20Z for c016-c020 only, same run id and attempt 0, appending to the same rows file; the first 15 lines are byte-identical to before the resume (sha256 of those 15 lines cc2f044729e7eb5cf192f2c4f0423a20694173b67e6c354fe52d58d47fb2d54e). c016 was started twice; no item has two rows.",
+    "c002 started at 05:09:58Z, about 3.5 min after c001 finished: the memory/load gate held the run between items (its readings are in the row's gate field).",
+    "Because the resume named only c016-c020, the driver's timing re-queue check covered those five (none drifted, no attempt-1 rows); c001-c015 were not re-checked for timing drift. The lock reads decisions, not timings, so this does not touch the decision.",
+    "After the lock run started, the record was edited in disclosure and wording fields only: exposure reasons and exposureEvidence, a third exposure (c029, c081, c097, c112, c144: C2-donor readouts recorded before the record, found by a refute; analysed n 180 to 175, fallback 40 to 39; none is in the practice set) with a fail-closed pre-record scan, the footprint statement (naming the C2 donors), pairLockResult (this lock's outcome, stated plainly in the record from these rows), the A2b label, the R1 wording, mapper notes, the analysis note, and pairLockEarlierPractice, which split the earlier-practice sentence out of pairLock and added that earlier run's own result (A0 ACCEPT on all 5, 3 of 5 correct; derivable from rows and labels committed before the record, first computed after the lock run). The operative pairLock text, the bar, the practice set, and the runner, readout, strata and scorer hashes above are unchanged and are checked against the record. The always-ACCEPT score (alwaysAccept above) was computed after the lock outcome and is kept out of the record.",
+    "At publication (2026-10-02) the record was edited once more, in wording and date fields only: freeze.frozenOn (2026-10-02, the date the page carries), one sentence in the C2-donor exposure reason (the stratum S smoke rows were not committed; their donors follow from the strata manifest), and a mapper note that the record's A2b label supersedes the shorter hash-bound labels. experiments/latent-handoff/README.md, which the record pins, gained the full A2b label and a line naming the five C2 donors, so its hash in the record changed. arms.mjs and the other files under run.code are byte-unchanged.",
+    "The hashes under run.code are the record's bound hashes, checked against the files on disk when this file is built, not when the run ran: the rows carry no code hash. Those eight files are byte-identical at b5543ab, where the run started, and at this build.",
+    "The record in force when the run started is commit b5543ab, experiments/latent-handoff/preregistration.json sha256 d5b1f81db88b8e4c33c690075a888f837a726c023f1492084ace0ed865358e56; record above is the current record."
+  ],
+  "items": [
+    {
+      "itemId": "c001",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.347204,
+      "attempt": 0,
+      "ts": "2026-10-02T05:06:19Z"
+    },
+    {
+      "itemId": "c002",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.435881,
+      "attempt": 0,
+      "ts": "2026-10-02T05:10:18Z"
+    },
+    {
+      "itemId": "c003",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.268068,
+      "attempt": 0,
+      "ts": "2026-10-02T05:10:39Z"
+    },
+    {
+      "itemId": "c004",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267532,
+      "attempt": 0,
+      "ts": "2026-10-02T05:11:00Z"
+    },
+    {
+      "itemId": "c005",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.292963,
+      "attempt": 0,
+      "ts": "2026-10-02T05:11:22Z"
+    },
+    {
+      "itemId": "c006",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.244314,
+      "attempt": 0,
+      "ts": "2026-10-02T05:11:46Z"
+    },
+    {
+      "itemId": "c007",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267605,
+      "attempt": 0,
+      "ts": "2026-10-02T05:12:12Z"
+    },
+    {
+      "itemId": "c008",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267976,
+      "attempt": 0,
+      "ts": "2026-10-02T05:12:38Z"
+    },
+    {
+      "itemId": "c009",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267882,
+      "attempt": 0,
+      "ts": "2026-10-02T05:13:06Z"
+    },
+    {
+      "itemId": "c010",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.43623,
+      "attempt": 0,
+      "ts": "2026-10-02T05:13:32Z"
+    },
+    {
+      "itemId": "c011",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.347245,
+      "attempt": 0,
+      "ts": "2026-10-02T05:13:59Z"
+    },
+    {
+      "itemId": "c012",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267774,
+      "attempt": 0,
+      "ts": "2026-10-02T05:14:25Z"
+    },
+    {
+      "itemId": "c013",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.292717,
+      "attempt": 0,
+      "ts": "2026-10-02T05:14:51Z"
+    },
+    {
+      "itemId": "c014",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.319888,
+      "attempt": 0,
+      "ts": "2026-10-02T05:15:20Z"
+    },
+    {
+      "itemId": "c015",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.347653,
+      "attempt": 0,
+      "ts": "2026-10-02T05:15:49Z"
+    },
+    {
+      "itemId": "c016",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.221694,
+      "attempt": 0,
+      "ts": "2026-10-02T05:21:32Z"
+    },
+    {
+      "itemId": "c017",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.221696,
+      "attempt": 0,
+      "ts": "2026-10-02T05:21:53Z"
+    },
+    {
+      "itemId": "c018",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.404738,
+      "attempt": 0,
+      "ts": "2026-10-02T05:22:14Z"
+    },
+    {
+      "itemId": "c019",
+      "label": "RED",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.29307,
+      "attempt": 0,
+      "ts": "2026-10-02T05:22:36Z"
+    },
+    {
+      "itemId": "c020",
+      "label": "GREEN",
+      "decision": "ACCEPT",
+      "abstain": false,
+      "pYes": 0.267276,
+      "attempt": 0,
+      "ts": "2026-10-02T05:22:59Z"
+    }
+  ]
+}

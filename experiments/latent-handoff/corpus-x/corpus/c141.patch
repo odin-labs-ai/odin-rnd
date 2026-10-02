@@ -1,0 +1,13 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..8d940c8 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -16,3 +16,8 @@ export function add(a: Money, b: Money): Money {
+ export function multiply(a: Money, factor: number): Money {
+   return money(Math.round(a.cents * factor), a.currency);
+ }
++
++export function subtract(a: Money, b: Money): Money {
++  if (a.currency !== b.currency) throw new RangeError('currencies differ');
++  return money(a.cents - b.cents, a.currency);
++}

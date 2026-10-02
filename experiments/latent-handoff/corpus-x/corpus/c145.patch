@@ -1,0 +1,12 @@
+diff --git a/src/infra/http/routes.ts b/src/infra/http/routes.ts
+index c4e74d9..35025aa 100644
+--- a/src/infra/http/routes.ts
++++ b/src/infra/http/routes.ts
+@@ -4,6 +4,7 @@ import type { Services } from '../index';
+ 
+ export function createHttpServer(services: Services): Server {
+   return createServer(async (req, res) => {
++    // CORS stays off for now; the origin list would come from process.env.CORS_ORIGINS.
+     const match = /^\/orders\/([\w-]+)\/(place|invoice)$/.exec(req.url ?? '');
+     if (req.method !== 'POST' || !match) {
+       res.writeHead(404).end();

@@ -1,0 +1,10 @@
+diff --git a/src/app/ports.ts b/src/app/ports.ts
+index 24c1fa6..bbbb654 100644
+--- a/src/app/ports.ts
++++ b/src/app/ports.ts
+@@ -1,4 +1,5 @@
+ import type { Customer, Invoice, Order } from '../domain';
++export type { PgInvoiceRepository } from '../infra/db/invoice-repository';
+ 
+ export interface OrderRepository {
+   get(id: string): Promise<Order | undefined>;

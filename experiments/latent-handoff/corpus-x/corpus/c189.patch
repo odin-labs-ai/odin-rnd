@@ -1,0 +1,36 @@
+diff --git a/src/domain/money.ts b/src/domain/amount.ts
+similarity index 100%
+rename from src/domain/money.ts
+rename to src/domain/amount.ts
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..c75a750 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -1,5 +1,5 @@
+ export * from './customer';
+ export * from './errors';
+ export * from './invoice';
+-export * from './money';
++export * from './amount';
+ export * from './order';
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..45b1cff 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,4 +1,4 @@
+-import type { Money } from './money';
++import type { Money } from './amount';
+ import { orderTotal, type Order } from './order';
+ 
+ export interface Invoice {
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..15d84ba 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,5 +1,5 @@
+ import { DomainError } from './errors';
+-import { add, money, multiply, type Money } from './money';
++import { add, money, multiply, type Money } from './amount';
+ 
+ export interface OrderLine {
+   readonly sku: string;

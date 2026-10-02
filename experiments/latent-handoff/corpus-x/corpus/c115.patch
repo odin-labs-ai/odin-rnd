@@ -1,0 +1,12 @@
+diff --git a/test/order.test.ts b/test/order.test.ts
+index 480da82..13c5a64 100644
+--- a/test/order.test.ts
++++ b/test/order.test.ts
+@@ -16,3 +16,7 @@ test('order total multiplies quantity by unit price', () => {
+ test('placing an order changes its status', () => {
+   assert.equal(placeOrder(order).status, 'placed');
+ });
++
++test('a cancelled order stays unplaced', () => {
++  assert.throws(() => placeOrder({ ...order, status: 'cancelled' }), /only open orders/);
++});

@@ -1,0 +1,14 @@
+diff --git a/src/infra/db/schema.ts b/src/infra/db/schema.ts
+new file mode 100644
+index 0000000..215fb56
+--- /dev/null
++++ b/src/infra/db/schema.ts
+@@ -0,0 +1,8 @@
++import type pg from 'pg';
++
++export async function ensureSchema(pool: pg.Pool): Promise<void> {
++  await pool.query('create table if not exists orders (id text primary key, body jsonb not null)');
++  await pool.query('create table if not exists customers (id text primary key, body jsonb not null)');
++  await pool.query('create table if not exists invoices (number text primary key, body jsonb not null)');
++  await pool.query('create sequence if not exists invoice_seq');
++}

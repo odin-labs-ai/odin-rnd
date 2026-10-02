@@ -1,0 +1,21 @@
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..00e4d0b 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -3,3 +3,4 @@ export * from './errors';
+ export * from './invoice';
+ export * from './money';
+ export * from './order';
++export * from './tax';
+diff --git a/src/domain/tax.ts b/src/domain/tax.ts
+new file mode 100644
+index 0000000..068c8b3
+--- /dev/null
++++ b/src/domain/tax.ts
+@@ -0,0 +1,6 @@
++import { type Money, money } from './money';
++
++export function vatOn(amount: Money, ratePercent: number): Money {
++  if (ratePercent < 0) throw new RangeError('a tax rate cannot be negative');
++  return money(Math.round((amount.cents * ratePercent) / 100), amount.currency);
++}

@@ -1,0 +1,14 @@
+diff --git a/src/app/reports/daily-count.ts b/src/app/reports/daily-count.ts
+new file mode 100644
+index 0000000..0b2024d
+--- /dev/null
++++ b/src/app/reports/daily-count.ts
+@@ -0,0 +1,8 @@
++import { createPool } from '../../infra/db/pool';
++
++export async function ordersToday(databaseUrl: string): Promise<number> {
++  const handle = createPool(databaseUrl);
++  const rows = await handle.query("select count(*)::int as n from orders where body->>'status' = 'placed'");
++  await handle.end();
++  return rows.rows[0].n;
++}

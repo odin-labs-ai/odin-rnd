@@ -1,0 +1,17 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..10883da 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,3 +1,4 @@
++import * as config from '../config/settings';
+ import type { Money } from './money';
+ import { orderTotal, type Order } from './order';
+ 
+@@ -11,3 +12,7 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export function prefixedNumber(sequence: number): string {
++  return `${config.loadSettings().invoicePrefix}${sequence}`;
++}

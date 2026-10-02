@@ -1,0 +1,12 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..e8b356e 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -7,6 +7,7 @@ export interface OrderLine {
+   readonly unitPrice: Money;
+ }
+ 
++// Use cases depend on the domain, never the reverse: no import('../app') belongs in this folder.
+ export interface Order {
+   readonly id: string;
+   readonly customerId: string;

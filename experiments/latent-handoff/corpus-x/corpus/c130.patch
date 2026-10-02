@@ -1,0 +1,16 @@
+diff --git a/test/config.test.ts b/test/config.test.ts
+new file mode 100644
+index 0000000..562a179
+--- /dev/null
++++ b/test/config.test.ts
+@@ -0,0 +1,10 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import * as config from '../src/config/settings';
++
++test('a missing database url is reported', () => {
++  delete process.env.DATABASE_URL;
++  process.env.SMTP_HOST = 'mail.local';
++  process.env.REDIS_URL = 'redis://cache.local:6379';
++  assert.throws(() => config.loadSettings(), /DATABASE_URL/);
++});

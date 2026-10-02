@@ -1,0 +1,942 @@
+{
+  "binding": {
+    "schemaVersion": 1,
+    "pair": "D1p",
+    "receiverDtype": "float32",
+    "items": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20"
+    ],
+    "contextsSha256": {
+      "p01": "533d127c043d74a7e84529f44f9b508549e2537d34b9601caac867c791c3d5ee",
+      "p02": "03dfb3f9351d4391b1bf7691530277aad548b326c7129dae8d691cb4382f9350",
+      "p03": "3d13c9c55adf7f3c13a92e5342d8b93159935349da6d9041a96d6a330509eba2",
+      "p04": "a10effa603d36de64750e96109b40d2106cdd6f846d2991a1c7c8e0edcc5f8df",
+      "p05": "fc30179266c2aa409eb261aaa1534309cf74aafc560fd1ef2e6875c71317ccf0",
+      "p06": "ff21fccb257dbd493ab12a2040177f428dfb4ac700c8195aefea85a4d56f1850",
+      "p07": "77b7ee98cc729374c3465fa88986fdcbd51d079f1a4595c0aba89a3ffaaaa282",
+      "p08": "68c802a84583c18b3cd026112b6b5789380e87965461ab06bdfdb1f328f9736b",
+      "p09": "f5d5c0dd352db0f37b9727dbf5a70c68061b1dac51fe5f6ab067c9bc2924122d",
+      "p10": "a46173b171bb9fa103e99a1d6f0a1c5e577375b54b30d7cdda14945e098134b3",
+      "p11": "092771d2752acf0cb0021ee1da3f173f760f3b2f1c51d03878fde5fceceda22d",
+      "p12": "5d8a4f446b424c340f9afe1dd25f7e2838bdf651023f464b64681a380e56ee44",
+      "p13": "c4d9d3dd6ff03f1dbab70f43c76a5a88b201decafb9d76e520b46f354fdbf277",
+      "p14": "ac43c63ba7d318ad169cb3d83de3a38ce4a7b505962d757473608514073fc03f",
+      "p15": "3d90dccadf6684f0fb66e9966e9d8c7abc89753fc17301e21464f174e3064f8e",
+      "p16": "51e16747dfea69e3397a3d26d5e207991957c1463b3ed559571a243e07e22c40",
+      "p17": "5706f614858aca9b57a711028101a65af380f6f3d160311eace7c335c7aba44e",
+      "p18": "c91abfe623390699eaa5ece09eb0bdb7740ddfb970513f17255c117dcc7c6acb",
+      "p19": "cde2ea9e15b97eef81cdc1379855f29d6f1e5a5548598edadc28fae7152288ea",
+      "p20": "98551bb66e7d47a5a76cc0fa1a1d387d46ef81c41db95df93206e39cf9046968"
+    },
+    "maxDp": 0.001,
+    "reference": "kvmap TORCH backend, float32 CPU",
+    "port": "kvmap MLX backend",
+    "weightsSha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+    "verdict": {
+      "A2a": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 5.032682453512405e-06,
+        "pass": true
+      },
+      "A2b": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 8.255717453331535e-06,
+        "pass": true
+      }
+    },
+    "rows": [
+      {
+        "item": "p01",
+        "mapper": "A2a",
+        "pMlx": 0.007337125204835043,
+        "pTorch": 0.0073373822071708715,
+        "dp": 2.5700233582861415e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.009506225585938e-05,
+        "maxAbsDeltaValues": 1.5139579772949219e-05
+      },
+      {
+        "item": "p01",
+        "mapper": "A2b",
+        "pMlx": 0.1717758481169998,
+        "pTorch": 0.171774219984694,
+        "dp": 1.628132305808716e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001430511474609375,
+        "maxAbsDeltaValues": 1.4781951904296875e-05
+      },
+      {
+        "item": "p02",
+        "mapper": "A2a",
+        "pMlx": 0.01772770318466085,
+        "pTorch": 0.017728467110982395,
+        "dp": 7.639263215446224e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.915496826171875e-05,
+        "maxAbsDeltaValues": 2.053380012512207e-05
+      },
+      {
+        "item": "p02",
+        "mapper": "A2b",
+        "pMlx": 0.0763775382422462,
+        "pTorch": 0.07638184401824083,
+        "dp": 4.305775994625782e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015401840209960938,
+        "maxAbsDeltaValues": 1.8388032913208008e-05
+      },
+      {
+        "item": "p03",
+        "mapper": "A2a",
+        "pMlx": 0.058997794622316954,
+        "pTorch": 0.05899546507709523,
+        "dp": 2.3295452217242385e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.295608520507812e-05,
+        "maxAbsDeltaValues": 1.7821788787841797e-05
+      },
+      {
+        "item": "p03",
+        "mapper": "A2b",
+        "pMlx": 0.19111057203199783,
+        "pTorch": 0.1911023163145445,
+        "dp": 8.255717453331535e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001888275146484375,
+        "maxAbsDeltaValues": 2.0742416381835938e-05
+      },
+      {
+        "item": "p04",
+        "mapper": "A2a",
+        "pMlx": 0.0574338784918599,
+        "pTorch": 0.057431297177502116,
+        "dp": 2.581314357784359e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.009506225585938e-05,
+        "maxAbsDeltaValues": 1.609325408935547e-05
+      },
+      {
+        "item": "p04",
+        "mapper": "A2b",
+        "pMlx": 0.17647165532600007,
+        "pTorch": 0.1764661115173836,
+        "dp": 5.543808616476076e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015175342559814453,
+        "maxAbsDeltaValues": 1.3589859008789062e-05
+      },
+      {
+        "item": "p05",
+        "mapper": "A2a",
+        "pMlx": 0.011929514348108511,
+        "pTorch": 0.011929222081722386,
+        "dp": 2.922663861256586e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.829202175140381e-05,
+        "maxAbsDeltaValues": 1.6763806343078613e-05
+      },
+      {
+        "item": "p05",
+        "mapper": "A2b",
+        "pMlx": 0.08768338723781935,
+        "pTorch": 0.08768201404216769,
+        "dp": 1.373195651660497e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015306472778320312,
+        "maxAbsDeltaValues": 1.621246337890625e-05
+      },
+      {
+        "item": "p06",
+        "mapper": "A2a",
+        "pMlx": 0.007727479293073022,
+        "pTorch": 0.007727289169070705,
+        "dp": 1.9012400231683407e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.617473602294922e-05,
+        "maxAbsDeltaValues": 1.4103949069976807e-05
+      },
+      {
+        "item": "p06",
+        "mapper": "A2b",
+        "pMlx": 0.04141052946264332,
+        "pTorch": 0.04140931806304694,
+        "dp": 1.2113995963777824e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016260147094726562,
+        "maxAbsDeltaValues": 1.621246337890625e-05
+      },
+      {
+        "item": "p07",
+        "mapper": "A2a",
+        "pMlx": 0.0299972709904714,
+        "pTorch": 0.029999824047558046,
+        "dp": 2.5530570866467983e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.56978988647461e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p07",
+        "mapper": "A2b",
+        "pMlx": 0.07026297031766304,
+        "pTorch": 0.07026459012997675,
+        "dp": 1.6198123137106668e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.000141143798828125,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p08",
+        "mapper": "A2a",
+        "pMlx": 0.016190919762585253,
+        "pTorch": 0.01619031213929789,
+        "dp": 6.076232873623855e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.105618715286255e-05,
+        "maxAbsDeltaValues": 1.4722347259521484e-05
+      },
+      {
+        "item": "p08",
+        "mapper": "A2b",
+        "pMlx": 0.03555486073831739,
+        "pTorch": 0.035553748881216554,
+        "dp": 1.111857100832836e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016069412231445312,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p09",
+        "mapper": "A2a",
+        "pMlx": 0.02960846649356452,
+        "pTorch": 0.029609233725172796,
+        "dp": 7.672316082764363e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.176399230957031e-05,
+        "maxAbsDeltaValues": 1.570582389831543e-05
+      },
+      {
+        "item": "p09",
+        "mapper": "A2b",
+        "pMlx": 0.08880115311241463,
+        "pTorch": 0.08880485720015667,
+        "dp": 3.704087742043005e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016236305236816406,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p10",
+        "mapper": "A2a",
+        "pMlx": 0.0835829242955642,
+        "pTorch": 0.08358219381427456,
+        "dp": 7.304812896374857e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.973743438720703e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p10",
+        "mapper": "A2b",
+        "pMlx": 0.16493268119015334,
+        "pTorch": 0.16492952882727782,
+        "dp": 3.1523628755136812e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001544952392578125,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p11",
+        "mapper": "A2a",
+        "pMlx": 0.07188281837400927,
+        "pTorch": 0.07188549067106685,
+        "dp": 2.672297057582096e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.05718994140625e-05,
+        "maxAbsDeltaValues": 1.665949821472168e-05
+      },
+      {
+        "item": "p11",
+        "mapper": "A2b",
+        "pMlx": 0.09709821209743667,
+        "pTorch": 0.09710105483274414,
+        "dp": 2.8427353074705897e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016069412231445312,
+        "maxAbsDeltaValues": 1.9222497940063477e-05
+      },
+      {
+        "item": "p12",
+        "mapper": "A2a",
+        "pMlx": 0.02197049740088713,
+        "pTorch": 0.02197168598907105,
+        "dp": 1.1885881839174273e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.444620132446289e-05,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p12",
+        "mapper": "A2b",
+        "pMlx": 0.021908777353931066,
+        "pTorch": 0.021908041667133307,
+        "dp": 7.356867977592607e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015544891357421875,
+        "maxAbsDeltaValues": 1.704692840576172e-05
+      },
+      {
+        "item": "p13",
+        "mapper": "A2a",
+        "pMlx": 0.0974462454594979,
+        "pTorch": 0.09745127814195141,
+        "dp": 5.032682453512405e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.104873657226562e-05,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p13",
+        "mapper": "A2b",
+        "pMlx": 0.28387831759471815,
+        "pTorch": 0.2838814195858192,
+        "dp": 3.101991101039925e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015854835510253906,
+        "maxAbsDeltaValues": 1.704692840576172e-05
+      },
+      {
+        "item": "p14",
+        "mapper": "A2a",
+        "pMlx": 0.023871279388118914,
+        "pTorch": 0.02387190161164362,
+        "dp": 6.222235247044239e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.337331771850586e-05,
+        "maxAbsDeltaValues": 1.52587890625e-05
+      },
+      {
+        "item": "p14",
+        "mapper": "A2b",
+        "pMlx": 0.1319581924615544,
+        "pTorch": 0.13195862941753556,
+        "dp": 4.369559811479018e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016820430755615234,
+        "maxAbsDeltaValues": 1.52587890625e-05
+      },
+      {
+        "item": "p15",
+        "mapper": "A2a",
+        "pMlx": 0.02623804413757358,
+        "pTorch": 0.026237605553031246,
+        "dp": 4.385845423331147e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.961822509765625e-05,
+        "maxAbsDeltaValues": 1.6421079635620117e-05
+      },
+      {
+        "item": "p15",
+        "mapper": "A2b",
+        "pMlx": 0.03774771139832617,
+        "pTorch": 0.03774771139832617,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001569688320159912,
+        "maxAbsDeltaValues": 1.9550323486328125e-05
+      },
+      {
+        "item": "p16",
+        "mapper": "A2a",
+        "pMlx": 0.04819203421580684,
+        "pTorch": 0.04819133430666028,
+        "dp": 6.999091465564877e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.67572021484375e-05,
+        "maxAbsDeltaValues": 1.952052116394043e-05
+      },
+      {
+        "item": "p16",
+        "mapper": "A2b",
+        "pMlx": 0.0943688380732429,
+        "pTorch": 0.0943699791383889,
+        "dp": 1.1410651460097565e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001747608184814453,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p17",
+        "mapper": "A2a",
+        "pMlx": 0.03424508920811087,
+        "pTorch": 0.03424489996703574,
+        "dp": 1.8924107512974242e-07,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.200241088867188e-05,
+        "maxAbsDeltaValues": 1.570582389831543e-05
+      },
+      {
+        "item": "p17",
+        "mapper": "A2b",
+        "pMlx": 0.13688736131091797,
+        "pTorch": 0.13688938948919538,
+        "dp": 2.028178277407866e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015735626220703125,
+        "maxAbsDeltaValues": 1.8164515495300293e-05
+      },
+      {
+        "item": "p18",
+        "mapper": "A2a",
+        "pMlx": 0.10936402402242665,
+        "pTorch": 0.10936253777130227,
+        "dp": 1.4862511243801668e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.151812314987183e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p18",
+        "mapper": "A2b",
+        "pMlx": 0.20145950839998758,
+        "pTorch": 0.20145490580940367,
+        "dp": 4.602590583907551e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001373291015625,
+        "maxAbsDeltaValues": 1.5497207641601562e-05
+      },
+      {
+        "item": "p19",
+        "mapper": "A2a",
+        "pMlx": 0.1536654747608662,
+        "pTorch": 0.1536607617700625,
+        "dp": 4.712990803706907e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.462501525878906e-05,
+        "maxAbsDeltaValues": 1.33514404296875e-05
+      },
+      {
+        "item": "p19",
+        "mapper": "A2b",
+        "pMlx": 0.37497753436947107,
+        "pTorch": 0.37498558083821154,
+        "dp": 8.046468740474655e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016867369413375854,
+        "maxAbsDeltaValues": 1.5974044799804688e-05
+      },
+      {
+        "item": "p20",
+        "mapper": "A2a",
+        "pMlx": 0.14637442870928,
+        "pTorch": 0.14636966234919518,
+        "dp": 4.76636008481246e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.878376007080078e-05,
+        "maxAbsDeltaValues": 1.6510486602783203e-05
+      },
+      {
+        "item": "p20",
+        "mapper": "A2b",
+        "pMlx": 0.254016027979509,
+        "pTorch": 0.2540134979981968,
+        "dp": 2.5299813122270365e-06,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015592575073242188,
+        "maxAbsDeltaValues": 1.4066696166992188e-05
+      }
+    ],
+    "wallSeconds": 95.0
+  },
+  "informational": {
+    "schemaVersion": 1,
+    "pair": "D1p",
+    "receiverDtype": "bfloat16",
+    "items": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20"
+    ],
+    "contextsSha256": {
+      "p01": "533d127c043d74a7e84529f44f9b508549e2537d34b9601caac867c791c3d5ee",
+      "p02": "03dfb3f9351d4391b1bf7691530277aad548b326c7129dae8d691cb4382f9350",
+      "p03": "3d13c9c55adf7f3c13a92e5342d8b93159935349da6d9041a96d6a330509eba2",
+      "p04": "a10effa603d36de64750e96109b40d2106cdd6f846d2991a1c7c8e0edcc5f8df",
+      "p05": "fc30179266c2aa409eb261aaa1534309cf74aafc560fd1ef2e6875c71317ccf0",
+      "p06": "ff21fccb257dbd493ab12a2040177f428dfb4ac700c8195aefea85a4d56f1850",
+      "p07": "77b7ee98cc729374c3465fa88986fdcbd51d079f1a4595c0aba89a3ffaaaa282",
+      "p08": "68c802a84583c18b3cd026112b6b5789380e87965461ab06bdfdb1f328f9736b",
+      "p09": "f5d5c0dd352db0f37b9727dbf5a70c68061b1dac51fe5f6ab067c9bc2924122d",
+      "p10": "a46173b171bb9fa103e99a1d6f0a1c5e577375b54b30d7cdda14945e098134b3",
+      "p11": "092771d2752acf0cb0021ee1da3f173f760f3b2f1c51d03878fde5fceceda22d",
+      "p12": "5d8a4f446b424c340f9afe1dd25f7e2838bdf651023f464b64681a380e56ee44",
+      "p13": "c4d9d3dd6ff03f1dbab70f43c76a5a88b201decafb9d76e520b46f354fdbf277",
+      "p14": "ac43c63ba7d318ad169cb3d83de3a38ce4a7b505962d757473608514073fc03f",
+      "p15": "3d90dccadf6684f0fb66e9966e9d8c7abc89753fc17301e21464f174e3064f8e",
+      "p16": "51e16747dfea69e3397a3d26d5e207991957c1463b3ed559571a243e07e22c40",
+      "p17": "5706f614858aca9b57a711028101a65af380f6f3d160311eace7c335c7aba44e",
+      "p18": "c91abfe623390699eaa5ece09eb0bdb7740ddfb970513f17255c117dcc7c6acb",
+      "p19": "cde2ea9e15b97eef81cdc1379855f29d6f1e5a5548598edadc28fae7152288ea",
+      "p20": "98551bb66e7d47a5a76cc0fa1a1d387d46ef81c41db95df93206e39cf9046968"
+    },
+    "maxDp": 0.001,
+    "reference": "kvmap TORCH backend, float32 CPU",
+    "port": "kvmap MLX backend",
+    "weightsSha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+    "verdict": {
+      "A2a": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 0.019491284877865944,
+        "pass": null
+      },
+      "A2b": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 0.02527355079299365,
+        "pass": null
+      }
+    },
+    "rows": [
+      {
+        "item": "p01",
+        "mapper": "A2a",
+        "pMlx": 0.0066928509242848554,
+        "pTorch": 0.007121428745735101,
+        "dp": 0.0004285778214502458,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.009506225585938e-05,
+        "maxAbsDeltaValues": 1.5139579772949219e-05
+      },
+      {
+        "item": "p01",
+        "mapper": "A2b",
+        "pMlx": 0.16451646289656316,
+        "pTorch": 0.18242552380635635,
+        "dp": 0.01790906090979319,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001430511474609375,
+        "maxAbsDeltaValues": 1.4781951904296875e-05
+      },
+      {
+        "item": "p02",
+        "mapper": "A2a",
+        "pMlx": 0.020332353342658753,
+        "pTorch": 0.015906391711814714,
+        "dp": 0.004425961630844039,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.915496826171875e-05,
+        "maxAbsDeltaValues": 2.053380012512207e-05
+      },
+      {
+        "item": "p02",
+        "mapper": "A2b",
+        "pMlx": 0.07585818002124355,
+        "pTorch": 0.0675466911396291,
+        "dp": 0.00831148888161444,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015401840209960938,
+        "maxAbsDeltaValues": 1.8388032913208008e-05
+      },
+      {
+        "item": "p03",
+        "mapper": "A2a",
+        "pMlx": 0.0675466911396291,
+        "pTorch": 0.060086650174007626,
+        "dp": 0.00746004096562148,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.295608520507812e-05,
+        "maxAbsDeltaValues": 1.7821788787841797e-05
+      },
+      {
+        "item": "p03",
+        "mapper": "A2b",
+        "pMlx": 0.20181322226037884,
+        "pTorch": 0.20181322226037884,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001888275146484375,
+        "maxAbsDeltaValues": 2.0742416381835938e-05
+      },
+      {
+        "item": "p04",
+        "mapper": "A2a",
+        "pMlx": 0.05340332979982423,
+        "pTorch": 0.0675466911396291,
+        "dp": 0.014143361339804879,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.009506225585938e-05,
+        "maxAbsDeltaValues": 1.609325408935547e-05
+      },
+      {
+        "item": "p04",
+        "mapper": "A2b",
+        "pMlx": 0.18242552380635635,
+        "pTorch": 0.16451646289656316,
+        "dp": 0.01790906090979319,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015175342559814453,
+        "maxAbsDeltaValues": 1.3589859008789062e-05
+      },
+      {
+        "item": "p05",
+        "mapper": "A2a",
+        "pMlx": 0.01243165085318582,
+        "pTorch": 0.014063627043245475,
+        "dp": 0.0016319761900596558,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.829202175140381e-05,
+        "maxAbsDeltaValues": 1.6763806343078613e-05
+      },
+      {
+        "item": "p05",
+        "mapper": "A2b",
+        "pMlx": 0.08509904500702024,
+        "pTorch": 0.08509904500702024,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015306472778320312,
+        "maxAbsDeltaValues": 1.621246337890625e-05
+      },
+      {
+        "item": "p06",
+        "mapper": "A2a",
+        "pMlx": 0.007121428745735101,
+        "pTorch": 0.008577485413711984,
+        "dp": 0.0014560566679768829,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.617473602294922e-05,
+        "maxAbsDeltaValues": 1.4103949069976807e-05
+      },
+      {
+        "item": "p06",
+        "mapper": "A2b",
+        "pMlx": 0.03732688734412946,
+        "pTorch": 0.03732688734412946,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016260147094726562,
+        "maxAbsDeltaValues": 1.621246337890625e-05
+      },
+      {
+        "item": "p07",
+        "mapper": "A2a",
+        "pMlx": 0.02931223075135632,
+        "pTorch": 0.02931223075135632,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.56978988647461e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p07",
+        "mapper": "A2b",
+        "pMlx": 0.060086650174007626,
+        "pTorch": 0.0675466911396291,
+        "dp": 0.00746004096562148,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.000141143798828125,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p08",
+        "mapper": "A2a",
+        "pMlx": 0.015906391711814714,
+        "pTorch": 0.015906391711814714,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.105618715286255e-05,
+        "maxAbsDeltaValues": 1.4722347259521484e-05
+      },
+      {
+        "item": "p08",
+        "mapper": "A2b",
+        "pMlx": 0.033085978388704126,
+        "pTorch": 0.03732688734412946,
+        "dp": 0.004240908955425331,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016069412231445312,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p09",
+        "mapper": "A2a",
+        "pMlx": 0.02931223075135632,
+        "pTorch": 0.022977369910025615,
+        "dp": 0.006334860841330704,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.176399230957031e-05,
+        "maxAbsDeltaValues": 1.570582389831543e-05
+      },
+      {
+        "item": "p09",
+        "mapper": "A2b",
+        "pMlx": 0.07585818002124355,
+        "pTorch": 0.08509904500702024,
+        "dp": 0.009240864985776698,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016236305236816406,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p10",
+        "mapper": "A2a",
+        "pMlx": 0.09534946489910949,
+        "pTorch": 0.07585818002124355,
+        "dp": 0.019491284877865944,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.973743438720703e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p10",
+        "mapper": "A2b",
+        "pMlx": 0.16451646289656316,
+        "pTorch": 0.16451646289656316,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001544952392578125,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p11",
+        "mapper": "A2a",
+        "pMlx": 0.07585818002124355,
+        "pTorch": 0.07585818002124355,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.05718994140625e-05,
+        "maxAbsDeltaValues": 1.665949821472168e-05
+      },
+      {
+        "item": "p11",
+        "mapper": "A2b",
+        "pMlx": 0.09534946489910949,
+        "pTorch": 0.08509904500702024,
+        "dp": 0.010250419892089246,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016069412231445312,
+        "maxAbsDeltaValues": 1.9222497940063477e-05
+      },
+      {
+        "item": "p12",
+        "mapper": "A2a",
+        "pMlx": 0.01798620996209156,
+        "pTorch": 0.022977369910025615,
+        "dp": 0.004991159947934056,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.444620132446289e-05,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p12",
+        "mapper": "A2b",
+        "pMlx": 0.01798620996209156,
+        "pTorch": 0.020332353342658753,
+        "dp": 0.0023461433805671943,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015544891357421875,
+        "maxAbsDeltaValues": 1.704692840576172e-05
+      },
+      {
+        "item": "p13",
+        "mapper": "A2a",
+        "pMlx": 0.09534946489910949,
+        "pTorch": 0.08509904500702024,
+        "dp": 0.010250419892089246,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.104873657226562e-05,
+        "maxAbsDeltaValues": 1.7881393432617188e-05
+      },
+      {
+        "item": "p13",
+        "mapper": "A2b",
+        "pMlx": 0.2689414213699951,
+        "pTorch": 0.29421497216298875,
+        "dp": 0.02527355079299365,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015854835510253906,
+        "maxAbsDeltaValues": 1.704692840576172e-05
+      },
+      {
+        "item": "p14",
+        "mapper": "A2a",
+        "pMlx": 0.022977369910025615,
+        "pTorch": 0.022977369910025615,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.337331771850586e-05,
+        "maxAbsDeltaValues": 1.52587890625e-05
+      },
+      {
+        "item": "p14",
+        "mapper": "A2b",
+        "pMlx": 0.14804719803168948,
+        "pTorch": 0.13296424019782926,
+        "dp": 0.015082957833860211,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016820430755615234,
+        "maxAbsDeltaValues": 1.52587890625e-05
+      },
+      {
+        "item": "p15",
+        "mapper": "A2a",
+        "pMlx": 0.025957357197796852,
+        "pTorch": 0.025957357197796852,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.961822509765625e-05,
+        "maxAbsDeltaValues": 1.6421079635620117e-05
+      },
+      {
+        "item": "p15",
+        "mapper": "A2b",
+        "pMlx": 0.042087727915618836,
+        "pTorch": 0.033085978388704126,
+        "dp": 0.00900174952691471,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001569688320159912,
+        "maxAbsDeltaValues": 1.9550323486328125e-05
+      },
+      {
+        "item": "p16",
+        "mapper": "A2a",
+        "pMlx": 0.04742587317756678,
+        "pTorch": 0.042087727915618836,
+        "dp": 0.005338145261947945,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.67572021484375e-05,
+        "maxAbsDeltaValues": 1.952052116394043e-05
+      },
+      {
+        "item": "p16",
+        "mapper": "A2b",
+        "pMlx": 0.08509904500702024,
+        "pTorch": 0.08509904500702024,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001747608184814453,
+        "maxAbsDeltaValues": 1.4990568161010742e-05
+      },
+      {
+        "item": "p17",
+        "mapper": "A2a",
+        "pMlx": 0.033085978388704126,
+        "pTorch": 0.033085978388704126,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.200241088867188e-05,
+        "maxAbsDeltaValues": 1.570582389831543e-05
+      },
+      {
+        "item": "p17",
+        "mapper": "A2b",
+        "pMlx": 0.14804719803168948,
+        "pTorch": 0.14804719803168948,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015735626220703125,
+        "maxAbsDeltaValues": 1.8164515495300293e-05
+      },
+      {
+        "item": "p18",
+        "mapper": "A2a",
+        "pMlx": 0.09534946489910949,
+        "pTorch": 0.10669059394565118,
+        "dp": 0.011341129046541693,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.151812314987183e-05,
+        "maxAbsDeltaValues": 1.329183578491211e-05
+      },
+      {
+        "item": "p18",
+        "mapper": "A2b",
+        "pMlx": 0.20181322226037884,
+        "pTorch": 0.20181322226037884,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.0001373291015625,
+        "maxAbsDeltaValues": 1.5497207641601562e-05
+      },
+      {
+        "item": "p19",
+        "mapper": "A2a",
+        "pMlx": 0.16451646289656316,
+        "pTorch": 0.14804719803168948,
+        "dp": 0.016469264864873684,
+        "agree": true,
+        "maxAbsDeltaKeys": 7.462501525878906e-05,
+        "maxAbsDeltaValues": 1.33514404296875e-05
+      },
+      {
+        "item": "p19",
+        "mapper": "A2b",
+        "pMlx": 0.3775406687981454,
+        "pTorch": 0.3775406687981454,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00016867369413375854,
+        "maxAbsDeltaValues": 1.5974044799804688e-05
+      },
+      {
+        "item": "p20",
+        "mapper": "A2a",
+        "pMlx": 0.14804719803168948,
+        "pTorch": 0.13296424019782926,
+        "dp": 0.015082957833860211,
+        "agree": true,
+        "maxAbsDeltaKeys": 6.878376007080078e-05,
+        "maxAbsDeltaValues": 1.6510486602783203e-05
+      },
+      {
+        "item": "p20",
+        "mapper": "A2b",
+        "pMlx": 0.24508501313237172,
+        "pTorch": 0.24508501313237172,
+        "dp": 0.0,
+        "agree": true,
+        "maxAbsDeltaKeys": 0.00015592575073242188,
+        "maxAbsDeltaValues": 1.4066696166992188e-05
+      }
+    ],
+    "wallSeconds": 19.4
+  }
+}

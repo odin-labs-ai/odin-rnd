@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 2,
+  "pairs": {
+    "D1": {
+      "calibration": {
+        "sourcesSha256": "36a9413fdc7af34dfd09214fd0684cfd54fc1fd233e75d09c20a3bbb039c9296",
+        "textSha256": "7b856f5100c972446d129096b0dd51e8c6aa5a9c3b359b8984245bcd6a8986e2",
+        "receiverTokens": 125176,
+        "where": "Mac-only calibration (no GPU account), per pre-stated fallback",
+        "machine": {
+          "model": "Mac17,6",
+          "chip": "Apple M5 Max",
+          "memoryGB": 128,
+          "os": "26.6.1"
+        },
+        "wallSeconds": 145.9
+      },
+      "mapperRecordSha256": "a3f94751214dbd8e34787eb026f2bc951c381f43224fe412e45c3dd149b38605",
+      "mapperWeightsSha256": "73548d54c23c0dc954261adb64e1a2cfe1c0f270418acbefb87f6f07eeedb876",
+      "parityRecordSha256": "29a33e3d1f96a8a4d6fac3a6a87f6b014cd1a9bd05e3f0c6ff2996ab5e71a76a",
+      "parityBinding": {
+        "A2a": {
+          "items": 20,
+          "agree": 20,
+          "maxDp": 8.284784579731808e-06,
+          "pass": true
+        },
+        "A2b": {
+          "items": 20,
+          "agree": 20,
+          "maxDp": 1.3340116775895083e-05,
+          "pass": true
+        }
+      },
+      "parityDefinition": {
+        "frozenBefore": "any counted item is read out with a mapper (bundle 4 pre-registration)",
+        "items": [
+          "p01",
+          "p02",
+          "p03",
+          "p04",
+          "p05",
+          "p06",
+          "p07",
+          "p08",
+          "p09",
+          "p10",
+          "p11",
+          "p12",
+          "p13",
+          "p14",
+          "p15",
+          "p16",
+          "p17",
+          "p18",
+          "p19",
+          "p20"
+        ],
+        "contextsSha256": {
+          "p01": "533d127c043d74a7e84529f44f9b508549e2537d34b9601caac867c791c3d5ee",
+          "p02": "03dfb3f9351d4391b1bf7691530277aad548b326c7129dae8d691cb4382f9350",
+          "p03": "3d13c9c55adf7f3c13a92e5342d8b93159935349da6d9041a96d6a330509eba2",
+          "p04": "a10effa603d36de64750e96109b40d2106cdd6f846d2991a1c7c8e0edcc5f8df",
+          "p05": "fc30179266c2aa409eb261aaa1534309cf74aafc560fd1ef2e6875c71317ccf0",
+          "p06": "ff21fccb257dbd493ab12a2040177f428dfb4ac700c8195aefea85a4d56f1850",
+          "p07": "77b7ee98cc729374c3465fa88986fdcbd51d079f1a4595c0aba89a3ffaaaa282",
+          "p08": "68c802a84583c18b3cd026112b6b5789380e87965461ab06bdfdb1f328f9736b",
+          "p09": "f5d5c0dd352db0f37b9727dbf5a70c68061b1dac51fe5f6ab067c9bc2924122d",
+          "p10": "a46173b171bb9fa103e99a1d6f0a1c5e577375b54b30d7cdda14945e098134b3",
+          "p11": "092771d2752acf0cb0021ee1da3f173f760f3b2f1c51d03878fde5fceceda22d",
+          "p12": "5d8a4f446b424c340f9afe1dd25f7e2838bdf651023f464b64681a380e56ee44",
+          "p13": "c4d9d3dd6ff03f1dbab70f43c76a5a88b201decafb9d76e520b46f354fdbf277",
+          "p14": "ac43c63ba7d318ad169cb3d83de3a38ce4a7b505962d757473608514073fc03f",
+          "p15": "3d90dccadf6684f0fb66e9966e9d8c7abc89753fc17301e21464f174e3064f8e",
+          "p16": "51e16747dfea69e3397a3d26d5e207991957c1463b3ed559571a243e07e22c40",
+          "p17": "5706f614858aca9b57a711028101a65af380f6f3d160311eace7c335c7aba44e",
+          "p18": "c91abfe623390699eaa5ece09eb0bdb7740ddfb970513f17255c117dcc7c6acb",
+          "p19": "cde2ea9e15b97eef81cdc1379855f29d6f1e5a5548598edadc28fae7152288ea",
+          "p20": "98551bb66e7d47a5a76cc0fa1a1d387d46ef81c41db95df93206e39cf9046968"
+        },
+        "contexts": "segments of the pinned held-out public file in calib-sources.json parityHeldOut, minus every calibration and evaluation line; never an EXP 005 / 008-X item",
+        "mapping": "kvmap MLX port on the GPU (split-precision float32 matmul) vs kvmap torch reference, float32 CPU",
+        "readout": "receiver and cache in float32 on MLX's CPU stream (true float32)",
+        "pass": "decision agreement 20/20 AND max |p_mlx - p_torch| <= 1e-3, for each mapper; any mismatch fails the run",
+        "maxDp": 0.001,
+        "rationale": "The gate proves the PORT is correct. A float32 readout removes the receiver's own rounding noise (bf16 activations, reduced-precision GPU float32 matmul), which would otherwise dominate a 1e-3 bar regardless of the port; the run-time bf16 sensitivity is recorded separately as a descriptive property of the arms, never as a gate."
+      },
+      "bf16DecisionStabilitySha256": "3c0d84d5fb4a0c0fbbd7d5444be7f28124dcccce3952b33636670e4396588005",
+      "implementations": {
+        "A2a": "our extension of arXiv 2608.03893 (per-head ridge, RoPE-stripped keys) to a cross-tokenizer pair",
+        "A2b": "our reimplementation of HeteroFold (arXiv 2609.32259) from the paper's description; closed-form fit, output-aware calibration not reproduced; the authors' repository had no released code, so our reimplementation is used (no authors' mappers available at freeze)"
+      }
+    },
+    "D1p": {
+      "calibration": {
+        "sourcesSha256": "2f9998352768492952665bb2a8b4594d6a8365fde03ccb8067ca453d4ef456b3",
+        "textSha256": "7b856f5100c972446d129096b0dd51e8c6aa5a9c3b359b8984245bcd6a8986e2",
+        "receiverTokens": 125176,
+        "where": "Mac-only calibration (no GPU account), per pre-stated fallback",
+        "machine": {
+          "model": "Mac17,6",
+          "chip": "Apple M5 Max",
+          "memoryGB": 128,
+          "os": "26.6.1"
+        },
+        "wallSeconds": 132.9
+      },
+      "mapperRecordSha256": "a5078a3bfaca7e0696054490baf75842849732466ec945e3602cdb8add659853",
+      "mapperWeightsSha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+      "parityRecordSha256": "c761d42bbc95d15071c05308d64ff52665f930fbf7ca8400208281f5a0a31af5",
+      "parityBinding": {
+        "A2a": {
+          "items": 20,
+          "agree": 20,
+          "maxDp": 5.032682453512405e-06,
+          "pass": true
+        },
+        "A2b": {
+          "items": 20,
+          "agree": 20,
+          "maxDp": 8.255717453331535e-06,
+          "pass": true
+        }
+      },
+      "parityDefinition": {
+        "frozenBefore": "any counted item is read out with a mapper (bundle 4 pre-registration)",
+        "items": [
+          "p01",
+          "p02",
+          "p03",
+          "p04",
+          "p05",
+          "p06",
+          "p07",
+          "p08",
+          "p09",
+          "p10",
+          "p11",
+          "p12",
+          "p13",
+          "p14",
+          "p15",
+          "p16",
+          "p17",
+          "p18",
+          "p19",
+          "p20"
+        ],
+        "contextsSha256": {
+          "p01": "533d127c043d74a7e84529f44f9b508549e2537d34b9601caac867c791c3d5ee",
+          "p02": "03dfb3f9351d4391b1bf7691530277aad548b326c7129dae8d691cb4382f9350",
+          "p03": "3d13c9c55adf7f3c13a92e5342d8b93159935349da6d9041a96d6a330509eba2",
+          "p04": "a10effa603d36de64750e96109b40d2106cdd6f846d2991a1c7c8e0edcc5f8df",
+          "p05": "fc30179266c2aa409eb261aaa1534309cf74aafc560fd1ef2e6875c71317ccf0",
+          "p06": "ff21fccb257dbd493ab12a2040177f428dfb4ac700c8195aefea85a4d56f1850",
+          "p07": "77b7ee98cc729374c3465fa88986fdcbd51d079f1a4595c0aba89a3ffaaaa282",
+          "p08": "68c802a84583c18b3cd026112b6b5789380e87965461ab06bdfdb1f328f9736b",
+          "p09": "f5d5c0dd352db0f37b9727dbf5a70c68061b1dac51fe5f6ab067c9bc2924122d",
+          "p10": "a46173b171bb9fa103e99a1d6f0a1c5e577375b54b30d7cdda14945e098134b3",
+          "p11": "092771d2752acf0cb0021ee1da3f173f760f3b2f1c51d03878fde5fceceda22d",
+          "p12": "5d8a4f446b424c340f9afe1dd25f7e2838bdf651023f464b64681a380e56ee44",
+          "p13": "c4d9d3dd6ff03f1dbab70f43c76a5a88b201decafb9d76e520b46f354fdbf277",
+          "p14": "ac43c63ba7d318ad169cb3d83de3a38ce4a7b505962d757473608514073fc03f",
+          "p15": "3d90dccadf6684f0fb66e9966e9d8c7abc89753fc17301e21464f174e3064f8e",
+          "p16": "51e16747dfea69e3397a3d26d5e207991957c1463b3ed559571a243e07e22c40",
+          "p17": "5706f614858aca9b57a711028101a65af380f6f3d160311eace7c335c7aba44e",
+          "p18": "c91abfe623390699eaa5ece09eb0bdb7740ddfb970513f17255c117dcc7c6acb",
+          "p19": "cde2ea9e15b97eef81cdc1379855f29d6f1e5a5548598edadc28fae7152288ea",
+          "p20": "98551bb66e7d47a5a76cc0fa1a1d387d46ef81c41db95df93206e39cf9046968"
+        },
+        "contexts": "segments of the pinned held-out public file in calib-sources.json parityHeldOut, minus every calibration and evaluation line; never an EXP 005 / 008-X item",
+        "mapping": "kvmap MLX port on the GPU (split-precision float32 matmul) vs kvmap torch reference, float32 CPU",
+        "readout": "receiver and cache in float32 on MLX's CPU stream (true float32)",
+        "pass": "decision agreement 20/20 AND max |p_mlx - p_torch| <= 1e-3, for each mapper; any mismatch fails the run",
+        "maxDp": 0.001,
+        "rationale": "The gate proves the PORT is correct. A float32 readout removes the receiver's own rounding noise (bf16 activations, reduced-precision GPU float32 matmul), which would otherwise dominate a 1e-3 bar regardless of the port; the run-time bf16 sensitivity is recorded separately as a descriptive property of the arms, never as a gate."
+      },
+      "bf16DecisionStabilitySha256": "fdd3ef0bd4a476d4a8f423531dd9a26ed1e108a62acb66ea9551c78b2ff8d51b",
+      "implementations": {
+        "A2a": "our extension of arXiv 2608.03893 (per-head ridge, RoPE-stripped keys) to a cross-tokenizer pair",
+        "A2b": "our reimplementation of HeteroFold (arXiv 2609.32259) from the paper's description; closed-form fit, output-aware calibration not reproduced; the authors' repository had no released code, so our reimplementation is used (no authors' mappers available at freeze)"
+      }
+    }
+  },
+  "footprintsSha256": "886cab9ddfed1189bcd05ab3c9b1fb1705d682ded3c512f69f45f7907c8bbe3e",
+  "code": {
+    "kvmap.py": "6725630bc5c7150c47b0cd82bd3436d3d1ce0f0cc78182431e68de25d33ab1c5",
+    "calibrate.py": "501beee874d2403040430b76745c6c19046fb4455adc5caefb51b5ea1ce291b8",
+    "parity.py": "9943fd2afbb5c3d3c061fd2edc4f4a536dcd948fe5219b5f45ec88a54179c3fe",
+    "runner.py": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+    "arms.mjs": "e4ae8d1afde49889b6a5886601ee1c13021cbde0781cdac20c8dd416df6c7642",
+    "score.mjs": "9df5a67ccd0f661e500266b7818cfd621f78e0e62ccd3fb74199f4dbb04b962d",
+    "timing.mjs": "d06edccfc028170bfa48e803c1b569d94530b0bd036408872ffbfd7252ff3e44",
+    "mem-gate.mjs": "e1f7f15b32612523fc172ed86b2df1cd28c1d5bbae497d07f99339bc526aabfc",
+    "calib-sources.json": "2f9998352768492952665bb2a8b4594d6a8365fde03ccb8067ca453d4ef456b3",
+    "readout.json": "8c4c78285bb6c09ec5ce3c560344a20985013fadef57faaf3e7dc5e4cab74f24"
+  },
+  "notes": [
+    "calib-sources.json gained only its parityHeldOut entry between the D1 and D1' calibrations; the calibration text (textSha256) is identical for both pairs.",
+    "Footprint bounds (footprints.json): D1 at the 24 GB design bound (measured 21.9 GB); D1' alone raised to 48 GB on measurement (measured 36.9 GB with A2b on L)."
+  ]
+}

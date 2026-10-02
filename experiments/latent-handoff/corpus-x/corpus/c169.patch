@@ -1,0 +1,12 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..72f0d61 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -1,6 +1,6 @@
+ export interface Settings {
+   port: number;
+-  databaseUrl: string;
++  databaseUrl: string; // handed to createPool in src/infra/db/pool.ts ('pg')
+   logLevel: 'debug' | 'info' | 'warn';
+   smtpHost: string;
+   smtpFrom: string;

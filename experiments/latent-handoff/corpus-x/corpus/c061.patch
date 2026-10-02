@@ -1,0 +1,14 @@
+diff --git a/src/config/settings.ts b/src/domain/settings.ts
+similarity index 100%
+rename from src/config/settings.ts
+rename to src/domain/settings.ts
+diff --git a/src/main.ts b/src/main.ts
+index 275a1be..b5c099c 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,4 +1,4 @@
+-import { loadSettings } from './config/settings';
++import { loadSettings } from './domain/settings';
+ import { createHttpServer, createServices } from './infra';
+ 
+ const settings = loadSettings();

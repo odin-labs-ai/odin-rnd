@@ -1,0 +1,35 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..7a68388 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -3,7 +3,7 @@ import { PgCustomerRepository } from './db/customer-repository';
+ import { PgInvoiceRepository } from './db/invoice-repository';
+ import { PgOrderRepository } from './db/order-repository';
+ import { createPool } from './db/pool';
+-import { SmtpNotifier } from './mail/mailer';
++import { MailNotifier } from './mail/mailer';
+ 
+ export interface Services {
+   orders: OrderRepository;
+@@ -23,7 +23,7 @@ export function createServices(settings: {
+     orders: new PgOrderRepository(pool),
+     customers: new PgCustomerRepository(pool),
+     invoices: new PgInvoiceRepository(pool, settings.invoicePrefix),
+-    notifier: new SmtpNotifier(settings.smtpHost, settings.smtpFrom),
++    notifier: new MailNotifier(settings.smtpHost, settings.smtpFrom),
+   };
+ }
+ 
+diff --git a/src/infra/mail/mailer.ts b/src/infra/mail/mailer.ts
+index 8b44948..a2bcf48 100644
+--- a/src/infra/mail/mailer.ts
++++ b/src/infra/mail/mailer.ts
+@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
+ import type { Notifier } from '../../app/ports';
+ import type { Customer, Invoice } from '../../domain';
+ 
+-export class SmtpNotifier implements Notifier {
++export class MailNotifier implements Notifier {
+   private readonly transport;
+ 
+   constructor(host: string, private readonly from: string) {

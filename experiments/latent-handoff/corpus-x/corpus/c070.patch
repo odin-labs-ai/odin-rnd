@@ -1,0 +1,17 @@
+diff --git a/src/infra/http/routes.ts b/src/infra/http/routes.ts
+index c4e74d9..0092262 100644
+--- a/src/infra/http/routes.ts
++++ b/src/infra/http/routes.ts
+@@ -4,6 +4,12 @@ import type { Services } from '../index';
+ 
+ export function createHttpServer(services: Services): Server {
+   return createServer(async (req, res) => {
++    const lookup = /^\/orders\/([\w-]+)$/.exec(req.url ?? '');
++    if (req.method === 'GET' && lookup) {
++      const found = await services.orders.get(lookup[1]);
++      res.writeHead(found ? 200 : 404, { 'content-type': 'application/json' }).end(JSON.stringify(found ?? null));
++      return;
++    }
+     const match = /^\/orders\/([\w-]+)\/(place|invoice)$/.exec(req.url ?? '');
+     if (req.method !== 'POST' || !match) {
+       res.writeHead(404).end();

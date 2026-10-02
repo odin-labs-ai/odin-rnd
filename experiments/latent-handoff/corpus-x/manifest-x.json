@@ -1,0 +1,1127 @@
+{
+  "schemaVersion": 1,
+  "note": "EXP 008-X author intent only; NOT a gate input. Ground truth is labels-x.json (bce).",
+  "seed": 8008,
+  "items": [
+    {
+      "id": "c061",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-domain"
+      ]
+    },
+    {
+      "id": "c062",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c063",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c064",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c065",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c066",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c067",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c068",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c069",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c070",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c071",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c072",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c073",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c074",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c075",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c076",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-domain"
+      ]
+    },
+    {
+      "id": "c077",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c078",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-app"
+      ]
+    },
+    {
+      "id": "c079",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c080",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c081",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c082",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c083",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c084",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c085",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-infra"
+      ]
+    },
+    {
+      "id": "c086",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c087",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c088",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c089",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c090",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c091",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-domain"
+      ]
+    },
+    {
+      "id": "c092",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c093",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c094",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c095",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-domain"
+      ]
+    },
+    {
+      "id": "c096",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c097",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c098",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c099",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c100",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c101",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c102",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c103",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c104",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-domain"
+      ]
+    },
+    {
+      "id": "c105",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c106",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c107",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c108",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c109",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c110",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c111",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-infra"
+      ]
+    },
+    {
+      "id": "c112",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c113",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c114",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-infra"
+      ]
+    },
+    {
+      "id": "c115",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c116",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c117",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c118",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-app"
+      ]
+    },
+    {
+      "id": "c119",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c120",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c121",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c122",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c123",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c124",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c125",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c126",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c127",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c128",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c129",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c130",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c131",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c132",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c133",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c134",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c135",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c136",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c137",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c138",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c139",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c140",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c141",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c142",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c143",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c144",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c145",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-infra"
+      ]
+    },
+    {
+      "id": "c146",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c147",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-app"
+      ]
+    },
+    {
+      "id": "c148",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c149",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c150",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c151",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c152",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c153",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c154",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c155",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c156",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c157",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c158",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c159",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c160",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c161",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c162",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c163",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c164",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c165",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c166",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c167",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c168",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c169",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c170",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c171",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "core-no-pg"
+      ]
+    },
+    {
+      "id": "c172",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-infra"
+      ]
+    },
+    {
+      "id": "c173",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c174",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c175",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c176",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c177",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c178",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-app"
+      ]
+    },
+    {
+      "id": "c179",
+      "family": "infra-leak",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c180",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c181",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c182",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c183",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c184",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c185",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c186",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c187",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "app-no-infra-internals"
+      ]
+    },
+    {
+      "id": "c188",
+      "family": "feature-add",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c189",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c190",
+      "family": "comment-or-doc-mention",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c191",
+      "family": "reexport-from-governed-file",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-config"
+      ]
+    },
+    {
+      "id": "c192",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "env-not-in-app"
+      ]
+    },
+    {
+      "id": "c193",
+      "family": "test-only-change",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c194",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c195",
+      "family": "allowed-import-near-forbidden",
+      "intent": "clean",
+      "nearMiss": true,
+      "targets": []
+    },
+    {
+      "id": "c196",
+      "family": "dynamic-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-infra"
+      ]
+    },
+    {
+      "id": "c197",
+      "family": "reverse-layer-import",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "domain-no-app"
+      ]
+    },
+    {
+      "id": "c198",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    },
+    {
+      "id": "c199",
+      "family": "forbidden-config-key",
+      "intent": "drift",
+      "nearMiss": false,
+      "targets": [
+        "config-env-allowlist"
+      ]
+    },
+    {
+      "id": "c200",
+      "family": "refactor-rename",
+      "intent": "clean",
+      "nearMiss": false,
+      "targets": []
+    }
+  ]
+}

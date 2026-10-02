@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "pair": "D1p",
+  "sender": "Qwen/Qwen3-4B",
+  "receiver": "unsloth/Llama-3.1-8B-Instruct",
+  "labels": {
+    "A2a": "our extension of arXiv 2608.03893 (per-head ridge, RoPE-stripped keys) to a cross-tokenizer pair",
+    "A2b": "our reimplementation of HeteroFold (arXiv 2609.32259) from the paper's description; closed-form fit, output-aware calibration not reproduced"
+  },
+  "calibration": {
+    "where": "Mac-only calibration (no GPU account), per pre-stated fallback",
+    "machine": {
+      "model": "Mac17,6",
+      "chip": "Apple M5 Max",
+      "memoryGB": 128,
+      "os": "26.6.1"
+    },
+    "sourcesSha256": "2f9998352768492952665bb2a8b4594d6a8365fde03ccb8067ca453d4ef456b3",
+    "textSha256": "7b856f5100c972446d129096b0dd51e8c6aa5a9c3b359b8984245bcd6a8986e2",
+    "linesDroppedAsEvalOverlap": 36,
+    "segments": 76,
+    "segmentChars": 6000,
+    "receiverTokens": 125176,
+    "wallSeconds": 132.9
+  },
+  "fit": {
+    "alpha": 0.001,
+    "lambda": "alpha * trace(Cxx) / d",
+    "window": [
+      -4,
+      0,
+      4
+    ],
+    "precision": "statistics MLX float32 (mean-shifted), fit torch float64, weights float32"
+  },
+  "weights": {
+    "file": "mappers-D1p.safetensors",
+    "sha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+    "tensors": 256
+  },
+  "toolchain": {
+    "mlx": "0.31.2",
+    "torch": "2.11.0"
+  }
+}

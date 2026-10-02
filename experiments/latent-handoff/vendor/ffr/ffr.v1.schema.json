@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://odin-labs.ai/schemas/ffr.v1.schema.json",
+  "title": "ffr.v1 — factory flight-recorder event",
+  "description": "One factory event: agent_step, handoff, verdict, cost or outcome. FROZEN: the sha256 of this file is the identifier ffr.v1@<sha12>, asserted by `node .claude/scripts/ffr/validate.mjs --self-test`. Any later edit is a new ffr.v1.x with an entry in .claude/schemas/ffr.CHANGELOG.md, additive only. Null rule: every usage measurement is a number or null, a null carries quality.nullReasons[<field>], and zero never means unknown. The rules JSON Schema cannot express (null-reason pairing, costUsd 0 only when measured, costProvenance unknown exactly when costUsd is null, modelFamily equal to the committed lookup in .claude/config/ffr-model-family.json) are enforced by the validator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "ts", "source", "sourceRowHash", "runId", "stepId", "parentStepId", "tier", "kind", "actor", "quality"],
+  "properties": {
+    "schemaVersion": { "const": "ffr.v1" },
+    "eventId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "ts": { "type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "source": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,63}$" },
+    "sourceRowHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "runId": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "stepId": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "parentStepId": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "tier": { "type": ["string", "null"], "pattern": "^T[0-6](\\.5)?$" },
+    "kind": { "enum": ["agent_step", "handoff", "verdict", "cost", "outcome"] },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "modelFamily"],
+      "properties": {
+        "model": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "modelFamily": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,31}$" }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prefillTok", "prefillMs", "ttftMs", "peakMemGB", "costUsd", "costProvenance"],
+      "properties": {
+        "prefillTok": { "type": ["integer", "null"], "minimum": 0 },
+        "prefillMs": { "type": ["number", "null"], "minimum": 0 },
+        "ttftMs": { "type": ["number", "null"], "minimum": 0 },
+        "peakMemGB": { "type": ["number", "null"], "minimum": 0 },
+        "costUsd": { "type": ["number", "null"], "minimum": 0 },
+        "costProvenance": { "enum": ["measured", "estimated", "upper-bound", "unknown"] }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nullReasons"],
+      "properties": {
+        "nullReasons": {
+          "type": "object",
+          "propertyNames": { "enum": ["prefillTok", "prefillMs", "ttftMs", "peakMemGB", "costUsd"] },
+          "additionalProperties": { "type": "string", "minLength": 3, "maxLength": 64 }
+        },
+        "tags": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$" }, "uniqueItems": true }
+      }
+    },
+    "agentStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskType"],
+      "properties": {
+        "taskType": { "type": ["string", "null"], "minLength": 1, "maxLength": 64 },
+        "durationMs": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "fromModel", "toModel"],
+      "properties": {
+        "channel": { "enum": ["text", "kv-native", "kv-transferred", "summary"] },
+        "fromModel": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "toModel": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "pr", "headSha", "verdict"],
+      "properties": {
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "pr": { "type": "integer", "minimum": 1 },
+        "headSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "verdict": { "enum": ["SHIP", "HOLD", "REFUSE", "FIX-NEEDED", "REJECT"] }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "pr", "headSha", "state", "mergedAt", "headIsMergedHead"],
+      "properties": {
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "pr": { "type": "integer", "minimum": 1 },
+        "headSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "state": { "enum": ["MERGED", "CLOSED", "OPEN"] },
+        "mergedAt": { "type": ["string", "null"], "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$" },
+        "headIsMergedHead": { "type": ["boolean", "null"] }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "agent_step" } } }, "then": { "required": ["agentStep", "usage"] } },
+    { "if": { "properties": { "kind": { "const": "handoff" } } }, "then": { "required": ["handoff", "usage"] } },
+    { "if": { "properties": { "kind": { "const": "verdict" } } }, "then": { "required": ["verdict"] } },
+    { "if": { "properties": { "kind": { "const": "cost" } } }, "then": { "required": ["usage"] } },
+    { "if": { "properties": { "kind": { "const": "outcome" } } }, "then": { "required": ["outcome"] } },
+    { "if": { "required": ["agentStep"] }, "then": { "properties": { "kind": { "const": "agent_step" } } } },
+    { "if": { "required": ["handoff"] }, "then": { "properties": { "kind": { "const": "handoff" } } } },
+    { "if": { "required": ["verdict"] }, "then": { "properties": { "kind": { "const": "verdict" } } } },
+    { "if": { "required": ["outcome"] }, "then": { "properties": { "kind": { "const": "outcome" } } } },
+    { "if": { "properties": { "outcome": { "properties": { "state": { "const": "MERGED" } } } }, "required": ["outcome"] }, "then": { "properties": { "outcome": { "properties": { "mergedAt": { "type": "string" } } } } } }
+  ]
+}

@@ -1,0 +1,14 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..f3bd5b5 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -16,3 +16,9 @@ export function add(a: Money, b: Money): Money {
+ export function multiply(a: Money, factor: number): Money {
+   return money(Math.round(a.cents * factor), a.currency);
+ }
++
++export async function parseNumericColumn(raw: string): Promise<Money> {
++  const { types } = await import("pg");
++  const parse = types.getTypeParser(types.builtins.NUMERIC);
++  return money(Math.round(Number(parse(raw)) * 100));
++}

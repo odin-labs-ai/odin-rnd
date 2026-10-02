@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "kind": "horizon",
+  "slug": "factory-intelligence",
+  "title": "Factory intelligence and telemetry",
+  "authoredOn": "2026-10-01",
+  "summary": "Where the software factory's own records could take it: a ladder from instrumentation today to a factory whose routing, scoping and reviewing are learned from its own priced and graded outcomes. Each rung has a milestone and a kill criterion, stated before the work, and the page shows the measured numbers that decide where we stand on the first rung.",
+  "dot": {
+    "rung": "H3",
+    "when": "2029–30",
+    "statement": "A factory that learns from its own outcomes. Routing, scoping, reviewing and the choice of context form are decided by models trained on the factory's joined, priced and graded traces. Cache handoff between models (EXP 008) is one possible organ of that system, not the whole of it."
+  },
+  "invariant": "A goal for every later rung, not yet built: every handoff that is not plain text also emits a human-readable receipt, a digest and a hash of what was handed over.",
+  "thresholdsSet": {
+    "statement": "Every rung's dates, thresholds and kill criteria were set in Odin Labs' private planning record, committed before either H0 measurement was taken; this page restates them in neutral words. Since then two rungs lost an item each, and nothing was added or moved.",
+    "repository": "Odin Labs' private monorepo",
+    "commit": "7373f95f0f",
+    "committedAt": "2026-10-01T13:17:16Z"
+  },
+  "rungs": [
+    {
+      "id": "H0",
+      "when": "Oct–Nov 2026",
+      "theme": "Instrument the factory and run one clean experiment.",
+      "milestones": [
+        {
+          "id": "schema",
+          "statement": "A flight-recorder event schema is frozen, so every agent step, handoff, verdict, cost and outcome can be written in one shape.",
+          "fact": "ffr-schema"
+        },
+        {
+          "id": "join",
+          "statement": "At least 80% of the last 30 days of review verdicts join to the outcome of their pull request.",
+          "measure": "outcome-join-coverage"
+        },
+        {
+          "id": "cost",
+          "statement": "At least 50% of routing rows carry a recorded cost rather than an unknown one.",
+          "measure": "routing-cost-share"
+        },
+        {
+          "id": "exp008",
+          "statement": "EXP 008 is pre-registered, run, independently reviewed and published on public baselines, whatever its result.",
+          "fact": "exp008"
+        },
+        {
+          "id": "prize",
+          "statement": "A prize-size report: how large first-turn contexts are, multiplied by the measured local prefill curve. It says how much a cache handoff could save before anyone builds one.",
+          "fact": "prize-size"
+        },
+        {
+          "id": "dataset",
+          "statement": "Open telemetry dataset v0: flight-recorder rows from already-public sources only, de-identified, with the tenant floor applied and failing closed. Rows derived from private telemetry wait for H2.",
+          "fact": "dataset-v0"
+        }
+      ],
+      "kill": [
+        {
+          "statement": "Outcome-join coverage below 50%: stop the learning work and fix the instrumentation first.",
+          "measure": "outcome-join-coverage"
+        },
+        {
+          "statement": "The locked model pair misses the text re-prefill accuracy floor (A0 ≥ 0.75 on the long contexts): publish that small receivers cannot do this gate, and add no further transfer arm."
+        },
+        {
+          "statement": "Neither candidate pair can be run on the hardware: report EXP 008 as uninformative (a hardware failure, not a finding about the receivers), and add no further transfer arm."
+        }
+      ]
+    },
+    {
+      "id": "H1",
+      "when": "Q4 2026–Q1 2027",
+      "theme": "First predictions from the records.",
+      "milestones": [
+        {
+          "id": "lands",
+          "statement": "A time-split \"will it land?\" baseline reaches AUROC ≥ 0.70 on pull requests it never saw.",
+          "notYetMature": {
+            "evaluableFrom": "2026-10-27",
+            "reason": "Outcomes use the plan's 14-day horizon, and a record counts only once it is 28 days old. The first 30-day time-split window closes on this date."
+          }
+        },
+        {
+          "id": "brier",
+          "statement": "Calibration (Brier) curves are published for at least three review lanes.",
+          "notYetMature": {
+            "evaluableFrom": "2026-10-08",
+            "reason": "Outcomes use the plan's 14-day horizon, and a record counts only once it is 28 days old. The first records mature on this date; at least 30 per lane in at least three lanes is expected around late October 2026."
+          }
+        },
+        {
+          "id": "hybrid",
+          "statement": "A feasibility note on handing state between hybrid models, whose layers mix attention with recurrent or feed-forward-only blocks."
+        }
+      ],
+      "kill": [
+        {
+          "statement": "AUROC below 0.62 on two monthly windows: drop the outcome model.",
+          "notYetMature": {
+            "evaluableFrom": "2026-11-26",
+            "reason": "Outcomes use the plan's 14-day horizon, and a record counts only once it is 28 days old. The kill needs two monthly windows; the second closes around this date."
+          }
+        }
+      ]
+    },
+    {
+      "id": "H2",
+      "when": "2027",
+      "theme": "Learned decisions, tested against the rules they would replace.",
+      "milestones": [
+        {
+          "id": "router",
+          "statement": "A learned router, A/B-tested on internal lanes that serve no paying customer, shows at least 20% lower cost per landed outcome than the current routing rubric."
+        },
+        {
+          "id": "specialist",
+          "statement": "The first specialist model post-trained on factory traces ships."
+        },
+        {
+          "id": "dataset",
+          "statement": "Public dataset v1."
+        },
+        {
+          "id": "bus",
+          "statement": "A cache-handoff bus on one local lane, only if a handoff shows at least 2× end to end and a KV-compatible model pair is actually deployed."
+        }
+      ],
+      "kill": [
+        {
+          "statement": "The router beats the rubric by less than 10%: keep the rubric."
+        },
+        {
+          "statement": "Cache handoff below 1.3× end to end: park the bus."
+        }
+      ]
+    },
+    {
+      "id": "H3",
+      "when": "2029–30",
+      "theme": "The dot.",
+      "milestones": [
+        {
+          "id": "monthly",
+          "statement": "Cost per landed outcome and the calibration of P(lands) are published every month from committed records."
+        }
+      ],
+      "kill": [
+        {
+          "statement": "If specialists and the bus never beat text handoff with frontier models, narrow the goal to telemetry-driven routing."
+        }
+      ]
+    }
+  ],
+  "measurements": [
+    {
+      "id": "outcome-join-coverage",
+      "role": "milestone",
+      "label": "Review verdicts joined to their pull request's outcome",
+      "numerator": 1194,
+      "denominator": 1304,
+      "value": 0.9156,
+      "milestone": {
+        "op": ">=",
+        "value": 0.8
+      },
+      "kill": {
+        "op": "<",
+        "value": 0.5
+      },
+      "window": {
+        "start": "2026-09-01T19:16:29.310Z",
+        "end": "2026-10-01T19:16:29.310Z",
+        "days": 30
+      },
+      "definition": "Verdict rows in the window whose (repository, pull request, head commit) matches a pull request outcome. The 110 unjoined rows name a head commit that is not on their pull request.",
+      "source": {
+        "repository": "Odin Labs' private monorepo",
+        "record": ".ai/research/ffr/outcome-join-summary-2026-10-01.json",
+        "recordSha256": "156763ab6e2688e431cd502bf4e6368d342850f37842a9c71f5d3a62ecfbbe3d",
+        "command": "node .claude/scripts/ffr/outcome-join.mjs --rows <backfill rows> --days 30",
+        "commit": "5783a83f2d",
+        "toolFailures": 0
+      }
+    },
+    {
+      "id": "routing-cost-share",
+      "role": "milestone",
+      "label": "Routing rows that carry a recorded cost",
+      "numerator": 3,
+      "denominator": 341,
+      "value": 0.0088,
+      "milestone": {
+        "op": ">=",
+        "value": 0.5
+      },
+      "window": {
+        "start": "2026-09-01T19:16:08.143Z",
+        "end": "2026-10-01T19:16:08.143Z",
+        "days": 30
+      },
+      "definition": "Routing rows with a usage block in the window; share = rows with a recorded cost / rows. An unknown cost is recorded as unknown, never as zero. This is the milestone as the plan set it.",
+      "source": {
+        "repository": "Odin Labs' private monorepo",
+        "record": ".ai/research/ffr/backfill-summary-2026-10-01.json",
+        "recordSha256": "f6f4cc4e2fe48d76598201226bd9719b85cff788352a8d6001ace671b1f18172",
+        "command": "node .claude/scripts/ffr/backfill.mjs",
+        "commit": "5783a83f2d"
+      }
+    },
+    {
+      "id": "dispatch-cost-share",
+      "role": "context",
+      "label": "Context, not the milestone value: all five dispatch and spend sources, mostly bench rows",
+      "numerator": 358,
+      "denominator": 753,
+      "value": 0.4754,
+      "window": {
+        "start": "2026-09-01T19:16:08.143Z",
+        "end": "2026-10-01T19:16:08.143Z",
+        "days": 30
+      },
+      "definition": "Rows with a usage block in the window, from the routing, bench, factory-audit, cost-ledger and mission-spend sources; share = rows with a recorded cost / rows. Bench rows carry 315 of the 358 recorded costs. Shown only as context: the milestone is defined on routing rows.",
+      "breakdown": [
+        {
+          "source": "routing",
+          "numerator": 3,
+          "denominator": 341
+        },
+        {
+          "source": "bench",
+          "numerator": 315,
+          "denominator": 332
+        },
+        {
+          "source": "factory-audit",
+          "numerator": 0,
+          "denominator": 19
+        },
+        {
+          "source": "cost-ledger",
+          "numerator": 39,
+          "denominator": 60
+        },
+        {
+          "source": "mission-spend",
+          "numerator": 1,
+          "denominator": 1
+        }
+      ],
+      "source": {
+        "repository": "Odin Labs' private monorepo",
+        "record": ".ai/research/ffr/backfill-summary-2026-10-01.json",
+        "recordSha256": "f6f4cc4e2fe48d76598201226bd9719b85cff788352a8d6001ace671b1f18172",
+        "command": "node .claude/scripts/ffr/backfill.mjs",
+        "commit": "5783a83f2d"
+      }
+    }
+  ],
+  "prizeSize": {
+    "statement": "How much a cache handoff could save today, measured before anyone builds one. Today the factory has no open-weight to open-weight handoff, so latent handoff is a lab result the factory could adopt, not a current saving.",
+    "window": {
+      "start": "2026-09-01T23:33:06Z",
+      "end": "2026-10-01T23:33:06Z",
+      "days": 30
+    },
+    "figures": [
+      {
+        "id": "open-to-open",
+        "label": "Subagent handoffs from an open-weight model to an open-weight model",
+        "numerator": 0,
+        "denominator": 2077,
+        "note": "Every subagent receiver is a closed-weight model, so the zero is structural: there is nothing for a cache transfer to apply to today."
+      },
+      {
+        "id": "first-turn-p50",
+        "label": "First-turn context, median",
+        "value": 270485,
+        "unit": "tokens",
+        "n": 2077,
+        "note": "p90 is 284,166 tokens; the distribution is bimodal (p25 is 78,897)."
+      },
+      {
+        "id": "above-window",
+        "label": "First turns larger than the D1 receiver's whole context window (131,072 tokens)",
+        "numerator": 1375,
+        "denominator": 2077,
+        "note": "A small open receiver could not hold most real first turns at all."
+      },
+      {
+        "id": "prefill-16k",
+        "label": "D1 receiver prefill of 16,384 tokens on the Mac, median",
+        "value": 7673.4,
+        "unit": "ms",
+        "n": 5,
+        "note": "5 timed repetitions after a warm-up, on a shared machine (1-minute load average 57.86 right after the curve): an order of magnitude, not a benchmark."
+      },
+      {
+        "id": "fresh-share",
+        "label": "First-turn tokens freshly prefilled rather than served from the provider's prompt cache",
+        "numerator": 387251810,
+        "denominator": 434609344,
+        "note": "An upper bound on what a handoff could remove, not the saving: it includes each receiver's own fixed system prompt and tool definitions, which a handoff would not replace."
+      }
+    ],
+    "source": {
+      "repository": "Odin Labs' private monorepo",
+      "record": ".ai/research/latent-handoff/prize-size-2026-10-02.md",
+      "recordSha256": "8075c8f3a1d53bc51031e6f78c92d3b074637644a98f52b2e67043fae1778f0d",
+      "data": ".ai/research/latent-handoff/prize-size-2026-10-02.json",
+      "dataSha256": "ea7fce0a552ffa7b13749c90e8bd0d134688cbb9817b44e315e5924ab3d99d15",
+      "curve": ".ai/research/latent-handoff/prefill-curve-d1-2026-10-02.json",
+      "curveSha256": "cb3d0e68706fdddf774eeccb08d2290bb0a14ccd4b9f47b13f911baa74e88e96",
+      "command": "node .ai/research/latent-handoff/prize_size.mjs --days 30 (with the measured D1 prefill curve)",
+      "commit": "cfd8c1ece3"
+    }
+  },
+  "facts": [
+    {
+      "id": "ffr-schema",
+      "state": "met",
+      "statement": "The flight-recorder schema ffr.v1 is frozen at ffr.v1@ad3aec7c87bc, with a validator. EXP 008 vendors it byte for byte (experiments/latent-handoff/vendor/ffr/ffr.v1.schema.json in this site's source has the same sha256) and emits it.",
+      "source": {
+        "repository": "Odin Labs' private monorepo",
+        "record": ".claude/schemas/ffr.v1.schema.json",
+        "recordSha256": "ad3aec7c87bc43fef79d2e9fd8ae91b8df2898a5bb177e8064f4f7b72b48a8fe",
+        "commit": "bed074f1b8"
+      }
+    },
+    {
+      "id": "prize-size",
+      "state": "met-on-publication",
+      "statement": "The prize-size report combines the first-turn context distribution with the measured local prefill curve; it is committed in a private repository (commit cfd8c1ece3), and this milestone is met when this page publishes its headline figures (below, under \"How big the prize is today\": the distribution and one point of the curve).",
+      "source": {
+        "repository": "Odin Labs' private monorepo",
+        "record": ".ai/research/latent-handoff/prize-size-2026-10-02.md",
+        "recordSha256": "8075c8f3a1d53bc51031e6f78c92d3b074637644a98f52b2e67043fae1778f0d",
+        "commit": "cfd8c1ece3"
+      }
+    },
+    {
+      "id": "exp008",
+      "state": "in-progress",
+      "statement": "EXP 008's pre-registration is frozen and shown on this site; the counted run has not started.",
+      "source": {
+        "repository": "odin-rnd (this site's source)",
+        "record": "experiments/latent-handoff/preregistration.json"
+      }
+    },
+    {
+      "id": "dataset-v0",
+      "state": "met-on-publication",
+      "statement": "latent-handoff-telemetry v0: 482 ffr.v1 rows built only from odin-rnd's own published experiment records, with a datasheet; met when this page publishes it.",
+      "source": {
+        "repository": "odin-rnd (this site's source)",
+        "record": "experiments/latent-handoff/datasets/ffr-handoffs-v0/dataset-v0.jsonl",
+        "recordSha256": "8b39a717200b6722f6e0f3674e662495610cad6e8bdc5de9fb84b83d4e972fba"
+      }
+    }
+  ],
+  "limits": [
+    "The H0 measurements and the prize-size figures come from a private repository and cannot be re-run from this site; each source line names the committed record and its sha256, so a later public release can be checked against them. Dataset v0 is the exception: it is built only from this site's own published experiment records and is published here.",
+    "Only aggregates of private telemetry are published. No private row, tenant, customer, prompt or log is published; rows derived from private telemetry wait for H2.",
+    "The thresholds were set before the measurements (see above), on the same day. The cost milestone is judged on routing rows, as set; the five-source share is shown only as context and is never the milestone value. A change to any of them is published here as a dated revision, never as a silent edit.",
+    "No KV-compatible sender-receiver model pair is deployed on the factory floor today; the local decoders are hybrids. Any cache-handoff rung waits on that."
+  ]
+}

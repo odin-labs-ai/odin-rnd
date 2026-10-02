@@ -1,0 +1,13 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..986553b 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -16,7 +16,7 @@ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),
+     databaseUrl: required('DATABASE_URL', process.env.DATABASE_URL),
+-    logLevel: (process.env.LOG_LEVEL ?? 'info') as Settings['logLevel'],
++    logLevel: (process.env['LOG_LEVEL'] ?? 'info') as Settings['logLevel'],
+     smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),
+     smtpFrom: process.env.SMTP_FROM ?? 'no-reply',
+     invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',

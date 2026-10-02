@@ -1,0 +1,17 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..4aebc5e 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -7,3 +7,12 @@ export async function registerCustomerUseCase(
+ ): Promise<void> {
+   await customers.save(createCustomer(input.id, input.name, input.email));
+ }
++
++export async function emailInUse(connectionString: string, email: string): Promise<boolean> {
++  const driver = await import('pg');
++  const db = new driver.default.Client({ connectionString });
++  await db.connect();
++  const found = await db.query("select id from customers where lower(body->>'email') = lower($1)", [email]);
++  await db.end();
++  return (found.rowCount ?? 0) > 0;
++}

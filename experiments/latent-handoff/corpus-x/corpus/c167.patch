@@ -1,0 +1,13 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..4cf572d 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -11,3 +11,8 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export function isOverdue(invoice: Invoice, issuedOn: Date, today: Date): boolean {
++  const due = new Date(issuedOn.getTime() + invoice.dueDays * 86_400_000);
++  return today.getTime() > due.getTime();
++}

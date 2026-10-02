@@ -1,0 +1,15 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..491b254 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -18,6 +18,10 @@ export function orderTotal(order: Order): Money {
+   return order.lines.reduce((sum, line) => add(sum, multiply(line.unitPrice, line.quantity)), money(0));
+ }
+ 
++/**
++ * Places an open order. The line cap that used to come from process.env.ORDER_LINE_CAP is gone;
++ * an order is limited only by the customer credit check in the use case.
++ */
+ export function placeOrder(order: Order): Order {
+   if (order.lines.length === 0) throw new DomainError('order.empty', 'an order needs at least one line');
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');

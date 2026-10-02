@@ -1,0 +1,13 @@
+diff --git a/src/main.ts b/src/main.ts
+index 275a1be..5f48a27 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,7 +1,7 @@
+ import { loadSettings } from './config/settings';
+ import { createHttpServer, createServices } from './infra';
+ 
+-const settings = loadSettings();
++const settings = loadSettings(); // the only place process.env is read is src/config
+ const services = createServices(settings);
+ createHttpServer(services).listen(settings.port, () => {
+   console.log(`ledger-service listening on ${settings.port}`);

@@ -1,0 +1,13 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..d3bafbd 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -9,7 +9,7 @@ export async function issueInvoiceUseCase(
+   if (!order || order.status !== 'placed') throw new DomainError('invoice.order', 'order is not placed');
+   const customer = await deps.customers.get(order.customerId);
+   if (!customer) throw new DomainError('customer.missing', 'customer not found');
+-  const invoice = invoiceFor(order, await deps.invoices.nextNumber());
++  const invoice = invoiceFor(order, await deps.invoices.nextNumber()); // the number is drawn in ../infra/db/invoice-repository
+   await deps.invoices.save(invoice);
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;

@@ -1,0 +1,12 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..b153e03 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -15,3 +15,7 @@ export async function placeOrderUseCase(
+   }
+   await orders.save(placeOrder(order));
+ }
++
++export async function repositoryModule(table: 'order' | 'customer' | 'invoice'): Promise<Record<string, unknown>> {
++  return import(`../infra/db/${table}-repository`);
++}

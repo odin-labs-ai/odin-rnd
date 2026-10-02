@@ -1,0 +1,18 @@
+diff --git a/src/domain/pricing/lifetime.ts b/src/domain/pricing/lifetime.ts
+new file mode 100644
+index 0000000..4338835
+--- /dev/null
++++ b/src/domain/pricing/lifetime.ts
+@@ -0,0 +1,12 @@
++import type { OrderRepository } from '../../app/ports';
++import { add, money, type Money } from '../money';
++import { orderTotal } from '../order';
++
++export async function lifetimeSpend(orders: OrderRepository, orderIds: readonly string[]): Promise<Money> {
++  let spent = money(0);
++  for (const orderId of orderIds) {
++    const found = await orders.get(orderId);
++    if (found?.status === 'placed') spent = add(spent, orderTotal(found));
++  }
++  return spent;
++}
