@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkRecord, publishedPath as preregPublishedPath, sha256, localPath, TO_FREEZE } from './latent-handoff-prereg.mjs';
+import { amendmentPublishedPath, checkAmendment } from './latent-handoff-amendment.mjs';
 
 export const horizonPath = 'experiments/latent-handoff/horizon.json';
 export const horizonPinPath = 'experiments/latent-handoff/horizon.sha256';
@@ -31,6 +32,13 @@ export const noteSlug = 'latent-handoff-pre-registration';
 export const notePath = `site/journal/${noteSlug}.html`;
 export const horizonPagePath = 'site/horizon/factory-intelligence.html';
 export const noteNumber = '005';
+// Every file that still carries the shorter A2b label. Each is hash-bound, so it stays as it is; the record's full label
+// supersedes it. A test re-derives this list by scanning experiments/latent-handoff/.
+export const SHORT_A2B_FILES = ['arms.mjs', 'calibrate.py', 'kvmap.py', 'mapper-freeze.json', 'mappers-D1.json', 'mappers-D1p.json', 'evidence/mappers-D1-attempt1-gpu-reduced-precision.json'];
+// The dataset's null-cost reason code and EXP 008's say the same thing in two words; the page says so once.
+export const UNPRICED_NOTE = 'Two reason codes mean the same thing: the dataset\'s local-no-price and EXP 008\'s local-unpriced both mark local compute that has no price, its cost recorded as unknown, never as zero.';
+/** A source in the public site repository is named by path; one in the private monorepo by sha256 and commit only. */
+export const isPublicSource = repository => repository.startsWith('odin-rnd');
 const SITE = 'https://odin-labs-ai.github.io/odin-rnd/';
 
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -127,13 +135,20 @@ export function checkHorizon(root = '.') {
 
 // ---- pages ----
 
+/** What D1's A0 answered in the lock run, counted from pair-lock.json's items. */
+export function lockAnswers(lock) {
+  const accept = lock.items.filter(i => i.decision === 'ACCEPT').length, n = lock.items.length;
+  return accept === n ? `In the lock run, D1's A0 answered ACCEPT on all ${n} practice items, so its ${lock.result.correct} right answers are the ${lock.result.correct} GREEN items.` : `In the lock run, D1's A0 answered ACCEPT on ${accept} of ${n} practice items.`;
+}
+
 /** The EXP 008 pre-registration note: the record in prose. Nothing on it is a result. */
-export function renderNote(record, recordSha256, lock = null) {
+export function renderNote(record, recordSha256, lock = null, amendment = null) {
   assert.match(recordSha256, hex, 'The note needs the sha256 of the record it renders');
   if (record.pairLockResult) {
     assert.ok(lock, 'a record with a pair-lock result needs pair-lock.json, which discloses the edits made after its run started');
     assert.equal(lock.record.sha256, recordSha256, 'pair-lock.json describes a different record');
     assert.equal(lock.decision, record.pairLockResult.decision, 'pair-lock.json and the record disagree on the locked pair');
+    assert.ok(lock.notes.some(x => x.includes('analysed n 180 to 175, fallback 40 to 39')), 'the lock notes state the 180 to 175 shrink the edit summary repeats');
   }
   const { experiment: e, corpus: c, strata: s, pins: p, pairs, readout: r, primary: { P1 }, mappers: m, spend } = record;
   const draft = record.freeze.status !== 'frozen';
@@ -141,7 +156,8 @@ export function renderNote(record, recordSha256, lock = null) {
   const pairRow = x => `<tr><td>${escape(x.id === 'D1p' ? 'D1′' : x.id)}</td><td>${model(x.sender)}</td><td>${model(x.receiver)}</td><td>${escape(x.use)}</td></tr>`;
   const value = v => v === TO_FREEZE ? '<strong>to be frozen</strong>' : code(v);
   const title = `${e.id}: ${e.title}, the pre-registration`;
-  return `${header(title, `Field notes from Odin R&D. ${draft ? 'A draft of the pre-registration' : 'The pre-registration'} of ${e.id}, shown before the counted run: ${e.summary}`, `journal/${noteSlug}.html`)}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1>${escape(title)}</h1><p class="article-meta">EXPERIMENT NOTE / ${noteNumber} · ${escape(e.id)} · ${draft ? 'DRAFT' : 'PRE-REGISTERED'} ${escape(day(record.freeze.frozenOn ?? e.authoredOn))} · NOT YET RUN</p></header><article class="article-body">
+  if (amendment) assert.equal(amendment.record.parent.sha256, recordSha256, 'the amendment amends a different record');
+  return `${header(title, `Field notes from Odin R&D. ${draft ? 'A draft of the pre-registration' : 'The pre-registration'} of ${e.id}, shown before the counted run: ${e.summary}`, `journal/${noteSlug}.html`)}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1>${escape(title)}</h1><p class="article-meta">EXPERIMENT NOTE / ${noteNumber} · ${escape(e.id)} · ${draft ? 'DRAFT' : 'PRE-REGISTERED'} ${escape(day(record.freeze.frozenOn ?? e.authoredOn))}${amendment ? ` · AMENDED ${escape(day(amendment.record.date))}` : ''} · NOT YET RUN</p></header><article class="article-body">
 ${draft ? `<p><strong>Draft.</strong> ${escape(record.freeze.rule)} Fields still to freeze: ${record.freeze.toFreeze.map(code).join(', ')}.</p>\n` : ''}<p><strong>${escape(e.statusText)}.</strong> ${escape(e.summary)} ${escape(e.note)}</p>
 <h2>The question</h2>
 <p>${escape(record.question)}</p>
@@ -159,7 +175,7 @@ ${list([
 <h2>The models</h2>
 <table><thead><tr><th>Pair</th><th>Sender</th><th>Receiver</th><th>Use</th></tr></thead><tbody>${Object.values(pairs).map(pairRow).join('')}</tbody></table>
 ${list([escape(p.rule), escape(p.vocabAssertion), ...p.mirrors.map(escape), `Pins file sha256 ${code(p.sha256)}; MLX ${escape(p.toolchain.mlx)}, mlx-lm ${escape(p.toolchain.mlxLm)}.`])}
-<p><strong>Which pair is counted.</strong> ${escape(record.pairLock)} ${escape(record.pairLockEarlierPractice)}${record.pairLockResult ? ` <strong>${escape(record.pairLockResult.statement)}</strong>` : ''}</p>
+<p><strong>Which pair is counted.</strong> ${escape(record.pairLock)} ${escape(record.pairLockEarlierPractice)}${record.pairLockResult ? ` <strong>${escape(record.pairLockResult.statement)}</strong>` : ''}${lock ? ` ${lockAnswers(lock)} The record was edited after the lock run started: see <a href="#after-the-lock">the edits after the lock run started</a>.` : ''}</p>
 ${list([`D1: ${escape(record.hardware.D1)}`, `D1′: ${escape(record.hardware.D1p)}`, `Memory: ${escape(record.hardware.footprints.statement)}`])}
 <h2>The decision</h2>
 <p>${escape(r.rule)} The question is EXP 005's: “${escape(r.question)}” followed by “${escape(r.answerInstruction)}” Readout sha256 ${code(r.sha256)}; receiver chat templates by sha256: ${Object.entries(r.chatTemplates).map(([k, v]) => `${escape(k)} ${code(v.slice(0, 12))}…`).join(', ')}.</p>
@@ -170,6 +186,7 @@ ${list([`D1: ${escape(record.hardware.D1)}`, `D1′: ${escape(record.hardware.D1
 ${m.implementations === TO_FREEZE ? '' : list(Object.entries(m.implementations).map(([k, v]) => `<strong>${escape(k)}</strong>: ${escape(v)}`))}
 <p><strong>The parity gate.</strong> ${m.parity === TO_FREEZE ? value(m.parity) : `${escape(m.parity.items)}: ${escape(m.parity.itemsAre)}. Mapping: ${escape(m.parity.mapping)}. Readout: ${escape(m.parity.readout)}. Pass: ${escape(m.parity.pass)}. ${escape(m.parity.rationale)} Result at freeze: ${m.pairs === TO_FREEZE ? value(m.pairs) : Object.entries(m.pairs).map(([p, x]) => `${p === 'D1p' ? 'D1′' : escape(p)}: ${Object.entries(x.parityBinding).map(([k, b]) => `${escape(k)} ${b.agree}/${b.items}, max |Δp| ${b.maxDp.toExponential(1)}`).join(', ')}`).join('; ')}.`} ${escape(m.parityRule)}</p>
 ${m.notes.length ? list(m.notes.map(escape)) : ''}
+<p>Every file that still carries a shorter A2b label (each hash-bound, so it stays as it is, and the label above supersedes it): ${SHORT_A2B_FILES.map(code).join(', ')}.</p>
 ${list([...Object.entries(m.code).map(([f, d]) => `${code(f.split('/').pop())}: ${value(d)}`), `Calibration text: ${value(m.calibrationTextSha256)} (${m.calibrationWhere === TO_FREEZE ? value(m.calibrationWhere) : escape(m.calibrationWhere)})`, ...(m.pairs === TO_FREEZE ? [`Per-pair records: ${value(m.pairs)}`] : Object.entries(m.pairs).map(([p, x]) => `${p === 'D1p' ? 'D1′' : escape(p)}: mapper record ${value(x.mapperRecordSha256)}, mapper weights ${value(x.mapperWeightsSha256)}, parity record ${value(x.parityRecordSha256)}`)), `Freeze record: ${m.freezeRecord === TO_FREEZE ? value(m.freezeRecord) : `${code(m.freezeRecord.file.split('/').pop())} ${code(m.freezeRecord.sha256)}. ${escape(m.freezeRecord.rule)}`}`])}
 <h2>The claim: P1</h2>
 <p>On ${escape(P1.on)}:</p>
@@ -189,10 +206,10 @@ ${list(record.leakageFences.map(escape))}
 <h2>Memory, timing and spend</h2>
 ${list([escape(record.memoryGate.rule), escape(record.timing.rule), escape(record.telemetry.rule), `${escape(spend.rule)} Stage 1 budget $${spend.stage1BudgetUsd}: ${escape(spend.stage1Split)} ${escape(spend.local)}`, escape(record.notBefore)])}
 ${lock ? `<h2 id="after-the-lock">Edits after the lock run started</h2>
-<p>The lock run started seconds after the record was frozen. The record on this page is not byte-identical to the one in force then: it was revised afterwards, in disclosure, wording and date fields only. The pair-lock rule, its bar, its practice set and the files the run used are unchanged and are checked against this record. The lock's committed record, <a href="../data/latent-handoff/pair-lock.json"><code>pair-lock.json</code></a>, lists every edit; its last note gives the sha256 of the record in force when the run started. The commit that held that record is not on a public branch.</p>
+<p>The lock run started seconds after the record was frozen. The record on this page is not byte-identical to the one in force then: it was revised afterwards, in disclosure, wording and date fields only. One of those disclosures, a third exposure found by a refute, shrank the analysed set from 180 to 175 items (and the fallback from 40 to 39). The pair-lock rule, its bar, its practice set and the files the run used are unchanged and are checked against this record. The lock's committed record, <a href="../data/latent-handoff/pair-lock.json"><code>pair-lock.json</code></a>, lists every edit; its last note gives the sha256 of the record in force when the run started. The commit that held that record is not on a public branch.</p>
 ${list(lock.notes.map(escape))}
 <p>${escape(lock.alwaysAccept)}</p>
-` : ''}<h2>What this does not establish</h2>
+` : ''}${amendment ? renderAmendment(amendment) : ''}<h2>What this does not establish</h2>
 ${list(record.limits.map(escape))}
 <h2>Provenance</h2>
 <p>This page is rendered from <a href="../data/latent-handoff/preregistration.json"><code>preregistration.json</code></a>, the committed record at ${code('experiments/latent-handoff/preregistration.json')}, whose sha256 is ${code(recordSha256)}. The site publishes that file byte for byte, and a repository test re-renders this page from it and fails if they differ. A validator rebuilds the record from the harness files and refuses any difference; it pins ${Object.keys(record.files).length} files by sha256.</p>
@@ -205,7 +222,9 @@ export function renderHorizon(record, recordSha256) {
   assert.match(recordSha256, hex, 'The page needs the sha256 of the record it renders');
   const byId = Object.fromEntries(record.measurements.map(m => [m.id, m]));
   const factById = Object.fromEntries(record.facts.map(f => [f.id, f]));
-  const sourceLine = s => `Source: ${escape(s.repository)}, ${code(s.record)}${s.recordSha256 ? ` (sha256 ${code(s.recordSha256)})` : ''}${s.commit ? ` at commit ${code(s.commit)}` : ''}${s.command ? `; command ${code(s.command)}` : ''}${s.toolFailures !== undefined ? `; ${s.toolFailures} tool failures` : ''}.`;
+  const sourceLine = s => isPublicSource(s.repository)
+    ? `Source: ${escape(s.repository)}, ${code(s.record)}${s.recordSha256 ? ` (sha256 ${code(s.recordSha256)})` : ''}${s.commit ? ` at commit ${code(s.commit)}` : ''}${s.command ? `; command ${code(s.command)}` : ''}${s.toolFailures !== undefined ? `; ${s.toolFailures} tool failures` : ''}.`
+    : `Source: ${escape(s.repository)}, a committed record${s.recordSha256 ? ` with sha256 ${code(s.recordSha256)}` : ''}${s.commit ? ` at commit ${code(s.commit)}` : ''}${s.toolFailures !== undefined ? `; ${s.toolFailures} tool failures` : ''}.`;
   const measured = m => {
     const st = measurementState(m);
     const bits = [st.milestone ? `Milestone (≥ ${pct(m.milestone.value)}): <strong>${st.milestone}</strong>` : null, st.kill ? `Kill line (below ${pct(m.kill.value)}): <strong>${st.kill}</strong>` : null].filter(Boolean);
@@ -226,11 +245,11 @@ export function renderHorizon(record, recordSha256) {
 <p class="technical">Source: ${escape(record.thresholdsSet.repository)}, commit ${code(record.thresholdsSet.commit)}, committed ${escape(record.thresholdsSet.committedAt)}.</p>
 <h2>Where we stand on H0</h2>
 ${record.measurements.map(measured).join('\n')}
-${record.facts.map(f => `<p id="${escape(f.id)}"><strong>${escape(FACT_STATE[f.state][0].toUpperCase() + FACT_STATE[f.state].slice(1))}.</strong> ${escape(f.statement)}${f.id === 'exp008' ? ' <a href="../journal/latent-handoff-pre-registration.html">Read the pre-registration</a>.' : ''}${f.id === 'dataset-v0' ? ' <a href="../data/latent-handoff/dataset-v0/dataset-v0.jsonl">Download the rows</a> and <a href="../data/latent-handoff/dataset-v0/DATASHEET.md">read the datasheet</a>.' : ''}</p>\n<p class="technical">${sourceLine(f.source)}</p>`).join('\n')}
+${record.facts.map(f => `<p id="${escape(f.id)}"><strong>${escape(FACT_STATE[f.state][0].toUpperCase() + FACT_STATE[f.state].slice(1))}.</strong> ${escape(f.statement)}${f.id === 'exp008' ? ' <a href="../journal/latent-handoff-pre-registration.html">Read the pre-registration</a>.' : ''}${f.id === 'dataset-v0' ? ` <a href="../data/latent-handoff/dataset-v0/dataset-v0.jsonl">Download the rows</a> and <a href="../data/latent-handoff/dataset-v0/DATASHEET.md">read the datasheet</a>. ${escape(UNPRICED_NOTE)}` : ''}</p>\n<p class="technical">${sourceLine(f.source)}</p>`).join('\n')}
 <h2 id="prize">How big the prize is today</h2>
 <p>${escape(record.prizeSize.statement)}</p>
 ${list(record.prizeSize.figures.map(f => `<strong>${escape(f.label)}: ${f.unit ? `${escape(f.value.toLocaleString('en-US'))} ${escape(f.unit)}</strong> (n = ${f.n})` : `${pct(Number((f.numerator / f.denominator).toFixed(4)))}</strong> (${f.numerator.toLocaleString('en-US')} of ${f.denominator.toLocaleString('en-US')})`}. ${escape(f.note)}`))}
-<p class="technical">Window ${escape(record.prizeSize.window.start)} to ${escape(record.prizeSize.window.end)} (${record.prizeSize.window.days} days). Source: ${escape(record.prizeSize.source.repository)}, ${code(record.prizeSize.source.record)} (sha256 ${code(record.prizeSize.source.recordSha256)}), data ${code(record.prizeSize.source.data)} (sha256 ${code(record.prizeSize.source.dataSha256)}), prefill curve ${code(record.prizeSize.source.curve)} (sha256 ${code(record.prizeSize.source.curveSha256)}), at commit ${code(record.prizeSize.source.commit)}; command ${code(record.prizeSize.source.command)}.</p>
+<p class="technical">Window ${escape(record.prizeSize.window.start)} to ${escape(record.prizeSize.window.end)} (${record.prizeSize.window.days} days). ${isPublicSource(record.prizeSize.source.repository) ? `Source: ${escape(record.prizeSize.source.repository)}, ${code(record.prizeSize.source.record)} (sha256 ${code(record.prizeSize.source.recordSha256)}), data ${code(record.prizeSize.source.data)} (sha256 ${code(record.prizeSize.source.dataSha256)}), prefill curve ${code(record.prizeSize.source.curve)} (sha256 ${code(record.prizeSize.source.curveSha256)}), at commit ${code(record.prizeSize.source.commit)}; command ${code(record.prizeSize.source.command)}.` : `Source: ${escape(record.prizeSize.source.repository)}, committed records with sha256 ${code(record.prizeSize.source.recordSha256)} (the summary), ${code(record.prizeSize.source.dataSha256)} (the data) and ${code(record.prizeSize.source.curveSha256)} (the prefill curve), at commit ${code(record.prizeSize.source.commit)}.`}</p>
 <h2>The ladder</h2>
 ${record.rungs.map(r => `<h3>${escape(r.id)} · ${escape(r.when)}: ${escape(r.theme)}</h3>\n<p><strong>Milestones.</strong></p>\n${list(r.milestones.map(milestone))}\n<p><strong>Kill criteria.</strong></p>\n${list(r.kill.map(kill))}`).join('\n')}
 <h2>What this does not establish</h2>
@@ -263,6 +282,18 @@ export function withHome(html, record) {
   return out.replace(horizonAnchor, `${horizonAnchor}${horizonLink}`);
 }
 
+/** Amendment 01 on the note: what it adds, the clauses it implements, the run it fixes and the later not-before. */
+export function renderAmendment({ record: a, sha256: digest }) {
+  return `<h2 id="amendment-01">${escape(a.title)}</h2>
+<p><strong>${escape(a.statusText)}.</strong> The pre-registration's analysis field reads: “${escape(a.reason.record)}” ${escape(a.reason.statement)} ${escape(a.changes.statement)}</p>
+<p>The script is ${code(a.analysis.file)} (sha256 ${code(a.analysis.sha256)}); its tests are ${code(a.analysis.tests.file)} (sha256 ${code(a.analysis.tests.sha256)}). It reads ${escape(a.analysis.reads)}. The amendment is published byte for byte as <a href="../data/latent-handoff/amendment-01.json"><code>amendment-01.json</code></a>, sha256 ${code(digest)}; each clause there quotes the pre-registration's own words beside its implementation.</p>
+${list(a.clauses.map(c => `<strong>${escape(c.id)}</strong> (${c.record.map(q => code(q.path)).join(', ')}): ${escape(c.implementation)}`))}
+<p><strong>The run.</strong> ${escape(a.run.statement)} Counted: ${a.run.counted.map(x => `${code(x.runId)} (${escape(x.stratum)})`).join(', ')}; re-run: ${a.run.rerun.map(x => `${code(x.runId)} (${escape(x.stratum)})`).join(', ')}.</p>
+<p><strong>The not-before.</strong> ${escape(a.notBefore)}</p>
+${list(a.limits.map(escape))}
+`;
+}
+
 export const sitemapUrls = [`${SITE}journal/${noteSlug}.html`, `${SITE}horizon/factory-intelligence.html`];
 export function withSitemap(xml) {
   let out = xml;
@@ -274,7 +305,7 @@ export function withSitemap(xml) {
 
 /** Everything the site carries for latent-handoff, as it must be on disk. */
 export function expected(root = '.') {
-  const prereg = checkRecord(root), horizon = checkHorizon(root);
+  const prereg = checkRecord(root), horizon = checkHorizon(root), amendment = checkAmendment(root);
   // The horizon's EXP 008 fact must agree with the pre-registration's freeze status.
   const fact = horizon.record.facts.find(f => f.id === 'exp008');
   assert.equal(fact.state, 'in-progress');
@@ -291,7 +322,8 @@ export function expected(root = '.') {
   assert.equal(dsFact?.source.recordSha256, DATASET.files['dataset-v0.jsonl'], 'the horizon\'s dataset fact names the pinned dataset');
   return {
     ...dataset,
-    [notePath]: renderNote(prereg.record, prereg.sha256, lock),
+    [notePath]: renderNote(prereg.record, prereg.sha256, lock, amendment),
+    [amendmentPublishedPath]: amendment.bytes,
     [lockPublishedPath]: lockBytes,
     [horizonPagePath]: renderHorizon(horizon.record, horizon.sha256),
     [preregPublishedPath]: prereg.bytes,
@@ -320,7 +352,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       mkdirSync(file.split('/').slice(0, -1).join('/'), { recursive: true });
       writeFileSync(file, content);
     }
-    console.log(`Wrote ${notePath}, ${horizonPagePath}, the data copies (record, horizon, pair lock, dataset v0), the home-page row and link, and the sitemap.`);
+    console.log(`Wrote ${notePath}, ${horizonPagePath}, the data copies (record, amendment, horizon, pair lock, dataset v0), the home-page row and link, and the sitemap.`);
   } else if (command !== '--check') {
     console.error('usage: node scripts/latent-handoff-site.mjs --check | --write | --pin');
     process.exit(2);
