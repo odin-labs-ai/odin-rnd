@@ -324,6 +324,26 @@ export function qualifyIntro(page, data) {
     .replace(introNoResults, `and one pre-registered experiment, measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.`);
 }
 
+// The station data the page script reads (#station-data, the station contract serialised by the build) carries each
+// station's status, which app.js announces in the screen-reader status when a station is selected. Station 06's status
+// in the contract is the pre-registration's; once measured, the visible heading says measuredStatus (station-render.mjs),
+// so the serialised status is set to exactly that, here, from the same results. Without results the build never calls
+// this and the contract's status stays.
+const stationDataRe = /<script type="application\/json" id="station-data">([\s\S]*?)<\/script>/;
+export function qualifyStationData(page, data) {
+  const matches = page.match(new RegExp(stationDataRe.source, 'g')) ?? [];
+  // The source page has no #station-data (the build adds it before qualifying the home page; the built-page test
+  // asserts the result there), so a page without it is returned as is; two would be ambiguous.
+  if (matches.length === 0) return page;
+  assert.equal(matches.length, 1, 'The page must carry #station-data exactly once');
+  const stations = JSON.parse(stationDataRe.exec(page)[1]);
+  const triage = stations.filter(s => s.record === 'jev-gate');
+  assert.equal(triage.length, 1, 'The station data must hold the jev-gate station exactly once');
+  const qualified = stations.map(s => (s.record === 'jev-gate' ? { ...s, status: measuredStatus(data) } : s));
+  // Serialised exactly as the build serialises it (JSON, '<' escaped).
+  return page.replace(stationDataRe, () => `<script type="application/json" id="station-data">${JSON.stringify(qualified).replaceAll('<', '\\u003c')}</script>`);
+}
+
 // The built home page: row 004 and the journal row show the measured state, and nina's card follows row 004.
 const row004Start = '<article class="project-row project-featured"><div class="project-number">004';
 export function qualifyHomeResults(page, data) {
@@ -340,8 +360,9 @@ export function qualifyHomeResults(page, data) {
   row = `${row.slice(0, para)} <a class="amendment-qualifier" href="${notePath}#${resultsSectionId}">Measured ${escape(day(f.measuredOn))}. ${escape(headline(data))} ${escape(headlineContext(data))}</a>${row.slice(para)}`;
   const out = page.slice(0, at) + row + renderSpotlightCard(data) + page.slice(end);
   const journalRow = 'Pre-registered, no results yet.</p></div><span class="journal-arrow"';
-  assert.equal(qualifyIntro(out, data).split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
-  return qualifyIntro(out, data).replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
+  const qualified = qualifyStationData(qualifyIntro(out, data), data);
+  assert.equal(qualified.split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
+  return qualified.replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
 }
 
 // The built note: the meta line says measured, the parent's "no results yet" sentences point at the results,
