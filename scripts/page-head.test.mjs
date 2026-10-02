@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkResults, measuredHead } from './jev-gate-results-site.mjs';
+import { checkResults, introBeforeRun, introNoResults, measuredHead, qualifyIntro } from './jev-gate-results-site.mjs';
 import { checkResults6, measuredHead6 } from './nina-changes-results-site.mjs';
 import { readHead, replaceHead, SITE_SUFFIX } from './page-head.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -61,4 +61,25 @@ test('replaceHead changes only the head: the title, the description and any og:/
 
 test('without results the committed notes keep the pre-registration\'s head (the no-results path)', () => {
   for (const page of Object.values(pages)) assert.match(readHead(readFileSync(join('site', page), 'utf8')).title, /the pre-registration/, page);
+});
+
+const intro = html => /<p class="factory-boundary">([^<]*)<\/p>/.exec(html)?.[1] ?? null;
+
+test('the home stations intro states station 06\'s experiment as its committed results say; "no results yet" only without them', { timeout: 600_000 }, () => {
+  const source = readFileSync('site/index.html', 'utf8');
+  assert(intro(source).includes(introNoResults.replace(/^and /, '')) && intro(source).includes(introBeforeRun), 'the committed page keeps the pre-registration\'s sentence (the no-results path)');
+  const built = intro(readFileSync(join(builtCopy(), 'dist', 'index.html'), 'utf8'));
+  const data = checkResults();
+  if (!data) { assert.equal(built, intro(source), 'no results: the sentence as written'); return; }
+  assert.equal(built, intro(qualifyIntro(source, data)), 'the built sentence is the committed one, qualified from the results');
+  assert.doesNotMatch(built, /no results yet|before it runs/);
+  assert(built.includes(`measured ${data.facts.measuredOn.slice(8, 10).replace(/^0/, '')} `) && built.includes(data.results.claim.refuted ? 'the claim is refuted' : 'the claim holds'));
+});
+
+test('qualifyIntro derives the clause from the record (claim refuted or holds) and needs both sentences exactly once', () => {
+  const page = `<p class="factory-boundary">x ${introBeforeRun} y one measured model comparison ${introNoResults} z</p>`;
+  const d = refuted => ({ results: { claim: { refuted } }, facts: { measuredOn: '2026-09-29' } });
+  assert.equal(intro(qualifyIntro(page, d(true))), 'x and one experiment written down before it ran. y one measured model comparison and one pre-registered experiment, measured 29 Sep 2026: the claim is refuted. z');
+  assert.match(intro(qualifyIntro(page, d(false))), /measured 29 Sep 2026: the claim holds\. z$/);
+  assert.throws(() => qualifyIntro(page.replace(introNoResults, ''), d(true)), /exactly once/);
 });

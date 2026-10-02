@@ -312,6 +312,18 @@ export function renderSpotlightCard(data) {
   return `<article class="project-row project-featured" id="project-nina"><div class="project-number">005<span>HARNESS</span></div><div class="project-description"><h3><a href="${notePath}#${harnessSectionId}">nina, the harness we measured</a></h3><p>nina 0.34.0's reviewer, deciding whether a change breaks mechanical architecture rules, met the bar fixed before the counted run: ${escape(rate(c('missed-drift').runLevel))} runs missed drift (${escape(c('missed-drift').itemLevel.state)} on the items), ${escape(rate(c('false-reject').runLevel))} runs falsely rejected (${escape(c('false-reject').itemLevel.state)}), the same verdict on ${c('self-agreement').x} of ${c('self-agreement').n} changes, and no patch. In ${f.diff.blind.runs} of the ${f.diff.runs} runs this experiment's tool fence kept it from seeing the diff, so it audited the small repository against the rules instead; those runs were still all correct, because the base tree is clean. Nothing else about nina was measured.</p><div class="project-links"><a href="https://github.com/xhulz/nina">github.com/xhulz/nina</a><a href="${notePath}#${harnessSectionId}">What was measured</a><a href="${resultsDataPath}">The record</a></div><p class="project-note">${nina()}.</p></div><dl class="project-spec"><div><dt>Measured</dt><dd>nina 0.34.0 reviewer</dd></div><div><dt>Bar</dt><dd>${escape(results.spotlight.verdict)}</dd></div><div><dt>Runs</dt><dd>${c('zero-patches').harnessFailures.n}</dd></div></dl></article>`;
 }
 
+// The stations intro (a hand-written sentence of the home page) states station 06's experiment as pre-registered with no
+// results; once its results are committed, those two clauses state what was measured instead, from the record. Without
+// results the build never calls this and the page keeps its sentence.
+export const introBeforeRun = 'and one experiment written down before it runs.';
+export const introNoResults = 'and one pre-registration with no results yet.';
+export function qualifyIntro(page, data) {
+  const { results, facts: f } = data;
+  for (const marker of [introBeforeRun, introNoResults]) assert.equal(page.split(marker).length, 2, `The stations intro must contain ${JSON.stringify(marker)} exactly once`);
+  return page.replace(introBeforeRun, 'and one experiment written down before it ran.')
+    .replace(introNoResults, `and one pre-registered experiment, measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.`);
+}
+
 // The built home page: row 004 and the journal row show the measured state, and nina's card follows row 004.
 const row004Start = '<article class="project-row project-featured"><div class="project-number">004';
 export function qualifyHomeResults(page, data) {
@@ -328,8 +340,8 @@ export function qualifyHomeResults(page, data) {
   row = `${row.slice(0, para)} <a class="amendment-qualifier" href="${notePath}#${resultsSectionId}">Measured ${escape(day(f.measuredOn))}. ${escape(headline(data))} ${escape(headlineContext(data))}</a>${row.slice(para)}`;
   const out = page.slice(0, at) + row + renderSpotlightCard(data) + page.slice(end);
   const journalRow = 'Pre-registered, no results yet.</p></div><span class="journal-arrow"';
-  assert.equal(out.split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
-  return out.replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
+  assert.equal(qualifyIntro(out, data).split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
+  return qualifyIntro(out, data).replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
 }
 
 // The built note: the meta line says measured, the parent's "no results yet" sentences point at the results,
