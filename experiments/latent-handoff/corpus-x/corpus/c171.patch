@@ -1,0 +1,18 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..55afe62 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -1,4 +1,5 @@
+ import { createCustomer } from '../domain';
++import { prepareValue } from 'pg/lib/utils';
+ import type { CustomerRepository } from './ports';
+ 
+ export async function registerCustomerUseCase(
+@@ -7,3 +8,7 @@ export async function registerCustomerUseCase(
+ ): Promise<void> {
+   await customers.save(createCustomer(input.id, input.name, input.email));
+ }
++
++export function customerRow(input: { id: string; name: string }): unknown[] {
++  return [input.id, prepareValue(input.name)];
++}

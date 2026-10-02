@@ -1,0 +1,16 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..f933ba3 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -1,9 +1,10 @@
+-import { createCustomer } from '../domain';
++import { createCustomer, DomainError } from '../domain';
+ import type { CustomerRepository } from './ports';
+ 
+ export async function registerCustomerUseCase(
+   customers: CustomerRepository,
+   input: { id: string; name: string; email: string },
+ ): Promise<void> {
++  if (process.env.REGISTRATION_CLOSED === 'true') throw new DomainError('customer.closed', 'registration is closed');
+   await customers.save(createCustomer(input.id, input.name, input.email));
+ }

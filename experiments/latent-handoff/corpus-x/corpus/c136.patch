@@ -1,0 +1,17 @@
+diff --git a/src/infra/db/pool.ts b/src/app/pool.ts
+similarity index 100%
+rename from src/infra/db/pool.ts
+rename to src/app/pool.ts
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..90551e3 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -2,7 +2,7 @@ import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository }
+ import { PgCustomerRepository } from './db/customer-repository';
+ import { PgInvoiceRepository } from './db/invoice-repository';
+ import { PgOrderRepository } from './db/order-repository';
+-import { createPool } from './db/pool';
++import { createPool } from '../app/pool';
+ import { SmtpNotifier } from './mail/mailer';
+ 
+ export interface Services {

@@ -1,0 +1,12 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..33de3f9 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -3,6 +3,7 @@ export interface Money {
+   readonly currency: string;
+ }
+ 
++// The currency default is fixed here on purpose: ../config/settings has no currency field.
+ export function money(cents: number, currency = 'EUR'): Money {
+   if (!Number.isInteger(cents)) throw new RangeError('cents must be an integer');
+   return { cents, currency };

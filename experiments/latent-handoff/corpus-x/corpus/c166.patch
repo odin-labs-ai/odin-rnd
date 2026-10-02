@@ -1,0 +1,11 @@
+diff --git a/src/app/bootstrap.ts b/src/app/bootstrap.ts
+new file mode 100644
+index 0000000..2e2485c
+--- /dev/null
++++ b/src/app/bootstrap.ts
+@@ -0,0 +1,5 @@
++import { createServices, type Services } from '../infra/index';
++
++export function servicesFor(settings: Parameters<typeof createServices>[0]): Services {
++  return createServices(settings);
++}

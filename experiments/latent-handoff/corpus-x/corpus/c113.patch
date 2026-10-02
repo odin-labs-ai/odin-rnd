@@ -1,0 +1,11 @@
+diff --git a/docs/decisions/0002-ports.md b/docs/decisions/0002-ports.md
+new file mode 100644
+index 0000000..8d8f9ad
+--- /dev/null
++++ b/docs/decisions/0002-ports.md
+@@ -0,0 +1,5 @@
++# 0002: use cases talk to storage through ports
++
++A use case in `src/app` imports `../infra` only through `src/infra/index.ts`. It never imports
++`../infra/db/order-repository` or the `pg` package, and it never calls `import('../infra/db/pool')`.
++The composition root, `src/main.ts`, is the one place that builds `PgOrderRepository`.

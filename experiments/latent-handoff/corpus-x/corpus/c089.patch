@@ -1,0 +1,16 @@
+diff --git a/src/jobs/send-reminders.ts b/src/jobs/send-reminders.ts
+new file mode 100644
+index 0000000..383f7f3
+--- /dev/null
++++ b/src/jobs/send-reminders.ts
+@@ -0,0 +1,10 @@
++import * as settingsModule from '../config/settings';
++import type { Customer, Invoice } from '../domain';
++import { SmtpNotifier } from '../infra/mail/mailer';
++
++export async function remind(pairs: ReadonlyArray<[Customer, Invoice]>): Promise<number> {
++  const settings = settingsModule.loadSettings();
++  const mail = new SmtpNotifier(settings.smtpHost, settings.smtpFrom);
++  for (const [customer, invoice] of pairs) await mail.invoiceIssued(customer, invoice);
++  return pairs.length;
++}

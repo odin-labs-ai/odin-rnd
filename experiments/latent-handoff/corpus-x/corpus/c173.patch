@@ -1,0 +1,26 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..02e923f 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -4,6 +4,7 @@ import { PgInvoiceRepository } from './db/invoice-repository';
+ import { PgOrderRepository } from './db/order-repository';
+ import { createPool } from './db/pool';
+ import { SmtpNotifier } from './mail/mailer';
++import type { Settings as RuntimeSettings } from '../config/settings';
+ 
+ export interface Services {
+   orders: OrderRepository;
+@@ -12,12 +13,7 @@ export interface Services {
+   notifier: Notifier;
+ }
+ 
+-export function createServices(settings: {
+-  databaseUrl: string;
+-  smtpHost: string;
+-  smtpFrom: string;
+-  invoicePrefix: string;
+-}): Services {
++export function createServices(settings: Pick<RuntimeSettings, 'databaseUrl' | 'smtpHost' | 'smtpFrom' | 'invoicePrefix'>): Services {
+   const pool = createPool(settings.databaseUrl);
+   return {
+     orders: new PgOrderRepository(pool),

@@ -1,0 +1,2234 @@
+{
+  "schemaVersion": 1,
+  "truth": "bce label (RED = the change breaks a blueprint rule, GREEN = it does not). intended is the author intent from manifest-x.json. Every intent/bce disagreement met while authoring was resolved by re-authoring the item (adjudication-x.jsonl), never by editing a label.",
+  "engine": {
+    "package": "bce-engine",
+    "version": "0.3.1",
+    "extractor": "ast"
+  },
+  "blueprintSha256": "1648713fe91cfc0800ca0e20d5447476ce9cb8b7f52c060b863eeed6e382de07",
+  "counts": {
+    "total": 140,
+    "RED": 70,
+    "GREEN": 70,
+    "EXCLUDED": 0,
+    "disagree": 0,
+    "rulesDifferFromIntent": 2
+  },
+  "items": [
+    {
+      "id": "c061",
+      "label": "RED",
+      "score": 0,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L17"
+        },
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L18"
+        },
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L19"
+        },
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L20"
+        },
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L21"
+        },
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/settings.ts#L22"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c062",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c063",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c064",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c065",
+      "label": "RED",
+      "score": 0,
+      "rules": [
+        "core-no-pg",
+        "domain-no-app",
+        "domain-no-config",
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/invoice.ts#L17"
+        },
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/invoice.ts#L17"
+        },
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/invoice.ts#L17"
+        },
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/invoice.ts#L17"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": false,
+      "disagree": false
+    },
+    {
+      "id": "c066",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/order.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c067",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/money.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c068",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c069",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c070",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c071",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c072",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/place-order.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c073",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/invoice.ts#L15"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c074",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/order.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c075",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c076",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/money.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c077",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c078",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/index.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c079",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/admin/reset-sequence.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c080",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order-summary.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c081",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c082",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c083",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/invoice-mail.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c084",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/index.ts#L5"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c085",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/mail/mailer.ts#L9"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c086",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c087",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/index.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c088",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c089",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c090",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c091",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/order.ts#L22"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c092",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L19"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c093",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c094",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c095",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/customer.ts#L12"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c096",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/money.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c097",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/issue-invoice.ts#L15"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c098",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/http.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c099",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c100",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/env.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c101",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/register-customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c102",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L19"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c103",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c104",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-domain"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-domain",
+          "ref": "src/domain/errors.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-domain"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c105",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.ts#L27"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c106",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c107",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c108",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/customer.ts#L15"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c109",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c110",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c111",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/index.ts#L21"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c112",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/pricing/lifetime.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c113",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c114",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/db/invoice-repository.ts#L8"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c115",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c116",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/index.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c117",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c118",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/clock.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c119",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c120",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c121",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c122",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c123",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/order.ts#L17"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c124",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c125",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/ports.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c126",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/index.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c127",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c128",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c129",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c130",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c131",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c132",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c133",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c134",
+      "label": "RED",
+      "score": 20,
+      "rules": [
+        "app-no-infra-internals",
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/place-order.ts#L20"
+        },
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/place-order.ts#L20"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": false,
+      "disagree": false
+    },
+    {
+      "id": "c135",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/reminders/schedule.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c136",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/pool.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c137",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c138",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/reports/daily-count.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c139",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L15"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c140",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c141",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c142",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/order.ts#L28"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c143",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c144",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/money.ts#L21"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c145",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/http/routes.ts#L7"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c146",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/domain/index.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c147",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/place-order.ts#L13"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c148",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c149",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c150",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c151",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/register-customer.ts#L12"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c152",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c153",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c154",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c155",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c156",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/issue-invoice.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c157",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/order.spec.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c158",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c159",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/place-order.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c160",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c161",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c162",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c163",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/replica.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c164",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c165",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c166",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c167",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c168",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/customer.ts#L16"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c169",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c170",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/invoice.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c171",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "core-no-pg"
+      ],
+      "violations": [
+        {
+          "rule": "core-no-pg",
+          "ref": "src/app/register-customer.ts#L2"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "core-no-pg"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c172",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-infra"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-infra",
+          "ref": "src/infra/db/customer-repository.ts#L14"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c173",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c174",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c175",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c176",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c177",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/errors.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c178",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/register-customer.ts#L8"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c179",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c180",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c181",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c182",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c183",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c184",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c185",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c186",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c187",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "app-no-infra-internals"
+      ],
+      "violations": [
+        {
+          "rule": "app-no-infra-internals",
+          "ref": "src/app/index.ts#L4"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "app-no-infra-internals"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c188",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c189",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c190",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c191",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-config"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-config",
+          "ref": "src/domain/config.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-config"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c192",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "env-not-in-app"
+      ],
+      "violations": [
+        {
+          "rule": "env-not-in-app",
+          "ref": "src/app/ports.ts#L3"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "env-not-in-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c193",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c194",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c195",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c196",
+      "label": "RED",
+      "score": 20,
+      "rules": [
+        "domain-no-infra"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/order.ts#L28"
+        },
+        {
+          "rule": "domain-no-infra",
+          "ref": "src/domain/order.ts#L28"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-infra"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c197",
+      "label": "RED",
+      "score": 60,
+      "rules": [
+        "domain-no-app"
+      ],
+      "violations": [
+        {
+          "rule": "domain-no-app",
+          "ref": "src/domain/invoice.ts#L1"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "domain-no-app"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c198",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c199",
+      "label": "RED",
+      "score": 80,
+      "rules": [
+        "config-env-allowlist"
+      ],
+      "violations": [
+        {
+          "rule": "config-env-allowlist",
+          "ref": "src/config/settings.ts#L24"
+        }
+      ],
+      "intended": "RED",
+      "intendedRules": [
+        "config-env-allowlist"
+      ],
+      "rulesMatchIntent": true,
+      "disagree": false
+    },
+    {
+      "id": "c200",
+      "label": "GREEN",
+      "score": 100,
+      "rules": [],
+      "violations": [],
+      "intended": "GREEN",
+      "intendedRules": [],
+      "rulesMatchIntent": true,
+      "disagree": false
+    }
+  ]
+}

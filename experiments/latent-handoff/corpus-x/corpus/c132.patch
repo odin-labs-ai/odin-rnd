@@ -1,0 +1,10 @@
+diff --git a/src/domain/README.md b/src/domain/README.md
+new file mode 100644
+index 0000000..0d8d1b3
+--- /dev/null
++++ b/src/domain/README.md
+@@ -0,0 +1,4 @@
++# Domain
++
++Plain types and functions. Nothing here reads `process.env` or imports from `../infra`, `../app` or `../config`.
++Persistence lives in `src/infra/db` (the `pg` package); use cases live in `src/app`.

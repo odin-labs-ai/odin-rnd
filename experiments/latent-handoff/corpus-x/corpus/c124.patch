@@ -1,0 +1,14 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..c8fdc30 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,9 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export function addLine(order: Order, line: OrderLine): Order {
++  if (order.status !== 'open') throw new DomainError('order.status', 'lines can only be added to an open order');
++  if (line.quantity <= 0) throw new DomainError('order.quantity', 'quantity must be positive');
++  return { ...order, lines: [...order.lines, line] };
++}

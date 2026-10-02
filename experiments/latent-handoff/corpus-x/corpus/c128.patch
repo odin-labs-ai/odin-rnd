@@ -1,0 +1,16 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..a47158e 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -1,4 +1,5 @@
+ import { DomainError, invoiceFor } from '../domain';
++import type { Services } from '../infra';
+ import type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ 
+ export async function issueInvoiceUseCase(
+@@ -14,3 +15,5 @@ export async function issueInvoiceUseCase(
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;
+ }
++
++export const issueWith = (services: Services, orderId: string): Promise<string> => issueInvoiceUseCase(services, orderId);

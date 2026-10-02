@@ -1,0 +1,12 @@
+diff --git a/src/app/ports.ts b/src/app/ports.ts
+index 24c1fa6..9b18055 100644
+--- a/src/app/ports.ts
++++ b/src/app/ports.ts
+@@ -15,6 +15,7 @@ export interface InvoiceRepository {
+   save(invoice: Invoice): Promise<void>;
+ }
+ 
++/** Implemented by SmtpNotifier in ../infra/mail/mailer.ts; use cases only see this port. */
+ export interface Notifier {
+   invoiceIssued(customer: Customer, invoice: Invoice): Promise<void>;
+ }

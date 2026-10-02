@@ -1,0 +1,24 @@
+diff --git a/src/app/issue-invoice.ts b/src/app/issue-invoice.ts
+index e58dbc1..9662722 100644
+--- a/src/app/issue-invoice.ts
++++ b/src/app/issue-invoice.ts
+@@ -5,8 +5,7 @@ export async function issueInvoiceUseCase(
+   deps: { orders: OrderRepository; customers: CustomerRepository; invoices: InvoiceRepository; notifier: Notifier },
+   orderId: string,
+ ): Promise<string> {
+-  const order = await deps.orders.get(orderId);
+-  if (!order || order.status !== 'placed') throw new DomainError('invoice.order', 'order is not placed');
++  const order = await placedOrder(deps.orders, orderId);
+   const customer = await deps.customers.get(order.customerId);
+   if (!customer) throw new DomainError('customer.missing', 'customer not found');
+   const invoice = invoiceFor(order, await deps.invoices.nextNumber());
+@@ -14,3 +13,9 @@ export async function issueInvoiceUseCase(
+   await deps.notifier.invoiceIssued(customer, invoice);
+   return invoice.number;
+ }
++
++async function placedOrder(orders: OrderRepository, orderId: string) {
++  const found = await orders.get(orderId);
++  if (!found || found.status !== 'placed') throw new DomainError('invoice.order', 'order is not placed');
++  return found;
++}

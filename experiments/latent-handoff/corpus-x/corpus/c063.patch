@@ -1,0 +1,18 @@
+diff --git a/test/place-order.test.ts b/test/place-order.test.ts
+new file mode 100644
+index 0000000..5bf2fa1
+--- /dev/null
++++ b/test/place-order.test.ts
+@@ -0,0 +1,12 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { placeOrderUseCase } from '../src/app';
++import { money, type Customer, type Order } from '../src/domain';
++
++test('an order over the credit limit is refused', async () => {
++  const big: Order = { id: 'o-7', customerId: 'c-7', status: 'open', lines: [{ sku: 'sofa', quantity: 1, unitPrice: money(90_000) }] };
++  const buyer: Customer = { id: 'c-7', name: 'Buyer', email: 'buyer', creditLimitCents: 50_000 };
++  const orders = { get: async () => big, save: async () => undefined };
++  const customers = { get: async () => buyer, save: async () => undefined };
++  await assert.rejects(placeOrderUseCase(orders, customers, 'o-7'), /credit limit/);
++});

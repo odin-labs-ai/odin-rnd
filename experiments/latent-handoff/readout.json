@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "note": "EXP 008 frozen readout. The question is the EXP 005 gate question (gate-question.json instructions, asserted by the runner). The user turn is <context> + \"\\n\\n\" + question + \" \" + answerInstruction; the receiver's chat template adds the generation prompt. The decision is softmax over the two answer token ids at the first assistant position: REJECT when p(yes) / (p(yes) + p(no)) >= 0.5. Decoding is deterministic (no sampling).",
+  "question": "Does this change break any of these rules?",
+  "answerInstruction": "Answer with exactly one word: YES or NO.",
+  "yes": "YES",
+  "no": "NO",
+  "rejectThreshold": 0.5,
+  "llamaDateString": "26 Jul 2024",
+  "summaryPrompt": "Summarise the following material for a colleague who will decide on it. Do not judge it and do not give a verdict.",
+  "summaryMaxTokens": 256,
+  "prefillStep": 2048,
+  "derangementSeed": 8008,
+  "c1KlMax": 0.001,
+  "armOrderSeed": 8008
+}

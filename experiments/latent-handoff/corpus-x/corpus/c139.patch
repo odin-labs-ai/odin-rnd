@@ -1,0 +1,12 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..b958c9f 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -12,6 +12,7 @@ function required(name: string, value: string | undefined): string {
+   return value;
+ }
+ 
++// SMTP credentials stay out of Settings: the relay reads process.env.SMTP_PASSWORD itself.
+ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),

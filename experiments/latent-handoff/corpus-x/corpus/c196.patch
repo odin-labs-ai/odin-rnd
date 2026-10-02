@@ -1,0 +1,15 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..d13c74a 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,10 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function persistPlaced(order: Order, connectionString: string): Promise<Order> {
++  const [{ createPool }, { PgOrderRepository }] = await Promise.all([import('../infra/db/pool'), import('../infra/db/order-repository')]);
++  const next = placeOrder(order);
++  await new PgOrderRepository(createPool(connectionString)).save(next);
++  return next;
++}

@@ -1,0 +1,12 @@
+diff --git a/src/app/admin/reset-sequence.ts b/src/app/admin/reset-sequence.ts
+new file mode 100644
+index 0000000..5fafc9d
+--- /dev/null
++++ b/src/app/admin/reset-sequence.ts
+@@ -0,0 +1,6 @@
++export async function resetInvoiceSequence(connectionString: string): Promise<void> {
++  const { createPool } = await import('../../infra/db/pool');
++  const db = createPool(connectionString);
++  await db.query('alter sequence invoice_seq restart with 1');
++  await db.end();
++}

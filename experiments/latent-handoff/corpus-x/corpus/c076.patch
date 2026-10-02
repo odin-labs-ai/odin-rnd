@@ -1,0 +1,17 @@
+diff --git a/src/domain/money.ts b/src/domain/money.ts
+index 011f1e4..8f5b798 100644
+--- a/src/domain/money.ts
++++ b/src/domain/money.ts
+@@ -1,9 +1,11 @@
++const DEFAULT_CURRENCY = process.env.CURRENCY ?? 'EUR';
++
+ export interface Money {
+   readonly cents: number;
+   readonly currency: string;
+ }
+ 
+-export function money(cents: number, currency = 'EUR'): Money {
++export function money(cents: number, currency = DEFAULT_CURRENCY): Money {
+   if (!Number.isInteger(cents)) throw new RangeError('cents must be an integer');
+   return { cents, currency };
+ }

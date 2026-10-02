@@ -1,0 +1,20 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..a113311 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -10,6 +10,7 @@ export interface Services {
+   customers: CustomerRepository;
+   invoices: InvoiceRepository;
+   notifier: Notifier;
++  close(): Promise<void>;
+ }
+ 
+ export function createServices(settings: {
+@@ -24,6 +25,7 @@ export function createServices(settings: {
+     customers: new PgCustomerRepository(pool),
+     invoices: new PgInvoiceRepository(pool, settings.invoicePrefix),
+     notifier: new SmtpNotifier(settings.smtpHost, settings.smtpFrom),
++    close: () => pool.end(),
+   };
+ }
+ 

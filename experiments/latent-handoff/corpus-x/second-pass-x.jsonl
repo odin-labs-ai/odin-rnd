@@ -1,0 +1,140 @@
+{"id": "c061", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "settings.ts moved into src/domain carries process.env"}
+{"id": "c062", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c063", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c064", "label": "GREEN", "rules": [], "confidence": "high", "why": "process.env.PORT allowlisted"}
+{"id": "c065", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "low", "why": "domain dynamic import() of infra modules via computed path"}
+{"id": "c066", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain imports config type"}
+{"id": "c067", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain imports config"}
+{"id": "c068", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c069", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment mentions infra path, not an import"}
+{"id": "c070", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c071", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, not an import"}
+{"id": "c072", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "app imports pg PoolClient"}
+{"id": "c073", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain import('../app')"}
+{"id": "c074", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain imports infra index"}
+{"id": "c075", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain imports config"}
+{"id": "c076", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "domain reads process.env.CURRENCY"}
+{"id": "c077", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, not an import"}
+{"id": "c078", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "app comment mentions process.env"}
+{"id": "c079", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app import() of infra/db/pool"}
+{"id": "c080", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "new domain file imports app"}
+{"id": "c081", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c082", "label": "GREEN", "rules": [], "confidence": "high", "why": "re-export via src/infra/index.ts is allowed"}
+{"id": "c083", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain imports infra mailer"}
+{"id": "c084", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain re-exports from app/ports"}
+{"id": "c085", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "infra reads process.env.SMTP_PORT"}
+{"id": "c086", "label": "GREEN", "rules": [], "confidence": "high", "why": "src/jobs not governed"}
+{"id": "c087", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "app re-exports from pg"}
+{"id": "c088", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c089", "label": "GREEN", "rules": [], "confidence": "high", "why": "src/jobs not governed"}
+{"id": "c090", "label": "GREEN", "rules": [], "confidence": "high", "why": "no rule forbids app importing config"}
+{"id": "c091", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "domain comment mentions process.env"}
+{"id": "c092", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "PORT_ADMIN not allowlisted"}
+{"id": "c093", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain imports app/place-order"}
+{"id": "c094", "label": "GREEN", "rules": [], "confidence": "high", "why": "main.ts not governed"}
+{"id": "c095", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "domain string contains process.env"}
+{"id": "c096", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "domain imports pg"}
+{"id": "c097", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app import() of infra/mail/mailer"}
+{"id": "c098", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app re-exports infra/http/routes"}
+{"id": "c099", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, no process.env"}
+{"id": "c100", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "process.env[name] in config"}
+{"id": "c101", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app imports infra/db repo"}
+{"id": "c102", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "process.env['LOG_LEVEL'] bracket form"}
+{"id": "c103", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain imports config"}
+{"id": "c104", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "domain comment mentions process.env"}
+{"id": "c105", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain re-exports from app"}
+{"id": "c106", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c107", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c108", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain re-exports infra type"}
+{"id": "c109", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c110", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c111", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "infra reads process.env"}
+{"id": "c112", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "new domain file imports app/ports"}
+{"id": "c113", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c114", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "infra comment mentions process.env"}
+{"id": "c115", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c116", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain re-exports config"}
+{"id": "c117", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c118", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "app reads process.env.FIXED_NOW"}
+{"id": "c119", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c120", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c121", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, not import"}
+{"id": "c122", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c123", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain import() type from config"}
+{"id": "c124", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c125", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app re-exports infra/db file"}
+{"id": "c126", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain re-exports infra mailer"}
+{"id": "c127", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c128", "label": "GREEN", "rules": [], "confidence": "high", "why": "app uses src/infra index"}
+{"id": "c129", "label": "GREEN", "rules": [], "confidence": "high", "why": "main.ts not governed"}
+{"id": "c130", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c131", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain imports app/index"}
+{"id": "c132", "label": "GREEN", "rules": [], "confidence": "high", "why": "README.md is not a .ts file"}
+{"id": "c133", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c134", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app import() template into infra/db"}
+{"id": "c135", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "new domain file imports config"}
+{"id": "c136", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "pool.ts moved into src/app imports pg"}
+{"id": "c137", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain imports infra repo type"}
+{"id": "c138", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app imports infra/db/pool"}
+{"id": "c139", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "config comment process.env.SMTP_PASSWORD"}
+{"id": "c140", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c141", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c142", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain import() config"}
+{"id": "c143", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c144", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "domain import('pg')"}
+{"id": "c145", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "infra comment mentions process.env"}
+{"id": "c146", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "domain re-exports from pg"}
+{"id": "c147", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "app reads process.env[...]"}
+{"id": "c148", "label": "GREEN", "rules": [], "confidence": "high", "why": "src/cli not governed"}
+{"id": "c149", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c150", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c151", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "app import('pg')"}
+{"id": "c152", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c153", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain import type * from config"}
+{"id": "c154", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c155", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment names allowlisted LOG_LEVEL"}
+{"id": "c156", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app imports infra/mail type"}
+{"id": "c157", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "src/domain spec .ts imports app"}
+{"id": "c158", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c159", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app imports infra/db repo"}
+{"id": "c160", "label": "GREEN", "rules": [], "confidence": "high", "why": "infra dynamic import within infra, no rule"}
+{"id": "c161", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c162", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c163", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "DATABASE_URL_REPLICA not allowlisted"}
+{"id": "c164", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c165", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c166", "label": "GREEN", "rules": [], "confidence": "high", "why": "src/infra/index is allowed"}
+{"id": "c167", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c168", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain import('../app')"}
+{"id": "c169", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, not import"}
+{"id": "c170", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain re-exports config type"}
+{"id": "c171", "label": "RED", "rules": ["domain and app must not import pg"], "confidence": "high", "why": "app imports pg/lib/utils"}
+{"id": "c172", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "infra reads process.env.READ_ONLY"}
+{"id": "c173", "label": "GREEN", "rules": [], "confidence": "high", "why": "no rule forbids infra importing config"}
+{"id": "c174", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c175", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment, not import"}
+{"id": "c176", "label": "GREEN", "rules": [], "confidence": "high", "why": "no rule forbids app importing config"}
+{"id": "c177", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain imports config type"}
+{"id": "c178", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "app reads process.env"}
+{"id": "c179", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain imports infra repo"}
+{"id": "c180", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c181", "label": "GREEN", "rules": [], "confidence": "high", "why": "src/jobs not governed"}
+{"id": "c182", "label": "GREEN", "rules": [], "confidence": "high", "why": "no rule forbids infra importing app"}
+{"id": "c183", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain imports app/ports"}
+{"id": "c184", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c185", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c186", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c187", "label": "RED", "rules": ["app only via src/infra/index.ts"], "confidence": "high", "why": "app re-exports infra/mail/mailer"}
+{"id": "c188", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c189", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c190", "label": "GREEN", "rules": [], "confidence": "high", "why": "comment text is not an import"}
+{"id": "c191", "label": "RED", "rules": ["domain must not import src/config"], "confidence": "high", "why": "domain re-exports config namespace"}
+{"id": "c192", "label": "RED", "rules": ["domain/app/infra no process.env, comments included"], "confidence": "high", "why": "app comment mentions process.env"}
+{"id": "c193", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c194", "label": "GREEN", "rules": [], "confidence": "high", "why": "main.ts not governed"}
+{"id": "c195", "label": "GREEN", "rules": [], "confidence": "high", "why": ".js file, rules govern .ts only"}
+{"id": "c196", "label": "RED", "rules": ["domain must not import src/infra"], "confidence": "high", "why": "domain import() infra/db"}
+{"id": "c197", "label": "RED", "rules": ["domain must not import src/app"], "confidence": "high", "why": "domain multiline import type from app"}
+{"id": "c198", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}
+{"id": "c199", "label": "RED", "rules": ["config process.env.NAME allowlist / no process.env[...]"], "confidence": "high", "why": "process.env.TZ not allowlisted"}
+{"id": "c200", "label": "GREEN", "rules": [], "confidence": "high", "why": "breaks no rule"}

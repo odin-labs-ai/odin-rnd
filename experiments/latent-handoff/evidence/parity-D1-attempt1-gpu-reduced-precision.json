@@ -1,0 +1,43 @@
+{
+  "note": "Parity attempt 1 (superseded), REDACTED: it read out EXP items c001-c020, which included counted items c006-c020, so its per-item readouts are not kept (iteration happens on practice rows only; no label was ever read and nothing was scored). Kept: the failure itself. The cause was MLX's reduced-precision GPU float32 matmul (max |error| 3.5e-2 vs float64 on a 3072x1024 map), fixed with a split-precision product; parity now runs on held-out non-item text.",
+  "binding": {
+    "receiverDtype": "float32",
+    "verdict": {
+      "A2a": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 0.001982804247698977,
+        "pass": false
+      },
+      "A2b": {
+        "items": 20,
+        "agree": 20,
+        "maxDp": 0.0013209933297006482,
+        "pass": false
+      }
+    },
+    "maxAbsDeltaKeys": 0.024775028228759766,
+    "maxAbsDeltaValues": 0.005639329552650452,
+    "weightsSha256": "0b85dc0066b04316b96c4b7ccbb2bfd4e7e8d281f148d2ae1e085cba62cc31cd"
+  },
+  "informational": {
+    "receiverDtype": "bfloat16",
+    "verdict": {
+      "A2a": {
+        "items": 20,
+        "agree": 19,
+        "maxDp": 0.031209373373756233,
+        "pass": false
+      },
+      "A2b": {
+        "items": 20,
+        "agree": 18,
+        "maxDp": 0.054430163170957,
+        "pass": false
+      }
+    },
+    "maxAbsDeltaKeys": 0.024775028228759766,
+    "maxAbsDeltaValues": 0.005639329552650452,
+    "weightsSha256": "0b85dc0066b04316b96c4b7ccbb2bfd4e7e8d281f148d2ae1e085cba62cc31cd"
+  }
+}

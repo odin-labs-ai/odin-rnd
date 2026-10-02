@@ -1,0 +1,12 @@
+{
+  "note": "Vendored by sha256, byte-identical, from the private odin-labs repo (bundle 2 WO-01, PR #5244). Never edited here: ffr8.mjs refuses to load if any hash differs.",
+  "source": "odin-labs-ai/odin-labs",
+  "commit": "10cffe0226d8dde0b971880059a98d1c98e4629d",
+  "lastChangedIn": "bed074f1b8eb0a1aa002aee1f159ab29acce69ed",
+  "schemaId": "ffr.v1@ad3aec7c87bc",
+  "files": {
+    "ffr.v1.schema.json": "ad3aec7c87bc43fef79d2e9fd8ae91b8df2898a5bb177e8064f4f7b72b48a8fe",
+    "ffr-model-family.json": "b49786fcd2caf9e5042a1fa2668253973aa021701b2fa8414766f38ddd9228fd",
+    "validate.mjs": "20d95bc8d4a442e0de21028868b1399ef996af9d6c4d863d2254fc104428098f"
+  }
+}

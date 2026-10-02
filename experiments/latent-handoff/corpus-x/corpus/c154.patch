@@ -1,0 +1,16 @@
+diff --git a/src/app/register-customer.ts b/src/app/register-customer.ts
+index 6dd5a56..1d4fcc1 100644
+--- a/src/app/register-customer.ts
++++ b/src/app/register-customer.ts
+@@ -1,9 +1,10 @@
+-import { createCustomer } from '../domain';
++import { createCustomer, DomainError } from '../domain';
+ import type { CustomerRepository } from './ports';
+ 
+ export async function registerCustomerUseCase(
+   customers: CustomerRepository,
+   input: { id: string; name: string; email: string },
+ ): Promise<void> {
++  if (await customers.get(input.id)) throw new DomainError('customer.exists', `customer ${input.id} already exists`);
+   await customers.save(createCustomer(input.id, input.name, input.email));
+ }

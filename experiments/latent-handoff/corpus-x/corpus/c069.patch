@@ -1,0 +1,12 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..33d1266 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,6 +1,7 @@
+ import type { Money } from './money';
+ import { orderTotal, type Order } from './order';
+ 
++// Invoices are persisted by PgInvoiceRepository in src/infra/db/invoice-repository.ts.
+ export interface Invoice {
+   readonly number: string;
+   readonly orderId: string;

@@ -1,0 +1,8 @@
+diff --git a/src/app/http.ts b/src/app/http.ts
+new file mode 100644
+index 0000000..a254f6c
+--- /dev/null
++++ b/src/app/http.ts
+@@ -0,0 +1,2 @@
++// The HTTP entry point, next to the use cases it serves.
++export * from '../infra/http/routes';

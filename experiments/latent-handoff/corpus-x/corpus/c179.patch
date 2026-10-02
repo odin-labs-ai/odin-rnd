@@ -1,0 +1,15 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..52092d8 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,3 +1,4 @@
++import { PgInvoiceRepository } from '../infra/db/invoice-repository';
+ import type { Money } from './money';
+ import { orderTotal, type Order } from './order';
+ 
+@@ -11,3 +12,5 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export const invoiceStore = (pool: ConstructorParameters<typeof PgInvoiceRepository>[0]) => new PgInvoiceRepository(pool, 'INV');

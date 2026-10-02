@@ -1,0 +1,12 @@
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..d7bd3f0 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -1,5 +1,5 @@
+-export * from './customer';
+-export * from './errors';
++export { createCustomer, type Customer } from './customer';
++export { DomainError } from './errors';
+ export * from './invoice';
+ export * from './money';
+ export * from './order';

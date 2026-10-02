@@ -1,0 +1,10 @@
+diff --git a/src/infra/http/plugins.ts b/src/infra/http/plugins.ts
+new file mode 100644
+index 0000000..43f5e6a
+--- /dev/null
++++ b/src/infra/http/plugins.ts
+@@ -0,0 +1,4 @@
++export async function loadPlugin(name: string): Promise<unknown> {
++  if (!/^[a-z-]+$/.test(name)) throw new Error(`bad plugin name ${name}`);
++  return import(`./plugins/${name}`);
++}

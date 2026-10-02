@@ -1,0 +1,15 @@
+diff --git a/src/infra/db/listen.ts b/src/infra/db/listen.ts
+new file mode 100644
+index 0000000..02e7e24
+--- /dev/null
++++ b/src/infra/db/listen.ts
+@@ -0,0 +1,9 @@
++import pg from 'pg';
++
++export async function onInvoiceIssued(connectionString: string, handler: (payload: string) => void): Promise<pg.Client> {
++  const listener = new pg.Client({ connectionString });
++  await listener.connect();
++  listener.on('notification', message => handler(message.payload ?? ''));
++  await listener.query('listen invoice_issued');
++  return listener;
++}

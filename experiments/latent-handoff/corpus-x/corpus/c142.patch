@@ -1,0 +1,14 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..fbffda3 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -23,3 +23,9 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function debugTotals(order: Order): Promise<string | undefined> {
++  const settingsModule = await import('../config/settings');
++  if (settingsModule.loadSettings().logLevel !== 'debug') return undefined;
++  return order.lines.map(line => `${line.sku} x${line.quantity}`).join(', ');
++}

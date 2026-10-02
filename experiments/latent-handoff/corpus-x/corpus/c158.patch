@@ -1,0 +1,11 @@
+diff --git a/test/helpers/env.ts b/test/helpers/env.ts
+new file mode 100644
+index 0000000..93c22ef
+--- /dev/null
++++ b/test/helpers/env.ts
+@@ -0,0 +1,5 @@
++export function withEnv<T>(vars: Record<string, string>, run: () => T): T {
++  const saved = { ...process.env };
++  Object.assign(process.env, vars);
++  try { return run(); } finally { process.env = saved; }
++}

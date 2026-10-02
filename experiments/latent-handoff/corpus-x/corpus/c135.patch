@@ -1,0 +1,13 @@
+diff --git a/src/domain/reminders/schedule.ts b/src/domain/reminders/schedule.ts
+new file mode 100644
+index 0000000..b9bfc28
+--- /dev/null
++++ b/src/domain/reminders/schedule.ts
+@@ -0,0 +1,7 @@
++import { loadSettings } from '../../config/settings';
++import type { Invoice } from '../invoice';
++
++export function reminderDays(invoice: Invoice): number[] {
++  const days = [invoice.dueDays - 7, invoice.dueDays, invoice.dueDays + 14].filter(day => day > 0);
++  return loadSettings().logLevel === 'debug' ? days.map(() => 0) : days;
++}

@@ -1,0 +1,21 @@
+diff --git a/src/domain/invoice.ts b/src/domain/invoice.ts
+index ad74456..ee83b80 100644
+--- a/src/domain/invoice.ts
++++ b/src/domain/invoice.ts
+@@ -1,3 +1,7 @@
++import type {
++  CustomerRepository,
++  OrderRepository,
++} from '../app';
+ import type { Money } from './money';
+ import { orderTotal, type Order } from './order';
+ 
+@@ -11,3 +15,8 @@ export interface Invoice {
+ export function invoiceFor(order: Order, number: string, dueDays = 30): Invoice {
+   return { number, orderId: order.id, amount: orderTotal(order), dueDays };
+ }
++
++export async function recipientOf(invoice: Invoice, orders: OrderRepository, customers: CustomerRepository): Promise<string | undefined> {
++  const placed = await orders.get(invoice.orderId);
++  return placed ? (await customers.get(placed.customerId))?.email : undefined;
++}

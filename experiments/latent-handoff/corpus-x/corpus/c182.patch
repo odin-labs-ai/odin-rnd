@@ -1,0 +1,13 @@
+diff --git a/src/infra/queue/consumer.ts b/src/infra/queue/consumer.ts
+new file mode 100644
+index 0000000..4e2facb
+--- /dev/null
++++ b/src/infra/queue/consumer.ts
+@@ -0,0 +1,7 @@
++import { placeOrderUseCase } from '../../app/place-order';
++import type { Services } from '../index';
++
++export async function handlePlaceMessage(services: Services, body: string): Promise<void> {
++  const { orderId } = JSON.parse(body) as { orderId: string };
++  await placeOrderUseCase(services.orders, services.customers, orderId);
++}

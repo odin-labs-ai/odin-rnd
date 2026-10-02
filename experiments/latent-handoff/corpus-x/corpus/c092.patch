@@ -1,0 +1,19 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..ba1f3c3 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -1,5 +1,6 @@
+ export interface Settings {
+   port: number;
++  adminPort: number;
+   databaseUrl: string;
+   logLevel: 'debug' | 'info' | 'warn';
+   smtpHost: string;
+@@ -15,6 +16,7 @@ function required(name: string, value: string | undefined): string {
+ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),
++    adminPort: Number(process.env.PORT_ADMIN ?? '9090'),
+     databaseUrl: required('DATABASE_URL', process.env.DATABASE_URL),
+     logLevel: (process.env.LOG_LEVEL ?? 'info') as Settings['logLevel'],
+     smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),

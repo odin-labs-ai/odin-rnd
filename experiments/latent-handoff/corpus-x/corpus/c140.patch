@@ -1,0 +1,13 @@
+diff --git a/src/infra/mail/mailer.ts b/src/infra/mail/mailer.ts
+index 8b44948..d3e587f 100644
+--- a/src/infra/mail/mailer.ts
++++ b/src/infra/mail/mailer.ts
+@@ -17,4 +17,8 @@ export class SmtpNotifier implements Notifier {
+       text: `Amount due: ${(invoice.amount.cents / 100).toFixed(2)} ${invoice.amount.currency}`,
+     });
+   }
++
++  async customerWelcomed(customer: Customer): Promise<void> {
++    await this.transport.sendMail({ from: this.from, to: customer.email, subject: 'Welcome', text: `Hello ${customer.name}` });
++  }
+ }

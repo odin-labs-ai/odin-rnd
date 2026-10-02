@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "note": "EXP 008 mapper calibration text: public, MIT-licensed code and docs, fetched by URL at a pinned commit and checked by sha256. Disjoint from EXP 005 / EXP 008-X (overlap-x.mjs --calibration) and from the L distractor (lodash). Nothing private; never committed as text.",
+  "licenses": {
+    "colinhacks/zod": "MIT",
+    "expressjs/express": "MIT"
+  },
+  "files": [
+    {
+      "repo": "colinhacks/zod",
+      "commit": "59bbc03e10c636b9eb3c393dfeb552819774ec21",
+      "path": "packages/zod/src/v3/types.ts",
+      "url": "https://raw.githubusercontent.com/colinhacks/zod/59bbc03e10c636b9eb3c393dfeb552819774ec21/packages/zod/src/v3/types.ts",
+      "bytes": 160442,
+      "sha256": "73b9529564a34fc028a5a62c17e09148747b737039b78b124e84254cb886411a"
+    },
+    {
+      "repo": "colinhacks/zod",
+      "commit": "59bbc03e10c636b9eb3c393dfeb552819774ec21",
+      "path": "packages/docs-v3/home.md",
+      "url": "https://raw.githubusercontent.com/colinhacks/zod/59bbc03e10c636b9eb3c393dfeb552819774ec21/packages/docs-v3/home.md",
+      "bytes": 95059,
+      "sha256": "3a3f4083aa98f9a7b81bfc52ddf00d4825a9a2217f89a46587cda98589faec3e"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "lib/response.js",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/lib/response.js",
+      "bytes": 24876,
+      "sha256": "2be00bc1c458a975bc7526d77092db4bd5e55208f5a541c2db51536913775754"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "lib/application.js",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/lib/application.js",
+      "bytes": 13971,
+      "sha256": "93933d053fb70337594e0826536acfe0e9787007e199878dbd357b99f026e5c7"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "lib/request.js",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/lib/request.js",
+      "bytes": 11688,
+      "sha256": "c6915039cdb51527eb70c14f13a8a481e87500bdcb187e9895645c002417b887"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "lib/utils.js",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/lib/utils.js",
+      "bytes": 5293,
+      "sha256": "4bd3bf9c911e086d1911954708de7a6c384ed924360e3fd1d4a43c98bd68b112"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "lib/view.js",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/lib/view.js",
+      "bytes": 3809,
+      "sha256": "74f4171b66263e22481820bc5975708f7dd8a61484f570aac7c5b4ab77ecbd79"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "Readme.md",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/Readme.md",
+      "bytes": 9952,
+      "sha256": "b64824e537697508d0bc7bc65a0897283bb1d8b5f72ede4ff8c1ffb3363aec39"
+    },
+    {
+      "repo": "expressjs/express",
+      "commit": "dbac741a49a5a64336b70c06e85c2e2706e36336",
+      "path": "History.md",
+      "url": "https://raw.githubusercontent.com/expressjs/express/dbac741a49a5a64336b70c06e85c2e2706e36336/History.md",
+      "bytes": 123246,
+      "sha256": "64181f7f1f0cfa652d3fbed41ff5612724d14278f5c2fbcb04f1d83d41b8b285"
+    }
+  ],
+  "parityHeldOut": {
+    "note": "Held-out public text for the mapper parity gate: never calibration text and never an EXP 005 / 008-X item (iteration happens on practice rows only, so parity reads out no counted item).",
+    "files": [
+      {
+        "repo": "colinhacks/zod",
+        "commit": "59bbc03e10c636b9eb3c393dfeb552819774ec21",
+        "path": "packages/zod/src/v4/core/util.ts",
+        "url": "https://raw.githubusercontent.com/colinhacks/zod/59bbc03e10c636b9eb3c393dfeb552819774ec21/packages/zod/src/v4/core/util.ts",
+        "bytes": 47589,
+        "sha256": "ee6d6992291b45ca83995c7471c4d0c2182fd9e4113da86c455f1b2074bb4ac6"
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..dffe4b4 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -14,6 +14,8 @@ export interface Order {
+   readonly status: 'open' | 'placed' | 'cancelled';
+ }
+ 
++export type TraceLevel = import('../config/settings').Settings['logLevel'];
++
+ export function orderTotal(order: Order): Money {
+   return order.lines.reduce((sum, line) => add(sum, multiply(line.unitPrice, line.quantity)), money(0));
+ }

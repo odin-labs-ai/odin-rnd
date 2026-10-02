@@ -1,0 +1,12 @@
+diff --git a/src/infra/db/customer-repository.ts b/src/infra/db/customer-repository.ts
+index 0e7d353..2b7c457 100644
+--- a/src/infra/db/customer-repository.ts
++++ b/src/infra/db/customer-repository.ts
+@@ -11,6 +11,7 @@ export class PgCustomerRepository implements CustomerRepository {
+   }
+ 
+   async save(customer: Customer): Promise<void> {
++    if (process.env.READ_ONLY === '1') throw new Error('customers are read-only on this instance');
+     await this.pool.query('insert into customers (id, body) values ($1, $2)', [customer.id, customer]);
+   }
+ }

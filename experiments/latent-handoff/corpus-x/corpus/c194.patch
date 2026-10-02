@@ -1,0 +1,17 @@
+diff --git a/src/main.ts b/src/main.ts
+index 275a1be..5dc4ebd 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -2,6 +2,12 @@ import { loadSettings } from './config/settings';
+ import { createHttpServer, createServices } from './infra';
+ 
+ const settings = loadSettings();
++if (process.argv.includes('--mail-check')) {
++  const mailer = await import('./infra/mail/mailer');
++  new mailer.SmtpNotifier(settings.smtpHost, settings.smtpFrom);
++  console.log('mail settings accepted');
++  process.exit(Number(!settings.smtpHost));
++}
+ const services = createServices(settings);
+ createHttpServer(services).listen(settings.port, () => {
+   console.log(`ledger-service listening on ${settings.port}`);

@@ -1,0 +1,11 @@
+diff --git a/src/infra/db/pool.ts b/src/infra/db/pool.ts
+index a813586..10aff95 100644
+--- a/src/infra/db/pool.ts
++++ b/src/infra/db/pool.ts
+@@ -1,5 +1,6 @@
+ import pg from 'pg';
+ 
++// The pool size is fixed at ten; making it configurable starts in src/config/settings.ts.
+ export function createPool(connectionString: string): pg.Pool {
+   return new pg.Pool({ connectionString, max: 10 });
+ }

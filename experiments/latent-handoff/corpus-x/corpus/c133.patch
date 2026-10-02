@@ -1,0 +1,17 @@
+diff --git a/docs/runbook.md b/docs/runbook.md
+new file mode 100644
+index 0000000..10291d0
+--- /dev/null
++++ b/docs/runbook.md
+@@ -0,0 +1,11 @@
++# Runbook
++
++## Configuration
++
++The service reads `process.env.PORT`, `process.env.DATABASE_URL`, `process.env.LOG_LEVEL`,
++`process.env.SMTP_HOST`, `process.env.SMTP_FROM` and `process.env.INVOICE_PREFIX` in `src/config/settings.ts`.
++A cache would need `process.env.REDIS_URL`; it is not wired yet.
++
++## Database
++
++`src/infra/db/pool.ts` opens a `pg` pool of ten connections. Restart the service after a failover.

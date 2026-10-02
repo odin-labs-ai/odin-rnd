@@ -1,0 +1,16 @@
+diff --git a/src/infra/db/customer-repository.ts b/src/infra/db/customer-repository.ts
+index 0e7d353..da1d910 100644
+--- a/src/infra/db/customer-repository.ts
++++ b/src/infra/db/customer-repository.ts
+@@ -1,9 +1,9 @@
+-import type pg from 'pg';
++import type { Pool as PgPool } from 'pg';
+ import type { CustomerRepository } from '../../app/ports';
+ import type { Customer } from '../../domain';
+ 
+ export class PgCustomerRepository implements CustomerRepository {
+-  constructor(private readonly pool: pg.Pool) {}
++  constructor(private readonly pool: PgPool) {}
+ 
+   async get(id: string): Promise<Customer | undefined> {
+     const result = await this.pool.query('select body from customers where id = $1', [id]);
