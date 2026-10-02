@@ -14,6 +14,7 @@ import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 import { publishedParentSha256 } from './jev-gate-amendment.mjs';
 import { amendment01Sha256 } from './jev-gate-amendment-02.mjs';
 import { ninaAttribution } from './jev-gate-prereg.mjs';
+import { replaceHead } from './page-head.mjs';
 
 const dir = 'experiments/jev-gate';
 export const resultsDir = `${dir}/results`;
@@ -311,6 +312,18 @@ export function renderSpotlightCard(data) {
   return `<article class="project-row project-featured" id="project-nina"><div class="project-number">005<span>HARNESS</span></div><div class="project-description"><h3><a href="${notePath}#${harnessSectionId}">nina, the harness we measured</a></h3><p>nina 0.34.0's reviewer, deciding whether a change breaks mechanical architecture rules, met the bar fixed before the counted run: ${escape(rate(c('missed-drift').runLevel))} runs missed drift (${escape(c('missed-drift').itemLevel.state)} on the items), ${escape(rate(c('false-reject').runLevel))} runs falsely rejected (${escape(c('false-reject').itemLevel.state)}), the same verdict on ${c('self-agreement').x} of ${c('self-agreement').n} changes, and no patch. In ${f.diff.blind.runs} of the ${f.diff.runs} runs this experiment's tool fence kept it from seeing the diff, so it audited the small repository against the rules instead; those runs were still all correct, because the base tree is clean. Nothing else about nina was measured.</p><div class="project-links"><a href="https://github.com/xhulz/nina">github.com/xhulz/nina</a><a href="${notePath}#${harnessSectionId}">What was measured</a><a href="${resultsDataPath}">The record</a></div><p class="project-note">${nina()}.</p></div><dl class="project-spec"><div><dt>Measured</dt><dd>nina 0.34.0 reviewer</dd></div><div><dt>Bar</dt><dd>${escape(results.spotlight.verdict)}</dd></div><div><dt>Runs</dt><dd>${c('zero-patches').harnessFailures.n}</dd></div></dl></article>`;
 }
 
+// The stations intro (a hand-written sentence of the home page) states station 06's experiment as pre-registered with no
+// results; once its results are committed, those two clauses state what was measured instead, from the record. Without
+// results the build never calls this and the page keeps its sentence.
+export const introBeforeRun = 'and one experiment written down before it runs.';
+export const introNoResults = 'and one pre-registration with no results yet.';
+export function qualifyIntro(page, data) {
+  const { results, facts: f } = data;
+  for (const marker of [introBeforeRun, introNoResults]) assert.equal(page.split(marker).length, 2, `The stations intro must contain ${JSON.stringify(marker)} exactly once`);
+  return page.replace(introBeforeRun, 'and one experiment written down before it ran.')
+    .replace(introNoResults, `and one pre-registered experiment, measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.`);
+}
+
 // The built home page: row 004 and the journal row show the measured state, and nina's card follows row 004.
 const row004Start = '<article class="project-row project-featured"><div class="project-number">004';
 export function qualifyHomeResults(page, data) {
@@ -327,8 +340,8 @@ export function qualifyHomeResults(page, data) {
   row = `${row.slice(0, para)} <a class="amendment-qualifier" href="${notePath}#${resultsSectionId}">Measured ${escape(day(f.measuredOn))}. ${escape(headline(data))} ${escape(headlineContext(data))}</a>${row.slice(para)}`;
   const out = page.slice(0, at) + row + renderSpotlightCard(data) + page.slice(end);
   const journalRow = 'Pre-registered, no results yet.</p></div><span class="journal-arrow"';
-  assert.equal(out.split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
-  return out.replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
+  assert.equal(qualifyIntro(out, data).split(journalRow).length, 2, 'The journal row must say it is pre-registered exactly once');
+  return qualifyIntro(out, data).replace(journalRow, `Pre-registered; measured ${escape(day(f.measuredOn))}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}.</p></div><span class="journal-arrow"`);
 }
 
 // The built note: the meta line says measured, the parent's "no results yet" sentences point at the results,
@@ -344,5 +357,21 @@ export function amendNoteResults(note, data) {
   out = out.replace(' · NO RESULTS YET</p>', ` · MEASURED ${day(f.measuredOn).toUpperCase()}</p>`)
     .replace('including a refutation.</p>', `including a refutation.${qualifier}</p>`)
     .replace(bodyOpen, `${bodyOpen}${renderResultsSection(data)}${renderHarnessSection(data)}`);
-  return out;
+  return replaceHead(out, measuredHead(data));
+}
+
+/**
+ * The note's <head> once measured: the title and description say what the results say, not that the page was published
+ * before any gate ran (the body keeps the pre-registration as published). Every phrase comes from the results record,
+ * the spotlight decision and the dated records.
+ */
+export function measuredHead(data, root = '.') {
+  const { results, facts: f } = data, spot = results.spotlight;
+  const prereg = json(root, `${dir}/preregistration.json`), a01 = json(root, `${dir}/amendment-01.json`), a02 = json(root, `${dir}/amendment-02.json`);
+  const e = prereg.experiment;
+  const nina = spot.verdict === 'PASS' ? `nina's reviewer met the spotlight bar, and the spotlight ${spotlightShown(data) ? 'is featured' : 'is held'}` : 'nina\'s reviewer did not meet the spotlight bar';
+  return {
+    title: `${e.title}: measured`,
+    description: `Field notes from Odin R&D. ${e.id}, ${e.title}, measured ${day(f.measuredOn)}: ${results.claim.refuted ? 'the claim is refuted' : 'the claim holds'}; ${nina}. Pre-registered ${day(e.authoredOn)}; amendment 01 ${day(a01.date)}, amendment 02 ${day(a02.date)}.`,
+  };
 }
