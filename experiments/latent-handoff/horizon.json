@@ -318,7 +318,7 @@
     {
       "id": "ffr-schema",
       "state": "met",
-      "statement": "The flight-recorder schema ffr.v1 is frozen at ffr.v1@ad3aec7c87bc, with a validator. EXP 008 vendors it byte for byte (experiments/latent-handoff/vendor/ffr/ffr.v1.schema.json in this site's source has the same sha256) and emits it.",
+      "statement": "The flight-recorder schema ffr.v1 is frozen at ffr.v1@ad3aec7c87bc, with a validator. EXP 008 vendors it byte for byte (experiments/latent-handoff/vendor/ffr/ffr.v1.schema.json in this site's source has the same sha256) and will emit it for every arm row of its counted run.",
       "source": {
         "repository": "Odin Labs' private monorepo",
         "record": ".claude/schemas/ffr.v1.schema.json",
