@@ -1,0 +1,49 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..b828850 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -1,4 +1,4 @@
+-import { DomainError, orderTotal, placeOrder } from '../domain';
++import { DomainError, markPlaced, orderTotal } from '../domain';
+ import type { CustomerRepository, OrderRepository } from './ports';
+ 
+ export async function placeOrderUseCase(
+@@ -13,5 +13,5 @@ export async function placeOrderUseCase(
+   if (orderTotal(order).cents > customer.creditLimitCents) {
+     throw new DomainError('order.credit', 'order exceeds the credit limit');
+   }
+-  await orders.save(placeOrder(order));
++  await orders.save(markPlaced(order));
+ }
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..88788b9 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -18,7 +18,7 @@ export function orderTotal(order: Order): Money {
+   return order.lines.reduce((sum, line) => add(sum, multiply(line.unitPrice, line.quantity)), money(0));
+ }
+ 
+-export function placeOrder(order: Order): Order {
++export function markPlaced(order: Order): Order {
+   if (order.lines.length === 0) throw new DomainError('order.empty', 'an order needs at least one line');
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+diff --git a/test/order.test.ts b/test/order.test.ts
+index 480da82..e7eb960 100644
+--- a/test/order.test.ts
++++ b/test/order.test.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+-import { money, orderTotal, placeOrder, type Order } from '../src/domain';
++import { markPlaced, money, orderTotal, type Order } from '../src/domain';
+ 
+ const order: Order = {
+   id: 'o-1',
+@@ -14,5 +14,5 @@ test('order total multiplies quantity by unit price', () => {
+ });
+ 
+ test('placing an order changes its status', () => {
+-  assert.equal(placeOrder(order).status, 'placed');
++  assert.equal(markPlaced(order).status, 'placed');
+ });

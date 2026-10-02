@@ -1,0 +1,11 @@
+diff --git a/src/config/env.ts b/src/config/env.ts
+new file mode 100644
+index 0000000..df654a1
+--- /dev/null
++++ b/src/config/env.ts
+@@ -0,0 +1,5 @@
++export type KnownName = 'PORT' | 'LOG_LEVEL' | 'INVOICE_PREFIX';
++
++export function readKnown(name: KnownName): string | undefined {
++  return process.env[name];
++}

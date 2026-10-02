@@ -1,0 +1,24 @@
+diff --git a/src/config/settings.ts b/src/config/settings.ts
+index 96ec4b5..6433c78 100644
+--- a/src/config/settings.ts
++++ b/src/config/settings.ts
+@@ -12,13 +12,17 @@ function required(name: string, value: string | undefined): string {
+   return value;
+ }
+ 
++function withDefault(value: string | undefined, fallback: string): string {
++  return value === undefined || value === '' ? fallback : value;
++}
++
+ export function loadSettings(): Settings {
+   return {
+     port: Number(process.env.PORT ?? '8080'),
+     databaseUrl: required('DATABASE_URL', process.env.DATABASE_URL),
+     logLevel: (process.env.LOG_LEVEL ?? 'info') as Settings['logLevel'],
+     smtpHost: required('SMTP_HOST', process.env.SMTP_HOST),
+-    smtpFrom: process.env.SMTP_FROM ?? 'no-reply',
+-    invoicePrefix: process.env.INVOICE_PREFIX ?? 'INV',
++    smtpFrom: withDefault(process.env.SMTP_FROM, 'no-reply'),
++    invoicePrefix: withDefault(process.env.INVOICE_PREFIX, 'INV'),
+   };
+ }

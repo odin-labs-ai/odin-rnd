@@ -1,0 +1,30 @@
+diff --git a/src/app/place-order.ts b/src/app/place-order.ts
+index dbc83b5..24404ac 100644
+--- a/src/app/place-order.ts
++++ b/src/app/place-order.ts
+@@ -1,6 +1,8 @@
+ import { DomainError, orderTotal, placeOrder } from '../domain';
+ import type { CustomerRepository, OrderRepository } from './ports';
+ 
++export const MAX_ORDER_LINES = 50;
++
+ export async function placeOrderUseCase(
+   orders: OrderRepository,
+   customers: CustomerRepository,
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..de64264 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,3 +1,4 @@
++import { MAX_ORDER_LINES } from '../app/place-order';
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
+ 
+@@ -20,6 +21,7 @@ export function orderTotal(order: Order): Money {
+ 
+ export function placeOrder(order: Order): Order {
+   if (order.lines.length === 0) throw new DomainError('order.empty', 'an order needs at least one line');
++  if (order.lines.length > MAX_ORDER_LINES) throw new DomainError('order.size', `at most ${MAX_ORDER_LINES} lines per order`);
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }

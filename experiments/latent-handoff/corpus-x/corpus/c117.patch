@@ -1,0 +1,17 @@
+diff --git a/test/invoice.test.ts b/test/invoice.test.ts
+new file mode 100644
+index 0000000..fe8c4da
+--- /dev/null
++++ b/test/invoice.test.ts
+@@ -0,0 +1,11 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { invoiceFor, money, type Order } from '../src/domain';
++
++const placed: Order = { id: 'o-2', customerId: 'c-2', status: 'placed', lines: [{ sku: 'lamp', quantity: 3, unitPrice: money(2_000) }] };
++
++test('an invoice defaults to thirty days', () => {
++  const invoice = invoiceFor(placed, 'INV-000001');
++  assert.equal(invoice.dueDays, 30);
++  assert.equal(invoice.amount.cents, 6_000);
++});

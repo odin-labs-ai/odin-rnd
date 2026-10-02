@@ -1,0 +1,29 @@
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index b1faaab..49426b0 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -3,3 +3,4 @@ export * from './errors';
+ export * from './invoice';
+ export * from './money';
+ export * from './order';
++export * from './order-summary';
+diff --git a/src/domain/order-summary.ts b/src/domain/order-summary.ts
+new file mode 100644
+index 0000000..769792a
+--- /dev/null
++++ b/src/domain/order-summary.ts
+@@ -0,0 +1,14 @@
++import type { InvoiceRepository, OrderRepository } from '../app';
++import { orderTotal, type Order } from './order';
++
++export interface OrderSummary {
++  readonly orderId: string;
++  readonly lineCount: number;
++  readonly totalCents: number;
++}
++
++export async function summarise(orders: OrderRepository, _invoices: InvoiceRepository, orderId: string): Promise<OrderSummary | undefined> {
++  const found: Order | undefined = await orders.get(orderId);
++  if (!found) return undefined;
++  return { orderId, lineCount: found.lines.length, totalCents: orderTotal(found).cents };
++}

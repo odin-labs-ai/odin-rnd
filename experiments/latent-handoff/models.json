@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "note": "EXP 008 (latent-handoff) model pins. Every file pinned by sha256 at an exact HF revision; weights are never committed (cache root LH_MODEL_CACHE). Verified by `node experiments/latent-handoff/pins.mjs --verify`.",
+  "toolchain": {
+    "mlxLm": "0.31.3",
+    "mlx": "0.31.2"
+  },
+  "models": {
+    "qwen3-1.7b": {
+      "repo": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "source": "upstream",
+      "files": {
+        "LICENSE": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+        "config.json": "1ddb5b89ebc90dcb417a45c213d818577e65976454d29385c8f6140771d95197",
+        "generation_config.json": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2",
+        "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+        "model-00001-of-00002.safetensors": "169ad53ec313c3a34b06c0809216e4fc072cce444a5d4ff2b59690d064130ed5",
+        "model-00002-of-00002.safetensors": "912becff8d60672aa8628ef08c05898d9adf17c2ad4ae3caf99b065622fdeff9",
+        "model.safetensors.index.json": "0d660e94b165eb912669a5249dff44b83188c4777a07ddb9611fb78d91b0578d",
+        "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+        "tokenizer_config.json": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101",
+        "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+      },
+      "geometry": {
+        "layers": 28,
+        "kvHeads": 8,
+        "headDim": 128
+      },
+      "attentionLayers": 28,
+      "vocab": {
+        "size": 151643,
+        "sha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "configVocabSize": 151936
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/qwen3-1.7b",
+          "--mlx-path",
+          "<cache>/mlx/qwen3-1.7b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "1a127c49a60fb70816260c037e7b54b3b5831e05ba4e4427dd016bf579247943",
+          "chat_template.jinja": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+          "config.json": "41eb9baa243fc92dadd6ac800e1c073efcbc1cee198e360de07470420b7ef0a6",
+          "generation_config.json": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2",
+          "model.safetensors": "51dc5e7fe6cade6082d91065daea84fe46522c64e77ecba10a83d5cbd53f66e4",
+          "model.safetensors.index.json": "5bc27eb752e76bec3235ce08f98789307f6b3f00f3be241d9fa42a3a50c9fbe8",
+          "tokenizer.json": "be75606093db2094d7cd20f3c2f385c212750648bd6ea4fb2bf507a6a4c55506",
+          "tokenizer_config.json": "5d1da8a22094af87a0eb4dc47f6ad0e9712f3ff4d179591de452ebd2acd88b96"
+        },
+        "weightsGB": 3.205
+      }
+    },
+    "llama-3.2-3b": {
+      "repo": "unsloth/Llama-3.2-3B-Instruct",
+      "revision": "006f5dcd1393c3add266de40994ba96225e9689d",
+      "source": "unsloth mirror (founder-approved 2026-10-01)",
+      "upstreamRepo": "meta-llama/Llama-3.2-3B-Instruct",
+      "upstreamIndexGitOid": "d3a1f0f5f401eeadca0c7a6786bd9e877fd42e58",
+      "byteIdentityToUpstream": "unverifiable",
+      "disclosure": "Byte-identity to the upstream weights cannot be verified: the gated upstream repo masks its LFS sha256s. Only model.safetensors.index.json matches the upstream git oid.",
+      "files": {
+        "chat_template.jinja": "5816fce10444e03c2e9ee1ef8a4a1ea61ae7e69e438613f3b17b69d0426223a4",
+        "config.json": "eadff796b79b82cefa0537004668d70a1dd099fd4986b91ef88398ed91b26311",
+        "generation_config.json": "8bab06a398ca622f8b941eb0b5f425d71d007080436cfa4f37d6c03c23b756a9",
+        "model-00001-of-00002.safetensors": "13cbd6d16e927a0c5bad54102514e6e18b4a47b3a6eb911e39d678d328d19f55",
+        "model-00002-of-00002.safetensors": "7b770216613ac5c34d7c54bdff1fa616bc4e338a9d0b20af6303e48c295ee23c",
+        "model.safetensors.index.json": "0a57c30afc07c81610ae7fe013bea3b9d50365f9a8145ae98e8714220f3d7c7c",
+        "special_tokens_map.json": "94e708c3f5e64acf85bbe5ad01467a1248faadb73e83b41793087ecced586e8f",
+        "tokenizer.json": "6b9e4e7fb171f92fd137b777cc2714bf87d11576700a1dcd7a399e7bbe39537b",
+        "tokenizer_config.json": "9ddd255c19fe319c8d4e891163540382e9fbda99f394674f2a929efc47d57458"
+      },
+      "geometry": {
+        "layers": 28,
+        "kvHeads": 8,
+        "headDim": 128
+      },
+      "attentionLayers": 28,
+      "vocab": {
+        "size": 128000,
+        "sha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "configVocabSize": 128256
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/llama-3.2-3b",
+          "--mlx-path",
+          "<cache>/mlx/llama-3.2-3b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "f3270b3cb7c42dee36dcff63717fd8e7dc3bdaacd58e05e34ac093dc05d7ad58",
+          "chat_template.jinja": "5816fce10444e03c2e9ee1ef8a4a1ea61ae7e69e438613f3b17b69d0426223a4",
+          "config.json": "e55696536d18f9c80765bb924a14dd36e17d09a57e027b8666ad70024af4feda",
+          "generation_config.json": "8bab06a398ca622f8b941eb0b5f425d71d007080436cfa4f37d6c03c23b756a9",
+          "model-00001-of-00002.safetensors": "b475af8535933afaf9393b30c6bcb4bfede59586b16ecdd010e7da8a83dfc95b",
+          "model-00002-of-00002.safetensors": "9b2903fa2b3728423f6442c0dc667db645906fb113c9d0cd794faeb820cc82d3",
+          "model.safetensors.index.json": "672faff76e8e6b2f395927b504bc80cc02d7b5db7bde6badbfd82b33a7fcf740",
+          "tokenizer.json": "6b9e4e7fb171f92fd137b777cc2714bf87d11576700a1dcd7a399e7bbe39537b",
+          "tokenizer_config.json": "2565a5f08ae859d8d6a654dc732944eb2fb85335a4362f17cf48ee8c3b6480cf"
+        },
+        "weightsGB": 5.984
+      }
+    },
+    "qwen3-4b": {
+      "repo": "Qwen/Qwen3-4B",
+      "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+      "source": "upstream",
+      "files": {
+        "LICENSE": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+        "config.json": "8ba006f74fecfaaeb392872a60f4a480e7ec9860153d2e1b769ec81f9a147f8a",
+        "generation_config.json": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2",
+        "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+        "model-00001-of-00003.safetensors": "328a91d3122359d5547f9d79521205bc0a46e1f79a792dfe650e99fc2d651223",
+        "model-00002-of-00003.safetensors": "6cd087b316306a68c562436b5492edbcf6e16c6dba3a1308279caa5a58e21ca5",
+        "model-00003-of-00003.safetensors": "e4bf436957184f4eeb86a80e9db394503f1f56446b2e6b7edeac5b81470f4ca1",
+        "model.safetensors.index.json": "6dc0981b8829fead746441f68f38f24c5ca4a3a66351f652c26c6df0efc43ab2",
+        "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+        "tokenizer_config.json": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101",
+        "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+      },
+      "geometry": {
+        "layers": 36,
+        "kvHeads": 8,
+        "headDim": 128
+      },
+      "attentionLayers": 36,
+      "vocab": {
+        "size": 151643,
+        "sha256": "02c4d9161602518670e40cd484607bc12d482c5eed73eefe53dbffee2379c23a",
+        "configVocabSize": 151936
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/qwen3-4b",
+          "--mlx-path",
+          "<cache>/mlx/qwen3-4b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "8df8741a2dc87926f74ea10c5a8862fed59e90d816a6a569062f725c1be36e7c",
+          "chat_template.jinja": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+          "config.json": "2c76bf5093edd24543889d86fc21388837bcf6fbe5fed6848ff42ba4eb3c2838",
+          "generation_config.json": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2",
+          "model-00001-of-00002.safetensors": "8769f2551e5c77b637e91dd6dcf25ef5a7fd11d67aec46418e2ddd71a7941a68",
+          "model-00002-of-00002.safetensors": "c29469a393b2df3f4586eb238ae6650ad03d7e9b8219596fcab4c05e91441b37",
+          "model.safetensors.index.json": "5e699a61da09415f33a625885364d3889a80acb6ab88aedaf6e195b2612addf4",
+          "tokenizer.json": "be75606093db2094d7cd20f3c2f385c212750648bd6ea4fb2bf507a6a4c55506",
+          "tokenizer_config.json": "5d1da8a22094af87a0eb4dc47f6ad0e9712f3ff4d179591de452ebd2acd88b96"
+        },
+        "weightsGB": 7.492
+      }
+    },
+    "llama-3.1-8b": {
+      "repo": "unsloth/Llama-3.1-8B-Instruct",
+      "revision": "4699cc75b550f9c6f3173fb80f4703b62d946aa5",
+      "source": "unsloth mirror (founder-approved 2026-10-01)",
+      "upstreamRepo": "meta-llama/Llama-3.1-8B-Instruct",
+      "upstreamIndexGitOid": "0fd8120f1c6acddc268ebc2583058efaf699a771",
+      "byteIdentityToUpstream": "unverifiable",
+      "disclosure": "Byte-identity to the upstream weights cannot be verified: the gated upstream repo masks its LFS sha256s. Only model.safetensors.index.json matches the upstream git oid.",
+      "files": {
+        "chat_template.jinja": "e10ca381b1ccc5cf9db52e371f3b6651576caee0a630b452e2816b2d404d4b65",
+        "config.json": "ad98082c6bc4ea7078915219241814762be259de16d6ca5f170ba02820b3928b",
+        "generation_config.json": "6d4f979915331212d7672c68b22a4ddad9e21ed8126cf2bd1ea6b2b88f595c1c",
+        "model-00001-of-00004.safetensors": "2b1879f356aed350030bb40eb45ad362c89d9891096f79a3ab323d3ba5607668",
+        "model-00002-of-00004.safetensors": "09d433f650646834a83c580877bd60c6d1f88f7755305c12576b5c7058f9af15",
+        "model-00003-of-00004.safetensors": "fc1cdddd6bfa91128d6e94ee73d0ce62bfcdb7af29e978ddcab30c66ae9ea7fa",
+        "model-00004-of-00004.safetensors": "92ecfe1a2414458b4821ac8c13cf8cb70aed66b5eea8dc5ad9eeb4ff309d6d7b",
+        "model.safetensors.index.json": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b",
+        "special_tokens_map.json": "94e708c3f5e64acf85bbe5ad01467a1248faadb73e83b41793087ecced586e8f",
+        "tokenizer.json": "6b9e4e7fb171f92fd137b777cc2714bf87d11576700a1dcd7a399e7bbe39537b",
+        "tokenizer_config.json": "671ecdff1a4241f7d3e0ad21d347ada7d90f673810906727c124972e3ce03465"
+      },
+      "geometry": {
+        "layers": 32,
+        "kvHeads": 8,
+        "headDim": 128
+      },
+      "attentionLayers": 32,
+      "vocab": {
+        "size": 128000,
+        "sha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "configVocabSize": 128256
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/llama-3.1-8b",
+          "--mlx-path",
+          "<cache>/mlx/llama-3.1-8b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "8df8741a2dc87926f74ea10c5a8862fed59e90d816a6a569062f725c1be36e7c",
+          "chat_template.jinja": "e10ca381b1ccc5cf9db52e371f3b6651576caee0a630b452e2816b2d404d4b65",
+          "config.json": "c1fc22b3c0207f91552626ff15e1ba6b5a3f10ad350ae3ece48a95dd7fa11ade",
+          "generation_config.json": "6d4f979915331212d7672c68b22a4ddad9e21ed8126cf2bd1ea6b2b88f595c1c",
+          "model-00001-of-00004.safetensors": "e8f8bd79686b2bf28b7f47826c14f038488c1e23311ffa64c5a6c84b9bd80a03",
+          "model-00002-of-00004.safetensors": "0ba199f8cba7b46e09dad10ee239a2877d6467f9448c08db87f7a74e43ead599",
+          "model-00003-of-00004.safetensors": "c37b5389bcd3d822c9a712b8fec3327585f760cc9b10081c81f9dfa9194d2794",
+          "model-00004-of-00004.safetensors": "bfca38e630589bdba9d83040a771d63b36ea18ce5bce8f7c70493119a1f77fd5",
+          "model.safetensors.index.json": "785c336d2e2064e8b6e25ebe5360683ea41d3c0d2cc5a075fd7c48980f551df0",
+          "tokenizer.json": "6b9e4e7fb171f92fd137b777cc2714bf87d11576700a1dcd7a399e7bbe39537b",
+          "tokenizer_config.json": "2565a5f08ae859d8d6a654dc732944eb2fb85335a4362f17cf48ee8c3b6480cf"
+        },
+        "weightsGB": 14.958
+      }
+    },
+    "gemma-3-1b": {
+      "repo": "unsloth/gemma-3-1b-it",
+      "revision": "5b11413a10db4e486ef16a20101fd028f8f2499c",
+      "source": "unsloth mirror (founder-approved 2026-10-01)",
+      "upstreamRepo": "google/gemma-3-1b-it",
+      "upstreamIndexGitOid": null,
+      "byteIdentityToUpstream": "unverifiable",
+      "disclosure": "Byte-identity to the upstream weights cannot be verified: the gated upstream repo masks its LFS sha256s (single-file checkpoint; no index json to compare).",
+      "files": {
+        "added_tokens.json": "50b2f405ba56a26d4913fd772089992252d7f942123cc0a034d96424221ba946",
+        "chat_template.jinja": "7de1c58e208eda46e9c7f86397df37ec49883aeece39fb961e0a6b24088dd3c4",
+        "config.json": "c5b2136c452797c0c52cba5793ced59d95453dfdc3444433b03e27699ff1c2cd",
+        "generation_config.json": "faa83f23a56aee7b9722f2a7263f6419341b62496d604a78775aeff9660701c3",
+        "model.safetensors": "3d4ef8d71c14db7e448a09ebe891cfb6bf32c57a9b44499ae0d1c098e48516b6",
+        "special_tokens_map.json": "45a857d8a2495d0be30a5d2d6de03278195eb028b6e0b8efc248bfa697d65f05",
+        "tokenizer.json": "4667f2089529e8e7657cfb6d1c19910ae71ff5f28aa7ab2ff2763330affad795",
+        "tokenizer.model": "1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c",
+        "tokenizer_config.json": "a622f3103725cffe1f19deed01e8675cea4443bc3eff27680f9484e5dc4acf7b"
+      },
+      "geometry": {
+        "layers": 26,
+        "kvHeads": 1,
+        "headDim": 256
+      },
+      "attentionLayers": 26,
+      "vocab": {
+        "size": 262144,
+        "sha256": "c1f61698445190691e3a3f22f2f9a4f6df59c889c6598c327efe21196b799d92",
+        "configVocabSize": 262144
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/gemma-3-1b",
+          "--mlx-path",
+          "<cache>/mlx/gemma-3-1b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "1a127c49a60fb70816260c037e7b54b3b5831e05ba4e4427dd016bf579247943",
+          "chat_template.jinja": "7de1c58e208eda46e9c7f86397df37ec49883aeece39fb961e0a6b24088dd3c4",
+          "config.json": "4994cef1bc6531b1e2448e1823d3f351f6c163e0fc4aa7ce572aa7c60d042214",
+          "generation_config.json": "faa83f23a56aee7b9722f2a7263f6419341b62496d604a78775aeff9660701c3",
+          "model.safetensors": "ec6cb38927fa3fc69729e37af689415997823e37cb0ebac8c57b7f01bc5404cb",
+          "model.safetensors.index.json": "3b278c833af84a67a977fd6e47be11808e047382db58d156551c5aaf009f8968",
+          "tokenizer.json": "daab2354f8a74e70d70b4d1f804939b68a8c9624dd06cb7858e52dd8970e9726",
+          "tokenizer_config.json": "3e04cc68998816177c0135f0e395ae169ad2fa9155468a8868445081915f3c2b"
+        },
+        "weightsGB": 1.862
+      }
+    },
+    "smollm3-3b": {
+      "repo": "HuggingFaceTB/SmolLM3-3B",
+      "revision": "a07cc9a04f16550a088caea529712d1d335b0ac1",
+      "source": "upstream",
+      "role": "control only",
+      "files": {
+        "chat_template.jinja": "3e0e275a527f249670056e0078e474eadbdd007c134b4fdfae5a7b3089702814",
+        "config.json": "c72b1031274ff4626e434d0019e88e95a767460135db9ee492eb80652b786af1",
+        "generation_config.json": "3458d62b3f9654f4bbe285223b0f4e5a1e67cae61c92bb6aeaadf04468bf9e01",
+        "model-00001-of-00002.safetensors": "e5eed4113a925264c33e3cdf76cd9f547c06a207ef2270914a7274a2bf685ffd",
+        "model-00002-of-00002.safetensors": "6c3ad90646457295723e4da5ee8afac47006e20407b122df5174693dd8d68a43",
+        "model.safetensors.index.json": "e3a7254c086c4a78f95ad5864f435d165ffed1ed8998326ce5107b4423c15b76",
+        "special_tokens_map.json": "12403efb970f069ba62ddf3b66166a27254be4a198166b61ad1ee604bd3a4515",
+        "tokenizer.json": "7b6a500b662a34eb3f0374db856ba4ad7de4c81040571d78dc0d357238930005",
+        "tokenizer_config.json": "59a64b39f05ee0acf7479bbccf99a44d9e481c1a4a494eb03838ae3c35eb29be"
+      },
+      "geometry": {
+        "layers": 36,
+        "kvHeads": 4,
+        "headDim": 128
+      },
+      "attentionLayers": 36,
+      "vocab": {
+        "size": 128000,
+        "sha256": "23f117937603a7106cc063ff315100dac4bcd58667f0f0f8835453497637b1ba",
+        "configVocabSize": 128256
+      },
+      "convert": {
+        "argv": [
+          "python",
+          "-m",
+          "mlx_lm",
+          "convert",
+          "--hf-path",
+          "<cache>/hf/smollm3-3b",
+          "--mlx-path",
+          "<cache>/mlx/smollm3-3b",
+          "--dtype",
+          "bfloat16"
+        ],
+        "mlxLm": "0.31.3",
+        "files": {
+          "README.md": "5ad88ec5ec365ab38e227409e147a8ddc1918d62d587183b3b8c90e9de6a2f2f",
+          "chat_template.jinja": "3e0e275a527f249670056e0078e474eadbdd007c134b4fdfae5a7b3089702814",
+          "config.json": "74dd8624a3afe875adadf8c5f783a63ec0fdd32f85386daaf8931075bfa66912",
+          "generation_config.json": "3458d62b3f9654f4bbe285223b0f4e5a1e67cae61c92bb6aeaadf04468bf9e01",
+          "model-00001-of-00002.safetensors": "98a83135c9cc072d127367550d0474aee7ba027a107dd71f64bbae0204c82b35",
+          "model-00002-of-00002.safetensors": "bda6940fce09abaf4b0ec92e394c00b6f3c02ecbfb5f04642374ef38fa92f6ca",
+          "model.safetensors.index.json": "d30086b4ee9da323ca792eceab810cf3a6ef3fd5fd0901baeeb98d5deb323d2f",
+          "tokenizer.json": "7b6a500b662a34eb3f0374db856ba4ad7de4c81040571d78dc0d357238930005",
+          "tokenizer_config.json": "69994bdbef7e2a704e0ed45ff352803424d85f38efd6fbcb9d8ad741c7569c03"
+        },
+        "weightsGB": 5.728
+      }
+    }
+  },
+  "pairs": {
+    "D1": {
+      "sender": "qwen3-1.7b",
+      "receiver": "llama-3.2-3b",
+      "role": "primary"
+    },
+    "D1p": {
+      "sender": "qwen3-4b",
+      "receiver": "llama-3.1-8b",
+      "role": "pre-stated fallback (D1′)"
+    },
+    "D2": {
+      "sender": "llama-3.2-3b",
+      "receiver": "qwen3-1.7b",
+      "role": "reported only (reverse of D1)"
+    },
+    "D3": {
+      "sender": "qwen3-1.7b",
+      "receiver": "gemma-3-1b",
+      "role": "reported only"
+    }
+  },
+  "controls": {
+    "vocab-control-smollm3-llama": {
+      "sender": "smollm3-3b",
+      "receiver": "llama-3.2-3b",
+      "expect": "vocab assertion throws (SmolLM3 shares Llama-3 ids)"
+    }
+  },
+  "limits": [
+    "Byte-identity to the upstream weights cannot be verified: the gated upstream repos (meta-llama, google) mask its LFS sha256s. Only model.safetensors.index.json matches the upstream git oid. Llama-3.2-3B, Llama-3.1-8B and Gemma-3-1B are pinned from founder-approved unsloth mirrors (2026-10-01)."
+  ]
+}

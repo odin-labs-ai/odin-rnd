@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "note": "Measured peak MLX memory (mx.get_peak_memory) per pair on practice items c001-c020 only, from footprint-only runs (memory gate strict, CPU-load criterion skipped and recorded) and practice runs. The gate uses max(weights, measured peak) as the pair footprint.",
+  "pairs": {
+    "D1": {
+      "peakGB": 21.91,
+      "byArm": {
+        "L.A2a": 18.89,
+        "L.A2b": 21.91,
+        "L.A0": 11.59,
+        "L.A1": 11.42,
+        "L.C1": 12.85,
+        "L.C2": 12.97,
+        "L.C3": 9.27
+      },
+      "sources": {
+        "footprint-d1-L-c001-a2.rows.jsonl": "cfbfd04072a9ff194d2a07f4930e74f0d86820cfba6a31331e66c5960ba9fd4d",
+        "practice-d1-L-01.rows.jsonl": "a6722c76c44011faff4bdc15214b98a18f4172ac258bec7582fa71fd8b30da97"
+      },
+      "weightsGB": 9.189,
+      "armsMeasured": [
+        "A0",
+        "A1",
+        "A2a",
+        "A2b",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "boundGB": 24,
+      "why": "design bound (FINAL-SHAPE)"
+    },
+    "D1p": {
+      "peakGB": 36.89,
+      "byArm": {
+        "L.A2a": 33.62,
+        "L.A2b": 36.89,
+        "L.C3": 15.04,
+        "L.C2": 19.4,
+        "L.A1": 25.26,
+        "L.A0": 25.38,
+        "L.C1": 26.89
+      },
+      "sources": {
+        "footprint-d1p-L-c001-a2.rows.jsonl": "4be0b4fbdce39fdb680b5c9fd0c7a76ff7c93dee025f01b7cfe34f5b8ba20632",
+        "footprint-d1p-L-c001.rows.jsonl": "2d6b73592f62e84786d498f90d9371c30b617f436937daa60bc12800f670f83b"
+      },
+      "weightsGB": 22.45,
+      "armsMeasured": [
+        "A0",
+        "A1",
+        "A2a",
+        "A2b",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "boundGB": 48,
+      "why": "measured peak above 24 GB (text/control arms on L); 48 = 64 GB available at 50% free - 16 GB headroom"
+    }
+  }
+}

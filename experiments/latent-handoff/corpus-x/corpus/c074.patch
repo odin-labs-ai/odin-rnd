@@ -1,0 +1,18 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..7770f2a 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,3 +1,4 @@
++import type { Services } from '../infra';
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
+ 
+@@ -23,3 +24,8 @@ export function placeOrder(order: Order): Order {
+   if (order.status !== 'open') throw new DomainError('order.status', 'only open orders can be placed');
+   return { ...order, status: 'placed' };
+ }
++
++export async function reopen(services: Pick<Services, 'orders'>, orderId: string): Promise<void> {
++  const current = await services.orders.get(orderId);
++  if (current && current.status === 'cancelled') await services.orders.save({ ...current, status: 'open' });
++}

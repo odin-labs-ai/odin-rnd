@@ -1,0 +1,13 @@
+diff --git a/src/domain/invoice-mail.ts b/src/domain/invoice-mail.ts
+new file mode 100644
+index 0000000..f3c32ea
+--- /dev/null
++++ b/src/domain/invoice-mail.ts
+@@ -0,0 +1,7 @@
++import { SmtpNotifier } from '../infra/mail/mailer';
++import type { Customer } from './customer';
++import type { Invoice } from './invoice';
++
++export function mailInvoice(customer: Customer, invoice: Invoice, relay: string): Promise<void> {
++  return new SmtpNotifier(relay, 'billing').invoiceIssued(customer, invoice);
++}

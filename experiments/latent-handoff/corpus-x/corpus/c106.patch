@@ -1,0 +1,16 @@
+diff --git a/test/pool.test.ts b/test/pool.test.ts
+new file mode 100644
+index 0000000..9a03cbb
+--- /dev/null
++++ b/test/pool.test.ts
+@@ -0,0 +1,10 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import pg from 'pg';
++import { createPool } from '../src/infra/db/pool';
++
++test('createPool returns a pg pool', async () => {
++  const made = createPool('postgres://localhost:5432/ledger_test');
++  assert.ok(made instanceof pg.Pool);
++  await made.end();
++});

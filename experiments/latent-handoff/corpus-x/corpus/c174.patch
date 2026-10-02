@@ -1,0 +1,14 @@
+diff --git a/src/config/smtp.ts b/src/config/smtp.ts
+new file mode 100644
+index 0000000..c1190bc
+--- /dev/null
++++ b/src/config/smtp.ts
+@@ -0,0 +1,8 @@
++export interface SmtpSettings {
++  host: string;
++  from: string;
++}
++
++export function smtpSettings(): SmtpSettings {
++  return { host: process.env.SMTP_HOST ?? 'localhost', from: process.env.SMTP_FROM ?? 'billing' };
++}

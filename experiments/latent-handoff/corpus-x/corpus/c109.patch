@@ -1,0 +1,28 @@
+diff --git a/src/infra/index.ts b/src/infra/index.ts
+index 79f19e1..871470f 100644
+--- a/src/infra/index.ts
++++ b/src/infra/index.ts
+@@ -12,7 +12,7 @@ export interface Services {
+   notifier: Notifier;
+ }
+ 
+-export function createServices(settings: {
++export function buildServices(settings: {
+   databaseUrl: string;
+   smtpHost: string;
+   smtpFrom: string;
+diff --git a/src/main.ts b/src/main.ts
+index 275a1be..6667f0e 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,8 +1,8 @@
+ import { loadSettings } from './config/settings';
+-import { createHttpServer, createServices } from './infra';
++import { buildServices, createHttpServer } from './infra';
+ 
+ const settings = loadSettings();
+-const services = createServices(settings);
++const services = buildServices(settings);
+ createHttpServer(services).listen(settings.port, () => {
+   console.log(`ledger-service listening on ${settings.port}`);
+ });

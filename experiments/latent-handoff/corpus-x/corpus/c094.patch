@@ -1,0 +1,14 @@
+diff --git a/src/main.ts b/src/main.ts
+index 275a1be..46a4a7b 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -3,6 +3,7 @@ import { createHttpServer, createServices } from './infra';
+ 
+ const settings = loadSettings();
+ const services = createServices(settings);
+-createHttpServer(services).listen(settings.port, () => {
+-  console.log(`ledger-service listening on ${settings.port}`);
++const server = createHttpServer(services).listen(settings.port, () => {
++  if (process.env.NODE_ENV !== 'production') console.log(`ledger-service listening on ${settings.port}`);
+ });
++process.once('SIGTERM', () => server.close());

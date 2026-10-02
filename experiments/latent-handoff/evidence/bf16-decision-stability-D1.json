@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "kind": "descriptive property of the A2 arms (not a gate)",
+  "question": "decision stability under bf16 rounding: does the bf16 receiver's decision survive float32-level differences in a mapped cache?",
+  "heldOut": {
+    "items": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20"
+    ],
+    "receiverDtype": "bfloat16",
+    "maxAbsDeltaKeys": 0.0001430511474609375,
+    "maxAbsDeltaValues": 2.9027462005615234e-05,
+    "byMapper": {
+      "A2a": {
+        "agree": 20,
+        "of": 20,
+        "maxDp": 0.030490099068271603
+      },
+      "A2b": {
+        "agree": 20,
+        "of": 20,
+        "maxDp": 0.030967127512041837
+      }
+    },
+    "pStepNote": "near p = 0.5 one bf16 logit step moves p by about 0.03"
+  },
+  "attempt1": {
+    "note": "Superseded parity attempt 1 (reduced-precision GPU matmul, so larger cache differences; read out on EXP items c001-c020, per-item values redacted).",
+    "maxAbsDeltaKeys": 0.024775028228759766,
+    "byMapper": {
+      "A2a": {
+        "agree": 19,
+        "of": 20,
+        "maxDp": 0.031209373373756233
+      },
+      "A2b": {
+        "agree": 18,
+        "of": 20,
+        "maxDp": 0.054430163170957
+      }
+    }
+  },
+  "weightsSha256": "73548d54c23c0dc954261adb64e1a2cfe1c0f270418acbefb87f6f07eeedb876",
+  "forPrereg": "disclose in limits; pre-register as a descriptive secondary (decision stability under bf16 rounding), never as a gate change"
+}

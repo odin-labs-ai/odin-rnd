@@ -1,0 +1,14 @@
+diff --git a/src/domain/rates.js b/src/domain/rates.js
+new file mode 100644
+index 0000000..1ba7486
+--- /dev/null
++++ b/src/domain/rates.js
+@@ -0,0 +1,8 @@
++// Plain JavaScript seed data for local runs.
++import { createPool as poolFor } from '../infra/db/pool';
++
++export async function seedRates(url) {
++  const db = poolFor(url);
++  await db.query("insert into rates (code, percent) values ('std', 21) on conflict do nothing");
++  await db.end();
++}

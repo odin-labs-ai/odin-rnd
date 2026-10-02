@@ -1,0 +1,17 @@
+diff --git a/test/money.test.ts b/test/money.test.ts
+new file mode 100644
+index 0000000..6e6167e
+--- /dev/null
++++ b/test/money.test.ts
+@@ -0,0 +1,11 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { add, money } from '../src/domain';
++
++test('adding two amounts keeps the currency', () => {
++  assert.deepEqual(add(money(150), money(250)), { cents: 400, currency: 'EUR' });
++});
++
++test('mixed currencies are refused', () => {
++  assert.throws(() => add(money(1, 'EUR'), money(1, 'USD')), RangeError);
++});

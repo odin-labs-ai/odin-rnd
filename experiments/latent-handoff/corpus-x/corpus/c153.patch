@@ -1,0 +1,16 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..c3f12b9 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -1,4 +1,5 @@
+ import { DomainError } from './errors';
++import type * as ConfigModule from '../config/settings';
+ 
+ export interface Customer {
+   readonly id: string;
+@@ -11,3 +12,5 @@ export function createCustomer(id: string, name: string, email: string): Custome
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+   return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
+ }
++
++export type CustomerDefaults = Pick<ReturnType<typeof ConfigModule.loadSettings>, 'smtpFrom'>;

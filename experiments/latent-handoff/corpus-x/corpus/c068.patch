@@ -1,0 +1,36 @@
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..163f64b 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -2,3 +2,4 @@ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ export { registerCustomerUseCase } from './register-customer';
++export { renameCustomerUseCase } from './rename-customer';
+diff --git a/src/app/rename-customer.ts b/src/app/rename-customer.ts
+new file mode 100644
+index 0000000..44ab41d
+--- /dev/null
++++ b/src/app/rename-customer.ts
+@@ -0,0 +1,8 @@
++import { DomainError, renameCustomer } from '../domain';
++import type { CustomerRepository } from './ports';
++
++export async function renameCustomerUseCase(customers: CustomerRepository, id: string, name: string): Promise<void> {
++  const existing = await customers.get(id);
++  if (!existing) throw new DomainError('customer.missing', `no customer ${id}`);
++  await customers.save(renameCustomer(existing, name));
++}
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..61ef0e1 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -11,3 +11,8 @@ export function createCustomer(id: string, name: string, email: string): Custome
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+   return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
+ }
++
++export function renameCustomer(customer: Customer, name: string): Customer {
++  if (name.trim() === '') throw new DomainError('customer.name', 'name must not be blank');
++  return { ...customer, name: name.trim() };
++}

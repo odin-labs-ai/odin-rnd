@@ -1,0 +1,19 @@
+diff --git a/src/app/clock.ts b/src/app/clock.ts
+new file mode 100644
+index 0000000..441a6c4
+--- /dev/null
++++ b/src/app/clock.ts
+@@ -0,0 +1,4 @@
++export function now(): Date {
++  const pinned = process.env.FIXED_NOW;
++  return pinned ? new Date(pinned) : new Date();
++}
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..602383c 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -2,3 +2,4 @@ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+ export { registerCustomerUseCase } from './register-customer';
++export { now } from './clock';

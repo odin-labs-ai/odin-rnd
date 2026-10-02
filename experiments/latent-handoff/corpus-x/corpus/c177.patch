@@ -1,0 +1,17 @@
+diff --git a/src/domain/errors.ts b/src/domain/errors.ts
+index abdcb08..4d42abd 100644
+--- a/src/domain/errors.ts
++++ b/src/domain/errors.ts
+@@ -1,6 +1,12 @@
++import type { Settings as Config } from '../config/settings';
++
+ export class DomainError extends Error {
+   constructor(readonly code: string, message: string) {
+     super(message);
+     this.name = 'DomainError';
+   }
+ }
++
++export function missingSetting(key: keyof Config): DomainError {
++  return new DomainError('setting.missing', `no value for ${String(key)}`);
++}

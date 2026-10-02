@@ -1,0 +1,22 @@
+diff --git a/src/domain/order.ts b/src/domain/order.ts
+index 8bdfb4f..e5c0768 100644
+--- a/src/domain/order.ts
++++ b/src/domain/order.ts
+@@ -1,7 +1,7 @@
+ import { DomainError } from './errors';
+ import { add, money, multiply, type Money } from './money';
+ 
+-export interface OrderLine {
++export interface LineItem {
+   readonly sku: string;
+   readonly quantity: number;
+   readonly unitPrice: Money;
+@@ -10,7 +10,7 @@ export interface OrderLine {
+ export interface Order {
+   readonly id: string;
+   readonly customerId: string;
+-  readonly lines: readonly OrderLine[];
++  readonly lines: readonly LineItem[];
+   readonly status: 'open' | 'placed' | 'cancelled';
+ }
+ 

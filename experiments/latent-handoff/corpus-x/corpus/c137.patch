@@ -1,0 +1,20 @@
+diff --git a/src/domain/customer.ts b/src/domain/customer.ts
+index 05e12c7..2aaeb89 100644
+--- a/src/domain/customer.ts
++++ b/src/domain/customer.ts
+@@ -1,4 +1,5 @@
+ import { DomainError } from './errors';
++import type { PgCustomerRepository } from '../infra/db/customer-repository';
+ 
+ export interface Customer {
+   readonly id: string;
+@@ -11,3 +12,9 @@ export function createCustomer(id: string, name: string, email: string): Custome
+   if (!email.includes('@')) throw new DomainError('customer.email', 'email is not valid');
+   return { id, name: name.trim(), email: email.toLowerCase(), creditLimitCents: 50_000 };
+ }
++
++export async function storeCustomer(store: PgCustomerRepository, customer: Customer): Promise<Customer> {
++  if (customer.creditLimitCents < 0) throw new DomainError('customer.credit', 'credit limit below zero');
++  await store.save(customer);
++  return customer;
++}

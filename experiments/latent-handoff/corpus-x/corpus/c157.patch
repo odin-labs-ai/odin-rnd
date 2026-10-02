@@ -1,0 +1,15 @@
+diff --git a/src/domain/order.spec.ts b/src/domain/order.spec.ts
+new file mode 100644
+index 0000000..afac1b7
+--- /dev/null
++++ b/src/domain/order.spec.ts
+@@ -0,0 +1,9 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { placeOrderUseCase } from '../app';
++import { DomainError } from './errors';
++
++test('an unknown order cannot be placed', async () => {
++  const nothing = { get: async () => undefined, save: async () => undefined };
++  await assert.rejects(placeOrderUseCase(nothing, nothing, 'o-404'), DomainError);
++});

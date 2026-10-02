@@ -1,0 +1,14 @@
+diff --git a/test/mailer.test.ts b/test/mailer.test.ts
+new file mode 100644
+index 0000000..b0efd23
+--- /dev/null
++++ b/test/mailer.test.ts
+@@ -0,0 +1,8 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { SmtpNotifier } from '../src/infra/mail/mailer';
++
++test('the notifier exposes invoiceIssued', () => {
++  const notifier = new SmtpNotifier('localhost', 'billing');
++  assert.equal(typeof notifier.invoiceIssued, 'function');
++});

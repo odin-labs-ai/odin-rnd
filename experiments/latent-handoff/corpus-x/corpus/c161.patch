@@ -1,0 +1,12 @@
+diff --git a/src/infra/db/locks.ts b/src/infra/db/locks.ts
+new file mode 100644
+index 0000000..324d056
+--- /dev/null
++++ b/src/infra/db/locks.ts
+@@ -0,0 +1,6 @@
++import type { PoolClient } from 'pg';
++
++export async function withAdvisoryLock<T>(client: PoolClient, key: number, work: () => Promise<T>): Promise<T> {
++  await client.query('select pg_advisory_lock($1)', [key]);
++  return work().finally(() => client.query('select pg_advisory_unlock($1)', [key]));
++}

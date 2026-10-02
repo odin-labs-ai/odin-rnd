@@ -1,0 +1,14 @@
+diff --git a/src/app/index.ts b/src/app/index.ts
+index 867de9d..0b047e6 100644
+--- a/src/app/index.ts
++++ b/src/app/index.ts
+@@ -1,4 +1,4 @@
+ export { issueInvoiceUseCase } from './issue-invoice';
+ export { placeOrderUseCase } from './place-order';
+ export type { CustomerRepository, InvoiceRepository, Notifier, OrderRepository } from './ports';
+-export { registerCustomerUseCase } from './register-customer';
++export { registerCustomerUseCase } from './register';
+diff --git a/src/app/register-customer.ts b/src/app/register.ts
+similarity index 100%
+rename from src/app/register-customer.ts
+rename to src/app/register.ts

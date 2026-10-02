@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "descriptive property of the A2 arms (not a gate)",
+  "question": "decision stability under bf16 rounding: does the bf16 receiver's decision survive float32-level differences in a mapped cache?",
+  "heldOut": {
+    "items": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20"
+    ],
+    "receiverDtype": "bfloat16",
+    "maxAbsDeltaKeys": 0.0001888275146484375,
+    "maxAbsDeltaValues": 2.0742416381835938e-05,
+    "byMapper": {
+      "A2a": {
+        "agree": 20,
+        "of": 20,
+        "maxDp": 0.019491284877865944
+      },
+      "A2b": {
+        "agree": 20,
+        "of": 20,
+        "maxDp": 0.02527355079299365
+      }
+    },
+    "pStepNote": "near p = 0.5 one bf16 logit step moves p by about 0.03"
+  },
+  "attempt1": null,
+  "weightsSha256": "03133fd709afd0d1efd9ea2373d6a6fb2642571a6fc05ea1859469fd8c9948c6",
+  "forPrereg": "disclose in limits; pre-register as a descriptive secondary (decision stability under bf16 rounding), never as a gate change"
+}

@@ -1,0 +1,13 @@
+diff --git a/src/infra/db/pool.ts b/src/infra/db/pool.ts
+index a813586..7c29350 100644
+--- a/src/infra/db/pool.ts
++++ b/src/infra/db/pool.ts
+@@ -1,5 +1,5 @@
+-import pg from 'pg';
++import { Pool } from 'pg';
+ 
+-export function createPool(connectionString: string): pg.Pool {
+-  return new pg.Pool({ connectionString, max: 10 });
++export function createPool(connectionString: string): Pool {
++  return new Pool({ connectionString, max: 10 });
+ }

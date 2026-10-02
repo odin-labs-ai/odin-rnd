@@ -1,0 +1,16 @@
+diff --git a/src/infra/db/invoice-repository.ts b/src/infra/db/invoice-repository.ts
+index 061341b..38a5d1a 100644
+--- a/src/infra/db/invoice-repository.ts
++++ b/src/infra/db/invoice-repository.ts
+@@ -10,6 +10,11 @@ export class PgInvoiceRepository implements InvoiceRepository {
+     return `${this.prefix}-${String(result.rows[0].n).padStart(6, '0')}`;
+   }
+ 
++  async findByOrder(orderId: string): Promise<Invoice | undefined> {
++    const found = await this.pool.query("select body from invoices where body->>'orderId' = $1 limit 1", [orderId]);
++    return found.rows[0]?.body as Invoice | undefined;
++  }
++
+   async save(invoice: Invoice): Promise<void> {
+     await this.pool.query('insert into invoices (number, body) values ($1, $2)', [invoice.number, invoice]);
+   }

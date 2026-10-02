@@ -1,0 +1,18 @@
+diff --git a/test/routes.test.ts b/test/routes.test.ts
+new file mode 100644
+index 0000000..d459909
+--- /dev/null
++++ b/test/routes.test.ts
+@@ -0,0 +1,12 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { createHttpServer } from '../src/infra/http/routes';
++import type { Services } from '../src/infra';
++
++test('an unknown path answers 404', async () => {
++  const server = createHttpServer({} as Services).listen(0);
++  const { port } = server.address() as { port: number };
++  const res = await fetch(`http://127.0.0.1:${port}/nowhere`, { method: 'POST' });
++  server.close();
++  assert.equal(res.status, 404);
++});
