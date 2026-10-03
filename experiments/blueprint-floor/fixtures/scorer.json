@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "note": "Scorer fixtures (R2-8). Each case gives the census input and the values a hand calculation gives; scripts/blueprint-floor-scorer.test.mjs checks the scorer against them.",
+  "cases": [
+    {
+      "name": "four plugins, one disputed, the median exactly at the threshold",
+      "input": {
+        "plugins": ["a", "b", "c", "d"],
+        "rules": [
+          { "ruleId": "a/1", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/2", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/3", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/4", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "b/1", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/2", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "c/1", "plugin": "c", "stratum": "primary" },
+          { "ruleId": "d/1", "plugin": "d", "stratum": "primary" },
+          { "ruleId": "d/2", "plugin": "d", "stratum": "primary" },
+          { "ruleId": "d/3", "plugin": "d", "stratum": "primary" }
+        ],
+        "records": {
+          "a/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "a/2": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "a/3": { "translator": { "translatorClass": "partial", "classAfterMechanical": "partial", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "partial" } },
+          "a/4": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "b/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "dispute", "proposedClass": "partial" } },
+          "b/2": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "c/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "d/1": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "d/2": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "d/3": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } }
+        }
+      },
+      "expect": {
+        "shares": { "a": 0.5, "b": 0, "c": 1, "d": 0 },
+        "median": 0.25,
+        "preDispute": 0.5,
+        "partialAsHalf": 0.4375,
+        "plugins": 4,
+        "refuted": false,
+        "variant": "interim",
+        "disputes": [{ "ruleId": "b/1", "from": "expressible", "to": "partial" }]
+      }
+    },
+    {
+      "name": "all harness errors",
+      "input": {
+        "plugins": ["a", "b", "c"],
+        "rules": [
+          { "ruleId": "a/1", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "b/1", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/2", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "c/1", "plugin": "c", "stratum": "primary" }
+        ],
+        "records": {
+          "a/1": { "translatorError": "timeout" },
+          "b/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicatorError": "model id mismatch" },
+          "b/2": { "translator": { "translatorClass": "error", "classAfterMechanical": "error", "failedCheck": "parse" }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } }
+        }
+      },
+      "expect": {
+        "shares": { "a": 0, "b": 0, "c": 0 },
+        "median": 0,
+        "plugins": 3,
+        "refuted": true,
+        "variant": "refuted",
+        "errors": ["a/1", "b/1", "b/2", "c/1"],
+        "kappaN": 0
+      }
+    },
+    {
+      "name": "ties below the threshold, and a plugin with no rules",
+      "input": {
+        "plugins": ["a", "b", "empty"],
+        "rules": [
+          { "ruleId": "a/1", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/2", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/3", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/4", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "a/5", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "b/1", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/2", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/3", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/4", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "b/5", "plugin": "b", "stratum": "primary" },
+          { "ruleId": "s/1", "plugin": "a", "stratum": "secondary" }
+        ],
+        "records": {
+          "a/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "a/2": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "partial", "failedCheck": "teeth" }, "adjudicator": { "verdict": "confirm", "proposedClass": "partial" } },
+          "a/3": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "a/4": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "a/5": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "b/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "b/2": { "translator": { "translatorClass": "partial", "classAfterMechanical": "not", "failedCheck": "validate", "engineLimit": true }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "b/3": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "dispute", "proposedClass": "expressible" } },
+          "b/4": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "b/5": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "s/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } }
+        }
+      },
+      "expect": {
+        "shares": { "a": 0.2, "b": 0.2, "empty": null },
+        "median": 0.2,
+        "plugins": 2,
+        "pluginsWithoutRules": ["empty"],
+        "refuted": true,
+        "variant": "refuted",
+        "downgrades": ["a/2", "b/2"],
+        "engineLimit": ["b/2"],
+        "secondaryExpressible": 1
+      }
+    },
+    {
+      "name": "controls: the calibration bar met, then missed by one negative",
+      "input": {
+        "plugins": ["a"],
+        "rules": [
+          { "ruleId": "a/1", "plugin": "a", "stratum": "primary" },
+          { "ruleId": "p1", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p2", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p3", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p4", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p5", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p6", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "p7", "plugin": null, "stratum": "control-positive" },
+          { "ruleId": "n1", "plugin": null, "stratum": "control-negative" },
+          { "ruleId": "n2", "plugin": null, "stratum": "control-negative" },
+          { "ruleId": "n3", "plugin": null, "stratum": "control-negative" },
+          { "ruleId": "n4", "plugin": null, "stratum": "control-negative" },
+          { "ruleId": "n5", "plugin": null, "stratum": "control-negative" },
+          { "ruleId": "n6", "plugin": null, "stratum": "control-negative" }
+        ],
+        "records": {
+          "a/1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "p1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "p2": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "p3": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "p4": { "translator": { "translatorClass": "partial", "classAfterMechanical": "partial", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "partial" } },
+          "p5": { "translator": { "translatorClass": "partial", "classAfterMechanical": "partial", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "partial" } },
+          "p6": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "p7": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "n1": { "translator": { "translatorClass": "expressible", "classAfterMechanical": "expressible", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "expressible" } },
+          "n2": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "n3": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "n4": { "translator": { "translatorClass": "partial", "classAfterMechanical": "partial", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "partial" } },
+          "n5": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } },
+          "n6": { "translator": { "translatorClass": "not", "classAfterMechanical": "not", "failedCheck": null }, "adjudicator": { "verdict": "confirm", "proposedClass": "not" } }
+        }
+      },
+      "expect": {
+        "positiveHits": 6,
+        "negativeExpressible": 1,
+        "calibrated": true,
+        "median": 1,
+        "refuted": false
+      }
+    }
+  ]
+}

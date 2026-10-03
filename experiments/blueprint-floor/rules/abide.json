@@ -1,0 +1,1528 @@
+{
+  "schemaVersion": 1,
+  "plugin": "abide",
+  "repo": "coldteadotai/abide",
+  "sha": "ea6d0976a0cbac70f71a460ece348bd68d777350",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Coldtea AI",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "sha256": "f95e90af396c71c9a94648bd58e4f5bb2dcab4f6ac3ab7d3d2ca3f4e4f4a1ae7"
+    },
+    {
+      "path": ".abide/rubric.json",
+      "sha256": "82551b08392da11fdd15fbd07acbc1e7ba146663f7568cfd2e6b661a8b567889"
+    }
+  ],
+  "counts": {
+    "primary": 43,
+    "secondary": 0,
+    "excluded": 0
+  },
+  "rulesSha256": "31fb3402b052bbd341314b28b50875ff7e67efdd9641516ed894ab95d87adfc8",
+  "rules": [
+    {
+      "ruleId": "abide/hook-never-breaks-agent",
+      "sourcePath": ".abide/rubric.json",
+      "line": 20,
+      "kind": "rubric",
+      "text": "The hook must never break the agent. Every hook path exits 0, bounds its own time, and writes nothing to stdout but the JSON the host expects.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: packages/hooks/**/*.ts, packages/cli/src/hooks/**/*.ts, packages/cli/src/lib/hookRunner.ts, packages/cli/src/<tool>-hook.ts.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "packages/hooks/**/*.ts",
+          "packages/cli/src/hooks/**/*.ts",
+          "packages/cli/src/lib/hookRunner.ts",
+          "packages/cli/src/abide-hook.ts"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "On a hook path, does this change add something that can exit non-zero, throw past the top-level catch, await without a timeout or abort, or write to stdout anything other than the host's JSON?",
+            "criteria": {
+              "true": "process.exit(1) on a parse failure, or console.log(\"checking...\") beside the JSON write, or an un-timed await fetch(...)",
+              "false": "catch (error) { log.debug(error); return ok(); } and a single JSON.stringify to stdout"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "fired": 0,
+          "verdict": "skipped"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 7
+        }
+      }
+    },
+    {
+      "ruleId": "abide/api-key-never-a-flag",
+      "sourcePath": ".abide/rubric.json",
+      "line": 56,
+      "kind": "rubric",
+      "text": "Never accept it as a flag — a flag lands in shell history and in CI logs.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change let an API key or token be passed as a command-line argument or flag?",
+            "criteria": {
+              "true": "an --api-key or --token option, or reading argv for a key",
+              "false": "reading the key from process.env or from ~/.abide/.env"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.025,
+          "min": 0.02,
+          "max": 0.04,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 8
+        }
+      }
+    },
+    {
+      "ruleId": "abide/api-key-never-logged",
+      "sourcePath": ".abide/rubric.json",
+      "line": 86,
+      "kind": "rubric",
+      "text": "No secrets in this repo, ever. [...] and never log it.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change put an API key, token or secret value where it can be printed or persisted — console output, a log call, an error message, a thrown string, or a file that is not ~/.abide/.env or the repo's .env.local?",
+            "criteria": {
+              "true": "console.error(`bad key: ${apiKey}`)",
+              "false": "console.error(\"that key was rejected\")"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.02,
+          "min": 0.01,
+          "max": 0.13,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 8
+        }
+      }
+    },
+    {
+      "ruleId": "abide/key-write-targets",
+      "sourcePath": ".abide/rubric.json",
+      "line": 116,
+      "kind": "rubric",
+      "text": "`abide login` writes it, owner-only, to `~/.abide/.env` or the repo's `.env.local`, the only two files abide may ever write a key to, and changes nothing else in them.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change write a credential to a file other than ~/.abide/.env or the repo's .env.local, write one without owner-only permissions (0o600), or rewrite lines in those files other than the key's own?",
+            "criteria": {
+              "true": "appending the key to .env, or writeFile without a mode",
+              "false": "writeFile(envLocal, next, { mode: 0o600 }) preserving every other line"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.04,
+          "min": 0.02,
+          "max": 0.23,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 8
+        }
+      }
+    },
+    {
+      "ruleId": "abide/verify-before-done",
+      "sourcePath": ".abide/rubric.json",
+      "line": 146,
+      "kind": "rubric",
+      "text": "Verify before claiming done: tests green, `pnpm build` + typecheck clean, and the end-to-end path exercised against live Jev with latency measured.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about what the agent does before reporting, not about the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 9
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-ai-attribution",
+      "sourcePath": ".abide/rubric.json",
+      "line": 159,
+      "kind": "rubric",
+      "text": "No AI attribution in commits or pull requests. No `Co-Authored-By` line for a model, no \"Generated with\" footer, no session link, no bot listed as an author.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about commit and pull request metadata, which is not in a diff"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 10
+        }
+      }
+    },
+    {
+      "ruleId": "abide/humanize-user-facing-words",
+      "sourcePath": ".abide/rubric.json",
+      "line": 172,
+      "kind": "rubric",
+      "text": "Pass user-facing words through the humanizer before shipping them. Anything a person reads — CLI output, rule instructions, README prose, error messages, the compile skill — goes through the humanizer skill first.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "a step the agent runs, not a property of the diff"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 11
+        }
+      }
+    },
+    {
+      "ruleId": "abide/state-assumptions",
+      "sourcePath": ".abide/rubric.json",
+      "line": 185,
+      "kind": "rubric",
+      "text": "State your assumptions explicitly. If uncertain, ask.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about the conversation, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 25
+        }
+      }
+    },
+    {
+      "ruleId": "abide/present-interpretations",
+      "sourcePath": ".abide/rubric.json",
+      "line": 198,
+      "kind": "rubric",
+      "text": "If multiple interpretations exist, present them - don't pick silently.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about the conversation, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 26
+        }
+      }
+    },
+    {
+      "ruleId": "abide/say-when-simpler-exists",
+      "sourcePath": ".abide/rubric.json",
+      "line": 211,
+      "kind": "rubric",
+      "text": "If a simpler approach exists, say so. Push back when warranted.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about the conversation, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 27
+        }
+      }
+    },
+    {
+      "ruleId": "abide/stop-when-unclear",
+      "sourcePath": ".abide/rubric.json",
+      "line": 224,
+      "kind": "rubric",
+      "text": "If something is unclear, stop. Name what's confusing. Ask.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about the conversation, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 28
+        }
+      }
+    },
+    {
+      "ruleId": "abide/minimum-code",
+      "sourcePath": ".abide/rubric.json",
+      "line": 237,
+      "kind": "rubric",
+      "text": "Minimum code that solves the problem. Nothing speculative. If you write 200 lines and it could be 50, rewrite it.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "score",
+            "instructions": "How much longer is this change than the shortest version that would solve the stated task?",
+            "criteria": [
+              "about as short as it can be",
+              "somewhat longer than needed",
+              "about twice as long as needed",
+              "several times longer than needed"
+            ],
+            "violatingFrom": 2
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.03,
+          "min": 0.02,
+          "max": 0.24,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 32
+        }
+      }
+    },
+    {
+      "ruleId": "abide/scope-creep",
+      "sourcePath": ".abide/rubric.json",
+      "line": 270,
+      "kind": "rubric",
+      "text": "No features beyond what was asked. The test: Every changed line should trace directly to the user's request.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add functionality, files or options that the task did not ask for?"
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.035,
+          "min": 0.03,
+          "max": 0.29,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 34
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-single-use-abstraction",
+      "sourcePath": ".abide/rubric.json",
+      "line": 296,
+      "kind": "rubric",
+      "text": "No abstractions for single-use code.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a helper, wrapper, base class, interface or indirection layer that has exactly one caller in the whole change?",
+            "criteria": {
+              "true": "a new formatRow() called once, from the one place it was extracted from",
+              "false": "a new formatRow() called from three render paths"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.03,
+          "min": 0.02,
+          "max": 0.67,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 35
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-unrequested-configurability",
+      "sourcePath": ".abide/rubric.json",
+      "line": 326,
+      "kind": "rubric",
+      "text": "No \"flexibility\" or \"configurability\" that wasn't requested.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add an options object, a config field, a feature toggle or a strategy parameter that the task did not ask for, where every call site passes the same value?",
+            "criteria": {
+              "true": "fn(value, { format = \"json\" } = {}) with one call site and no request for other formats",
+              "false": "fn(value) doing the one thing that was asked"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.015,
+          "min": 0.01,
+          "max": 0.09,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 36
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-impossible-error-handling",
+      "sourcePath": ".abide/rubric.json",
+      "line": 356,
+      "kind": "rubric",
+      "text": "No error handling for impossible scenarios.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change guard against a state the types or the surrounding code already rule out — a null check on a non-nullable value, a catch around code that cannot throw, a default branch on an already exhaustive union?",
+            "criteria": {
+              "true": "if (!parsed) return; right after a zod .parse() that throws on failure",
+              "false": "if (!found) return notFound(); on a lookup that can miss"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.095,
+          "min": 0.03,
+          "max": 0.2,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 37
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-drive-by-improvement",
+      "sourcePath": ".abide/rubric.json",
+      "line": 386,
+      "kind": "rubric",
+      "text": "Don't \"improve\" adjacent code, comments, or formatting.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change touch lines near the real edit only to reformat, rename, reword a comment or tidy them, with no bearing on the task?",
+            "criteria": {
+              "true": "re-wrapping an untouched function's arguments in the same file",
+              "false": "editing only the lines the task required"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.04,
+          "min": 0.03,
+          "max": 0.44,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 48
+        }
+      }
+    },
+    {
+      "ruleId": "abide/preserve-blank-lines",
+      "sourcePath": ".abide/rubric.json",
+      "line": 416,
+      "kind": "rubric",
+      "text": "Preserve intentional blank lines between methods and logical blocks. Do not compact whitespace to reduce line count or satisfy a file-size target; restructure the code instead if length is a problem.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change remove a blank line that separated two methods or two logical blocks, where the surrounding code is otherwise unchanged?",
+            "criteria": {
+              "true": "two adjacent methods pulled together with the empty line between them deleted",
+              "false": "a blank line disappearing because the block it separated was deleted"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.04,
+          "min": 0.02,
+          "max": 0.1,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 49
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-unasked-refactor",
+      "sourcePath": ".abide/rubric.json",
+      "line": 446,
+      "kind": "rubric",
+      "text": "Don't refactor things that aren't broken.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change restructure working code — moving, splitting, renaming or rewriting it — beyond what the task required?",
+            "criteria": {
+              "true": "a working module split into three files while fixing one of its functions",
+              "false": "editing the one function the task named"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.025,
+          "min": 0.02,
+          "max": 0.43,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 50
+        }
+      }
+    },
+    {
+      "ruleId": "abide/match-existing-style",
+      "sourcePath": ".abide/rubric.json",
+      "line": 476,
+      "kind": "rubric",
+      "text": "Match existing style, even if you'd do it differently.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "deferred",
+          "reason": "needs the surrounding files to know what the existing style is"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 51
+        }
+      }
+    },
+    {
+      "ruleId": "abide/mention-dead-code-dont-delete",
+      "sourcePath": ".abide/rubric.json",
+      "line": 489,
+      "kind": "rubric",
+      "text": "If you notice unrelated dead code, mention it - don't delete it. Don't remove pre-existing dead code unless asked.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change delete existing code that the task did not ask about and that this change did not make unused?",
+            "criteria": {
+              "true": "an unrelated unused export removed while fixing a different function",
+              "false": "removing an import that this change's edit left with no references"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.02,
+          "min": 0.02,
+          "max": 0.15,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 52
+        }
+      }
+    },
+    {
+      "ruleId": "abide/remove-own-orphans",
+      "sourcePath": ".abide/rubric.json",
+      "line": 519,
+      "kind": "rubric",
+      "text": "Remove imports/variables/functions that YOUR changes made unused.",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "@typescript-eslint/no-unused-vars",
+          "pattern": "unused import or binding left behind after an edit"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 56
+        }
+      }
+    },
+    {
+      "ruleId": "abide/verifiable-goals",
+      "sourcePath": ".abide/rubric.json",
+      "line": 537,
+      "kind": "rubric",
+      "text": "Transform tasks into verifiable goals: \"Add validation\" → \"Write tests for invalid inputs, then make them pass\".",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about how the agent frames the task, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 65
+        }
+      }
+    },
+    {
+      "ruleId": "abide/state-a-plan",
+      "sourcePath": ".abide/rubric.json",
+      "line": 550,
+      "kind": "rubric",
+      "text": "For multi-step tasks, state a brief plan.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "unenforceable",
+          "reason": "about the conversation, not the code"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 71
+        }
+      }
+    },
+    {
+      "ruleId": "abide/comment-length",
+      "sourcePath": ".abide/rubric.json",
+      "line": 563,
+      "kind": "rubric",
+      "text": "Every comment must earn its place: if you can't name what it tells the reader that the code doesn't, drop it.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "score",
+            "instructions": "Take the longest comment this change adds. How much longer is it than the shortest wording that still carries its reason, gotcha or constraint? Length that the reason genuinely needs is not padding.",
+            "criteria": [
+              "no longer than the reason needs, however many lines that takes",
+              "slightly padded: one clause or line that repeats what the rest already said",
+              "about twice as long as the reason needs",
+              "several times longer than needed, or a paragraph where a line would do"
+            ],
+            "violatingFrom": 2
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.095,
+          "min": 0,
+          "max": 0.33,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 89
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-narrating-comment",
+      "sourcePath": ".abide/rubric.json",
+      "line": 596,
+      "kind": "rubric",
+      "text": "Don't narrate what the code does — the reader sees the `map`, the `switch`, the names. Restating them is noise. Delete comments that restate the adjacent line.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Among the added lines, is there at least one comment whose content a reader could reconstruct from the code directly below it?",
+            "criteria": {
+              "true": "// loop over the rules\\nfor (const rule of rules) {",
+              "false": "// the host truncates stdout past 8KB, so keep the JSON flat"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.49,
+          "min": 0.05,
+          "max": 0.81,
+          "fired": 1,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 85
+        }
+      }
+    },
+    {
+      "ruleId": "abide/clearer-code-over-comment",
+      "sourcePath": ".abide/rubric.json",
+      "line": 626,
+      "kind": "rubric",
+      "text": "If code needs a comment to be understood, first make the code clearer (rename, extract). Comment only what better code can't express.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a comment that explains a vague name or a dense expression, where renaming the identifier or extracting a named function would have said the same thing?",
+            "criteria": {
+              "true": "// d is the number of days since the last run\\nconst d = ...",
+              "false": "// Node resolves this symlink differently on Windows"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.125,
+          "min": 0.01,
+          "max": 0.3,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 87
+        }
+      }
+    },
+    {
+      "ruleId": "abide/exhaustive-switch",
+      "sourcePath": ".abide/rubric.json",
+      "line": 656,
+      "kind": "rubric",
+      "text": "Closed sets use an exhaustive `switch` + `assertNever`. Never use if/else-if chains for mutually-exclusive variants.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "choice",
+            "instructions": "This change branches on the discriminant of a union or enum. Which shape does it use?",
+            "criteria": {
+              "none": "no branching on a discriminant or enum here",
+              "switch-assertnever": "a switch ending in default: return assertNever(value)",
+              "switch-no-assertnever": "a switch with no default, or a default that does not call assertNever",
+              "if-else-chain": "if / else if over the discriminant, or a ternary chain"
+            },
+            "violating": [
+              "switch-no-assertnever",
+              "if-else-chain"
+            ]
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.01,
+          "min": 0,
+          "max": 1,
+          "fired": 3,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 95
+        }
+      }
+    },
+    {
+      "ruleId": "abide/derive-one-status-type",
+      "sourcePath": ".abide/rubric.json",
+      "line": 696,
+      "kind": "rubric",
+      "text": "When behavior depends on several related status checks, derive one closed decision/status type and switch over that — don't scatter conditionals through a method.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change decide one outcome from several related boolean or status checks spread through a function, instead of deriving one closed status value and switching over it?",
+            "criteria": {
+              "true": "if (isWeak) ... later if (isNoisy) ... later if (!isWeak && !isNoisy) ...",
+              "false": "const verdict = toVerdict(stats); switch (verdict) { ... }"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.12,
+          "min": 0.05,
+          "max": 0.88,
+          "fired": 1,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 95
+        }
+      }
+    },
+    {
+      "ruleId": "abide/assertnever-single-owner",
+      "sourcePath": ".abide/rubric.json",
+      "line": 730,
+      "kind": "rubric",
+      "text": "Define `assertNever` once in the schema package's utils and import it everywhere.",
+      "flags": null,
+      "context": "Applies only to files matching: packages/cli/**/*.ts, packages/cli/**/*.tsx, packages/hooks/**/*.ts.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "packages/cli/**/*.ts",
+          "packages/cli/**/*.tsx",
+          "packages/hooks/**/*.ts"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "no-restricted-syntax on a VariableDeclarator or FunctionDeclaration named assertNever outside packages/schema/src/utils",
+          "pattern": "^\\s*(export\\s+)?(const|function)\\s+assertNever\\b"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 95
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-interface",
+      "sourcePath": ".abide/rubric.json",
+      "line": 749,
+      "kind": "rubric",
+      "text": "Use `type`, not `interface`.",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "@typescript-eslint/consistent-type-definitions",
+          "pattern": "^\\s*(export\\s+)?(declare\\s+)?interface\\s+[A-Za-z_$]"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 103
+        }
+      }
+    },
+    {
+      "ruleId": "abide/discriminated-union-state",
+      "sourcePath": ".abide/rubric.json",
+      "line": 767,
+      "kind": "rubric",
+      "text": "Discriminated unions for state — every multi-shape value carries a `type`/`kind` discriminant. No optional-field soup where one shape is meant.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a type whose optional fields encode which shape a value is, instead of a union of shapes each carrying a `type` or `kind` discriminant?",
+            "criteria": {
+              "true": "type Result = { ok?: Data; error?: string; retryAfter?: number }",
+              "false": "type Result = { kind: \"ok\"; data: Data } | { kind: \"error\"; message: string }"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.07,
+          "min": 0.03,
+          "max": 0.12,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 104
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-type-casting",
+      "sourcePath": ".abide/rubric.json",
+      "line": 801,
+      "kind": "rubric",
+      "text": "No type casting. `as` is a bug until proven otherwise — narrow with `typeof`/discriminants/schema parsing instead. (`as const` and zod `.parse()` outputs are fine.)",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "@typescript-eslint/consistent-type-assertions with assertionStyle never",
+          "pattern": "\\bas\\s+(?!const\\b)[A-Za-z_$][A-Za-z0-9_$<>\\[\\].]*"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 105
+        }
+      }
+    },
+    {
+      "ruleId": "abide/typed-domain-errors",
+      "sourcePath": ".abide/rubric.json",
+      "line": 819,
+      "kind": "rubric",
+      "text": "Expected failures use typed domain errors with a stable machine-readable `code` (SCREAMING_SNAKE_CASE) callers can switch on exhaustively.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change signal an expected failure with a bare Error, a string or a boolean, rather than a typed domain error carrying a SCREAMING_SNAKE_CASE `code`?",
+            "criteria": {
+              "true": "throw new Error(\"rubric not found\")",
+              "false": "throw abideError(\"RUBRIC_NOT_FOUND\", \"no rubric at that path\")"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.14,
+          "min": 0.04,
+          "max": 0.78,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 106
+        }
+      }
+    },
+    {
+      "ruleId": "abide/error-message-punctuation",
+      "sourcePath": ".abide/rubric.json",
+      "line": 853,
+      "kind": "rubric",
+      "text": "Concise messages, no terminal punctuation.",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "no-restricted-syntax on a NewExpression of Error whose first argument is a string literal ending in . ! or ?",
+          "pattern": "new [A-Za-z]*Error\\([\"'`][^\"'`]*[.!?][\"'`]"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 106
+        }
+      }
+    },
+    {
+      "ruleId": "abide/single-owner-id-formats",
+      "sourcePath": ".abide/rubric.json",
+      "line": 871,
+      "kind": "rubric",
+      "text": "Deterministic ID/key formats have a single owner: one named creation function per format (rule ids, source hashes, rubric cache keys). Never inline-format the same ID in two places.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "deferred",
+          "reason": "needs the rest of the repo to know whether that format is already formatted somewhere else"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 107
+        }
+      }
+    },
+    {
+      "ruleId": "abide/schema-first-boundaries",
+      "sourcePath": ".abide/rubric.json",
+      "line": 884,
+      "kind": "rubric",
+      "text": "Schema-first boundaries: anything crossing a process/API boundary is zod-parsed at the edge; internal code trusts parsed types, never re-validates ad hoc.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change read data crossing a boundary — stdin, a hook payload, a file on disk, an HTTP response, a model answer — without a zod parse at that edge, or re-check the shape of a value that was already parsed?",
+            "criteria": {
+              "true": "const payload = JSON.parse(raw); if (!payload.tool_name) return;",
+              "false": "const payload = hookPayloadSchema.parse(JSON.parse(raw));"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.11,
+          "min": 0.03,
+          "max": 0.67,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 108
+        }
+      }
+    },
+    {
+      "ruleId": "abide/zero-coldtea-dependency",
+      "sourcePath": ".abide/rubric.json",
+      "line": 918,
+      "kind": "rubric",
+      "text": "Zero Coldtea dependency. This runs in anyone's repo on anyone's machine. Nothing here may require Coldtea to be installed, running, or reachable.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change make any behaviour depend on Coldtea being installed, running or reachable — importing a Coldtea package other than this repo's own, calling a coldtea binary, or reaching a coldtea.ai endpoint?",
+            "criteria": {
+              "true": "spawn(\"coldtea\", [\"task\", \"log\"]) or fetch(\"https://coldtea.ai/api/...\")",
+              "false": "importing @coldtea/abide-schema, which is a package in this repo"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.03,
+          "min": 0.02,
+          "max": 0.12,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 113
+        }
+      }
+    },
+    {
+      "ruleId": "abide/verdict-names-its-rule",
+      "sourcePath": ".abide/rubric.json",
+      "line": 948,
+      "kind": "rubric",
+      "text": "The rubric is the product's trust surface. Every verdict must trace to a named rule a person can read and rewrite. A verdict that cannot be explained by pointing at a rule is a bug.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: packages/**/*.ts, packages/**/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "packages/**/*.ts",
+          "packages/**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change report a violation, block or warning to the user without carrying the id of the rule it came from?",
+            "criteria": {
+              "true": "return { blocked: true, message: \"this edit looks wrong\" }",
+              "false": "return { blocked: true, ruleId: rule.id, message: rule.text }"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.11,
+          "min": 0.08,
+          "max": 0.73,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 114
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-default-rules",
+      "sourcePath": ".abide/rubric.json",
+      "line": 982,
+      "kind": "rubric",
+      "text": "No default rules. Rules come only from the user's own instruction files. Shipping a built-in ruleset turns this into a generic linter and loses the premise.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a rule, rule text or question that abide would check without it coming from the user's own instruction files?",
+            "criteria": {
+              "true": "a BUILTIN_RULES array merged into the loaded rubric",
+              "false": "rules read from .abide/rubric.json only"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.05,
+          "min": 0.03,
+          "max": 0.12,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 115
+        }
+      }
+    },
+    {
+      "ruleId": "abide/band-verdicts",
+      "sourcePath": ".abide/rubric.json",
+      "line": 1012,
+      "kind": "rubric",
+      "text": "Band verdicts, never threshold at 0.5. Act above a high score, flag the middle, ignore below.",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "no-restricted-syntax on a BinaryExpression comparing a score against a numeric literal outside the thresholds module",
+          "pattern": "(score|probability|answer|value)\\s*[<>]=?\\s*0\\.\\d"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 116
+        }
+      }
+    },
+    {
+      "ruleId": "abide/trim-rule-instructions",
+      "sourcePath": ".abide/rubric.json",
+      "line": 1030,
+      "kind": "rubric",
+      "text": "Rule instructions are input tokens billed on every edit whether or not a rule fires. Trim instructions for tokens as well as for readability, and use `scope` globs to keep out-of-scope questions out of the request entirely.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "deferred",
+          "reason": "about the rubric a compile produces, not about a diff of this repo"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 117
+        }
+      }
+    },
+    {
+      "ruleId": "abide/prefer-mechanical-check",
+      "sourcePath": ".abide/rubric.json",
+      "line": 1043,
+      "kind": "rubric",
+      "text": "Prefer the mechanical check. A rule a linter can enforce exactly, for free, must never be sent to a model.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change send something to the model that a regex, an AST query or the type checker decides exactly — a fixed syntax, a banned identifier, a required file name?",
+            "criteria": {
+              "true": "a model question asking whether the code declares `interface`",
+              "false": "a model question asking whether a comment restates the line below it"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.15,
+          "min": 0.08,
+          "max": 0.34,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 118
+        }
+      }
+    }
+  ],
+  "excluded": []
+}

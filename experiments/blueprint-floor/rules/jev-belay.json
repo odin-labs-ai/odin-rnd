@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "plugin": "jev-belay",
+  "repo": "valentynkit/jev-belay",
+  "sha": "ef719db7eaadc56aa4def86c4da4ffff5bcbca35",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Valentyn Kit",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "sha256": "c2686bf7578adaf9e8011544a578a308a70fa12cfa4720a008f9240d44f0b53f"
+    },
+    {
+      "path": "belay.mjs",
+      "sha256": "81e13e7f1b324cf89a29840ea5d99cd9af52fb017b27fd7fa0e4c3790610eb12"
+    }
+  ],
+  "counts": {
+    "primary": 0,
+    "secondary": 0,
+    "excluded": 4
+  },
+  "rulesSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "rules": [],
+  "excluded": [
+    {
+      "id": "jev-belay/claims_done",
+      "sourcePath": "belay.mjs",
+      "line": 417,
+      "reason": "score-only dial feeding a combined decision: decide() blocks only when claims_done, verification_applies, outcome and the transcript's own check evidence agree (belay.mjs decide)"
+    },
+    {
+      "id": "jev-belay/claims_verified",
+      "sourcePath": "belay.mjs",
+      "line": 425,
+      "reason": "score-only dial: it only sets falseClaim beside a block that decide() already made; it never blocks by itself"
+    },
+    {
+      "id": "jev-belay/verification_applies",
+      "sourcePath": "belay.mjs",
+      "line": 433,
+      "reason": "score-only dial feeding a combined decision: a veto inside decide(), never a block by itself"
+    },
+    {
+      "id": "jev-belay/outcome",
+      "sourcePath": "belay.mjs",
+      "line": 441,
+      "reason": "choice classifier (complete, partial, blocked, other) feeding a combined decision: a veto inside decide()"
+    }
+  ]
+}
