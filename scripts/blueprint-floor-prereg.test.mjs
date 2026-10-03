@@ -25,7 +25,7 @@ test('the record is pinned, and every file fact in it is exactly what the files 
 });
 
 test('every required field is required: deleting any one is refused', () => {
-  for (const path of Object.keys(required)) assert.throws(() => validateRecord(unset(copy(), path)), new RegExp(path.replace(/\./g, '\\.')), path);
+  for (const path of Object.keys(required)) assert.throws(() => validateRecord(unset(copy(), path)), new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), path);
 });
 
 test('the kill criteria and the discriminating negatives are the council\'s words verbatim; the R2-7 wording too', () => {
@@ -34,7 +34,7 @@ test('the kill criteria and the discriminating negatives are the council\'s word
   assert.match(KILL_CRITERIA_VERBATIM, /median expressible share < 25% → premise refuted, census is the result;\n {2}cascade adds false rejects > 2 pts over plugin-alone, or avoids < 20% of Jev calls → refuted\.$/);
   for (const [path, value] of [['killCriteria.verbatim', KILL_CRITERIA_VERBATIM.replace('25%', '20%')], ['killCriteria.discriminatingNegativesVerbatim', DISCRIMINATING_NEGATIVES_VERBATIM.replace('95%', '90%')], ['spend.wording', WORDING_R2_7.replace('$100', '$200')]]) {
     const bad = copy(); const keys = path.split('.'); keys.slice(0, -1).reduce((o, k) => o[k], bad)[keys.at(-1)] = value;
-    assert.throws(() => validateRecord(bad), new RegExp(path.replace(/\./g, '\\.')));
+    assert.throws(() => validateRecord(bad), new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
 });
 

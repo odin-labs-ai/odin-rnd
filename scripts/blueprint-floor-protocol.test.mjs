@@ -279,7 +279,7 @@ test('refute r5 B1: the "Applies to" context is shown to both models, and names 
   assert(buildTranslatorPrompt(s1).user.includes(`Applies to: ${s1.context}`));
   assert(buildAdjudicatorPrompt(s1, '{}', mech).user.includes(`Applies to: ${s1.context}`));
   assert(!buildTranslatorPrompt(loadRules('abide').rules.find(r => r.context === null)).user.includes('Applies to:'));
-  const word = w => new RegExp(`(^|[^A-Za-z0-9])${w.replace(/[-]/g, '\\-')}($|[^A-Za-z0-9])`, 'i');
+  const word = w => new RegExp(`(^|[^A-Za-z0-9])${w.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}($|[^A-Za-z0-9])`, 'i');
   for (const r of withCtx) {
     for (const name of PLUGIN_NAMES) assert(!word(name).test(r.context), `${r.ruleId}: plugin name in context`);
     for (const w of STRATUM_WORDS) assert(!word(w).test(r.context), `${r.ruleId}: ${w} in context`);
