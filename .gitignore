@@ -9,3 +9,8 @@ dist/
 experiments/nina-changes/spend-ledger.pending.jsonl
 experiments/nina-changes/spend-ledger.pending.jsonl.*.tmp
 experiments/nina-changes/run.lock
+
+# EXP 007 census runner state, per worktree, never committed: the pending-spend sidecar and the exclusive run lock.
+experiments/blueprint-floor/spend-ledger.pending.jsonl
+experiments/blueprint-floor/spend-ledger.pending.jsonl.*.tmp
+experiments/blueprint-floor/run.lock
