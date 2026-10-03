@@ -1,0 +1,49 @@
+{
+  "schema": "odin-rnd.exp009.baseline-summary.v1",
+  "configs": 120,
+  "faulty": 60,
+  "clean": 60,
+  "filterAgreesWithSpecEnabledAtBoot": 120,
+  "faultySignalled": 0,
+  "cleanSignalled": 0,
+  "faultyWithSilentInert": 44,
+  "faultyWithSilentDropped": 16,
+  "byFaultClass": {
+    "floor-epoch-drop": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 0,
+      "silentDropped": 10
+    },
+    "missing-dependency": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 10,
+      "silentDropped": 0
+    },
+    "missing-dependency-pair": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 10,
+      "silentDropped": 0
+    },
+    "profile-typo": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 4,
+      "silentDropped": 6
+    },
+    "provider-withdrawn": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 10,
+      "silentDropped": 0
+    },
+    "transitive-missing": {
+      "n": 10,
+      "signalled": 0,
+      "silentInert": 10,
+      "silentDropped": 0
+    }
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "id": "cfg-065",
+  "label": "faulty",
+  "faultClass": "missing-dependency-pair",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-05",
+      "needs": [
+        "store.read"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-06",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-07",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-08",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-09",
+      "needs": [],
+      "provides": [
+        "log.write"
+      ]
+    },
+    {
+      "name": "core-10",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-quill",
+      "needs": [
+        "log.write"
+      ],
+      "provides": [
+        "quill.feed"
+      ]
+    },
+    {
+      "name": "x-oyster",
+      "needs": [
+        "quill.feed"
+      ],
+      "provides": [
+        "oyster.feed"
+      ]
+    }
+  ],
+  "profile": null,
+  "intended": [
+    "q",
+    "core-02",
+    "q-resume",
+    "core-06"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "q": "inactive: missing q.release",
+    "q-resume": "active",
+    "x-quill": "active",
+    "x-oyster": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "q": "inactive: missing q.release",
+    "q-resume": "active",
+    "x-quill": "active",
+    "x-oyster": "active"
+  },
+  "note": "q is on the current floor but q-release is not registered, so one of its needs has no provider."
+}

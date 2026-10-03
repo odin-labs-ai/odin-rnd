@@ -1,0 +1,75 @@
+{
+  "id": "cfg-016",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "x-river",
+      "needs": [],
+      "provides": [
+        "river.feed"
+      ]
+    },
+    {
+      "name": "x-ladder",
+      "needs": [
+        "river.feed"
+      ],
+      "provides": [
+        "ladder.feed"
+      ]
+    },
+    {
+      "name": "x-orchard",
+      "needs": [],
+      "provides": [
+        "orchard.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-ladder",
+      "x-river"
+    ]
+  },
+  "intended": [
+    "x-ladder"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "x-river": "active",
+    "x-ladder": "active",
+    "x-orchard": "excluded"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "x-river": "active",
+    "x-ladder": "active",
+    "x-orchard": "excluded"
+  },
+  "note": "A profiled config whose intended plugins all resolve to active."
+}

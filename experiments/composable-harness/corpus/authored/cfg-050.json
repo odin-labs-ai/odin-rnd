@@ -1,0 +1,112 @@
+{
+  "id": "cfg-050",
+  "label": "faulty",
+  "faultClass": "provider-withdrawn",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-palette",
+      "needs": [],
+      "provides": [
+        "palette.feed"
+      ]
+    },
+    {
+      "name": "x-jacket",
+      "needs": [
+        "palette.feed"
+      ],
+      "provides": [
+        "jacket.feed"
+      ]
+    },
+    {
+      "name": "x-velvet",
+      "needs": [],
+      "provides": [
+        "velvet.feed"
+      ]
+    }
+  ],
+  "profile": null,
+  "intended": [
+    "x-jacket",
+    "q"
+  ],
+  "schedule": [
+    {
+      "step": 3,
+      "op": "withdraw",
+      "name": "x-palette"
+    }
+  ],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-palette": "active",
+    "x-jacket": "active",
+    "x-velvet": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-palette": "excluded",
+    "x-jacket": "inactive: missing palette.feed",
+    "x-velvet": "active"
+  },
+  "note": "Everything intended is active at boot, then x-palette is withdrawn and x-jacket loses its provider."
+}
