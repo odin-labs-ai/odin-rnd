@@ -31,6 +31,8 @@ import { CensusLedger, LEDGER, projection, ROLES } from './census-spend.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const FAKE_CLAUDE7 = join(HERE, 'fixtures', 'fake-claude-census.mjs');
+/** The client's program name, as PATH resolves it (a rehearsal puts the fake first on PATH under this name). */
+export const CLIENT_BIN = 'claude';
 export const RECORDS_DIR = `${DIR}/census`;
 export const PRACTICE_RECORD = `${DIR}/practice/practice-run.json`;
 export const LOCK = `${DIR}/run.lock`;

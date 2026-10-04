@@ -6,7 +6,7 @@
 // codeOnly and testSources are EXP 006's (scripts/nina-changes-claude-free.mjs), imported, not copied.
 import { chmodSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FAKE_CLAUDE7 } from '../experiments/blueprint-floor/census-run.mjs';
+import { CLIENT_BIN, FAKE_CLAUDE7 } from '../experiments/blueprint-floor/census-run.mjs';
 import { CensusLedger } from '../experiments/blueprint-floor/census-spend.mjs';
 import { codeOnly, testSources } from './nina-changes-claude-free.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -99,7 +99,7 @@ export async function withFake(plan, fn) {
   try {
     chmodSync(FAKE_CLAUDE7, 0o755);
     mkdirSync(join(dir, 'bin'));
-    symlinkSync(FAKE_CLAUDE7, join(dir, 'bin', 'claude'));
+    symlinkSync(FAKE_CLAUDE7, join(dir, 'bin', CLIENT_BIN));
     writeFileSync(join(dir, 'bin', 'fake7.json'), JSON.stringify({ plan }));
     process.env.PATH = `${join(dir, 'bin')}:${saved}`;
     const paths = { outDir: join(dir, 'out'), ledgerPath: join(dir, 'ledger.jsonl'), practicePath: join(dir, 'practice.json') };
