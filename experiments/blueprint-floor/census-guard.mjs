@@ -17,7 +17,7 @@
 //   node experiments/blueprint-floor/census-guard.mjs [--mode practice|counted]   run the guard (fetches the served copy)
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from './freeze.mjs';
@@ -74,7 +74,7 @@ export async function fetchServed(url = SERVED_URL, env = process.env) {
 // git as the PATH resolved it when this module loaded (a test may empty PATH afterwards to keep the client unreachable).
 const GIT = (process.env.PATH ?? '').split(':').filter(Boolean).map(d => join(d, 'git')).find(p => existsSync(p)) ?? 'git';
 /** A git runner bound to `root`: (args) -> {status, stdout}. Injectable in the guard's tests only. */
-export const gitIn = root => args => { const r = spawnSync(GIT, args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }); return { status: r.status, stdout: r.stdout ?? '' }; };
+export const gitIn = root => (args, input) => { const r = spawnSync(GIT, args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, ...(input !== undefined ? { input } : {}) }); return { status: r.status, stdout: r.stdout ?? '' }; };
 export const BASE_DIR = 'experiments/jev-gate/base';
 export const STATE_SUBDIR = 'exp007-census';
 /** The repository's shared census state dir: <git common dir>/exp007-census (one per repository, every worktree). */
@@ -84,8 +84,29 @@ export function censusStateDir(root = REPO_ROOT, git = gitIn(root)) {
   return join(resolve(root, r.stdout.trim()), STATE_SUBDIR);
 }
 
-/** B1: the base tree at HEAD is the pinned one and nothing untracked or ignored sits under it. Returns {tree, clean}. */
-export function checkBaseTree(prereg, git) {
+/** Every path under `dir` (relative, '/'-separated), refusing a symlink or anything that is not a file or directory. */
+function filesUnder(dir) {
+  const out = [];
+  const walk = rel => {
+    for (const e of readdirSync(join(dir, rel), { withFileTypes: true })) {
+      const r = rel ? `${rel}/${e.name}` : e.name;
+      const st = lstatSync(join(dir, r));
+      if (st.isSymbolicLink()) refuse(`${BASE_DIR}/${r} is a symlink`);
+      if (st.isDirectory()) walk(r); else if (st.isFile()) out.push(r); else refuse(`${BASE_DIR}/${r} is not a regular file`);
+    }
+  };
+  walk('');
+  return out.sort();
+}
+
+/**
+ * B1 + refute r2 B2: the base tree is the pinned one BY ITS BYTES. HEAD:experiments/jev-gate/base is the pre-registration's
+ * adapter.baseTree; git status (untracked and ignored files included) is empty under it; every index entry under it is
+ * tagged H by `git ls-files -v` (no assume-unchanged, no skip-worktree, which hide edits from git status); and the files
+ * on disk are exactly the tree's: the same paths, every blob id equal to `git hash-object` of the file on disk, every
+ * mode a regular file, no extra file and no symlink. Returns {tree, clean}.
+ */
+export function checkBaseTree(prereg, git, root = REPO_ROOT) {
   const want = prereg.adapter?.baseTree;
   const t = git(['rev-parse', `HEAD:${BASE_DIR}`]);
   const tree = t.status === 0 ? t.stdout.trim() : null;
@@ -93,6 +114,23 @@ export function checkBaseTree(prereg, git) {
   const st = git(['status', '--porcelain', '--ignored', '--', BASE_DIR]);
   if (st.status !== 0) refuse(`git status failed under ${BASE_DIR}`);
   if (st.stdout.trim()) refuse(`${BASE_DIR} has changed, untracked or ignored files: ${st.stdout.trim().split('\n').slice(0, 5).join('; ')}`);
+  const tags = git(['ls-files', '-v', '--', BASE_DIR]);
+  if (tags.status !== 0) refuse(`git ls-files failed under ${BASE_DIR}`);
+  const flagged = tags.stdout.split('\n').filter(Boolean).filter(l => !l.startsWith('H '));
+  if (flagged.length) refuse(`${BASE_DIR} has index entries git status cannot see changes in (assume-unchanged or skip-worktree): ${flagged.slice(0, 5).join('; ')}`);
+  const lt = git(['ls-tree', '-r', `HEAD:${BASE_DIR}`]);
+  if (lt.status !== 0) refuse(`git ls-tree failed for ${BASE_DIR}`);
+  const entries = lt.stdout.split('\n').filter(Boolean).map(l => { const [meta, path] = l.split('\t'); const [mode, type, blob] = meta.split(' '); return { mode, type, blob, path }; });
+  const bad = entries.filter(e => e.type !== 'blob' || e.mode !== '100644');
+  if (bad.length) refuse(`${BASE_DIR} at HEAD has entries that are not regular files: ${bad.map(e => `${e.mode} ${e.path}`).join(', ')}`);
+  const disk = filesUnder(join(root, BASE_DIR));
+  const inTree = entries.map(e => e.path).sort();
+  if (JSON.stringify(disk) !== JSON.stringify(inTree)) refuse(`the files under ${BASE_DIR} are not the tree's (extra: ${disk.filter(p => !inTree.includes(p)).join(', ') || 'none'}; missing: ${inTree.filter(p => !disk.includes(p)).join(', ') || 'none'})`);
+  const ho = git(['hash-object', '--stdin-paths'], entries.map(e => `${BASE_DIR}/${e.path}`).join('\n') + '\n');
+  const blobs = ho.stdout.split('\n').filter(Boolean);
+  if (ho.status !== 0 || blobs.length !== entries.length) refuse(`git hash-object failed under ${BASE_DIR}`);
+  const differ = entries.filter((e, i) => blobs[i] !== e.blob).map(e => e.path);
+  if (differ.length) refuse(`files under ${BASE_DIR} differ from HEAD by their bytes: ${differ.join(', ')}`);
   return { tree, clean: true };
 }
 
@@ -121,7 +159,7 @@ export const MODES = ['practice', 'counted', 'rehearsal'];
  * The guard. Returns the stamp every record carries: {mode, rehearsal, preregSha256, notBefore, served, code,
  * codeMatchesPins, checkedAt}. `freeze`, `now`, `fetch`, `git`, `stateDir` and `root` are injectable for tests.
  */
-export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), git = gitIn(root), stateDir, servedUrl = SERVED_URL } = {}) {
+export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), git = gitIn(root), baseRoot, stateDir, servedUrl = SERVED_URL } = {}) {
   if (!MODES.includes(mode)) refuse(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (!freeze?.PREREG_SHA256 || !freeze?.NOT_BEFORE) refuse('the census waits for the freeze: PREREG_SHA256 and NOT_BEFORE in freeze.mjs are null');
@@ -136,7 +174,7 @@ export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(),
   checkPinned(prereg.files, root, 'the pre-registration');
   checkPinned(Object.fromEntries(Object.entries(prereg.engine?.files ?? {}).map(([f, h]) => [`node_modules/bce-engine/${f}`, h])), root, 'the pre-registration (engine)');
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the not-before ${freeze.NOT_BEFORE}`);
-  const base = checkBaseTree(prereg, git);
+  const base = checkBaseTree(prereg, git, baseRoot ?? root);
 
   const code = codeShas(root);
   const missing = Object.keys(code).filter(k => code[k] === null);

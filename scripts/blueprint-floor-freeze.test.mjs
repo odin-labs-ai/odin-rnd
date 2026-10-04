@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
-import { BASE_DIR, censusStateDir, checkCensusRun, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
+import { BASE_DIR, censusStateDir, checkBaseTree, checkCensusRun, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
 import { LEDGER } from '../experiments/blueprint-floor/census-spend.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
@@ -18,7 +18,7 @@ const STATE = scratchDir('bf-freeze-state');
 const AFTER = new Date(Date.parse(NOT_BEFORE) + 1000);
 const frozenArgs = over => ({ mode: 'counted', now: AFTER, fetch: served, git: realGit, stateDir: STATE, ...over });
 /** The real git, with some answers replaced (B1 / B3 cases). */
-const gitWith = answers => args => { const k = args.join(' '); for (const [re, out] of answers) if (re.test(k)) return out; return realGit(args); };
+const gitWith = answers => (args, input) => { const k = args.join(' '); for (const [re, out] of answers) if (re.test(k)) return out; return realGit(args, input); };
 
 test('the freeze holds the published record: its sha256, and the odin-rnd #25 mergedAt as the not-before', () => {
   assert.equal(PREREG_SHA256, 'ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb');
@@ -84,7 +84,7 @@ test('a counted-path file or a pre-registration pin that drifts refuses the guar
   try {
     for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
     symlinkSync(join(REPO_ROOT, 'node_modules'), join(root, 'node_modules'));
-    const args = over => frozenArgs({ root, ledgerPath: join(root, LEDGER), ...over }); // git answers from the real repo
+    const args = over => frozenArgs({ root, baseRoot: REPO_ROOT, ledgerPath: join(root, LEDGER), ...over }); // git and the base tree from the real repo
     await checkCensusRun(args());
     writeFileSync(join(root, 'experiments/blueprint-floor/census-run.mjs'), `${readFileSync(join(root, 'experiments/blueprint-floor/census-run.mjs'), 'utf8')}\n// drift\n`);
     await assert.rejects(checkCensusRun(args()), /counted-path code differs from experiments\/blueprint-floor\/runners\.sha256 \(experiments\/blueprint-floor\/census-run\.mjs\)/);
@@ -130,7 +130,7 @@ test('B3: the guard refuses a ledger that does not start with HEAD\'s bytes or l
       for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
       symlinkSync(join(REPO_ROOT, 'node_modules'), join(root, 'node_modules'));
       const L = join(root, LEDGER);
-      const args = over => frozenArgs({ root, ledgerPath: L, git: head, stateDir: state, ...over });
+      const args = over => frozenArgs({ root, baseRoot: REPO_ROOT, ledgerPath: L, git: head, stateDir: state, ...over });
       writeFileSync(L, committed);
       await checkCensusRun(args()); // ledger == HEAD, no mirror yet: allowed (the ledger initialises the mirror)
       writeFileSync(L, line('a'));
@@ -144,4 +144,46 @@ test('B3: the guard refuses a ledger that does not start with HEAD\'s bytes or l
     } finally { removeScratch(root); }
   } finally { removeScratch(dir); }
   assert.equal(censusStateDir(REPO_ROOT), join(resolve(REPO_ROOT, realGit(['rev-parse', '--git-common-dir']).stdout.trim()), 'exp007-census'), 'one state dir per repository, shared by every worktree');
+});
+
+/** A scratch repository holding a byte-identical copy of the base tree at the same path (its tree id is the pinned one). */
+function baseRepo() {
+  const repo = scratchDir('bf-base-repo');
+  const git = gitIn(repo);
+  for (const a of [['init', '-q'], ['config', 'user.email', 'b@example.invalid'], ['config', 'user.name', 'b'], ['config', 'commit.gpgsign', 'false']]) git(a);
+  cpSync(join(REPO_ROOT, BASE_DIR), join(repo, BASE_DIR), { recursive: true });
+  git(['add', '--', BASE_DIR]); git(['commit', '-q', '-m', 'base']);
+  return { repo, git };
+}
+
+test('refute r2 B2: the base tree is checked by its bytes: assume-unchanged or skip-worktree edits, extra files and symlinks refuse', () => {
+  const prereg = JSON.parse(preregBytes);
+  const { repo, git } = baseRepo();
+  try {
+    assert.deepEqual(checkBaseTree(prereg, git, repo), { tree: prereg.adapter.baseTree, clean: true }, 'a byte-identical copy passes');
+    const f = `${BASE_DIR}/src/domain/money.ts`, abs = join(repo, f), orig = readFileSync(abs);
+    // assume-unchanged hides the edit from git status: the ls-files tag refuses it.
+    git(['update-index', '--assume-unchanged', f]); writeFileSync(abs, `${orig}// edited\n`);
+    assert.equal(git(['status', '--porcelain', '--', BASE_DIR]).stdout, '', 'git status is blind to it');
+    assert.throws(() => checkBaseTree(prereg, git, repo), /assume-unchanged or skip-worktree.*h experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
+    // Even if the tag were reported H, the blob comparison catches the bytes.
+    const lying = (args, input) => { const r = git(args, input); return args[0] === 'ls-files' ? { ...r, stdout: r.stdout.replace(/^h /gm, 'H ') } : r; };
+    assert.throws(() => checkBaseTree(prereg, lying, repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+    git(['update-index', '--no-assume-unchanged', f]); writeFileSync(abs, orig);
+    git(['update-index', '--skip-worktree', f]); writeFileSync(abs, `${orig}// edited\n`);
+    assert.throws(() => checkBaseTree(prereg, git, repo), /assume-unchanged or skip-worktree.*S experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
+    git(['update-index', '--no-skip-worktree', f]); writeFileSync(abs, orig);
+    checkBaseTree(prereg, git, repo);
+    // An ignored extra file (git status --ignored sees it) and a symlink both refuse.
+    writeFileSync(join(repo, '.git', 'info', 'exclude'), 'extra.ts\n');
+    writeFileSync(join(repo, BASE_DIR, 'src', 'extra.ts'), 'x\n');
+    assert.throws(() => checkBaseTree(prereg, git, repo), /untracked or ignored files: !! /);
+    rmSync(join(repo, BASE_DIR, 'src', 'extra.ts'));
+    const hidden = (args, input) => (args[0] === 'status' ? { status: 0, stdout: '' } : git(args, input));
+    symlinkSync(join(repo, BASE_DIR, 'package.json'), join(repo, BASE_DIR, 'src', 'link.ts'));
+    assert.throws(() => checkBaseTree(prereg, hidden, repo), /src\/link\.ts is a symlink/, 'a symlink refuses even when git status says nothing');
+    rmSync(join(repo, BASE_DIR, 'src', 'link.ts'));
+    writeFileSync(join(repo, BASE_DIR, 'src', 'extra2.ts'), 'x\n');
+    assert.throws(() => checkBaseTree(prereg, hidden, repo), /not the tree's \(extra: src\/extra2\.ts/, 'an extra file refuses even when git status says nothing');
+  } finally { removeScratch(repo); }
 });
