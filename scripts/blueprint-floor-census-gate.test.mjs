@@ -36,10 +36,14 @@ function fixture(classOf = i => ['expressible', 'partial', 'not'][i % 3]) {
   const pre = [['canary', 'canary', 'translator', 'claude-opus-5-5', 0.0312345], ['canary', 'canary', 'adjudicator', 'claude-sonnet-5', 0.0101234], ['practice', 'practice/01', 'translator', 'claude-opus-5-5', 0.0456789], ['practice', 'practice/01', 'adjudicator', 'claude-sonnet-5', 0.0123456]]
     .map(([kind, ruleId, role, model, c], n) => ({ ts: new Date(Date.parse(NOT_BEFORE) + 1000 * (n + 1)).toISOString(), kind, ruleId, role, model, costUsd: c, costBasis: 'api-equivalent', reportedCostUsd: c, rehearsal: false, callId: `${kind}:${role}` }));
   const all = [...pre, ...lines];
+  const pcall = l => ({ called: true, model: l.model, modelUsage: [l.model], callId: l.callId, costUsd: l.costUsd, harnessFailure: null, startedAt: l.ts, endedAt: l.ts });
+  const practiceRecord = { kind: 'census-practice', mode: 'practice', rehearsal: false, fixture: false, partial: null, askFork: false, preregSha256: PREREG_SHA256, code: pins,
+    canary: { translator: { ...pcall(pre[0]), pass: true }, adjudicator: { ...pcall(pre[1]), pass: true } }, practice: { ruleId: 'practice/01', translator: pcall(pre[2]), adjudicator: pcall(pre[3]) } };
   const results = computeCensusResults({ rules, plugins, records, ledgerLines: all, denominator: prereg.census.rules, scorerSha256: scorerPin });
-  return { records, recordFiles: Object.keys(records).map(id => `${id}.json`), ledgerText: `${all.map(l => JSON.stringify(l)).join('\n')}\n`, resultsBytes: JSON.stringify(results, null, 2), results, lines: all };
+  return { records, recordFiles: Object.keys(records).map(id => `${id}.json`), ledgerText: `${all.map(l => JSON.stringify(l)).join('\n')}\n`, resultsBytes: JSON.stringify(results, null, 2), results, lines: all, practiceRecords: [practiceRecord] };
 }
-const inputs = f => ({ resultsBytes: f.resultsBytes, records: f.records, recordFiles: f.recordFiles, ledgerText: f.ledgerText, rules, plugins, pins, freeze: { PREREG_SHA256, NOT_BEFORE }, preregDiskSha256: PREREG_SHA256, denominator: prereg.census.rules, scorerDiskSha256: scorerPin, scorerPin });
+const models = { translator: 'claude-opus-5-5', adjudicator: 'claude-sonnet-5' };
+const inputs = f => ({ resultsBytes: f.resultsBytes, records: f.records, recordFiles: f.recordFiles, ledgerText: f.ledgerText, practiceRecords: f.practiceRecords, models, rules, plugins, pins, freeze: { PREREG_SHA256, NOT_BEFORE }, preregDiskSha256: PREREG_SHA256, denominator: prereg.census.rules, scorerDiskSha256: scorerPin, scorerPin });
 const FIX = fixture();
 const closedBy = (mutate, re, label) => {
   const f = structuredClone(FIX);
@@ -110,6 +114,27 @@ test('each check broken in turn keeps the gate closed', () => {
   closedBy(i => { delete i.records['control/11'].translator.costUsd; }, /control\/11: translator\.costUsd missing/, 'a missing call field');
   closedBy(i => { delete i.records['control/12'].final; }, /control\/12: no final/, 'a missing record field');
   closedBy(i => { i.records['control/13'].final = { ...i.records['control/13'].final, final: 'expressible' }; }, /final is not the scorer's finalClass/, 'a final class that is not the scorer\'s');
+});
+
+test('refute r1 N1: the practice record, its canaries, its callIds, and the per-call harness and model facts', () => {
+  closedBy(i => { i.practiceRecords = []; }, /no practice record/, 'no practice record');
+  closedBy(i => { i.practiceRecords[0].canary.adjudicator.pass = false; }, /canaries did not both PASS/, 'a failed canary');
+  closedBy(i => { i.practiceRecords[0].askFork = true; }, /no practice record that completed without an ASK-FORK/, 'an ASK-FORK practice');
+  closedBy(i => { i.practiceRecords[0].partial = { reason: 'canary' }; }, /no practice record that completed/, 'a stopped practice');
+  closedBy(i => { i.practiceRecords[0].rehearsal = true; }, /a practice record is a rehearsal or a fixture/, 'a rehearsed practice');
+  closedBy(i => { i.practiceRecords[0].code = { ...i.practiceRecords[0].code, 'experiments/blueprint-floor/census-run.mjs': 'f'.repeat(64) }; }, /practice record was made under another pre-registration or other code/, 'practice on other code');
+  closedBy(i => { i.practiceRecords[0].practice.translator.callId = 'practice:other'; }, /not exactly the calls of the practice records \(by callId\)/, 'an excluded line with no practice call');
+  closedBy(i => { i.practiceRecords[0].canary.translator.costUsd = 0.0312346; }, /its cost differs from its ledger line/, 'a practice cost that differs');
+  const r = 'control/05';
+  const rescore = i => { i.records[r].final = finalClass(i.records[r]); };
+  closedBy(i => { i.records[r].translator.harnessFailure = 'timeout'; rescore(i); }, /control\/05: a translator harness failure without an error class/, 'a translator timeout without an error class');
+  closedBy(i => { i.records[r].translator.modelUsage = ['claude-opus-5-5', 'claude-haiku-4-5']; }, /control\/05: a translator call without an error class but with a harness failure or a model other than the pin/, 'a second model key');
+  closedBy(i => { i.records[r].translator.modelUsage = ['claude-sonnet-5']; i.records[r].translator.model = 'claude-sonnet-5'; }, /a model other than the pin/, 'the translator on the adjudicator model');
+  closedBy(i => { i.records[r].adjudicator.harnessFailure = 'nonzero-exit'; }, /control\/05: an adjudicator harness failure without an error class/, 'an adjudicator failure without an error');
+  closedBy(i => { i.records[r].adjudicator.modelUsage = ['claude-opus-5-5']; }, /control\/05: an adjudicator call without an error class but with a harness failure or a model other than the pin/, 'the adjudicator on another model');
+  closedBy(i => { i.models = undefined; }, /no pinned models/, 'no pinned models given');
+  const g = gateFromData(inputs(FIX));
+  assert.equal(g.facts.disclosures.length, 5, 'the disclosures travel with the facts');
 });
 
 test('the committed tree: no census has run, so the gate is closed', () => {
