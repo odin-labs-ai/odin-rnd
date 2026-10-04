@@ -1,13 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { censusStateDir, gitIn, REPO_ROOT } from '../experiments/blueprint-floor/census-guard.mjs';
+import { BASE_DIR, censusStateDir, gitIn, REPO_ROOT } from '../experiments/blueprint-floor/census-guard.mjs';
+import { computeCensusResults, recordProblems } from '../experiments/blueprint-floor/census-gate.mjs';
+import { loadCensusRules } from '../experiments/blueprint-floor/scorer.mjs';
 import { CensusLedger, checkLedgerIntegrity, LIMITS, projection, validLine } from '../experiments/blueprint-floor/census-spend.mjs';
 import {
   acquireRunLock, billedInEnv, CANARY_BASE_TERMS, canaryPrompt, canaryVerdict, censusArgs, censusRules, childEnv7, chooseClaude7, commandTemplate, ENV_ALLOW,
-  COMMIT_EVERY, DIGESTS, FAKE_CLAUDE7, LOCK, makeRunDir, maskDigests, modelCheck, parseClientOutput, practiceRule, publicCensusRecord, refuseUnderTestRunner, renderCommand, reportedCost, runCensus, WITHHELD,
+  COMMIT_EVERY, DIGESTS, FAKE_CLAUDE7, storedDigests, LOCK, makeRunDir, maskDigests, modelCheck, parseClientOutput, practiceRule, publicCensusRecord, refuseUnderTestRunner, renderCommand, reportedCost, runCensus, WITHHELD,
 } from '../experiments/blueprint-floor/census-run.mjs';
 import { censusCallSites, censusImportIssues, claudeFree7, testSources, withFake } from './blueprint-floor-census-free.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -454,6 +456,88 @@ test('N5: the practice rule shares no four-word sequence with any census rule an
   assert.ok(mine.size >= 5);
   const shared = censusRules().flatMap(r => [...shingles(r.text)].filter(s => mine.has(s)).map(s => `${r.ruleId}: ${s}`));
   assert.deepEqual(shared, []);
+  // Refute r2 N10: the authorship claim, made exactly true: no census rule names an image (as a word), alt text or accessibility.
+  assert.match(p.text, /\bimage\b/);
+  assert.deepEqual(censusRules().filter(r => /\bimages?\b|\balt[ -]text\b|accessib/i.test(r.text)).map(r => r.ruleId), []);
+  assert.match(JSON.parse(readFileSync(join(REPO_ROOT, 'experiments/blueprint-floor/controls/practice.json'), 'utf8')).authorship, /No census rule's text names an image as a word, alt text or accessibility/);
   assert.equal(p.stratum, 'practice');
   assert.ok(!censusRules().some(r => r.ruleId === p.ruleId));
+});
+
+
+// ----------------------------------------------------------------------------- refute r2
+
+test('refute r2 B1: a non-JSON answer starting with a temp or home path, and an adjudicator key that is a home path: final is withheld, never rewritten, and the public record still passes the gate', LONG, async () => {
+  // Practice: calls 1-4; then c08 T (5) garbage-tmp; c09 T (6) garbage-home; c10 T (7), A (8) adj-path-key.
+  const ids = ['control/08', 'control/09', 'control/10'];
+  await withFake({ 5: 'garbage-tmp', 6: 'garbage-home', 8: 'adj-path-key' }, async ({ paths }) => {
+    await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', log: () => {} });
+    const run = await runCensus({ ...paths, mode: 'rehearsal', only: ids, log: () => {} });
+    assert.equal(run.partial, null);
+    const recs = Object.fromEntries(ids.map(id => [id, JSON.parse(readFileSync(join(paths.outDir, `${id}.json`), 'utf8'))]));
+    for (const id of ids) {
+      const r = recs[id];
+      assert.deepEqual(recordProblems(r, id), [], `${id}: the PUBLIC record passes the gate's record check`);
+      assert.equal(r.final.final, 'error');
+      assert.equal(r.final.error, WITHHELD, `${id}: final.error withheld, not rewritten`);
+      assert.ok(r.j7.withheld.some(w => w.path.join('.') === 'final.error'), `${id}: final.error listed`);
+      assert.ok(!JSON.stringify(r).includes('<tmp>/x') && !JSON.stringify(r).includes('~/.ssh'), `${id}: no rewritten copy of the model text`);
+    }
+    assert.equal(recs['control/08'].translatorError, WITHHELD);
+    assert.equal(recs['control/10'].adjudicator.parsed, WITHHELD, 'the answer object with a path key is withheld whole');
+    assert.equal(recs['control/10'].adjudicatorError, WITHHELD);
+    const { rules, plugins } = loadCensusRules(REPO_ROOT);
+    const sub = rules.filter(r => ids.includes(r.ruleId));
+    const res = computeCensusResults({ rules: sub, plugins, records: recs, ledgerLines: [], denominator: 3, scorerSha256: 'x' });
+    assert.deepEqual(res.score.errors.map(e => e.ruleId), ids);
+  });
+});
+
+test('refute r2 B2: an untracked file appearing under the base tree mid-run stops the run at the next rule (base-changed)', LONG, async () => {
+  const repo = scratchDir('bf-base-mid');
+  const git = gitIn(repo);
+  try {
+    for (const a of [['init', '-q'], ['config', 'user.email', 'b@example.invalid'], ['config', 'user.name', 'b'], ['config', 'commit.gpgsign', 'false']]) git(a);
+    cpSync(join(REPO_ROOT, BASE_DIR), join(repo, BASE_DIR), { recursive: true });
+    git(['add', '--', BASE_DIR]); git(['commit', '-q', '-m', 'base']);
+    const good = readFileSync(join(REPO_ROOT, 'experiments/blueprint-floor/preregistration.json'));
+    let n = 0;
+    // The served re-check runs just before the base check: on its 5th call (rule 2 of the counted run) a file appears.
+    const fetch = async () => { n += 1; if (n === 5) writeFileSync(join(repo, BASE_DIR, 'src', 'stray.ts'), 'x\n'); return good; };
+    await withFake({}, async ({ paths, log }) => {
+      await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', git, baseRoot: repo, fetch, log: () => {} });
+      const before = log().length;
+      const run = await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08', 'control/09', 'control/10'], git, baseRoot: repo, fetch, log: () => {} });
+      assert.equal(run.partial.reason, 'base-changed');
+      assert.match(run.partial.error, /untracked or ignored files: \?\? experiments\/jev-gate\/base\/src\/stray\.ts/);
+      assert.equal(log().length - before, 2, 'rule 1 (two calls) ran; rule 2 made no call');
+    });
+  } finally { removeScratch(repo); }
+});
+
+test('refute r2 N8 + N9: the raw store keeps each call\'s full stdout; stored digests must be hex; a resume without the raw store keeps the withheld list', LONG, async () => {
+  await withFake({ 5: 'j7-pattern' }, async ({ dir, paths, ledger }) => {
+    await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', log: () => {} });
+    // Stop before the adjudicator (spend), so the record is resumed later.
+    ledger.record({ ts: new Date().toISOString(), kind: 'practice', ruleId: 'filler', role: 'adjudicator', model: 'claude-sonnet-5', reportedCostUsd: 20, rehearsal: true, callId: 'f' });
+    const stopped = await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08'], log: () => {} });
+    assert.equal(stopped.partial.limit, 'census-ceiling');
+    const rawPath = join(dir, 'census-raw', 'control/08.json');
+    const store = JSON.parse(readFileSync(rawPath, 'utf8'));
+    const mid = JSON.parse(readFileSync(join(paths.outDir, 'control/08.json'), 'utf8'));
+    const [[spath, stdout]] = store.stdouts;
+    assert.deepEqual(spath, ['translator']);
+    assert.equal(createHash('sha256').update(stdout).digest('hex'), mid.translator.stdoutSha256, 'N8: stdoutSha256 is re-verifiable from the raw store');
+    writeFileSync(rawPath, JSON.stringify({ ...store, runnerDigests: [...store.runnerDigests, [['translator', 'evil'], 'not-hex'], [['x'], 'A'.repeat(64)]] }));
+    assert.ok(storedDigests(rawPath).every(([, h]) => /^[0-9a-f]{64}$/.test(h)), 'N8: only lowercase 64-hex digests are accepted');
+    assert.equal(storedDigests(rawPath).length, store.runnerDigests.length);
+    // N9: lose the raw store, repair the ledger, resume: the earlier withheld field stays listed.
+    rmSync(join(dir, 'census-raw'), { recursive: true, force: true });
+    for (const f of [paths.ledgerPath, join(paths.stateDir, 'spend-ledger.mirror.jsonl')]) writeFileSync(f, readFileSync(f, 'utf8').split('\n').filter(l => !l.includes('"filler"')).join('\n'));
+    await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08'], log: () => {} });
+    const done = JSON.parse(readFileSync(join(paths.outDir, 'control/08.json'), 'utf8'));
+    assert.equal(done.complete, true);
+    assert.ok(done.j7.withheld.some(w => w.path.join('.') === 'translator.raw' && w.preSha256 === mid.translator.rawSha256), 'N9: carried from the public record');
+    assert.match(done.adjudicatorError, /not recoverable verbatim/, 'without the raw store the withheld answer cannot be adjudicated (error, never a re-call)');
+  });
 });

@@ -6,7 +6,9 @@
 // the path it was invoked by (the test's symlink directory, which the test puts first on PATH).
 //   fake7.json (optional): { "plan": { "<1-based call index>": "<behaviour>" } } with a behaviour of
 //     garbage | nocost | wrong-model | exit1 | is-error | no-result | canary-leak | timeout | j7-pattern (a translator
-//     answer of class not whose rationale quotes a home-directory regex, to exercise the J7 withholding)
+//     answer of class not whose rationale quotes a home-directory regex, to exercise the J7 withholding) | garbage-tmp |
+//     garbage-home (a non-JSON answer that starts with a temp or a home path) | adj-path-key (an adjudicator answer with an
+//     extra key that is a home path)
 // Default answers: the canary answers NONE; the translator answers expressible for the first rule of each shape
 // (input kind, flags line, contract form) it sees, partial for the second, and not for every other; the adjudicator
 // confirms the stated class, and disputes to not on every seventh adjudicator call.
@@ -70,6 +72,9 @@ else if (role === 'translator') {
 if (behaviour === 'j7-pattern') text = JSON.stringify({ ruleId: id, class: 'not', constraints: [], coverage: '', residual: 'Does the input read a key under /home/[^/]+/\\.ssh?', probes: null, rationale: 'The rule names /home/[^/]+/\\.ssh as its pattern.' });
 writeFileSync(join(home, 'fake7.state'), JSON.stringify(state));
 if (behaviour === 'garbage') text = 'this is not json {';
+if (behaviour === 'garbage-tmp') text = '/tmp/x is where I would look, not JSON';
+if (behaviour === 'garbage-home') text = '/home/someone/.ssh/id_rsa is the file this rule protects';
+if (behaviour === 'adj-path-key') { const o = JSON.parse(text); o['/home/someone/.ssh'] = 1; text = JSON.stringify(o); }
 if (behaviour === 'timeout') { setTimeout(() => {}, 3_600_000); } else {
   const cost = role === 'adjudicator' ? 0.0130211 : 0.0421337;
   const out = { type: 'result', subtype: behaviour === 'is-error' ? 'error_during_execution' : 'success', is_error: behaviour === 'is-error', duration_ms: 1234, num_turns: 1, session_id: 'rehearsal' };

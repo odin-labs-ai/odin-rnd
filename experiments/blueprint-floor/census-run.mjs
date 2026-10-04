@@ -26,7 +26,7 @@ import { BILLED, resolveBin } from '../jev-gate/run_reviewer.mjs';
 import { lint6, scrubPaths6 } from '../nina-changes/scrub6.mjs';
 import { assertOpaqueIdsDistinct, buildAdjudicatorPrompt, buildTranslatorPrompt, mechanicalChecks, parseAnswer, PROMPT_FILES, validateAdjudicatorOutput } from './protocol.mjs';
 import { finalClass } from './scorer.mjs';
-import { censusStateDir, checkCensusRun, DIR, gitIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
+import { censusStateDir, checkBaseTree, checkCensusRun, DIR, gitIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
 import { CensusLedger, LEDGER, projection, ROLES } from './census-spend.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -184,6 +184,15 @@ export function canaryVerdict(text, terms) {
  * that exact value (EXP 006 amendment 01 A1): never by key name.
  */
 export const DIGESTS = Symbol('runnerDigests');
+/** The client's full stdout of a call, kept for the raw store only (never in a public record; refute r2 N8). */
+export const STDOUT = Symbol('clientStdout');
+/** Every [path, stdout] a record's calls carry under STDOUT. */
+function stdoutsOf(rec) {
+  const out = [];
+  const walk = (v, path) => { if (!v || typeof v !== 'object') return; if (typeof v[STDOUT] === 'string') out.push([path, v[STDOUT]]); for (const [k, x] of Object.entries(v)) walk(x, [...path, k]); };
+  walk(rec, []);
+  return out;
+}
 const own = (o, entries) => { o[DIGESTS] = { ...(o[DIGESTS] ?? {}), ...entries }; return o; };
 /** Every [path, sha256] pair the runner holds for `rec` (walks the symbol-tagged objects), plus `extra` pairs. */
 export function runnerDigests(rec, extra = []) {
@@ -209,8 +218,13 @@ export function maskDigests(value, pairs) {
   return walk(value, []);
 }
 
-/** Fields whose text a model (or the engine, quoting a model's constraint) wrote: never rewritten, only withheld. */
-export const MODEL_KEYS = new Set(['raw', 'parsed', 'mechanical', 'errors', 'translatorError', 'adjudicatorError']);
+/**
+ * Fields whose text a model (or the engine, quoting a model's constraint) wrote, or that copy such text: never rewritten,
+ * only withheld. `final` (the scorer's finalClass, whose error copies translatorError/adjudicatorError) and `partial` (a
+ * stop reason quoting an error) are copies (refute r2 B1): rewriting one copy and not the other would make a public
+ * record fail its own finalClass check.
+ */
+export const MODEL_KEYS = new Set(['raw', 'parsed', 'mechanical', 'errors', 'translatorError', 'adjudicatorError', 'final', 'partial']);
 export const WITHHELD = '<withheld: J7>';
 const j7Hit = (text, name) => scrubPaths6(text) !== text || lint6(text, name).length > 0;
 
@@ -223,9 +237,9 @@ const j7Hit = (text, name) => scrubPaths6(text) !== text || lint6(text, name).le
  * are exempt from the restricted-term scan structurally (path and value). Returns {pub, j7, digests}; a record that
  * still fails the whole-record lint is refused.
  */
-export function publicCensusRecord(rec, name, extraDigests = []) {
+export function publicCensusRecord(rec, name, extraDigests = [], carryWithheld = []) {
   const pairs = runnerDigests(rec, extraDigests);
-  const changed = [], withheld = [];
+  const changed = [], withheld = [...carryWithheld];
   const hold = (path, v, reason) => { withheld.push({ path, preSha256: sha256(typeof v === 'string' ? v : JSON.stringify(v)), reason }); return WITHHELD; };
   const walk = (v, path) => {
     const model = path.some(k => MODEL_KEYS.has(k));
@@ -243,7 +257,8 @@ export function publicCensusRecord(rec, name, extraDigests = []) {
     }
     return v;
   };
-  const pub = walk(rec, []);
+  const { j7: _earlier, ...body } = rec; // an earlier public j7 summary is replaced, never re-walked
+  const pub = walk(body, []);
   pub.j7 = { rule: 'runner text path-scrubbed and listed (pre/post sha256); model-authored text never rewritten, withheld whole and listed (pre sha256); the full pre-scrub record is in the local raw store', changed, withheld };
   const j7Pairs = [...changed.flatMap((c, i) => [[['j7', 'changed', String(i), 'preSha256'], c.preSha256], [['j7', 'changed', String(i), 'postSha256'], c.postSha256]]), ...withheld.map((w, i) => [['j7', 'withheld', String(i), 'preSha256'], w.preSha256])];
   const all = [...pairs, ...j7Pairs];
@@ -261,15 +276,18 @@ function writeJson(path, value) {
  * Write one record: the full pre-scrub record and the runner's digests to the local raw store (gitignored), then the
  * public form (J7-scrubbed, every change and withholding listed, naming the raw store) to `path`.
  */
-function writeRecord(path, rawPath, rawLabel, rec, name, extraDigests = []) {
-  const { pub, digests } = publicCensusRecord(rec, name, extraDigests);
-  writeJson(rawPath, { kind: 'census-raw-store', note: 'local only, never committed: the record before the J7 scrub', runnerDigests: digests, record: rec });
+function writeRecord(path, rawPath, rawLabel, rec, name, extraDigests = [], { carryWithheld = [], priorStdouts = [] } = {}) {
+  const { pub, digests } = publicCensusRecord(rec, name, extraDigests, carryWithheld);
+  const stdouts = [...priorStdouts.filter(([p]) => !stdoutsOf(rec).some(([q]) => JSON.stringify(q) === JSON.stringify(p))), ...stdoutsOf(rec)];
+  writeJson(rawPath, { kind: 'census-raw-store', note: 'local only, never committed: the record before the J7 scrub, and each call\'s full client stdout', runnerDigests: digests, stdouts, record: rec });
   pub.j7.rawStore = rawLabel;
   writeJson(path, pub);
   return pub;
 }
 /** The runner digests a raw-store file holds (for a record resumed from disk, whose symbols are gone). */
-const storedDigests = rawPath => { try { return JSON.parse(readFileSync(rawPath, 'utf8')).runnerDigests ?? []; } catch { return []; } };
+const HEX64 = /^[0-9a-f]{64}$/;
+export const storedDigests = rawPath => { try { const d = JSON.parse(readFileSync(rawPath, 'utf8')).runnerDigests ?? []; return d.filter(x => Array.isArray(x) && Array.isArray(x[0]) && typeof x[1] === 'string' && HEX64.test(x[1])); } catch { return []; } };
+export const storedStdouts = rawPath => { try { return (JSON.parse(readFileSync(rawPath, 'utf8')).stdouts ?? []).filter(x => Array.isArray(x) && Array.isArray(x[0]) && typeof x[1] === 'string'); } catch { return []; } };
 const storedRecord = rawPath => { try { return JSON.parse(readFileSync(rawPath, 'utf8')).record ?? null; } catch { return null; } };
 
 /** Positional commit of exactly `paths` (those that changed) in `repo` (refute r1 B3); never another path. */
@@ -337,7 +355,7 @@ function callFacts(call, pin) {
   const { spawn: s, line, parsed, model } = call;
   const raw = typeof parsed.out?.result === 'string' ? parsed.out.result : null;
   const stdoutSha256 = sha256(s.stdout), rawSha256 = raw === null ? null : sha256(raw);
-  return own({
+  const facts = own({
     called: true, model: pin, modelUsage: model.keys, command: call.command,
     startedAt: s.startedAt, endedAt: s.endedAt, latencyMs: Math.round(s.latencyMs), exitCode: s.exitCode, timedOut: s.timedOut,
     harnessFailure: parsed.harnessFailure ?? (model.ok ? null : 'model-mismatch'),
@@ -347,6 +365,8 @@ function callFacts(call, pin) {
     stderrTail: s.stderr ? s.stderr.trim().split('\n').slice(-5).join('\n') : '',
     ...(call.runDirNotRemoved ? { runDirNotRemoved: call.runDirNotRemoved } : {}),
   }, { stdoutSha256, ...(rawSha256 ? { rawSha256 } : {}) });
+  facts[STDOUT] = s.stdout;
+  return facts;
 }
 
 const MECH_KEYS = ['translatorClass', 'classAfterMechanical', 'schemaOk', 'errors', 'fenced', 'vocabularyOk', 'validate', 'teeth', 'flags', 'failedCheck', 'engineLimit', 'maxClass', 'unverifiableFlags'];
@@ -402,14 +422,14 @@ export async function runCensus(opts) {
 
 const stampFields = stamp => ({ preregSha256: stamp.preregSha256, notBefore: stamp.notBefore, served: stamp.served ? own({ ...stamp.served }, { sha256: stamp.served.sha256 }) : null, base: stamp.base, code: own({ ...stamp.code }, stamp.code), codeMatchesPins: stamp.codeMatchesPins });
 
-async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, rawDir, stateDir, commitRepo, only = null, now, freeze, fetch, git, timeoutMs, log = console.log } = {}) {
+async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, rawDir, stateDir, commitRepo, baseRoot, only = null, now, freeze, fetch, git, timeoutMs, log = console.log } = {}) {
   if (!MODES.includes(mode)) throw new Error(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (rehearsal && !['practice', 'counted'].includes(rehearsalOf)) throw new Error('a rehearsal rehearses the practice or the counted path');
   if (!rehearsal && (outDir !== undefined || ledgerPath !== undefined || practicePath !== undefined || rawDir !== undefined || commitRepo !== undefined || only !== null || timeoutMs !== undefined || rehearsalOf !== 'counted')) throw new Error('a practice or counted run writes the committed records and ledger with the pinned timeout over the whole census; scratch paths, subsets and other timeouts are for rehearsals');
   // A metered run takes the real clock, the committed freeze, the real served-record fetch and the real git: an injected
   // stand-in for any of them is for a rehearsal only (it could otherwise bypass J1 or B1/B3).
-  if (!rehearsal && (now !== undefined || freeze !== undefined || fetch !== undefined || git !== undefined)) throw new Error('a practice or counted run cannot take an injected clock, freeze, fetch or git');
+  if (!rehearsal && (now !== undefined || freeze !== undefined || fetch !== undefined || git !== undefined || baseRoot !== undefined)) throw new Error('a practice or counted run cannot take an injected clock, freeze, fetch or git');
   if (rehearsal) {
     for (const [name, p] of Object.entries({ outDir, ledgerPath, practicePath, stateDir })) {
       if (!p) throw new Error(`a rehearsal needs a scratch ${name}`);
@@ -423,7 +443,7 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   const path = rehearsal ? rehearsalOf : mode;
 
   // The guard first (tests see its refusals), then the defence in depth: no metered call under the test runner.
-  const stamp = await checkCensusRun({ mode, root, ledgerPath: ledgerFile, stateDir, ...(now ? { now } : {}), ...(freeze ? { freeze } : {}), ...(fetch ? { fetch } : {}), ...(git ? { git } : {}) });
+  const stamp = await checkCensusRun({ mode, root, ledgerPath: ledgerFile, stateDir, ...(baseRoot ? { baseRoot } : {}), ...(now ? { now } : {}), ...(freeze ? { freeze } : {}), ...(fetch ? { fetch } : {}), ...(git ? { git } : {}) });
   if (!rehearsal) refuseUnderTestRunner();
   const billed = billedInEnv();
   if (!rehearsal && billed.length) throw new Error(`API-billing variables are set (${billed.join(', ')}): the census runs under subscription auth only`);
@@ -442,7 +462,10 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   // B3: commits of the ledger and the records (a metered run in its own worktree; a rehearsal only into a scratch repo).
   const repo = rehearsal ? commitRepo ?? null : root;
   const commit = (paths, message) => (repo ? commitPaths(repo, [ledgerFile, ...paths], message) : { committed: false });
-  const ctx = { ledger, claudeBin, prereg, root, rehearsal, timeoutMs: timeoutMs ?? CALL_TIMEOUT_MS, stamp, recheck, commit, raw, rawLabel: rel => (rehearsal ? `<rehearsal raw store>/${rel}` : `${RAW_DIR}/${rel}`) };
+  // Refute r2 B2: the base tree is re-checked by its bytes before every rule (and before the practice phases).
+  const baseGit = git ?? gitIn(root);
+  const baseCheck = () => checkBaseTree(prereg, baseGit, baseRoot ?? root);
+  const ctx = { ledger, claudeBin, prereg, root, rehearsal, baseCheck, timeoutMs: timeoutMs ?? CALL_TIMEOUT_MS, stamp, recheck, commit, raw, rawLabel: rel => (rehearsal ? `<rehearsal raw store>/${rel}` : `${RAW_DIR}/${rel}`) };
   const header = { experiment: 'EXP 007', mode: path === 'practice' ? 'practice' : 'counted', rehearsal, fixture: false, ...(rehearsal ? { banner: 'REHEARSAL: the fake client stands in for the models; not a measurement and never publishable' } : {}), clientVersion: version, callTimeoutMs: ctx.timeoutMs, timeoutRule: 'a call that reaches the timeout is a harness failure: class error, counted as not', ...stampFields(stamp) };
   own(header, { preregSha256: stamp.preregSha256 });
 
@@ -450,10 +473,14 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   return runCounted(ctx, { header, all, out, practiceFile, only, log });
 }
 
-/** The served record, re-checked now (N4): {served} or {stop}. */
+/** Before a rule: the served record re-checked (N4), then the base tree by its bytes (refute r2 B2). {served} or {stop}. */
 async function served(ctx) {
-  if (!ctx.recheck) return { served: ctx.stamp.served };
-  try { const r = await ctx.recheck(); return { served: own(r, { sha256: r.sha256 }) }; } catch (error) { return { stop: ['served-changed', { error: String(error.message).slice(0, 200) }] }; }
+  let out = { served: ctx.stamp.served };
+  if (ctx.recheck) {
+    try { const r = await ctx.recheck(); out = { served: own(r, { sha256: r.sha256 }) }; } catch (error) { return { stop: ['served-changed', { error: String(error.message).slice(0, 200) }] }; }
+  }
+  try { ctx.baseCheck(); } catch (error) { return { stop: ['base-changed', { error: String(error.message).slice(0, 300) }] }; }
+  return out;
 }
 
 /** The practice path (WO-2-03, R6-1, R6-3): the two canaries, then the practice pair, then the projection. */
@@ -538,8 +565,11 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
     const rec = stored ?? prior ?? { schemaVersion: 1, kind: 'census-record', ...header, ruleId: rule.ruleId, plugin: rule.plugin, stratum: rule.stratum, startedAt: null, endedAt: null, translator: null, adjudicator: null, translatorError: null, adjudicatorError: null, final: null, complete: false, resumed: false };
     if (!prior) own(rec, header[DIGESTS]);
     const priorDigests = prior ? storedDigests(rawPath) : [];
+    const priorStdouts = prior ? storedStdouts(rawPath) : [];
+    // N9: resumed without its raw store, the record keeps every field an earlier write withheld, listed.
+    const carryWithheld = prior && !stored ? (prior.j7?.withheld ?? []) : [];
     rec.resumed = rec.resumed || resumed;
-    const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(`${rule.ruleId}.json`), rec, `census record ${rule.ruleId}`, priorDigests); dirty.add(recPath); };
+    const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(`${rule.ruleId}.json`), rec, `census record ${rule.ruleId}`, priorDigests, { carryWithheld, priorStdouts }); dirty.add(recPath); };
     let raw = null; // the translator's verbatim text for the adjudicator, from this invocation or the raw store
 
     if (!rec.translator) {

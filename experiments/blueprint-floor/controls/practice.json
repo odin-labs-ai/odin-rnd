@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "kind": "practice-rule",
   "description": "The pinned practice rule of the pre-count (PLAN-DETAIL R6-3): one translator call and one adjudicator call on it, before any counted call, give the practice pair cost the projection uses. It is outside every stratum (not a plugin rule, not a control) and never enters a census record, a median or the scorer. It takes the same path as a plugin rule (plugin-surface, the same prompt builders and mechanical checks).",
-  "authorship": "Written by the bundle-2 implementer lane and replaced after refute r1 (N5): a style rule about headings and spelling, a topic no census rule has (no shell, network, secret, file-path, serialisation or date topic); a committed test shows it shares no four-word sequence with any census rule's text.",
+  "authorship": "Written by the bundle-2 implementer lane; replaced after refute r1 (N5) and again after refute r2 (N10, the earlier heading rule overlapped a punctuation rule). It is a rule about image alt text in documents. No census rule's text names an image as a word, alt text or accessibility, and the practice rule shares no four-word sequence with any census rule's text; a committed test checks both.",
   "rules": [
     {
       "ruleId": "practice/01",
       "sourcePath": "experiments/blueprint-floor/controls/practice.json",
       "line": 8,
       "kind": "prose",
-      "text": "Every heading in a document uses British spelling and has no full stop at its end.",
+      "text": "Every image in a document has alt text that says what the image shows.",
       "flags": null,
       "context": "Checked on the text of one document.",
       "inputKind": "file",
