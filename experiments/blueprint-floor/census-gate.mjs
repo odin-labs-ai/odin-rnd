@@ -44,6 +44,9 @@ export const DISCLOSURES = Object.freeze([
   'If the practice run stops for an ASK-FORK and is run again, the canaries are paid again; every practice and canary line is in the ledger and listed.',
   'The pinned adapter does not return the engine\'s reports, so records keep the validation message\'s sha256 and teeth\'s per-probe labels and per-constraint results instead of report sha256s.',
   'bce-engine\'s own third-party dependencies are pinned only by the lockfile (bundle-1 scope).',
+  'A reported (known) cost can overshoot the $40 ceiling by at most one call\'s cost minus its reserve; the pre-registered rule, refuse a call when spend + reserve > $40, is met as written.',
+  'The ledger binds one repository clone: a fresh clone has its own run state; the published census is the one whose records and ledger are committed and pushed with the results.',
+  'A call that may not have been paid (a failed spawn or a failed run-directory creation) is still charged its upper bound.',
 ]);
 export const SCORER_PATH = `${DIR}/scorer.mjs`;
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -210,6 +213,12 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
   else {
     const pr = passed.at(-1);
     if (!(pr.canary?.translator?.pass === true && pr.canary?.adjudicator?.pass === true)) fail('the practice record\'s canaries did not both PASS');
+    // Refute r2 N7: a canary's pass counts only if the call itself is sound (no harness failure, the pinned model alone).
+    for (const role of ['translator', 'adjudicator']) {
+      const c = pr.canary?.[role];
+      if (!c || c.harnessFailure !== null || !models || c.model !== models[role] || canonical(c.modelUsage) !== canonical([models[role]])) fail(`the ${role} canary call is not a sound call of the pinned model`);
+    }
+    if (!pr.practice || pr.practice.translator?.called !== true || pr.practice.adjudicator?.called !== true) fail('the passed practice record carries no complete practice pair');
     if (pr.preregSha256 !== freeze?.PREREG_SHA256 || !pins || canonical(pr.code) !== canonical(pins)) fail('the practice record was made under another pre-registration or other code');
   }
   if (practiceRecords.some(pr => pr?.rehearsal !== false || pr?.fixture !== false)) fail('a practice record is a rehearsal or a fixture');
@@ -235,7 +244,10 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
     }
     for (const [k, l] of byKey) if (!made.has(k)) fail(`a counted ledger line with no call in the records: ${l.ruleId} ${l.role}`);
     // N1: every canary and practice line is a call of a practice record, by callId, and each such call has its line.
-    const practiceCalls = practiceRecords.flatMap(pr => [pr?.canary?.translator, pr?.canary?.adjudicator, pr?.practice?.translator, pr?.practice?.adjudicator].filter(c => c?.called === true));
+    const slots = pr => [['canary', pr?.canary?.translator], ['canary', pr?.canary?.adjudicator], ['practice', pr?.practice?.translator], ['practice', pr?.practice?.adjudicator]].filter(([, c]) => c?.called === true);
+    const practiceCalls = practiceRecords.flatMap(pr => slots(pr).map(([, c]) => c));
+    // N7: each excluded line's kind is its slot's (canary vs practice).
+    for (const [kind, c] of practiceRecords.flatMap(slots)) { const l = excluded.find(x => x.callId === c.callId); if (l && l.kind !== kind) fail(`ledger line ${c.callId} is kind ${l.kind}, but its practice-record slot is ${kind}`); }
     const practiceIds = practiceCalls.map(c => c.callId).sort(), excludedIds = excluded.map(l => l.callId).sort();
     if (canonical(practiceIds) !== canonical(excludedIds)) fail('the canary and practice ledger lines are not exactly the calls of the practice records (by callId)');
     for (const c of practiceCalls) { const l = excluded.find(x => x.callId === c.callId); if (l && l.costUsd !== c.costUsd) fail(`practice call ${c.callId}: its cost differs from its ledger line`); }

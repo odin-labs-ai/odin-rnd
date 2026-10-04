@@ -134,7 +134,16 @@ test('refute r1 N1: the practice record, its canaries, its callIds, and the per-
   closedBy(i => { i.records[r].adjudicator.modelUsage = ['claude-opus-5-5']; }, /control\/05: an adjudicator call without an error class but with a harness failure or a model other than the pin/, 'the adjudicator on another model');
   closedBy(i => { i.models = undefined; }, /no pinned models/, 'no pinned models given');
   const g = gateFromData(inputs(FIX));
-  assert.equal(g.facts.disclosures.length, 5, 'the disclosures travel with the facts');
+  assert.equal(g.facts.disclosures.length, 8, 'the disclosures travel with the facts');
+});
+
+test('refute r2 N7: canary calls are validated before their pass counts; the practice pair is required; each excluded line\'s kind matches its slot', () => {
+  closedBy(i => { i.practiceRecords[0].canary.translator.harnessFailure = 'timeout'; }, /the translator canary call is not a sound call of the pinned model/, 'a canary pass on a failed call');
+  closedBy(i => { i.practiceRecords[0].canary.adjudicator.modelUsage = ['claude-sonnet-5', 'claude-haiku-4-5']; }, /the adjudicator canary call is not a sound call/, 'a canary on two models');
+  closedBy(i => { i.practiceRecords[0].canary.adjudicator.model = 'claude-opus-5-5'; i.practiceRecords[0].canary.adjudicator.modelUsage = ['claude-opus-5-5']; }, /adjudicator canary call is not a sound call/, 'a canary on the other role\'s model');
+  closedBy(i => { i.practiceRecords[0].practice = null; }, /carries no complete practice pair/, 'no practice pair');
+  closedBy(i => { i.practiceRecords[0].practice.adjudicator = { called: false }; }, /carries no complete practice pair/, 'half a practice pair');
+  closedBy(i => { i.ledgerText = i.ledgerText.replace('"kind":"canary","ruleId":"canary","role":"translator"', '"kind":"practice","ruleId":"canary","role":"translator"'); setResults(i, r => { r.spend.excludedLines[0].kind = 'practice'; }); }, /is kind practice, but its practice-record slot is canary/, 'a canary line booked as practice');
 });
 
 test('the committed tree: no census has run, so the gate is closed', () => {
