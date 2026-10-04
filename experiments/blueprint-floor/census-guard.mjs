@@ -66,9 +66,11 @@ export async function fetchServed(url = SERVED_URL, env = process.env) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+// git as the PATH resolved it when this module loaded (a test may empty PATH afterwards to keep the client unreachable).
+const GIT = (process.env.PATH ?? '').split(':').filter(Boolean).map(d => join(d, 'git')).find(p => existsSync(p)) ?? 'git';
 /** Is `rel` tracked by git in `root` (committed at least once)? */
 export function trackedByGit(root, rel) {
-  const r = spawnSync('git', ['ls-files', '--error-unmatch', '--', rel], { cwd: root, encoding: 'utf8' });
+  const r = spawnSync(GIT, ['ls-files', '--error-unmatch', '--', rel], { cwd: root, encoding: 'utf8' });
   return r.status === 0;
 }
 

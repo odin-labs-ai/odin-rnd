@@ -152,14 +152,24 @@ test('the diff base is EXP 005\'s base tree; the positive controls grade on the 
   assert.equal(buildBlueprint({ constraints: constraint, inputKind: 'diff', minFiles: 19, role: 'control' }).extraction.profile, 'typescript-module-graph');
 });
 
-test('no EXP 007 module imports a network API or names the model client as a program (only rules --verify clones, via git)', () => {
+test('no EXP 007 module imports a network API or names the model client as a program (only rules --verify clones, via git), except the two bundle-2 census modules named here', () => {
   const src = [...readdirSync('experiments/blueprint-floor').filter(f => f.endsWith('.mjs')).map(f => `experiments/blueprint-floor/${f}`), ...readdirSync('scripts').filter(f => /^blueprint-floor-.*\.mjs$/.test(f) && !f.endsWith('.test.mjs')).map(f => `scripts/${f}`)];
   const client = ['cla', 'ude'].join('');
+  // Bundle 2 (PLAN-DETAIL R2-4, WO-2-01): the census runner is the one module that resolves the model client (by name, on
+  // PATH, through chooseClaude7, which refuses under the test runner), and the census guard is the one module that
+  // fetches (the served pre-registration, once per run, refused under the test runner). Nothing else may.
+  const RUNNER = 'experiments/blueprint-floor/census-run.mjs', GUARD = 'experiments/blueprint-floor/census-guard.mjs';
   for (const f of src) {
     const text = readFileSync(f, 'utf8');
-    assert(!new RegExp(`['"\`]${client}['"\`]`).test(text), `${f} names the model client as a program`);
-    assert(!/from 'node:(https?|net|tls|dgram)'|\bfetch\(/.test(text), `${f} can reach the network`);
+    if (f !== RUNNER) assert(!new RegExp(`['"\`]${client}['"\`]`).test(text), `${f} names the model client as a program`);
+    if (f !== GUARD) assert(!/from 'node:(https?|net|tls|dgram)'|\bfetch\(/.test(text), `${f} can reach the network`);
   }
+  const runner = readFileSync(RUNNER, 'utf8');
+  assert.deepEqual([...runner.matchAll(new RegExp(`resolveBin\\(['"]${client}['"]`, 'g'))].length, 1, 'the runner resolves the client in exactly one place');
+  assert(!/from 'node:(https?|net|tls|dgram)'|\bfetch\(/.test(runner), 'the runner itself fetches nothing');
+  const guard = readFileSync(GUARD, 'utf8');
+  assert.equal([...guard.matchAll(/\bfetch\(/g)].length, 1, 'the guard fetches in exactly one place');
+  assert.match(guard, /if \(env\.NODE_TEST_CONTEXT\) throw new Error\('the served pre-registration is not fetched under the Node test runner/);
 });
 
 test('refute r3: an /i rule\'s input is folded (contents lower-cased, paths kept), for a diff after the patch applies', LONG, async () => {
