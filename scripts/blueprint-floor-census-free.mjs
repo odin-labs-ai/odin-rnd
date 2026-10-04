@@ -102,9 +102,9 @@ export async function withFake(plan, fn) {
     symlinkSync(FAKE_CLAUDE7, join(dir, 'bin', CLIENT_BIN));
     writeFileSync(join(dir, 'bin', 'fake7.json'), JSON.stringify({ plan }));
     process.env.PATH = `${join(dir, 'bin')}:${saved}`;
-    const paths = { outDir: join(dir, 'out'), ledgerPath: join(dir, 'ledger.jsonl'), practicePath: join(dir, 'practice.json') };
+    const paths = { outDir: join(dir, 'out'), ledgerPath: join(dir, 'ledger.jsonl'), practicePath: join(dir, 'practice.json'), stateDir: join(dir, 'state') };
     const log = () => (existsSync(join(dir, 'bin', 'fake7.log.jsonl')) ? readFileSync(join(dir, 'bin', 'fake7.log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : []);
-    return await fn({ dir, paths, log, ledger: new CensusLedger(paths.ledgerPath) });
+    return await fn({ dir, paths, log, ledger: new CensusLedger(paths.ledgerPath, { stateDir: paths.stateDir }) });
   } finally { process.env.PATH = saved; removeScratch(dir); }
 }
 

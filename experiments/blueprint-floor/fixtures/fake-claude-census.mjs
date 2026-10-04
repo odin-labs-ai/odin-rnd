@@ -5,7 +5,8 @@
 // configuration from the environment: it reads fake7.json and keeps fake7.state / fake7.log.jsonl in the directory of
 // the path it was invoked by (the test's symlink directory, which the test puts first on PATH).
 //   fake7.json (optional): { "plan": { "<1-based call index>": "<behaviour>" } } with a behaviour of
-//     garbage | nocost | wrong-model | exit1 | is-error | no-result | canary-leak | timeout
+//     garbage | nocost | wrong-model | exit1 | is-error | no-result | canary-leak | timeout | j7-pattern (a translator
+//     answer of class not whose rationale quotes a home-directory regex, to exercise the J7 withholding)
 // Default answers: the canary answers NONE; the translator answers expressible for the first rule of each shape
 // (input kind, flags line, contract form) it sees, partial for the second, and not for every other; the adjudicator
 // confirms the stated class, and disputes to not on every seventh adjudicator call.
@@ -66,6 +67,7 @@ else if (role === 'translator') {
   text = JSON.stringify({ ruleId: id, verdict: dispute ? 'dispute' : 'confirm', proposedClass: dispute ? 'not' : stated, reason: 'Rehearsal adjudication.' });
 } else text = 'unknown role';
 
+if (behaviour === 'j7-pattern') text = JSON.stringify({ ruleId: id, class: 'not', constraints: [], coverage: '', residual: 'Does the input read a key under /home/[^/]+/\\.ssh?', probes: null, rationale: 'The rule names /home/[^/]+/\\.ssh as its pattern.' });
 writeFileSync(join(home, 'fake7.state'), JSON.stringify(state));
 if (behaviour === 'garbage') text = 'this is not json {';
 if (behaviour === 'timeout') { setTimeout(() => {}, 3_600_000); } else {

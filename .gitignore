@@ -14,3 +14,6 @@ experiments/nina-changes/run.lock
 experiments/blueprint-floor/spend-ledger.pending.jsonl
 experiments/blueprint-floor/spend-ledger.pending.jsonl.*.tmp
 experiments/blueprint-floor/run.lock
+
+# EXP 007 census: the full pre-scrub records (refute r1 B2), local only, never committed.
+experiments/blueprint-floor/census-raw/

@@ -19,14 +19,14 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { BILLED, resolveBin } from '../jev-gate/run_reviewer.mjs';
-import { leakFields, lint6, scrubPaths6 } from '../nina-changes/scrub6.mjs';
+import { lint6, scrubPaths6 } from '../nina-changes/scrub6.mjs';
 import { assertOpaqueIdsDistinct, buildAdjudicatorPrompt, buildTranslatorPrompt, mechanicalChecks, parseAnswer, PROMPT_FILES, validateAdjudicatorOutput } from './protocol.mjs';
 import { finalClass } from './scorer.mjs';
-import { checkCensusRun, DIR, REPO_ROOT, sha256 } from './census-guard.mjs';
+import { censusStateDir, checkCensusRun, DIR, gitIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
 import { CensusLedger, LEDGER, projection, ROLES } from './census-spend.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -35,7 +35,12 @@ export const FAKE_CLAUDE7 = join(HERE, 'fixtures', 'fake-claude-census.mjs');
 export const CLIENT_BIN = 'claude';
 export const RECORDS_DIR = `${DIR}/census`;
 export const PRACTICE_RECORD = `${DIR}/practice/practice-run.json`;
-export const LOCK = `${DIR}/run.lock`;
+/** The run lock and the pending sidecar live in the repository's shared state dir (census-guard.mjs censusStateDir). */
+export const LOCK = 'run.lock';
+/** The full pre-scrub records (gitignored, local only), so a refuter can diff what the J7 scrub changed or withheld. */
+export const RAW_DIR = `${DIR}/census-raw`;
+/** The runner commits the ledger and the records every COMMIT_EVERY completed rules, and when it stops (refute r1 B3). */
+export const COMMIT_EVERY = 10;
 export const CANARY_FILE = `${DIR}/prompts/canary.md`;
 export const PRACTICE_FILE = `${DIR}/controls/practice.json`;
 /** Not pre-registered: the runner's per-call limit (EXP 005's reviewer limit). A call that reaches it is a timeout: class error. */
@@ -171,44 +176,112 @@ export function canaryVerdict(text, terms) {
   return { pass: hits.length === 0, reason: hits.length ? 'names a pinned term' : 'names no pinned term', hits };
 }
 
-// ----------------------------------------------------------------------------- the J7 scrub at write time
+// ----------------------------------------------------------------------------- the J7 scrub at write time (refute r1 B2)
 
-const DIGEST = /^[0-9a-f]{64}$/;
-// Subtrees whose keys the MODEL or the engine chose (the answer as parsed, the mechanical results naming its constraint
-// ids): a 64-hex value there is scanned like any other text. Everywhere else the record's keys are the runner's own.
-const MODEL_SUBTREES = new Set(['raw', 'parsed', 'mechanical', 'errors', 'stderrTail', 'hits']);
-/** The runner's own digests (keys ending in Sha256, and the code map) masked before the text lint (EXP 006 amendment 01 A1). */
-function maskDigests(value) {
-  const walk = (v, key, inCode) => {
-    if (typeof v === 'string') return DIGEST.test(v) && (inCode || /Sha256$/.test(key) || key === 'sha256') ? '<sha256>' : v;
-    if (Array.isArray(v)) return v.map(x => walk(x, '', false));
-    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, MODEL_SUBTREES.has(k) ? x : walk(x, k, k === 'code')]));
+/**
+ * The digests the runner computed itself, carried on the object that holds them under a symbol (never serialised, kept
+ * by object spread): {key: sha256}. A value is exempt from the restricted-term scan only at that exact path AND with
+ * that exact value (EXP 006 amendment 01 A1): never by key name.
+ */
+export const DIGESTS = Symbol('runnerDigests');
+const own = (o, entries) => { o[DIGESTS] = { ...(o[DIGESTS] ?? {}), ...entries }; return o; };
+/** Every [path, sha256] pair the runner holds for `rec` (walks the symbol-tagged objects), plus `extra` pairs. */
+export function runnerDigests(rec, extra = []) {
+  const pairs = [...extra];
+  const walk = (v, path) => {
+    if (!v || typeof v !== 'object') return;
+    for (const [k, h] of Object.entries(v[DIGESTS] ?? {})) if (v[k] === h) pairs.push([[...path, k], h]);
+    for (const [k, x] of Object.entries(v)) walk(x, [...path, k]);
+  };
+  walk(rec, []);
+  return pairs;
+}
+const samePath = (a, b) => a.length === b.length && a.every((k, i) => String(k) === String(b[i]));
+const isRunnerDigest = (pairs, path, value) => pairs.some(([p, h]) => h === value && samePath(p, path));
+/** The record with every runner digest (path AND value) replaced by a placeholder, for the whole-record lint. */
+export function maskDigests(value, pairs) {
+  const walk = (v, path) => {
+    if (typeof v === 'string') return isRunnerDigest(pairs, path, v) ? '<sha256>' : v;
+    if (Array.isArray(v)) return v.map((x, i) => walk(x, [...path, String(i)]));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, [...path, k])]));
     return v;
   };
-  return walk(value, '', false);
+  return walk(value, []);
 }
-const setAt = (o, path, value) => { const last = path.at(-1); const parent = path.slice(0, -1).reduce((v, k) => v?.[k], o); if (parent && typeof parent === 'object') parent[last] = value; };
+
+/** Fields whose text a model (or the engine, quoting a model's constraint) wrote: never rewritten, only withheld. */
+export const MODEL_KEYS = new Set(['raw', 'parsed', 'mechanical', 'errors', 'translatorError', 'adjudicatorError']);
+export const WITHHELD = '<withheld: J7>';
+const j7Hit = (text, name) => scrubPaths6(text) !== text || lint6(text, name).length > 0;
+
 /**
- * Scrub (EXP 006 scrubPaths6: run dirs, temp roots, home) and lint (paths, credentials, the session uid, restricted terms).
- * A field that still leaks is replaced by a marker and listed under j7Withheld (its raw sha256 stays); a record that
- * leaks after that is refused.
+ * The public form of a record (refute r1 B2). Runner-authored text is path-scrubbed (EXP 006 scrubPaths6) and every field
+ * the scrub changed is listed with its pre- and post-scrub sha256; a model-authored field (under raw, parsed, mechanical,
+ * errors, translatorError, adjudicatorError) is NEVER rewritten: if it holds anything the scrub or the lint would act on
+ * (a home or temp path, a credential shape, the session uid, a restricted term), the whole field is replaced by a marker
+ * and listed with its pre-scrub sha256; an object whose model-chosen KEY would trip it is withheld whole. Runner digests
+ * are exempt from the restricted-term scan structurally (path and value). Returns {pub, j7, digests}; a record that
+ * still fails the whole-record lint is refused.
  */
-export function publicCensusRecord(rec, name) {
-  const scrubbed = JSON.parse(scrubPaths6(JSON.stringify(rec)));
-  const masked = maskDigests(scrubbed);
-  if (!lint6(JSON.stringify(masked, null, 2), name).length) return scrubbed;
-  const leaks = leakFields(masked);
-  for (const p of leaks) setAt(scrubbed, p.split('.'), '<withheld: J7>');
-  scrubbed.j7Withheld = [...(scrubbed.j7Withheld ?? []), ...leaks];
-  const findings = lint6(JSON.stringify(maskDigests(scrubbed), null, 2), name);
+export function publicCensusRecord(rec, name, extraDigests = []) {
+  const pairs = runnerDigests(rec, extraDigests);
+  const changed = [], withheld = [];
+  const hold = (path, v, reason) => { withheld.push({ path, preSha256: sha256(typeof v === 'string' ? v : JSON.stringify(v)), reason }); return WITHHELD; };
+  const walk = (v, path) => {
+    const model = path.some(k => MODEL_KEYS.has(k));
+    if (typeof v === 'string') {
+      if (isRunnerDigest(pairs, path, v)) return v;
+      if (model) return j7Hit(v, name) ? hold(path, v, 'model-authored text holding a J7 term: withheld, never rewritten') : v;
+      const s = scrubPaths6(v);
+      if (s !== v) changed.push({ path, preSha256: sha256(v), postSha256: sha256(s) });
+      return lint6(s, name).length ? hold(path, v, 'runner text still holding a J7 term after the path scrub: withheld') : s;
+    }
+    if (Array.isArray(v)) return v.map((x, i) => walk(x, [...path, String(i)]));
+    if (v && typeof v === 'object') {
+      if (model && Object.keys(v).some(k => j7Hit(k, name))) return hold(path, v, 'a model-chosen key holding a J7 term: the object is withheld whole');
+      return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, [...path, k])]));
+    }
+    return v;
+  };
+  const pub = walk(rec, []);
+  pub.j7 = { rule: 'runner text path-scrubbed and listed (pre/post sha256); model-authored text never rewritten, withheld whole and listed (pre sha256); the full pre-scrub record is in the local raw store', changed, withheld };
+  const j7Pairs = [...changed.flatMap((c, i) => [[['j7', 'changed', String(i), 'preSha256'], c.preSha256], [['j7', 'changed', String(i), 'postSha256'], c.postSha256]]), ...withheld.map((w, i) => [['j7', 'withheld', String(i), 'preSha256'], w.preSha256])];
+  const all = [...pairs, ...j7Pairs];
+  const findings = lint6(JSON.stringify(maskDigests(pub, all), null, 2), name);
   if (findings.length) throw new Error(`${name}: refusing to write a record that leaks: ${[...new Set(findings)].slice(0, 5).join('; ')}`);
-  return scrubbed;
+  return { pub, j7: pub.j7, digests: pairs };
 }
 function writeJson(path, value) {
   mkdirSync(dirname(path), { recursive: true });
   const tmp = `${path}.${process.pid}.tmp`;
   writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`);
   renameSync(tmp, path);
+}
+/**
+ * Write one record: the full pre-scrub record and the runner's digests to the local raw store (gitignored), then the
+ * public form (J7-scrubbed, every change and withholding listed, naming the raw store) to `path`.
+ */
+function writeRecord(path, rawPath, rawLabel, rec, name, extraDigests = []) {
+  const { pub, digests } = publicCensusRecord(rec, name, extraDigests);
+  writeJson(rawPath, { kind: 'census-raw-store', note: 'local only, never committed: the record before the J7 scrub', runnerDigests: digests, record: rec });
+  pub.j7.rawStore = rawLabel;
+  writeJson(path, pub);
+  return pub;
+}
+/** The runner digests a raw-store file holds (for a record resumed from disk, whose symbols are gone). */
+const storedDigests = rawPath => { try { return JSON.parse(readFileSync(rawPath, 'utf8')).runnerDigests ?? []; } catch { return []; } };
+const storedRecord = rawPath => { try { return JSON.parse(readFileSync(rawPath, 'utf8')).record ?? null; } catch { return null; } };
+
+/** Positional commit of exactly `paths` (those that changed) in `repo` (refute r1 B3); never another path. */
+export function commitPaths(repo, paths, message, git = gitIn(repo)) {
+  const rel = [...new Set(paths.filter(p => existsSync(p)).map(p => relative(repo, p)))].filter(r => r && !r.startsWith('..')); // only paths inside the repo
+  if (!rel.length) return { committed: false };
+  if (!git(['status', '--porcelain', '--', ...rel]).stdout.trim()) return { committed: false };
+  const add = git(['add', '--', ...rel]);
+  if (add.status !== 0) throw new Error('git add failed');
+  const c = git(['commit', '-q', '-m', message, '--', ...rel]);
+  if (c.status !== 0) throw new Error(`git commit failed: ${c.stdout.slice(0, 200)}`);
+  return { committed: true, sha: git(['rev-parse', 'HEAD']).stdout.trim(), paths: rel };
 }
 
 // ----------------------------------------------------------------------------- the lock
@@ -217,7 +290,7 @@ function writeJson(path, value) {
 export function acquireRunLock(path) {
   let fd;
   try { fd = openSync(path, 'wx'); } catch (error) {
-    if (error.code === 'EEXIST') throw new Error(`another census runner holds ${LOCK} (${readFileSync(path, 'utf8').trim() || 'no content'}); if none is running, the operator checks and removes it`);
+    if (error.code === 'EEXIST') throw new Error(`another census runner holds the run lock (${readFileSync(path, 'utf8').trim() || 'no content'}); if none is running, the operator checks and removes it`);
     throw error;
   }
   const token = JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() });
@@ -263,16 +336,17 @@ async function meteredCall(ctx, { kind, ruleId, role, user }) {
 function callFacts(call, pin) {
   const { spawn: s, line, parsed, model } = call;
   const raw = typeof parsed.out?.result === 'string' ? parsed.out.result : null;
-  return {
+  const stdoutSha256 = sha256(s.stdout), rawSha256 = raw === null ? null : sha256(raw);
+  return own({
     called: true, model: pin, modelUsage: model.keys, command: call.command,
     startedAt: s.startedAt, endedAt: s.endedAt, latencyMs: Math.round(s.latencyMs), exitCode: s.exitCode, timedOut: s.timedOut,
     harnessFailure: parsed.harnessFailure ?? (model.ok ? null : 'model-mismatch'),
     durationMs: parsed.out?.duration_ms ?? null, numTurns: parsed.out?.num_turns ?? null,
     costUsd: line.costUsd, costBasis: line.costBasis, reportedCostUsd: line.reportedCostUsd, callId: line.callId,
-    stdoutSha256: sha256(s.stdout), raw, rawSha256: raw === null ? null : sha256(raw),
+    stdoutSha256, raw, rawSha256,
     stderrTail: s.stderr ? s.stderr.trim().split('\n').slice(-5).join('\n') : '',
     ...(call.runDirNotRemoved ? { runDirNotRemoved: call.runDirNotRemoved } : {}),
-  };
+  }, { stdoutSha256, ...(rawSha256 ? { rawSha256 } : {}) });
 }
 
 const MECH_KEYS = ['translatorClass', 'classAfterMechanical', 'schemaOk', 'errors', 'fenced', 'vocabularyOk', 'validate', 'teeth', 'flags', 'failedCheck', 'engineLimit', 'maxClass', 'unverifiableFlags'];
@@ -281,7 +355,7 @@ async function mechanical(rule, raw) {
   try {
     const m = await mechanicalChecks(rule, raw);
     const out = Object.fromEntries(MECH_KEYS.filter(k => k in m).map(k => [k, m[k]]));
-    if (out.validate) out.validate = { ...out.validate, messageSha256: sha256(out.validate.message ?? '') };
+    if (out.validate) { const h = sha256(out.validate.message ?? ''); out.validate = own({ ...out.validate, messageSha256: h }, { messageSha256: h }); }
     return out;
   } catch (error) {
     return { translatorClass: 'error', classAfterMechanical: 'error', schemaOk: false, errors: [`mechanical checks threw: ${String(error.message).slice(0, 200)}`], failedCheck: 'harness', engineLimit: false };
@@ -294,7 +368,7 @@ async function translatorStep(ctx, rule, kind) {
   const call = await meteredCall(ctx, { kind, ruleId: rule.ruleId, role: 'translator', user });
   if (call.stop) return call;
   const facts = callFacts(call, modelOf(ctx.prereg, 'translator'));
-  facts.userSha256 = sha256(user);
+  own(facts, { userSha256: (facts.userSha256 = sha256(user)) });
   if (facts.harnessFailure) return { translator: { ...facts, translatorClass: 'error', classAfterMechanical: 'error', schemaOk: false, failedCheck: 'harness', engineLimit: false, mechanical: null }, translatorError: facts.harnessFailure };
   const m = await mechanical(rule, facts.raw);
   const translator = { ...facts, translatorClass: m.translatorClass, classAfterMechanical: m.classAfterMechanical, failedCheck: m.failedCheck ?? null, engineLimit: Boolean(m.engineLimit), schemaOk: m.schemaOk, mechanical: m };
@@ -307,7 +381,7 @@ async function adjudicatorStep(ctx, rule, kind, translator) {
   const call = await meteredCall(ctx, { kind, ruleId: rule.ruleId, role: 'adjudicator', user });
   if (call.stop) return call;
   const facts = callFacts(call, modelOf(ctx.prereg, 'adjudicator'));
-  facts.userSha256 = sha256(user);
+  own(facts, { userSha256: (facts.userSha256 = sha256(user)) });
   if (facts.harnessFailure) return { adjudicator: { ...facts, parsed: null, schemaOk: false, errors: [facts.harnessFailure], verdict: null, proposedClass: null }, adjudicatorError: facts.harnessFailure };
   const p = parseAnswer(facts.raw);
   const v = p.ok ? validateAdjudicatorOutput(p.value, rule) : { ok: false, errors: [p.error] };
@@ -317,25 +391,27 @@ async function adjudicatorStep(ctx, rule, kind, translator) {
 
 // ----------------------------------------------------------------------------- the invocation
 
-/** One invocation. A metered one (practice, counted) holds the exclusive run lock throughout. */
+/** One invocation. A metered one (practice, counted) holds the exclusive run lock, in the shared state dir, throughout. */
 export async function runCensus(opts) {
   if (opts?.mode === 'rehearsal') return runInvocation(opts);
-  const release = acquireRunLock(join(opts?.root ?? REPO_ROOT, LOCK));
-  try { return await runInvocation(opts); } finally { release(); }
+  const stateDir = censusStateDir(opts?.root ?? REPO_ROOT);
+  mkdirSync(stateDir, { recursive: true });
+  const release = acquireRunLock(join(stateDir, LOCK));
+  try { return await runInvocation({ ...opts, stateDir }); } finally { release(); }
 }
 
-const stampFields = stamp => ({ preregSha256: stamp.preregSha256, notBefore: stamp.notBefore, served: stamp.served, code: stamp.code, codeMatchesPins: stamp.codeMatchesPins });
+const stampFields = stamp => ({ preregSha256: stamp.preregSha256, notBefore: stamp.notBefore, served: stamp.served ? own({ ...stamp.served }, { sha256: stamp.served.sha256 }) : null, base: stamp.base, code: own({ ...stamp.code }, stamp.code), codeMatchesPins: stamp.codeMatchesPins });
 
-async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, only = null, now, freeze, fetch, tracked, timeoutMs, log = console.log } = {}) {
+async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, rawDir, stateDir, commitRepo, only = null, now, freeze, fetch, git, timeoutMs, log = console.log } = {}) {
   if (!MODES.includes(mode)) throw new Error(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (rehearsal && !['practice', 'counted'].includes(rehearsalOf)) throw new Error('a rehearsal rehearses the practice or the counted path');
-  if (!rehearsal && (outDir !== undefined || ledgerPath !== undefined || practicePath !== undefined || only !== null || timeoutMs !== undefined || rehearsalOf !== 'counted')) throw new Error('a practice or counted run writes the committed records and ledger with the pinned timeout over the whole census; scratch paths, subsets and other timeouts are for rehearsals');
-  // A metered run takes the real clock, the committed freeze, the real served-record fetch and git's tracked check: an
-  // injected stand-in for any of them is for a rehearsal only (it could otherwise bypass J1).
-  if (!rehearsal && (now !== undefined || freeze !== undefined || fetch !== undefined || tracked !== undefined)) throw new Error('a practice or counted run cannot take an injected clock, freeze, fetch or tracked check');
+  if (!rehearsal && (outDir !== undefined || ledgerPath !== undefined || practicePath !== undefined || rawDir !== undefined || commitRepo !== undefined || only !== null || timeoutMs !== undefined || rehearsalOf !== 'counted')) throw new Error('a practice or counted run writes the committed records and ledger with the pinned timeout over the whole census; scratch paths, subsets and other timeouts are for rehearsals');
+  // A metered run takes the real clock, the committed freeze, the real served-record fetch and the real git: an injected
+  // stand-in for any of them is for a rehearsal only (it could otherwise bypass J1 or B1/B3).
+  if (!rehearsal && (now !== undefined || freeze !== undefined || fetch !== undefined || git !== undefined)) throw new Error('a practice or counted run cannot take an injected clock, freeze, fetch or git');
   if (rehearsal) {
-    for (const [name, p] of Object.entries({ outDir, ledgerPath, practicePath })) {
+    for (const [name, p] of Object.entries({ outDir, ledgerPath, practicePath, stateDir })) {
       if (!p) throw new Error(`a rehearsal needs a scratch ${name}`);
       if (resolve(p).startsWith(resolve(root, DIR))) throw new Error(`a rehearsal never writes under ${DIR} (${name})`);
     }
@@ -343,10 +419,11 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   const out = outDir ?? join(root, RECORDS_DIR);
   const ledgerFile = ledgerPath ?? join(root, LEDGER);
   const practiceFile = practicePath ?? join(root, PRACTICE_RECORD);
+  const raw = rawDir ?? (rehearsal ? join(dirname(out), 'census-raw') : join(root, RAW_DIR));
   const path = rehearsal ? rehearsalOf : mode;
 
   // The guard first (tests see its refusals), then the defence in depth: no metered call under the test runner.
-  const stamp = await checkCensusRun({ mode, root, ledgerPath: ledgerFile, ...(now ? { now } : {}), ...(freeze ? { freeze } : {}), ...(fetch ? { fetch } : {}), ...(tracked ? { tracked } : {}) });
+  const stamp = await checkCensusRun({ mode, root, ledgerPath: ledgerFile, stateDir, ...(now ? { now } : {}), ...(freeze ? { freeze } : {}), ...(fetch ? { fetch } : {}), ...(git ? { git } : {}) });
   if (!rehearsal) refuseUnderTestRunner();
   const billed = billedInEnv();
   if (!rehearsal && billed.length) throw new Error(`API-billing variables are set (${billed.join(', ')}): the census runs under subscription auth only`);
@@ -359,31 +436,52 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   if (all.length !== prereg.census.rules) throw new Error(`the census has ${all.length} rules, not the pre-registered ${prereg.census.rules}`);
   const practice = practiceRule(root);
   assertOpaqueIdsDistinct([...all.map(r => r.ruleId), practice.ruleId]);
-  const ledger = new CensusLedger(ledgerFile);
-  const ctx = { ledger, claudeBin, prereg, root, rehearsal, timeoutMs: timeoutMs ?? CALL_TIMEOUT_MS, stamp };
-  const header = { experiment: 'EXP 007', mode: path === 'practice' ? 'practice' : 'counted', rehearsal, fixture: false, ...(rehearsal ? { banner: 'REHEARSAL: the fake client stands in for the models; not a measurement and never publishable' } : {}), clientVersion: version, ...stampFields(stamp) };
+  const ledger = new CensusLedger(ledgerFile, { stateDir: stamp.stateDir, headText: stamp.ledgerHeadText });
+  // N4: the served record is re-checked before every rule (a metered run always; a rehearsal only with a stub fetch).
+  const recheck = !rehearsal ? () => recheckServed({ expected: stamp.preregSha256 }) : fetch ? () => recheckServed({ expected: stamp.preregSha256, fetch }) : null;
+  // B3: commits of the ledger and the records (a metered run in its own worktree; a rehearsal only into a scratch repo).
+  const repo = rehearsal ? commitRepo ?? null : root;
+  const commit = (paths, message) => (repo ? commitPaths(repo, [ledgerFile, ...paths], message) : { committed: false });
+  const ctx = { ledger, claudeBin, prereg, root, rehearsal, timeoutMs: timeoutMs ?? CALL_TIMEOUT_MS, stamp, recheck, commit, raw, rawLabel: rel => (rehearsal ? `<rehearsal raw store>/${rel}` : `${RAW_DIR}/${rel}`) };
+  const header = { experiment: 'EXP 007', mode: path === 'practice' ? 'practice' : 'counted', rehearsal, fixture: false, ...(rehearsal ? { banner: 'REHEARSAL: the fake client stands in for the models; not a measurement and never publishable' } : {}), clientVersion: version, callTimeoutMs: ctx.timeoutMs, timeoutRule: 'a call that reaches the timeout is a harness failure: class error, counted as not', ...stampFields(stamp) };
+  own(header, { preregSha256: stamp.preregSha256 });
 
   if (path === 'practice') return runPractice(ctx, { header, all, practice, practiceFile, log });
   return runCounted(ctx, { header, all, out, practiceFile, only, log });
 }
 
+/** The served record, re-checked now (N4): {served} or {stop}. */
+async function served(ctx) {
+  if (!ctx.recheck) return { served: ctx.stamp.served };
+  try { const r = await ctx.recheck(); return { served: own(r, { sha256: r.sha256 }) }; } catch (error) { return { stop: ['served-changed', { error: String(error.message).slice(0, 200) }] }; }
+}
+
 /** The practice path (WO-2-03, R6-1, R6-3): the two canaries, then the practice pair, then the projection. */
 async function runPractice(ctx, { header, all, practice, practiceFile, log }) {
-  if (existsSync(practiceFile)) throw new Error('a practice record already exists; the ledger keeps every practice line, so the operator moves it aside after checking before another practice run');
+  if (existsSync(practiceFile)) throw new Error('a practice record already exists; the ledger keeps every practice line, so the operator moves it aside (practice/practice-run.<n>.json) after checking before another practice run');
   const rec = { schemaVersion: 1, kind: 'census-practice', ...header, startedAt: new Date().toISOString(), endedAt: null, canary: {}, practice: null, projection: null, askFork: null, partial: { reason: 'in-progress' } };
-  const save = () => { rec.endedAt = new Date().toISOString(); writeJson(practiceFile, publicCensusRecord(rec, 'practice record')); };
-  const stopFor = (reason, detail) => { rec.partial = { reason, ...detail }; rec.askFork = true; log(`STOP: ${reason}`); save(); return rec; };
+  own(rec, header[DIGESTS]);
+  const rawPath = join(ctx.raw, 'practice-run.json');
+  const save = () => { rec.endedAt = new Date().toISOString(); writeRecord(practiceFile, rawPath, ctx.rawLabel('practice-run.json'), rec, 'practice record'); };
+  const finish = () => { save(); try { ctx.commit([practiceFile], 'record(exp007): census practice record and ledger'); } catch (error) { rec.commitError = String(error.message).slice(0, 200); save(); } return rec; };
+  const stopFor = (reason, detail) => { rec.partial = { reason, ...detail }; rec.askFork = true; log(`STOP: ${reason}`); return finish(); };
   const terms = [...CANARY_BASE_TERMS, ...all.map(r => r.ruleId)];
   const prompt = canaryPrompt(ctx.root);
+  const sv = await served(ctx);
+  if (sv.stop) return stopFor(...sv.stop);
+  rec.served = sv.served;
   for (const role of ROLES) {
     const call = await meteredCall(ctx, { kind: 'canary', ruleId: 'canary', role, user: prompt });
     if (call.stop) return stopFor(...call.stop);
     const facts = callFacts(call, modelOf(ctx.prereg, role));
     const verdict = facts.harnessFailure ? { pass: false, reason: `harness failure: ${facts.harnessFailure}`, hits: [] } : canaryVerdict(facts.raw, terms);
-    rec.canary[role] = { ...facts, promptSha256: sha256(prompt), pass: verdict.pass, reason: verdict.reason, hits: verdict.hits };
+    const promptSha256 = sha256(prompt);
+    rec.canary[role] = own({ ...facts, promptSha256, pass: verdict.pass, reason: verdict.reason, hits: verdict.hits }, { promptSha256 });
     save();
     if (!verdict.pass) return stopFor('canary', { role, hits: verdict.hits });
   }
+  const sv2 = await served(ctx);
+  if (sv2.stop) return stopFor(...sv2.stop);
   const t = await translatorStep(ctx, practice, 'practice');
   if (t.stop) return stopFor(...t.stop);
   rec.practice = { ruleId: practice.ruleId, translator: t.translator, translatorError: t.translatorError, adjudicator: null, adjudicatorError: null };
@@ -395,9 +493,8 @@ async function runPractice(ctx, { header, all, practice, practiceFile, log }) {
   rec.projection = projection({ rules: all.length, pairCostUsd: t.translator.costUsd + a.adjudicator.costUsd, spentUsd: ctx.ledger.total() });
   rec.askFork = rec.projection.askFork;
   rec.partial = null;
-  save();
   log(`practice: canaries PASS; projection $${rec.projection.totalUsd.toFixed(7)} vs ceiling $${rec.projection.ceilingUsd}${rec.askFork ? ' -> ASK-FORK' : ''}`);
-  return rec;
+  return finish();
 }
 
 /** The counted census (or its rehearsal). Resumes per (ruleId, role): a pair with a ledger line is never called again. */
@@ -410,14 +507,25 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
 
   const rules = only ? all.filter(r => only.includes(r.ruleId)) : all;
   if (only && !ctx.rehearsal) throw new Error('a counted run covers the whole census');
-  const invocation = { startedAt: new Date().toISOString(), endedAt: null, mode: header.mode, rehearsal: ctx.rehearsal, firstRuleId: null, called: 0, completed: 0, skipped: 0, resumed: [], partial: null };
+  const invocation = { startedAt: new Date().toISOString(), endedAt: null, mode: header.mode, rehearsal: ctx.rehearsal, firstRuleId: null, called: 0, completed: 0, skipped: 0, resumed: [], commits: [], partial: null };
   const runsLog = join(out, 'runs.jsonl');
-  const finishInvocation = partial => { invocation.endedAt = new Date().toISOString(); invocation.partial = partial; mkdirSync(out, { recursive: true }); appendFileSync(runsLog, `${JSON.stringify(publicCensusRecord(invocation, 'run log line'))}\n`); return invocation; };
+  const dirty = new Set();
+  const commitNow = label => {
+    try { const c = ctx.commit([...dirty, runsLog], `record(exp007): census ${label}: ${invocation.completed} rule(s) this invocation, ledger $${ctx.ledger.total().toFixed(7)}`); if (c.committed) { invocation.commits.push(c.sha); dirty.clear(); } return null; } catch (error) { return String(error.message).slice(0, 200); }
+  };
+  const finishInvocation = partial => {
+    invocation.endedAt = new Date().toISOString(); invocation.partial = partial;
+    mkdirSync(out, { recursive: true });
+    appendFileSync(runsLog, `${JSON.stringify(publicCensusRecord(invocation, 'run log line').pub)}\n`);
+    const err = commitNow(partial ? 'stopped' : 'invocation end');
+    if (err) invocation.commitError = err;
+    return invocation;
+  };
   const stopFor = (reason, detail) => { log(`STOP: ${reason}`); return finishInvocation({ reason, ...detail }); };
   const isCalled = (ruleId, role) => ctx.ledger.called('counted', ruleId, role, { rehearsal: ctx.rehearsal });
 
   for (const rule of rules) {
-    const recPath = join(out, `${rule.ruleId}.json`);
+    const recPath = join(out, `${rule.ruleId}.json`), rawPath = join(ctx.raw, `${rule.ruleId}.json`);
     const prior = existsSync(recPath) ? JSON.parse(readFileSync(recPath, 'utf8')) : null;
     if (prior?.complete === true) { invocation.skipped += 1; continue; }
     if (prior && JSON.stringify(prior.code) !== JSON.stringify(header.code)) return stopFor('code-changed', { ruleId: rule.ruleId });
@@ -425,10 +533,14 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
     const resumed = Boolean(prior || tLine || aLine);
     if (resumed) invocation.resumed.push(rule.ruleId);
     invocation.firstRuleId ??= rule.ruleId;
-    const rec = prior ?? { schemaVersion: 1, kind: 'census-record', ...header, ruleId: rule.ruleId, plugin: rule.plugin, stratum: rule.stratum, startedAt: null, endedAt: null, translator: null, adjudicator: null, translatorError: null, adjudicatorError: null, final: null, complete: false, resumed: false };
+    // A resumed record continues from the raw store (the pre-scrub record), so a withheld field is never lost.
+    const stored = prior ? storedRecord(rawPath) : null;
+    const rec = stored ?? prior ?? { schemaVersion: 1, kind: 'census-record', ...header, ruleId: rule.ruleId, plugin: rule.plugin, stratum: rule.stratum, startedAt: null, endedAt: null, translator: null, adjudicator: null, translatorError: null, adjudicatorError: null, final: null, complete: false, resumed: false };
+    if (!prior) own(rec, header[DIGESTS]);
+    const priorDigests = prior ? storedDigests(rawPath) : [];
     rec.resumed = rec.resumed || resumed;
-    const save = () => writeJson(recPath, publicCensusRecord(rec, `census record ${rule.ruleId}`));
-    let raw = null; // the translator's verbatim text for the adjudicator, from this invocation or a scrub-free record
+    const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(`${rule.ruleId}.json`), rec, `census record ${rule.ruleId}`, priorDigests); dirty.add(recPath); };
+    let raw = null; // the translator's verbatim text for the adjudicator, from this invocation or the raw store
 
     if (!rec.translator) {
       if (tLine) {
@@ -436,6 +548,9 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
         rec.translator = { called: true, lost: true, model: tLine.model, costUsd: tLine.costUsd, costBasis: tLine.costBasis, reportedCostUsd: tLine.reportedCostUsd, callId: tLine.callId, startedAt: tLine.ts, endedAt: tLine.ts, translatorClass: 'error', classAfterMechanical: 'error', failedCheck: 'harness', engineLimit: false };
         rec.translatorError = 'the record of a charged translator call was lost after an interruption (never re-called)';
       } else {
+        const sv = await served(ctx);
+        if (sv.stop) return stopFor(...sv.stop);
+        rec.served = sv.served;
         const t = await translatorStep(ctx, rule, 'counted');
         if (t.stop) return stopFor(...t.stop);
         invocation.called += 1;
@@ -456,6 +571,8 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
         rec.adjudicator = { called: false, reason: 'the translator answer could not be recovered verbatim after an interruption' };
         rec.adjudicatorError = 'not adjudicated: the translator answer was not recoverable verbatim after an interruption';
       } else {
+        const sv = await served(ctx);
+        if (sv.stop) { save(); return stopFor(...sv.stop); }
         const a = await adjudicatorStep(ctx, rule, 'counted', { ...rec.translator, raw });
         if (a.stop) { save(); return stopFor(...a.stop); }
         invocation.called += 1;
@@ -468,7 +585,8 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
     rec.complete = true;
     save();
     invocation.completed += 1;
-    log(`${rule.ruleId}: ${rec.final.final}${ctx.ledger ? ` (ledger $${ctx.ledger.total().toFixed(7)})` : ''}`);
+    log(`${rule.ruleId}: ${rec.final.final} (ledger $${ctx.ledger.total().toFixed(7)})`);
+    if (invocation.completed % COMMIT_EVERY === 0) { const err = commitNow('progress'); if (err) return stopFor('commit-failed', { error: err }); }
   }
   return finishInvocation(null);
 }
