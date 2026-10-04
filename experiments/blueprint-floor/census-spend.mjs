@@ -4,13 +4,19 @@
 //   - Unknown cost (a timeout, a crash, no or a non-positive total_cost_usd): charged the upper bound, which the
 //     pre-registration states (spend.unknownCost): three times the largest observed cost of that role, at least
 //     $0.5000000. Never a $0 line; an unpaid round gets no line.
-//   - Reserve (EXP 005's rule, per role): the largest line of that role so far, at least $0.50. A call is refused when the
-//     ledger total + its reserve would exceed the $40 census ceiling (or the $100 cap).
+//   - Reserve (per role, refute r1 N2): the larger of the largest line of that role so far and the role's unknown-cost
+//     bound, so an unknown-cost charge on the last call cannot cross the ceiling. A call is refused when the ledger total +
+//     its reserve would exceed the $40 census ceiling (or the $100 cap).
+//   - Integrity (refute r1 B3): the ledger must start with the bytes committed at HEAD, and an append-only MIRROR of every
+//     line lives in a state directory shared by every worktree of the repository (the git common dir, chosen by the
+//     runner): the ledger must contain the mirror's lines in order, and every uncommitted ledger line must be in the
+//     mirror. A truncated or reset ledger, a second worktree's ledger, or a missing mirror beside uncommitted lines all
+//     refuse every call. The pending sidecar lives in the same state directory.
 //   - Crash safety (EXP 006 r4 N1): an INTENT line is appended to the gitignored pending sidecar before every spawn and
 //     cleared after the ledger line is written; any line left in the sidecar refuses every later call (fail closed). A
 //     corrupt ledger line refuses every call too.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 
 export const LEDGER = 'experiments/blueprint-floor/spend-ledger.jsonl';
 export const LIMITS = Object.freeze({ capUsd: 100, ceilingUsd: 40, unknownFactor: 3, unknownFloorUsd: 0.5, reserveFloorUsd: 0.5, decimals: 7 });
@@ -39,7 +45,22 @@ export function validLine(e) {
 }
 
 export class CensusLedger {
-  constructor(path, limits = LIMITS) { this.path = path; this.limits = limits; this.pendingPath = `${path.replace(/\.jsonl$/, '')}.pending.jsonl`; }
+  /**
+   * `stateDir`: where the pending sidecar and the mirror live (the runner passes the git common dir's census dir for a
+   * metered run). `headText`: the ledger as committed at HEAD. `mirror: false` only for unit tests of the arithmetic.
+   */
+  constructor(path, { stateDir = dirname(path), headText = '', mirror = true, limits = LIMITS } = {}) {
+    this.path = path; this.limits = limits; this.headText = headText; this.mirror = mirror;
+    this.pendingPath = join(stateDir, 'spend-ledger.pending.jsonl');
+    this.mirrorPath = join(stateDir, 'spend-ledger.mirror.jsonl');
+  }
+  text() { return existsSync(this.path) ? readFileSync(this.path, 'utf8') : ''; }
+  /** The integrity check (B3); a missing mirror beside a ledger equal to HEAD is initialised from it (bootstrap). */
+  integrity() {
+    const r = checkLedgerIntegrity({ ledgerText: this.text(), headText: this.headText, mirrorText: !this.mirror ? undefined : existsSync(this.mirrorPath) ? readFileSync(this.mirrorPath, 'utf8') : null });
+    if (r.ok && r.bootstrap) { mkdirSync(dirname(this.mirrorPath), { recursive: true }); writeFileSync(this.mirrorPath, this.text(), { flag: 'wx' }); }
+    return r;
+  }
 
   /** Every line, validated; a corrupt line throws (the guard then refuses: fail closed). */
   entries() {
@@ -56,7 +77,7 @@ export class CensusLedger {
   largest(role) { return this.entries().filter(e => e.role === role).reduce((m, e) => Math.max(m, e.costUsd), 0); }
   /** The largest OBSERVED (reported) cost of a role so far, for the unknown-cost bound. */
   largestObserved(role) { return this.entries().filter(e => e.role === role && e.costBasis === 'api-equivalent').reduce((m, e) => Math.max(m, e.costUsd), 0); }
-  reserve(role) { return round7(Math.max(this.largest(role), this.limits.reserveFloorUsd)); }
+  reserve(role) { return round7(Math.max(this.largest(role), this.unknownBound(role), this.limits.reserveFloorUsd)); }
   /** The pre-registered unknown-cost bound: max(observed per role) x 3, at least $0.5000000. */
   unknownBound(role) { return round7(Math.max(this.largestObserved(role) * this.limits.unknownFactor, this.limits.unknownFloorUsd)); }
   /** Whether (kind, ruleId, role) already has a line: the resume key (R6-3), never re-called. */
@@ -84,6 +105,8 @@ export class CensusLedger {
     if (!ROLES.includes(role)) return { ok: false, reason: 'unknown-role', askFork: true };
     if (this.pendingLines().length) return { ok: false, reason: 'pending-ledger-line', askFork: true, pending: this.pendingPath.split('/').pop() };
     try { this.entries(); } catch (error) { return { ok: false, reason: 'corrupt-ledger', askFork: true, error: error.message }; }
+    const integrity = this.integrity();
+    if (!integrity.ok) return { ok: false, reason: integrity.reason, askFork: true };
     const spent = this.total(), reserve = this.reserve(role);
     const base = { spent, reserve, ceilingUsd: this.limits.ceilingUsd, capUsd: this.limits.capUsd };
     if (units(spent) + units(reserve) > units(this.limits.capUsd)) return { ok: false, reason: 'cap', askFork: true, ...base };
@@ -106,8 +129,29 @@ export class CensusLedger {
     if (!validLine(line)) throw new Error('refusing to write an invalid ledger line (never a $0 line)');
     mkdirSync(dirname(this.path), { recursive: true });
     appendFileSync(this.path, `${JSON.stringify(line)}\n`);
+    // Then the mirror (B3). If this append fails, the caller keeps the line pending and every later call refuses.
+    if (this.mirror) { mkdirSync(dirname(this.mirrorPath), { recursive: true }); appendFileSync(this.mirrorPath, `${JSON.stringify(line)}\n`); }
     return line;
   }
+}
+
+const lines = t => t.split('\n').filter(Boolean);
+/**
+ * B3: the ledger starts with the bytes committed at HEAD; the mirror's lines appear in the ledger in order; every ledger
+ * line after the committed ones is in the mirror. `mirrorText` null = no mirror file (allowed only when the ledger is
+ * exactly HEAD's, and then the mirror is initialised from it); undefined = mirror not used (arithmetic unit tests).
+ */
+export function checkLedgerIntegrity({ ledgerText, headText, mirrorText }) {
+  if (!ledgerText.startsWith(headText)) return { ok: false, reason: 'ledger-not-head-prefix' };
+  if (mirrorText === undefined) return { ok: true };
+  if (mirrorText === null) return ledgerText === headText ? { ok: true, bootstrap: true } : { ok: false, reason: 'mirror-missing' };
+  const L = lines(ledgerText), M = lines(mirrorText), H = lines(headText);
+  let j = 0;
+  for (const l of L) if (j < M.length && l === M[j]) j += 1;
+  if (j !== M.length) return { ok: false, reason: 'ledger-lacks-mirror' };
+  const mirrored = new Set(M);
+  if (L.slice(H.length).some(l => !mirrored.has(l))) return { ok: false, reason: 'ledger-line-not-mirrored' };
+  return { ok: true };
 }
 
 /**

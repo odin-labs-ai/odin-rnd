@@ -5,9 +5,14 @@
 //   - the site serves the record byte for byte: the served copy, fetched at run start, hashes to PREREG_SHA256 (the fetch
 //     and its sha are recorded; tests stub the fetch, and the default fetch refuses under the Node test runner);
 //   - every file on the counted path hashes to its pin in experiments/blueprint-floor/runners.sha256;
-//   - the ledger is exactly the committed experiments/blueprint-floor/spend-ledger.jsonl (that path, tracked by git).
-// A REHEARSAL (the fake client) checks the same frozen record and pins, but fetches nothing and appends to a scratch
-// ledger; its records are marked rehearsal and never publishable.
+//   - EXP 005's base tree is the pinned one at run time (refute r1 B1): HEAD:experiments/jev-gate/base is the
+//     pre-registration's adapter.baseTree, and git status (untracked and ignored files included) is empty under it;
+//   - the ledger is exactly the committed experiments/blueprint-floor/spend-ledger.jsonl (that path, committed at HEAD),
+//     it starts with the bytes committed at HEAD, and it contains the append-only mirror kept in the repository's shared
+//     state dir (refute r1 B3: <git common dir>/exp007-census, shared by every worktree, which also holds the run lock and
+//     the pending sidecar).
+// A REHEARSAL (the fake client) checks the same frozen record, pins and base tree, but fetches nothing and appends to a
+// scratch ledger with a scratch state dir; its records are marked rehearsal and never publishable.
 //   node experiments/blueprint-floor/census-guard.mjs --write-pins     rewrite runners.sha256 from the files on disk
 //   node experiments/blueprint-floor/census-guard.mjs [--mode practice|counted]   run the guard (fetches the served copy)
 import { spawnSync } from 'node:child_process';
@@ -16,7 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from './freeze.mjs';
-import { LEDGER } from './census-spend.mjs';
+import { checkLedgerIntegrity, LEDGER } from './census-spend.mjs';
 
 export const REPO_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -68,10 +73,36 @@ export async function fetchServed(url = SERVED_URL, env = process.env) {
 
 // git as the PATH resolved it when this module loaded (a test may empty PATH afterwards to keep the client unreachable).
 const GIT = (process.env.PATH ?? '').split(':').filter(Boolean).map(d => join(d, 'git')).find(p => existsSync(p)) ?? 'git';
-/** Is `rel` tracked by git in `root` (committed at least once)? */
-export function trackedByGit(root, rel) {
-  const r = spawnSync(GIT, ['ls-files', '--error-unmatch', '--', rel], { cwd: root, encoding: 'utf8' });
-  return r.status === 0;
+/** A git runner bound to `root`: (args) -> {status, stdout}. Injectable in the guard's tests only. */
+export const gitIn = root => args => { const r = spawnSync(GIT, args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }); return { status: r.status, stdout: r.stdout ?? '' }; };
+export const BASE_DIR = 'experiments/jev-gate/base';
+export const STATE_SUBDIR = 'exp007-census';
+/** The repository's shared census state dir: <git common dir>/exp007-census (one per repository, every worktree). */
+export function censusStateDir(root = REPO_ROOT, git = gitIn(root)) {
+  const r = git(['rev-parse', '--git-common-dir']);
+  if (r.status !== 0 || !r.stdout.trim()) refuse('git rev-parse --git-common-dir failed');
+  return join(resolve(root, r.stdout.trim()), STATE_SUBDIR);
+}
+
+/** B1: the base tree at HEAD is the pinned one and nothing untracked or ignored sits under it. Returns {tree, clean}. */
+export function checkBaseTree(prereg, git) {
+  const want = prereg.adapter?.baseTree;
+  const t = git(['rev-parse', `HEAD:${BASE_DIR}`]);
+  const tree = t.status === 0 ? t.stdout.trim() : null;
+  if (!want || tree !== want) refuse(`HEAD:${BASE_DIR} is ${tree ?? 'missing'}, not the pinned base tree ${want}`);
+  const st = git(['status', '--porcelain', '--ignored', '--', BASE_DIR]);
+  if (st.status !== 0) refuse(`git status failed under ${BASE_DIR}`);
+  if (st.stdout.trim()) refuse(`${BASE_DIR} has changed, untracked or ignored files: ${st.stdout.trim().split('\n').slice(0, 5).join('; ')}`);
+  return { tree, clean: true };
+}
+
+/** N4: the served pre-registration, re-fetched (before every rule); refuses unless it hashes to `expected`. */
+export async function recheckServed({ expected, fetch: fetchBytes = fetchServed, url = SERVED_URL }) {
+  let bytes;
+  try { bytes = await fetchBytes(url); } catch (error) { refuse(`the served pre-registration could not be fetched: ${String(error.message).slice(0, 200)}`); }
+  const got = sha256(bytes);
+  if (got !== expected) refuse(`the site serves a pre-registration hashing to ${got}, not the frozen ${expected}`);
+  return { url, sha256: got, fetchedAt: new Date().toISOString() };
 }
 
 /** Refuses unless every file `pins` names exists under `root` and hashes to its pin. */
@@ -88,9 +119,9 @@ export const MODES = ['practice', 'counted', 'rehearsal'];
 
 /**
  * The guard. Returns the stamp every record carries: {mode, rehearsal, preregSha256, notBefore, served, code,
- * codeMatchesPins, checkedAt}. `freeze`, `now`, `fetch`, `tracked` and `root` are injectable for tests.
+ * codeMatchesPins, checkedAt}. `freeze`, `now`, `fetch`, `git`, `stateDir` and `root` are injectable for tests.
  */
-export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), tracked = trackedByGit, servedUrl = SERVED_URL } = {}) {
+export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), git = gitIn(root), stateDir, servedUrl = SERVED_URL } = {}) {
   if (!MODES.includes(mode)) refuse(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (!freeze?.PREREG_SHA256 || !freeze?.NOT_BEFORE) refuse('the census waits for the freeze: PREREG_SHA256 and NOT_BEFORE in freeze.mjs are null');
@@ -105,6 +136,7 @@ export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(),
   checkPinned(prereg.files, root, 'the pre-registration');
   checkPinned(Object.fromEntries(Object.entries(prereg.engine?.files ?? {}).map(([f, h]) => [`node_modules/bce-engine/${f}`, h])), root, 'the pre-registration (engine)');
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the not-before ${freeze.NOT_BEFORE}`);
+  const base = checkBaseTree(prereg, git);
 
   const code = codeShas(root);
   const missing = Object.keys(code).filter(k => code[k] === null);
@@ -113,17 +145,19 @@ export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(),
   const codeMatchesPins = sameShas(pinned, code);
   if (!codeMatchesPins) refuse(`the counted-path code differs from ${PINS} (${[...new Set([...Object.keys(code), ...Object.keys(pinned)])].filter(k => pinned[k] !== code[k]).join(', ') || 'file list'})`);
 
-  let served = null;
+  let served = null, ledgerHeadText = '', state = stateDir ?? null;
   if (!rehearsal) {
     if (resolve(ledgerPath) !== resolve(join(root, LEDGER))) refuse(`a practice or counted run appends to the committed ledger ${LEDGER}`);
-    if (!tracked(root, LEDGER)) refuse(`${LEDGER} is not committed (tracked by git)`);
-    let servedBytes;
-    try { servedBytes = await fetchBytes(servedUrl); } catch (error) { refuse(`the served pre-registration could not be fetched: ${String(error.message).slice(0, 200)}`); }
-    const servedSha = sha256(servedBytes);
-    served = { url: servedUrl, sha256: servedSha, fetchedAt: new Date().toISOString() };
-    if (servedSha !== freeze.PREREG_SHA256) refuse(`the site serves a pre-registration hashing to ${servedSha}, not the frozen ${freeze.PREREG_SHA256}`);
+    const head = git(['show', `HEAD:${LEDGER}`]);
+    if (head.status !== 0) refuse(`${LEDGER} is not committed at HEAD`);
+    ledgerHeadText = head.stdout;
+    state ??= censusStateDir(root, git);
+    const mirrorPath = join(state, 'spend-ledger.mirror.jsonl');
+    const integrity = checkLedgerIntegrity({ ledgerText: existsSync(ledgerPath) ? readFileSync(ledgerPath, 'utf8') : '', headText: ledgerHeadText, mirrorText: existsSync(mirrorPath) ? readFileSync(mirrorPath, 'utf8') : null });
+    if (!integrity.ok) refuse(`the ledger fails its integrity check (${integrity.reason}): it must start with the bytes committed at HEAD and contain the shared mirror`);
+    served = await recheckServed({ expected: freeze.PREREG_SHA256, fetch: fetchBytes, url: servedUrl });
   }
-  return { mode, rehearsal, preregSha256: got, notBefore: freeze.NOT_BEFORE, served, code, codeMatchesPins, checkedAt: now.toISOString(), prereg };
+  return { mode, rehearsal, preregSha256: got, notBefore: freeze.NOT_BEFORE, served, base, code, codeMatchesPins, checkedAt: now.toISOString(), prereg, ledgerHeadText, ledgerHeadSha256: sha256(ledgerHeadText), stateDir: state };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -135,7 +169,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   }
   try {
     const mode = argv.includes('--mode') ? argv[argv.indexOf('--mode') + 1] : 'counted';
-    const { prereg: _p, code: _c, ...stamp } = await checkCensusRun({ mode });
+    const { prereg: _p, code: _c, ledgerHeadText: _l, stateDir: _s, ...stamp } = await checkCensusRun({ mode });
     console.log(JSON.stringify({ ok: true, ...stamp }));
   } catch (error) {
     console.log(JSON.stringify({ ok: false, error: error.message }));

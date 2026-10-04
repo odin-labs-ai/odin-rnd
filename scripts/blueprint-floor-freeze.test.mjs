@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
-import { checkCensusRun, codeShas, fetchServed, PINS, readPins, REPO_ROOT, RUNNER_FILES, sha256, trackedByGit } from '../experiments/blueprint-floor/census-guard.mjs';
+import { BASE_DIR, censusStateDir, checkCensusRun, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
 import { LEDGER } from '../experiments/blueprint-floor/census-spend.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
@@ -13,9 +13,12 @@ import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 const PREREG = 'experiments/blueprint-floor/preregistration.json';
 const preregBytes = readFileSync(join(REPO_ROOT, PREREG));
 const served = async () => preregBytes;
-const tracked = () => true;
+const realGit = gitIn(REPO_ROOT);
+const STATE = scratchDir('bf-freeze-state');
 const AFTER = new Date(Date.parse(NOT_BEFORE) + 1000);
-const frozenArgs = over => ({ mode: 'counted', now: AFTER, fetch: served, tracked, ...over });
+const frozenArgs = over => ({ mode: 'counted', now: AFTER, fetch: served, git: realGit, stateDir: STATE, ...over });
+/** The real git, with some answers replaced (B1 / B3 cases). */
+const gitWith = answers => args => { const k = args.join(' '); for (const [re, out] of answers) if (re.test(k)) return out; return realGit(args); };
 
 test('the freeze holds the published record: its sha256, and the odin-rnd #25 mergedAt as the not-before', () => {
   assert.equal(PREREG_SHA256, 'ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb');
@@ -60,17 +63,19 @@ test('frozen, but each condition broken in turn: the guard refuses', async () =>
   await assert.rejects(checkCensusRun(frozenArgs({ freeze: { PREREG_SHA256, NOT_BEFORE: '2026-10-03 12:09:42' } })), /not an ISO 8601 UTC time/);
   await assert.rejects(checkCensusRun(frozenArgs({ fetch: async () => Buffer.concat([preregBytes, Buffer.from(' ')]) })), /site serves a pre-registration hashing to/, 'the served copy differs');
   await assert.rejects(checkCensusRun(frozenArgs({ fetch: async () => { throw new Error('HTTP 404'); } })), /could not be fetched: HTTP 404/);
-  await assert.rejects(checkCensusRun(frozenArgs({ tracked: () => false })), /spend-ledger\.jsonl is not committed/);
+  await assert.rejects(checkCensusRun(frozenArgs({ git: gitWith([[/^show HEAD:/, { status: 128, stdout: '' }]]) })), /spend-ledger\.jsonl is not committed at HEAD/);
   await assert.rejects(checkCensusRun(frozenArgs({ ledgerPath: join(REPO_ROOT, 'experiments/blueprint-floor/other-ledger.jsonl') })), /appends to the committed ledger/);
   await assert.rejects(checkCensusRun(frozenArgs({ mode: 'probe' })), /unknown mode/);
   // The default fetch never reaches the network under the test runner.
   await assert.rejects(fetchServed(SERVED_URL), /not fetched under the Node test runner/);
-  await assert.rejects(checkCensusRun({ mode: 'counted', now: AFTER, tracked }), /could not be fetched: the served pre-registration is not fetched under the Node test runner/);
+  await assert.rejects(checkCensusRun({ mode: 'counted', now: AFTER, git: realGit, stateDir: STATE }), /could not be fetched: the served pre-registration is not fetched under the Node test runner/);
+  await assert.rejects(recheckServed({ expected: PREREG_SHA256, fetch: async () => Buffer.from('x') }), /site serves a pre-registration hashing to/, 'the per-rule re-check (N4)');
+  assert.equal((await recheckServed({ expected: PREREG_SHA256, fetch: served })).sha256, PREREG_SHA256);
 });
 
 test('a rehearsal checks the same freeze and pins, fetches nothing and takes a scratch ledger', async () => {
   let fetched = false;
-  const stamp = await checkCensusRun({ mode: 'rehearsal', now: AFTER, fetch: async () => { fetched = true; return preregBytes; }, ledgerPath: '/nonexistent/ledger.jsonl', tracked: () => false });
+  const stamp = await checkCensusRun({ mode: 'rehearsal', now: AFTER, fetch: async () => { fetched = true; return preregBytes; }, ledgerPath: '/nonexistent/ledger.jsonl', git: realGit, stateDir: STATE });
   assert.deepEqual([stamp.rehearsal, stamp.served, fetched], [true, null, false]);
 });
 
@@ -79,7 +84,7 @@ test('a counted-path file or a pre-registration pin that drifts refuses the guar
   try {
     for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
     symlinkSync(join(REPO_ROOT, 'node_modules'), join(root, 'node_modules'));
-    const args = over => frozenArgs({ root, ledgerPath: join(root, LEDGER), ...over });
+    const args = over => frozenArgs({ root, ledgerPath: join(root, LEDGER), ...over }); // git answers from the real repo
     await checkCensusRun(args());
     writeFileSync(join(root, 'experiments/blueprint-floor/census-run.mjs'), `${readFileSync(join(root, 'experiments/blueprint-floor/census-run.mjs'), 'utf8')}\n// drift\n`);
     await assert.rejects(checkCensusRun(args()), /counted-path code differs from experiments\/blueprint-floor\/runners\.sha256 \(experiments\/blueprint-floor\/census-run\.mjs\)/);
@@ -90,8 +95,53 @@ test('a counted-path file or a pre-registration pin that drifts refuses the guar
   } finally { removeScratch(root); }
 });
 
-test('the committed ledger exists, is tracked by git, and holds no line from before the not-before (none at all in bundle 1)', () => {
-  assert.equal(trackedByGit(REPO_ROOT, LEDGER), true);
+test('the committed ledger exists, is committed at HEAD, and holds no line from before the not-before (none at all in bundle 1)', () => {
+  assert.equal(realGit(['show', `HEAD:${LEDGER}`]).status, 0);
   const lines = readFileSync(join(REPO_ROOT, LEDGER), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
   for (const l of lines) assert(Date.parse(l.ts) > Date.parse(NOT_BEFORE), `a ledger line at ${l.ts}`);
+});
+
+test('B1: the base tree is the pinned one at run time; a mismatched tree or an untracked or ignored file under it refuses (frozen and unfrozen)', async () => {
+  const prereg = JSON.parse(preregBytes);
+  const stamp = await checkCensusRun(frozenArgs());
+  assert.deepEqual(stamp.base, { tree: prereg.adapter.baseTree, clean: true }, 'recorded in the stamp every header carries');
+  assert.equal(realGit(['rev-parse', `HEAD:${BASE_DIR}`]).stdout.trim(), '957b5e10c099ef2c86bb4543a8560aba59290d62');
+  const wrongTree = gitWith([[/^rev-parse HEAD:experiments\/jev-gate\/base$/, { status: 0, stdout: `${'e'.repeat(40)}\n` }]]);
+  const untracked = gitWith([[/^status --porcelain --ignored -- experiments\/jev-gate\/base$/, { status: 0, stdout: '?? experiments/jev-gate/base/src/app/extra.ts\n' }]]);
+  const ignored = gitWith([[/^status --porcelain --ignored/, { status: 0, stdout: '!! experiments/jev-gate/base/.DS_Store\n' }]]);
+  for (const mode of ['counted', 'practice', 'rehearsal']) {
+    await assert.rejects(checkCensusRun(frozenArgs({ mode, git: wrongTree })), /HEAD:experiments\/jev-gate\/base is e{40}, not the pinned base tree 957b5e10/, `${mode}: a mismatched tree`);
+    await assert.rejects(checkCensusRun(frozenArgs({ mode, git: untracked })), /has changed, untracked or ignored files: \?\? experiments\/jev-gate\/base\/src\/app\/extra\.ts/, `${mode}: an untracked file`);
+    await assert.rejects(checkCensusRun(frozenArgs({ mode, git: ignored })), /untracked or ignored files: !! /, `${mode}: an ignored file`);
+    // Unfrozen: the freeze refusal comes first, whatever the base tree.
+    await assert.rejects(checkCensusRun(frozenArgs({ mode, git: untracked, freeze: { PREREG_SHA256: null, NOT_BEFORE } })), /waits for the freeze/);
+  }
+});
+
+test('B3: the guard refuses a ledger that does not start with HEAD\'s bytes or lacks the shared mirror; the state dir is the git common dir\'s', async () => {
+  const dir = scratchDir('bf-ledger-guard');
+  try {
+    const line = l => `${JSON.stringify({ ts: '2026-10-04T00:00:00Z', kind: 'counted', ruleId: l, role: 'translator', model: 'm', costUsd: 0.1, costBasis: 'api-equivalent', reportedCostUsd: 0.1, rehearsal: false, callId: l })}\n`;
+    const committed = line('a') + line('b');
+    const head = gitWith([[/^show HEAD:experiments\/blueprint-floor\/spend-ledger\.jsonl$/, { status: 0, stdout: committed }]]);
+    const state = join(dir, 'state'); mkdirSync(state);
+    const root = scratchDir('bf-ledger-root');
+    try {
+      for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
+      symlinkSync(join(REPO_ROOT, 'node_modules'), join(root, 'node_modules'));
+      const L = join(root, LEDGER);
+      const args = over => frozenArgs({ root, ledgerPath: L, git: head, stateDir: state, ...over });
+      writeFileSync(L, committed);
+      await checkCensusRun(args()); // ledger == HEAD, no mirror yet: allowed (the ledger initialises the mirror)
+      writeFileSync(L, line('a'));
+      await assert.rejects(checkCensusRun(args()), /integrity check \(ledger-not-head-prefix\)/, 'a truncated ledger');
+      writeFileSync(L, committed + line('c'));
+      await assert.rejects(checkCensusRun(args()), /integrity check \(mirror-missing\)/, 'an uncommitted line and no mirror');
+      writeFileSync(join(state, 'spend-ledger.mirror.jsonl'), committed + line('c'));
+      await checkCensusRun(args());
+      writeFileSync(L, committed);
+      await assert.rejects(checkCensusRun(args()), /integrity check \(ledger-lacks-mirror\)/, 'a ledger reset to HEAD (or another worktree\'s ledger)');
+    } finally { removeScratch(root); }
+  } finally { removeScratch(dir); }
+  assert.equal(censusStateDir(REPO_ROOT), join(resolve(REPO_ROOT, realGit(['rev-parse', '--git-common-dir']).stdout.trim()), 'exp007-census'), 'one state dir per repository, shared by every worktree');
 });
