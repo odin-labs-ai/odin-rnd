@@ -93,14 +93,14 @@ export function censusImportIssues(src, file = '<source>') {
 }
 
 /** A rehearsal workspace: the fake first on PATH, its plan, scratch outputs. */
-export async function withFake(plan, fn) {
+export async function withFake(plan, fn, config = {}) {
   const dir = scratchDir('bf-rehearsal');
   const saved = process.env.PATH;
   try {
     chmodSync(FAKE_CLAUDE7, 0o755);
     mkdirSync(join(dir, 'bin'));
     symlinkSync(FAKE_CLAUDE7, join(dir, 'bin', CLIENT_BIN));
-    writeFileSync(join(dir, 'bin', 'fake7.json'), JSON.stringify({ plan }));
+    writeFileSync(join(dir, 'bin', 'fake7.json'), JSON.stringify({ plan, ...config }));
     process.env.PATH = `${join(dir, 'bin')}:${saved}`;
     const paths = { outDir: join(dir, 'out'), ledgerPath: join(dir, 'ledger.jsonl'), practicePath: join(dir, 'practice.json'), stateDir: join(dir, 'state') };
     const log = () => (existsSync(join(dir, 'bin', 'fake7.log.jsonl')) ? readFileSync(join(dir, 'bin', 'fake7.log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : []);

@@ -8,7 +8,7 @@
 //     garbage | nocost | wrong-model | exit1 | is-error | no-result | canary-leak | timeout | j7-pattern (a translator
 //     answer of class not whose rationale quotes a home-directory regex, to exercise the J7 withholding) | garbage-tmp |
 //     garbage-home (a non-JSON answer that starts with a temp or a home path) | adj-path-key (an adjudicator answer with an
-//     extra key that is a home path)
+//     extra key that is a home path) | touch (writes the file named by fake7.json "touch", to change the world mid-call)
 // Default answers: the canary answers NONE; the translator answers expressible for the first rule of each shape
 // (input kind, flags line, contract form) it sees, partial for the second, and not for every other; the adjudicator
 // confirms the stated class, and disputes to not on every seventh adjudicator call.
@@ -69,8 +69,10 @@ else if (role === 'translator') {
   text = JSON.stringify({ ruleId: id, verdict: dispute ? 'dispute' : 'confirm', proposedClass: dispute ? 'not' : stated, reason: 'Rehearsal adjudication.' });
 } else text = 'unknown role';
 
+if (behaviour === 'j7-pattern') process.stderr.write('note: scratch file at /tmp/fake7-note\n');
 if (behaviour === 'j7-pattern') text = JSON.stringify({ ruleId: id, class: 'not', constraints: [], coverage: '', residual: 'Does the input read a key under /home/[^/]+/\\.ssh?', probes: null, rationale: 'The rule names /home/[^/]+/\\.ssh as its pattern.' });
 writeFileSync(join(home, 'fake7.state'), JSON.stringify(state));
+if (behaviour === 'touch' && config.touch) writeFileSync(config.touch, 'x\n');
 if (behaviour === 'garbage') text = 'this is not json {';
 if (behaviour === 'garbage-tmp') text = '/tmp/x is where I would look, not JSON';
 if (behaviour === 'garbage-home') text = '/home/someone/.ssh/id_rsa is the file this rule protects';

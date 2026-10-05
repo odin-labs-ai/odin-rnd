@@ -538,6 +538,33 @@ test('refute r2 N8 + N9: the raw store keeps each call\'s full stdout; stored di
     const done = JSON.parse(readFileSync(join(paths.outDir, 'control/08.json'), 'utf8'));
     assert.equal(done.complete, true);
     assert.ok(done.j7.withheld.some(w => w.path.join('.') === 'translator.raw' && w.preSha256 === mid.translator.rawSha256), 'N9: carried from the public record');
+    // Refute r3 N14: the runner-text changes listed before (the client's stderr named a temp path) are carried too.
+    const stderrChange = mid.j7.changed.find(c => c.path.join('.') === 'translator.stderrTail');
+    assert.ok(stderrChange, 'the earlier write listed the scrubbed stderr');
+    assert.match(mid.translator.stderrTail, /<tmp>\/fake7-note/);
+    assert.ok(done.j7.changed.some(c => c.path.join('.') === 'translator.stderrTail' && c.preSha256 === stderrChange.preSha256 && c.postSha256 === stderrChange.postSha256), 'N14: carried from the public record');
     assert.match(done.adjudicatorError, /not recoverable verbatim/, 'without the raw store the withheld answer cannot be adjudicated (error, never a re-call)');
   });
+});
+
+
+test('refute r3 N12: a base-tree change during a call stops the run before the record is saved; no valid record for that rule', LONG, async () => {
+  const repo = scratchDir('bf-base-toctou');
+  const git = gitIn(repo);
+  try {
+    for (const a of [['init', '-q'], ['config', 'user.email', 'b@example.invalid'], ['config', 'user.name', 'b'], ['config', 'commit.gpgsign', 'false']]) git(a);
+    cpSync(join(REPO_ROOT, BASE_DIR), join(repo, BASE_DIR), { recursive: true });
+    git(['add', '--', BASE_DIR]); git(['commit', '-q', '-m', 'base']);
+    // Call 5 is control/08's translator: the fake writes a file under the base tree while "thinking", after the pre-call check.
+    await withFake({ 5: 'touch' }, async ({ paths, ledger, log }) => {
+      await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', git, baseRoot: repo, log: () => {} });
+      const before = log().length;
+      const run = await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08', 'control/09'], git, baseRoot: repo, log: () => {} });
+      assert.deepEqual([run.partial.reason, run.partial.when], ['base-changed', 'after the call, before the record was saved']);
+      assert.match(run.partial.error, /src\/touched\.ts/);
+      assert.equal(log().length - before, 1, 'the translator call was made; nothing after it');
+      assert.equal(existsSync(join(paths.outDir, 'control/08.json')), false, 'no record was saved for the rule');
+      assert.ok(ledger.called('counted', 'control/08', 'translator', { rehearsal: true }), 'the charged call keeps its ledger line (on resume it is a lost record: error, never a re-call)');
+    }, { touch: join(repo, BASE_DIR, 'src', 'touched.ts') });
+  } finally { removeScratch(repo); }
 });

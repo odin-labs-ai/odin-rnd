@@ -237,9 +237,9 @@ const j7Hit = (text, name) => scrubPaths6(text) !== text || lint6(text, name).le
  * are exempt from the restricted-term scan structurally (path and value). Returns {pub, j7, digests}; a record that
  * still fails the whole-record lint is refused.
  */
-export function publicCensusRecord(rec, name, extraDigests = [], carryWithheld = []) {
+export function publicCensusRecord(rec, name, extraDigests = [], carryWithheld = [], carryChanged = []) {
   const pairs = runnerDigests(rec, extraDigests);
-  const changed = [], withheld = [...carryWithheld];
+  const changed = [...carryChanged], withheld = [...carryWithheld];
   const hold = (path, v, reason) => { withheld.push({ path, preSha256: sha256(typeof v === 'string' ? v : JSON.stringify(v)), reason }); return WITHHELD; };
   const walk = (v, path) => {
     const model = path.some(k => MODEL_KEYS.has(k));
@@ -276,8 +276,8 @@ function writeJson(path, value) {
  * Write one record: the full pre-scrub record and the runner's digests to the local raw store (gitignored), then the
  * public form (J7-scrubbed, every change and withholding listed, naming the raw store) to `path`.
  */
-function writeRecord(path, rawPath, rawLabel, rec, name, extraDigests = [], { carryWithheld = [], priorStdouts = [] } = {}) {
-  const { pub, digests } = publicCensusRecord(rec, name, extraDigests, carryWithheld);
+function writeRecord(path, rawPath, rawLabel, rec, name, extraDigests = [], { carryWithheld = [], carryChanged = [], priorStdouts = [] } = {}) {
+  const { pub, digests } = publicCensusRecord(rec, name, extraDigests, carryWithheld, carryChanged);
   const stdouts = [...priorStdouts.filter(([p]) => !stdoutsOf(rec).some(([q]) => JSON.stringify(q) === JSON.stringify(p))), ...stdoutsOf(rec)];
   writeJson(rawPath, { kind: 'census-raw-store', note: 'local only, never committed: the record before the J7 scrub, and each call\'s full client stdout', runnerDigests: digests, stdouts, record: rec });
   pub.j7.rawStore = rawLabel;
@@ -473,6 +473,11 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   return runCounted(ctx, { header, all, out, practiceFile, only, log });
 }
 
+/** After a call and its mechanical checks (refute r3 N12): null, or the stop for a changed base tree. */
+function baseAfter(ctx) {
+  try { ctx.baseCheck(); return null; } catch (error) { return ['base-changed', { error: String(error.message).slice(0, 300), when: 'after the call, before the record was saved' }]; }
+}
+
 /** Before a rule: the served record re-checked (N4), then the base tree by its bytes (refute r2 B2). {served} or {stop}. */
 async function served(ctx) {
   let out = { served: ctx.stamp.served };
@@ -511,6 +516,8 @@ async function runPractice(ctx, { header, all, practice, practiceFile, log }) {
   if (sv2.stop) return stopFor(...sv2.stop);
   const t = await translatorStep(ctx, practice, 'practice');
   if (t.stop) return stopFor(...t.stop);
+  const afterT = baseAfter(ctx);
+  if (afterT) return stopFor(...afterT);
   rec.practice = { ruleId: practice.ruleId, translator: t.translator, translatorError: t.translatorError, adjudicator: null, adjudicatorError: null };
   save();
   if (t.translatorError) return stopFor('practice-translator-error', { error: t.translatorError });
@@ -568,8 +575,9 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
     const priorStdouts = prior ? storedStdouts(rawPath) : [];
     // N9: resumed without its raw store, the record keeps every field an earlier write withheld, listed.
     const carryWithheld = prior && !stored ? (prior.j7?.withheld ?? []) : [];
+    const carryChanged = prior && !stored ? (prior.j7?.changed ?? []) : []; // refute r3 N14
     rec.resumed = rec.resumed || resumed;
-    const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(`${rule.ruleId}.json`), rec, `census record ${rule.ruleId}`, priorDigests, { carryWithheld, priorStdouts }); dirty.add(recPath); };
+    const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(`${rule.ruleId}.json`), rec, `census record ${rule.ruleId}`, priorDigests, { carryWithheld, carryChanged, priorStdouts }); dirty.add(recPath); };
     let raw = null; // the translator's verbatim text for the adjudicator, from this invocation or the raw store
 
     if (!rec.translator) {
@@ -584,6 +592,10 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
         const t = await translatorStep(ctx, rule, 'counted');
         if (t.stop) return stopFor(...t.stop);
         invocation.called += 1;
+        // Refute r3 N12: the base tree again, after the call and the mechanical checks and before anything is saved. A
+        // change stops the run and this rule gets no record (its charged call is then a lost record on resume: error).
+        const after = baseAfter(ctx);
+        if (after) return stopFor(...after);
         rec.translator = t.translator;
         rec.translatorError = t.translatorError;
         raw = t.translator.raw;
@@ -606,6 +618,8 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
         const a = await adjudicatorStep(ctx, rule, 'counted', { ...rec.translator, raw });
         if (a.stop) { save(); return stopFor(...a.stop); }
         invocation.called += 1;
+        const after = baseAfter(ctx);
+        if (after) { save(); return stopFor(...after); } // the translator half stays incomplete; never a valid census record
         rec.adjudicator = a.adjudicator;
         rec.adjudicatorError = a.adjudicatorError;
       }
