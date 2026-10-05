@@ -73,8 +73,21 @@ export async function fetchServed(url = SERVED_URL, env = process.env) {
 
 // git as the PATH resolved it when this module loaded (a test may empty PATH afterwards to keep the client unreachable).
 const GIT = (process.env.PATH ?? '').split(':').filter(Boolean).map(d => join(d, 'git')).find(p => existsSync(p)) ?? 'git';
-/** A git runner bound to `root`: (args) -> {status, stdout}. Injectable in the guard's tests only. */
-export const gitIn = root => (args, input) => { const r = spawnSync(GIT, args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, ...(input !== undefined ? { input } : {}) }); return { status: r.status, stdout: r.stdout ?? '' }; };
+/**
+ * Refute r3 B2: what git reports about the base tree must not be changeable by repository state outside the tree. Every git
+ * call the census makes runs with replace objects off (--no-replace-objects and GIT_NO_REPLACE_OBJECTS=1, so `git replace`
+ * cannot swap the tree that ls-tree or status read while rev-parse still names the pinned id), and with the settings that
+ * change how files on disk compare to blobs pinned: no line-ending conversion (core.autocrlf=false, core.safecrlf=false),
+ * the exec bit honoured (core.fileMode=true), case-sensitive paths (core.ignorecase=false), no stat-only shortcut on
+ * untracked files (core.untrackedCache=false) and no filesystem monitor (core.fsmonitor=false). Clean filters cannot be
+ * disabled by -c, so checkBaseTree hashes with hash-object --no-filters (refute r3 B1).
+ */
+export const GIT_GUARD_ARGS = Object.freeze(['--no-replace-objects', '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', '-c', 'core.fileMode=true', '-c', 'core.ignorecase=false', '-c', 'core.untrackedCache=false', '-c', 'core.fsmonitor=false']);
+/** A git runner bound to `root`: (args, input?) -> {status, stdout}, always with GIT_GUARD_ARGS. Injectable in the guard's tests only. */
+export const gitIn = root => (args, input) => {
+  const r = spawnSync(GIT, [...GIT_GUARD_ARGS, ...args], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' }, ...(input !== undefined ? { input } : {}) });
+  return { status: r.status, stdout: r.stdout ?? '' };
+};
 export const BASE_DIR = 'experiments/jev-gate/base';
 export const STATE_SUBDIR = 'exp007-census';
 /** The repository's shared census state dir: <git common dir>/exp007-census (one per repository, every worktree). */
@@ -84,7 +97,7 @@ export function censusStateDir(root = REPO_ROOT, git = gitIn(root)) {
   return join(resolve(root, r.stdout.trim()), STATE_SUBDIR);
 }
 
-/** Every path under `dir` (relative, '/'-separated), refusing a symlink or anything that is not a file or directory. */
+/** Every path under `dir` (relative, '/'-separated), refusing a symlink, an executable file, or anything that is not a file or directory. */
 function filesUnder(dir) {
   const out = [];
   const walk = rel => {
@@ -92,7 +105,12 @@ function filesUnder(dir) {
       const r = rel ? `${rel}/${e.name}` : e.name;
       const st = lstatSync(join(dir, r));
       if (st.isSymbolicLink()) refuse(`${BASE_DIR}/${r} is a symlink`);
-      if (st.isDirectory()) walk(r); else if (st.isFile()) out.push(r); else refuse(`${BASE_DIR}/${r} is not a regular file`);
+      if (st.isDirectory()) walk(r);
+      else if (st.isFile()) {
+        // Refute r3 N13: a 100644 blob means a non-executable file, whatever core.fileMode says.
+        if (st.mode & 0o111) refuse(`${BASE_DIR}/${r} is executable (mode ${(st.mode & 0o777).toString(8)}); the tree pins 100644`);
+        out.push(r);
+      } else refuse(`${BASE_DIR}/${r} is not a regular file`);
     }
   };
   walk('');
@@ -103,8 +121,9 @@ function filesUnder(dir) {
  * B1 + refute r2 B2: the base tree is the pinned one BY ITS BYTES. HEAD:experiments/jev-gate/base is the pre-registration's
  * adapter.baseTree; git status (untracked and ignored files included) is empty under it; every index entry under it is
  * tagged H by `git ls-files -v` (no assume-unchanged, no skip-worktree, which hide edits from git status); and the files
- * on disk are exactly the tree's: the same paths, every blob id equal to `git hash-object` of the file on disk, every
- * mode a regular file, no extra file and no symlink. Returns {tree, clean}.
+ * on disk are exactly the tree's: the same paths, every blob id equal to `git hash-object --no-filters` of the file's
+ * bytes, every entry a 100644 blob and every file non-executable, no extra file and no symlink. All through gitIn's
+ * GIT_GUARD_ARGS (no replace objects, no line-ending conversion). Returns {tree, clean}.
  */
 export function checkBaseTree(prereg, git, root = REPO_ROOT) {
   const want = prereg.adapter?.baseTree;
@@ -126,7 +145,8 @@ export function checkBaseTree(prereg, git, root = REPO_ROOT) {
   const disk = filesUnder(join(root, BASE_DIR));
   const inTree = entries.map(e => e.path).sort();
   if (JSON.stringify(disk) !== JSON.stringify(inTree)) refuse(`the files under ${BASE_DIR} are not the tree's (extra: ${disk.filter(p => !inTree.includes(p)).join(', ') || 'none'}; missing: ${inTree.filter(p => !disk.includes(p)).join(', ') || 'none'})`);
-  const ho = git(['hash-object', '--stdin-paths'], entries.map(e => `${BASE_DIR}/${e.path}`).join('\n') + '\n');
+  // --no-filters: the blob id of the bytes on disk, never of what a clean filter or line-ending conversion makes of them (refute r3 B1).
+  const ho = git(['hash-object', '--no-filters', '--stdin-paths'], entries.map(e => `${BASE_DIR}/${e.path}`).join('\n') + '\n');
   const blobs = ho.stdout.split('\n').filter(Boolean);
   if (ho.status !== 0 || blobs.length !== entries.length) refuse(`git hash-object failed under ${BASE_DIR}`);
   const differ = entries.filter((e, i) => blobs[i] !== e.blob).map(e => e.path);

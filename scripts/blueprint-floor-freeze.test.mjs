@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
-import { BASE_DIR, censusStateDir, checkBaseTree, checkCensusRun, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
+import { BASE_DIR, censusStateDir, checkBaseTree, checkCensusRun, GIT_GUARD_ARGS, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
 import { LEDGER } from '../experiments/blueprint-floor/census-spend.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
@@ -186,4 +186,64 @@ test('refute r2 B2: the base tree is checked by its bytes: assume-unchanged or s
     writeFileSync(join(repo, BASE_DIR, 'src', 'extra2.ts'), 'x\n');
     assert.throws(() => checkBaseTree(prereg, hidden, repo), /not the tree's \(extra: src\/extra2\.ts/, 'an extra file refuses even when git status says nothing');
   } finally { removeScratch(repo); }
+});
+
+test('refute r3 B1, B2, N13: clean filters, autocrlf, replace objects and the exec bit cannot hide a changed base tree', () => {
+  const prereg = JSON.parse(preregBytes);
+  const f = `${BASE_DIR}/src/domain/money.ts`;
+  const hidden = git => (args, input) => (args[0] === 'status' ? { status: 0, stdout: '' } : git(args, input));
+  const REFUSED = /differ from HEAD by their bytes|has changed, untracked or ignored files|not the pinned base tree|is executable/;
+  // B1: a clean filter that strips the edit makes the edited file hash like the pinned blob; --no-filters hashes the bytes.
+  {
+    const { repo, git } = baseRepo();
+    try {
+      writeFileSync(join(repo, '.git', 'info', 'attributes'), '*.ts filter=evil\n');
+      git(['config', 'filter.evil.clean', "sed '/edited/d'"]);
+      const abs = join(repo, f);
+      writeFileSync(abs, `${readFileSync(abs, 'utf8')}// edited\n`);
+      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
+      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/, 'the bytes, not the cleaned content');
+    } finally { removeScratch(repo); }
+  }
+  // B1: core.autocrlf=true and a CRLF copy of an LF blob.
+  {
+    const { repo, git } = baseRepo();
+    try {
+      git(['config', 'core.autocrlf', 'true']);
+      const abs = join(repo, f);
+      writeFileSync(abs, readFileSync(abs, 'utf8').replace(/\n/g, '\r\n'));
+      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
+      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+    } finally { removeScratch(repo); }
+  }
+  // B2: git replace <pinned tree> <edited tree>, with the index and the disk made to match the replacement.
+  {
+    const { repo, git } = baseRepo();
+    try {
+      const pinned = git(['rev-parse', `HEAD:${BASE_DIR}`]).stdout.trim();
+      assert.equal(pinned, prereg.adapter.baseTree);
+      const abs = join(repo, f);
+      writeFileSync(abs, `${readFileSync(abs, 'utf8')}// edited\n`);
+      git(['add', '--', f]);
+      const other = git(['write-tree', `--prefix=${BASE_DIR}/`]).stdout.trim();
+      assert.notEqual(other, pinned);
+      const raw = gitIn(repo);
+      assert.equal(raw(['replace', pinned, other]).status, 0);
+      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED, 'the replacement is not seen');
+      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+    } finally { removeScratch(repo); }
+  }
+  // N13: core.fileMode=false hides an exec bit from git; the lstat check does not.
+  {
+    const { repo, git } = baseRepo();
+    try {
+      git(['config', 'core.fileMode', 'false']);
+      chmodSync(join(repo, f), 0o755);
+      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /src\/domain\/money\.ts is executable \(mode 755\)/);
+      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
+    } finally { removeScratch(repo); }
+  }
+  // Every guard git call carries the neutralising arguments and the environment.
+  assert.deepEqual(GIT_GUARD_ARGS.slice(0, 1), ['--no-replace-objects']);
+  for (const c of ['core.autocrlf=false', 'core.fileMode=true', 'core.ignorecase=false']) assert(GIT_GUARD_ARGS.includes(c), c);
 });
