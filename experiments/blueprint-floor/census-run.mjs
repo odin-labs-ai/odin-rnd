@@ -26,7 +26,7 @@ import { BILLED, resolveBin } from '../jev-gate/run_reviewer.mjs';
 import { lint6, scrubPaths6 } from '../nina-changes/scrub6.mjs';
 import { assertOpaqueIdsDistinct, buildAdjudicatorPrompt, buildTranslatorPrompt, mechanicalChecks, parseAnswer, PROMPT_FILES, validateAdjudicatorOutput } from './protocol.mjs';
 import { finalClass } from './scorer.mjs';
-import { censusStateDir, checkBaseTree, checkCensusRun, DIR, gitIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
+import { censusStateDir, checkBaseTree, checkCensusRun, DIR, gitIn, gitPlainIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
 import { CensusLedger, LEDGER, projection, ROLES } from './census-spend.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -291,7 +291,7 @@ export const storedStdouts = rawPath => { try { return (JSON.parse(readFileSync(
 const storedRecord = rawPath => { try { return JSON.parse(readFileSync(rawPath, 'utf8')).record ?? null; } catch { return null; } };
 
 /** Positional commit of exactly `paths` (those that changed) in `repo` (refute r1 B3); never another path. */
-export function commitPaths(repo, paths, message, git = gitIn(repo)) {
+export function commitPaths(repo, paths, message, git = gitPlainIn(repo)) {
   const rel = [...new Set(paths.filter(p => existsSync(p)).map(p => relative(repo, p)))].filter(r => r && !r.startsWith('..')); // only paths inside the repo
   if (!rel.length) return { committed: false };
   if (!git(['status', '--porcelain', '--', ...rel]).stdout.trim()) return { committed: false };

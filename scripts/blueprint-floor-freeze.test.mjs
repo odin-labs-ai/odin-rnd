@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
-import { BASE_DIR, censusStateDir, checkBaseTree, checkCensusRun, GIT_GUARD_ARGS, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
+import { BASE_DIR, censusStateDir, checkBaseTree, checkCensusRun, diskTreeHex, GIT_GUARD_ARGS, gitBaseChecks, guardGitEnv, codeShas, fetchServed, gitIn, PINS, readPins, recheckServed, REPO_ROOT, RUNNER_FILES, sha256 } from '../experiments/blueprint-floor/census-guard.mjs';
 import { LEDGER } from '../experiments/blueprint-floor/census-spend.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
@@ -146,6 +147,15 @@ test('B3: the guard refuses a ledger that does not start with HEAD\'s bytes or l
   assert.equal(censusStateDir(REPO_ROOT), join(resolve(REPO_ROOT, realGit(['rev-parse', '--git-common-dir']).stdout.trim()), 'exp007-census'), 'one state dir per repository, shared by every worktree');
 });
 
+/**
+ * Refute r4: every base-tree attack refuses through the full guard (the Node byte hash comes first and is authoritative),
+ * and the git defence-in-depth layer alone still refuses it with its own reason.
+ */
+function refusesBoth(prereg, git, repo, re, label) {
+  assert.throws(() => checkBaseTree(prereg, git, repo), /EXP 007 census guard refused/, label);
+  assert.throws(() => gitBaseChecks(prereg, git, repo), re, label);
+}
+
 /** A scratch repository holding a byte-identical copy of the base tree at the same path (its tree id is the pinned one). */
 function baseRepo() {
   const repo = scratchDir('bf-base-repo');
@@ -165,26 +175,26 @@ test('refute r2 B2: the base tree is checked by its bytes: assume-unchanged or s
     // assume-unchanged hides the edit from git status: the ls-files tag refuses it.
     git(['update-index', '--assume-unchanged', f]); writeFileSync(abs, `${orig}// edited\n`);
     assert.equal(git(['status', '--porcelain', '--', BASE_DIR]).stdout, '', 'git status is blind to it');
-    assert.throws(() => checkBaseTree(prereg, git, repo), /assume-unchanged or skip-worktree.*h experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
+    refusesBoth(prereg, git, repo, /assume-unchanged or skip-worktree.*h experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
     // Even if the tag were reported H, the blob comparison catches the bytes.
     const lying = (args, input) => { const r = git(args, input); return args[0] === 'ls-files' ? { ...r, stdout: r.stdout.replace(/^h /gm, 'H ') } : r; };
-    assert.throws(() => checkBaseTree(prereg, lying, repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+    refusesBoth(prereg, lying, repo, /differ from HEAD by their bytes: src\/domain\/money\.ts/);
     git(['update-index', '--no-assume-unchanged', f]); writeFileSync(abs, orig);
     git(['update-index', '--skip-worktree', f]); writeFileSync(abs, `${orig}// edited\n`);
-    assert.throws(() => checkBaseTree(prereg, git, repo), /assume-unchanged or skip-worktree.*S experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
+    refusesBoth(prereg, git, repo, /assume-unchanged or skip-worktree.*S experiments\/jev-gate\/base\/src\/domain\/money\.ts/);
     git(['update-index', '--no-skip-worktree', f]); writeFileSync(abs, orig);
     checkBaseTree(prereg, git, repo);
     // An ignored extra file (git status --ignored sees it) and a symlink both refuse.
     writeFileSync(join(repo, '.git', 'info', 'exclude'), 'extra.ts\n');
     writeFileSync(join(repo, BASE_DIR, 'src', 'extra.ts'), 'x\n');
-    assert.throws(() => checkBaseTree(prereg, git, repo), /untracked or ignored files: !! /);
+    refusesBoth(prereg, git, repo, /untracked or ignored files: !! /);
     rmSync(join(repo, BASE_DIR, 'src', 'extra.ts'));
     const hidden = (args, input) => (args[0] === 'status' ? { status: 0, stdout: '' } : git(args, input));
     symlinkSync(join(repo, BASE_DIR, 'package.json'), join(repo, BASE_DIR, 'src', 'link.ts'));
-    assert.throws(() => checkBaseTree(prereg, hidden, repo), /src\/link\.ts is a symlink/, 'a symlink refuses even when git status says nothing');
+    refusesBoth(prereg, hidden, repo, /src\/link\.ts is a symlink/, 'a symlink refuses even when git status says nothing');
     rmSync(join(repo, BASE_DIR, 'src', 'link.ts'));
     writeFileSync(join(repo, BASE_DIR, 'src', 'extra2.ts'), 'x\n');
-    assert.throws(() => checkBaseTree(prereg, hidden, repo), /not the tree's \(extra: src\/extra2\.ts/, 'an extra file refuses even when git status says nothing');
+    refusesBoth(prereg, hidden, repo, /not the tree's \(extra: src\/extra2\.ts/, 'an extra file refuses even when git status says nothing');
   } finally { removeScratch(repo); }
 });
 
@@ -201,8 +211,8 @@ test('refute r3 B1, B2, N13: clean filters, autocrlf, replace objects and the ex
       git(['config', 'filter.evil.clean', "sed '/edited/d'"]);
       const abs = join(repo, f);
       writeFileSync(abs, `${readFileSync(abs, 'utf8')}// edited\n`);
-      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
-      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/, 'the bytes, not the cleaned content');
+      refusesBoth(prereg, git, repo, REFUSED);
+      refusesBoth(prereg, hidden(git), repo, /differ from HEAD by their bytes: src\/domain\/money\.ts/, 'the bytes, not the cleaned content');
     } finally { removeScratch(repo); }
   }
   // B1: core.autocrlf=true and a CRLF copy of an LF blob.
@@ -212,8 +222,8 @@ test('refute r3 B1, B2, N13: clean filters, autocrlf, replace objects and the ex
       git(['config', 'core.autocrlf', 'true']);
       const abs = join(repo, f);
       writeFileSync(abs, readFileSync(abs, 'utf8').replace(/\n/g, '\r\n'));
-      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
-      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+      refusesBoth(prereg, git, repo, REFUSED);
+      refusesBoth(prereg, hidden(git), repo, /differ from HEAD by their bytes: src\/domain\/money\.ts/);
     } finally { removeScratch(repo); }
   }
   // B2: git replace <pinned tree> <edited tree>, with the index and the disk made to match the replacement.
@@ -229,8 +239,8 @@ test('refute r3 B1, B2, N13: clean filters, autocrlf, replace objects and the ex
       assert.notEqual(other, pinned);
       const raw = gitIn(repo);
       assert.equal(raw(['replace', pinned, other]).status, 0);
-      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED, 'the replacement is not seen');
-      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /differ from HEAD by their bytes: src\/domain\/money\.ts/);
+      refusesBoth(prereg, git, repo, REFUSED, 'the replacement is not seen');
+      refusesBoth(prereg, hidden(git), repo, /differ from HEAD by their bytes: src\/domain\/money\.ts/);
     } finally { removeScratch(repo); }
   }
   // N13: core.fileMode=false hides an exec bit from git; the lstat check does not.
@@ -239,11 +249,78 @@ test('refute r3 B1, B2, N13: clean filters, autocrlf, replace objects and the ex
     try {
       git(['config', 'core.fileMode', 'false']);
       chmodSync(join(repo, f), 0o755);
-      assert.throws(() => checkBaseTree(prereg, hidden(git), repo), /src\/domain\/money\.ts is executable \(mode 755\)/);
-      assert.throws(() => checkBaseTree(prereg, git, repo), REFUSED);
+      refusesBoth(prereg, hidden(git), repo, /src\/domain\/money\.ts is executable \(mode 755\)/);
+      refusesBoth(prereg, git, repo, REFUSED);
     } finally { removeScratch(repo); }
   }
   // Every guard git call carries the neutralising arguments and the environment.
   assert.deepEqual(GIT_GUARD_ARGS.slice(0, 1), ['--no-replace-objects']);
   for (const c of ['core.autocrlf=false', 'core.fileMode=true', 'core.ignorecase=false']) assert(GIT_GUARD_ARGS.includes(c), c);
+});
+
+// ----------------------------------------------------------------------------- refute r4: no git is trusted for the bytes
+
+/** Raw git, unscrubbed, for building the forgeries (never what the guard runs). */
+const rawGit = (repo, args, input, env = process.env) => { const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', env, ...(input !== undefined ? { input } : {}) }); return r.stdout.trim(); };
+/** The loose-object file of `id` in an objects dir. */
+const looseOf = (objects, id) => join(objects, id.slice(0, 2), id.slice(2));
+/** Overwrite the loose object `id` with the bytes of loose object `from` (git never re-hashes a loose object it reads). */
+function forge(objects, id, fromObjects, from) { chmodSync(looseOf(objects, id), 0o644); writeFileSync(looseOf(objects, id), readFileSync(looseOf(fromObjects, from))); }
+
+test('refute r4 (3): the Node tree hash of the committed base is the pinned id; a one-byte edit is not', () => {
+  const prereg = JSON.parse(preregBytes);
+  assert.equal(diskTreeHex(join(REPO_ROOT, BASE_DIR)), prereg.adapter.baseTree);
+  assert.equal(prereg.adapter.baseTree, '957b5e10c099ef2c86bb4543a8560aba59290d62');
+  const { repo } = baseRepo();
+  try {
+    const f = join(repo, BASE_DIR, 'src', 'domain', 'money.ts');
+    const b = readFileSync(f); b[0] ^= 1; writeFileSync(f, b);
+    assert.notEqual(diskTreeHex(join(repo, BASE_DIR)), prereg.adapter.baseTree);
+    mkdirSync(join(repo, BASE_DIR, 'src', 'empty'));
+    assert.throws(() => diskTreeHex(join(repo, BASE_DIR)), /is an empty directory/, 'an empty directory refuses');
+  } finally { removeScratch(repo); }
+});
+
+test('refute r4 repro 1: a forged src/domain subtree object in .git/objects plus an edited file: git alone is fooled, the guard refuses', () => {
+  const prereg = JSON.parse(preregBytes);
+  const { repo } = baseRepo();
+  try {
+    const rel = `${BASE_DIR}/src/domain/money.ts`, abs = join(repo, rel), objects = join(repo, '.git', 'objects');
+    const sub = rawGit(repo, ['rev-parse', `HEAD:${BASE_DIR}/src/domain`]);
+    writeFileSync(abs, `${readFileSync(abs, 'utf8')}// edited\n`);
+    const blob = rawGit(repo, ['hash-object', '-w', '--no-filters', rel]);
+    const listing = rawGit(repo, ['ls-tree', sub]).split('\n').map(l => (l.endsWith('\tmoney.ts') ? l.replace(/blob [0-9a-f]{40}/, `blob ${blob}`) : l)).join('\n') + '\n';
+    const forgedTree = rawGit(repo, ['mktree'], listing);
+    forge(objects, sub, objects, forgedTree);
+    rawGit(repo, ['update-index', '--add', '--cacheinfo', `100644,${blob},${rel}`]);
+    // git, through the guard's own scrubbed runner, now reports the pinned tree with the edited bytes: the old check passed.
+    assert.deepEqual(gitBaseChecks(prereg, gitIn(repo), repo), { tree: prereg.adapter.baseTree, clean: true }, 'the forgery fools every git check');
+    assert.throws(() => checkBaseTree(prereg, gitIn(repo), repo), /bytes under experiments\/jev-gate\/base hash to tree [0-9a-f]{40}, not the pinned base tree 957b5e10/);
+  } finally { removeScratch(repo); }
+});
+
+test('refute r4 repro 2: GIT_OBJECT_DIRECTORY in the census process env pointing at a forged store: scrubbed from every guard git call, and the guard refuses', () => {
+  const prereg = JSON.parse(preregBytes);
+  const { repo } = baseRepo();
+  const store = scratchDir('bf-forged-store');
+  const saved = process.env.GIT_OBJECT_DIRECTORY;
+  try {
+    const rel = `${BASE_DIR}/src/domain/money.ts`, abs = join(repo, rel);
+    cpSync(join(repo, '.git', 'objects'), store, { recursive: true });
+    const sub = rawGit(repo, ['rev-parse', `HEAD:${BASE_DIR}/src/domain`]);
+    writeFileSync(abs, `${readFileSync(abs, 'utf8')}// edited\n`);
+    const env = { ...process.env, GIT_OBJECT_DIRECTORY: store };
+    const blob = rawGit(repo, ['hash-object', '-w', '--no-filters', rel], undefined, env);
+    const listing = rawGit(repo, ['ls-tree', sub]).split('\n').map(l => (l.endsWith('\tmoney.ts') ? l.replace(/blob [0-9a-f]{40}/, `blob ${blob}`) : l)).join('\n') + '\n';
+    const forgedTree = rawGit(repo, ['mktree'], listing, env);
+    forge(store, sub, store, forgedTree);
+    process.env.GIT_OBJECT_DIRECTORY = store;
+    assert.equal(guardGitEnv().GIT_OBJECT_DIRECTORY, undefined, 'every GIT_* variable is dropped');
+    assert.deepEqual([guardGitEnv().GIT_CONFIG_NOSYSTEM, guardGitEnv().GIT_CONFIG_GLOBAL, guardGitEnv().GIT_NO_REPLACE_OBJECTS], ['1', '/dev/null', '1']);
+    assert.match(gitIn(repo)(['rev-parse', '--git-path', 'objects']).stdout.trim(), /^\.git\/objects$/, 'the guard\'s git reads the repository\'s own objects');
+    assert.throws(() => checkBaseTree(prereg, gitIn(repo), repo), /hash to tree [0-9a-f]{40}, not the pinned base tree/);
+  } finally {
+    if (saved === undefined) delete process.env.GIT_OBJECT_DIRECTORY; else process.env.GIT_OBJECT_DIRECTORY = saved;
+    removeScratch(store); removeScratch(repo);
+  }
 });

@@ -509,7 +509,7 @@ test('refute r2 B2: an untracked file appearing under the base tree mid-run stop
       const before = log().length;
       const run = await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08', 'control/09', 'control/10'], git, baseRoot: repo, fetch, log: () => {} });
       assert.equal(run.partial.reason, 'base-changed');
-      assert.match(run.partial.error, /untracked or ignored files: \?\? experiments\/jev-gate\/base\/src\/stray\.ts/);
+      assert.match(run.partial.error, /the bytes under experiments\/jev-gate\/base hash to tree [0-9a-f]{40}, not the pinned base tree/, 'refute r4: the Node byte hash refuses first');
       assert.equal(log().length - before, 2, 'rule 1 (two calls) ran; rule 2 made no call');
     });
   } finally { removeScratch(repo); }
@@ -561,7 +561,7 @@ test('refute r3 N12: a base-tree change during a call stops the run before the r
       const before = log().length;
       const run = await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08', 'control/09'], git, baseRoot: repo, log: () => {} });
       assert.deepEqual([run.partial.reason, run.partial.when], ['base-changed', 'after the call, before the record was saved']);
-      assert.match(run.partial.error, /src\/touched\.ts/);
+      assert.match(run.partial.error, /the bytes under experiments\/jev-gate\/base hash to tree [0-9a-f]{40}, not the pinned base tree/);
       assert.equal(log().length - before, 1, 'the translator call was made; nothing after it');
       assert.equal(existsSync(join(paths.outDir, 'control/08.json')), false, 'no record was saved for the rule');
       assert.ok(ledger.called('counted', 'control/08', 'translator', { rehearsal: true }), 'the charged call keeps its ledger line (on resume it is a lost record: error, never a re-call)');

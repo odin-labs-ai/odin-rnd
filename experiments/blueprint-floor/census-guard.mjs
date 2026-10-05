@@ -83,11 +83,55 @@ const GIT = (process.env.PATH ?? '').split(':').filter(Boolean).map(d => join(d,
  * disabled by -c, so checkBaseTree hashes with hash-object --no-filters (refute r3 B1).
  */
 export const GIT_GUARD_ARGS = Object.freeze(['--no-replace-objects', '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', '-c', 'core.fileMode=true', '-c', 'core.ignorecase=false', '-c', 'core.untrackedCache=false', '-c', 'core.fsmonitor=false']);
-/** A git runner bound to `root`: (args, input?) -> {status, stdout}, always with GIT_GUARD_ARGS. Injectable in the guard's tests only. */
+/**
+ * Refute r4: the environment every guard git call runs in. Every GIT_* variable of this process is dropped (so
+ * GIT_OBJECT_DIRECTORY, GIT_ALTERNATE_OBJECT_DIRECTORIES, GIT_DIR, GIT_INDEX_FILE, GIT_CONFIG_* and the rest cannot point
+ * git at forged state), system and global config are not read, and replace objects are off.
+ */
+export function guardGitEnv(env = process.env) {
+  const out = Object.fromEntries(Object.entries(env).filter(([k]) => !k.startsWith('GIT_')));
+  return { ...out, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_NO_REPLACE_OBJECTS: '1' };
+}
+/** A git runner bound to `root`: (args, input?) -> {status, stdout}, with GIT_GUARD_ARGS and guardGitEnv. Injectable in the guard's tests only. */
 export const gitIn = root => (args, input) => {
-  const r = spawnSync(GIT, [...GIT_GUARD_ARGS, ...args], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' }, ...(input !== undefined ? { input } : {}) });
+  const r = spawnSync(GIT, [...GIT_GUARD_ARGS, ...args], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, env: guardGitEnv(), ...(input !== undefined ? { input } : {}) });
   return { status: r.status, stdout: r.stdout ?? '' };
 };
+/** A plain git runner (the user's identity and config) for the runner's own commits, never for a check. */
+export const gitPlainIn = root => (args, input) => {
+  const r = spawnSync(GIT, args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' }, ...(input !== undefined ? { input } : {}) });
+  return { status: r.status, stdout: r.stdout ?? '' };
+};
+
+/**
+ * Refute r4 B1: the git tree id of a directory computed IN NODE from the bytes on disk, trusting no git: a blob id is
+ * sha1("blob <n>\0" + bytes), a tree entry is "100644 <name>\0" + the raw 20-byte id for a file and "40000 <name>\0" +
+ * the raw id for a directory, entries in git's order (a directory sorts as "<name>/"), and a tree id is
+ * sha1("tree <len>\0" + entries). Every entry is lstat-ed first: a symlink, an executable file, a FIFO or anything else
+ * that is not a regular non-executable file or a directory refuses; an EMPTY directory refuses too (git cannot represent
+ * it and the pinned tree has none).
+ */
+export function diskTreeId(dir, rel = '') {
+  const sha1 = buf => createHash('sha1').update(buf).digest();
+  const entries = [];
+  const names = readdirSync(join(dir, rel));
+  if (!names.length) refuse(`${BASE_DIR}/${rel} is an empty directory`);
+  for (const name of names) {
+    const r = rel ? `${rel}/${name}` : name;
+    const st = lstatSync(join(dir, r));
+    if (st.isSymbolicLink()) refuse(`${BASE_DIR}/${r} is a symlink`);
+    if (st.isDirectory()) entries.push({ key: Buffer.from(`${name}/`), head: Buffer.from(`40000 ${name}\0`), id: diskTreeId(dir, r) });
+    else if (st.isFile()) {
+      if (st.mode & 0o111) refuse(`${BASE_DIR}/${r} is executable (mode ${(st.mode & 0o777).toString(8)}); the tree pins 100644`);
+      const bytes = readFileSync(join(dir, r));
+      entries.push({ key: Buffer.from(name), head: Buffer.from(`100644 ${name}\0`), id: sha1(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])) });
+    } else refuse(`${BASE_DIR}/${r} is not a regular file`);
+  }
+  entries.sort((a, b) => Buffer.compare(a.key, b.key));
+  const body = Buffer.concat(entries.flatMap(e => [e.head, e.id]));
+  return sha1(Buffer.concat([Buffer.from(`tree ${body.length}\0`), body]));
+}
+export const diskTreeHex = dir => diskTreeId(dir).toString('hex');
 export const BASE_DIR = 'experiments/jev-gate/base';
 export const STATE_SUBDIR = 'exp007-census';
 /** The repository's shared census state dir: <git common dir>/exp007-census (one per repository, every worktree). */
@@ -127,6 +171,16 @@ function filesUnder(dir) {
  */
 export function checkBaseTree(prereg, git, root = REPO_ROOT) {
   const want = prereg.adapter?.baseTree;
+  if (!want) refuse('the pre-registration pins no base tree');
+  // The authoritative byte check (refute r4 B1): the tree id of the bytes on disk, computed without git.
+  const disk = diskTreeHex(join(root, BASE_DIR));
+  if (disk !== want) refuse(`the bytes under ${BASE_DIR} hash to tree ${disk}, not the pinned base tree ${want}`);
+  return gitBaseChecks(prereg, git, root);
+}
+
+/** Defence in depth only (refute r4): what git reports about the base, through gitIn's scrubbed environment. */
+export function gitBaseChecks(prereg, git, root = REPO_ROOT) {
+  const want = prereg.adapter?.baseTree;
   const t = git(['rev-parse', `HEAD:${BASE_DIR}`]);
   const tree = t.status === 0 ? t.stdout.trim() : null;
   if (!want || tree !== want) refuse(`HEAD:${BASE_DIR} is ${tree ?? 'missing'}, not the pinned base tree ${want}`);
@@ -137,7 +191,7 @@ export function checkBaseTree(prereg, git, root = REPO_ROOT) {
   if (tags.status !== 0) refuse(`git ls-files failed under ${BASE_DIR}`);
   const flagged = tags.stdout.split('\n').filter(Boolean).filter(l => !l.startsWith('H '));
   if (flagged.length) refuse(`${BASE_DIR} has index entries git status cannot see changes in (assume-unchanged or skip-worktree): ${flagged.slice(0, 5).join('; ')}`);
-  const lt = git(['ls-tree', '-r', `HEAD:${BASE_DIR}`]);
+  const lt = git(['ls-tree', '-r', want]);
   if (lt.status !== 0) refuse(`git ls-tree failed for ${BASE_DIR}`);
   const entries = lt.stdout.split('\n').filter(Boolean).map(l => { const [meta, path] = l.split('\t'); const [mode, type, blob] = meta.split(' '); return { mode, type, blob, path }; });
   const bad = entries.filter(e => e.type !== 'blob' || e.mode !== '100644');
