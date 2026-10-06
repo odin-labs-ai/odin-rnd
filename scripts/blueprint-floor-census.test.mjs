@@ -164,8 +164,11 @@ test('a metered run is refused under the test runner, never uses the fake, and t
   } finally { removeScratch(dir); }
   if (process.env.NODE_TEST_CONTEXT) assert.throws(() => chooseClaude7(false, '/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin'), /claude is not on the PATH|refused under the Node test runner/);
   // A metered run, end to end: refused before any client is resolved, whatever the guard decides.
-  await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), /could not be fetched: the served pre-registration is not fetched under the Node test runner/));
-  await claudeFree7(free => assert.rejects(runCensus({ mode: 'practice', log: () => {}, ...free }), /not fetched under the Node test runner/));
+  // The guard refuses before any client is resolved: at the served-record fetch (refused under the test runner) or, on a
+  // machine whose shared state dir holds another worktree's metered ledger lines, earlier at the ledger integrity check (B3).
+  const REFUSED_BEFORE_ANY_CALL = /not fetched under the Node test runner|the ledger fails its integrity check/;
+  await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), REFUSED_BEFORE_ANY_CALL));
+  await claudeFree7(free => assert.rejects(runCensus({ mode: 'practice', log: () => {}, ...free }), REFUSED_BEFORE_ANY_CALL));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', fetch: async () => Buffer.from(''), log: () => {}, ...free }), /cannot take an injected clock, freeze, fetch or git/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', git: () => ({ status: 0, stdout: '' }), log: () => {}, ...free }), /cannot take an injected/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', now: new Date(), log: () => {}, ...free }), /cannot take an injected/));

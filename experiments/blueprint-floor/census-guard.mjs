@@ -20,7 +20,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from './freeze.mjs';
+import { AMENDMENT01_NOT_BEFORE, AMENDMENT01_SHA256, NOT_BEFORE, PREREG_SHA256, SERVED_AMENDMENT01_URL, SERVED_URL } from './freeze.mjs';
+import { AMENDMENT_PATH } from './amendment01.mjs';
 import { checkLedgerIntegrity, LEDGER } from './census-spend.mjs';
 
 export const REPO_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
@@ -34,7 +35,7 @@ const PLUGINS = ['hunch', 'jev-pref', 'abide', 'limpet', 'jev-belay', 'jev-engin
  * run); and every module outside this directory they import (EXP 005's engine contract, scrub and lint; EXP 006's
  * scrub; check.mjs, which the scrub reads). */
 export const RUNNER_FILES = [
-  `${DIR}/census-run.mjs`, `${DIR}/census-guard.mjs`, `${DIR}/census-gate.mjs`, `${DIR}/census-spend.mjs`, `${DIR}/freeze.mjs`,
+  `${DIR}/census-run.mjs`, `${DIR}/census-guard.mjs`, `${DIR}/census-gate.mjs`, `${DIR}/census-spend.mjs`, `${DIR}/freeze.mjs`, `${DIR}/amendment01.mjs`, `${DIR}/amendment-01.json`,
   `${DIR}/protocol.mjs`, `${DIR}/adapter.mjs`, `${DIR}/whitelist.mjs`, `${DIR}/whitelist.json`, `${DIR}/scorer.mjs`,
   `${DIR}/contract.md`, `${DIR}/contract-module-graph.md`, `${DIR}/prompts/translator.md`, `${DIR}/prompts/adjudicator.md`, `${DIR}/prompts/canary.md`,
   `${DIR}/rules/selection.json`, ...PLUGINS.map(p => `${DIR}/rules/${p}.json`),
@@ -227,13 +228,41 @@ export function checkPinned(pins, root, by) {
   }
 }
 
-export const MODES = ['practice', 'counted', 'rehearsal'];
+export const MODES = ['practice', 'counted', 'recall', 'rehearsal'];
 
 /**
  * The guard. Returns the stamp every record carries: {mode, rehearsal, preregSha256, notBefore, served, code,
  * codeMatchesPins, checkedAt}. `freeze`, `now`, `fetch`, `git`, `stateDir` and `root` are injectable for tests.
  */
-export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), git = gitIn(root), baseRoot, stateDir, servedUrl = SERVED_URL } = {}) {
+/**
+ * Amendment 01 (a recall, or its rehearsal): refuses unless the amendment is frozen (sha and not-before), the file on disk
+ * hashes to the frozen sha and names the frozen pre-registration as its parent, now is after the amendment's not-before,
+ * and (not in a rehearsal) the site serves it byte for byte. Returns {amendmentSha256, amendmentNotBefore, servedAmendment}.
+ */
+export async function checkAmendment01({ root = REPO_ROOT, now = new Date(), freeze, rehearsal, fetch: fetchBytes = fetchServed, url = SERVED_AMENDMENT01_URL }) {
+  if (!freeze?.AMENDMENT01_SHA256 || !freeze?.AMENDMENT01_NOT_BEFORE) refuse('a re-call waits for the amendment 01 freeze: AMENDMENT01_SHA256 and AMENDMENT01_NOT_BEFORE in freeze.mjs are null');
+  if (!/^[0-9a-f]{64}$/.test(freeze.AMENDMENT01_SHA256)) refuse('AMENDMENT01_SHA256 is not a sha256');
+  const anb = utc('AMENDMENT01_NOT_BEFORE', freeze.AMENDMENT01_NOT_BEFORE);
+  const path = join(root, AMENDMENT_PATH);
+  if (!existsSync(path)) refuse(`${AMENDMENT_PATH} is missing`);
+  const bytes = readFileSync(path), got = sha256(bytes);
+  if (got !== freeze.AMENDMENT01_SHA256) refuse(`${AMENDMENT_PATH} hashes to ${got}, not the frozen ${freeze.AMENDMENT01_SHA256}`);
+  const amendment = JSON.parse(bytes);
+  if (amendment.parent?.sha256 !== freeze.PREREG_SHA256) refuse(`${AMENDMENT_PATH} does not name the frozen pre-registration as its parent`);
+  if (!(anb > Date.parse(freeze.NOT_BEFORE))) refuse('the amendment not-before is not after the pre-registration not-before');
+  if (!(now.getTime() > anb)) refuse(`it is ${now.toISOString()}, not after the amendment 01 not-before ${freeze.AMENDMENT01_NOT_BEFORE}`);
+  let servedAmendment = null;
+  if (!rehearsal) {
+    let served;
+    try { served = await fetchBytes(url); } catch (error) { refuse(`the served amendment 01 could not be fetched: ${String(error.message).slice(0, 200)}`); }
+    const s = sha256(served);
+    if (s !== got) refuse(`the site serves an amendment 01 hashing to ${s}, not the frozen ${got}`);
+    servedAmendment = { url, sha256: s, fetchedAt: new Date().toISOString() };
+  }
+  return { amendment, amendmentSha256: got, amendmentNotBefore: freeze.AMENDMENT01_NOT_BEFORE, servedAmendment };
+}
+
+export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(), freeze = { PREREG_SHA256, NOT_BEFORE, AMENDMENT01_SHA256, AMENDMENT01_NOT_BEFORE }, fetch: fetchBytes = fetchServed, ledgerPath = join(root, LEDGER), git = gitIn(root), baseRoot, stateDir, servedUrl = SERVED_URL, recall = false } = {}) {
   if (!MODES.includes(mode)) refuse(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (!freeze?.PREREG_SHA256 || !freeze?.NOT_BEFORE) refuse('the census waits for the freeze: PREREG_SHA256 and NOT_BEFORE in freeze.mjs are null');
@@ -249,6 +278,9 @@ export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(),
   checkPinned(Object.fromEntries(Object.entries(prereg.engine?.files ?? {}).map(([f, h]) => [`node_modules/bce-engine/${f}`, h])), root, 'the pre-registration (engine)');
   if (!(now.getTime() > nb)) refuse(`it is ${now.toISOString()}, not after the not-before ${freeze.NOT_BEFORE}`);
   const base = checkBaseTree(prereg, git, baseRoot ?? root);
+  // Amendment 01: a recall (or a rehearsal of one) also needs the frozen, published amendment and its later not-before.
+  const isRecall = mode === 'recall' || (rehearsal && recall);
+  const a01 = isRecall ? await checkAmendment01({ root, now, freeze, rehearsal, fetch: fetchBytes }) : null;
 
   const code = codeShas(root);
   const missing = Object.keys(code).filter(k => code[k] === null);
@@ -269,7 +301,7 @@ export async function checkCensusRun({ mode, root = REPO_ROOT, now = new Date(),
     if (!integrity.ok) refuse(`the ledger fails its integrity check (${integrity.reason}): it must start with the bytes committed at HEAD and contain the shared mirror`);
     served = await recheckServed({ expected: freeze.PREREG_SHA256, fetch: fetchBytes, url: servedUrl });
   }
-  return { mode, rehearsal, preregSha256: got, notBefore: freeze.NOT_BEFORE, served, base, code, codeMatchesPins, checkedAt: now.toISOString(), prereg, ledgerHeadText, ledgerHeadSha256: sha256(ledgerHeadText), stateDir: state };
+  return { mode, rehearsal, preregSha256: got, notBefore: freeze.NOT_BEFORE, served, base, code, codeMatchesPins, checkedAt: now.toISOString(), prereg, ledgerHeadText, ledgerHeadSha256: sha256(ledgerHeadText), stateDir: state, ...(a01 ? { amendment: a01.amendment, amendmentSha256: a01.amendmentSha256, amendmentNotBefore: a01.amendmentNotBefore, servedAmendment: a01.servedAmendment } : {}) };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

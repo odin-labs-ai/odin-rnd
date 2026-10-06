@@ -20,7 +20,12 @@
 //     (canary, practice) maps 1:1 by callId to a call in the practice records and is the list the results disclose, and
 //     every sum is exact at 7 dp;
 //   - the scorer on disk is the pinned one, and the results' score is the scorer's recompute from the records (and its
-//     sha256 binds it).
+//     sha256 binds it);
+//   - amendment 01, once frozen: the amendment on disk is the frozen one; the attempt-1 records (and the practice record) are
+//     the attempt-1 code it pins; every rule eligible under it (the spend-limit refusals, amendment01.mjs) has exactly one
+//     attempt-2 record, made after its not-before by the pinned code, amending its attempt-1 translator call, and that
+//     record is the one scored; no other rule has an attempt-2 record; every re-call ledger line maps 1:1 to an attempt-2
+//     call and names the attempt-1 call it amends. Without the amendment in force, any attempt-2 record or line closes it.
 //   node experiments/blueprint-floor/census-gate.mjs --write-results   compute results/results.json from the committed records
 //   node experiments/blueprint-floor/census-gate.mjs --check           print the gate's decision
 import { createHash } from 'node:crypto';
@@ -28,8 +33,9 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCensusRules, finalClass, score } from './scorer.mjs';
-import { NOT_BEFORE, PREREG_SHA256 } from './freeze.mjs';
-import { LEDGER, ROLES, sumUsd, units, validLine } from './census-spend.mjs';
+import { AMENDMENT01_NOT_BEFORE, AMENDMENT01_SHA256, NOT_BEFORE, PREREG_SHA256 } from './freeze.mjs';
+import { AMENDMENT_PATH, ATTEMPT2_DIR, isEligibleForRecall } from './amendment01.mjs';
+import { attemptOf, LEDGER, ROLES, sumUsd, units, validLine } from './census-spend.mjs';
 
 export const REPO_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const DIR = 'experiments/blueprint-floor';
@@ -93,7 +99,24 @@ export const calledRoles = rec => ROLES.filter(r => rec?.[r]?.called === true).m
  * The results record from the census records and the ledger, computed by the pinned scorer. Throws on any unsound
  * record (a missing field, an incomplete record, a ruleId outside the census or missing from it).
  */
-export function computeCensusResults({ rules, plugins, records, ledgerLines, denominator, scorerSha256 }) {
+/**
+ * Amendment 01: the records the scorer sees. For a rule eligible under the amendment the attempt-2 record replaces the
+ * attempt-1 record; every other rule keeps its attempt-1 record. Throws on a missing or extra attempt-2 record.
+ */
+export function scoredRecords(records, attempt2Records, amendment) {
+  if (!amendment) {
+    if (Object.keys(attempt2Records ?? {}).length) throw new Error('attempt-2 records without amendment 01');
+    return { scored: records, eligible: [] };
+  }
+  const eligible = Object.keys(records).filter(id => isEligibleForRecall(records[id], amendment));
+  const extra = Object.keys(attempt2Records ?? {}).filter(id => !eligible.includes(id));
+  if (extra.length) throw new Error(`attempt-2 records for rules that are not eligible under amendment 01: ${extra.slice(0, 5).join(', ')}`);
+  const missing = eligible.filter(id => !attempt2Records?.[id]);
+  if (missing.length) throw new Error(`eligible rules without an attempt-2 record: ${missing.slice(0, 5).join(', ')}`);
+  return { scored: { ...records, ...Object.fromEntries(eligible.map(id => [id, attempt2Records[id]])) }, eligible };
+}
+
+export function computeCensusResults({ rules, plugins, records, ledgerLines, denominator, scorerSha256, attempt2Records = {}, amendment = null, amendmentSha256 = null }) {
   const ids = rules.map(r => r.ruleId);
   const missing = ids.filter(id => !records[id]);
   if (missing.length) throw new Error(`no record for ${missing.length} census rule(s): ${missing.slice(0, 5).join(', ')}`);
@@ -106,15 +129,22 @@ export function computeCensusResults({ rules, plugins, records, ledgerLines, den
     if (values.length !== 1) throw new Error(`the records disagree on ${label}`);
     return JSON.parse(values[0]);
   };
-  const recs = ids.map(id => records[id]);
+  const { scored, eligible } = scoredRecords(records, attempt2Records, amendment);
+  const a2problems = eligible.flatMap(id => recordProblems(attempt2Records[id], id));
+  if (a2problems.length) throw new Error(`unsound attempt-2 records: ${a2problems.slice(0, 5).join('; ')}`);
+  const a2 = eligible.map(id => attempt2Records[id]);
+  const recs = [...ids.map(id => records[id]), ...a2];
   const counted = ledgerLines.filter(l => l.kind === 'counted'), excluded = ledgerLines.filter(l => l.kind !== 'counted');
-  const scoreOut = score({ rules, records, plugins });
+  const scoreOut = score({ rules, records: scored, plugins });
   const calls = recs.flatMap(r => calledRoles(r).map(c => c.call));
+  const code1 = one('code', 'the code');
+  const codeOf2 = () => { const v = [...new Set(a2.map(r => canonical(r.code)))]; if (v.length !== 1) throw new Error('the attempt-2 records disagree on the code'); return JSON.parse(v[0]); };
   return {
     schemaVersion: 1, kind: 'census-results', experiment: 'EXP 007',
     mode: one('mode', 'the mode'), rehearsal: one('rehearsal', 'rehearsal'), fixture: one('fixture', 'fixture'),
     preregSha256: one('preregSha256', 'the pre-registration'), notBefore: one('notBefore', 'the not-before'), servedSha256: one('served', 'the served record', r => r.served?.sha256),
-    code: one('code', 'the code'), scorer: { file: SCORER_PATH, sha256: scorerSha256 },
+    code: a2.length ? codeOf2() : code1, ...(amendment ? { attempt1Code: code1 } : {}), scorer: { file: SCORER_PATH, sha256: scorerSha256 },
+    ...(amendment ? { amendment: { id: amendment.id, sha256: amendmentSha256, eligible: eligible.length, recalled: a2.length, rule: amendment.eligibility.rule } } : {}),
     denominator, rules: ids.length,
     measured: { firstCallStartedAt: calls.map(c => c.startedAt).sort()[0] ?? null, lastCallEndedAt: calls.map(c => c.endedAt).sort().at(-1) ?? null },
     spend: {
@@ -123,7 +153,7 @@ export function computeCensusResults({ rules, plugins, records, ledgerLines, den
       basis: 'API-equivalent total_cost_usd under subscription auth; an unknown cost is charged its pre-registered bound',
     },
     score: scoreOut, scoreSha256: sha256(canonical(scoreOut)),
-    disclosures: DISCLOSURES,
+    disclosures: [...DISCLOSURES, ...(amendment?.disclosures ?? [])],
   };
 }
 
@@ -155,7 +185,7 @@ const parseLedger = text => text.split('\n').filter(Boolean).map(l => { try { re
  * The gate from in-memory inputs (tests inject them; censusGate() reads them from disk). Returns {publishable, variant,
  * facts, failures}: publishable only when failures is empty.
  */
-export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, practiceRecords = [], models, rules, plugins, pins, freeze = { PREREG_SHA256, NOT_BEFORE }, preregDiskSha256, denominator, scorerDiskSha256, scorerPin }) {
+export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, practiceRecords = [], models, rules, plugins, pins, freeze = { PREREG_SHA256, NOT_BEFORE, AMENDMENT01_SHA256, AMENDMENT01_NOT_BEFORE }, preregDiskSha256, denominator, scorerDiskSha256, scorerPin, attempt2Records = {}, attempt2Files = [], attempt1Shas = null, amendment = null, amendmentDiskSha256 = null }) {
   const failures = [];
   const fail = m => failures.push(m);
   const closed = () => ({ publishable: false, variant: null, facts: null, failures });
@@ -188,6 +218,42 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
   const missing = ids.filter(id => !records[id]);
   if (missing.length) fail(`no record for ${missing.length} census rule(s) (a partial set): ${missing.slice(0, 5).join(', ')}`);
 
+  // Amendment 01: in force once frozen; then the attempt-1 records are the amendment's pinned attempt-1 code's, and the
+  // eligible rules (the spend-limit refusals) are scored from their one attempt-2 record.
+  const inForce = Boolean(freeze?.AMENDMENT01_SHA256);
+  const expected1 = inForce ? amendment?.attempt1Code ?? null : pins;
+  let eligible = [];
+  if (inForce) {
+    if (!amendment) fail('amendment 01 is frozen but not on disk');
+    if (amendmentDiskSha256 !== freeze.AMENDMENT01_SHA256) fail('amendment 01 on disk is not the frozen one');
+    if (amendment && amendment.parent?.sha256 !== freeze?.PREREG_SHA256) fail('amendment 01 does not name the frozen pre-registration');
+    if (results.amendment?.sha256 !== freeze.AMENDMENT01_SHA256) fail('the results were not made under the frozen amendment 01');
+    if (!freeze.AMENDMENT01_NOT_BEFORE) fail('amendment 01 has no frozen not-before');
+    eligible = amendment ? ids.filter(id => isObject(records[id]) && isEligibleForRecall(records[id], amendment)) : [];
+    const a2ids = attempt2Files.map(f => f.replace(/\.json$/, ''));
+    const dup2 = a2ids.filter((id, i) => a2ids.indexOf(id) !== i);
+    if (dup2.length) fail(`duplicate attempt-2 record files: ${[...new Set(dup2)].join(', ')}`);
+    const inelig = a2ids.filter(id => !eligible.includes(id));
+    if (inelig.length) fail(`attempt-2 records for rules that are not eligible under amendment 01 (an ineligible re-call): ${inelig.slice(0, 5).join(', ')}`);
+    const noA2 = eligible.filter(id => !attempt2Records[id]);
+    if (noA2.length) fail(`eligible rules without their attempt-2 record: ${noA2.slice(0, 5).join(', ')}`);
+    const anb = Date.parse(freeze.AMENDMENT01_NOT_BEFORE ?? '');
+    for (const id of eligible.filter(i => attempt2Records[i])) {
+      const r2 = attempt2Records[id], r1 = records[id];
+      for (const p of recordProblems(r2, id)) fail(`attempt 2: ${p}`);
+      if (!isObject(r2)) continue;
+      if (r2.attempt !== 2 || r2.amends !== r1.translator?.callId) fail(`${id}: the attempt-2 record does not amend its attempt-1 translator call`);
+      if (attempt1Shas && r2.attempt1Sha256 !== attempt1Shas[id]) fail(`${id}: the attempt-2 record names another attempt-1 record`);
+      if (r2.mode !== 'counted' || r2.fixture !== false || r2.rehearsal !== false) fail(`${id}: the attempt-2 record is not a counted record`);
+      if (r2.preregSha256 !== freeze.PREREG_SHA256 || r2.amendmentSha256 !== freeze.AMENDMENT01_SHA256) fail(`${id}: the attempt-2 record was made under another pre-registration or amendment`);
+      if (r2.served?.sha256 !== freeze.PREREG_SHA256) fail(`${id}: attempt 2: the served record was not the frozen one`);
+      if (!pins || canonical(r2.code) !== canonical(pins)) fail(`${id}: attempt 2: its code shas differ from runners.sha256`);
+      const starts = [r2.startedAt, ...calledRoles(r2).map(c => c.call.startedAt)];
+      if (!starts.every(t => Number.isFinite(Date.parse(t)) && Date.parse(t) > anb)) fail(`${id}: an attempt-2 call started at or before the amendment 01 not-before`);
+      for (const p of callProblems(r2, id, models)) fail(`attempt 2: ${p}`);
+    }
+  } else if (attempt2Files.length) fail('attempt-2 records without amendment 01 in force');
+
   // Every record.
   const notBefore = Date.parse(freeze?.NOT_BEFORE ?? '');
   for (const id of ids.filter(i => records[i])) {
@@ -199,12 +265,14 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
     if (rec.rehearsal !== false) fail(`${id}: a rehearsal record`);
     if (rec.preregSha256 !== freeze?.PREREG_SHA256 || rec.notBefore !== freeze?.NOT_BEFORE) fail(`${id}: made under another pre-registration or not-before`);
     if (rec.served?.sha256 !== freeze?.PREREG_SHA256) fail(`${id}: the served record was not the frozen one at run start`);
-    if (!pins || canonical(rec.code) !== canonical(pins)) fail(`${id}: its code shas differ from runners.sha256`);
+    if (!expected1 || canonical(rec.code) !== canonical(expected1)) fail(`${id}: its code shas differ from ${inForce ? 'the attempt-1 code amendment 01 pins' : 'runners.sha256'}`);
     const starts = [rec.startedAt, ...calledRoles(rec).map(c => c.call.startedAt)];
     if (!starts.every(s => Number.isFinite(Date.parse(s)) && Date.parse(s) > notBefore)) fail(`${id}: a call started at or before the not-before`);
     for (const p of callProblems(rec, id, models)) fail(p);
   }
-  if (!pins || canonical(results.code) !== canonical(pins)) fail('the results name other code than runners.sha256');
+  const a2count = eligible.filter(id => attempt2Records[id]).length;
+  if (!pins || canonical(results.code) !== canonical(inForce && !a2count ? expected1 : pins)) fail('the results name other code than runners.sha256');
+  if (inForce && canonical(results.attempt1Code) !== canonical(expected1)) fail('the results name other attempt-1 code than amendment 01 pins');
 
   // N1: a passed practice record (the canaries and the pre-count) under the same pre-registration and code.
   const passed = practiceRecords.filter(pr => pr?.kind === 'census-practice' && pr.mode === 'practice' && pr.partial === null && pr.askFork === false);
@@ -219,7 +287,7 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
       if (!c || c.harnessFailure !== null || !models || c.model !== models[role] || canonical(c.modelUsage) !== canonical([models[role]])) fail(`the ${role} canary call is not a sound call of the pinned model`);
     }
     if (!pr.practice || pr.practice.translator?.called !== true || pr.practice.adjudicator?.called !== true) fail('the passed practice record carries no complete practice pair');
-    if (pr.preregSha256 !== freeze?.PREREG_SHA256 || !pins || canonical(pr.code) !== canonical(pins)) fail('the practice record was made under another pre-registration or other code');
+    if (pr.preregSha256 !== freeze?.PREREG_SHA256 || !expected1 || canonical(pr.code) !== canonical(expected1)) fail('the practice record was made under another pre-registration or other code');
   }
   if (practiceRecords.some(pr => pr?.rehearsal !== false || pr?.fixture !== false)) fail('a practice record is a rehearsal or a fixture');
 
@@ -230,19 +298,23 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
   else {
     if (lines.some(l => l.rehearsal)) fail('the ledger holds rehearsal lines');
     const counted = lines.filter(l => l.kind === 'counted'), excluded = lines.filter(l => l.kind !== 'counted');
-    const key = (ruleId, role) => `${ruleId}\u0000${role}`;
+    const key = (ruleId, role, attempt) => `${ruleId}\u0000${role}\u0000${attempt}`;
     const byKey = new Map();
-    for (const l of counted) { const k = key(l.ruleId, l.role); if (byKey.has(k)) fail(`two ledger lines for ${l.ruleId} ${l.role}`); byKey.set(k, l); }
+    for (const l of counted) { const k = key(l.ruleId, l.role, attemptOf(l)); if (byKey.has(k)) fail(`two ledger lines for ${l.ruleId} ${l.role} attempt ${attemptOf(l)}`); byKey.set(k, l); }
+    if (!inForce && counted.some(l => attemptOf(l) === 2)) fail('re-call (attempt 2) ledger lines without amendment 01 in force');
     const made = new Set();
-    for (const id of ids.filter(i => isObject(records[i]))) {
-      for (const { role, call } of calledRoles(records[id])) {
-        const k = key(id, role); made.add(k);
+    const mapCalls = (rec, id, attempt) => {
+      for (const { role, call } of calledRoles(rec)) {
+        const k = key(id, role, attempt); made.add(k);
         const l = byKey.get(k);
-        if (!l) fail(`${id} ${role}: a call with no ledger line (a ledger gap)`);
+        if (!l) fail(`${id} ${role}${attempt === 2 ? ' attempt 2' : ''}: a call with no ledger line (a ledger gap)`);
         else if (l.costUsd !== call.costUsd || l.callId !== call.callId) fail(`${id} ${role}: the record's cost or call id differs from its ledger line`);
+        else if (attempt === 2 && l.amends !== records[id]?.translator?.callId) fail(`${id} ${role}: the re-call ledger line does not amend the attempt-1 translator call`);
       }
-    }
-    for (const [k, l] of byKey) if (!made.has(k)) fail(`a counted ledger line with no call in the records: ${l.ruleId} ${l.role}`);
+    };
+    for (const id of ids.filter(i => isObject(records[i]))) mapCalls(records[id], id, 1);
+    for (const id of eligible.filter(i => isObject(attempt2Records[i]))) mapCalls(attempt2Records[id], id, 2);
+    for (const [k, l] of byKey) if (!made.has(k)) fail(`a counted ledger line with no call in the records: ${l.ruleId} ${l.role}${attemptOf(l) === 2 ? ' attempt 2 (a re-call the gate does not accept)' : ''}`);
     // N1: every canary and practice line is a call of a practice record, by callId, and each such call has its line.
     const slots = pr => [['canary', pr?.canary?.translator], ['canary', pr?.canary?.adjudicator], ['practice', pr?.practice?.translator], ['practice', pr?.practice?.adjudicator]].filter(([, c]) => c?.called === true);
     const practiceCalls = practiceRecords.flatMap(pr => slots(pr).map(([, c]) => c));
@@ -259,7 +331,9 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
 
   // The score: the pinned scorer's recompute, bound by sha256.
   let recomputed = null;
-  try { recomputed = score({ rules, records: Object.fromEntries(ids.filter(i => records[i]).map(i => [i, records[i]])), plugins }); } catch (error) { fail(`the scorer refused the records: ${error.message}`); }
+  const present = Object.fromEntries(ids.filter(i => records[i]).map(i => [i, records[i]]));
+  const scored = { ...present, ...Object.fromEntries(eligible.filter(i => attempt2Records[i]).map(i => [i, attempt2Records[i]])) };
+  try { recomputed = score({ rules, records: scored, plugins }); } catch (error) { fail(`the scorer refused the records: ${error.message}`); }
   if (recomputed) {
     if (canonical(results.score) !== canonical(recomputed)) fail('the results\' score is not the scorer\'s recompute (tampered)');
     if (results.scoreSha256 !== sha256(canonical(recomputed))) fail('the results\' scoreSha256 does not bind the recompute');
@@ -272,7 +346,8 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
       preregSha256: results.preregSha256, notBefore: results.notBefore, denominator, measured: results.measured, spend: results.spend,
       kill: s.kill, median: s.median, perPlugin: s.perPlugin, pluginsWithoutRules: s.pluginsWithoutRules, secondary: s.secondary, controls: s.controls,
       calibrated: s.controls.calibrated, agreement: s.agreement, disputes: s.disputes, downgrades: s.downgrades, engineLimit: s.engineLimit, errors: s.errors,
-      abide: s.abide, breakdown: s.breakdown, disclosures: DISCLOSURES,
+      abide: s.abide, breakdown: s.breakdown, disclosures: [...DISCLOSURES, ...(inForce ? amendment.disclosures ?? [] : [])],
+      ...(inForce ? { amendment: { id: amendment.id, sha256: freeze.AMENDMENT01_SHA256, notBefore: freeze.AMENDMENT01_NOT_BEFORE, eligible: eligible.length, recalled: a2count } } : {}),
     },
   };
 }
@@ -312,6 +387,18 @@ export function loadInputs(root = REPO_ROOT, { recordsDir = join(root, RECORDS_D
     scorerDiskSha256: sha256(readFileSync(join(root, SCORER_PATH))), scorerPin: prereg.files[SCORER_PATH],
     practiceRecords: Object.values(readRecords(join(root, PRACTICE_DIR), recordFilesUnder(join(root, PRACTICE_DIR)))),
     models: { translator: prereg.calls.translatorModel, adjudicator: prereg.calls.adjudicatorModel },
+    ...amendmentInputs(root, recordsDir, recordFiles),
+  };
+}
+/** Amendment 01's inputs: the amendment, its sha256, the attempt-2 records and each attempt-1 record's sha256. */
+function amendmentInputs(root, recordsDir, recordFiles) {
+  const apath = join(root, AMENDMENT_PATH), a2dir = join(root, ATTEMPT2_DIR);
+  const attempt2Files = recordFilesUnder(a2dir);
+  return {
+    amendment: existsSync(apath) ? JSON.parse(readFileSync(apath, 'utf8')) : null,
+    amendmentDiskSha256: existsSync(apath) ? sha256(readFileSync(apath)) : null,
+    attempt2Files, attempt2Records: readRecords(a2dir, attempt2Files),
+    attempt1Shas: Object.fromEntries(recordFiles.map(f => [f.replace(/\.json$/, ''), sha256(readFileSync(join(recordsDir, f)))])),
   };
 }
 
@@ -324,7 +411,8 @@ export function censusGate(root = REPO_ROOT, { freeze } = {}) {
 /** Writes results/results.json from the committed records and ledger (the pinned scorer computes it). */
 export function writeResults(root = REPO_ROOT) {
   const i = loadInputs(root);
-  const results = computeCensusResults({ rules: i.rules, plugins: i.plugins, records: i.records, ledgerLines: parseLedger(i.ledgerText), denominator: i.denominator, scorerSha256: i.scorerDiskSha256 });
+  const inForce = Boolean(AMENDMENT01_SHA256);
+  const results = computeCensusResults({ rules: i.rules, plugins: i.plugins, records: i.records, ledgerLines: parseLedger(i.ledgerText), denominator: i.denominator, scorerSha256: i.scorerDiskSha256, ...(inForce ? { attempt2Records: i.attempt2Records, amendment: i.amendment, amendmentSha256: i.amendmentDiskSha256 } : {}) });
   mkdirSync(join(root, DIR, 'results'), { recursive: true });
   writeFileSync(join(root, RESULTS_PATH), `${JSON.stringify(results, null, 2)}\n`);
   return results;
