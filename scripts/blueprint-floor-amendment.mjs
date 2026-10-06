@@ -131,6 +131,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error('usage: node scripts/blueprint-floor-amendment.mjs --check | --pin');
     process.exit(2);
   }
-  const { sha256: digest } = checkAmendment('.', { verifyHistory: true });
-  console.log(`PASS ${recordPath} sha256 ${digest} (attempt-1 code checked against git history)`);
+  const { sha256: digest, record } = checkAmendment('.', { verifyHistory: true });
+  const history = commitExists(record.incident.attempt1Commit) ? 'confirmed against git history' : 'git history not present (a shallow clone): checked by its pinned sha256 only';
+  console.log(`PASS ${recordPath} sha256 ${digest} (attempt-1 code matches its pinned runners.sha256; ${history})`);
 }
