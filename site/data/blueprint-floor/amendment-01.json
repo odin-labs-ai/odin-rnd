@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "experiment": "EXP 007",
+  "id": "amendment-01",
+  "title": "Amendment 01: one re-call for the translator calls the client's spend limit refused",
+  "authoredOn": "2026-10-06",
+  "parent": {
+    "file": "experiments/blueprint-floor/preregistration.json",
+    "sha256": "ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb"
+  },
+  "decision": {
+    "by": "founder",
+    "on": "2026-10-06",
+    "verbatim": "Amend, then re-call once (Recommended)"
+  },
+  "incident": {
+    "summary": "During the counted census the model client stopped answering: its account had reached its monthly spend limit. From that moment every translator call ended at once with a non-zero exit and the same one-line message, so 37 rules got class error (counted as not) without the translator ever seeing them. This amendment is written after the counted run and before any census result is published; it shows no result.",
+    "firstRefusedCallEndedAt": "2026-10-06T12:38:20Z",
+    "client": "Claude Code 2.1.280 (the pinned client)",
+    "message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your weekly limit resets Oct 9 at 3am (Europe/Amsterdam)",
+    "affected": {
+      "translatorCalls": 37,
+      "secondarySample": 30,
+      "secondaryOf": 30,
+      "primary": 7,
+      "primaryOf": 145,
+      "controls": 0,
+      "adjudicatorCallsSkipped": 37
+    },
+    "charged": "Each of the 37 calls was charged the pre-registered unknown-cost bound, $0.5000000 ($18.5000000 in all), and its adjudicator call was not made (the translator ended in error).",
+    "untouched": "The other 151 census rules (the 13 controls and 138 primary rules) were called and answered before the limit was reached; their records are not changed by this amendment.",
+    "attempt1Commit": "ee88bf763bc25d4642fb3de4bf9fe951297ca7a8"
+  },
+  "eligibility": {
+    "rule": "A census rule is eligible for exactly one re-call when its committed attempt-1 record's translator call ended with harnessFailure nonzero-exit AND that call's raw client output (translator.raw) is byte for byte the message below, which begins with the stable prefix, AND translator.rawSha256 is the sha256 of that text. Any other failure (another message, a timeout, a parse error, a model mismatch) is not eligible and keeps its class error.",
+    "harnessFailure": "nonzero-exit",
+    "messagePrefix": "You've hit your monthly spend limit",
+    "message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your weekly limit resets Oct 9 at 3am (Europe/Amsterdam)",
+    "messageSha256": "89f790ed0c36f3e73ca2ec31b87340447cee8489c27fa6370de5836f8da9246c",
+    "recordFields": [
+      "translator.harnessFailure",
+      "translator.raw",
+      "translator.rawSha256"
+    ]
+  },
+  "recall": [
+    "Each eligible (ruleId, translator) pair is called again ONCE, with the pinned argv, models, prompts, environment and checks of the counted run, then its adjudicator if the translator answers (no error class).",
+    "The attempt-1 record is kept unchanged as the attempt-1 record; the re-call writes an attempt-2 record (experiments/blueprint-floor/census-attempt-2/<ruleId>.json) that names the attempt-1 translator call it amends.",
+    "The original ledger lines stay as they are (charged the bound, disclosed); every re-call call gets its own new ledger line (kind counted, attempt 2, amends: the attempt-1 translator call id).",
+    "A re-call that fails again, for any reason, keeps class error: there is no third attempt, and a (ruleId, role) pair with an attempt-2 ledger line is never called again.",
+    "For an eligible rule the attempt-2 record is the one scored; every other rule must have no attempt-2 record, and an attempt-2 record or ledger line for an ineligible rule keeps the result unpublishable.",
+    "The re-call runs under the same guards as the counted run (the frozen pre-registration and this amendment, both served byte for byte, after this amendment's not-before; the pinned code; the base tree by its bytes; the shared ledger), and under the same spend rules: the $100 cap, the $40 census ceiling and the reserve rule."
+  ],
+  "unchanged": [
+    "the calibration bar and the kill criterion",
+    "the prompts, the contracts and the vocabulary",
+    "the models, the client version, the effort and the command",
+    "the scorer (scorer.mjs, byte for byte)",
+    "the strata, the rules and the controls",
+    "the mechanical checks and the adjudicator rule",
+    "the cap, the census ceiling and the reserve rule"
+  ],
+  "onlyChange": "This is the only post-run change to EXP 007 stage 1.",
+  "attempt1Code": {
+    "experiments/blueprint-floor/census-run.mjs": "2b60bb4fa8aab8f779375415ff05db39d16efd2a3e21db1fde34f5db245455ea",
+    "experiments/blueprint-floor/census-guard.mjs": "1ad02dbaba3343c696b732ed184e85d7ae9799ef3bf56b44d4ae533e5ab20ffa",
+    "experiments/blueprint-floor/census-gate.mjs": "41f6879d37dc55b42ad2b39c73b525c26b38d1070f174b1baddd367d5e987a52",
+    "experiments/blueprint-floor/census-spend.mjs": "133ac82f41bc941a72f062a9dfa4406d0ac48443b6ae5de208851571655b8eb6",
+    "experiments/blueprint-floor/freeze.mjs": "8e6d3238712748c3ce0a084a936ffd2e1c115b88bda9cab87801967b1a3539d4",
+    "experiments/blueprint-floor/protocol.mjs": "ec6bfe573e6eda48784cea76fc1f57d84c55f2e535845c990afbe75fce0026bf",
+    "experiments/blueprint-floor/adapter.mjs": "d35854970e69ff73424bff23c7a480b566a2893e4d82953635ccc835ea30cfb2",
+    "experiments/blueprint-floor/whitelist.mjs": "ccdebf36d6344842de0903876ada39dbf02a228cf3a98c2ba1871bd5f05d2300",
+    "experiments/blueprint-floor/whitelist.json": "bf8115d21d3c34771d7a9370e6da73141b028aa978ca0492e8a96749cbecf54d",
+    "experiments/blueprint-floor/scorer.mjs": "f2113f3666ec288aebc420750d9b16c3b2eb8fac2078296acad1afdee0d2f351",
+    "experiments/blueprint-floor/contract.md": "62a0fde91db4f74bb4ab4d1173d72f4f0469a3a67b9381bf5c01eec8b4b48178",
+    "experiments/blueprint-floor/contract-module-graph.md": "ba244156d2bfafe6f4ecbbef734a9a6ff457f606ae1544cb5c97cd25daff06bc",
+    "experiments/blueprint-floor/prompts/translator.md": "c2b016bf0b2f0dd81655fa57f04ad79201760058ef1fec8c772953c4af237fb6",
+    "experiments/blueprint-floor/prompts/adjudicator.md": "b67fa1081ec39c3258b2139d04100cf85bde8e132c82ddf4d0ab901be64e9ee4",
+    "experiments/blueprint-floor/prompts/canary.md": "3afdde754180920ab518e8d9ebf56c9e87886c75cc8b1e8866aa6efc1bdb6d81",
+    "experiments/blueprint-floor/rules/selection.json": "049193ecaaee466bad0bbaaa335efb49cf5b76ddcd489d2bdf6dca6bf3e6be65",
+    "experiments/blueprint-floor/rules/hunch.json": "3a3877d4e2f9ce977b609695a71c7e5abe99ae989a60bc094fa5971cb1ef3455",
+    "experiments/blueprint-floor/rules/jev-pref.json": "0c865bc3d55227ce8690ddcb2d66ffb082d8564fa74a59dc443e68863cf72639",
+    "experiments/blueprint-floor/rules/abide.json": "68160f8b5c01da7551183b91933474b992810185d5c53ce8adc49727ae2fb7d0",
+    "experiments/blueprint-floor/rules/limpet.json": "17e93bdde655e68ad8838f50f651f66c7d1ac90db88d2ca5821a28a76f43e172",
+    "experiments/blueprint-floor/rules/jev-belay.json": "ef35a1382489f9491931c5939e33d22f0f875c9e2d085d579bc81a71c5465134",
+    "experiments/blueprint-floor/rules/jev-engineering.json": "163e64a1113d83a215b0b632938659dc20a2cf0adbcb762088f00858b1fde849",
+    "experiments/blueprint-floor/rules/pi-verdict.json": "a72b20ca299fad54ed8d4a6970e129a0aee24492440accb81e478c0eea0d639c",
+    "experiments/blueprint-floor/rules/jev-axi.json": "b6856f2e723a3c76d6ac5aac7377b44585136cd66a4aeb0cf27e83a389a2e375",
+    "experiments/blueprint-floor/controls/positive.json": "6d9c6ea150aaeecea4492f3fac63a72ab6aa5cb7bdd783dfdb674a42cc8bab88",
+    "experiments/blueprint-floor/controls/negative.json": "ad0b6bc24d8d8679f18c538a4e4ba2224bb4d54eb0e028852ba394b6c54f6b2c",
+    "experiments/blueprint-floor/controls/practice.json": "dcc4ffd5358968552d9406f21134199412f358cbda68efb8cb961e15471f2483",
+    "experiments/blueprint-floor/fixtures/fake-claude-census.mjs": "09cd75ef7131b1af2e4ad51080cb045eb15cf81387a8f0a54b2e161650e0335e",
+    "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
+    "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
+    "experiments/jev-gate/runner-guard.mjs": "1ad072329cf7f70f9c12b70e56a7fe42f06afcdcbdd84eb455fc2d014fa1bcd9",
+    "experiments/jev-gate/lint.mjs": "df4485c7c7c7f515c5a484ec10df3400c59e2558c9cc67d1956aa6d40f9f38c9",
+    "experiments/nina-changes/scrub6.mjs": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+    "scripts/check.mjs": "dddfb7303567badd6efe198757443785528bf9190fdb6a21c04b1b3e3e03706f"
+  },
+  "notBefore": "No re-call before the merge time of the odin-rnd pull request that adds this file (gh pr view <n> -R odin-labs-ai/odin-rnd --json mergedAt, UTC), and only while the site serves this record and the pre-registration byte for byte.",
+  "disclosures": [
+    "From 2026-10-06T12:38:20Z the model client's account had reached its monthly spend limit; 37 translator calls (the 30 secondary-sample rules and 7 primary rules) ended at once with the client's limit message and no answer.",
+    "Those 37 calls were charged the pre-registered unknown-cost bound, $0.5000000 each ($18.5000000), although the client reported no cost; their lines stay in the ledger.",
+    "Under this amendment each of those 37 rules is re-called once (attempt 2) and the attempt-2 record is the one scored; a re-call that fails again stays class error."
+  ]
+}
