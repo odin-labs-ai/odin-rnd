@@ -29,7 +29,7 @@ const A_NB = '2026-10-04T00:00:00Z'; // after the pre-registration's not-before,
 const FROZEN = { PREREG_SHA256, NOT_BEFORE, AMENDMENT01_SHA256: AMENDMENT_SHA, AMENDMENT01_NOT_BEFORE: A_NB };
 
 test('amendment 01: pinned, its parent the published pre-registration, the decision and the message verbatim, its site copy byte for byte, no result', () => {
-  const { record, sha256 } = checkAmendment(REPO_ROOT);
+  const { record, sha256 } = checkAmendment(REPO_ROOT, { verifyHistory: true }); // attempt1Code == runners.sha256 at ee88bf7, from git
   assert.equal(sha256, readFileSync(join(REPO_ROOT, 'experiments/blueprint-floor/amendment-01.sha256'), 'utf8').split(/\s/)[0]);
   assert.equal(record.parent.sha256, 'ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb');
   assert.equal(record.decision.verbatim, 'Amend, then re-call once (Recommended)');

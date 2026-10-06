@@ -31,7 +31,7 @@ export function attempt1Pins(commit, root = '.') {
 }
 
 /** Every fact the record states that the files can confirm. Returns the record. */
-export function validateAmendment(record, { parentSha256, root = '.' } = {}) {
+export function validateAmendment(record, { parentSha256, root = '.', verifyHistory = false } = {}) {
   for (const f of REQUIRED) assert(f in record, `amendment 01 has no ${f}`);
   assert.equal(record.kind, 'amendment');
   assert.equal(record.experiment, 'EXP 007');
@@ -47,7 +47,11 @@ export function validateAmendment(record, { parentSha256, root = '.' } = {}) {
   assert.equal(e.messageSha256, sha256(e.message));
   assert.equal(e.harnessFailure, 'nonzero-exit');
   assert.deepEqual(record.incident.affected, { translatorCalls: 37, secondarySample: 30, secondaryOf: 30, primary: 7, primaryOf: 145, controls: 0, adjudicatorCallsSkipped: 37 });
-  assert.deepEqual(record.attempt1Code, attempt1Pins(record.incident.attempt1Commit, root), 'attempt1Code is the counted-path pins at the attempt-1 commit');
+  assert.equal(Object.keys(record.attempt1Code).length, 34);
+  assert(Object.values(record.attempt1Code).every(h => /^[0-9a-f]{64}$/.test(h)));
+  // The history check needs the attempt-1 commit, so it runs in --check and the tests, not in the build (a fresh copy
+  // or a shallow CI clone has no history); the record itself is pinned by its sha256 either way.
+  if (verifyHistory) assert.deepEqual(record.attempt1Code, attempt1Pins(record.incident.attempt1Commit, root), 'attempt1Code is the counted-path pins at the attempt-1 commit');
   assert(record.unchanged.some(x => /scorer/.test(x)), 'the scorer is named unchanged');
   assert.equal(record.disclosures.length, 3);
   const text = JSON.stringify(record);
@@ -57,12 +61,12 @@ export function validateAmendment(record, { parentSha256, root = '.' } = {}) {
 }
 
 /** The record on disk: pinned, valid, its parent the pinned pre-registration, its site copy byte-identical. */
-export function checkAmendment(root = '.') {
+export function checkAmendment(root = '.', { verifyHistory = false } = {}) {
   const bytes = readFileSync(join(root, recordPath));
   const pinned = existsSync(join(root, pinPath)) ? readFileSync(join(root, pinPath), 'utf8').split(/\s+/)[0] : null;
   assert.equal(pinned, sha256(bytes), `${recordPath} differs from the sha256 pinned in ${pinPath}`);
   const parentSha256 = sha256(readFileSync(join(root, parentPath)));
-  const record = validateAmendment(JSON.parse(bytes), { parentSha256, root });
+  const record = validateAmendment(JSON.parse(bytes), { parentSha256, root, verifyHistory });
   if (existsSync(join(root, publishedPath))) assert.equal(sha256(readFileSync(join(root, publishedPath))), sha256(bytes), `${publishedPath} is not byte-identical to ${recordPath}`);
   return { record, sha256: sha256(bytes), bytes };
 }
@@ -107,7 +111,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [command] = process.argv.slice(2);
   if (command === '--pin') {
     const parentSha256 = sha256(readFileSync(parentPath));
-    validateAmendment(JSON.parse(readFileSync(recordPath, 'utf8')), { parentSha256 });
+    validateAmendment(JSON.parse(readFileSync(recordPath, 'utf8')), { parentSha256, verifyHistory: true });
     writeFileSync(pinPath, `${sha256(readFileSync(recordPath))}  amendment-01.json\n`);
     writeFileSync(publishedPath, readFileSync(recordPath));
     console.log(`Pinned ${recordPath} in ${pinPath} and copied it to ${publishedPath}.`);
@@ -115,6 +119,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error('usage: node scripts/blueprint-floor-amendment.mjs --check | --pin');
     process.exit(2);
   }
-  const { sha256: digest } = checkAmendment();
-  console.log(`PASS ${recordPath} sha256 ${digest}`);
+  const { sha256: digest } = checkAmendment('.', { verifyHistory: true });
+  console.log(`PASS ${recordPath} sha256 ${digest} (attempt-1 code checked against git history)`);
 }
