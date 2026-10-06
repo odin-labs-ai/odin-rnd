@@ -7,6 +7,7 @@
 //   node experiments/blueprint-floor/census-run.mjs --mode practice   the two blinding canaries and the practice pair
 //   node experiments/blueprint-floor/census-run.mjs --mode counted    the census (resumes after an interruption)
 //   node experiments/blueprint-floor/census-run.mjs --mode recall     amendment 01: the one re-call of the spend-limit refusals
+//   node experiments/blueprint-floor/census-run.mjs --mode recall --dry-run   the eligible set and the projected spend, no call
 //
 // Modes: practice (metered: one canary per model, then one translator + adjudicator pair on the pinned practice rule,
 // then the projection), counted (metered: the census), rehearsal (the committed fake client, scratch outputs, never
@@ -27,7 +28,7 @@ import { BILLED, resolveBin } from '../jev-gate/run_reviewer.mjs';
 import { lint6, scrubPaths6 } from '../nina-changes/scrub6.mjs';
 import { assertOpaqueIdsDistinct, buildAdjudicatorPrompt, buildTranslatorPrompt, mechanicalChecks, parseAnswer, PROMPT_FILES, validateAdjudicatorOutput } from './protocol.mjs';
 import { finalClass } from './scorer.mjs';
-import { ATTEMPT2_DIR, isEligibleForRecall } from './amendment01.mjs';
+import { ATTEMPT2_DIR, eligiblePinProblems, isClientLimitRefusal, isEligibleForRecall } from './amendment01.mjs';
 import { SERVED_AMENDMENT01_URL } from './freeze.mjs';
 import { censusStateDir, checkBaseTree, checkCensusRun, DIR, gitIn, gitPlainIn, recheckServed, REPO_ROOT, sha256 } from './census-guard.mjs';
 import { CensusLedger, LEDGER, projection, ROLES } from './census-spend.mjs';
@@ -426,7 +427,10 @@ async function adjudicatorStep(ctx, rule, kind, translator) {
 /** One invocation. A metered one (practice, counted) holds the exclusive run lock, in the shared state dir, throughout. */
 export async function runCensus(opts) {
   if (opts?.mode === 'rehearsal') return runInvocation(opts);
-  const stateDir = censusStateDir(opts?.root ?? REPO_ROOT);
+  // Refute A1-B2: a test passes a scratch state dir so it never takes the repository's run lock or reads its mirror; any
+  // other state dir than the repository's is refused outside the test runner (a metered run there is refused anyway).
+  if (opts?.stateDir !== undefined && !process.env.NODE_TEST_CONTEXT) throw new Error('a metered run uses the repository\'s shared state dir; a scratch state dir is for tests');
+  const stateDir = opts?.stateDir ?? censusStateDir(opts?.root ?? REPO_ROOT);
   mkdirSync(stateDir, { recursive: true });
   const release = acquireRunLock(join(stateDir, LOCK));
   try { return await runInvocation({ ...opts, stateDir }); } finally { release(); }
@@ -434,7 +438,7 @@ export async function runCensus(opts) {
 
 const stampFields = stamp => ({ preregSha256: stamp.preregSha256, notBefore: stamp.notBefore, served: stamp.served ? own({ ...stamp.served }, { sha256: stamp.served.sha256 }) : null, base: stamp.base, code: own({ ...stamp.code }, stamp.code), codeMatchesPins: stamp.codeMatchesPins });
 
-async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, rawDir, stateDir, commitRepo, baseRoot, outDir2, only = null, now, freeze, fetch, git, timeoutMs, log = console.log } = {}) {
+async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, outDir, ledgerPath, practicePath, rawDir, stateDir, commitRepo, baseRoot, outDir2, only = null, now, freeze, fetch, git, timeoutMs, dryRun = false, rehearsalEligible = null, log = console.log } = {}) {
   if (!MODES.includes(mode)) throw new Error(`unknown mode ${mode}`);
   const rehearsal = mode === 'rehearsal';
   if (rehearsal && !['practice', 'counted', 'recall'].includes(rehearsalOf)) throw new Error('a rehearsal rehearses the practice, the counted or the recall path');
@@ -456,12 +460,18 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   const path = rehearsal ? rehearsalOf : mode;
 
   // The guard first (tests see its refusals), then the defence in depth: no metered call under the test runner.
+  if (dryRun && path !== 'recall') throw new Error('--dry-run is for --mode recall');
+  if (rehearsalEligible && !rehearsal) throw new Error('a rehearsal eligible set is for a rehearsal only');
   const stamp = await checkCensusRun({ mode, root, ledgerPath: ledgerFile, stateDir, recall: path === 'recall', ...(baseRoot ? { baseRoot } : {}), ...(now ? { now } : {}), ...(freeze ? { freeze } : {}), ...(fetch ? { fetch } : {}), ...(git ? { git } : {}) });
-  if (!rehearsal) paidPreflight();
   const prereg = stamp.prereg;
-  const claudeBin = chooseClaude7(rehearsal, process.env.PATH);
-  const version = clientVersion(claudeBin);
-  if (version !== prereg.calls.clientVersion) throw new Error(`claude --version is ${version}, not the pinned ${prereg.calls.clientVersion}`);
+  // A dry run makes no call: it needs neither the client nor the metered preflight.
+  let claudeBin = null, version = prereg.calls.clientVersion;
+  if (!dryRun) {
+    if (!rehearsal) paidPreflight();
+    claudeBin = chooseClaude7(rehearsal, process.env.PATH);
+    version = clientVersion(claudeBin);
+    if (version !== prereg.calls.clientVersion) throw new Error(`claude --version is ${version}, not the pinned ${prereg.calls.clientVersion}`);
+  }
 
   const all = censusRules(root);
   if (all.length !== prereg.census.rules) throw new Error(`the census has ${all.length} rules, not the pre-registered ${prereg.census.rules}`);
@@ -484,7 +494,7 @@ async function runInvocation({ mode, rehearsalOf = 'counted', root = REPO_ROOT, 
   own(header, { preregSha256: stamp.preregSha256, ...(path === 'recall' ? { amendmentSha256: stamp.amendmentSha256 } : {}) });
 
   if (path === 'practice') return runPractice(ctx, { header, all, practice, practiceFile, log });
-  if (path === 'recall') return runRecall(ctx, { header, all, out, out2, practiceFile, only, log });
+  if (path === 'recall') return runRecall(ctx, { header, all, out, out2, practiceFile, only, log, dryRun, rehearsalEligible });
   return runCounted(ctx, { header, all, out, practiceFile, only, log });
 }
 
@@ -588,7 +598,7 @@ async function runCounted(ctx, { header, all, out, practiceFile, only, log }) {
  * attempt 2 (translator, mechanical checks, adjudicator), with ledger lines {attempt: 2, amends: <attempt-1 translator
  * call id>} and an attempt-2 record in census-attempt-2/. A pair with an attempt-2 line is never called again.
  */
-async function runRecall(ctx, { header, all, out, out2, practiceFile, only, log }) {
+async function runRecall(ctx, { header, all, out, out2, practiceFile, only, log, dryRun = false, rehearsalEligible = null }) {
   if (!existsSync(practiceFile)) throw new Error('no practice record');
   const pr = JSON.parse(readFileSync(practiceFile, 'utf8'));
   // The practice was made under the attempt-1 code (the amendment pins it); the canaries and the pre-count must have passed.
@@ -610,7 +620,22 @@ async function runRecall(ctx, { header, all, out, out2, practiceFile, only, log 
   }
   const eligible = rules.filter(r => isEligibleForRecall(first[r.ruleId].rec, amendment));
   for (const r of eligible) if (!ctx.ledger.called('counted', r.ruleId, 'translator', { rehearsal: ctx.rehearsal, attempt: 1 })) throw new Error(`the attempt-1 translator call of ${r.ruleId} has no ledger line`);
-  const invocation = { startedAt: new Date().toISOString(), endedAt: null, mode: 'counted', attempt: 2, rehearsal: ctx.rehearsal, eligible: eligible.length, firstRuleId: null, called: 0, completed: 0, skipped: 0, resumed: [], commits: [], partial: null };
+  // Refute A1 N2: the recomputed eligible set must be the one the amendment pins. A rehearsal (the fake client, never
+  // publishable) checks it against the set the test supplies instead, since its records are not the counted run's.
+  const pinAgainst = ctx.rehearsal ? (rehearsalEligible ? { eligibility: { eligibleCallIds: [...rehearsalEligible].sort(), eligibleCallIdsSha256: sha256(JSON.stringify([...rehearsalEligible].sort())) } } : null) : amendment;
+  if (pinAgainst) { const p = eligiblePinProblems(eligible.map(r => first[r.ruleId].rec), pinAgainst); if (p.length) throw new Error(`amendment 01: ${p.join('; ')}`); }
+  if (dryRun) {
+    // --dry-run: the eligible set and the projected spend; no call, no record, no ledger line.
+    const pr2 = pr.practice;
+    const pairCostUsd = (pr2?.translator?.costUsd ?? 0) + (pr2?.adjudicator?.costUsd ?? 0);
+    const remaining = eligible.filter(r => !existsSync(join(out2, `${r.ruleId}.json`)));
+    const spentUsd = ctx.ledger.total();
+    const projectedUsd = Math.round((spentUsd + remaining.length * pairCostUsd * 1.5) * 1e7) / 1e7;
+    const plan = { dryRun: true, eligible: eligible.map(r => r.ruleId), eligibleSetPinned: Boolean(pinAgainst), remaining: remaining.map(r => r.ruleId), pairCostUsd, spentUsd, projectedUsd, formula: 'spent + (#remaining) x (practice pair cost) x 1.5', ceilingUsd: ctx.ledger.limits.ceilingUsd, overCeiling: projectedUsd > ctx.ledger.limits.ceilingUsd };
+    log(JSON.stringify(plan));
+    return plan;
+  }
+  const invocation = { startedAt: new Date().toISOString(), endedAt: null, mode: 'counted', attempt: 2, rehearsal: ctx.rehearsal, eligible: eligible.length, eligibleSetPinned: Boolean(pinAgainst), firstRuleId: null, called: 0, completed: 0, skipped: 0, resumed: [], commits: [], partial: null };
   const runsLog = join(out2, 'runs.jsonl');
   const dirty = new Set();
   const commitNow = label => {
@@ -657,6 +682,7 @@ async function oneRule(ctx, rule, { header, recPath, rawPath, rawRel, invocation
   rec.resumed = rec.resumed || resumed;
   const save = () => { writeRecord(recPath, rawPath, ctx.rawLabel(rawRel), rec, `census record ${rule.ruleId}`, priorDigests, { carryWithheld, carryChanged, priorStdouts }); dirty.add(recPath); };
   let raw = null; // the translator's verbatim text for the adjudicator, from this invocation or the raw store
+  let limitHit = null; // refute A1 N1: a usage-limit refusal by the client in this rule's calls
 
   if (!rec.translator) {
     if (tLine) {
@@ -677,6 +703,7 @@ async function oneRule(ctx, rule, { header, recPath, rawPath, rawRel, invocation
       rec.translator = t.translator;
       rec.translatorError = t.translatorError;
       raw = t.translator.raw;
+      if (isClientLimitRefusal(t.translator)) limitHit = 'translator';
     }
     rec.startedAt = rec.translator.startedAt;
     save();
@@ -700,6 +727,7 @@ async function oneRule(ctx, rule, { header, recPath, rawPath, rawRel, invocation
       if (after) { save(); return { stop: after }; } // the translator half stays incomplete; never a valid census record
       rec.adjudicator = a.adjudicator;
       rec.adjudicatorError = a.adjudicatorError;
+      if (isClientLimitRefusal(a.adjudicator)) limitHit = 'adjudicator';
     }
   }
   rec.endedAt = rec.adjudicator.endedAt ?? rec.translator.endedAt;
@@ -708,15 +736,20 @@ async function oneRule(ctx, rule, { header, recPath, rawPath, rawRel, invocation
   save();
   invocation.completed += 1;
   ctx.log(`${rule.ruleId}: ${rec.final.final} (ledger $${ctx.ledger.total().toFixed(7)})`);
+  // Refute A1 N1: the circuit breaker. The refused call keeps its line and its (error) record; the invocation stops here,
+  // and every rule after it stays uncalled and can be called by a later invocation.
+  if (limitHit) return { done: true, stop: ['client-limit', { ruleId: rule.ruleId, role: limitHit }] };
   return { done: true };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const argv = process.argv.slice(2);
   const mode = argv.includes('--mode') ? argv[argv.indexOf('--mode') + 1] : null;
-  if (!['practice', 'counted', 'recall'].includes(mode)) { console.error('usage: census-run.mjs --mode practice|counted|recall'); process.exit(2); }
+  if (!['practice', 'counted', 'recall'].includes(mode)) { console.error('usage: census-run.mjs --mode practice|counted|recall [--dry-run]'); process.exit(2); }
+  const dryRun = argv.includes('--dry-run');
   try {
-    const result = await runCensus({ mode });
+    const result = await runCensus({ mode, ...(dryRun ? { dryRun } : {}) });
+    if (dryRun) process.exit(0);
     console.log(JSON.stringify({ ok: !result.partial, partial: result.partial ?? null, askFork: result.askFork ?? null }));
     process.exit(result.partial ? 3 : result.askFork ? 4 : 0);
   } catch (error) {

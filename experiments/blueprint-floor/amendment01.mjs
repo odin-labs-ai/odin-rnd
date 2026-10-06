@@ -28,3 +28,22 @@ export function isEligibleForRecall(rec, amendment) {
     && t.rawSha256 === sha256(t.raw)
     && t.classAfterMechanical === 'error';
 }
+
+/**
+ * Refute A1 N1: a usage-limit refusal by the client ("You've hit your ... limit", printed as the whole answer with a
+ * non-zero exit). The runner stops its invocation at the first one, so a limit cannot burn through the remaining rules.
+ */
+export const isClientLimitRefusal = call => call?.harnessFailure === 'nonzero-exit' && typeof call.raw === 'string' && /^You've hit your [^\n]*limit/.test(call.raw);
+
+/**
+ * Refute A1 N2: the recomputed eligible set must be exactly the set the amendment pins (the attempt-1 translator call
+ * ids, sorted, and their sha256). Returns the problems (empty when it matches).
+ */
+export function eligiblePinProblems(eligibleRecords, amendment) {
+  const pinned = amendment?.eligibility?.eligibleCallIds;
+  const got = eligibleRecords.map(r => r?.translator?.callId).sort();
+  if (!Array.isArray(pinned)) return ['the amendment pins no eligible set'];
+  if (sha256(JSON.stringify(pinned)) !== amendment.eligibility.eligibleCallIdsSha256) return ['the pinned eligible set does not match its sha256'];
+  if (JSON.stringify(got) !== JSON.stringify(pinned)) return [`the eligible set (${got.length}) is not the ${pinned.length} attempt-1 calls the amendment pins`];
+  return [];
+}

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { AMENDMENT01_NOT_BEFORE, AMENDMENT01_SHA256, NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
 import { checkAmendment01, checkCensusRun, gitIn, readPins, REPO_ROOT } from '../experiments/blueprint-floor/census-guard.mjs';
@@ -10,7 +11,7 @@ import { isEligibleForRecall, loadAmendment } from '../experiments/blueprint-flo
 import { paidPreflight, runCensus } from '../experiments/blueprint-floor/census-run.mjs';
 import { computeCensusResults, gateFromData, readRecords, recordFilesUnder } from '../experiments/blueprint-floor/census-gate.mjs';
 import { loadCensusRules } from '../experiments/blueprint-floor/scorer.mjs';
-import { amendNote, checkAmendment, MESSAGE, publishedPath, recordPath, renderSection } from './blueprint-floor-amendment.mjs';
+import { amendNote, checkAmendment, MESSAGE, publishedPath, recordPath, renderSection, validateAmendment } from './blueprint-floor-amendment.mjs';
 import { resultWords } from './blueprint-floor-note.mjs';
 import { claudeFree7, withFake } from './blueprint-floor-census-free.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
@@ -44,10 +45,37 @@ test('amendment 01: pinned, its parent the published pre-registration, the decis
   assert.equal(AMENDMENT01_NOT_BEFORE, null);
   const section = renderSection(record, sha256);
   assert.ok(!resultWords.test(section));
+  assert.equal(section.split('the pinned client').length - 1, 1, 'refute A1 N5: "the pinned client" once');
+  assert.match(section, /the pinned client \(Claude Code 2\.1\.280\) answered/);
+  assert.equal(record.eligibility.eligibleCallIds.length, 37, 'refute A1 N2: the eligible set is pinned');
+  assert.equal(record.disclosures.length, 5, 'refute A1 N4 and N6 are disclosed');
   const note = readFileSync(join(REPO_ROOT, 'site/journal/which-rules-need-a-model.html'), 'utf8');
   const built = amendNote(note, record, sha256);
   assert.ok(built.indexOf('id="amendment-01"') < built.indexOf('<h2>Provenance</h2>'), 'the section sits before Provenance');
   assert.throws(() => amendNote(built, record, sha256), /already carries amendment 01/);
+});
+
+test('refute A1-B1: the amendment checks without git history (a copy with no .git, and a depth-1 clone)', () => {
+  const copy = scratchDir('bf-a01-nogit');
+  try {
+    for (const rel of [recordPath, 'experiments/blueprint-floor/amendment-01.sha256', publishedPath, 'experiments/blueprint-floor/preregistration.json']) { mkdirSync(join(copy, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(copy, rel)); }
+    const { sha256 } = checkAmendment(copy, { verifyHistory: true }); // no commit object here: only the git confirmation is skipped
+    assert.equal(sha256, AMENDMENT_SHA);
+    const tampered = JSON.parse(amendmentBytes);
+    tampered.attempt1Code['experiments/blueprint-floor/scorer.mjs'] = 'f'.repeat(64);
+    assert.throws(() => validateAmendment(tampered, { parentSha256: PREREG_SHA256, root: copy }), /attempt1Code is the runners\.sha256 whose sha256 the amendment pins/);
+  } finally { removeScratch(copy); }
+  // A depth-1 clone of the committed branch head: no history, and the checker passes there.
+  const clone = scratchDir('bf-a01-clone');
+  try {
+    const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).stdout.trim();
+    const r = spawnSync('git', ['clone', '-q', '--depth', '1', '--no-local', `file://${REPO_ROOT}`, join(clone, 'r')], { encoding: 'utf8' });
+    if (r.status !== 0) return; // a worktree without a committed branch head to clone (the copy check above still ran)
+    spawnSync('git', ['-C', join(clone, 'r'), 'checkout', '-q', head], { encoding: 'utf8' });
+    assert.equal(spawnSync('git', ['-C', join(clone, 'r'), 'cat-file', '-e', 'ee88bf763bc25d4642fb3de4bf9fe951297ca7a8^{commit}']).status === 0, false, 'the clone has no history');
+    const run = spawnSync(process.execPath, ['scripts/blueprint-floor-amendment.mjs', '--check'], { cwd: join(clone, 'r'), encoding: 'utf8' });
+    if (existsSync(join(clone, 'r', recordPath)) && readFileSync(join(clone, 'r', recordPath)).equals(amendmentBytes)) assert.equal(run.status, 0, run.stderr);
+  } finally { removeScratch(clone); }
 });
 
 test('eligibility is exact: the spend-limit message on a nonzero exit, byte for byte, and nothing else', () => {
@@ -115,8 +143,11 @@ test('rehearsal: the fake client refuses with the limit message on attempt 1; th
   await withFake({ 5: 'limit', 8: 'other-limit' }, async ({ dir, paths, ledger, log }) => {
     const outDir2 = join(dir, 'attempt-2');
     await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', log: () => {} });
-    const run = await runCensus({ ...paths, mode: 'rehearsal', only: ids, log: () => {} });
-    assert.equal(run.partial, null);
+    const run1 = await runCensus({ ...paths, mode: 'rehearsal', only: ids, log: () => {} });
+    assert.deepEqual([run1.partial.reason, run1.partial.ruleId], ['client-limit', 'control/08'], 'refute A1 N1: the circuit breaker stops at the first limit refusal');
+    const run2 = await runCensus({ ...paths, mode: 'rehearsal', only: ids, log: () => {} });
+    assert.equal(run2.partial.reason, 'client-limit', 'control/10\'s refusal (another limit message) stops it too');
+    assert.deepEqual([run2.skipped, run2.completed], [1, 2]);
     // The attempt-1 records stand in for the counted run's, made by the code the amendment pins.
     for (const id of ids) { const f = join(paths.outDir, `${id}.json`); const r = JSON.parse(readFileSync(f, 'utf8')); r.code = amendment.attempt1Code; writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`); }
     const r08 = JSON.parse(readFileSync(join(paths.outDir, 'control/08.json'), 'utf8'));
@@ -124,8 +155,9 @@ test('rehearsal: the fake client refuses with the limit message on attempt 1; th
     assert.equal(isEligibleForRecall(JSON.parse(readFileSync(join(paths.outDir, 'control/10.json'), 'utf8')), amendment), false);
     const before = log().length;
     const now = new Date(Date.parse(A_NB) + 1000);
-    const recall = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, log: () => {} });
+    const recall = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, rehearsalEligible: [r08.translator.callId], log: () => {} });
     assert.equal(recall.partial, null);
+    assert.equal(recall.eligibleSetPinned, true);
     assert.deepEqual([recall.eligible, recall.completed, recall.called], [1, 1, 2]);
     assert.deepEqual(log().slice(before).map(c => c.role), ['translator', 'adjudicator'], 'one re-call of the translator, then its adjudicator');
     assert.deepEqual(recordFilesUnder(outDir2), ['control/08.json'], 'only the eligible rule has an attempt-2 record');
@@ -136,14 +168,18 @@ test('rehearsal: the fake client refuses with the limit message on attempt 1; th
     assert.deepEqual(lines.map(l => [l.ruleId, l.role, l.amends]), [['control/08', 'translator', r08.translator.callId], ['control/08', 'adjudicator', r08.translator.callId]]);
     assert.equal(ledger.entries().filter(l => l.ruleId === 'control/08' && l.role === 'translator').length, 2, 'the original line stays');
     // A second recall calls nothing: every eligible pair has its attempt-2 record (and line).
-    const again = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, log: () => {} });
+    const again = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, rehearsalEligible: [r08.translator.callId], log: () => {} });
     assert.deepEqual([again.called, again.skipped], [0, 1]);
+    await assert.rejects(runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, rehearsalEligible: ['counted:other:translator:1:1'], log: () => {} }), /eligible set \(1\) is not the 1 attempt-1 calls the amendment pins/, 'refute A1 N2: another pinned set refuses');
     assert.equal(log().length - before, 2, 'no second re-call');
 
     // The gate: with the rehearsal markers flipped in memory, it opens, and control/08 is scored from attempt 2.
     const { rules, plugins } = loadCensusRules(REPO_ROOT);
     const sub = rules.filter(r => ids.includes(r.ruleId));
-    const flip = rec => ({ ...rec, rehearsal: false, served: { url: SERVED_URL, sha256: PREREG_SHA256, fetchedAt: rec.startedAt } });
+    const flip = rec => ({ ...rec, rehearsal: false, served: { url: SERVED_URL, sha256: PREREG_SHA256, fetchedAt: rec.startedAt }, ...(rec.attempt === 2 ? { servedAmendment: { url: 'served', sha256: AMENDMENT_SHA, fetchedAt: rec.startedAt } } : {}) });
+    // The rehearsal's eligible set (one rule) stands in for the 37 the published amendment pins.
+    const pinnedOne = [r08.translator.callId];
+    const amendmentT = { ...amendment, eligibility: { ...amendment.eligibility, eligibleCallIds: pinnedOne, eligibleCallIdsSha256: sha(JSON.stringify(pinnedOne)) } };
     const files1 = recordFilesUnder(paths.outDir);
     const recs1 = Object.fromEntries(Object.entries(readRecords(paths.outDir, files1)).map(([k, v]) => [k, flip(v)]));
     const recs2 = Object.fromEntries(Object.entries(readRecords(outDir2, recordFilesUnder(outDir2))).map(([k, v]) => [k, flip(v)]));
@@ -152,15 +188,15 @@ test('rehearsal: the fake client refuses with the limit message on attempt 1; th
     const scorerPin = prereg.files['experiments/blueprint-floor/scorer.mjs'];
     const shas1 = Object.fromEntries(files1.map(f => [f.replace(/\.json$/, ''), sha(Buffer.from(`${JSON.stringify(recs1[f.replace(/\.json$/, '')], null, 2)}\n`))]));
     for (const id of Object.keys(recs2)) recs2[id] = { ...recs2[id], attempt1Sha256: shas1[id] };
-    const results = computeCensusResults({ rules: sub, plugins, records: recs1, ledgerLines: allLines, denominator: 3, scorerSha256: scorerPin, attempt2Records: recs2, amendment, amendmentSha256: AMENDMENT_SHA });
-    const inputs = over => ({ resultsBytes: JSON.stringify(results), records: recs1, recordFiles: files1, ledgerText: `${allLines.map(l => JSON.stringify(l)).join('\n')}\n`, practiceRecords: [practiceRec], models: { translator: 'claude-opus-5-5', adjudicator: 'claude-sonnet-5' }, rules: sub, plugins, pins: readPins(), freeze: FROZEN, preregDiskSha256: PREREG_SHA256, denominator: 3, scorerDiskSha256: scorerPin, scorerPin, attempt2Records: recs2, attempt2Files: Object.keys(recs2).map(k => `${k}.json`), attempt1Shas: shas1, amendment, amendmentDiskSha256: AMENDMENT_SHA, ...over });
+    const results = computeCensusResults({ rules: sub, plugins, records: recs1, ledgerLines: allLines, denominator: 3, scorerSha256: scorerPin, attempt2Records: recs2, amendment: amendmentT, amendmentSha256: AMENDMENT_SHA });
+    const inputs = over => ({ resultsBytes: JSON.stringify(results), records: recs1, recordFiles: files1, ledgerText: `${allLines.map(l => JSON.stringify(l)).join('\n')}\n`, practiceRecords: [practiceRec], models: { translator: 'claude-opus-5-5', adjudicator: 'claude-sonnet-5' }, rules: sub, plugins, pins: readPins(), freeze: FROZEN, preregDiskSha256: PREREG_SHA256, denominator: 3, scorerDiskSha256: scorerPin, scorerPin, attempt2Records: recs2, attempt2Files: Object.keys(recs2).map(k => `${k}.json`), attempt1Shas: shas1, amendment: amendmentT, amendmentDiskSha256: AMENDMENT_SHA, ...over });
     const g = gateFromData(inputs({}));
     assert.deepEqual(g.failures, []);
     assert.equal(g.publishable, true);
     assert.ok(!g.facts.errors.some(e => e.ruleId === 'control/08'), 'control/08 is scored from its attempt-2 record');
     assert.ok(g.facts.errors.some(e => e.ruleId === 'control/10'), 'the ineligible failure stays error');
     assert.deepEqual([g.facts.amendment.eligible, g.facts.amendment.recalled], [1, 1]);
-    assert.equal(g.facts.disclosures.length, 8 + 3);
+    assert.equal(g.facts.disclosures.length, 8 + 5);
     const closed = (over, re, label) => { const x = gateFromData(inputs(over)); assert.equal(x.publishable, false, label); assert.ok(x.failures.some(f => re.test(f)), `${label}: ${JSON.stringify(x.failures.slice(0, 3))}`); };
     closed({ attempt2Records: {}, attempt2Files: [] }, /eligible rules without their attempt-2 record: control\/08/, 'the eligible rule was not re-called');
     closed({ attempt2Records: { ...recs2, 'control/10': { ...recs2['control/08'], ruleId: 'control/10' } }, attempt2Files: ['control/08.json', 'control/10.json'] }, /not eligible under amendment 01 \(an ineligible re-call\): control\/10/, 'an ineligible re-call');
@@ -173,6 +209,10 @@ test('rehearsal: the fake client refuses with the limit message on attempt 1; th
     closed({ attempt2Records: { 'control/08': { ...recs2['control/08'], amends: 'other' } } }, /does not amend its attempt-1 translator call/, 'amends another call');
     closed({ attempt2Records: { 'control/08': { ...recs2['control/08'], startedAt: A_NB } } }, /attempt-2 call started at or before the amendment 01 not-before/, 'a re-call before the not-before');
     closed({ attempt1Shas: { ...shas1, 'control/08': 'e'.repeat(64) } }, /names another attempt-1 record/, 'the attempt-1 record changed after the re-call');
+    closed({ amendment }, /the eligible set \(1\) is not the 37 attempt-1 calls the amendment pins/, 'refute A1 N2: the published amendment pins 37');
+    closed({ attempt2Records: { 'control/08': { ...recs2['control/08'], amendmentNotBefore: '2026-10-05T00:00:00Z' } } }, /another not-before or amendment not-before/, 'refute A1 N3: amendmentNotBefore');
+    closed({ attempt2Records: { 'control/08': { ...recs2['control/08'], notBefore: '2026-10-03T12:09:43Z' } } }, /another not-before or amendment not-before/, 'refute A1 N3: notBefore');
+    closed({ attempt2Records: { 'control/08': { ...recs2['control/08'], servedAmendment: null } } }, /the served amendment was not the frozen one/, 'refute A1 N3: servedAmendment');
     // Results scored from the attempt-1 records (the refusal) instead of attempt 2: closed.
     const fromAttempt1 = computeCensusResults({ rules: sub, plugins, records: recs1, ledgerLines: allLines, denominator: 3, scorerSha256: scorerPin });
     const forged = { ...fromAttempt1, amendment: results.amendment, code: results.code, attempt1Code: results.attempt1Code };
@@ -189,12 +229,41 @@ test('a re-call that fails again stays error, and there is no third attempt', LO
     await runCensus({ ...paths, mode: 'rehearsal', only: ['control/08'], log: () => {} });
     const f = join(paths.outDir, 'control/08.json'); const r = JSON.parse(readFileSync(f, 'utf8')); r.code = amendment.attempt1Code; writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`);
     const now = new Date(Date.parse(A_NB) + 1000);
-    await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ['control/08'], log: () => {} });
+    const first = JSON.parse(readFileSync(f, 'utf8')).translator.callId;
+    const stopped = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ['control/08'], rehearsalEligible: [first], log: () => {} });
+    assert.equal(stopped.partial.reason, 'client-limit', 'the re-call was refused again: the breaker stops the invocation');
     const a2 = JSON.parse(readFileSync(join(outDir2, 'control/08.json'), 'utf8'));
     assert.deepEqual([a2.final.final, a2.translator.harnessFailure, a2.adjudicator.called], ['error', 'nonzero-exit', false]);
     const n = log().length;
-    const again = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ['control/08'], log: () => {} });
+    const again = await runCensus({ ...paths, outDir2, mode: 'rehearsal', rehearsalOf: 'recall', freeze: FROZEN, now, only: ['control/08'], rehearsalEligible: [first], log: () => {} });
     assert.deepEqual([again.called, log().length - n], [0, 0], 'no third attempt');
     assert.equal(ledger.entries().filter(l => l.ruleId === 'control/08').length, 2, 'one attempt-1 line, one attempt-2 line');
+  });
+});
+
+test('refute A1 N1: the circuit breaker stops a recall at the first limit refusal; the rest stay uncalled and resumable. --dry-run calls nothing', LONG, async () => {
+  // Practice 1-4. Counted: c08 T (5) limit -> stop; c09 T (6) limit -> stop; c10 T (7), A (8).
+  // Recall: c08 T (9) limit -> stop, c09 untouched; next recall: c09 T (10), A (11).
+  const ids = ['control/08', 'control/09', 'control/10'];
+  await withFake({ 5: 'limit', 6: 'limit', 9: 'limit' }, async ({ dir, paths, ledger, log }) => {
+    const outDir2 = join(dir, 'attempt-2');
+    await runCensus({ ...paths, mode: 'rehearsal', rehearsalOf: 'practice', log: () => {} });
+    for (let i = 0; i < 3; i += 1) await runCensus({ ...paths, mode: 'rehearsal', only: ids, log: () => {} });
+    for (const id of ids) { const f = join(paths.outDir, `${id}.json`); const r = JSON.parse(readFileSync(f, 'utf8')); r.code = amendment.attempt1Code; writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`); }
+    const eligibleIds = ['control/08', 'control/09'].map(id => JSON.parse(readFileSync(join(paths.outDir, `${id}.json`), 'utf8')).translator.callId);
+    const now = new Date(Date.parse(A_NB) + 1000);
+    const opts = { ...paths, outDir2, rehearsalOf: 'recall', freeze: FROZEN, now, only: ids, rehearsalEligible: eligibleIds, log: () => {} };
+    const n0 = log().length, lines0 = ledger.entries().length;
+    const plan = await runCensus({ ...opts, mode: 'rehearsal', dryRun: true });
+    assert.deepEqual([plan.dryRun, plan.eligible, plan.remaining, plan.eligibleSetPinned], [true, ['control/08', 'control/09'], ['control/08', 'control/09'], true]);
+    assert.ok(plan.projectedUsd > plan.spentUsd && plan.formula.includes('1.5'));
+    assert.deepEqual([log().length - n0, ledger.entries().length - lines0, existsSync(outDir2)], [0, 0, false], 'a dry run makes no call, no line, no record');
+    const r1 = await runCensus({ ...opts, mode: 'rehearsal' });
+    assert.deepEqual([r1.partial.reason, r1.partial.ruleId, r1.called], ['client-limit', 'control/08', 1]);
+    assert.equal(existsSync(join(outDir2, 'control/09.json')), false, 'the next eligible rule stays uncalled');
+    const r2 = await runCensus({ ...opts, mode: 'rehearsal' });
+    assert.deepEqual([r2.partial, r2.called, r2.skipped], [null, 2, 1], 'a later invocation calls the remaining rule');
+    assert.notEqual(JSON.parse(readFileSync(join(outDir2, 'control/09.json'), 'utf8')).final.final, 'error');
+    assert.equal(JSON.parse(readFileSync(join(outDir2, 'control/08.json'), 'utf8')).final.final, 'error', 'the refused re-call stays error');
   });
 });

@@ -34,7 +34,7 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCensusRules, finalClass, score } from './scorer.mjs';
 import { AMENDMENT01_NOT_BEFORE, AMENDMENT01_SHA256, NOT_BEFORE, PREREG_SHA256 } from './freeze.mjs';
-import { AMENDMENT_PATH, ATTEMPT2_DIR, isEligibleForRecall } from './amendment01.mjs';
+import { AMENDMENT_PATH, ATTEMPT2_DIR, eligiblePinProblems, isEligibleForRecall } from './amendment01.mjs';
 import { attemptOf, LEDGER, ROLES, sumUsd, units, validLine } from './census-spend.mjs';
 
 export const REPO_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
@@ -230,6 +230,8 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
     if (results.amendment?.sha256 !== freeze.AMENDMENT01_SHA256) fail('the results were not made under the frozen amendment 01');
     if (!freeze.AMENDMENT01_NOT_BEFORE) fail('amendment 01 has no frozen not-before');
     eligible = amendment ? ids.filter(id => isObject(records[id]) && isEligibleForRecall(records[id], amendment)) : [];
+    // Refute A1 N2: the recomputed eligible set is exactly the set the amendment pins.
+    if (amendment) for (const p of eligiblePinProblems(eligible.map(id => records[id]), amendment)) fail(`amendment 01: ${p}`);
     const a2ids = attempt2Files.map(f => f.replace(/\.json$/, ''));
     const dup2 = a2ids.filter((id, i) => a2ids.indexOf(id) !== i);
     if (dup2.length) fail(`duplicate attempt-2 record files: ${[...new Set(dup2)].join(', ')}`);
@@ -246,6 +248,9 @@ export function gateFromData({ resultsBytes, records, recordFiles, ledgerText, p
       if (attempt1Shas && r2.attempt1Sha256 !== attempt1Shas[id]) fail(`${id}: the attempt-2 record names another attempt-1 record`);
       if (r2.mode !== 'counted' || r2.fixture !== false || r2.rehearsal !== false) fail(`${id}: the attempt-2 record is not a counted record`);
       if (r2.preregSha256 !== freeze.PREREG_SHA256 || r2.amendmentSha256 !== freeze.AMENDMENT01_SHA256) fail(`${id}: the attempt-2 record was made under another pre-registration or amendment`);
+      // Refute A1 N3: its not-befores and the served amendment it checked.
+      if (r2.notBefore !== freeze.NOT_BEFORE || r2.amendmentNotBefore !== freeze.AMENDMENT01_NOT_BEFORE) fail(`${id}: the attempt-2 record carries another not-before or amendment not-before`);
+      if (r2.servedAmendment?.sha256 !== freeze.AMENDMENT01_SHA256) fail(`${id}: attempt 2: the served amendment was not the frozen one`);
       if (r2.served?.sha256 !== freeze.PREREG_SHA256) fail(`${id}: attempt 2: the served record was not the frozen one`);
       if (!pins || canonical(r2.code) !== canonical(pins)) fail(`${id}: attempt 2: its code shas differ from runners.sha256`);
       const starts = [r2.startedAt, ...calledRoles(r2).map(c => c.call.startedAt)];
