@@ -17,7 +17,7 @@
   "incident": {
     "summary": "During the counted census the model client stopped answering: its account had reached its monthly spend limit. From that moment every translator call ended at once with a non-zero exit and the same one-line message, so 37 rules got class error (counted as not) without the translator ever seeing them. This amendment is written after the counted run and before any census result is published; it shows no result.",
     "firstRefusedCallEndedAt": "2026-10-06T12:38:20Z",
-    "client": "Claude Code 2.1.280 (the pinned client)",
+    "client": "Claude Code 2.1.280",
     "message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your weekly limit resets Oct 9 at 3am (Europe/Amsterdam)",
     "affected": {
       "translatorCalls": 37,
@@ -30,7 +30,8 @@
     },
     "charged": "Each of the 37 calls was charged the pre-registered unknown-cost bound, $0.5000000 ($18.5000000 in all), and its adjudicator call was not made (the translator ended in error).",
     "untouched": "The other 151 census rules (the 13 controls and 138 primary rules) were called and answered before the limit was reached; their records are not changed by this amendment.",
-    "attempt1Commit": "ee88bf763bc25d4642fb3de4bf9fe951297ca7a8"
+    "attempt1Commit": "ee88bf763bc25d4642fb3de4bf9fe951297ca7a8",
+    "attempt1RunnersSha256": "8716466f2459860f494c7f163f65e2088ba16b197b071bd73e1daae0565e93f6"
   },
   "eligibility": {
     "rule": "A census rule is eligible for exactly one re-call when its committed attempt-1 record's translator call ended with harnessFailure nonzero-exit AND that call's raw client output (translator.raw) is byte for byte the message below, which begins with the stable prefix, AND translator.rawSha256 is the sha256 of that text. Any other failure (another message, a timeout, a parse error, a model mismatch) is not eligible and keeps its class error.",
@@ -42,7 +43,48 @@
       "translator.harnessFailure",
       "translator.raw",
       "translator.rawSha256"
-    ]
+    ],
+    "eligibleCallIds": [
+      "counted:hunch/spec/bips/bip133/feefilter-is-advisory:translator:1791290317789:12038",
+      "counted:hunch/spec/bips/bip137/legacy-format-scope:translator:1791290320568:12038",
+      "counted:hunch/spec/bips/bip158/siphash-parameters:translator:1791290323625:12038",
+      "counted:hunch/spec/bips/bip322/to-sign-fields:translator:1791290327180:12038",
+      "counted:hunch/spec/bips/bip339/msg-wtx-announcements:translator:1791290330249:12038",
+      "counted:hunch/spec/bips/bip340/nonce-must-be-unpredictable:translator:1791290333083:12038",
+      "counted:hunch/spec/bips/bip342/minimalif-consensus:translator:1791290335941:12038",
+      "counted:hunch/spec/bips/bip352/eligible-inputs-only:translator:1791290338273:12038",
+      "counted:hunch/spec/bips/bip370/locktime-resolution:translator:1791290341926:12038",
+      "counted:hunch/spec/bips/bip380/checksum-verified:translator:1791290345073:12038",
+      "counted:hunch/spec/bips/bip47/op-return-payload:translator:1791290347959:12038",
+      "counted:hunch/spec/bips/bip78/proposal-fee-not-lower:translator:1791290350682:12038",
+      "counted:hunch/spec/nips/nip01/a-tag-coordinate:translator:1791290353484:12038",
+      "counted:hunch/spec/nips/nip18/repost-e-tag-relay-hint:translator:1791290356946:12038",
+      "counted:hunch/spec/nips/nip22/comment-content-plain:translator:1791290359888:12038",
+      "counted:hunch/spec/nips/nip44/padded-length-algorithm:translator:1791290362506:12038",
+      "counted:hunch/spec/nips/nip44/plaintext-length-bounds:translator:1791290365113:12038",
+      "counted:hunch/spec/nips/nip47/request-tags:translator:1791290366949:12038",
+      "counted:hunch/spec/nips/nip75/zap-request-carries-goal-relays:translator:1791290368977:12038",
+      "counted:hunch/spec/nuts/nut00/proof-shape:translator:1791290371643:12038",
+      "counted:hunch/spec/nuts/nut00/short-keyset-id-not-sent-to-mint:translator:1791290374249:12038",
+      "counted:hunch/spec/nuts/nut00/v3-version-and-encoding:translator:1791290376940:12038",
+      "counted:hunch/spec/nuts/nut02/keysets-endpoint-shape:translator:1791290380852:12038",
+      "counted:hunch/spec/nuts/nut03/swap-to-receive-settles:translator:1791290386289:12038",
+      "counted:hunch/spec/nuts/nut11/sig-inputs-only-without-sig-all:translator:1791290392075:12038",
+      "counted:hunch/spec/nuts/nut15/mpp-support-per-method-unit:translator:1791290395070:12038",
+      "counted:hunch/spec/nuts/nut21/clear-auth-settings-shape:translator:1791290397886:12038",
+      "counted:hunch/spec/nuts/nut21/localhost-redirect-url:translator:1791290400688:12038",
+      "counted:hunch/spec/nuts/nut22/bat-serialization:translator:1791290403302:12038",
+      "counted:hunch/spec/nuts/nut25/bolt12-multiple-issuances:translator:1791290406279:12038",
+      "counted:jev-axi/PUSH_QUESTIONS/unreviewed_leftovers:translator:1791290298634:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/destructive:translator:1791290301092:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/exfiltration:translator:1791290304004:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/outside_project:translator:1791290306903:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/remote_code:translator:1791290309702:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/risk:translator:1791290312747:12038",
+      "counted:jev-axi/SAFETY_QUESTIONS/weakens_security:translator:1791290314798:12038"
+    ],
+    "eligibleCallIdsSha256": "2b616dda039af9902213560c43ec34676ea7a30ec9746c231c802090f023593b",
+    "pinnedSet": "The eligible set is pinned: the attempt-1 translator call ids of the 37 rules the rule selects, sorted (eligibleCallIds, and the sha256 of their JSON array). A re-call and the gate both recompute the set from the committed attempt-1 records and refuse unless it is exactly this list."
   },
   "recall": [
     "Each eligible (ruleId, translator) pair is called again ONCE, with the pinned argv, models, prompts, environment and checks of the counted run, then its adjudicator if the translator answers (no error class).",
@@ -50,7 +92,8 @@
     "The original ledger lines stay as they are (charged the bound, disclosed); every re-call call gets its own new ledger line (kind counted, attempt 2, amends: the attempt-1 translator call id).",
     "A re-call that fails again, for any reason, keeps class error: there is no third attempt, and a (ruleId, role) pair with an attempt-2 ledger line is never called again.",
     "For an eligible rule the attempt-2 record is the one scored; every other rule must have no attempt-2 record, and an attempt-2 record or ledger line for an ineligible rule keeps the result unpublishable.",
-    "The re-call runs under the same guards as the counted run (the frozen pre-registration and this amendment, both served byte for byte, after this amendment's not-before; the pinned code; the base tree by its bytes; the shared ledger), and under the same spend rules: the $100 cap, the $40 census ceiling and the reserve rule."
+    "The re-call runs under the same guards as the counted run (the frozen pre-registration and this amendment, both served byte for byte, after this amendment's not-before; the pinned code; the base tree by its bytes; the shared ledger), and under the same spend rules: the $100 cap, the $40 census ceiling and the reserve rule.",
+    "The re-call stops at the first call the client refuses with a usage-limit message (\"You've hit your ... limit\"): that call keeps its ledger line and its record (class error, no further attempt), and the remaining eligible rules stay uncalled and can be re-called by a later invocation. A dry run (--mode recall --dry-run) lists the eligible set and the projected spend without any call."
   ],
   "unchanged": [
     "the calibration bar and the kill criterion",
@@ -102,6 +145,8 @@
   "disclosures": [
     "From 2026-10-06T12:38:20Z the model client's account had reached its monthly spend limit; 37 translator calls (the 30 secondary-sample rules and 7 primary rules) ended at once with the client's limit message and no answer.",
     "Those 37 calls were charged the pre-registered unknown-cost bound, $0.5000000 each ($18.5000000), although the client reported no cost; their lines stay in the ledger.",
-    "Under this amendment each of those 37 rules is re-called once (attempt 2) and the attempt-2 record is the one scored; a re-call that fails again stays class error."
+    "Under this amendment each of those 37 rules is re-called once (attempt 2) and the attempt-2 record is the one scored; a re-call that fails again stays class error.",
+    "The re-call runs on code that differs from the code published with this amendment only in freeze.mjs's values (this amendment's sha256 and not-before) and the re-pinned runners.sha256.",
+    "The attempt-2 answers come from a later session and date than the attempt-1 answers of the other rules (a time confound); which rules are re-called does not depend on any answer, only on the client's refusal message."
   ]
 }

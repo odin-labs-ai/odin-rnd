@@ -24,6 +24,12 @@ export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 const REQUIRED = ['schemaVersion', 'kind', 'experiment', 'id', 'title', 'authoredOn', 'parent', 'decision', 'incident', 'eligibility', 'recall', 'unchanged', 'onlyChange', 'attempt1Code', 'notBefore', 'disclosures'];
 
+/** The bytes of a runners.sha256 file for a pins map (the format census-guard.mjs renderPins writes). */
+export const renderPinsBytes = map => Object.entries(map).map(([rel, h]) => `${h}  ${rel}\n`).join('');
+/** Does `root`'s git have the commit object? (A shallow clone or a copy without .git does not.) */
+export function commitExists(commit, root = '.') {
+  try { execFileSync('git', ['cat-file', '-e', `${commit}^{commit}`], { cwd: root, stdio: 'ignore' }); return true; } catch { return false; }
+}
 /** The pins of the counted-path code at the attempt-1 commit, read from git (the commit is in this repository's history). */
 export function attempt1Pins(commit, root = '.') {
   const text = execFileSync('git', ['show', `${commit}:${D}/runners.sha256`], { cwd: root, encoding: 'utf8' });
@@ -49,11 +55,17 @@ export function validateAmendment(record, { parentSha256, root = '.', verifyHist
   assert.deepEqual(record.incident.affected, { translatorCalls: 37, secondarySample: 30, secondaryOf: 30, primary: 7, primaryOf: 145, controls: 0, adjudicatorCallsSkipped: 37 });
   assert.equal(Object.keys(record.attempt1Code).length, 34);
   assert(Object.values(record.attempt1Code).every(h => /^[0-9a-f]{64}$/.test(h)));
-  // The history check needs the attempt-1 commit, so it runs in --check and the tests, not in the build (a fresh copy
-  // or a shallow CI clone has no history); the record itself is pinned by its sha256 either way.
-  if (verifyHistory) assert.deepEqual(record.attempt1Code, attempt1Pins(record.incident.attempt1Commit, root), 'attempt1Code is the counted-path pins at the attempt-1 commit');
+  // Refute A1-B1: no git history needed. attempt1Code, rendered back to runners.sha256 bytes, hashes to the pinned sha256
+  // of the attempt-1 commit's runners.sha256. When the commit object exists (not in a shallow clone), git confirms it too.
+  assert.equal(sha256(renderPinsBytes(record.attempt1Code)), record.incident.attempt1RunnersSha256, 'attempt1Code is the runners.sha256 whose sha256 the amendment pins');
+  if (verifyHistory && commitExists(record.incident.attempt1Commit, root)) assert.deepEqual(record.attempt1Code, attempt1Pins(record.incident.attempt1Commit, root), 'attempt1Code is the counted-path pins at the attempt-1 commit');
+  const ids = e.eligibleCallIds;
+  assert(Array.isArray(ids) && ids.length === 37, 'the pinned eligible set lists 37 attempt-1 translator calls');
+  assert.deepEqual(ids, [...new Set(ids)].sort(), 'the pinned eligible call ids are sorted and unique');
+  assert(ids.every(id => /^counted:[^:]+(\/[^:]+)*:translator:\d+:\d+$/.test(id)), 'each pinned id is an attempt-1 translator call id');
+  assert.equal(e.eligibleCallIdsSha256, sha256(JSON.stringify(ids)));
   assert(record.unchanged.some(x => /scorer/.test(x)), 'the scorer is named unchanged');
-  assert.equal(record.disclosures.length, 3);
+  assert.equal(record.disclosures.length, 5);
   const text = JSON.stringify(record);
   assert(!resultWords.test(text.replace(/\bpasses\b/g, '')), 'amendment 01 states no result');
   assert(!/expressible share is|median (expressible )?share (is|was) \d/i.test(text), 'amendment 01 states no result');
