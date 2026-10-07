@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
 import { readPins, REPO_ROOT } from '../experiments/blueprint-floor/census-guard.mjs';
@@ -146,8 +146,14 @@ test('refute r2 N7: canary calls are validated before their pass counts; the pra
   closedBy(i => { i.ledgerText = i.ledgerText.replace('"kind":"canary","ruleId":"canary","role":"translator"', '"kind":"practice","ruleId":"canary","role":"translator"'); setResults(i, r => { r.spend.excludedLines[0].kind = 'practice'; }); }, /is kind practice, but its practice-record slot is canary/, 'a canary line booked as practice');
 });
 
-test('the committed tree: no census has run, so the gate is closed', () => {
+test('the committed tree: closed with no results record; once results are committed, open on them', () => {
   const g = censusGate(REPO_ROOT);
-  assert.deepEqual([g.publishable, g.variant, g.facts], [false, null, null]);
-  assert.deepEqual(g.failures, ['no results record']);
+  if (!existsSync(join(REPO_ROOT, 'experiments/blueprint-floor/results/results.json'))) {
+    assert.deepEqual([g.publishable, g.variant, g.facts], [false, null, null]);
+    assert.deepEqual(g.failures, ['no results record']);
+  } else {
+    assert.deepEqual(g.failures, [], 'the committed census is publishable');
+    assert.equal(g.publishable, true);
+    assert.equal(g.variant, JSON.parse(readFileSync(join(REPO_ROOT, 'experiments/blueprint-floor/results/results.json'), 'utf8')).score.kill.variant);
+  }
 });
