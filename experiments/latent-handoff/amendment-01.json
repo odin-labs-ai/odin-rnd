@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "id": "amendment-01",
+  "experiment": "EXP 008",
+  "title": "Amendment 01: the confirmatory analysis script",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "638d1dda53e8ae6c9c129d34e6b83fa6642f7ef60b30de8da71e7660082f7f6c",
+    "published": "odin-rnd #24, merged 2026-10-02T14:11:46Z (GitHub mergedAt). It stays byte-identical and is still served as published. This amendment adds the analysis script that its analysis field calls for and changes none of its fields."
+  },
+  "date": "2026-10-02",
+  "statusText": "Amended 02 Oct 2026, before any counted run",
+  "reason": {
+    "record": "score.mjs scores rows; the confirmatory analysis (the exclusions, Wilson interval, paired bootstrap, A2b-vs-A0 agreement, gates and the re-run comparison) is a script written after this record, before the not-before, that implements exactly the definitions here. It is added by a dated amendment that changes no other field, is refuted and published before any counted item runs, and resets the not-before.",
+    "statement": "This is that amendment. No counted item has run: nothing of the counted run exists when it is written, and its tests use synthetic rows only."
+  },
+  "changes": {
+    "fields": [],
+    "statement": "No field of the pre-registration changes. Its not-before is replaced by the later one below, as its analysis field requires."
+  },
+  "analysis": {
+    "file": "experiments/latent-handoff/analyse.mjs",
+    "sha256": "bc7e0b560f7ac6b7a96c8b5e6528d9b5b0346102c98aaab0f1e68635b32fac2b",
+    "tests": {
+      "file": "scripts/latent-handoff-analysis.test.mjs",
+      "sha256": "9858ef4358326822b313800534852692d22a15cc64872eda352b03baca794bab"
+    },
+    "reads": "the counted and re-run rows, the labels through score.mjs, the pre-registration, this amendment and pair-lock.json. Before it analyses anything it checks against its sha256 every file the pre-registration binds (its files and mapper code, the EXP 005 corpus sums, inputs, labels and rules, the EXP 008-X sums, the strata manifest, the pins, the readout, the pair-lock rows and the exposure and R1 evidence) and the script and tests this amendment binds",
+    "command": "node experiments/latent-handoff/analyse.mjs --counted <rows of counted-d1p-L-01, counted-d1p-M-01, counted-d1p-S-01> --rerun <rows of rerun-d1p-L-01, rerun-d1p-M-01, rerun-d1p-S-01> --amendment-merged-at <mergedAt> --out <analysis.json>"
+  },
+  "clauses": [
+    {
+      "id": "exclusions",
+      "record": [
+        {
+          "path": "corpus.analysed",
+          "text": "Every claim and validity gate is computed on the 175 items not seen before this record (136 of the 140 EXP 008-X items and 39 of EXP 005's c021–c060). c001–c020 and c029, c081, c097, c112, c144 were seen (see exposures and limits): they are run in the counted run but excluded from P1, S1–S3 and every gate, and reported separately."
+        },
+        {
+          "path": "corpus.fallback",
+          "text": "If the refute of this record (or a dated amendment before the not-before) finds EXP 008-X invalid, by a label error or a leak through the overlap fence, the run uses the 60 EXP 005 items alone and is refute-only: a P1 that holds on the 39 analysed EXP 005 items (c021–c060 without c029) is reported as \"not refuted\", never as met."
+        }
+      ],
+      "implementation": "The analysed items are every labelled item (score.mjs's labels, 200 items) minus corpus.exposedItems, asserted to be the record's count (175). Every claim, gate, secondary and descriptive figure is computed on them. The seen items are run and reported separately (seenItems: accuracy per stratum and arm), and enter nothing else. The 60-item fallback is not implemented: the pre-registration's refute did not trigger it, so it can now be triggered only by a dated amendment before the not-before, which would carry its own analysis of that run."
+    },
+    {
+      "id": "one-run",
+      "record": [
+        {
+          "path": "leakageFences.2",
+          "text": "Iteration happens on practice items only. There is one counted run, append-only."
+        }
+      ],
+      "implementation": "The counted run is exactly these run ids on the locked pair (read from pair-lock.json): counted-d1p-S-01, counted-d1p-M-01, counted-d1p-L-01; the re-run is rerun-d1p-S-01, rerun-d1p-M-01, rerun-d1p-L-01. Any row of another run id or pair is refused. Any row of another stratum, a duplicate attempt or a row for an item outside the run is refused too; a refusal stops the analysis (it is not a gate result), and its cause is disclosed and settled by a dated amendment before any result is read. The latest attempt counts per (item, arm); the driver re-queues whole items, so the arms of one item come from the same attempt. The run is analysed once, when it has finished or stopped; a paused run is resumed under the same run id first. Global gate complete: per stratum, the latest timing attempt of every (item, arm) exists for all 200 items × the 7 stage 1 arms (A0, A1, C1, C2, C3, A2a, A2b) in the counted run and for the re-run items in the re-run; an abstention is a row. A gap (for example, a run the runner stopped on a C1 mismatch) fails it, and then nothing else is computed: the result is uninformative."
+    },
+    {
+      "id": "not-before",
+      "record": [
+        {
+          "path": "notBefore",
+          "text": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this record as frozen. That time is recorded after publication; every counted item must start after it. Practice items do not wait for it."
+        }
+      ],
+      "implementation": "The not-before is 24 hours after the GitHub mergedAt of the odin-rnd pull request that publishes this amendment, passed to the script as --amendment-merged-at. Every row of the counted run and of the re-run, of every timing attempt (a superseded attempt included), must have its item start (the memory-gate reading taken before the item, gate.ts) after it; otherwise the global gate not-before fails and the run is uninformative."
+    },
+    {
+      "id": "a0-accuracy",
+      "record": [
+        {
+          "path": "validityGates.0",
+          "text": "Global: A0 accuracy ≥ 0.75 on stratum L of the locked pair. Below it the receiver cannot do the gate, and the result is \"small receivers cannot do this gate\", not a test of transfer."
+        }
+      ],
+      "implementation": "A0 on stratum L, analysed items, scored by score.mjs (an abstention is a wrong answer): passes when 100 × correct ≥ 75 × n. When it fails, the result is reported with the record's own reading: small receivers cannot do this gate, not a test of transfer."
+    },
+    {
+      "id": "c1",
+      "record": [
+        {
+          "path": "validityGates.1",
+          "text": "Global: C1 matches A0, KL < 0.001 on every item; a C1 abstention counts as a mismatch. Otherwise the run stops."
+        }
+      ],
+      "implementation": "score.mjs's C1 check on every stratum, analysed items: every C1 row must be answered, with klVsA0 < c1KlMax (0.001) and the same decision as A0 on that item; a C1 abstention is a failure. The gate passes only if all three strata pass."
+    },
+    {
+      "id": "zero-prefill",
+      "record": [
+        {
+          "path": "validityGates.2",
+          "text": "Global: zero prefill, the receiver's forwarded-token count equals the suffix length on every KV-arm item."
+        },
+        {
+          "path": "interface.rule",
+          "text": "A transfer may read the context text to align tokens; it may not run any forward pass over the context. The zero-prefill counter wraps the receiver: in a KV arm the receiver forwards exactly the suffix (the question and the chat-template tail) and nothing else, or the run fails."
+        }
+      ],
+      "implementation": "For every answered row of a KV arm (C1, C2, A2a, A2b) on the analysed items, every stratum: the sum of the receiver's recorded forward calls (forwardCalls) equals suffixLen. Abstained rows have no forward count; they are counted and reported."
+    },
+    {
+      "id": "rerun",
+      "record": [
+        {
+          "path": "validityGates.3",
+          "text": "Global: the seeded 10% re-run is byte-identical (see leakage fences)."
+        },
+        {
+          "path": "leakageFences.3",
+          "text": "A seeded 10% re-run: the 18 analysed items with the smallest sha256(\"8008:\" + item id), run again on the locked pair, every stratum and every arm (c027, c034, c038, c054, c089, c096, c103, c111, c136, c153, c168, c177, c181, c184, c191, c192, c196, c198). Under the 39-item fallback the set is the 4 analysed EXP 005 items picked the same way (c027, c034, c038, c054). Decisions and readout probabilities (to 6 decimals) must be byte-identical. Timings are excluded from byte identity and reported separately. A difference makes the run uninformative."
+        }
+      ],
+      "implementation": "The re-run set is recomputed (the analysed items with the smallest sha256(\"8008:\" + id)) and must equal the record's list. For every stratum, item and arm of the re-run, the key (abstain, decision, pYes to 6 decimals, pYesBin to 6 decimals) must equal the counted run's, string for string. Timings are not compared. Any difference fails the gate."
+    },
+    {
+      "id": "parity",
+      "record": [
+        {
+          "path": "validityGates.4",
+          "text": "Per arm: MLX-vs-CPU-torch parity for that arm's ported mapper (above)."
+        }
+      ],
+      "implementation": "Per KV claim arm (A2a, A2b): the record's own parity result for the locked pair (mappers.pairs.<pair>.parityBinding.<arm>.pass) must be true. A1 is a text arm and has no ported mapper: not applicable."
+    },
+    {
+      "id": "manipulation",
+      "record": [
+        {
+          "path": "validityGates.5",
+          "text": "Per arm: manipulation check, (arm accuracy − C2 accuracy) ≥ 0.15 on the stratum claimed, and |C2 − C3| ≤ 0.10 there."
+        }
+      ],
+      "implementation": "Per claim arm (A1, A2a, A2b) and per stratum, on the analysed items: 100 × (correct(arm) − correct(C2)) ≥ 15 × n and 100 × |correct(C2) − correct(C3)| ≤ 10 × n. P1 reads A2b on stratum L."
+    },
+    {
+      "id": "p1-agreement",
+      "record": [
+        {
+          "path": "primary.P1.criteria.0.statement",
+          "text": "Decision agreement with A0, item by item over the analysed items, has a two-sided 95% Wilson score interval whose lower bound is ≥ 0.90. An item where either arm abstains counts as a disagreement; the denominator is every analysed item."
+        }
+      ],
+      "implementation": "A2b and A0 on stratum L agree on an item when both answered and their decisions are equal; any abstention is a disagreement; n is every analysed item. The interval is the two-sided Wilson score interval with z = 1.959963984540054. The criterion holds when its lower bound ≥ 0.9."
+    },
+    {
+      "id": "p1-ttft",
+      "record": [
+        {
+          "path": "primary.P1.criteria.1.statement",
+          "text": "The ratio median(A2b receiver TTFT, mapping time included) / median(A0 TTFT), over the items where both arms answered and neither is timing-unstable, has a 95% percentile-bootstrap interval (10,000 paired item resamples, seed 8008) whose upper bound is ≤ 0.5. The sender's own prefill is excluded (in a handoff the sender has already read the context for its own work) and reported separately. Timing follows the protocol below. The excluded items are counted and reported; if more than 10% of the analysed items are excluded, the TTFT criterion is uninformative."
+        },
+        {
+          "path": "timing.rule",
+          "text": "Per item, the arm order is a seeded random permutation; each arm gets 1 warm-up and 5 timed repetitions and reports the median. The gate is read before and after each item; an item whose readings drifted is re-queued at most twice, then marked timing-unstable. TTFT includes the mapping time."
+        }
+      ],
+      "implementation": "TTFT is the row's ttftMs: the median of the 5 timed repetitions, which for A2b is the receiver side (the transfer plus the suffix, mapping included) and for A0 the whole prefill. Included items: analysed items where A0 and A2b both answered on stratum L and the item is not timing-unstable there (a timing-unstable line of the run names it). If 100 × excluded > 10 × n the criterion is uninformative. Ratio = median(A2b) / median(A0) over the included items. The bootstrap draws 10000 resamples of the included items with replacement, each an index floor(u × m) used for both arms (paired), u from mulberry32 seeded with 8008; the 95% interval is the sorted resampled ratios at 0-based positions 250 and 9749. The criterion holds when the upper bound ≤ 0.5. The sender's own prefill (senderMs) is reported separately as a median over the included items."
+    },
+    {
+      "id": "p1-verdict",
+      "record": [
+        {
+          "path": "primary.P1.rule",
+          "text": "P1 holds only if both criteria hold and every validity gate passes. Refuting P1 is the expected outcome, and it is published the same way."
+        },
+        {
+          "path": "validityRule",
+          "text": "Failing a global gate makes every result uninformative; failing a per-arm gate makes that arm's results uninformative. P1 needs every global gate and A2b's per-arm gates. Uninformative is never a pass."
+        }
+      ],
+      "implementation": "In this order: any global gate failed → uninformative; an A2b per-arm gate failed on stratum L → uninformative; the agreement criterion failed, or the TTFT criterion was informative and failed → refuted; the TTFT criterion uninformative → uninformative; otherwise holds. When a gate makes the verdict uninformative, the two criteria are shown with their numbers but no holds value (not in force). Every other figure (S1, R1, the accuracy and timing tables) carries informative false when a global gate failed, or, for a claim arm (A1, A2a, A2b), when its per-arm gate on that stratum failed."
+    },
+    {
+      "id": "s1",
+      "record": [
+        {
+          "path": "secondary.0.statement",
+          "text": "On stratum S, neither A2a nor A2b reaches a 1.2× TTFT speed-up over A0 (median A0 TTFT / median arm TTFT, mapping included). Predicted to hold; it locates the crossover."
+        }
+      ],
+      "implementation": "On stratum S, per arm A2a and A2b: speed-up = median(A0 TTFT) / median(arm TTFT) over the analysed items both answered and not timing-unstable there. S1 holds when both speed-ups are below 1.2. It is uninformative (no holds value) when any global gate fails or the per-arm gate of A2a or A2b on stratum S fails. Directional; it decides nothing."
+    },
+    {
+      "id": "s2",
+      "record": [
+        {
+          "path": "secondary.1.statement",
+          "text": "Round trip, on D1 and its reverse D2 only (A → B → A; not estimable if D1′ is locked, since its reverse is not pinned): decision agreement with A0 after the round trip is below the product of the two one-hop agreements."
+        }
+      ],
+      "implementation": "The locked pair is D1′ (pair-lock.json), so S2 is reported as not estimable, as the record says."
+    },
+    {
+      "id": "s3",
+      "record": [
+        {
+          "path": "secondary.2.statement",
+          "text": "An intrinsic signal (next-token KL, cycle-consistency error or attention-output cosine) predicts disagreement with A0 at AUROC ≥ 0.70 and beats KV cosine by ≥ 0.05. Recorded as \"not estimable\" if there are fewer than 15 disagreements."
+        }
+      ],
+      "implementation": "The frozen runner (runner.py, hash-bound) records none of the three intrinsic signals and no KV cosine for a mapper arm (for a mapper arm it records only the YES and NO log-probabilities, lpYes and lpNo, not a next-token distribution), so S3 is reported as not estimable, with the count of A2b-vs-A0 disagreements on stratum L (also not estimable below 15). This amendment changes no runner to add them."
+    },
+    {
+      "id": "r1",
+      "record": [
+        {
+          "path": "descriptive.0.statement",
+          "text": "Decision stability under bf16 rounding, reported for A2a and A2b on the locked pair, never a gate. At run time the receiver computes in bf16, where near p = 0.5 one logit step moves p by about 0.03. On the held-out parity items, float32-level cache differences (largest key difference 1.4e-4 on D1) left D1: A2a 20/20, A2b 20/20 decisions unchanged (max Δp 0.030 and 0.031); D1′: A2a 20/20, A2b 20/20 decisions unchanged (max Δp 0.019 and 0.025). The larger cache differences of a superseded reduced-precision D1 port attempt (largest key difference 0.025, read out on c001–c020) gave 19/20 (A2a) and 18/20 (A2b). The counted run reports, per arm, how many decisions sit within 0.03 of the threshold."
+        }
+      ],
+      "implementation": "Per arm A2a and A2b, per stratum, analysed items: the number of answered rows with |pYesBin − 0.5| ≤ 0.03, out of the answered rows, flagged informative only when every global gate and that arm's per-arm gate on that stratum pass. Never a gate."
+    }
+  ],
+  "run": {
+    "pair": "D1p",
+    "arms": [
+      "A0",
+      "A1",
+      "C1",
+      "C2",
+      "C3",
+      "A2a",
+      "A2b"
+    ],
+    "strataOrder": [
+      "L",
+      "M",
+      "S"
+    ],
+    "counted": [
+      {
+        "stratum": "L",
+        "runId": "counted-d1p-L-01",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum L --items <c001,…,c200> --run-id counted-d1p-L-01 --peak-gb 36.89"
+      },
+      {
+        "stratum": "M",
+        "runId": "counted-d1p-M-01",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum M --items <c001,…,c200> --run-id counted-d1p-M-01 --peak-gb 36.89"
+      },
+      {
+        "stratum": "S",
+        "runId": "counted-d1p-S-01",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum S --items <c001,…,c200> --run-id counted-d1p-S-01 --peak-gb 36.89"
+      }
+    ],
+    "rerun": [
+      {
+        "stratum": "L",
+        "runId": "rerun-d1p-L-01",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum L --items <the 18 ids> --run-id rerun-d1p-L-01 --peak-gb 36.89"
+      },
+      {
+        "stratum": "M",
+        "runId": "rerun-d1p-M-01",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum M --items <the 18 ids> --run-id rerun-d1p-M-01 --peak-gb 36.89"
+      },
+      {
+        "stratum": "S",
+        "runId": "rerun-d1p-S-01",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum S --items <the 18 ids> --run-id rerun-d1p-S-01 --peak-gb 36.89"
+      }
+    ],
+    "statement": "The counted run goes stratum by stratum in this order, then the re-run in the same order, each through arms.mjs (its timing protocol, seeded arm order and memory gate unchanged). --peak-gb is the measured D1′ practice peak in footprints.json (36.89 GB). A paused run is resumed under the same run id; nothing is ever re-run to change a result."
+  },
+  "notBefore": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this amendment (its GitHub mergedAt). That time is recorded after publication. This replaces the pre-registration's not-before, which it can only move later. If any item of the counted run or the re-run started earlier, the analysis fails its global gate not-before and the whole result is uninformative.",
+  "limits": [
+    "The not-before time is an input to the script (the merge time). The script checks every item start against it; that the input is the true merge time is checked against GitHub by the results refute, not by the script.",
+    "S2 and S3 are not estimable in this run (see clauses s2 and s3). Neither was a primary claim.",
+    "The 60-item fallback has no analysis here (see clause exclusions).",
+    "The tests use synthetic rows on real item ids with invented decisions, probabilities and timings; no counted data existed when this was written."
+  ]
+}
