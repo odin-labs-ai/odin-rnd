@@ -32,10 +32,17 @@ export const sumUsd = lines => fromUnits(lines.reduce((s, l) => s + units(l.cost
 export const knownCost = v => typeof v === 'number' && Number.isFinite(v) && round7(v) > 0;
 
 const LINE_KEYS = ['ts', 'kind', 'ruleId', 'role', 'model', 'costUsd', 'costBasis', 'reportedCostUsd', 'rehearsal', 'callId'];
+/** Amendment 01: a re-call's line also carries attempt (2) and amends (the attempt-1 translator call id). */
+const RECALL_KEYS = ['attempt', 'amends'];
+/** The attempt a line belongs to: 1 unless it is an amendment-01 re-call line. */
+export const attemptOf = e => e?.attempt ?? 1;
 /** A ledger line exactly as record() writes it; anything else makes the ledger corrupt (fail closed, never NaN). */
 export function validLine(e) {
+  const recall = e !== null && typeof e === 'object' && 'attempt' in e;
+  const keys = recall ? [...LINE_KEYS, ...RECALL_KEYS] : LINE_KEYS;
   return e !== null && typeof e === 'object' && !Array.isArray(e)
-    && Object.keys(e).length === LINE_KEYS.length && LINE_KEYS.every(k => k in e)
+    && Object.keys(e).length === keys.length && keys.every(k => k in e)
+    && (!recall || (e.attempt === 2 && e.kind === 'counted' && typeof e.amends === 'string' && e.amends.length > 0))
     && typeof e.ts === 'string' && Number.isFinite(Date.parse(e.ts)) && KINDS.includes(e.kind)
     && typeof e.ruleId === 'string' && e.ruleId.length > 0 && ROLES.includes(e.role) && typeof e.model === 'string'
     && typeof e.costUsd === 'number' && Number.isFinite(e.costUsd) && e.costUsd > 0 && e.costUsd === round7(e.costUsd)
@@ -81,7 +88,7 @@ export class CensusLedger {
   /** The pre-registered unknown-cost bound: max(observed per role) x 3, at least $0.5000000. */
   unknownBound(role) { return round7(Math.max(this.largestObserved(role) * this.limits.unknownFactor, this.limits.unknownFloorUsd)); }
   /** Whether (kind, ruleId, role) already has a line: the resume key (R6-3), never re-called. */
-  called(kind, ruleId, role, { rehearsal = false } = {}) { return this.entries().find(e => e.kind === kind && e.ruleId === ruleId && e.role === role && e.rehearsal === rehearsal) ?? null; }
+  called(kind, ruleId, role, { rehearsal = false, attempt = 1 } = {}) { return this.entries().find(e => e.kind === kind && e.ruleId === ruleId && e.role === role && e.rehearsal === rehearsal && attemptOf(e) === attempt) ?? null; }
 
   pendingLines() { return existsSync(this.pendingPath) ? readFileSync(this.pendingPath, 'utf8').split('\n').filter(Boolean) : []; }
   recordPending(meta) { mkdirSync(dirname(this.pendingPath), { recursive: true }); appendFileSync(this.pendingPath, `${JSON.stringify(meta)}\n`); }
@@ -115,7 +122,7 @@ export class CensusLedger {
   }
 
   /** Appends the line for one metered call; an unknown cost is charged the bound. Returns the line written. */
-  record({ ts, kind, ruleId, role, model, reportedCostUsd, rehearsal = false, callId }) {
+  record({ ts, kind, ruleId, role, model, reportedCostUsd, rehearsal = false, callId, attempt = 1, amends = null }) {
     if (!KINDS.includes(kind)) throw new Error(`unknown ledger kind ${kind}`);
     if (!ROLES.includes(role)) throw new Error(`unknown role ${role}`);
     const known = knownCost(reportedCostUsd);
@@ -125,7 +132,9 @@ export class CensusLedger {
       costBasis: known ? 'api-equivalent' : 'upper-bound',
       reportedCostUsd: typeof reportedCostUsd === 'number' && Number.isFinite(reportedCostUsd) ? reportedCostUsd : null,
       rehearsal: Boolean(rehearsal), callId,
+      ...(attempt === 2 ? { attempt: 2, amends } : {}),
     };
+    if (attempt !== 1 && attempt !== 2) throw new Error('a ledger line is attempt 1 or an amendment-01 re-call (attempt 2)');
     if (!validLine(line)) throw new Error('refusing to write an invalid ledger line (never a $0 line)');
     mkdirSync(dirname(this.path), { recursive: true });
     appendFileSync(this.path, `${JSON.stringify(line)}\n`);

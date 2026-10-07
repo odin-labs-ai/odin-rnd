@@ -164,26 +164,33 @@ test('a metered run is refused under the test runner, never uses the fake, and t
   } finally { removeScratch(dir); }
   if (process.env.NODE_TEST_CONTEXT) assert.throws(() => chooseClaude7(false, '/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin'), /claude is not on the PATH|refused under the Node test runner/);
   // A metered run, end to end: refused before any client is resolved, whatever the guard decides.
-  await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), /could not be fetched: the served pre-registration is not fetched under the Node test runner/));
-  await claudeFree7(free => assert.rejects(runCensus({ mode: 'practice', log: () => {}, ...free }), /not fetched under the Node test runner/));
+  // The guard refuses before any client is resolved, at the served-record fetch (refused under the test runner). With a
+  // scratch state dir (refute A1-B2) no other worktree's mirror can make the result depend on the machine.
+  const REFUSED_BEFORE_ANY_CALL = /could not be fetched: the served pre-registration is not fetched under the Node test runner/;
+  await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), REFUSED_BEFORE_ANY_CALL));
+  await claudeFree7(free => assert.rejects(runCensus({ mode: 'practice', log: () => {}, ...free }), REFUSED_BEFORE_ANY_CALL));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', fetch: async () => Buffer.from(''), log: () => {}, ...free }), /cannot take an injected clock, freeze, fetch or git/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', git: () => ({ status: 0, stdout: '' }), log: () => {}, ...free }), /cannot take an injected/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', now: new Date(), log: () => {}, ...free }), /cannot take an injected/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', outDir: '/x', log: () => {}, ...free }), /scratch paths, subsets and other timeouts are for rehearsals/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', ledgerPath: '/x.jsonl', log: () => {}, ...free }), /scratch paths/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'probe', log: () => {}, ...free }), /unknown mode/));
-  assert.equal(existsSync(join(censusStateDir(REPO_ROOT), LOCK)), false, 'the lock was released');
+  assert.equal(existsSync(join(censusStateDir(REPO_ROOT), LOCK)), false, 'the repository\'s lock was never taken');
 });
 
 test('the exclusive run lock: a second metered runner refuses; a rehearsal needs scratch paths outside the experiment', async () => {
+  // Refute A1-B2: the lock is taken in the scratch state dir claudeFree7 hands the runner, never the repository's.
+  await claudeFree7(async free => {
+    const release = acquireRunLock(join(free.stateDir, LOCK));
+    try { await assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), /another census runner holds the run lock/); } finally { release(); }
+    assert.equal(existsSync(join(free.stateDir, LOCK)), false);
+  });
   const state = censusStateDir(REPO_ROOT);
-  mkdirSync(state, { recursive: true });
-  const release = acquireRunLock(join(state, LOCK));
-  try {
-    await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), /another census runner holds the run lock/));
-  } finally { release(); }
-  assert.equal(existsSync(join(state, LOCK)), false);
-  assert.ok(state.endsWith('exp007-census') && !state.includes('.worktrees'), 'the lock is in the shared git common dir, one per repository (B3)');
+  assert.ok(state.endsWith('exp007-census') && !state.includes('.worktrees'), 'the real lock is in the shared git common dir, one per repository (B3)');
+  // Outside the test runner a scratch state dir is refused (a metered run uses the repository's).
+  const ctx = process.env.NODE_TEST_CONTEXT;
+  delete process.env.NODE_TEST_CONTEXT;
+  try { await claudeFree7(free => assert.rejects(runCensus({ mode: 'counted', log: () => {}, ...free }), /a scratch state dir is for tests/)); } finally { if (ctx !== undefined) process.env.NODE_TEST_CONTEXT = ctx; }
   await assert.rejects(runCensus({ mode: 'rehearsal', log: () => {} }), /a rehearsal needs a scratch outDir/);
   await assert.rejects(runCensus({ mode: 'rehearsal', outDir: join(REPO_ROOT, 'experiments/blueprint-floor/census'), ledgerPath: '/a', practicePath: '/b', log: () => {} }), /never writes under experiments\/blueprint-floor/);
 });

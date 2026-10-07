@@ -13,14 +13,20 @@ import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
 export { codeOnly, testSources };
 
-/** Runs fn(free) with PATH set to an empty scratch directory; restores PATH and removes the directory. */
+/**
+ * Runs fn(free) with PATH set to an empty scratch directory; restores PATH and removes the directories. `free` carries a
+ * scratch stateDir (refute A1-B2), so a metered runCensus in a test never takes the repository's run lock, never reads
+ * its ledger mirror and never races another test file.
+ */
 export async function claudeFree7(fn) {
   const dir = scratchDir('bf-claude-free');
+  const stateDir = scratchDir('bf-claude-free-state');
   const saved = process.env.PATH;
   process.env.PATH = dir;
-  try { return await fn({}); } finally {
+  try { return await fn({ stateDir }); } finally {
     if (saved === undefined) delete process.env.PATH; else process.env.PATH = saved;
     removeScratch(dir);
+    removeScratch(stateDir);
   }
 }
 
