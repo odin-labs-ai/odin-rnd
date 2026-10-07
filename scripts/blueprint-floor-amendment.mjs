@@ -62,7 +62,7 @@ export function validateAmendment(record, { parentSha256, root = '.', verifyHist
   const ids = e.eligibleCallIds;
   assert(Array.isArray(ids) && ids.length === 37, 'the pinned eligible set lists 37 attempt-1 translator calls');
   assert.deepEqual(ids, [...new Set(ids)].sort(), 'the pinned eligible call ids are sorted and unique');
-  assert(ids.every(id => /^counted:[^:]+(\/[^:]+)*:translator:\d+:\d+$/.test(id)), 'each pinned id is an attempt-1 translator call id');
+  assert(ids.every(id => /^counted:[^:]+:translator:\d+:\d+$/.test(id)), 'each pinned id is an attempt-1 translator call id');
   assert.equal(e.eligibleCallIdsSha256, sha256(JSON.stringify(ids)));
   assert(record.unchanged.some(x => /scorer/.test(x)), 'the scorer is named unchanged');
   assert.equal(record.disclosures.length, 5);
