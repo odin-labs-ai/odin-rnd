@@ -1,0 +1,106 @@
+{
+  "id": "cfg-007",
+  "label": "faulty",
+  "faultClass": "provider-withdrawn",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-pebble",
+      "needs": [],
+      "provides": [
+        "pebble.feed"
+      ]
+    },
+    {
+      "name": "x-hammock",
+      "needs": [
+        "pebble.feed"
+      ],
+      "provides": [
+        "hammock.feed"
+      ]
+    },
+    {
+      "name": "x-quill",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "quill.feed"
+      ]
+    }
+  ],
+  "profile": null,
+  "intended": [
+    "x-quill"
+  ],
+  "schedule": [
+    {
+      "step": 1,
+      "op": "withdraw",
+      "name": "core-02"
+    }
+  ],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-pebble": "active",
+    "x-hammock": "active",
+    "x-quill": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "excluded",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-pebble": "active",
+    "x-hammock": "active",
+    "x-quill": "inactive: missing store.read"
+  },
+  "note": "Everything intended is active at boot, then core-02 is withdrawn and x-quill loses its provider."
+}

@@ -1,0 +1,314 @@
+{
+  "id": "cfg-062",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-05",
+      "needs": [
+        "store.read"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-06",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-07",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-08",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-09",
+      "needs": [],
+      "provides": [
+        "log.write"
+      ]
+    },
+    {
+      "name": "core-10",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-11",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-12",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-13",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-14",
+      "needs": [
+        "log.write"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-15",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-16",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-17",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-18",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-19",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-20",
+      "needs": [],
+      "provides": [
+        "clock.tick"
+      ]
+    },
+    {
+      "name": "core-21",
+      "needs": [
+        "clock.tick"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-22",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-23",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-24",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-25",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-cabin",
+      "needs": [],
+      "provides": [
+        "cabin.feed"
+      ]
+    },
+    {
+      "name": "x-fiddle",
+      "needs": [],
+      "provides": [
+        "fiddle.feed"
+      ]
+    },
+    {
+      "name": "x-oyster",
+      "needs": [
+        "cabin.feed"
+      ],
+      "provides": [
+        "oyster.feed"
+      ]
+    },
+    {
+      "name": "x-wagon",
+      "needs": [
+        "fiddle.feed"
+      ],
+      "provides": [
+        "wagon.feed"
+      ]
+    },
+    {
+      "name": "x-umbrella",
+      "needs": [],
+      "provides": [
+        "umbrella.feed"
+      ]
+    },
+    {
+      "name": "x-kettle",
+      "needs": [],
+      "provides": [
+        "kettle.feed"
+      ]
+    },
+    {
+      "name": "x-hinge",
+      "needs": [
+        "fiddle.feed"
+      ],
+      "provides": [
+        "hinge.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-baket",
+      "x-oyster",
+      "x-wagon",
+      "x-hinge",
+      "x-kettle",
+      "x-fiddle",
+      "x-umbrella",
+      "x-cabin"
+    ]
+  },
+  "intended": [
+    "x-kettle",
+    "core-02"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "core-11": "active",
+    "core-12": "active",
+    "core-13": "active",
+    "core-14": "active",
+    "core-15": "active",
+    "core-16": "active",
+    "core-17": "active",
+    "core-18": "active",
+    "core-19": "active",
+    "core-20": "active",
+    "core-21": "active",
+    "core-22": "active",
+    "core-23": "active",
+    "core-24": "active",
+    "core-25": "active",
+    "q": "excluded",
+    "q-release": "excluded",
+    "q-resume": "excluded",
+    "x-cabin": "active",
+    "x-fiddle": "active",
+    "x-oyster": "active",
+    "x-wagon": "active",
+    "x-umbrella": "active",
+    "x-kettle": "active",
+    "x-hinge": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "core-11": "active",
+    "core-12": "active",
+    "core-13": "active",
+    "core-14": "active",
+    "core-15": "active",
+    "core-16": "active",
+    "core-17": "active",
+    "core-18": "active",
+    "core-19": "active",
+    "core-20": "active",
+    "core-21": "active",
+    "core-22": "active",
+    "core-23": "active",
+    "core-24": "active",
+    "core-25": "active",
+    "q": "excluded",
+    "q-release": "excluded",
+    "q-resume": "excluded",
+    "x-cabin": "active",
+    "x-fiddle": "active",
+    "x-oyster": "active",
+    "x-wagon": "active",
+    "x-umbrella": "active",
+    "x-kettle": "active",
+    "x-hinge": "active"
+  },
+  "note": "Near-miss: the profile names an unregistered extra that no intended plugin depends on."
+}

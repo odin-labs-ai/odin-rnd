@@ -1,0 +1,167 @@
+{
+  "id": "cfg-049",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-05",
+      "needs": [
+        "store.read"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-06",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-07",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-08",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-gravel",
+      "needs": [],
+      "provides": [
+        "gravel.feed"
+      ]
+    },
+    {
+      "name": "x-hammock",
+      "needs": [],
+      "provides": [
+        "hammock.feed"
+      ]
+    },
+    {
+      "name": "x-quill",
+      "needs": [
+        "hammock.feed"
+      ],
+      "provides": [
+        "quill.feed"
+      ]
+    },
+    {
+      "name": "x-acorn",
+      "needs": [
+        "gravel.feed"
+      ],
+      "provides": [
+        "acorn.feed"
+      ]
+    },
+    {
+      "name": "x-meadow",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "meadow.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-gravel",
+      "x-hammock",
+      "x-quill",
+      "x-meadow",
+      "x-vevet",
+      "x-acorn"
+    ]
+  },
+  "intended": [
+    "core-06",
+    "q"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-gravel": "active",
+    "x-hammock": "active",
+    "x-quill": "active",
+    "x-acorn": "active",
+    "x-meadow": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-gravel": "active",
+    "x-hammock": "active",
+    "x-quill": "active",
+    "x-acorn": "active",
+    "x-meadow": "active"
+  },
+  "note": "Near-miss: the profile names an unregistered extra that no intended plugin depends on."
+}

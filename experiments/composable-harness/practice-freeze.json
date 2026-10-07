@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.exp009.practice-freeze",
+  "experiment": "EXP 009",
+  "practiceRun": {
+    "seed": "practice-1",
+    "pins": { "A": "qwen3-0.6b-practice", "B": "llama-3.2-1b-practice" },
+    "trials": 10,
+    "lease": "one mac-memory-window.sh lease, held 27.7 min (first sample to close); load1 5.15 to 22.72 over 27 one-minute samples, 12 of them breaches (load1 >= 12), free memory 70 to 72%",
+    "note": "Practice seed and practice pins only. EXP 008's counted weights (Llama-3.2-3B, Qwen3-1.7B) were not loaded: EXP 008's counted run has not happened."
+  },
+  "values": {
+    "perTrialWallSeconds": 199,
+    "blockSize": 10,
+    "mxMemoryToleranceGB": 0.35
+  },
+  "provenance": {
+    "perTrialWallSeconds": {
+      "source": "practice run 1 summary.json h1.wallMsPerTrial (n = 10): 85312, 24790, 29149, 33575, 89932, 104575, 173990, 254612, 198571, 186820 ms",
+      "statistic": "p90, nearest rank (the 9th of 10 sorted values)",
+      "derivation": "p90 of H1 wall time per trial (H1 plus its R0 references) = 198.571 s, rounded up to 199 s. The median is 97.3 s; p90 is used because wall time varied 10x with host load (the four slowest trials ran while load1 was 10.4 to 20.5, two of them in breach; the fastest four at 5 to 9)."
+    },
+    "blockSize": {
+      "source": "the window census (window-census.jsonl, n = 57 five-minute samples over 4.7 h, 13 qualifying, longest qualifying stretch 9 samples, about 45 min; the 48 h census is still running) and the practice lease sidecar (held 27.7 min)",
+      "statistic": "per-trial p90 of H1 (199 s) plus p90 of H2 (53 s, the 9th of 10 H2 trial durations taken from the trials' directory times) = 252 s",
+      "derivation": "10 trials x 252 s = 42 min, which fits the longest observed qualifying stretch (about 45 min); at the medians (97 s + 28 s) a block is 21 min, which fits the 27.7 min the practice lease held. The work order's default of 25 would be 105 min at p90, more than twice the longest stretch seen, holding the machine-wide lease while most of the block runs in breach. n = 400 is 40 blocks of 10."
+    },
+    "mxMemoryToleranceGB": {
+      "source": "practice run 1 summary.json memory: afterLoad 335380488 B, afterEvals 570261512 B (5 evaluations through a 4-entry prefix cache), markedAfterUnload 0; KV geometry from the practice models' config.json and the counted models' published configurations",
+      "statistic": "eval growth of a live child = afterEvals - afterLoad = 0.235 GB, times a 1.5 margin",
+      "derivation": "Within one live child the weights are constant, so a before/after difference is cache, not weights: afterLoad (0.335 GB) is the 0.6B weights (335 MB on disk) and does not transfer, but the prefix-cache growth does, because KV bytes per token are set by layers x KV heads x head dim, and Qwen3-0.6B, Qwen3-1.7B and Llama-3.2-3B all have 28 x 8 x 128 (114688 B per token in fp16). 1.5 x 0.235 = 0.352, rounded to 0.35 GB, covers prompts longer than the 20 practice items in the full 200-item corpus. NOT measured on the counted weights; it rests on their published architecture."
+    }
+  }
+}

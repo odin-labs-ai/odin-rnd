@@ -1,0 +1,106 @@
+{
+  "id": "cfg-012",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "x-acorn",
+      "needs": [],
+      "provides": [
+        "acorn.feed"
+      ]
+    },
+    {
+      "name": "x-jacket",
+      "needs": [],
+      "provides": [
+        "jacket.feed"
+      ]
+    },
+    {
+      "name": "x-willow",
+      "needs": [
+        "acorn.feed"
+      ],
+      "provides": [
+        "willow.feed"
+      ]
+    },
+    {
+      "name": "x-cabin",
+      "needs": [
+        "acorn.feed"
+      ],
+      "provides": [
+        "cabin.feed"
+      ]
+    },
+    {
+      "name": "x-tablet",
+      "needs": [
+        "acorn.feed"
+      ],
+      "provides": [
+        "tablet.feed"
+      ]
+    }
+  ],
+  "profile": null,
+  "intended": [
+    "x-tablet",
+    "x-acorn",
+    "x-jacket",
+    "core-03"
+  ],
+  "schedule": [
+    {
+      "step": 1,
+      "op": "withdraw",
+      "name": "x-acorn"
+    },
+    {
+      "step": 3,
+      "op": "restore",
+      "name": "x-acorn"
+    }
+  ],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "x-acorn": "active",
+    "x-jacket": "active",
+    "x-willow": "active",
+    "x-cabin": "active",
+    "x-tablet": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "x-acorn": "active",
+    "x-jacket": "active",
+    "x-willow": "active",
+    "x-cabin": "active",
+    "x-tablet": "active"
+  },
+  "note": "Near-miss: x-acorn is withdrawn and then restored before the end, so x-tablet finishes active."
+}

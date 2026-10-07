@@ -1,0 +1,114 @@
+{
+  "id": "cfg-096",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-wagon",
+      "needs": [],
+      "provides": [
+        "wagon.feed"
+      ]
+    },
+    {
+      "name": "x-saddle",
+      "needs": [],
+      "provides": [
+        "saddle.feed"
+      ]
+    },
+    {
+      "name": "x-gravel",
+      "needs": [],
+      "provides": [
+        "gravel.feed"
+      ]
+    },
+    {
+      "name": "x-umbrella",
+      "needs": [
+        "saddle.feed"
+      ],
+      "provides": [
+        "umbrella.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-umbrella",
+      "x-gravel",
+      "x-saddle",
+      "x-wagon"
+    ]
+  },
+  "intended": [
+    "x-saddle"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-wagon": "active",
+    "x-saddle": "active",
+    "x-gravel": "active",
+    "x-umbrella": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-wagon": "active",
+    "x-saddle": "active",
+    "x-gravel": "active",
+    "x-umbrella": "active"
+  },
+  "note": "A profiled config whose intended plugins all resolve to active."
+}

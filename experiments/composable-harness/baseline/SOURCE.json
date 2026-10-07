@@ -1,0 +1,28 @@
+{
+  "schema": "odin-rnd.exp009.baseline-source.v1",
+  "repository": "odin-suite (private; source not vendored)",
+  "pins": {
+    "pre": {
+      "commit": "d6431af9bad7455be086e69feafe7bc8db606629",
+      "role": "parent of the commit that added the q trio to the floor",
+      "sha256": {
+        "odin-agent/src/config/extension-filter.ts": "20876c03901a7be0988ca87b4ed211960e227f6240ad35940c94eab5d36ce18b",
+        "odin-agent/src/config/proven-core.ts": "3c126d5a665cb81759741e2550f646d01ccbec2ea121d68d62f21bb508d49f2b"
+      }
+    },
+    "current": {
+      "commit": "2d522f50538026e773a83539b6ab4c94bee0d69e",
+      "role": "plan-pinned origin/main",
+      "sha256": {
+        "odin-agent/src/config/extension-filter.ts": "20876c03901a7be0988ca87b4ed211960e227f6240ad35940c94eab5d36ce18b",
+        "odin-agent/src/config/proven-core.ts": "14ad55c5fd358d789b93bd23e3fe94aa2a09b8c5e857e60b101e0149ea5a2121"
+      }
+    }
+  },
+  "runtime": {
+    "node": "22",
+    "tsx": "4.23.1",
+    "skillContracts": "0.7.0"
+  },
+  "corpusIndexSha256": "ce605cd8b01d6fc6504bec7bc783e37854269830772266b7c3ae9e372cd634d0"
+}

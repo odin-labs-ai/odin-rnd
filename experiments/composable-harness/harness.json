@@ -1,0 +1,14 @@
+{
+  "schema": "odin-rnd.harness.v1",
+  "note": "EXP 009's declarative active set, loaded through the harness kernel's harness.json loader (arms/harness-set.mjs). components[0] is infrastructure, loaded before any scheduled operation (the memory gate mlx.model injects); components[1..] are the six schedulable components, in the order the schedule generator draws from. A config here is a default; a run supplies the run-environment parts (mlx.model's pin, the memory gate's readers). Its sha256 goes into the pre-registration's file map.",
+  "keys": {},
+  "components": [
+    { "name": "mlxMemory", "module": "harness/services/mlxMemory.mjs", "config": {} },
+    { "name": "lint", "module": "experiments/composable-harness/components/lint.mjs", "config": {} },
+    { "name": "grep", "module": "experiments/composable-harness/components/grep.mjs", "config": {} },
+    { "name": "mlx.model", "module": "experiments/composable-harness/components/mlx-model.mjs", "config": {} },
+    { "name": "memo-cache", "module": "experiments/composable-harness/components/memo-cache.mjs", "config": { "maxEntries": 256 } },
+    { "name": "yesno-gate", "module": "experiments/composable-harness/components/yesno-gate.mjs", "config": {} },
+    { "name": "spend-counter", "module": "experiments/composable-harness/components/spend-counter.mjs", "config": {} }
+  ]
+}

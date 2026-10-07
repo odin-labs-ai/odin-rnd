@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "observation-set",
+  "experiment": "EXP 009",
+  "note": "The frozen observation set O (implemented by probes/observe.mjs). Serialisation: sorted-key JSON, counts and sorted names only, never a pid, a time or a path outside the scratch root. Residue = any probe whose value differs between the observation before a component was loaded and after it was unloaded (or, for the cache-validity probes, any key of a pin other than the current one).",
+  "quiesce": { "rule": "Before every observation the event loop is advanced one setImmediate turn at a time until the set of active handles is unchanged for two consecutive turns, at most maxTurns turns (Node releases a closed handle a few turns after its exit/close event). Loop turns only, never wall time.", "maxTurns": 200 },
+  "warmUp": { "rule": "Once per observer process, before its first observation: create and release one child process, one worker thread, one fs watcher and one listening server, so a process-wide facility Node allocates on first use is not counted as a component's residue." },
+  "inside": {
+    "registry": { "source": "kernel.snapshot()", "fields": ["components: name, status, config, undo-stack depth", "services: key, provider"] },
+    "pins": { "source": "mlx service pin; the distinct pins carried by the prefix-cache keys and the memo keys" },
+    "staleKeys": { "source": "count of prefix-cache and memo keys whose pin is not the current mlx pin" },
+    "listeners": { "source": "process.listenerCount", "events": ["SIGINT", "SIGTERM", "SIGUSR1", "SIGUSR2", "beforeExit", "exit", "uncaughtException", "unhandledRejection", "warning"] },
+    "timers": { "source": "process.getActiveResourcesInfo()", "types": ["Timeout"] },
+    "env": { "source": "process.env keys", "prefixes": ["EXP009_"] },
+    "globals": { "source": "globalThis own keys not present when the observer started" }
+  },
+  "outside": {
+    "handles": { "source": "process._getActiveHandles(), counted by constructor name" },
+    "childPids": { "source": "pgrep -P <this pid>, the probe's own ps excluded" },
+    "markedProcesses": { "source": "ps -A: live processes whose command matches <pattern> and whose parent is this process or pid 1 (an orphan); another process's live children are not this observer's residue", "pattern": "composable-harness/(components/mlx_gate[.]py|fixtures/fake-mlx[.]mjs|probes/leak-child[.]mjs)" },
+    "fds": { "source": "lsof -a -p <this pid> -d 0-9999 -F t, counted by type" },
+    "mxActiveBytes": { "source": "mx.get_active_memory() of the live mlx.model child (null when none)", "toleranceBytes": 0, "toleranceRule": "0 on the fake child; the real-model tolerance is set from the practice dry run and frozen in the pre-registration" },
+    "scratch": { "source": "the run's scratch root, sorted entry names" }
+  }
+}

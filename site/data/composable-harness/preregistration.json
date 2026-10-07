@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 009",
+    "slug": "composable-harness",
+    "title": "Unload leaves no trace",
+    "statusText": "Pre-registered — not yet run",
+    "note": "Written, hashed and published before the counted run. Nothing in this record may change after publication; a later change is a new, dated amendment, refuted and published first, and it resets the not-before.",
+    "authoredOn": "2026-10-03",
+    "summary": "Does hot load, unload and reconfigure of research components leave the harness indistinguishable from a fresh process, and does every unmet need show up as a named inactive component instead of silently doing nothing?",
+    "inspiredBy": "arXiv 2608.25512"
+  },
+  "freeze": {
+    "status": "frozen",
+    "rule": "A draft may carry TO-FREEZE fields and names no not-before. Every TO-FREEZE field is filled from committed records (the practice window run for the three practice values; the committed file for every file-map entry) before the record is cut for publication; only a record with status \"frozen\" and no TO-FREEZE field is the pre-registration.",
+    "toFreeze": []
+  },
+  "question": {
+    "temporal": "When components route every runtime mutation through ctx.effect, does hot load, unload and reconfigure leave the harness observationally equivalent to a fresh process with the same active set?",
+    "spatial": "Does an unmet need always surface as `inactive: missing <key>`, and never as silent inertness?"
+  },
+  "framing": "The kernel is our kernel implementing Cordis semantics: a small subset, written here, that uses Cordis (github.com/cordiverse/cordis) as the semantic reference only. It is not a dependency, and nothing here claims Cordis's guarantees. The kernel is pinned by sha256 in the file map.",
+  "components": [
+    {
+      "name": "lint",
+      "role": "EXP 005's lint, as a component"
+    },
+    {
+      "name": "grep",
+      "role": "a pattern search service"
+    },
+    {
+      "name": "mlx.model",
+      "role": "a local model server child process: Llama-3.2-3B, swapped by reconfigure to Qwen3-1.7B; EXP 008's pinned weights, read only; its prefix cache is an internal effect"
+    },
+    {
+      "name": "yesno-gate",
+      "role": "EXP 008's readout at stratum S"
+    },
+    {
+      "name": "memo-cache",
+      "role": "decisions keyed by item sha256"
+    },
+    {
+      "name": "spend-counter",
+      "role": "a stub with no network access"
+    }
+  ],
+  "corpus": {
+    "sets": [
+      "EXP 005 (60 items)",
+      "EXP 008-X (140 items)"
+    ],
+    "n": 200,
+    "bySet": {
+      "exp005": 60,
+      "exp008x": 140
+    },
+    "sha256": "4d0273836696f751272276fe1004ebfc8312d5397fbdaa09ee58232ac48c5acd",
+    "identityRule": "sha256 over the ordered \"set\\tid\\tstateSha256\\n\" lines, computed by harness/services/corpus.mjs, which asserts every item state by its committed sha256.",
+    "statement": "The study measures equivalence, not accuracy: the runner never opens a labels file, and earlier exposure to these items cannot bias an equality."
+  },
+  "arms": [
+    {
+      "id": "R0",
+      "what": "A fresh process per (active set, pin, item), cached: the reference."
+    },
+    {
+      "id": "H1",
+      "what": "One long-lived kernel. Each trial runs 20 seeded operations (at least 25% of them reconfigures, including pin swaps) with 40 evaluations interleaved."
+    },
+    {
+      "id": "H2",
+      "what": "The same component specs on a plain registry with hand-written register and unregister, written by a blind author (secondary).",
+      "freeze": {
+        "tree": {
+          "files": 8,
+          "sha256": "5a4198c8b2a36b722d61dfc64775c13884d5fd3679caf43d9f7b0aa75c2e0217"
+        },
+        "spec": "b9babd23470c2b398e6d78c4c1264520c1a21aa9d98f1ae775e87d56910e4e4f"
+      }
+    },
+    {
+      "id": "K1",
+      "what": "H1 plus 12 pre-registered planted leaks (for example a raw setInterval, a listener outside ctx, a stale prefix cache after a pin swap, an MLX child that was never reified): the teeth."
+    },
+    {
+      "id": "K2",
+      "what": "The K1 effects routed through reifying coeffects."
+    }
+  ],
+  "schedule": {
+    "seedRule": "seed = sha256 of the merge commit id of the odin-rnd pull request that publishes this record as frozen (the 40-character lower-case hex string, UTF-8). The seed is unknowable when the record is frozen.",
+    "trials": 400,
+    "opsPerTrial": 20,
+    "minReconfigureShare": 0.25,
+    "evaluationsPerTrial": 40,
+    "blockSize": 10,
+    "perTrialWallSeconds": 199,
+    "rule": "Trials run in window-held blocks of blockSize, in seed order. A block that cannot start within the max-wait is retried; the trials themselves never change."
+  },
+  "primary": {
+    "P1": {
+      "claim": "H1 diverges from R0 in 0 of n = 400 trials.",
+      "divergence": "Any difference, after any operation, in a decision, in p to 6 decimal places, or in any inside-boundary snapshot field: the component registry and statuses, provided services, listeners, timers, memo keys and prefix-cache keys.",
+      "n": 400,
+      "wilsonUpper95AtZero": 0.009512,
+      "minNForOnePercent": 381,
+      "refutedBy": "Any single divergence."
+    },
+    "P2": {
+      "claim": "On the blind-authored corpus of 120 configurations, the kernel's census shows 0 silent-inert components and 0 false-inactive components.",
+      "corpus": {
+        "configs": 120,
+        "faulty": 60,
+        "clean": 60,
+        "tree": {
+          "files": 123,
+          "sha256": "48546709c0c64c2931e5151930225b5c1328bac06029023a0df48ec3515756d8"
+        },
+        "spec": "1cce4517d80ecdfac6d4fd8903f47587962c523f3d3e1b2408a84ab4bb2852ba",
+        "authoring": "Written by a history-free agent from the spec alone; fence audit FENCE-HELD (author A) and FENCE-HELD (author B)."
+      },
+      "silentInert": "A component the census reports active although, by the corpus construction, a need it has is unmet (or its provider was withdrawn).",
+      "falseInactive": "A component the census reports inactive although, by construction, every need it has is met.",
+      "mapping": "absent ⇔ excluded: the kernel never loads a plugin that is not enabled and unloads a withdrawn one, so either is absent from the census, which the corpus calls \"excluded\". Every other status compares one to one (analysis/SPEC.md §P2).",
+      "mislabelled": "Any other mismatch (for example different missing keys) is counted and reported; it does not by itself refute the claim, which is about silent inertness.",
+      "refutedBy": "Any silent-inert or false-inactive kernel configuration among the 120.",
+      "baseline": {
+        "what": "odin-agent's real extension filter and its proven-core floor, run unchanged at pinned odin-suite commits. Only its outputs and the source sha256s are published; the source is private.",
+        "pins": {
+          "pre": {
+            "commit": "d6431af9bad7455be086e69feafe7bc8db606629",
+            "sha256": {
+              "odin-agent/src/config/extension-filter.ts": "20876c03901a7be0988ca87b4ed211960e227f6240ad35940c94eab5d36ce18b",
+              "odin-agent/src/config/proven-core.ts": "3c126d5a665cb81759741e2550f646d01ccbec2ea121d68d62f21bb508d49f2b"
+            }
+          },
+          "current": {
+            "commit": "2d522f50538026e773a83539b6ab4c94bee0d69e",
+            "sha256": {
+              "odin-agent/src/config/extension-filter.ts": "20876c03901a7be0988ca87b4ed211960e227f6240ad35940c94eab5d36ce18b",
+              "odin-agent/src/config/proven-core.ts": "14ad55c5fd358d789b93bd23e3fe94aa2a09b8c5e857e60b101e0149ea5a2121"
+            }
+          }
+        },
+        "atFreeze": {
+          "faultySignalled": 0,
+          "cleanSignalled": 0,
+          "agreesWithSpecEnabledAtBoot": 120
+        },
+        "comparison": "An exact two-sided McNemar test on kernel-correct against baseline-correct per configuration: the binomial test on the discordant pairs (b, c). Secondary; it decides nothing."
+      }
+    }
+  },
+  "p2Disclosure": {
+    "computedBeforeRegistration": true,
+    "statement": "P2 has no seed and is deterministic, so its outcome was computable before this record. It was computed once, before registration: while validating the pipeline on the real corpus, the instrument author ran it a single time, with output to the terminal only and nothing committed.",
+    "seenOutcome": {
+      "kernelCorrect": 120,
+      "of": 120,
+      "silentInert": 0,
+      "falseInactive": 0,
+      "mcnemar": {
+        "b": 60,
+        "c": 0
+      }
+    },
+    "weight": "P2 is registered for the record. Its evidential weight rests on the blind authorship of the 120 configurations (written by a history-free agent from the corpus spec alone, fence audit above) and on the real, unmodified filter baseline, not on any claim about an unseen outcome.",
+    "predictive": "Only P1 (seeded from the merge commit of this record) and the validity gates are predictive: they test outcomes that are unknown when this record is frozen.",
+    "source": "experiments/composable-harness/analysis/SPEC.md §P2 \"Disclosure\""
+  },
+  "secondary": [
+    {
+      "id": "S1",
+      "statement": "H2 leaves residue (any inside- or outside-boundary difference from R0) in at least 10% of trials."
+    },
+    {
+      "id": "S2",
+      "statement": "The outside-boundary probes (active handles, child pids, open files, MLX active memory, the temp directory) catch K1's unreified leaks and show 0 in K2."
+    },
+    {
+      "id": "S3",
+      "statement": "H1 and R0 time-to-ready. A block that recorded a memory-window breach has its S3 timings excluded and counted; nothing else is excluded for a breach."
+    }
+  ],
+  "secondaryRule": "Secondary results decide nothing; they are reported as they come out.",
+  "validityGates": [
+    "K1 detects at least 11 of its 12 planted leaks.",
+    "A seeded 10% re-run of R0 is byte-identical.",
+    "R0 is self-equivalent across a process restart.",
+    "pins.mjs --verify passes, and the kernel sha256 is in this record's file map.",
+    "Every measured block held a memory-window lease (its sidecar is committed with the run)."
+  ],
+  "validityRule": "If any gate fails, the result is published as uninformative, never as a pass.",
+  "analysis": {
+    "file": "experiments/composable-harness/analysis/analyse.mjs",
+    "spec": "experiments/composable-harness/analysis/SPEC.md",
+    "tests": "scripts/composable-harness-analyse.test.mjs",
+    "rule": "The confirmatory analysis is the pinned analyse.mjs, frozen in this record with its synthetic-row tests. No analysis is added after freeze; a change to it is a dated amendment that resets the not-before.",
+    "definitions": [
+      "P1: count trials with any divergence (definition above); report x of 400 and the 95% Wilson upper bound (z = 1.959964).",
+      "P2: per configuration, map the census onto every registered name (absent ⇔ excluded) and compare with the corpus \"expected\"; a configuration's outcome is its worst plugin outcome, silent-inert > false-inactive > mislabelled > correct (analysis/SPEC.md §P2).",
+      "McNemar: kernel-correct against baseline-correct per configuration; exact two-sided binomial on the discordant pairs (b, c). The baseline row is correct when a clean configuration is not signalled and a faulty one is.",
+      "S1: share of H2 trials with any residue. S2: per planted leak, detected in K1 and absent in K2. S3: median time-to-ready per arm, breach blocks excluded and counted.",
+      "Gates: evaluated first; any failure makes the run uninformative before P1 or P2 is read."
+    ]
+  },
+  "fences": [
+    "Seed: sha256(prereg merge commit), as above.",
+    "One counted run: iteration happens only on practice seeds. The counted run is single and append-only.",
+    "Frozen here: the probe observation set, analyse.mjs and its synthetic-row tests (EXP 008's lesson: an analysis amendment resets the clock).",
+    "Synthetic configurations only: no tenant names.",
+    "Live arms only: no replay arms.",
+    "No other experiment's files change: EXP 005–008 stay untouched, enforced by the frozen-path census test."
+  ],
+  "memoryWindow": {
+    "wrapper": "mac-memory-window.sh run --label <block> --max-wait 12h -- <block command> (odin-labs)",
+    "opens": "free memory ≥ 50% and load1 < 8 for 3 consecutive readings, 60 s apart",
+    "breach": "free < 50% or load1 ≥ 12 during a block: recorded, never acted on",
+    "exclusive": "one measured run holds the lease machine-wide",
+    "mxMemoryToleranceGB": 0.35
+  },
+  "spend": {
+    "rule": "Inference is local and unpriced: its cost is recorded as unknown, with the reason local-unpriced, never as zero. Paid spend is refutes and lane overhead only, under the program cap.",
+    "programCapUsd": 150
+  },
+  "notBefore": "No attempt of the counted run starts before 24 hours after the merge of the odin-rnd pull request that publishes this record as frozen. This covers every attempt: a restarted, resumed or re-queued block is an attempt and is held to the same time. The time is recorded after publication. Practice seeds do not wait for it.",
+  "limits": [
+    "n = 400 supports \"at most 1% of trials\" (95% Wilson upper bound 0.95% at zero divergences), not zero.",
+    "One kernel, one language, one Mac.",
+    "Equivalence says nothing about accuracy.",
+    "The P2 corpus is synthetic, written from a spec whose fault classes we chose; the real filter keeps exactly the spec-enabled set in all 120 configurations, which shows the spec models its enable rule, not that the classes are representative.",
+    "The baseline filter has no notion of needs, so it is the no-census condition, not a competing census.",
+    "P2's outcome was computed once before registration (see the P2 disclosure): P2 is registered for the record, its weight rests on the blind authorship and the real filter baseline, and only P1 and the validity gates are predictive."
+  ],
+  "practiceFields": {
+    "mxMemoryToleranceGB": "after unloading mlx.model, active MLX memory must return to its pre-load baseline within this many GB (outside-boundary probe, S2 and the unload check)",
+    "blockSize": "trials per window-held block of the counted run",
+    "perTrialWallSeconds": "p90 (nearest rank) wall time of one H1 trial plus its R0 references in the practice window run, used to size blocks against the 12 h max-wait"
+  },
+  "files": {
+    "experiments/composable-harness/FREEZE.json": "00f813e7dd35dd2b65849c3d9c9e0e05ef5c09afafef582213a61ed55547984c",
+    "experiments/composable-harness/analysis/SPEC.md": "8a1a48269b1a49354bdcab968f740745b8085a395e1749b6e886350535eb1558",
+    "experiments/composable-harness/analysis/analyse.mjs": "436b434ff3ef59fa082ea1f991a1e52181a2e1480ec7e55c2e086354cea0394d",
+    "experiments/composable-harness/arms/dry-run.mjs": "cd2ae8ccbc22071469672e000d37668827a7004b518ddfab3e2d186c63b9f1bf",
+    "experiments/composable-harness/arms/h2.mjs": "7ca52a2cce24866792efde4c177d214b992d528f4e99d414a98ef9fcf6643497",
+    "experiments/composable-harness/arms/harness-set.mjs": "4f1b4f9dc7722024555f3d73f4e0a28909e62ba600435670b7b165779d03f4cc",
+    "experiments/composable-harness/arms/p2.mjs": "f911a7755440fac0f0747269835cf1b9dc914ba0168889564d669f90a40f1fd5",
+    "experiments/composable-harness/arms/r0.mjs": "4589d1ccbd05e79f66c0bd33701a5f72ee6172c726158c2b0d863a38039ac507",
+    "experiments/composable-harness/arms/run.mjs": "4076a86046bcc777f7efc08c3ca3213b4139d4cc25325facf21538f50df17db6",
+    "experiments/composable-harness/arms/schedule.mjs": "707cf48eff1fcf9fcccfd44a0b850611395d7e6ac85f1d13bb2bf9346f6bee26",
+    "experiments/composable-harness/baseline/SOURCE.json": "8e6d25fb41ac6edd350b47c6a85ca5e5b52295c6d2dcb63569e5b72c97e42eb4",
+    "experiments/composable-harness/baseline/driver.mjs": "3df9086bdfcdb21bee6f00b6b5c82206db2ad9bb40ae476ba57f122991d09c00",
+    "experiments/composable-harness/baseline/outputs.json": "061826e7ad9a5fe2bfea5825c555d948118b0696277896429d1d8fd3b5c68f5b",
+    "experiments/composable-harness/baseline/run-baseline.mjs": "b7c5c3a4944979eefee8dfae09d258afe05b2f1fb4393f9e2b0547518de68ffc",
+    "experiments/composable-harness/baseline/summary.json": "b310dd3b37420fb5ffa9c365fad6e5718d0192c28a609cac68eda4c4760aac54",
+    "experiments/composable-harness/components/grep.mjs": "2f407a5897c415b8ec82e2d43ddaf24066172434d4f2f7d1582671810944e8f6",
+    "experiments/composable-harness/components/lint.mjs": "76a5e758506529ce9d3c9244966b4f5794e1603ea4df76e88b84b73ff142b665",
+    "experiments/composable-harness/components/memo-cache.mjs": "9490122a354243d85539518cc1ef703b36893ade3f9b7049f03d3c22c3ecdd42",
+    "experiments/composable-harness/components/mlx-model.mjs": "1465ca78268beff391564954ac6a3db6a94a2f98959d15de32f144313b23140c",
+    "experiments/composable-harness/components/mlx_gate.py": "c93132a64b2baaf3635c83d2a40c0f25bde8dd835354a3163bf6cbf9e03f501c",
+    "experiments/composable-harness/components/spend-counter.mjs": "7501a27ec5c18d6983cfd129f29383a97154e4bf0ec9635bf55b2c18d5433997",
+    "experiments/composable-harness/components/yesno-gate.mjs": "1dfe3b7668739e7c61c76349203aef31341d2264a8bb72dd82899018eccab775",
+    "experiments/composable-harness/corpus/SPEC.md": "1cce4517d80ecdfac6d4fd8903f47587962c523f3d3e1b2408a84ab4bb2852ba",
+    "experiments/composable-harness/corpus/authored/cfg-001.json": "e370a2bd33e92cccb562aa485e6b60861d25758cac9abb03628e84d732abf206",
+    "experiments/composable-harness/corpus/authored/cfg-002.json": "6dae9154f6aeceb4bb7be0fad8b6cb04a6dcfa08a828a92c95b235aa26300192",
+    "experiments/composable-harness/corpus/authored/cfg-003.json": "b05fe17ac995f32442c5bcbcabe1f8a5b2fff95053cc3583d2cfa61a6ab67bb9",
+    "experiments/composable-harness/corpus/authored/cfg-004.json": "d8bab411655f21d4cf2ff4a2116adb379adbabaf9adb8d2f238428756c36053f",
+    "experiments/composable-harness/corpus/authored/cfg-005.json": "3619ecd95545749874d78f02fa501ff7342c752c5425cd0e75ee58743b7ff90c",
+    "experiments/composable-harness/corpus/authored/cfg-006.json": "21e7b1368889c19507f910f4bbce0ac8a95bd5cc9005e3254819e5061a375195",
+    "experiments/composable-harness/corpus/authored/cfg-007.json": "5c0ca8af012972c67b299152f7c5bb1b89935df9e5455cadca765afe753d53f5",
+    "experiments/composable-harness/corpus/authored/cfg-008.json": "1a13e5d89bd63f4a2baa832f902788422a6aab9da4419738e182fafe085b2a62",
+    "experiments/composable-harness/corpus/authored/cfg-009.json": "c8c9df8102237079fe63b50db909a261c0d78752bc902c629547b0b460c3fa82",
+    "experiments/composable-harness/corpus/authored/cfg-010.json": "3662d2d168823c47b02204962c1c005b9e206973017c4dd1105cf206bdfb0328",
+    "experiments/composable-harness/corpus/authored/cfg-011.json": "98e98a177fba9476bf86643467b829e0ba19dd6ec97847111a57f6b27db76db0",
+    "experiments/composable-harness/corpus/authored/cfg-012.json": "36233cc365b2dccb82bef4e50450921a0ca6a72936567b6d6edb8c88172eb13d",
+    "experiments/composable-harness/corpus/authored/cfg-013.json": "dbf8b7301ffd4d67c9c9f5ee18cb86077cbbdd565a71d688fffb4f5f0625969e",
+    "experiments/composable-harness/corpus/authored/cfg-014.json": "4836c1a71d8a9b9d2ea0df2ff62b2caeafb522f40c2ca1535d96dcc59c319f07",
+    "experiments/composable-harness/corpus/authored/cfg-015.json": "de70b4f1ab90202d04dc4c8b2405a64aef072e47904f8bb965a0da6262e8c6ce",
+    "experiments/composable-harness/corpus/authored/cfg-016.json": "7a6e7836f68b38e0fc56c7ea194e382499c7694e5bc3aca68b85915a0c125af4",
+    "experiments/composable-harness/corpus/authored/cfg-017.json": "19cdeb386d59a91eef5f322b8d2788c1556ea46a76d9103af5c9e3b428ddf113",
+    "experiments/composable-harness/corpus/authored/cfg-018.json": "5f644d2a4acdac71312e55e629fe307899c61d78e6f34003ade18f66129369a2",
+    "experiments/composable-harness/corpus/authored/cfg-019.json": "3a1898e2dff3378ab0747283503025a986e593ae58cfaa2360c0dd8e793ad217",
+    "experiments/composable-harness/corpus/authored/cfg-020.json": "0e72f0afb17a81b11e57f7061a339530a7cadd46e8473bf63b62d449bb908ca5",
+    "experiments/composable-harness/corpus/authored/cfg-021.json": "7a4cfa1a03476800a8d72466a61d886de5c40db4d8568e057149ee82c0fc5b5b",
+    "experiments/composable-harness/corpus/authored/cfg-022.json": "444d0fd9b86a287aae58d975cd2da50b4ef1df0bc0bb231dab02de4a82d0220e",
+    "experiments/composable-harness/corpus/authored/cfg-023.json": "4cdf30b636f3b839ba1a94011258542b3a508a6bc04c3a013d87dd437db5f0bd",
+    "experiments/composable-harness/corpus/authored/cfg-024.json": "a6a67537e8c7e763311d2afe4c0904d457dc48a8e509cfe0a2694c8afd3646db",
+    "experiments/composable-harness/corpus/authored/cfg-025.json": "8bc969932f07ada33bbeda7e4d99268eb39738edb631ac948b2c122e340ba499",
+    "experiments/composable-harness/corpus/authored/cfg-026.json": "3317ebc855f06d48fe546215841b5e0f89a76a4202f2c3a28f59449d0987a10a",
+    "experiments/composable-harness/corpus/authored/cfg-027.json": "bc1a6a06aed2af27b3a324ed6b99a7f060f880707c08fc1def0fb17a77fab650",
+    "experiments/composable-harness/corpus/authored/cfg-028.json": "d9ad572c97902d2b671baef373c12f2308c946be33ca7dc0084fd0877cc7791e",
+    "experiments/composable-harness/corpus/authored/cfg-029.json": "339f27f84b2321e84cdb784cfade456c39add788a0d0d552081e265da287655d",
+    "experiments/composable-harness/corpus/authored/cfg-030.json": "7d07a961106891e5e463ac90740c89529873b8f5bb38858fc906da21f39127ad",
+    "experiments/composable-harness/corpus/authored/cfg-031.json": "63e4eb364bc810cacaca22f9e30f1295fade63d92a069a066ad6b54c43c81243",
+    "experiments/composable-harness/corpus/authored/cfg-032.json": "6a9e94e8bcf1ff23f1d0bdbdb25807c875123fe2874f75ac0f0bd736667b2588",
+    "experiments/composable-harness/corpus/authored/cfg-033.json": "a9743a2fe7ff4add9c25e6947e74dca4e843f99fcfa0d071783c5d83937a7151",
+    "experiments/composable-harness/corpus/authored/cfg-034.json": "aa549c899297e9984267434ba5e680d02380ef3829a2fb724a1b89e1a942a21e",
+    "experiments/composable-harness/corpus/authored/cfg-035.json": "e556c5f1a6faf7d15a4c2eea7b1a7d74387887937b1d4b70bbf35a674ce518c8",
+    "experiments/composable-harness/corpus/authored/cfg-036.json": "359f5a5aab8377969709bd78685c21834a39a740d22b9a03fea3d3e43761653c",
+    "experiments/composable-harness/corpus/authored/cfg-037.json": "2f84622f63c1bfa6442ccd7c998739e35e71bc210b7da456fe97ea301d045cad",
+    "experiments/composable-harness/corpus/authored/cfg-038.json": "8986a1b7bef25245e8d46cccca0c1a56129b7c5db8244db8a43e86f8934efa78",
+    "experiments/composable-harness/corpus/authored/cfg-039.json": "70ef80bd3632d065e4a0e7b9fa0224b3fa4f95ad5c4f9ff698b426eed5a2517c",
+    "experiments/composable-harness/corpus/authored/cfg-040.json": "01ddba56ddc1a14ee96639048bf14de1d3aa6a255b5a7b1d75e3e558c65231f3",
+    "experiments/composable-harness/corpus/authored/cfg-041.json": "4f05aafa5f3e620170d94bdf413742b91b8b6dca71b2b807d455a7ddf3d98ce9",
+    "experiments/composable-harness/corpus/authored/cfg-042.json": "654010f632e9fd28bb50416e667621dedf86add1a8988bf3df31c15f18051bd2",
+    "experiments/composable-harness/corpus/authored/cfg-043.json": "ec36344b28bc66bb888002c14a46e577779e618e6eb94bee6edf3d0a082908a0",
+    "experiments/composable-harness/corpus/authored/cfg-044.json": "5d1d3e32cc3edab4fd4f0fb5032ffd1bdd13917e71899dc66bc9db332ba97748",
+    "experiments/composable-harness/corpus/authored/cfg-045.json": "d706bb6f69baf88e6a6a2f03aa388c833f0483c88d0f480a88b821ab40787736",
+    "experiments/composable-harness/corpus/authored/cfg-046.json": "b574708dabd46c386dc0885ef9814c819c551eddbd7b774d938e44b018e8b2dd",
+    "experiments/composable-harness/corpus/authored/cfg-047.json": "b0207ab345dc6170b1b663686ec908aec6484b2dff20a08f87f5fe64aecc6345",
+    "experiments/composable-harness/corpus/authored/cfg-048.json": "695edeefe647e389743245155ce9430070d6ad63bd3bd2dbae9d09da6c1b7e67",
+    "experiments/composable-harness/corpus/authored/cfg-049.json": "04c7355b9ce8042cf540d114f2e02a534dc27a5e15f9fb3fed36ff0bb2c5390e",
+    "experiments/composable-harness/corpus/authored/cfg-050.json": "0f238befdcb874c1013cf9e4b68d85c68d7f09efd2af43dda1562510af14028f",
+    "experiments/composable-harness/corpus/authored/cfg-051.json": "435cd696a5832637708416654e36fa0a3078694ada9d1aa202385c8c178c01b2",
+    "experiments/composable-harness/corpus/authored/cfg-052.json": "218cf7232536846cda44b4a0508df9ae9f1c496ae4b02844ff5ee60829dacf97",
+    "experiments/composable-harness/corpus/authored/cfg-053.json": "1782a595d655c6f76311c8f00378e45bf6c2a23424cb0c32b225e8fccce00203",
+    "experiments/composable-harness/corpus/authored/cfg-054.json": "fb06744e59f76804c3e119e0a1014a41921ca2f5fdb44ba2cf1f0dff08d809a7",
+    "experiments/composable-harness/corpus/authored/cfg-055.json": "bce336a080ca4681ee0a11a5a3cd7c4a7528a5ce5f28d53c847c1ab8cfcb8c54",
+    "experiments/composable-harness/corpus/authored/cfg-056.json": "834cc2fa6fbbea01dd71f0510056bd87553fd08cf8be3635f920d42f5a2e0d5d",
+    "experiments/composable-harness/corpus/authored/cfg-057.json": "3df5b80112acc3b083b3438420c819302bf1608d0aa1873fa22030b3be0f81c5",
+    "experiments/composable-harness/corpus/authored/cfg-058.json": "2c548b9512375b274a67473dda2de39812460b9e0bae326256f9d901ed274699",
+    "experiments/composable-harness/corpus/authored/cfg-059.json": "684fda088dc6508913bf20acbc6994e07901598c76d6f17268f06796188b83bb",
+    "experiments/composable-harness/corpus/authored/cfg-060.json": "c285020e3f6cbd8ab41f1b40a5cc2eab3e274888d2fe3a61f7a5bad2e47e231d",
+    "experiments/composable-harness/corpus/authored/cfg-061.json": "72cd90ec7ad4a672260158e124629067f17f97764bca382e9719300cd9eed488",
+    "experiments/composable-harness/corpus/authored/cfg-062.json": "16def71e815e0832be5f7b98562a424a0775c306b50d36cee3995320e34c777b",
+    "experiments/composable-harness/corpus/authored/cfg-063.json": "86a084fd9e0423691c33277afe9fb6f678098e2c3f0acca01dc2404df4796276",
+    "experiments/composable-harness/corpus/authored/cfg-064.json": "b2d2b0be5581bf5cee5c965befa0bb4bcaac4a2b8c216e8973ff348c3be4785a",
+    "experiments/composable-harness/corpus/authored/cfg-065.json": "393cf03fe4206ab9c83176f87762ae0be99ee9e641f71dbbe2fa138fffebb628",
+    "experiments/composable-harness/corpus/authored/cfg-066.json": "2b3b6f8eaedc0b8d8c1238ae5ac881f26d2db631dde3087b6a1bd498334bb5ab",
+    "experiments/composable-harness/corpus/authored/cfg-067.json": "b2e04176de5de7f2a1ac5913bd6c7d6b2538667d57a8acdd430607a71b4f77dc",
+    "experiments/composable-harness/corpus/authored/cfg-068.json": "d1bfe1c54b5d5387324caaaf127f9e91fc7d9cf4033e323d878ada285a3fe8fa",
+    "experiments/composable-harness/corpus/authored/cfg-069.json": "011111dfe9bbd953d3abed0ccc9e7bd25db3909a04bdab0b4982a764c52eb733",
+    "experiments/composable-harness/corpus/authored/cfg-070.json": "8425c961a711ebabef4943982f79878b207e6d4502a359027fdf2ae23e5278b2",
+    "experiments/composable-harness/corpus/authored/cfg-071.json": "045cb1cf102c8e180a0cd6c1f49c484ede8787407329e14e13740eebaeb5734a",
+    "experiments/composable-harness/corpus/authored/cfg-072.json": "d2bf10d66d1e3af1c3c4b1d28c9c0a86aaa47e93f3ab0edc297d9d4cf2110309",
+    "experiments/composable-harness/corpus/authored/cfg-073.json": "2ce6bafe2f8dc68c7da923f613ccf2e5c4d3d0395692565b98a4aec1c2ac0d91",
+    "experiments/composable-harness/corpus/authored/cfg-074.json": "a78ede88fd1be9e2dbd4fe3d1c8812e90913c846f3f6f06017471af9869d4b4b",
+    "experiments/composable-harness/corpus/authored/cfg-075.json": "f99b239ce08b4ad56b8491729adf3cc6f2914c2ee721bbd3aee9e855b014a4c5",
+    "experiments/composable-harness/corpus/authored/cfg-076.json": "7431e787dd3016727f0b75f3a5f37c6d8f4b17d9a22480de9fc57c8f912c9c2d",
+    "experiments/composable-harness/corpus/authored/cfg-077.json": "e35c71ddc6277dcc89d74620a1f2783ae11d76f5f31773dd1ef5541f126cb643",
+    "experiments/composable-harness/corpus/authored/cfg-078.json": "6bf06858c0050b0e8f23ecaf1a28910f97a4f15c6deb0075e45715d25048e7f8",
+    "experiments/composable-harness/corpus/authored/cfg-079.json": "7c7d09c8b41dcaea26b9325adb47be2f5dae957ff4b2b1478a70152579ef7c86",
+    "experiments/composable-harness/corpus/authored/cfg-080.json": "1070bf5c5981ce444977213552d6a583d9b1fc5c3e96f080977cedbc3215fafb",
+    "experiments/composable-harness/corpus/authored/cfg-081.json": "a22baf0c37263270a85b3a7e3dd1305810ab35a3d24d364acaaa59654eb23f84",
+    "experiments/composable-harness/corpus/authored/cfg-082.json": "ead430457c627d1c509954311d9a822f6dba5337ef2d12f635e57d3ce4486b8e",
+    "experiments/composable-harness/corpus/authored/cfg-083.json": "5f6a5f078f66d44a84853223914cff0df092804b1908acb82afb6a40531ceb34",
+    "experiments/composable-harness/corpus/authored/cfg-084.json": "675f43cb1f547580f4eb48d5b35731f17bdc3d10c9a1bcb8f9a336598dccbaa8",
+    "experiments/composable-harness/corpus/authored/cfg-085.json": "2ecc66a174ef721075e0b26d2784dacc9cd88cda1b691785c1cb03de4f41bc21",
+    "experiments/composable-harness/corpus/authored/cfg-086.json": "68bbd1b2fae3baba4b52aa793aa0f1f7ac36ac5b72ebb167bbb70d4eee67cad0",
+    "experiments/composable-harness/corpus/authored/cfg-087.json": "2ec71f8d138616caed26197f9ee01ba11667f184c5a9e9b93500109304418ae6",
+    "experiments/composable-harness/corpus/authored/cfg-088.json": "e5e31e8d703678ce581d0c30bea69c125befa41df319b96932788f10ae5f3b16",
+    "experiments/composable-harness/corpus/authored/cfg-089.json": "adbe44750e5dd84805213264fa0bae4e790f250fc548ac9689678ed79340f40c",
+    "experiments/composable-harness/corpus/authored/cfg-090.json": "9929546abc034a6b3c064c2c6cfc7c306472520a59d126e795eaec422e5febbe",
+    "experiments/composable-harness/corpus/authored/cfg-091.json": "c1342f4a0c09dfd455d9b264f6647d7b5e0f68e87bfe518a0071d07fd74ba256",
+    "experiments/composable-harness/corpus/authored/cfg-092.json": "08131e5b789fe6621f92416a4d8e3d812050dc9ec37ca31f26fb0efd29949a61",
+    "experiments/composable-harness/corpus/authored/cfg-093.json": "c203002dc1df298e8b81e2ddd659572f0031510d8ace5e891b3a17d5ffe26270",
+    "experiments/composable-harness/corpus/authored/cfg-094.json": "4ded99e5cdf37efa9a0d1b34aa962f7d6ebca9696b07ff331f046cb2493eadc6",
+    "experiments/composable-harness/corpus/authored/cfg-095.json": "31f1698344dbd66868ea144c9eff35840ad9bcc17db6feffa79d727009ff2899",
+    "experiments/composable-harness/corpus/authored/cfg-096.json": "f3dfa744e9c2b175fec771d35c3981cac477871f6c745a217af269bf46ab070b",
+    "experiments/composable-harness/corpus/authored/cfg-097.json": "2f3b8abeee52ce7586f703b24ddaa373acdb2b7349b691ea72b43d1621944de4",
+    "experiments/composable-harness/corpus/authored/cfg-098.json": "9391a9f74d5b166c13bf229e08050d371b773d3cf41b6eb49fbaab57a94b8de3",
+    "experiments/composable-harness/corpus/authored/cfg-099.json": "5e18765a2fb0d4b2c27860475ec79b94ab626bea376747dafec0df1cbb80985d",
+    "experiments/composable-harness/corpus/authored/cfg-100.json": "1d955666f4333bfda196574b95f727d5a2b215571737543922e45b8c52353817",
+    "experiments/composable-harness/corpus/authored/cfg-101.json": "0e4272b9cbc691f472a96df1b952ca0b45866bb4c4d25c3db25c581cc3729be7",
+    "experiments/composable-harness/corpus/authored/cfg-102.json": "94bbb123f3fbcf745cee3102109422512b8a8c60f058c00211c5a1b2221d7c0b",
+    "experiments/composable-harness/corpus/authored/cfg-103.json": "f6f5eb06bccb827e255f4fea10f05b118c5691a690272830204d9fbe749b2177",
+    "experiments/composable-harness/corpus/authored/cfg-104.json": "bd66d19e3056bf04169e3576a0c6e5b6b39aa37e69097d3d8eb8ac2ae6e53d44",
+    "experiments/composable-harness/corpus/authored/cfg-105.json": "f71c30694ba0820254caec01b643c4a11981af9dc6e99a62177a059be584efdd",
+    "experiments/composable-harness/corpus/authored/cfg-106.json": "3c500e1137d009e622174cea6e7f18ac51b7f9a35dff24582b8d0fc387b25482",
+    "experiments/composable-harness/corpus/authored/cfg-107.json": "eebbb2dede63d923076cd8625fe2ee5ac0f9f32f33c6b19d95c77cfc89bc6e2e",
+    "experiments/composable-harness/corpus/authored/cfg-108.json": "36a8863d20636368acff2d9321cb2ef784cc5dd85a53cd5afda472b601e0e16f",
+    "experiments/composable-harness/corpus/authored/cfg-109.json": "8a0a3ed927c591ea1076dea2e1dd9417a0e106cc082549f2151ae481b1f3c390",
+    "experiments/composable-harness/corpus/authored/cfg-110.json": "eacc4f2b9961bd178c7fdb82f340c96707275946441e60a27ae87ce48bbdb9b6",
+    "experiments/composable-harness/corpus/authored/cfg-111.json": "3100ce169cc48dec3eae617ac5329f0227fba77e6c7dbd16b0f7d79c6c524300",
+    "experiments/composable-harness/corpus/authored/cfg-112.json": "43e888d5f5e97e24ec7861cdf249ae616cd34e858adf065c84e911c99446f2e4",
+    "experiments/composable-harness/corpus/authored/cfg-113.json": "81062aa0d1c386a82b89bd83bbd941c78db8a06830b20d287ecd19c7950ac311",
+    "experiments/composable-harness/corpus/authored/cfg-114.json": "5698f01f1ea01f5822bab97793852f81875d7edcb18c4e50c30a2d5b1268bf86",
+    "experiments/composable-harness/corpus/authored/cfg-115.json": "afe56cb28731d87f912cf178ac87a61727bd996528c2d7588f0660b923c417cf",
+    "experiments/composable-harness/corpus/authored/cfg-116.json": "2d4508147995c92bf6616f42b9463f74e3cd46ae638b71f3b9459c6039bd861d",
+    "experiments/composable-harness/corpus/authored/cfg-117.json": "89caca6892859a474ebadc619c45914093b001c346e592b5cfd48ea16e1acb6e",
+    "experiments/composable-harness/corpus/authored/cfg-118.json": "a8ec35afa82e768a427841386b5fd369a1ff693220a27c61a6220b2914124c02",
+    "experiments/composable-harness/corpus/authored/cfg-119.json": "1180ee1e54c68a65b0473f060a7d0af7d8b590144d035160a9d8a8661dd75811",
+    "experiments/composable-harness/corpus/authored/cfg-120.json": "1cbda231f58830fe08951b969bd7c12e129b1684cba1332db5a0471c9757e50a",
+    "experiments/composable-harness/corpus/authored/gen.mjs": "b5080ec7608219f5092c007025bdf5c9acd5ba73fac4340d25ae59d946ca4f8d",
+    "experiments/composable-harness/corpus/authored/index.json": "ce605cd8b01d6fc6504bec7bc783e37854269830772266b7c3ae9e372cd634d0",
+    "experiments/composable-harness/corpus/authored/verify.mjs": "17afad32fe425b8dd877df2fc159ebf9b449ada350b26ef16aaffdb2be11185f",
+    "experiments/composable-harness/fence/author-a.json": "4621ae8aa6fac740c3e344b4ffa33157cfa6b883c9625bceaea3c1e809305765",
+    "experiments/composable-harness/fence/author-b.json": "52cbab654ad41ada7acffc02caa620e9dd16638045b2b0d790277232b15b1a8c",
+    "experiments/composable-harness/fence/fence-audit.mjs": "852ff9759ed04ad4f085d1737ac93b97e2f446548f09de2f7ca3ede97a54ad1f",
+    "experiments/composable-harness/fixtures/fake-mlx.mjs": "5beb917099bdb1158960ef4ce7fcfec967e92099ab0a665345869d25eaf1a1dc",
+    "experiments/composable-harness/freeze.mjs": "08352f9f719a7c3c3b59c7306377df6d8f4c0bc69d34519b9927c584b4005b77",
+    "experiments/composable-harness/h2/SPEC.md": "b9babd23470c2b398e6d78c4c1264520c1a21aa9d98f1ae775e87d56910e4e4f",
+    "experiments/composable-harness/h2/authored/components/grep.mjs": "cbbedc6685ea344110a63193cd371d17a092f21fe96c3c4ac25895e222779c66",
+    "experiments/composable-harness/h2/authored/components/lint.mjs": "4da9f0e1ea40d1ba78506d1ed2a80fbf41649842b452a86fa95e2eee3f814a9a",
+    "experiments/composable-harness/h2/authored/components/memo-cache.mjs": "d056799cee97ad58f487cc32da17c08a20532592e381204a1dfc19ac73639139",
+    "experiments/composable-harness/h2/authored/components/mlx.model.mjs": "325f86e734d01732956e2299cdbcd341c056de8549d030adcaf2729260526748",
+    "experiments/composable-harness/h2/authored/components/spend-counter.mjs": "705d8ffc0ba91a92d7ca5d6c92374dc93518c14546e5a54876282dcbc9674490",
+    "experiments/composable-harness/h2/authored/components/yesno-gate.mjs": "d4683422e36a22d7f2fc7c01dcde07ca243842c5494a0ac896d52f822f814d61",
+    "experiments/composable-harness/h2/authored/registry.mjs": "472148e27255cddb1b0d14040f4f8f082f6fb686c9100a0d7dccd0784d1519e2",
+    "experiments/composable-harness/h2/authored/selftest.mjs": "be295e57c23ed072029aa9fa3203a4267f46e5a3915d8b639237f8e69c0ab7c1",
+    "experiments/composable-harness/harness.json": "31c2466099608afb1361faa166d94f485a5a60d260ce7e98796378f616461e18",
+    "experiments/composable-harness/probes/leak-child.mjs": "0e1876049c8081cf9f30f8092d5a2103295db186247118b5c42fb73f6f7d04dd",
+    "experiments/composable-harness/probes/leaks.mjs": "255c8a97c4bae85d6250c1b87f6426b55262fae2f586874591107c39cb036bf6",
+    "experiments/composable-harness/probes/observation-set.json": "04b966beddd9f8b143b0fe39e35e9859fb7cc543a1415adb29a99b92c7ef8b22",
+    "experiments/composable-harness/probes/observe.mjs": "5897e55d5e0d89326b4fdd38f17ad0f69b75b2d34f93013796e19bd712199635",
+    "harness/frozen-census.json": "8af1b03ea09f6068b3bf653e90e49b7190ab6f747e4772262fee79fe12ec7be3",
+    "harness/frozen-census.mjs": "0194ae7b41563eeb00cea35f81baf4d7208648488690feb72241ac768b3a717e",
+    "harness/kernel.mjs": "dd701a944f92bbb90081f5f127b8e4ec5bf06b99c143e8197cd12b6a7393dbaf",
+    "harness/parity.mjs": "1baa004daa03a5a06464f029c8d80ddeb1fd56f28994a49acddcd03deec8b05b",
+    "harness/services/clock.mjs": "c9058659ca78cdd39809b6f78cc02f4eec8efb636ae8f5dda44be9bc1d7ddb9a",
+    "harness/services/corpus.mjs": "f4a61c81d242f431afdc75733ae2493df40efe12b591c044a62f6d2e5ca5abfe",
+    "harness/services/fence.mjs": "75a67a5bf608176a3568dc15f704e40e331d4f4a4808a198cf33f19bfd933323",
+    "harness/services/ffr.mjs": "ce1081baf216185c679e9d917bbe60b4dd9712381c793d8abf1213226032565e",
+    "harness/services/mlxMemory.mjs": "b491e034559a29baac9f936efecaa529c1daa8301c3ba21a4847e10b296ef627",
+    "harness/services/pins.mjs": "44cfdf896c940bc1b496ef900f3e3d388c271aa7bf9240e8171981a16e66cae3",
+    "harness/services/spend.mjs": "55afb064c1517f511663a917345312d1ff4d14d455f40bb525f7b6cc3cc05f88",
+    "harness/services/vendored-exp008.mjs": "809d11af54522c6215d408f2a83612bedaa30d28ae3c7e956d2ee0b7da98cc4c",
+    "harness/vendored-exp006.mjs": "d6c9444396722e0ffcbc68616f9ca820cd9ed1a66ee3961b29042988a051468b",
+    "scripts/composable-baseline.test.mjs": "4a0e4b5a9e6cee8b00e0f7f8cf2de3e8db48349d166998ddefb57c9942bbe2ac",
+    "scripts/composable-corpus.test.mjs": "e41c3e81235e6aa6f438e16fb0339e7d945c722a026dcc999b4544050daae270",
+    "scripts/composable-harness-analyse.test.mjs": "a69c72cf6868b2c2948ae01326933ee6645f7b9c36f1e545b35d8bd35aa4de90",
+    "scripts/composable-harness-arms.test.mjs": "ded23150b0cf22f80105d5defc74b0b7addb502403d4c2fcf81b59d0958a4f53",
+    "scripts/composable-harness-components.test.mjs": "4dd608cd4fa71eb45faedb3cbae9c04821d0a4a51a94349d46ef3dba6a9fc670",
+    "scripts/composable-harness-probes.test.mjs": "e345177d7356908e99f9b9cd438dcb09872e6f9f9088918d482536beb3cbb57f",
+    "scripts/harness-adapters.test.mjs": "70920d177aafd5e7d327bbcf9e314a548ec9130950e9bcc5df04ce5f2b5094a5",
+    "scripts/harness-frozen.test.mjs": "85858d600ac599813e2942a3f2c4d2f9d3bb0977e72cdab1a48f607a5826c443",
+    "scripts/harness-kernel.test.mjs": "a6327ce6cefb70e64c1f79842f2b89b42f93790a69d7c794f023159017cce66d",
+    "scripts/harness-parity.test.mjs": "91a07bff0dea6f4c8d3ef53bd4fa106b4587b6b10dfeb15940f006a89fc2c837"
+  },
+  "pendingFiles": {}
+}

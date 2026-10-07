@@ -1,0 +1,82 @@
+{
+  "id": "cfg-020",
+  "label": "faulty",
+  "faultClass": "missing-dependency",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "x-blanket",
+      "needs": [],
+      "provides": [
+        "blanket.feed"
+      ]
+    },
+    {
+      "name": "x-needle",
+      "needs": [
+        "blanket.feed"
+      ],
+      "provides": [
+        "needle.feed"
+      ]
+    },
+    {
+      "name": "x-orchard",
+      "needs": [],
+      "provides": [
+        "orchard.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-needle",
+      "x-orchard"
+    ]
+  },
+  "intended": [
+    "x-needle"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "x-blanket": "excluded",
+    "x-needle": "inactive: missing blanket.feed",
+    "x-orchard": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "x-blanket": "excluded",
+    "x-needle": "inactive: missing blanket.feed",
+    "x-orchard": "active"
+  },
+  "note": "x-needle is enabled but no enabled plugin provides blanket.feed."
+}
