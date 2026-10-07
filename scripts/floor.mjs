@@ -92,6 +92,13 @@ export function factoryFloor({crop = false} = {}) {
   svg+=box(226,336,8,24,30,12,'machine');
   for(const z of [21,25,29])svg+=box(228,338,z,20,26,2,'machine');
   svg+=marker(194,350,92,'05')+'</g>';
+  // Floor inspection plate (station 07): a sieve over a low bench sorts rules a checker decides from those it cannot.
+  svg += '<g data-floor-station="floor" class="station-geometry">';
+  for(const [x,y] of [[280,334],[336,334],[280,362],[336,362]])svg+=box(x,y,0,6,6,22,'machine');
+  svg+=box(276,330,22,70,40,6,'machine')+poly([[282,336,28],[340,336,28],[340,364,28],[282,364,28]],'top');
+  for(let x=290;x<340;x+=10)svg+=line([x,338,28],[x,362,28],'ghost');
+  svg+=box(284,340,28,18,20,10,'orange')+box(316,340,28,18,20,4,'machine');
+  svg+=marker(310,350,70,'07')+'</g>';
   svg+='<text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
   svg+='</g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
   svg+=screenText(45,550,'ORTHOGRAPHIC ASSEMBLY / CONCEPT DRAWING')+screenText(662,550,'DWG. OD-000 / A');

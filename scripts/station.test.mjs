@@ -9,7 +9,7 @@ const report = JSON.parse(readFileSync('site/data/experiments.json','utf8'));
 const reports = ['migration-witness','test-witness','ci-witness'].map(id=>JSON.parse(readFileSync(`site/data/witnesses/${id}.json`,'utf8')));
 test('station claims resolve exact observations and reject missing or contradictory evidence', () => {
   assert.equal(validateStationContracts(report,reports).length,stations.length);
-  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05','06']);
+  assert.deepEqual(stations.map(s=>s.number),['01','02','03','04','05','06','07']);
   for (const mutate of [
     records => records[0].observations.find(o=>o.id===stations[1].observations[1]).actual = 'a different answer',
     records => records[0].observations.find(o=>o.id===stations[1].observations[0]).verdict = 'accepted',

@@ -24,6 +24,7 @@ import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 import { publishedPath as exp007PublishedPath, recordPath as exp007RecordPath } from './blueprint-floor-prereg.mjs';
 import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCurrent } from './blueprint-floor-note.mjs';
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
+import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -56,6 +57,9 @@ copyFileSync(exp007RecordPath, exp007PublishedPath);
 // EXP 007 amendment 01: validated against its pin and its parent, published byte for byte.
 const exp007a01 = checkExp007Amendment();
 copyFileSync(exp007AmendmentRecordPath, exp007AmendmentPublishedPath);
+// EXP 007's census results, once committed: opened by the pinned census gate (a record it refuses stops the build), published byte for byte.
+const exp007Census = exp007CensusPublication();
+if (exp007Census) copyFileSync(exp007ResultsPath, exp007PublishedResultsPath);
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
@@ -68,6 +72,8 @@ if (sha256(readFileSync(`dist/${exp007PublishedPath.slice('site/'.length)}`)) !=
 if (sha256(readFileSync(`dist/${exp007AmendmentPublishedPath.slice('site/'.length)}`)) !== exp007a01.sha256) throw new Error('Published EXP 007 amendment 01 differs from '+exp007AmendmentRecordPath);
 // The EXP 007 note: the pre-registration's committed render plus amendment 01's dated section, from its record.
 writeFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, amendExp007Note(readFileSync(exp007ArticlePath, 'utf8'), exp007a01.record, exp007a01.sha256));
+// The EXP 007 note, once measured: its results section first and a head that states the measured result, from the gate.
+if (exp007Census) { if (sha256(readFileSync(`dist/${exp007PublishedResultsPath.slice('site/'.length)}`)) !== exp007Census.resultsSha256) throw new Error('Published EXP 007 results differ from '+exp007ResultsPath); writeFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, amendExp007NoteResults(readFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, 'utf8'), exp007Census)); }
 // The built note is the parent's committed render plus each amendment's dated section, all from their records.
 const amendedNote = amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256);
 const measuredNote = results ? amendNoteResults(amendedNote, results) : amendedNote;
@@ -83,6 +89,8 @@ html = html.replace('<!--STATION_CROP-->', factoryFloor({crop:true}));
 html = html.replace('<!--STATION_LINKS-->', renderStationLinks());
 html = html.replace('<!--STATION_EXHIBITS-->', renderStations(report,witnesses.reports));
 html = html.replace('</body>', '<script type="application/json" id="station-data">'+JSON.stringify(stations).replaceAll('<','\\u003c')+'</script>\n</body>');
+// Station 07's announced status is the one its heading shows, from the census gate.
+if (exp007Census) html = qualifyFloorStationData(html, exp007Census);
 html = html.replace('<!--EXPERIMENT_BUTTONS-->', report.runs.map((run,index) => '<button class="experiment-choice" data-experiment="'+index+'" aria-pressed="'+(index===0)+'"><span>EXP / '+String(index+1).padStart(3,'0')+'</span>'+escape(run.title)+'</button>').join(''));
 html = html.replace('<!--FIRST_TRANSCRIPT-->', escape(report.runs[0].transcript));
 html = html.replace('<!--RUN_DATE-->', 'RECORDED '+escape(report.completedAt));
@@ -99,6 +107,7 @@ html = addExp006Row(html, exp006.record);
 if (exp006Results) html = qualifyHome6(html, exp006Results);
 // EXP 007's field note leads the notes: its row, rendered from the record, directly above EXP 006's.
 html = addExp007Row(html, exp007.record);
+if (exp007Census) html = qualifyHomeExp007(html, exp007Census);
 // nina's entry in the tools list: only on an EXP 006 PASS with an explicit held:false (nothing while no results exist).
 html = addNinaEntry(html, loadEntryData());
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');

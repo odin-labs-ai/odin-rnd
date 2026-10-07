@@ -8,6 +8,8 @@ export const stations = [
   { id:'record', number:'04', label:'Record', title:'The target is fixed. What else broke?', project:'ci-witness', observations:['locale-corrected','locale-regression'], href:'projects/ci-witness/#observation-locale-regression', crop:'400 300 175 190', trace:'M462 325L650 325L795 150' },
   { id:'decision', number:'05', label:'Decision', title:'Can an open model take the call?', project:'laya-vs-jev', record:'laya', href:'#laya-bench', crop:'120 180 200 190', trace:'M206 228L206 40L560 40L795 150' },
   { id:'triage', number:'06', label:'Triage', title:'Can a fast model gate drift from the diff alone?', status:'Pre-registered — not yet run', project:'jev-gate', record:'jev-gate', href:'journal/jev-as-a-fast-gate.html', crop:'160 70 230 190', trace:'M264 95L264 22L580 22L795 150' },
+  // Station 07 is earned by results: it renders only the pinned EXP 007 census gate's facts, and only for a refuted census.
+  { id:'floor', number:'07', label:'Floor', title:'Which of your gate\'s rules need a model at all?', project:'blueprint-floor', record:'blueprint-floor', href:'journal/which-rules-need-a-model.html', crop:'235 250 190 175', trace:'M313 300L680 300L795 150' },
 ];
 export function recordedAssertions(record, observation) {
   const command = record.commands.find(c => c.id === observation.commandIds.at(-1));
