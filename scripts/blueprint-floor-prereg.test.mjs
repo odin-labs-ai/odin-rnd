@@ -47,7 +47,8 @@ test('the plan\'s pins: stage, models, effort, the pinned command, the spend cap
   assert.throws(() => validateRecord(bad), /pinned command/);
   assert.deepEqual([record.spend.capUsd, record.spend.censusCeilingUsd], [100, 40]);
   assert.match(record.spend.bundle1, /\$0\.0000000/);
-  assert(!existsSync('experiments/blueprint-floor/spend-ledger.jsonl'), 'bundle 1 writes no ledger line');
+  // Bundle 1 wrote no ledger line; bundle 2 commits the (empty) ledger, and every line it gains is after the not-before.
+  if (existsSync('experiments/blueprint-floor/spend-ledger.jsonl')) for (const l of readFileSync('experiments/blueprint-floor/spend-ledger.jsonl', 'utf8').split('\n').filter(Boolean)) assert(Date.parse(JSON.parse(l).ts) > Date.parse('2026-10-03T12:09:42Z'), 'no ledger line from bundle 1');
   assert.match(record.calls.billing, /API-equivalent/);
   assert.match(record.notBefore, /mergedAt/);
 });
