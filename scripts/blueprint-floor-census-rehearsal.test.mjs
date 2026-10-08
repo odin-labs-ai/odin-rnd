@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
+import { NOT_BEFORE, PREREG_SHA256, SERVED_URL } from '../experiments/blueprint-floor/freeze.mjs';
 import { readPins, REPO_ROOT } from '../experiments/blueprint-floor/census-guard.mjs';
 import { computeCensusResults, gateFromData, readRecords, recordFilesUnder } from '../experiments/blueprint-floor/census-gate.mjs';
 import { buildTranslatorPrompt } from '../experiments/blueprint-floor/protocol.mjs';
@@ -83,7 +83,8 @@ test('rehearsal: 188 rules -> builders -> fake client -> mechanical -> adjudicat
 
     // The gate refuses it, for being a rehearsal and nothing else.
     const practiceRec = JSON.parse(readFileSync(paths.practicePath, 'utf8'));
-    const gateArgs = (res, recs, ledgerText, practiceRecords = [practiceRec]) => ({ resultsBytes: JSON.stringify(res), records: recs, recordFiles: files, ledgerText, practiceRecords, models: MODELS, rules, plugins, pins: readPins(), preregDiskSha256: PREREG_SHA256, denominator: prereg.census.rules, scorerDiskSha256: prereg.files['experiments/blueprint-floor/scorer.mjs'], scorerPin: prereg.files['experiments/blueprint-floor/scorer.mjs'] });
+    // The rehearsal models the counted run before amendment 01, so the gate is asked under that freeze (no amendment in force).
+    const gateArgs = (res, recs, ledgerText, practiceRecords = [practiceRec]) => ({ freeze: { PREREG_SHA256, NOT_BEFORE, AMENDMENT01_SHA256: null, AMENDMENT01_NOT_BEFORE: null }, resultsBytes: JSON.stringify(res), records: recs, recordFiles: files, ledgerText, practiceRecords, models: MODELS, rules, plugins, pins: readPins(), preregDiskSha256: PREREG_SHA256, denominator: prereg.census.rules, scorerDiskSha256: prereg.files['experiments/blueprint-floor/scorer.mjs'], scorerPin: prereg.files['experiments/blueprint-floor/scorer.mjs'] });
     const ledgerText = readFileSync(paths.ledgerPath, 'utf8');
     const g = gateFromData(gateArgs(results, records, ledgerText));
     assert.equal(g.publishable, false);

@@ -83,7 +83,8 @@ test('a rehearsal checks the same freeze and pins, fetches nothing and takes a s
 test('a counted-path file or a pre-registration pin that drifts refuses the guard (on a copy of the tree)', async () => {
   const root = scratchDir('bf-freeze');
   try {
-    for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
+    // The committed ledger too: the guard (git from the real repo) requires the copy's ledger to start with HEAD's bytes.
+    for (const rel of [...new Set([...RUNNER_FILES, PINS, PREREG, LEDGER, ...Object.keys(JSON.parse(preregBytes).files)])]) { mkdirSync(join(root, rel, '..'), { recursive: true }); cpSync(join(REPO_ROOT, rel), join(root, rel)); }
     symlinkSync(join(REPO_ROOT, 'node_modules'), join(root, 'node_modules'));
     const args = over => frozenArgs({ root, baseRoot: REPO_ROOT, ledgerPath: join(root, LEDGER), ...over }); // git and the base tree from the real repo
     await checkCensusRun(args());

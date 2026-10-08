@@ -41,8 +41,12 @@ test('amendment 01: pinned, its parent the published pre-registration, the decis
   assert.equal(Object.keys(record.attempt1Code).length, 34);
   assert.ok(record.unchanged.includes('the scorer (scorer.mjs, byte for byte)'));
   assert.equal(prereg.files['experiments/blueprint-floor/scorer.mjs'], sha(readFileSync(join(REPO_ROOT, 'experiments/blueprint-floor/scorer.mjs'))), 'the scorer bytes are the pre-registered ones');
-  assert.equal(AMENDMENT01_SHA256, null, 'freeze.mjs waits for the published amendment');
-  assert.equal(AMENDMENT01_NOT_BEFORE, null);
+  // freeze.mjs holds null until the amendment is published; once frozen it holds this file's sha256 and a later not-before.
+  if (AMENDMENT01_SHA256 === null) assert.equal(AMENDMENT01_NOT_BEFORE, null, 'freeze.mjs waits for the published amendment');
+  else {
+    assert.equal(AMENDMENT01_SHA256, AMENDMENT_SHA, 'the frozen amendment is this file');
+    assert.ok(Date.parse(AMENDMENT01_NOT_BEFORE) > Date.parse(NOT_BEFORE), 'its not-before follows the pre-registration\'s');
+  }
   const section = renderSection(record, sha256);
   assert.ok(!resultWords.test(section));
   assert.equal(section.split('the pinned client').length - 1, 1, 'refute A1 N5: "the pinned client" once');
@@ -99,7 +103,8 @@ test('recall refuses: without the amendment freeze, before its not-before, on an
   try {
     const args = over => ({ mode: 'recall', now: new Date('2026-10-04T01:00:00Z'), fetch: served, git: gitIn(REPO_ROOT), stateDir: state, ...over });
     await assert.rejects(checkCensusRun(args({ freeze: { PREREG_SHA256, NOT_BEFORE, AMENDMENT01_SHA256: null, AMENDMENT01_NOT_BEFORE: null } })), /waits for the amendment 01 freeze/);
-    await assert.rejects(checkCensusRun(args({})), /waits for the amendment 01 freeze/, 'the committed freeze.mjs (null)');
+    // The committed freeze.mjs: null before publication (waits), frozen after it (this earlier clock is before its not-before).
+    await assert.rejects(checkCensusRun(args({})), AMENDMENT01_SHA256 === null ? /waits for the amendment 01 freeze/ : /not after the amendment 01 not-before/, 'the committed freeze.mjs');
     const stamp = await checkCensusRun(args({ freeze: FROZEN }));
     assert.deepEqual([stamp.amendmentSha256, stamp.amendmentNotBefore, stamp.servedAmendment.sha256], [AMENDMENT_SHA, A_NB, AMENDMENT_SHA]);
     await assert.rejects(checkCensusRun(args({ freeze: FROZEN, now: new Date(A_NB) })), /not after the amendment 01 not-before/);
@@ -111,7 +116,9 @@ test('recall refuses: without the amendment freeze, before its not-before, on an
   assert.throws(() => paidPreflight({ NODE_TEST_CONTEXT: 'child' }), /refused under the Node test runner/);
   assert.throws(() => paidPreflight({ ANTHROPIC_API_KEY: 'k' }), /API-billing variables are set \(ANTHROPIC_API_KEY\)/);
   assert.doesNotThrow(() => paidPreflight({}));
-  await claudeFree7(free => assert.rejects(runCensus({ mode: 'recall', log: () => {}, ...free }), /waits for the amendment 01 freeze/));
+  // A metered recall under the test runner: refused before any client, by the null freeze or, once frozen, at the served
+  // amendment's fetch (refused under the test runner).
+  await claudeFree7(free => assert.rejects(runCensus({ mode: 'recall', log: () => {}, ...free }), AMENDMENT01_SHA256 === null ? /waits for the amendment 01 freeze/ : /served (amendment 01|pre-registration) could not be fetched/));
   await claudeFree7(free => assert.rejects(runCensus({ mode: 'recall', freeze: FROZEN, log: () => {}, ...free }), /cannot take an injected/));
   await assert.rejects(checkAmendment01({ freeze: FROZEN, now: new Date('2026-10-04T01:00:00Z'), rehearsal: true, root: scratchDir('bf-a01-empty') }), /amendment-01\.json is missing/);
 });

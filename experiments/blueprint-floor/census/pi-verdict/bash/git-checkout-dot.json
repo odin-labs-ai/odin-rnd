@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "kind": "census-record",
+  "experiment": "EXP 007",
+  "mode": "counted",
+  "rehearsal": false,
+  "fixture": false,
+  "clientVersion": "2.1.280",
+  "callTimeoutMs": 600000,
+  "timeoutRule": "a call that reaches the timeout is a harness failure: class error, counted as not",
+  "preregSha256": "ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb",
+  "notBefore": "2026-10-03T12:09:42Z",
+  "served": {
+    "url": "https://odin-labs-ai.github.io/odin-rnd/data/blueprint-floor/preregistration.json",
+    "sha256": "ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb",
+    "fetchedAt": "2026-10-06T12:00:35.301Z"
+  },
+  "base": {
+    "tree": "957b5e10c099ef2c86bb4543a8560aba59290d62",
+    "clean": true
+  },
+  "code": {
+    "experiments/blueprint-floor/census-run.mjs": "2b60bb4fa8aab8f779375415ff05db39d16efd2a3e21db1fde34f5db245455ea",
+    "experiments/blueprint-floor/census-guard.mjs": "1ad02dbaba3343c696b732ed184e85d7ae9799ef3bf56b44d4ae533e5ab20ffa",
+    "experiments/blueprint-floor/census-gate.mjs": "41f6879d37dc55b42ad2b39c73b525c26b38d1070f174b1baddd367d5e987a52",
+    "experiments/blueprint-floor/census-spend.mjs": "133ac82f41bc941a72f062a9dfa4406d0ac48443b6ae5de208851571655b8eb6",
+    "experiments/blueprint-floor/freeze.mjs": "8e6d3238712748c3ce0a084a936ffd2e1c115b88bda9cab87801967b1a3539d4",
+    "experiments/blueprint-floor/protocol.mjs": "ec6bfe573e6eda48784cea76fc1f57d84c55f2e535845c990afbe75fce0026bf",
+    "experiments/blueprint-floor/adapter.mjs": "d35854970e69ff73424bff23c7a480b566a2893e4d82953635ccc835ea30cfb2",
+    "experiments/blueprint-floor/whitelist.mjs": "ccdebf36d6344842de0903876ada39dbf02a228cf3a98c2ba1871bd5f05d2300",
+    "experiments/blueprint-floor/whitelist.json": "bf8115d21d3c34771d7a9370e6da73141b028aa978ca0492e8a96749cbecf54d",
+    "experiments/blueprint-floor/scorer.mjs": "f2113f3666ec288aebc420750d9b16c3b2eb8fac2078296acad1afdee0d2f351",
+    "experiments/blueprint-floor/contract.md": "62a0fde91db4f74bb4ab4d1173d72f4f0469a3a67b9381bf5c01eec8b4b48178",
+    "experiments/blueprint-floor/contract-module-graph.md": "ba244156d2bfafe6f4ecbbef734a9a6ff457f606ae1544cb5c97cd25daff06bc",
+    "experiments/blueprint-floor/prompts/translator.md": "c2b016bf0b2f0dd81655fa57f04ad79201760058ef1fec8c772953c4af237fb6",
+    "experiments/blueprint-floor/prompts/adjudicator.md": "b67fa1081ec39c3258b2139d04100cf85bde8e132c82ddf4d0ab901be64e9ee4",
+    "experiments/blueprint-floor/prompts/canary.md": "3afdde754180920ab518e8d9ebf56c9e87886c75cc8b1e8866aa6efc1bdb6d81",
+    "experiments/blueprint-floor/rules/selection.json": "049193ecaaee466bad0bbaaa335efb49cf5b76ddcd489d2bdf6dca6bf3e6be65",
+    "experiments/blueprint-floor/rules/hunch.json": "3a3877d4e2f9ce977b609695a71c7e5abe99ae989a60bc094fa5971cb1ef3455",
+    "experiments/blueprint-floor/rules/jev-pref.json": "0c865bc3d55227ce8690ddcb2d66ffb082d8564fa74a59dc443e68863cf72639",
+    "experiments/blueprint-floor/rules/abide.json": "68160f8b5c01da7551183b91933474b992810185d5c53ce8adc49727ae2fb7d0",
+    "experiments/blueprint-floor/rules/limpet.json": "17e93bdde655e68ad8838f50f651f66c7d1ac90db88d2ca5821a28a76f43e172",
+    "experiments/blueprint-floor/rules/jev-belay.json": "ef35a1382489f9491931c5939e33d22f0f875c9e2d085d579bc81a71c5465134",
+    "experiments/blueprint-floor/rules/jev-engineering.json": "163e64a1113d83a215b0b632938659dc20a2cf0adbcb762088f00858b1fde849",
+    "experiments/blueprint-floor/rules/pi-verdict.json": "a72b20ca299fad54ed8d4a6970e129a0aee24492440accb81e478c0eea0d639c",
+    "experiments/blueprint-floor/rules/jev-axi.json": "b6856f2e723a3c76d6ac5aac7377b44585136cd66a4aeb0cf27e83a389a2e375",
+    "experiments/blueprint-floor/controls/positive.json": "6d9c6ea150aaeecea4492f3fac63a72ab6aa5cb7bdd783dfdb674a42cc8bab88",
+    "experiments/blueprint-floor/controls/negative.json": "ad0b6bc24d8d8679f18c538a4e4ba2224bb4d54eb0e028852ba394b6c54f6b2c",
+    "experiments/blueprint-floor/controls/practice.json": "dcc4ffd5358968552d9406f21134199412f358cbda68efb8cb961e15471f2483",
+    "experiments/blueprint-floor/fixtures/fake-claude-census.mjs": "09cd75ef7131b1af2e4ad51080cb045eb15cf81387a8f0a54b2e161650e0335e",
+    "experiments/jev-gate/bce-contract.mjs": "ca9ea8860b5fe5502c32b102c3db5fcc19e3474bdde9cc4104d3da89364f2004",
+    "experiments/jev-gate/run_reviewer.mjs": "6134e3a3dfd6ab845d536a5afaca83b9d620bc48b3b4057c19d039b461505116",
+    "experiments/jev-gate/runner-guard.mjs": "1ad072329cf7f70f9c12b70e56a7fe42f06afcdcbdd84eb455fc2d014fa1bcd9",
+    "experiments/jev-gate/lint.mjs": "df4485c7c7c7f515c5a484ec10df3400c59e2558c9cc67d1956aa6d40f9f38c9",
+    "experiments/nina-changes/scrub6.mjs": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+    "scripts/check.mjs": "dddfb7303567badd6efe198757443785528bf9190fdb6a21c04b1b3e3e03706f"
+  },
+  "codeMatchesPins": true,
+  "ruleId": "pi-verdict/bash/git-checkout-dot",
+  "plugin": "pi-verdict",
+  "stratum": "primary",
+  "startedAt": "2026-10-06T12:00:35.334Z",
+  "endedAt": "2026-10-06T12:02:54.063Z",
+  "translator": {
+    "called": true,
+    "model": "claude-opus-5-5",
+    "modelUsage": [
+      "claude-opus-5-5"
+    ],
+    "command": "claude -p --model claude-opus-5-5 --effort high --tools \"\" --strict-mcp-config --setting-sources project --no-session-persistence --system-prompt-file <repo>/experiments/blueprint-floor/prompts/translator.md --output-format json",
+    "startedAt": "2026-10-06T12:00:35.334Z",
+    "endedAt": "2026-10-06T12:00:51.477Z",
+    "latencyMs": 16143,
+    "exitCode": 0,
+    "timedOut": false,
+    "harnessFailure": null,
+    "durationMs": 13738,
+    "numTurns": 1,
+    "costUsd": 0.0571794,
+    "costBasis": "api-equivalent",
+    "reportedCostUsd": 0.0571794,
+    "callId": "counted:pi-verdict/bash/git-checkout-dot:translator:1791288035332:12038",
+    "stdoutSha256": "cd4a947d2ab5eba3320a55168b7d4a01ca5d3195d45d641987e2f60ef4abf977",
+    "raw": "{\"ruleId\":\"item-4c84d3505f73\",\"class\":\"partial\",\"constraints\":[{\"id\":\"no-git-checkout-dot\",\"type\":\"forbiddenPattern\",\"pattern\":\"\\\\bgit\\\\s+checkout\\\\s+(--\\\\s+)?\\\\.(?:\\\\s|$)\",\"path\":\".floor/command.txt\"}],\"coverage\":\"The rule's regex is applied to the shell command text, one line at a time. This catches every `git checkout .` or `git checkout -- .` (any case) that sits on a single line of the command.\",\"residual\":\"Does the input differ from a single-line scan of the whole command: a match split across a newline (e.g. `git` and `checkout .` on separate lines), a match only after the first 8192 characters, or a `command` field on a tool that is neither bash nor powershell?\",\"probes\":{\"violating\":[{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git checkout .\"}},{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd repo && git checkout -- . && git status\"}}],\"compliant\":{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git checkout main && git checkout -- src/app.ts\"}}},\"rationale\":\"The regex carries over directly to command.txt in lower case. The checker matches line by line, so a match whose `\\\\s` spans a newline is missed. It also cannot apply the 8192-character limit or limit the check to bash/powershell tool calls. These mechanical edge cases remain as the residual.\"}",
+    "rawSha256": "a4c73e865ecff02f6ad23f4eac82b4a90bdd66129dcad261d569b62a6916e7dd",
+    "stderrTail": "",
+    "userSha256": "7c34dc5b7fddf1130de80e4d233d6cb388f072df8790740632df998d17ad25af",
+    "translatorClass": "partial",
+    "classAfterMechanical": "partial",
+    "failedCheck": null,
+    "engineLimit": false,
+    "schemaOk": true,
+    "mechanical": {
+      "translatorClass": "partial",
+      "classAfterMechanical": "partial",
+      "schemaOk": true,
+      "errors": [],
+      "fenced": false,
+      "vocabularyOk": true,
+      "validate": {
+        "ok": true,
+        "exitCode": 0,
+        "engineLimit": false,
+        "message": "blueprint VALID: exp007-pi-verdict-bash-git-checkout-dot@1.0.0 (1 constraint(s))",
+        "messageSha256": "a61536ce25e85d030e13d4da9d30b8fb30485c77f77feba3621d2c483028209b"
+      },
+      "teeth": {
+        "pass": true,
+        "violating": [
+          "RED",
+          "RED"
+        ],
+        "compliant": "GREEN",
+        "perConstraint": {
+          "no-git-checkout-dot": true
+        },
+        "reason": "violating RED, compliant GREEN, every constraint reddens a violating probe alone"
+      },
+      "flags": {
+        "pass": true,
+        "bad": [],
+        "reason": "every pattern is lower case with no upper-case escape"
+      },
+      "failedCheck": null,
+      "engineLimit": false
+    }
+  },
+  "adjudicator": {
+    "called": true,
+    "model": "claude-sonnet-5",
+    "modelUsage": [
+      "claude-sonnet-5"
+    ],
+    "command": "claude -p --model claude-sonnet-5 --effort high --tools \"\" --strict-mcp-config --setting-sources project --no-session-persistence --system-prompt-file <repo>/experiments/blueprint-floor/prompts/adjudicator.md --output-format json",
+    "startedAt": "2026-10-06T12:00:53.103Z",
+    "endedAt": "2026-10-06T12:02:54.063Z",
+    "latencyMs": 120959,
+    "exitCode": 0,
+    "timedOut": false,
+    "harnessFailure": null,
+    "durationMs": 119666,
+    "numTurns": 1,
+    "costUsd": 0.105342,
+    "costBasis": "api-equivalent",
+    "reportedCostUsd": 0.105342,
+    "callId": "counted:pi-verdict/bash/git-checkout-dot:adjudicator:1791288053102:12038",
+    "stdoutSha256": "7e6342c8385e0576a44b434c6794ca137c6fec7121114bebd394eccf21c78f0e",
+    "raw": "{\"ruleId\":\"item-4c84d3505f73\",\"verdict\":\"confirm\",\"proposedClass\":\"partial\",\"reason\":\"The regex itself correctly captures 'git checkout .' / 'git checkout -- .' in any case, but the forbiddenPattern constraint alone cannot enforce the rule's scope conditions: restriction to bash/powershell tool calls specifically, and the 8192-character truncation boundary. Whether the extraction pipeline truly honors these before matching is a judgment call outside the pattern itself, leaving a genuine residual.\"}",
+    "rawSha256": "dd2c2764b84435e14e116e6c271dc9e1b005913dcc0d683941f3cc2ee857cfb4",
+    "stderrTail": "",
+    "userSha256": "9764ab1f786d50adb941912ffe90d17ca22e33f7473ed11be0353d58938f2a6d",
+    "parsed": {
+      "ruleId": "item-4c84d3505f73",
+      "verdict": "confirm",
+      "proposedClass": "partial",
+      "reason": "The regex itself correctly captures 'git checkout .' / 'git checkout -- .' in any case, but the forbiddenPattern constraint alone cannot enforce the rule's scope conditions: restriction to bash/powershell tool calls specifically, and the 8192-character truncation boundary. Whether the extraction pipeline truly honors these before matching is a judgment call outside the pattern itself, leaving a genuine residual."
+    },
+    "fenced": false,
+    "schemaOk": true,
+    "errors": [],
+    "verdict": "confirm",
+    "proposedClass": "partial"
+  },
+  "translatorError": null,
+  "adjudicatorError": null,
+  "final": {
+    "disputed": false,
+    "downgraded": false,
+    "failedCheck": null,
+    "engineLimit": false,
+    "final": "partial",
+    "preDispute": "partial",
+    "error": null
+  },
+  "complete": true,
+  "resumed": false,
+  "j7": {
+    "rule": "runner text path-scrubbed and listed (pre/post sha256); model-authored text never rewritten, withheld whole and listed (pre sha256); the full pre-scrub record is in the local raw store",
+    "changed": [],
+    "withheld": [],
+    "rawStore": "experiments/blueprint-floor/census-raw/pi-verdict/bash/git-checkout-dot.json"
+  }
+}

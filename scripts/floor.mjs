@@ -1,4 +1,7 @@
 // Authored orthographic geometry. This is a conceptual diagram, not a runtime map.
+import { stations } from './station-contract.mjs';
+// The description names the number of station links, from the station contract (refute r2: seven since station 07).
+const stationCountWord = ['zero','one','two','three','four','five','six','seven','eight','nine','ten'][stations.length] ?? String(stations.length);
 export function factoryFloor({crop = false} = {}) {
   const p = (x, y, z = 0) => [(x - y) * .92 + 350, (x + y) * .43 + 86 - z];
   const pts = points => points.map(v => p(...v).map(n => n.toFixed(2)).join(',')).join(' ');
@@ -10,7 +13,7 @@ export function factoryFloor({crop = false} = {}) {
     poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],'top') + '</g>';
   const marker = (x,y,z,n) => {const [a,b]=p(x,y,z);return '<g class="station-marker"><circle cx="'+a+'" cy="'+b+'" r="12"/><text x="'+a+'" y="'+(b+.5)+'">'+n+'</text></g>'};
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console and a triage bench. Use the six station links below to explore each part.</desc>';
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Use the '+stationCountWord+' station links below to explore each part.</desc>';
   svg += '<g id="factory-geometry">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
@@ -92,6 +95,13 @@ export function factoryFloor({crop = false} = {}) {
   svg+=box(226,336,8,24,30,12,'machine');
   for(const z of [21,25,29])svg+=box(228,338,z,20,26,2,'machine');
   svg+=marker(194,350,92,'05')+'</g>';
+  // Floor inspection plate (station 07): a sieve over a low bench sorts rules a checker decides from those it cannot.
+  svg += '<g data-floor-station="floor" class="station-geometry">';
+  for(const [x,y] of [[280,334],[336,334],[280,362],[336,362]])svg+=box(x,y,0,6,6,22,'machine');
+  svg+=box(276,330,22,70,40,6,'machine')+poly([[282,336,28],[340,336,28],[340,364,28],[282,364,28]],'top');
+  for(let x=290;x<340;x+=10)svg+=line([x,338,28],[x,362,28],'ghost');
+  svg+=box(284,340,28,18,20,10,'orange')+box(316,340,28,18,20,4,'machine');
+  svg+=marker(310,350,70,'07')+'</g>';
   svg+='<text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
   svg+='</g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
   svg+=screenText(45,550,'ORTHOGRAPHIC ASSEMBLY / CONCEPT DRAWING')+screenText(662,550,'DWG. OD-000 / A');

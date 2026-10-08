@@ -23,8 +23,11 @@ test('the built #station-data status for station 06 is the status its visible he
   assert.equal(announced, shown, 'what is announced is what is shown');
   const results = checkResults();
   assert.equal(announced, results ? measuredStatus(results) : statusText, results ? 'measured: the results\' status' : 'no results: the pre-registration\'s status');
-  // Every other station is serialised exactly as the contract has it.
-  assert.deepEqual(data.filter(s => s.id !== triage.id), stations.filter(s => s.id !== triage.id));
+  // Station 07 (EXP 007) announces what its heading shows too, from the census gate; every other station is serialised
+  // exactly as the contract has it.
+  const floor = stations.find(s => s.record === 'blueprint-floor');
+  assert.equal(data.find(s => s.id === floor.id).status, unescapeHtml(heading(page, floor.id)), 'station 07: what is announced is what is shown');
+  assert.deepEqual(data.filter(s => s.id !== triage.id && s.id !== floor.id), stations.filter(s => s.id !== triage.id && s.id !== floor.id));
 });
 
 test('without results the contract keeps the pre-registration\'s status; qualifyStationData sets only station 06\'s, from the record', () => {

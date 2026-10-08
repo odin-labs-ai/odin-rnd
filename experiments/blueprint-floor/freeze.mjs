@@ -14,6 +14,6 @@ export const SERVED_URL = 'https://odin-labs-ai.github.io/odin-rnd/data/blueprin
 // until the amendment is published on odin-rnd main: AMENDMENT01_SHA256 = the sha256 of the published
 // experiments/blueprint-floor/amendment-01.json, AMENDMENT01_NOT_BEFORE = the merge time of the odin-rnd pull request that
 // adds it (gh pr view <n> -R odin-labs-ai/odin-rnd --json mergedAt). While either is null, --mode recall refuses.
-export const AMENDMENT01_SHA256 = null;
-export const AMENDMENT01_NOT_BEFORE = null;
+export const AMENDMENT01_SHA256 = 'c3d2c883c06592d55e585505d05ec6f1b0b93ea47784d072e1d21768383aba11';
+export const AMENDMENT01_NOT_BEFORE = '2026-10-07T06:30:26Z'; // gh pr view 26 -R odin-labs-ai/odin-rnd --json mergedAt
 export const SERVED_AMENDMENT01_URL = 'https://odin-labs-ai.github.io/odin-rnd/data/blueprint-floor/amendment-01.json';

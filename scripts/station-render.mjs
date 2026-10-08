@@ -9,15 +9,21 @@ import { renderAmendmentLine, qualifyStation } from './jev-gate-amendment-note.m
 import { checkAmendment02 } from './jev-gate-amendment-02.mjs';
 import { renderAmendment02Line, qualifyStation02 } from './jev-gate-amendment-02-note.mjs';
 import { checkResults, measuredStatus, renderMeasuredExhibit, resultsSectionId } from './jev-gate-results-site.mjs';
+import { censusPublication, floorLink, measuredStatus as floorStatus, renderFloorExhibit } from './blueprint-floor-results-site.mjs';
 const pre = text => `<pre tabindex="0">${escape(text)}</pre>`;
 const row = (label, value, state='') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const receiptLink = (station,id,label) => `<a href="projects/${station.project}/#observation-${escape(id)}">${escape(label)}</a>`;
-export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8'), preregistration = loadPreregistration(), amendment = loadAmendment(), amendment02 = checkAmendment02().record, results = checkResults()) {
+export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8'), preregistration = loadPreregistration(), amendment = loadAmendment(), amendment02 = checkAmendment02().record, results = checkResults(), census = censusPublication()) {
   validateStationContracts(report,reports);
   assertBenchCurrent(page, laya);
   return stations.map((station,index) => {
     let body, link = null;
-    if(station.record==='jev-gate' && results){
+    if(station.record==='blueprint-floor'){
+      // Station 07: only the pinned census gate's facts (renderFloorExhibit refuses without a refuted, publishable census).
+      body=renderFloorExhibit(census);
+      station={...station,status:floorStatus(census)};
+      link=floorLink;
+    }else if(station.record==='jev-gate' && results){
       // Measured: the results record, recomputed at load, replaces the pre-registration's exhibit; the amendment lines stay.
       body=renderMeasuredExhibit(results)+renderAmendmentLine(amendment)+renderAmendment02Line(amendment02);
       station={...station,status:measuredStatus(results)};

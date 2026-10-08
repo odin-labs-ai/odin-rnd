@@ -8,6 +8,7 @@ import { addJournalRow, articlePath, assertNoteCurrent, exp006RowOpenings, rende
 import { addJournalRow as addExp006Row } from './nina-changes-note.mjs';
 import { checkRecord as checkExp006 } from './nina-changes-prereg.mjs';
 import { builtCopy } from './test-build.mjs';
+import { censusPublication, qualifyHomeExp007 } from './blueprint-floor-results-site.mjs';
 
 // EXP 007 WO-1-04 and WO-1-05: the stage-1 pre-registration, its validator, and its public pages.
 const LONG = { timeout: 600_000 };
@@ -104,7 +105,9 @@ test('the home row goes directly above EXP 006\'s, is rendered from the record, 
 test('the built site publishes the record byte for byte and carries the row and the note (fresh build copy)', LONG, () => {
   const dist = join(builtCopy(), 'dist');
   assert.equal(sha256(readFileSync(join(dist, 'data/blueprint-floor/preregistration.json'))), digest);
-  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(renderJournalRow(record)));
+  // Once the census results are committed the build qualifies the row (measured); before that it is the record's row.
+  const census = censusPublication('.');
+  assert(readFileSync(join(dist, 'index.html'), 'utf8').includes(census ? qualifyHomeExp007(renderJournalRow(record), census) : renderJournalRow(record)));
   assert(existsSync(join(dist, `journal/${slug}.html`)));
 });
 

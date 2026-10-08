@@ -1,0 +1,217 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { cpSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { censusGate, writeResults } from '../experiments/blueprint-floor/census-gate.mjs';
+import { finalClass } from '../experiments/blueprint-floor/scorer.mjs';
+import { amendNote } from './blueprint-floor-amendment.mjs';
+import { amendNoteResults, censusPublication, censusScope, headline, measuredHead, measuredStatus, POST_REVIEW_DISCLOSURE, publishedResultsPath, RESULTS_SHA256, RUN_DATA, checkRunData, qualifyFloorStationData, qualifyHomeExp007, recomputedResultsBytes, renderFloorExhibit, renderResultsSection, resultsPath } from './blueprint-floor-results-site.mjs';
+import { readHead } from './page-head.mjs';
+import { stations } from './station-contract.mjs';
+import { builtCopy } from './test-build.mjs';
+import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
+
+// EXP 007 results on the site: everything rendered comes from the pinned census gate's return; a results record the gate
+// refuses stops the build; the variant is the gate's; every disclosure and every pre-registered limit is shown verbatim.
+
+const sha = b => createHash('sha256').update(b).digest('hex');
+const recordFilesUnderLocal = dir => { const out = []; const walk = d => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name.endsWith('.json')) out.push(p.slice(dir.length + 1)); } }; walk(dir); return out.sort(); };
+const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+const results = JSON.parse(readFileSync(resultsPath, 'utf8'));
+const pub = censusPublication('.');
+const LONG = { timeout: 900_000 };
+
+test('the committed census is publishable under the pinned gate, and the publication is its return', () => {
+  assert.ok(pub, 'results are committed');
+  const g = censusGate('.');
+  assert.deepEqual([g.publishable, g.variant], [true, pub.variant]);
+  assert.deepEqual(pub.facts, g.facts, 'the page data is the gate\'s facts, nothing else');
+  assert.equal(pub.variant, results.score.kill.variant, 'the variant is the scorer\'s kill output');
+  assert.equal(pub.resultsSha256, sha(readFileSync(resultsPath)));
+});
+
+test('a tampered results.json (or record) is refused: the build stops', () => {
+  const root = scratchDir('bf-results-tamper');
+  try {
+    cpSync('experiments/blueprint-floor', join(root, 'experiments/blueprint-floor'), { recursive: true });
+    assert.ok(censusPublication(root), 'an untampered copy opens');
+    const rp = join(root, resultsPath);
+    const r = JSON.parse(readFileSync(rp, 'utf8'));
+    r.score.median.expressibleShare = 0.5;
+    writeFileSync(rp, JSON.stringify(r, null, 2));
+    // Every layer refuses: the run-data pins first (refute R2-B1), and the pinned gate on its own.
+    assert.throws(() => censusPublication(root), /not the data of the run/);
+    assert.ok(censusGate(root).failures.some(m => /not the scorer's recompute \(tampered\)/.test(m)), 'the gate alone refuses it too');
+    writeFileSync(rp, JSON.stringify({ ...JSON.parse(readFileSync(resultsPath, 'utf8')), rehearsal: true }));
+    assert.throws(() => censusPublication(root), /not the data of the run/);
+    assert.ok(censusGate(root).failures.includes('the results are a rehearsal'), 'the gate alone refuses it too');
+    cpSync(resultsPath, rp);
+    const rec = join(root, 'experiments/blueprint-floor/census/control/01.json');
+    const c = JSON.parse(readFileSync(rec, 'utf8')); c.translator.classAfterMechanical = 'not'; c.final = { ...c.final, final: 'not', preDispute: 'not' };
+    writeFileSync(rec, JSON.stringify(c));
+    assert.throws(() => censusPublication(root), /not the data of the run/, 'a record edited after the results');
+    assert.equal(censusGate(root).publishable, false, 'the gate alone refuses it too');
+  } finally { removeScratch(root); }
+});
+
+test('refute R-B1: results.json must be the pinned code\'s recompute byte for byte; a tampered field the gate does not bind is refused too', () => {
+  assert.equal(recomputedResultsBytes('.'), readFileSync(resultsPath, 'utf8'), 'the committed results are the recompute');
+  assert.equal(sha(readFileSync(resultsPath)), '26eb7287e88f3bbf97b6311dc1d355195bb98901c8135569aa9a56c827404a44');
+  const root = scratchDir('bf-results-rb1');
+  try {
+    cpSync('experiments/blueprint-floor', join(root, 'experiments/blueprint-floor'), { recursive: true });
+    const rp = join(root, resultsPath);
+    const tamper = (label, edit) => {
+      const r = JSON.parse(readFileSync(resultsPath, 'utf8')); edit(r);
+      writeFileSync(rp, `${JSON.stringify(r, null, 2)}\n`);
+      assert.throws(() => censusPublication(root), /not the data of the run|not byte for byte the pinned code's recompute|refuses them/, label);
+      // The byte-equal recompute (refute R-B1) refuses it on its own too.
+      assert.notEqual(recomputedResultsBytes(root), readFileSync(rp, 'utf8'), `${label}: the recompute differs`);
+    };
+    tamper('measured', r => { r.measured.lastCallEndedAt = '2026-12-31T00:00:00.000Z'; });
+    tamper('a disclosure', r => { r.disclosures[0] = `${r.disclosures[0]} (edited)`; });
+    tamper('servedSha256', r => { r.servedSha256 = 'f'.repeat(64); });
+    tamper('amendment.recalled', r => { r.amendment.recalled = 36; });
+    tamper('spend.basis', r => { r.spend.basis = 'cash'; });
+    // A whitespace-only change is refused too (byte equality, not JSON equality).
+    writeFileSync(rp, readFileSync(resultsPath, 'utf8').replace(/\n$/, () => ''));
+    assert.throws(() => censusPublication(root), /not the data of the run|not byte for byte/);
+    assert.notEqual(recomputedResultsBytes(root), readFileSync(rp, 'utf8'));
+    cpSync(resultsPath, rp);
+    assert.ok(censusPublication(root), 'the untampered copy opens');
+  } finally { removeScratch(root); }
+});
+
+test('refute R2-B1: a consistent rewrite (record class edited, results.json regenerated by the pinned writer) passes the gate but not the run-data pins', () => {
+  assert.equal(RESULTS_SHA256, sha(readFileSync(resultsPath)));
+  assert.deepEqual(RUN_DATA.map(d => d.path), ['experiments/blueprint-floor/census', 'experiments/blueprint-floor/census-attempt-2', 'experiments/blueprint-floor/practice', 'experiments/blueprint-floor/spend-ledger.jsonl', 'experiments/blueprint-floor/results/results.json']);
+  assert.ok(checkRunData('.'), 'the committed data is the run\'s');
+  const fresh = () => { const root = scratchDir('bf-results-r2'); cpSync('experiments/blueprint-floor', join(root, 'experiments/blueprint-floor'), { recursive: true }); return root; };
+  const PINNED = /not the data of the run \(pinned at b57e4ec\)/;
+  // 1. The refute's attack: one record's class changed, its final re-derived, results.json rewritten by the pinned writer.
+  let root = fresh();
+  try {
+    assert.equal(checkRunData(root).historyChecked, false, 'a copy outside the repository has no history: the Node pins alone decide');
+    assert.ok(censusPublication(root), 'an untampered copy opens');
+    const f = join(root, 'experiments/blueprint-floor/census/hunch/failures/misleading-success.json');
+    const r = JSON.parse(readFileSync(f, 'utf8'));
+    r.translator.classAfterMechanical = 'expressible'; r.translator.translatorClass = 'expressible'; r.adjudicator = { ...r.adjudicator, verdict: 'confirm', proposedClass: 'expressible' }; r.final = finalClass(r);
+    writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`);
+    writeResults(root);
+    assert.equal(censusGate(root).publishable, true, 'the pinned gate alone is satisfied by the consistent rewrite');
+    assert.throws(() => censusPublication(root), PINNED);
+    assert.match((() => { try { censusPublication(root); } catch (e) { return e.message; } })(), /experiments\/blueprint-floor\/census \(tree/);
+  } finally { removeScratch(root); }
+  // 2. A ledger edit, and 3. an attempt-2 record edit: each refused.
+  root = fresh();
+  try {
+    const l = join(root, 'experiments/blueprint-floor/spend-ledger.jsonl');
+    writeFileSync(l, readFileSync(l, 'utf8').replace(/"costUsd":0\.0\d+/, m => m.replace(/\d$/, d => String((Number(d) + 1) % 10))));
+    assert.throws(() => censusPublication(root), /spend-ledger\.jsonl \(blob/);
+  } finally { removeScratch(root); }
+  root = fresh();
+  try {
+    const dir = join(root, 'experiments/blueprint-floor/census-attempt-2');
+    const f = join(dir, recordFilesUnderLocal(dir)[0]);
+    const r = JSON.parse(readFileSync(f, 'utf8')); r.adjudicator = { ...r.adjudicator, reason: `${r.adjudicator?.reason ?? ''} edited` };
+    writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`);
+    assert.throws(() => censusPublication(root), /census-attempt-2 \(tree/);
+  } finally { removeScratch(root); }
+  // The practice record and results.json are pinned too.
+  root = fresh();
+  try {
+    writeFileSync(join(root, 'experiments/blueprint-floor/practice/practice-run.json'), `${readFileSync(join(root, 'experiments/blueprint-floor/practice/practice-run.json'), 'utf8')} `);
+    assert.throws(() => censusPublication(root), /practice \(tree/);
+  } finally { removeScratch(root); }
+});
+
+test('refute R-B2: the scope is derived from the gate\'s facts: 145 primary + 30 sampled plugin rules and 13 controls = 188', () => {
+  const sc = censusScope(pub.facts);
+  assert.deepEqual([sc.primary, sc.secondary, sc.plugin, sc.negative, sc.positive, sc.controls], [145, 30, 175, 6, 7, 13]);
+  assert.equal(sc.primary + sc.secondary + sc.controls, pub.facts.denominator);
+  assert.equal(pub.facts.denominator, 188);
+  assert.equal(sc.text, '175 rules that the plugins ship (145 primary, 30 sampled) and 13 controls (6 written for this experiment, 7 from EXP 005)');
+  assert.ok(renderFloorExhibit(pub).includes(escape(sc.text)) && !renderFloorExhibit(pub).includes('eight gate plugins ship'));
+  const head = measuredHead(pub);
+  assert.ok(head.description.includes(sc.text) && !/rules across eight plugins/.test(head.description));
+  assert.ok(!head.title.includes('$') && !head.description.includes('$'), 'no $ in the head (page-head.mjs replaces with strings)');
+  assert.throws(() => censusScope({ ...pub.facts, denominator: 187 }), /adds up to the denominator/);
+});
+
+test('refute N1: the post-review disclosure is shown under its own heading, outside the gate\'s disclosure list', () => {
+  const html = renderResultsSection(pub);
+  assert.ok(html.includes('<h3>Found in review after the run</h3>') && html.includes(escape(POST_REVIEW_DISCLOSURE)));
+  assert.ok(!pub.facts.disclosures.includes(POST_REVIEW_DISCLOSURE), 'not inside the pinned list');
+  assert.ok(html.indexOf('Found in review after the run</h3>') > html.indexOf('Disclosed with these results</h3>'));
+  assert.match(POST_REVIEW_DISCLOSURE, /exp007-census/);
+});
+
+test('the results section shows the gate\'s numbers: per plugin, medians, controls, agreement, errors, spend at 7 dp; every disclosure and limit verbatim; amendment 01', () => {
+  const html = renderResultsSection(pub);
+  const s = results.score;
+  for (const p of s.perPlugin) assert.ok(html.includes(`<tr><th scope="row">${escape(p.plugin)}</th><td>${p.n}</td><td>${p.expressible}</td><td>${p.partial}</td><td>${p.not}</td><td>${p.error}</td>`), p.plugin);
+  assert.ok(html.includes(`<strong>${(s.median.expressibleShare * 100).toFixed(1)}%</strong> across ${s.median.plugins} plugins`));
+  assert.ok(html.includes(`Median with partial counted as 0.5 (sensitivity, not decisive): ${(s.median.partialAsHalf * 100).toFixed(1)}%`));
+  assert.ok(html.includes(`Positive controls final expressible or partial: ${s.controls.positive.expressibleOrPartial} of ${s.controls.positive.n}`));
+  assert.ok(html.includes(`Cohen's kappa ${s.agreement.kappa.toFixed(3)} over ${s.agreement.n} rules`));
+  assert.ok(html.includes(`Errors (counted as not): ${s.errors.length}.`));
+  for (const e of s.errors) assert.ok(html.includes(`<code>${escape(e.ruleId)}</code>: ${escape(e.reason)}`), e.ruleId);
+  assert.ok(html.includes(`Disputes: ${s.disputes.length}`) && html.includes(`Downgrades by the mechanical checks: ${s.downgrades.length}`));
+  assert.ok(html.includes(`$${results.spend.totalUsd.toFixed(7)}`) && html.includes(`$${results.spend.countedUsd.toFixed(7)}`) && html.includes(`$${results.spend.excludedUsd.toFixed(7)}`));
+  assert.equal(results.spend.totalUsd.toFixed(7), '33.1047852');
+  assert.equal(results.disclosures.length, 13);
+  for (const d of results.disclosures) assert.ok(html.includes(`<li>${escape(d)}</li>`), `disclosure missing: ${d.slice(0, 60)}`);
+  const prereg = JSON.parse(readFileSync('experiments/blueprint-floor/preregistration.json', 'utf8'));
+  for (const l of prereg.limits) assert.ok(html.includes(`<li>${escape(l)}</li>`), `limit missing: ${l.slice(0, 60)}`);
+  assert.ok(html.includes(`${pub.facts.amendment.eligible} rules were eligible under its rule and ${pub.facts.amendment.recalled} were re-called once`));
+  assert.deepEqual([pub.facts.amendment.eligible, pub.facts.amendment.recalled], [37, 37]);
+  assert.ok(html.includes(headline(pub)) && html.includes(`variant <code>${pub.variant}</code>`));
+});
+
+test('the variant\'s words come from the gate: refuted vs interim; station 07 is earned by a refuted census only', () => {
+  assert.equal(pub.variant, 'refuted');
+  assert.match(headline(pub), /below the pre-registered 25\.0% bar: the premise is refuted/);
+  assert.equal(measuredStatus(pub), 'Measured — premise refuted');
+  const interim = { ...pub, variant: 'interim', facts: { ...pub.facts, kill: { ...pub.facts.kill, median: 0.3, refuted: false, variant: 'interim' } } };
+  assert.match(headline(interim), /at or above the pre-registered 25\.0% bar: the premise stands for now/);
+  assert.equal(measuredStatus(interim), 'Measured — stage 1 result (interim)');
+  assert.throws(() => renderFloorExhibit(interim), /earned by a refuted census only/);
+  assert.throws(() => renderFloorExhibit(null), /needs the committed EXP 007 census results/);
+  assert.match(renderFloorExhibit(pub), /Median expressible share/);
+  assert.ok(stations.some(s => s.id === 'floor' && s.number === '07' && s.label === 'Floor' && s.record === 'blueprint-floor'));
+});
+
+test('the note: results first, meta MEASURED, the head states the measured result; the home row and the station data say so', () => {
+  const note = amendNote(readFileSync('site/journal/which-rules-need-a-model.html', 'utf8'), JSON.parse(readFileSync('experiments/blueprint-floor/amendment-01.json', 'utf8')), sha(readFileSync('experiments/blueprint-floor/amendment-01.json')));
+  const out = amendNoteResults(note, pub);
+  assert.ok(out.indexOf('id="results"') < out.indexOf('<h2>The question</h2>'), 'results come first');
+  assert.match(out, / · MEASURED \d+ [A-Z]{3} 2026<\/p>/);
+  const head = readHead(out);
+  assert.match(head.title, /Measured: the premise is refuted/);
+  assert.ok(head.description.includes(escape(headline(pub))));
+  assert.deepEqual(measuredHead(pub).title.includes('premise is refuted'), true);
+  assert.throws(() => amendNoteResults(out, pub), /must contain|already carries the results/);
+  const row = '<a class="journal-row" href="journal/which-rules-need-a-model.html"><div><p>x Pre-registered, not yet run.</p></div></a>';
+  assert.match(qualifyHomeExp007(row, pub), /measured \d+ \w+ 2026: the premise is refuted/);
+  const page = `<script type="application/json" id="station-data">${JSON.stringify(stations)}</script>`;
+  const data = JSON.parse(/id="station-data">([\s\S]*?)<\/script>/.exec(qualifyFloorStationData(page, pub))[1]);
+  assert.equal(data.find(s => s.id === 'floor').status, 'Measured — premise refuted');
+});
+
+test('the built site: results.json byte for byte, the measured note and head, station 07 from the gate (fresh build copy)', LONG, () => {
+  const dist = join(builtCopy(), 'dist');
+  assert.equal(sha(readFileSync(join(dist, 'data/blueprint-floor/results.json'))), pub.resultsSha256);
+  assert.equal(readFileSync(publishedResultsPath, 'utf8'), readFileSync(resultsPath, 'utf8'), 'the committed site copy is the results record');
+  const note = readFileSync(join(dist, 'journal/which-rules-need-a-model.html'), 'utf8');
+  assert.ok(note.includes('id="results"') && note.includes('id="amendment-01"'));
+  assert.match(readHead(note).title, /Measured: the premise is refuted/);
+  for (const d of results.disclosures) assert.ok(note.includes(escape(d)));
+  assert.ok(note.includes(escape(POST_REVIEW_DISCLOSURE)), 'the post-review disclosure is on the built note');
+  assert.ok(note.includes('$33.1047852'), 'a $ amount survives the insertion intact (function replacers)');
+  const home = readFileSync(join(dist, 'index.html'), 'utf8');
+  const exhibit = home.split('id="station-floor"')[1].split('</article>')[0];
+  assert.ok(exhibit.includes('Measured — premise refuted') && exhibit.includes(escape(headline(pub))));
+  assert.ok(home.includes('data-floor-station="floor"'));
+  assert.match(home, /Pre-registered; measured \d+ \w+ 2026: the premise is refuted/);
+});
