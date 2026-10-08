@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { censusGate } from '../experiments/blueprint-floor/census-gate.mjs';
+import { censusGate, writeResults } from '../experiments/blueprint-floor/census-gate.mjs';
+import { finalClass } from '../experiments/blueprint-floor/scorer.mjs';
 import { amendNote } from './blueprint-floor-amendment.mjs';
-import { amendNoteResults, censusPublication, censusScope, headline, measuredHead, measuredStatus, POST_REVIEW_DISCLOSURE, publishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, recomputedResultsBytes, renderFloorExhibit, renderResultsSection, resultsPath } from './blueprint-floor-results-site.mjs';
+import { amendNoteResults, censusPublication, censusScope, headline, measuredHead, measuredStatus, POST_REVIEW_DISCLOSURE, publishedResultsPath, RESULTS_SHA256, RUN_DATA, checkRunData, qualifyFloorStationData, qualifyHomeExp007, recomputedResultsBytes, renderFloorExhibit, renderResultsSection, resultsPath } from './blueprint-floor-results-site.mjs';
 import { readHead } from './page-head.mjs';
 import { stations } from './station-contract.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -15,6 +16,7 @@ import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 // refuses stops the build; the variant is the gate's; every disclosure and every pre-registered limit is shown verbatim.
 
 const sha = b => createHash('sha256').update(b).digest('hex');
+const recordFilesUnderLocal = dir => { const out = []; const walk = d => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name.endsWith('.json')) out.push(p.slice(dir.length + 1)); } }; walk(dir); return out.sort(); };
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const results = JSON.parse(readFileSync(resultsPath, 'utf8'));
 const pub = censusPublication('.');
@@ -38,14 +40,18 @@ test('a tampered results.json (or record) is refused: the build stops', () => {
     const r = JSON.parse(readFileSync(rp, 'utf8'));
     r.score.median.expressibleShare = 0.5;
     writeFileSync(rp, JSON.stringify(r, null, 2));
-    assert.throws(() => censusPublication(root), /the pinned census gate refuses them: .*not the scorer's recompute \(tampered\)/);
+    // Every layer refuses: the run-data pins first (refute R2-B1), and the pinned gate on its own.
+    assert.throws(() => censusPublication(root), /not the data of the run/);
+    assert.ok(censusGate(root).failures.some(m => /not the scorer's recompute \(tampered\)/.test(m)), 'the gate alone refuses it too');
     writeFileSync(rp, JSON.stringify({ ...JSON.parse(readFileSync(resultsPath, 'utf8')), rehearsal: true }));
-    assert.throws(() => censusPublication(root), /refuses them: the results are a rehearsal/);
+    assert.throws(() => censusPublication(root), /not the data of the run/);
+    assert.ok(censusGate(root).failures.includes('the results are a rehearsal'), 'the gate alone refuses it too');
     cpSync(resultsPath, rp);
     const rec = join(root, 'experiments/blueprint-floor/census/control/01.json');
     const c = JSON.parse(readFileSync(rec, 'utf8')); c.translator.classAfterMechanical = 'not'; c.final = { ...c.final, final: 'not', preDispute: 'not' };
     writeFileSync(rec, JSON.stringify(c));
-    assert.throws(() => censusPublication(root), /refuses them/, 'a record edited after the results');
+    assert.throws(() => censusPublication(root), /not the data of the run/, 'a record edited after the results');
+    assert.equal(censusGate(root).publishable, false, 'the gate alone refuses it too');
   } finally { removeScratch(root); }
 });
 
@@ -59,7 +65,9 @@ test('refute R-B1: results.json must be the pinned code\'s recompute byte for by
     const tamper = (label, edit) => {
       const r = JSON.parse(readFileSync(resultsPath, 'utf8')); edit(r);
       writeFileSync(rp, `${JSON.stringify(r, null, 2)}\n`);
-      assert.throws(() => censusPublication(root), /not byte for byte the pinned code's recompute|refuses them/, label);
+      assert.throws(() => censusPublication(root), /not the data of the run|not byte for byte the pinned code's recompute|refuses them/, label);
+      // The byte-equal recompute (refute R-B1) refuses it on its own too.
+      assert.notEqual(recomputedResultsBytes(root), readFileSync(rp, 'utf8'), `${label}: the recompute differs`);
     };
     tamper('measured', r => { r.measured.lastCallEndedAt = '2026-12-31T00:00:00.000Z'; });
     tamper('a disclosure', r => { r.disclosures[0] = `${r.disclosures[0]} (edited)`; });
@@ -68,9 +76,53 @@ test('refute R-B1: results.json must be the pinned code\'s recompute byte for by
     tamper('spend.basis', r => { r.spend.basis = 'cash'; });
     // A whitespace-only change is refused too (byte equality, not JSON equality).
     writeFileSync(rp, readFileSync(resultsPath, 'utf8').replace(/\n$/, () => ''));
-    assert.throws(() => censusPublication(root), /not byte for byte/);
+    assert.throws(() => censusPublication(root), /not the data of the run|not byte for byte/);
+    assert.notEqual(recomputedResultsBytes(root), readFileSync(rp, 'utf8'));
     cpSync(resultsPath, rp);
     assert.ok(censusPublication(root), 'the untampered copy opens');
+  } finally { removeScratch(root); }
+});
+
+test('refute R2-B1: a consistent rewrite (record class edited, results.json regenerated by the pinned writer) passes the gate but not the run-data pins', () => {
+  assert.equal(RESULTS_SHA256, sha(readFileSync(resultsPath)));
+  assert.deepEqual(RUN_DATA.map(d => d.path), ['experiments/blueprint-floor/census', 'experiments/blueprint-floor/census-attempt-2', 'experiments/blueprint-floor/practice', 'experiments/blueprint-floor/spend-ledger.jsonl', 'experiments/blueprint-floor/results/results.json']);
+  assert.ok(checkRunData('.'), 'the committed data is the run\'s');
+  const fresh = () => { const root = scratchDir('bf-results-r2'); cpSync('experiments/blueprint-floor', join(root, 'experiments/blueprint-floor'), { recursive: true }); return root; };
+  const PINNED = /not the data of the run \(pinned at b57e4ec\)/;
+  // 1. The refute's attack: one record's class changed, its final re-derived, results.json rewritten by the pinned writer.
+  let root = fresh();
+  try {
+    assert.equal(checkRunData(root).historyChecked, false, 'a copy outside the repository has no history: the Node pins alone decide');
+    assert.ok(censusPublication(root), 'an untampered copy opens');
+    const f = join(root, 'experiments/blueprint-floor/census/hunch/failures/misleading-success.json');
+    const r = JSON.parse(readFileSync(f, 'utf8'));
+    r.translator.classAfterMechanical = 'expressible'; r.translator.translatorClass = 'expressible'; r.adjudicator = { ...r.adjudicator, verdict: 'confirm', proposedClass: 'expressible' }; r.final = finalClass(r);
+    writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`);
+    writeResults(root);
+    assert.equal(censusGate(root).publishable, true, 'the pinned gate alone is satisfied by the consistent rewrite');
+    assert.throws(() => censusPublication(root), PINNED);
+    assert.match((() => { try { censusPublication(root); } catch (e) { return e.message; } })(), /experiments\/blueprint-floor\/census \(tree/);
+  } finally { removeScratch(root); }
+  // 2. A ledger edit, and 3. an attempt-2 record edit: each refused.
+  root = fresh();
+  try {
+    const l = join(root, 'experiments/blueprint-floor/spend-ledger.jsonl');
+    writeFileSync(l, readFileSync(l, 'utf8').replace(/"costUsd":0\.0\d+/, m => m.replace(/\d$/, d => String((Number(d) + 1) % 10))));
+    assert.throws(() => censusPublication(root), /spend-ledger\.jsonl \(blob/);
+  } finally { removeScratch(root); }
+  root = fresh();
+  try {
+    const dir = join(root, 'experiments/blueprint-floor/census-attempt-2');
+    const f = join(dir, recordFilesUnderLocal(dir)[0]);
+    const r = JSON.parse(readFileSync(f, 'utf8')); r.adjudicator = { ...r.adjudicator, reason: `${r.adjudicator?.reason ?? ''} edited` };
+    writeFileSync(f, `${JSON.stringify(r, null, 2)}\n`);
+    assert.throws(() => censusPublication(root), /census-attempt-2 \(tree/);
+  } finally { removeScratch(root); }
+  // The practice record and results.json are pinned too.
+  root = fresh();
+  try {
+    writeFileSync(join(root, 'experiments/blueprint-floor/practice/practice-run.json'), `${readFileSync(join(root, 'experiments/blueprint-floor/practice/practice-run.json'), 'utf8')} `);
+    assert.throws(() => censusPublication(root), /practice \(tree/);
   } finally { removeScratch(root); }
 });
 
