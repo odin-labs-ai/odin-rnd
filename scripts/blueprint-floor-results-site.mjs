@@ -9,7 +9,8 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { censusGate, RESULTS_PATH } from '../experiments/blueprint-floor/census-gate.mjs';
+import { censusGate, computeCensusResults, loadInputs, RESULTS_PATH } from '../experiments/blueprint-floor/census-gate.mjs';
+import { AMENDMENT01_SHA256 } from '../experiments/blueprint-floor/freeze.mjs';
 import { replaceHead } from './page-head.mjs';
 import { slug } from './blueprint-floor-note.mjs';
 
@@ -33,17 +34,52 @@ const once = (text, marker, where) => assert.equal(text.split(marker).length, 2,
  * otherwise the gate's return, which must be publishable (a results record the gate refuses stops the build), plus the
  * pre-registration, the amendment and the results bytes (for the published copy and the provenance line).
  */
+/**
+ * Refute R-B1: the results record recomputed IN MEMORY from the committed records and ledger with the pinned code,
+ * exactly as the pinned census-gate.mjs writeResults writes it (loadInputs, the same ledger parse, computeCensusResults
+ * with amendment 01's inputs when it is frozen), serialised byte for byte as that writer does.
+ */
+export function recomputedResultsBytes(root = '.') {
+  const i = loadInputs(root);
+  const ledgerLines = i.ledgerText.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } });
+  const inForce = Boolean(AMENDMENT01_SHA256);
+  const results = computeCensusResults({ rules: i.rules, plugins: i.plugins, records: i.records, ledgerLines, denominator: i.denominator, scorerSha256: i.scorerDiskSha256, ...(inForce ? { attempt2Records: i.attempt2Records, amendment: i.amendment, amendmentSha256: i.amendmentDiskSha256 } : {}) });
+  return `${JSON.stringify(results, null, 2)}\n`;
+}
+
 export function censusPublication(root = '.', { gate = censusGate } = {}) {
   if (!existsSync(join(root, RESULTS_PATH))) return null;
   const g = gate(root);
   if (!g.publishable) throw new Error(`EXP 007 results are committed but the pinned census gate refuses them: ${g.failures.slice(0, 5).join('; ')}`);
   assert(['refuted', 'interim'].includes(g.variant), 'the gate returns a variant');
   const bytes = readFileSync(join(root, RESULTS_PATH));
+  // R-B1: every field the page shows, not only the score the gate binds, must be the pinned code's own recompute.
+  let recomputed;
+  try { recomputed = recomputedResultsBytes(root); } catch (error) { throw new Error(`EXP 007 results cannot be recomputed from the committed records: ${error.message}`); }
+  if (recomputed !== bytes.toString('utf8')) throw new Error(`EXP 007 results.json is not byte for byte the pinned code's recompute from the committed records and ledger (${RESULTS_PATH})`);
   const prereg = JSON.parse(readFileSync(join(root, 'experiments/blueprint-floor/preregistration.json'), 'utf8'));
   const amendmentPath = join(root, 'experiments/blueprint-floor/amendment-01.json');
   const amendment = existsSync(amendmentPath) ? JSON.parse(readFileSync(amendmentPath, 'utf8')) : null;
   return { gate: g, variant: g.variant, facts: g.facts, prereg, amendment, resultsSha256: sha256(bytes) };
 }
+
+/**
+ * Refute R-B2: what the census covers, from the gate's facts: the plugin rules (primary and the sampled secondary) and the
+ * controls (the negative ones written for this experiment, the positive ones from EXP 005).
+ */
+export function censusScope(f) {
+  const primary = f.perPlugin.reduce((n, p) => n + p.n, 0), secondary = f.secondary.n;
+  const positive = f.controls.positive.n, negative = f.controls.negative.n;
+  assert.equal(primary + secondary + positive + negative, f.denominator, 'the census scope adds up to the denominator');
+  return { primary, secondary, plugin: primary + secondary, positive, negative, controls: positive + negative,
+    text: `${primary + secondary} rules that the plugins ship (${primary} primary, ${secondary} sampled) and ${positive + negative} controls (${negative} written for this experiment, ${positive} from EXP 005)` };
+}
+
+/**
+ * Refute N1: a disclosure found in review after the run. It is site text, labelled as such, and NOT part of the gate's
+ * disclosure list (the census gate is pinned and its list is part of the recorded results).
+ */
+export const POST_REVIEW_DISCLOSURE = "Found in review after the run: each call ran in a fresh temp directory whose name began 'exp007-census', so the models could see the experiment id (never the hypothesis, plugin, rule label or expected class); the R6-1 canary terms did not include 'exp007'. A neutral prefix and the id in the canary terms are adopted for stage 2.";
 
 /** The measured state in words, from the gate's variant and kill facts. */
 export const measuredStatus = pub => (pub.variant === 'refuted' ? 'Measured — premise refuted' : 'Measured — stage 1 result (interim)');
@@ -60,7 +96,7 @@ export function measuredHead(pub) {
   const e = pub.prereg.experiment, f = pub.facts;
   return {
     title: `${e.id} — ${e.title} ${pub.variant === 'refuted' ? 'Measured: the premise is refuted' : 'Measured: stage 1 result (interim)'}`,
-    description: `Field notes from Odin R&D. ${e.id}, measured ${day(measuredOn(pub))}: ${headline(pub)} ${f.denominator} rules across eight plugins and 13 controls; the controls ${f.calibrated ? 'met' : 'missed'} the calibration bar. Pre-registered ${day(e.authoredOn)}${pub.amendment ? `; amendment 01 ${day(pub.amendment.authoredOn)}` : ''}.`,
+    description: `Field notes from Odin R&D. ${e.id}, measured ${day(measuredOn(pub))}: ${headline(pub)} ${censusScope(f).text}; the controls ${f.calibrated ? 'met' : 'missed'} the calibration bar. Pre-registered ${day(e.authoredOn)}${pub.amendment ? `; amendment 01 ${day(pub.amendment.authoredOn)}` : ''}.`,
   };
 }
 
@@ -76,7 +112,7 @@ export function renderResultsSection(pub) {
   const { facts: f, prereg, amendment } = pub, k = f.kill, m = f.median, c = f.controls, a = f.agreement, s = f.spend;
   const piv = f.breakdown?.['pi-verdict'] ?? {};
   const am = f.amendment;
-  return `<section id="${resultsSectionId}"><h2>Results: ${escape(measuredStatus(pub).replace('Measured — ', ''))}</h2>
+  return `<section id="${resultsSectionId}"><h2>Results: ${escape(measuredStatus(pub).replace('Measured — ', () => ''))}</h2>
 <p class="results-headline"><strong>${escape(headline(pub))}</strong></p>
 <p>The pre-registered rule: ${escape(k.rule)}. Measured from ${escape(f.measured.firstCallStartedAt)} to ${escape(f.measured.lastCallEndedAt)}; ${f.denominator} census rules, each with its record; decided by the pinned census gate (variant ${code(pub.variant)}).</p>
 <h3>Per plugin</h3>
@@ -103,6 +139,8 @@ ${am ? `<h3>Amendment 01</h3>
 ${list([`Counted census calls: ${s.countedCalls}, ${usd(s.countedUsd)}.`, `Canary and practice calls (outside the census): ${s.excludedLines.length}, ${usd(s.excludedUsd)}.`, `Total: ${usd(s.totalUsd)}, against the census ceiling of $${prereg.spend.censusCeilingUsd} and the experiment's cap of $${prereg.spend.capUsd}.`, escape(s.basis)])}
 <h3>Disclosed with these results</h3>
 ${list(f.disclosures.map(escape))}
+<h3>Found in review after the run</h3>
+<p class="post-review-disclosure">${escape(POST_REVIEW_DISCLOSURE)}</p>
 <h3>Limits, as pre-registered</h3>
 ${list(prereg.limits.map(escape))}
 <p>Provenance: <a href="../${resultsDataPath}"><code>results.json</code></a> (sha256 ${code(pub.resultsSha256)}), computed by the pinned scorer from the committed census records and spend ledger and opened by the pinned census gate; the build re-runs the gate and refuses a record it does not open.</p>
@@ -119,9 +157,11 @@ export function amendNoteResults(note, pub) {
   const qualifier = ` <a class="amendment-qualifier" href="#${resultsSectionId}">${escape(measuredStatus(pub))}, ${escape(day(measuredOn(pub)))}: see the results.</a>`;
   const first = note.indexOf('</p>', note.indexOf(lead));
   let out = note.slice(0, first) + qualifier + note.slice(first);
-  out = out.replace(meta, ` · MEASURED ${day(measuredOn(pub)).toUpperCase()}</p>`)
-    .replace(tail, `reported as they come out, including if the premise is refuted.${qualifier}</p>`)
-    .replace(bodyOpen, `${bodyOpen}${renderResultsSection(pub)}`);
+  // Function replacers (refute N2): the inserted text carries data ($ amounts), which a string replacement would read as patterns.
+  const section = renderResultsSection(pub), measured = ` · MEASURED ${day(measuredOn(pub)).toUpperCase()}</p>`;
+  out = out.replace(meta, () => measured)
+    .replace(tail, () => `reported as they come out, including if the premise is refuted.${qualifier}</p>`)
+    .replace(bodyOpen, () => `${bodyOpen}${section}`);
   return replaceHead(out, measuredHead(pub));
 }
 
@@ -132,7 +172,8 @@ export function qualifyHomeExp007(page, pub) {
   const at = page.indexOf(start), end = page.indexOf('</a>', at);
   const row = page.slice(at, end), lead = 'Pre-registered, not yet run.';
   once(row, lead, 'The EXP 007 field-note row');
-  const next = row.replace(`href="${notePath}"`, `href="${notePath}#${resultsSectionId}"`).replace(lead, `Pre-registered; measured ${escape(day(measuredOn(pub)))}: ${pub.variant === 'refuted' ? 'the premise is refuted' : 'stage 1 result (interim)'}.`);
+  const measured = `Pre-registered; measured ${escape(day(measuredOn(pub)))}: ${pub.variant === 'refuted' ? 'the premise is refuted' : 'stage 1 result (interim)'}.`;
+  const next = row.replace(`href="${notePath}"`, () => `href="${notePath}#${resultsSectionId}"`).replace(lead, () => measured);
   return page.slice(0, at) + next + page.slice(end);
 }
 
@@ -142,7 +183,7 @@ export function renderFloorExhibit(pub) {
   if (pub.variant !== 'refuted') throw new Error('Station 07 is earned by a refuted census only; an interim stage-1 result waits for stage 2');
   const f = pub.facts;
   const row = (label, value, state = '') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
-  return `<p class="artifact-label">${escape(f.denominator)} rules that eight gate plugins ship, translated blind into a static checker's constraints</p><div class="record-comparisons">${row('Median expressible share', `${pct(f.median.expressibleShare)} (bar ${pct(f.kill.threshold)})`, 'rejected')}${row('Rules expressible, primary stratum', `${f.perPlugin.reduce((n, p) => n + p.expressible, 0)} of ${f.perPlugin.reduce((n, p) => n + p.n, 0)}`)}${row('Partial (a model still needed)', `${f.perPlugin.reduce((n, p) => n + p.partial, 0)}`)}${row('Controls', f.calibrated ? 'calibration bar met' : 'translator uncalibrated', f.calibrated ? 'accepted' : 'rejected')}</div><p class="station-implication">${escape(headline(pub))}</p><p class="station-provenance">Pinned census gate · results.json sha256 ${escape(pub.resultsSha256.slice(0, 12))} · <a href="${resultsDataPath}">The results record</a></p>`;
+  return `<p class="artifact-label">${escape(censusScope(f).text)}, each translated blind into a static checker's constraints</p><div class="record-comparisons">${row('Median expressible share', `${pct(f.median.expressibleShare)} (bar ${pct(f.kill.threshold)})`, 'rejected')}${row('Rules expressible, primary stratum', `${f.perPlugin.reduce((n, p) => n + p.expressible, 0)} of ${f.perPlugin.reduce((n, p) => n + p.n, 0)}`)}${row('Partial (a model still needed)', `${f.perPlugin.reduce((n, p) => n + p.partial, 0)}`)}${row('Controls', f.calibrated ? 'calibration bar met' : 'translator uncalibrated', f.calibrated ? 'accepted' : 'rejected')}</div><p class="station-implication">${escape(headline(pub))}</p><p class="station-provenance">Pinned census gate · results.json sha256 ${escape(pub.resultsSha256.slice(0, 12))} · <a href="${resultsDataPath}">The results record</a></p>`;
 }
 
 /** The #station-data entry for station 07 carries the status its visible heading shows (app.js announces it). */
