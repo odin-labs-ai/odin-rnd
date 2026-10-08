@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "runId": "9ca59d05-89a9-4384-b007-7deebb78d198",
-  "startedAt": "2026-10-07T22:38:41.287Z",
-  "sourceRevision": "78b5e2ada750a5480f803c571007d1493a96c9e5",
+  "runId": "2114a9ff-3066-4511-bb5f-26693ab57aad",
+  "startedAt": "2026-10-08T06:04:01.712Z",
+  "sourceRevision": "20c638ed16d2d76f689e0724f5208b459314c139",
   "workingTree": {
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
@@ -22,18 +22,18 @@
   },
   "records": {
     "test-witness": {
-      "sha256": "6e4dd7daf36f6257dcc1d6fd36d09077b43adda3feae750f915254bdd5cce4af",
-      "completedAt": "2026-10-07T22:38:42.837Z"
+      "sha256": "1f5dc5c5826077f68931657d883bb44f57fd17ecc529c9e3c8603a1d9cd558e1",
+      "completedAt": "2026-10-08T06:04:02.805Z"
     },
     "migration-witness": {
-      "sha256": "f5f58fc91abb61adcbecf7c55e5024a5e2a079493e65ba6c8d6c11feed2ecba3",
-      "completedAt": "2026-10-07T22:38:45.826Z"
+      "sha256": "049b1c82929080e6518b2d74ca7bd6a903b4a405b8d88db7e130e466086ae330",
+      "completedAt": "2026-10-08T06:04:05.027Z"
     },
     "ci-witness": {
-      "sha256": "66c1b1c87f7c0c9e4a846fbb5007005d95cff477794ba09af60658d3878bd943",
-      "completedAt": "2026-10-07T22:38:48.293Z"
+      "sha256": "f10304c9e422154248ced5987529636f22704b9e26b10dd0016349a25f34283f",
+      "completedAt": "2026-10-08T06:04:06.720Z"
     }
   },
   "integrityScope": "Consistency of source inputs and raw records, not authentication against an attacker replacing all artifacts.",
-  "completedAt": "2026-10-07T22:38:48.300Z"
+  "completedAt": "2026-10-08T06:04:06.733Z"
 }

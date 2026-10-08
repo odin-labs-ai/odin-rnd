@@ -3,8 +3,8 @@
   "project": "migration-witness",
   "projectVersion": "0.1.0",
   "mode": "authored-fixtures",
-  "startedAt": "2026-10-07T22:38:42.847Z",
-  "completedAt": "2026-10-07T22:38:45.826Z",
+  "startedAt": "2026-10-08T06:04:02.811Z",
+  "completedAt": "2026-10-08T06:04:05.027Z",
   "runtime": {
     "node": "v22.22.2",
     "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
@@ -580,7 +580,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
-      "durationMs": 47
+      "durationMs": 26
     },
     {
       "id": "command-2",
@@ -593,7 +593,7 @@
       "exitCode": 0,
       "stdout": "javac 21.0.12.1\n",
       "stderr": "",
-      "durationMs": 128
+      "durationMs": 79
     },
     {
       "id": "command-3",
@@ -611,7 +611,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 456
+      "durationMs": 269
     },
     {
       "id": "command-4",
@@ -631,7 +631,7 @@
       "exitCode": 0,
       "stdout": "ASSERT\tround-half-cent\tPASS\tQWNtZXwxLjAxfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tPASS\tQWNtZXwtMS4wMXwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tR3Vlc3R8MS4wMHwyMDI2LTA5LTIw\nSUMMARY\t8\t0\n",
       "stderr": "",
-      "durationMs": 95
+      "durationMs": 61
     },
     {
       "id": "command-5",
@@ -649,7 +649,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 425
+      "durationMs": 263
     },
     {
       "id": "command-6",
@@ -669,7 +669,7 @@
       "exitCode": 0,
       "stdout": "ASSERT\tround-half-cent\tPASS\tQWNtZXwxLjAxfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tPASS\tQWNtZXwtMS4wMXwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t0\n",
       "stderr": "",
-      "durationMs": 97
+      "durationMs": 50
     },
     {
       "id": "command-7",
@@ -687,7 +687,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 429
+      "durationMs": 427
     },
     {
       "id": "command-8",
@@ -707,7 +707,7 @@
       "exitCode": 1,
       "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t2\n",
       "stderr": "",
-      "durationMs": 83
+      "durationMs": 58
     },
     {
       "id": "command-9",
@@ -725,7 +725,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 394
+      "durationMs": 299
     },
     {
       "id": "command-10",
@@ -745,7 +745,7 @@
       "exitCode": 1,
       "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tR3Vlc3R8MS4wMHwyMDI2LTA5LTIw\nSUMMARY\t8\t2\n",
       "stderr": "",
-      "durationMs": 82
+      "durationMs": 52
     },
     {
       "id": "command-11",
@@ -763,7 +763,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 399
+      "durationMs": 267
     },
     {
       "id": "command-12",
@@ -783,7 +783,7 @@
       "exitCode": 1,
       "stdout": "ASSERT\tround-half-cent\tFAIL\tQWNtZXwxLjAwfDIwMjYtMDktMjA=\nASSERT\tunicode\tPASS\tQ2Fmw6kg5p2x5LqsfDEyLjUwfDIwMjYtMDktMjA=\nASSERT\tutc-day-boundary\tPASS\tQWNtZXwwLjAwfDIwMjUtMTItMzE=\nASSERT\tleap-day\tFAIL\tQWNtZXwtMS4wMHwyMDI0LTAyLTI5\nASSERT\tinvalid-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tempty-amount\tPASS\tRVJST1JfQU1PVU5U\nASSERT\tinvalid-date\tPASS\tRVJST1JfREFURQ==\nASSERT\tempty-customer\tPASS\tRVJST1JfQ1VTVE9NRVI=\nSUMMARY\t8\t2\n",
       "stderr": "",
-      "durationMs": 83
+      "durationMs": 117
     },
     {
       "id": "command-13",
@@ -801,7 +801,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "<repo>/demos/migration-witness/fixtures/BrokenInvoice.java:1: error: illegal start of type\npublic class BrokenInvoice { public static String render( { return \"broken\"; } }\n                                                          ^\n1 error\n",
-      "durationMs": 251
+      "durationMs": 246
     }
   ],
   "runs": {
@@ -922,12 +922,12 @@
     }
   ],
   "experimentVerdict": "passed",
-  "sourceRevision": "78b5e2ada750a5480f803c571007d1493a96c9e5",
+  "sourceRevision": "20c638ed16d2d76f689e0724f5208b459314c139",
   "workingTree": {
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
   },
-  "runId": "9ca59d05-89a9-4384-b007-7deebb78d198",
+  "runId": "2114a9ff-3066-4511-bb5f-26693ab57aad",
   "environment": "local reproduction",
   "workflowRun": null,
   "workflowAttempt": null
