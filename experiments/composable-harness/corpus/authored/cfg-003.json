@@ -1,0 +1,101 @@
+{
+  "id": "cfg-003",
+  "label": "faulty",
+  "faultClass": "missing-dependency-pair",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-harbor",
+      "needs": [],
+      "provides": [
+        "harbor.feed"
+      ]
+    },
+    {
+      "name": "x-lantern",
+      "needs": [],
+      "provides": [
+        "lantern.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "q",
+      "q-resume"
+    ]
+  },
+  "intended": [
+    "q",
+    "core-01",
+    "q-resume"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "q": "inactive: missing q.release",
+    "q-release": "excluded",
+    "q-resume": "active",
+    "x-harbor": "excluded",
+    "x-lantern": "excluded"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "q": "inactive: missing q.release",
+    "q-release": "excluded",
+    "q-resume": "active",
+    "x-harbor": "excluded",
+    "x-lantern": "excluded"
+  },
+  "note": "The profile lists q on the pre floor but omits one of its helpers, so q cannot get its keys."
+}

@@ -1,0 +1,165 @@
+{
+  "id": "cfg-117",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-05",
+      "needs": [
+        "store.read"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-06",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-07",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-08",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-saddle",
+      "needs": [],
+      "provides": [
+        "saddle.feed"
+      ]
+    },
+    {
+      "name": "x-nutmeg",
+      "needs": [
+        "saddle.feed"
+      ],
+      "provides": [
+        "nutmeg.feed"
+      ]
+    },
+    {
+      "name": "x-tablet",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "tablet.feed"
+      ]
+    },
+    {
+      "name": "x-lemon",
+      "needs": [
+        "saddle.feed"
+      ],
+      "provides": [
+        "lemon.feed"
+      ]
+    },
+    {
+      "name": "x-ledger",
+      "needs": [
+        "lemon.feed"
+      ],
+      "provides": [
+        "ledger.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": []
+  },
+  "intended": [
+    "q",
+    "core-03",
+    "core-01",
+    "core-06",
+    "q-resume"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-saddle": "excluded",
+    "x-nutmeg": "excluded",
+    "x-tablet": "excluded",
+    "x-lemon": "excluded",
+    "x-ledger": "excluded"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-saddle": "excluded",
+    "x-nutmeg": "excluded",
+    "x-tablet": "excluded",
+    "x-lemon": "excluded",
+    "x-ledger": "excluded"
+  },
+  "note": "Near-miss: q is intended and unlisted, but the current floor carries q and both helpers, so it is active."
+}

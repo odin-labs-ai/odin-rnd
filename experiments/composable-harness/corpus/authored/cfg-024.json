@@ -1,0 +1,109 @@
+{
+  "id": "cfg-024",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-pillow",
+      "needs": [],
+      "provides": [
+        "pillow.feed"
+      ]
+    },
+    {
+      "name": "x-needle",
+      "needs": [
+        "pillow.feed"
+      ],
+      "provides": [
+        "needle.feed"
+      ]
+    },
+    {
+      "name": "x-basket",
+      "needs": [
+        "pillow.feed"
+      ],
+      "provides": [
+        "basket.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-needle",
+      "x-pillow"
+    ]
+  },
+  "intended": [
+    "q",
+    "core-01",
+    "x-needle",
+    "core-02",
+    "q-resume"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-pillow": "active",
+    "x-needle": "active",
+    "x-basket": "excluded"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-pillow": "active",
+    "x-needle": "active",
+    "x-basket": "excluded"
+  },
+  "note": "Near-miss: q is intended and unlisted, but the current floor carries q and both helpers, so it is active."
+}

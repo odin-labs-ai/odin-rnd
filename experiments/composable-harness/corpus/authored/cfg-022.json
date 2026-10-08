@@ -1,0 +1,116 @@
+{
+  "id": "cfg-022",
+  "label": "clean",
+  "faultClass": "none",
+  "floorEpoch": "current",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "q",
+      "needs": [
+        "q.release",
+        "q.resume"
+      ],
+      "provides": []
+    },
+    {
+      "name": "q-release",
+      "needs": [],
+      "provides": [
+        "q.release"
+      ]
+    },
+    {
+      "name": "q-resume",
+      "needs": [],
+      "provides": [
+        "q.resume"
+      ]
+    },
+    {
+      "name": "x-mitten",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "mitten.feed"
+      ]
+    },
+    {
+      "name": "x-saddle",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "saddle.feed"
+      ]
+    },
+    {
+      "name": "x-pebble",
+      "needs": [
+        "store.read"
+      ],
+      "provides": [
+        "pebble.feed"
+      ]
+    },
+    {
+      "name": "x-ledger",
+      "needs": [
+        "pebble.feed"
+      ],
+      "provides": [
+        "ledger.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": []
+  },
+  "intended": [
+    "q-release",
+    "q-resume"
+  ],
+  "schedule": [],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-mitten": "excluded",
+    "x-saddle": "excluded",
+    "x-pebble": "excluded",
+    "x-ledger": "excluded"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "q": "active",
+    "q-release": "active",
+    "q-resume": "active",
+    "x-mitten": "excluded",
+    "x-saddle": "excluded",
+    "x-pebble": "excluded",
+    "x-ledger": "excluded"
+  },
+  "note": "A profiled config whose intended plugins all resolve to active."
+}

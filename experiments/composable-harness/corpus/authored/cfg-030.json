@@ -1,0 +1,248 @@
+{
+  "id": "cfg-030",
+  "label": "faulty",
+  "faultClass": "provider-withdrawn",
+  "floorEpoch": "pre",
+  "registry": [
+    {
+      "name": "core-01",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-02",
+      "needs": [],
+      "provides": [
+        "store.read"
+      ]
+    },
+    {
+      "name": "core-03",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-04",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-05",
+      "needs": [
+        "store.read"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-06",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-07",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-08",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-09",
+      "needs": [],
+      "provides": [
+        "log.write"
+      ]
+    },
+    {
+      "name": "core-10",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-11",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-12",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-13",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-14",
+      "needs": [
+        "log.write"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-15",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-16",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-17",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-18",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-19",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-20",
+      "needs": [],
+      "provides": [
+        "clock.tick"
+      ]
+    },
+    {
+      "name": "core-21",
+      "needs": [
+        "clock.tick"
+      ],
+      "provides": []
+    },
+    {
+      "name": "core-22",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-23",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-24",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "core-25",
+      "needs": [],
+      "provides": []
+    },
+    {
+      "name": "x-timber",
+      "needs": [],
+      "provides": [
+        "timber.feed"
+      ]
+    },
+    {
+      "name": "x-ledger",
+      "needs": [],
+      "provides": [
+        "ledger.feed"
+      ]
+    },
+    {
+      "name": "x-saddle",
+      "needs": [
+        "ledger.feed"
+      ],
+      "provides": [
+        "saddle.feed"
+      ]
+    }
+  ],
+  "profile": {
+    "enabledExtensions": [
+      "x-timber",
+      "x-ledger",
+      "x-saddle"
+    ]
+  },
+  "intended": [
+    "x-saddle",
+    "core-20",
+    "core-14"
+  ],
+  "schedule": [
+    {
+      "step": 2,
+      "op": "withdraw",
+      "name": "x-ledger"
+    }
+  ],
+  "expectedAtBoot": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "core-11": "active",
+    "core-12": "active",
+    "core-13": "active",
+    "core-14": "active",
+    "core-15": "active",
+    "core-16": "active",
+    "core-17": "active",
+    "core-18": "active",
+    "core-19": "active",
+    "core-20": "active",
+    "core-21": "active",
+    "core-22": "active",
+    "core-23": "active",
+    "core-24": "active",
+    "core-25": "active",
+    "x-timber": "active",
+    "x-ledger": "active",
+    "x-saddle": "active"
+  },
+  "expected": {
+    "core-01": "active",
+    "core-02": "active",
+    "core-03": "active",
+    "core-04": "active",
+    "core-05": "active",
+    "core-06": "active",
+    "core-07": "active",
+    "core-08": "active",
+    "core-09": "active",
+    "core-10": "active",
+    "core-11": "active",
+    "core-12": "active",
+    "core-13": "active",
+    "core-14": "active",
+    "core-15": "active",
+    "core-16": "active",
+    "core-17": "active",
+    "core-18": "active",
+    "core-19": "active",
+    "core-20": "active",
+    "core-21": "active",
+    "core-22": "active",
+    "core-23": "active",
+    "core-24": "active",
+    "core-25": "active",
+    "x-timber": "active",
+    "x-ledger": "excluded",
+    "x-saddle": "inactive: missing ledger.feed"
+  },
+  "note": "Everything intended is active at boot, then x-ledger is withdrawn and x-saddle loses its provider."
+}

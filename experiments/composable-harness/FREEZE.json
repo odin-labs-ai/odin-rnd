@@ -1,0 +1,15 @@
+{
+  "schema": "odin-rnd.exp009.freeze.v1",
+  "corpus": {
+    "files": 123,
+    "sha256": "48546709c0c64c2931e5151930225b5c1328bac06029023a0df48ec3515756d8"
+  },
+  "h2": {
+    "files": 8,
+    "sha256": "5a4198c8b2a36b722d61dfc64775c13884d5fd3679caf43d9f7b0aa75c2e0217"
+  },
+  "specs": {
+    "corpus/SPEC.md": "1cce4517d80ecdfac6d4fd8903f47587962c523f3d3e1b2408a84ab4bb2852ba",
+    "h2/SPEC.md": "b9babd23470c2b398e6d78c4c1264520c1a21aa9d98f1ae775e87d56910e4e4f"
+  }
+}
