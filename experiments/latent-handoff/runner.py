@@ -466,6 +466,7 @@ def run_item(engine, item_id, context, donor_context, arms, lint=lint_summary, o
         raise ValueError(f"arm order {order} is not a permutation of {arms}")
     c1_before_a0 = "C1" in arms and ("A0" not in arms or order.index("C1") < order.index("A0"))
     if c1_before_a0:
+        engine.receiver.reset()
         a0()  # C1's reference distribution, untimed, when A0 has not run yet in this item's order
         engine.receiver.reset()
     for arm in order:

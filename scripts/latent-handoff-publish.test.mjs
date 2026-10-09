@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NOTE, preRecordItemIds, REQUIRED, STATUS, TO_FREEZE, checkRecord, toFreezePaths, validateRecord, EXP005 } from './latent-handoff-prereg.mjs';
+import { NOTE, preRecordItemIds, REQUIRED, STATUS, TO_FREEZE, checkRecord, toFreezePaths, validateRecord, EXP005, REBOUND } from './latent-handoff-prereg.mjs';
 import { build as buildPairLock } from '../experiments/latent-handoff/pair_lock.mjs';
 import { assertSiteCurrent, checkHorizon, measurementState, renderHorizon, renderNote, resultWords, validateHorizon } from './latent-handoff-site.mjs';
 
@@ -176,7 +176,8 @@ test('every committed row file from before the record holds only excluded (seen)
 
 test('pair-lock.json is the pairLock rule applied to its committed rows, under the frozen record', () => {
   const lock = JSON.parse(readFileSync('experiments/latent-handoff/pair-lock.json', 'utf8'));
-  const again = buildPairLock(lock.run.rows.file, lock.notes);
+  const again = buildPairLock(lock.run.rows.file, lock.notes, undefined, REBOUND);
+  assert.throws(() => buildPairLock(lock.run.rows.file, lock.notes), /runner\.py differs from the hash the frozen record binds/);
   assert.deepEqual(again, lock);
   assert.equal(sha(committed(lock.run.rows.file)), lock.run.rows.sha256);
   assert.equal(lock.record.sha256, sha(committed('experiments/latent-handoff/preregistration.json')));

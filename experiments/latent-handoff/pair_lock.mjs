@@ -31,15 +31,16 @@ export function decide(rows, truth) {
   return { correct: g.correct, of: g.n, abstentions: g.abstentions, accuracy: g.accuracy, locked: g.correct >= BAR ? 'D1' : 'D1p' };
 }
 
-export function build(rowsPath, notes = [], root = ROOT) {
+/** `rebound`: a bound file a later dated amendment rebinds ({ [file]: { published, rebound } }); it passes at its new hash. */
+export function build(rowsPath, notes = [], root = ROOT, rebound = {}) {
   const raw = readFileSync(rowsPath);
   const rows = raw.toString('utf8').trim().split('\n').map(l => JSON.parse(l));
   const runIds = [...new Set(rows.map(r => r.runId))];
   if (runIds.length !== 1) throw new Error(`rows carry ${runIds.length} run ids`);
   const record = JSON.parse(readFileSync(join(root, 'experiments/latent-handoff/preregistration.json'), 'utf8'));
   for (const f of BOUND) {
-    const have = sha256(readFileSync(join(root, f)));
-    if (record.files[f] !== have) throw new Error(`${f} differs from the hash the frozen record binds`);
+    const have = sha256(readFileSync(join(root, f))), r = rebound[f];
+    if (record.files[f] !== have && !(r && record.files[f] === r.published && have === r.rebound)) throw new Error(`${f} differs from the hash the frozen record binds`);
   }
   const truth = loadTruth();
   const d = decide(rows, truth);

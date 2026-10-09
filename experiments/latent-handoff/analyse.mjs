@@ -1,4 +1,6 @@
-// EXP 008 (latent-handoff) confirmatory analysis, added by amendment 01 (experiments/latent-handoff/amendment-01.json).
+// EXP 008 (latent-handoff) confirmatory analysis, added by amendment 01 (experiments/latent-handoff/amendment-01.json)
+// and rebound by amendment 02 (experiments/latent-handoff/amendment-02.json): the fixed runner.py, the -02 run ids and
+// amendment 02's not-before. Every statistical clause is amendment 01's, unchanged.
 //
 // The pre-registration's `analysis` field calls for this script: written after the record, before the not-before,
 // implementing exactly the record's definitions (the exclusions, the Wilson interval, the paired bootstrap, A2b-vs-A0
@@ -7,12 +9,12 @@
 // never changes a row.
 //
 // Before it analyses anything it checks that the pre-registration, the amendment and every file they bind hash to what
-// they say and that the rows are the amendment's run ids on the locked pair. A run is analysed once, when it has
+// they say (runner.py at the hash amendment 02 rebinds) and that the rows are amendment 02's run ids on the locked pair. A run is analysed once, when it has
 // finished or stopped (a paused run is resumed first): a gap, such as a run the runner stopped on a C1 mismatch, fails
 // the global gate `complete` and the result is uninformative. A failed gate is never reported as a pass.
 //
 //   node experiments/latent-handoff/analyse.mjs --counted <S,M,L rows.jsonl> --rerun <S,M,L rows.jsonl> \
-//        --amendment-merged-at <ISO mergedAt of the odin-rnd PR that published amendment 01> [--out <file>]
+//        --amendment-merged-at <ISO mergedAt of the odin-rnd PR that published amendment 02> [--out <file>]
 //
 // The record's 60-item fallback (corpus.fallback) is not implemented: the pre-registration's refute did not trigger it,
 // so only a dated amendment before the not-before can, and that amendment would carry its own analysis.
@@ -31,15 +33,18 @@ const L = 'experiments/latent-handoff';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export const PREREG = { file: `${L}/preregistration.json`, sha256: '638d1dda53e8ae6c9c129d34e6b83fa6642f7ef60b30de8da71e7660082f7f6c' };
-export const AMENDMENT = { file: `${L}/amendment-01.json`, pin: `${L}/amendment-01.sha256` };
+export const AMENDMENT = { id: 'amendment-02', file: `${L}/amendment-02.json`, pin: `${L}/amendment-02.sha256` };
+/** The amendments before it, as published; amendment 02 names each by sha256. */
+export const PRIOR_AMENDMENTS = [{ id: 'amendment-01', file: `${L}/amendment-01.json`, pin: `${L}/amendment-01.sha256`, sha256: 'cf96ee3871282fdbf1a6b6d3b4ab1381dcc4305ac992e0a366f6f044bfb49f83' }];
 export const SELF = `${L}/analyse.mjs`;
 export const STRATA = ['S', 'M', 'L'];
 export const KV_ARMS = STAGE1_ARMS.filter(a => ARMS[a].kind === 'kv');
 /** The arms a claim can be made on, each with its per-arm gates: the two mappers and the sender summary. */
 export const CLAIM_ARMS = ['A1', 'A2a', 'A2b'];
-export const runIds = pair => ({
-  counted: Object.fromEntries(STRATA.map(s => [s, `counted-${pair.toLowerCase()}-${s}-01`])),
-  rerun: Object.fromEntries(STRATA.map(s => [s, `rerun-${pair.toLowerCase()}-${s}-01`])),
+/** The run ids of a harness version: -02 (amendment 02, the fixed runner) unless another is named; -01 rows are refused. */
+export const runIds = (pair, version = '02') => ({
+  counted: Object.fromEntries(STRATA.map(s => [s, `counted-${pair.toLowerCase()}-${s}-${version}`])),
+  rerun: Object.fromEntries(STRATA.map(s => [s, `rerun-${pair.toLowerCase()}-${s}-${version}`])),
 });
 // Every bar is the record's; the comparisons are done in integers (percent × n) so no bar is missed by rounding.
 export const BARS = Object.freeze({
@@ -278,11 +283,13 @@ export function analyse({ record, lock, truth, counted, rerun, mergedAt }) {
   };
 }
 
-/** Every file the pre-registration and the amendment bind by sha256, as [path, sha256]. */
+/** Every file the pre-registration and the amendment bind by sha256, as [path, sha256]; a file the amendment rebinds at its new hash. */
 export function boundFiles(record, amendment) {
   const e5 = record.corpus.exp005, J = 'experiments/jev-gate';
+  const rebound = new Map((amendment.rebinds ?? []).filter(r => r.file in record.files).map(r => [r.file, r]));
+  for (const r of rebound.values()) assert.equal(r.from, record.files[r.file], `the amendment rebinds ${r.file} from a hash the record does not bind`);
   return [
-    ...Object.entries(record.files), ...Object.entries(record.mappers.code),
+    ...Object.entries(record.files).map(([f, d]) => [f, rebound.get(f)?.to ?? d]), ...Object.entries(record.mappers.code),
     [`${J}/corpus.sha256`, e5.corpusSumsSha256], [`${J}/inputs.json`, e5.inputsSha256], [`${J}/labels.json`, e5.labelsSha256], [`${J}/rules.txt`, e5.rulesSha256],
     [record.corpus.exp008x.sumsFile, record.corpus.exp008x.sumsSha256],
     [record.strata.manifest.file, record.strata.manifest.sha256], [record.pins.file, record.pins.sha256], [record.readout.file, record.readout.sha256],
@@ -300,15 +307,23 @@ export function loadInputs(root = ROOT) {
   assert.equal(sha256(recordBytes), PREREG.sha256, 'preregistration.json is not the published record');
   const record = JSON.parse(recordBytes);
   const amendmentBytes = read(AMENDMENT.file);
-  assert.equal(read(AMENDMENT.pin).toString().split(/\s+/)[0], sha256(amendmentBytes), 'amendment-01.json differs from its pin');
+  assert.equal(read(AMENDMENT.pin).toString().split(/\s+/)[0], sha256(amendmentBytes), 'amendment-02.json differs from its pin');
   const amendment = JSON.parse(amendmentBytes);
+  assert.equal(amendment.id, AMENDMENT.id, 'the amendment is not amendment 02');
   assert.equal(amendment.parent.sha256, PREREG.sha256, 'the amendment amends another record');
+  for (const p of PRIOR_AMENDMENTS) {
+    const bytes = read(p.file);
+    assert.equal(sha256(bytes), p.sha256, `${p.file} is not the published ${p.id}`);
+    assert.equal(read(p.pin).toString().split(/\s+/)[0], p.sha256, `${p.file} differs from its pin`);
+    assert.equal(JSON.parse(bytes).parent.sha256, PREREG.sha256, `${p.id} amends another record`);
+  }
+  assert.deepEqual(amendment.priorAmendments.map(p => [p.id, p.sha256]), PRIOR_AMENDMENTS.map(p => [p.id, p.sha256]), 'the amendment names other prior amendments');
   assert.equal(amendment.analysis.file, SELF, 'the amendment binds another script');
   for (const [f, d] of boundFiles(record, amendment)) assert.equal(sha256(read(f)), d, `${f} differs from the sha256 the pre-registration or the amendment binds`);
   const lock = JSON.parse(read(`${L}/pair-lock.json`));
   assert.equal(lock.record.sha256, PREREG.sha256, 'pair-lock.json describes another record');
   assert.equal(lock.decision, record.pairLockResult.decision, 'pair-lock.json and the record disagree on the locked pair');
-  return { record, lock, amendment: { file: AMENDMENT.file, sha256: sha256(amendmentBytes) } };
+  return { record, lock, amendment: { id: AMENDMENT.id, file: AMENDMENT.file, sha256: sha256(amendmentBytes) } };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
