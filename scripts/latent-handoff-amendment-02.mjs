@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { AMENDMENT, PREREG, PRIOR_AMENDMENTS, SELF, runIds } from '../experiments/latent-handoff/analyse.mjs';
+import { AMENDMENT, PREREG, PRIOR_AMENDMENTS, RUNNER_REBIND, SELF, runIds } from '../experiments/latent-handoff/analyse.mjs';
 import { STAGE1_ARMS } from '../experiments/latent-handoff/arms.mjs';
 import { at, checkAmendment, longDate, ORDER, PUBLISHED, testPath } from './latent-handoff-amendment.mjs';
 import { checkRecord, localPath, REBOUND, sha256 } from './latent-handoff-prereg.mjs';
@@ -47,6 +47,8 @@ export function buildAmendment02(root = '.') {
   const { record: a1, sha256: a1Sha } = checkAmendment(root);
   assert.equal(a1Sha, amendment01Sha256, 'amendment-01.json is not the published amendment 01');
   const rb = REBOUND[runnerPath];
+  assert.equal(JSON.parse(read(`${L}/mapper-freeze.json`)).code['runner.py'], rb.published, 'mapper-freeze.json binds another runner.py');
+  assert.deepEqual([RUNNER_REBIND.file, RUNNER_REBIND.from, RUNNER_REBIND.to], [runnerPath, rb.published, rb.rebound], 'analyse.mjs and the prereg builder rebind runner.py the same way');
   assert.equal(record.files[runnerPath], rb.published, 'the record binds another runner.py');
   assert.equal(sha256(read(runnerPath)), rb.rebound, 'runner.py is not the one this amendment rebinds');
   assert.deepEqual([a1.analysis.sha256, a1.analysis.tests.sha256], [PUBLISHED.analysis, PUBLISHED.tests]);
@@ -93,7 +95,7 @@ export function buildAmendment02(root = '.') {
       statement: 'No field of the pre-registration or of amendment 01 is rewritten; both stay byte-identical. This amendment supersedes the bindings and run ids listed here.',
     },
     rebinds: [
-      { file: runnerPath, boundBy: 'preregistration.json files', from: rb.published, to: rb.rebound },
+      { file: runnerPath, boundBy: 'preregistration.json files and mapper-freeze.json code."runner.py"', from: rb.published, to: rb.rebound },
       { file: SELF, boundBy: 'amendment-01.json analysis.sha256', from: PUBLISHED.analysis, to: analysisSha },
       { file: testPath, boundBy: 'amendment-01.json analysis.tests.sha256', from: PUBLISHED.tests, to: testsSha },
     ],

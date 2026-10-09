@@ -68,7 +68,7 @@
   "rebinds": [
     {
       "file": "experiments/latent-handoff/runner.py",
-      "boundBy": "preregistration.json files",
+      "boundBy": "preregistration.json files and mapper-freeze.json code.\"runner.py\"",
       "from": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
       "to": "6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044"
     },
@@ -76,21 +76,21 @@
       "file": "experiments/latent-handoff/analyse.mjs",
       "boundBy": "amendment-01.json analysis.sha256",
       "from": "bc7e0b560f7ac6b7a96c8b5e6528d9b5b0346102c98aaab0f1e68635b32fac2b",
-      "to": "e5e881dd3cd6a76f70248998f67eb9977badbe6b458111e569307737bf97c83d"
+      "to": "a8013f13d72cd1928cd02aae87669dbf3daa801bde69accbe53aa7d1ff7d2aae"
     },
     {
       "file": "scripts/latent-handoff-analysis.test.mjs",
       "boundBy": "amendment-01.json analysis.tests.sha256",
       "from": "9858ef4358326822b313800534852692d22a15cc64872eda352b03baca794bab",
-      "to": "fc26fcc35f66eb356862471fe8acc3bcb04691a49171d14568913bebd7e28214"
+      "to": "5d2fb88f7d2c217cca1742295e38c12f1c64fe3e75922bb07643f89ca6d83908"
     }
   ],
   "analysis": {
     "file": "experiments/latent-handoff/analyse.mjs",
-    "sha256": "e5e881dd3cd6a76f70248998f67eb9977badbe6b458111e569307737bf97c83d",
+    "sha256": "a8013f13d72cd1928cd02aae87669dbf3daa801bde69accbe53aa7d1ff7d2aae",
     "tests": {
       "file": "scripts/latent-handoff-analysis.test.mjs",
-      "sha256": "fc26fcc35f66eb356862471fe8acc3bcb04691a49171d14568913bebd7e28214"
+      "sha256": "5d2fb88f7d2c217cca1742295e38c12f1c64fe3e75922bb07643f89ca6d83908"
     },
     "command": "node experiments/latent-handoff/analyse.mjs --counted <rows of counted-d1p-L-02, counted-d1p-M-02, counted-d1p-S-02> --rerun <rows of rerun-d1p-L-02, rerun-d1p-M-02, rerun-d1p-S-02> --amendment-merged-at <mergedAt of this amendment> --out <analysis.json>"
   },

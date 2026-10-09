@@ -37,6 +37,8 @@ export const AMENDMENT = { id: 'amendment-02', file: `${L}/amendment-02.json`, p
 /** The amendments before it, as published; amendment 02 names each by sha256. */
 export const PRIOR_AMENDMENTS = [{ id: 'amendment-01', file: `${L}/amendment-01.json`, pin: `${L}/amendment-01.sha256`, sha256: 'cf96ee3871282fdbf1a6b6d3b4ab1381dcc4305ac992e0a366f6f044bfb49f83' }];
 export const SELF = `${L}/analyse.mjs`;
+/** The one record.files binding amendment 02 rebinds, with its exact hashes: the fixed runner. No other bound file may be rebound. */
+export const RUNNER_REBIND = Object.freeze({ file: `${L}/runner.py`, from: '95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd', to: '6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044' });
 export const STRATA = ['S', 'M', 'L'];
 export const KV_ARMS = STAGE1_ARMS.filter(a => ARMS[a].kind === 'kv');
 /** The arms a claim can be made on, each with its per-arm gates: the two mappers and the sender summary. */
@@ -287,7 +289,11 @@ export function analyse({ record, lock, truth, counted, rerun, mergedAt }) {
 export function boundFiles(record, amendment) {
   const e5 = record.corpus.exp005, J = 'experiments/jev-gate';
   const rebound = new Map((amendment.rebinds ?? []).filter(r => r.file in record.files).map(r => [r.file, r]));
-  for (const r of rebound.values()) assert.equal(r.from, record.files[r.file], `the amendment rebinds ${r.file} from a hash the record does not bind`);
+  for (const r of rebound.values()) {
+    assert.equal(r.file, RUNNER_REBIND.file, `the amendment may rebind only ${RUNNER_REBIND.file}, not ${r.file}`);
+    assert.deepEqual([r.from, r.to], [RUNNER_REBIND.from, RUNNER_REBIND.to], `the amendment rebinds ${r.file} from or to another hash`);
+    assert.equal(record.files[r.file], RUNNER_REBIND.from, `the record does not bind ${r.file} at ${RUNNER_REBIND.from}`);
+  }
   return [
     ...Object.entries(record.files).map(([f, d]) => [f, rebound.get(f)?.to ?? d]), ...Object.entries(record.mappers.code),
     [`${J}/corpus.sha256`, e5.corpusSumsSha256], [`${J}/inputs.json`, e5.inputsSha256], [`${J}/labels.json`, e5.labelsSha256], [`${J}/rules.txt`, e5.rulesSha256],

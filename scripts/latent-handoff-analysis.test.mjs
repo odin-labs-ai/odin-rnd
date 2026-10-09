@@ -253,7 +253,8 @@ test('amendment 02 rebinds runner.py only, and quotes every clause it touches ve
   }
   assert.deepEqual(a2.clauses.map(c => c.id), CLAUSES02.map(c => c.id));
   for (const id of VOID.items) assert.ok(record.corpus.exposedItems.includes(id), `${id} is a seen item`);
-  assert.throws(() => boundFiles(record, { ...a2, rebinds: [{ ...a2.rebinds[0], from: 'a'.repeat(64) }] }), /does not bind/);
+  assert.throws(() => boundFiles(record, { ...a2, rebinds: [{ ...a2.rebinds[0], from: 'a'.repeat(64) }] }), /from or to another hash/);
+  assert.throws(() => boundFiles(record, { ...a2, rebinds: [{ ...a2.rebinds[0], to: 'a'.repeat(64) }] }), /from or to another hash/);
 });
 
 test('the analysis reads the -02 run ids and refuses a row of the void -01 attempt', () => {
@@ -265,4 +266,12 @@ test('the analysis reads the -02 run ids and refuses a row of the void -01 attem
   assert.throws(() => analyse({ record, lock, truth, counted, rerun: rows(ids.rerun, reIds), mergedAt: MERGED }), /a row of run counted-d1p-L-01, which is not one of/);
   const old = runIds(lock.decision, '01');
   assert.throws(() => analyse({ record, lock, truth, counted: rows(old.counted, ALL), rerun: rows(old.rerun, reIds), mergedAt: MERGED }), /which is not one of/);
+});
+
+test('a rebind of any record.files path other than runner.py is refused', () => {
+  const { record: a2 } = checkAmendment02();
+  for (const file of Object.keys(record.files).filter(f => f !== 'experiments/latent-handoff/runner.py')) {
+    const other = { file, boundBy: 'preregistration.json files', from: record.files[file], to: 'a'.repeat(64) };
+    assert.throws(() => boundFiles(record, { ...a2, rebinds: [...a2.rebinds, other] }), /may rebind only experiments\/latent-handoff\/runner\.py/, file);
+  }
 });
