@@ -238,6 +238,6 @@
     "The void attempt stopped 9 times and was resumed after each stop under the same run id: the scheduler wrapper treated a stop with progress as a pause. A stop on an error now ends the run and is escalated, never resumed; that wrapper lives outside this repository and is not bound here. The attempt ended when the host restarted; no row of c020 or a later item exists.",
     "Under the old runner an item with C1 before A0 could complete only as the first item after a process start, so the void attempt's items are not a random sample of arm orders. Under the fix every item resets the counter first, so this pattern cannot recur; the void rows enter nothing.",
     "The not-before time is an input to the script (the merge time). The script checks every item start against it; that the input is the true merge time is checked against GitHub by the results refute, not by the script.",
-    "The regression test runs the real run_item on a fake engine, without the models."
+    "The regression test runs the real run_item on a fake engine, without any model."
   ]
 }
