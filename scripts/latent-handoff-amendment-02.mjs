@@ -61,6 +61,15 @@ export function buildAmendment02(root = '.') {
   const command = (id, s, items) => `node experiments/latent-handoff/arms.mjs --pair ${lock.decision} --stratum ${s} --items ${items} --run-id ${id} --peak-gb ${fp.peakGB}`;
   const quote = (src, path) => { const text = at(src, path); assert.equal(typeof text, 'string', `${path} is not a text field`); return { path, text }; };
   const analysisSha = sha256(read(SELF)), testsSha = sha256(read(testPath));
+  const rebinds = [
+    { file: runnerPath, boundBy: 'preregistration.json files and mapper-freeze.json code."runner.py"', from: rb.published, to: rb.rebound },
+    { file: SELF, boundBy: 'amendment-01.json analysis.sha256', from: PUBLISHED.analysis, to: analysisSha },
+    { file: testPath, boundBy: 'amendment-01.json analysis.tests.sha256', from: PUBLISHED.tests, to: testsSha },
+  ];
+  // The repository's frozen-path census reads a record's re-pins from `pins` ({ path: { from, to } }) and accepts one only
+  // for a path an earlier record's files bind: the rebinds the analysis applies to record.files, selected the same way.
+  const pins = Object.fromEntries(rebinds.filter(r => r.file in record.files).map(r => [r.file, { from: r.from, to: r.to }]));
+  assert.deepEqual(Object.keys(pins), [runnerPath], 'of the record\'s files, only runner.py is re-pinned');
   return {
     schemaVersion: 1,
     kind: 'amendment',
@@ -94,11 +103,8 @@ export function buildAmendment02(root = '.') {
       analysis: `analyse.mjs binds this amendment (its pin, the pre-registration as parent and amendment 01, by sha256, as the prior amendment), checks runner.py at the hash rebound below with every other file the record binds unchanged, reads the -02 run ids, and takes the not-before from this amendment's merge. Every statistical clause of amendment 01 is unchanged, byte for byte.`,
       statement: 'No field of the pre-registration or of amendment 01 is rewritten; both stay byte-identical. This amendment supersedes the bindings and run ids listed here.',
     },
-    rebinds: [
-      { file: runnerPath, boundBy: 'preregistration.json files and mapper-freeze.json code."runner.py"', from: rb.published, to: rb.rebound },
-      { file: SELF, boundBy: 'amendment-01.json analysis.sha256', from: PUBLISHED.analysis, to: analysisSha },
-      { file: testPath, boundBy: 'amendment-01.json analysis.tests.sha256', from: PUBLISHED.tests, to: testsSha },
-    ],
+    rebinds,
+    pins,
     analysis: {
       file: SELF,
       sha256: analysisSha,
@@ -139,6 +145,9 @@ export function validateAmendment02(a) {
   assert.deepEqual(a.changes.fields, [], 'this amendment rewrites no field of the pre-registration');
   assert.ok(!/\b20\d\d\b|\b\d{1,2}:\d\d\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i.test(a.notBefore), 'the not-before is a rule here; its time is recorded after publication');
   assert.deepEqual(a.clauses.map(c => c.id), CLAUSES.map(c => c.id));
+  const runnerRebind = a.rebinds.find(r => r.file === runnerPath);
+  assert.deepEqual([runnerRebind?.from, runnerRebind?.to], [RUNNER_REBIND.from, RUNNER_REBIND.to], 'the rebinding of runner.py is the one analyse.mjs applies');
+  assert.deepEqual(a.pins, { [runnerPath]: { from: runnerRebind.from, to: runnerRebind.to } }, 'pins re-pins runner.py, and only it, exactly as rebinds does');
   assert.ok(a.analysis.command.includes('-02') && !a.analysis.command.includes('-01'), 'the analysis reads the -02 run ids only');
   const text = JSON.stringify(a);
   assert(!localPath.test(text), 'a local machine path in the amendment');

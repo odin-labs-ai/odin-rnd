@@ -85,6 +85,12 @@
       "to": "5d2fb88f7d2c217cca1742295e38c12f1c64fe3e75922bb07643f89ca6d83908"
     }
   ],
+  "pins": {
+    "experiments/latent-handoff/runner.py": {
+      "from": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+      "to": "6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044"
+    }
+  },
   "analysis": {
     "file": "experiments/latent-handoff/analyse.mjs",
     "sha256": "a8013f13d72cd1928cd02aae87669dbf3daa801bde69accbe53aa7d1ff7d2aae",
