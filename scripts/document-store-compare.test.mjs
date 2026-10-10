@@ -154,3 +154,46 @@ test('transcript unordered: the same documents split differently across batches 
   bad[1].cursor.ns = 'exp010.other';
   assert.equal(compareTranscript(ref, bad, { unordered: true }).same, false, 'envelope differs');
 });
+
+test('teeth r2: a malformed cursor id can never equal a valid one, even the literal token', () => {
+  const a = findReply(); a.cursor.id = long(12);
+  for (const bad of ['<open>', 0, { $malformedCursorId: '"x"' }]) {
+    const b = findReply(); b.cursor.id = bad;
+    assert.equal(compare(a, b).same, false, JSON.stringify(bad));
+  }
+});
+
+test('teeth r2: field names inside keyValue, keyPattern and errInfo are data, never dropped; their key order counts', () => {
+  const r = { n: int(0), writeErrors: [{ index: int(0), code: int(11000), codeName: 'DuplicateKey', keyPattern: { errmsg: int(1), $clusterTime: int(1) }, keyValue: { errmsg: 'a', $clusterTime: 'x' }, errmsg: 'E11000' }], ok: dbl(1.0) };
+  const b = clone(r); b.writeErrors[0].keyValue.errmsg = 'b';
+  assert.equal(compare(r, b).same, false, 'errmsg inside keyValue');
+  const c = clone(r); c.writeErrors[0].keyValue.$clusterTime = 'y';
+  assert.equal(compare(r, c).same, false, '$clusterTime inside keyValue');
+  const d = clone(r); d.writeErrors[0].keyPattern = { $clusterTime: int(1), errmsg: int(1) };
+  assert.equal(compare(r, d).same, false, 'compound key order');
+  const e = clone(r); e.writeErrors[0].errmsg = 'other text';
+  assert.deepEqual(compare(r, e), { same: true }, 'the entry errmsg is still free text');
+  const f = { ...findReply(), cursor: { ...findReply().cursor, firstBatch: [{ _id: int(1), errmsg: 'a', operationTime: int(1) }] } };
+  const g = clone(f); g.cursor.firstBatch[0].errmsg = 'b';
+  assert.equal(compare(f, g).same, false, 'errmsg as a document field');
+});
+
+test('teeth r2: a transcript must be non-empty, well formed and end exhausted or in an error', () => {
+  const done = [page([d(1)], long(0), true)];
+  assert.equal(compareTranscript([], []).same, false, 'empty');
+  assert.equal(compareTranscript([page([d(1)], long(5), true)], [page([d(1)], long(6), true)]).same, false, 'both unfinished');
+  assert.equal(compareTranscript(done, [page([d(1)], long(0), false)]).same, false, 'nextBatch first');
+  assert.equal(compareTranscript([page([d(1)], long(3), true), page([d(2)], long(0), false)], [page([d(1)], long(3), true), page([d(2)], long(0), true)]).same, false, 'firstBatch later');
+  assert.equal(compareTranscript([page([d(1)], long(3), true), page([d(2)], long(0), false)], [page([d(1)], 'invalid', true), page([d(2)], long(0), false)], { unordered: true }).same, false, 'malformed intermediate id, unordered');
+  assert.equal(compareTranscript([page([d(1)], long(0), true), page([], long(0), false)], [page([d(1)], long(0), true), page([], long(0), false)]).same, false, 'continues after exhaustion');
+  const err = { ok: dbl(0.0), code: int(43), codeName: 'CursorNotFound', errmsg: 'x' };
+  assert.deepEqual(compareTranscript([page([d(1)], long(3), true), err], [page([d(1)], long(4), true), { ...err, errmsg: 'y' }]), { same: true }, 'same error ending');
+  assert.equal(compareTranscript([page([d(1)], long(3), true), err], [page([d(1)], long(4), true), { ...err, code: int(50) }]).same, false, 'different error ending');
+});
+
+test('teeth r2: S5 keeps a binary subtype', () => {
+  const sig = sub => ({ ...findReply(), $clusterTime: { clusterTime: { $timestamp: { t: 1, i: 1 } }, signature: { hash: { $binary: { base64: 'AAAA', subType: sub } }, keyId: long(0) } } });
+  assert.notDeepEqual(sessionShape(sig('00')), sessionShape(sig('04')));
+  const other = sig('00'); other.$clusterTime.signature.hash.$binary.base64 = 'BBBB';
+  assert.deepEqual(sessionShape(sig('00')), sessionShape(other));
+});

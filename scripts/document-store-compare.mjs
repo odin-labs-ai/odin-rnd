@@ -6,16 +6,21 @@
 //   - SESSION_METADATA (cluster time, operation time, replication op times, election id) is split off the reply.
 //     Its values identify the server's clock and topology. P1 compares the rest of the reply; the metadata's
 //     presence and shape are compared separately (secondary S5), never pooled into P1.
-//   - `errmsg` is free text and is dropped everywhere. Every other error field (code, codeName, errorLabels,
-//     keyPattern, keyValue, errInfo) is compared.
+//   - Both are dropped only where they are server-written envelope fields: session metadata at the reply's top
+//     level, `errmsg` (free text) there and in each writeErrors entry and the writeConcernError. Inside a returned
+//     document, keyPattern, keyValue or errInfo every field is compared, whatever its name.
+//   - Every other error field (code, codeName, errorLabels, index, keyPattern, keyValue, errInfo) is compared;
+//     keyPattern, keyValue and errInfo are documents, so their key order is significant.
 //   - A cursor id that is a canonical int64 ({"$numberLong": digits}) becomes 0 when it is zero and "<open>"
-//     otherwise; any other cursor id value is compared as it is (a malformed id is a difference).
+//     otherwise; any other cursor id becomes {"$malformedCursorId": <its JSON>}, which equals no valid id.
 //   - Reply envelopes are compared as maps (drivers read fields by name). DOCUMENTS the server returns
 //     (cursor batches, findAndModify `value`) are compared with key order significant: BSON documents are ordered.
 //   - Types are compared exactly: canonical EJSON keeps {"$numberInt": "1"} and {"$numberDouble": "1.0"} distinct.
 //   - A batch is compared as a multiset only when the case declares `unordered: true` (a query with no sort).
 //   - A case that declares `drain: true` is compared as a transcript: the first reply and every getMore reply
-//     until the cursor is exhausted. Equal length and pairwise equality, or it differs.
+//     until the cursor is exhausted. Each transcript must be non-empty and well formed (firstBatch first, nextBatch
+//     after, valid open ids before the end, and it ends exhausted or with an error reply); then equal length and
+//     pairwise equality, or for an unordered case the same documents, envelopes and ending.
 import assert from 'node:assert/strict';
 
 export const SESSION_METADATA = Object.freeze(['$clusterTime', 'operationTime', 'electionId', 'opTime',
@@ -28,12 +33,13 @@ const canonical = v => JSON.stringify(v);
 // Code-unit order: a total order on distinct strings (localeCompare is not; it ties canonically equal Unicode).
 const byCodeUnit = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
 
-const cursorId = v => {
-  if (isObj(v) && Object.keys(v).length === 1 && typeof v.$numberLong === 'string' && /^-?\d+$/.test(v.$numberLong)) {
-    return /^-?0+$/.test(v.$numberLong) ? 0 : '<open>';
-  }
-  return v;
-};
+const validId = v => isObj(v) && Object.keys(v).length === 1 && typeof v.$numberLong === 'string' && /^-?\d+$/.test(v.$numberLong);
+const cursorId = v => (validId(v) ? (/^-?0+$/.test(v.$numberLong) ? 0 : '<open>') : { $malformedCursorId: canonical(v) ?? 'undefined' });
+
+// Where a server-written envelope field may be dropped: the reply's top level, a writeErrors entry, writeConcernError.
+const isEnvelope = path => path.length === 0 || (path.length === 2 && path[0] === 'writeErrors') ||
+  (path.length === 1 && path[0] === 'writeConcernError');
+const ERROR_DOCUMENTS = Object.freeze(['keyPattern', 'keyValue', 'errInfo']);
 
 // Envelope: unordered map, session metadata and errmsg dropped. Inside a document payload: ordered, nothing dropped.
 export function normalise(reply, path = []) {
@@ -41,8 +47,10 @@ export function normalise(reply, path = []) {
   if (!isObj(reply)) return reply;
   const out = {};
   for (const key of Object.keys(reply).sort()) {
-    if (SESSION_METADATA.includes(key) || DROPPED.includes(key)) continue;
+    if (path.length === 0 && SESSION_METADATA.includes(key)) continue;
+    if (isEnvelope(path) && DROPPED.includes(key)) continue;
     const value = reply[key];
+    if (ERROR_DOCUMENTS.includes(key) && path.length === 2 && path[0] === 'writeErrors') { out[key] = document(value); continue; }
     if (key === 'id' && path[path.length - 1] === 'cursor') { out.id = cursorId(value); continue; }
     if (DOCUMENT_KEYS.includes(key) && Array.isArray(value)) { out[key] = value.map(document); continue; }
     if (key === 'value' && (isObj(value) || value === null) && 'lastErrorObject' in reply) { out.value = document(value); continue; }
@@ -53,8 +61,10 @@ export function normalise(reply, path = []) {
 
 // The session metadata's shape: which fields are present and the EJSON type of every leaf, never the values.
 export function sessionShape(reply) {
-  const shape = v => (Array.isArray(v) ? v.map(shape) : isObj(v)
-    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, k.startsWith('$') && !isObj(v[k]) ? `<${k}>` : shape(v[k])]))
+  // A binary's subType is a BSON type discriminator, not a value: it is kept.
+  const shape = (v, parent) => (Array.isArray(v) ? v.map(x => shape(x)) : isObj(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, parent === '$binary' && k === 'subType' ? v[k]
+      : k.startsWith('$') && !isObj(v[k]) ? `<${k}>` : shape(v[k], k)]))
     : `<${v === null ? 'null' : typeof v}>`);
   return Object.fromEntries(SESSION_METADATA.filter(k => isObj(reply) && k in reply).map(k => [k, shape(reply[k])]));
 }
@@ -82,8 +92,27 @@ export function compare(reference, candidate, { unordered = false } = {}) {
 
 // A drained cursor: the replies to the command and to each getMore, in order. Unordered batches are compared as one
 // multiset across the whole transcript (a server may split an unsorted result differently), the rest pairwise.
+// Why a transcript is not a well-formed drained cursor, or null when it is.
+export function transcriptDefect(t) {
+  if (!Array.isArray(t) || t.length === 0) return 'empty transcript';
+  for (let i = 0; i < t.length; i++) {
+    const r = t[i], last = i === t.length - 1;
+    if (!isObj(r)) return `reply ${i} is not a document`;
+    if (!isObj(r.cursor)) { if (last && 'code' in r) return null; return `reply ${i} has no cursor`; }
+    const batch = i === 0 ? 'firstBatch' : 'nextBatch', other = i === 0 ? 'nextBatch' : 'firstBatch';
+    if (!Array.isArray(r.cursor[batch]) || other in r.cursor) return `reply ${i} has no ${batch}`;
+    if (!validId(r.cursor.id)) return `reply ${i} has a malformed cursor id`;
+    const exhausted = cursorId(r.cursor.id) === 0;
+    if (last && !exhausted) return 'cursor not exhausted at the end of the transcript';
+    if (!last && exhausted) return `cursor exhausted at reply ${i} but the transcript continues`;
+  }
+  return null;
+}
+
 export function compareTranscript(reference, candidate, { unordered = false } = {}) {
-  if (!Array.isArray(reference) || !Array.isArray(candidate)) return { same: false, reason: 'transcript is not a list' };
+  const ra = transcriptDefect(reference), rb = transcriptDefect(candidate);
+  if (ra) return { same: false, reason: `reference transcript: ${ra}` };
+  if (rb) return { same: false, reason: `candidate transcript: ${rb}` };
   if (unordered) {
     const docs = t => t.flatMap(r => normalise(r).cursor?.firstBatch ?? normalise(r).cursor?.nextBatch ?? []).map(canonical).sort(byCodeUnit);
     const da = docs(reference), db = docs(candidate);
@@ -91,8 +120,8 @@ export function compareTranscript(reference, candidate, { unordered = false } = 
     // Everything but the batches and the cursor id (ns, ok, any error) must be the same set of envelopes.
     const envelopes = t => [...new Set(t.map(r => { const n = normalise(r); if (n.cursor) n.cursor = { ...n.cursor, firstBatch: undefined, nextBatch: undefined, id: undefined }; return canonical(n); }))].sort(byCodeUnit);
     if (canonical(envelopes(reference)) !== canonical(envelopes(candidate))) return { same: false, reason: 'drained reply envelopes differ' };
-    const last = t => (t.length ? normalise(t[t.length - 1]).cursor?.id : undefined);
-    return last(reference) === 0 && last(candidate) === 0 ? { same: true } : { same: false, reason: 'cursor not exhausted at the end of the transcript' };
+    const ending = t => canonical(isObj(t[t.length - 1].cursor) ? 'exhausted' : normalise(t[t.length - 1]));
+    return ending(reference) === ending(candidate) ? { same: true } : { same: false, reason: 'transcripts end differently' };
   }
   if (reference.length !== candidate.length) return { same: false, reason: `transcript length ${reference.length} vs ${candidate.length}` };
   for (let i = 0; i < reference.length; i++) {

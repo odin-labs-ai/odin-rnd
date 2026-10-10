@@ -268,15 +268,16 @@
   },
   "comparator": {
     "file": "scripts/document-store-compare.mjs",
-    "sha256": "97774c291c43bfd1f5bde02f6a4ebe09c46fdea551d750dffddf25565495023e",
+    "sha256": "34e1258c7c66ce0124d1b8cf22b57f55f7865d6697b98e7055911ebcdd36eeee",
     "normalisation": [
-      "session metadata ($clusterTime, operationTime, electionId, opTime, lastCommittedOpTime, $configTime, $topologyTime) is split off every reply: excluded from P1, its presence and leaf types compared in S5",
-      "errmsg is dropped everywhere; every other error field (code, codeName, errorLabels, keyPattern, keyValue, errInfo, per-document index) is compared",
-      "a cursor id that is a canonical int64 becomes 0 when zero and \"<open>\" otherwise; any other cursor id value is compared as it is",
+      "session metadata ($clusterTime, operationTime, electionId, opTime, lastCommittedOpTime, $configTime, $topologyTime) is split off the reply's top level only: excluded from P1, its presence and leaf types (keeping a binary's subType) compared in S5",
+      "errmsg is dropped only as a server-written envelope field (reply top level, each writeErrors entry, writeConcernError); a field of that name inside any document is compared",
+      "every other error field (code, codeName, errorLabels, index, keyPattern, keyValue, errInfo) is compared; keyPattern, keyValue and errInfo are documents, key order significant",
+      "a cursor id that is a canonical int64 becomes 0 when zero and \"<open>\" otherwise; any other cursor id becomes {\"$malformedCursorId\": <its JSON>}, equal to no valid id",
       "reply envelopes compared as maps; returned documents (cursor batches, findAndModify value) compared with key order significant",
       "types compared exactly (canonical Extended JSON v2)",
       "a batch is a multiset (code-unit ordering of canonical JSON) only when its case declares unordered: true",
-      "a case with drain: true is compared as a transcript (the reply and every getMore reply until exhaustion, at most 10 getMores): equal length and pairwise equal, or for an unordered case the same multiset of drained documents, the same set of envelopes and both cursors exhausted"
+      "a case with drain: true is a transcript (the reply and every getMore reply, at most 10 getMores): each transcript must be non-empty and well formed (firstBatch first, nextBatch after, valid open ids until the last reply, which is exhausted or an error); then equal length and pairwise equal, or for an unordered case the same multiset of drained documents, the same set of envelopes and the same ending"
     ],
     "teeth": "scripts/document-store-compare.test.mjs: planted divergences in returned documents, errors, structured write errors, findAndModify values, malformed cursor ids and drained transcripts must each be reported; session-metadata values, envelope key order, errmsg text, an open cursor's id value, byte-distinct but canonically equal strings in an unordered batch, and a different split of the same unordered documents across batches must not."
   },
@@ -342,7 +343,7 @@
   ],
   "files": {
     "experiments/document-store/corpus/cases.json": "716d34d69881109a4ad0529c459234820a3ea793198f0c232a92a4a012b64caa",
-    "scripts/document-store-compare.mjs": "97774c291c43bfd1f5bde02f6a4ebe09c46fdea551d750dffddf25565495023e",
+    "scripts/document-store-compare.mjs": "34e1258c7c66ce0124d1b8cf22b57f55f7865d6697b98e7055911ebcdd36eeee",
     "experiments/document-store/CLEAN-ROOM.md": "a42717417189cbdd849add0510b6c9d6c75706cc1962c1ee12bb5f0b2a1c1a1b"
   },
   "sources": [
