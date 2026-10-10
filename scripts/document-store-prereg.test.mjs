@@ -13,7 +13,7 @@ const record = () => JSON.parse(readFileSync(recordPath, 'utf8'));
 function sandbox(t) {
   const root = mkdtempSync(join(tmpdir(), 'document-store-prereg-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  for (const p of [...PINNED, recordPath]) cpSync(p, join(root, p), { recursive: true });
+  for (const p of [...PINNED, recordPath, pinPath]) cpSync(p, join(root, p), { recursive: true });
   return root;
 }
 
@@ -40,6 +40,19 @@ test('refuses a changed comparator', t => {
   const root = sandbox(t);
   writeFileSync(join(root, 'scripts/document-store-compare.mjs'), readFileSync('scripts/document-store-compare.mjs', 'utf8') + '\n// changed\n');
   assert.throws(() => validate(record(), root), /files|comparator/);
+});
+
+test('refuses an in-memory change to a field the field checks cannot see', () => {
+  for (const mutate of [r => { r.arms.reference.digest = 'sha256:' + '0'.repeat(64); }, r => { r.driver.version = '7.7.1'; }, r => { r.primary.P1.metric += ' '; }]) {
+    const r = record(); mutate(r);
+    assert.throws(() => validate(r), /committed preregistration/);
+  }
+});
+
+test('refuses a pin that does not match the record', t => {
+  const root = sandbox(t);
+  writeFileSync(join(root, pinPath), `${'0'.repeat(64)}  ${recordPath}\n`);
+  assert.throws(() => validate(record(), root), /does not pin/);
 });
 
 test('refuses a moved decision threshold', () => {

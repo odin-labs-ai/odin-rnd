@@ -76,7 +76,7 @@ On xAI: we found **no public primary source**, as of 2026-10-10, that xAI runs M
 
 | | Option | What "own" means | Cost (order of magnitude) | Main risk |
 |---|---|---|---|---|
-| A | Run MongoDB itself (Community self-hosted, or a commercial licence) | Not owned: licensed | Days | SSPL service-offering obligations for a platform that hosts tenants; lock-in |
+| A | Run MongoDB itself (Community self-hosted, or a commercial licence) | Not owned: licensed | Days | Lock-in. SSPL §13 obligations would apply if Odin **offered database functionality to third parties as a service** (for example tenant-facing database access); using MongoDB behind Odin's own application is a different case. Where that line falls for a tenant platform is a legal question. |
 | B | **Adopt FerretDB v2 + DocumentDB on Odin's existing PostgreSQL** | Pinned forks under Apache-2.0/MIT; Odin's own spec, governance and operations | Weeks | Compatibility gaps; younger project; performance relative to MongoDB |
 | C | Build Odin's own wire layer over PostgreSQL | Fully owned code | Months | Rebuilds what B already provides; years of edge cases |
 | D | Build a new engine (storage, replication, sharding) | Fully owned engine | Years, with a storage team | Correctness (see the Jepsen history); no measured need at current scale |

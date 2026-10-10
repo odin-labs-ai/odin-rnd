@@ -2,7 +2,7 @@
 // client cannot observe (volatile envelope fields, envelope key order, errmsg text, an open cursor's id) must not.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compare, normalise } from './document-store-compare.mjs';
+import { compare, compareTranscript, normalise, sessionShape } from './document-store-compare.mjs';
 
 const int = n => ({ $numberInt: String(n) });
 const long = n => ({ $numberLong: String(n) });
@@ -65,7 +65,7 @@ test('teeth: findAndModify value keeps key order and type', () => {
 });
 
 // Unobservable differences: none may be reported.
-test('ignored: volatile envelope fields and errmsg text', () => {
+test('ignored in P1: session metadata values and errmsg text', () => {
   const b = findReply(); b.$clusterTime = { clusterTime: { $timestamp: { t: 9, i: 9 } } }; b.operationTime = { $timestamp: { t: 9, i: 9 } }; b.electionId = { $oid: '7fffffff0000000000000001' };
   assert.deepEqual(compare(findReply(), b), { same: true });
   assert.deepEqual(compare(errorReply(), { ...errorReply(), errmsg: 'other words' }), { same: true });
@@ -96,4 +96,61 @@ test('normalise is deterministic and does not mutate its input', () => {
   const a = findReply(), before = JSON.stringify(a);
   assert.deepEqual(normalise(a), normalise(findReply()));
   assert.equal(JSON.stringify(a), before);
+});
+
+test('teeth: structured write-error fields (keyValue, keyPattern, errInfo) are compared', () => {
+  const r = { n: int(1), writeErrors: [{ index: int(1), code: int(11000), codeName: 'DuplicateKey', keyPattern: { _id: int(1) }, keyValue: { _id: 'a' }, errmsg: 'x' }], ok: dbl(1.0) };
+  const b = clone(r); b.writeErrors[0].keyValue = { _id: 'b' };
+  assert.equal(compare(r, b).same, false);
+  const c = clone(r); delete c.writeErrors[0].keyPattern;
+  assert.equal(compare(r, c).same, false);
+  const d = clone(r); d.writeErrors[0].errInfo = { details: {} };
+  assert.equal(compare(r, d).same, false);
+});
+
+test('teeth: a malformed cursor id is a difference, a different open int64 id is not', () => {
+  const a = findReply(); a.cursor.id = long(12);
+  for (const bad of ['invalid', null, int(12), dbl(12)]) {
+    const b = findReply(); b.cursor.id = bad;
+    assert.equal(compare(a, b).same, false, JSON.stringify(bad));
+  }
+  const ok = findReply(); ok.cursor.id = long(98765);
+  assert.deepEqual(compare(a, ok), { same: true });
+});
+
+test('unordered: canonically equal but byte-distinct strings do not produce a false divergence', () => {
+  const batch = [{ _id: int(1), x: '\u00e9' }, { _id: int(2), x: 'e\u0301' }];
+  const a = { cursor: { firstBatch: batch, id: long(0), ns: 'exp010.c' }, ok: dbl(1.0) };
+  const b = { cursor: { firstBatch: [...batch].reverse(), id: long(0), ns: 'exp010.c' }, ok: dbl(1.0) };
+  assert.deepEqual(compare(a, b, { unordered: true }), { same: true });
+});
+
+test('session metadata: shape records presence and types, never values (secondary S5)', () => {
+  const a = findReply(), b = findReply();
+  b.$clusterTime = { clusterTime: { $timestamp: { t: 9, i: 9 } } };
+  assert.deepEqual(sessionShape(a), sessionShape(b));
+  const none = findReply(); delete none.$clusterTime; delete none.operationTime;
+  assert.notDeepEqual(sessionShape(a), sessionShape(none));
+  assert.deepEqual(sessionShape(none), {});
+});
+
+const page = (docs, id, first) => ({ cursor: { [first ? 'firstBatch' : 'nextBatch']: docs, id, ns: 'exp010.c' }, ok: dbl(1.0) });
+const d = n => ({ _id: int(n) });
+
+test('transcript: a drained cursor is compared reply by reply', () => {
+  const ref = [page([d(1), d(2)], long(7), true), page([d(3), d(4)], long(0), false)];
+  assert.deepEqual(compareTranscript(ref, [page([d(1), d(2)], long(8), true), page([d(3), d(4)], long(0), false)]), { same: true });
+  assert.equal(compareTranscript(ref, [page([d(1), d(2)], long(8), true)]).same, false, 'stopped early');
+  assert.equal(compareTranscript(ref, [page([d(1), d(2)], long(8), true), page([d(3)], long(0), false)]).same, false, 'lost a document');
+  assert.equal(compareTranscript(ref, [page([d(1), d(2)], long(8), true), page([d(3), d(4)], long(5), false)]).same, false, 'never exhausted');
+});
+
+test('transcript unordered: the same documents split differently across batches are the same', () => {
+  const ref = [page([d(1), d(2)], long(7), true), page([d(3)], long(0), false)];
+  assert.deepEqual(compareTranscript(ref, [page([d(3)], long(7), true), page([d(2), d(1)], long(0), false)], { unordered: true }), { same: true });
+  assert.equal(compareTranscript(ref, [page([d(3)], long(7), true), page([d(2)], long(0), false)], { unordered: true }).same, false);
+  assert.equal(compareTranscript(ref, [page([d(1), d(2), d(3)], long(4), true)], { unordered: true }).same, false, 'left open');
+  const bad = [page([d(1), d(2)], long(7), true), { ...page([d(3)], long(0), false), ns: 'other' }];
+  bad[1].cursor.ns = 'exp010.other';
+  assert.equal(compareTranscript(ref, bad, { unordered: true }).same, false, 'envelope differs');
 });

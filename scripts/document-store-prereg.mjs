@@ -66,7 +66,10 @@ export function derive(root = '.') {
   };
 }
 
-export function validate(record, root = '.') {
+// The record is serialised exactly as --write writes it; a record object that is not those bytes is not the record.
+export const serialise = record => JSON.stringify(record, null, 2) + '\n';
+
+export function validate(record, root = '.', { requirePin = true } = {}) {
   for (const [path, ok] of Object.entries(required)) assert.ok(ok(get(record, path)), `preregistration field ${path}`);
   const d = derive(root);
   assert.deepEqual(record.files, d.files, 'files: pinned sha256 differ from disk');
@@ -80,12 +83,19 @@ export function validate(record, root = '.') {
   const ops = new Map(record.operations.map(o => [o.id, o]));
   const corpus = JSON.parse(readFileSync(`${root}/${corpusPath}`));
   for (const c of corpus.cases) {
+    assert.equal(typeof c.drain, 'boolean', `case ${c.id} drain flag`);
+    if (c.drain) assert.ok('find' in c.command || 'aggregate' in c.command, `case ${c.id} drains a command without a cursor`);
     assert.ok(ops.has(c.op), `case ${c.id} names an unlisted operation`);
     assert.equal(c.usedByOdin, ops.get(c.op).usedByOdin, `case ${c.id} used flag disagrees with ${c.op}`);
     assert.notEqual(ops.get(c.op).inExperiment, 'excluded', `case ${c.id} runs an excluded operation`);
   }
   if (record.freeze.status === 'frozen') assert.equal(record.freeze.toFreeze.length, 0, 'a frozen record has no TO-FREEZE field');
-  return sha256(readFileSync(`${root}/${recordPath}`));
+  // Bind the object to the committed bytes and the bytes to the pin: an in-memory change to any field is refused.
+  const bytes = readFileSync(`${root}/${recordPath}`);
+  assert.equal(serialise(record), bytes.toString('utf8'), 'record differs from the committed preregistration.json');
+  const hash = sha256(bytes);
+  if (requirePin) assert.equal(readFileSync(`${root}/${pinPath}`, 'utf8'), `${hash}  ${recordPath}\n`, 'preregistration.sha256 does not pin this record');
+  return hash;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -97,9 +107,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     Object.assign(record.corpus, d.corpus);
     record.comparator.sha256 = d.comparator.sha256;
     record.primary.P1.n = d.corpus.usedCases;
-    writeFileSync(recordPath, JSON.stringify(record, null, 2) + '\n');
+    writeFileSync(recordPath, serialise(record));
   }
-  const hash = validate(JSON.parse(readFileSync(recordPath, 'utf8')));
+  const hash = validate(JSON.parse(readFileSync(recordPath, 'utf8')), '.', { requirePin: mode === '--check' || mode === undefined });
   if (mode === '--pin') writeFileSync(pinPath, `${hash}  ${recordPath}\n`);
   console.log(hash);
 }
