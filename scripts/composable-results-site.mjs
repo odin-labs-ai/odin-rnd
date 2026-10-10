@@ -84,7 +84,7 @@ ${results.disclosures.filter(d => d.id === 'divergence-diagnosis').map(d => `<p>
 ${list([
   `<strong>S1.</strong> ${S1.residueTrials} of ${S1.n} H2 trials left residue (share ${escape(S1.share)}): ${escape(S1.statement)}. H2's decision mismatches against R0, expected by design: ${S1.mismatchTrials} of ${S1.n} trials.`,
   `<strong>S2.</strong> K1 detected ${S2.k1Detected} of its ${S2.k1Of} planted leaks; K2 left ${S2.k2ResidueProbes} residue probes.`,
-  `<strong>S3.</strong> Not measured (H1 median ${escape(S3.h1MedianReadyMs)}, R0 median ${escape(S3.r0MedianReadyMs)}): see the disclosures.`,
+  `<strong>S3.</strong> Not measured (${S3.h1MedianReadyMs == null && S3.r0MedianReadyMs == null ? 'no per-arm time to ready was recorded' : `H1 median ${escape(S3.h1MedianReadyMs ?? 'none')}, R0 median ${escape(S3.r0MedianReadyMs ?? 'none')}`}): see the disclosures.`,
 ])}
 <p>${escape(record.secondaryRule)} ${escape(r.decides)}.</p>
 <h2>Validity gates</h2>

@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import * as site from './composable-results-site.mjs';
+import * as prereg from './composable-site.mjs';
 import { adapt, buildResults, check, DIVERGENCE_DIAGNOSES, expected, k1k2, leaseHeld, nearestRank, render, RESULTS_PATH } from './composable-results.mjs';
 
 // EXP 009 bundle 5 WO-02: the results adapter. Synthetic rows only, except the last two tests, which recompute the
@@ -169,8 +171,6 @@ test('the CLI --check passes on the committed record and is stable across runs',
 });
 
 test('the results page, data copy, home row and sitemap are current, and leave the pre-registration\'s byte-identical', async () => {
-  const site = await import('./composable-results-site.mjs');
-  const prereg = await import('./composable-site.mjs');
   const want = site.assertSiteCurrent();
   const page = want[site.notePath];
   assert.ok(page.includes(site.P2_LABEL));

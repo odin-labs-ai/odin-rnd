@@ -479,11 +479,16 @@ test('refute r6 B1: every runner call in a test is a fixture run, a rehearsal, o
   assert.ok(sites.some(s => s.kind === 'claude-free') && sites.some(s => s.kind === 'fixture') && sites.some(s => s.kind === 'rehearsal'));
   assert.deepEqual(Object.fromEntries(['fixture', 'rehearsal', 'claude-free'].map(k => [k, sites.filter(s => s.kind === k).length])), { fixture: 5, rehearsal: 5, 'claude-free': 8 }, 'the 18 real call sites, each classified');
   // Dynamic relative imports accepted by name (refute r8): each is followed, and none of them calls the runner.
-  const ACCEPTED_DYNAMIC = { 'scripts/laya-home.test.mjs': '../site/assets/app.js', 'scripts/roi-lib.test.mjs': '../demos/test-witness/run.mjs', 'scripts/transcript.test.mjs': './transcript.mjs' };
+  // EXP 009's counted driver loads its arms lazily, so the CLI's gates refuse before any arm module is read; the driver
+  // is published byte-identical to the code that produced the counted records, so its imports are named here instead.
+  const ACCEPTED_DYNAMIC = {
+    'scripts/laya-home.test.mjs': ['../site/assets/app.js'], 'scripts/roi-lib.test.mjs': ['../demos/test-witness/run.mjs'], 'scripts/transcript.test.mjs': ['./transcript.mjs'],
+    'scripts/composable-counted.mjs': ['../experiments/composable-harness/arms/p2.mjs', '../experiments/composable-harness/arms/schedule.mjs', '../experiments/composable-harness/arms/run.mjs', '../experiments/composable-harness/arms/h2.mjs', '../experiments/composable-harness/probes/leaks.mjs', '../experiments/composable-harness/probes/observe.mjs', '../experiments/latent-handoff/pins.mjs', '../harness/kernel.mjs', '../harness/services/corpus.mjs'],
+  };
   const issues0 = testSources(files).flatMap(f => importIssues(readFileSync(f, 'utf8'), f.slice(f.indexOf('scripts/'))));
-  const unaccepted = issues0.filter(i => i.issue !== `a dynamic import of ${ACCEPTED_DYNAMIC[i.file]}`);
+  const unaccepted = issues0.filter(i => !(ACCEPTED_DYNAMIC[i.file] ?? []).some(spec => i.issue === `a dynamic import of ${spec}`));
   assert.deepEqual(unaccepted, [], 'an import the scan could not attribute or follow');
-  for (const [f, spec] of Object.entries(ACCEPTED_DYNAMIC)) assert.deepEqual(paidCallSites(readFileSync(join(dirname(f), spec), 'utf8')), [], `${spec} calls no runner`);
+  for (const [f, specs] of Object.entries(ACCEPTED_DYNAMIC)) for (const spec of specs) assert.deepEqual(paidCallSites(readFileSync(join(dirname(f), spec), 'utf8')), [], `${spec} calls no runner`);
   // The check itself: an unwrapped paid call is UNSAFE; a spread named free outside claudeFree is not enough; parens and
   // quotes in strings, regexes and comments do not confuse it.
   const kinds = src => paidCallSites(src).map(s => s.kind);
