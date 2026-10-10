@@ -61,6 +61,7 @@ test('the built home page lists every experiment, in order, with the status its 
     }
   }
   const text = stripTags(ledger);
+  assert.match(text, /EXP 001–003 show their recorded run/, 'the intro says which statuses are composed from a record and which are copied from a note');
   assert.match(text, /EXP 005\s+Jev as a fast gate\s+Results published[^]*?the claim is refuted\./, 'a refuted claim stays refuted');
   assert.match(text, /EXP 007\s+Which of your gate's rules need a model at all\?\s+Results published[^]*?the premise is refuted\./);
 });

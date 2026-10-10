@@ -52,7 +52,8 @@ export function ledgerEntries(html, report, dist = 'dist') {
     title: run.title,
     href: '#bench',
     stage: 'Recorded',
-    // The build refuses a report in which any recipe failed to tell its two trees apart, so every run here passed.
+    // No field note exists for the bench recipes, so their status is composed from the recorded report's own fields
+    // (completedAt, cleanScore, driftScore) and the intro says so. The build refuses a report with any failed recipe.
     status: `Recorded ${day(report.completedAt)}: the same rule scored the conforming tree GREEN / ${run.cleanScore} and the drifted tree RED / ${run.driftScore}.`,
   }));
   const layaManifest = JSON.parse(readFileSync(`${dist}/data/laya-vs-jev/manifest.json`, 'utf8'));
@@ -84,7 +85,7 @@ export function ledgerEntries(html, report, dist = 'dist') {
 
 export function renderLedger(entries) {
   const items = entries.map(e => `<li><a href="${escape(e.href)}"><span class="technical">${escape(e.id)}</span><span class="ledger-title">${escape(e.title)}</span><span class="ledger-stage technical">${escape(e.stage)}</span>${e.status ? `<span class="ledger-status">${escape(e.status)}</span>` : ''}</a></li>`).join('');
-  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment, and where it stands.</h3><p>Each status is the one the experiment's own record and field note state. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
+  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment, and where it stands.</h3><p>EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
 }
 
 /** Replaces the page's ledger marker with the ledger built from `dist`. */
