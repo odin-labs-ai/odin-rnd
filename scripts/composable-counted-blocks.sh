@@ -6,7 +6,7 @@
 # It asks the driver for the lowest block with no complete attempt, then runs
 #   bash <labs>/.claude/scripts/mac-memory-window.sh run --label exp009-counted-bNN --max-wait 12h -- \
 #     node scripts/composable-counted.mjs --merge-commit <id> --block NN
-# The driver applies every gate itself (seed, not-before, EXP 008 finished, held lease); this script adds none and
+# The driver applies every gate itself (seed, not-before, a held lease labelled for the block); this script adds none and
 # can relax none. After the wrapper exits it copies the run's sidecar (every sample and the close summary) to
 # runs/composable-harness/counted/leases/<runId>.jsonl, refusing to overwrite. One block per invocation.
 set -euo pipefail

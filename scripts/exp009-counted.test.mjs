@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Kernel } from '../harness/kernel.mjs';
@@ -17,6 +17,11 @@ import {
 
 const MERGE = '91de325de980493291d17237387aac6d2c656b7c';
 const ENV = { pins: { A: { modelKey: 'qwen3-fake-a', fake: true }, B: { modelKey: 'llama-fake-b', fake: true } }, memory: { stub: { freePct: 74, totalGB: 128, swapUsedMB: 100, load1: 3 } }, untimed: true };
+// The published raw records live under OUT_ROOT, so "writes nothing" means the tree under it is byte-for-byte unchanged.
+const treeSnapshot = root => existsSync(root)
+  ? readdirSync(root, { recursive: true }).map(String).sort().map(f => { const p = join(root, f), s = statSync(p);
+    return s.isFile() ? `${f} ${createHash('sha256').update(readFileSync(p)).digest('hex')}` : `${f}/`; })
+  : null;
 const temp = t => { const d = mkdtempSync(join(tmpdir(), 'exp009-counted-test-')); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
 
 test('the seed is sha256 of the 40-char merge id, and only the published merge id passes', () => {
@@ -32,18 +37,20 @@ test('the seed is sha256 of the 40-char merge id, and only the published merge i
 });
 
 test('the CLI refuses a wrong merge id before anything else, and writes nothing', () => {
+  const before = treeSnapshot(OUT_ROOT);
   const r = spawnSync(process.execPath, ['scripts/composable-counted.mjs', '--merge-commit', `${MERGE.slice(0, 39)}d`, '--block', '00'], { encoding: 'utf8' });
   assert.equal(r.status, 2);
   assert.match(r.stderr, /REFUSED \(seed\)/);
-  assert.ok(!existsSync(OUT_ROOT), 'no counted output directory was created');
+  assert.deepEqual(treeSnapshot(OUT_ROOT), before, 'nothing under the counted output directory was created or changed');
 });
 
 test('the CLI has no override flag: an unknown flag changes nothing and the gates still refuse', () => {
   // MMW_RUN_ID / MMW_RUN_SIDECAR are overridden so the test refuses even when the suite itself runs under a lease.
+  const before = treeSnapshot(OUT_ROOT);
   const r = spawnSync(process.execPath, ['scripts/composable-counted.mjs', '--merge-commit', MERGE, '--block', '00', '--force', '--fake', '--now', '2030-01-01T00:00:00Z'], { encoding: 'utf8', env: { ...process.env, MMW_RUN_ID: 'x', MMW_RUN_SIDECAR: '/x/x.jsonl' } });
   assert.equal(r.status, 2);
   assert.match(r.stderr, /REFUSED \((not-before|lease)\)/);
-  assert.ok(!existsSync(OUT_ROOT));
+  assert.deepEqual(treeSnapshot(OUT_ROOT), before);
 });
 
 test('gate (a): refuses at and before the not-before, passes strictly after', () => {
