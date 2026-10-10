@@ -76,16 +76,22 @@ test('the ledger refuses results whose field-note row still says the experiment 
   assert.throws(() => ledgerEntries(stale, report, join(root, 'dist')), /EXP 005 publishes results but its field-note row says it has not run/);
 });
 
-test('a pre-registration with no field-note row is listed with a plain status, and results without one refuse the build', () => {
+test('a pre-registration with no field-note row is listed with a plain status, and results without one refuse the build', (t) => {
   const root = builtCopy();
-  const page = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const dist = join(root, 'dist');
+  const page = readFileSync(join(dist, 'index.html'), 'utf8');
   const report = JSON.parse(readFileSync(join(root, 'site/data/experiments.json'), 'utf8'));
-  // Rename EXP 009's and EXP 007's row headings so neither id nor title matches any more.
-  const unmatched = page.replaceAll('EXP 009: Unload leaves no trace:', 'Renamed note:').replaceAll('<h3>EXP 007: Which of your gate&#39;s rules need a model at all? <br>', '<h3>Renamed note: <br>');
-  assert.notEqual(unmatched, page);
-  assert.throws(() => ledgerEntries(unmatched, report, join(root, 'dist')), /EXP 007 publishes results but has no field-note row/);
-  const only009 = page.replaceAll('EXP 009: Unload leaves no trace:', 'Renamed note:');
-  const entry = ledgerEntries(only009, report, join(root, 'dist')).find(e => e.id === 'EXP 009');
+  // Subjects are picked from what is published now, so the test keeps working as results land (EXP 009 next).
+  const published = readdirSync(join(dist, 'data'), { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)
+    .filter(slug => readdirSync(join(dist, 'data', slug)).includes('preregistration.json'))
+    .map(slug => ({ slug, id: JSON.parse(readFileSync(join(dist, 'data', slug, 'preregistration.json'), 'utf8')).experiment.id, results: readdirSync(join(dist, 'data', slug)).includes('results.json') }))
+    .filter(e => page.includes(`<h3>${e.id}: `));
+  const unrow = (html, id) => html.replaceAll(`<h3>${id}: `, '<h3>Renamed note: ');
+  const measured = published.find(e => e.results);
+  if (measured) assert.throws(() => ledgerEntries(unrow(page, measured.id), report, dist), new RegExp(`${measured.id} publishes results but has no field-note row`));
+  const pending = published.find(e => !e.results);
+  if (!pending) { t.skip('every published pre-registration has results'); return; }
+  const entry = ledgerEntries(unrow(page, pending.id), report, dist).find(e => e.id === pending.id);
   assert.equal(entry.status, 'Pre-registration published; no field note yet.');
-  assert.equal(entry.href, 'data/composable-harness/preregistration.json');
+  assert.equal(entry.href, `data/${pending.slug}/preregistration.json`);
 });

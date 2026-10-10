@@ -68,9 +68,9 @@ export function ledgerEntries(html, report, dist = 'dist') {
     const row = rows.find(r => r.heading.startsWith(`${id}:`) || r.heading.startsWith(`${title}:`));
     const amendments = readdirSync(`${dist}/data/${slug}`).filter(file => /^amendment-\d{2}\.json$/.test(file)).length;
     const results = existsSync(`${dist}/data/${slug}/results.json`);
-    // A row is matched by its heading ("EXP 007: …", or the title for EXP 005's older note). Each note generator
-    // renders that heading from the same record's experiment.id and experiment.title, so a renumber or a retitle
-    // moves both together. With no row, the entry says so in plain words and links the published record: never a
+    // A row is matched by its heading: "EXP 006: …" onwards, rendered by each note generator from the same record's
+    // experiment.id and experiment.title, so a renumber or a retitle moves both together. EXP 005's row is written by
+    // hand in site/index.html and has no id, so it matches by title. With no row, the entry says so in plain words and links the published record: never a
     // blank status. Results need their note.
     if (!row && results) throw new Error(`Experiment ledger: ${id} publishes results but has no field-note row on the home page`);
     const status = row ? statusSentence(row.text) : 'Pre-registration published; no field note yet.';
