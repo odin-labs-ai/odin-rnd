@@ -268,7 +268,7 @@
   },
   "comparator": {
     "file": "scripts/document-store-compare.mjs",
-    "sha256": "34e1258c7c66ce0124d1b8cf22b57f55f7865d6697b98e7055911ebcdd36eeee",
+    "sha256": "88ecb85d78f3f59ee15d6ecf8a257bbe22d0624ce34eaa95b7e487ea04cbdcf0",
     "normalisation": [
       "session metadata ($clusterTime, operationTime, electionId, opTime, lastCommittedOpTime, $configTime, $topologyTime) is split off the reply's top level only: excluded from P1, its presence and leaf types (keeping a binary's subType) compared in S5",
       "errmsg is dropped only as a server-written envelope field (reply top level, each writeErrors entry, writeConcernError); a field of that name inside any document is compared",
@@ -283,7 +283,7 @@
   },
   "controls": {
     "positive": "Reference against itself: the full corpus is run twice against two fresh reference containers; every case must compare equal.",
-    "negative": "Planted divergence: for every case, the runner also compares the reference reply against a copy with one deterministic, observable mutation (the first returned document's first non-_id value's type changed, or for replies without documents, ok flipped); every one must be reported as different.",
+    "negative": "Planted divergence: for every case, the runner also compares the reference reply (or transcript) against plantDivergence() of it (scripts/document-store-compare.mjs, frozen): the field \"__exp010_planted\": true appended to the first returned document when the reply has one, to the reply envelope otherwise, and to the first reply of a drained transcript. Every one must be reported as different.",
     "calibrationBar": "If the positive control shows any difference, or the negative control misses any mutation, the comparator is miscalibrated: the run is void, published as void, and P1 is not computed."
   },
   "primary": {
@@ -343,7 +343,7 @@
   ],
   "files": {
     "experiments/document-store/corpus/cases.json": "716d34d69881109a4ad0529c459234820a3ea793198f0c232a92a4a012b64caa",
-    "scripts/document-store-compare.mjs": "34e1258c7c66ce0124d1b8cf22b57f55f7865d6697b98e7055911ebcdd36eeee",
+    "scripts/document-store-compare.mjs": "88ecb85d78f3f59ee15d6ecf8a257bbe22d0624ce34eaa95b7e487ea04cbdcf0",
     "experiments/document-store/CLEAN-ROOM.md": "a42717417189cbdd849add0510b6c9d6c75706cc1962c1ee12bb5f0b2a1c1a1b"
   },
   "sources": [

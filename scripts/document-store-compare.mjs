@@ -147,3 +147,20 @@ function firstDifference(a, b, at) {
   }
   return `value ${at || '.'}`;
 }
+
+// The frozen negative control: one deterministic, client-observable mutation that applies to every reply. It appends
+// the field "__exp010_planted": true to the first returned document (cursor batch or findAndModify value) when there is
+// one, and to the reply envelope otherwise. For a drained transcript it mutates the first reply. Never mutates input.
+export const PLANTED_FIELD = '__exp010_planted';
+export function plantDivergence(reply) {
+  if (Array.isArray(reply)) return reply.length ? [plantDivergence(reply[0]), ...reply.slice(1)] : [{ [PLANTED_FIELD]: true }];
+  const out = structuredClone(reply);
+  if (!isObj(out)) return { [PLANTED_FIELD]: true };
+  for (const key of DOCUMENT_KEYS) {
+    const batch = out.cursor?.[key];
+    if (Array.isArray(batch) && batch.length && isObj(batch[0])) { batch[0][PLANTED_FIELD] = true; return out; }
+  }
+  if ('lastErrorObject' in out && isObj(out.value)) { out.value[PLANTED_FIELD] = true; return out; }
+  out[PLANTED_FIELD] = true;
+  return out;
+}

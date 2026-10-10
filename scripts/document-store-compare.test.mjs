@@ -2,7 +2,7 @@
 // client cannot observe (volatile envelope fields, envelope key order, errmsg text, an open cursor's id) must not.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compare, compareTranscript, normalise, sessionShape } from './document-store-compare.mjs';
+import { compare, compareTranscript, normalise, plantDivergence, sessionShape } from './document-store-compare.mjs';
 
 const int = n => ({ $numberInt: String(n) });
 const long = n => ({ $numberLong: String(n) });
@@ -196,4 +196,18 @@ test('teeth r2: S5 keeps a binary subtype', () => {
   assert.notDeepEqual(sessionShape(sig('00')), sessionShape(sig('04')));
   const other = sig('00'); other.$clusterTime.signature.hash.$binary.base64 = 'BBBB';
   assert.deepEqual(sessionShape(sig('00')), sessionShape(other));
+});
+
+test('negative control: the planted divergence applies to every reply shape and is always caught', () => {
+  const idOnly = { cursor: { firstBatch: [{ _id: int(1) }, { _id: int(2) }], id: long(0), ns: 'exp010.c' }, ok: dbl(1.0) };
+  const empty = { cursor: { firstBatch: [], id: long(0), ns: 'exp010.c' }, ok: dbl(1.0) };
+  const transcript = [page([d(1)], long(3), true), page([d(2)], long(0), false)];
+  for (const [name, reply, opts] of [['find', findReply()], ['id-only projection', idOnly], ['id-only unordered', idOnly, { unordered: true }], ['empty batch', empty],
+    ['write', writeReply()], ['error', errorReply()], ['findAndModify', famReply()], ['findAndModify null value', { ...famReply(), value: null }]]) {
+    const before = JSON.stringify(reply);
+    assert.equal(compare(reply, plantDivergence(reply), opts).same, false, name);
+    assert.equal(JSON.stringify(reply), before, `${name}: input untouched`);
+  }
+  assert.equal(compareTranscript(transcript, plantDivergence(transcript)).same, false, 'transcript');
+  assert.equal(compareTranscript(transcript, plantDivergence(transcript), { unordered: true }).same, false, 'unordered transcript');
 });
