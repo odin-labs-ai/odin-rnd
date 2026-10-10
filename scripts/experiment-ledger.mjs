@@ -68,8 +68,10 @@ export function ledgerEntries(html, report, dist = 'dist') {
     const row = rows.find(r => r.heading.startsWith(`${id}:`) || r.heading.startsWith(`${title}:`));
     const amendments = readdirSync(`${dist}/data/${slug}`).filter(file => /^amendment-\d{2}\.json$/.test(file)).length;
     const results = existsSync(`${dist}/data/${slug}/results.json`);
-    // A row is matched by its heading ("EXP 007: …", or the title for EXP 005's older note). With no row, the entry
-    // says so in plain words and links the published record: never a blank status. Results need their note.
+    // A row is matched by its heading ("EXP 007: …", or the title for EXP 005's older note). Each note generator
+    // renders that heading from the same record's experiment.id and experiment.title, so a renumber or a retitle
+    // moves both together. With no row, the entry says so in plain words and links the published record: never a
+    // blank status. Results need their note.
     if (!row && results) throw new Error(`Experiment ledger: ${id} publishes results but has no field-note row on the home page`);
     const status = row ? statusSentence(row.text) : 'Pre-registration published; no field note yet.';
     if (results && /not yet run/.test(status)) throw new Error(`Experiment ledger: ${id} publishes results but its field-note row says it has not run`);
@@ -88,7 +90,7 @@ export function ledgerEntries(html, report, dist = 'dist') {
 
 export function renderLedger(entries) {
   const items = entries.map(e => `<li><a href="${escape(e.href)}"><span class="technical">${escape(e.id)}</span><span class="ledger-title">${escape(e.title)}</span><span class="ledger-stage technical">${escape(e.stage)}</span>${e.status ? `<span class="ledger-status">${escape(e.status)}</span>` : ''}</a></li>`).join('');
-  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment, and where it stands.</h3><p>EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
+  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment, and where it stands.</h3><p>EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited, or says it has no note yet. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
 }
 
 /** Replaces the page's ledger marker with the ledger built from `dist`. */
