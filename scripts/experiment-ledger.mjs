@@ -23,23 +23,32 @@ export function textOf(fragment) {
   return plain.replace(/&#39;|&quot;|&lt;|&gt;|&nbsp;/g, match => entities[match]).replaceAll('&amp;', '&').replace(/\s+/g, ' ').trim();
 }
 
+/** The content of the first `<tag>` or `<tag …>` element in `html`, or '' when there is none. */
+function inner(html, tag) {
+  let at = html.indexOf(`<${tag}`);
+  while (at >= 0 && !['>', ' '].includes(html[at + tag.length + 1])) at = html.indexOf(`<${tag}`, at + 1);
+  if (at < 0) return '';
+  const open = html.indexOf('>', at);
+  const close = html.indexOf(`</${tag}>`, open);
+  return open < 0 || close < 0 ? '' : html.slice(open + 1, close);
+}
+
 /** The home page's field-note rows: link, heading text and paragraph text, in page order. */
 export function journalRows(html) {
   const rows = [];
   for (const part of html.split('<a class="journal-row" href="').slice(1)) {
     const href = part.slice(0, part.indexOf('"'));
     const body = part.slice(0, part.indexOf('</a>'));
-    const h3 = body.split('<h3>')[1]?.split('</h3>')[0] ?? '';
-    const p = body.split('<p>')[1]?.split('</p>')[0] ?? '';
-    rows.push({ href, heading: textOf(h3), text: textOf(p) });
+    rows.push({ href, heading: textOf(inner(body, 'h3')), text: textOf(inner(body, 'p')) });
   }
   return rows;
 }
 
-/** The status sentence at the end of a row's paragraph: from its first "Pre-registered", "Draft" or "Measured" on. */
+/** The status sentence at the end of a row's paragraph: from its first "Pre-registered", "Draft" or "Measured" on.
+ *  A paragraph with none of those words is shown whole, unedited, rather than cut or left blank. */
 export function statusSentence(text) {
   const starts = ['Pre-registered', 'Draft', 'Measured'].map(word => text.indexOf(word)).filter(at => at >= 0);
-  return starts.length ? text.slice(Math.min(...starts)) : '';
+  return starts.length ? text.slice(Math.min(...starts)) : text;
 }
 
 const expNumber = id => Number(/^EXP (\d{3})$/.exec(id)?.[1] ?? NaN);
@@ -81,6 +90,10 @@ export function ledgerEntries(html, report, dist = 'dist') {
       stage: (results ? 'Results published' : 'Pre-registered') + (amendments ? ` · ${amendments} amendment${amendments > 1 ? 's' : ''}` : ''),
       status,
     });
+  }
+  // Every published result belongs to a listed experiment: results with no pre-registration beside them refuse the build.
+  for (const slug of readdirSync(`${dist}/data`, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)) {
+    if (existsSync(`${dist}/data/${slug}/results.json`) && !existsSync(`${dist}/data/${slug}/preregistration.json`)) throw new Error(`Experiment ledger: data/${slug}/results.json has no pre-registration, so no ledger entry`);
   }
   const ids = entries.map(e => e.id);
   const repeated = ids.find((id, i) => ids.indexOf(id) !== i);

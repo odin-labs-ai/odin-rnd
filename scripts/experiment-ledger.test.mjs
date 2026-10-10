@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { addLedger, journalRows, ledgerEntries, renderLedger, statusSentence, textOf } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -15,7 +15,7 @@ test('textOf reads what a visitor sees and leaves no tag behind', () => {
 test('statusSentence starts at the first status word and is empty without one', () => {
   assert.equal(statusSentence('Can a model do it? Pre-registered; measured 29 Sep 2026: the claim is refuted.'), 'Pre-registered; measured 29 Sep 2026: the claim is refuted.');
   assert.equal(statusSentence('A question. Measured on one laptop, 48 authored rows.'), 'Measured on one laptop, 48 authored rows.');
-  assert.equal(statusSentence('A question with no status yet.'), '');
+  assert.equal(statusSentence('A question with no status word.'), 'A question with no status word.', 'shown whole, never cut or blank');
 });
 
 test('journalRows reads each field-note row in page order', () => {
@@ -24,6 +24,9 @@ test('journalRows reads each field-note row in page order', () => {
     { href: 'journal/a.html#results', heading: 'EXP 010: A title', text: 'Why. Pre-registered; not yet run.' },
     { href: 'journal/b.html', heading: 'B', text: 'Note.' },
   ]);
+  const withAttributes = '<a class="journal-row" href="journal/c.html"><h3 class="t">EXP 011: C</h3><p class="s">Pre-registered; not yet run.</p></a>';
+  assert.deepEqual(journalRows(withAttributes), [{ href: 'journal/c.html', heading: 'EXP 011: C', text: 'Pre-registered; not yet run.' }], 'attributes on h3 or p do not hide the row');
+  assert.equal(journalRows('<a class="journal-row" href="x"><header>H</header><p>t</p></a>')[0].heading, '', '<header> is not an h3');
 });
 
 test('renderLedger escapes every value it prints', () => {
@@ -94,4 +97,18 @@ test('a pre-registration with no field-note row is listed with a plain status, a
   const entry = ledgerEntries(unrow(page, pending.id), report, dist).find(e => e.id === pending.id);
   assert.equal(entry.status, 'Pre-registration published; no field note yet.');
   assert.equal(entry.href, `data/${pending.slug}/preregistration.json`);
+});
+
+test('a published results.json with no pre-registration beside it refuses the build', () => {
+  const root = builtCopy();
+  const page = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const report = JSON.parse(readFileSync(join(root, 'site/data/experiments.json'), 'utf8'));
+  const orphan = join(root, 'dist/data/orphan-results-fixture');
+  mkdirSync(orphan);
+  try {
+    writeFileSync(join(orphan, 'results.json'), '{}');
+    assert.throws(() => ledgerEntries(page, report, join(root, 'dist')), /data\/orphan-results-fixture\/results\.json has no pre-registration/);
+  } finally {
+    rmSync(orphan, { recursive: true, force: true });
+  }
 });
