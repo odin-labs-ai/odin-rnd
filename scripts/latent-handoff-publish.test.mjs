@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NOTE, preRecordItemIds, REQUIRED, STATUS, TO_FREEZE, checkRecord, toFreezePaths, validateRecord, EXP005 } from './latent-handoff-prereg.mjs';
+import { NOTE, preRecordItemIds, REQUIRED, STATUS, TO_FREEZE, checkRecord, toFreezePaths, validateRecord, EXP005, REBOUND } from './latent-handoff-prereg.mjs';
 import { build as buildPairLock } from '../experiments/latent-handoff/pair_lock.mjs';
 import { assertSiteCurrent, checkHorizon, measurementState, renderHorizon, renderNote, resultWords, validateHorizon } from './latent-handoff-site.mjs';
 
@@ -30,7 +30,13 @@ test('every hash the pre-registration references resolves to a committed file', 
     [`experiments/latent-handoff/${record.strata.distractor.file}`]: record.strata.distractor.sha256,
     ...Object.fromEntries(Object.entries(record.mappers.code).filter(([, d]) => d !== TO_FREEZE)),
   };
-  for (const [path, digest] of Object.entries(refs)) assert.equal(sha(committed(path)), digest, `${path} is not committed with sha256 ${digest}`);
+  // amendment 02 rebinds runner.py, and only it: the record still states the published hash, the committed file is the rebound one
+  assert.deepEqual(Object.keys(REBOUND), ['experiments/latent-handoff/runner.py']);
+  for (const [path, r] of Object.entries(REBOUND)) assert.equal(record.files[path], r.published, `the record still binds ${path} at its published hash`);
+  for (const [path, digest] of Object.entries(refs)) {
+    const want = REBOUND[path]?.published === digest ? REBOUND[path].rebound : digest;
+    assert.equal(sha(committed(path)), want, `${path} is not committed with sha256 ${want}`);
+  }
 });
 
 test('a draft lists its TO-FREEZE fields; a frozen record may carry none', () => {
@@ -176,7 +182,8 @@ test('every committed row file from before the record holds only excluded (seen)
 
 test('pair-lock.json is the pairLock rule applied to its committed rows, under the frozen record', () => {
   const lock = JSON.parse(readFileSync('experiments/latent-handoff/pair-lock.json', 'utf8'));
-  const again = buildPairLock(lock.run.rows.file, lock.notes);
+  const again = buildPairLock(lock.run.rows.file, lock.notes, undefined, REBOUND);
+  assert.throws(() => buildPairLock(lock.run.rows.file, lock.notes), /runner\.py differs from the hash the frozen record binds/);
   assert.deepEqual(again, lock);
   assert.equal(sha(committed(lock.run.rows.file)), lock.run.rows.sha256);
   assert.equal(lock.record.sha256, sha(committed('experiments/latent-handoff/preregistration.json')));

@@ -79,6 +79,18 @@ export const PINNED = [
     'corpus-x/corpus-x.json', 'corpus-x/corpus-x.sha256', 'corpus-x/labels-x.json', 'corpus-x/baselines-x.mjs', 'corpus-x/overlap-x.mjs'].map(f => `${L}/${f}`),
   ...['lint.mjs', 'gate-question.json', 'baselines.json'].map(f => `${J}/${f}`),
 ];
+// A pinned file a later dated amendment rebinds: the record keeps (and still states) the published sha256; the file on
+// disk must hash to the amendment's new one, and any other content is refused.
+export const REBOUND = Object.freeze({
+  [`${L}/runner.py`]: Object.freeze({ published: '95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd', rebound: '6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044', by: 'amendment-02' }),
+});
+/** The sha256 the record binds for a pinned file, given its bytes on disk (a rebound file must be at its new hash). */
+export function boundDigest(file, bytes) {
+  const digest = sha256(bytes), r = REBOUND[file];
+  if (!r) return digest;
+  assert.equal(digest, r.rebound, `${file} is neither the published file nor the one ${r.by} rebinds`);
+  return r.published;
+}
 export const NOT_PINNED = ['scripts/latent-handoff-prereg.mjs', 'scripts/latent-handoff-site.mjs', recordPath, pinPath, `${L}/horizon.json`, `${L}/horizon.sha256`];
 
 // Bundle 3 WO-05 (the two public mappers, calibrated on the Mac) is still in progress. Its code is pinned here once
@@ -114,7 +126,7 @@ export function buildRecord(root = '.') {
     return { key, repo: m.repo, revision: m.revision, source: m.source.replace('founder-approved ', 'approved '), geometry: m.geometry, attentionLayers: m.attentionLayers, vocabSha256: m.vocab.sha256, chatTemplateSha256: m.convert.files['chat_template.jinja'], weightsGB: m.convert.weightsGB };
   };
   const pair = (id, extra) => ({ id, sender: model(models.pairs[id].sender), receiver: model(models.pairs[id].receiver), role: models.pairs[id].role, ...extra });
-  const files = Object.fromEntries(PINNED.map(f => [f, sha256(read(f))]));
+  const files = Object.fromEntries(PINNED.map(f => [f, boundDigest(f, read(f))]));
   const frozenMappers = existsSync(join(root, mapperFreezePath)) && tracked(mapperFreezePath, root) ? json(mapperFreezePath) : {};
   const analysedIds = [...items5, ...itemsX].map(i => i.id).filter(id => !EXPOSED.includes(id));
   const analysed5 = analysedIds.filter(id => items5.some(i => i.id === id));
@@ -166,7 +178,7 @@ export function buildRecord(root = '.') {
       statement: `Applied after this record was frozen: D1's A0 on stratum L got ${d.correct} of ${d.of} practice items (${LOCK_PRACTICE[0]}–${LOCK_PRACTICE.at(-1)}) right, with ${d.abstentions} abstentions, ${d.correct >= LOCK_BAR ? 'at or above' : 'below'} the bar of ${LOCK_BAR}, so ${d.locked === 'D1' ? 'D1 stays the counted pair' : 'D1′ (Qwen3-4B → Llama-3.1-8B) is the counted pair'}. The rows and the decision are in experiments/latent-handoff/pair-lock.json.` };
   })() : null;
   const earlierPractice = `An earlier 5-item D1 practice run (stratum L, an older render, ${practiceRows.map(r => r.itemId).join(', ')}) is not the lock test: its A0 ${answered} (${practiceCorrect} of ${practiceRows.length} correct).`;
-  if (fm.code) for (const [f, digest] of Object.entries(fm.code)) assert.equal(sha256(read(`${L}/${f}`)), digest, `${f} differs from the hash mapper-freeze.json binds`);
+  if (fm.code) for (const [f, digest] of Object.entries(fm.code)) assert.equal(boundDigest(`${L}/${f}`, read(`${L}/${f}`)), digest, `${f} differs from the hash mapper-freeze.json binds`);
   const bf16 = fm.pairs ? Object.fromEntries(PAIRS_FROZEN.map(p => [p, json(`${L}/evidence/bf16-decision-stability-${p}.json`)])) : null;
   const mapperCode = Object.fromEntries(MAPPER_CODE.map(f => [f, existsSync(join(root, f)) && tracked(f, root) ? sha256(read(f)) : TO_FREEZE]));
   const record = {

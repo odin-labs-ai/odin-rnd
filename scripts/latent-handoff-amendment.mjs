@@ -25,6 +25,9 @@ export const DATE = '2026-10-02';
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const longDate = iso => { const [y, m, d] = iso.split('-'); return `${d} ${months[Number(m) - 1]} ${y}`; };
 export const STATUS = `Amended ${longDate(DATE)}, before any counted run`;
+// The script and tests as amendment 01 published them. Amendment 02 rebinds both (and the run ids, -01 to -02), so this
+// build reproduces amendment 01 from these hashes and its own run ids, not from the files now on disk.
+export const PUBLISHED = Object.freeze({ analysis: 'bc7e0b560f7ac6b7a96c8b5e6528d9b5b0346102c98aaab0f1e68635b32fac2b', tests: '9858ef4358326822b313800534852692d22a15cc64872eda352b03baca794bab' });
 /** The run order the amendment fixes: the primary stratum first, then M and S; the re-run after, in the same order. */
 export const ORDER = ['L', 'M', 'S'];
 
@@ -34,7 +37,7 @@ export const at = (record, path) => path.split('.').reduce((x, k) => (x === unde
 // The clauses the script implements: [record path(s) quoted verbatim, how analyse.mjs implements them].
 export const CLAUSES = [
   { id: 'exclusions', from: ['corpus.analysed', 'corpus.fallback'], implementation: `The analysed items are every labelled item (score.mjs's labels, ${200} items) minus corpus.exposedItems, asserted to be the record's count (175). Every claim, gate, secondary and descriptive figure is computed on them. The seen items are run and reported separately (seenItems: accuracy per stratum and arm), and enter nothing else. The 60-item fallback is not implemented: the pre-registration's refute did not trigger it, so it can now be triggered only by a dated amendment before the not-before, which would carry its own analysis of that run.` },
-  { id: 'one-run', from: ['leakageFences.2'], implementation: `The counted run is exactly these run ids on the locked pair (read from pair-lock.json): ${Object.values(runIds('D1p').counted).join(', ')}; the re-run is ${Object.values(runIds('D1p').rerun).join(', ')}. Any row of another run id or pair is refused. Any row of another stratum, a duplicate attempt or a row for an item outside the run is refused too; a refusal stops the analysis (it is not a gate result), and its cause is disclosed and settled by a dated amendment before any result is read. The latest attempt counts per (item, arm); the driver re-queues whole items, so the arms of one item come from the same attempt. The run is analysed once, when it has finished or stopped; a paused run is resumed under the same run id first. Global gate complete: per stratum, the latest timing attempt of every (item, arm) exists for all 200 items × the ${STAGE1_ARMS.length} stage 1 arms (${STAGE1_ARMS.join(', ')}) in the counted run and for the re-run items in the re-run; an abstention is a row. A gap (for example, a run the runner stopped on a C1 mismatch) fails it, and then nothing else is computed: the result is uninformative.` },
+  { id: 'one-run', from: ['leakageFences.2'], implementation: `The counted run is exactly these run ids on the locked pair (read from pair-lock.json): ${Object.values(runIds('D1p', '01').counted).join(', ')}; the re-run is ${Object.values(runIds('D1p', '01').rerun).join(', ')}. Any row of another run id or pair is refused. Any row of another stratum, a duplicate attempt or a row for an item outside the run is refused too; a refusal stops the analysis (it is not a gate result), and its cause is disclosed and settled by a dated amendment before any result is read. The latest attempt counts per (item, arm); the driver re-queues whole items, so the arms of one item come from the same attempt. The run is analysed once, when it has finished or stopped; a paused run is resumed under the same run id first. Global gate complete: per stratum, the latest timing attempt of every (item, arm) exists for all 200 items × the ${STAGE1_ARMS.length} stage 1 arms (${STAGE1_ARMS.join(', ')}) in the counted run and for the re-run items in the re-run; an abstention is a row. A gap (for example, a run the runner stopped on a C1 mismatch) fails it, and then nothing else is computed: the result is uninformative.` },
   { id: 'not-before', from: ['notBefore'], implementation: 'The not-before is 24 hours after the GitHub mergedAt of the odin-rnd pull request that publishes this amendment, passed to the script as --amendment-merged-at. Every row of the counted run and of the re-run, of every timing attempt (a superseded attempt included), must have its item start (the memory-gate reading taken before the item, gate.ts) after it; otherwise the global gate not-before fails and the run is uninformative.' },
   { id: 'a0-accuracy', from: ['validityGates.0'], implementation: `A0 on stratum L, analysed items, scored by score.mjs (an abstention is a wrong answer): passes when 100 × correct ≥ ${BARS.a0MinPct} × n. When it fails, the result is reported with the record's own reading: small receivers cannot do this gate, not a test of transfer.` },
   { id: 'c1', from: ['validityGates.1'], implementation: 'score.mjs\'s C1 check on every stratum, analysed items: every C1 row must be answered, with klVsA0 < c1KlMax (0.001) and the same decision as A0 on that item; a C1 abstention is a failure. The gate passes only if all three strata pass.' },
@@ -58,7 +61,7 @@ export function buildAmendment(root = '.') {
   const lock = JSON.parse(read(`${L}/pair-lock.json`));
   assert.equal(lock.record.sha256, preregSha, 'pair-lock.json describes another record');
   const fp = JSON.parse(read(`${L}/footprints.json`)).pairs[lock.decision];
-  const ids = runIds(lock.decision);
+  const ids = runIds(lock.decision, '01');
   const command = (id, s, items) => `node experiments/latent-handoff/arms.mjs --pair ${lock.decision} --stratum ${s} --items ${items} --run-id ${id} --peak-gb ${fp.peakGB}`;
   return {
     schemaVersion: 1,
@@ -77,8 +80,8 @@ export function buildAmendment(root = '.') {
     changes: { fields: [], statement: 'No field of the pre-registration changes. Its not-before is replaced by the later one below, as its analysis field requires.' },
     analysis: {
       file: SELF,
-      sha256: sha256(read(SELF)),
-      tests: { file: testPath, sha256: sha256(read(testPath)) },
+      sha256: PUBLISHED.analysis,
+      tests: { file: testPath, sha256: PUBLISHED.tests },
       reads: 'the counted and re-run rows, the labels through score.mjs, the pre-registration, this amendment and pair-lock.json. Before it analyses anything it checks against its sha256 every file the pre-registration binds (its files and mapper code, the EXP 005 corpus sums, inputs, labels and rules, the EXP 008-X sums, the strata manifest, the pins, the readout, the pair-lock rows and the exposure and R1 evidence) and the script and tests this amendment binds',
       command: `node ${SELF} --counted <rows of ${ORDER.map(s => ids.counted[s]).join(', ')}> --rerun <rows of ${ORDER.map(s => ids.rerun[s]).join(', ')}> --amendment-merged-at <mergedAt> --out <analysis.json>`,
     },

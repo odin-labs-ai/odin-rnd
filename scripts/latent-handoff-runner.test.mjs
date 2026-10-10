@@ -19,7 +19,7 @@ const MODELS = JSON.parse(readFileSync(new URL('../experiments/latent-handoff/mo
 test('runner control flow, abstentions, C1 stop, zero-prefill and the labels guard (python3, stdlib)', () => {
   const r = spawnSync('python3', ['-B', 'experiments/latent-handoff/test_runner.py'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stderr, /Ran 11 tests/);
+  assert.match(r.stderr, /Ran 12 tests/);
   assert.match(r.stderr, /OK/);
 });
 

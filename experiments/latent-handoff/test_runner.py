@@ -12,6 +12,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import counter  # noqa: E402
 import runner  # noqa: E402
 from counter import ForwardCounter, ZeroPrefillViolation  # noqa: E402
 
@@ -127,6 +128,35 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(r["armOrder"], ["C1", "C3", "A0"])
         with self.assertRaises(ValueError):
             runner.run_item(e, "c001", "ctx", "other", ["A0", "C1"], lint=lambda _: [], order=["A0"])
+
+    def test_the_counter_does_not_carry_over_into_the_next_items_reference_a0(self):
+        # amendment 02: item N ends on a text arm (its forward calls stay in the counter); item N+1 puts C1 before A0,
+        # so its untimed reference A0 runs first and must be checked on its own calls only
+        e = FakeEngine()
+        e.arm = "no-fault"
+        first = runner.run_item(e, "c001", "ctx words here", "other ctx", ["A0", "C1", "C3"], lint=lambda _: [],
+                                order=["A0", "C1", "C3"])
+        self.assertEqual(first[-1]["arm"], "C3")
+        self.assertGreater(e.receiver.total, 0)
+        seen = []
+        real = counter.check  # run_item imports check at call time, so the spy sees every check of item N+1
+
+        def spy(arm, calls, suffix_len, prompt_len=None):
+            seen.append((arm, list(calls), prompt_len))
+            return real(arm, calls, suffix_len, prompt_len=prompt_len)
+
+        counter.check = spy
+        try:
+            rows = runner.run_item(e, "c002", "other words in this context", "ctx", ["A0", "C1", "C3"], lint=lambda _: [],
+                                   order=["C1", "A0", "C3"])
+        finally:
+            counter.check = real
+        self.assertEqual([r["arm"] for r in rows], ["C1", "A0", "C3"])
+        reference = seen[0]
+        self.assertEqual(reference[0], "A0")
+        self.assertEqual(sum(reference[1]), reference[2], "the reference A0 counted only its own prompt")
+        c1 = rows[0]
+        self.assertEqual(sum(c1["forwardCalls"]), c1["suffixLen"])
 
     def test_derangement_has_no_fixed_point_and_is_seeded(self):
         ids = [f"c{i:03d}" for i in range(1, 201)]

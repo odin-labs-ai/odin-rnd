@@ -1,13 +1,16 @@
 // EXP 008 amendment 01: the confirmatory analysis (experiments/latent-handoff/analyse.mjs) on SYNTHETIC rows only.
+// Amendment 02 rebinds it (the fixed runner.py, the -02 run ids, its own not-before); its tests are at the end.
 // No counted data existed when this was written: every row below is invented on the real item ids and labels.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { STAGE1_ARMS } from '../experiments/latent-handoff/arms.mjs';
+import { createHash } from 'node:crypto';
 import { analyse, analysedIds, boundFiles, bootstrapRatio, loadInputs, mulberry32, rerunIds, runIds, wilson, STRATA } from '../experiments/latent-handoff/analyse.mjs';
 import { loadTruth } from '../experiments/latent-handoff/score.mjs';
-import { at, checkAmendment, CLAUSES } from './latent-handoff-amendment.mjs';
-import { checkRecord } from './latent-handoff-prereg.mjs';
+import { at, checkAmendment, CLAUSES, PUBLISHED } from './latent-handoff-amendment.mjs';
+import { checkAmendment02, CLAUSES as CLAUSES02, VOID } from './latent-handoff-amendment-02.mjs';
+import { checkRecord, REBOUND } from './latent-handoff-prereg.mjs';
 import { renderNote, SHORT_A2B_FILES, UNPRICED_NOTE } from './latent-handoff-site.mjs';
 
 const { record } = checkRecord();
@@ -170,22 +173,33 @@ test('the other arm of the manipulation check, a parity failure, and abstentions
   assert.equal(ab.P1.verdict, 'refuted', 'a failed agreement criterion refutes even when TTFT is uninformative');
 });
 
-test('the amendment is exactly its build, quotes the record verbatim, and binds this script and these tests', () => {
-  const { record: a } = checkAmendment();
+test('amendment 01 is exactly its published build, quotes the record verbatim, and amendment 02 binds this script and these tests', () => {
+  const { record: a, sha256: a1Sha } = checkAmendment();
   for (const c of a.clauses) for (const q of c.record) assert.equal(q.text, at(record, q.path), `${c.id}: ${q.path}`);
   assert.deepEqual(a.clauses.map(c => c.id), CLAUSES.map(c => c.id));
+  assert.equal(a1Sha, 'cf96ee3871282fdbf1a6b6d3b4ab1381dcc4305ac992e0a366f6f044bfb49f83');
+  assert.deepEqual([a.analysis.sha256, a.analysis.tests.sha256], [PUBLISHED.analysis, PUBLISHED.tests]);
+  const { record: a2, sha256: a2Sha } = checkAmendment02();
   const inputs = loadInputs();
-  assert.equal(inputs.amendment.sha256, checkAmendment().sha256);
-  const bound = boundFiles(record, a).map(([f]) => f);
+  assert.deepEqual([inputs.amendment.id, inputs.amendment.sha256], ['amendment-02', a2Sha]);
+  const digest = f => createHash('sha256').update(readFileSync(f)).digest('hex');
+  assert.deepEqual([a2.analysis.sha256, a2.analysis.tests.sha256], [digest('experiments/latent-handoff/analyse.mjs'), digest('scripts/latent-handoff-analysis.test.mjs')]);
+  const bound = boundFiles(record, a2).map(([f]) => f);
   for (const f of ['experiments/jev-gate/labels.json', 'experiments/latent-handoff/corpus-x/labels-x.json', record.pairLockResult.rows.file, ...record.corpus.exposureEvidence.map(x => x.file), 'experiments/latent-handoff/analyse.mjs', 'scripts/latent-handoff-analysis.test.mjs']) assert.ok(bound.includes(f), `${f} is checked before the analysis`);
   assert.equal(a.run.pair, lock.decision);
 });
 
-test('the note renders amendment 01 and refuses one that amends another record', () => {
+test('the note renders amendments 01 and 02 and refuses one that amends another record', () => {
   const { record: r, sha256 } = checkRecord();
-  const amendment = checkAmendment();
-  const note = renderNote(r, sha256, lock, amendment);
-  assert.match(note, /PRE-REGISTERED 02 OCT 2026 · AMENDED 02 OCT 2026 · NOT YET RUN/);
+  const amendment = checkAmendment(), amendment02 = checkAmendment02();
+  assert.match(renderNote(r, sha256, lock, amendment), /PRE-REGISTERED 02 OCT 2026 · AMENDED 02 OCT 2026 · NOT YET RUN/);
+  const note = renderNote(r, sha256, lock, amendment, amendment02);
+  assert.match(note, /PRE-REGISTERED 02 OCT 2026 · AMENDED 02 OCT 2026 AND 09 OCT 2026 · NOT YET RUN/);
+  assert.match(note, /<h2 id="amendment-02">Amendment 02: the zero-prefill counter fix and a fresh counted run<\/h2>/);
+  assert.ok(note.includes(amendment02.sha256) && note.includes('../data/latent-handoff/amendment-02.json') && note.includes('counted-d1p-L-02'));
+  assert.ok(note.indexOf('id="amendment-01"') < note.indexOf('id="amendment-02"'));
+  const stale = { ...amendment02, record: { ...amendment02.record, priorAmendments: [{ ...amendment02.record.priorAmendments[0], sha256: 'b'.repeat(64) }] } };
+  assert.throws(() => renderNote(r, sha256, lock, amendment, stale), /names another amendment 01/);
   assert.match(note, /<h2 id="amendment-01">Amendment 01: the confirmatory analysis script<\/h2>/);
   assert.ok(note.includes(amendment.sha256) && note.includes('../data/latent-handoff/amendment-01.json'));
   const other = { ...amendment, record: { ...amendment.record, parent: { ...amendment.record.parent, sha256: 'a'.repeat(64) } } };
@@ -221,4 +235,43 @@ test('the site wording fixes: edit summary, lock link and answers, short labels,
   assert.ok(!/(^|[^\w.-])\.(ai|claude)\//.test(horizon), 'no internal monorepo path on the horizon page');
   assert.ok(horizon.includes(UNPRICED_NOTE.replaceAll("'", '&#39;')));
   assert.match(horizon, /will emit it for every arm row of its counted run/);
+});
+
+test('amendment 02 rebinds runner.py only, and quotes every clause it touches verbatim', () => {
+  const { record: a2 } = checkAmendment02();
+  const { record: a1 } = checkAmendment();
+  const runner = 'experiments/latent-handoff/runner.py';
+  const bound = new Map(boundFiles(record, a2));
+  const original = new Map(boundFiles(record, a1));
+  const differ = [...bound.keys()].filter(f => bound.get(f) !== original.get(f)).sort();
+  assert.deepEqual(differ, ['experiments/latent-handoff/analyse.mjs', runner, 'scripts/latent-handoff-analysis.test.mjs'].sort());
+  assert.deepEqual([original.get(runner), bound.get(runner)], [REBOUND[runner].published, REBOUND[runner].rebound]);
+  assert.equal(record.files[runner], REBOUND[runner].published, 'the record still states the published runner hash');
+  for (const c of a2.clauses) {
+    for (const q of c.record) assert.equal(q.text, at(record, q.path), `${c.id}: ${q.path}`);
+    for (const q of c.amendment01) assert.equal(q.text, at(a1, q.path), `${c.id}: amendment 01 ${q.path}`);
+  }
+  assert.deepEqual(a2.clauses.map(c => c.id), CLAUSES02.map(c => c.id));
+  for (const id of VOID.items) assert.ok(record.corpus.exposedItems.includes(id), `${id} is a seen item`);
+  assert.throws(() => boundFiles(record, { ...a2, rebinds: [{ ...a2.rebinds[0], from: 'a'.repeat(64) }] }), /from or to another hash/);
+  assert.throws(() => boundFiles(record, { ...a2, rebinds: [{ ...a2.rebinds[0], to: 'a'.repeat(64) }] }), /from or to another hash/);
+});
+
+test('the analysis reads the -02 run ids and refuses a row of the void -01 attempt', () => {
+  assert.equal(ids.counted.L, 'counted-d1p-L-02');
+  assert.equal(ids.rerun.S, 'rerun-d1p-S-02');
+  assert.equal(run().P1.verdict, 'holds');
+  const counted = rows(ids.counted, ALL);
+  counted.push({ ...counted.find(x => x.stratum === 'L' && x.itemId === 'c001' && x.arm === 'A0'), runId: VOID.runId });
+  assert.throws(() => analyse({ record, lock, truth, counted, rerun: rows(ids.rerun, reIds), mergedAt: MERGED }), /a row of run counted-d1p-L-01, which is not one of/);
+  const old = runIds(lock.decision, '01');
+  assert.throws(() => analyse({ record, lock, truth, counted: rows(old.counted, ALL), rerun: rows(old.rerun, reIds), mergedAt: MERGED }), /which is not one of/);
+});
+
+test('a rebind of any record.files path other than runner.py is refused', () => {
+  const { record: a2 } = checkAmendment02();
+  for (const file of Object.keys(record.files).filter(f => f !== 'experiments/latent-handoff/runner.py')) {
+    const other = { file, boundBy: 'preregistration.json files', from: record.files[file], to: 'a'.repeat(64) };
+    assert.throws(() => boundFiles(record, { ...a2, rebinds: [...a2.rebinds, other] }), /may rebind only experiments\/latent-handoff\/runner\.py/, file);
+  }
 });

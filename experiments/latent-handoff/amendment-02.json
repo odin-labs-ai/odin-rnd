@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "kind": "amendment",
+  "id": "amendment-02",
+  "experiment": "EXP 008",
+  "title": "Amendment 02: the zero-prefill counter fix and a fresh counted run",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "638d1dda53e8ae6c9c129d34e6b83fa6642f7ef60b30de8da71e7660082f7f6c",
+    "published": "odin-rnd #24, merged 2026-10-02T14:11:46Z (GitHub mergedAt). It stays byte-identical and is still served as published."
+  },
+  "priorAmendments": [
+    {
+      "id": "amendment-01",
+      "file": "amendment-01.json",
+      "sha256": "cf96ee3871282fdbf1a6b6d3b4ab1381dcc4305ac992e0a366f6f044bfb49f83",
+      "published": "odin-rnd #27, merged 2026-10-07T09:18:47Z (GitHub mergedAt). It stays byte-identical. This amendment supersedes its run ids, its not-before and its binding of the analysis script and tests; every clause of its analysis stands."
+    }
+  ],
+  "date": "2026-10-09",
+  "statusText": "Amended 09 Oct 2026, before any analysed item has run",
+  "reason": {
+    "record": "Written, hashed and published before the counted run. Nothing in this record may change after publication; a later change is a new, dated amendment, refuted and published first, and it resets the not-before.",
+    "bug": "In the runner, every arm resets the receiver's forward counter before it runs, except one call: when an item's seeded arm order puts C1 before A0, the runner first computes A0 once, untimed, as C1's reference, and reset the counter only after that call. Its zero-prefill check then also counted the previous item's last arm, and stopped the run with a false zero-prefill violation. The model computation was unaffected (that call builds a fresh cache); only the count was stale. The first item after a process start has an empty counter, so it passed.",
+    "evidence": "The first counted attempt (counted-d1p-L-01) stopped 9 times, each time at that reference A0. The excesses over the prompt were 24 tokens five times, 54 three times and 15811 once, and each equals the previous item's last arm: a KV arm's 24-token suffix, C3's 54-token prompt, or a whole A0 prompt (that stop read 31624 tokens against a 15813-token prompt, after an item that ended on A0)."
+  },
+  "changes": {
+    "fields": [],
+    "runner": {
+      "file": "experiments/latent-handoff/runner.py",
+      "change": "engine.receiver.reset() is called immediately before the untimed reference a0() in run_item (the existing reset after it is kept). Nothing else in the runner changes.",
+      "test": {
+        "file": "experiments/latent-handoff/test_runner.py",
+        "sha256": "4ebbd22704f8a1b56450605e8e80b8f1019f98534bfa963d6abaa720a7649877",
+        "name": "test_the_counter_does_not_carry_over_into_the_next_items_reference_a0",
+        "statement": "Item N ends on a text arm, so its forward calls stay in the counter; item N+1 puts C1 before A0. The reference A0 must be checked on its own calls only. It fails on the old runner (a zero-prefill violation on that A0) and passes on the fixed one."
+      }
+    },
+    "runIds": {
+      "from": {
+        "counted": [
+          "counted-d1p-L-01",
+          "counted-d1p-M-01",
+          "counted-d1p-S-01"
+        ],
+        "rerun": [
+          "rerun-d1p-L-01",
+          "rerun-d1p-M-01",
+          "rerun-d1p-S-01"
+        ]
+      },
+      "to": {
+        "counted": [
+          "counted-d1p-L-02",
+          "counted-d1p-M-02",
+          "counted-d1p-S-02"
+        ],
+        "rerun": [
+          "rerun-d1p-L-02",
+          "rerun-d1p-M-02",
+          "rerun-d1p-S-02"
+        ]
+      }
+    },
+    "analysis": "analyse.mjs binds this amendment (its pin, the pre-registration as parent and amendment 01, by sha256, as the prior amendment), checks runner.py at the hash rebound below with every other file the record binds unchanged, reads the -02 run ids, and takes the not-before from this amendment's merge. Every statistical clause of amendment 01 is unchanged, byte for byte.",
+    "statement": "No field of the pre-registration or of amendment 01 is rewritten; both stay byte-identical. This amendment supersedes the bindings and run ids listed here."
+  },
+  "rebinds": [
+    {
+      "file": "experiments/latent-handoff/runner.py",
+      "boundBy": "preregistration.json files and mapper-freeze.json code.\"runner.py\"",
+      "from": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+      "to": "6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044"
+    },
+    {
+      "file": "experiments/latent-handoff/analyse.mjs",
+      "boundBy": "amendment-01.json analysis.sha256",
+      "from": "bc7e0b560f7ac6b7a96c8b5e6528d9b5b0346102c98aaab0f1e68635b32fac2b",
+      "to": "a8013f13d72cd1928cd02aae87669dbf3daa801bde69accbe53aa7d1ff7d2aae"
+    },
+    {
+      "file": "scripts/latent-handoff-analysis.test.mjs",
+      "boundBy": "amendment-01.json analysis.tests.sha256",
+      "from": "9858ef4358326822b313800534852692d22a15cc64872eda352b03baca794bab",
+      "to": "5d2fb88f7d2c217cca1742295e38c12f1c64fe3e75922bb07643f89ca6d83908"
+    }
+  ],
+  "pins": {
+    "experiments/latent-handoff/runner.py": {
+      "from": "95152adafb736193692443a54aed0c168322be31f5a66ec902608fddf88b27fd",
+      "to": "6d41e10b9670de8604ad709270a2d80c1cb322bae397facf7442531dd96ea044"
+    }
+  },
+  "analysis": {
+    "file": "experiments/latent-handoff/analyse.mjs",
+    "sha256": "a8013f13d72cd1928cd02aae87669dbf3daa801bde69accbe53aa7d1ff7d2aae",
+    "tests": {
+      "file": "scripts/latent-handoff-analysis.test.mjs",
+      "sha256": "5d2fb88f7d2c217cca1742295e38c12f1c64fe3e75922bb07643f89ca6d83908"
+    },
+    "command": "node experiments/latent-handoff/analyse.mjs --counted <rows of counted-d1p-L-02, counted-d1p-M-02, counted-d1p-S-02> --rerun <rows of rerun-d1p-L-02, rerun-d1p-M-02, rerun-d1p-S-02> --amendment-merged-at <mergedAt of this amendment> --out <analysis.json>"
+  },
+  "clauses": [
+    {
+      "id": "frozen",
+      "record": [
+        {
+          "path": "experiment.note",
+          "text": "Written, hashed and published before the counted run. Nothing in this record may change after publication; a later change is a new, dated amendment, refuted and published first, and it resets the not-before."
+        }
+      ],
+      "amendment01": [],
+      "change": "This is that amendment. runner.py is hash-bound by the record, so the one-line fix below is a dated change, refuted and published before any analysed item runs, and it resets the not-before."
+    },
+    {
+      "id": "zero-prefill",
+      "record": [
+        {
+          "path": "validityGates.2",
+          "text": "Global: zero prefill, the receiver's forwarded-token count equals the suffix length on every KV-arm item."
+        },
+        {
+          "path": "interface.rule",
+          "text": "A transfer may read the context text to align tokens; it may not run any forward pass over the context. The zero-prefill counter wraps the receiver: in a KV arm the receiver forwards exactly the suffix (the question and the chat-template tail) and nothing else, or the run fails."
+        }
+      ],
+      "amendment01": [],
+      "change": "The gate and its analysis (amendment 01, clause zero-prefill) are unchanged. The fix makes the runner's own run-time check, which stops a run on a violation, count the untimed reference A0's forward calls only, as every other arm already does."
+    },
+    {
+      "id": "one-run",
+      "record": [
+        {
+          "path": "leakageFences.2",
+          "text": "Iteration happens on practice items only. There is one counted run, append-only."
+        }
+      ],
+      "amendment01": [
+        {
+          "path": "clauses.1.implementation",
+          "text": "The counted run is exactly these run ids on the locked pair (read from pair-lock.json): counted-d1p-S-01, counted-d1p-M-01, counted-d1p-L-01; the re-run is rerun-d1p-S-01, rerun-d1p-M-01, rerun-d1p-L-01. Any row of another run id or pair is refused. Any row of another stratum, a duplicate attempt or a row for an item outside the run is refused too; a refusal stops the analysis (it is not a gate result), and its cause is disclosed and settled by a dated amendment before any result is read. The latest attempt counts per (item, arm); the driver re-queues whole items, so the arms of one item come from the same attempt. The run is analysed once, when it has finished or stopped; a paused run is resumed under the same run id first. Global gate complete: per stratum, the latest timing attempt of every (item, arm) exists for all 200 items × the 7 stage 1 arms (A0, A1, C1, C2, C3, A2a, A2b) in the counted run and for the re-run items in the re-run; an abstention is a row. A gap (for example, a run the runner stopped on a C1 mismatch) fails it, and then nothing else is computed: the result is uninformative."
+        },
+        {
+          "path": "run.statement",
+          "text": "The counted run goes stratum by stratum in this order, then the re-run in the same order, each through arms.mjs (its timing protocol, seeded arm order and memory gate unchanged). --peak-gb is the measured D1′ practice peak in footprints.json (36.89 GB). A paused run is resumed under the same run id; nothing is ever re-run to change a result."
+        }
+      ],
+      "change": "The counted run moves to the run ids counted-d1p-L-02, counted-d1p-M-02, counted-d1p-S-02 and the re-run to rerun-d1p-L-02, rerun-d1p-M-02, rerun-d1p-S-02, so rows of two runner versions never share a run id. The analysis refuses every row of any other run id, the -01 ids included. Every other part of amendment 01's clause stands."
+    },
+    {
+      "id": "exclusions",
+      "record": [
+        {
+          "path": "corpus.analysed",
+          "text": "Every claim and validity gate is computed on the 175 items not seen before this record (136 of the 140 EXP 008-X items and 39 of EXP 005's c021–c060). c001–c020 and c029, c081, c097, c112, c144 were seen (see exposures and limits): they are run in the counted run but excluded from P1, S1–S3 and every gate, and reported separately."
+        }
+      ],
+      "amendment01": [],
+      "change": "The void attempt (see void) covered c001–c019 only, all of them seen items that this clause excludes from every claim and gate. No analysed item has run."
+    },
+    {
+      "id": "not-before",
+      "record": [
+        {
+          "path": "notBefore",
+          "text": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this record as frozen. That time is recorded after publication; every counted item must start after it. Practice items do not wait for it."
+        }
+      ],
+      "amendment01": [
+        {
+          "path": "notBefore",
+          "text": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this amendment (its GitHub mergedAt). That time is recorded after publication. This replaces the pre-registration's not-before, which it can only move later. If any item of the counted run or the re-run started earlier, the analysis fails its global gate not-before and the whole result is uninformative."
+        }
+      ],
+      "change": "The not-before moves to 24 hours after the merge of the odin-rnd pull request that publishes this amendment, replacing amendment 01's (see notBefore)."
+    }
+  ],
+  "run": {
+    "pair": "D1p",
+    "arms": [
+      "A0",
+      "A1",
+      "C1",
+      "C2",
+      "C3",
+      "A2a",
+      "A2b"
+    ],
+    "strataOrder": [
+      "L",
+      "M",
+      "S"
+    ],
+    "counted": [
+      {
+        "stratum": "L",
+        "runId": "counted-d1p-L-02",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum L --items <c001,…,c200> --run-id counted-d1p-L-02 --peak-gb 36.89"
+      },
+      {
+        "stratum": "M",
+        "runId": "counted-d1p-M-02",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum M --items <c001,…,c200> --run-id counted-d1p-M-02 --peak-gb 36.89"
+      },
+      {
+        "stratum": "S",
+        "runId": "counted-d1p-S-02",
+        "items": "all 200 (c001–c200)",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum S --items <c001,…,c200> --run-id counted-d1p-S-02 --peak-gb 36.89"
+      }
+    ],
+    "rerun": [
+      {
+        "stratum": "L",
+        "runId": "rerun-d1p-L-02",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum L --items <the 18 ids> --run-id rerun-d1p-L-02 --peak-gb 36.89"
+      },
+      {
+        "stratum": "M",
+        "runId": "rerun-d1p-M-02",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum M --items <the 18 ids> --run-id rerun-d1p-M-02 --peak-gb 36.89"
+      },
+      {
+        "stratum": "S",
+        "runId": "rerun-d1p-S-02",
+        "items": "the 18 re-run items of the record",
+        "command": "node experiments/latent-handoff/arms.mjs --pair D1p --stratum S --items <the 18 ids> --run-id rerun-d1p-S-02 --peak-gb 36.89"
+      }
+    ],
+    "statement": "As amendment 01's run, under the new run ids and the fixed runner: stratum by stratum in this order, then the re-run in the same order, each through arms.mjs (its timing protocol, seeded arm order and memory gate unchanged). A paused run is resumed under the same run id; nothing is ever re-run to change a result."
+  },
+  "void": {
+    "runId": "counted-d1p-L-01",
+    "rows": 133,
+    "items": "c001–c019",
+    "statement": "The attempt counted-d1p-L-01 ran under the old runner and recorded 133 rows (19 items × 7 arms), on c001–c019 only: seen items, which corpus.analysed excludes from every claim and gate. It is void. Its rows are never scored and never analysed (the analysis refuses its run id), and no score or analysis of them exists; they were read only to diagnose the stops (the token counts above). Each stored row passed its own zero-prefill check after its own reset; the 9 stops were false positives of the mechanism above. They are disclosed with it here and on the results page."
+  },
+  "notBefore": "No counted item runs before 24 hours after the merge of the odin-rnd pull request that publishes this amendment (its GitHub mergedAt). That time is recorded after publication. This replaces amendment 01's not-before, which it can only move later. If any item of the counted run or the re-run started earlier, the analysis fails its global gate not-before and the whole result is uninformative.",
+  "limits": [
+    "The void attempt stopped 9 times and was resumed after each stop under the same run id: the scheduler wrapper treated a stop with progress as a pause. A stop on an error now ends the run and is escalated, never resumed; that wrapper lives outside this repository and is not bound here. The attempt ended when the host restarted; no row of c020 or a later item exists.",
+    "Under the old runner an item with C1 before A0 could complete only as the first item after a process start, so the void attempt's items are not a random sample of arm orders. Under the fix every item resets the counter first, so this pattern cannot recur; the void rows enter nothing.",
+    "The not-before time is an input to the script (the merge time). The script checks every item start against it; that the input is the true merge time is checked against GitHub by the results refute, not by the script.",
+    "The regression test runs the real run_item on a fake engine, without any model."
+  ]
+}

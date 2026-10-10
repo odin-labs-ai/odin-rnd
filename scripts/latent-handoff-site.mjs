@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkRecord, publishedPath as preregPublishedPath, sha256, localPath, TO_FREEZE } from './latent-handoff-prereg.mjs';
 import { amendmentPublishedPath, checkAmendment } from './latent-handoff-amendment.mjs';
+import { amendment02PublishedPath, checkAmendment02 } from './latent-handoff-amendment-02.mjs';
 
 export const horizonPath = 'experiments/latent-handoff/horizon.json';
 export const horizonPinPath = 'experiments/latent-handoff/horizon.sha256';
@@ -142,7 +143,7 @@ export function lockAnswers(lock) {
 }
 
 /** The EXP 008 pre-registration note: the record in prose. Nothing on it is a result. */
-export function renderNote(record, recordSha256, lock = null, amendment = null) {
+export function renderNote(record, recordSha256, lock = null, amendment = null, amendment02 = null) {
   assert.match(recordSha256, hex, 'The note needs the sha256 of the record it renders');
   if (record.pairLockResult) {
     assert.ok(lock, 'a record with a pair-lock result needs pair-lock.json, which discloses the edits made after its run started');
@@ -157,7 +158,12 @@ export function renderNote(record, recordSha256, lock = null, amendment = null) 
   const value = v => v === TO_FREEZE ? '<strong>to be frozen</strong>' : code(v);
   const title = `${e.id}: ${e.title}, the pre-registration`;
   if (amendment) assert.equal(amendment.record.parent.sha256, recordSha256, 'the amendment amends a different record');
-  return `${header(title, `Field notes from Odin R&D. ${draft ? 'A draft of the pre-registration' : 'The pre-registration'} of ${e.id}, shown before the counted run: ${e.summary}`, `journal/${noteSlug}.html`)}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1>${escape(title)}</h1><p class="article-meta">EXPERIMENT NOTE / ${noteNumber} · ${escape(e.id)} · ${draft ? 'DRAFT' : 'PRE-REGISTERED'} ${escape(day(record.freeze.frozenOn ?? e.authoredOn))}${amendment ? ` · AMENDED ${escape(day(amendment.record.date))}` : ''} · NOT YET RUN</p></header><article class="article-body">
+  if (amendment02) {
+    assert.ok(amendment, 'amendment 02 is shown after amendment 01');
+    assert.equal(amendment02.record.parent.sha256, recordSha256, 'amendment 02 amends a different record');
+    assert.deepEqual(amendment02.record.priorAmendments.map(p => p.sha256), [amendment.sha256], 'amendment 02 names another amendment 01');
+  }
+  return `${header(title, `Field notes from Odin R&D. ${draft ? 'A draft of the pre-registration' : 'The pre-registration'} of ${e.id}, shown before the counted run: ${e.summary}`, `journal/${noteSlug}.html`)}<main id="main" class="article-shell"><a class="article-back" href="../#journal">← Back to the field notes</a><header class="article-header"><h1>${escape(title)}</h1><p class="article-meta">EXPERIMENT NOTE / ${noteNumber} · ${escape(e.id)} · ${draft ? 'DRAFT' : 'PRE-REGISTERED'} ${escape(day(record.freeze.frozenOn ?? e.authoredOn))}${amendment ? ` · AMENDED ${escape(day(amendment.record.date))}${amendment02 ? ` AND ${escape(day(amendment02.record.date))}` : ''}` : ''} · NOT YET RUN</p></header><article class="article-body">
 ${draft ? `<p><strong>Draft.</strong> ${escape(record.freeze.rule)} Fields still to freeze: ${record.freeze.toFreeze.map(code).join(', ')}.</p>\n` : ''}<p><strong>${escape(e.statusText)}.</strong> ${escape(e.summary)} ${escape(e.note)}</p>
 <h2>The question</h2>
 <p>${escape(record.question)}</p>
@@ -209,7 +215,7 @@ ${lock ? `<h2 id="after-the-lock">Edits after the lock run started</h2>
 <p>The lock run started seconds after the record was frozen. The record on this page is not byte-identical to the one in force then: it was revised afterwards, in disclosure, wording and date fields only. One of those disclosures, a third exposure found by a refute, shrank the analysed set from 180 to 175 items (and the fallback from 40 to 39). The pair-lock rule, its bar, its practice set and the files the run used are unchanged and are checked against this record. The lock's committed record, <a href="../data/latent-handoff/pair-lock.json"><code>pair-lock.json</code></a>, lists every edit; its last note gives the sha256 of the record in force when the run started. The commit that held that record is not on a public branch.</p>
 ${list(lock.notes.map(escape))}
 <p>${escape(lock.alwaysAccept)}</p>
-` : ''}${amendment ? renderAmendment(amendment) : ''}<h2>What this does not establish</h2>
+` : ''}${amendment ? renderAmendment(amendment) : ''}${amendment02 ? renderAmendment02(amendment02) : ''}<h2>What this does not establish</h2>
 ${list(record.limits.map(escape))}
 <h2>Provenance</h2>
 <p>This page is rendered from <a href="../data/latent-handoff/preregistration.json"><code>preregistration.json</code></a>, the committed record at ${code('experiments/latent-handoff/preregistration.json')}, whose sha256 is ${code(recordSha256)}. The site publishes that file byte for byte, and a repository test re-renders this page from it and fails if they differ. A validator rebuilds the record from the harness files and refuses any difference; it pins ${Object.keys(record.files).length} files by sha256.</p>
@@ -294,6 +300,19 @@ ${list(a.limits.map(escape))}
 `;
 }
 
+/** Amendment 02 on the note, in short: the counter fix, the rebinding, the fresh run ids, the void attempt and the later not-before. */
+export function renderAmendment02({ record: a, sha256: digest }) {
+  const runner = a.changes.runner;
+  return `<h2 id="amendment-02">${escape(a.title)}</h2>
+<p><strong>${escape(a.statusText)}.</strong> ${escape(a.reason.bug)} ${escape(a.reason.evidence)}</p>
+<p><strong>The fix.</strong> ${escape(runner.change)} A regression test, ${code(runner.test.name)} in ${code(runner.test.file)}, covers it: ${escape(runner.test.statement)} The record binds runner.py by sha256, and its own rule reads: “${escape(a.reason.record)}” So this is a dated amendment. It rebinds ${a.rebinds.map(r => `${code(r.file)} (${code(r.from.slice(0, 12))} → ${code(r.to.slice(0, 12))})`).join(', ')}; every other bound file is unchanged. ${escape(a.changes.analysis)}</p>
+<p><strong>The run.</strong> Counted: ${a.run.counted.map(x => `${code(x.runId)} (${escape(x.stratum)})`).join(', ')}; re-run: ${a.run.rerun.map(x => `${code(x.runId)} (${escape(x.stratum)})`).join(', ')}. ${escape(a.void.statement)}</p>
+<p><strong>The not-before.</strong> ${escape(a.notBefore)}</p>
+${list(a.limits.map(escape))}
+<p>The amendment is published byte for byte as <a href="../data/latent-handoff/amendment-02.json"><code>amendment-02.json</code></a>, sha256 ${code(digest)}; each clause it touches quotes the pre-registration's or amendment 01's own words beside the change.</p>
+`;
+}
+
 export const sitemapUrls = [`${SITE}journal/${noteSlug}.html`, `${SITE}horizon/factory-intelligence.html`];
 export function withSitemap(xml) {
   let out = xml;
@@ -305,7 +324,7 @@ export function withSitemap(xml) {
 
 /** Everything the site carries for latent-handoff, as it must be on disk. */
 export function expected(root = '.') {
-  const prereg = checkRecord(root), horizon = checkHorizon(root), amendment = checkAmendment(root);
+  const prereg = checkRecord(root), horizon = checkHorizon(root), amendment = checkAmendment(root), amendment02 = checkAmendment02(root);
   // The horizon's EXP 008 fact must agree with the pre-registration's freeze status.
   const fact = horizon.record.facts.find(f => f.id === 'exp008');
   assert.equal(fact.state, 'in-progress');
@@ -322,8 +341,9 @@ export function expected(root = '.') {
   assert.equal(dsFact?.source.recordSha256, DATASET.files['dataset-v0.jsonl'], 'the horizon\'s dataset fact names the pinned dataset');
   return {
     ...dataset,
-    [notePath]: renderNote(prereg.record, prereg.sha256, lock, amendment),
+    [notePath]: renderNote(prereg.record, prereg.sha256, lock, amendment, amendment02),
     [amendmentPublishedPath]: amendment.bytes,
+    [amendment02PublishedPath]: amendment02.bytes,
     [lockPublishedPath]: lockBytes,
     [horizonPagePath]: renderHorizon(horizon.record, horizon.sha256),
     [preregPublishedPath]: prereg.bytes,
@@ -352,7 +372,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       mkdirSync(file.split('/').slice(0, -1).join('/'), { recursive: true });
       writeFileSync(file, content);
     }
-    console.log(`Wrote ${notePath}, ${horizonPagePath}, the data copies (record, amendment, horizon, pair lock, dataset v0), the home-page row and link, and the sitemap.`);
+    console.log(`Wrote ${notePath}, ${horizonPagePath}, the data copies (record, amendments 01 and 02, horizon, pair lock, dataset v0), the home-page row and link, and the sitemap.`);
   } else if (command !== '--check') {
     console.error('usage: node scripts/latent-handoff-site.mjs --check | --write | --pin');
     process.exit(2);
