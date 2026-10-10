@@ -53,13 +53,14 @@
     </section>
     <section class="experiments content-section" id="experiments" aria-labelledby="experiments-title">
       <div class="section-heading"><h2 id="experiments-title">Try to prove it wrong.</h2><p>A useful check has to reject a plausible failure. Inspect the input, the result and the limits.</p></div>
+      <!--EXPERIMENT_LEDGER-->
       <div class="experiment-index" aria-label="Witness experiments">
         <a href="projects/test-witness/"><h3>Would your tests notice?</h3><p>A weak suite, a precise assertion, and an always-passing impostor.</p><span>Test Witness · Authored Java fixtures</span></a>
         <a href="projects/migration-witness/"><h3>What if both versions are wrong?</h3><p>Matching outputs tested against an independent expectation.</p><span>Migration Witness · Authored Java fixtures</span></a>
         <a href="projects/ci-witness/"><h3>Did the correction keep the other checks?</h3><p>A repaired target with a surviving regression.</p><span>CI Witness · Authored Java fixtures</span></a>
       </div>
       <div class="bench-introduction"><h3>Start with an architectural boundary.</h3><p>Three published BCE recipes. The same rule, applied to a conforming tree and a deliberately drifted tree.</p></div>
-      <div class="workbench dark-surface">
+      <div class="workbench dark-surface" id="bench">
         <div class="bench-menu"><div class="bench-label technical">SELECT EXPERIMENT</div><!--EXPERIMENT_BUTTONS--><a class="all-runs" href="https://github.com/odin-labs-ai/odin-rnd/actions/workflows/publish.yml">Watch the public runs <span aria-hidden="true">↗</span></a></div>
         <div class="bench-body">
           <div class="bench-status technical"><span id="run-id">EXP / 001</span><span id="run-badge" role="status">RECORDED EXPERIMENT</span></div>
@@ -68,7 +69,7 @@
           <div class="specimen-pair"><div><span class="technical">SPECIMEN A / CONFORMING</span><strong id="clean-result">—</strong><span>The authored boundary holds.</span></div><div><span class="technical">SPECIMEN B / DRIFTED</span><strong id="drift-result">—</strong><span>A deliberate violation is detected.</span></div></div>
           <p class="bench-explainer">One unchanged rule. Two different trees. The experiment succeeds when the engine tells them apart.</p>
           <details class="transcript-panel"><summary>Read the engine output <span aria-hidden="true">+</span></summary><pre id="transcript" tabindex="0"><!--FIRST_TRANSCRIPT--></pre></details>
-          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.1 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy reproduction command">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
+          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.1 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy command: reproduce the BCE recipe">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
           <div class="run-meta"><span id="run-date"><!--RUN_DATE--></span><a href="data/experiments.json">Full result & provenance <span aria-hidden="true">↗</span></a></div>
           <p class="scope-note">Packaged fixtures, run with BCE 0.3.1. This tests the mechanism; it does not measure agent productivity or production reliability. <span id="run-origin"><!--RUN_ORIGIN--></span> Selectors inspect the recording; reproduction runs on your machine.</p>
           <noscript><p>The first experiment’s transcript is available above. <a href="data/experiments.json">Read all three results as JSON</a>. Interactive selection needs JavaScript.</p></noscript>
@@ -88,7 +89,7 @@
           <div class="reproduce"><span class="technical">REPRODUCE / APPLE SILICON + UV · FROM A CLONE OF THIS REPOSITORY</span><pre id="laya-reproduce-command" tabindex="0">cd experiments/laya-vs-jev
 uv venv -p 3.12 .venv
 VIRTUAL_ENV=$PWD/.venv uv pip install -r requirements.txt
-.venv/bin/python run.py            # add --out &lt;file&gt; to avoid overwriting today&#39;s recording</pre><button data-copy-target="laya-reproduce-command" aria-label="Copy the Laya reproduction commands">Copy command</button><span class="copy-status" role="status"></span></div>
+.venv/bin/python run.py            # add --out &lt;file&gt; to avoid overwriting today&#39;s recording</pre><button data-copy-target="laya-reproduce-command" aria-label="Copy command: reproduce the Laya comparison">Copy command</button><span class="copy-status" role="status"></span></div>
           <div class="run-meta"><span>MEASURED 2026-09-24 13:34 UTC · APPLE M5 MAX · MLX 0.32.2</span><a href="data/laya-vs-jev/laya-mlx-2026-09-24.json">Full result &amp; provenance <span aria-hidden="true">↗</span></a><a href="journal/system-1-decisions-without-lock-in.html">Read the field note <span aria-hidden="true">↗</span></a></div>
           <p class="scope-note">48 hand-written rows on one busy laptop (load average 36–47 during the run) is a mechanism check, not a benchmark. It does not predict accuracy on your decisions. Jev’s latency includes the public internet; Laya’s confident-answer figure rests on 2 answers. Opening this page runs nothing; the browser demo downloads and runs Laya only when you ask it to.</p>
         </div>
