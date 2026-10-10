@@ -1,0 +1,17 @@
+{"ts":"2026-10-08T20:39:29Z","kind":"sample","freePct":77,"load1":3.92}
+{"ts":"2026-10-08T20:40:31Z","kind":"sample","freePct":71,"load1":4.42}
+{"ts":"2026-10-08T20:41:33Z","kind":"sample","freePct":71,"load1":4.55}
+{"ts":"2026-10-08T20:42:35Z","kind":"sample","freePct":75,"load1":5.99}
+{"ts":"2026-10-08T20:43:37Z","kind":"sample","freePct":76,"load1":6.08}
+{"ts":"2026-10-08T20:44:38Z","kind":"sample","freePct":76,"load1":5.23}
+{"ts":"2026-10-08T20:45:40Z","kind":"sample","freePct":71,"load1":5.54}
+{"ts":"2026-10-08T20:46:42Z","kind":"sample","freePct":76,"load1":5.30}
+{"ts":"2026-10-08T20:47:44Z","kind":"sample","freePct":77,"load1":5.46}
+{"ts":"2026-10-08T20:48:46Z","kind":"sample","freePct":71,"load1":5.28}
+{"ts":"2026-10-08T20:49:47Z","kind":"sample","freePct":76,"load1":5.23}
+{"ts":"2026-10-08T20:50:49Z","kind":"sample","freePct":77,"load1":5.62}
+{"ts":"2026-10-08T20:51:51Z","kind":"sample","freePct":74,"load1":6.60}
+{"ts":"2026-10-08T20:52:53Z","kind":"sample","freePct":71,"load1":6.50}
+{"ts":"2026-10-08T20:53:55Z","kind":"sample","freePct":77,"load1":5.70}
+{"ts":"2026-10-08T20:54:56Z","kind":"sample","freePct":77,"load1":5.52}
+{"ts":"2026-10-08T20:55:48Z","kind":"close","exitCode":0,"samples":16,"breaches":0}

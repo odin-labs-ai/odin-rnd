@@ -1,0 +1,782 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.results",
+  "experiment": {
+    "id": "EXP 009",
+    "slug": "composable-harness",
+    "title": "Unload leaves no trace"
+  },
+  "record": {
+    "path": "experiments/composable-harness/preregistration.json",
+    "sha256": "d25f7f3fe9f802b19ed5caa9a437126109b20f83fe993086854a20bb902e7e7e",
+    "mergeCommit": "91de325de980493291d17237387aac6d2c656b7c",
+    "publishedAt": "2026-10-07T11:34:15Z",
+    "notBefore": "2026-10-08T11:34:15Z",
+    "seed": "32e343ca3a4e46c007abbdd09ee5e406a1cb4e7f452aad67587812f36b96a7c5"
+  },
+  "run": {
+    "blocks": 40,
+    "firstStartedAt": "2026-10-08T13:06:23.112Z",
+    "lastEndedAt": "2026-10-09T05:24:34.706Z"
+  },
+  "analysis": {
+    "file": "experiments/composable-harness/analysis/analyse.mjs",
+    "sha256": "436b434ff3ef59fa082ea1f991a1e52181a2e1480ec7e55c2e086354cea0394d"
+  },
+  "raw": [
+    {
+      "path": "runs/composable-harness/counted/attempts.jsonl",
+      "sha256": "ca91471016abc92e49bf381659acaebeab7cad9eee1f75cd456efe1691af2a88",
+      "rows": 80
+    },
+    {
+      "path": "runs/composable-harness/counted/h1.jsonl",
+      "sha256": "901f32b448f9ac65e81efef021755cc52a5db5dc313b0a52c3b4b4b8b7f092c9",
+      "rows": 400
+    },
+    {
+      "path": "runs/composable-harness/counted/h1-prelude.jsonl",
+      "sha256": "83d2fbb7bda83f02089ccb3f597a6be52d710a1a191762c7ad5dbcaea6dd0761",
+      "rows": 39
+    },
+    {
+      "path": "runs/composable-harness/counted/h2.jsonl",
+      "sha256": "cae83d756270366cb5daeac7f87e9dc255d895b2af199e8be5eb59f4b776e869",
+      "rows": 400
+    },
+    {
+      "path": "runs/composable-harness/counted/r0-rerun.jsonl",
+      "sha256": "da7d5104c395c869bc984ba09c08790f78832780db57e3a94024c771f8ed6a75",
+      "rows": 1907
+    },
+    {
+      "path": "runs/composable-harness/counted/r0-restart.jsonl",
+      "sha256": "283d7e2be191fdb7e74f0b0171728bde3dcc6ec16b4cf7b23861fa0401059239",
+      "rows": 40
+    },
+    {
+      "path": "runs/composable-harness/counted/k.jsonl",
+      "sha256": "888781967cd225a133a5c0f4817f585abce47b66eefcf6804a329bed7237e7fe",
+      "rows": 480
+    },
+    {
+      "path": "runs/composable-harness/counted/memory.jsonl",
+      "sha256": "fa742802592af5da7006263965517a33444d809508b4ecfb1dde9d3735417c42",
+      "rows": 40
+    },
+    {
+      "path": "runs/composable-harness/counted/p2.jsonl",
+      "sha256": "c18ea1ec791878fff5e07734dc7df734f4f028e13f7ec58f6010421da0e437c4",
+      "rows": 120
+    },
+    {
+      "path": "runs/composable-harness/counted/leases.jsonl",
+      "sha256": "93f1c0ec7702a6c60664422a51a5c6ff75e0217e5615fc367c8b8393a7799013",
+      "rows": 40
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T113917Z-exp009-counted-b00-83850.jsonl",
+      "sha256": "e11d3c33885303b4a82cacacc8571ea553b5ca885b582599c5c99848c6c9a21a",
+      "rows": 27
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T133131Z-exp009-counted-b01-18238.jsonl",
+      "sha256": "f24c841f4e705f391d028092dbe7914b22a986977ed07c0b93c9888bea31c401",
+      "rows": 35
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T140737Z-exp009-counted-b02-85465.jsonl",
+      "sha256": "7fde8168b76cf818ee4c7426edb06fd07ae0e56a557674a34a039a9093c64409",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T144800Z-exp009-counted-b03-17315.jsonl",
+      "sha256": "96126d0582401c7ec19640a031d885f387b6a85edec2322973f3a6f1850a5f20",
+      "rows": 28
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T151722Z-exp009-counted-b04-73098.jsonl",
+      "sha256": "ed14ee45732ed7911e5ec3b68af46c81b1da232ba5ea6848cd354aa90b6bcedb",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T154038Z-exp009-counted-b05-7115.jsonl",
+      "sha256": "de136dda64cfbcba3d5e69461ca0d436dd8140a55ed894c4826cbc0f2f9fa045",
+      "rows": 30
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T161732Z-exp009-counted-b06-10137.jsonl",
+      "sha256": "218e2590fff122bc9bdea3e152f48f746de66dfdcfe76d2565c42f75db6e28ca",
+      "rows": 26
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T164502Z-exp009-counted-b07-63626.jsonl",
+      "sha256": "065ab011b5800dbc1dfb5ad1c5335151187029ef18d790feb861eceae567849d",
+      "rows": 23
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T170906Z-exp009-counted-b08-93867.jsonl",
+      "sha256": "7a12cffe338d52b580d3571fe080774aff67498d53d26f1b45b5cbce037ac690",
+      "rows": 27
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T173716Z-exp009-counted-b09-25641.jsonl",
+      "sha256": "a83989431e214ddd04f10a183c3af1fbb16415b950283240453350baefc66ee5",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T180253Z-exp009-counted-b10-61043.jsonl",
+      "sha256": "e398d73c15bd324f89224ed5aa154f844f0b06986a2ec8f5e5d25bed673b3b17",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T182754Z-exp009-counted-b11-94143.jsonl",
+      "sha256": "f593bb58cd3524f9ed127a9df6e4edc9625140a64a6aaf029bb218adce5f3ba3",
+      "rows": 19
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T184736Z-exp009-counted-b12-1292.jsonl",
+      "sha256": "59b0c5e5f7993f3c7883f7eab2670d843fc11dce97724d1d11c741615942a4a1",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T191221Z-exp009-counted-b13-32959.jsonl",
+      "sha256": "b475308cda7cef44a534bd2670c3bf6344590960801e3ef3a335d0172977cff8",
+      "rows": 21
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T193443Z-exp009-counted-b14-53661.jsonl",
+      "sha256": "a7a20a37825505e82285cfed0832e4bf215dbd0962072dd4799e5d1c5b42a365",
+      "rows": 18
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T195409Z-exp009-counted-b15-59897.jsonl",
+      "sha256": "181cbce73d5873f38d060ed212e1eca39028d1103a9cf4511e323e1b67f0e618",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T201935Z-exp009-counted-b16-92204.jsonl",
+      "sha256": "3baa00dc11d839ab4f4d691dd9a435a0087f111c256f533284492be4a511fcd9",
+      "rows": 17
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T203729Z-exp009-counted-b17-91540.jsonl",
+      "sha256": "6f069a471edaa0fbec9b53ae54298e3d2ee98f4efd794ff3eb43cb66dfd283ad",
+      "rows": 17
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T205548Z-exp009-counted-b18-88766.jsonl",
+      "sha256": "966e0440c65ef32f742b55523ab3c3a7b43e0733608c049e70e06117331a455f",
+      "rows": 21
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T211815Z-exp009-counted-b19-6907.jsonl",
+      "sha256": "064ffdcc5e774faba46a5981903f389ad8ea059d6ab5fecfb311b77d16a408d0",
+      "rows": 20
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T213908Z-exp009-counted-b20-18240.jsonl",
+      "sha256": "3f568a4bc4f3a5b4e092b3351dd68112113431e3eeef802e51c2e2715a30bdd5",
+      "rows": 27
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T220720Z-exp009-counted-b21-78792.jsonl",
+      "sha256": "c7460f76ab31bf4d6545b659660235444222bb5839dc93a50b4cf6eaec7aa47b",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T223038Z-exp009-counted-b22-7391.jsonl",
+      "sha256": "a64db3ff07c0df9df35ed6b28073ec51dd61484ad125e2e117fb1dcc1bf0ebf6",
+      "rows": 20
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T225127Z-exp009-counted-b23-15915.jsonl",
+      "sha256": "2b1f82364fc22c35665b1e6c9228cff61fdc9666bb798525d6d053da13111441",
+      "rows": 25
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T231720Z-exp009-counted-b24-53844.jsonl",
+      "sha256": "8b548f05b20fc7bb801a7c4b3a90f0ddc03e49c943694b716ebe97eb7605a679",
+      "rows": 18
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T233604Z-exp009-counted-b25-57577.jsonl",
+      "sha256": "02c93d503317c79a9143ae1d64d8e7e0fad4b020c8b46564e3b0834e970ab11a",
+      "rows": 21
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261008T235805Z-exp009-counted-b26-74014.jsonl",
+      "sha256": "37a36197786e099334c5df785087063d4093043a3062ac3bbc8322d8480f4903",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T002047Z-exp009-counted-b27-97049.jsonl",
+      "sha256": "6202a17de2ce4d9cead8d761ad02edb3f76cb31ab7678471e4150c5c5df012e8",
+      "rows": 17
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T003820Z-exp009-counted-b28-87274.jsonl",
+      "sha256": "a3d1fe3f37e2fbb1f18d011c702f68a9dbe8b36a4d37f03b583cb53f4c1e515d",
+      "rows": 19
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T005856Z-exp009-counted-b29-97014.jsonl",
+      "sha256": "ee1402338b74d839ddd8b6fde1b626dde594b50e765edce696cfae6d38aba4f0",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T012149Z-exp009-counted-b30-20272.jsonl",
+      "sha256": "c30f5903f34f6458a124c98b78372bb726904901217151ab4298b3a6ec3a696b",
+      "rows": 20
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T014248Z-exp009-counted-b31-31323.jsonl",
+      "sha256": "74bf2e3398689bd3101277dafd18d9087392e3276a54d8327c77780b93e71127",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T020734Z-exp009-counted-b32-65765.jsonl",
+      "sha256": "f8974ff5ab0df725d9c6fd7ae403d80b72418dcf4e7eca7bee8e9e603cdf6b44",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T023052Z-exp009-counted-b33-90781.jsonl",
+      "sha256": "931b7c71af6bdaefea08d594bbabe7993c19c0c316e57ed52f8084f5558a83b5",
+      "rows": 23
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T025456Z-exp009-counted-b34-18938.jsonl",
+      "sha256": "6385597c5a0033e8fcfdae06d9e57bffe3579c1286156762de5602fcc0a19a71",
+      "rows": 21
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T031728Z-exp009-counted-b35-40511.jsonl",
+      "sha256": "086d350932baedf961256bb9b99039e20b7383370dd48c8ed9193c3f3a1eb185",
+      "rows": 21
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T033934Z-exp009-counted-b36-58149.jsonl",
+      "sha256": "6ce3df616d07d418c5a18b5d67a7f47882400386e5c74df913dbabf9c2a77bb8",
+      "rows": 22
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T040226Z-exp009-counted-b37-83359.jsonl",
+      "sha256": "8c287296d4933e425e523afe22fc8bae2deeaebd66dd5f72f84bb0e856c4b21f",
+      "rows": 24
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T044412Z-exp009-counted-b38-93192.jsonl",
+      "sha256": "12d1399b931375ac59c13072dcb48271a6b0f1705a4ebbaa75377aead9052304",
+      "rows": 19
+    },
+    {
+      "path": "runs/composable-harness/counted/leases/20261009T050348Z-exp009-counted-b39-99667.jsonl",
+      "sha256": "baa6bd378f8eddc60179b28f60523dcec1c62063dae8341a8feeadc1572d6508",
+      "rows": 20
+    }
+  ],
+  "result": {
+    "validity": {
+      "gates": [
+        {
+          "id": "k1-teeth",
+          "pass": true,
+          "detail": "K1 detected 12/12 (needs >= 11/12)"
+        },
+        {
+          "id": "r0-rerun",
+          "pass": true,
+          "detail": "seeded R0 re-run: 1907/1907 byte-identical"
+        },
+        {
+          "id": "r0-restart",
+          "pass": true,
+          "detail": "R0 self-equivalent across a restart"
+        },
+        {
+          "id": "pins",
+          "pass": true,
+          "detail": "pins verified and the kernel sha in the prereg file map"
+        },
+        {
+          "id": "leases",
+          "pass": true,
+          "detail": "40/40 measured blocks held a window lease"
+        }
+      ],
+      "informative": true
+    },
+    "P1": {
+      "n": 400,
+      "divergentTrials": 1,
+      "wilsonUpper95": 0.014023,
+      "verdict": "refuted"
+    },
+    "P2": {
+      "n": 120,
+      "faulty": 60,
+      "kernel": {
+        "silentInert": 0,
+        "falseInactive": 0
+      },
+      "kernelMislabelled": 0,
+      "baseline": {
+        "silentInert": 44,
+        "silentDropped": 16,
+        "falseInactive": 0
+      },
+      "mcnemar": {
+        "b": 60,
+        "c": 0,
+        "p": 1.734723475976807e-18
+      },
+      "verdict": "supported",
+      "kernelCorrect": 120,
+      "baselineCorrect": 60
+    },
+    "S1": {
+      "n": 400,
+      "residueTrials": 0,
+      "mismatchTrials": 356,
+      "share": 0,
+      "statement": "H2 leaves residue in < 10% of trials"
+    },
+    "S2": {
+      "k1Detected": 12,
+      "k1Of": 12,
+      "k2ResidueProbes": 0
+    },
+    "S3": {
+      "h1MedianReadyMs": null,
+      "r0MedianReadyMs": null,
+      "excludedBreachSamples": 0
+    },
+    "decides": "P1 and P2 only; S1-S3 decide nothing"
+  },
+  "verdicts": {
+    "P1": {
+      "claim": "H1 diverges from R0 in 0 of n = 400 trials.",
+      "verdict": "refuted",
+      "refutedBy": "Any single divergence."
+    },
+    "P2": {
+      "claim": "On the blind-authored corpus of 120 configurations, the kernel's census shows 0 silent-inert components and 0 false-inactive components.",
+      "verdict": "supported",
+      "refutedBy": "Any silent-inert or false-inactive kernel configuration among the 120."
+    },
+    "validityRule": "If any gate fails, the result is published as uninformative, never as a pass.",
+    "informative": true
+  },
+  "p1Divergences": [
+    {
+      "block": 29,
+      "trial": 291,
+      "divergences": [
+        {
+          "step": 7,
+          "kind": "decision",
+          "detail": {
+            "item": "c058",
+            "h1": {
+              "yesno": {
+                "decision": "REJECT",
+                "p": 0.5
+              }
+            },
+            "r0": {}
+          }
+        },
+        {
+          "step": 8,
+          "kind": "decision",
+          "detail": {
+            "item": "c021",
+            "h1": {
+              "yesno": {
+                "decision": "REJECT",
+                "p": 0.592667
+              }
+            },
+            "r0": {}
+          }
+        }
+      ]
+    }
+  ],
+  "k1PerLeak": [
+    {
+      "leak": "env-var",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "fs-watcher",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "global",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "net-server",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "open-fd",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "process-listener",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "raw-interval",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "stale-memo",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "stale-prefix-cache",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "temp-file",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "unreified-child",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    },
+    {
+      "leak": "worker-thread",
+      "blocks": 40,
+      "k1DetectedBlocks": 40,
+      "k2ResidueProbes": 0
+    }
+  ],
+  "leases": [
+    {
+      "block": 0,
+      "runId": "20261008T113917Z-exp009-counted-b00-83850",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 1,
+      "runId": "20261008T133131Z-exp009-counted-b01-18238",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 2,
+      "runId": "20261008T140737Z-exp009-counted-b02-85465",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 3,
+      "runId": "20261008T144800Z-exp009-counted-b03-17315",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 4,
+      "runId": "20261008T151722Z-exp009-counted-b04-73098",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 5,
+      "runId": "20261008T154038Z-exp009-counted-b05-7115",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 6,
+      "runId": "20261008T161732Z-exp009-counted-b06-10137",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 7,
+      "runId": "20261008T164502Z-exp009-counted-b07-63626",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 8,
+      "runId": "20261008T170906Z-exp009-counted-b08-93867",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 9,
+      "runId": "20261008T173716Z-exp009-counted-b09-25641",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 10,
+      "runId": "20261008T180253Z-exp009-counted-b10-61043",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 11,
+      "runId": "20261008T182754Z-exp009-counted-b11-94143",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 12,
+      "runId": "20261008T184736Z-exp009-counted-b12-1292",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 13,
+      "runId": "20261008T191221Z-exp009-counted-b13-32959",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 14,
+      "runId": "20261008T193443Z-exp009-counted-b14-53661",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 15,
+      "runId": "20261008T195409Z-exp009-counted-b15-59897",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 16,
+      "runId": "20261008T201935Z-exp009-counted-b16-92204",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 17,
+      "runId": "20261008T203729Z-exp009-counted-b17-91540",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 18,
+      "runId": "20261008T205548Z-exp009-counted-b18-88766",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 19,
+      "runId": "20261008T211815Z-exp009-counted-b19-6907",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 20,
+      "runId": "20261008T213908Z-exp009-counted-b20-18240",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 21,
+      "runId": "20261008T220720Z-exp009-counted-b21-78792",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 22,
+      "runId": "20261008T223038Z-exp009-counted-b22-7391",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 23,
+      "runId": "20261008T225127Z-exp009-counted-b23-15915",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 24,
+      "runId": "20261008T231720Z-exp009-counted-b24-53844",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 25,
+      "runId": "20261008T233604Z-exp009-counted-b25-57577",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 26,
+      "runId": "20261008T235805Z-exp009-counted-b26-74014",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 27,
+      "runId": "20261009T002047Z-exp009-counted-b27-97049",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 28,
+      "runId": "20261009T003820Z-exp009-counted-b28-87274",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 29,
+      "runId": "20261009T005856Z-exp009-counted-b29-97014",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 30,
+      "runId": "20261009T012149Z-exp009-counted-b30-20272",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 31,
+      "runId": "20261009T014248Z-exp009-counted-b31-31323",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 32,
+      "runId": "20261009T020734Z-exp009-counted-b32-65765",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 33,
+      "runId": "20261009T023052Z-exp009-counted-b33-90781",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 34,
+      "runId": "20261009T025456Z-exp009-counted-b34-18938",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 35,
+      "runId": "20261009T031728Z-exp009-counted-b35-40511",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 36,
+      "runId": "20261009T033934Z-exp009-counted-b36-58149",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 37,
+      "runId": "20261009T040226Z-exp009-counted-b37-83359",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 38,
+      "runId": "20261009T044412Z-exp009-counted-b38-93192",
+      "held": true,
+      "reasons": []
+    },
+    {
+      "block": 39,
+      "runId": "20261009T050348Z-exp009-counted-b39-99667",
+      "held": true,
+      "reasons": []
+    }
+  ],
+  "limits": [
+    "n = 400 supports \"at most 1% of trials\" (95% Wilson upper bound 0.95% at zero divergences), not zero.",
+    "One kernel, one language, one Mac.",
+    "Equivalence says nothing about accuracy.",
+    "The P2 corpus is synthetic, written from a spec whose fault classes we chose; the real filter keeps exactly the spec-enabled set in all 120 configurations, which shows the spec models its enable rule, not that the classes are representative.",
+    "The baseline filter has no notion of needs, so it is the no-census condition, not a competing census.",
+    "P2's outcome was computed once before registration (see the P2 disclosure): P2 is registered for the record, its weight rests on the blind authorship and the real filter baseline, and only P1 and the validity gates are predictive."
+  ],
+  "disclosures": [
+    {
+      "id": "prelude",
+      "text": "Each block's long-lived kernel first loads the set its first trial enters with, as a prelude compared with R0 like any step and never counted as a trial: 39 preludes (0 with a divergence); 1 block(s) (00) entered with an empty set and needed none."
+    },
+    {
+      "id": "items-and-pins",
+      "text": "Items: the record's 200-item corpus (sha256 4d0273836696f751272276fe1004ebfc8312d5397fbdaa09ee58232ac48c5acd). Pins A and B: A = llama-3.2-3b, B = qwen3-1.7b, the record's mlx.model swapped by reconfigure."
+    },
+    {
+      "id": "attempts",
+      "text": "Attempts: 40 started, 40 complete, 0 error. A crashed attempt would be kept on disk and excluded from the analysis; there were 0."
+    },
+    {
+      "id": "s3-not-measured",
+      "text": "S3 (time to ready) is not measured. The frozen arms record only a trial's wall time, not a per-arm time-to-ready, and no instrumentation was added after the freeze: an instrument gap, disclosed. S3 decides nothing."
+    },
+    {
+      "id": "p2-pre-computed",
+      "text": "P2 pre-computed before registration: a disclosure, not a prediction. P2 has no seed and is deterministic, so its outcome was computable before this record. It was computed once, before registration: while validating the pipeline on the real corpus, the instrument author ran it a single time, with output to the terminal only and nothing committed. Seen then: kernel correct on 120 of 120, McNemar b = 60, c = 0. Measured in the counted run: kernel correct on 120 of 120, McNemar b = 60, c = 0. Only P1 (seeded from the merge commit of this record) and the validity gates are predictive: they test outcomes that are unknown when this record is frozen."
+    },
+    {
+      "id": "breaches",
+      "text": "Memory-window breaches (free < 50% or load1 ≥ 12 during a block: recorded, never acted on), counted from the committed lease sidecars: 10 breach sample(s) in 6 block(s) (b01: 1, b02: 1, b05: 1, b08: 5, b10: 1, b20: 1). They exclude S3 timings only, and S3 is not measured."
+    },
+    {
+      "id": "wall-time",
+      "text": "Wall time per counted H1 trial (as arms/run.mjs records it): median 103.208 s, p90 (nearest rank) 147.375 s, max 275.633 s over 400 trials, against the frozen practice p90 of 199 s; 8 trial(s) took longer than 199 s."
+    },
+    {
+      "id": "not-before",
+      "text": "Not-before honoured: the record was published at 2026-10-07T11:34:15Z (odin-rnd #28, merge 91de325de980493291d17237387aac6d2c656b7c), so no attempt could start before 2026-10-08T11:34:15Z; the first attempt started at 2026-10-08T13:06:23.112Z and the first complete one at 2026-10-08T13:06:23.112Z, and 0 of 40 attempts started at or before it."
+    },
+    {
+      "id": "leases",
+      "text": "Every block held its memory-window lease: 40 of 40 complete blocks, each with its committed sidecar (40 sidecars), the block's own label, a close with exit 0, and the attempt's start inside the lease."
+    },
+    {
+      "id": "gate-aggregation",
+      "text": "Gate aggregation over 40 blocks: K1 counts a planted leak as detected only if every block detected it (12 of 12 leaks in all blocks); K2 sums residue probes over every block; the R0 re-run counts a skipped key as not identical (0 skipped); the restart gate needs every block's pair identical."
+    },
+    {
+      "id": "h2-evaluation-errors",
+      "text": "182 of 400 H2 trials recorded at least one evaluation error. S1 counts residue only, as the frozen analysis defines it; H2 is secondary and decides nothing."
+    },
+    {
+      "id": "divergence-diagnosis",
+      "block": 29,
+      "trial": 291,
+      "text": "Diagnosis of the one divergent trial (block 29, trial 291), not a re-classification: the pre-registered verdict stands. What the records show. Reconstructed from the seed, trial 291 enters with memo-cache (maxEntries 256), yesno-gate and mlx.model on pin B, in that load order; step 5 swaps mlx.model to pin A; steps 6, 7 and 8 evaluate c024, c058 and c021 on that unchanged set. H1 answered all three through yesno-gate. For c024, R0's fresh process (cache key 3f0dfcf0c8aa…, written 01:03:50.79Z) had all four components active and answered REJECT, p = 0.651355, matching H1. For c058 (e12c56e6e725…, 01:03:51.98Z) and c021 (b99d4a820b1f…, 01:03:52.24Z), on the same loaded set, R0's fresh process ended with mlx.model not active, memo-cache and yesno-gate inactive behind it (both inject mlx), mlxPin null and no decisions; that is the recorded R0 output of {}. H1 had passed its own activation of mlx.model at the step-5 swap. So the two arms judged activation at different instants and only R0's attempt failed: on these two steps R0 is not a valid reference, rather than H1 carrying a state a fresh process would not. Bounded. Over the whole run, 10 of the 13,627 cached R0 outputs with mlx.model in the loaded set have it not active, all inside block 29 between 01:03:18Z and 01:04:52Z. The other 8 had no yesno-gate loaded, so their decisions (lint and grep only) could not differ, and eval steps compare decisions only. None of the 10 keys fell in the seeded 10% R0 re-run or the restart pick (a fact of the draw, not a gate failure). Why it failed is inferred, not recorded: R0 prints the kernel projection, which reports a failed component as inactive and drops its reason, and exits 0, so the failure was cached as an answer. The failed outputs were written 0.13 to 0.25 s apart, against a median of 2.7 s (n = 8,008) before a fresh R0 output for an evaluation through yesno-gate and mlx.model, which puts the failure before the MLX child started. All 10 are on pin A (llama-3.2-3b, the larger model), and each of the three clusters (01:03:18Z, 01:03:51Z, 01:04:52Z) begins right after a fresh R0 process had loaded pin A successfully and exited. That is most consistent with the memory gate in mlx.model's apply refusing while the memory of the previous R0 process's child was not yet reclaimed, beside H1's own resident pin-A child. Block 29's lease sidecar (21 samples, 0 breaches) read 53%, 56% and 56% free at 01:01:59Z, 01:03:01Z and 01:04:03Z, near the gate's 50% floor. Undetermined from the records: the gate's reading and its refusal at those instants, which no record kept."
+    }
+  ]
+}
