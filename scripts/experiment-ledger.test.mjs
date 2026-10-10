@@ -75,3 +75,17 @@ test('the ledger refuses results whose field-note row still says the experiment 
   assert.notEqual(stale, page, 'the fixture changed the EXP 005 row');
   assert.throws(() => ledgerEntries(stale, report, join(root, 'dist')), /EXP 005 publishes results but its field-note row says it has not run/);
 });
+
+test('a pre-registration with no field-note row is listed with a plain status, and results without one refuse the build', () => {
+  const root = builtCopy();
+  const page = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const report = JSON.parse(readFileSync(join(root, 'site/data/experiments.json'), 'utf8'));
+  // Rename EXP 009's and EXP 007's row headings so neither id nor title matches any more.
+  const unmatched = page.replaceAll('EXP 009: Unload leaves no trace:', 'Renamed note:').replaceAll('<h3>EXP 007: Which of your gate&#39;s rules need a model at all? <br>', '<h3>Renamed note: <br>');
+  assert.notEqual(unmatched, page);
+  assert.throws(() => ledgerEntries(unmatched, report, join(root, 'dist')), /EXP 007 publishes results but has no field-note row/);
+  const only009 = page.replaceAll('EXP 009: Unload leaves no trace:', 'Renamed note:');
+  const entry = ledgerEntries(only009, report, join(root, 'dist')).find(e => e.id === 'EXP 009');
+  assert.equal(entry.status, 'Pre-registration published; no field note yet.');
+  assert.equal(entry.href, 'data/composable-harness/preregistration.json');
+});
