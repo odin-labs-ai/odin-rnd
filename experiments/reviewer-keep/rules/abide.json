@@ -1,0 +1,489 @@
+{
+  "schemaVersion": 1,
+  "kind": "vendored-rules",
+  "experiment": "EXP 011",
+  "plugin": "abide",
+  "repo": "coldteadotai/abide",
+  "sha": "ea6d0976a0cbac70f71a460ece348bd68d777350",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Coldtea AI",
+  "source": {
+    "file": "experiments/blueprint-floor/rules/abide.json",
+    "sha256": "68160f8b5c01da7551183b91933474b992810185d5c53ce8adc49727ae2fb7d0"
+  },
+  "licenseFile": {
+    "file": "experiments/blueprint-floor/rules/licenses/abide.LICENSE",
+    "sha256": "f95e90af396c71c9a94648bd58e4f5bb2dcab4f6ac3ab7d3d2ca3f4e4f4a1ae7"
+  },
+  "statement": "The eligible abide rule records, copied verbatim (every field) from EXP 007's vendored rule file at the sha256 above. The licence is referenced, not duplicated.",
+  "ruleIds": [
+    "abide/clearer-code-over-comment",
+    "abide/derive-one-status-type",
+    "abide/match-existing-style",
+    "abide/mention-dead-code-dont-delete",
+    "abide/minimum-code",
+    "abide/no-drive-by-improvement",
+    "abide/no-single-use-abstraction",
+    "abide/no-unasked-refactor",
+    "abide/no-unrequested-configurability",
+    "abide/remove-own-orphans",
+    "abide/scope-creep",
+    "abide/single-owner-id-formats"
+  ],
+  "recordSha256": {
+    "abide/clearer-code-over-comment": "523b27441d9a52dfdd5f687715bb6b1d077df393d264deacb090c26a24b19df1",
+    "abide/derive-one-status-type": "e9938275dc31f48c122167821f9fc4988c679ceed268408429933c6dc4167f66",
+    "abide/match-existing-style": "d4d199e5e76846783523bb191a03bb0e7136c0959b1ff3a748ab0c68fb514f4e",
+    "abide/mention-dead-code-dont-delete": "9ae427245bc584d889bb1cb360face2dc4943d27ebd0b0218b950680bafe23ad",
+    "abide/minimum-code": "633204458e5aeb0c199592473a425c81a793d0d490a9cf38d763dabdcd50016e",
+    "abide/no-drive-by-improvement": "452106c731720a1ef8d055ed1906deda4e5760199a970e5d24ad2b7c152d68cf",
+    "abide/no-single-use-abstraction": "a990278b69a4054d2d845e2fabafe8b50deffe6488080fc8962d369c503a9890",
+    "abide/no-unasked-refactor": "c71903e0bfcbe9d010a2264b127d251b4568941d8948e1f707e7f2aa0f75ab5c",
+    "abide/no-unrequested-configurability": "be0bdc20cee5697d075dbbdb40ae07151091f345df7134903415d21cd88d5ec5",
+    "abide/remove-own-orphans": "afe9d278543ed96f01a09725b84ad920925cbd55ec052fec3f09f061fa61ff52",
+    "abide/scope-creep": "864212f7ca611c08502dcec3237fda081d812ce9b66b045061c2b8ada3286f43",
+    "abide/single-owner-id-formats": "ed71cf1faf9e74e48058c5069c6e3fb7ab24b41c1a60df187b7585745fa4aacb"
+  },
+  "rules": [
+    {
+      "ruleId": "abide/clearer-code-over-comment",
+      "sourcePath": ".abide/rubric.json",
+      "line": 626,
+      "kind": "rubric",
+      "text": "If code needs a comment to be understood, first make the code clearer (rename, extract). Comment only what better code can't express.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a comment that explains a vague name or a dense expression, where renaming the identifier or extracting a named function would have said the same thing?",
+            "criteria": {
+              "true": "// d is the number of days since the last run\\nconst d = ...",
+              "false": "// Node resolves this symlink differently on Windows"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 20,
+          "median": 0.125,
+          "min": 0.01,
+          "max": 0.3,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 87
+        }
+      }
+    },
+    {
+      "ruleId": "abide/derive-one-status-type",
+      "sourcePath": ".abide/rubric.json",
+      "line": 696,
+      "kind": "rubric",
+      "text": "When behavior depends on several related status checks, derive one closed decision/status type and switch over that — don't scatter conditionals through a method.",
+      "flags": null,
+      "context": "Checked after each file edit, on that edit's diff, given the user's latest request. Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change decide one outcome from several related boolean or status checks spread through a function, instead of deriving one closed status value and switching over it?",
+            "criteria": {
+              "true": "if (isWeak) ... later if (isNoisy) ... later if (!isWeak && !isNoisy) ...",
+              "false": "const verdict = toVerdict(stats); switch (verdict) { ... }"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 15,
+          "median": 0.12,
+          "min": 0.05,
+          "max": 0.88,
+          "fired": 1,
+          "verdict": "decisive"
+        },
+        "when": "edit",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 95
+        }
+      }
+    },
+    {
+      "ruleId": "abide/match-existing-style",
+      "sourcePath": ".abide/rubric.json",
+      "line": 476,
+      "kind": "rubric",
+      "text": "Match existing style, even if you'd do it differently.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "deferred",
+          "reason": "needs the surrounding files to know what the existing style is"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 51
+        }
+      }
+    },
+    {
+      "ruleId": "abide/mention-dead-code-dont-delete",
+      "sourcePath": ".abide/rubric.json",
+      "line": 489,
+      "kind": "rubric",
+      "text": "If you notice unrelated dead code, mention it - don't delete it. Don't remove pre-existing dead code unless asked.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change delete existing code that the task did not ask about and that this change did not make unused?",
+            "criteria": {
+              "true": "an unrelated unused export removed while fixing a different function",
+              "false": "removing an import that this change's edit left with no references"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.02,
+          "min": 0.02,
+          "max": 0.15,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 52
+        }
+      }
+    },
+    {
+      "ruleId": "abide/minimum-code",
+      "sourcePath": ".abide/rubric.json",
+      "line": 237,
+      "kind": "rubric",
+      "text": "Minimum code that solves the problem. Nothing speculative. If you write 200 lines and it could be 50, rewrite it.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "score",
+            "instructions": "How much longer is this change than the shortest version that would solve the stated task?",
+            "criteria": [
+              "about as short as it can be",
+              "somewhat longer than needed",
+              "about twice as long as needed",
+              "several times longer than needed"
+            ],
+            "violatingFrom": 2
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.03,
+          "min": 0.02,
+          "max": 0.24,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 32
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-drive-by-improvement",
+      "sourcePath": ".abide/rubric.json",
+      "line": 386,
+      "kind": "rubric",
+      "text": "Don't \"improve\" adjacent code, comments, or formatting.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change touch lines near the real edit only to reformat, rename, reword a comment or tidy them, with no bearing on the task?",
+            "criteria": {
+              "true": "re-wrapping an untouched function's arguments in the same file",
+              "false": "editing only the lines the task required"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.04,
+          "min": 0.03,
+          "max": 0.44,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 48
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-single-use-abstraction",
+      "sourcePath": ".abide/rubric.json",
+      "line": 296,
+      "kind": "rubric",
+      "text": "No abstractions for single-use code.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add a helper, wrapper, base class, interface or indirection layer that has exactly one caller in the whole change?",
+            "criteria": {
+              "true": "a new formatRow() called once, from the one place it was extracted from",
+              "false": "a new formatRow() called from three render paths"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.03,
+          "min": 0.02,
+          "max": 0.67,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 35
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-unasked-refactor",
+      "sourcePath": ".abide/rubric.json",
+      "line": 446,
+      "kind": "rubric",
+      "text": "Don't refactor things that aren't broken.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change restructure working code — moving, splitting, renaming or rewriting it — beyond what the task required?",
+            "criteria": {
+              "true": "a working module split into three files while fixing one of its functions",
+              "false": "editing the one function the task named"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.025,
+          "min": 0.02,
+          "max": 0.43,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 50
+        }
+      }
+    },
+    {
+      "ruleId": "abide/no-unrequested-configurability",
+      "sourcePath": ".abide/rubric.json",
+      "line": 326,
+      "kind": "rubric",
+      "text": "No \"flexibility\" or \"configurability\" that wasn't requested.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add an options object, a config field, a feature toggle or a strategy parameter that the task did not ask for, where every call site passes the same value?",
+            "criteria": {
+              "true": "fn(value, { format = \"json\" } = {}) with one call site and no request for other formats",
+              "false": "fn(value) doing the one thing that was asked"
+            }
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.015,
+          "min": 0.01,
+          "max": 0.09,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 36
+        }
+      }
+    },
+    {
+      "ruleId": "abide/remove-own-orphans",
+      "sourcePath": ".abide/rubric.json",
+      "line": 519,
+      "kind": "rubric",
+      "text": "Remove imports/variables/functions that YOUR changes made unused.",
+      "flags": null,
+      "context": "Applies only to files matching: **/*.ts, **/*.tsx.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "scope": [
+          "**/*.ts",
+          "**/*.tsx"
+        ],
+        "check": {
+          "type": "lint",
+          "how": "@typescript-eslint/no-unused-vars",
+          "pattern": "unused import or binding left behind after an edit"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 56
+        }
+      }
+    },
+    {
+      "ruleId": "abide/scope-creep",
+      "sourcePath": ".abide/rubric.json",
+      "line": 270,
+      "kind": "rubric",
+      "text": "No features beyond what was asked. The test: Every changed line should trace directly to the user's request.",
+      "flags": null,
+      "context": "Checked when the agent stops, on the diff of everything the turn changed, given the user's latest request.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "model",
+          "question": {
+            "type": "boolean",
+            "instructions": "Does this change add functionality, files or options that the task did not ask for?"
+          }
+        },
+        "status": "active",
+        "calibration": {
+          "at": "2026-09-20T07:58:13.854Z",
+          "hunks": 8,
+          "median": 0.035,
+          "min": 0.03,
+          "max": 0.29,
+          "fired": 0,
+          "verdict": "decisive"
+        },
+        "when": "turn",
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 34
+        }
+      }
+    },
+    {
+      "ruleId": "abide/single-owner-id-formats",
+      "sourcePath": ".abide/rubric.json",
+      "line": 871,
+      "kind": "rubric",
+      "text": "Deterministic ID/key formats have a single owner: one named creation function per format (rule ids, source hashes, rubric cache keys). Never inline-format the same ID in two places.",
+      "flags": null,
+      "context": null,
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "check": {
+          "type": "deferred",
+          "reason": "needs the rest of the repo to know whether that format is already formatted somewhere else"
+        },
+        "status": "active",
+        "when": null,
+        "upstreamSource": {
+          "path": "AGENTS.md",
+          "line": 107
+        }
+      }
+    }
+  ]
+}

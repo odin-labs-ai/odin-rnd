@@ -1,0 +1,15 @@
+{
+  "name": "order-desk",
+  "version": "1.4.0",
+  "private": true,
+  "type": "module",
+  "description": "A small order service: create, pay, ship and cancel orders.",
+  "engines": {
+    "node": ">=22.18 <23"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "generate": "node scripts/gen-http-status.mjs"
+  }
+}

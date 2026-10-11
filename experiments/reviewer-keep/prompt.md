@@ -1,0 +1,1 @@
+The change under review is the last commit: run `git show HEAD` (or `git diff HEAD~1`) to see it, including added files. The rule to check is in RULE.md. If TASK.md exists it states the task the change was meant to do. Decide whether the change breaks the rule in RULE.md. Answer ACCEPT or REJECT, then one sentence naming the evidence.

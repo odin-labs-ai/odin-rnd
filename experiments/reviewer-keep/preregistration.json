@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 1,
+  "kind": "preregistration",
+  "experiment": {
+    "id": "EXP 011",
+    "slug": "reviewer-keep",
+    "title": "Where does a model reviewer earn its keep?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-10",
+    "summary": "Every model-reviewer measurement so far used rules a hand-written checker already decides. EXP 011 asks the opposite: on the 18 rules EXP 007's census found no bce 0.3.1 constraint can decide, and which a code change can still break, does nina 0.34.0's reviewer tell violating changes from clean ones better than the frozen rule-filtered off-the-shelf tools, with both held to a false-reject rate of at most 15%?",
+    "note": "Written, hashed and published before any item exists and before any paid call. This bundle made no model or API call. The item authors, the blind labeller and the cap are fixed by dated amendments before the first call."
+  },
+  "claim": "On code changes that break, or respect, rules that EXP 007's census found not expressible in bce 0.3.1, nina's reviewer separates violating from clean changes better than the best frozen off-the-shelf model-free baseline. Both are measured at a matched false-reject budget.",
+  "question": "On code changes to a small TypeScript fixture that break or respect one of the 18 eligible rules, is the balanced accuracy of nina 0.34.0's reviewer (item majority of its scheduled runs) at least 0.20 above that of the best of the frozen rule-filtered off-the-shelf tools (tsc, eslint, prettier, a churn heuristic, or their OR, each run only on the rules it is mapped to, selected at a false-reject rate of at most 15%), with the lower bound of a class-stratified bootstrap interval above 0, and with the reviewer's own item-level false-reject rate also at most 15%?",
+  "parents": {
+    "exp005": {
+      "preregistration": {
+        "file": "experiments/jev-gate/preregistration.json",
+        "sha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a"
+      },
+      "results": {
+        "file": "experiments/jev-gate/results/results.json",
+        "sha256": "7388556049b7639e2a251edcf3fb8feb782213b78e71a02cddb687f12b09dccd"
+      },
+      "finding": "On 7 mechanical architecture rules, a linter hand-written from the rules missed 0 RED items (1 false reject); the truth labels were bce's own."
+    },
+    "exp006": {
+      "preregistration": {
+        "file": "experiments/nina-changes/preregistration.json",
+        "sha256": "41efb90da633b42acca619ab4d761e15e608ca06e496bafbc73ccfd9df03b98a"
+      },
+      "amendment01": {
+        "file": "experiments/nina-changes/amendment-01.json",
+        "sha256": "40c95cb0963fd760e078a27946d4c9aeb62c3f0d26a255374ea4079fa680cf47"
+      },
+      "results": {
+        "file": "experiments/nina-changes/results/results.json",
+        "sha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c"
+      },
+      "finding": "nina 0.34.0's reviewer saw the change in 177 of 180 runs and missed 1 of 90 RED runs, measured on mechanical architecture rules and nothing else."
+    },
+    "exp007": {
+      "preregistration": {
+        "file": "experiments/blueprint-floor/preregistration.json",
+        "sha256": "ee56929ab38de831d618a41b9a2f359d814fc01849d273060e590669e94c9edb"
+      },
+      "amendment01": {
+        "file": "experiments/blueprint-floor/amendment-01.json",
+        "sha256": "c3d2c883c06592d55e585505d05ec6f1b0b93ea47784d072e1d21768383aba11"
+      },
+      "results": {
+        "file": "experiments/blueprint-floor/results/results.json",
+        "sha256": "26eb7287e88f3bbf97b6311dc1d355195bb98901c8135569aa9a56c827404a44"
+      },
+      "primaryClasses": {
+        "expressible": 1,
+        "partial": 86,
+        "not": 50,
+        "error": 8
+      },
+      "finding": "Of 145 primary rules from 8 MIT plugins, the census classed 1 expressible, 86 partial, 50 not and 8 error. 'not' means no whitelisted bce 0.3.1 constraint decides any non-trivial part of the rule, as judged by a Claude translator and adjudicator; it does not mean no deterministic tool can decide it."
+    }
+  },
+  "eligibility": {
+    "criteria": {
+      "file": "experiments/reviewer-keep/criteria.md",
+      "sha256": "a714c0c3648804df25be79edcc561264fd981f3b4b58be42b2d2657ef44ef49b"
+    },
+    "decisions": {
+      "file": "experiments/reviewer-keep/eligibility.json",
+      "sha256": "bceba756d9de166a3eacad1dbc19fd65e94462dce6e90e669ecc7d99927f6879"
+    },
+    "notRules": {
+      "file": "experiments/reviewer-keep/not-rules.json",
+      "sha256": "f3b65c1daa8af241381a957cc62fdc4b8f490124e7cbf605da44b753c1491a86"
+    },
+    "source": "The 50 primary rules EXP 007's census finally classed not (an attempt-2 record supersedes attempt 1), recomputed by the validator from the census records; not-rules.json carries their text, kind, input kind and context as EXP 007 vendored them.",
+    "decidedBy": "The frozen criteria (criteria.md), applied to the rule text only by a fresh agent that never saw an item (none exists), before any authoring. Each decision carries one reason code and a one-sentence reason quoting the rule. The decisions are published as they were made; this bundle does not re-judge them.",
+    "rules": 50,
+    "eligible": 18,
+    "excluded": 32,
+    "uncertain": 5,
+    "perCode": {
+      "ELIGIBLE": 18,
+      "X-PROCESS": 8,
+      "X-TRANSCRIPT": 8,
+      "X-TOOLCALL": 6,
+      "X-COMMIT": 4,
+      "X-WITHHELD": 1,
+      "X-RUST": 2,
+      "X-META": 3
+    },
+    "perPlugin": {
+      "abide": 12,
+      "hunch": 5,
+      "jev-axi": 1
+    },
+    "killFloor": "Fewer than 10 eligible rules would have published EXP 011 as \"too few buildable rules\"; 18 are eligible, so the floor holds."
+  },
+  "rules": {
+    "dir": "experiments/reviewer-keep/rules",
+    "plugins": [
+      {
+        "plugin": "hunch",
+        "file": "experiments/reviewer-keep/rules/hunch.json",
+        "sha256": "251f58f6bdbdb7e050c4f1c504d378b352c17e1fede7af599252baea9ef39f86",
+        "repo": "Kelbie/hunch",
+        "sha": "c2c680ed2c12c42c8a1b668a4b0b0858c5f463a6",
+        "license": "MIT",
+        "copyright": "Copyright (c) 2026 Kelbie",
+        "source": {
+          "file": "experiments/blueprint-floor/rules/hunch.json",
+          "sha256": "3a3877d4e2f9ce977b609695a71c7e5abe99ae989a60bc094fa5971cb1ef3455"
+        },
+        "licenseFile": {
+          "file": "experiments/blueprint-floor/rules/licenses/hunch.LICENSE",
+          "sha256": "16b89cdeda4c522f238b3bcaacea44ce4013384f5f14ac41515344bc7096521f"
+        },
+        "rules": 5
+      },
+      {
+        "plugin": "abide",
+        "file": "experiments/reviewer-keep/rules/abide.json",
+        "sha256": "62bf457261c6955e3e1b23964b9005c86eacf1ea3eaaf76051b765d608294db0",
+        "repo": "coldteadotai/abide",
+        "sha": "ea6d0976a0cbac70f71a460ece348bd68d777350",
+        "license": "MIT",
+        "copyright": "Copyright (c) 2026 Coldtea AI",
+        "source": {
+          "file": "experiments/blueprint-floor/rules/abide.json",
+          "sha256": "68160f8b5c01da7551183b91933474b992810185d5c53ce8adc49727ae2fb7d0"
+        },
+        "licenseFile": {
+          "file": "experiments/blueprint-floor/rules/licenses/abide.LICENSE",
+          "sha256": "f95e90af396c71c9a94648bd58e4f5bb2dcab4f6ac3ab7d3d2ca3f4e4f4a1ae7"
+        },
+        "rules": 12
+      },
+      {
+        "plugin": "jev-axi",
+        "file": "experiments/reviewer-keep/rules/jev-axi.json",
+        "sha256": "ee009890f52be85c3d557d824cb18981ddfe5a6c20fad0f3d61a38aba68094d5",
+        "repo": "shiftynick/jev-axi",
+        "sha": "044fae73a05d5699c4b5c47073f1ffc29d9aa82d",
+        "license": "MIT",
+        "copyright": "Copyright (c) 2026 Nicholas Underwood (shiftynick)",
+        "source": {
+          "file": "experiments/blueprint-floor/rules/jev-axi.json",
+          "sha256": "b6856f2e723a3c76d6ac5aac7377b44585136cd66a4aeb0cf27e83a389a2e375"
+        },
+        "licenseFile": {
+          "file": "experiments/blueprint-floor/rules/licenses/jev-axi.LICENSE",
+          "sha256": "0d3ec93d780f31677b36e049dce13ffdea9ea4da1480f560b210adf908c2ae1b"
+        },
+        "rules": 1
+      }
+    ],
+    "recordSha256": {
+      "hunch/correctness/edge-case-regression": "c684437ed7c75fdc44709fcb81354d99888514265d5bc6335ecd73f7c4a92dc0",
+      "hunch/docs/contradictory-comment": "48aa895ea643eaeda22a33d89e8a72470ba9072a7345b7639f5d62069c43e572",
+      "hunch/tests/weakened-test": "3950b86dad6c01ca571d4991bdc907c8bee05e317199ba328015bc5f1861a4e4",
+      "hunch/typescript/async-ordering": "e226d30f6d2e33286627449c9a7991dc11b726fe58685378b27e19586b77314c",
+      "hunch/typescript/lossy-serialization": "78505c5f3bea4966dee03504a9f0d188947c8b65a1a08aede15fa82202ca8e0d",
+      "abide/clearer-code-over-comment": "523b27441d9a52dfdd5f687715bb6b1d077df393d264deacb090c26a24b19df1",
+      "abide/derive-one-status-type": "e9938275dc31f48c122167821f9fc4988c679ceed268408429933c6dc4167f66",
+      "abide/match-existing-style": "d4d199e5e76846783523bb191a03bb0e7136c0959b1ff3a748ab0c68fb514f4e",
+      "abide/mention-dead-code-dont-delete": "9ae427245bc584d889bb1cb360face2dc4943d27ebd0b0218b950680bafe23ad",
+      "abide/minimum-code": "633204458e5aeb0c199592473a425c81a793d0d490a9cf38d763dabdcd50016e",
+      "abide/no-drive-by-improvement": "452106c731720a1ef8d055ed1906deda4e5760199a970e5d24ad2b7c152d68cf",
+      "abide/no-single-use-abstraction": "a990278b69a4054d2d845e2fabafe8b50deffe6488080fc8962d369c503a9890",
+      "abide/no-unasked-refactor": "c71903e0bfcbe9d010a2264b127d251b4568941d8948e1f707e7f2aa0f75ab5c",
+      "abide/no-unrequested-configurability": "be0bdc20cee5697d075dbbdb40ae07151091f345df7134903415d21cd88d5ec5",
+      "abide/remove-own-orphans": "afe9d278543ed96f01a09725b84ad920925cbd55ec052fec3f09f061fa61ff52",
+      "abide/scope-creep": "864212f7ca611c08502dcec3237fda081d812ce9b66b045061c2b8ada3286f43",
+      "abide/single-owner-id-formats": "ed71cf1faf9e74e48058c5069c6e3fb7ab24b41c1a60df187b7585745fa4aacb",
+      "jev-axi/PUSH_QUESTIONS/generated_by_hand": "94b0cd897628d0a954e59d8ceee857d8a334a60d17b6c80f70b35e9e4c45046d"
+    },
+    "statement": "Each eligible rule's record is copied verbatim (every field) from EXP 007's vendored rule file, which pins the plugin repository at a commit with the sha256 of each source file. The MIT licence files stay where EXP 007 vendored them and are referenced by sha256. recordSha256 is the sha256 of each record's compact JSON.",
+    "ruleFileShown": "RULE.md, committed in the base, holds the rule's text field and, when the record has one, its context line, verbatim, as EXP 007's translator saw them; it names no plugin and no rule id."
+  },
+  "fixture": {
+    "dir": "experiments/reviewer-keep/fixture",
+    "manifest": {
+      "file": "experiments/reviewer-keep/fixture.sha256",
+      "sha256": "53b901072a6054051021faecfc7b93df0fefc8a6de2954762bb544b8aefa40cc"
+    },
+    "files": 29,
+    "language": "TypeScript",
+    "description": "order-desk: a small order service (create, pay, ship, cancel) with a closed status set, one identifier format with a single owner, integer money, an in-memory async store, an ordered async event bus, JSON serialisation with dates and optional fields, a generated file and its generator, a piece of pre-existing dead code, comments, docs and node:test tests. It is the base every item changes.",
+    "taskTemplate": "fixture/TASK.template.md",
+    "history": "**Neutral fixture history.** Exactly two commits on one branch: `base` (\"fixture\") and `change` (\"change\"). There are no other refs or tags, and no author intent in any message, file name or path. `git log`/`show` therefore leak nothing. A validator asserts this per item.",
+    "baseCleanliness": "Not established by this bundle: no tool is installed here and none was run. It is a precondition of the first paid call (see preconditions), not of scoring: the installing amendment must show the base clean under all four baselines before any authoring, labelling, practice or matrix call. The fixture tests passed under node 22 type stripping when it was written.",
+    "authoredBy": "The fixture was written by a Claude agent in this bundle, before any item, from the brief only (neutral names, no rule in mind per file). Items, not the fixture, carry the violations; they are written by a non-Claude model."
+  },
+  "items": {
+    "perRule": {
+      "red": 2,
+      "green": 2
+    },
+    "red": 36,
+    "green": 36,
+    "total": 72,
+    "status": "None exists. They are authored after the founder signs the cap, by a paid non-Claude model.",
+    "nearMiss": "A violation is minimal; a clean item touches the same code region with similar churn.",
+    "shown": "The reviewer sees the fixture, TASK.md if the item has one, RULE.md (the item's own rule only) and the change, committed as HEAD so that git show HEAD and git diff HEAD~1 show added files.",
+    "cleanMeans": "Clean means clean against the one rule shown.",
+    "onePrior": "The one-rule prior (\"this change is checked against rule X\") applies to the baselines too: each baseline runs only the tools mapped to the item's rule.",
+    "controls": {
+      "statement": "Calibration controls: one known-violating and one known-clean MECHANICAL item (an EXP 005-style architecture rule on the same fixture) per batch, outside the primary analysis. They tell \"the reviewer missed it\" apart from \"the prompt or the fixture does not fire\".",
+      "batch": "A batch is the items of 6 consecutive eligible rules in eligibility order (24 items): 3 batches, so 6 control items. With 3 batches the 90% control bar means all 3.",
+      "batches": 3,
+      "items": 6
+    }
+  },
+  "labels": {
+    "author": {
+      "family": "non-Claude (an OpenRouter open-weight or GPT-class model)",
+      "model": "to be pinned by dated amendment before any call",
+      "fence": "The author writes each item from the rule text, the fixture and the TASK.md template, and is fenced from the reviewer prompt; its intent (RED or GREEN) is recorded per item."
+    },
+    "labeller": {
+      "family": "non-Claude, a different model from the author",
+      "model": "to be pinned by dated amendment before any call",
+      "blind": "The labeller sees the rule, the fixture, TASK.md and the change, and labels violating or clean with no author intent."
+    },
+    "humanSpotCheck": {
+      "n": 16,
+      "red": 8,
+      "green": 8,
+      "share": "22% of the 72 items",
+      "seed": 10011,
+      "procedure": "Frozen now, before any label exists. Item ids are assigned at authoring. Within each class (the author's intent), the ids are sorted by code unit and Fisher-Yates shuffled by mulberry32(10011), RED first and then GREEN on one stream; the first 8 RED and the first 8 GREEN ids are the sample (spotCheckSample in the pinned scorer). A human labels those 16 items blind to both model labels, and the record of it is committed."
+    },
+    "agreementBar": {
+      "rawAgreement": 0.9,
+      "kappa": 0.7,
+      "fixForwardRounds": 1,
+      "statement": "Raw agreement >= 90% AND Cohen's kappa >= 0.70 between author intent and the blind label. If the bar is missed after one fix-forward round, the corpus is unlabelable; that is published as such, and it is a kill."
+    },
+    "disagreements": "Items where the author and the labeller disagree are excluded from the primary analysis and reported as a sensitivity analysis (the EXP 005 disagree precedent)."
+  },
+  "arms": {
+    "reviewer": {
+      "nina": {
+        "release": "0.34.0",
+        "commit": "be546e32ce30acb2a18ec9b55ff4a3b23a7b4890",
+        "integrity": "sha512-M/Vtu9DGe931tYBA+jJ60LtSiFGnu0y7fNBUYZEIXbMbji70aBVRvleOTpq6N8MceW0lXbeIvkDA94QM91fUjg=="
+      },
+      "model": "claude-opus-5-5",
+      "client": "Claude Code",
+      "clientVersion": "2.1.280",
+      "effort": "high",
+      "runsPerItem": 3,
+      "prompt": {
+        "file": "experiments/reviewer-keep/prompt.md",
+        "sha256": "c99e86dd4759be498488136be3b1480d29100feb80176251a73bb4eaf2543563"
+      },
+      "promptText": "The change under review is the last commit: run `git show HEAD` (or `git diff HEAD~1`) to see it, including added files. The rule to check is in RULE.md. If TASK.md exists it states the task the change was meant to do. Decide whether the change breaks the rule in RULE.md. Answer ACCEPT or REJECT, then one sentence naming the evidence.",
+      "promptComparable": false,
+      "ignoreList": "There is no ignore-list.",
+      "reusedFromExp006": {
+        "commit": "5b5c68189a047029278fe24df80cbd8b0c9a51a3",
+        "files": {
+          "experiments/nina-changes/run_reviewer6.mjs": "83794bdcb8377315c4ac3f4ff2a188018529129ae050d0d258a25e59290d0eb2",
+          "experiments/nina-changes/stream6.mjs": "36868cbffeb42e62b614b112c2c1b3d8a464a2a49b6703d3f66bb4b91cd8d6e1",
+          "experiments/nina-changes/fence6.mjs": "a591069653a39f3d9efe00e98511b81c1f7bd83584a066e7ed6e15243d79698f",
+          "experiments/nina-changes/scrub6.mjs": "47d38d5cd7108ad03f76dc4b767b34ac33ca7ef7358bb5dd6cf1a9462fd06329",
+          "experiments/nina-changes/spend6.mjs": "7663e90febdd9f50cb2a11fee2a54feb56282cbd09c7cecfdab4d9b689524897",
+          "experiments/nina-changes/guard6.mjs": "da1794d276182e66347f37c29225d13f4fa20dab033552d4a43b67a9054403c5",
+          "experiments/nina-changes/diff-seen.mjs": "64d85ee38f99bb6858609cb2d835581d40c9d8058a3cfa2fc4558f95464566cf",
+          "experiments/nina-changes/fingerprints.mjs": "4eab13972a6c255ce264eebe935f7db16ea87b9bd48839762dfa65b056ba22ea",
+          "experiments/nina-changes/amendment-01.json": "40c95cb0963fd760e078a27946d4c9aeb62c3f0d26a255374ea4079fa680cf47"
+        }
+      },
+      "statement": "The EXP 006 reviewer arm, reused by reference: the same fence (fence 6), diff-seen classifier, spend guard and amendment 01's chained-git rule, at the files and commit pinned here. The only change is the prompt, which is declared NOT prompt-comparable to EXP 005/006; the isolation matrix is re-run under it (budgeted at about $5, paid, after the cap is signed)."
+    },
+    "baselines": {
+      "mapping": {
+        "file": "experiments/reviewer-keep/baselines.json",
+        "sha256": "380ad025c3bc78539016787d1b3c8545589644cfc3a09c4081439ad767859457"
+      },
+      "tools": [
+        {
+          "id": "tsc-unused",
+          "command": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
+          "packages": {
+            "typescript": "5.9.3",
+            "@types/node": "22.18.0"
+          }
+        },
+        {
+          "id": "eslint-tseslint-recommended",
+          "command": "eslint .",
+          "packages": {
+            "eslint": "9.39.1",
+            "typescript-eslint": "8.46.4"
+          }
+        },
+        {
+          "id": "prettier-check",
+          "command": "prettier --check .",
+          "packages": {
+            "prettier": "3.6.2"
+          }
+        },
+        {
+          "id": "churn",
+          "command": "the frozen churn heuristic below, over git diff --numstat base change and TASK.md",
+          "packages": {}
+        }
+      ],
+      "rulesWithoutTool": [
+        "abide/clearer-code-over-comment",
+        "abide/derive-one-status-type",
+        "abide/single-owner-id-formats",
+        "hunch/correctness/edge-case-regression",
+        "hunch/docs/contradictory-comment",
+        "hunch/tests/weakened-test",
+        "hunch/typescript/async-ordering"
+      ],
+      "or": "OR-of-tools on an item rejects iff any tool mapped to its rule rejects; a tool not mapped to the rule is silent (ACCEPT).",
+      "churn": "**Churn heuristic, frozen:** REJECT iff the change touches any file not named in TASK.md, or changes more than 40 lines (added+deleted). Without a TASK.md, only the 40-line rule applies.",
+      "statement": "The comparator is the frozen rule-filtered off-the-shelf tools: frozen and pinned before authoring, configured per rule from the rule text only (baselines.json). A tool rejects an item iff its output on the change carries a diagnostic its output on the base does not."
+    },
+    "references": [
+      "always-RED (BA 0.5)",
+      "prevalence-random (expected BA 0.5)"
+    ],
+    "jev": "OFF. Decided now, never from data. Jev is a model, not a model-free arm."
+  },
+  "scoring": {
+    "scorer": {
+      "file": "scripts/reviewer-keep-stats.mjs",
+      "sha256": "779c20afbc3fe22f4a89c2d717f84f332b9a8e2332d7dc51d68f19b47e247944"
+    },
+    "primary": {
+      "verbatim": "BA difference = BA(reviewer item-majority) − BA(best baseline). The bar is: difference ≥ 0.20 AND the 95% lower bound of a **class-stratified bootstrap** > 0. The bootstrap resamples items within RED and within GREEN, 10,000 resamples, seed 10010.",
+      "bar": 0.2,
+      "seed": 10010,
+      "resamples": 10000,
+      "interval": "mulberry32(10010) drives the draws (RED items first, then GREEN, in item order); the 95% interval is the percentile interval of the 10,000 sorted differences d: lower d[250], upper d[9749].",
+      "comparatorFixed": "The best of the frozen rule-filtered off-the-shelf tools is selected once, on all items, by the definition below; it is not re-selected per resample.",
+      "itemCall": "The reviewer's item call is the verdict a strict majority of its 3 scheduled runs gave; a run that abstained, failed or was DIFF-BLIND is no decision, and an item without a majority verdict is scored as the wrong answer for its label (EXP 006's mapping).",
+      "reported": "Reported beside it, never judged: the paired TPR and TNR differences, each with an exact McNemar test (two-sided binomial on the discordant pairs).",
+      "matchedBudget": "The primary passes only if ALL three hold: the BA difference >= 0.20, AND the 95% lower bound of the class-stratified bootstrap > 0, AND the reviewer's item-level false-reject rate on GREEN items <= 15% (the same budget the best baseline is selected under). A reviewer above the budget fails the primary whatever its BA.",
+      "reviewerFrBudget": 0.15,
+      "runsPerItem": "The frozen scorer takes the schedule as a parameter: 3 runs per item (pre-registered) or 2 (the $60 fallback). With 2 runs a 1-1 split is no majority and is scored as the wrong answer; any other schedule is refused."
+    },
+    "bestBaseline": [
+      "**Best baseline, one definition everywhere** (gate AND primary): among {each tool, OR-of-tools}, the one with the highest BA subject to FR ≤ 15% on GREEN items.",
+      "Ties → the lower FR, then the fixed tool order [tsc, eslint, prettier, churn, OR].",
+      "If none reaches FR ≤ 15%, the hardness gate passes (published explicitly) and the primary compares against always-RED / prevalence-random, reported as such."
+    ],
+    "secondary": [
+      {
+        "id": "run-level",
+        "statement": "Run-level miss rate <= 15% and false-reject rate <= 15%, judged on the run-level point estimate (a run without a decision is wrong either way)."
+      },
+      {
+        "id": "item-level",
+        "statement": "The item-level majority, published with a Wilson 95% interval and the three-state label: passes / fails / passes, not established at this N."
+      },
+      {
+        "id": "self-agreement",
+        "statement": "Self-agreement >= 0.90: the share of items whose 3 runs all gave the same decided verdict (EXP 006 level)."
+      },
+      {
+        "id": "mapped-unmapped",
+        "statement": "The BA difference between the reviewer and the selected comparator on the items of the 11 rules mapped to at least one tool, and on the items of the 7 rules mapped to none (subgroupDifferences in the scorer). Published, never judged."
+      }
+    ],
+    "hardnessGate": "Before counted runs, the best baseline's balanced accuracy at a false-reject rate <= 15% must be <= 0.75. Otherwise the corpus is 'decidable model-free', and that is published as a finding: these rules were decidable after all. If no baseline reaches FR <= 15%, the gate passes, and that is published explicitly.",
+    "manipulation": "Diff-seen in >= 90% of runs (EXP 006's classifier), or the run is uninformative.",
+    "controls": "The reviewer must call both controls of a batch correctly in >= 90% of batches (all 3), or the run is uninformative."
+  },
+  "floors": [
+    "fewer than 10 eligible rules after the blind filter → \"too few buildable rules\";",
+    "after label-disagreement exclusions, fewer than 30 RED or fewer than 30 GREEN items → \"unlabelable at this N\";",
+    "if the human spot-check disagrees with the agreed label on more than 10% of the spot-checked items → the agreement gate fails."
+  ],
+  "kills": [
+    "Agreement bar missed after one fix-forward round: the corpus is unlabelable, published as such.",
+    "Any floor above reached: published under its own name.",
+    "Hardness gate failed: published as \"decidable model-free\"; no counted run.",
+    "Pre-counted ceiling tripped: stop before the counted runs, disclose, ask the founder."
+  ],
+  "spend": {
+    "capUsd": 80,
+    "capStatus": "$80 proposed — founder sign-off pending; no call before a dated amendment records the signed cap",
+    "preCountedCeilingUsd": 30,
+    "ceilingTrip": "**Pre-counted ceiling trip:** if pre-counted spend reaches $30 before the counted runs, STOP. Do not start the counted runs; disclose; ask the founder.",
+    "estimate": [
+      {
+        "item": "Author (non-Claude)",
+        "lowUsd": 8,
+        "highUsd": 15
+      },
+      {
+        "item": "Blind labeller",
+        "lowUsd": 3,
+        "highUsd": 6
+      },
+      {
+        "item": "Practice",
+        "lowUsd": 4,
+        "highUsd": 4
+      },
+      {
+        "item": "Isolation matrix (new prompt)",
+        "lowUsd": 5,
+        "highUsd": 5
+      },
+      {
+        "item": "Counted runs: 234 runs (72 items and 6 controls, 3 each)",
+        "lowUsd": 38.61,
+        "highUsd": 43.06
+      }
+    ],
+    "countedRuns": 234,
+    "perRunUsd": [
+      0.165,
+      0.184
+    ],
+    "breaker": "A spend-limit circuit breaker as in EXP 007: every paid call appends one ledger line; a call is refused when the recorded total plus a reserve would pass the cap, or a pre-counted call when it would pass the ceiling; a call the client refuses at its spend limit stops the run.",
+    "fallback": "If the founder holds the cap at $60: 2 runs per item (about $27-30 counted), self-agreement measured on 2 runs. The dated amendment that records it changes only the schedule (runsPerItem 2, which the frozen scorer already takes) and the pinned scorer sha256, before any call.",
+    "thisBundle": "$0: this pre-registration made no model or API call."
+  },
+  "notBefore": "the merge time of this pre-registration's odin-rnd PR",
+  "limits": [
+    "One reviewer, one fixture language (TypeScript), a small synthetic fixture: no transfer claim to large codebases.",
+    "not-class membership comes from EXP 007's translator and adjudicator (a Claude family) and inherits their published calibration.",
+    "One rule shown per item: real gates show many rules at once. The one-rule prior applies to the baselines too.",
+    "The baseline tool mapping per rule is a judgement, frozen before items exist and published; 7 of the 18 rules map to no listed tool.",
+    "Plugin skew: abide 12/18, hunch 5/18, jev-axi 1/18; reported per plugin, never reweighted.",
+    "Rust-only rules are excluded to keep one fixture language.",
+    "The prompt is new and NOT comparable to EXP 005/006; their figures are context, not a baseline.",
+    "The fixture was written by a Claude agent; the reviewer is a Claude model. The items and both labels come from non-Claude models.",
+    "Tool versions were pinned without a registry lookup, and base cleanliness is a precondition the installing amendment must prove.",
+    "Item counts assume no exclusions: with 36 RED and 36 GREEN, at most 6 items per class can be excluded for label disagreement before the 30-per-class floor.",
+    "The 7 rules mapped to no tool are, for the comparator, always ACCEPT: on their 14 RED items a perfect reviewer gains 14/36 of TPR over it, about 0.19 of BA advantage on their own (7/36 = 0.194), nearly the whole 0.20 bar. The mapped/unmapped subgroup differences are therefore published beside the primary.",
+    "The no-baseline branch (no candidate within FR <= 15%) is unreachable under this mapping and the 30-per-class floor: prettier is mapped to 2 rules, so it can reject at most 4 GREEN items, an FR of at most 4/30 = 13.3%. The branch stays in the frozen scorer, unused."
+  ],
+  "publication": "every outcome published",
+  "status": "Pre-registered, not yet run",
+  "decisions": [
+    "Items: 18 rules x (2 RED + 2 GREEN) = 72 items, not the design's pre-filter estimate of about 80; counted runs = 3 x (72 items + 6 controls) = 234.",
+    "Control batches: a batch is 6 consecutive eligible rules (24 items), so 3 batches and 6 control items; the 90% control bar therefore means all 3 batches.",
+    "Item call: the verdict of a strict majority of the 3 scheduled runs; abstained, failed and DIFF-BLIND runs are no decision, and an item without a majority verdict is scored as the wrong answer for its label (EXP 006's mapping).",
+    "Bootstrap mechanics: mulberry32 (copied from EXP 007), RED draws then GREEN in item order, percentile interval d[250] and d[9749]; the comparator is selected once and not re-selected per resample; with no eligible baseline the comparator is the constant BA 0.5.",
+    "McNemar: exact two-sided, p = min(1, 2 x P(X <= min(b, c))), X ~ Binomial(b + c, 1/2); TPR pairs on RED items, TNR pairs on GREEN items.",
+    "A tool rejects an item iff its output on the change carries a diagnostic (file, code, message; line-insensitive) absent on the base; a tool not mapped to the rule is silent (ACCEPT); OR-of-tools is over the mapped tools only.",
+    "Tool versions: typescript 5.9.3 (+ @types/node 22.18.0), eslint 9.39.1 with typescript-eslint 8.46.4, prettier 3.6.2, chosen without a registry lookup.",
+    "RULE.md holds the rule text and its context line verbatim (no plugin, no rule id); RULE.md and any TASK.md are committed in the base. The fixture ships TASK.template.md, never a live TASK.md.",
+    "TASK.md's named files for the churn heuristic are the paths listed under its '## Files' heading; lines changed come from git diff --numstat.",
+    "The fixture uses a const-object status set, not a TypeScript enum, so its tests run under node type stripping (erasableSyntaxOnly).",
+    "The EXP 006 reviewer files reused by reference are pinned by sha256 at odin-rnd main 5b5c681 (run_reviewer6, stream6, fence6, scrub6, spend6, guard6, diff-seen, fingerprints, amendment-01).",
+    "not-rules.json is vendored beside the decisions, and the validator recomputes the 50 not-class rules from EXP 007's census records.",
+    "Bars are compared with a 1e-12 floating-point slack, because every rate is a ratio of integer counts.",
+    "The note, its data copy, its home row (directly above the EXP 009 row) and its sitemap entry are committed under site/; the build re-checks them.",
+    "Refute r1: the matched false-reject budget binds the reviewer too: the primary also requires the reviewer's item-level FR on GREEN items <= 15%.",
+    "Refute r1: tool install, version existence (by lockfile integrity) and a clean base under all four tools are preconditions of the first paid call, not of scoring.",
+    "Refute r1: the scorer takes runsPerItem (3 or 2); the comparator is named the frozen rule-filtered off-the-shelf tools; a mapped/unmapped subgroup secondary is reported; the human spot-check is frozen at 8 RED + 8 GREEN by seed 10011."
+  ],
+  "files": {
+    "experiments/reviewer-keep/criteria.md": "a714c0c3648804df25be79edcc561264fd981f3b4b58be42b2d2657ef44ef49b",
+    "experiments/reviewer-keep/eligibility.json": "bceba756d9de166a3eacad1dbc19fd65e94462dce6e90e669ecc7d99927f6879",
+    "experiments/reviewer-keep/not-rules.json": "f3b65c1daa8af241381a957cc62fdc4b8f490124e7cbf605da44b753c1491a86",
+    "experiments/reviewer-keep/baselines.json": "380ad025c3bc78539016787d1b3c8545589644cfc3a09c4081439ad767859457",
+    "experiments/reviewer-keep/prompt.md": "c99e86dd4759be498488136be3b1480d29100feb80176251a73bb4eaf2543563",
+    "experiments/reviewer-keep/fixture.sha256": "53b901072a6054051021faecfc7b93df0fefc8a6de2954762bb544b8aefa40cc",
+    "experiments/reviewer-keep/rules/hunch.json": "251f58f6bdbdb7e050c4f1c504d378b352c17e1fede7af599252baea9ef39f86",
+    "experiments/reviewer-keep/rules/abide.json": "62bf457261c6955e3e1b23964b9005c86eacf1ea3eaaf76051b765d608294db0",
+    "experiments/reviewer-keep/rules/jev-axi.json": "ee009890f52be85c3d557d824cb18981ddfe5a6c20fad0f3d61a38aba68094d5",
+    "scripts/reviewer-keep-stats.mjs": "779c20afbc3fe22f4a89c2d717f84f332b9a8e2332d7dc51d68f19b47e247944"
+  },
+  "claimReading": "In the claim, 'the best frozen off-the-shelf model-free baseline' is the best of the frozen rule-filtered off-the-shelf tools: each tool runs only on the rules baselines.json maps it to, and a tool not mapped to a rule accepts every change to it. 'A matched false-reject budget' means both sides: the baseline is selected among candidates with FR <= 15% on GREEN items, and the primary passes only if the reviewer's item-level FR on GREEN items is also <= 15%.",
+  "comparatorName": "the frozen rule-filtered off-the-shelf tools",
+  "preconditions": [
+    "Before the FIRST paid call of EXP 011 (item authoring, blind labelling, practice or the isolation matrix), a dated amendment must record ALL of the following; until it exists, no paid call is made:",
+    "The four baselines are installed at exactly the pinned versions (typescript 5.9.3, @types/node 22.18.0, eslint 9.39.1, typescript-eslint 8.46.4, prettier 3.6.2), with a committed lockfile for the fixture's tool install.",
+    "Each pinned version is verified to exist in the public registry, by its resolved integrity in that lockfile; a version that does not resolve is replaced by the amendment, before any call, with the replacement disclosed.",
+    "The base fixture is clean under all four: tsc --noEmit --noUnusedLocals --noUnusedParameters, eslint . and prettier --check . report zero diagnostics on it, and the churn heuristic has nothing to judge on the base; the outputs are committed with the amendment.",
+    "The founder-signed cap and the pinned author and labeller model ids are recorded by dated amendment, as stated under spend and labels."
+  ]
+}

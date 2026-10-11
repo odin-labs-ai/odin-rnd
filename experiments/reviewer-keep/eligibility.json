@@ -1,0 +1,352 @@
+[
+ {
+  "ruleId": "abide/clearer-code-over-comment",
+  "eligible": true,
+  "reason": "\"If code needs a comment to be understood, first make the code clearer\" is visible as an explanatory comment on unclear code in a TS diff.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/derive-one-status-type",
+  "eligible": true,
+  "reason": "\"derive one closed decision/status type ... don't scatter conditionals through a method\" is visible in TS source.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/humanize-user-facing-words",
+  "eligible": false,
+  "reason": "\"goes through the humanizer skill first\" requires knowing a process step was run, not visible in the repo.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/match-existing-style",
+  "eligible": true,
+  "reason": "\"Match existing style\" is decidable by comparing the change with the repository's existing code.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/mention-dead-code-dont-delete",
+  "eligible": true,
+  "reason": "\"Don't remove pre-existing dead code unless asked\" is visible as a deletion of unrelated dead code not requested in TASK.md.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/minimum-code",
+  "eligible": true,
+  "reason": "\"Minimum code that solves the problem. Nothing speculative\" is visible as speculative or bloated code in the diff against TASK.md.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/no-drive-by-improvement",
+  "eligible": true,
+  "reason": "\"Don't 'improve' adjacent code, comments, or formatting\" is visible as unrelated edits in the diff.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/no-single-use-abstraction",
+  "eligible": true,
+  "reason": "\"No abstractions for single-use code\" is visible as a new abstraction with one use in the repo.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/no-unasked-refactor",
+  "eligible": true,
+  "reason": "\"Don't refactor things that aren't broken\" is visible as a refactor of working code not asked for in TASK.md.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/no-unrequested-configurability",
+  "eligible": true,
+  "reason": "\"No 'flexibility' or 'configurability' that wasn't requested\" is visible as added options absent from TASK.md.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/prefer-mechanical-check",
+  "eligible": false,
+  "reason": "\"A rule a linter can enforce exactly ... must never be sent to a model\" is about the rule-checking product itself.",
+  "code": "X-META",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/present-interpretations",
+  "eligible": false,
+  "reason": "\"present them - don't pick silently\" is a conversation behavior not visible in source files.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/remove-own-orphans",
+  "eligible": true,
+  "reason": "\"Remove imports/variables/functions that YOUR changes made unused\" is visible as orphaned TS symbols after the diff.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/say-when-simpler-exists",
+  "eligible": false,
+  "reason": "\"If a simpler approach exists, say so. Push back\" is a conversation behavior.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/scope-creep",
+  "eligible": true,
+  "reason": "\"Every changed line should trace directly to the user's request\" is decidable from the diff against TASK.md.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/single-owner-id-formats",
+  "eligible": true,
+  "reason": "\"Never inline-format the same ID in two places\" is visible as duplicated ID formatting in TS source.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/state-a-plan",
+  "eligible": false,
+  "reason": "\"For multi-step tasks, state a brief plan\" is a conversation behavior.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/state-assumptions",
+  "eligible": false,
+  "reason": "\"State your assumptions explicitly. If uncertain, ask\" is a conversation behavior.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/stop-when-unclear",
+  "eligible": false,
+  "reason": "\"If something is unclear, stop. Name what's confusing. Ask\" is a conversation behavior.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/trim-rule-instructions",
+  "eligible": false,
+  "reason": "\"Rule instructions are input tokens billed on every edit\" is about the rule product's own instructions.",
+  "code": "X-META",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/verdict-names-its-rule",
+  "eligible": false,
+  "reason": "\"Every verdict must trace to a named rule\" is about the reviewing product's verdicts.",
+  "code": "X-META",
+  "uncertain": false
+ },
+ {
+  "ruleId": "abide/verifiable-goals",
+  "eligible": false,
+  "reason": "\"Write tests for invalid inputs, then make them pass\" prescribes a working order not decidable from the final repo.",
+  "code": "X-PROCESS",
+  "uncertain": true
+ },
+ {
+  "ruleId": "abide/verify-before-done",
+  "eligible": false,
+  "reason": "\"Verify before claiming done ... exercised against live Jev with latency measured\" needs runtime evidence and a claim in conversation.",
+  "code": "X-PROCESS",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/correctness/edge-case-regression",
+  "eligible": true,
+  "reason": "\"Does the change break a previously supported empty, missing, zero, or boundary-value case?\" is decidable from TS code and tests.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/docs/contradictory-comment",
+  "eligible": true,
+  "reason": "\"leave a factual comment or API description ... contradicting the implementation\" is visible in source.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/rust/error-context",
+  "eligible": false,
+  "reason": "\"Does a changed Rust error conversion merge distinct failures\" is Rust-specific (**/*.rs).",
+  "code": "X-RUST",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/rust/panic-on-recoverable-input",
+  "eligible": false,
+  "reason": "\"Does changed Rust code introduce a reachable panic\" is Rust-specific (**/*.rs).",
+  "code": "X-RUST",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/tests/weakened-test",
+  "eligible": true,
+  "reason": "\"Does an edited test stop detecting a specific incorrect behavior\" is decidable from the test diff.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/typescript/async-ordering",
+  "eligible": true,
+  "reason": "\"Does changed ... TypeScript asynchronous code allow a concrete stale result, duplicate side effect, or out-of-order state update?\" is decidable from TS source.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "hunch/typescript/lossy-serialization",
+  "eligible": true,
+  "reason": "\"conversion between runtime values and serialized or persisted data lose meaning that a visible consumer requires\" is decidable from TS source.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/COMMIT_QUESTIONS/conventional",
+  "eligible": false,
+  "reason": "\"Does `subject` follow the Conventional Commits format\" judges the commit subject.",
+  "code": "X-COMMIT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/COMMIT_QUESTIONS/describes_diff",
+  "eligible": false,
+  "reason": "\"Does `subject` (together with `body`) accurately describe the main change\" needs the commit message.",
+  "code": "X-COMMIT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/COMMIT_QUESTIONS/focused",
+  "eligible": false,
+  "reason": "\"How many independent changes does `diff` contain?\" is a count whose violation threshold is not in the text.",
+  "code": "X-WITHHELD",
+  "uncertain": true
+ },
+ {
+  "ruleId": "jev-axi/COMMIT_QUESTIONS/subject_quality",
+  "eligible": false,
+  "reason": "\"How useful is `subject` to someone reading the history\" judges the commit subject (with a withheld scale).",
+  "code": "X-COMMIT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/PROGRESS_WORKER/worker_stuck",
+  "eligible": false,
+  "reason": "\"Do the recent `events` show the worker stuck\" needs the session's tool-call events.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/PUSH_QUESTIONS/generated_by_hand",
+  "eligible": true,
+  "reason": "\"Does `diff` hand-edit files that a build or tool normally produces\" is visible as edits to generated or vendored files in the repo.",
+  "code": "ELIGIBLE",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-axi/PUSH_QUESTIONS/migration_without_note",
+  "eligible": false,
+  "reason": "\"while neither `commits` nor `diff` mentions how to roll it back\" requires the commit subjects to decide a violation.",
+  "code": "X-COMMIT",
+  "uncertain": true
+ },
+ {
+  "ruleId": "jev-engineering/pack/data/verdict",
+  "eligible": false,
+  "reason": "\"What should the gate do with this data operation?\" judges a proposed tool action.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-engineering/pack/message/verdict",
+  "eligible": false,
+  "reason": "\"What should the gate do with this message?\" judges a proposed tool action.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-engineering/pack/money/verdict",
+  "eligible": false,
+  "reason": "\"What should the gate do with this transaction?\" judges a proposed tool action.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-engineering/pack/publish/verdict",
+  "eligible": false,
+  "reason": "\"What should the gate do with this release?\" judges a proposed tool action.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ },
+ {
+  "ruleId": "jev-engineering/policy/verdict",
+  "eligible": false,
+  "reason": "\"What should the gate do with this tool call?\" judges a tool call.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ },
+ {
+  "ruleId": "limpet/r1",
+  "eligible": false,
+  "reason": "\"Don't edit files outside the scope of the task\" could be read from a diff, but it is checked on the stop transcript and tool calls.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": true
+ },
+ {
+  "ruleId": "limpet/r2",
+  "eligible": false,
+  "reason": "\"Back up claims with tool output\" needs the transcript and tool output.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "limpet/r3",
+  "eligible": false,
+  "reason": "\"If asked for a proposal, don't implement it\" is judged on the conversation, though a TASK.md asking for a proposal might show it.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": true
+ },
+ {
+  "ruleId": "limpet/r5",
+  "eligible": false,
+  "reason": "\"Don't hand work to the human ... with a record of having tried\" needs the transcript.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "limpet/r6",
+  "eligible": false,
+  "reason": "\"Fix problems you find before stopping ... If you can't fix it, say why\" needs the transcript.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "limpet/r8",
+  "eligible": false,
+  "reason": "\"Don't stop to offer things that weren't asked for\" judges the agent's final message.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "limpet/r9",
+  "eligible": false,
+  "reason": "\"Answer in the language the human writes in\" judges conversation messages.",
+  "code": "X-TRANSCRIPT",
+  "uncertain": false
+ },
+ {
+  "ruleId": "pi-verdict/jev/verdict",
+  "eligible": false,
+  "reason": "\"You are a permission classifier for tool calls\" judges a tool call in a condensed transcript.",
+  "code": "X-TOOLCALL",
+  "uncertain": false
+ }
+]
