@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 010",
+    "slug": "document-store",
+    "title": "Would you notice it is not MongoDB?",
+    "statusText": "Pre-registered — not yet run",
+    "note": "Written, hashed and published before the counted run. Nothing in this record may change after publication; a later change is a new, dated amendment, refuted and published first.",
+    "authoredOn": "2026-10-10",
+    "summary": "On the operations Odin actually performs on document-shaped data, does a permissively licensed wire layer over PostgreSQL (FerretDB 2.7.0 with DocumentDB) answer exactly like MongoDB Community 9.0.2, as seen by the official driver?"
+  },
+  "freeze": {
+    "status": "frozen",
+    "rule": "Frozen at publication: the operations, arms, corpus, comparator, controls, P1 and the decision rule. The runner that executes the frozen corpus is published by amendment 01 before any counted run (the EXP 008 precedent); the amendment may add only the runner and the O20/O21 capability rows, and its merge sets the not-before.",
+    "toFreeze": []
+  },
+  "question": "Odin needs a document store it owns. If a wire-compatible layer under permissive licences already answers like MongoDB on the operations Odin uses, owning means adopting and forking it; if it does not, the gap is what Odin would have to build.",
+  "cleanRoom": {
+    "file": "experiments/document-store/CLEAN-ROOM.md",
+    "statement": "Commands are written from public documentation only; no MongoDB server source, test file or specification text is in this repository. The reference server is run, not read."
+  },
+  "operations": [
+    {
+      "id": "O01",
+      "name": "insertOne / insertMany, unordered, with a per-item result",
+      "usedByOdin": true,
+      "evidence": "memory-service create path and its non-transactional batch endpoint (per-item 201/207)",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O02",
+      "name": "replaceOne with upsert (whole document)",
+      "usedByOdin": true,
+      "evidence": "memory-service write replaces the whole value",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O03",
+      "name": "findOne by _id",
+      "usedByOdin": true,
+      "evidence": "memory-service read by (namespace, key)",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O04",
+      "name": "find with $eq / anchored $regex prefix on top-level fields, $gte/$lte on timestamps",
+      "usedByOdin": true,
+      "evidence": "memory-service query filter: namespace prefix, key, owner, time ranges",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O05",
+      "name": "find with $eq on a nested field",
+      "usedByOdin": true,
+      "evidence": "one database-side compare-and-set guard; otherwise emulated in application code",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O06",
+      "name": "find with $in / $all array membership",
+      "usedByOdin": true,
+      "evidence": "dependency membership and role containment queries",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O07",
+      "name": "sort + limit + skip, countDocuments, cursor batches",
+      "usedByOdin": true,
+      "evidence": "memory-service pagination with a total count; relational take/skip/orderBy",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O08",
+      "name": "updateOne $set on a nested path",
+      "usedByOdin": true,
+      "evidence": "rare: one nested JSON set on a policy document",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O09",
+      "name": "updateOne $inc",
+      "usedByOdin": true,
+      "evidence": "version counters and access counters",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O10",
+      "name": "updateOne $addToSet",
+      "usedByOdin": true,
+      "evidence": "membership arrays appended only when absent",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O11",
+      "name": "$push / $pull",
+      "usedByOdin": false,
+      "evidence": "not found in current code",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O12",
+      "name": "findOneAndUpdate as compare-and-set on a version",
+      "usedByOdin": true,
+      "evidence": "conditional update with a version increment; one store does it non-atomically today",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O13",
+      "name": "aggregate $group + $count",
+      "usedByOdin": true,
+      "evidence": "memory-service stats by namespace prefix and owner; relational groupBy",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O14",
+      "name": "aggregate $facet / $lookup",
+      "usedByOdin": false,
+      "evidence": "not found in current code",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O15",
+      "name": "createIndex single-field and compound, unique, hint",
+      "usedByOdin": true,
+      "evidence": "metadata indexes; unique (namespace, key)",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O16",
+      "name": "partial unique index",
+      "usedByOdin": true,
+      "evidence": "unique (tenant, external id) only where the id is present",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O17",
+      "name": "vector search (HNSW cosine)",
+      "usedByOdin": true,
+      "evidence": "pgvector in the memory service and the agent memory store",
+      "inExperiment": "excluded",
+      "why": "MongoDB Community serves vector search through a separate search process; a capability check, not a wire-compatibility case."
+    },
+    {
+      "id": "O18",
+      "name": "text index / $text",
+      "usedByOdin": false,
+      "evidence": "search runs in an application-side index, not the database",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O19",
+      "name": "TTL index",
+      "usedByOdin": false,
+      "evidence": "expiry is an application sweep today (and collides with append-only)",
+      "inExperiment": "measured"
+    },
+    {
+      "id": "O20",
+      "name": "change stream with a resume token",
+      "usedByOdin": false,
+      "evidence": "only a non-durable in-process feed exists; this is a wanted capability",
+      "inExperiment": "secondary"
+    },
+    {
+      "id": "O21",
+      "name": "multi-document transaction",
+      "usedByOdin": true,
+      "evidence": "relational transactions writing a row and its audit row together",
+      "inExperiment": "secondary"
+    },
+    {
+      "id": "O22",
+      "name": "advisory / pessimistic lock",
+      "usedByOdin": true,
+      "evidence": "a transaction-scoped advisory lock",
+      "inExperiment": "excluded",
+      "why": "No MongoDB equivalent; an application-level primitive."
+    },
+    {
+      "id": "O23",
+      "name": "database-enforced append-only collections",
+      "usedByOdin": true,
+      "evidence": "a trigger refuses update and delete on audit namespaces",
+      "inExperiment": "excluded",
+      "why": "Application-level in any engine."
+    },
+    {
+      "id": "O24",
+      "name": "per-document version history, rollback and diff",
+      "usedByOdin": true,
+      "evidence": "a history row per version with rollback and diff endpoints",
+      "inExperiment": "excluded",
+      "why": "Application-level in any engine."
+    },
+    {
+      "id": "O25",
+      "name": "key-order-preserving storage of hashed payloads",
+      "usedByOdin": true,
+      "evidence": "a decision record requires the hashed payload be stored as text because JSONB reorders keys",
+      "inExperiment": "measured",
+      "measuredBy": "cases O01-03 and O01-04 (key order and numeric types survive a round trip)"
+    },
+    {
+      "id": "O26",
+      "name": "per-tenant database or schema isolation",
+      "usedByOdin": true,
+      "evidence": "one database per tenant; one schema per memory instance",
+      "inExperiment": "excluded",
+      "why": "Deployment-level, not a wire command."
+    }
+  ],
+  "arms": {
+    "reference": {
+      "image": "docker.io/library/mongo:9.0.2",
+      "digest": "sha256:bac22ea7710d774103dcad3ec8ac13cba1eb378f488e3ce8a6b3a1adf2ba9dcc",
+      "licence": "SSPL-1.0 (run unmodified as a black box; not redistributed)",
+      "topology": "single-node replica set (so sessions, transactions and change streams exist)"
+    },
+    "candidate": {
+      "images": [
+        {
+          "image": "ghcr.io/ferretdb/ferretdb:2.7.0",
+          "digest": "sha256:5706414241eb84f0515512c37b46db0f1b1eac9e5ceb7e4c2523211c184b1985",
+          "licence": "Apache-2.0"
+        },
+        {
+          "image": "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0",
+          "digest": "sha256:2386795ec2aa7ae559304361979f1dc5708d383ee9020ae63dadc2940dfe58f7",
+          "licence": "PostgreSQL + MIT (DocumentDB extension)"
+        }
+      ],
+      "topology": "one FerretDB process in front of one PostgreSQL 17 with the DocumentDB extension, default settings"
+    }
+  },
+  "driver": {
+    "package": "mongodb",
+    "version": "7.7.0",
+    "integrity": "sha512-XG1xXEqyouAV8GCb3PuRaujofeXKpAJAPvXYWZgHl6Dz4QHSJ1nRLl0+GpqaLTwKvC0RFE9truOur34RNFY1nw==",
+    "licence": "Apache-2.0"
+  },
+  "corpus": {
+    "file": "experiments/document-store/corpus/cases.json",
+    "sha256": "716d34d69881109a4ad0529c459234820a3ea793198f0c232a92a4a012b64caa",
+    "cases": 61,
+    "usedCases": 55,
+    "byOperation": {
+      "O01": 4,
+      "O02": 3,
+      "O03": 3,
+      "O04": 6,
+      "O05": 4,
+      "O06": 4,
+      "O07": 7,
+      "O08": 4,
+      "O09": 4,
+      "O10": 3,
+      "O11": 2,
+      "O12": 4,
+      "O13": 4,
+      "O14": 2,
+      "O15": 3,
+      "O16": 2,
+      "O18": 1,
+      "O19": 1
+    },
+    "authoring": "61 commands written on 2026-10-10 from the public documentation pages each case links; every case runs on a freshly dropped database (setup commands, then the measured command), with explicit _id values so no server-generated value enters a reply. Written before either server was run."
+  },
+  "comparator": {
+    "file": "scripts/document-store-compare.mjs",
+    "sha256": "88ecb85d78f3f59ee15d6ecf8a257bbe22d0624ce34eaa95b7e487ea04cbdcf0",
+    "normalisation": [
+      "session metadata ($clusterTime, operationTime, electionId, opTime, lastCommittedOpTime, $configTime, $topologyTime) is split off the reply's top level only: excluded from P1, its presence and leaf types (keeping a binary's subType) compared in S5",
+      "errmsg is dropped only as a server-written envelope field (reply top level, each writeErrors entry, writeConcernError); a field of that name inside any document is compared",
+      "every other error field (code, codeName, errorLabels, index, keyPattern, keyValue, errInfo) is compared; keyPattern, keyValue and errInfo are documents, key order significant",
+      "a cursor id that is a canonical int64 becomes 0 when zero and \"<open>\" otherwise; any other cursor id becomes {\"$malformedCursorId\": <its JSON>}, equal to no valid id",
+      "reply envelopes compared as maps; returned documents (cursor batches, findAndModify value) compared with key order significant",
+      "types compared exactly (canonical Extended JSON v2)",
+      "a batch is a multiset (code-unit ordering of canonical JSON) only when its case declares unordered: true",
+      "a case with drain: true is a transcript (the reply and every getMore reply, at most 10 getMores): each transcript must be non-empty and well formed (firstBatch first, nextBatch after, valid open ids until the last reply, which is exhausted or an error); then equal length and pairwise equal, or for an unordered case the same multiset of drained documents, the same set of envelopes and the same ending"
+    ],
+    "teeth": "scripts/document-store-compare.test.mjs: planted divergences in returned documents, errors, structured write errors, findAndModify values, malformed cursor ids and drained transcripts must each be reported; session-metadata values, envelope key order, errmsg text, an open cursor's id value, byte-distinct but canonically equal strings in an unordered batch, and a different split of the same unordered documents across batches must not."
+  },
+  "controls": {
+    "positive": "Reference against itself: the full corpus is run twice against two fresh reference containers; every case must compare equal.",
+    "negative": "Planted divergence: for every case, the runner also compares the reference reply (or transcript) against plantDivergence() of it (scripts/document-store-compare.mjs, frozen): the field \"__exp010_planted\": true appended to the first returned document when the reply has one, to the reply envelope otherwise, and to the first reply of a drained transcript. Every one must be reported as different.",
+    "calibrationBar": "If the positive control shows any difference, or the negative control misses any mutation, the comparator is miscalibrated: the run is void, published as void, and P1 is not computed."
+  },
+  "primary": {
+    "P1": {
+      "claim": "The candidate is indistinguishable from the reference on at least 95% of the cases that exercise operations Odin uses today.",
+      "n": 55,
+      "metric": "indistinguishable cases / used cases, each case compared once after one execution per arm",
+      "interval": "Wilson 95% interval reported beside the point estimate; the decision uses the point estimate as pre-registered here"
+    }
+  },
+  "decision": {
+    "adopt": 0.95,
+    "adoptAndBuild": 0.8,
+    "rule": "P1 >= 0.95: adopt the candidate as the base of an Odin-owned store (fork, spec, governance layer). 0.80 <= P1 < 0.95: adopt and build the failing operation classes. P1 < 0.80: adoption is refuted for Odin's needs; stay on PostgreSQL JSONB and treat building a wire layer as the open question.",
+    "refutedBy": "P1 < 0.95 refutes the claim; the band it falls in selects the decision."
+  },
+  "secondary": [
+    {
+      "id": "S1",
+      "what": "Per operation class: indistinguishable share, with every divergent case published with its comparator reason."
+    },
+    {
+      "id": "S2",
+      "what": "The 6 cases on operations Odin does not use today (O11, O14, O18, O19), reported separately, never pooled into P1."
+    },
+    {
+      "id": "S3",
+      "what": "Change streams (O20) and multi-document transactions (O21): does the candidate accept the command at all, and do events/commits match? Reported as capability rows; added to the corpus by amendment 01 with the runner, because they need sessions and a tailing cursor."
+    },
+    {
+      "id": "S4",
+      "what": "Descriptive latency: median wall time per case per arm on the same runner. No claim; one runner, one execution."
+    },
+    {
+      "id": "S5",
+      "what": "Session metadata: per case, whether the candidate's split-off session metadata has the same shape (fields present, leaf types) as the reference's. A missing $clusterTime/operationTime means drivers cannot use causal consistency against the candidate; reported per case and in total, never pooled into P1."
+    }
+  ],
+  "execution": {
+    "where": "A GitHub Actions runner in this public repository, both arms as service containers pinned by digest; never an operator laptop.",
+    "runner": "scripts/document-store-run.mjs, published by amendment 01 before any counted run; it executes this frozen corpus and comparator unchanged.",
+    "notBefore": "The merge time of amendment 01 in this repository; no counted run before it.",
+    "attempts": 1,
+    "environment": "Node 22, the pinned driver installed from the frozen lockfile; one counted run; a failed run is published as failed, never retried silently."
+  },
+  "spend": {
+    "capUsd": 0,
+    "statement": "No model call and no paid service: two pinned container images on a standard runner."
+  },
+  "limits": [
+    "One version of each server, default settings, single node; no claim about sharding, failover or performance at scale.",
+    "The corpus covers the operations Odin uses today as found on 2026-10-10; it is not a general compatibility suite and a high P1 says nothing about operations outside it.",
+    "Commands are compared through one driver (Node.js); other drivers can expose differences this one hides.",
+    "The reference is MongoDB's behaviour, not a specification: where MongoDB's own behaviour is a bug, the candidate is still scored against it.",
+    "The source studied (r8.3.11) and the reference binary (9.0.2) differ: 9.0.2 has no public source tag yet. Behavioural claims are taken from the binary's replies, not the notes.",
+    "P1 measures operation results, not session semantics: the reference runs as a replica set and gossips cluster time; a candidate that does not is scored in S5, not in P1. A reader must read P1 and S5 together before claiming drop-in compatibility."
+  ],
+  "files": {
+    "experiments/document-store/corpus/cases.json": "716d34d69881109a4ad0529c459234820a3ea793198f0c232a92a4a012b64caa",
+    "scripts/document-store-compare.mjs": "88ecb85d78f3f59ee15d6ecf8a257bbe22d0624ce34eaa95b7e487ea04cbdcf0",
+    "experiments/document-store/CLEAN-ROOM.md": "a42717417189cbdd849add0510b6c9d6c75706cc1962c1ee12bb5f0b2a1c1a1b"
+  },
+  "sources": [
+    {
+      "id": "ferretdb",
+      "url": "https://github.com/FerretDB/FerretDB/releases/tag/v2.7.0",
+      "claim": "FerretDB 2.7.0, Apache-2.0, works best with DocumentDB v0.107.0-ferretdb-2.7.0"
+    },
+    {
+      "id": "documentdb",
+      "url": "https://github.com/documentdb/documentdb",
+      "claim": "DocumentDB PostgreSQL extension, MIT"
+    },
+    {
+      "id": "node-driver",
+      "url": "https://www.npmjs.com/package/mongodb",
+      "claim": "Official Node.js driver 7.7.0, Apache-2.0"
+    },
+    {
+      "id": "mongodb-downloads",
+      "url": "https://downloads.mongodb.org/current.json",
+      "claim": "9.0.2 is a production release; the Community macOS arm64 build sha256 9a30e942...6de3 was verified before inspection"
+    },
+    {
+      "id": "bson",
+      "url": "https://bsonspec.org/",
+      "claim": "BSON specification, CC0"
+    }
+  ]
+}
