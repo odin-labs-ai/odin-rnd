@@ -102,3 +102,21 @@ test('built routes remain inactive with the published null API origin', () => {
     assert.deepEqual(result, { events: [], listeners: {} }, page.route);
   }
 });
+
+// vp-rnd-frontier-residuals R7. The note generators (laya-journal, nina-changes-note, blueprint-floor-note,
+// reviewer-keep-note, ...) already put the collector in their <head>; build.mjs used to add a second copy to
+// every built page regardless. Checked over ALL built HTML, not only the canonical routes above, because the
+// field notes are exactly the pages routeKey() does not list.
+test('every built HTML page loads the collector module exactly once', () => {
+  const doubled = [];
+  const missing = [];
+  const pages = walk(dist()).filter(file => file.endsWith('.html'));
+  assert(pages.length > 7, 'expected the field notes as well as the canonical routes');
+  for (const file of pages) {
+    const count = moduleEntries({ file, html: readFileSync(file, 'utf8') }).filter(entry => entry === activity).length;
+    if (count > 1) doubled.push(`${file.slice(dist().length + 1)} (${count})`);
+    if (count === 0) missing.push(file.slice(dist().length + 1));
+  }
+  assert.deepEqual(doubled, [], 'pages that load assets/activity.mjs more than once');
+  assert.deepEqual(missing, [], 'pages that never load assets/activity.mjs');
+});
