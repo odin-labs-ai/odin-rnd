@@ -1,6 +1,7 @@
 // The decoding half of the site check (vp-rnd-frontier-residuals R4). check.mjs scans the built site's raw text for
 // restricted terms; a term written as hex or base64 passed it. check.mjs is pinned by EXP 006 and EXP 007 (their
-// runners.sha256), so it is not edited: this separate tripwire runs after it in `pnpm check`, reads the SAME
+// runners.sha256), and so is package.json (EXP 007's pre-registration record), so neither is edited: this separate
+// tripwire runs in `pnpm test` (check-decoded-site.test.mjs, over a disposable build of the site), reads the SAME
 // fingerprint list from check.mjs's source (so there is one list), decodes hex and base64/base64url tokens, and scans
 // only the decodings that are readable text. Raw text stays check.mjs's job. Like check.mjs this is a tripwire, not a
 // semantic privacy audit: it decodes one layer, and a term split across tokens or encoded twice is not found.

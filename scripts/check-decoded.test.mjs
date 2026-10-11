@@ -1,6 +1,6 @@
 // vp-rnd-frontier-residuals R4: the site check scans raw text only, so a restricted term written as hex or base64
 // passed it. check.mjs is pinned by EXP 006 and EXP 007 (their runners.sha256), so the decoding pass is a separate
-// tripwire, check-decoded.mjs, run by `pnpm check` after check.mjs. It reads the same fingerprint list from
+// tripwire, check-decoded.mjs, run over the built site by check-decoded-site.test.mjs. It reads the same list from
 // check.mjs's source. Proved here with synthetic terms; the real list is only checked for parity.
 import test from 'node:test';
 import assert from 'node:assert/strict';
