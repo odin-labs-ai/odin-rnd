@@ -1,4 +1,4 @@
-// The experiment ledger at the top of the home page's Experiments section: every published experiment, its stage
+// The experiment ledger at the top of the home page's Experiments section: every experiment this site publishes, its stage
 // and the status sentence its own field-note row already states. Nothing here is authored per experiment. The bench
 // recipes come from the recorded report, EXP 004 from the committed Laya record, and every pre-registered experiment
 // from the pre-registration published under dist/data/<slug>/, so a new experiment or new results appear without an
@@ -103,7 +103,7 @@ export function ledgerEntries(html, report, dist = 'dist') {
 
 export function renderLedger(entries) {
   const items = entries.map(e => `<li><a href="${escape(e.href)}"><span class="technical">${escape(e.id)}</span><span class="ledger-title">${escape(e.title)}</span><span class="ledger-stage technical">${escape(e.stage)}</span>${e.status ? `<span class="ledger-status">${escape(e.status)}</span>` : ''}</a></li>`).join('');
-  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment, and where it stands.</h3><p>EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited, or says it has no note yet. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
+  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment on this site, and where it stands.</h3><p>It lists each experiment whose pre-registration this site publishes; a record published only in the repository joins the list once its site copy does. EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited, or says it has no note yet. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
 }
 
 /** Replaces the page's ledger marker with the ledger built from `dist`. */
