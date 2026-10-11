@@ -10,7 +10,7 @@
   "scripts": {
     "experiment": "node scripts/run-experiments.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs && node scripts/check-decoded.mjs",
     "test": "node --test scripts/*.test.mjs",
     "serve": "node scripts/serve.mjs"
   },
