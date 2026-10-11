@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "kind": "vendored-rules",
+  "experiment": "EXP 011",
+  "plugin": "hunch",
+  "repo": "Kelbie/hunch",
+  "sha": "c2c680ed2c12c42c8a1b668a4b0b0858c5f463a6",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Kelbie",
+  "source": {
+    "file": "experiments/blueprint-floor/rules/hunch.json",
+    "sha256": "3a3877d4e2f9ce977b609695a71c7e5abe99ae989a60bc094fa5971cb1ef3455"
+  },
+  "licenseFile": {
+    "file": "experiments/blueprint-floor/rules/licenses/hunch.LICENSE",
+    "sha256": "16b89cdeda4c522f238b3bcaacea44ce4013384f5f14ac41515344bc7096521f"
+  },
+  "statement": "The eligible hunch rule records, copied verbatim (every field) from EXP 007's vendored rule file at the sha256 above. The licence is referenced, not duplicated.",
+  "ruleIds": [
+    "hunch/correctness/edge-case-regression",
+    "hunch/docs/contradictory-comment",
+    "hunch/tests/weakened-test",
+    "hunch/typescript/async-ordering",
+    "hunch/typescript/lossy-serialization"
+  ],
+  "recordSha256": {
+    "hunch/correctness/edge-case-regression": "c684437ed7c75fdc44709fcb81354d99888514265d5bc6335ecd73f7c4a92dc0",
+    "hunch/docs/contradictory-comment": "48aa895ea643eaeda22a33d89e8a72470ba9072a7345b7639f5d62069c43e572",
+    "hunch/tests/weakened-test": "3950b86dad6c01ca571d4991bdc907c8bee05e317199ba328015bc5f1861a4e4",
+    "hunch/typescript/async-ordering": "e226d30f6d2e33286627449c9a7991dc11b726fe58685378b27e19586b77314c",
+    "hunch/typescript/lossy-serialization": "78505c5f3bea4966dee03504a9f0d188947c8b65a1a08aede15fa82202ca8e0d"
+  },
+  "rules": [
+    {
+      "ruleId": "hunch/correctness/edge-case-regression",
+      "sourcePath": "packages/core/src/presets.ts",
+      "line": 26,
+      "kind": "question",
+      "text": "Does the change break a previously supported empty, missing, zero, or boundary-value case? Require evidence in the removed behavior, a visible caller, or an explicit contract that this case must remain supported. Do not flag an intentional contract change consistently implemented in the visible code.",
+      "flags": null,
+      "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "preset": "hunch:recommended",
+        "message": "A previously supported edge case may no longer behave correctly.",
+        "level": "warn",
+        "threshold": 0.85,
+        "criteria": {
+          "true": "The visible change provides concrete evidence of this problem.",
+          "false": "The concern is absent, or the change is intentional and consistent with the visible contract."
+        }
+      }
+    },
+    {
+      "ruleId": "hunch/docs/contradictory-comment",
+      "sourcePath": "packages/core/src/presets.ts",
+      "line": 34,
+      "kind": "question",
+      "text": "Does a code or comment change leave a factual comment or API description in the hunk contradicting the implementation visible there? Do not judge prose style or demand extra comments.",
+      "flags": null,
+      "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "preset": "hunch:recommended",
+        "message": "A comment or API description may contradict the changed behavior.",
+        "level": "warn",
+        "threshold": 0.85,
+        "criteria": {
+          "true": "The visible change provides concrete evidence of this problem.",
+          "false": "The concern is absent, or the change is intentional and consistent with the visible contract."
+        }
+      }
+    },
+    {
+      "ruleId": "hunch/tests/weakened-test",
+      "sourcePath": "packages/core/src/presets.ts",
+      "line": 30,
+      "kind": "question",
+      "text": "Does an edited test stop detecting a specific incorrect behavior that it previously rejected, while that behavior remains incorrect under the visible contract? Judge the behavior still tested, not the assertion method name. Exclude equivalent assertions, replacement coverage visible in the hunk, and tests updated for an intentional contract change.",
+      "flags": null,
+      "context": "The question is asked about one hunk of a pull request's diff and nothing else.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "preset": "hunch:recommended",
+        "message": "An edited test may now accept behavior it is still meant to reject.",
+        "level": "warn",
+        "threshold": 0.85,
+        "criteria": {
+          "true": "The visible change provides concrete evidence of this problem.",
+          "false": "The concern is absent, or the change is intentional and consistent with the visible contract."
+        }
+      }
+    },
+    {
+      "ruleId": "hunch/typescript/async-ordering",
+      "sourcePath": "packages/core/src/presets.ts",
+      "line": 41,
+      "kind": "question",
+      "text": "Does changed JavaScript or TypeScript asynchronous code allow a concrete stale result, duplicate side effect, or out-of-order state update? Identify the overlapping operations and incorrect outcome in the visible code. Merely finding an unawaited promise, async callback, or missing cancellation is insufficient.",
+      "flags": null,
+      "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "preset": "hunch:typescript",
+        "message": "Overlapping asynchronous operations may publish stale state or repeat a side effect.",
+        "files": [
+          "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+        ],
+        "level": "warn",
+        "threshold": 0.85,
+        "criteria": {
+          "true": "The visible change provides concrete evidence of this problem.",
+          "false": "The concern is absent, or the change is intentional and consistent with the visible contract."
+        }
+      }
+    },
+    {
+      "ruleId": "hunch/typescript/lossy-serialization",
+      "sourcePath": "packages/core/src/presets.ts",
+      "line": 46,
+      "kind": "question",
+      "text": "Does changed JavaScript or TypeScript conversion between runtime values and serialized or persisted data lose meaning that a visible consumer requires, such as Date/timezone meaning, Map/Set entries, or the distinction between absent and null? Require both the changed conversion and evidence of the affected contract. Do not flag serialization or type assertions by themselves.",
+      "flags": null,
+      "context": "The question is asked about one hunk of a pull request's diff and nothing else. Applies only to files matching: **/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "preset": "hunch:typescript",
+        "message": "A data conversion may discard meaning that its consumer relies on.",
+        "files": [
+          "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+        ],
+        "level": "warn",
+        "threshold": 0.85,
+        "criteria": {
+          "true": "The visible change provides concrete evidence of this problem.",
+          "false": "The concern is absent, or the change is intentional and consistent with the visible contract."
+        }
+      }
+    }
+  ]
+}

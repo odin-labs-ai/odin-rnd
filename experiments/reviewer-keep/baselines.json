@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "kind": "baselines",
+  "experiment": "EXP 011",
+  "frozen": "Decided from the rule text only (eligibility.json, rules/*.json), before any item exists, and frozen with the pre-registration. Each rule lists the off-the-shelf model-free tools that plausibly speak to it; a rule may list none.",
+  "tools": [
+    {
+      "id": "tsc-unused",
+      "name": "tsc",
+      "command": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
+      "packages": {
+        "typescript": "5.9.3",
+        "@types/node": "22.18.0"
+      },
+      "config": "fixture/tsconfig.json"
+    },
+    {
+      "id": "eslint-tseslint-recommended",
+      "name": "eslint",
+      "command": "eslint .",
+      "packages": {
+        "eslint": "9.39.1",
+        "typescript-eslint": "8.46.4"
+      },
+      "config": "fixture/eslint.config.mjs (typescript-eslint recommended, not type-checked)"
+    },
+    {
+      "id": "prettier-check",
+      "name": "prettier",
+      "command": "prettier --check .",
+      "packages": {
+        "prettier": "3.6.2"
+      },
+      "config": "fixture/.prettierrc.json"
+    },
+    {
+      "id": "churn",
+      "name": "churn",
+      "command": "the frozen churn heuristic below, over git diff --numstat base change and TASK.md",
+      "packages": {},
+      "config": "none"
+    }
+  ],
+  "rejectRule": "A tool REJECTs an item iff its output on the change commit carries at least one diagnostic that its output on the base commit does not (keyed by file, rule or error code, and message; line and column ignored). churn REJECTs by its own definition. A tool not mapped to the item's rule is silent on that item: ACCEPT.",
+  "orRule": "OR-of-tools on an item: REJECT iff any tool mapped to the item's rule REJECTs; a rule with no mapped tool has OR = ACCEPT on all its items.",
+  "churnHeuristic": "**Churn heuristic, frozen:** REJECT iff the change touches any file not named in TASK.md, or changes more than 40 lines (added+deleted). Without a TASK.md, only the 40-line rule applies.",
+  "churnReading": "The files named in TASK.md are the paths listed one per line under its \"## Files\" heading (fixture/TASK.template.md); lines changed = the sum of added and deleted lines in git diff --numstat base change.",
+  "bestBaseline": [
+    "**Best baseline, one definition everywhere** (gate AND primary): among {each tool, OR-of-tools}, the one with the highest BA subject to FR ≤ 15% on GREEN items.",
+    "Ties → the lower FR, then the fixed tool order [tsc, eslint, prettier, churn, OR].",
+    "If none reaches FR ≤ 15%, the hardness gate passes (published explicitly) and the primary compares against always-RED / prevalence-random, reported as such."
+  ],
+  "tieOrder": [
+    "tsc",
+    "eslint",
+    "prettier",
+    "churn",
+    "OR"
+  ],
+  "references": [
+    "always-RED",
+    "prevalence-random"
+  ],
+  "versionsNote": "Exact versions chosen without a registry lookup (this bundle makes no network call).",
+  "rules": [
+    {
+      "ruleId": "abide/clearer-code-over-comment",
+      "tools": [],
+      "reason": "No listed tool reads what a comment explains or whether a rename or extraction would replace it."
+    },
+    {
+      "ruleId": "abide/derive-one-status-type",
+      "tools": [],
+      "reason": "typescript-eslint recommended has no branching or complexity rule, and no other listed tool reads the shape of control flow."
+    },
+    {
+      "ruleId": "abide/match-existing-style",
+      "tools": [
+        "prettier-check",
+        "eslint-tseslint-recommended"
+      ],
+      "reason": "Formatting and lint style are what prettier --check and eslint check, against the fixture's own configuration."
+    },
+    {
+      "ruleId": "abide/mention-dead-code-dont-delete",
+      "tools": [
+        "churn"
+      ],
+      "reason": "Deleting unrelated dead code touches a file the task does not name."
+    },
+    {
+      "ruleId": "abide/minimum-code",
+      "tools": [
+        "tsc-unused",
+        "eslint-tseslint-recommended",
+        "churn"
+      ],
+      "reason": "Speculative code often leaves unused locals or parameters, and bloat shows as diff size."
+    },
+    {
+      "ruleId": "abide/no-drive-by-improvement",
+      "tools": [
+        "prettier-check",
+        "churn"
+      ],
+      "reason": "Adjacent edits touch files the task does not name or grow the diff; a hand reformat can differ from the formatter's output."
+    },
+    {
+      "ruleId": "abide/no-single-use-abstraction",
+      "tools": [
+        "churn"
+      ],
+      "reason": "A new abstraction grows the diff and may add a file the task does not name."
+    },
+    {
+      "ruleId": "abide/no-unasked-refactor",
+      "tools": [
+        "churn"
+      ],
+      "reason": "A refactor touches code outside the task's files or grows the diff."
+    },
+    {
+      "ruleId": "abide/no-unrequested-configurability",
+      "tools": [
+        "tsc-unused",
+        "churn"
+      ],
+      "reason": "An added option that nothing sets can leave an unused parameter, and extra options grow the diff."
+    },
+    {
+      "ruleId": "abide/remove-own-orphans",
+      "tools": [
+        "tsc-unused",
+        "eslint-tseslint-recommended"
+      ],
+      "reason": "Unused imports, locals and parameters are what noUnusedLocals, noUnusedParameters and no-unused-vars report."
+    },
+    {
+      "ruleId": "abide/scope-creep",
+      "tools": [
+        "churn"
+      ],
+      "reason": "Lines that do not trace to the request show as files outside the task or as diff size."
+    },
+    {
+      "ruleId": "abide/single-owner-id-formats",
+      "tools": [],
+      "reason": "No listed tool compares how an identifier is formatted across call sites."
+    },
+    {
+      "ruleId": "hunch/correctness/edge-case-regression",
+      "tools": [],
+      "reason": "No listed tool runs the code or its tests, and a dropped boundary case need not change a type."
+    },
+    {
+      "ruleId": "hunch/docs/contradictory-comment",
+      "tools": [],
+      "reason": "No listed tool reads a comment against the code it describes."
+    },
+    {
+      "ruleId": "hunch/tests/weakened-test",
+      "tools": [],
+      "reason": "No listed tool runs the tests or compares what an assertion rejects."
+    },
+    {
+      "ruleId": "hunch/typescript/async-ordering",
+      "tools": [],
+      "reason": "typescript-eslint recommended without type information has no floating-promise or ordering rule."
+    },
+    {
+      "ruleId": "hunch/typescript/lossy-serialization",
+      "tools": [
+        "tsc-unused"
+      ],
+      "reason": "A conversion that changes a field's type surfaces as a type error under strict tsc."
+    },
+    {
+      "ruleId": "jev-axi/PUSH_QUESTIONS/generated_by_hand",
+      "tools": [
+        "churn"
+      ],
+      "reason": "Hand-editing generated or vendored output touches files the task does not name."
+    }
+  ],
+  "precondition": "Before the FIRST paid call of EXP 011 (authoring, labelling, practice or matrix), a dated amendment must show: the four tools installed at exactly these versions with a committed lockfile; each version verified to exist by its resolved integrity in that lockfile; and the base fixture clean under all four (zero diagnostics). No paid call is made before it.",
+  "comparatorName": "the frozen rule-filtered off-the-shelf tools"
+}

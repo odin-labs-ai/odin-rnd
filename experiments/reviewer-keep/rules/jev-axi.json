@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "vendored-rules",
+  "experiment": "EXP 011",
+  "plugin": "jev-axi",
+  "repo": "shiftynick/jev-axi",
+  "sha": "044fae73a05d5699c4b5c47073f1ffc29d9aa82d",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Nicholas Underwood (shiftynick)",
+  "source": {
+    "file": "experiments/blueprint-floor/rules/jev-axi.json",
+    "sha256": "b6856f2e723a3c76d6ac5aac7377b44585136cd66a4aeb0cf27e83a389a2e375"
+  },
+  "licenseFile": {
+    "file": "experiments/blueprint-floor/rules/licenses/jev-axi.LICENSE",
+    "sha256": "0d3ec93d780f31677b36e049dce13ffdea9ea4da1480f560b210adf908c2ae1b"
+  },
+  "statement": "The eligible jev-axi rule records, copied verbatim (every field) from EXP 007's vendored rule file at the sha256 above. The licence is referenced, not duplicated.",
+  "ruleIds": [
+    "jev-axi/PUSH_QUESTIONS/generated_by_hand"
+  ],
+  "recordSha256": {
+    "jev-axi/PUSH_QUESTIONS/generated_by_hand": "94b0cd897628d0a954e59d8ceee857d8a334a60d17b6c80f70b35e9e4c45046d"
+  },
+  "rules": [
+    {
+      "ruleId": "jev-axi/PUSH_QUESTIONS/generated_by_hand",
+      "sourcePath": "src/recipes/questions.ts",
+      "line": 250,
+      "kind": "question",
+      "text": "Does `diff` hand-edit files that a build or tool normally produces -- bundled or minified output, compiled assets, vendored third-party directories, or generated clients -- as opposed to source files and dependency lockfiles?",
+      "flags": null,
+      "context": "The question is asked about everything a push would send: the diff (with credentials redacted), the changed files, the commit subjects and the branch.",
+      "maxClass": null,
+      "inputKind": "diff",
+      "stratum": "primary",
+      "withheld": {
+        "set": "PUSH_QUESTIONS",
+        "type": "noul",
+        "criteria": "{\n      true: \"Edits inside dist, build, vendor, node_modules, or a file whose header says it is generated\",\n      false: \"Only source, config, docs, tests, or a lockfile updated alongside its manifest\",\n    }"
+      }
+    }
+  ]
+}

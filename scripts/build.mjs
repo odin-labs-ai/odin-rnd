@@ -27,6 +27,8 @@ import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCur
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
 import { addLedger } from './experiment-ledger.mjs';
 import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
+import { assertSiteCurrent as assertExp011SiteCurrent } from './reviewer-keep-note.mjs';
+import { publishedPath as exp011PublishedPath, recordPath as exp011RecordPath } from './reviewer-keep-prereg.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
 if (report.runs.length !== 3 || report.runs.some(run => !run.passed)) throw new Error('All three real experiments must discriminate before publication');
@@ -65,6 +67,8 @@ copyFileSync(exp007AmendmentRecordPath, exp007AmendmentPublishedPath);
 // EXP 007's census results, once committed: opened by the pinned census gate (a record it refuses stops the build), published byte for byte.
 const exp007Census = exp007CensusPublication();
 if (exp007Census) copyFileSync(exp007ResultsPath, exp007PublishedResultsPath);
+// EXP 011's pre-registration: validated and rebuilt from the files; its committed page, data copy, home row and sitemap entry must be exactly its render.
+const exp011 = assertExp011SiteCurrent();
 rmSync('dist', { recursive: true, force: true });
 cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
@@ -76,6 +80,7 @@ if (sha256(readFileSync(`dist/${exp006PublishedPath.slice('site/'.length)}`)) !=
 for (const { file, sha256: want } of exp006Published) if (sha256(readFileSync(`dist/${exp006DataDir.slice('site/'.length)}/${file}`)) !== want) throw new Error('Published EXP 006 '+file+' differs from the committed record');
 if (sha256(readFileSync(`dist/${exp007PublishedPath.slice('site/'.length)}`)) !== exp007.sha256) throw new Error('Published EXP 007 pre-registration differs from '+exp007RecordPath);
 if (sha256(readFileSync(`dist/${exp007AmendmentPublishedPath.slice('site/'.length)}`)) !== exp007a01.sha256) throw new Error('Published EXP 007 amendment 01 differs from '+exp007AmendmentRecordPath);
+if (sha256(readFileSync(`dist/${exp011PublishedPath.slice('site/'.length)}`)) !== exp011.sha256) throw new Error('Published EXP 011 pre-registration differs from '+exp011RecordPath);
 // The EXP 007 note: the pre-registration's committed render plus amendment 01's dated section, from its record.
 writeFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, amendExp007Note(readFileSync(exp007ArticlePath, 'utf8'), exp007a01.record, exp007a01.sha256));
 // The EXP 007 note, once measured: its results section first and a head that states the measured result, from the gate.
