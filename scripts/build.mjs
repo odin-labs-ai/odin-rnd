@@ -16,6 +16,7 @@ import { checkAmendment, amendmentPath, publishedPath as amendmentPublishedPath 
 import { amendNote, qualifyHome } from './jev-gate-amendment-note.mjs';
 import { checkAmendment02, amendment02Path, published02Path } from './jev-gate-amendment-02.mjs';
 import { amendNote02, qualifyHome02 } from './jev-gate-amendment-02-note.mjs';
+import { checkErratum, erratumPath, publishedErratumPath, amendNoteErratum } from './jev-gate-erratum.mjs';
 import { checkResults, resultsPath, publishedResultsPath, amendNoteResults, qualifyHomeResults } from './jev-gate-results-site.mjs';
 import { publishedPath as exp006PublishedPath, recordPath as exp006RecordPath } from './nina-changes-prereg.mjs';
 import { addJournalRow as addExp006Row, articlePath as exp006ArticlePath, assertNoteCurrent as assertExp006NoteCurrent } from './nina-changes-note.mjs';
@@ -41,6 +42,9 @@ copyFileSync(amendmentPath, amendmentPublishedPath);
 // Amendment 02 names amendment 01 and the pre-registration by sha256 and is published beside them.
 const amendment02 = checkAmendment02();
 copyFileSync(amendment02Path, published02Path);
+// Erratum 01 names the pre-registration by sha256, corrects one citation link beside it, and is published byte for byte.
+const erratum = checkErratum();
+copyFileSync(erratumPath, publishedErratumPath);
 // The measured results, recomputed from the committed runs by the frozen results.mjs, are published beside them.
 const results = checkResults();
 if (results) copyFileSync(resultsPath, publishedResultsPath);
@@ -66,6 +70,7 @@ cpSync('site', 'dist', { recursive: true });
 if (sha256(readFileSync('dist/data/jev-gate/preregistration.json')) !== preregistration.sha256) throw new Error('Published pre-registration differs from '+recordPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-01.json')) !== amendment.sha256) throw new Error('Published amendment differs from '+amendmentPath);
 if (sha256(readFileSync('dist/data/jev-gate/amendment-02.json')) !== amendment02.sha256) throw new Error('Published amendment 02 differs from '+amendment02Path);
+if (sha256(readFileSync('dist/data/jev-gate/erratum-01.json')) !== erratum.sha256) throw new Error('Published erratum differs from '+erratumPath);
 if (results && sha256(readFileSync('dist/data/jev-gate/results.json')) !== results.sha256) throw new Error('Published results differ from '+resultsPath);
 if (sha256(readFileSync(`dist/${exp006PublishedPath.slice('site/'.length)}`)) !== exp006.sha256) throw new Error('Published EXP 006 pre-registration differs from '+exp006RecordPath);
 for (const { file, sha256: want } of exp006Published) if (sha256(readFileSync(`dist/${exp006DataDir.slice('site/'.length)}/${file}`)) !== want) throw new Error('Published EXP 006 '+file+' differs from the committed record');
@@ -75,8 +80,8 @@ if (sha256(readFileSync(`dist/${exp007AmendmentPublishedPath.slice('site/'.lengt
 writeFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, amendExp007Note(readFileSync(exp007ArticlePath, 'utf8'), exp007a01.record, exp007a01.sha256));
 // The EXP 007 note, once measured: its results section first and a head that states the measured result, from the gate.
 if (exp007Census) { if (sha256(readFileSync(`dist/${exp007PublishedResultsPath.slice('site/'.length)}`)) !== exp007Census.resultsSha256) throw new Error('Published EXP 007 results differ from '+exp007ResultsPath); writeFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, amendExp007NoteResults(readFileSync(`dist/${exp007ArticlePath.slice('site/'.length)}`, 'utf8'), exp007Census)); }
-// The built note is the parent's committed render plus each amendment's dated section, all from their records.
-const amendedNote = amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256);
+// The built note is the parent's committed render plus each amendment's dated section and the erratum's dated line, all from their records.
+const amendedNote = amendNoteErratum(amendNote02(amendNote(readFileSync(articlePath, 'utf8'), amendment.record, amendment.sha256), amendment02.record, amendment02.sha256), erratum.record);
 const measuredNote = results ? amendNoteResults(amendedNote, results) : amendedNote;
 writeFileSync(`dist/${articlePath.slice('site/'.length)}`, exp006Results ? qualifyExp005Note(measuredNote, exp006Results) : measuredNote);
 // The EXP 006 note: the pre-registration's committed render, plus the results section once measured.

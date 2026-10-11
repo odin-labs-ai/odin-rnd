@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "erratum",
+  "id": "erratum-01",
+  "experiment": "EXP 005",
+  "title": "Erratum 01: the DOI link for Newcombe (1998) in the pre-registration does not resolve",
+  "date": "2026-10-11",
+  "statusText": "Erratum 11 Oct 2026",
+  "parent": {
+    "file": "preregistration.json",
+    "sha256": "30bdcf07a6d3dc14383858bb8f9ef64d8419dc2c59f8c2f3725b09f7bdc8fb1a",
+    "published": "The pre-registration stays byte-identical and served. This note names it by sha256 and corrects one citation link beside it."
+  },
+  "scope": "This erratum corrects one citation link only; it changes no method, analysis, data, decision or result.",
+  "corrections": [
+    {
+      "sourceId": "newcombe-1998",
+      "field": "url",
+      "was": "https://doi.org/10.1002/(SICI)1097-0258(19981030)17:20%3C2635::AID-SIM954%3E3.0.CO;2-C",
+      "now": "https://doi.org/10.1002/(SICI)1097-0258(19981130)17:22%3C2635::AID-SIM954%3E3.0.CO;2-C",
+      "evidence": {
+        "checkedOn": "2026-10-11",
+        "wasHandle": "The doi.org handle API returns responseCode 100 (handle not found) for 10.1002/(SICI)1097-0258(19981030)17:20<2635::AID-SIM954>3.0.CO;2-C.",
+        "nowHandle": "The doi.org handle API returns responseCode 1 for 10.1002/(SICI)1097-0258(19981130)17:22<2635::AID-SIM954>3.0.CO;2-C, with a URL value on onlinelibrary.wiley.com.",
+        "crossref": {
+          "title": "Improved confidence intervals for the difference between binomial proportions based on paired data",
+          "journal": "Statistics in Medicine",
+          "volume": "17",
+          "issue": "22",
+          "pages": "2635-2650",
+          "published": "1998-11-30"
+        },
+        "difference": "The two DOIs differ only in the issue part: (19981030)17:20 in the record, (19981130)17:22 in Crossref. The record's label, Statistics in Medicine 17 (1998), is correct and stays."
+      }
+    }
+  ],
+  "statement": "the DOI link in the frozen record does not resolve; the correct link is {now}. The record is unchanged."
+}
