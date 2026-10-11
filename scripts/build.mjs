@@ -24,6 +24,7 @@ import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 import { publishedPath as exp007PublishedPath, recordPath as exp007RecordPath } from './blueprint-floor-prereg.mjs';
 import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCurrent } from './blueprint-floor-note.mjs';
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
+import { addLedger } from './experiment-ledger.mjs';
 import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
 validateProvenance(report);
@@ -110,6 +111,8 @@ html = addExp007Row(html, exp007.record);
 if (exp007Census) html = qualifyHomeExp007(html, exp007Census);
 // nina's entry in the tools list: only on an EXP 006 PASS with an explicit held:false (nothing while no results exist).
 html = addNinaEntry(html, loadEntryData());
+// The experiment ledger reads the finished field-note rows and the published records, so it runs last.
+html = addLedger(html, report);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 mkdirSync('dist/data', { recursive: true });
