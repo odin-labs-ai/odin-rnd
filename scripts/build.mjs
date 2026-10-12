@@ -142,3 +142,10 @@ for (const file of htmlFiles('dist')) {
   const source = readFileSync(file,'utf8');
   writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
 }
+// A way back to the main Odin Labs site in every built page's header (founder ask 2026-10-11). Fails closed on a page without exactly one site header.
+const parentSiteLink = '<a class="parent-site-link" href="https://odin-labs.ai/"><span aria-hidden="true">←</span> Back to odin-labs.ai</a>';
+for (const file of htmlFiles('dist')) {
+  const source = readFileSync(file,'utf8');
+  if ((source.match(/<header class="site-header[ "]/g) || []).length !== 1) throw new Error('Expected exactly one site header in '+file);
+  writeFileSync(file,source.replace(/(<header class="site-header[^"]*"[^>]*>[\s\S]*?)<\/header>/,`$1${parentSiteLink}</header>`));
+}
