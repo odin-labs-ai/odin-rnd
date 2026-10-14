@@ -1,4 +1,4 @@
-// Motion that tells the story, and only when the reader scrolls. Elements animate once when scrolling brings them into
+// Motion that tells the story, and only when the reader scrolls (reader input, not merely a scroll event). Elements animate once when scrolling brings them into
 // view, and the four-step story follows the scroll. Whatever is in view when the page opens, or comes into view by any
 // other means (a resize, a restored position, a jump link), takes its final state at once, with no transition.
 // Without JavaScript, with reduced motion, or without IntersectionObserver, nothing is hidden and every element shows
@@ -11,11 +11,21 @@ export function storyProgress(rect, viewportHeight) {
   return Math.min(1, Math.max(0, distance > 0 ? travelled / distance : 1));
 }
 
-/** True while the reader is scrolling: set by a scroll event, cleared shortly after the last one. */
-export function scrollTracker(win, quietMs = 250) {
+/** Keys that scroll the page when focus is not in a field. */
+export const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Spacebar']);
+
+/**
+ * True while the READER is scrolling. A scroll event alone never counts: browsers also fire it for restored positions,
+ * jump links and script calls. Reader input (wheel, touch, a scroll key, a pointer press on the scrollbar or page) opens
+ * a short window; scroll events inside it, such as momentum after a flick, keep it open.
+ */
+export function scrollTracker(win, { inputMs = 700, momentumMs = 250, now = () => Date.now() } = {}) {
   let until = 0;
-  win.addEventListener('scroll', () => { until = Date.now() + quietMs; }, { passive: true });
-  return () => Date.now() < until;
+  const intent = () => { until = Math.max(until, now() + inputMs); };
+  for (const type of ['wheel', 'touchstart', 'touchmove', 'pointerdown']) win.addEventListener(type, intent, { passive: true });
+  win.addEventListener('keydown', event => { if (SCROLL_KEYS.has(event.key)) intent(); });
+  win.addEventListener('scroll', () => { if (now() < until) until = Math.max(until, now() + momentumMs); }, { passive: true });
+  return () => now() < until;
 }
 
 /** Applies `change` with every transition switched off, then restores transitions after the next paint. */
@@ -58,7 +68,7 @@ function init() {
   for (const element of revealed) if (!element.classList.contains('is-in')) reveal.observe(element);
 
   let frame = 0;
-  const onScroll = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; stories.forEach(updateStory); }); };
+  const onScroll = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; const update = () => stories.forEach(updateStory); if (scrolling()) update(); else instantly(update); }); };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', () => instantly(() => stories.forEach(updateStory)), { passive: true });
 }

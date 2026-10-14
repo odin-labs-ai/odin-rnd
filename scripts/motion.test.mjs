@@ -22,15 +22,27 @@ test('every start state and transition sits behind html.motion and a no-preferen
   for (const [, seconds] of css.matchAll(/(?:transition|animation):[^;}]*?\s(\d*\.?\d+)s/g)) assert.ok(Number(seconds) <= 0.5, `duration ${seconds}s is at most 500 ms`);
 });
 
-test('only a scroll counts as the reader moving the page (refute pr39 r1 #3)', () => {
+test('only reader input opens the motion window; a bare scroll event never does (refute pr39 r1 #3, recheck)', () => {
   const listeners = {};
+  let clock = 1000;
   const win = { addEventListener: (type, fn) => { listeners[type] = fn; } };
-  const scrolling = scrollTracker(win, 50);
-  assert.equal(scrolling(), false, 'nothing has scrolled when the page opens');
+  const scrolling = scrollTracker(win, { inputMs: 700, momentumMs: 250, now: () => clock });
+  assert.equal(scrolling(), false, 'nothing has happened when the page opens');
   listeners.scroll();
-  assert.equal(scrolling(), true);
-  const until = Date.now() + 80; while (Date.now() < until) { /* wait past the quiet window */ }
-  assert.equal(scrolling(), false, 'a later intersection (resize, jump link) is not a scroll');
+  assert.equal(scrolling(), false, 'a restored position, jump link or script scroll is not the reader');
+  listeners.keydown({ key: 'a' });
+  assert.equal(scrolling(), false, 'typing is not scrolling');
+  listeners.wheel();
+  assert.equal(scrolling(), true, 'a wheel turn is the reader');
+  clock += 650; listeners.scroll(); clock += 200;
+  assert.equal(scrolling(), true, 'momentum scroll inside the window keeps it open');
+  clock += 300;
+  assert.equal(scrolling(), false, 'the window closes once input and momentum stop');
+  listeners.keydown({ key: 'PageDown' });
+  assert.equal(scrolling(), true, 'a scroll key is the reader');
+  clock += 2000; listeners.scroll();
+  assert.equal(scrolling(), false, 'a later automatic scroll does not reopen it');
+  for (const type of ['touchstart', 'touchmove', 'pointerdown']) assert.equal(typeof listeners[type], 'function', `${type} counts as reader input`);
 });
 
 test('motion.mjs reveals what is in view at load without a transition and gates observer reveals on scrolling', () => {
@@ -38,4 +50,5 @@ test('motion.mjs reveals what is in view at load without a transition and gates 
   assert.match(js, /instantly\(\(\) => \{\s*document\.documentElement\.classList\.add\('motion'\);/, 'the motion class is set inside an instant change');
   assert.match(js, /if \(scrolling\(\)\) show\(\); else instantly\(show\);/);
   assert.match(js, /addEventListener\('resize', \(\) => instantly\(/, 'a resize never animates');
+  assert.match(js, /if \(scrolling\(\)\) update\(\); else instantly\(update\);/, 'story steps follow an automatic scroll without a transition');
 });
