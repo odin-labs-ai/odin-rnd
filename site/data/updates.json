@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "site": "https://odin-labs-ai.github.io/odin-rnd/",
+  "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
+  "updates": [
+    {
+      "key": "exp-005-erratum-01",
+      "experiment": "EXP 005",
+      "title": "Jev as a fast gate",
+      "kind": "Erratum",
+      "text": "Erratum 01: the DOI link for Newcombe (1998) in the pre-registration does not resolve.",
+      "href": "journal/jev-as-a-fast-gate.html",
+      "source": "data/jev-gate/erratum-01.json",
+      "date": "2026-10-11"
+    },
+    {
+      "key": "exp-011-preregistration",
+      "experiment": "EXP 011",
+      "title": "Where does a model reviewer earn its keep?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/where-a-model-reviewer-earns-its-keep.html",
+      "source": "data/reviewer-keep/preregistration.json",
+      "date": "2026-10-11"
+    },
+    {
+      "key": "exp-009-results",
+      "experiment": "EXP 009",
+      "title": "Unload leaves no trace",
+      "kind": "Results",
+      "text": "P1 refuted: 1 of 400 H1 trials diverged from R0 (95% Wilson upper bound 1.40%). P2 supported: 0 silent-inert and 0 false-inactive kernel configurations of 120. All 5 validity gates passed, so the record is informative.",
+      "href": "journal/composable-harness-results.html",
+      "source": "data/composable-harness/results.json",
+      "date": "2026-10-10"
+    },
+    {
+      "key": "exp-008-amendment-02",
+      "experiment": "EXP 008",
+      "title": "Hand over the cache, not the text",
+      "kind": "Amendment",
+      "text": "Amendment 02: the zero-prefill counter fix and a fresh counted run.",
+      "href": "journal/latent-handoff-pre-registration.html",
+      "source": "data/latent-handoff/amendment-02.json",
+      "date": "2026-10-09"
+    },
+    {
+      "key": "exp-007-results",
+      "experiment": "EXP 007",
+      "title": "Which of your gate's rules need a model at all?",
+      "kind": "Results",
+      "text": "Pre-registered; measured 7 Oct 2026: the premise is refuted.",
+      "href": "journal/which-rules-need-a-model.html#results",
+      "source": "data/blueprint-floor/results.json",
+      "date": "2026-10-08"
+    },
+    {
+      "key": "exp-007-amendment-01",
+      "experiment": "EXP 007",
+      "title": "Which of your gate's rules need a model at all?",
+      "kind": "Amendment",
+      "text": "Amendment 01: one re-call for the translator calls the client's spend limit refused.",
+      "href": "journal/which-rules-need-a-model.html#results",
+      "source": "data/blueprint-floor/amendment-01.json",
+      "date": "2026-10-07"
+    },
+    {
+      "key": "exp-009-preregistration",
+      "experiment": "EXP 009",
+      "title": "Unload leaves no trace",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/composable-harness-results.html",
+      "source": "data/composable-harness/preregistration.json",
+      "date": "2026-10-07"
+    },
+    {
+      "key": "exp-007-preregistration",
+      "experiment": "EXP 007",
+      "title": "Which of your gate's rules need a model at all?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/which-rules-need-a-model.html#results",
+      "source": "data/blueprint-floor/preregistration.json",
+      "date": "2026-10-03"
+    },
+    {
+      "key": "exp-008-amendment-01",
+      "experiment": "EXP 008",
+      "title": "Hand over the cache, not the text",
+      "kind": "Amendment",
+      "text": "Amendment 01: the confirmatory analysis script.",
+      "href": "journal/latent-handoff-pre-registration.html",
+      "source": "data/latent-handoff/amendment-01.json",
+      "date": "2026-10-02"
+    },
+    {
+      "key": "exp-008-preregistration",
+      "experiment": "EXP 008",
+      "title": "Hand over the cache, not the text",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/latent-handoff-pre-registration.html",
+      "source": "data/latent-handoff/preregistration.json",
+      "date": "2026-10-02"
+    },
+    {
+      "key": "exp-006-results",
+      "experiment": "EXP 006",
+      "title": "nina reviews the change",
+      "kind": "Results",
+      "text": "Pre-registered; measured 01 OCT 2026: bar met, nina in the spotlight. Amended 01 Oct 2026, before any counted run.",
+      "href": "journal/nina-reviews-the-change.html#amendment-01",
+      "source": "data/nina-changes/results.json",
+      "date": "2026-10-01"
+    },
+    {
+      "key": "exp-006-amendment-01",
+      "experiment": "EXP 006",
+      "title": "nina reviews the change",
+      "kind": "Amendment",
+      "text": "Amendment 01: a digest is not a restricted term, a compound git call counts, and the client's built-in reads are disclosed.",
+      "href": "journal/nina-reviews-the-change.html#amendment-01",
+      "source": "data/nina-changes/amendment-01.json",
+      "date": "2026-10-01"
+    },
+    {
+      "key": "exp-006-preregistration",
+      "experiment": "EXP 006",
+      "title": "nina reviews the change",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/nina-reviews-the-change.html#amendment-01",
+      "source": "data/nina-changes/preregistration.json",
+      "date": "2026-09-30"
+    },
+    {
+      "key": "exp-005-results",
+      "experiment": "EXP 005",
+      "title": "Jev as a fast gate",
+      "kind": "Results",
+      "text": "Pre-registered; measured 29 Sep 2026: the claim is refuted.",
+      "href": "journal/jev-as-a-fast-gate.html",
+      "source": "data/jev-gate/results.json",
+      "date": "2026-09-29"
+    },
+    {
+      "key": "exp-005-amendment-01",
+      "experiment": "EXP 005",
+      "title": "Jev as a fast gate",
+      "kind": "Amendment",
+      "text": "Amendment 01: nina 0.34.0 and a pre-registered spotlight bar.",
+      "href": "journal/jev-as-a-fast-gate.html",
+      "source": "data/jev-gate/amendment-01.json",
+      "date": "2026-09-28"
+    },
+    {
+      "key": "exp-005-amendment-02",
+      "experiment": "EXP 005",
+      "title": "Jev as a fast gate",
+      "kind": "Amendment",
+      "text": "Amendment 02: the reviewer's file and git tools are fenced to its workspace, in two layers.",
+      "href": "journal/jev-as-a-fast-gate.html",
+      "source": "data/jev-gate/amendment-02.json",
+      "date": "2026-09-28"
+    },
+    {
+      "key": "exp-005-preregistration",
+      "experiment": "EXP 005",
+      "title": "Jev as a fast gate",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/jev-as-a-fast-gate.html",
+      "source": "data/jev-gate/preregistration.json",
+      "date": "2026-09-28"
+    },
+    {
+      "key": "tool-laya-browser",
+      "experiment": null,
+      "title": "Laya in your browser",
+      "kind": "Tool",
+      "text": "Run Laya, an open-weight typed-decision model, entirely on your own device: type a situation and a choice, score or yes/no question and read calibrated probabilities.",
+      "href": "projects/laya-browser/",
+      "source": "projects/laya-browser/",
+      "date": "2026-09-25"
+    },
+    {
+      "key": "exp-004-measured",
+      "experiment": "EXP 004",
+      "title": "System-1 decisions without lock-in: Jev vs open-weight Laya",
+      "kind": "Measured",
+      "text": "Measured on one laptop, 48 authored rows.",
+      "href": "journal/system-1-decisions-without-lock-in.html",
+      "source": "data/laya-vs-jev/manifest.json",
+      "date": "2026-09-24"
+    },
+    {
+      "key": "exp-001-003-recorded",
+      "experiment": "EXP 001–003",
+      "title": "Three blueprint recipes",
+      "kind": "Recorded",
+      "text": "Each recipe applies one unchanged architectural rule to a conforming tree and to a deliberately drifted tree; the engine scored every conforming tree GREEN and every drifted tree RED.",
+      "href": "#bench",
+      "source": "data/experiments.json",
+      "date": "2026-09-23"
+    },
+    {
+      "key": "tool-ci-witness",
+      "experiment": null,
+      "title": "CI Witness",
+      "kind": "Tool",
+      "text": "Turn an environment-sensitive failure into an inspectable comparison: the failing assertion, a controlled reproduction and a correction that keeps the agreed checks.",
+      "href": "projects/ci-witness/",
+      "source": "projects/ci-witness/",
+      "date": "2026-09-23"
+    },
+    {
+      "key": "tool-migration-witness",
+      "experiment": null,
+      "title": "Migration Witness",
+      "kind": "Tool",
+      "text": "Make the acceptance decision explicit: compare the old and new component against examples you approve, with intentional changes recorded separately.",
+      "href": "projects/migration-witness/",
+      "source": "projects/migration-witness/",
+      "date": "2026-09-23"
+    },
+    {
+      "key": "tool-test-witness",
+      "experiment": null,
+      "title": "Test Witness",
+      "kind": "Tool",
+      "text": "A passing suite can miss a broken calculation.",
+      "href": "projects/test-witness/",
+      "source": "projects/test-witness/",
+      "date": "2026-09-23"
+    },
+    {
+      "key": "note-a-passing-pipeline",
+      "experiment": null,
+      "title": "A passing pipeline was not yet a verified release.",
+      "kind": "Field note",
+      "text": "What a missing coverage report taught us about making “done” explainable.",
+      "href": "journal/a-passing-pipeline.html",
+      "source": "journal/a-passing-pipeline.html",
+      "date": "2026-09-07"
+    },
+    {
+      "key": "note-why-open-the-floor",
+      "experiment": null,
+      "title": "Why open the factory floor?",
+      "kind": "Field note",
+      "text": "Tools, experiments and a place to show work while it is still becoming something.",
+      "href": "journal/why-open-the-floor.html",
+      "source": "journal/why-open-the-floor.html",
+      "date": "2026-09-07"
+    }
+  ]
+}

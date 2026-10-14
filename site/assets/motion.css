@@ -1,0 +1,115 @@
+/* The updates feed, the four-step story and the two ways of working. Every rule outside html.motion is the final,
+   readable state; html.motion (set by motion.mjs, never under reduced motion) only adds the start states and one-shot
+   transitions into them, played once when an element first enters the viewport. Nothing is tied to scroll position. */
+
+/* Updates feed: home block and the updates page */
+.update-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.update-item>a{display:grid;grid-template-columns:120px 190px minmax(0,1fr);gap:4px 28px;padding:20px 0;border-bottom:1px solid var(--rule);text-decoration:none;align-items:baseline}
+.update-item>a:hover .update-title,.update-item>a:focus-visible .update-title{text-decoration:underline}
+.update-item time{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--steel)}
+.update-kind{color:var(--brand);font-size:10px}
+.update-title{font-family:var(--display);font-weight:600;font-size:19px;line-height:1.3}
+.update-text{grid-column:3;color:var(--steel);font-size:15px;line-height:1.55;max-width:72ch}
+.updates-feed .section-heading p a{color:var(--brand);font-weight:600}
+.update-month{margin-top:48px}.update-month:first-child{margin-top:0}
+.update-month h2{margin:0 0 14px;font-size:11px;color:var(--steel)}
+.updates-all{padding-top:24px}
+@media(max-width:900px){.update-item>a{grid-template-columns:100px minmax(0,1fr)}.update-title,.update-text{grid-column:2}}
+@media(max-width:560px){.update-item>a{grid-template-columns:minmax(0,1fr)}.update-kind,.update-title,.update-text{grid-column:1}.update-item>a{gap:6px}}
+
+/* The four-step story */
+.story-rail{position:relative}
+.story-track{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--rule)}
+.story-fill{display:block;height:100%;background:var(--primary);transform-origin:left center}
+.story-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px}
+.story-step{padding-top:34px;position:relative}
+.story-step::before{content:'';position:absolute;top:3px;left:0;width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid var(--primary)}
+.story-index{display:block;color:var(--brand)}
+.story-step h3{font-size:22px;margin:18px 0 8px}
+.story-step p{margin:0;font-size:15px;color:var(--steel);max-width:34ch}
+.story-figure{position:relative;height:118px;margin-top:14px;border:1px solid var(--rule);background:var(--panel);overflow:hidden}
+.figure-blueprint{background:#18393d;border-color:#18393d;background-image:linear-gradient(rgba(130,179,194,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(130,179,194,.18) 1px,transparent 1px);background-size:14px 14px}
+.sheet-line{position:absolute;left:16px;top:22px;width:62%;height:2px;background:#82b3c2;transform-origin:left}
+.sheet-line.short{top:36px;width:38%}
+.sheet-rule{position:absolute;left:16px;bottom:18px;font-family:var(--mono);font-size:11px;color:#eef6ed;border:1px solid #82b3c2;padding:4px 8px}
+.part{position:absolute;top:50%;font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:8px 10px;border:1px solid var(--paper);background:var(--ground);transform:translateY(-50%)}
+.part-a{left:12%}.part-b{left:54%;border-style:dashed}
+.gate-post{position:absolute;left:50%;top:14px;bottom:14px;width:6px;margin-left:-3px;background:var(--paper)}
+.chip{position:absolute;font-family:var(--mono);font-size:10px;padding:6px 8px;border:1px solid;white-space:nowrap;background:var(--ground)}
+.chip-pass{top:24px;left:calc(50% + 14px);border-color:var(--primary);color:var(--primary)}
+.chip-stop{bottom:24px;right:calc(50% + 14px);border-color:#b42318;color:#b42318}
+.record-line{display:block;height:2px;width:70%;margin:20px 0 0 16px;background:var(--steel);opacity:.55;transform-origin:left}
+.record-line+.record-line{margin-top:12px}.record-line.short{width:44%}
+.record-stamp{position:absolute;right:14px;bottom:14px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#92502d;border:2px solid #92502d;padding:4px 8px;transform:rotate(-6deg)}
+@media(max-width:900px){.story-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.story-track{display:none}}
+@media(max-width:560px){.story-steps{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:28px}.story-track{display:block;left:6px;right:auto;top:0;bottom:0;width:2px;height:auto}.story-fill{transform-origin:center top}.story-step{padding-top:0}.story-step::before{left:-29px;top:2px}}
+
+/* Two ways of working */
+.mode-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+.mode-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:32px;align-items:center;padding:32px;border:1px solid var(--rule);border-radius:12px;background:var(--panel);overflow:hidden}
+.mode-card h3{font-size:28px;margin:10px 0}
+.mode-card p{margin:0;color:var(--steel);font-size:16px}
+.mode-card .technical{color:var(--brand)}
+.door{display:flex;align-items:center;gap:16px}
+.door-frame{position:relative;width:78px;height:112px;border:3px solid var(--paper);background:#0f2a21;perspective:420px}
+.door-light{position:absolute;inset:0;background:linear-gradient(180deg,#6ee7b7,#047857);opacity:0}
+.door-panel{position:absolute;inset:0;background:var(--paper);transform-origin:left center;transform:rotateY(0deg);box-shadow:inset -6px 0 0 rgba(0,0,0,.18)}
+.door-knob{position:absolute;right:9px;top:52%;width:7px;height:7px;border-radius:50%;background:#a7f3d0}
+.door-lock{position:absolute;left:50%;top:50%;width:26px;height:20px;margin:-6px 0 0 -13px;background:#ff7a45;border-radius:3px}
+.door-lock::before{content:'';position:absolute;left:5px;top:-12px;width:12px;height:12px;border:3px solid #ff7a45;border-bottom:0;border-radius:9px 9px 0 0}
+.door-items{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.door-items li{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:5px 8px;border:1px solid var(--primary);color:var(--primary);background:var(--ground);white-space:nowrap}
+[data-mode=open] .door-light{opacity:.9}
+[data-mode=open] .door-panel{transform:rotateY(-68deg)}
+[data-mode=closed] .door-items li{border-style:dashed;border-color:var(--steel);color:var(--steel)}
+.offer-areas{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px}
+.offer-areas li{border-top:2px solid var(--primary);padding-top:16px}
+.offer-areas .technical{color:var(--brand);font-size:11px}
+.offer-areas p{margin:10px 0 0;font-size:15px;color:var(--steel)}
+.offer-actions{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;margin-top:40px}
+.offer-actions>a:not(.button){min-height:44px;display:inline-flex;align-items:center;color:var(--brand);font-weight:600}
+@media(max-width:1100px){.mode-card{grid-template-columns:minmax(0,1fr);gap:22px}.offer-areas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.mode-pair,.offer-areas{grid-template-columns:minmax(0,1fr)}.mode-card{padding:24px}.mode-card h3{font-size:24px}}
+
+.offer-areas h3{font-size:20px;margin:8px 0 0}
+.offer-areas a{color:var(--brand)}
+.offer-hero{padding-bottom:20px}
+.bench-first-step .bench-proposal{align-self:start}
+
+/* Start states and transitions: only with motion allowed */
+@media(prefers-reduced-motion:no-preference){
+  .motion [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .4s ease-out calc(var(--i,0) * 70ms),transform .4s ease-out calc(var(--i,0) * 70ms)}
+  .motion [data-reveal].is-in{opacity:1;transform:none}
+
+  .motion .story-rail:not(.is-in) .story-fill{transform:scale(0)}
+  .motion .story-fill{transition:transform .5s ease-out}
+  .motion .story-step{transition:opacity .35s ease-out calc(var(--i,0) * 120ms)}
+  .motion .story-step:not(.is-in){opacity:.4}
+  .motion .story-step::before{transition:background-color .3s ease-out calc(var(--i,0) * 120ms)}
+  .motion .story-step:not(.is-in)::before{background:var(--ground)}
+  .motion .story-step:not(.is-in) .sheet-line,.motion .story-step:not(.is-in) .record-line{transform:scaleX(0)}
+  .motion .sheet-line,.motion .record-line{transition:transform .45s ease-out .1s}
+  .motion .story-step:not(.is-in) .sheet-rule,.motion .story-step:not(.is-in) .record-stamp{opacity:0;transform:scale(1.25) rotate(-6deg)}
+  .motion .sheet-rule,.motion .record-stamp{transition:opacity .3s ease-out .3s,transform .3s ease-out .3s}
+  .motion .story-step:not(.is-in) .part-a{transform:translate(-30px,-50%);opacity:0}
+  .motion .story-step:not(.is-in) .part-b{transform:translate(30px,-50%);opacity:0}
+  .motion .part{transition:transform .4s ease-out .1s,opacity .4s ease-out .1s}
+  .motion .story-step:not(.is-in) .chip-pass{transform:translateX(calc(-100% - 28px));opacity:.5}
+  .motion .chip-pass{transition:transform .45s ease-out .15s,opacity .45s ease-out .15s}
+  .motion .story-step:not(.is-in) .chip-stop{transform:translateX(26px);opacity:.5}
+  .motion .chip-stop{transition:transform .45s cubic-bezier(.34,1.56,.64,1) .2s,opacity .3s ease-out .2s}
+
+  .motion [data-mode] .door-panel{transition:transform .45s ease-out}
+  .motion [data-mode] .door-light{transition:opacity .45s ease-out .1s}
+  .motion [data-mode] .door-items li{transition:opacity .3s ease-out,transform .3s ease-out}
+  .motion [data-mode] .door-items li:nth-child(1){transition-delay:.3s}
+  .motion [data-mode] .door-items li:nth-child(2){transition-delay:.38s}
+  .motion [data-mode] .door-items li:nth-child(3){transition-delay:.46s}
+  .motion [data-mode]:not(.is-in) .door-items li{opacity:0;transform:translateX(-14px)}
+  .motion [data-mode=open]:not(.is-in) .door-panel{transform:rotateY(0deg)}
+  .motion [data-mode=open]:not(.is-in) .door-light{opacity:0}
+  .motion [data-mode=closed]:not(.is-in) .door-panel{transform:rotateY(-68deg)}
+  .motion [data-mode=closed] .door-lock{transition:transform .25s ease-out .45s,opacity .25s ease-out .45s}
+  .motion [data-mode=closed]:not(.is-in) .door-lock{transform:scale(0);opacity:0}
+  .motion body.motion-setup *,.motion body.motion-setup *::before,.motion body.motion-setup *::after{transition:none!important}
+}

@@ -183,4 +183,4 @@
 /* The way back to odin-labs.ai, injected into every page's header by the build. */
 .parent-site-link{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 13px;border:1px solid var(--rule);border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;text-decoration:none;color:var(--brand)}.parent-site-link span{font-size:16px;line-height:1}.site-header a.parent-site-link:hover{color:var(--paper);border-color:var(--brand)}
 @media(min-width:761px){.site-header:has(.parent-site-link) nav{margin-inline:auto}}
-@media(max-width:760px){.parent-site-link{order:-1;flex:0 0 100%;min-height:40px;padding:0;border:0;border-radius:0;border-bottom:1px solid var(--rule);font-size:12px;gap:8px}}
+@media(max-width:760px){.parent-site-link{order:4;flex:0 0 100%;min-height:40px;padding:0;border:0;border-radius:0;border-top:1px solid var(--rule);font-size:12px;gap:8px}}
