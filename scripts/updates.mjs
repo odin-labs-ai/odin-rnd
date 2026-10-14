@@ -5,9 +5,9 @@
 // erratum's title, a result's full status as the home page's experiment ledger states it.
 //
 // A date, once written to site/data/updates.json, is frozen: regenerating keeps it. A new entry takes the record's own
-// `date` when it has one, otherwise the day the file was first committed to this repository, otherwise today (a record
-// not yet committed; the line says so on stderr). So the committed feed is reproducible from a build and the dates
-// never move when CI re-records an experiment.
+// `date` when it has one, otherwise the day the file was first committed to this repository; with neither, --write
+// refuses (never the wall clock). So the same tree always renders the same feed, and dates never move when CI
+// re-records an experiment.
 //
 //   pnpm build && node scripts/updates.mjs --write   write site/data/updates.json and the two rendered blocks
 //   node scripts/updates.mjs --check                 exit 1 when the committed feed or blocks differ from a fresh render
@@ -132,12 +132,13 @@ export function sortUpdates(entries) {
     || a.key.localeCompare(b.key));
 }
 
-/** The feed: frozen dates from `previous`, otherwise the record's own date, its first commit, or `today`. */
-export function buildFeed(list, previous = null, { root = '.', today = new Date().toISOString().slice(0, 10), commitDay = firstCommitDay, warn = message => process.stderr.write(`${message}\n`) } = {}) {
+/** The feed: frozen dates from `previous`, otherwise the record's own date or its first commit. Never the wall clock:
+ *  an entry with none of those is refused, so the same tree always renders the same feed. */
+export function buildFeed(list, previous = null, { root = '.', commitDay = firstCommitDay } = {}) {
   const frozen = new Map((previous?.updates ?? []).map(entry => [entry.key, entry.date]));
   const updates = list.map(({ ownDate, file, ...entry }) => {
-    let date = frozen.get(entry.key) ?? ownDate ?? commitDay(file, root);
-    if (!date) { warn(`Updates: ${file} is not committed yet; dated ${today}. Commit it, then run --write again to keep that date.`); date = today; }
+    const date = frozen.get(entry.key) ?? ownDate ?? commitDay(file, root);
+    if (!date) throw new Error(`Updates: ${file} has no date of its own and is not committed yet. Commit it (or give the record a "date"), then run --write again.`);
     return { ...entry, date };
   });
   return {

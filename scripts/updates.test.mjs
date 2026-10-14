@@ -18,23 +18,15 @@ test('titleSentence keeps the record title unedited, so a lower-case name stays 
   assert.equal(titleSentence('Erratum 01: done.'), 'Erratum 01: done.');
 });
 
-test('a written date is frozen; a new entry takes its own date, then its first commit, then today with a warning', () => {
-  const warnings = [];
+test('a written date is frozen; a new entry takes its own date, then its first commit, and never the wall clock', () => {
   const item = (key, file, extra = {}) => ({ key, kind: 'Tool', experiment: null, title: key, text: `${key}.`, href: 'x', source: 's', file, ...extra });
-  const list = [
-    item('a', 'site/a', { ownDate: '2026-01-05' }),
-    item('b', 'site/b', { ownDate: '2026-01-06' }),
-    item('c', 'site/c'),
-    item('d', 'site/d'),
-  ];
-  const feed = buildFeed(list, { updates: [{ key: 'a', date: '2025-12-31' }] }, {
-    today: '2026-02-01', commitDay: file => (file === 'site/c' ? '2026-01-10' : null), warn: message => warnings.push(message),
-  });
-  assert.deepEqual(Object.fromEntries(feed.updates.map(e => [e.key, e.date])), { a: '2025-12-31', b: '2026-01-06', c: '2026-01-10', d: '2026-02-01' });
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /site\/d is not committed yet/);
-  assert.deepEqual(feed.updates.map(e => e.key), ['d', 'c', 'b', 'a'], 'newest first');
+  const list = [item('a', 'site/a', { ownDate: '2026-01-05' }), item('b', 'site/b', { ownDate: '2026-01-06' }), item('c', 'site/c')];
+  const feed = buildFeed(list, { updates: [{ key: 'a', date: '2025-12-31' }] }, { commitDay: file => (file === 'site/c' ? '2026-01-10' : null) });
+  assert.deepEqual(Object.fromEntries(feed.updates.map(e => [e.key, e.date])), { a: '2025-12-31', b: '2026-01-06', c: '2026-01-10' });
+  assert.deepEqual(feed.updates.map(e => e.key), ['c', 'b', 'a'], 'newest first');
   assert.ok(feed.updates.every(e => !('file' in e) && !('ownDate' in e)), 'working fields are not published');
+  assert.throws(() => buildFeed([item('d', 'site/d')], null, { commitDay: () => null }), /site\/d has no date of its own and is not committed yet/,
+    'refute pr39 final-7: an undatable entry is refused, so two identical trees never render different feeds');
 });
 
 test('the same day orders results before errata, amendments and plans, then the higher experiment first', () => {
@@ -64,7 +56,7 @@ test('replaceBlock refuses a page without both markers in order', () => {
 
 test('the committed feed and both rendered blocks are exactly a fresh render of the built site', () => {
   const root = builtCopy();
-  assert.deepEqual(stale(root, { commitDay: () => null, warn: message => assert.fail(`an entry has no committed date: ${message}`) }), [],
+  assert.deepEqual(stale(root, { commitDay: () => null }), [],
     'run: pnpm build && node scripts/updates.mjs --write');
 });
 
