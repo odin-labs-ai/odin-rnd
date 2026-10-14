@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { KINDS, formatWeek, inert, weekOf, yesterday } from './rnd-weekly.mjs';
+import { KINDS, formatWeek, inert, isCalendarDay, weekOf, yesterday } from './rnd-weekly.mjs';
 import { KIND_ORDER } from './updates.mjs';
 
 const feed = { updates: [
@@ -72,4 +72,12 @@ test('no mention or entity in record text can leave its code span (refute pr39 f
     const span = inert(raw);
     assert.match(span, /^`[^`]*`$/, `${raw} stays inside exactly one code span`);
   }
+});
+
+test('an impossible week end is refused instead of shifting the window (refute pr39 final-4 #1)', () => {
+  assert.equal(isCalendarDay('2026-02-28'), true);
+  assert.equal(isCalendarDay('2028-02-29'), true);
+  for (const day of ['2026-02-30', '2026-13-01', '2026-00-10', '2026-04-31', '2026-1-1']) assert.equal(isCalendarDay(day), false, day);
+  assert.throws(() => weekOf(feed, '2026-02-30'), /real calendar day/);
+  assert.throws(() => execFileSync(process.execPath, ['scripts/rnd-weekly.mjs', '--dry-run'], { env: { ...process.env, RND_WEEK_END: '2026-02-30' }, stdio: 'pipe' }));
 });

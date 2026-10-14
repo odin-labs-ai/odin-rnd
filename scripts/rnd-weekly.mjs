@@ -19,10 +19,17 @@ export const KINDS = ['Results', 'Erratum', 'Amendment', 'Pre-registered', 'Meas
 const kindOf = kind => { if (!KINDS.includes(kind)) throw new Error(`Unknown update kind in the feed: ${JSON.stringify(String(kind).slice(0, 40))}`); return kind; };
 const dateOf = date => { if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('An update in the feed has no YYYY-MM-DD date'); return date; };
 const dayBefore = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) - n * 86400000).toISOString().slice(0, 10);
+/** True only for a YYYY-MM-DD string naming a day that exists (2026-02-30 does not). */
+export const isCalendarDay = day => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const date = new Date(`${day}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === day;
+};
 export const yesterday = (now = new Date()) => dayBefore(now.toISOString().slice(0, 10), 1);
 
 /** The entries dated in the seven days ending on `end` (inclusive), in feed order. */
 export function weekOf(feed, end) {
+  if (!isCalendarDay(end)) throw new Error('The week must end on a real calendar day, YYYY-MM-DD');
   const start = dayBefore(end, 6);
   return { start, end, entries: feed.updates.filter(entry => entry.date >= start && entry.date <= end) };
 }
@@ -53,7 +60,7 @@ export function formatWeek({ start, end, entries }) {
 async function main(argv) {
   const dryRun = argv.includes('--dry-run');
   const end = process.env.RND_WEEK_END || yesterday();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) throw new Error('RND_WEEK_END must be YYYY-MM-DD');
+  if (!isCalendarDay(end)) throw new Error('RND_WEEK_END must be a real calendar day, YYYY-MM-DD');
   const webhook = process.env.ODIN_MM_RND_WEBHOOK_URL;
   if (!dryRun && !webhook) {
     console.log('R&D weekly summary is not configured (ODIN_MM_RND_WEBHOOK_URL is unset); skipping.');
