@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#102b22">
-  <title>Work with Odin — Bring one workflow. Leave with evidence.</title>
-  <meta name="description" content="Explore a scoped Agent Acceptance Bench with Odin: one recurring engineering workflow, an agreed baseline and evidence for your next decision.">
-  <meta property="og:title" content="Work with Odin — Bring one workflow. Leave with evidence.">
-  <meta property="og:description" content="A proposal for a scoped evaluation of an agent-assisted engineering workflow, with human review and a portable handover.">
+  <title>Work with Odin R&amp;D — in the open or behind closed doors</title>
+  <meta name="description" content="Work with Odin R&amp;D on legacy code, security, frontier experiments and blueprints, in the open or under NDA. Engagements run over months, scoped together, by proposal.">
+  <meta property="og:title" content="Work with Odin R&amp;D — in the open or behind closed doors">
+  <meta property="og:description" content="Legacy code, security, frontier experiments and blueprints. Public experiments or private work under NDA, scoped together, by proposal.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/work-with-us/">
   <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/work-with-us/">
@@ -15,6 +15,8 @@
   <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="../assets/company.css">
+  <link rel="stylesheet" href="../assets/motion.css">
+  <script type="module" src="../assets/motion.mjs"></script>
   <script type="module" src="../assets/brief.mjs"></script>
   <script type="module" src="../assets/intake.mjs"></script>
 </head>
@@ -22,13 +24,50 @@
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header dark-surface">
     <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
-    <nav aria-label="Main navigation"><a href="../#floor">The floor</a><a href="../#experiments">Experiments</a><a href="../#projects">Open source</a><a href="../#journal">Field notes</a><a href="./" aria-current="page">Work with us</a></nav>
+    <nav aria-label="Main navigation"><a href="../#floor">The floor</a><a href="../#experiments">Experiments</a><a href="../updates/">Updates</a><a href="../#journal">Field notes</a><a href="./" aria-current="page">Work with us</a></nav>
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
-    <section class="company-hero company-width" aria-labelledby="company-title">
+    <section class="company-hero company-width offer-hero" aria-labelledby="company-title">
       <div>
-        <h1 id="company-title">What would make you<br>accept an agent’s work?</h1>
+        <h1 id="company-title">Work with us, in the open <br>or behind closed doors.</h1>
+        <p class="company-lead">We take on hard engineering problems with AI and prove the result: old code that has to keep working, security that has to hold, and experiments in fields that are new for everyone. Engagements run over months, scoped together, by proposal.</p>
+        <div class="company-actions"><a class="button button-primary" href="https://odin-labs.ai/contact/?topic=lab#contact-form" data-contact-opened>Start a conversation</a><a href="#how-it-runs">How an engagement runs</a></div>
+      </div>
+      <aside class="bench-proposal" aria-labelledby="glance-title">
+        <h2 id="glance-title">An engagement at a glance</h2>
+        <dl><div><dt>Mode</dt><dd>In the open, or behind closed doors under NDA</dd></div><div><dt>Work</dt><dd>Legacy code, security, frontier experiments, blueprints</dd></div><div><dt>Length</dt><dd>Months, in stages that each end with evidence</dd></div><div><dt>Terms</dt><dd>Scoped together, by proposal</dd></div></dl>
+        <p class="proposal-boundary">Every plan is written down before the work starts. No outcome is promised in advance.</p>
+      </aside>
+    </section>
+    <section class="company-section company-width" id="modes" aria-labelledby="modes-title">
+      <div class="company-section-heading"><h2 id="modes-title">Two ways to work.</h2><p>The same people, methods and standard of evidence. You choose who gets to see the result.</p></div>
+      <div class="mode-pair">
+        <article class="mode-card" data-mode="open" aria-labelledby="wwu-open-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span></div><ul class="door-items"><li>PLAN</li><li>RESULT</li><li>SOURCE</li></ul></div><div><span class="technical">MODE 01</span><h3 id="wwu-open-title">In the open</h3><p>We run the work as a public experiment on this floor. The plan is written down before the first run, the result is published whatever it shows, and the tools we build are open source. Like the <a href="../#experiments">experiments already here</a>.</p></div></article>
+        <article class="mode-card" data-mode="closed" aria-labelledby="wwu-closed-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span><span class="door-lock"></span></div><ul class="door-items"><li>NDA</li><li>YOUR CODE</li><li>PRIVATE RECORD</li></ul></div><div><span class="technical">MODE 02</span><h3 id="wwu-closed-title">Behind closed doors</h3><p>We do the same work privately, under NDA, on your code and data. You get the same written plan and evidence. Nothing is published unless you decide it should be.</p></div></article>
+      </div>
+    </section>
+    <section class="company-section company-width" id="what-we-take-on" aria-labelledby="areas-title">
+      <div class="company-section-heading"><h2 id="areas-title">What we take on.</h2><p>Hard problems where “it seems to work” is not good enough.</p></div>
+      <ul class="offer-areas offer-areas-detailed">
+        <li data-reveal><span class="technical">LEGACY CODE</span><h3>Refactor and migrate</h3><p>Move old systems to new code without changing what they do, and prove it with checks against an independent expectation, not just against the old output. See the <a href="../projects/migration-witness/">Migration Witness</a>.</p></li>
+        <li data-reveal><span class="technical">SECURITY</span><h3>Fix it and show it holds</h3><p>Find and fix weaknesses, then show that the fix holds and that the checks around it still catch what they should. See the <a href="../projects/ci-witness/">CI Witness</a>.</p></li>
+        <li data-reveal><span class="technical">FRONTIER EXPERIMENTS</span><h3>Space, robotics, vision, ML</h3><p>New directions we take on with partners. Each one starts as a written experiment: the question, the data and what would count as success, fixed before anything runs.</p></li>
+        <li data-reveal><span class="technical">BLUEPRINTS</span><h3>Rules enforced as code</h3><p>Write your architecture rules down once and have code check them on every change, with the open-source <a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine</a>.</p></li>
+      </ul>
+    </section>
+    <section class="company-section company-width" id="how-it-runs" aria-labelledby="runs-title">
+      <div class="company-section-heading"><h2 id="runs-title">How an engagement runs.</h2><p>Scoped together, by proposal. No price list: every engagement is different.</p></div>
+      <ol class="bench-phases">
+        <li data-reveal><span class="phase-number" aria-hidden="true">01</span><h3>A conversation</h3><p>What you want to change, why it matters and what is in the way. A short message is enough to start.</p></li>
+        <li data-reveal><span class="phase-number" aria-hidden="true">02</span><h3>A proposal</h3><p>Scope, the mode (open or closed), the people involved, the timeline and the terms, written down and agreed together.</p></li>
+        <li data-reveal><span class="phase-number" aria-hidden="true">03</span><h3>Work in stages</h3><p>Over months, in stages. Each stage ends with evidence and a decision: continue, change course or stop.</p></li>
+      </ol>
+      <div class="offer-actions"><a class="button button-primary" href="https://odin-labs.ai/contact/?topic=lab#contact-form" data-contact-opened>Start a conversation <span aria-hidden="true">↗</span></a><a href="mailto:contact@odin-labs.ai">Email contact@odin-labs.ai</a></div>
+    </section>
+    <section class="company-section company-width company-split bench-first-step" aria-labelledby="bench-title">
+      <div>
+        <h2 id="bench-title">A common first step: <br>can you accept an agent’s work?</h2>
         <p class="company-lead">A plausible patch and a passing job can still be wrong. Work with Odin to define what must be true, build checks that can reject the wrong result, and follow the accepted change to the outcome your team needs.</p>
         <div class="company-actions"><a class="button button-primary" href="#enquiry" data-contact-opened>Discuss a workflow</a><a href="#brief">Prepare a brief first</a></div>
       </div>
