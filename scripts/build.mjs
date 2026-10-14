@@ -144,9 +144,10 @@ for (const file of htmlFiles('dist')) {
 }
 // Page views counted by odin-labs.ai (cookieless, path + referrer host only): GitHub Pages has no analytics and Vercel's
 // own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (odin-website-preview #50).
-// The beacon is this site's own file: no script from another origin runs on these pages.
+// The beacon is this site's own file: no script from another origin runs on these pages. It loads async, so it never
+// holds up the page's own scripts or DOMContentLoaded.
 for (const file of htmlFiles('dist')) {
-  const tag = `<script defer src="${relative(dirname(file),'dist/assets/view-beacon.js')}"></script>`;
+  const tag = `<script async src="${relative(dirname(file),'dist/assets/view-beacon.js')}"></script>`;
   const source = readFileSync(file,'utf8');
   writeFileSync(file,source.replace('</head>',`${tag}\n</head>`));
 }

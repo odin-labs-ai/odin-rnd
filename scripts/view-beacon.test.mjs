@@ -17,7 +17,7 @@ test('every built page loads the self-hosted view beacon exactly once, inside <h
   assert.ok(pages.length >= 10, `expected the full site, found ${pages.length} pages`);
   for (const file of pages) {
     const html = readFileSync(file, 'utf8');
-    const tags = [...html.matchAll(/<script defer src="([^"]*view-beacon\.js)"><\/script>/g)];
+    const tags = [...html.matchAll(/<script async src="([^"]*view-beacon\.js)"><\/script>/g)];
     assert.equal(tags.length, 1, `${file} must load the beacon once`);
     assert.equal(resolve(dirname(file), tags[0][1]), beacon, `${file} must load this site's own beacon`);
     assert.ok(tags[0].index < html.indexOf('</head>'), `${file} must load the beacon in <head>`);
@@ -30,6 +30,7 @@ test('the beacon only reports this site, to the odin-labs.ai counter, and honour
   assert.match(source, /location\.origin !== 'https:\/\/odin-labs-ai\.github\.io'/);
   assert.match(source, /'https:\/\/odin-labs\.ai\/api\/rnd-hit\/'/);
   assert.match(source, /globalPrivacyControl === true \|\| navigator\.doNotTrack === '1'/);
+  assert.match(source, /credentials: 'omit'/);
   const code = source.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.doesNotMatch(code, /cookie|localStorage|sessionStorage|indexedDB/i);
+  assert.doesNotMatch(code, /cookie|localStorage|sessionStorage|indexedDB|sendBeacon/i);
 });

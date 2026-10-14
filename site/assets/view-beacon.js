@@ -11,7 +11,8 @@
     try { const url = new URL(document.referrer); if (url.origin !== location.origin) ref = url.hostname; } catch { /* no referrer */ }
     const body = JSON.stringify({ path: path.slice(0, 160), ref });
     const url = 'https://odin-labs.ai/api/rnd-hit/';
-    if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }))) return;
-    fetch(url, { method: 'POST', body, keepalive: true, mode: 'no-cors', credentials: 'omit' }).catch(() => {});
+    // fetch with credentials omitted, never sendBeacon: sendBeacon always sends cookies the browser holds for the
+    // counter's site, and this beacon must carry nothing but the path and the referrer host.
+    fetch(url, { method: 'POST', body, keepalive: true, mode: 'no-cors', credentials: 'omit', referrerPolicy: 'no-referrer' }).catch(() => {});
   } catch { /* never break the page */ }
 })();
