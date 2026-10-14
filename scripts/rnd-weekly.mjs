@@ -29,7 +29,9 @@ export function weekOf(feed, end) {
 
 // Feed text is ours, but it is shown in Mattermost markdown: keep it inert. Line breaks become spaces (no new block can
 // start), and the backslash is escaped with every other markdown character, so an escape in the text cannot re-arm one.
-export const inert = text => String(text).replace(/\s+/g, ' ').replace(/[\\@*_`[\]()<>#|~!.+-]/g, char => `\\${char}`);
+// Mattermost removes markdown escapes BEFORE it looks for mentions, so `\\@here` would still notify: every @ is instead
+// followed by a zero-width space, which ends the mention token while the text reads the same.
+export const inert = text => String(text).replace(/\s+/g, ' ').replace(/[\\*_`[\]()<>#|~!.+-]/g, char => `\\${char}`).replace(/@/g, '@\u200B');
 // A link target cannot close the markdown link early: parentheses and spaces are percent-encoded.
 const absolute = href => new URL(href, SITE).href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
 

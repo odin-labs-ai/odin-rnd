@@ -21,7 +21,7 @@ test('the summary links absolute pages and keeps record text inert in Mattermost
   const text = formatWeek(weekOf(feed, '2026-10-11'));
   assert.match(text, /^#### R&D floor this week \(5 Oct 2026 to 11 Oct 2026\)/);
   assert.match(text, /\[EXP 005: Jev as a fast gate\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/jev-as-a-fast-gate\.html\)/);
-  assert.ok(text.includes('P1 refuted \\@here \\*bold\\*\\.'), 'no mention or emphasis from record text');
+  assert.ok(text.includes('P1 refuted @\u200Bhere \\*bold\\*\\.'), 'no mention or emphasis from record text');
   assert.match(text, /\[All updates\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/updates\/\)/);
 });
 
@@ -64,4 +64,11 @@ test('an unknown kind or a malformed date in the feed is refused, never posted (
 
 test('the weekly summary accepts exactly the kinds the feed generator writes', () => {
   assert.deepEqual(KINDS, KIND_ORDER);
+});
+
+test('no mention survives Mattermost removing markdown escapes first (refute pr39 final-2 #1)', () => {
+  for (const raw of ['@here', '@channel', '@all', '\\@here', 'x@here', '@everyone please']) {
+    const out = inert(raw).replace(/\\(.)/g, '$1');
+    assert.doesNotMatch(out, /@(here|channel|all|everyone)\b/, `${raw} cannot mention once escapes are removed`);
+  }
 });
