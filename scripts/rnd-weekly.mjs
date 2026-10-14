@@ -39,8 +39,13 @@ export function weekOf(feed, end) {
 // markdown, decodes no entity and detects no mention. A backtick inside the text (which would end the span) becomes ',
 // and line breaks become spaces.
 export const inert = text => `\`${String(text).replace(/\s+/g, ' ').replace(/`/g, "'").trim() || ' '}\``;
-// A link target cannot close the markdown link early: parentheses and spaces are percent-encoded.
-const absolute = href => new URL(href, SITE).href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+// A link target must resolve inside the R&D site (an absolute or protocol-relative URL elsewhere is refused, never
+// posted), and it cannot close the markdown link early: parentheses and spaces are percent-encoded.
+export function absolute(href) {
+  const url = new URL(String(href), SITE);
+  if (!url.href.startsWith(SITE) || url.username || url.password) throw new Error('An update in the feed links outside the R&D site');
+  return url.href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+}
 
 export function formatWeek({ start, end, entries }) {
   const lines = [`#### R&D floor this week (${humanDay(start)} to ${humanDay(end)})`];

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { KINDS, formatWeek, inert, isCalendarDay, weekOf, yesterday } from './rnd-weekly.mjs';
+import { KINDS, absolute, formatWeek, inert, isCalendarDay, weekOf, yesterday } from './rnd-weekly.mjs';
 import { KIND_ORDER } from './updates.mjs';
 
 const feed = { updates: [
@@ -80,4 +80,13 @@ test('an impossible week end is refused instead of shifting the window (refute p
   for (const day of ['2026-02-30', '2026-13-01', '2026-00-10', '2026-04-31', '2026-1-1']) assert.equal(isCalendarDay(day), false, day);
   assert.throws(() => weekOf(feed, '2026-02-30'), /real calendar day/);
   assert.throws(() => execFileSync(process.execPath, ['scripts/rnd-weekly.mjs', '--dry-run'], { env: { ...process.env, RND_WEEK_END: '2026-02-30' }, stdio: 'pipe' }));
+});
+
+test('a feed link must stay inside the R&D site, or the summary is refused (refute pr39 final-5 #1)', () => {
+  assert.equal(absolute('journal/x.html'), 'https://odin-labs-ai.github.io/odin-rnd/journal/x.html');
+  assert.equal(absolute('#bench'), 'https://odin-labs-ai.github.io/odin-rnd/#bench');
+  for (const href of ['//evil.invalid/credential-check', 'https://evil.invalid/', 'javascript:alert(1)', '../../other-repo/', 'https://odin-labs-ai.github.io/other/', 'https://user:pw@odin-labs-ai.github.io/odin-rnd/']) {
+    assert.throws(() => absolute(href), /outside the R&D site/, href);
+  }
+  assert.throws(() => formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind: 'Tool', experiment: null, title: 'T', text: 't', href: '//evil.invalid/' }] }, '2026-10-11')), /outside the R&D site/);
 });
