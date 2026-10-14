@@ -96,3 +96,10 @@ test('unconfigured, even a bad manual date skips instead of failing (refute pr39
   delete env.ODIN_MM_RND_WEBHOOK_URL;
   assert.match(execFileSync(process.execPath, ['scripts/rnd-weekly.mjs'], { env, encoding: 'utf8' }), /not configured .* skipping/);
 });
+
+test('no newline look-alike can break the code span: U+2424 and Unicode separators become spaces (refute pr39 final-8 #1)', () => {
+  for (const sep of ['\u2424', '\u2028', '\u2029', '\u0085', '\r', '\v', '\f', '\u200B', '\u200E']) {
+    const span = inert(`a${sep}${sep}---${sep}[x](https://evil.invalid)${sep}@here`);
+    assert.match(span, /^`[^`\u2424\u2028\u2029\u0085\r\n\v\f\u200B\u200E]*`$/u, `separator U+${sep.codePointAt(0).toString(16)} is gone`);
+  }
+});

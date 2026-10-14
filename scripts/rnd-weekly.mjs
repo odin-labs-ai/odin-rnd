@@ -38,7 +38,10 @@ export function weekOf(feed, end) {
 // text is never escaped character by character: it goes out as an inline code span, where Mattermost renders no
 // markdown, decodes no entity and detects no mention. A backtick inside the text (which would end the span) becomes ',
 // and line breaks become spaces.
-export const inert = text => `\`${String(text).replace(/\s+/g, ' ').replace(/`/g, "'").trim() || ' '}\``;
+// Mattermost's parser turns U+2424 (SYMBOL FOR NEWLINE) into a real newline before parsing, so every line-like or
+// control character (whitespace, U+2424, U+2028/U+2029, U+0085, any Unicode control or format character) becomes a space.
+export const LINE_LIKE = /[\s\u2424\u2028\u2029\u0085\p{Cc}\p{Cf}]+/gu;
+export const inert = text => `\`${String(text).replace(LINE_LIKE, ' ').replace(/`/g, "'").trim() || ' '}\``;
 // A link target must resolve inside the R&D site (an absolute or protocol-relative URL elsewhere is refused, never
 // posted), and it cannot close the markdown link early: parentheses and spaces are percent-encoded.
 export function absolute(href) {
