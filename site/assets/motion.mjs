@@ -22,15 +22,17 @@ export const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp'
  * jump links and script calls. Reader input (wheel, touch, a scroll key outside a control, a press off links and controls) opens
  * a short window; scroll events inside it, such as momentum after a flick, keep it open.
  */
-export function scrollTracker(win, { inputMs = 700, momentumMs = 250, now = () => Date.now() } = {}) {
-  let until = 0;
-  const intent = () => { until = Math.max(until, now() + inputMs); };
-  for (const type of ['wheel', 'touchstart', 'touchmove']) win.addEventListener(type, intent, { passive: true });
-  // A press counts only off links and controls (the scrollbar, the page itself): a click on a jump link is navigation.
-  win.addEventListener('pointerdown', event => { if (!event.target?.closest?.(INTERACTIVE)) intent(); }, { passive: true });
-  win.addEventListener('keydown', event => { if (SCROLL_KEYS.has(event.key) && !event.target?.closest?.(INTERACTIVE)) intent(); });
-  // A jump (hash change) is navigation, whatever input preceded it: the scroll it causes is never the reader's.
-  win.addEventListener('hashchange', () => { until = 0; });
+export function scrollTracker(win, { inputMs = 700, momentumMs = 250, navigationMs = 1500, now = () => Date.now() } = {}) {
+  let until = 0, blocked = 0;
+  const onControl = event => Boolean(event?.target?.closest?.(INTERACTIVE));
+  // Input on a link or control activates it; it is never scrolling intent, whatever the input type.
+  const intent = event => { if (!onControl(event) && now() >= blocked) until = Math.max(until, now() + inputMs); };
+  for (const type of ['wheel', 'touchstart', 'touchmove', 'pointerdown']) win.addEventListener(type, intent, { passive: true });
+  win.addEventListener('keydown', event => { if (SCROLL_KEYS.has(event.key)) intent(event); });
+  // Navigation closes the window and keeps it closed while the browser performs the jump, even to the current fragment.
+  const navigate = () => { until = 0; blocked = now() + navigationMs; };
+  win.addEventListener('click', event => { if (event?.target?.closest?.('a[href*="#"]')) navigate(); }, { capture: true });
+  win.addEventListener('hashchange', navigate);
   win.addEventListener('scroll', () => { if (now() < until) until = Math.max(until, now() + momentumMs); }, { passive: true });
   return () => now() < until;
 }

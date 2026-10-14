@@ -32,7 +32,7 @@ test('only reader input opens the motion window; a bare scroll event never does 
   assert.equal(scrolling(), false, 'a restored position, jump link or script scroll is not the reader');
   listeners.keydown({ key: 'a' });
   assert.equal(scrolling(), false, 'typing is not scrolling');
-  listeners.wheel();
+  listeners.wheel({ target: { closest: () => null } });
   assert.equal(scrolling(), true, 'a wheel turn is the reader');
   clock += 650; listeners.scroll(); clock += 200;
   assert.equal(scrolling(), true, 'momentum scroll inside the window keeps it open');
@@ -53,6 +53,17 @@ test('only reader input opens the motion window; a bare scroll event never does 
   assert.equal(scrolling(), true, 'a press on the page or scrollbar is the reader');
   listeners.hashchange();
   assert.equal(scrolling(), false, 'a jump closes the window whatever input preceded it');
+  clock += 5000;
+  listeners.touchstart({ target: onLink });
+  assert.equal(scrolling(), false, 'a tap on a jump link is navigation (refute pr39 recheck-4)');
+  listeners.click({ target: { closest: selector => (selector.includes('#') ? {} : null) } });
+  listeners.scroll();
+  assert.equal(scrolling(), false, 'clicking an anchor to the CURRENT fragment (no hashchange) still never animates');
+  listeners.wheel({ target: off });
+  assert.equal(scrolling(), false, 'input during the jump does not reopen the window');
+  clock += 1600;
+  listeners.wheel({ target: off });
+  assert.equal(scrolling(), true, 'after the jump, reader input counts again');
 });
 
 test('motion.mjs reveals what is in view at load without a transition and gates observer reveals on scrolling', () => {
