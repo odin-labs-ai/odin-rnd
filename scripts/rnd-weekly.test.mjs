@@ -90,3 +90,9 @@ test('a feed link must stay inside the R&D site, or the summary is refused (refu
   }
   assert.throws(() => formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind: 'Tool', experiment: null, title: 'T', text: 't', href: '//evil.invalid/' }] }, '2026-10-11')), /outside the R&D site/);
 });
+
+test('unconfigured, even a bad manual date skips instead of failing (refute pr39 final-6 #1)', () => {
+  const env = { ...process.env, RND_WEEK_END: '2026-02-30' };
+  delete env.ODIN_MM_RND_WEBHOOK_URL;
+  assert.match(execFileSync(process.execPath, ['scripts/rnd-weekly.mjs'], { env, encoding: 'utf8' }), /not configured .* skipping/);
+});

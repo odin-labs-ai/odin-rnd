@@ -64,13 +64,14 @@ export function formatWeek({ start, end, entries }) {
 
 async function main(argv) {
   const dryRun = argv.includes('--dry-run');
-  const end = process.env.RND_WEEK_END || yesterday();
-  if (!isCalendarDay(end)) throw new Error('RND_WEEK_END must be a real calendar day, YYYY-MM-DD');
+  // Not configured at all: skip before reading any input, so an unconfigured repository never fails a run.
   const webhook = process.env.ODIN_MM_RND_WEBHOOK_URL;
   if (!dryRun && !webhook) {
     console.log('R&D weekly summary is not configured (ODIN_MM_RND_WEBHOOK_URL is unset); skipping.');
     return;
   }
+  const end = process.env.RND_WEEK_END || yesterday();
+  if (!isCalendarDay(end)) throw new Error('RND_WEEK_END must be a real calendar day, YYYY-MM-DD');
   const feed = JSON.parse(readFileSync('site/data/updates.json', 'utf8'));
   const text = formatWeek(weekOf(feed, end));
   if (dryRun) { console.log(text); return; }
