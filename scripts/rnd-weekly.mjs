@@ -24,9 +24,11 @@ export function weekOf(feed, end) {
   return { start, end, entries: feed.updates.filter(entry => entry.date >= start && entry.date <= end) };
 }
 
-// Feed text is ours, but it is shown in Mattermost markdown: keep it inert (no mentions, links or emphasis from text).
-const inert = text => String(text).replace(/[@*_`[\]<>#|~]/g, char => `\\${char}`);
-const absolute = href => (/^https?:/.test(href) ? href : new URL(href, SITE).href);
+// Feed text is ours, but it is shown in Mattermost markdown: keep it inert. Line breaks become spaces (no new block can
+// start), and the backslash is escaped with every other markdown character, so an escape in the text cannot re-arm one.
+export const inert = text => String(text).replace(/\s+/g, ' ').replace(/[\\@*_`[\]()<>#|~!.+-]/g, char => `\\${char}`);
+// A link target cannot close the markdown link early: parentheses and spaces are percent-encoded.
+const absolute = href => new URL(href, SITE).href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
 
 export function formatWeek({ start, end, entries }) {
   const lines = [`#### R&D floor this week (${humanDay(start)} to ${humanDay(end)})`];
@@ -54,7 +56,10 @@ async function main(argv) {
   const feed = JSON.parse(readFileSync('site/data/updates.json', 'utf8'));
   const text = formatWeek(weekOf(feed, end));
   if (dryRun) { console.log(text); return; }
-  const response = await fetch(webhook, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(20000) });
+  let response;
+  // A fetch or URL-parse error can quote the webhook URL, whole or in part; never let one reach the log.
+  try { response = await fetch(webhook, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(20000) }); }
+  catch { throw new Error('Could not reach the Mattermost webhook (error details withheld: they can contain the webhook URL).'); }
   if (!response.ok) throw new Error(`Mattermost webhook answered HTTP ${response.status}`);
   console.log(`Posted the R&D summary for the week ending ${end} (${text.length} characters).`);
 }
@@ -62,7 +67,10 @@ async function main(argv) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2)).catch(error => {
     // A malformed webhook secret can surface inside a fetch error message; never print a URL.
-    console.error(String(error?.message ?? error).replace(/https?:\/\/\S+/g, '[url]'));
+    const secret = process.env.ODIN_MM_RND_WEBHOOK_URL;
+    let message = String(error?.message ?? error);
+    if (secret) message = message.split(secret).join('[webhook]');
+    console.error(/https?:|hooks\//i.test(message) ? 'R&D weekly summary failed (details withheld: they can contain the webhook URL).' : message);
     process.exitCode = 1;
   });
 }

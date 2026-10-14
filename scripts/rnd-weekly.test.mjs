@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { formatWeek, weekOf, yesterday } from './rnd-weekly.mjs';
+import { formatWeek, inert, weekOf, yesterday } from './rnd-weekly.mjs';
 
 const feed = { updates: [
   { key: 'a', date: '2026-10-11', kind: 'Erratum', experiment: 'EXP 005', title: 'Jev as a fast gate', text: 'Erratum 01: the DOI link does not resolve.', href: 'journal/jev-as-a-fast-gate.html' },
@@ -20,7 +20,7 @@ test('the summary links absolute pages and keeps record text inert in Mattermost
   const text = formatWeek(weekOf(feed, '2026-10-11'));
   assert.match(text, /^#### R&D floor this week \(5 Oct 2026 to 11 Oct 2026\)/);
   assert.match(text, /\[EXP 005: Jev as a fast gate\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/jev-as-a-fast-gate\.html\)/);
-  assert.ok(text.includes('P1 refuted \\@here \\*bold\\*.'), 'no mention or emphasis from record text');
+  assert.ok(text.includes('P1 refuted \\@here \\*bold\\*\\.'), 'no mention or emphasis from record text');
   assert.match(text, /\[All updates\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/updates\/\)/);
 });
 
@@ -33,4 +33,23 @@ test('without the webhook the scheduled run skips instead of failing', () => {
   delete env.ODIN_MM_RND_WEBHOOK_URL;
   const out = execFileSync(process.execPath, ['scripts/rnd-weekly.mjs'], { env, encoding: 'utf8' });
   assert.match(out, /not configured .* skipping/);
+});
+
+test('an escape or a line break in record text cannot re-arm markdown (refute pr39 r1 #1)', () => {
+  assert.equal(inert('\\[click\\](https://example.invalid/)'), '\\\\\\[click\\\\\\]\\(https://example\\.invalid/\\)');
+  assert.doesNotMatch(inert('Record title\n\n---\n\nInjected paragraph'), /\n/, 'no new block can start');
+  assert.match(inert('1. item'), /^1\\\. item$/, 'no list marker');
+  const text = formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind: 'Tool', experiment: null, title: 'T', text: 'a\n\n---\n[x](https://evil.invalid)', href: 'journal/a (b).html' }] }, '2026-10-11'));
+  assert.ok(!/\]\(https:\/\/evil/.test(text), 'no live link from text');
+  assert.ok(text.includes('journal/a%20%28b%29.html'), 'a link target cannot close the markdown link');
+});
+
+test('a malformed webhook never reaches the log, whole or in part (refute pr39 r1 #2)', () => {
+  for (const webhook of ['https://bad host/hooks/DEMO_SECRET_1', 'HTTPS://[invalid]/hooks/DEMO_SECRET_2']) {
+    let stderr = '';
+    try { execFileSync(process.execPath, ['scripts/rnd-weekly.mjs'], { env: { ...process.env, ODIN_MM_RND_WEBHOOK_URL: webhook, RND_WEEK_END: '2026-10-11' }, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (error) { stderr = String(error.stderr); }
+    assert.ok(stderr.length > 0, 'the run fails visibly');
+    assert.doesNotMatch(stderr, /DEMO_SECRET|bad host|hooks/, `no part of ${webhook} is printed`);
+  }
 });

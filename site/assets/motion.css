@@ -96,7 +96,8 @@
   .motion .part{transition:transform .4s ease-out,opacity .4s ease-out}
   .motion .story-step:not(.is-active) .chip-pass{transform:translateX(calc(-100% - 28px));opacity:.5}
   .motion .chip-pass{transition:transform .45s ease-out .1s,opacity .45s ease-out .1s}
-  .motion .story-step.is-active .chip-stop{animation:stopped .45s ease-out .15s both}
+  .motion .story-step:not(.is-active) .chip-stop{transform:translateX(26px);opacity:.5}
+  .motion .chip-stop{transition:transform .45s cubic-bezier(.34,1.56,.64,1) .15s,opacity .3s ease-out .15s}
 
   .motion [data-mode] .door-panel{transition:transform .45s ease-out}
   .motion [data-mode] .door-light{transition:opacity .45s ease-out .1s}
@@ -110,5 +111,5 @@
   .motion [data-mode=closed]:not(.is-in) .door-panel{transform:rotateY(-68deg)}
   .motion [data-mode=closed] .door-lock{transition:transform .25s ease-out .45s,opacity .25s ease-out .45s}
   .motion [data-mode=closed]:not(.is-in) .door-lock{transform:scale(0);opacity:0}
+  .motion body.motion-instant *,.motion body.motion-instant *::before,.motion body.motion-instant *::after{transition:none!important}
 }
-@keyframes stopped{0%{transform:translateX(18px)}45%{transform:translateX(-4px)}70%{transform:translateX(3px)}100%{transform:none}}
