@@ -60,7 +60,7 @@ test('an unknown kind or a malformed date in the feed is refused, never posted (
   const bad = kind => formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind, experiment: null, title: 'T', text: 't', href: 'updates/' }] }, '2026-10-11'));
   assert.throws(() => bad('Tool** @here [x](https://evil.invalid) **'), /Unknown update kind/);
   assert.throws(() => formatWeek({ start: '2026-10-05', end: '2026-10-11', entries: [{ key: 'x', date: '2026-10-11 @here', kind: 'Tool', experiment: null, title: 'T', text: 't', href: 'updates/' }] }), /no YYYY-MM-DD date/);
-  assert.doesNotMatch(bad('Pre-registered'), /\*\*Pre-registered\*\*/, 'the kind is escaped too');
+  assert.match(bad('Pre-registered'), /- \*\*Pre-registered\*\* · /, 'a kind from the closed list renders as plain bold');
 });
 
 test('the weekly summary accepts exactly the kinds the feed generator writes', () => {
