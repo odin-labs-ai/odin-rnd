@@ -25,8 +25,9 @@ concurrency:
 
 jobs:
   summary:
-    # Same runner labels as the odin-labs.ai analytics digest: GitHub-hosted runners did not pick that job up (2026-10-11).
-    runs-on: [self-hosted, linux, x64, hetzner]
+    # GitHub-hosted, like publish.yml: this repo is public, and the self-hosted pool never picked up its jobs
+    # (run 38654899400 sat queued). The odin-labs.ai digest uses self-hosted because that repo is private.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
