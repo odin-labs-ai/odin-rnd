@@ -11,19 +11,26 @@ export function storyProgress(rect, viewportHeight) {
   return Math.min(1, Math.max(0, distance > 0 ? travelled / distance : 1));
 }
 
+/** Elements whose press or key activates something rather than scrolling the page. */
+export const INTERACTIVE = 'a[href], button, input, select, textarea, label, summary, [role=button], [contenteditable]';
+
 /** Keys that scroll the page when focus is not in a field. */
 export const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Spacebar']);
 
 /**
  * True while the READER is scrolling. A scroll event alone never counts: browsers also fire it for restored positions,
- * jump links and script calls. Reader input (wheel, touch, a scroll key, a pointer press on the scrollbar or page) opens
+ * jump links and script calls. Reader input (wheel, touch, a scroll key outside a control, a press off links and controls) opens
  * a short window; scroll events inside it, such as momentum after a flick, keep it open.
  */
 export function scrollTracker(win, { inputMs = 700, momentumMs = 250, now = () => Date.now() } = {}) {
   let until = 0;
   const intent = () => { until = Math.max(until, now() + inputMs); };
-  for (const type of ['wheel', 'touchstart', 'touchmove', 'pointerdown']) win.addEventListener(type, intent, { passive: true });
-  win.addEventListener('keydown', event => { if (SCROLL_KEYS.has(event.key)) intent(); });
+  for (const type of ['wheel', 'touchstart', 'touchmove']) win.addEventListener(type, intent, { passive: true });
+  // A press counts only off links and controls (the scrollbar, the page itself): a click on a jump link is navigation.
+  win.addEventListener('pointerdown', event => { if (!event.target?.closest?.(INTERACTIVE)) intent(); }, { passive: true });
+  win.addEventListener('keydown', event => { if (SCROLL_KEYS.has(event.key) && !event.target?.closest?.(INTERACTIVE)) intent(); });
+  // A jump (hash change) is navigation, whatever input preceded it: the scroll it causes is never the reader's.
+  win.addEventListener('hashchange', () => { until = 0; });
   win.addEventListener('scroll', () => { if (now() < until) until = Math.max(until, now() + momentumMs); }, { passive: true });
   return () => now() < until;
 }

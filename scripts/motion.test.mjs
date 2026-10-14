@@ -42,7 +42,17 @@ test('only reader input opens the motion window; a bare scroll event never does 
   assert.equal(scrolling(), true, 'a scroll key is the reader');
   clock += 2000; listeners.scroll();
   assert.equal(scrolling(), false, 'a later automatic scroll does not reopen it');
-  for (const type of ['touchstart', 'touchmove', 'pointerdown']) assert.equal(typeof listeners[type], 'function', `${type} counts as reader input`);
+  for (const type of ['touchstart', 'touchmove']) assert.equal(typeof listeners[type], 'function', `${type} counts as reader input`);
+  const off = { closest: () => null }, onLink = { closest: () => ({}) };
+  clock += 5000;
+  listeners.pointerdown({ target: onLink });
+  assert.equal(scrolling(), false, 'a press on a jump link is navigation, not scrolling (refute pr39 recheck-3)');
+  listeners.keydown({ key: ' ', target: onLink });
+  assert.equal(scrolling(), false, 'Space on a focused link or button activates it');
+  listeners.pointerdown({ target: off });
+  assert.equal(scrolling(), true, 'a press on the page or scrollbar is the reader');
+  listeners.hashchange();
+  assert.equal(scrolling(), false, 'a jump closes the window whatever input preceded it');
 });
 
 test('motion.mjs reveals what is in view at load without a transition and gates observer reveals on scrolling', () => {
