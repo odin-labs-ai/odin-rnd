@@ -28,7 +28,7 @@
       "experiment": "EXP 009",
       "title": "Unload leaves no trace",
       "kind": "Results",
-      "text": "P1 refuted: 1 of 400 H1 trials diverged from R0 (95% Wilson upper bound 1.40%).",
+      "text": "P1 refuted: 1 of 400 H1 trials diverged from R0 (95% Wilson upper bound 1.40%). P2 supported: 0 silent-inert and 0 false-inactive kernel configurations of 120. All 5 validity gates passed, so the record is informative.",
       "href": "journal/composable-harness-results.html",
       "source": "data/composable-harness/results.json",
       "date": "2026-10-10"
@@ -108,7 +108,7 @@
       "experiment": "EXP 006",
       "title": "nina reviews the change",
       "kind": "Results",
-      "text": "Pre-registered; measured 01 OCT 2026: bar met, nina in the spotlight.",
+      "text": "Pre-registered; measured 01 OCT 2026: bar met, nina in the spotlight. Amended 01 Oct 2026, before any counted run.",
       "href": "journal/nina-reviews-the-change.html#amendment-01",
       "source": "data/nina-changes/results.json",
       "date": "2026-10-01"

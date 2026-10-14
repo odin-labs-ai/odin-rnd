@@ -20,8 +20,8 @@ test('the week is the seven days ending on the given day, inclusive', () => {
 test('the summary links absolute pages and keeps record text inert in Mattermost', () => {
   const text = formatWeek(weekOf(feed, '2026-10-11'));
   assert.match(text, /^#### R&D floor this week \(5 Oct 2026 to 11 Oct 2026\)/);
-  assert.match(text, /\[EXP 005: Jev as a fast gate\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/jev-as-a-fast-gate\.html\)/);
-  assert.ok(text.includes('P1 refuted @\u200Bhere \\*bold\\*\\.'), 'no mention or emphasis from record text');
+  assert.match(text, /\[`EXP 005: Jev as a fast gate`\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/jev-as-a-fast-gate\.html\)/);
+  assert.ok(text.includes('`P1 refuted @here *bold*.`'), 'record text goes out as an inline code span: no mention, emphasis or entity is processed');
   assert.match(text, /\[All updates\]\(https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/updates\/\)/);
 });
 
@@ -36,12 +36,13 @@ test('without the webhook the scheduled run skips instead of failing', () => {
   assert.match(out, /not configured .* skipping/);
 });
 
-test('an escape or a line break in record text cannot re-arm markdown (refute pr39 r1 #1)', () => {
-  assert.equal(inert('\\[click\\](https://example.invalid/)'), '\\\\\\[click\\\\\\]\\(https://example\\.invalid/\\)');
-  assert.doesNotMatch(inert('Record title\n\n---\n\nInjected paragraph'), /\n/, 'no new block can start');
-  assert.match(inert('1. item'), /^1\\\. item$/, 'no list marker');
+test('record text is one inline code span: a backtick or line break cannot end it (refute pr39 r1 #1, final-2, final-3)', () => {
+  assert.equal(inert('\\[click\\](https://example.invalid/)'), '`\\[click\\](https://example.invalid/)`');
+  assert.equal(inert('Record title\n\n---\n\nInjected paragraph'), '`Record title --- Injected paragraph`', 'no new block can start');
+  assert.equal(inert('a ` b `` c'), "`a ' b '' c`", 'a backtick cannot close the span');
+  assert.equal(inert(''), '` `', 'an empty value still renders as an empty span');
   const text = formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind: 'Tool', experiment: null, title: 'T', text: 'a\n\n---\n[x](https://evil.invalid)', href: 'journal/a (b).html' }] }, '2026-10-11'));
-  assert.ok(!/\]\(https:\/\/evil/.test(text), 'no live link from text');
+  assert.ok(text.includes('`a --- [x](https://evil.invalid)`'), 'a link in record text stays literal code');
   assert.ok(text.includes('journal/a%20%28b%29.html'), 'a link target cannot close the markdown link');
 });
 
@@ -66,9 +67,9 @@ test('the weekly summary accepts exactly the kinds the feed generator writes', (
   assert.deepEqual(KINDS, KIND_ORDER);
 });
 
-test('no mention survives Mattermost removing markdown escapes first (refute pr39 final-2 #1)', () => {
-  for (const raw of ['@here', '@channel', '@all', '\\@here', 'x@here', '@everyone please']) {
-    const out = inert(raw).replace(/\\(.)/g, '$1');
-    assert.doesNotMatch(out, /@(here|channel|all|everyone)\b/, `${raw} cannot mention once escapes are removed`);
+test('no mention or entity in record text can leave its code span (refute pr39 final-2 #1, final-3 #1)', () => {
+  for (const raw of ['@here', '@channel', '@all', '\\@here', '&commat;here', '&#64;here', '&#x40;channel', 'x`@here`y', '@everyone\n\n@here']) {
+    const span = inert(raw);
+    assert.match(span, /^`[^`]*`$/, `${raw} stays inside exactly one code span`);
   }
 });

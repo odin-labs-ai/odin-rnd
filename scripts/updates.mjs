@@ -1,8 +1,8 @@
 // The updates feed: one dated line for every record this site publishes, newest first. Nothing here is written per
 // experiment. Entries come from the built site (pnpm build first): every pre-registration, amendment, erratum and results
 // record under dist/data/<slug>/, the recorded BCE recipes, the measured Laya comparison, the tools under projects/ and
-// the field notes that belong to no experiment. Each entry's sentence is the record's own words: an amendment's or
-// erratum's title, a result's status sentence as the home page's experiment ledger states it.
+// the field notes that belong to no experiment. Each entry's text is the record's own words: an amendment's or
+// erratum's title, a result's full status as the home page's experiment ledger states it.
 //
 // A date, once written to site/data/updates.json, is frozen: regenerating keeps it. A new entry takes the record's own
 // `date` when it has one, otherwise the day the file was first committed to this repository, otherwise today (a record
@@ -75,7 +75,7 @@ export function candidates(root = '.') {
   add({ key: 'exp-001-003-recorded', experiment: 'EXP 001–003', title: 'Three blueprint recipes', kind: 'Recorded', text: 'Each recipe applies one unchanged architectural rule to a conforming tree and to a deliberately drifted tree; the engine scored every conforming tree GREEN and every drifted tree RED.', href: '#bench', source: 'data/experiments.json', file: 'site/data/experiments.json', ownDate: dayOf(report.completedAt) });
 
   const laya = byId.get('EXP 004');
-  if (laya) add({ key: 'exp-004-measured', experiment: 'EXP 004', title: laya.title, kind: 'Measured', text: firstSentence(laya.status), href: laya.href, source: 'data/laya-vs-jev/manifest.json', file: 'site/data/laya-vs-jev/manifest.json', ownDate: dayOf(JSON.parse(readFileSync(join(dist, 'data/laya-vs-jev/manifest.json'), 'utf8')).copiedAt) });
+  if (laya) add({ key: 'exp-004-measured', experiment: 'EXP 004', title: laya.title, kind: 'Measured', text: laya.status, href: laya.href, source: 'data/laya-vs-jev/manifest.json', file: 'site/data/laya-vs-jev/manifest.json', ownDate: dayOf(JSON.parse(readFileSync(join(dist, 'data/laya-vs-jev/manifest.json'), 'utf8')).copiedAt) });
 
   for (const slug of readdirSync(join(dist, 'data'), { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort()) {
     const dir = join(dist, 'data', slug);
@@ -94,7 +94,7 @@ export function candidates(root = '.') {
     }
     if (existsSync(join(dir, 'results.json'))) {
       if (!listed) throw new Error(`Updates: ${id} publishes results but is not in the experiment ledger`);
-      add({ key: `exp-${n}-results`, experiment: id, title, kind: 'Results', text: firstSentence(listed.status), href, source: `data/${slug}/results.json`, file: `site/data/${slug}/results.json` });
+      add({ key: `exp-${n}-results`, experiment: id, title, kind: 'Results', text: listed.status, href, source: `data/${slug}/results.json`, file: `site/data/${slug}/results.json` });
     }
   }
 

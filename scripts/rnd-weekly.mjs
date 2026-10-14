@@ -27,11 +27,11 @@ export function weekOf(feed, end) {
   return { start, end, entries: feed.updates.filter(entry => entry.date >= start && entry.date <= end) };
 }
 
-// Feed text is ours, but it is shown in Mattermost markdown: keep it inert. Line breaks become spaces (no new block can
-// start), and the backslash is escaped with every other markdown character, so an escape in the text cannot re-arm one.
-// Mattermost removes markdown escapes BEFORE it looks for mentions, so `\\@here` would still notify: every @ is instead
-// followed by a zero-width space, which ends the mention token while the text reads the same.
-export const inert = text => String(text).replace(/\s+/g, ' ').replace(/[\\*_`[\]()<>#|~!.+-]/g, char => `\\${char}`).replace(/@/g, '@\u200B');
+// Feed text is shown in Mattermost, which decodes markdown escapes and HTML entities before it looks for mentions. So
+// text is never escaped character by character: it goes out as an inline code span, where Mattermost renders no
+// markdown, decodes no entity and detects no mention. A backtick inside the text (which would end the span) becomes ',
+// and line breaks become spaces.
+export const inert = text => `\`${String(text).replace(/\s+/g, ' ').replace(/`/g, "'").trim() || ' '}\``;
 // A link target cannot close the markdown link early: parentheses and spaces are percent-encoded.
 const absolute = href => new URL(href, SITE).href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
 
@@ -42,8 +42,8 @@ export function formatWeek({ start, end, entries }) {
     lines.push('', `${entries.length} new record${entries.length === 1 ? '' : 's'}:`, '');
     for (const entry of entries) {
       const label = entry.experiment ? `${entry.experiment}: ${entry.title}` : entry.title;
-      // Every field from the feed is escaped; kind and date are also checked against their closed forms.
-      lines.push(`- **${inert(kindOf(entry.kind))}** · ${humanDay(dateOf(entry.date))} · [${inert(label)}](${absolute(entry.href)})  `, `  ${inert(entry.text)}`);
+      // kind and date are checked against their closed forms; every free-text field goes out as a code span.
+      lines.push(`- **${kindOf(entry.kind)}** · ${humanDay(dateOf(entry.date))} · [${inert(label)}](${absolute(entry.href)})  `, `  ${inert(entry.text)}`);
     }
   }
   lines.push('', `[All updates](${SITE}updates/) · [Work with us](${SITE}work-with-us/)`);
