@@ -15,6 +15,9 @@ export const SITE = 'https://odin-labs-ai.github.io/odin-rnd/';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const humanDay = day => { const [y, m, d] = day.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; };
 
+export const KINDS = ['Results', 'Erratum', 'Amendment', 'Pre-registered', 'Measured', 'Recorded', 'Tool', 'Field note'];
+const kindOf = kind => { if (!KINDS.includes(kind)) throw new Error(`Unknown update kind in the feed: ${JSON.stringify(String(kind).slice(0, 40))}`); return kind; };
+const dateOf = date => { if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('An update in the feed has no YYYY-MM-DD date'); return date; };
 const dayBefore = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) - n * 86400000).toISOString().slice(0, 10);
 export const yesterday = (now = new Date()) => dayBefore(now.toISOString().slice(0, 10), 1);
 
@@ -37,7 +40,8 @@ export function formatWeek({ start, end, entries }) {
     lines.push('', `${entries.length} new record${entries.length === 1 ? '' : 's'}:`, '');
     for (const entry of entries) {
       const label = entry.experiment ? `${entry.experiment}: ${entry.title}` : entry.title;
-      lines.push(`- **${entry.kind}** · ${humanDay(entry.date)} · [${inert(label)}](${absolute(entry.href)})  `, `  ${inert(entry.text)}`);
+      // Every field from the feed is escaped; kind and date are also checked against their closed forms.
+      lines.push(`- **${inert(kindOf(entry.kind))}** · ${humanDay(dateOf(entry.date))} · [${inert(label)}](${absolute(entry.href)})  `, `  ${inert(entry.text)}`);
     }
   }
   lines.push('', `[All updates](${SITE}updates/) · [Work with us](${SITE}work-with-us/)`);

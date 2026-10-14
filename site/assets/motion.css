@@ -1,6 +1,6 @@
 /* The updates feed, the four-step story and the two ways of working. Every rule outside html.motion is the final,
-   readable state; html.motion (set by motion.mjs, never under reduced motion) only adds the start states and the
-   transitions into them. Nothing animates on its own: each change follows the reader's scroll. */
+   readable state; html.motion (set by motion.mjs, never under reduced motion) only adds the start states and one-shot
+   transitions into them, played once when an element first enters the viewport. Nothing is tied to scroll position. */
 
 /* Updates feed: home block and the updates page */
 .update-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
@@ -20,7 +20,7 @@
 /* The four-step story */
 .story-rail{position:relative}
 .story-track{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--rule)}
-.story-fill{display:block;height:100%;background:var(--primary);transform-origin:left center;transform:scaleX(var(--p,1))}
+.story-fill{display:block;height:100%;background:var(--primary);transform-origin:left center}
 .story-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px}
 .story-step{padding-top:34px;position:relative}
 .story-step::before{content:'';position:absolute;top:3px;left:0;width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid var(--primary)}
@@ -42,7 +42,7 @@
 .record-line+.record-line{margin-top:12px}.record-line.short{width:44%}
 .record-stamp{position:absolute;right:14px;bottom:14px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#92502d;border:2px solid #92502d;padding:4px 8px;transform:rotate(-6deg)}
 @media(max-width:900px){.story-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.story-track{display:none}}
-@media(max-width:560px){.story-steps{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:28px}.story-track{display:block;left:6px;right:auto;top:0;bottom:0;width:2px;height:auto}.story-fill{transform-origin:center top;transform:scaleY(var(--p,1))}.story-step{padding-top:0}.story-step::before{left:-29px;top:2px}}
+@media(max-width:560px){.story-steps{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:28px}.story-track{display:block;left:6px;right:auto;top:0;bottom:0;width:2px;height:auto}.story-fill{transform-origin:center top}.story-step{padding-top:0}.story-step::before{left:-29px;top:2px}}
 
 /* Two ways of working */
 .mode-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
@@ -81,23 +81,23 @@
   .motion [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .4s ease-out calc(var(--i,0) * 70ms),transform .4s ease-out calc(var(--i,0) * 70ms)}
   .motion [data-reveal].is-in{opacity:1;transform:none}
 
-  .motion .story-fill{transition:transform .15s linear}
-  .motion .story-step{opacity:.4;transition:opacity .35s ease-out}
-  .motion .story-step.is-active{opacity:1}
-  .motion .story-step::before{transition:background-color .3s ease-out}
-  .motion .story-step:not(.is-active)::before{background:var(--ground)}
-  .motion .story-step:not(.is-active) .sheet-line,.motion .story-step:not(.is-active) .record-line{transform:scaleX(0)}
-  .motion .sheet-line,.motion .record-line{transition:transform .45s ease-out}
-  .motion .sheet-line.short,.motion .record-line+.record-line{transition-delay:.08s}
-  .motion .story-step:not(.is-active) .sheet-rule,.motion .story-step:not(.is-active) .record-stamp{opacity:0;transform:scale(1.25) rotate(-6deg)}
-  .motion .sheet-rule,.motion .record-stamp{transition:opacity .3s ease-out .2s,transform .3s ease-out .2s}
-  .motion .story-step:not(.is-active) .part-a{transform:translate(-30px,-50%);opacity:0}
-  .motion .story-step:not(.is-active) .part-b{transform:translate(30px,-50%);opacity:0}
-  .motion .part{transition:transform .4s ease-out,opacity .4s ease-out}
-  .motion .story-step:not(.is-active) .chip-pass{transform:translateX(calc(-100% - 28px));opacity:.5}
-  .motion .chip-pass{transition:transform .45s ease-out .1s,opacity .45s ease-out .1s}
-  .motion .story-step:not(.is-active) .chip-stop{transform:translateX(26px);opacity:.5}
-  .motion .chip-stop{transition:transform .45s cubic-bezier(.34,1.56,.64,1) .15s,opacity .3s ease-out .15s}
+  .motion .story-rail:not(.is-in) .story-fill{transform:scale(0)}
+  .motion .story-fill{transition:transform .5s ease-out}
+  .motion .story-step{transition:opacity .35s ease-out calc(var(--i,0) * 120ms)}
+  .motion .story-step:not(.is-in){opacity:.4}
+  .motion .story-step::before{transition:background-color .3s ease-out calc(var(--i,0) * 120ms)}
+  .motion .story-step:not(.is-in)::before{background:var(--ground)}
+  .motion .story-step:not(.is-in) .sheet-line,.motion .story-step:not(.is-in) .record-line{transform:scaleX(0)}
+  .motion .sheet-line,.motion .record-line{transition:transform .45s ease-out .1s}
+  .motion .story-step:not(.is-in) .sheet-rule,.motion .story-step:not(.is-in) .record-stamp{opacity:0;transform:scale(1.25) rotate(-6deg)}
+  .motion .sheet-rule,.motion .record-stamp{transition:opacity .3s ease-out .3s,transform .3s ease-out .3s}
+  .motion .story-step:not(.is-in) .part-a{transform:translate(-30px,-50%);opacity:0}
+  .motion .story-step:not(.is-in) .part-b{transform:translate(30px,-50%);opacity:0}
+  .motion .part{transition:transform .4s ease-out .1s,opacity .4s ease-out .1s}
+  .motion .story-step:not(.is-in) .chip-pass{transform:translateX(calc(-100% - 28px));opacity:.5}
+  .motion .chip-pass{transition:transform .45s ease-out .15s,opacity .45s ease-out .15s}
+  .motion .story-step:not(.is-in) .chip-stop{transform:translateX(26px);opacity:.5}
+  .motion .chip-stop{transition:transform .45s cubic-bezier(.34,1.56,.64,1) .2s,opacity .3s ease-out .2s}
 
   .motion [data-mode] .door-panel{transition:transform .45s ease-out}
   .motion [data-mode] .door-light{transition:opacity .45s ease-out .1s}
@@ -111,5 +111,5 @@
   .motion [data-mode=closed]:not(.is-in) .door-panel{transform:rotateY(-68deg)}
   .motion [data-mode=closed] .door-lock{transition:transform .25s ease-out .45s,opacity .25s ease-out .45s}
   .motion [data-mode=closed]:not(.is-in) .door-lock{transform:scale(0);opacity:0}
-  .motion body.motion-instant *,.motion body.motion-instant *::before,.motion body.motion-instant *::after{transition:none!important}
+  .motion body.motion-setup *,.motion body.motion-setup *::before,.motion body.motion-setup *::after{transition:none!important}
 }

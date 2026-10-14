@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { formatWeek, inert, weekOf, yesterday } from './rnd-weekly.mjs';
+import { KINDS, formatWeek, inert, weekOf, yesterday } from './rnd-weekly.mjs';
+import { KIND_ORDER } from './updates.mjs';
 
 const feed = { updates: [
   { key: 'a', date: '2026-10-11', kind: 'Erratum', experiment: 'EXP 005', title: 'Jev as a fast gate', text: 'Erratum 01: the DOI link does not resolve.', href: 'journal/jev-as-a-fast-gate.html' },
@@ -52,4 +53,15 @@ test('a malformed webhook never reaches the log, whole or in part (refute pr39 r
     assert.ok(stderr.length > 0, 'the run fails visibly');
     assert.doesNotMatch(stderr, /DEMO_SECRET|bad host|hooks/, `no part of ${webhook} is printed`);
   }
+});
+
+test('an unknown kind or a malformed date in the feed is refused, never posted (refute pr39 final #1)', () => {
+  const bad = kind => formatWeek(weekOf({ updates: [{ key: 'x', date: '2026-10-11', kind, experiment: null, title: 'T', text: 't', href: 'updates/' }] }, '2026-10-11'));
+  assert.throws(() => bad('Tool** @here [x](https://evil.invalid) **'), /Unknown update kind/);
+  assert.throws(() => formatWeek({ start: '2026-10-05', end: '2026-10-11', entries: [{ key: 'x', date: '2026-10-11 @here', kind: 'Tool', experiment: null, title: 'T', text: 't', href: 'updates/' }] }), /no YYYY-MM-DD date/);
+  assert.doesNotMatch(bad('Pre-registered'), /\*\*Pre-registered\*\*/, 'the kind is escaped too');
+});
+
+test('the weekly summary accepts exactly the kinds the feed generator writes', () => {
+  assert.deepEqual(KINDS, KIND_ORDER);
 });
