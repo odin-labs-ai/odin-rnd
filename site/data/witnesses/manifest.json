@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "32aaf033-57b5-401f-8d77-948b4b22792c",
-  "startedAt": "2026-10-12T10:50:11.166Z",
-  "sourceRevision": "6a375f0b5f0c0c26c9563613e5aa0cbb808c94b9",
+  "runId": "aa64699e-79c3-4b16-8eaa-99279babf27f",
+  "startedAt": "2026-10-14T23:57:40.652Z",
+  "sourceRevision": "3beba9e78eda08aae701c9ef478ccfca072a8fea",
   "workingTree": {
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
   },
-  "environment": "local reproduction",
-  "workflowRun": null,
-  "workflowAttempt": null,
+  "environment": "GitHub Actions",
+  "workflowRun": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/38657198208",
+  "workflowAttempt": 1,
   "status": "passed",
   "generatorInputSha256": {
     ".github/workflows/publish.yml": "2907c19848b6727a0e41e6bfd6323ce28c2dd05a99faa5948d453886e0d41857",
-    "scripts/build.mjs": "e1057f7533828f115054b38e04048237c98ac254f70d20a338f81f2fbb5d771e",
+    "scripts/build.mjs": "ab236fc1eae8917d58f2d5106b09273d1202c42f843c3bd22747d6378b19f472",
     "scripts/check.mjs": "dddfb7303567badd6efe198757443785528bf9190fdb6a21c04b1b3e3e03706f",
     "scripts/recording-provenance.mjs": "916671610918ba58246ddf913aa8ed569ddaadde2ef199cc5bcee8d8ae32da1b",
     "scripts/run-roi-demos.mjs": "7b6a70b7d407967857501417379c1717030f297a725952c9d1669754f34b2734",
@@ -22,18 +22,18 @@
   },
   "records": {
     "test-witness": {
-      "sha256": "154aac544444f3c97b5a63c87fc04adfbef28ccc5715bebc9f4c748ba4bf1670",
-      "completedAt": "2026-10-12T10:50:11.986Z"
+      "sha256": "77694bd8b60993f4988ce006a83c95d5fe70478caa2079e0fe4c3b8337a4de8e",
+      "completedAt": "2026-10-14T23:57:43.997Z"
     },
     "migration-witness": {
-      "sha256": "5c796cd2de74abb5f99429a93a67016f6fc9bdbf6763710a16879441755eee71",
-      "completedAt": "2026-10-12T10:50:13.726Z"
+      "sha256": "82ad77320318c86ad5927621ef27a536a9c9369b37029714b84c8878d1885773",
+      "completedAt": "2026-10-14T23:57:48.160Z"
     },
     "ci-witness": {
-      "sha256": "97c60d1b1987cd86a58a62c877aa5b6f331a96893a38aaafeceb2edc4bc32c25",
-      "completedAt": "2026-10-12T10:50:15.116Z"
+      "sha256": "7264b9a57513f5ff06e71386069bcc83746ba354b4a5792b87e127cb9912ad5a",
+      "completedAt": "2026-10-14T23:57:50.700Z"
     }
   },
   "integrityScope": "Consistency of source inputs and raw records, not authentication against an attacker replacing all artifacts.",
-  "completedAt": "2026-10-12T10:50:15.119Z"
+  "completedAt": "2026-10-14T23:57:50.704Z"
 }

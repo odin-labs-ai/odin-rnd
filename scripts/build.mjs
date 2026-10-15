@@ -142,6 +142,15 @@ for (const file of htmlFiles('dist')) {
   const source = readFileSync(file,'utf8');
   writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
 }
+// Page views counted by odin-labs.ai (cookieless, path + referrer host only): GitHub Pages has no analytics and Vercel's
+// own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (odin-website-preview #50).
+// The beacon is this site's own file: no script from another origin runs on these pages. It loads async, so it never
+// holds up the page's own scripts or DOMContentLoaded.
+for (const file of htmlFiles('dist')) {
+  const tag = `<script async src="${relative(dirname(file),'dist/assets/view-beacon.js')}"></script>`;
+  const source = readFileSync(file,'utf8');
+  writeFileSync(file,source.replace('</head>',`${tag}\n</head>`));
+}
 // A way back to the main Odin Labs site in every built page's header (founder ask 2026-10-11). Fails closed on a page without exactly one site header.
 const parentSiteLink = '<a class="parent-site-link" href="https://odin-labs.ai/"><span aria-hidden="true">←</span> Back to odin-labs.ai</a>';
 for (const file of htmlFiles('dist')) {
