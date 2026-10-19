@@ -1,0 +1,103 @@
+{
+  "kind": "derived-manifest-summary",
+  "runId": "run-2026-10-19T01-47-53-404Z",
+  "createdAt": "2026-10-19T01:48:06.328Z",
+  "originalManifestSHA256": "1391717b8e93f1fe9e80c7287d34b9a68a40c0eb9ae1bd35aebf7cd7628b3310",
+  "protocolHash": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+  "sourceHashes": {
+    "experiments/temporal-document-fit/PROTOCOL.md": "01a84bd8a7566a941f7208224544f7158bc937c1470def041823281cdd2ce67e",
+    "experiments/temporal-document-fit/README.md": "305bde67183f5894856ecf495f0a3f20ba84032d70713ea64a0614d212c7fd1b",
+    "experiments/temporal-document-fit/adapters.mjs": "570b7c29fe6fd5a88b65db1e2ce941278f4aefe8ec421b506cd3895673856e95",
+    "experiments/temporal-document-fit/adapters.test.mjs": "94aca363493308c3133c12562562e6e22537164a828038692b36211710752ad8",
+    "experiments/temporal-document-fit/authorization.mjs": "1c93caf8411c8ff104e5e8e3c1700309bd282648353e114c0dec93131b1a5790",
+    "experiments/temporal-document-fit/fixtures.mjs": "34ca0b967e69fe7014386f50d03e9ca2d7ec166351160afa940a486eade544ab",
+    "experiments/temporal-document-fit/oracle.mjs": "d5f51155a402541aef3fdc140015ca57c4b31f9de83e6f753be42c2adaa97e9c",
+    "experiments/temporal-document-fit/oracle.test.mjs": "7af1d643c68b2f1964066f1b16efb476331fedc03be65855cacebf0b6819bba3",
+    "experiments/temporal-document-fit/package.json": "14e834ebb9c23d6512b563feb6b0bf201b88cfed4ddac9e920e1760c7bc4d93e",
+    "experiments/temporal-document-fit/pnpm-lock.yaml": "b7b07374822dca40fa60b953e4aefdbb1abeb7086fca0a55352e29d56d498179",
+    "experiments/temporal-document-fit/protocol.json": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+    "experiments/temporal-document-fit/run.mjs": "1c24633ae35165ce245122d2f7999edd1b331c27a7b8356bba3b8d829021b0b0",
+    "experiments/temporal-document-fit/runtime.mjs": "857a5fc997fc34b2e62ded59aaa671fe1bef7c7b90182ea5d0890555c135cf37",
+    "experiments/temporal-document-fit/suites.mjs": "5d50ce23a435f6dbd759765fe452b9765ccc0484372e4523947cc6ef12d7dac9",
+    "experiments/temporal-document-fit/worker.mjs": "5eeaf263b694f20fa08a9f7cf383cb6e617149c129ba341e41f2b35f38feba96",
+    "experiments/temporal-document-fit/workflows.cjs": "f17aae5c1fbd8a8c9f46b49b3d9e89f8da9904b96a44fd4e10f014f05c937e58"
+  },
+  "dependencies": {
+    "@temporalio/activity": "1.24.0",
+    "@temporalio/client": "1.24.0",
+    "@temporalio/worker": "1.24.0",
+    "@temporalio/workflow": "1.24.0",
+    "mongodb": "6.20.0",
+    "pg": "8.23.1"
+  },
+  "runtime": {
+    "binaries": {
+      "postgres": {
+        "file": "$RUNTIME_ROOT/postgres/bin/postgres",
+        "sha256": "3f7c9874117ec9a722076258c99a2b817aa70a041423a35bd69873ee808a399a"
+      },
+      "mongodb": {
+        "file": "$RUNTIME_ROOT/mongo/bin/mongod",
+        "sha256": "0b3994cd166514da3e8fd4cb72e08e6d650fb913abf464db6b5d0d8871f9dca1"
+      },
+      "temporal": {
+        "file": "$RUNTIME_ROOT/temporal/temporal",
+        "sha256": "d5776986d343fb789f49e4e7b6d3faca931c0877b71c6d4a7ac39dba467155cc"
+      }
+    },
+    "provenance": {
+      "date": "2026-10-19",
+      "platform": "macOS-15.4.1-x86_64-i386-64bit",
+      "binaries": {
+        "postgres": {
+          "sha256": "3f7c9874117ec9a722076258c99a2b817aa70a041423a35bd69873ee808a399a",
+          "file": "postgres/bin/postgres"
+        },
+        "mongodb": {
+          "sha256": "0b3994cd166514da3e8fd4cb72e08e6d650fb913abf464db6b5d0d8871f9dca1",
+          "file": "mongo/bin/mongod"
+        },
+        "temporal": {
+          "sha256": "d5776986d343fb789f49e4e7b6d3faca931c0877b71c6d4a7ac39dba467155cc",
+          "file": "temporal/temporal"
+        }
+      },
+      "publisherChecksumVerified": [
+        "postgres",
+        "temporal"
+      ]
+    },
+    "ports": {
+      "postgres": 55439,
+      "mongodb": 27029,
+      "temporal": 17239
+    }
+  },
+  "host": {
+    "platform": "darwin",
+    "release": "24.4.0",
+    "arch": "x64",
+    "cpus": 12,
+    "totalMemoryBytes": 17179869184,
+    "node": "v22.21.1"
+  },
+  "fixture": {
+    "seed": 20261019,
+    "hash": "ad1e043ebbd3477184f8be5f07cfc535eebf5f37235e4bb2cf2d600ee6fa8623",
+    "recordCount": 1000
+  },
+  "measurement": {
+    "databaseMs": "await database adapter call only; excludes projection hashing and telemetry",
+    "temporalMs": "workflow activity schedule to activity result, includes workflow-task scheduling; excludes workflow client start overhead",
+    "resourceIsolation": "Observed owned process RSS; unrestricted host, no cgroup guarantee",
+    "publicExport": "Do not publish worker logs, raw ownership records, or unredacted local paths"
+  },
+  "counts": {
+    "cells": 20,
+    "faults": 42,
+    "evolutions": 10,
+    "measuredAttempts": 20000,
+    "measuredCompleted": 20000
+  },
+  "note": "Derived summary: full synthetic fixtures, diagnostics and runtime download URLs omitted here; normalized full manifest retained in raw-evidence.tar.gz."
+}

@@ -1,0 +1,643 @@
+[
+  {
+    "name": "duplicate operation",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "operation key payload mismatch",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "optimistic version conflict",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "forbidden direct terminal transition",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "terminal mutation rejection",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "abort before commit",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "out-of-order checkpoint",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "payload limit",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "cross-tenant read/write/list/history",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "positive get and list pagination",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "positive history pagination",
+    "passed": true,
+    "arm": "postgres"
+  },
+  {
+    "name": "deliberate duplicate-event negative control",
+    "passed": true,
+    "detected": true,
+    "errors": [
+      "duplicate sequence:tenant-0/record-0000/1",
+      "event multiplicity:tenant-0/same-operation:2"
+    ],
+    "arm": "postgres"
+  },
+  {
+    "name": "commit before activity acknowledgment failure",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 1831,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "duplicate",
+          "version": 1
+        },
+        "dbMs": 2.714227000000392,
+        "attempt": 2,
+        "temporalMs": 1134
+      },
+      "snapshot": {
+        "file": "snapshots/after-commit-before-ack-postgres.json",
+        "hash": "9603b94efd23458197da4a5acb2c79a0043fa00b6eb1c6309a835e027c192f7d",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1,
+          "receipts": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "worker restart and activity retry",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 32432,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "duplicate",
+          "version": 1
+        },
+        "dbMs": 48.57651799999803,
+        "attempt": 2,
+        "temporalMs": 31321
+      },
+      "snapshot": {
+        "file": "snapshots/after-worker-restart-postgres.json",
+        "hash": "5a8390d937eefb1bcfdf30bf917bb05d8c1efd39a6161b34e0b20ddadadd86de",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 2,
+          "receipts": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "connectivity interruption",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 2157,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "applied",
+          "version": 1
+        },
+        "dbMs": 76.59281300000293,
+        "attempt": 2,
+        "temporalMs": 1172
+      },
+      "snapshot": {
+        "file": "snapshots/after-connection-retry-postgres.json",
+        "hash": "aeaf1fea6bfad7018ce7ad448fbe8dc43866b9e54da15cd88a1cbbae1a495e2d",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      }
+    }
+  },
+  {
+    "name": "owned database restart durability",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 2369,
+    "evidence": {
+      "before": {
+        "file": "snapshots/before-database-restart-postgres.json",
+        "hash": "aeaf1fea6bfad7018ce7ad448fbe8dc43866b9e54da15cd88a1cbbae1a495e2d",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      },
+      "after": {
+        "file": "snapshots/after-database-restart-postgres.json",
+        "hash": "aeaf1fea6bfad7018ce7ad448fbe8dc43866b9e54da15cd88a1cbbae1a495e2d",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      }
+    }
+  },
+  {
+    "name": "workflow start acknowledgment loss and duplicate start",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 763,
+    "evidence": {
+      "workflowId": "run-2026-10-19T01-47-53-404Z-postgres-dedup",
+      "duplicateStartRejected": true,
+      "reattachedResult": {
+        "result": {
+          "status": "applied",
+          "version": 1
+        },
+        "dbMs": 19.65153299999656,
+        "attempt": 1,
+        "temporalMs": 114
+      },
+      "snapshot": {
+        "file": "snapshots/after-workflow-dedup-postgres.json",
+        "hash": "d60efe30df0d119b47e0e2f13b202558bfe54b886a2b52f530ec7d7f791e271e",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 4,
+          "receipts": 4
+        }
+      }
+    }
+  },
+  {
+    "name": "duplicate approval signal",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 821,
+    "evidence": {
+      "result": {
+        "deliveries": 2,
+        "uniqueApprovals": 1,
+        "result": {
+          "result": {
+            "status": "applied",
+            "version": 1
+          },
+          "dbMs": 8.30833100000018,
+          "attempt": 1
+        }
+      },
+      "snapshot": {
+        "file": "snapshots/after-duplicate-signal-postgres.json",
+        "hash": "1b403b2304edec2c1a1a06c1b2156bd4a410ab59729b35ebeffbad79758e3112",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 5,
+          "receipts": 5
+        }
+      }
+    }
+  },
+  {
+    "name": "cross-tenant workflow signal",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 844,
+    "evidence": {
+      "wrongTenantRejected": true,
+      "spoofedBodyIdentityRejected": true,
+      "result": {
+        "deliveries": 2,
+        "uniqueApprovals": 1,
+        "result": {
+          "result": {
+            "status": "applied",
+            "version": 1
+          },
+          "dbMs": 8.612152000001515,
+          "attempt": 1
+        }
+      },
+      "snapshot": {
+        "file": "snapshots/after-cross-tenant-signal-postgres.json",
+        "hash": "8e97dc18ae25c1d48f0582fb3bd954f1b337d343fd3fedadb4384c8b3797cd3f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      }
+    }
+  },
+  {
+    "name": "workflow history replay",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 4045,
+    "evidence": {
+      "historyEvents": 11,
+      "replayed": true
+    }
+  },
+  {
+    "name": "quiescent backup and isolated restore",
+    "arm": "postgres",
+    "passed": true,
+    "recoveryMs": 13432,
+    "evidence": {
+      "before": {
+        "file": "snapshots/before-cold-restore-postgres.json",
+        "hash": "8e97dc18ae25c1d48f0582fb3bd954f1b337d343fd3fedadb4384c8b3797cd3f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      },
+      "after": {
+        "file": "snapshots/after-cold-restore-postgres.json",
+        "hash": "8e97dc18ae25c1d48f0582fb3bd954f1b337d343fd3fedadb4384c8b3797cd3f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      },
+      "restore": {
+        "method": "clean shutdown and complete cold directory copy",
+        "original": "$RUNTIME_ROOT/state/postgres",
+        "restored": "$RUNTIME_ROOT/restores/run-2026-10-19T01-47-53-404Z-postgres"
+      }
+    }
+  },
+  {
+    "name": "duplicate operation",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "operation key payload mismatch",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "optimistic version conflict",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "forbidden direct terminal transition",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "terminal mutation rejection",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "abort before commit",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "out-of-order checkpoint",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "payload limit",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "cross-tenant read/write/list/history",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "positive get and list pagination",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "positive history pagination",
+    "passed": true,
+    "arm": "mongodb"
+  },
+  {
+    "name": "deliberate duplicate-event negative control",
+    "passed": true,
+    "detected": true,
+    "errors": [
+      "duplicate sequence:tenant-0/record-0000/1",
+      "event multiplicity:tenant-0/same-operation:2"
+    ],
+    "arm": "mongodb"
+  },
+  {
+    "name": "commit before activity acknowledgment failure",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 2023,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "duplicate",
+          "version": 1
+        },
+        "dbMs": 26.44764899999973,
+        "attempt": 2,
+        "temporalMs": 1170
+      },
+      "snapshot": {
+        "file": "snapshots/after-commit-before-ack-mongodb.json",
+        "hash": "69783fb545b3acbe631a8df7098cec324bc4a0c8938b8242f998de62a5f00bc9",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1,
+          "receipts": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "worker restart and activity retry",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 33603,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "duplicate",
+          "version": 1
+        },
+        "dbMs": 79.38448000000062,
+        "attempt": 2,
+        "temporalMs": 32275
+      },
+      "snapshot": {
+        "file": "snapshots/after-worker-restart-mongodb.json",
+        "hash": "46ee25037eb1931f2a547058e0a8cb7c572daca9b64de4572d0b87e44f9832e1",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 2,
+          "receipts": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "connectivity interruption",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 11437,
+    "evidence": {
+      "result": {
+        "result": {
+          "status": "applied",
+          "version": 1
+        },
+        "dbMs": 151.20169200000237,
+        "attempt": 3,
+        "temporalMs": 9381
+      },
+      "snapshot": {
+        "file": "snapshots/after-connection-retry-mongodb.json",
+        "hash": "711af9189cf1b9d7d5c39e24661b885cf168d46da4c89cc4d27a1423c9006cec",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      }
+    }
+  },
+  {
+    "name": "owned database restart durability",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 9311,
+    "evidence": {
+      "before": {
+        "file": "snapshots/before-database-restart-mongodb.json",
+        "hash": "711af9189cf1b9d7d5c39e24661b885cf168d46da4c89cc4d27a1423c9006cec",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      },
+      "after": {
+        "file": "snapshots/after-database-restart-mongodb.json",
+        "hash": "711af9189cf1b9d7d5c39e24661b885cf168d46da4c89cc4d27a1423c9006cec",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 3,
+          "receipts": 3
+        }
+      }
+    }
+  },
+  {
+    "name": "workflow start acknowledgment loss and duplicate start",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 1310,
+    "evidence": {
+      "workflowId": "run-2026-10-19T01-47-53-404Z-mongodb-dedup",
+      "duplicateStartRejected": true,
+      "reattachedResult": {
+        "result": {
+          "status": "applied",
+          "version": 1
+        },
+        "dbMs": 97.7040810000035,
+        "attempt": 1,
+        "temporalMs": 193
+      },
+      "snapshot": {
+        "file": "snapshots/after-workflow-dedup-mongodb.json",
+        "hash": "a297bee3f62864b0a127d555f8089036eced7a0d0bf4e8c479d1a489ed9290db",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 4,
+          "receipts": 4
+        }
+      }
+    }
+  },
+  {
+    "name": "duplicate approval signal",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 911,
+    "evidence": {
+      "result": {
+        "deliveries": 2,
+        "uniqueApprovals": 1,
+        "result": {
+          "result": {
+            "status": "applied",
+            "version": 1
+          },
+          "dbMs": 53.33080500000506,
+          "attempt": 1
+        }
+      },
+      "snapshot": {
+        "file": "snapshots/after-duplicate-signal-mongodb.json",
+        "hash": "e90e9fe9c179f40ee1ead01ea90e92822947a3f2bc8f0850a87e8a6717117d30",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 5,
+          "receipts": 5
+        }
+      }
+    }
+  },
+  {
+    "name": "cross-tenant workflow signal",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 922,
+    "evidence": {
+      "wrongTenantRejected": true,
+      "spoofedBodyIdentityRejected": true,
+      "result": {
+        "deliveries": 2,
+        "uniqueApprovals": 1,
+        "result": {
+          "result": {
+            "status": "applied",
+            "version": 1
+          },
+          "dbMs": 60.27406900000642,
+          "attempt": 1
+        }
+      },
+      "snapshot": {
+        "file": "snapshots/after-cross-tenant-signal-mongodb.json",
+        "hash": "4dd3ec109d00f5a51c415de0ccc6bf6d56d2f02d840680ada240827a552d8d4f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      }
+    }
+  },
+  {
+    "name": "workflow history replay",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 2314,
+    "evidence": {
+      "historyEvents": 11,
+      "replayed": true
+    }
+  },
+  {
+    "name": "quiescent backup and isolated restore",
+    "arm": "mongodb",
+    "passed": true,
+    "recoveryMs": 19438,
+    "evidence": {
+      "before": {
+        "file": "snapshots/before-cold-restore-mongodb.json",
+        "hash": "4dd3ec109d00f5a51c415de0ccc6bf6d56d2f02d840680ada240827a552d8d4f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      },
+      "after": {
+        "file": "snapshots/after-cold-restore-mongodb.json",
+        "hash": "4dd3ec109d00f5a51c415de0ccc6bf6d56d2f02d840680ada240827a552d8d4f",
+        "oracle": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 6,
+          "receipts": 6
+        }
+      },
+      "restore": {
+        "method": "clean shutdown and complete cold directory copy",
+        "shutdownEvidence": {
+          "pid": 89947,
+          "processExited": true,
+          "cleanShutdownLog": true
+        },
+        "original": "$RUNTIME_ROOT/state/mongo",
+        "restored": "$RUNTIME_ROOT/restores/run-2026-10-19T01-47-53-404Z-mongodb"
+      }
+    }
+  }
+]
