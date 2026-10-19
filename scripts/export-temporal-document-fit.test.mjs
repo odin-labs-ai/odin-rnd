@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,access} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,access,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir,homedir} from 'node:os';
 import {execFileSync} from 'node:child_process';
@@ -15,7 +15,12 @@ test('recursive diagnostics sanitation preserves scientific values',()=>{
  assert.throws(()=>assertPrivateFree('machine-secret',['machine-secret']));
 });
 test('export binds normalized bytes, preserves frozen sources and excludes logs',async()=>{
- const root=await mkdtemp(join(tmpdir(),'tdf-export-test-')),repo=join(root,'repo'),source=join(repo,'experiments/temporal-document-fit'),run=join(root,'runtime/runs/main');
+ const root=await mkdtemp(join(tmpdir(),'tdf-export-test-'));
+ const previousTmpdir=process.env.TMPDIR;
+ try {
+  // Keep exporter staging directories within this test's cleanup boundary too.
+  process.env.TMPDIR=root;
+  const repo=join(root,'repo'),source=join(repo,'experiments/temporal-document-fit'),run=join(root,'runtime/runs/main');
  await mkdir(source,{recursive:true});await mkdir(run,{recursive:true});
  const sources={};for(const name of ['PROTOCOL.md','protocol.json']){const bytes=name.endsWith('json')?'{}\n':'# Frozen\n';await writeFile(join(source,name),bytes);sources['experiments/temporal-document-fit/'+name]=sha256(bytes);}
  const manifest={runId:'main',createdAt:'2026-01-01',protocolHash:sources['experiments/temporal-document-fit/protocol.json'],sources,dependencies:{pg:'test'},runtime:{version:'test',provenance:{downloads:{temporal:'https://github.com/temporalio/cli/releases/test'}}},host:{platform:'test'},fixture:{seed:1,hash:'fixture',records:[{}]},measurement:{},diagnostics:{serverInfo:{host:'private-test-host'},fsUsedSize:100}};
@@ -34,6 +39,10 @@ test('export binds normalized bytes, preserves frozen sources and excludes logs'
  await writeFile(join(source,'PROTOCOL.md'),'changed');
  await assert.rejects(exportEvidence({run,out:join(root,'bad-export'),prior,repo}),/Frozen source mismatch/);
  await assert.rejects(access(join(root,'bad-export')));
+ } finally {
+  if(previousTmpdir===undefined) delete process.env.TMPDIR; else process.env.TMPDIR=previousTmpdir;
+  await rm(root,{recursive:true,force:true});
+ }
 });
 
 test('archive ownership arguments support GNU and BSD tar without mixing flags',()=>{
