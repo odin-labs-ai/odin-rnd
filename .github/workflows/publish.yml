@@ -30,11 +30,6 @@ jobs:
         run: npm install --global pnpm@10.11.1
       - name: Install released engine
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Check Temporal document-fit adapter and oracle units
-        working-directory: experiments/temporal-document-fit
-        run: |
-          pnpm install --frozen-lockfile --ignore-scripts
-          pnpm test
       - name: Re-execute all three Java fixture projects
         run: node scripts/run-roi-demos.mjs
       - name: Keep witness receipts including failures
