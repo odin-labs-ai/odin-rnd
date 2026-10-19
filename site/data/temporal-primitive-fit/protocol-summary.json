@@ -1,0 +1,187 @@
+{
+  "kind": "derived-protocol-summary",
+  "originalProtocolSHA256": "09e2c9bad3d545f4c62278b9f6d7f84dea25d70904ca7ac70c632d286f2be6e4",
+  "originalMarkdownSHA256": "d755aecfb8d1e915e5fe09ebde41e4334f856770f6ae4eee78c915f0068e92d8",
+  "exactSourceInArchive": "sources/protocol.json",
+  "note": "Readable derived summary; exact frozen protocol and all source files are retained in the archive.",
+  "protocol": {
+    "id": "temporal-primitive-fit-v2",
+    "authoredAt": "2026-10-19",
+    "status": "frozen-before-amended-counted",
+    "seed": 20261019,
+    "reproductionSeed": 20261020,
+    "question": "Does MongoDB earn a bounded Odin document primitive by materially outperforming the strongest tested PostgreSQL design while preserving the same contract?",
+    "priorStudy": "temporal-document-fit",
+    "tier": "synthetic native single-host candidate screening; not production adoption",
+    "runtime": {
+      "postgres": "16.15",
+      "mongodb": "8.0.15",
+      "temporalCli": "1.9.1",
+      "temporalServer": "1.32.0",
+      "nodeMajor": 22,
+      "ports": {
+        "postgres": 55739,
+        "mongodb": 27329,
+        "temporal": 17539
+      },
+      "durability": {
+        "postgres": "fsync=on synchronous_commit=on full_page_writes=on wal_sync_method=fsync_writethrough",
+        "mongodb": "one-member replica set w=majority j=true"
+      },
+      "temporalPersistence": "SQLite development server",
+      "platformBoundary": "macOS native comparison; observed PostgreSQL fsync_writethrough required before measurement. Mongo pinned WiredTiger source attempts F_FULLFSYNC, but actual syscall branch and power-loss recovery are not traced or tested.",
+      "durabilityVerification": "Read live PostgreSQL settings and Mongo configuration before adapter mutation and at run end; reject setting drift, PGOPTIONS overrides, pending PostgreSQL restart, or the pinned WiredTiger full-flush fallback warning in the owned Mongo log. Absence of a warning is not syscall tracing."
+    },
+    "kernels": {
+      "A": {
+        "designs": [
+          "pg-monolithic",
+          "pg-split",
+          "mongo"
+        ],
+        "sizes": [
+          8192,
+          65536
+        ],
+        "count": 1000,
+        "tenants": 10,
+        "repetitions": 5,
+        "warmup": 100,
+        "operations": 1000,
+        "concurrency": 10,
+        "mutablePaths": 64,
+        "profiles": [
+          {
+            "id": "known-hot",
+            "updateFraction": 0.8
+          },
+          {
+            "id": "distributed-write-heavy",
+            "updateFraction": 0.9
+          },
+          {
+            "id": "distributed-read-heavy",
+            "updateFraction": 0.5
+          }
+        ],
+        "contract": "bounded aggregate CAS state; no durable historical receipt or business-event guarantee",
+        "activeRecords": 10,
+        "distributedPreconditionMutationsPerRecord": 64,
+        "sizeMeaning": "cold-body bytes; full serialized documents include identity/version/nested-state overhead"
+      },
+      "B": {
+        "designs": [
+          "pg-gin",
+          "pg-attributes",
+          "mongo-wildcard"
+        ],
+        "count": 10000,
+        "tenants": 10,
+        "keyCount": 200,
+        "attributesPerDocument": 20,
+        "repetitions": 5,
+        "warmup": 100,
+        "queries": 500,
+        "updates": 100,
+        "concurrency": 10,
+        "queryLimit": 20,
+        "contract": "tenant-scoped scalar attribute predicates and ordered identifier/value projections; full match oracle outside timing",
+        "queryCases": 20,
+        "queryClasses": [
+          "numeric-equality-positive",
+          "string-equality-positive",
+          "numeric-range",
+          "explicit-null",
+          "exists"
+        ],
+        "queryGroups": [
+          "known",
+          "withheld"
+        ],
+        "queryPolicy": "two fixed seeded cases per group/class; positive fixtures chosen deterministically before timing; negative/type/absent controls separate"
+      }
+    },
+    "reproduction": {
+      "repetitions": 1,
+      "sameMatrix": true,
+      "separateSeed": 20261020,
+      "pooledWithMain": false
+    },
+    "limits": {
+      "elapsedMs": 3600000,
+      "rssBytes": 4294967296,
+      "diskBytes": 10737418240,
+      "operationTimeoutMs": 30000,
+      "cellTimeoutMs": 300000
+    },
+    "decision": {
+      "minMedianLatencyReduction": 0.3,
+      "minWinningRepetitions": 4,
+      "repetitions": 5,
+      "maxP95Ratio": 1.1,
+      "maxStorageRatio": 2,
+      "compareAgainst": "both PostgreSQL designs separately within each profile/size or query cell; a win against JSONB alone is not a PostgreSQL win",
+      "maintenanceVeto": "for attribute-query candidates, update median latency may not exceed the best PostgreSQL design by more than 2x; report ingestion and index build separately",
+      "correctnessVeto": "any missing acknowledged effect, incorrect reconstructed field/query, mismatched-tenant/id access, failed negative control or source drift rejects candidate",
+      "reproductionGate": "candidate must retain direction and at least30percent median reduction against both PostgreSQL designs in the independent one-repetition full-matrix repeat, with correctness and p95/storage gates; this is screening replication, not statistical generalization",
+      "possibleOutcomes": [
+        "candidate-advantage",
+        "jsonb-only-advantage",
+        "no-demonstrated-advantage",
+        "invalid-or-incomplete"
+      ],
+      "productionAdoption": false,
+      "p95Aggregation": "median of five paired per-cell p95 ratios, separately against each PostgreSQL design",
+      "storageAggregation": "maximum paired data-plus-index ratio across repetitions, separately against each PostgreSQL design",
+      "queryClassPolicy": "evaluate fixed mixed workload and every prespecified group/class separately, report all; no class claim inferred from pooled median",
+      "maxMaintenanceMedianRatio": 2
+    },
+    "measurement": {
+      "timed": "direct adapter request/response including driver serialization and any required reconstruction",
+      "excluded": "fixture generation, expected-state/query oracle computation, evidence hashing, Temporal orchestration; no full-document pre-read/validation before partial update",
+      "order": "fixed Latin-square arm rotation per repetition and profile, identical per-lane operation traces across designs",
+      "statistics": "per-cell request p50/p95 and throughput; five paired repetition ratios, all cells shown; no population tail or production capacity inference",
+      "storage": "data plus all required indexes per design, after maintenance; WAL/oplog measurements separately named and never ratioed as equivalent write amplification",
+      "host": "record shared host load and CPU speed limits; no heavy owned test/build jobs during measurement",
+      "authorizationBoundary": "tenant-key scoping only, not independently authenticated identity or database-enforced tenant isolation",
+      "snapshotEvidence": "full actual snapshot is compared independently in memory; stored session evidence retains hot/tools/core and cold-body byte length/SHA256 plus full-snapshot digest; cold bodies are reproducible from frozen fixture source/seed, not repeated in every export",
+      "throughput": "whole-cell harness throughput includes trace bookkeeping; per-request latency excludes oracle work"
+    },
+    "temporalIntegration": {
+      "timedWithKernel": false,
+      "contract": "real activity execution, commit-before-ack retry and bounded CAS reconciliation on isolated known states; not general exactly-once receipts or a Mongo Temporal history backend"
+    },
+    "operatingDecision": {
+      "scope": "bounded session/artifact aggregate and tenant-defined metadata search candidates only",
+      "retainRelationalAuthority": [
+        "governed memory history and idempotency",
+        "billing/ledger records",
+        "cross-entity integrity and uniqueness"
+      ],
+      "unmeasured": [
+        "production workload proportions",
+        "replicated HA and failover",
+        "backup/PITR and retention exhaustion",
+        "sharding",
+        "independent engineer productivity",
+        "total operating cost and migration break-even",
+        "change-stream vs PostgreSQL logical decoding recovery contract"
+      ]
+    },
+    "sources": [
+      "https://www.postgresql.org/docs/16/datatype-json.html",
+      "https://www.postgresql.org/docs/16/queries-with.html",
+      "https://www.mongodb.com/docs/v8.0/core/indexes/index-types/index-wildcard/",
+      "https://www.mongodb.com/docs/v8.0/core/write-operations-atomicity/",
+      "https://www.postgresql.org/docs/16/wal-reliability.html"
+    ],
+    "amendment": {
+      "reason": "Initial counted run discovered macOS flush-method confound: PostgreSQL default open_datasync versus MongoDB WiredTiger source attempting F_FULLFSYNC. Initial run interrupted and excluded; exact original sources and records retained.",
+      "priorRun": "main-2026-10-19T08-22-08.743Z",
+      "priorCompletedCells": 81,
+      "comparisonPolicy": "Restart entire main matrix and independent reproduction under required PostgreSQL fsync_writethrough; never pool earlier rows. Decision thresholds, workloads, seeds and denominators unchanged.",
+      "registration": "Locally frozen before amended counted run; not publicly preregistered."
+    },
+    "frozenAt": "2026-10-19T08:52:38.512713+00:00"
+  }
+}

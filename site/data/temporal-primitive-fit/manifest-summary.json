@@ -1,0 +1,715 @@
+{
+  "kind": "derived-manifest-summary",
+  "protocolHash": "09e2c9bad3d545f4c62278b9f6d7f84dea25d70904ca7ac70c632d286f2be6e4",
+  "sourceHashes": {
+    "PROTOCOL.md": "d755aecfb8d1e915e5fe09ebde41e4334f856770f6ae4eee78c915f0068e92d8",
+    "README.md": "1ff4659b2ab5fcd669adf900e4db058b5c4a3c29c8dadb3d40937796db55bb77",
+    "adapters.mjs": "153e72912f6ca043fba3e9095a7cc24daf25c46b1fc04f370effa14ace617580",
+    "adapters.test.mjs": "5e241732a5f310e4a72bd72f3f10682368772687be711ccc2b47c2cabe109b2c",
+    "evaluate.mjs": "38042e81a9a9a91a0efa4d3d5dee3c1521c1a87b8567a7d2c56cf9a93d004d48",
+    "evaluate.test.mjs": "19c54ca5765aa7471b45a3edfd973c777b9486a4afc8527de2fba6c7a0d2f132",
+    "fixtures.mjs": "b3877855678c16f72bc795689bc771d67f860262e09eff74712691ed64663109",
+    "native.test.mjs": "73e09f81f9936face1457dd184aac39dbd8182b2ac95363abd6e4311c400c8a0",
+    "oracle.mjs": "15f2f1876b0abf2961630c065fe24817c0040e9ded81578733efce98cf8d8d97",
+    "package.json": "e323e16717ddd7e436664d58d767c924d042adeb5dd7ae97bdbcc272167cbffe",
+    "pnpm-lock.yaml": "b7b07374822dca40fa60b953e4aefdbb1abeb7086fca0a55352e29d56d498179",
+    "protocol.json": "09e2c9bad3d545f4c62278b9f6d7f84dea25d70904ca7ac70c632d286f2be6e4",
+    "run.mjs": "ff6768a4b7a3d740904023a8d8efba4e596f9714e861e3584863dec5b7e2c2f1",
+    "runner.test.mjs": "021695732d913bd3cd6cb83e201cd50bb1ad13f50809b872280de0cc23b86206",
+    "runtime.mjs": "6f3e7aa2e4538a3d6c1e454187b2465239143d57877d7c5bc8f5a3bcc8b57ae1",
+    "runtime.test.mjs": "771fe0f200639c226e79ff7e9548e2c4938cd314517ee39b5e7ea45637075aa2",
+    "temporal-correctness.mjs": "de2ea182360ed81bb20b4a11a486d0b310d3805c6344b38720cf4d2148363ae2",
+    "workflows.cjs": "a1b9843e2cac08e771150bbca313a8fd3ccf58c2a6bed6676e1688c4b9c8e920"
+  },
+  "fixtures": {
+    "main": [
+      {
+        "label": "A-known-hot-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r0-mongo",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r1-pg-split",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r1-mongo",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r2-mongo",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r2-pg-split",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r3-pg-split",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r3-mongo",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r4-pg-split",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r4-mongo",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-8192-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "080ec3a61b46030af89af5257dc0400b4930df177a32b14b799be3a280df2571"
+      },
+      {
+        "label": "A-known-hot-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r0-mongo",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r1-pg-split",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r1-mongo",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r2-mongo",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r2-pg-split",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r3-pg-split",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r3-mongo",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r4-pg-split",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r4-mongo",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-known-hot-65536-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "6b2c4e3669077584feb61936fe83af01828a8ac423070644b183c6f1a9415099"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r1-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r1-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r2-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r2-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r3-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r3-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r4-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r4-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r1-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r1-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r2-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r2-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r3-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r3-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r4-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r4-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r1-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r1-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r2-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r2-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r3-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r3-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r4-pg-split",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r4-mongo",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "b8ba1f2a7a240739eca5c049f8206af0ffa2da9934f4d6c3f7ed130c593daff0"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r1-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r1-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r1-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r2-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r2-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r2-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r3-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r3-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r3-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r4-pg-split",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r4-mongo",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r4-pg-monolithic",
+        "count": 1000,
+        "hash": "7c3268bf6a12d5bd00ae757a72f871e2c6101c8a1656bf845304b7b28cab5c90"
+      },
+      {
+        "label": "B-attributes-0-r0-pg-gin",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r0-pg-attributes",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r0-mongo-wildcard",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r1-pg-attributes",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r1-mongo-wildcard",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r1-pg-gin",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r2-mongo-wildcard",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r2-pg-gin",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r2-pg-attributes",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r3-pg-gin",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r3-pg-attributes",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r3-mongo-wildcard",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r4-pg-attributes",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r4-mongo-wildcard",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      },
+      {
+        "label": "B-attributes-0-r4-pg-gin",
+        "count": 10000,
+        "hash": "4242974b1c3b4eab234fb6a573a56b5231e638704b8f4b55dffd48e21419a921"
+      }
+    ],
+    "reproduction": [
+      {
+        "label": "A-known-hot-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "7fa52519243537fbbcdc76b37633cda53005024b4b07f7cd9a25c36d5b5d0f67"
+      },
+      {
+        "label": "A-known-hot-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "7fa52519243537fbbcdc76b37633cda53005024b4b07f7cd9a25c36d5b5d0f67"
+      },
+      {
+        "label": "A-known-hot-8192-r0-mongo",
+        "count": 1000,
+        "hash": "7fa52519243537fbbcdc76b37633cda53005024b4b07f7cd9a25c36d5b5d0f67"
+      },
+      {
+        "label": "A-known-hot-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "0518bb65ea210822e08ba5d3c81301465a1b8ccc4d0dad5fb25bacc403eafde4"
+      },
+      {
+        "label": "A-known-hot-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "0518bb65ea210822e08ba5d3c81301465a1b8ccc4d0dad5fb25bacc403eafde4"
+      },
+      {
+        "label": "A-known-hot-65536-r0-mongo",
+        "count": 1000,
+        "hash": "0518bb65ea210822e08ba5d3c81301465a1b8ccc4d0dad5fb25bacc403eafde4"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-write-heavy-8192-r0-mongo",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "A-distributed-write-heavy-65536-r0-mongo",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-pg-split",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-read-heavy-8192-r0-mongo",
+        "count": 1000,
+        "hash": "71fe6ec649d8d5bc50d0ad7cec07f3e8d0e8ec81b53f029f7a6b04c5d09194ac"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-pg-split",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "A-distributed-read-heavy-65536-r0-mongo",
+        "count": 1000,
+        "hash": "dd9c8a8bb92a79278e647da06b23de33989054a6663ce5fe01e3f8d0ff6ae82e"
+      },
+      {
+        "label": "B-attributes-0-r0-pg-gin",
+        "count": 10000,
+        "hash": "ee3a7a27885ee1da1b518011036da31db53925d4e73ed924973729d62d2491f0"
+      },
+      {
+        "label": "B-attributes-0-r0-pg-attributes",
+        "count": 10000,
+        "hash": "ee3a7a27885ee1da1b518011036da31db53925d4e73ed924973729d62d2491f0"
+      },
+      {
+        "label": "B-attributes-0-r0-mongo-wildcard",
+        "count": 10000,
+        "hash": "ee3a7a27885ee1da1b518011036da31db53925d4e73ed924973729d62d2491f0"
+      }
+    ]
+  },
+  "runtime": {
+    "binaries": {
+      "postgres": {
+        "file": "$RUNTIME_ROOT/postgres/bin/postgres",
+        "sha256": "3f7c9874117ec9a722076258c99a2b817aa70a041423a35bd69873ee808a399a"
+      },
+      "mongodb": {
+        "file": "$RUNTIME_ROOT/mongo/bin/mongod",
+        "sha256": "0b3994cd166514da3e8fd4cb72e08e6d650fb913abf464db6b5d0d8871f9dca1"
+      },
+      "temporal": {
+        "file": "$RUNTIME_ROOT/temporal/temporal",
+        "sha256": "d5776986d343fb789f49e4e7b6d3faca931c0877b71c6d4a7ac39dba467155cc"
+      }
+    },
+    "provenance": {
+      "date": "2026-10-19",
+      "platform": "macOS-15.4.1-x86_64-i386-64bit",
+      "binaries": {
+        "postgres": {
+          "sha256": "3f7c9874117ec9a722076258c99a2b817aa70a041423a35bd69873ee808a399a",
+          "file": "postgres/bin/postgres"
+        },
+        "mongodb": {
+          "sha256": "0b3994cd166514da3e8fd4cb72e08e6d650fb913abf464db6b5d0d8871f9dca1",
+          "file": "mongo/bin/mongod"
+        },
+        "temporal": {
+          "sha256": "d5776986d343fb789f49e4e7b6d3faca931c0877b71c6d4a7ac39dba467155cc",
+          "file": "temporal/temporal"
+        }
+      },
+      "publisherChecksumVerified": [
+        "postgres",
+        "temporal"
+      ]
+    },
+    "ports": {
+      "postgres": 55739,
+      "mongodb": 27329,
+      "temporal": 17539
+    }
+  },
+  "limits": {
+    "elapsedMs": 3600000,
+    "rssBytes": 4294967296,
+    "diskBytes": 10737418240,
+    "operationTimeoutMs": 30000,
+    "cellTimeoutMs": 300000
+  },
+  "seeds": {
+    "main": 20261019,
+    "reproduction": 20261020
+  },
+  "note": "Normalized full manifests and runtime download provenance are retained in the archive."
+}

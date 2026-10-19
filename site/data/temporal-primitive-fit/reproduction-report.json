@@ -1,0 +1,1961 @@
+{
+  "mode": "reproduction",
+  "seed": 20261020,
+  "durabilityObserved": {
+    "observedAt": "2026-10-19T09:26:44.713Z",
+    "postgres": {
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on",
+      "wal_sync_method": "fsync_writethrough"
+    },
+    "postgresSettings": [
+      {
+        "name": "fsync",
+        "setting": "on",
+        "source": "command line",
+        "pending_restart": false
+      },
+      {
+        "name": "full_page_writes",
+        "setting": "on",
+        "source": "default",
+        "pending_restart": false
+      },
+      {
+        "name": "synchronous_commit",
+        "setting": "on",
+        "source": "command line",
+        "pending_restart": false
+      },
+      {
+        "name": "wal_sync_method",
+        "setting": "fsync_writethrough",
+        "source": "configuration file",
+        "pending_restart": false
+      }
+    ],
+    "mongo": {
+      "version": "8.0.15",
+      "fullFlushFallbackLog": {
+        "marker": "fcntl(F_FULLFSYNC) failed, falling back to fdatasync or fsync",
+        "observed": false,
+        "scope": "Owned complete MongoDB log; absence does not prove actual syscall branch"
+      },
+      "writeConcern": {
+        "w": "majority",
+        "j": true
+      },
+      "writeConcernProvenance": "Explicit driver request contract, also frozen in adapters; not a claim about the server default or observed flush syscall",
+      "serverDefaultWriteConcern": {
+        "w": "majority",
+        "wtimeout": 0
+      },
+      "serverConfiguration": {
+        "replication": {
+          "replSet": "primitivefit"
+        },
+        "storage": {
+          "dbPath": "$RUNTIME_ROOT/state/mongo",
+          "wiredTiger": {
+            "engineConfig": {
+              "cacheSizeGB": 0.25
+            }
+          }
+        }
+      },
+      "actualFlushSyscallTraced": false
+    },
+    "boundary": "PostgreSQL fsync_writethrough is required on this macOS tier; this does not prove equal physical flush behavior, power-loss recovery or production durability."
+  },
+  "startedAt": "2026-10-19T09:26:44.716Z",
+  "outcome": "completed",
+  "cells": [
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 41.350274000000354,
+          "p95Ms": 75.32233400000041
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 0.4736059999995632,
+          "p95Ms": 1.1268079999999827
+        }
+      },
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 4078.335196,
+      "throughput": 245.198089892364,
+      "medianMs": 39.22859200000039,
+      "p95Ms": 74.74208799999997,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.006208000000242464
+      },
+      "storageBytes": 16719872
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 38.21674699999858,
+          "p95Ms": 45.78897399999914
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 0.7613899999996647,
+          "p95Ms": 1.1594140000015614
+        }
+      },
+      "label": "A-known-hot-8192-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3116.1917429999994,
+      "throughput": 320.9045150210451,
+      "medianMs": 37.714357999999265,
+      "p95Ms": 42.51915899999949,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.003404999999474967
+      },
+      "storageBytes": 8962048
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 38.586874000000535,
+          "p95Ms": 55.52196400000139
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 2.7912519999990764,
+          "p95Ms": 4.201252999999269
+        }
+      },
+      "label": "A-known-hot-8192-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3261.783429000001,
+      "throughput": 306.58074693407235,
+      "medianMs": 37.98117000000275,
+      "p95Ms": 55.26386300000013,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.0037460000003193272
+      },
+      "storageBytes": 8585216
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 76.76659700000164,
+          "p95Ms": 112.78187700000126
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 0.9765200000001641,
+          "p95Ms": 4.228778000000602
+        }
+      },
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 6205.647525,
+      "throughput": 161.14353836105118,
+      "medianMs": 65.07394999999815,
+      "p95Ms": 111.97497499999736,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.002861000000848435
+      },
+      "storageBytes": 128835584
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 42.93734899999981,
+          "p95Ms": 60.421669999996084
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 2.1756789999999455,
+          "p95Ms": 4.856541000001016
+        }
+      },
+      "label": "A-known-hot-65536-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3667.340999,
+      "throughput": 272.67712499946884,
+      "medianMs": 42.23138699999981,
+      "p95Ms": 59.819697999999335,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.004093000003194902
+      },
+      "storageBytes": 68739072
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 800,
+          "medianMs": 40.08776999999827,
+          "p95Ms": 57.02878700000292
+        },
+        "read": {
+          "count": 200,
+          "medianMs": 3.057852999998431,
+          "p95Ms": 7.9381349999966915
+        }
+      },
+      "label": "A-known-hot-65536-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3400.466567999996,
+      "throughput": 294.0772920429433,
+      "medianMs": 39.00488700000278,
+      "p95Ms": 56.021835999999894,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "known-hot",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 0,
+        "elapsedMs": 0.0032219999993685633
+      },
+      "storageBytes": 69767168
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 42.2500260000088,
+          "p95Ms": 73.34666100000322
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 0.501631000006455,
+          "p95Ms": 0.8313859999907436
+        }
+      },
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 4555.472956999991,
+      "throughput": 219.51617525539007,
+      "medianMs": 39.884640000003856,
+      "p95Ms": 72.9842670000071,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 3156.612310000004
+      },
+      "storageBytes": 31981568
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 38.269568000003346,
+          "p95Ms": 54.42513100001088
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 1.2881899999920279,
+          "p95Ms": 2.2445819999993546
+        }
+      },
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3771.311235999994,
+      "throughput": 265.15976471372875,
+      "medianMs": 38.08404099999461,
+      "p95Ms": 54.33257900000899,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 3073.9569880000054
+      },
+      "storageBytes": 13557760
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 38.83416399999987,
+          "p95Ms": 56.33791499999643
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 1.7730679999949643,
+          "p95Ms": 2.7801949999993667
+        }
+      },
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3812.673489000008,
+      "throughput": 262.28314669092765,
+      "medianMs": 38.572698000003584,
+      "p95Ms": 56.263229000003776,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 1822.9999790000002
+      },
+      "storageBytes": 9043968
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 77.85618099999556,
+          "p95Ms": 115.61983100000361
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 0.9399430000048596,
+          "p95Ms": 19.40154099999927
+        }
+      },
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 7420.423711999989,
+      "throughput": 134.76319396463077,
+      "medianMs": 77.12914900000033,
+      "p95Ms": 114.93363800000225,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 3738.5423660000088
+      },
+      "storageBytes": 186056704
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 38.302029999991646,
+          "p95Ms": 55.918839999998454
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 2.3672699999879114,
+          "p95Ms": 4.791261999984272
+        }
+      },
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3718.1397590000124,
+      "throughput": 268.9516975738826,
+      "medianMs": 38.14953399999649,
+      "p95Ms": 55.7418760000146,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 2671.107090999998
+      },
+      "storageBytes": 71524352
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 900,
+          "medianMs": 89.95241699999315,
+          "p95Ms": 144.73521499999333
+        },
+        "read": {
+          "count": 100,
+          "medianMs": 1.7859879999887198,
+          "p95Ms": 3.2353650000004563
+        }
+      },
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 8530.049877000012,
+      "throughput": 117.2326087677809,
+      "medianMs": 88.90265700002783,
+      "p95Ms": 144.01775800000178,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-write-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 2216.7711000000127
+      },
+      "storageBytes": 70258688
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 39.21352200000547,
+          "p95Ms": 74.681585000013
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 0.3832469999906607,
+          "p95Ms": 0.8590350000013132
+        }
+      },
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 2514.336618000001,
+      "throughput": 397.71922058528423,
+      "medianMs": 19.635135999997146,
+      "p95Ms": 58.84452300000703,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 3103.4188250000007
+      },
+      "storageBytes": 26877952
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 37.59680100000696,
+          "p95Ms": 43.3348849999893
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 1.08565299998736,
+          "p95Ms": 1.5548070000077132
+        }
+      },
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 1911.8602189999947,
+      "throughput": 523.0507910892427,
+      "medianMs": 3.107036999979755,
+      "p95Ms": 39.520017000002554,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 2566.5677589999977
+      },
+      "storageBytes": 13713408
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 38.557486000005156,
+          "p95Ms": 50.99233499998809
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 1.361256999982288,
+          "p95Ms": 3.208832000003895
+        }
+      },
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 2011.1724790000007,
+      "throughput": 497.22239660778473,
+      "medianMs": 7.051815999991959,
+      "p95Ms": 44.104713999986416,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 8192,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 1650.6222760000092
+      },
+      "storageBytes": 9379840
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 75.36238299999968,
+          "p95Ms": 109.8684179999982
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 0.7899040000047535,
+          "p95Ms": 2.4351219999953173
+        }
+      },
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 3788.6891829999804,
+      "throughput": 263.9435307829012,
+      "medianMs": 20.018169999995735,
+      "p95Ms": 97.85866099997656,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-monolithic",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 3188.0903829999734
+      },
+      "storageBytes": 154845184
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 56.11646200000541,
+          "p95Ms": 83.98380200000247
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 2.5426879999868106,
+          "p95Ms": 6.200555999996141
+        }
+      },
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 2993.8237300000037,
+      "throughput": 334.0210012965589,
+      "medianMs": 8.593866999988677,
+      "p95Ms": 77.26026999999885,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-split",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 2783.264576000016
+      },
+      "storageBytes": 71393280
+    },
+    {
+      "strata": {
+        "mutate": {
+          "count": 500,
+          "medianMs": 37.66142500002752,
+          "p95Ms": 53.64957300000242
+        },
+        "read": {
+          "count": 500,
+          "medianMs": 1.8494229999778327,
+          "p95Ms": 6.531068000011146
+        }
+      },
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "attempted": 1000,
+      "completed": 1000,
+      "operations": 1000,
+      "elapsedMs": 2062.424651999987,
+      "throughput": 484.86619815675397,
+      "medianMs": 11.420530999981565,
+      "p95Ms": 43.51753599999938,
+      "kernel": "A",
+      "phase": "mixed-session",
+      "profile": "distributed-read-heavy",
+      "size": 65536,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo",
+      "preconditioning": {
+        "operations": 640,
+        "elapsedMs": 1850.269628000009
+      },
+      "storageBytes": 69910528
+    },
+    {
+      "strata": {
+        "known/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 0.5110529999947175,
+          "p95Ms": 0.7670729999954347
+        },
+        "known/string-equality-positive": {
+          "count": 50,
+          "medianMs": 0.9297640000004321,
+          "p95Ms": 1.2388190000201575
+        },
+        "known/numeric-range": {
+          "count": 50,
+          "medianMs": 1.1040440000069793,
+          "p95Ms": 1.3727069999731611
+        },
+        "known/explicit-null": {
+          "count": 50,
+          "medianMs": 1.5033999999868684,
+          "p95Ms": 1.8041890000167768
+        },
+        "known/exists": {
+          "count": 50,
+          "medianMs": 0.8890659999742638,
+          "p95Ms": 1.041666000004625
+        },
+        "withheld/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 0.4990680000046268,
+          "p95Ms": 0.6331849999842234
+        },
+        "withheld/string-equality-positive": {
+          "count": 50,
+          "medianMs": 0.9271679999947082,
+          "p95Ms": 1.2012640000029933
+        },
+        "withheld/numeric-range": {
+          "count": 50,
+          "medianMs": 1.0604119999916293,
+          "p95Ms": 1.2765890000155196
+        },
+        "withheld/explicit-null": {
+          "count": 50,
+          "medianMs": 0.9397900000039954,
+          "p95Ms": 1.2900059999956284
+        },
+        "withheld/exists": {
+          "count": 50,
+          "medianMs": 0.9097920000203885,
+          "p95Ms": 1.0931210000126157
+        }
+      },
+      "label": "B-attributes-0-r0-pg-gin-query",
+      "attempted": 500,
+      "completed": 500,
+      "operations": 500,
+      "elapsedMs": 59.872128999995766,
+      "throughput": 8351.13112480158,
+      "medianMs": 0.9049320000049192,
+      "p95Ms": 1.523035999998683,
+      "kernel": "B",
+      "phase": "query",
+      "profile": "attributes",
+      "size": 0,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-gin",
+      "update": {
+        "strata": {
+          "updateAttribute": {
+            "count": 100,
+            "medianMs": 38.99991499999305,
+            "p95Ms": 56.85652299999492
+          }
+        },
+        "label": "B-attributes-0-r0-pg-gin-update",
+        "attempted": 100,
+        "completed": 100,
+        "operations": 100,
+        "elapsedMs": 475.587629000016,
+        "throughput": 210.26619260526778,
+        "medianMs": 38.99991499999305,
+        "p95Ms": 56.85652299999492
+      },
+      "storageBytes": 6758400
+    },
+    {
+      "strata": {
+        "known/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 0.7070839999942109,
+          "p95Ms": 1.0344359999871813
+        },
+        "known/string-equality-positive": {
+          "count": 50,
+          "medianMs": 0.7424260000116192,
+          "p95Ms": 0.9303509999881499
+        },
+        "known/numeric-range": {
+          "count": 50,
+          "medianMs": 1.09569499999634,
+          "p95Ms": 1.395885999983875
+        },
+        "known/explicit-null": {
+          "count": 50,
+          "medianMs": 0.6961019999871496,
+          "p95Ms": 1.2035000000032596
+        },
+        "known/exists": {
+          "count": 50,
+          "medianMs": 1.1169410000147764,
+          "p95Ms": 1.571181000006618
+        },
+        "withheld/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 0.6821779999881983,
+          "p95Ms": 0.9050160000042524
+        },
+        "withheld/string-equality-positive": {
+          "count": 50,
+          "medianMs": 0.7378259999968577,
+          "p95Ms": 1.05851299999631
+        },
+        "withheld/numeric-range": {
+          "count": 50,
+          "medianMs": 1.0351150000060443,
+          "p95Ms": 1.4627810000092722
+        },
+        "withheld/explicit-null": {
+          "count": 50,
+          "medianMs": 0.7297700000053737,
+          "p95Ms": 0.9703210000006948
+        },
+        "withheld/exists": {
+          "count": 50,
+          "medianMs": 1.117658000002848,
+          "p95Ms": 1.4490989999903832
+        }
+      },
+      "label": "B-attributes-0-r0-pg-attributes-query",
+      "attempted": 500,
+      "completed": 500,
+      "operations": 500,
+      "elapsedMs": 55.520086000004085,
+      "throughput": 9005.74973893166,
+      "medianMs": 0.7589250000019092,
+      "p95Ms": 1.3960280000173952,
+      "kernel": "B",
+      "phase": "query",
+      "profile": "attributes",
+      "size": 0,
+      "rep": 0,
+      "repetition": 0,
+      "design": "pg-attributes",
+      "update": {
+        "strata": {
+          "updateAttribute": {
+            "count": 100,
+            "medianMs": 38.807416000025114,
+            "p95Ms": 45.77719999998226
+          }
+        },
+        "label": "B-attributes-0-r0-pg-attributes-update",
+        "attempted": 100,
+        "completed": 100,
+        "operations": 100,
+        "elapsedMs": 414.4926170000108,
+        "throughput": 241.25882078135396,
+        "medianMs": 38.807416000025114,
+        "p95Ms": 45.77719999998226
+      },
+      "storageBytes": 61251584
+    },
+    {
+      "strata": {
+        "known/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 2.048116999998456,
+          "p95Ms": 3.5433539999939967
+        },
+        "known/string-equality-positive": {
+          "count": 50,
+          "medianMs": 2.1515439999930095,
+          "p95Ms": 3.8252510000020266
+        },
+        "known/numeric-range": {
+          "count": 50,
+          "medianMs": 2.009046999999555,
+          "p95Ms": 3.2499290000123437
+        },
+        "known/explicit-null": {
+          "count": 50,
+          "medianMs": 3.319900999980746,
+          "p95Ms": 6.899394999985816
+        },
+        "known/exists": {
+          "count": 50,
+          "medianMs": 2.715330000006361,
+          "p95Ms": 5.299608999979682
+        },
+        "withheld/numeric-equality-positive": {
+          "count": 50,
+          "medianMs": 2.1112100000027567,
+          "p95Ms": 3.4761369999905583
+        },
+        "withheld/string-equality-positive": {
+          "count": 50,
+          "medianMs": 2.1293389999773353,
+          "p95Ms": 4.045959000010043
+        },
+        "withheld/numeric-range": {
+          "count": 50,
+          "medianMs": 2.1148730000131764,
+          "p95Ms": 2.806101000023773
+        },
+        "withheld/explicit-null": {
+          "count": 50,
+          "medianMs": 3.454675999993924,
+          "p95Ms": 5.851362000015797
+        },
+        "withheld/exists": {
+          "count": 50,
+          "medianMs": 2.3844019999960437,
+          "p95Ms": 5.257952000014484
+        }
+      },
+      "label": "B-attributes-0-r0-mongo-wildcard-query",
+      "attempted": 500,
+      "completed": 500,
+      "operations": 500,
+      "elapsedMs": 194.65415600000415,
+      "throughput": 2568.65823096009,
+      "medianMs": 2.2890019999758806,
+      "p95Ms": 5.3187139999936335,
+      "kernel": "B",
+      "phase": "query",
+      "profile": "attributes",
+      "size": 0,
+      "rep": 0,
+      "repetition": 0,
+      "design": "mongo-wildcard",
+      "update": {
+        "strata": {
+          "updateAttribute": {
+            "count": 100,
+            "medianMs": 38.66226300000562,
+            "p95Ms": 75.76662199999555
+          }
+        },
+        "label": "B-attributes-0-r0-mongo-wildcard-update",
+        "attempted": 100,
+        "completed": 100,
+        "operations": 100,
+        "elapsedMs": 443.4703499999887,
+        "throughput": 225.49421849736416,
+        "medianMs": 38.66226300000562,
+        "p95Ms": 75.76662199999555
+      },
+      "storageBytes": 4505600
+    }
+  ],
+  "checks": [
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "970f0d52ca1b5494fc2653df0daed9de244456c5d482241363036e2b70bc5ee8",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "e886e03156e1c17d160c5183a1d4ac4811a4024c113b0b4f8b4deb6dcbea2de7",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "b806f19f42aa8873d558a297b217d4da9ebc3a41f65efe6b3a1a5e3815cd84da",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "970f0d52ca1b5494fc2653df0daed9de244456c5d482241363036e2b70bc5ee8",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "kind": "sessions",
+      "hash": "e886e03156e1c17d160c5183a1d4ac4811a4024c113b0b4f8b4deb6dcbea2de7",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "b806f19f42aa8873d558a297b217d4da9ebc3a41f65efe6b3a1a5e3815cd84da",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "970f0d52ca1b5494fc2653df0daed9de244456c5d482241363036e2b70bc5ee8",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "kind": "sessions",
+      "hash": "e886e03156e1c17d160c5183a1d4ac4811a4024c113b0b4f8b4deb6dcbea2de7",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-8192-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "b806f19f42aa8873d558a297b217d4da9ebc3a41f65efe6b3a1a5e3815cd84da",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "2e6925e93c2e9241cdc5868d120c9d7926ba16ad482cfdd4e4414443a056a75f",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "c18313940d89334e472694ee87a9f0c2d10ad193e15a00666f1f4889895664de",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "dcc50122ed89165078c59358902007ba33fecdac42436595a358cf09406e1716",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "2e6925e93c2e9241cdc5868d120c9d7926ba16ad482cfdd4e4414443a056a75f",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "kind": "sessions",
+      "hash": "c18313940d89334e472694ee87a9f0c2d10ad193e15a00666f1f4889895664de",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "dcc50122ed89165078c59358902007ba33fecdac42436595a358cf09406e1716",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "2e6925e93c2e9241cdc5868d120c9d7926ba16ad482cfdd4e4414443a056a75f",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "kind": "sessions",
+      "hash": "c18313940d89334e472694ee87a9f0c2d10ad193e15a00666f1f4889895664de",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-known-hot-65536-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "dcc50122ed89165078c59358902007ba33fecdac42436595a358cf09406e1716",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "f2a2f95f3f68c2185180c52c16c0212c2f3a7986975664e02ad8939b8402118e",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "805614200d2cfce7fadfbb8660962f89756abec18aa08085907e4e2475a0b4c8",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "kind": "sessions",
+      "hash": "f2a2f95f3f68c2185180c52c16c0212c2f3a7986975664e02ad8939b8402118e",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "805614200d2cfce7fadfbb8660962f89756abec18aa08085907e4e2475a0b4c8",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "kind": "sessions",
+      "hash": "f2a2f95f3f68c2185180c52c16c0212c2f3a7986975664e02ad8939b8402118e",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-8192-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "805614200d2cfce7fadfbb8660962f89756abec18aa08085907e4e2475a0b4c8",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "9dd24e95df97c58a54c658a9edb747c8c9afa8f34ae2423163ded1bf52e9cda4",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "aed9cce87fefc58a746897545cd14022bba8eeed6d8ebeba2edeff9c4798bac6",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "kind": "sessions",
+      "hash": "9dd24e95df97c58a54c658a9edb747c8c9afa8f34ae2423163ded1bf52e9cda4",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "d347d98dd70c5166f417e65b43c49be4837e93fde3640518d8106d7d43f7d4d8",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "kind": "sessions",
+      "hash": "9dd24e95df97c58a54c658a9edb747c8c9afa8f34ae2423163ded1bf52e9cda4",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-write-heavy-65536-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "d347d98dd70c5166f417e65b43c49be4837e93fde3640518d8106d7d43f7d4d8",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "7bd744d1b61a5b0529232610bef022024db7e4c76cfc996cf3f06aee5dfcdfe2",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "7c3f99f1c98363ba43b67bbba2775abf593bf52f91564e1af58820ad49b2ce69",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "kind": "sessions",
+      "hash": "7bd744d1b61a5b0529232610bef022024db7e4c76cfc996cf3f06aee5dfcdfe2",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "7c3f99f1c98363ba43b67bbba2775abf593bf52f91564e1af58820ad49b2ce69",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "7ba0ab19dea747c05ed7c83e248b48d347ffe57d21dddf936bf8ebfa267deff5",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "kind": "sessions",
+      "hash": "7bd744d1b61a5b0529232610bef022024db7e4c76cfc996cf3f06aee5dfcdfe2",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-8192-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "7c3f99f1c98363ba43b67bbba2775abf593bf52f91564e1af58820ad49b2ce69",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "kind": "sessions",
+      "hash": "a7048a9db112b68d8a4d29fdb1327e7d53a355363633d14b9ab7c4a0b5fd0a3b",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-monolithic-after-negative",
+      "kind": "sessions",
+      "hash": "d762506123f5eb7d98571220d365cb7eda8b6f11b24e9709d1019a4b0cfd30b1",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "kind": "sessions",
+      "hash": "a7048a9db112b68d8a4d29fdb1327e7d53a355363633d14b9ab7c4a0b5fd0a3b",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-pg-split-after-negative",
+      "kind": "sessions",
+      "hash": "d762506123f5eb7d98571220d365cb7eda8b6f11b24e9709d1019a4b0cfd30b1",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo-preconditioned",
+      "kind": "sessions",
+      "hash": "46c34848672b00a93d921be695875d4af0001180b313fad30d5d30ab7e723f03",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "kind": "sessions",
+      "hash": "a7048a9db112b68d8a4d29fdb1327e7d53a355363633d14b9ab7c4a0b5fd0a3b",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "name": "stale",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "name": "wrong-tenant",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "name": "missing",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo",
+      "name": "competing-CAS-exactly-one-winner",
+      "passed": true
+    },
+    {
+      "label": "A-distributed-read-heavy-65536-r0-mongo-after-negative",
+      "kind": "sessions",
+      "hash": "d762506123f5eb7d98571220d365cb7eda8b6f11b24e9709d1019a4b0cfd30b1",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "name": "full-query-matrix-before",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "name": "corrupt-query-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "name": "full-query-matrix-after",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "name": "wrong-tenant-attribute-update",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-gin",
+      "kind": "attributes",
+      "hash": "cb489c0fab5d89b20962921845b610de501d68b09274604c8b6614c9560699b7",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "name": "full-query-matrix-before",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "name": "corrupt-query-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "name": "full-query-matrix-after",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "name": "wrong-tenant-attribute-update",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-pg-attributes",
+      "kind": "attributes",
+      "hash": "cb489c0fab5d89b20962921845b610de501d68b09274604c8b6614c9560699b7",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "name": "corrupt-snapshot-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "name": "full-query-matrix-before",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "name": "corrupt-query-detected",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "name": "full-query-matrix-after",
+      "positiveCases": 20,
+      "negativeCases": 3,
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "name": "wrong-tenant-attribute-update",
+      "passed": true
+    },
+    {
+      "label": "B-attributes-0-r0-mongo-wildcard",
+      "kind": "attributes",
+      "hash": "cb489c0fab5d89b20962921845b610de501d68b09274604c8b6614c9560699b7",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "temporal": {
+    "outcome": "passed",
+    "mutations": 30,
+    "attempts": 33,
+    "checks": [
+      {
+        "design": "pg-monolithic",
+        "check": "duplicate-workflow-id-rejected",
+        "passed": true
+      },
+      {
+        "design": "pg-monolithic",
+        "check": "committed-CAS-reconciled-on-retry",
+        "passed": true,
+        "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+      },
+      {
+        "design": "pg-monolithic",
+        "check": "same-code-mutation-history-replay",
+        "passed": true
+      },
+      {
+        "design": "pg-split",
+        "check": "duplicate-workflow-id-rejected",
+        "passed": true
+      },
+      {
+        "design": "pg-split",
+        "check": "committed-CAS-reconciled-on-retry",
+        "passed": true,
+        "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+      },
+      {
+        "design": "pg-split",
+        "check": "same-code-mutation-history-replay",
+        "passed": true
+      },
+      {
+        "design": "mongo",
+        "check": "duplicate-workflow-id-rejected",
+        "passed": true
+      },
+      {
+        "design": "mongo",
+        "check": "committed-CAS-reconciled-on-retry",
+        "passed": true,
+        "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+      },
+      {
+        "design": "mongo",
+        "check": "same-code-mutation-history-replay",
+        "passed": true
+      }
+    ],
+    "scope": "Dedicated isolated records: version and intended value verify a previously applied CAS. This is bounded CAS reconciliation, not a general idempotency receipt protocol; no timings pooled with kernels."
+  },
+  "sourceFreezeVerified": true,
+  "durabilityObservedEnd": {
+    "observedAt": "2026-10-19T09:31:11.885Z",
+    "postgres": {
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on",
+      "wal_sync_method": "fsync_writethrough"
+    },
+    "postgresSettings": [
+      {
+        "name": "fsync",
+        "setting": "on",
+        "source": "command line",
+        "pending_restart": false
+      },
+      {
+        "name": "full_page_writes",
+        "setting": "on",
+        "source": "default",
+        "pending_restart": false
+      },
+      {
+        "name": "synchronous_commit",
+        "setting": "on",
+        "source": "command line",
+        "pending_restart": false
+      },
+      {
+        "name": "wal_sync_method",
+        "setting": "fsync_writethrough",
+        "source": "configuration file",
+        "pending_restart": false
+      }
+    ],
+    "mongo": {
+      "version": "8.0.15",
+      "fullFlushFallbackLog": {
+        "marker": "fcntl(F_FULLFSYNC) failed, falling back to fdatasync or fsync",
+        "observed": false,
+        "scope": "Owned complete MongoDB log; absence does not prove actual syscall branch"
+      },
+      "writeConcern": {
+        "w": "majority",
+        "j": true
+      },
+      "writeConcernProvenance": "Explicit driver request contract, also frozen in adapters; not a claim about the server default or observed flush syscall",
+      "serverDefaultWriteConcern": {
+        "w": "majority",
+        "wtimeout": 0
+      },
+      "serverConfiguration": {
+        "replication": {
+          "replSet": "primitivefit"
+        },
+        "storage": {
+          "dbPath": "$RUNTIME_ROOT/state/mongo",
+          "wiredTiger": {
+            "engineConfig": {
+              "cacheSizeGB": 0.25
+            }
+          }
+        }
+      },
+      "actualFlushSyscallTraced": false
+    },
+    "boundary": "PostgreSQL fsync_writethrough is required on this macOS tier; this does not prove equal physical flush behavior, power-loss recovery or production durability."
+  },
+  "durabilityVerified": true,
+  "elapsedMs": 267171,
+  "resources": {
+    "samples": 136,
+    "maxRssBytes": 3013517312,
+    "maxDiskBytes": 5514960896
+  }
+}
