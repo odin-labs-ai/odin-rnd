@@ -1,0 +1,260 @@
+{
+  "kind": "derived-protocol-summary",
+  "originalProtocolSHA256": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+  "originalMarkdownSHA256": "01a84bd8a7566a941f7208224544f7158bc937c1470def041823281cdd2ce67e",
+  "exactSourceInArchive": "sources/experiments/temporal-document-fit/protocol.json",
+  "note": "Derived readable summary. Temporal source-repository citation is represented by its documentation homepage; the exact original citation and byte-identical protocol files are retained in raw-evidence.tar.gz. Runtime download URLs, if any, are omitted from readable summaries.",
+  "protocol": {
+    "schemaVersion": 1,
+    "kind": "odin-rnd.temporal-document-fit.protocol",
+    "slug": "temporal-document-fit",
+    "authoredOn": "2026-10-19",
+    "status": "planned-not-run",
+    "distinctFrom": "EXP 010 document-store wire compatibility",
+    "question": "Does MongoDB improve schema evolution for work-order/session application data compared with typed PostgreSQL plus JSONB while preserving correctness under Temporal retries?",
+    "primary": [
+      "schema-evolution task outcomes",
+      "business invariants under retries and injected faults"
+    ],
+    "latencyRole": "descriptive-local-only",
+    "freeze": {
+      "rule": "Record protocol hash, executable hashes, dependency versions, fixtures, schemas, indexes and commands before counted work. Amendments create a new manifest; retain prior failures.",
+      "productionAdoptionClaimAllowed": false
+    },
+    "arms": {
+      "postgres": {
+        "topology": "isolated single node",
+        "fsync": true,
+        "synchronous_commit": "on",
+        "payload": "JSONB plus typed core",
+        "history": "separate append-only events"
+      },
+      "mongodb": {
+        "topology": "isolated single-member replica set",
+        "writeConcern": {
+          "w": "majority",
+          "j": true
+        },
+        "readPreference": "primary",
+        "payload": "bounded document",
+        "history": "separate append-only events"
+      }
+    },
+    "temporal": {
+      "mode": "CLI dev server",
+      "persistence": "local SQLite",
+      "identicalAcrossArms": true,
+      "databaseIO": "activities only",
+      "limits": [
+        "no production Temporal persistence validation",
+        "no HA or replica failover claim"
+      ]
+    },
+    "localTier": {
+      "pairedRepeats": 5,
+      "seedRecords": 1000,
+      "tenants": 10,
+      "concurrency": [
+        1,
+        10
+      ],
+      "attemptsPerArmCell": 1000,
+      "warmupOperationsPerArmCell": 100,
+      "warmupIDs": "disjoint",
+      "armCells": 20,
+      "totalMeasuredAttempts": 20000,
+      "armOrder": "alternate per pair",
+      "resetPerCell": true,
+      "evolutionSuite": "once per arm per pair on fresh fixture",
+      "operationMix": {
+        "get": 0.4,
+        "listOpen": 0.2,
+        "patch": 0.2,
+        "appendCheckpoint": 0.1,
+        "queryPayload": 0.1
+      }
+    },
+    "limits": {
+      "cellSeconds": 120,
+      "activityAttemptSeconds": 30,
+      "activityMaximumAttempts": 3,
+      "faultRecoverySeconds": 120,
+      "wholeRunSeconds": 1800,
+      "experimentDiskBytes": 10737418240,
+      "maximumPayloadBytes": 65536,
+      "initialPayloadBytes": [
+        1024,
+        8192
+      ],
+      "onExceeded": "stop safely, retain partial evidence, mark inconclusive",
+      "paidExecutionBudgetUsd": 0,
+      "combinedProcessRssBytes": 4294967296,
+      "memoryPolicy": "Monitor owned process RSS; overrun stops owned processes and marks inconclusive; no kernel-enforced resource isolation claim"
+    },
+    "adapterMethods": [
+      "reset",
+      "create",
+      "get",
+      "patch",
+      "appendCheckpoint",
+      "listOpen",
+      "history",
+      "queryPayload",
+      "evolve",
+      "inspectInvariants",
+      "close"
+    ],
+    "mutationContract": {
+      "statuses": [
+        "applied",
+        "duplicate",
+        "conflict",
+        "not_found"
+      ],
+      "version": "increment exactly once on successful mutation",
+      "atomicUnit": [
+        "state",
+        "operation receipt",
+        "event"
+      ],
+      "operationKey": "tenantId + opId",
+      "duplicateRule": "same canonical request returns original receipt before version check; different request rejects",
+      "hashEncoding": "shared sorted-key canonical JSON",
+      "authorization": "independent synthetic identity through shared wrapper"
+    },
+    "evolutionTasks": [
+      {
+        "id": "E1",
+        "task": "optional payload.agent.model; old/new read and unrelated patches preserve unknown fields"
+      },
+      {
+        "id": "E2",
+        "task": "tenant-scoped indexed equality predicate on payload.agent.model; oracle parity before and after index creation"
+      },
+      {
+        "id": "E3",
+        "task": "priority integer to priorityV2.level via guarded resumable backfill; dual-compatible writers; old writes invalidate derived field; repeated backfill; rollback reader compatibility"
+      }
+    ],
+    "correctnessCases": [
+      "duplicate operation",
+      "operation key payload mismatch",
+      "optimistic version conflict",
+      "terminal mutation rejection",
+      "abort before commit",
+      "commit before activity acknowledgment failure",
+      "worker restart and activity retry",
+      "connectivity interruption",
+      "owned database restart durability",
+      "workflow start acknowledgment loss and duplicate start",
+      "duplicate approval signal",
+      "workflow history replay",
+      "cross-tenant read/write/list/history/signal",
+      "out-of-order checkpoint",
+      "payload limit",
+      "interrupted backfill with concurrent writes",
+      "quiescent backup and isolated restore",
+      "deliberate duplicate-event negative control"
+    ],
+    "invariants": [
+      "one business effect per operation key",
+      "one event per acknowledged mutation",
+      "no lost acknowledged state",
+      "state receipt and event agree",
+      "no stale-write overwrite",
+      "no forbidden terminal transition",
+      "no tested tenant escape",
+      "restored state matches declared quiescent snapshot"
+    ],
+    "report": {
+      "outcomes": [
+        "mechanisms-supported",
+        "mechanisms-failed",
+        "inconclusive"
+      ],
+      "thesis": [
+        "supported",
+        "unsupported within tested bounds",
+        "unresolved"
+      ],
+      "requiredEvidence": [
+        "protocol and source hashes",
+        "versions and settings",
+        "exact commands",
+        "fixture seeds",
+        "raw per-operation results",
+        "attempted and completed denominators",
+        "per-repetition latency distributions",
+        "fault receipts",
+        "evolution steps",
+        "failed attempts",
+        "limitations"
+      ],
+      "failureAttribution": [
+        "adapter bug",
+        "oracle defect",
+        "environment failure",
+        "database limitation"
+      ]
+    },
+    "futureDecisionTier": {
+      "status": "deferred-separate-freeze-required",
+      "tenants": 100,
+      "seedRecords": 100000,
+      "concurrency": [
+        1,
+        10,
+        50
+      ],
+      "pairedRepeats": 5,
+      "warmupSeconds": 60,
+      "minimumRunSeconds": 300,
+      "minimumCompletedOperationsPerRepetition": 10000,
+      "requires": [
+        "actual workload mix",
+        "absolute production latency and recovery targets",
+        "operating cost ceiling",
+        "production-like Temporal persistence",
+        "matched replicated durability and failover",
+        "migration plan",
+        "independent review"
+      ]
+    },
+    "boundaries": [
+      "synthetic fixtures only",
+      "loopback endpoints",
+      "experiment-owned directories ports and PIDs",
+      "no existing service connections or termination",
+      "no tenant access or mutation",
+      "no production adoption verdict"
+    ],
+    "sourcesCheckedOn": "2026-10-19",
+    "sources": [
+      "https://www.postgresql.org/docs/current/datatype-json.html",
+      "https://www.mongodb.com/docs/manual/core/document/",
+      "https://www.mongodb.com/docs/manual/reference/write-concern/",
+      "https://www.mongodb.com/docs/manual/data-modeling/enforce-consistency/embed-data/",
+      "https://docs.temporal.io/"
+    ],
+    "runtimePins": {
+      "postgres": "16.15",
+      "mongodb": "8.0.15",
+      "temporalCLI": "1.9.1",
+      "temporalServer": "1.32.0",
+      "hashes": "required in execution manifest"
+    },
+    "localPorts": {
+      "postgres": 55439,
+      "mongodb": 27029,
+      "temporal": 17239,
+      "collisionPolicy": "abort"
+    },
+    "indexStages": {
+      "baseline": "no payload.agent.model index",
+      "E2": "create tenant/model index in each native design",
+      "timing": "both arms post-E2 indexed"
+    },
+    "numericDomain": "finite JSON numbers; integers restricted to JavaScript safe-integer range",
+    "restoreMethod": "clean shutdown, full cold data-directory copy into fresh owned path, start same pinned binary only after original is stopped; no online backup or PITR claim"
+  }
+}

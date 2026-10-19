@@ -1,0 +1,744 @@
+{
+  "kind": "normalized-public-evidence-export",
+  "runId": "run-2026-10-19T01-47-53-404Z",
+  "transformationPolicy": {
+    "json": "Recursively replace local paths and observed hostnames; serverInfo.host becomes local-experiment-host; omit fsUsedSize and fsTotalSize. $REPO_ROOT identifies the repository; preexisting runner $SOURCE_ROOT identifies the experiment directory. Preserve original files locally.",
+    "jsonl": "Apply the same normalization to each JSON row.",
+    "compact": "Public summary files omit diagnostics, beforeDiagnostics, afterDiagnostics and runtime download URL subtrees. Derived protocol summary substitutes the Temporal documentation homepage for its source-repository URL. Exact protocol sources and complete runtime download provenance remain in the archive with source hashes.",
+    "byteIdentical": "Frozen protocol and source files are copied byte for byte after hash verification and privacy scan.",
+    "archive": "Sorted tar entries, file mode 0644 and mtime 1970-01-01. Owner metadata: bsdtar uid/gid 0 and root names; GNU tar numeric owner/group 0. COPYFILE_DISABLE=1 suppresses AppleDouble metadata; the exact regular-file member set is checked against the evidence manifest. gzip header mtime 0. Archive SHA binds actual output; cross-tool or cross-platform byte reproducibility is not asserted."
+  },
+  "files": [
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/PROTOCOL.md",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/PROTOCOL.md",
+      "originalLocalSHA256": "01a84bd8a7566a941f7208224544f7158bc937c1470def041823281cdd2ce67e",
+      "exportedSHA256": "01a84bd8a7566a941f7208224544f7158bc937c1470def041823281cdd2ce67e",
+      "bytes": 12859,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/README.md",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/README.md",
+      "originalLocalSHA256": "305bde67183f5894856ecf495f0a3f20ba84032d70713ea64a0614d212c7fd1b",
+      "exportedSHA256": "305bde67183f5894856ecf495f0a3f20ba84032d70713ea64a0614d212c7fd1b",
+      "bytes": 7189,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/adapters.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/adapters.mjs",
+      "originalLocalSHA256": "570b7c29fe6fd5a88b65db1e2ce941278f4aefe8ec421b506cd3895673856e95",
+      "exportedSHA256": "570b7c29fe6fd5a88b65db1e2ce941278f4aefe8ec421b506cd3895673856e95",
+      "bytes": 25104,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/adapters.test.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/adapters.test.mjs",
+      "originalLocalSHA256": "94aca363493308c3133c12562562e6e22537164a828038692b36211710752ad8",
+      "exportedSHA256": "94aca363493308c3133c12562562e6e22537164a828038692b36211710752ad8",
+      "bytes": 10145,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/authorization.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/authorization.mjs",
+      "originalLocalSHA256": "1c93caf8411c8ff104e5e8e3c1700309bd282648353e114c0dec93131b1a5790",
+      "exportedSHA256": "1c93caf8411c8ff104e5e8e3c1700309bd282648353e114c0dec93131b1a5790",
+      "bytes": 564,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/fixtures.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/fixtures.mjs",
+      "originalLocalSHA256": "34ca0b967e69fe7014386f50d03e9ca2d7ec166351160afa940a486eade544ab",
+      "exportedSHA256": "34ca0b967e69fe7014386f50d03e9ca2d7ec166351160afa940a486eade544ab",
+      "bytes": 2653,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/oracle.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/oracle.mjs",
+      "originalLocalSHA256": "d5f51155a402541aef3fdc140015ca57c4b31f9de83e6f753be42c2adaa97e9c",
+      "exportedSHA256": "d5f51155a402541aef3fdc140015ca57c4b31f9de83e6f753be42c2adaa97e9c",
+      "bytes": 4908,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/oracle.test.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/oracle.test.mjs",
+      "originalLocalSHA256": "7af1d643c68b2f1964066f1b16efb476331fedc03be65855cacebf0b6819bba3",
+      "exportedSHA256": "7af1d643c68b2f1964066f1b16efb476331fedc03be65855cacebf0b6819bba3",
+      "bytes": 2594,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/package.json",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/package.json",
+      "originalLocalSHA256": "14e834ebb9c23d6512b563feb6b0bf201b88cfed4ddac9e920e1760c7bc4d93e",
+      "exportedSHA256": "14e834ebb9c23d6512b563feb6b0bf201b88cfed4ddac9e920e1760c7bc4d93e",
+      "bytes": 450,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/pnpm-lock.yaml",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/pnpm-lock.yaml",
+      "originalLocalSHA256": "b7b07374822dca40fa60b953e4aefdbb1abeb7086fca0a55352e29d56d498179",
+      "exportedSHA256": "b7b07374822dca40fa60b953e4aefdbb1abeb7086fca0a55352e29d56d498179",
+      "bytes": 55697,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/protocol.json",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/protocol.json",
+      "originalLocalSHA256": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+      "exportedSHA256": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+      "bytes": 7984,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/run.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/run.mjs",
+      "originalLocalSHA256": "1c24633ae35165ce245122d2f7999edd1b331c27a7b8356bba3b8d829021b0b0",
+      "exportedSHA256": "1c24633ae35165ce245122d2f7999edd1b331c27a7b8356bba3b8d829021b0b0",
+      "bytes": 19348,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/runtime.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/runtime.mjs",
+      "originalLocalSHA256": "857a5fc997fc34b2e62ded59aaa671fe1bef7c7b90182ea5d0890555c135cf37",
+      "exportedSHA256": "857a5fc997fc34b2e62ded59aaa671fe1bef7c7b90182ea5d0890555c135cf37",
+      "bytes": 6827,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/suites.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/suites.mjs",
+      "originalLocalSHA256": "5d50ce23a435f6dbd759765fe452b9765ccc0484372e4523947cc6ef12d7dac9",
+      "exportedSHA256": "5d50ce23a435f6dbd759765fe452b9765ccc0484372e4523947cc6ef12d7dac9",
+      "bytes": 12144,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/worker.mjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/worker.mjs",
+      "originalLocalSHA256": "5eeaf263b694f20fa08a9f7cf383cb6e617149c129ba341e41f2b35f38feba96",
+      "exportedSHA256": "5eeaf263b694f20fa08a9f7cf383cb6e617149c129ba341e41f2b35f38feba96",
+      "bytes": 4232,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raw-evidence/sources/experiments/temporal-document-fit/workflows.cjs",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/workflows.cjs",
+      "originalLocalSHA256": "f17aae5c1fbd8a8c9f46b49b3d9e89f8da9904b96a44fd4e10f014f05c937e58",
+      "exportedSHA256": "f17aae5c1fbd8a8c9f46b49b3d9e89f8da9904b96a44fd4e10f014f05c937e58",
+      "bytes": 2184,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "protocol-summary.json",
+      "originalLocalFile": "$REPO_ROOT/experiments/temporal-document-fit/protocol.json",
+      "originalLocalSHA256": "969aa9c150c29be7f6b2fc6039628913a2b54047d5bdb60133bcd9c51880b135",
+      "exportedSHA256": "de6eb5c890aab8d4e7cb8d136944f96f9b41de8ca1e15c607fa5f6e60f903584",
+      "bytes": 9028,
+      "transformation": "derived-summary"
+    },
+    {
+      "path": "raw-evidence/main/activity-attempts.jsonl",
+      "originalLocalFile": "$RUN_ROOT/activity-attempts.jsonl",
+      "originalLocalSHA256": "75e9c347c333e99f4a43454ce0ae7bba6520ca6cee7a0ba0bd198daf920658c4",
+      "exportedSHA256": "75e9c347c333e99f4a43454ce0ae7bba6520ca6cee7a0ba0bd198daf920658c4",
+      "bytes": 3865856,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/cells.json",
+      "originalLocalFile": "$RUN_ROOT/cells.json",
+      "originalLocalSHA256": "e1b08e229ab616ef515608a516996b745901b5a3723d859cc52c7d35306c3698",
+      "exportedSHA256": "b83f2006de766fa92a15a2194aaaa7c3ccec2c8f87702d48dd8adb718410a5f0",
+      "bytes": 263407,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/evolution.json",
+      "originalLocalFile": "$RUN_ROOT/evolution.json",
+      "originalLocalSHA256": "ceacdec477447f07042db14d0ce625866588dd9b40168644f882e883b78f65ea",
+      "exportedSHA256": "45e254a6238d139de1f06cfa2cc499809fa75e5e844fbec6b641e1a35569ce86",
+      "bytes": 191329,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/faults.json",
+      "originalLocalFile": "$RUN_ROOT/faults.json",
+      "originalLocalSHA256": "79a72a0382b61a81516f0e7691063c09407ffc9154886d336749ea95989f674b",
+      "exportedSHA256": "79a72a0382b61a81516f0e7691063c09407ffc9154886d336749ea95989f674b",
+      "bytes": 15481,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/host-context.json",
+      "originalLocalFile": "$RUN_ROOT/host-context.json",
+      "originalLocalSHA256": "c47835649e35f08d5ae22058722382c25fe29d5377186272c39e53784570817d",
+      "exportedSHA256": "c47835649e35f08d5ae22058722382c25fe29d5377186272c39e53784570817d",
+      "bytes": 513,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/independent-audit.json",
+      "originalLocalFile": "$RUN_ROOT/independent-audit.json",
+      "originalLocalSHA256": "5c721ffcffad96924e8b27a7eeb80f943aede929f8fb81059df67c0237cb5123",
+      "exportedSHA256": "5c721ffcffad96924e8b27a7eeb80f943aede929f8fb81059df67c0237cb5123",
+      "bytes": 6283,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/manifest.json",
+      "originalLocalFile": "$RUN_ROOT/manifest.json",
+      "originalLocalSHA256": "1391717b8e93f1fe9e80c7287d34b9a68a40c0eb9ae1bd35aebf7cd7628b3310",
+      "exportedSHA256": "4481761dd7b85a925c8273bb067a70d16392af1c078d2a0d202abe43681af135",
+      "bytes": 4680041,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/operations.jsonl",
+      "originalLocalFile": "$RUN_ROOT/operations.jsonl",
+      "originalLocalSHA256": "f962361992d0e9f9607429980aaa5331a236bf08e083dabf57bc695cec43746a",
+      "exportedSHA256": "f962361992d0e9f9607429980aaa5331a236bf08e083dabf57bc695cec43746a",
+      "bytes": 25856906,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/replay-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/replay-mongodb.json",
+      "originalLocalSHA256": "7beb535cad1ea1fdab87608b2c59c9a7d4f423a1d5bdf37c59d9394d305726dc",
+      "exportedSHA256": "eac6626b4ec876008fd5b8645ba815b0223db51f8a6aa84ce4069356bbb15858",
+      "bytes": 8689,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/replay-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/replay-postgres.json",
+      "originalLocalSHA256": "2e952bdcb03c6340714c689bf6f43ce408eeae0a16ebaaaa6d7028a4c3f07bba",
+      "exportedSHA256": "ecd025f066db03ce8e48e70fb964a8ec6d2304cbd9b1d83bfe2db44e9ac8f65c",
+      "bytes": 8689,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/report.json",
+      "originalLocalFile": "$RUN_ROOT/report.json",
+      "originalLocalSHA256": "8275a8b4a8d39534828b790477e6795cda3b6d1febcf539e2eefb9924277e982",
+      "exportedSHA256": "52ed4f6c1d06ccd2c496cc1066321d39fe8a1bafa34aeb24896a4f3386fb96dc",
+      "bytes": 501400,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/resources.jsonl",
+      "originalLocalFile": "$RUN_ROOT/resources.jsonl",
+      "originalLocalSHA256": "c5fa95a315a887a0ebfb29417884d7997cf3bb8c2510bbc071ab452c05b229a3",
+      "exportedSHA256": "c5fa95a315a887a0ebfb29417884d7997cf3bb8c2510bbc071ab452c05b229a3",
+      "bytes": 662106,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/runtime-commands.json",
+      "originalLocalFile": "$RUN_ROOT/runtime-commands.json",
+      "originalLocalSHA256": "434246f5978c378597851e452e31d6341077c3060cb526dfefd5a4c7cb0bf5bf",
+      "exportedSHA256": "434246f5978c378597851e452e31d6341077c3060cb526dfefd5a4c7cb0bf5bf",
+      "bytes": 2820,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-cold-restore-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-cold-restore-mongodb.json",
+      "originalLocalSHA256": "bf7d436216c6bcaf9d999d3361b9686fc45f3265d0e1030b4eaf1a3c241d18b8",
+      "exportedSHA256": "6d78d9a8229c978bab422455523ba865758f34f190ffe0653b67aa33ed78f65b",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-cold-restore-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-cold-restore-postgres.json",
+      "originalLocalSHA256": "338fc75686ea91ff68fe3eeb1f975417612225f7f5c1977d13f5d671726898df",
+      "exportedSHA256": "d5d55891e5d61acb6afd161b8097d299af0d8aadd7aa23464cdcd0e605cb101d",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-commit-before-ack-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-commit-before-ack-mongodb.json",
+      "originalLocalSHA256": "2b51cfb69778fbca9e22e2d1a43e01c87a83097dbdadcc6ddceb07c8d782bbc4",
+      "exportedSHA256": "c762bfd79b0ee974007c2bc2c8f367c0740a2664646f44c2be4ef26e961ba29f",
+      "bytes": 4602736,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-commit-before-ack-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-commit-before-ack-postgres.json",
+      "originalLocalSHA256": "d93984221f3b636f064cf4ad7b6ea00efef330d7df0f08d8c5c0c774a8f722f3",
+      "exportedSHA256": "e0a451efd841bd39d5e215659c1591d26aafbad5a92b2ebd359cd534aea38665",
+      "bytes": 4602736,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-connection-retry-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-connection-retry-mongodb.json",
+      "originalLocalSHA256": "f229dcc1cf6a1871799c1aa6cc69d62a2aa3421eef40fa9e39d4ad882cf6baac",
+      "exportedSHA256": "575a008d99166dfdbd7c48146dfb3c5b9b2f395445f8f42c60c422f03887d11d",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-connection-retry-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-connection-retry-postgres.json",
+      "originalLocalSHA256": "4d4652debc02880567271eeba01520d00098a01a5c8a71fe4002bbca0edbd32b",
+      "exportedSHA256": "c14e702fa4e848e3531de6330ee8f67f5ffc8ad0838592c8248c3f826e188550",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-cross-tenant-signal-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-cross-tenant-signal-mongodb.json",
+      "originalLocalSHA256": "bf7d436216c6bcaf9d999d3361b9686fc45f3265d0e1030b4eaf1a3c241d18b8",
+      "exportedSHA256": "6d78d9a8229c978bab422455523ba865758f34f190ffe0653b67aa33ed78f65b",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-cross-tenant-signal-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-cross-tenant-signal-postgres.json",
+      "originalLocalSHA256": "338fc75686ea91ff68fe3eeb1f975417612225f7f5c1977d13f5d671726898df",
+      "exportedSHA256": "d5d55891e5d61acb6afd161b8097d299af0d8aadd7aa23464cdcd0e605cb101d",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-database-restart-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-database-restart-mongodb.json",
+      "originalLocalSHA256": "f229dcc1cf6a1871799c1aa6cc69d62a2aa3421eef40fa9e39d4ad882cf6baac",
+      "exportedSHA256": "575a008d99166dfdbd7c48146dfb3c5b9b2f395445f8f42c60c422f03887d11d",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-database-restart-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-database-restart-postgres.json",
+      "originalLocalSHA256": "4d4652debc02880567271eeba01520d00098a01a5c8a71fe4002bbca0edbd32b",
+      "exportedSHA256": "c14e702fa4e848e3531de6330ee8f67f5ffc8ad0838592c8248c3f826e188550",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-duplicate-signal-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-duplicate-signal-mongodb.json",
+      "originalLocalSHA256": "5989c4e76dce728576eaf607f5c660429d28fcd450e81aca06d1dfa2b0163e82",
+      "exportedSHA256": "8061f7d9cbfb80a7a1c756462329237d42943dd332f800b586bcfd2404b5321b",
+      "bytes": 4605187,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-duplicate-signal-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-duplicate-signal-postgres.json",
+      "originalLocalSHA256": "61c4f85cde6cd18495ace9e3c64c01b1a953915b5bdd681a9b109b0d7f5a88c8",
+      "exportedSHA256": "b543f13430d66850fde53543fb63a7e0613277944f2259180e9bd000d4a52d34",
+      "bytes": 4605187,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-worker-restart-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-worker-restart-mongodb.json",
+      "originalLocalSHA256": "a40e28bc8550a258f77a7104bfe6e240486821ea964d9f878bc342afbc1c0d51",
+      "exportedSHA256": "61f7d653b9e046c9bfb59a65e68246fadb2d84f452fd491e41a51e089d1ec5d0",
+      "bytes": 4603363,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-worker-restart-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-worker-restart-postgres.json",
+      "originalLocalSHA256": "ce63a16b18fe2d0588ba93ce1fdab59afd1d9ac7cfd9ac1f5e5f435a7e7a0679",
+      "exportedSHA256": "c6c5c45c73cabc7a37e394cbfab128e35d072e98691778beed91380b1d7c15d1",
+      "bytes": 4603363,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-workflow-dedup-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-workflow-dedup-mongodb.json",
+      "originalLocalSHA256": "14524cab4c9ebd401bde4269891b166806468e811a12ab13b08ff51a80de68d6",
+      "exportedSHA256": "edfc8abd37f27c04adf3c38d694a3dc92b2c077a507ede654a198179fab3f7a7",
+      "bytes": 4604641,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/after-workflow-dedup-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/after-workflow-dedup-postgres.json",
+      "originalLocalSHA256": "8f0908b12f307c57f0b9421a4cc6f2f90c1d1fc071263f6fff10b0f4756d0749",
+      "exportedSHA256": "cef5540e1cf6587a9fbfca17277b79b26a5f9293e698aa0a3f6b81bf057f14a9",
+      "bytes": 4604641,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/before-cold-restore-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/before-cold-restore-mongodb.json",
+      "originalLocalSHA256": "bf7d436216c6bcaf9d999d3361b9686fc45f3265d0e1030b4eaf1a3c241d18b8",
+      "exportedSHA256": "6d78d9a8229c978bab422455523ba865758f34f190ffe0653b67aa33ed78f65b",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/before-cold-restore-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/before-cold-restore-postgres.json",
+      "originalLocalSHA256": "338fc75686ea91ff68fe3eeb1f975417612225f7f5c1977d13f5d671726898df",
+      "exportedSHA256": "d5d55891e5d61acb6afd161b8097d299af0d8aadd7aa23464cdcd0e605cb101d",
+      "bytes": 4605733,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/before-database-restart-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/before-database-restart-mongodb.json",
+      "originalLocalSHA256": "f229dcc1cf6a1871799c1aa6cc69d62a2aa3421eef40fa9e39d4ad882cf6baac",
+      "exportedSHA256": "575a008d99166dfdbd7c48146dfb3c5b9b2f395445f8f42c60c422f03887d11d",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/before-database-restart-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/before-database-restart-postgres.json",
+      "originalLocalSHA256": "4d4652debc02880567271eeba01520d00098a01a5c8a71fe4002bbca0edbd32b",
+      "exportedSHA256": "c14e702fa4e848e3531de6330ee8f67f5ffc8ad0838592c8248c3f826e188550",
+      "bytes": 4604006,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-1-c1-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-1-c1-mongodb-mongodb.json",
+      "originalLocalSHA256": "4893297d3836590235e94b0e38457331da07b573ee59e9a8aded5a2e8ffb81e0",
+      "exportedSHA256": "9e5b03cf3829be5f17ecd2f068b336bed30155f2e0e9cac0f669bedf098e47df",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-1-c1-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-1-c1-postgres-postgres.json",
+      "originalLocalSHA256": "de71a6683b637737d268f270e4a308699434a7775b797b581bffa2327e3fe97d",
+      "exportedSHA256": "476147d2ed691c2f65018a760a499013edf16ab0b68f09df6a7b346d9fc1e216",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-1-c10-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-1-c10-mongodb-mongodb.json",
+      "originalLocalSHA256": "6135f99353d45dac4f335b6958818ce865d106f8b44cacaab04cfed407d70943",
+      "exportedSHA256": "8885f52235c78643dfed5844822af5b79da054576595610b8b182196f74ad83a",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-1-c10-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-1-c10-postgres-postgres.json",
+      "originalLocalSHA256": "eb7d054b55d8b6a221438f9eb31442eb623610f817ac756b28850faa65b7ff00",
+      "exportedSHA256": "a2569391e16c36586f00e284f9c1426d847f3db1438bccba777f57221c01f3cf",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-2-c1-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-2-c1-mongodb-mongodb.json",
+      "originalLocalSHA256": "26d285530a6deae3f978101f2639f77149d861d6818ea177f01b2e6d9790083a",
+      "exportedSHA256": "8c8a59099e8d989dec0f07f0176c97a6f19d8e0f7547ec13488cf9635bb718c6",
+      "bytes": 4823195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-2-c1-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-2-c1-postgres-postgres.json",
+      "originalLocalSHA256": "2f1567884f1b728833f609ea956a5630d9f29d5caf86402e6ce8a29131bf7294",
+      "exportedSHA256": "0ca2a3ef28199806f8af1c7813c9a792f350359d177d66be3342fdd9b867e8af",
+      "bytes": 4823195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-2-c10-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-2-c10-mongodb-mongodb.json",
+      "originalLocalSHA256": "488087ac1e23b8728e6c2205c2bb640fedcef9d1c739dc06125c7549793e1686",
+      "exportedSHA256": "770c3f8fc885ba51424ff0a4a0b846c35b3aa056b2773d8f10428ab573db1acb",
+      "bytes": 4823195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-2-c10-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-2-c10-postgres-postgres.json",
+      "originalLocalSHA256": "990c3fa8c61549c4838edfce1252ccc2b863be46db87bec98e7e374b73b3f0f6",
+      "exportedSHA256": "39999d0c3361d9aa38bed6f1ff792c3f59b8dff8588b4594581a5e18b41d844b",
+      "bytes": 4823195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-3-c1-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-3-c1-mongodb-mongodb.json",
+      "originalLocalSHA256": "04be76a803fabba9428de89243453811ae28e95a871974f088d70c5b5a69f87c",
+      "exportedSHA256": "932841af9243d0fa26170178f7afda7bc6c622896365f46aad7e3716a6ac289b",
+      "bytes": 4824195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-3-c1-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-3-c1-postgres-postgres.json",
+      "originalLocalSHA256": "8456244cafd751d57d44dd524849ee76363ef2555a9a245110a9da75dd57bb10",
+      "exportedSHA256": "c62ac527a514f7c27d5ce97df82706b33f5b2f3b1ff7e714f1a945e660ca67b1",
+      "bytes": 4824195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-3-c10-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-3-c10-mongodb-mongodb.json",
+      "originalLocalSHA256": "c871297fef66d89bb8c79b1774289a1f19031dacf529b3d2d9020d7822be1c07",
+      "exportedSHA256": "0e8057bec974edd49dfd2287078892bba546cf84a7c9ce1a18a18a1372341865",
+      "bytes": 4824195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-3-c10-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-3-c10-postgres-postgres.json",
+      "originalLocalSHA256": "587dfab66cf678c5f3f7625027fbf61f50aee3082de3fb49c3634763f66bf35a",
+      "exportedSHA256": "3937fd511ed2b0e75d03de2d406b48d1083281c70a99d3395832e864c0e0b206",
+      "bytes": 4824195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-4-c1-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-4-c1-mongodb-mongodb.json",
+      "originalLocalSHA256": "06680c7d3ac27963882b377ed8101ba03913b0f3b3838757337ebfeef944e058",
+      "exportedSHA256": "a64ca003fde53f3df9276f69175de965528b7e5b5c7e7d3a5eeed2f32642156c",
+      "bytes": 4825195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-4-c1-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-4-c1-postgres-postgres.json",
+      "originalLocalSHA256": "bf2f7821619a0f846e693b0a95ca78c4db355aad2578848270156d20c02c5c1b",
+      "exportedSHA256": "3d34aa83dd64c50cef9fe44e7b49613d1f3ba2b5fc1724bb37e4e85d9ed970aa",
+      "bytes": 4825195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-4-c10-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-4-c10-mongodb-mongodb.json",
+      "originalLocalSHA256": "0661ed7c4850bba9feea71cb239c730a41d0be03e97f7f1e12269a54b6282519",
+      "exportedSHA256": "28491c88c5ef2fa33374cf7d235c1fe504f0fbeaa8f52abbd60e50c6e671ac75",
+      "bytes": 4825195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-4-c10-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-4-c10-postgres-postgres.json",
+      "originalLocalSHA256": "5622fe182301f406e55ac0c3f520289f8c403a5e285126bc229e7f14f4b79233",
+      "exportedSHA256": "fd317e014c73f9d360f794865f3b562c876f6181b4d836fa9ac35672259d3746",
+      "bytes": 4825195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-5-c1-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-5-c1-mongodb-mongodb.json",
+      "originalLocalSHA256": "0852348ceff1e94dbed50aff6a74523a56e856fdfbff979c1dbe6fe2fc683497",
+      "exportedSHA256": "32e130505b6359ee427316c285c84c5beb9bc76e2f1f2772649fcff8fd302583",
+      "bytes": 4826195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-5-c1-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-5-c1-postgres-postgres.json",
+      "originalLocalSHA256": "47eff0d3414ac8938f1a05c31f52c25655f9368d6e5e18d027306f841028e5a3",
+      "exportedSHA256": "8ee29be4b2b71a60bd528f9107dcba42650794265655466a8a85902f00471e73",
+      "bytes": 4826195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-5-c10-mongodb-mongodb.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-5-c10-mongodb-mongodb.json",
+      "originalLocalSHA256": "a8181c4b830555b11a1a20edb714e2a4a3f634641bde58f0222917cdb578fa02",
+      "exportedSHA256": "b134301e2641a4dddcf69ad6a6e7373307aeeb789fc26f71337c0af533a6b481",
+      "bytes": 4826195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/main/snapshots/repeat-5-c10-postgres-postgres.json",
+      "originalLocalFile": "$RUN_ROOT/snapshots/repeat-5-c10-postgres-postgres.json",
+      "originalLocalSHA256": "c84e10975dfdbd0ae4723f0563494fcb9ee6418f7a304e2adb0445f92f7723e3",
+      "exportedSHA256": "93fd6021ecc8bee11907bfa5c519b190c31463ecc137f2bbb2ca51c7bf906587",
+      "bytes": 4826195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-33-17-684Z/report.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-33-17-684Z/report.json",
+      "originalLocalSHA256": "95f3281d0e560e6486adaafaba5b4d8b7771934b79717782991762f96a975f53",
+      "exportedSHA256": "95f3281d0e560e6486adaafaba5b4d8b7771934b79717782991762f96a975f53",
+      "bytes": 1168,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-33-17-684Z/manifest.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-33-17-684Z/manifest.json",
+      "originalLocalSHA256": "15f37a54e9d1163431cf56ddb7a62836fa41d44b53d23fc83e3baf25bc2ab011",
+      "exportedSHA256": "180519058b1d77d5d216edb34810882cd4dde39951f465d90d4328fdc1be0402",
+      "bytes": 4676084,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-35-25-213Z/report.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-35-25-213Z/report.json",
+      "originalLocalSHA256": "67598ecd757de294f89a754d7faa06158bfc4d8a3a8b1e8f492284f605cb8a82",
+      "exportedSHA256": "67598ecd757de294f89a754d7faa06158bfc4d8a3a8b1e8f492284f605cb8a82",
+      "bytes": 2509,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-35-25-213Z/manifest.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-35-25-213Z/manifest.json",
+      "originalLocalSHA256": "4f5f367589277df4dc98352a6a029b55560008f404e7e7f724ae9517d3d8c9d8",
+      "exportedSHA256": "687e8c1467329a02a5a3a4dffe42e6e9313afce7d37da85bd196904397a717e7",
+      "bytes": 4676084,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-39-56-131Z/report.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-39-56-131Z/report.json",
+      "originalLocalSHA256": "04d768ad0782e24ba61e0db57e05e02515f5ff36bee2a9b73bad6265fc1445ab",
+      "exportedSHA256": "9a302824fa5a806b4479fc1fdb01cae874a509c546157bcbacaf4e8d735f1d82",
+      "bytes": 44511,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/uncounted-prior/run-2026-10-19T01-39-56-131Z/manifest.json",
+      "originalLocalFile": "$RUNTIME_ROOT/runs/run-2026-10-19T01-39-56-131Z/manifest.json",
+      "originalLocalSHA256": "4365bde88e6ee288d4fd4bf740681bf37a8476ec8d6f0ba4e9a7403cd3301993",
+      "exportedSHA256": "bde9cae551085258d1e3b4a04f2b9d74d08675f95da29ca396a19cdfb67ec99b",
+      "bytes": 4680041,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/activity-attempts.jsonl",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/activity-attempts.jsonl",
+      "originalLocalSHA256": "fb0b114038fb569e00dff65520be5e49888d67c1ef475fc17bab753e24444667",
+      "exportedSHA256": "fb0b114038fb569e00dff65520be5e49888d67c1ef475fc17bab753e24444667",
+      "bytes": 435723,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/manifest.json",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/manifest.json",
+      "originalLocalSHA256": "b9a13d86ef25c08fb574a54af8fa2610c170d14a0638de1baa6e33b7ffe28acd",
+      "exportedSHA256": "b9a13d86ef25c08fb574a54af8fa2610c170d14a0638de1baa6e33b7ffe28acd",
+      "bytes": 4226,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/operations.jsonl",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/operations.jsonl",
+      "originalLocalSHA256": "5e390bba380bbc88143352a981ddd9d6ac8e8daeb4815e5f82479571c22abe2d",
+      "exportedSHA256": "5e390bba380bbc88143352a981ddd9d6ac8e8daeb4815e5f82479571c22abe2d",
+      "bytes": 2576599,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/report.json",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/report.json",
+      "originalLocalSHA256": "ee6e947e2768ec333aa361672ca224e19995df90bb6ee330bf62ea72c91b062c",
+      "exportedSHA256": "3a2b9385eee689a6f0b6cf77f134e37fded7369e24f1ba84cb1dc105b25d83d6",
+      "bytes": 22783,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/resources.jsonl",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/resources.jsonl",
+      "originalLocalSHA256": "8017043e7ceb97a65c22b7ece0383eef41bcbfd53e87ce847136838c243947ce",
+      "exportedSHA256": "8017043e7ceb97a65c22b7ece0383eef41bcbfd53e87ce847136838c243947ce",
+      "bytes": 25865,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/snapshots/reproduce-2026-10-19T02-13-38-164Z-mongodb-mongodb.json",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/snapshots/reproduce-2026-10-19T02-13-38-164Z-mongodb-mongodb.json",
+      "originalLocalSHA256": "0c82c7cc9b6aeaa607977bd044560f956635683d7e5a1c7a3ca37f47deee2146",
+      "exportedSHA256": "382ab83f566dc59c1cb9f617008ded45d857d335d3e90252a119444c980f5ce0",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/snapshots/reproduce-2026-10-19T02-13-38-164Z-postgres-postgres.json",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-2026-10-19T02-13-38-164Z/snapshots/reproduce-2026-10-19T02-13-38-164Z-postgres-postgres.json",
+      "originalLocalSHA256": "02910cd9194cdd976b28ccee3753c500b3c08afdf1f2184e2c4fd35a40f7eaf3",
+      "exportedSHA256": "a351e91c9428a2690425a9c18dfa325283241b5337f24034725ac8d8f78a89c5",
+      "bytes": 4822195,
+      "transformation": "normalized"
+    },
+    {
+      "path": "raw-evidence/reproduction/reproduce-pair.mjs",
+      "originalLocalFile": "$RUNTIME_ROOT/reproduction/reproduce-pair.mjs",
+      "originalLocalSHA256": "c8cafc37aad91e13886060425144d5b1f06004e5e3ef2c64c1de4ea64f96bb7c",
+      "exportedSHA256": "c8cafc37aad91e13886060425144d5b1f06004e5e3ef2c64c1de4ea64f96bb7c",
+      "bytes": 6554,
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "report.json",
+      "originalLocalFile": "$RUN_ROOT/report.json",
+      "originalLocalSHA256": "8275a8b4a8d39534828b790477e6795cda3b6d1febcf539e2eefb9924277e982",
+      "exportedSHA256": "b60065612071489327fd19598fbf8071b43eb3e2fb227f5d956c51bfb2b878c0",
+      "bytes": 120325,
+      "transformation": "derived-summary",
+      "sourceProperty": "$"
+    },
+    {
+      "path": "cells.json",
+      "originalLocalFile": "$RUN_ROOT/report.json",
+      "originalLocalSHA256": "8275a8b4a8d39534828b790477e6795cda3b6d1febcf539e2eefb9924277e982",
+      "exportedSHA256": "027b95c4e0c32b20ab335e8711553f9855e56fa94b764389d8a63e426ede9c94",
+      "bytes": 62893,
+      "transformation": "derived-summary",
+      "sourceProperty": "$.cells"
+    },
+    {
+      "path": "faults.json",
+      "originalLocalFile": "$RUN_ROOT/report.json",
+      "originalLocalSHA256": "8275a8b4a8d39534828b790477e6795cda3b6d1febcf539e2eefb9924277e982",
+      "exportedSHA256": "79a72a0382b61a81516f0e7691063c09407ffc9154886d336749ea95989f674b",
+      "bytes": 15481,
+      "transformation": "derived-summary",
+      "sourceProperty": "$.faults"
+    },
+    {
+      "path": "evolution.json",
+      "originalLocalFile": "$RUN_ROOT/report.json",
+      "originalLocalSHA256": "8275a8b4a8d39534828b790477e6795cda3b6d1febcf539e2eefb9924277e982",
+      "exportedSHA256": "183ad19c5682c872716ae23765d43352f1a3819948474da5c0beb0e63ad84511",
+      "bytes": 31558,
+      "transformation": "derived-summary",
+      "sourceProperty": "$.evolutions"
+    },
+    {
+      "path": "host-context.json",
+      "originalLocalFile": "$RUN_ROOT/host-context.json",
+      "originalLocalSHA256": "c47835649e35f08d5ae22058722382c25fe29d5377186272c39e53784570817d",
+      "exportedSHA256": "c47835649e35f08d5ae22058722382c25fe29d5377186272c39e53784570817d",
+      "bytes": 513,
+      "transformation": "normalized"
+    },
+    {
+      "path": "manifest-summary.json",
+      "originalLocalFile": "$RUN_ROOT/manifest.json",
+      "originalLocalSHA256": "1391717b8e93f1fe9e80c7287d34b9a68a40c0eb9ae1bd35aebf7cd7628b3310",
+      "exportedSHA256": "effb9e2aa3a7b08aa6b50ba70aa8523a6847e5b771ff90062f3ef7d4c52adf56",
+      "bytes": 4906,
+      "transformation": "derived-summary"
+    }
+  ],
+  "archive": {
+    "path": "raw-evidence.tar.gz",
+    "sha256": "1dc1dfb8377892d62870d82a493905e070b7fffd835d6a025a92d1e8fae0bce6",
+    "bytes": 3931555,
+    "tarImplementation": "bsdtar 3.5.3 - libarchive 3.7.4 zlib/1.2.12 liblzma/5.4.3 bz2lib/1.0.8 "
+  },
+  "exporterSHA256": "dfc6230230b58d9abdf433aa2a6abab1ff95406edf1eb84302acdea7c46a78ab"
+}

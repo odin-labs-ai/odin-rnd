@@ -1,0 +1,6 @@
+{
+  "observedAt": "2026-10-19T01:48:10Z",
+  "note": "Host context captured immediately after starting counted run; independent shared-host load, not part of mechanism verdict",
+  "load": " 3:48  up 2 days,  2:46, 6 users, load averages: 20.69 116.72 151.02\n",
+  "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-19 03:48:10 +0200 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 33\n"
+}

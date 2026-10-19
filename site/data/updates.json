@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "note-mongodb-temporal-document-fit",
+      "experiment": null,
+      "title": "Does flexible workflow data need MongoDB?",
+      "kind": "Field note",
+      "text": "Both stores passed 20,000 operations, 42 correctness checks and ten evolution suites behind Temporal activities. A MongoDB advantage remains unresolved; flexible JSON alone gives no demonstrated reason to switch.",
+      "href": "journal/mongodb-temporal-document-fit.html",
+      "source": "journal/mongodb-temporal-document-fit.html",
+      "date": "2026-10-19"
+    },
+    {
       "key": "exp-005-erratum-01",
       "experiment": "EXP 005",
       "title": "Jev as a fast gate",
