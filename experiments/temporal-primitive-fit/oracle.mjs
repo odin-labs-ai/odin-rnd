@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {clone,canonical,hash} from './fixtures.mjs';
+export function matches(record,q) {if(record.tenantId!==q.tenantId)return false;const present=Object.hasOwn(record.attrs,q.key),v=record.attrs[q.key];if(q.op==='exists')return present;if(q.op==='null')return present&&v===null;if(q.op==='eq')return present&&v===q.value;if(q.op==='range')return present&&typeof v==='number'&&v>=q.min&&v<q.max;if(q.op==='gte')return present&&typeof v==='number'&&v>=q.value;throw new Error('Unsupported operation');}
+export function expectedQuery(records,q) {return records.filter(r=>matches(r,q)).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,q.limit??undefined).map(r=>({id:r.id,value:r.attrs[q.key]}));}
+export function assertQuery(records,q,actual) {assert.deepEqual(actual,expectedQuery(records,q));}
+export function assertSnapshot(expected,actual) {const normalize=rows=>rows.map(clone).sort((a,b)=>`${a.tenantId}:${a.id}`.localeCompare(`${b.tenantId}:${b.id}`));assert.equal(canonical(normalize(actual)),canonical(normalize(expected)));return hash(normalize(actual));}
+export function applyMutation(record,{tenantId,id,expectedVersion,nextValue,path=['hot','value']}) {if(record.tenantId!==tenantId||record.id!==id||record.version!==expectedVersion)return {applied:false,version:null};record.version++;let target=record.payload;for(const segment of path.slice(0,-1))target=target[segment];target[path.at(-1)]=nextValue;return {applied:true,version:record.version};}

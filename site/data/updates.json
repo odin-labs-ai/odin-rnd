@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "note-mongodb-primitive-fit",
+      "experiment": null,
+      "title": "Where would MongoDB earn a place in Odin?",
+      "kind": "Field note",
+      "text": "99,000 requests and a separate 19,800-request repeat found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives. All seventeen outcomes and the durability amendment are retained.",
+      "href": "journal/mongodb-primitive-fit.html",
+      "source": "journal/mongodb-primitive-fit.html",
+      "date": "2026-10-19"
+    },
+    {
       "key": "note-mongodb-temporal-document-fit",
       "experiment": null,
       "title": "Does flexible workflow data need MongoDB?",

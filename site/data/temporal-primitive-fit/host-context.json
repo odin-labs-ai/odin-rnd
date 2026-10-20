@@ -1,0 +1,71 @@
+{
+  "kind": "derived-host-context",
+  "initial": {
+    "main": {
+      "at": "2026-10-19T08:52:49.681Z",
+      "platform": "darwin",
+      "release": "24.4.0",
+      "arch": "x64",
+      "cpus": 12,
+      "load": [
+        4.51708984375,
+        6.3330078125,
+        6.70751953125
+      ],
+      "memoryBytes": 17179869184,
+      "node": "v22.21.1",
+      "power": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-19 10:52:49 +0200 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 42\n"
+    },
+    "reproduction": {
+      "at": "2026-10-19T09:26:45.743Z",
+      "platform": "darwin",
+      "release": "24.4.0",
+      "arch": "x64",
+      "cpus": 12,
+      "load": [
+        2.58251953125,
+        14.88671875,
+        21.2607421875
+      ],
+      "memoryBytes": 17179869184,
+      "node": "v22.21.1",
+      "power": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-19 11:26:45 +0200 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 100\n"
+    }
+  },
+  "supplementalHostObservations": {
+    "main": [
+      {
+        "at": "2026-10-19T09:02:29.080379+00:00",
+        "kind": "supplemental-read-only-host-observation",
+        "power": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-19 11:02:29 +0200 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 35\n",
+        "uptime": "11:02  up 2 days, 10 hrs, 6 users, load averages: 7.05 7.38 7.23\n",
+        "supportingActivity": {
+          "recordedAt": "2026-10-19T09:00:11Z",
+          "activityStartUtc": null,
+          "activityEndUtc": null,
+          "executionSessionId": 12716,
+          "activity": "Read existing download archive member names for reproduction documentation; no extraction to disk, native tests, database calls or benchmark work",
+          "commands": [
+            "unzip -l <prior-runtime>/downloads/postgres.jar | head -15",
+            "tar -tf <prior-runtime>/downloads/postgres.txz | head -8",
+            "tar -tzf <prior-runtime>/downloads/mongodb.tgz | head -5",
+            "tar -tzf <prior-runtime>/downloads/temporal.tgz | head -5"
+          ],
+          "observedInitialShellWaitSeconds": 10.001072106,
+          "durationScope": "Tool yielded after 10.001 seconds; exact start/end UTC and total decompression CPU time were not instrumented. Shell subsequently completed successfully. Do not treat this wait as an exact activity duration.",
+          "measurementLimitation": "Supporting archive-listing activity occurred during the shared-host main run; acknowledged as potential host-load interference. Independent reproduction should remain quiet.",
+          "followup": "No further archive/decompression/test/native jobs while measurement runs."
+        },
+        "scope": "Operator observation outside frozen runner; activity timing unknown beyond source receipt, not asserted to coincide with this sample."
+      },
+      {
+        "at": "2026-10-19T09:21:11.143555+00:00",
+        "kind": "supplemental-read-only-host-observation",
+        "power": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-19 11:21:11 +0200 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 77\n",
+        "uptime": "11:21  up 2 days, 10:19, 6 users, load averages: 8.83 38.22 29.66\n"
+      }
+    ]
+  },
+  "observationProvenance": "Supplemental observations were recorded by the operator outside the frozen runner. Exact normalized observation files and original/exported SHA-256 mappings are retained separately.",
+  "limitation": "Shared-host load and CPU speed limits can change during measurements. Initial host context alone does not establish a stable clock or isolated benchmark; local timing comparisons remain screening evidence."
+}
