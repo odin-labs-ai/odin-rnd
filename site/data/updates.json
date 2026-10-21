@@ -4,6 +4,26 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "note-flash-on-the-review-bench",
+      "experiment": null,
+      "title": "A free model on our review bench",
+      "kind": "Field note",
+      "text": "On a sealed corpus of 30 real defects and 30 clean changes, MiniMax M3.1 Flash caught as many defects as Claude Opus at about 1.5 cents a review. No reviewer flags few enough clean changes to vote, and an agent-run reviewer can read its own answer key.",
+      "href": "journal/flash-on-the-review-bench.html",
+      "source": "journal/flash-on-the-review-bench.html",
+      "date": "2026-10-21"
+    },
+    {
+      "key": "note-free-model-own-bug-history",
+      "experiment": null,
+      "title": "Can a free model find real bugs in code it has never seen?",
+      "kind": "Field note",
+      "text": "MiniMax M3.1 Flash localised 63% of the bugs in our private fix history that can be found from the code alone, against 23% for our current default. Only about 1 in 10 of the fixes could be found that way.",
+      "href": "journal/free-model-own-bug-history.html",
+      "source": "journal/free-model-own-bug-history.html",
+      "date": "2026-10-21"
+    },
+    {
       "key": "note-mongodb-primitive-fit",
       "experiment": null,
       "title": "Where would MongoDB earn a place in Odin?",
