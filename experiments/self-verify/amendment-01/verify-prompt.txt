@@ -1,0 +1,18 @@
+You are checking a code review before it is posted. Below is a proposed change (its description and its diff) and the findings a reviewer raised against it, numbered.
+
+For EACH finding, decide whether it is a real defect in this change. Keep a finding ONLY if you can name a concrete input, state or call sequence under which the changed code, as written in this diff, produces a wrong result, crashes or hangs, fails open, loses data, breaks a documented contract, or is insecure. The failure must follow from the diff itself, not from guesses about code you cannot see.
+
+Drop a finding when it is about style, naming, missing tests, missing documentation or comments, possible future changes, or anything you cannot tie to a concrete failing input. When in doubt, drop it.
+
+Reply with ONLY one JSON object, no prose:
+{"keep":[{"n":<finding number>,"failing_input":"<the concrete input or state, and the wrong outcome>"}]}
+An empty "keep" list means no finding survives.
+
+--- CHANGE DESCRIPTION ---
+__CHANGE__
+
+--- DIFF ---
+__DIFF__
+
+--- FINDINGS TO CHECK ---
+__FINDINGS__
