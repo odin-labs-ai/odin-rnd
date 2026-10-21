@@ -22,7 +22,7 @@
   ],
   "unchanged": "The question, model, corpus, arms, both prompts, scorer, decision rule, spend and limits are unchanged. The original frozen files stay byte-identical.",
   "excludedAttempt": {
-    "what": "Counted attempt 1 ran on the defective runner from about 20:34Z until it was stopped about 20:48Z, when the review result arrived.",
+    "what": "Counted attempt 1 ran on the defective runner from about 20:34Z until it was stopped about 20:44Z, right after the review result arrived (20:43Z).",
     "extent": "4 of 58 changes reviewed in each of the two runs (8 calls of pass 1 plus any verify calls).",
     "handling": "Excluded from every result. Its rows and logs are retained as evidence and were neither scored nor read for their verdicts. The counted runs restart from the first change under this amendment."
   },
