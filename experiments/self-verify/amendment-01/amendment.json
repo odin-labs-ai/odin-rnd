@@ -4,14 +4,18 @@
   "experiment": "EXP 012",
   "amendment": "01",
   "authoredOn": "2026-10-21",
-  "amends": {"preregistration": "experiments/self-verify/preregistration.json", "preregistrationSha256": "180f46754a63505bf754524b3d73f88a4052a5cae3c228d660d94882d3180619", "frozenCommit": "fb9e6e018e0ebcefba180ea8d6cb8ae2848bad43"},
+  "amends": {
+    "preregistration": "experiments/self-verify/preregistration.json",
+    "preregistrationSha256": "180f46754a63505bf754524b3d73f88a4052a5cae3c228d660d94882d3180619",
+    "frozenCommit": "fb9e6e018e0ebcefba180ea8d6cb8ae2848bad43"
+  },
   "why": "The independent review of the frozen commit (FIX-NEEDED, 2026-10-21 20:43Z) found two defects in the frozen runner. (1) The wrapper reads verify-prompt.txt from its own directory, but the record published the prompt one level up, so the published layout could not run. (2) A malformed verify reply such as {\"keep\":[null]} passed the list check, became an empty keep list and turned the verdict into SHIP with no retry and no verifyFailed mark. That contradicts the record's own failure rule, which says a verify failure leaves the alarm standing, and it would bias the result toward the hypothesis.",
   "changes": [
     {
       "what": "Strict validation of the verify reply",
-      "rule": "keep must be a list; every entry must be an object whose n is an integer (or all-digit string) between 1 and the number of findings, and whose failing_input is a non-empty string. One invalid entry rejects the whole reply, which then counts as unparseable: one retry, then verifyFailed and the pass-1 result stands. An explicit empty list stays valid (no finding survives).",
+      "rule": "keep must be a list; every entry must be an object whose n is an integer (or a string of ASCII digits 0-9 only) between 1 and the number of findings, and whose failing_input is a non-empty string. One invalid entry rejects the whole reply, which then counts as unparseable: one retry, then verifyFailed and the pass-1 result stands. An explicit empty list stays valid (no finding survives). Any exception while validating also counts as an invalid reply, never as a crash of the run.",
       "file": "experiments/self-verify/amendment-01/exp012-verify-seat.py",
-      "sha256": "b715e114d28a3a64dc85a8cafc20b69304284bea17d878f7e1441d72d835dcc9"
+      "sha256": "584a9ffeba13d9c9c7c7a2595255bf28ad252cb0496b4d27e8f3a51813ea59e0"
     },
     {
       "what": "Published layout matches execution",
@@ -26,5 +30,12 @@
     "extent": "4 of 58 changes reviewed in each of the two runs (8 calls of pass 1 plus any verify calls).",
     "handling": "Excluded from every result. Its rows and logs are retained as evidence and were neither scored nor read for their verdicts. The counted runs restart from the first change under this amendment."
   },
-  "notBefore": "The restarted counted runs begin after this amendment is pushed to the public branch and an independent review of that exact head returns SHIP."
+  "notBefore": "The restarted counted runs begin after this amendment is pushed to the public branch and an independent review of that exact head returns SHIP.",
+  "revisions": [
+    {
+      "on": "2026-10-21",
+      "before": "any counted call under this amendment",
+      "why": "The recheck of 37fba28/4fc543f (FIX-NEEDED, 20:48Z) found that a reply with n = \"²\" passes str.isdigit() but int() raises, which would crash the wrapper instead of counting as an invalid reply. The wrapper now accepts ASCII digits only and treats any validation exception as an invalid reply. No other rule changes."
+    }
+  ]
 }

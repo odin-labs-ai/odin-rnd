@@ -76,7 +76,10 @@ def main():
             keep = json.JSONDecoder().raw_decode(text, m.start())[0]["keep"] if m else None
         except (ValueError, KeyError, TypeError):
             keep = None
-        valid = validate_keep(keep, len(findings))
+        try:
+            valid = validate_keep(keep, len(findings))
+        except Exception:  # any validation fault = an invalid reply, never a crash of the run
+            valid = None
         if valid is None:  # Amendment 01: ANY malformed entry invalidates the whole reply (never a silent SHIP)
             cause = "verify-unparseable"; continue
         kept = valid
@@ -104,8 +107,8 @@ def validate_keep(keep, n_findings):
         if not isinstance(k, dict):
             return None
         n, fi = k.get("n"), k.get("failing_input")
-        if isinstance(n, bool) or not (isinstance(n, int) or (isinstance(n, str) and n.isdigit())):
-            return None
+        if isinstance(n, bool) or not (isinstance(n, int) or (isinstance(n, str) and re.fullmatch(r"[0-9]+", n))):
+            return None  # ASCII digits only: "²".isdigit() is True but int("²") raises (review 20:48Z)
         n = int(n)
         if not 1 <= n <= n_findings or not isinstance(fi, str) or not fi.strip():
             return None
