@@ -1,0 +1,108 @@
+{
+ "schemaVersion": 1,
+ "kind": "odin-rnd.results",
+ "experiment": "EXP 012",
+ "slug": "self-verify",
+ "preregistration": "experiments/self-verify/preregistration.json",
+ "amendment": "experiments/self-verify/amendment-01/amendment.json",
+ "measured": {
+  "start": "2026-10-21T20:51Z",
+  "end": "2026-10-22T04:02Z",
+  "host": "one laptop",
+  "model": "minimax-m3.1-flash (Ollama Cloud, free period)"
+ },
+ "decision": "no",
+ "decisionWhy": "Both A1 runs exceed 12 false alarms of 30 (20 and 22), so neither earnsItsKeep (<=2) nor partial (<=12) holds.",
+ "arms": {
+  "A1-a": {
+   "caught": 13,
+   "caughtCI": [
+    0.274,
+    0.608
+   ],
+   "falseAlarms": 20,
+   "faCI": [
+    0.488,
+    0.808
+   ],
+   "original": 4,
+   "harvested": 9,
+   "vsA0": {
+    "faRemoved": 1,
+    "faAdded": 0,
+    "catchesLost": 3,
+    "catchesGained": 0
+   }
+  },
+  "A1-b": {
+   "caught": 14,
+   "caughtCI": [
+    0.302,
+    0.639
+   ],
+   "falseAlarms": 22,
+   "faCI": [
+    0.556,
+    0.858
+   ],
+   "original": 5,
+   "harvested": 9,
+   "vsA0": {
+    "faRemoved": 1,
+    "faAdded": 4,
+    "catchesLost": 4,
+    "catchesGained": 2
+   }
+  },
+  "A0-a": {
+   "caught": 16,
+   "falseAlarms": 21
+  },
+  "A0-b": {
+   "caught": 16,
+   "falseAlarms": 19
+  }
+ },
+ "verify": [
+  {
+   "run": "A1-a",
+   "verifyCalls": 42,
+   "verifyFailed": 0,
+   "findingsKept": 127,
+   "findingsDropped": 7,
+   "pass1NoVerdict": 1,
+   "costUsd": 1.0389,
+   "medianLatencySec": 260
+  },
+  {
+   "run": "A1-b",
+   "verifyCalls": 45,
+   "verifyFailed": 0,
+   "findingsKept": 122,
+   "findingsDropped": 13,
+   "pass1NoVerdict": 2,
+   "costUsd": 1.1287,
+   "medianLatencySec": 317
+  }
+ ],
+ "verdictChanges": [
+  {
+   "run": "A1-a",
+   "pass1NonShip": 43,
+   "turnedToShipByVerify": 1,
+   "turnedKind": "clean",
+   "changesWithAFindingDropped": 7,
+   "ofWhichClean": 6
+  },
+  {
+   "run": "A1-b",
+   "pass1NonShip": 47,
+   "turnedToShipByVerify": 1,
+   "turnedKind": "clean",
+   "changesWithAFindingDropped": 10,
+   "ofWhichClean": 7
+  }
+ ],
+ "note": "Counts only. Cases, findings and diffs are private. vsA0 compares a fresh A1 run with an earlier A0 run of the same replicate letter; pass 1 is re-sampled, so those deltas mix pass-1 variation with the verify step. The verify step's own effect is verdictChanges.",
+ "excludedAttempt": "Counted attempt 1 (4 of 58 changes per run, stopped 2026-10-21 ~20:44Z) is excluded, per Amendment 01."
+}

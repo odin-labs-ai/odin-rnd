@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "note-self-verify-results",
+      "experiment": null,
+      "title": "EXP 012: Can a reviewer talk itself out of its false alarms?",
+      "kind": "Field note",
+      "text": "No. Asked to name a concrete failing input for every finding or drop it, MiniMax M3.1 Flash kept 249 of 269 of its own findings. False alarms stayed at 20 and 22 of 30 clean changes, against a pre-registered bar of 2.",
+      "href": "journal/self-verify-results.html",
+      "source": "journal/self-verify-results.html",
+      "date": "2026-10-22"
+    },
+    {
       "key": "note-flash-on-the-review-bench",
       "experiment": null,
       "title": "A free model on our review bench",

@@ -11,16 +11,17 @@
 <tr><th scope="row">MiniMax M3.1 Flash</th><td>P1 · a</td><td>16</td><td>21</td><td>0</td></tr>
 <tr><th scope="row">MiniMax M3.1 Flash</th><td>P1 · b</td><td>16</td><td>19</td><td>1</td></tr>
 <tr><th scope="row">MiniMax M3.1 Flash</th><td>P3 · a</td><td>15</td><td>20</td><td>1</td></tr>
+<tr><th scope="row">MiniMax M3.1 Flash</th><td>P3 · b</td><td>17</td><td>19</td><td>0</td></tr>
 <tr><th scope="row">gpt-oss:120b</th><td>P1 · a</td><td>11</td><td>23</td><td>1</td></tr>
 <tr><th scope="row">gpt-oss:120b</th><td>P1 · b</td><td>12</td><td>21</td><td>1</td></tr>
 <tr><th scope="row">gpt-oss:120b</th><td>P3 · a</td><td>7</td><td>14</td><td>1</td></tr>
 <tr><th scope="row">gpt-oss:120b</th><td>P3 · b</td><td>5</td><td>12</td><td>0</td></tr>
 <tr><th scope="row">Claude Opus (earlier calibration)</th><td>P1 · a / b</td><td>16 / 19</td><td>20 / 18</td><td>0 / 0</td></tr>
 </tbody></table></div>
-<p>A no-verdict (a timeout, or an HTTP 429 or 500 while the account was saturated) counts as a miss on a defect and as a false alarm on a clean change, so these figures are conservative. Three of the four planned Flash runs were complete when this note was written. The fourth, P3 · b, was restarted after an accounting abort and is still running.</p>
-<p><strong>Flash against our default, case by case.</strong> In each paired run, Flash was credited with more defects that gpt-oss:120b missed than the reverse: 8 against 3 (P1 a), 7 against 3 (P1 b) and 11 against 3 (P3 a). The direction is consistent, but no single run is significant at this size (exact paired p = 0.23, 0.34 and 0.057). Replicates replay the same cases, so they are not pooled. On clean changes the two are level on P1. On P3, gpt-oss:120b got more clean changes right because it ships more of everything.</p>
+<p>A no-verdict (a timeout, or an HTTP 429 or 500 while the account was saturated) counts as a miss on a defect and as a false alarm on a clean change, so these figures are conservative. Three of the four planned Flash runs were complete when this note was first published. The fourth, P3 · b, was restarted after an accounting abort and finished on 22 October 2026 at 00:24 UTC; its row and pairing were added then.</p>
+<p><strong>Flash against our default, case by case.</strong> In each paired run, Flash was credited with more defects that gpt-oss:120b missed than the reverse: 8 against 3 (P1 a), 7 against 3 (P1 b), 11 against 3 (P3 a) and 12 against 0 (P3 b). The direction is consistent. Only the last is significant (exact paired p = 0.23, 0.34, 0.057 and 0.0005), and that gpt-oss:120b run answered in a six-second median against about three minutes for its other runs, so it may have been degraded. Replicates replay the same cases, so they are not pooled. On clean changes the two are level on P1. On P3, gpt-oss:120b got more clean changes right because it ships more of everything.</p>
 <p><strong>Flash repeats itself.</strong> Between its two P1 runs, only 2 of the 30 defect outcomes flipped. In the earlier calibration, seats flipped between 4 and 9. A reviewer that gives the same answer twice is one you can calibrate.</p>
-<p>Unlike the seats in the earlier calibration, Flash did not shed false alarms under P3: 20 against 21 and 19. It kept its credited recall (15 of 30), though.</p>
+<p>Unlike the seats in the earlier calibration, Flash did not shed false alarms under P3: 20 and 19 against 21 and 19. It kept its credited recall (15 and 17 of 30), though. Between its two P3 runs, 6 of the 30 defect outcomes flipped.</p>
 <h2>The finding that matters more than the score</h2>
 <p>We first ran Flash through our general agent runtime, the way earlier reviewer seats were run, from an empty scratch directory. It did not stay there. With a shell tool available, it left the directory, found the developer checkout on the machine and searched it with <code>git log</code> and <code>grep</code>. That checkout contains the sealed answer key and the real fix history. Every command it ran was read-only, but nothing stopped it.</p>
 <ul>
@@ -40,7 +41,6 @@
 <li>A diagnosis check: whether each credited finding names the actual defect, not only its file.</li>
 <li>Whether a reviewer can talk itself out of its false alarms. That is the next pre-registered experiment.</li>
 <li>Latency outside peak hours. Up to eight runs shared one account at peak times, so Flash's five-to-seven-minute medians are an upper bound.</li>
-<li>The fourth Flash run (P3 · b).</li>
 </ul>
 <p class="article-note">Local experiment. The run plan was locally frozen, not publicly pre-registered. Private diffs; aggregates only. Flash was free on Ollama Cloud until 22 October 2026 23:59 UTC, then $0.15 / $0.60 per million input / output tokens.</p>
 </article></main><footer class="site-footer"><a href="../" class="footer-brand" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><span>From the dark factory. Out in the open.</span><div><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a><a href="../#journal">More field notes</a></div><span class="technical">REV 0.2.0 · 2026</span></footer></body></html>
