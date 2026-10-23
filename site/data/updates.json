@@ -14,12 +14,22 @@
       "date": "2026-10-23"
     },
     {
+      "key": "exp-016-results",
+      "experiment": "EXP 016",
+      "title": "Does the same model cost the same through every broker?",
+      "kind": "Results",
+      "text": "Measured on 720 identical calls: two brokers billed exactly list price for Claude Sonnet 5.5 and GPT-4o mini, the third 10% above it on both, a spread of 1.10 against a pre-registered bar of 1.05. No broker served a different model.",
+      "href": "journal/broker-same-model-results.html",
+      "source": "data/broker-same-model/results.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-016-amendment-01",
       "experiment": "EXP 016",
       "title": "Does the same model cost the same through every broker?",
       "kind": "Amendment",
       "text": "EXP 016's results are published with the three brokers shown as letters, not names.",
-      "href": "data/broker-same-model/preregistration.json",
+      "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/amendment-01.json",
       "date": "2026-10-23"
     },
@@ -49,7 +59,7 @@
       "title": "Does the same model cost the same through every broker?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/broker-same-model/preregistration.json",
+      "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/preregistration.json",
       "date": "2026-10-23"
     },
@@ -61,6 +71,16 @@
       "text": "The question and how it will be scored were published before any counted run.",
       "href": "data/telemetry-truth/preregistration.json",
       "source": "data/telemetry-truth/preregistration.json",
+      "date": "2026-10-23"
+    },
+    {
+      "key": "note-broker-same-model-results",
+      "experiment": null,
+      "title": "EXP 016: Does the same model cost the same through every broker?",
+      "kind": "Field note",
+      "text": "Almost. Measured on 720 identical calls: two brokers billed exactly list price for Claude Sonnet 5.5 and GPT-4o mini, the third 10% above it on both, a spread of 1.10 against a pre-registered bar of 1.05. No broker served a different model.",
+      "href": "journal/broker-same-model-results.html",
+      "source": "journal/broker-same-model-results.html",
       "date": "2026-10-23"
     },
     {
