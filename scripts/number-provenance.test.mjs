@@ -78,11 +78,17 @@ test('a title quoted verbatim from a frozen pre-registration may hold digits and
   assert.deepEqual(problems(`<p>EXP 018: <cite data-quote="${Q}">Does it beat one fixed model in 2 runs?</cite></p>`), []);
   assert.match(problems(`<p><cite data-quote="${Q}">Does it beat one fixed model in 3 runs?</cite></p>`).join('\n'), /not the record's, verbatim/);
   assert.match(problems(`<p><span data-quote="${Q}">Does it beat one fixed model in 2 runs?</span></p>`).join('\n'), /not on a <cite>/);
-  assert.match(problems(`<p><cite data-quote="${RECORD}#/seats/0/caught">31</cite></p>`).join('\n'), /not a published pre-registration/);
-  assert.match(problems(`<p><cite data-quote="data/evidence.json#/typed">42</cite></p>`).join('\n'), /not a published pre-registration/);
-  assert.match(problems(`<p><cite data-quote="data/demo/preregistration.json#/experiment/missing">x</cite></p>`).join('\n'), /does not resolve to text/);
+  assert.match(problems(`<p><cite data-quote="${RECORD}#/experiment/title">31</cite></p>`).join('\n'), /not a published pre-registration/);
+  assert.match(problems(`<p><cite data-quote="data/evidence.json#/experiment/title">42</cite></p>`).join('\n'), /not a published pre-registration/);
+  assert.match(problems(`<p><cite data-quote="data/other/preregistration.json#/experiment/title">x</cite></p>`).join('\n'), /not in the built site/);
   assert.match(problems(`<p><cite data-quote="${Q}">Does it beat <b>one</b> fixed model in 2 runs?</cite></p>`).join('\n'), /number word|unsourced digit/, 'not a leaf');
   assert.match(problems(`<p><cite>beats one fixed model</cite></p>`).join('\n'), /number word 'one'/, 'a plain <cite> is not exempt');
+  // Only the title may be quoted: a planned value stored as text in a pre-registration is never exempt.
+  for (const pointer of ['/hypotheses/0/text', '/experiment', '', '/experiment/title/', '/experiment%2Ftitle', '/experiment/id'])
+    assert.match(problems(`<p><cite data-quote="data/demo/preregistration.json#${pointer}">saves at least 20%</cite></p>`).join('\n'), /only \/experiment\/title may be quoted/, pointer || '(whole document)');
+  // A quoted title carries no other attribute, so nothing rides along unscanned.
+  for (const extra of ['title="2× cheaper"', 'aria-label="one model"', 'class="x"'])
+    assert.match(problems(`<p><cite data-quote="${Q}" ${extra}>Does it beat one fixed model in 2 runs?</cite></p>`).join('\n'), /carries no other attribute/, extra);
 });
 
 test('a missing record, an unresolved pointer, a non-number and an unknown format all fail', () => {
@@ -181,6 +187,13 @@ test('a source must be a measured experiment record bound to its frozen pre-regi
     assert.equal(quoteProblem('data/demo/preregistration.json', prereg, root), null);
     assert.match(quoteProblem('data/demo/preregistration.json', prereg.replace('}', ',"x":1}'), root), /not byte for byte/);
     assert.match(quoteProblem('data/demo/results.json', prereg, root), /not a published pre-registration/);
+    // The two checks that make a quoted pre-registration frozen: its pin exists, and it matches.
+    const pin = readFileSync(join(dir, 'preregistration.sha256'), 'utf8');
+    writeFileSync(join(dir, 'preregistration.sha256'), 'f'.repeat(64) + '  preregistration.json\n');
+    assert.match(quoteProblem('data/demo/preregistration.json', prereg, root), /does not match its preregistration\.sha256/);
+    rmSync(join(dir, 'preregistration.sha256'));
+    assert.match(quoteProblem('data/demo/preregistration.json', prereg, root), /has no preregistration\.sha256/);
+    writeFileSync(join(dir, 'preregistration.sha256'), pin);
     assert.match(recordProblem('data/demo/results.json', results.replace('3', '4'), root), /not byte for byte/);
     assert.match(recordProblem('data/marketing/results.json', '{"savings":0.4}', root), /not byte for byte experiments\/marketing/);
     assert.match(recordProblem('data/demo/preregistration.json', prereg, root), /not a results record/);
@@ -197,4 +210,22 @@ test('a source must be a measured experiment record bound to its frozen pre-regi
 
 test('the committed records the pages cite are bound to their experiments', () => {
   for (const slug of ['review-frontier', 'self-verify']) assert.equal(recordProblem(`data/${slug}/results.json`, readFileSync(`site/data/${slug}/results.json`, 'utf8')), null, slug);
+});
+
+test('checkSite joins the gate to the real record and quote checks (a built page, a checkout, no stubs)', () => {
+  const root = mkdtempSync(join(tmpdir(), 'np-site-'));
+  try {
+    const dist = join(root, 'dist'), dir = join(root, 'experiments/demo');
+    for (const d of [join(dist, 'evidence'), join(dist, 'data/demo'), dir]) mkdirSync(d, { recursive: true });
+    const prereg = JSON.stringify({ experiment: { title: 'Does it beat one fixed model?' } });
+    const results = JSON.stringify({ kind: 'odin-rnd.results', slug: 'demo', preregistration: 'experiments/demo/preregistration.json', n: 3 });
+    for (const [base, name, body] of [[dir, 'preregistration.json', prereg], [dir, 'results.json', results], [join(dist, 'data/demo'), 'preregistration.json', prereg], [join(dist, 'data/demo'), 'results.json', results]]) writeFileSync(join(base, name), body);
+    writeFileSync(join(dir, 'preregistration.sha256'), createHash('sha256').update(prereg).digest('hex') + '  preregistration.json\n');
+    const html = body => `<!doctype html><html><head></head><body>${body}</body></html>`;
+    const good = `<p><cite data-quote="data/demo/preregistration.json#/experiment/title">Does it beat one fixed model?</cite> <a href="../data/demo/results.json" data-source="data/demo/results.json#/n" data-format="int">3</a></p>`;
+    writeFileSync(join(dist, 'evidence/index.html'), html(good));
+    assert.deepEqual(checkSite(dist, ['evidence/index.html'], root), []);
+    writeFileSync(join(dir, 'preregistration.sha256'), 'f'.repeat(64) + '  preregistration.json\n');
+    assert.match(checkSite(dist, ['evidence/index.html'], root).join('\n'), /data-quote .*does not match its preregistration\.sha256/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

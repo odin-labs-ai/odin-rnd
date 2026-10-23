@@ -14,8 +14,8 @@
 //     its file name. A pre-registration (planned values), page configuration (evidence.json and the like) or any other
 //     file is never a source. Limit: a whole fabricated experiment folder would pass this check; review of the PR that
 //     adds it is the guard against that, and the folder is public.
-//   - A quoted title is a leaf <cite data-quote="data/<slug>/preregistration.json#<JSON pointer>"> whose text is,
-//     verbatim, the string at that pointer in a frozen pre-registration (quoteProblem: byte for byte
+//   - A quoted title is a leaf <cite data-quote="data/<slug>/preregistration.json#/experiment/title"> (that pointer
+//     only, and no other attribute) whose text is, verbatim, the experiment's title in a frozen pre-registration (quoteProblem: byte for byte
 //     experiments/<slug>/preregistration.json, matching its preregistration.sha256). Its words are the record's, frozen
 //     before the run, not a claim of ours, so they are exempt from the number scan below (an experiment may well ask
 //     whether something beats "one fixed model").
@@ -98,6 +98,8 @@ export function recordProblem(path, raw, root = '.') {
 
 /** The path shape a quoted title may come from: a published pre-registration. */
 export const QUOTE_FILE = /^data\/([a-z0-9-]+)\/preregistration\.json$/;
+/** The only field that may be quoted: the experiment's title. Planned values (thresholds, sizes, windows) never are. */
+export const QUOTE_POINTER = '/experiment/title';
 
 /** Why `raw`, published at `path`, is not a frozen pre-registration of this checkout, or null when it is. */
 export function quoteProblem(path, raw, root = '.') {
@@ -178,6 +180,9 @@ export function checkPage(file, html, io) {
       const quote = attrs.get('data-quote');
       const [path, pointer = ''] = quote.split('#');
       if (tag.toLowerCase() !== 'cite') { say(`data-quote '${quote}' is not on a <cite>`); return whole; }
+      if (pointer !== QUOTE_POINTER) { say(`data-quote '${quote}': only ${QUOTE_POINTER} may be quoted`); return whole; }
+      const extra = [...attrs.keys()].filter(name => name !== 'data-quote');
+      if (extra.length) { say(`data-quote '${quote}': a quoted title carries no other attribute (found ${extra.join(', ')})`); return whole; }
       const raw = QUOTE_FILE.test(path) ? readData(path) : null;
       const why = !QUOTE_FILE.test(path) ? `${path} is not a published pre-registration` : raw === null ? `${path} is not in the built site` : notQuote(path, raw);
       if (why) { say(`data-quote '${quote}': ${why}`); return whole; }
