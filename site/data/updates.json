@@ -24,6 +24,16 @@
       "date": "2026-10-23"
     },
     {
+      "key": "exp-018-preregistration",
+      "experiment": "EXP 018",
+      "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "data/router-arm/preregistration.json",
+      "source": "data/router-arm/preregistration.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-017-preregistration",
       "experiment": "EXP 017",
       "title": "What does a defect caught in review cost, model by model?",
