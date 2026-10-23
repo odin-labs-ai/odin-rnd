@@ -125,6 +125,12 @@ html = addNinaEntry(html, loadEntryData());
 html = addLedger(html, report);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
+// The provider-economics and evidence pages (vp-grow-odin-r-d bundle-3): rendered from their templates and the published
+// experiment records into dist/ only, before the per-page passes below, so they get the same header, beacon and checks.
+{
+  const { renderLabPages } = await import('./lab-pages.mjs');
+  for (const [page, pageHtml] of Object.entries(renderLabPages())) writeFileSync(`dist/${page}/index.html`, pageHtml);
+}
 mkdirSync('dist/data', { recursive: true });
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
@@ -167,4 +173,12 @@ for (const file of htmlFiles('dist')) {
   const problems = checkPages(htmlFiles('dist').map(file => ({ file, html: readFileSync(file, 'utf8') })), terms);
   if (problems.length) throw new Error('Broker named next to a measured number without leave in site/data/provider-terms.json:\n' + problems.join('\n'));
   for (const { id, readOn } of staleEntries(terms)) console.warn(`WARN: the ${id} terms were read on ${readOn}, more than ${terms.staleAfterDays} days ago; read them again.`);
+}
+// Number provenance (vp-grow-odin-r-d bundle-3 WO-04): on the provider-economics and evidence pages every visible number
+// must be a link to an experiment record whose value it shows exactly (scripts/number-provenance.mjs; tests in
+// scripts/number-provenance.test.mjs). A listed page missing from the build fails. Last, so it sees every finished page.
+{
+  const { checkSite } = await import('./number-provenance.mjs');
+  const problems = checkSite('dist');
+  if (problems.length) throw new Error('Number provenance failed:\n' + problems.join('\n'));
 }
