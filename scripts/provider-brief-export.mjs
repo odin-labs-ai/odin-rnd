@@ -16,27 +16,43 @@ export const BASE = 'https://odin-labs-ai.github.io/odin-rnd/';
 
 const decode = text => text.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-/** Rendered brief HTML (relative links from provider-brief/) to Markdown with absolute links. */
+/**
+ * Rendered brief HTML (relative links from provider-brief/) to Markdown with absolute links. The HTML is our own
+ * render, cut into tags and text once. Tags map to Markdown marks and are otherwise dropped. Text, and anything that
+ * looks like a tag but is not one, is decoded and its angle brackets escaped; attribute values are decoded and, as link
+ * destinations, carry angle brackets and spaces percent-encoded. So no angle bracket reaches the Markdown raw, and no
+ * text is dropped.
+ */
+const escapeText = text => decode(text).replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const url = text => text.replaceAll('<', '%3C').replaceAll('>', '%3E').replaceAll(' ', '%20');
+
 export function toMarkdown(html, base = BASE) {
   const abs = href => (/^[a-z]+:/i.test(href) ? href : base + href.replace(/^\.\.\//, ''));
-  return decode(html
-    .replace(/<a class="lab-num" href="[^"]*" data-source="([^"]*)"[^>]*>([^<]*)<\/a>/g, (_, source, value) => `[${value}](${base}${source})`)
-    .replace(/<a href="([^"]*)"[^>]*>([^<]*)<\/a>/g, (_, href, text) => `[${text}](${abs(href)})`)
-    .replace(/<a href="([^"]*)"[^>]*><code>([^<]*)<\/code><\/a>/g, (_, href, text) => `[\`${text}\`](${abs(href)})`)
-    .replace(/<code>([^<]*)<\/code>/g, '`$1`')
-    .replace(/<time[^>]*>([^<]*)<\/time>/g, '$1')
-    .replace(/<strong>([^<]*)<\/strong>/g, '**$1**')
-    .replace(/<cite[^>]*>([^<]*)<\/cite>/g, '*$1*')
-    .replace(/<h2[^>]*>([^<]*)<\/h2>/g, '\n### $1\n\n')
-    .replace(/<\/p><p class="lab-source">/g, '\n  ')
-    .replace(/<li[^>]*>/g, '- ')
-    .replace(/<\/li>/g, '\n')
-    .replace(/<\/p>/g, '\n\n')
-    // Any tag left is dropped, then any stray angle bracket; entities are decoded after that, and an angle bracket
-    // the decoding brings back is escaped again below, so no markup reaches the Markdown.
-    .replace(/<[^>]*>/g, '').replace(/[<>]/g, ''))
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`)); return m ? decode(m[1]) : undefined; };
+  let out = '', last = '';
+  const links = [];
+  // A tag starts with '<' and a letter or '/', holds no other '<' outside a quoted attribute value, and ends at the
+  // first '>' outside one. The split puts tags at the odd indices; every even index is text, whatever it looks like.
+  const tokens = html.split(/(<\/?[a-z][^<>"]*(?:"[^"]*"[^<>"]*)*>)/i);
+  for (const [i, token] of tokens.entries()) {
+    const m = i % 2 ? token.match(/^<(\/?)([a-z][a-z0-9]*)/i) : null;
+    if (!m) { out += escapeText(token); continue; }
+    const [close, name] = [m[1] === '/', m[2].toLowerCase()];
+    if (name === 'a') {
+      if (!close) { const source = attr(token, 'data-source'); links.push(url(source ? base + source : abs(attr(token, 'href') ?? ''))); out += '['; }
+      else if (links.length) out += `](${links.pop()})`;
+    } else if (name === 'code') out += '`';
+    else if (name === 'strong') out += '**';
+    else if (name === 'cite') out += '*';
+    else if (name === 'h2') out += close ? '\n\n' : '\n### ';
+    else if (name === 'li' && !close) out += '- ';
+    else if (name === 'li' && close) out += '\n';
+    else if (name === 'p' && close) out += '\n\n';
+    // A source line directly after its claim paragraph joins it as an indented second line.
+    else if (name === 'p' && attr(token, 'class') === 'lab-source' && last === '/p') out = out.replace(/\n\n$/, '') + '\n  ';
+    last = `${close ? '/' : ''}${name}`;
+  }
+  return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
 /** The deck section: a provenance header, then the brief's measured claims and its not-a-result list. */
