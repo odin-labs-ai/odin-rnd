@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "experiment": { "id": "EXP 014", "title": "Where would MongoDB earn a place in Odin?" },
+  "preregistered": false,
+  "numberedOn": "2026-10-23",
+  "source": "https://github.com/odin-labs-ai/odin-rnd/pull/43",
+  "note": "journal/mongodb-primitive-fit.html",
+  "why": "Published on 2026-10-20 with its protocol, frozen source hashes, raw evidence and a reproduction report (experiments/temporal-primitive-fit/), but no pre-registration was frozen before it ran. It is numbered so it can be cited; the ledger marks it not pre-registered. Numbering decided 2026-10-23 (merge order, after EXP 012); the lab owner may move both studies outside the numbering instead."
+}
