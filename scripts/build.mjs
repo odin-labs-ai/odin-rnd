@@ -158,3 +158,13 @@ for (const file of htmlFiles('dist')) {
   if ((source.match(/<header class="site-header[ "]/g) || []).length !== 1) throw new Error('Expected exactly one site header in '+file);
   writeFileSync(file,source.replace(/(<header class="site-header[^"]*"[^>]*>[\s\S]*?)<\/header>/,`$1${parentSiteLink}</header>`));
 }
+// Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05): the build refuses a page that names a broker next to a
+// measured number unless site/data/provider-terms.json allows it (scripts/provider-terms.mjs; tests in
+// scripts/provider-terms.test.mjs). A read older than its staleAfterDays warns. Last, so it sees every finished page.
+{
+  const { checkPages, loadTerms, staleEntries } = await import('./provider-terms.mjs');
+  const terms = loadTerms();
+  const problems = checkPages(htmlFiles('dist').map(file => ({ file, html: readFileSync(file, 'utf8') })), terms);
+  if (problems.length) throw new Error('Broker named next to a measured number without leave in site/data/provider-terms.json:\n' + problems.join('\n'));
+  for (const { id, readOn } of staleEntries(terms)) console.warn(`WARN: the ${id} terms were read on ${readOn}, more than ${terms.staleAfterDays} days ago; read them again.`);
+}

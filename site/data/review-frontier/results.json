@@ -1,0 +1,442 @@
+{
+ "schemaVersion": 1,
+ "kind": "odin-rnd.results",
+ "experiment": "EXP 017",
+ "slug": "review-frontier",
+ "preregistration": "experiments/review-frontier/preregistration.json",
+ "decision": {
+  "onFrontier": [
+   "flash",
+   "gpt-oss",
+   "opus"
+  ],
+  "offFrontier": [
+   "sonnet"
+  ],
+  "notMeasured": [],
+  "rule": "Per seat, pooled over its two runs: caught (of 60) and $ per review. A seat is ON the frontier if no other seat has both at least as many catches and no higher $ per review, and is strictly better on one of the two. Otherwise it is OFF the frontier."
+ },
+ "secondary": {
+  "frontierWithFalseAlarms": [
+   "flash",
+   "gpt-oss",
+   "sonnet",
+   "opus"
+  ]
+ },
+ "seats": [
+  {
+   "seat": "flash",
+   "model": "minimax/minimax-m3.1-flash",
+   "runsComplete": 2,
+   "runsPlanned": 2,
+   "status": "complete",
+   "caught": 30,
+   "caughtOf": 60,
+   "caughtCI": [
+    0.377,
+    0.623
+   ],
+   "caughtPerRun": [
+    14,
+    16
+   ],
+   "falseAlarms": 48,
+   "falseAlarmsOf": 60,
+   "faCI": [
+    0.682,
+    0.882
+   ],
+   "falseAlarmsPerRun": [
+    22,
+    26
+   ],
+   "costUsd": 1.755738,
+   "costPerReviewUsd": 0.015136,
+   "medianLatencySec": 146.25,
+   "noVerdict": 21,
+   "servedModelMatches": 115,
+   "servedModelReported": 115
+  },
+  {
+   "seat": "gpt-oss",
+   "model": "openai/gpt-oss-120b",
+   "runsComplete": 2,
+   "runsPlanned": 2,
+   "status": "complete",
+   "caught": 29,
+   "caughtOf": 60,
+   "caughtCI": [
+    0.362,
+    0.607
+   ],
+   "caughtPerRun": [
+    15,
+    14
+   ],
+   "falseAlarms": 42,
+   "falseAlarmsOf": 60,
+   "faCI": [
+    0.575,
+    0.801
+   ],
+   "falseAlarmsPerRun": [
+    22,
+    20
+   ],
+   "costUsd": 0.073224,
+   "costPerReviewUsd": 0.000631,
+   "medianLatencySec": 18.25,
+   "noVerdict": 0,
+   "servedModelMatches": 116,
+   "servedModelReported": 116
+  },
+  {
+   "seat": "sonnet",
+   "model": "anthropic/claude-sonnet-5.5",
+   "runsComplete": 2,
+   "runsPlanned": 2,
+   "status": "complete",
+   "caught": 26,
+   "caughtOf": 60,
+   "caughtCI": [
+    0.316,
+    0.559
+   ],
+   "caughtPerRun": [
+    13,
+    13
+   ],
+   "falseAlarms": 30,
+   "falseAlarmsOf": 60,
+   "faCI": [
+    0.377,
+    0.623
+   ],
+   "falseAlarmsPerRun": [
+    15,
+    15
+   ],
+   "costUsd": 5.369582,
+   "costPerReviewUsd": 0.04629,
+   "medianLatencySec": 18.25,
+   "noVerdict": 0,
+   "servedModelMatches": 116,
+   "servedModelReported": 116
+  },
+  {
+   "seat": "opus",
+   "model": "anthropic/claude-opus-5.5",
+   "runsComplete": 2,
+   "runsPlanned": 2,
+   "status": "complete",
+   "caught": 31,
+   "caughtOf": 60,
+   "caughtCI": [
+    0.393,
+    0.638
+   ],
+   "caughtPerRun": [
+    18,
+    13
+   ],
+   "falseAlarms": 36,
+   "falseAlarmsOf": 60,
+   "faCI": [
+    0.474,
+    0.714
+   ],
+   "falseAlarmsPerRun": [
+    16,
+    20
+   ],
+   "costUsd": 9.659776,
+   "costPerReviewUsd": 0.083274,
+   "medianLatencySec": 22.5,
+   "noVerdict": 0,
+   "servedModelMatches": 116,
+   "servedModelReported": 116
+  }
+ ],
+ "runs": [
+  {
+   "seat": "flash",
+   "run": "a",
+   "model": "minimax/minimax-m3.1-flash",
+   "start": "2026-10-23T05:46:13Z",
+   "end": "2026-10-23T11:24:34Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 0.945671,
+   "costPerReviewUsd": 0.016305,
+   "medianLatencySec": 187.5,
+   "noVerdict": 12,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "GMICloud": 4,
+    "InferenceNet": 21,
+    "Minimax": 4,
+    "Nebius": 6,
+    "Parasail": 16,
+    "Together": 4,
+    "Wafer": 3
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 14,
+   "caughtCI": [
+    0.302,
+    0.639
+   ],
+   "falseAlarms": 22,
+   "faCI": [
+    0.556,
+    0.858
+   ]
+  },
+  {
+   "seat": "flash",
+   "run": "b",
+   "model": "minimax/minimax-m3.1-flash",
+   "start": "2026-10-23T05:46:13Z",
+   "end": "2026-10-23T09:48:35Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 0.810067,
+   "costPerReviewUsd": 0.013967,
+   "medianLatencySec": 105,
+   "noVerdict": 9,
+   "servedModelMatches": 57,
+   "servedModelReported": 57,
+   "upstreams": {
+    "GMICloud": 3,
+    "InferenceNet": 15,
+    "Minimax": 5,
+    "Nebius": 5,
+    "Parasail": 15,
+    "Together": 9,
+    "Wafer": 5
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 16,
+   "caughtCI": [
+    0.361,
+    0.698
+   ],
+   "falseAlarms": 26,
+   "faCI": [
+    0.703,
+    0.947
+   ]
+  },
+  {
+   "seat": "gpt-oss",
+   "run": "a",
+   "model": "openai/gpt-oss-120b",
+   "start": "2026-10-23T05:46:13Z",
+   "end": "2026-10-23T06:11:03Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 0.038063,
+   "costPerReviewUsd": 0.000656,
+   "medianLatencySec": 17.5,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "AkashML": 7,
+    "BaseTen": 4,
+    "CoreWeave": 3,
+    "Crusoe": 3,
+    "DeepInfra": 3,
+    "DekaLLM": 5,
+    "Mancer 2": 7,
+    "Near AI": 10,
+    "Novita": 1,
+    "Parasail": 1,
+    "Phala": 1,
+    "Together": 1,
+    "Venice": 12
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 15,
+   "caughtCI": [
+    0.332,
+    0.668
+   ],
+   "falseAlarms": 22,
+   "faCI": [
+    0.556,
+    0.858
+   ]
+  },
+  {
+   "seat": "gpt-oss",
+   "run": "b",
+   "model": "openai/gpt-oss-120b",
+   "start": "2026-10-23T06:11:04Z",
+   "end": "2026-10-23T06:37:39Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 0.035161,
+   "costPerReviewUsd": 0.000606,
+   "medianLatencySec": 19,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "AkashML": 5,
+    "CoreWeave": 5,
+    "Crusoe": 3,
+    "DeepInfra": 4,
+    "DekaLLM": 5,
+    "Groq": 1,
+    "Mancer 2": 4,
+    "Mara": 1,
+    "Near AI": 18,
+    "Parasail": 3,
+    "Phala": 2,
+    "Venice": 7
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 14,
+   "caughtCI": [
+    0.302,
+    0.639
+   ],
+   "falseAlarms": 20,
+   "faCI": [
+    0.488,
+    0.808
+   ]
+  },
+  {
+   "seat": "opus",
+   "run": "a",
+   "model": "anthropic/claude-opus-5.5",
+   "start": "2026-10-23T07:19:31Z",
+   "end": "2026-10-23T07:43:56Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 4.90056,
+   "costPerReviewUsd": 0.084492,
+   "medianLatencySec": 22,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "Claude Platform on AWS": 58
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 18,
+   "caughtCI": [
+    0.423,
+    0.754
+   ],
+   "falseAlarms": 16,
+   "faCI": [
+    0.361,
+    0.698
+   ]
+  },
+  {
+   "seat": "opus",
+   "run": "b",
+   "model": "anthropic/claude-opus-5.5",
+   "start": "2026-10-23T07:43:56Z",
+   "end": "2026-10-23T08:07:33Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 4.759216,
+   "costPerReviewUsd": 0.082055,
+   "medianLatencySec": 23,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "Claude Platform on AWS": 58
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 13,
+   "caughtCI": [
+    0.274,
+    0.608
+   ],
+   "falseAlarms": 20,
+   "faCI": [
+    0.488,
+    0.808
+   ]
+  },
+  {
+   "seat": "sonnet",
+   "run": "a",
+   "model": "anthropic/claude-sonnet-5.5",
+   "start": "2026-10-23T06:37:39Z",
+   "end": "2026-10-23T06:57:45Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 2.654616,
+   "costPerReviewUsd": 0.045769,
+   "medianLatencySec": 19,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "Claude Platform on AWS": 58
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 13,
+   "caughtCI": [
+    0.274,
+    0.608
+   ],
+   "falseAlarms": 15,
+   "faCI": [
+    0.332,
+    0.668
+   ]
+  },
+  {
+   "seat": "sonnet",
+   "run": "b",
+   "model": "anthropic/claude-sonnet-5.5",
+   "start": "2026-10-23T06:57:45Z",
+   "end": "2026-10-23T07:19:31Z",
+   "complete": true,
+   "reviews": 58,
+   "costUsd": 2.714966,
+   "costPerReviewUsd": 0.04681,
+   "medianLatencySec": 17.5,
+   "noVerdict": 0,
+   "servedModelMatches": 58,
+   "servedModelReported": 58,
+   "upstreams": {
+    "Claude Platform on AWS": 58
+   },
+   "seeded": 30,
+   "clean": 30,
+   "caught": 13,
+   "caughtCI": [
+    0.274,
+    0.608
+   ],
+   "falseAlarms": 15,
+   "faCI": [
+    0.332,
+    0.668
+   ]
+  }
+ ],
+ "spend": {
+  "brokerReportedUsd": 16.85832,
+  "reviews": 464
+ }
+}
