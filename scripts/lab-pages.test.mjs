@@ -122,7 +122,12 @@ test('on /evidence/ the router-arm item drops its "not pre-registered" fallback 
   assert.match(before, /Not pre-registered yet\./);
   assert.doesNotMatch(after, /Not pre-registered yet/);
   assert.doesNotMatch(after, /assumes its baseline/);
-  assert.match(after, /EXP 018, “Does routing by our own rulebook beat one fixed model on real tasks\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
+  // The item names whichever EXP 018 record is committed: the results record once it exists, else the pre-registration.
+  if (existsSync('site/data/router-arm/results.json')) {
+    assert.match(after, /EXP 018, “Does routing by our own rulebook beat one fixed model on real tasks\?”: Results are published: <a href="\.\.\/data\/router-arm\/results\.json">the record<\/a>\./);
+  } else {
+    assert.match(after, /EXP 018, “Does routing by our own rulebook beat one fixed model on real tasks\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
+  }
 });
 
 test('when a pre-registered experiment gains results, it moves to the published block without a page edit', () => {
