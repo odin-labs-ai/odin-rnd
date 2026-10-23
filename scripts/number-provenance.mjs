@@ -14,6 +14,11 @@
 //     its file name. A pre-registration (planned values), page configuration (evidence.json and the like) or any other
 //     file is never a source. Limit: a whole fabricated experiment folder would pass this check; review of the PR that
 //     adds it is the guard against that, and the folder is public.
+//   - A quoted title is a leaf <cite data-quote="data/<slug>/preregistration.json#<JSON pointer>"> whose text is,
+//     verbatim, the string at that pointer in a frozen pre-registration (quoteProblem: byte for byte
+//     experiments/<slug>/preregistration.json, matching its preregistration.sha256). Its words are the record's, frozen
+//     before the run, not a claim of ours, so they are exempt from the number scan below (an experiment may well ask
+//     whether something beats "one fixed model").
 //   - Every local href and src on the page resolves to a file in dist/ (a folder link to its index.html).
 //   - Every other digit (any Unicode decimal digit) and every number word (NUMBER_WORDS: one, two, first, dozen, ...) in
 //     the visible body text, and in the text-bearing attributes (TEXT_ATTRIBUTES, any quoting), fails, with these
@@ -91,6 +96,22 @@ export function recordProblem(path, raw, root = '.') {
   return null;
 }
 
+/** The path shape a quoted title may come from: a published pre-registration. */
+export const QUOTE_FILE = /^data\/([a-z0-9-]+)\/preregistration\.json$/;
+
+/** Why `raw`, published at `path`, is not a frozen pre-registration of this checkout, or null when it is. */
+export function quoteProblem(path, raw, root = '.') {
+  const m = path.match(QUOTE_FILE);
+  if (!m) return `${path} is not a published pre-registration`;
+  const dir = join(root, 'experiments', m[1]);
+  const prereg = join(dir, 'preregistration.json'), pin = join(dir, 'preregistration.sha256');
+  if (!existsSync(prereg) || readFileSync(prereg, 'utf8') !== raw) return `${path} is not byte for byte experiments/${m[1]}/preregistration.json`;
+  if (!existsSync(pin)) return `experiments/${m[1]} has no preregistration.sha256`;
+  const want = readFileSync(pin, 'utf8').trim().split(/\s+/)[0];
+  if (createHash('sha256').update(readFileSync(prereg)).digest('hex') !== want) return `experiments/${m[1]}/preregistration.json does not match its preregistration.sha256`;
+  return null;
+}
+
 const decode = text => text.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/gi, "'").replace(/&amp;/g, '&');
 
 /** The attributes of a start tag's attribute text, in any quoting, as a Map of lower-cased name → decoded value. */
@@ -122,7 +143,7 @@ function unsourced(text) {
  * `io.recordProblem(path, raw)` says why a source is not a measured experiment record (null when it is).
  */
 export function checkPage(file, html, io) {
-  const { readData, exists = path => readData(path) !== null, recordProblem: notRecord = (path, raw) => recordProblem(path, raw) } = io;
+  const { readData, exists = path => readData(path) !== null, recordProblem: notRecord = (path, raw) => recordProblem(path, raw), quoteProblem: notQuote = (path, raw) => quoteProblem(path, raw) } = io;
   const problems = [];
   const say = message => problems.push(`${file}: ${message}`);
 
@@ -153,6 +174,19 @@ export function checkPage(file, html, io) {
   const cache = new Map();
   body = body.replace(/<([a-z][a-z0-9-]*)\b([^>]*)>([^<]*)<\/\1>/gi, (whole, tag, attrText, text) => {
     const attrs = parseAttributes(attrText);
+    if (attrs.has('data-quote')) {
+      const quote = attrs.get('data-quote');
+      const [path, pointer = ''] = quote.split('#');
+      if (tag.toLowerCase() !== 'cite') { say(`data-quote '${quote}' is not on a <cite>`); return whole; }
+      const raw = QUOTE_FILE.test(path) ? readData(path) : null;
+      const why = !QUOTE_FILE.test(path) ? `${path} is not a published pre-registration` : raw === null ? `${path} is not in the built site` : notQuote(path, raw);
+      if (why) { say(`data-quote '${quote}': ${why}`); return whole; }
+      let value;
+      try { value = resolvePointer(JSON.parse(raw), decodeURIComponent(pointer)); } catch { say(`data-quote '${quote}': malformed pointer`); return whole; }
+      if (typeof value !== 'string') { say(`data-quote '${quote}': the pointer does not resolve to text`); return whole; }
+      if (decode(text).trim() !== value) { say(`data-quote '${quote}' shows text that is not the record's, verbatim`); return whole; }
+      return ' ';
+    }
     if (!attrs.has('data-source')) return whole;
     const source = attrs.get('data-source');
     const kind = attrs.get('data-format');
@@ -199,7 +233,7 @@ export function isIdentifier(text) {
 export function checkSite(dist = 'dist', pages = PAGES, root = '.') {
   const readData = path => { const full = join(dist, path); return existsSync(full) ? readFileSync(full, 'utf8') : null; };
   const exists = path => existsSync(join(dist, path));
-  const io = { readData, exists, recordProblem: (path, raw) => recordProblem(path, raw, root) };
+  const io = { readData, exists, recordProblem: (path, raw) => recordProblem(path, raw, root), quoteProblem: (path, raw) => quoteProblem(path, raw, root) };
   const problems = [];
   for (const page of pages) {
     const full = join(dist, page);

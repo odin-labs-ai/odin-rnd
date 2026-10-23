@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { checkPage, checkSite, format, PAGES, parseAttributes, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { checkPage, checkSite, format, PAGES, parseAttributes, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 
 // The realism ratchet for the lab's provider-economics and evidence pages (vp-grow-odin-r-d bundle-3 WO-04): every
 // visible number links to an experiment record and shows exactly the value its JSON pointer holds. These tests run
@@ -14,6 +14,7 @@ const RECORD = 'data/demo/results.json';
 const files = {
   [RECORD]: JSON.stringify({ seats: [{ caught: 31, caughtOf: 60, cost: 0.083274, ci: [0.393, 0.638] }] }),
   'data/evidence.json': JSON.stringify({ typed: 42 }),
+  'data/demo/preregistration.json': JSON.stringify({ experiment: { title: 'Does it beat one fixed model in 2 runs?' } }),
   'assets/style.css': '',
   'methods/index.html': '',
 };
@@ -23,7 +24,7 @@ const FILE = 'evidence/index.html';
 const page = body => `<!doctype html><html><head><title>t 2026</title><link rel="stylesheet" href="../assets/style.css"></head><body><main>${body}</main></body></html>`;
 const sourced = (pointer, kind, shown, extra = '') => `<a href="../${RECORD}" data-source="${RECORD}#${pointer}" data-format="${kind}"${extra}>${shown}</a>`;
 // In these unit cases the demo record stands in for a measured experiment record; recordProblem has its own tests below.
-const io = { readData, exists, recordProblem: path => (path === RECORD ? null : `${path} is not a measured experiment record`) };
+const io = { readData, exists, recordProblem: path => (path === RECORD ? null : `${path} is not a measured experiment record`), quoteProblem: path => (path === 'data/demo/preregistration.json' ? null : `${path} is not a frozen pre-registration`) };
 const problems = body => checkPage(FILE, page(body), io);
 
 test('a sourced number that links to its record and shows its value passes', () => {
@@ -70,6 +71,18 @@ test('a sourced number must be a link to its own record', () => {
   assert.equal(parseAttributes(' data-href="x" x-data-source=\'y\'').get('data-source'), undefined);
   // Single-quoted and unquoted attributes are read the same as double-quoted ones.
   assert.deepEqual(problems(`<p><a href='../${RECORD}' data-source='${RECORD}#/seats/0/caught' data-format=int>31</a></p>`), []);
+});
+
+test('a title quoted verbatim from a frozen pre-registration may hold digits and number words; anything else may not', () => {
+  const Q = 'data/demo/preregistration.json#/experiment/title';
+  assert.deepEqual(problems(`<p>EXP 018: <cite data-quote="${Q}">Does it beat one fixed model in 2 runs?</cite></p>`), []);
+  assert.match(problems(`<p><cite data-quote="${Q}">Does it beat one fixed model in 3 runs?</cite></p>`).join('\n'), /not the record's, verbatim/);
+  assert.match(problems(`<p><span data-quote="${Q}">Does it beat one fixed model in 2 runs?</span></p>`).join('\n'), /not on a <cite>/);
+  assert.match(problems(`<p><cite data-quote="${RECORD}#/seats/0/caught">31</cite></p>`).join('\n'), /not a published pre-registration/);
+  assert.match(problems(`<p><cite data-quote="data/evidence.json#/typed">42</cite></p>`).join('\n'), /not a published pre-registration/);
+  assert.match(problems(`<p><cite data-quote="data/demo/preregistration.json#/experiment/missing">x</cite></p>`).join('\n'), /does not resolve to text/);
+  assert.match(problems(`<p><cite data-quote="${Q}">Does it beat <b>one</b> fixed model in 2 runs?</cite></p>`).join('\n'), /number word|unsourced digit/, 'not a leaf');
+  assert.match(problems(`<p><cite>beats one fixed model</cite></p>`).join('\n'), /number word 'one'/, 'a plain <cite> is not exempt');
 });
 
 test('a missing record, an unresolved pointer, a non-number and an unknown format all fail', () => {
@@ -165,6 +178,9 @@ test('a source must be a measured experiment record bound to its frozen pre-regi
     const results = JSON.stringify({ kind: 'odin-rnd.results', slug: 'demo', preregistration: 'experiments/demo/preregistration.json', n: 3 });
     writeFileSync(join(dir, 'results.json'), results);
     assert.equal(recordProblem('data/demo/results.json', results, root), null);
+    assert.equal(quoteProblem('data/demo/preregistration.json', prereg, root), null);
+    assert.match(quoteProblem('data/demo/preregistration.json', prereg.replace('}', ',"x":1}'), root), /not byte for byte/);
+    assert.match(quoteProblem('data/demo/results.json', prereg, root), /not a published pre-registration/);
     assert.match(recordProblem('data/demo/results.json', results.replace('3', '4'), root), /not byte for byte/);
     assert.match(recordProblem('data/marketing/results.json', '{"savings":0.4}', root), /not byte for byte experiments\/marketing/);
     assert.match(recordProblem('data/demo/preregistration.json', prereg, root), /not a results record/);
