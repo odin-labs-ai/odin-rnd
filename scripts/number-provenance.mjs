@@ -26,7 +26,7 @@ import { join, posix } from 'node:path';
 import { MEASURED } from './provider-terms.mjs';
 
 /** Pages under dist/ that the rule covers. A page added here must exist in every build. */
-export const PAGES = ['provider-economics/index.html', 'evidence/index.html'];
+export const PAGES = ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html'];
 
 /** The only path shapes a number may come from: a results record or a weekly probe record. */
 export const SOURCE_FILE = /^data\/(?:[a-z0-9-]+\/results\.json|broker-probe\/\d{4}-W\d{2}\.json)$/;

@@ -15,10 +15,13 @@ import { checkPages, loadTerms } from './provider-terms.mjs';
 const rendered = renderLabPages();
 const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
 
-test('both pages render from the committed records and pass the number-provenance check', () => {
+test('every lab page renders from the committed records and passes the number-provenance check', () => {
+  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0 };
+  assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
-    assert.ok((html.match(/data-source="/g) ?? []).length >= 10, `${page} shows sourced numbers`);
+    const sourced = (html.match(/data-source="/g) ?? []).length;
+    if (minimumSourced[page] === 0) assert.equal(sourced, 0, `${page} shows no number`); else assert.ok(sourced >= minimumSourced[page], `${page} shows sourced numbers`);
   }
 });
 
@@ -42,10 +45,11 @@ test('the evidence page lists what is not measured yet: at least routing savings
   for (const phrase of ["routing saves money against a fixed-model baseline", 'negotiated better prices', 'provider partnerships', "cost estimates match what the brokers bill"]) assert.ok(notMeasured.includes(phrase), phrase);
 });
 
-test('the pages are in the sitemap and linked from the home page and the methods page', () => {
+test('the pages are in the sitemap and linked from the home page, the methods page or provider economics', () => {
   const sitemap = readFileSync('site/sitemap.xml', 'utf8');
-  for (const page of ['provider-economics', 'evidence']) {
+  for (const page of ['provider-economics', 'evidence', 'providers']) {
     assert.match(sitemap, new RegExp(`<loc>https://odin-labs-ai\\.github\\.io/odin-rnd/${page}/</loc>`), page);
+    if (page === 'providers') { assert.match(rendered['provider-economics'], /href="\.\.\/providers\/"/, 'provider economics links the providers page'); continue; }
     assert.match(readFileSync('site/index.html', 'utf8'), new RegExp(`href="${page}/"`), `home links ${page}`);
     assert.match(readFileSync('site/methods/index.html', 'utf8'), new RegExp(`href="\\.\\./${page}/"`), `methods links ${page}`);
   }
@@ -89,6 +93,30 @@ test('an experiment with results is published; one without is listed as not yet 
   assert.doesNotMatch(pending, /EXP 901/);
   // The not-yet list is exactly the series entries without a results record.
   assert.equal((pending.match(/<li>/g) ?? []).length, 2);
+});
+
+test('a planned experiment shows its fallback until its pre-registration is published, then becomes a normal entry', () => {
+  const { read, root } = fixture();
+  const config = { series: [{ slug: 'gamma', unregistered: { title: 'Gamma question?', status: 'Not pre-registered yet.' } }] };
+  const withConfig = r => Object.assign(path => (path === 'data/provider-economics.json' ? config : r(path)), r);
+  assert.match(renderProviderEconomics(withConfig(read), ['2026-W43']), /Gamma question\?<\/strong> Not pre-registered yet\./);
+  mkdirSync(join(root, 'data/gamma'), { recursive: true });
+  writeFileSync(join(root, 'data/gamma/preregistration.json'), JSON.stringify({ experiment: { id: 'EXP 903', title: 'Gamma, frozen?' } }));
+  const html = renderProviderEconomics(withConfig(siteReader(root)), ['2026-W43']);
+  assert.match(html, /EXP 903: Gamma, frozen\?<\/strong> <a href="\.\.\/data\/gamma\/preregistration\.json">Pre-registered<\/a>/);
+  assert.doesNotMatch(html, /Not pre-registered yet/);
+});
+
+test('on /evidence/ the router-arm item drops its "not pre-registered" fallback once the pre-registration exists', () => {
+  const site = siteReader();
+  const without = path => (path === 'data/router-arm/preregistration.json' ? null : site(path));
+  const withPrereg = path => (path === 'data/router-arm/preregistration.json' ? { experiment: { id: 'EXP 018', title: 'Router arm?' } } : site(path));
+  for (const r of [without, withPrereg]) Object.assign(r, { recordProblem: site.recordProblem });
+  const before = renderEvidence(without), after = renderEvidence(withPrereg);
+  assert.match(before, /Not pre-registered yet\./);
+  assert.doesNotMatch(after, /Not pre-registered yet/);
+  assert.doesNotMatch(after, /assumes its baseline/);
+  assert.match(after, /EXP 018, “Router arm\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
 });
 
 test('when a pre-registered experiment gains results, it moves to the published block without a page edit', () => {
