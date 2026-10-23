@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "kind": "odin-rnd.provider-terms",
-  "$comment": "What each broker's public terms say about benchmarking, publication and use of its name, read before this site names a broker next to a measured number. scripts/provider-terms.mjs (run at the end of scripts/build.mjs) refuses the build of a page that does so unless the broker's entry has benchmarking 'allowed', a name use that is not 'consent-required' or 'unclear', no open founder review, and an accepted read. Accepted reads: 'human' always; 'agent-browser-verbatim' (a headless browser rendered the page and the quote is copied from that text) only with the sha256 of the text that was read. No entry here is a human read yet; the lab owner can change readBy to 'human' after reading the page. This is a record of what the pages say, not legal advice: a clause that is unclear is quoted and left to the lab owner, not interpreted.",
-  "readMethod": "Each page was rendered on 2026-10-23 with a headless Chromium (odin-labs .claude/scripts/playwright-isolated.mjs, one fresh browser context per page) and its document.body.innerText was saved. textSha256 is the sha256 of that UTF-8 text. The text was searched for benchmark, competitive, comparative, publicity, publish, trademark, trade name, logo and endorse, and every hit in the terms body was read in context.",
+  "$comment": "What each broker's public terms say about benchmarking, publication and use of its name, read before this site names a broker next to a measured number. scripts/provider-terms.mjs (run at the end of scripts/build.mjs) refuses the build of a page that does so unless the broker's entry has benchmarking 'allowed', a name use of 'plain-text' or 'plain-text-only', no open founder review, and an accepted read. Accepted reads: 'human' always; 'agent-browser-verbatim' (a headless browser rendered the page and the quote is copied from that text) only with the sha256 of the text that was read. No entry here is a human read yet; the lab owner can change readBy to 'human' after reading the page. This is a record of what the pages say, not legal advice: a clause that is unclear is quoted and left to the lab owner, not interpreted.",
+  "readMethod": "Each page was rendered on 2026-10-23 with a headless Chromium (odin-labs .claude/scripts/playwright-isolated.mjs, one fresh browser context per page) and its document.body.innerText was saved. textSha256 is the sha256 of that UTF-8 text. The text was searched for benchmark, competitive, comparative, publicity, publish, trademark, trade name, logo and endorse, and every hit in the terms body was read in context. scripts/provider-terms-capture.mjs repeats the read and reports, per provider, the hash and whether every quoted passage is still on the page. A quote is verbatim: passages are joined by ' [...] ', and a 'no clause found' quote cites its closest clause between single quotes. A second read with that script on 2026-10-23 reproduced the recorded hash exactly for OpenRouter and Doubleword; the EUrouter, Requesty and orq.ai texts hashed differently (their page chrome renders differently from one load to the next), and every quoted passage was found on all five pages.",
   "staleAfterDays": 90,
   "providers": {
     "openrouter": {
@@ -15,8 +15,10 @@
       "benchmarking": "allowed",
       "nameUse": "plain-text",
       "logoUse": "not-used",
-      "founderReview": { "required": false },
-      "quote": "no clause found: the terms body has no benchmarking, comparison or name-use clause; 'publicity' appears only as a third party's 'right of publicity' that user inputs must not infringe. The closest prohibited use: 'access the Site or Service for purposes of reselling API access to Models or otherwise developing a competing service'."
+      "founderReview": {
+        "required": false
+      },
+      "quote": "no clause found: the terms body has no benchmarking, comparison or name-use clause; publicity appears only as a third-party right of publicity that user inputs must not infringe. The closest prohibited use: 'access the Site or Service for purposes of reselling API access to Models or otherwise developing a competing service'"
     },
     "eurouter": {
       "name": "EUrouter",
@@ -28,8 +30,12 @@
       "benchmarking": "allowed",
       "nameUse": "plain-text-only",
       "logoUse": "consent-required",
-      "founderReview": { "required": true, "reason": "The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner." },
-      "quote": "The Customer shall not: (a) reverse-engineer, decompile, or disassemble the API or any part of the Service infrastructure; (b) use the Services to develop a product or service that directly competes with EUrouter; (c) remove or alter any proprietary notices or labels on the Services; or (d) use EUrouter’s trademarks, trade names, or branding without EUrouter’s prior written consent."
+      "founderReview": {
+        "required": true,
+        "reason": "The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner."
+      },
+      "quote": "The Customer shall not: (a) reverse-engineer, decompile, or disassemble the API or any part of the Service infrastructure; (b) use the Services to develop a product or service that directly competes with EUrouter; (c) remove or alter any proprietary notices or labels on the Services; or (d) use EUrouter’s trademarks, trade names, or branding without EUrouter’s prior written consent.",
+      "clause": "Article 8 (intellectual property)"
     },
     "requesty": {
       "name": "Requesty",
@@ -41,8 +47,12 @@
       "benchmarking": "allowed",
       "nameUse": "plain-text",
       "logoUse": "not-used",
-      "founderReview": { "required": true, "reason": "Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner." },
-      "quote": "13.1 Prohibited Activities. You must not: [...] extract, scrape, or systematically collect our proprietary model performance data, benchmarks, or routing intelligence for competitive purposes;"
+      "founderReview": {
+        "required": true,
+        "reason": "Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner."
+      },
+      "quote": "You must not: [...] extract, scrape, or systematically collect our proprietary model performance data, benchmarks, or routing intelligence for competitive purposes;",
+      "clause": "13.1 Prohibited Activities"
     },
     "orq": {
       "name": "orq.ai",
@@ -54,7 +64,9 @@
       "benchmarking": "allowed",
       "nameUse": "plain-text",
       "logoUse": "not-used",
-      "founderReview": { "required": false },
+      "founderReview": {
+        "required": false
+      },
       "quote": "no clause found: no benchmarking, publication or name-use clause. The closest restriction, item (vi): 'not use the Services to develop, train or improve models that compete with the Services (except to the extent such restriction is not permitted by Applicable Law);'"
     },
     "doubleword": {
@@ -67,8 +79,33 @@
       "benchmarking": "consent-required",
       "nameUse": "consent-required",
       "logoUse": "consent-required",
-      "founderReview": { "required": false },
-      "quote": "8. Acceptable Use and Restrictions [...] use the Service for benchmarking or competitive analysis intended to compare the Service with a competing offering, except with our prior written consent; [...] use our name, trademarks, or branding, or refer to us or the Service, in a way that could reasonably imply endorsement, affiliation, or sponsorship without our prior written consent."
+      "founderReview": {
+        "required": false
+      },
+      "quote": "use the Service for benchmarking or competitive analysis intended to compare the Service with a competing offering, except with our prior written consent; [...] use our name, trademarks, or branding, or refer to us or the Service, in a way that could reasonably imply endorsement, affiliation, or sponsorship without our prior written consent.",
+      "clause": "8. Acceptable Use and Restrictions"
     }
+  },
+  "enums": {
+    "readBy": [
+      "human",
+      "agent-browser-verbatim"
+    ],
+    "benchmarking": [
+      "allowed",
+      "consent-required",
+      "unknown"
+    ],
+    "nameUse": [
+      "plain-text",
+      "plain-text-only",
+      "consent-required",
+      "unclear"
+    ],
+    "logoUse": [
+      "not-used",
+      "consent-required",
+      "allowed"
+    ]
   }
 }
