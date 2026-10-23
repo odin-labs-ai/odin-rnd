@@ -13,13 +13,14 @@ test('every committed site copy is the frozen record, and every pinned record st
 });
 
 test('a record that drifted from its pin, a stale site copy and a missing site copy each refuse', () => {
-  const files = { rec: Buffer.from('{"a":1}'), pin: `${sha256(Buffer.from('{"a":1}'))}  rec\n`, site: Buffer.from('{"a":1}') };
+  const SITE = 'site/data/x/preregistration.json';
+  const files = { rec: Buffer.from('{"a":1}'), pin: `${sha256(Buffer.from('{"a":1}'))}  rec\n`, [SITE]: Buffer.from('{"a":1}') };
   const read = (p, enc) => (enc ? String(files[p]) : files[p]);
-  const c = { id: 'EXP 999', record: 'rec', pin: 'pin', site: 'site' };
+  const c = { id: 'EXP 999', record: 'rec', pin: 'pin', site: SITE };
   assert.equal(checkCopy(c, read, () => true), sha256(files.rec));
-  files.site = Buffer.from('{"a":2}');
+  files[SITE] = Buffer.from('{"a":2}');
   assert.throws(() => checkCopy(c, read, () => true), /differs from rec/);
-  files.site = files.rec;
+  files[SITE] = files.rec;
   assert.throws(() => checkCopy(c, read, () => false), /is missing/);
   files.rec = Buffer.from('{"a":3}');
   assert.throws(() => checkCopy(c, read, () => true), /no longer matches its frozen pin/);
@@ -51,4 +52,10 @@ test('a pre-registration listed from the repository must match its pin, the sha2
   assert.throws(() => checkLedgerEntry({ ...ok, pin: undefined }, 'w', read), /needs record, pin and sha256/);
   files.pin = `${'1'.repeat(64)}  rec\n`;
   assert.throws(() => checkLedgerEntry(ok, 'w', read), /does not match its pin/);
+  // a record or pin that does not exist on disk refuses (the real reader throws ENOENT)
+  assert.throws(() => checkLedgerEntry({ ...ok, record: 'experiments/no-such/preregistration.json' }, 'w'), /ENOENT/);
+});
+
+test('a site copy outside site/data/ is refused', () => {
+  assert.throws(() => checkCopy({ id: 'EXP 999', record: 'rec', pin: null, site: 'dist/x.json' }, () => Buffer.from('x'), () => true), /must live under site\/data\//);
 });

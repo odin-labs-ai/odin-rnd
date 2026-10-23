@@ -128,6 +128,6 @@ export function addLedger(html, report, dist = 'dist') {
   if (!html.includes('<!--EXPERIMENT_LEDGER-->')) throw new Error('Experiment ledger: the home page has no ledger marker');
   // EXP 010 and EXP 012 join through byte-for-byte site copies of their frozen records (scripts/ledger-publish.mjs):
   // each record must still match its committed .sha256, and the copy built into dist must still be the record's bytes.
-  if (dist === 'dist') checkDist(checkCopies(), dist);
+  checkDist(checkCopies(), dist);
   return html.replace('<!--EXPERIMENT_LEDGER-->', renderLedger(ledgerEntries(html, report, dist)));
 }

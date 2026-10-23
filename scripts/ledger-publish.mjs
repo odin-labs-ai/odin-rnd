@@ -29,6 +29,7 @@ export const pinned = text => String(text).trim().split(/\s+/)[0];
 
 /** Checks one copy; returns its sha256. Throws on a record that differs from its pin or a site copy that differs from the record. */
 export function checkCopy({ id, record, pin, site }, read = readFileSync, exists = existsSync) {
+  if (typeof site !== 'string' || !site.startsWith('site/data/')) throw new Error(`${id}: site copy ${site} must live under site/data/`);
   const bytes = read(record);
   const sum = sha256(bytes);
   if (pin && pinned(read(pin, 'utf8')) !== sum) throw new Error(`${id}: ${record} no longer matches its frozen ${pin}`);
@@ -41,6 +42,7 @@ export const checkCopies = (list = copies) => list.map(c => ({ ...c, sha256: che
 
 /** After `dist` is built from `site`, every published copy must still be the record's bytes. */
 export function checkDist(checked, dist = 'dist') {
+  for (const c of checked) if (!c.site.startsWith('site/data/')) throw new Error(`${c.id}: site copy ${c.site} must live under site/data/`);
   for (const c of checked) if (sha256(readFileSync(`${dist}/${c.site.slice('site/'.length)}`)) !== c.sha256) throw new Error(`${c.id}: published ${c.site} differs from ${c.record}`);
 }
 

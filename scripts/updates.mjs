@@ -91,7 +91,7 @@ export function candidates(root = '.') {
       const kind = file.startsWith('amendment') ? 'Amendment' : 'Erratum';
       // EXP 012's amendment 01 (frozen 2026-10-21) has no title; its own words are the first sentence of its `why`.
       const own = typeof record.title === 'string' && record.title ? titleSentence(record.title) : typeof record.why === 'string' && record.why ? firstSentence(record.why) : '';
-      if (!own) throw new Error(`Updates: data/${slug}/${file} has no title`);
+      if (!own) throw new Error(`Updates: data/${slug}/${file} has no title and no why to quote`);
       const date = [record.date, record.title ? undefined : record.authoredOn].find(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? ''));
       add({ key: `exp-${n}-${file.replace(/\.json$/, '')}`, experiment: id, title, kind, text: own, href, source: `data/${slug}/${file}`, file: `site/data/${slug}/${file}`, ownDate: date });
     }
