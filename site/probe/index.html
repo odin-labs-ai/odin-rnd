@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>Broker probe — Odin R&amp;D</title>
+  <meta name="description" content="A weekly probe of the model brokers Odin routes through: failed calls, silent model swaps, latency and catalogue changes, measured the same way every week.">
+  <meta property="og:title" content="The weekly broker probe">
+  <meta property="og:description" content="Failed calls, silent model swaps, latency and catalogue changes, every week.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/probe/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/probe/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <link rel="stylesheet" href="../assets/motion.css">
+  <script type="module" src="../assets/motion.mjs"></script>
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../#floor">Factory</a><a href="../#experiments">Experiments</a><a href="../updates/">Updates</a><a href="../#journal">Field notes</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <!-- rendered by scripts/broker-probe.mjs page --write from site/data/broker-probe/*.json; do not edit by hand -->
+    <section class="company-hero company-width" aria-labelledby="probe-title">
+      <div>
+        <h1 id="probe-title">The weekly <br>broker probe.</h1>
+        <p class="company-lead">Once a week a scheduled job sends 20 identical tiny calls to each of 2 fixed models through every broker we hold a key for, and fetches each broker's model catalogue. It records calls that fail, calls answered by a different model than the one asked for, latency, and models added, removed or re-priced since the week before.</p>
+      </div>
+    </section>
+    <section class="company-section company-width" id="weeks" aria-labelledby="weeks-title">
+      <h2 id="weeks-title">Week by week.</h2>
+      <div class="company-prose">
+        <p>No week has been recorded yet. The first scheduled run writes the first row.</p>
+      </div>
+    </section>
+    <section class="company-section company-width company-split" id="method" aria-labelledby="method-title">
+      <h2 id="method-title">How it is measured.</h2>
+      <div class="company-prose">
+        <p>The prompt is <q>Reply with the single word: pong</q>, at most 16 tokens back, temperature 0. A call counts as answered when it returns HTTP 200 with text. A served model counts as the requested one when the model id the broker returns names the same model family. The job runs on a GitHub-hosted runner under the lab's own GitHub identity, with dedicated, spend-capped keys, and only on its schedule or by hand: never on a pull request. The script is <code>scripts/broker-probe.mjs</code>; each week's record is <code>site/data/broker-probe/</code> plus the week, as JSON.</p>
+        <p>2 of 3 brokers are shown by letter: a broker is named next to a number only when its published terms, as recorded in <code>site/data/provider-terms.json</code>, allow it. A broker shown as "not keyed" had no dedicated capped key that week; one shown as "not probed" has terms that are still under review, so no call is made to it at all.</p>
+        <p>Twenty calls a week cannot show a small error rate, and one runner location is not every location. This page reports what happened; it does not rank brokers.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="../" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact/">Contact Odin</a><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>
