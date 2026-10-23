@@ -71,8 +71,8 @@
       <h2 id="review-title">5. Checked before it is published.</h2>
       <div class="company-prose">
         <p>Changes to this site arrive as pull requests. On each one, the <code>verify</code> job in <code>.github/workflows/publish.yml</code> reruns the three recorded experiments with the released engine, runs every test, builds the site and checks it (links, anchors, transcript digests and the public export boundary, <code>scripts/check.mjs</code>). The same job runs again on every push to main, before the site is deployed.</p>
-        <p>An independent review examines the final change on its exact head before it is merged (<code>AGENTS.md</code>). The reviewer is never the author of the change.</p>
-        <p>One gap is disclosed here. On 22 October 2026 a pull request was merged while its <code>verify</code> job was still running; that job then failed on a fence test whose base had moved, while the push run on main passed. Since 23 October our landing tool refuses to merge a pull request in this repository until <code>verify</code> has passed on its exact head. A rule on GitHub's side that requires the same check is waiting on the repository owner; until it exists, the landing tool is what enforces it.</p>
+        <p>An independent review examines the final change on its exact head before it is merged (<code>AGENTS.md</code>), run by a different agent and model from the one that wrote the change, and recorded with the head it reviewed.</p>
+        <p>One gap is disclosed here. On 22 October 2026 a pull request was merged while its <code>verify</code> job was still running; that job then failed on a fence test whose base had moved, while the push run on main passed. Since 23 October the current version of our landing tool refuses to merge a pull request in this repository until <code>verify</code> has passed on its exact head. That is a check in our own tooling, not yet on GitHub's side: a rule there that requires the same check is waiting on the repository owner, and until it exists an older copy of the tool, or a person merging by hand, could still merge early.</p>
       </div>
     </section>
 
