@@ -198,6 +198,18 @@ export const ASSERTS = {
     const ratio = f => { const v = l.map(x => x[f]); return Math.max(...v) / Math.min(...v); };
     return ratio(a.wide) > (a.by ?? 1) * ratio(a.narrow) ? null : `the spread of ${a.wide} is not more than ${a.by ?? 1}x the spread of ${a.narrow}`;
   },
+  // Every broker in every arm answered with the model asked for: servedMatch complete, no mismatch, no silent swap.
+  'served-as-asked': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const arms = resolvePointer(read(path), pointer);
+    if (!arms || typeof arms !== 'object' || !Object.keys(arms).length) return 'no arms';
+    for (const [arm, x] of Object.entries(arms)) {
+      if (x.silentSubstitutions !== 0) return `${arm}: silent substitutions are not zero`;
+      for (const [b, v] of Object.entries(x.perBroker ?? {})) if (!v.servedMatch || v.servedMatch.matched !== v.servedMatch.of || (v.mismatches ?? []).length) return `${arm}/${b}: an answer came from a different model`;
+      if (!Object.keys(x.perBroker ?? {}).length) return `${arm}: no brokers`;
+    }
+    return null;
+  },
   'intervals-overlap': (read, a) => {
     const [path, pointer = ''] = a.source.split('#');
     const ivs = resolvePointer(read(path), pointer).map(x => x[a.field]);
@@ -247,13 +259,19 @@ export function renderEvidence(read) {
  * what is not a result, with that verdict read from its record, and none of its figures.
  */
 export const NOT_A_CLAIM_RECORD = /^data\/router-arm(?:-fresh)?\//;
+/** Verdict words that are not a result: the not-a-result list refuses any other. */
+export const UNDECIDED = /^(?:incomplete|inconclusive|not run|pending)$/i;
+
+/** Every record path a claim reads: its record, and each `source` anywhere in it (values, window, asserts). */
+function claimSources(node, at = '', out = []) {
+  if (Array.isArray(node)) node.forEach((x, i) => claimSources(x, `${at}/${i}`, out));
+  else if (node && typeof node === 'object') for (const [k, v] of Object.entries(node)) { if ((k === 'source' || k === 'record') && typeof v === 'string') out.push([`${at}/${k}`, v]); else claimSources(v, `${at}/${k}`, out); }
+  return out;
+}
 
 export function briefProblems(config) {
   const problems = [];
-  for (const c of config?.claims ?? []) {
-    if (NOT_A_CLAIM_RECORD.test(c.record ?? '')) problems.push(`claim ${c.id}: ${c.record} has no decided result and may not back a claim`);
-    for (const [name, v] of Object.entries(c.values ?? {})) if (NOT_A_CLAIM_RECORD.test(v.source ?? '')) problems.push(`claim ${c.id}: {${name}} reads ${v.source}, which has no decided result`);
-  }
+  for (const c of config?.claims ?? []) for (const [where, source] of claimSources(c)) if (NOT_A_CLAIM_RECORD.test(source)) problems.push(`claim ${c.id}: ${where.slice(1)} reads ${source}, which has no decided result and may not back a claim`);
   return problems;
 }
 
@@ -271,6 +289,7 @@ export function renderProviderBrief(read) {
     if (!n.verdict) throw new Error(`not-a-result item '${n.claim}': ${n.slug} has results; name the pointer to its verdict`);
     const verdict = str(read, n.verdict);
     if (statesNumber(verdict)) throw new Error(`not-a-result item '${n.claim}': verdict '${verdict}' holds a digit`);
+    if (!UNDECIDED.test(verdict)) throw new Error(`not-a-result item '${n.claim}': verdict '${verdict}' is decided; a decided result belongs in the claims`);
     return `<li><strong>${escape(n.claim)}</strong> ${escape(e.id)}, “${e.title}”: its pre-registered verdict is <strong>${escape(verdict)}</strong>, so this brief cites none of its figures. <a href="../data/${escape(n.slug)}/results.json">The record</a>${n.note ? ` and <a href="../${escape(n.note)}">the field note</a>` : ''} say why.</li>`;
   }).join('');
   return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each number below is read from the published experiment record it links to, when the site is built.</p><ol class="lab-claims">${claims}</ol></div></section>`

@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
-import { briefProblems, renderLabPages, renderProviderBrief, siteReader } from './lab-pages.mjs';
+import { ASSERTS, briefProblems, renderLabPages, renderProviderBrief, siteReader } from './lab-pages.mjs';
 import { checkPage, recordProblem, SOURCE_FILE } from './number-provenance.mjs';
 import { checkPages, loadTerms } from './provider-terms.mjs';
 import { BASE, deckMarkdown } from './provider-brief-export.mjs';
@@ -46,7 +47,7 @@ test('a claim backed by EXP 018 or reading one of its values is refused', () => 
   const bad = { claims: [{ id: 'x', record: 'data/router-arm/results.json', values: {} }] };
   assert.match(briefProblems(bad).join('\n'), /has no decided result/);
   const sneaky = { claims: [{ id: 'y', record: 'data/review-frontier/results.json', values: { v: { source: 'data/router-arm/results.json#/spend/billedUsd', format: 'usd' } } }] };
-  assert.match(briefProblems(sneaky).join('\n'), /\{v\} reads data\/router-arm/);
+  assert.match(briefProblems(sneaky).join('\n'), /values\/v\/source reads data\/router-arm/);
   const read = siteReader();
   const patched = path => (path === 'data/provider-brief.json' ? { ...config, claims: [...config.claims, ...bad.claims] } : read(path));
   assert.throws(() => renderProviderBrief(patched), /is refused/);
@@ -83,4 +84,36 @@ test('the deck export says no more than the brief: every number is a link to its
     .replace(/`[^`]*`/g, ' ').replace(/\b\d{4}-\d{2}-\d{2}\b/g, ' ').replace(/\bEXP \d{3}\b/g, ' ');
   assert.doesNotMatch(rest, /\d/);
   assert.doesNotMatch(md, /open\s?router|eu\s?router|requesty|\borq\b|double\s?word/i);
+});
+
+test('a claim reading EXP 018 through its window or an assert is refused too', () => {
+  const review = config.claims.find(c => c.id === 'review-cost');
+  const viaWindow = { claims: [{ ...review, window: { from: { source: 'data/router-arm/results.json#/window/firstCall' } } }] };
+  assert.match(briefProblems(viaWindow).join('\n'), /window\/from\/source reads data\/router-arm/);
+  const viaAssert = { claims: [{ ...review, asserts: [{ kind: 'min-at', source: 'data/router-arm-fresh/results.json#/arms', field: 'x', index: 0 }] }] };
+  assert.match(briefProblems(viaAssert).join('\n'), /asserts\/0\/source reads data\/router-arm-fresh/);
+});
+
+test('"No broker answered with a different model" is checked against the record, and fails when one did', () => {
+  const real = siteReader();
+  const a = { kind: 'served-as-asked', source: 'data/broker-same-model/results.json#/perArm' };
+  assert.equal(ASSERTS['served-as-asked'](real, a), null);
+  const doc = JSON.parse(JSON.stringify(real('data/broker-same-model/results.json')));
+  doc.perArm.mini.perBroker.B.servedMatch.matched -= 1;
+  assert.match(ASSERTS['served-as-asked'](() => doc, a), /mini\/B: an answer came from a different model/);
+  const doc2 = JSON.parse(JSON.stringify(real('data/broker-same-model/results.json')));
+  doc2.perArm.sonnet.silentSubstitutions = 1;
+  assert.match(ASSERTS['served-as-asked'](() => doc2, a), /silent substitutions are not zero/);
+});
+
+test('a decided verdict is refused in the not-a-result list', () => {
+  const read = siteReader();
+  const patched = Object.assign(path => (path === 'data/router-arm/results.json' ? { ...read(path), decision: [{ verdict: 'supported' }] } : read(path)), { recordProblem: read.recordProblem, quoteProblem: read.quoteProblem });
+  assert.throws(() => renderProviderBrief(patched), /is decided/);
+});
+
+test('the export CLI runs from its path and prints the gated section', () => {
+  const out = execFileSync(process.execPath, ['scripts/provider-brief-export.mjs'], { encoding: 'utf8' });
+  assert.match(out, /^## Evidence: what the Odin R&D lab has measured/);
+  assert.match(out, /from odin-rnd at `[0-9a-f]{40}(?:-dirty)?`/);
 });

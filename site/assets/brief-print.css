@@ -1,4 +1,4 @@
-/* The provider brief, printed (site/provider-brief/): one page of text, no navigation, links shown as their target. */
+/* The provider brief, printed (site/provider-brief/): no navigation; the footer line names the page where every number links to its record. */
 @page{size:A4;margin:14mm 14mm 16mm}
 .brief-page{background:#fff;color:#111;font-size:10.5pt;line-height:1.4}
 .brief-page .skip,.brief-page .site-header nav,.brief-page .source-link,.brief-page .parent-site-link,.brief-page .brief-contact,.brief-page .site-footer>div{display:none}

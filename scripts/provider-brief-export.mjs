@@ -6,7 +6,11 @@
 //
 //   node scripts/provider-brief-export.mjs > deck-evidence.md
 import { execFileSync } from 'node:child_process';
-import { PAGES, briefProblems, renderProviderBrief, siteReader } from './lab-pages.mjs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { checkPage, recordProblem } from './number-provenance.mjs';
+import { PAGES, briefProblems, renderLabPages, renderProviderBrief, siteReader } from './lab-pages.mjs';
 
 export const BASE = 'https://odin-labs-ai.github.io/odin-rnd/';
 
@@ -28,15 +32,20 @@ export function toMarkdown(html, base = BASE) {
     .replace(/<li[^>]*>/g, '- ')
     .replace(/<\/li>/g, '\n')
     .replace(/<\/p>/g, '\n\n')
-    // Any tag left is dropped, then any stray angle bracket, so no markup survives into the Markdown; entities are
-    // decoded last, from text that holds no tag.
+    // Any tag left is dropped, then any stray angle bracket; entities are decoded after that, and an angle bracket
+    // the decoding brings back is escaped again below, so no markup reaches the Markdown.
     .replace(/<[^>]*>/g, '').replace(/[<>]/g, ''))
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
 /** The deck section: a provenance header, then the brief's measured claims and its not-a-result list. */
-export function deckMarkdown({ read = siteReader(), revision = 'unknown', base = BASE } = {}) {
+export function deckMarkdown({ root = 'site', read = siteReader(root), revision = 'unknown', base = BASE } = {}) {
   const problems = briefProblems(read(PAGES['provider-brief'].config));
+  // The same gate the build runs on the page: every number sourced from a bound experiment record, shown exactly.
+  const page = renderLabPages({ root, read })['provider-brief'];
+  const readData = path => (existsSync(join(root, path)) ? readFileSync(join(root, path), 'utf8') : null);
+  problems.push(...checkPage('provider-brief/index.html', page, { readData, recordProblem: (path, raw) => recordProblem(path, raw, join(root, '..')) }));
   if (problems.length) throw new Error(problems.join('\n'));
   return [
     '## Evidence: what the Odin R&D lab has measured',
@@ -47,8 +56,12 @@ export function deckMarkdown({ read = siteReader(), revision = 'unknown', base =
   ].join('\n');
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+  // The records are read from the working tree, so a tree with local changes to them is labelled as such.
   let revision = 'unknown';
-  try { revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch {}
+  try {
+    revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    if (execFileSync('git', ['status', '--porcelain', '--', 'site', 'scripts', 'experiments'], { encoding: 'utf8' }).trim()) revision += '-dirty';
+  } catch {}
   process.stdout.write(deckMarkdown({ revision }));
 }

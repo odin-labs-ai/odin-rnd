@@ -25,7 +25,10 @@
       "window": {
         "from": { "source": "data/broker-same-model/results.json#/window/firstCall" },
         "to": { "source": "data/broker-same-model/results.json#/window/lastCall" }
-      }
+      },
+      "asserts": [
+        { "kind": "served-as-asked", "source": "data/broker-same-model/results.json#/perArm" }
+      ]
     },
     {
       "id": "review-cost",
@@ -79,7 +82,7 @@
     },
     {
       "claim": "Negotiated prices.",
-      "why": "None exists. Every price the lab has paid so far is a broker's list price, a promotion or prepaid credit."
+      "why": "None exists. Every price the lab has paid so far is a broker's own published price, a promotion or prepaid credit."
     },
     {
       "claim": "Provider partnerships.",
