@@ -73,8 +73,11 @@ export function analyse(rows, prereg) {
       const rate = priced.map(r => { const l = listUsd(r, spec.listPrice); return l ? r.costUsd / l : null; }).filter(Number.isFinite);
       const lat = ok.map(r => r.latencyMs).filter(Number.isFinite);
       const reps = [...new Set(att.map(r => r.rep))].sort((a, b) => a - b);
-      const billedPerRep = reps.map(rep => priced.filter(r => r.rep === rep).reduce((a, r) => a + r.costUsd, 0));
-      const completeReps = reps.filter(rep => priced.filter(r => r.rep === rep).length === prereg.changes.count).length;
+      // $ per 60 changes only over replicates in which every one of the 60 calls was priced: a replicate with a failed
+      // call would otherwise sum lower and make a less reliable broker look cheaper.
+      const complete = reps.filter(rep => priced.filter(r => r.rep === rep).length === prereg.changes.count);
+      const billedPerRep = complete.map(rep => priced.filter(r => r.rep === rep).reduce((a, r) => a + r.costUsd, 0));
+      const completeReps = complete.length;
       const statuses = {};
       for (const r of att) { const k = r.status == null ? 'transport' : String(r.status); statuses[k] = (statuses[k] || 0) + 1; }
       const errors = att.length - ok.length;

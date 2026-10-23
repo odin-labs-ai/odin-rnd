@@ -15,7 +15,7 @@
 //
 // usage: node experiments/broker-same-model/run.mjs --kind calibration|counted --out <rows.jsonl>
 //          [--changes all|c001,c002] [--replicates 2] [--arms sonnet,mini] [--brokers openrouter,eurouter,requesty]
-//          [--cap-usd 10] [--timeout-ms 120000]
+//          [--cap-usd 3] [--timeout-ms 120000]
 import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -102,7 +102,7 @@ async function main() {
   const replicates = Number(arg('replicates', '2'));
   const arms = arg('arms', 'sonnet,mini').split(',');
   const brokers = arg('brokers', 'openrouter,eurouter,requesty').split(',');
-  const cap = Number(arg('cap-usd', '10'));
+  const cap = Number(arg('cap-usd', '3')); // the pre-registered bound
   const timeoutMs = Number(arg('timeout-ms', '120000'));
   for (const a of arms) if (!ARMS[a]) throw new Error(`unknown arm ${a}`);
   const keys = {};

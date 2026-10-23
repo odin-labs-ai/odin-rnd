@@ -45,13 +45,13 @@
   "replicates": 2,
   "procedure": "run.mjs walks replicate 1 and then replicate 2 over the 60 changes in order. For each change and arm it calls the three brokers at the same moment, in parallel, and the arm order alternates from change to change, so time of day falls on every broker alike. Latency is wall-clock time from sending the request until the whole response body has arrived, measured on one client (a laptop in the Netherlands). The answer itself is kept only as its length, its sha256 and its first-line verdict: this experiment does not judge answer quality.",
   "code": {
-    "runner": { "file": "experiments/broker-same-model/run.mjs", "sha256": "51bd129edbcf76732715125c5647f2be8c84ea79139448f9eaf009a576e2f5e0" },
+    "runner": { "file": "experiments/broker-same-model/run.mjs", "sha256": "bb6e1090fa34525a8d15965553641285f117c2010831cdf0f036352edca79ac2" },
     "shared": { "file": "experiments/broker-same-model/lib.mjs", "sha256": "6633be14ecc41402f16052e6e72cf4cbe8601be1e83998c1df7386091996b2a9" },
     "servedModelRule": "lib.mjs family(): the vendor or provider prefix, a region suffix, a variant suffix, a Bedrock version and a dated snapshot are dropped and dots become dashes; a served id matches when its family equals the arm's family. 'aws-bedrock/claude-sonnet-5-5', 'claude-sonnet-5-5' and 'gpt-4o-mini-2024-07-18' therefore match; a different model never does."
   },
   "metric": {
     "billedToList": "Per call: the cost the broker reports in the response (usage.cost, in USD), divided by the list price of that call's own prompt and completion tokens (the arm's listPrice). 1.00 means the broker billed exactly list. Per broker and arm: the median.",
-    "billedPer60Changes": "Per broker and arm: the sum of usage.cost over one replicate's 60 calls, averaged over the two replicates. Answers differ in length from call to call, so this figure carries that noise as well as the price.",
+    "billedPer60Changes": "Per broker and arm: the sum of usage.cost over one replicate's 60 calls, averaged over the replicates in which all 60 calls were priced (a replicate with a failed call is left out, so that failures cannot make a broker look cheaper; the count of complete replicates is reported). Answers differ in length from call to call, so this figure carries that noise as well as the price.",
     "latency": "p50 and p95 of the successful calls' latency, with a distribution-free 95% interval for the median.",
     "errorRate": "Failed calls (no HTTP 200, or no answer text) over attempted calls, with a Wilson 95% interval, and the count per HTTP status.",
     "servedModel": "Share of successful calls whose served model id matches the requested model (servedModelRule); any mismatch is listed by id."
@@ -69,13 +69,13 @@
   },
   "analysis": {
     "script": "experiments/broker-same-model/analyse.mjs",
-    "sha256": "34ef0fdcffb509beb0a0e4a7ff49d7a8523d424ec5bfe140dda7ba5a46f32ed2",
+    "sha256": "8ebf1c106bae5e79d3c58faf0e3639cc78f5480e4231ca4d95381fe851445587",
     "inputs": "runs/*.jsonl, the counted run's rows copied unchanged from run.mjs's output.",
     "outputs": "results.json and spend-ledger.jsonl (one line per counted call).",
     "check": "node experiments/broker-same-model/analyse.mjs --check exits 0 only if results.json and spend-ledger.jsonl are exactly what the frozen script computes from the committed rows."
   },
   "spend": {
-    "bound": "$3.00 for the counted run, enforced by run.mjs --cap-usd 3 (a call that reports no cost counts at its worst case). Calibration measured about $0.0025 per Sonnet call and $0.00006 per mini call, so 720 calls should cost about $1. The OpenRouter calls use a dedicated key with a $10 broker-side limit; EUrouter and Requesty run on the lab's existing keys, with their balances checked before the run.",
+    "bound": "$3.00 for the counted run, enforced by run.mjs's spend stop, whose default is this bound (--cap-usd 3; a call that reports no cost counts at its worst case). Calibration measured about $0.0025 per Sonnet call and $0.00006 per mini call, so 720 calls should cost about $1. The OpenRouter calls use a dedicated key with a $10 broker-side limit; EUrouter and Requesty run on the lab's existing keys, with their balances checked before the run.",
     "stop": "If the cap is reached or a broker refuses the key, the run stops and is published as incomplete, with the finished counts. Nothing is extrapolated."
   },
   "notBefore": "2026-10-23T08:00:00Z",
@@ -84,6 +84,7 @@
     "One client location, one run per replicate, two models and three brokers, on one day. Latency includes the client's own network path; it says how the brokers compare from here, not everywhere.",
     "Small prompts (about 200 to 900 tokens) and short answers, uncached and list-priced. Discounts, caching, long contexts, batch tiers and reasoning tokens are outside this measurement.",
     "The same model through different brokers reaches different upstream providers (Anthropic, AWS Bedrock, OpenAI, Microsoft Foundry), so a difference may belong to the upstream, not the broker. The served provider is recorded per call where the broker reports it.",
-    "Answer quality is not measured. The served-model check guards against a silent model swap, not against a weaker answer from the right model."
+    "Answer quality is not measured. The served-model check guards against a silent swap to a different model, not against a weaker answer from the right model, and not against a different dated snapshot of the same model: the rule drops snapshot dates, so every served id is also listed per broker for a reader to check.",
+    "That counted calls start only after the merge is a procedure, not a check in code: the analysis counts rows by kind and by notBefore. The results publish the counted run's header and the first call's time next to this record's merge time."
   ]
 }

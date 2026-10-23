@@ -61,7 +61,8 @@ test('cost reading: USD only, a declared currency fills an absent one, never an 
   assert.equal(reportedCostUsd('requesty', null).why, 'no-usage');
 });
 
-test('verdict parsing and the worst case used by the spend stop', () => {
+test('verdict parsing, the worst case used by the spend stop, and the default cap is the pre-registered bound', () => {
+  assert.match(readFileSync(`${dir}/run.mjs`, 'utf8'), /arg\('cap-usd', '3'\)/);
   assert.equal(verdictOf('VERDICT: SHIP\nREASON: fine'), 'SHIP');
   assert.equal(verdictOf('verdict: fix-needed'), 'FIX-NEEDED');
   assert.equal(verdictOf('no idea'), null);
@@ -113,6 +114,7 @@ test('end to end on synthetic rows: a +10% broker is a measured spread, a failur
   assert.equal(m.perBroker.requesty.errors, 1);
   assert.deepEqual(m.perBroker.requesty.statuses, { 200: 119, 503: 1 });
   assert.equal(m.perBroker.requesty.completeReplicates, 1);
+  assert.equal(m.perBroker.requesty.billedUsdPer60Changes, m.perBroker.openrouter.billedUsdPer60Changes, 'a replicate with a failed call is left out of $ per 60 changes, so it cannot look cheaper');
   assert.ok(s.latency.fasterAtP50.includes('openrouter < eurouter'));
   const ledger = spendLedger(synthetic(), prereg).trim().split('\n').map(l => JSON.parse(l));
   assert.equal(ledger.length, 720);
