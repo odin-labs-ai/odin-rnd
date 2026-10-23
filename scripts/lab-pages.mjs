@@ -1,0 +1,212 @@
+// The lab's provider-economics and evidence pages (vp-grow-odin-r-d bundle-3 WO-01, WO-03). Each page is a committed
+// template under site/<page>/index.html with one marker; scripts/build.mjs calls renderLabPages() after it copies
+// site/ to dist/ and writes the rendered pages into dist/ only. Nothing rendered is committed, so a record that lands
+// later (an experiment's results.json) changes the built page and stales no committed file.
+//
+// Every number these pages show is read from a published experiment record and rendered by format() from
+// scripts/number-provenance.mjs as a link to that record; the same module checks the built pages at the end of the
+// build. The page configuration files (site/data/provider-economics.json, site/data/evidence.json) hold words and
+// JSON pointers, never a number that is shown.
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { format, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { displayNames, PROBE } from './broker-probe.mjs';
+
+export const PAGES = {
+  'provider-economics': { marker: '<!--PROVIDER_ECONOMICS-->', config: 'data/provider-economics.json' },
+  evidence: { marker: '<!--EVIDENCE-->', config: 'data/evidence.json' },
+};
+
+const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+
+/** A reader over a site root (site/ in tests and the build): JSON by site-relative path, null when absent. */
+export function siteReader(root = 'site') {
+  const cache = new Map();
+  return path => {
+    if (!cache.has(path)) { const full = join(root, path); cache.set(path, existsSync(full) ? JSON.parse(readFileSync(full, 'utf8')) : null); }
+    return cache.get(path);
+  };
+}
+
+/** One sourced number: a link to its record, carrying the pointer the build check resolves again. `up` is '../'. */
+export function num(read, source, kind, up = '../') {
+  const [path, pointer = ''] = source.split('#');
+  if (!SOURCE_FILE.test(path)) throw new Error(`${source}: a number may only come from an experiment record`);
+  const doc = read(path);
+  if (doc === null) throw new Error(`${source}: ${path} does not exist`);
+  const value = resolvePointer(doc, pointer);
+  if (value === undefined) throw new Error(`${source}: the pointer does not resolve`);
+  return `<a class="lab-num" href="${up}${escape(path)}" data-source="${escape(source)}" data-format="${escape(kind)}">${escape(format(value, kind))}</a>`;
+}
+
+/** A string read from a record (a model id, a week, a date), shown as code or as a date; never a number. */
+function str(read, source) {
+  const [path, pointer = ''] = source.split('#');
+  const doc = read(path);
+  const value = doc === null ? undefined : resolvePointer(doc, pointer);
+  if (typeof value !== 'string') throw new Error(`${source}: expected a string`);
+  return value;
+}
+
+const time = value => `<time datetime="${escape(value)}">${escape(/^\d{4}-W\d{2}$/.test(value) ? value : value.slice(0, 10))}</time>`;
+
+/** What one experiment has published: its pre-registration (always) and its results (when present). */
+export function experiment(read, slug) {
+  const prereg = read(`data/${slug}/preregistration.json`);
+  if (!prereg) throw new Error(`data/${slug}/preregistration.json does not exist`);
+  return { slug, id: prereg.experiment.id, title: prereg.experiment.title, prereg, results: read(`data/${slug}/results.json`) };
+}
+
+function unpublished(e, up = '../') {
+  const window = e.prereg.window?.from && e.prereg.window?.to ? ` Its measurement window: ${time(e.prereg.window.from)} to ${time(e.prereg.window.to)}.` : '';
+  return `<a href="${up}data/${e.slug}/preregistration.json">Pre-registered</a>; no result is published yet.${window}`;
+}
+
+function publishedWithoutSummary(e, note, up = '../') {
+  return `Results are published: <a href="${up}data/${e.slug}/results.json">the record</a>${note ? ` and <a href="${up}${escape(note)}">the field note</a>` : ''}. This page does not summarise them yet.`;
+}
+
+/** EXP 017: the cost/recall table and a scatter of catches against cost per review (log scale, no tick numbers). */
+export function frontierBlock(read, e, note) {
+  const src = 'data/review-frontier/results.json';
+  const on = new Set(e.results.decision.onFrontier);
+  const rows = e.results.seats.map((s, i) => {
+    const p = `${src}#/seats/${i}`;
+    return `<tr><th scope="row">${escape(s.seat)}</th><td><code>${escape(s.model)}</code></td><td>${num(read, `${p}/caught`, 'int')} of ${num(read, `${p}/caughtOf`, 'int')} <span class="lab-ci">(${num(read, `${p}/caughtCI/0`, 'pct')} to ${num(read, `${p}/caughtCI/1`, 'pct')})</span></td><td>${num(read, `${p}/falseAlarms`, 'int')} of ${num(read, `${p}/falseAlarmsOf`, 'int')}</td><td>${num(read, `${p}/costPerReviewUsd`, 'usd')}</td><td>${on.has(s.seat) ? 'on' : 'off'}</td></tr>`;
+  }).join('');
+  const table = `<div class="table-scroll" role="region" aria-label="Review cost and recall, per model" tabindex="0"><table><caption>Pooled over two runs per model. The interval is the Wilson interval on defects caught. Cost is what the broker billed, per review.</caption><thead><tr><th scope="col">Seat</th><th scope="col">Model</th><th scope="col">Defects caught</th><th scope="col">False alarms</th><th scope="col">Cost per review</th><th scope="col">Frontier</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  // Scatter: x = log10(cost per review), y = caught. Positions only; the values are in the table above.
+  const W = 560, H = 260, L = 40, R = 120, T = 20, B = 40;
+  const xs = e.results.seats.map(s => Math.log10(s.costPerReviewUsd)), ys = e.results.seats.map(s => s.caught);
+  const [x0, x1] = [Math.min(...xs), Math.max(...xs)], yMax = e.results.seats[0].caughtOf;
+  const px = x => L + ((x - x0) / ((x1 - x0) || 1)) * (W - L - R), py = y => H - B - (y / yMax) * (H - T - B);
+  const points = e.results.seats.map((s, i) => `<g class="${on.has(s.seat) ? 'lab-on' : 'lab-off'}"><circle cx="${px(xs[i]).toFixed(1)}" cy="${py(ys[i]).toFixed(1)}" r="6"></circle><text x="${(px(xs[i]) + 10).toFixed(1)}" y="${(py(ys[i]) + 4).toFixed(1)}">${escape(s.seat)}</text></g>`).join('');
+  const svg = `<figure class="lab-figure"><svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="frontier-figure-caption"><line class="lab-axis" x1="${L}" y1="${H - B}" x2="${W - R + 20}" y2="${H - B}"></line><line class="lab-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"></line><text class="lab-axis-label" x="${L}" y="${H - 10}">cost per review, log scale →</text><text class="lab-axis-label" x="${L + 6}" y="${T + 4}">defects caught ↑ (axis starts at zero)</text>${points}</svg><figcaption id="frontier-figure-caption">Each point is one model: further right costs more per review, higher catches more defects. Filled points are on the cost/recall frontier. The numbers are in the table above.</figcaption></figure>`;
+  const spend = `<p>The broker billed ${num(read, `${src}#/spend/brokerReportedUsd`, 'usd')} for all ${num(read, `${src}#/spend/reviews`, 'int')} reviews. <a href="../${escape(note)}">The field note</a> gives the method, the limits and what the result does not show; <a href="../${src}">the record</a> holds every figure.</p>`;
+  return table + svg + spend;
+}
+
+/** The latest weekly probe week: answered calls, 5xx, other-model answers and latency per broker and model. */
+export function probeBlock(read, weeks) {
+  if (!weeks.length) return '<p>No probe week has been recorded yet.</p>';
+  const week = weeks[weeks.length - 1];
+  const src = `data/broker-probe/${week}.json`;
+  const record = read(src);
+  const brokers = Object.keys(PROBE.brokers);
+  const names = displayNames(brokers, read('data/provider-terms.json'));
+  const rows = brokers.map(b => {
+    const e = record.brokers[b];
+    if (e?.held) return `<tr><th scope="row">${escape(names[b])}</th><td colspan="5">not probed: its terms are under review before any measurement is published</td></tr>`;
+    if (!e || !e.keyed) return `<tr><th scope="row">${escape(names[b])}</th><td colspan="5">not keyed this week</td></tr>`;
+    return Object.entries(e.models).map(([m, s]) => {
+      const p = `${src}#/brokers/${b}/models/${m}`;
+      const lat = k => (s[k] === null || s[k] === undefined ? '—' : num(read, `${p}/${k}`, 'int'));
+      return `<tr><th scope="row">${escape(names[b])}</th><td><code>${escape(m)}</code></td><td>${num(read, `${p}/ok`, 'int')} of ${num(read, `${p}/attempted`, 'int')}</td><td>${num(read, `${p}/status5xx`, 'int')}</td><td>${num(read, `${p}/servedMismatch`, 'int')}</td><td>${lat('latencyMsP50')} / ${lat('latencyMsP95')}</td></tr>`;
+    }).join('');
+  }).join('');
+  return `<div class="table-scroll" role="region" aria-label="Latest weekly broker probe" tabindex="0"><table><caption>The week of ${time(record.week)}. Latency in milliseconds, measured from a GitHub-hosted runner. A broker shown by letter has terms that do not yet allow naming it next to a number.</caption><thead><tr><th scope="col">Broker</th><th scope="col">Model</th><th scope="col">Answered</th><th scope="col">5xx</th><th scope="col">Other model served</th><th scope="col">p50 / p95</th></tr></thead><tbody>${rows}</tbody></table></div><p><a href="../probe/">Every week of the probe</a> and how it is measured.</p>`;
+}
+
+/** The probe weeks published under `root`, oldest first, as 'YYYY-Www'. */
+export function probeWeeks(root = 'site') {
+  const dir = join(root, 'data/broker-probe');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter(f => /^\d{4}-W\d{2}\.json$/.test(f)).sort().map(f => f.slice(0, -'.json'.length));
+}
+
+/** The provider-economics section: one block per experiment in the series, then the probe, then what is unpublished. */
+export function renderProviderEconomics(read, weeks) {
+  const config = read(PAGES['provider-economics'].config);
+  const blocks = [], pending = [];
+  for (const item of config.series) {
+    if (!item.slug) { pending.push(`<li><strong>${escape(item.title)}</strong> ${escape(item.status)}</li>`); continue; }
+    const e = experiment(read, item.slug);
+    const head = `<h3 id="${escape(item.slug)}">${escape(e.id)}: ${escape(e.title)}</h3>`;
+    if (!e.results) { pending.push(`<li><strong>${escape(e.id)}: ${escape(e.title)}</strong> ${unpublished(e)}</li>`); continue; }
+    const body = item.slug === 'review-frontier' ? frontierBlock(read, e, item.note) : `<p>${publishedWithoutSummary(e, item.note)}</p>`;
+    blocks.push(`<article class="lab-block">${head}${body}</article>`);
+  }
+  blocks.push(`<article class="lab-block"><h3 id="probe">The weekly broker probe, latest week</h3>${probeBlock(read, weeks)}</article>`);
+  return `<section class="company-section company-width" id="published" aria-labelledby="published-title"><h2 id="published-title">Published results.</h2><div class="company-prose">${blocks.join('')}</div></section>`
+    + `<section class="company-section company-width" id="not-yet" aria-labelledby="not-yet-title"><h2 id="not-yet-title">No published result yet.</h2><div class="company-prose"><p>These questions are part of the series. Until a result is published here, this site makes no claim about them.</p><ul class="lab-pending">${pending.join('')}</ul></div></section>`;
+}
+
+/** Fill a claim's text: {name} placeholders become sourced numbers, model ids, broker names, words or dates. */
+export function fillClaim(read, claim) {
+  if (/\d/.test(claim.text)) throw new Error(`claim ${claim.id}: its text holds a digit; every number must be a sourced value`);
+  return escape(claim.text).replace(/\{([a-zA-Z0-9]+)\}/g, (whole, name) => {
+    const v = claim.values?.[name];
+    if (!v) throw new Error(`claim ${claim.id}: no value for {${name}}`);
+    if (v.format === 'code') return `<code>${escape(str(read, v.source))}</code>`;
+    if (v.format === 'word') { const w = str(read, v.source); if (/\d/.test(w)) throw new Error(`claim ${claim.id}: word value '${w}' holds a digit`); return `<strong>${escape(w)}</strong>`; }
+    if (v.format === 'date') return time(str(read, v.source));
+    if (v.format === 'broker') return escape(displayNames(Object.keys(PROBE.brokers), read('data/provider-terms.json'))[v.id]);
+    return num(read, v.source, v.format);
+  });
+}
+
+/** A claim's measurement window: dates read from its record (earliest start to latest end over a list, or two pointers). */
+function claimWindow(read, w) {
+  if (!w) return '';
+  const values = key => {
+    const spec = w[key];
+    const [path, pointer = ''] = spec.source.split('#');
+    const at = resolvePointer(read(path), pointer);
+    const list = (Array.isArray(at) ? at.map(x => (spec.field ? x[spec.field] : x)) : [at]).filter(x => typeof x === 'string').sort();
+    if (!list.length) throw new Error(`window ${spec.source}: no dates`);
+    return key === 'from' ? list[0] : list[list.length - 1];
+  };
+  const from = values('from'), to = w.to ? values('to') : null;
+  return to && to.slice(0, 10) !== from.slice(0, 10) ? `Measured ${time(from)} to ${time(to)}.` : `Measured ${time(from)}.`;
+}
+
+/**
+ * Qualitative sentences in a claim ("the intervals overlap") are checked against the record here, so a sentence that
+ * stops being true stops the build instead of staying on the page.
+ */
+export const ASSERTS = {
+  'intervals-overlap': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const ivs = resolvePointer(read(path), pointer).map(x => x[a.field]);
+    if (ivs.length < 2 || ivs.some(iv => !Array.isArray(iv) || iv.length !== 2)) return 'no intervals to compare';
+    return Math.max(...ivs.map(iv => iv[0])) <= Math.min(...ivs.map(iv => iv[1])) ? null : 'some intervals do not overlap';
+  },
+};
+
+export function renderEvidence(read) {
+  const config = read(PAGES.evidence.config);
+  const claims = config.claims.map(c => {
+    const [path] = (c.record ?? '').split('#');
+    if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
+    for (const a of c.asserts ?? []) {
+      const check = ASSERTS[a.kind];
+      const why = check ? check(read, a) : `unknown assertion '${a.kind}'`;
+      if (why) throw new Error(`claim ${c.id}: ${a.kind}: ${why}`);
+    }
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="../${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="../${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
+  }).join('');
+  const notYet = config.notMeasured.map(n => {
+    if (/\d/.test(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' holds a digit`);
+    let status = escape(n.why ?? '');
+    if (n.slug) {
+      const e = experiment(read, n.slug);
+      status = `${escape(e.id)}, “${escape(e.title)}”: ${e.results ? publishedWithoutSummary(e, n.note) : unpublished(e)}`;
+    }
+    return `<li><strong>${escape(n.claim)}</strong> ${status}${n.planned ? ` <em>${escape(n.planned)}</em>` : ''}</li>`;
+  }).join('');
+  return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each claim below is a sentence whose numbers are read from the experiment record it cites, at build time. Each number links to that record.</p><ol class="lab-claims">${claims}</ol></div></section>`
+    + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">What we have not measured yet.</h2><div class="company-prose"><p>These are things an investor or a provider might expect us to claim. Until a published result backs them, we do not.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
+}
+
+/** Render both pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
+export function renderLabPages({ root = 'site', read = siteReader(root), weeks = probeWeeks(root) } = {}) {
+  const out = {};
+  for (const [page, { marker }] of Object.entries(PAGES)) {
+    const template = readFileSync(join(root, page, 'index.html'), 'utf8');
+    if (template.split(marker).length !== 2) throw new Error(`site/${page}/index.html must hold ${marker} exactly once`);
+    const body = page === 'evidence' ? renderEvidence(read) : renderProviderEconomics(read, weeks);
+    out[page] = template.replace(marker, body);
+    if (/<!--[A-Z_]+-->/.test(out[page])) throw new Error(`Unresolved content marker in ${page}`);
+  }
+  return out;
+}
