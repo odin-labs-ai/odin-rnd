@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { catalogueDiff, displayNames, isoWeek, normaliseCatalogue, PAGE, PROBE, probe, readTerms, renderPage, summarise, weeks } from './broker-probe.mjs';
@@ -23,8 +23,9 @@ function fakeFetch({ swapOn = null, fail5xxOn = null } = {}) {
   };
 }
 
-test('the probe records every keyed broker, marks an unkeyed one, and finds a 5xx and a model swap', async () => {
-  const dataDir = mkdtempSync(join(tmpdir(), 'probe-'));
+test('the probe records every keyed broker, marks an unkeyed one, and finds a 5xx and a model swap', async t => {
+  const dataDir = mkdtempSync(join(tmpdir(), 'broker-probe-test-'));
+  t.after(() => rmSync(dataDir, { recursive: true, force: true }));
   mkdirSync(join(dataDir, 'catalogue'));
   writeFileSync(join(dataDir, 'catalogue', 'openrouter.json'), JSON.stringify({ models: { 'anthropic/claude-haiku-4.5': { in: 1, out: 5, currency: 'USD' }, 'openai/gpt-4o-mini': { in: 0.1, out: 0.6, currency: 'USD' }, 'gone/model': { in: 1, out: 1, currency: 'USD' } } }));
   const env = { BROKER_PROBE_OPENROUTER_KEY: 'k1', BROKER_PROBE_REQUESTY_KEY: 'k2' };
