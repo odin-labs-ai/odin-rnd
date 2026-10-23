@@ -1,0 +1,97 @@
+# The weekly broker probe (vp-grow-odin-r-d bundle-2 WO-04): see scripts/broker-probe.mjs.
+#
+# Runs on a GitHub-hosted runner under the org identity, never on an operator laptop (rule 02 mandate 16), and ONLY on
+# its schedule or by hand: there is no pull_request / pull_request_target trigger, so a fork's pull request can never
+# reach the broker keys. The keys are dedicated and spend-capped at the broker (names only; values never committed):
+#   secrets.BROKER_PROBE_OPENROUTER_KEY   OpenRouter key with a weekly limit
+#   secrets.BROKER_PROBE_REQUESTY_KEY     Requesty key with a monthly limit
+#   secrets.BROKER_PROBE_EUROUTER_KEY     EUrouter key with a weekly limit (absent: the week records "not keyed")
+#
+# Two jobs, so the broker keys and the write token never share a job:
+#   probe    has the broker keys and read-only repo access; uploads the week's data as an artifact.
+#   publish  has no broker key; mints a short-lived GitHub App token and opens a data pull request, which goes
+#            through the same verify check and review as any other change before it reaches main. Nothing is pushed
+#            to main by this workflow.
+name: broker-probe
+
+on:
+  schedule:
+    - cron: '15 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: broker-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      week: ${{ steps.week.outputs.week }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - id: week
+        run: echo "week=$(node -e 'import("./scripts/broker-probe.mjs").then(m => console.log(m.isoWeek()))')" >> "$GITHUB_OUTPUT"
+      - name: Probe the keyed brokers
+        env:
+          BROKER_PROBE_OPENROUTER_KEY: ${{ secrets.BROKER_PROBE_OPENROUTER_KEY }}
+          BROKER_PROBE_EUROUTER_KEY: ${{ secrets.BROKER_PROBE_EUROUTER_KEY }}
+          BROKER_PROBE_REQUESTY_KEY: ${{ secrets.BROKER_PROBE_REQUESTY_KEY }}
+          WEEK: ${{ steps.week.outputs.week }}
+        run: node scripts/broker-probe.mjs probe --week "$WEEK"
+      - name: Render the page
+        run: node scripts/broker-probe.mjs page --write
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: broker-probe-${{ steps.week.outputs.week }}-${{ github.run_id }}
+          path: |
+            site/data/broker-probe/
+            site/probe/index.html
+          retention-days: 90
+
+  publish:
+    needs: probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.ODIN_BOT_APP_ID }}
+          private-key: ${{ secrets.ODIN_BOT_APP_PRIVATE_KEY }}
+          repositories: odin-rnd
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: broker-probe-${{ needs.probe.outputs.week }}-${{ github.run_id }}
+          # upload-artifact stores the two paths relative to their common ancestor, site/
+          path: site
+      - name: Open the data pull request
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          WEEK: ${{ needs.probe.outputs.week }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          branch="data/broker-probe-${WEEK}-${GITHUB_RUN_ID}"
+          git config user.name "odin-ci-packages-bot[bot]"
+          git config user.email "odin-ci-packages-bot[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add site/data/broker-probe site/probe/index.html
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git commit -m "data(broker-probe): ${WEEK} weekly probe (run ${GITHUB_RUN_ID})"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "data(broker-probe): ${WEEK} weekly probe" \
+            --body "Data written by the scheduled broker probe: ${RUN_URL}. Only site/data/broker-probe/ and the rendered site/probe/index.html change. Lands like any other change: verify green on the head, then review."
