@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 017",
+    "slug": "review-frontier",
+    "title": "What does a defect caught in review cost, model by model?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-23",
+    "summary": "Four models review the same 58 private changes (30 known defects, 30 clean cases) through the same tool-free seat: one request per change, the same prompt, reasoning on, no tools and no file access. Each model reviews the corpus twice. We count defects caught and false alarms, and record what the broker billed for every review, to see which models sit on the cost/recall frontier: no other model catches at least as many defects for no more money per review.",
+    "note": "Written, hashed and merged to main before any counted call. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Our earlier review measurements compared models under different conditions: two on a tool-free seat (Flash, gpt-oss:120b), Opus on an agentic seat that could read outside its working directory. EXP 017 puts all four under one condition and asks: per model, how many of 30 defects does a review catch, how many of 30 clean changes does it flag, and what does one review cost? A model is worth its price as a reviewer only if it is on the frontier.",
+  "seats": [
+    { "id": "flash", "model": "minimax/minimax-m3.1-flash", "listPrice": { "inputPer1mUsd": 0.15, "outputPer1mUsd": 0.6 } },
+    { "id": "gpt-oss", "model": "openai/gpt-oss-120b", "listPrice": { "inputPer1mUsd": 0.15, "outputPer1mUsd": 0.6 } },
+    { "id": "sonnet", "model": "anthropic/claude-sonnet-5.5", "listPrice": { "inputPer1mUsd": 2.0, "outputPer1mUsd": 10.0 } },
+    { "id": "opus", "model": "anthropic/claude-opus-5.5", "listPrice": { "inputPer1mUsd": 4.0, "outputPer1mUsd": 20.0 } }
+  ],
+  "seat": {
+    "kind": "tool-free chat: one HTTPS request per review, the prompt in, text out. No tools, no file access, no working directory the model can read.",
+    "broker": "One broker for all four models, through one dedicated, spend-capped key used for nothing else. The broker picks the upstream host; the host is recorded per review, not pinned.",
+    "request": "reasoning enabled at the provider's default effort (the equivalent of the earlier seat's think: true), max_tokens 32000, no temperature (provider default), the broker's own cost reported in the response.",
+    "identity": "A review whose response names a different model than the one requested is a no-verdict for that seat, never credited to it.",
+    "listPriceSource": "The broker's model catalogue, read 2026-10-23. List prices are used only as a fallback bound; the cost of a review is what the broker reports billing for it."
+  },
+  "corpus": {
+    "kind": "internal, sealed",
+    "boundary": "The 58 diffs come from our private repositories and are not published. Only counts, costs and the sealed hashes are public. This is the corpus of EXP 012, assembled on 2026-10-14 before either experiment existed.",
+    "version": "cv1-0f1b32c1",
+    "seeded": 30,
+    "clean": 30,
+    "bundles": 58,
+    "pairs": "Two diffs each carry a seeded defect and a clean case, so 58 changes give 60 cases.",
+    "manifestSha256": "5f6d83a9540105f8e655fdff4736f2ade37b8280700d1875c5183f7c6836279e",
+    "bundlesArchiveSha256": "8601c792c45dae9312ee2b9f7b7212b65b1264c1cb9309ad6186e5f6772b038b"
+  },
+  "prompt": {
+    "file": "experiments/review-frontier/review-prompt.txt",
+    "sha256": "fcc09eac4336b43eea59b2e8e4f638948307f3054f3c0c84c5af771cc2b7b2e5",
+    "note": "The same review prompt as EXP 012 and note 005 (variant P1, the live review contract). __CHANGE__ is the change description, __DIFF__ the diff. Identical for every seat."
+  },
+  "design": {
+    "runsPerSeat": 2,
+    "runs": "8 counted runs: 4 seats x replicates a and b, each over all 58 changes in the sealed manifest's order.",
+    "concurrency": "At most 3 runs at a time. Within a run, reviews are sequential.",
+    "retries": "One retry per review on a failed or unparseable reply, then a no-verdict."
+  },
+  "scoring": {
+    "scorer": "The existing review-recall scorer, unchanged and byte-frozen (hash below). A defect is caught when the verdict is not SHIP and a finding names the defect's file (plus the sealed pattern for the two shared-diff pairs). A false alarm is a clean change given a verdict other than SHIP.",
+    "noVerdict": "A timeout, transport error, other-model response or unparseable reply after one retry counts as FIX-NEEDED with no findings: a miss on a defect and a false alarm on a clean change. Reported separately per run.",
+    "intervals": "Wilson 95%, per run (of 30) and per seat pooled over its two runs (of 60).",
+    "cost": "Per review, the sum over its attempts of the cost the broker reports for that call. An attempt without a reported cost is priced at its tokens times list price; an attempt with no response at all at an upper bound (prompt bytes / 3 at the input price plus 32000 tokens at the output price). Never zero for an attempt that may have billed. $ per review = a run's total over its 58 reviews.",
+    "latency": "Wall seconds per review including any retry; the median per run is reported, not judged."
+  },
+  "decision": {
+    "frontier": "Per seat, pooled over its two runs: caught (of 60) and $ per review. A seat is ON the frontier if no other seat has both at least as many catches and no higher $ per review, and is strictly better on one of the two. Otherwise it is OFF the frontier.",
+    "falseAlarms": "False alarms are reported with every seat and in a secondary three-way frontier (catches, false alarms, $ per review). They do not decide the primary frontier.",
+    "incomplete": "A seat with fewer than 2 complete runs is reported as 'incomplete' or 'not run', with its finished counts, and takes no part in the frontier. Nothing is extrapolated."
+  },
+  "calibration": {
+    "disclosed": "Before this record, each seat reviewed one change once through this seat (2026-10-23 04:27Z-04:33Z, not counted): the corpus change of median size (about 19 KB, a clean case). Broker-reported cost per review: Flash $0.0066 (372 s), gpt-oss-120b $0.0003 (6 s), Sonnet 5.5 $0.0477 (22 s), Opus 5.5 $0.0838 (23 s); served model = requested on all four; the four costs sum to the key's usage counter exactly ($0.138496). Earlier, on Ollama Cloud's tool-free seat with this prompt (note 005, 2026-10-21): Flash caught 16 and 16 of 30 with 21 and 19 false alarms; gpt-oss:120b caught 11 and 12 with 23 and 21. An Opus calibration on 2026-10-14 (16 and 19 caught) ran on an agentic seat that could read outside its working directory, including the sealed answer key, so it is not comparable and is not used here.",
+    "prediction": "Flash and gpt-oss-120b are on the frontier (cheapest, and Flash catches about as many as anything else). Sonnet 5.5 is off it: Flash catches at least as many for a fraction of the price. Opus 5.5 is on the frontier only if it catches more defects than every cheaper seat; we expect it does not by more than run-to-run noise. Every seat flags at least 15 of 30 clean changes. Written down so the result can contradict it."
+  },
+  "harness": {
+    "privateCode": "The counted runs drive the private review-recall harness of Odin's engineering repository at commit 62816f074e364886481890d68f89992ec0aedb27 (odin-labs-ai/odin-labs #8442, merged 2026-10-23T04:50:24Z), in checkouts that are not edited during the runs. Published here as hashes; runner/run-seat.sh refuses to start unless every file matches. The scorer is a byte-frozen copy of the review-recall scorer.",
+    "sha256": {
+      ".claude/scripts/review-recall/reviewer-engine.sh": "038c776730478469d1fca25bec7768b6bab7bc655c8d7e7d5772b1beaba7a0a4",
+      ".claude/scripts/review-recall/openrouter-chat-review.py": "9cddf09d7b3fd7f091a9b32a4c22d9244331d56d0d4faf311f08f00744325621",
+      ".claude/scripts/review-recall/chat_review_core.py": "eb2727f7c6c8360f98a378461cab9a8e9d8c13ad1844f0dba52a2df485d5ef0c",
+      ".claude/scripts/review-recall/review-recall-run.sh": "fd34957efae64adf90cb09882c11c6af4c75eb863a54a9608c79a1b48aaf92f3",
+      ".claude/scripts/review-recall/review-recall-score.mjs": "1dc00a37c2c26b8954b5c65e66e61fa8939799ed2eb2c2d3085fa4b05877894c",
+      ".claude/scripts/review-recall/scorer-loader.mjs": "46630ff058bf96ea05bfdae670e83a67e4d52c6a6b1f61cc9156f195bd3c7948",
+      ".claude/scripts/review-recall/corpus-validate.sh": "534e242076ad0ad14cad83bc5fb5cdd1485e1e7aee8da05cf6d328729329848f",
+      ".claude/scripts/spend-ceiling-guard.sh": "538d149eef8ac785572c30820d789e75fc2e2754e56d40181bd06dd00ffbe967",
+      ".claude/config/model-pricing.json": "5805065b916f40b2cae43259d0b90f1512aaa05d0a7f253da7a27b0cfffdd0e3",
+      ".claude/scripts/review-recall/corpus/manifest.json": "5f6d83a9540105f8e655fdff4736f2ade37b8280700d1875c5183f7c6836279e",
+      ".claude/scripts/review-recall/corpus/bundles.tar.gz": "8601c792c45dae9312ee2b9f7b7212b65b1264c1cb9309ad6186e5f6772b038b",
+      "scorer": "2f266dd882e4cf62ce58b3a29d29b7ed97c7a46f0d335734b525515ba8baa1f5"
+    },
+    "runner": {
+      "experiments/review-frontier/runner/run-seat.sh": "0e2db3150d9a507531327fc54691e598f1a2536f7e128791a0ba22b9fde29e9d",
+      "experiments/review-frontier/runner/collect.mjs": "7c6ca05cb312e5243745c63f6c68105a8644534dc10c336e9094a652455743e3"
+    }
+  },
+  "analysis": {
+    "script": "experiments/review-frontier/analyse.mjs",
+    "sha256": "3f2e9e3308bf5752c54ba3342f1d632a302dd073f129337cd0630af67d69b7b4",
+    "inputs": "runs/<seat>-<run>.json, written by runner/collect.mjs: per case only its number, kind and whether it was flagged; per review its number, broker-reported cost, latency, attempts, no-verdict flag, served model and upstream host. No case or bundle id, file name, finding or diff text.",
+    "check": "node experiments/review-frontier/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed runs."
+  },
+  "spend": {
+    "basis": "The broker's own reported cost per review on the experiment's dedicated key; the key's usage counter is read before and after each run as a cross-check.",
+    "bound": "$52 for the 8 counted runs: a harness cap per run of $12 (Opus), $8 (Sonnet), $4 (Flash) and $2 (gpt-oss), each run stopping before a review that could pass its cap. From the calibration we expect about $16 in total. The key also has a broker-side limit of $30 per day.",
+    "stop": "A run that reaches its cap stops; the seat is then reported as incomplete with its finished counts, never extrapolated. If any seat's calibrated cost per review times 116 reviews had exceeded the sum of its two run caps, that seat would have been reported as 'not run: cost' instead."
+  },
+  "notBefore": "The first counted call is made after this record is merged to main of odin-labs-ai/odin-rnd. The merge is the freeze.",
+  "limits": [
+    "One corpus of 58 changes from our own repositories, two runs per model. The two runs replay the same 60 cases, so they are not independent samples, and seats a few catches apart are within run-to-run noise.",
+    "The corpus is private. Readers can check the hashes, the method, the per-case counts and the costs, but cannot rerun the cases.",
+    "One broker. Upstream hosts vary per call and are recorded, not controlled; a host can quantise or route differently, which this experiment does not separate out.",
+    "The fleet reviewed some of these changes live, so a model may recognise a replayed change. This is not measured here.",
+    "List prices and billed costs are the broker's on the day; they change."
+  ]
+}

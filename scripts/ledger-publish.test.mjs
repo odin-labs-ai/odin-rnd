@@ -5,7 +5,7 @@ import { checkCopies, checkCopy, checkLedgerEntry, copies, pinned, sha256 } from
 
 test('every committed site copy is the frozen record, and every pinned record still matches its .sha256', () => {
   const checked = checkCopies();
-  assert.deepEqual([...new Set(checked.map(c => c.id))], ['EXP 012', 'EXP 015', 'EXP 016']);
+  assert.deepEqual([...new Set(checked.map(c => c.id))], ['EXP 012', 'EXP 015', 'EXP 016', 'EXP 017']);
   for (const c of checked) {
     assert.equal(c.sha256, sha256(readFileSync(c.site)));
     if (c.pin) assert.equal(c.sha256, pinned(readFileSync(c.pin, 'utf8')));
