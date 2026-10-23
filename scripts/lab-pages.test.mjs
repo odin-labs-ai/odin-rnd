@@ -16,7 +16,7 @@ const rendered = renderLabPages();
 const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
 
 test('every lab page renders from the committed records and passes the number-provenance check', () => {
-  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0 };
+  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0, 'provider-brief': 10 };
   assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
