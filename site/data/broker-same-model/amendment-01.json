@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 016",
+  "amendment": "01",
+  "authoredOn": "2026-10-23",
+  "amends": {
+    "preregistration": "experiments/broker-same-model/preregistration.json",
+    "preregistrationSha256": "8b618348ab005e3ed7fa24a100a3cfff2c1842c79155cb74267ec3bca0d12569",
+    "frozenCommit": "2c962031296a7dd1c83a928f183d5e471216ebca"
+  },
+  "why": "EXP 016's results are published with the three brokers shown as letters, not names. After this record was frozen, the lab recorded each broker's published terms (site/data/provider-terms.json, 2026-10-23). Two of the three brokers have a clause the lab owner has not yet ruled on: one bars use of its trade names without consent, the other bars systematically collecting benchmarks for competitive purposes. The lab owner decided on 2026-10-23 to publish EXP 016's results without saying which broker is which. This amendment changes only how the results are labelled. Nothing measured, counted or decided changes.",
+  "timing": "Written after the counted run (2026-10-23 08:00:44Z to 08:13:53Z) and before any result was published. The run itself followed the frozen record unchanged.",
+  "changes": [
+    {
+      "what": "Brokers are shown as letters",
+      "rule": "Each broker is given one of the letters A, B and C by a fixed assignment that is not the order in which the pre-registration lists the brokers. The assignment is kept in the lab's private records and is not published.",
+      "file": "experiments/broker-same-model/amendment-01/anonymise.mjs",
+      "sha256": "dd290ddb6ce9a68539e5253de5911582192e8afa22b712ffba1b16e68d0c4a5a"
+    },
+    {
+      "what": "The published rows leave out what names a broker",
+      "rule": "The published rows are run.mjs's counted rows with the broker replaced by its letter and four fields reduced: requestedModel and servedProvider are dropped, servedModel is dropped while servedFamily and servedMatches (computed by the frozen lib.mjs) are kept, and the error text is replaced by its class (http-<status>, empty-answer or transport). Every measured value (time, status, tokens, latency, reported cost, finish reason, answer length) is copied unchanged.",
+      "file": "experiments/broker-same-model/amendment-01/anonymise.mjs",
+      "sha256": "dd290ddb6ce9a68539e5253de5911582192e8afa22b712ffba1b16e68d0c4a5a"
+    },
+    {
+      "what": "The frozen analysis scores the published rows",
+      "rule": "amendment-01/analyse-anon.mjs imports analyse(), spendLedger() and readRuns() from the frozen analyse.mjs unchanged, reads runs-anon/*.jsonl, and gives analyse() the frozen record with its broker list replaced by the letters. Every price, threshold and decision rule is the frozen record's. Its --check mode is the CI recompute.",
+      "file": "experiments/broker-same-model/amendment-01/analyse-anon.mjs",
+      "sha256": "f87b3dcf066ed10ce48765e1fe2a5c1ee0258f9c3abf66d83269d7060999cc06"
+    }
+  ],
+  "unchanged": "The question, arms, request, changes, replicates, runner, served-model rule, metrics, decision rule, spend and limits are unchanged, and the frozen files stay byte-identical.",
+  "limits": [
+    "The pre-registration was published before the terms were reviewed, and it names the three brokers and each one's model ids. Its calibration also states which broker billed 10% above list. A reader who compares that with the results can probably match at least one letter to a broker. The letters keep the results pages from naming a broker next to a number; they do not make the brokers secret.",
+    "Dropping the served model id removes a per-broker detail the record listed as a metric (servedModels per broker). Whether the served model was the requested one is still published for every call, as servedMatches."
+  ],
+  "notBefore": "The results are published only after this amendment is merged to main of odin-labs-ai/odin-rnd."
+}

@@ -14,6 +14,16 @@
       "date": "2026-10-23"
     },
     {
+      "key": "exp-016-amendment-01",
+      "experiment": "EXP 016",
+      "title": "Does the same model cost the same through every broker?",
+      "kind": "Amendment",
+      "text": "EXP 016's results are published with the three brokers shown as letters, not names.",
+      "href": "data/broker-same-model/preregistration.json",
+      "source": "data/broker-same-model/amendment-01.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-017-preregistration",
       "experiment": "EXP 017",
       "title": "What does a defect caught in review cost, model by model?",
