@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>Odin Labs R&amp;D — wie we zijn, het bewijs, hoe je samenwerkt</title>
+  <meta name="description" content="Een pagina over Odin Labs R&amp;D: wat het lab is, het bewijs uit het publieke experimentenledger met bron, en hoe je kunt samenwerken.">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/one-pager/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <style>
+    @media print{
+      *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+      .article-body li{break-inside:avoid-page}
+      .skip,.source-link,.article-back{display:none!important}
+      .article-shell{margin-top:0}
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Ga naar de inhoud</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Hoofdnavigatie"><a href="../#floor">De vloer</a><a href="../#experiments">Experimenten</a><a href="../#journal">Veldnotities</a><a href="../work-with-us/">Werk met ons</a><a href="../partners/">Partners</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">Bekijk de broncode ↗</a>
+  </header>
+  <main id="main" class="article-shell">
+    <a class="article-back" href="../">← Terug naar de vloer</a>
+    <header class="article-header">
+      <h1>Odin Labs R&amp;D: wie we zijn, het bewijs, hoe je samenwerkt</h1>
+      <p class="article-meta">ONE-PAGER · ODIN LABS R&amp;D B.V. · 23 OKT 2026</p>
+    </header>
+    <article class="article-body">
+
+<h2>Wat dit lab is</h2>
+<p>Odin Labs R&amp;D is het onderzoekslab van Odin Labs. We testen wat AI-agents bouwen, voor onszelf en met partners, en publiceren wat we leren met het bewijs erbij: de vraag van tevoren, de opzet van tevoren, en het resultaat zoals het uitkomt, ook als het tegenvalt. Het lab werkt in de open, op <a href="https://odin-labs-ai.github.io/odin-rnd/">deze site</a>, en achter gesloten deuren onder NDA. Zie <a href="../work-with-us/">Work with us</a> voor hoe een opdracht loopt, en <a href="../partners/">de partnerpagina</a> voor de vormen waarin je kunt meedoen.</p>
+
+<h2>Het bewijs</h2>
+<p>Elk cijfer hieronder staat al publiek op deze site, met zijn eigen datum en bron. Dit is geen volledige lijst van het ledger, maar een greep uit wat al gemeten is.</p>
+<ul>
+<li><strong>De benchmark zelf, open source.</strong> De Blueprint Conformance Engine (bce-engine 0.3.1, Apache-2.0) onderscheidt een nette boomstructuur (score 100) van een bewust verstoorde boom (score 60), in drie publieke experimenten. Een CI-run herhaalt ze bij elke wijziging aan de site, en wekelijks op een vaste planning.</li>
+<li><strong>EXP 009 — agent-geheugen weg, niets blijft hangen.</strong> Van 400 geteste gevallen week er 1 af van de verwachte uitkomst (bovengrens 95%: 1,40%). Van 120 geteste instellingen deed er niet één stil niets, en bleef er niet één onterecht uitgeschakeld.</li>
+<li><strong>EXP 012 — kan een reviewer zijn eigen valse alarmen wegpraten?</strong> Nee. Gevraagd om bij elke melding een concreet falend geval te noemen of de melding te laten vallen, hield MiniMax M3.1 Flash 249 van zijn 269 meldingen vast. De valse alarmen bleven op 20 en 22 van 30 schone wijzigingen, tegen een vooraf afgesproken grens van 2.</li>
+<li><strong>Een gratis model op eigen bug-geschiedenis.</strong> Op bugs uit onze eigen, private geschiedenis die uit de code alleen te vinden zijn, gokte MiniMax M3.1 Flash de juiste plek 63% van de keer goed binnen twee regels, tegen 23% voor ons toenmalige standaardmodel. Dit is een losse onderzoeksnotitie, niet vooraf geregistreerd.</li>
+<li><strong>Hetzelfde model op de review-bank.</strong> Op een afgesloten verzameling van 30 echte fouten en 30 schone wijzigingen zaten de aantallen van MiniMax M3.1 Flash in hetzelfde bereik als Claude Opus, voor ongeveer 1,5 dollarcent per review. Ook een losse onderzoeksnotitie, niet vooraf geregistreerd.</li>
+<li><strong>Laya tegen Jev — een eerlijk "rood".</strong> Een open, lokaal model gaf op 48 van 48 rijen exact dezelfde beslissing als het gehoste model, maar scoorde 14,6 punten lager op juistheid. Dat is meer dan de vooraf afgesproken grens van 10 punten, dus telt het resultaat als rood en blijft het dat.</li>
+<li><strong>Een paper bij arXiv.</strong> "Blueprints with Teeth: Fail-Closed Architecture Conformance for AI-Built Systems" (36 pagina's) is ingediend. Aanname: acceptatie is niet bevestigd op deze pagina.</li>
+</ul>
+<p class="technical">Bronnen: <a href="../#experiments">de experimentenpagina</a> en <a href="../data/experiments.json">data/experiments.json</a>; <a href="../journal/composable-harness-results.html">journal/composable-harness-results.html</a> (EXP 009, gemeten 9 okt 2026); <a href="../journal/self-verify-results.html">journal/self-verify-results.html</a> (EXP 012, gemeten 22 okt 2026); <a href="../journal/free-model-own-bug-history.html">journal/free-model-own-bug-history.html</a> (21 okt 2026); <a href="../journal/flash-on-the-review-bench.html">journal/flash-on-the-review-bench.html</a> (21 okt 2026); <a href="../journal/system-1-decisions-without-lock-in.html">journal/system-1-decisions-without-lock-in.html</a> (gemeten 24 sep 2026).</p>
+<p>Deze resultaten komen van authored testgevallen en kleine, private corpora. Ze bewijzen geen klantresultaat op schaal en geen onbeperkte herhaalbaarheid. Elke pagina hierboven zegt zelf waar de grens van het resultaat ligt.</p>
+
+<h2>Hoe je samenwerkt</h2>
+<p>Zonder prijzen en zonder namen op deze pagina: een voorstel komt eerst, een uitkomst wordt nooit vooraf beloofd. Vijf vormen, op <a href="../partners/">de partnerpagina</a> verder uitgelegd:</p>
+<ul>
+<li><strong>Gesponsorde compute en tokens:</strong> een leverancier levert rekenkracht, Odin levert gebruik en metingen.</li>
+<li><strong>Closed-door evaluaties:</strong> een model getest op Odins eigen werk, onder NDA.</li>
+<li><strong>Innovation sprints:</strong> een vaste scope, bewijs per fase, een beslissing na elke fase.</li>
+<li><strong>Licenties op onderzoek:</strong> een rapport, dataset of meetlat in licentie, naast de open-source code.</li>
+<li><strong>Company-AGI-partnerprogramma:</strong> voor partners die meekijken naar een fabriek die steeds zelfstandiger werkt. Nog geen vast aanbod.</li>
+</ul>
+<p class="article-note">Odin Labs R&amp;D B.V. · Karos 70, 1625 HT Hoorn, Nederland · 100% dochter van Odin Labs Holding B.V. · <a href="https://odin-labs.ai/contact">Contact</a> · <a href="https://odin-labs.ai/contact/?topic=lab#contact-form">Start een gesprek over samenwerken</a></p>
+    </article>
+  </main>
+  <footer class="site-footer"><a href="../" class="footer-brand" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Bron</a><a href="../partners/">Partners</a></div><span class="technical">REV 0.2.0 · 2026</span></footer>
+</body>
+</html>
