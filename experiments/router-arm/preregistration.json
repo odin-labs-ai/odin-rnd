@@ -66,7 +66,7 @@
   },
   "analysis": {
     "script": "experiments/router-arm/analyse.mjs",
-    "sha256": "9b8d3e885f1cd5dbf89b037f8daae7c158d90a73de87b655ad25e331c2b77dc9",
+    "sha256": "0b2adbb39cc966c7fc962c1464aa2009fdebf10f336b266e585fa6dc3a964945",
     "inputs": "data/cells.json and data/billing.json, written by the private export script (hash above) from the run's evidence: per cell its arm, replicate, an opaque task index (t1..t8), whether it is out-of-sample, the model, verdict and target cases fixed / total; per lane its key's usage before and after.",
     "check": "node experiments/router-arm/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
   },

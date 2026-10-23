@@ -53,6 +53,8 @@ export function armSummary(arm, cells, billing, tasks, replicates) {
   }
   const done = reps.filter(r => r.complete && r.usdPerCaseFixed !== null);
   const shares = done.map(r => r.share);
+  // Total billed counts EVERY replicate, complete or not: the money was spent either way. The $/case figures use only
+  // complete replicates.
   const billed = reps.reduce((a, r) => a + (r.billedUsd ?? 0), 0);
   const fixedAll = done.reduce((a, r) => a + r.fixed, 0), billedDone = done.reduce((a, r) => a + r.billedUsd, 0);
   const oos = cells.filter(c => c.arm === arm && c.outOfSample && graded(c));
@@ -63,7 +65,7 @@ export function armSummary(arm, cells, billing, tasks, replicates) {
     share: meanCI(shares),
     shareRange: shares.length ? round(Math.max(...shares) - Math.min(...shares)) : null,
     pooledUsdPerCaseFixed: fixedAll > 0 ? round(billedDone / fixedAll) : null,
-    billedUsd: round(billed),
+    billedUsd: round(billed), billedUsdRaw: billed,
     outOfSample: { cells: oos.length, fixed: oosFixed, target: oosTarget, share: oosTarget ? round(oosFixed / oosTarget) : null },
   };
 }
@@ -88,7 +90,9 @@ export function decide(router, fixed, replicates) {
 export function analyse(cellsDoc, billingDoc, prereg) {
   const tasks = prereg.corpus.tasks, replicates = prereg.design.replicates;
   const arms = Object.fromEntries(prereg.arms.map(a => [a.id, armSummary(a.id, cellsDoc.cells, billingDoc.billing, tasks, replicates)]));
-  const totalBilled = Object.values(arms).reduce((a, s) => a + s.billedUsd, 0);
+  // Summed from the unrounded per-arm totals, so rounding can never move the cap check.
+  const totalBilled = Object.values(arms).reduce((a, s) => a + s.billedUsdRaw, 0);
+  for (const s of Object.values(arms)) delete s.billedUsdRaw;
   return {
     schemaVersion: 1, kind: 'odin-rnd.results', experiment: prereg.experiment.id, slug: prereg.experiment.slug,
     corpus: { name: prereg.corpus.name, tasks, outOfSampleTasks: cellsDoc.outOfSampleTasks },
