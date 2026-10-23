@@ -1,0 +1,842 @@
+{
+ "schemaVersion": 1,
+ "kind": "odin-rnd.exp017.run",
+ "seat": "flash",
+ "run": "b",
+ "model": "minimax/minimax-m3.1-flash",
+ "start": "2026-10-23T05:46:13Z",
+ "end": "2026-10-23T09:48:35Z",
+ "harnessExit": 2,
+ "complete": true,
+ "corpusVersion": "cv1-0f1b32c1",
+ "keyUsageUsd": {
+  "before": 0.138495884,
+  "after": 16.580844139
+ },
+ "cases": [
+  {
+   "n": 1,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 2,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 3,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 4,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 5,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 6,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 7,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 8,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 9,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 10,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 11,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 12,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 13,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 14,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 15,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 16,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 17,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 18,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 19,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 20,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 21,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 22,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 23,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 24,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 25,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 26,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 27,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 28,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 29,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 30,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 31,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 32,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 33,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 34,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 35,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 36,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 37,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 38,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 39,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 40,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 41,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 42,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 43,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 44,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 45,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 46,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 47,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 48,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 49,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 50,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 51,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 52,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 53,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 54,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 55,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 56,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 57,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 58,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 59,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 60,
+   "kind": "clean",
+   "flagged": true
+  }
+ ],
+ "reviews": [
+  {
+   "n": 1,
+   "costUsd": 0.003963,
+   "latencySec": 22,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Wafer"
+  },
+  {
+   "n": 2,
+   "costUsd": 0.003784,
+   "latencySec": 280,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 3,
+   "costUsd": 0.00089,
+   "latencySec": 5,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 4,
+   "costUsd": 0.008887,
+   "latencySec": 36,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 5,
+   "costUsd": 0.005243,
+   "latencySec": 64,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Minimax"
+  },
+  {
+   "n": 6,
+   "costUsd": 0.040121,
+   "latencySec": 151,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 7,
+   "costUsd": 0.004012,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 8,
+   "costUsd": 0.01092,
+   "latencySec": 861,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 9,
+   "costUsd": 0.009527,
+   "latencySec": 761,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 10,
+   "costUsd": 0.01071,
+   "latencySec": 107,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 11,
+   "costUsd": 0.041955,
+   "latencySec": 1047,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": null,
+   "upstream": null
+  },
+  {
+   "n": 12,
+   "costUsd": 0.004046,
+   "latencySec": 280,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 13,
+   "costUsd": 0.02134,
+   "latencySec": 203,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 14,
+   "costUsd": 0.008025,
+   "latencySec": 43,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 15,
+   "costUsd": 0.004939,
+   "latencySec": 311,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 16,
+   "costUsd": 0.03867,
+   "latencySec": 602,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Minimax"
+  },
+  {
+   "n": 17,
+   "costUsd": 0.035729,
+   "latencySec": 1229,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 18,
+   "costUsd": 0.011305,
+   "latencySec": 365,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 19,
+   "costUsd": 0.01092,
+   "latencySec": 103,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 20,
+   "costUsd": 0.0066,
+   "latencySec": 61,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Nebius"
+  },
+  {
+   "n": 21,
+   "costUsd": 0.014888,
+   "latencySec": 187,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Nebius"
+  },
+  {
+   "n": 22,
+   "costUsd": 0.004861,
+   "latencySec": 200,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 23,
+   "costUsd": 0.036238,
+   "latencySec": 1620,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 24,
+   "costUsd": 0.012127,
+   "latencySec": 66,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 25,
+   "costUsd": 0.03455,
+   "latencySec": 196,
+   "attempts": 2,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Wafer"
+  },
+  {
+   "n": 26,
+   "costUsd": 0.009998,
+   "latencySec": 335,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 27,
+   "costUsd": 0.012537,
+   "latencySec": 65,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Wafer"
+  },
+  {
+   "n": 28,
+   "costUsd": 0.019707,
+   "latencySec": 83,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 29,
+   "costUsd": 0.014921,
+   "latencySec": 93,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 30,
+   "costUsd": 0.003617,
+   "latencySec": 17,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 31,
+   "costUsd": 0.005817,
+   "latencySec": 28,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 32,
+   "costUsd": 0.002765,
+   "latencySec": 107,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 33,
+   "costUsd": 0.003219,
+   "latencySec": 16,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 34,
+   "costUsd": 0.011195,
+   "latencySec": 43,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 35,
+   "costUsd": 0.010821,
+   "latencySec": 44,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 36,
+   "costUsd": 0.002568,
+   "latencySec": 47,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "GMICloud"
+  },
+  {
+   "n": 37,
+   "costUsd": 0.011234,
+   "latencySec": 83,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 38,
+   "costUsd": 0.011688,
+   "latencySec": 407,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 39,
+   "costUsd": 0.014505,
+   "latencySec": 80,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Wafer"
+  },
+  {
+   "n": 40,
+   "costUsd": 0.039831,
+   "latencySec": 874,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Nebius"
+  },
+  {
+   "n": 41,
+   "costUsd": 0.005453,
+   "latencySec": 147,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "GMICloud"
+  },
+  {
+   "n": 42,
+   "costUsd": 0.010189,
+   "latencySec": 58,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Wafer"
+  },
+  {
+   "n": 43,
+   "costUsd": 0.015382,
+   "latencySec": 204,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 44,
+   "costUsd": 0.006673,
+   "latencySec": 324,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 45,
+   "costUsd": 0.006238,
+   "latencySec": 21,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 46,
+   "costUsd": 0.013956,
+   "latencySec": 45,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 47,
+   "costUsd": 0.0132,
+   "latencySec": 222,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Minimax"
+  },
+  {
+   "n": 48,
+   "costUsd": 0.002256,
+   "latencySec": 87,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Minimax"
+  },
+  {
+   "n": 49,
+   "costUsd": 0.001504,
+   "latencySec": 22,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Minimax"
+  },
+  {
+   "n": 50,
+   "costUsd": 0.015975,
+   "latencySec": 123,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Together"
+  },
+  {
+   "n": 51,
+   "costUsd": 0.002641,
+   "latencySec": 67,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "GMICloud"
+  },
+  {
+   "n": 52,
+   "costUsd": 0.00146,
+   "latencySec": 25,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Nebius"
+  },
+  {
+   "n": 53,
+   "costUsd": 0.039654,
+   "latencySec": 944,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 54,
+   "costUsd": 0.009996,
+   "latencySec": 457,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "InferenceNet"
+  },
+  {
+   "n": 55,
+   "costUsd": 0.006255,
+   "latencySec": 26,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 56,
+   "costUsd": 0.040147,
+   "latencySec": 388,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Nebius"
+  },
+  {
+   "n": 57,
+   "costUsd": 0.020595,
+   "latencySec": 64,
+   "attempts": 2,
+   "noVerdict": false,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 58,
+   "costUsd": 0.03982,
+   "latencySec": 156,
+   "attempts": 2,
+   "noVerdict": true,
+   "servedModel": "minimax/minimax-m3.1-flash",
+   "upstream": "Parasail"
+  }
+ ]
+}

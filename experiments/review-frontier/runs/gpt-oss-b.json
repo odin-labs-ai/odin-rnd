@@ -1,0 +1,842 @@
+{
+ "schemaVersion": 1,
+ "kind": "odin-rnd.exp017.run",
+ "seat": "gpt-oss",
+ "run": "b",
+ "model": "openai/gpt-oss-120b",
+ "start": "2026-10-23T06:11:04Z",
+ "end": "2026-10-23T06:37:39Z",
+ "harnessExit": 2,
+ "complete": true,
+ "corpusVersion": "cv1-0f1b32c1",
+ "keyUsageUsd": {
+  "before": 0.298103221,
+  "after": 0.428059524
+ },
+ "cases": [
+  {
+   "n": 1,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 2,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 3,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 4,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 5,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 6,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 7,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 8,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 9,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 10,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 11,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 12,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 13,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 14,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 15,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 16,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 17,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 18,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 19,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 20,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 21,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 22,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 23,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 24,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 25,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 26,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 27,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 28,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 29,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 30,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 31,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 32,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 33,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 34,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 35,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 36,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 37,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 38,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 39,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 40,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 41,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 42,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 43,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 44,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 45,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 46,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 47,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 48,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 49,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 50,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 51,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 52,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 53,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 54,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 55,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 56,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 57,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 58,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 59,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 60,
+   "kind": "clean",
+   "flagged": true
+  }
+ ],
+ "reviews": [
+  {
+   "n": 1,
+   "costUsd": 0.000373,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Mancer 2"
+  },
+  {
+   "n": 2,
+   "costUsd": 0.000169,
+   "latencySec": 15,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 3,
+   "costUsd": 0.000114,
+   "latencySec": 17,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 4,
+   "costUsd": 0.000381,
+   "latencySec": 49,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 5,
+   "costUsd": 0.000431,
+   "latencySec": 73,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 6,
+   "costUsd": 0.000556,
+   "latencySec": 59,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "CoreWeave"
+  },
+  {
+   "n": 7,
+   "costUsd": 0.000159,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DeepInfra"
+  },
+  {
+   "n": 8,
+   "costUsd": 0.000581,
+   "latencySec": 13,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "AkashML"
+  },
+  {
+   "n": 9,
+   "costUsd": 0.000421,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "AkashML"
+  },
+  {
+   "n": 10,
+   "costUsd": 0.000372,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 11,
+   "costUsd": 0.000757,
+   "latencySec": 38,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "CoreWeave"
+  },
+  {
+   "n": 12,
+   "costUsd": 0.000172,
+   "latencySec": 24,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 13,
+   "costUsd": 0.00107,
+   "latencySec": 79,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 14,
+   "costUsd": 0.000636,
+   "latencySec": 5,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Crusoe"
+  },
+  {
+   "n": 15,
+   "costUsd": 0.000512,
+   "latencySec": 8,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DekaLLM"
+  },
+  {
+   "n": 16,
+   "costUsd": 0.000201,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "AkashML"
+  },
+  {
+   "n": 17,
+   "costUsd": 0.000255,
+   "latencySec": 31,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 18,
+   "costUsd": 0.000462,
+   "latencySec": 38,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 19,
+   "costUsd": 0.000255,
+   "latencySec": 12,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 20,
+   "costUsd": 0.000236,
+   "latencySec": 24,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 21,
+   "costUsd": 0.001372,
+   "latencySec": 3,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Groq"
+  },
+  {
+   "n": 22,
+   "costUsd": 0.000093,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 23,
+   "costUsd": 0.000816,
+   "latencySec": 60,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "CoreWeave"
+  },
+  {
+   "n": 24,
+   "costUsd": 0.000862,
+   "latencySec": 50,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DeepInfra"
+  },
+  {
+   "n": 25,
+   "costUsd": 0.000556,
+   "latencySec": 32,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 26,
+   "costUsd": 0.0015,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 27,
+   "costUsd": 0.000381,
+   "latencySec": 29,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 28,
+   "costUsd": 0.001197,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Crusoe"
+  },
+  {
+   "n": 29,
+   "costUsd": 0.003212,
+   "latencySec": 11,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 30,
+   "costUsd": 0.000612,
+   "latencySec": 3,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Mara"
+  },
+  {
+   "n": 31,
+   "costUsd": 0.000211,
+   "latencySec": 25,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 32,
+   "costUsd": 0.000125,
+   "latencySec": 8,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DeepInfra"
+  },
+  {
+   "n": 33,
+   "costUsd": 0.000144,
+   "latencySec": 11,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Venice"
+  },
+  {
+   "n": 34,
+   "costUsd": 0.000603,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "AkashML"
+  },
+  {
+   "n": 35,
+   "costUsd": 0.001195,
+   "latencySec": 21,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Mancer 2"
+  },
+  {
+   "n": 36,
+   "costUsd": 0.000538,
+   "latencySec": 20,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DekaLLM"
+  },
+  {
+   "n": 37,
+   "costUsd": 0.000649,
+   "latencySec": 66,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 38,
+   "costUsd": 0.000597,
+   "latencySec": 31,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DekaLLM"
+  },
+  {
+   "n": 39,
+   "costUsd": 0.003096,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Phala"
+  },
+  {
+   "n": 40,
+   "costUsd": 0.000385,
+   "latencySec": 39,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 41,
+   "costUsd": 0.0006,
+   "latencySec": 58,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 42,
+   "costUsd": 0.000219,
+   "latencySec": 23,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "CoreWeave"
+  },
+  {
+   "n": 43,
+   "costUsd": 0.00043,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "AkashML"
+  },
+  {
+   "n": 44,
+   "costUsd": 0.00029,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "CoreWeave"
+  },
+  {
+   "n": 45,
+   "costUsd": 0.000178,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DekaLLM"
+  },
+  {
+   "n": 46,
+   "costUsd": 0.000534,
+   "latencySec": 64,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 47,
+   "costUsd": 0.000383,
+   "latencySec": 12,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DekaLLM"
+  },
+  {
+   "n": 48,
+   "costUsd": 0.000225,
+   "latencySec": 1,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Crusoe"
+  },
+  {
+   "n": 49,
+   "costUsd": 0.000323,
+   "latencySec": 3,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Parasail"
+  },
+  {
+   "n": 50,
+   "costUsd": 0.00085,
+   "latencySec": 44,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Mancer 2"
+  },
+  {
+   "n": 51,
+   "costUsd": 0.000178,
+   "latencySec": 22,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 52,
+   "costUsd": 0.000117,
+   "latencySec": 15,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 53,
+   "costUsd": 0.00104,
+   "latencySec": 42,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Mancer 2"
+  },
+  {
+   "n": 54,
+   "costUsd": 0.00162,
+   "latencySec": 9,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Phala"
+  },
+  {
+   "n": 55,
+   "costUsd": 0.00025,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "DeepInfra"
+  },
+  {
+   "n": 56,
+   "costUsd": 0.000535,
+   "latencySec": 64,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 57,
+   "costUsd": 0.000528,
+   "latencySec": 65,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  },
+  {
+   "n": 58,
+   "costUsd": 0.000604,
+   "latencySec": 102,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "openai/gpt-oss-120b",
+   "upstream": "Near AI"
+  }
+ ]
+}

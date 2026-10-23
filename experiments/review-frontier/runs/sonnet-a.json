@@ -1,0 +1,842 @@
+{
+ "schemaVersion": 1,
+ "kind": "odin-rnd.exp017.run",
+ "seat": "sonnet",
+ "run": "a",
+ "model": "anthropic/claude-sonnet-5.5",
+ "start": "2026-10-23T06:37:39Z",
+ "end": "2026-10-23T06:57:45Z",
+ "harnessExit": 2,
+ "complete": true,
+ "corpusVersion": "cv1-0f1b32c1",
+ "keyUsageUsd": {
+  "before": 0.428059524,
+  "after": 3.104252124
+ },
+ "cases": [
+  {
+   "n": 1,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 2,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 3,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 4,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 5,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 6,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 7,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 8,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 9,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 10,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 11,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 12,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 13,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 14,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 15,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 16,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 17,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 18,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 19,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 20,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 21,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 22,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 23,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 24,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 25,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 26,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 27,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 28,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 29,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 30,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 31,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 32,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 33,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 34,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 35,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 36,
+   "kind": "seeded",
+   "flagged": true
+  },
+  {
+   "n": 37,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 38,
+   "kind": "seeded",
+   "flagged": false
+  },
+  {
+   "n": 39,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 40,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 41,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 42,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 43,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 44,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 45,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 46,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 47,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 48,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 49,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 50,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 51,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 52,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 53,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 54,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 55,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 56,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 57,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 58,
+   "kind": "clean",
+   "flagged": true
+  },
+  {
+   "n": 59,
+   "kind": "clean",
+   "flagged": false
+  },
+  {
+   "n": 60,
+   "kind": "clean",
+   "flagged": true
+  }
+ ],
+ "reviews": [
+  {
+   "n": 1,
+   "costUsd": 0.027692,
+   "latencySec": 12,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 2,
+   "costUsd": 0.019956,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 3,
+   "costUsd": 0.013688,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 4,
+   "costUsd": 0.02423,
+   "latencySec": 12,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 5,
+   "costUsd": 0.019844,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 6,
+   "costUsd": 0.043854,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 7,
+   "costUsd": 0.00701,
+   "latencySec": 5,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 8,
+   "costUsd": 0.04093,
+   "latencySec": 18,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 9,
+   "costUsd": 0.04852,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 10,
+   "costUsd": 0.061274,
+   "latencySec": 30,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 11,
+   "costUsd": 0.107156,
+   "latencySec": 59,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 12,
+   "costUsd": 0.015568,
+   "latencySec": 10,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 13,
+   "costUsd": 0.103014,
+   "latencySec": 38,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 14,
+   "costUsd": 0.041908,
+   "latencySec": 21,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 15,
+   "costUsd": 0.055792,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 16,
+   "costUsd": 0.024206,
+   "latencySec": 15,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 17,
+   "costUsd": 0.033428,
+   "latencySec": 19,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 18,
+   "costUsd": 0.049234,
+   "latencySec": 23,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 19,
+   "costUsd": 0.087988,
+   "latencySec": 39,
+   "attempts": 2,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 20,
+   "costUsd": 0.024434,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 21,
+   "costUsd": 0.049402,
+   "latencySec": 31,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 22,
+   "costUsd": 0.009386,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 23,
+   "costUsd": 0.095058,
+   "latencySec": 51,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 24,
+   "costUsd": 0.053986,
+   "latencySec": 20,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 25,
+   "costUsd": 0.064938,
+   "latencySec": 21,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 26,
+   "costUsd": 0.15305,
+   "latencySec": 56,
+   "attempts": 2,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 27,
+   "costUsd": 0.051474,
+   "latencySec": 24,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 28,
+   "costUsd": 0.066388,
+   "latencySec": 24,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 29,
+   "costUsd": 0.076518,
+   "latencySec": 20,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 30,
+   "costUsd": 0.020362,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 31,
+   "costUsd": 0.014542,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 32,
+   "costUsd": 0.007582,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 33,
+   "costUsd": 0.019616,
+   "latencySec": 11,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 34,
+   "costUsd": 0.08428,
+   "latencySec": 29,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 35,
+   "costUsd": 0.0825,
+   "latencySec": 27,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 36,
+   "costUsd": 0.074598,
+   "latencySec": 27,
+   "attempts": 2,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 37,
+   "costUsd": 0.05516,
+   "latencySec": 16,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 38,
+   "costUsd": 0.04659,
+   "latencySec": 22,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 39,
+   "costUsd": 0.075982,
+   "latencySec": 30,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 40,
+   "costUsd": 0.059552,
+   "latencySec": 35,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 41,
+   "costUsd": 0.094742,
+   "latencySec": 50,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 42,
+   "costUsd": 0.01662,
+   "latencySec": 8,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 43,
+   "costUsd": 0.022018,
+   "latencySec": 13,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 44,
+   "costUsd": 0.015206,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 45,
+   "costUsd": 0.010164,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 46,
+   "costUsd": 0.048414,
+   "latencySec": 16,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 47,
+   "costUsd": 0.04772,
+   "latencySec": 17,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 48,
+   "costUsd": 0.009842,
+   "latencySec": 6,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 49,
+   "costUsd": 0.012568,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 50,
+   "costUsd": 0.052396,
+   "latencySec": 25,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 51,
+   "costUsd": 0.022184,
+   "latencySec": 12,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 52,
+   "costUsd": 0.011412,
+   "latencySec": 7,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 53,
+   "costUsd": 0.082728,
+   "latencySec": 34,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 54,
+   "costUsd": 0.023756,
+   "latencySec": 14,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 55,
+   "costUsd": 0.030558,
+   "latencySec": 16,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 56,
+   "costUsd": 0.045386,
+   "latencySec": 20,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 57,
+   "costUsd": 0.048904,
+   "latencySec": 22,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  },
+  {
+   "n": 58,
+   "costUsd": 0.049308,
+   "latencySec": 25,
+   "attempts": 1,
+   "noVerdict": false,
+   "servedModel": "anthropic/claude-sonnet-5.5",
+   "upstream": "Claude Platform on AWS"
+  }
+ ]
+}
