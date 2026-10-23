@@ -7,6 +7,7 @@
 // changes nothing in them. The only difference from the frozen main() is the input and the broker names: it reads
 // runs-anon/*.jsonl, whose rows carry a letter instead of a broker id, and gives the frozen analyse() the record with
 // its broker list replaced by those letters. Every decision rule, price and threshold comes from the frozen record.
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,11 +24,15 @@ export function outputs() {
   const prereg = JSON.parse(readFileSync(join(EXP, 'preregistration.json'), 'utf8'));
   prereg.sha256 = readFileSync(join(EXP, 'preregistration.sha256'), 'utf8').trim().split(/\s+/)[0];
   const rows = readRuns(join(EXP, 'runs-anon'));
-  const header = rows.find(r => r._header);
-  const record = letteredRecord(prereg, header ? header.brokers : ['A', 'B', 'C']);
+  const headers = rows.filter(r => r._header);
+  if (headers.length !== 1 || !Array.isArray(headers[0].brokers) || headers[0].brokers.length !== prereg.brokers.length)
+    throw new Error('EXP 016: runs-anon/ must hold exactly one header naming one letter per broker; refusing to guess');
+  const record = letteredRecord(prereg, headers[0].brokers);
+  const pinned = readFileSync(join(HERE, 'amendment.sha256'), 'utf8').trim().split(/\s+/)[0];
+  const actual = createHash('sha256').update(readFileSync(join(HERE, 'amendment.json'))).digest('hex');
+  if (pinned !== actual) throw new Error('EXP 016: amendment.json no longer matches amendment.sha256');
   const results = analyse(rows, record);
-  results.amendment = { id: '01', file: 'experiments/broker-same-model/amendment-01/amendment.json',
-    sha256: readFileSync(join(HERE, 'amendment.sha256'), 'utf8').trim().split(/\s+/)[0], brokers: 'shown as letters' };
+  results.amendment = { id: '01', file: 'experiments/broker-same-model/amendment-01/amendment.json', sha256: actual, brokers: 'shown as letters' };
   return { 'results.json': JSON.stringify(results, null, 2) + '\n', 'spend-ledger.jsonl': spendLedger(rows, record) };
 }
 

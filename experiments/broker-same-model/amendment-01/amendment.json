@@ -16,19 +16,19 @@
       "what": "Brokers are shown as letters",
       "rule": "Each broker is given one of the letters A, B and C by a fixed assignment that is not the order in which the pre-registration lists the brokers. The assignment is kept in the lab's private records and is not published.",
       "file": "experiments/broker-same-model/amendment-01/anonymise.mjs",
-      "sha256": "dd290ddb6ce9a68539e5253de5911582192e8afa22b712ffba1b16e68d0c4a5a"
+      "sha256": "e2ef44a18f89143aa288c31891ab4e78ec9ac5526d063c4c324f8b30ade0de07"
     },
     {
       "what": "The published rows leave out what names a broker",
       "rule": "The published rows are run.mjs's counted rows with the broker replaced by its letter and four fields reduced: requestedModel and servedProvider are dropped, servedModel is dropped while servedFamily and servedMatches (computed by the frozen lib.mjs) are kept, and the error text is replaced by its class (http-<status>, empty-answer or transport). Every measured value (time, status, tokens, latency, reported cost, finish reason, answer length) is copied unchanged.",
       "file": "experiments/broker-same-model/amendment-01/anonymise.mjs",
-      "sha256": "dd290ddb6ce9a68539e5253de5911582192e8afa22b712ffba1b16e68d0c4a5a"
+      "sha256": "e2ef44a18f89143aa288c31891ab4e78ec9ac5526d063c4c324f8b30ade0de07"
     },
     {
       "what": "The frozen analysis scores the published rows",
       "rule": "amendment-01/analyse-anon.mjs imports analyse(), spendLedger() and readRuns() from the frozen analyse.mjs unchanged, reads runs-anon/*.jsonl, and gives analyse() the frozen record with its broker list replaced by the letters. Every price, threshold and decision rule is the frozen record's. Its --check mode is the CI recompute.",
       "file": "experiments/broker-same-model/amendment-01/analyse-anon.mjs",
-      "sha256": "f87b3dcf066ed10ce48765e1fe2a5c1ee0258f9c3abf66d83269d7060999cc06"
+      "sha256": "00c0b8f7c93721cabb07a9a6cefb0c1e1ef6c18058db7bbb9b32dfecf9ceb66e"
     }
   ],
   "unchanged": "The question, arms, request, changes, replicates, runner, served-model rule, metrics, decision rule, spend and limits are unchanged, and the frozen files stay byte-identical.",

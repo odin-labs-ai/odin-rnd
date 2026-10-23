@@ -20,6 +20,7 @@ const KEEP = ['ts', 'kind', 'rep', 'slot', 'arm', 'change', 'latencyMs', 'status
   'promptTokens', 'completionTokens', 'costUsd', 'costWhy', 'finishReason', 'answerChars', 'answerSha256', 'verdict'];
 
 export function errorClass(row) {
+  if (row.ok !== true && row.ok !== false) throw new Error(`row without a boolean ok (slot ${row.slot}, ${row.broker})`);
   if (row.ok) return null;
   if (row.status == null) return 'transport';
   if (row.status !== 200) return `http-${row.status}`;
@@ -30,10 +31,12 @@ export function anonymiseRow(row, letters) {
   if (row._header) {
     return { _header: true, experiment: row.experiment, kind: row.kind, startedAt: row.startedAt,
       command: 'node experiments/broker-same-model/run.mjs --kind counted --cap-usd 3 (output anonymised by amendment-01/anonymise.mjs)',
+      // sorted, so the header's order says nothing about which letter was which position in the record's list
       changes: row.changes, replicates: row.replicates, arms: row.arms, brokers: row.brokers.map(b => letters[b]).sort(), capUsd: row.capUsd };
   }
   if (row._trailer) return row;
   if (!(row.broker in letters)) throw new Error(`no letter for broker ${row.broker}`);
+  if (!Number.isInteger(row.slot) || typeof row.arm !== 'string') throw new Error(`counted row without a slot or arm (${row.broker})`);
   const out = { broker: letters[row.broker] };
   for (const k of KEEP) if (k in row) out[k] = row[k];
   const e = errorClass(row);
@@ -44,6 +47,7 @@ export function anonymiseRow(row, letters) {
 export function anonymise(text, letters) {
   const lines = text.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
   const rows = lines.map(r => anonymiseRow(r, letters));
+  if (rows.filter(r => r._header).length !== 1) throw new Error('expected exactly one header row');
   const body = rows.filter(r => !r._header && !r._trailer);
   // keep the run's own order for the header and trailer; sort the calls so file order says nothing about which
   // broker answered first in a slot

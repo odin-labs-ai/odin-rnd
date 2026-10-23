@@ -53,6 +53,11 @@ test('the published rows keep every measured value and nothing that names a brok
   const r = anonymiseRow(named()[1], letters);
   assert.deepEqual(Object.keys(r).sort(), ['answerChars', 'answerSha256', 'arm', 'broker', 'change', 'completionTokens', 'costUsd', 'costWhy', 'finishReason', 'kind', 'latencyMs', 'ok', 'promptTokens', 'rep', 'servedFamily', 'servedMatches', 'slot', 'status', 'ts', 'verdict'].sort());
   assert.throws(() => anonymiseRow({ broker: 'other' }, letters), /no letter/);
+  assert.throws(() => anonymiseRow({ broker: 'openrouter', arm: 'mini' }, letters), /without a slot/);
+  assert.throws(() => errorClass({ status: 200 }), /boolean ok/);
+  assert.throws(() => anonymise(JSON.stringify(named()[1]), letters), /one header/);
+  for (const leak of ['{"openrouter": "A"}', "openrouter: 'B'", 'requesty=C', 'eurouter => "A"', 'EUrouter: Broker B'])
+    assert.ok(/\b(open\s?router|eu\s?router|requesty)\b["']?\s*(:|=>?|->)\s*["'`]?(broker\s)?[A-Z]\b(?![a-z])/i.test(leak), leak);
 });
 
 test('error classes', () => {
@@ -73,6 +78,10 @@ test('the frozen analysis gives the same numbers on the published rows as on the
     assert.equal(b.perArm[arm].silentSubstitutions, a.perArm[arm].silentSubstitutions);
     for (const [broker, letter] of Object.entries(letters)) {
       const x = { ...a.perArm[arm].perBroker[broker] }, y = { ...b.perArm[arm].perBroker[letter] };
+      // servedModels, servedProviders and mismatches list served ids, which name the broker's upstream; the published
+      // rows drop them by design. Whether each call was served the requested model is still compared (servedMatch).
+      assert.deepEqual([y.servedModels, y.servedProviders], [[], []]);
+      assert.equal(y.mismatches.length, x.mismatches.length);
       for (const k of ['servedModels', 'servedProviders', 'mismatches']) { delete x[k]; delete y[k]; }
       assert.deepEqual(y, x, `${arm} ${broker}`);
     }
@@ -82,8 +91,11 @@ test('the frozen analysis gives the same numbers on the published rows as on the
 
 test('no file in this public repository maps a broker to its EXP 016 letter (the assignment stays private)', () => {
   const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(f => f && !/\.(png|jpe?g|webp|woff2?|ico|gif|mp4|webm|tar\.gz)$/.test(f));
-  const mapping = /"(openrouter|eurouter|requesty)"\s*:\s*"[A-Z]"/i;
-  const hits = files.filter(f => { try { return mapping.test(readFileSync(f, 'utf8')); } catch { return false; } });
+  // a broker id followed, within the same line, by := or => and a single capital letter in any quoting
+  const mapping = /\b(open\s?router|eu\s?router|requesty)\b["']?\s*(:|=>?|->)\s*["'`]?(broker\s)?[A-Z]\b(?![a-z])/i;
+  // Test files are left out: they hold fixtures (this file's test assignment Q/R/S, and the probe's own display-name
+  // test, whose letters follow the probe's order and are unrelated to EXP 016). Every record, script and page is scanned.
+  const hits = files.filter(f => !/^scripts\/[^/]+\.test\.mjs$/.test(f)).filter(f => { try { return mapping.test(readFileSync(f, 'utf8')); } catch { return false; } });
   assert.deepEqual(hits, [], 'a broker-to-letter mapping is published');
   const published = readFileSync(`${dir}/amendment-01/anonymise.mjs`, 'utf8');
   assert.ok(!mapping.test(published));
