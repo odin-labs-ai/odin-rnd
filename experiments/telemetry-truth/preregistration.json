@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 015",
+    "slug": "telemetry-truth",
+    "title": "Does Odin's cost estimate match what the brokers bill?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-23",
+    "summary": "Odin estimates the cost of every model call from a price book. Before any savings figure can be published, that estimate has to be checked against what the brokers actually charge. Over 7 UTC days, a scheduled probe sends the same tiny completion through OpenRouter, EUrouter and Requesty and compares, call by call, the price-book estimate with the cost the broker reports. A second, coarser question asks whether the fleet's own logged estimates cover what one broker billed over the same week.",
+    "note": "Written, hashed and pushed to a public branch before the window opens. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Is the price-book estimate a usable stand-in for the broker's bill? If it is, per broker, a savings claim built on estimates is honest for that broker. If it is off by a stable factor, the claim needs that correction first. If it is unreliable, or the fleet's estimates do not cover what was billed, no savings claim may be built on Odin's estimates until the telemetry is fixed.",
+  "window": {
+    "from": "2026-10-28T00:00:00Z",
+    "to": "2026-11-04T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "settlement": "Billing is read no earlier than 2026-11-05T00:00:00Z: OpenRouter's per-call figures have been seen to under-count by 1-10% until settled."
+  },
+  "brokers": ["openrouter", "eurouter", "requesty"],
+  "capture": {
+    "what": "One identical completion per broker and model every 3 hours: the prompt 'Reply with the single word: pong', max_tokens 16, temperature 0, on anthropic/claude-haiku-4.5 and openai/gpt-4o-mini (each broker's own id for the same model). Each call records the served model, the tokens, the cost the broker reports in the response (usage.cost), OpenRouter's generation record as a cross-check, and the price-book estimate for the same tokens.",
+    "where": "A scheduled GitHub Actions workflow in Odin's private engineering repository (odin-labs-ai/odin-labs, 'R&D telemetry-truth capture', cron 41 */3 * * *), on a GitHub-hosted runner. Each run uploads its rows as an artifact. Nothing runs on a laptop.",
+    "privateCode": "The capture code is in a private repository. Its files are frozen here by sha256 (as on that repository's main branch when this record is merged); the rows it produces are published in full with the results. The spend stop in the capture is computed from list prices and is not a guarantee; the hard ceiling is each key's own broker-side limit.",
+    "sha256": {
+      ".claude/scripts/broker-actual-cost-probe.sh": "7bd772da3056a29e1831b4b91af235cc3c724688908c96b2ab1f04f07933454a",
+      ".claude/scripts/lib/broker_actual_cost.py": "a50b9ee0abc044020495155929ee010becea6a81e6d7289b2eb7d8b28ae9a293",
+      ".claude/config/broker-actual-cost-probe.json": "69f8b31e05facea12d97410a349e68781b6f318e1d4aee864e1b7a88b7581bbb",
+      ".github/workflows/rnd-telemetry-truth-capture.yml": "5876a74cba9e597fdf20cf256717e9fbf0d2ffb9137f7f8a688944dbab946627",
+      ".claude/scripts/fleet-cost-reconcile.mjs": "470d347b19cc3a7afe388b4442dd7c5613ad339f9a41a9210fde555cccb5e724"
+    },
+    "estimateBasis": "The price book Odin's gateway estimates from (local-agents packages/model-price-book): anthropic/claude-haiku-4.5 at $1.00 / $5.00 and openai/gpt-4o-mini at $0.15 / $0.60 per million input / output tokens, lastVerified in that book. The estimate is tokens times that list price.",
+    "keys": "One dedicated key per broker, added by the lab owner as repository secrets of the engineering repository. A first trial run on 2026-10-23 found the shared OpenRouter key there revoked (HTTP 401), so the capture uses its own. A broker whose key is missing for part of the window simply has fewer calls (see the decision rule)."
+  },
+  "metric": {
+    "perCall": "relative gap r = brokerReportedCost / priceBookEstimate - 1, for every counted call. A counted call is inside the window, returned HTTP 200 with a completion, and has both a broker-reported USD cost and an estimate above zero. Failed calls are counted and reported, never imputed.",
+    "perBroker": "n (counted calls), the median of r, the mean of r per UTC day, the mean of those daily means and its 95% Student-t interval across days (df = days - 1).",
+    "inBand": "the share of successful calls whose response carried usage.cost.",
+    "crossCheck": "OpenRouter only: how many calls' in-band cost agrees with the generation record within 1%."
+  },
+  "decision": {
+    "perBroker": {
+      "notEnoughCalls": "n below 50: reported as 'not enough calls', never as a gap.",
+      "estimateHolds": "|median r| <= 0.05 AND the 95% interval lies inside [-0.05, +0.05]. A savings claim built on estimates is honest for this broker, for list-priced, uncached calls.",
+      "stableFactor": "Not 'holds', but the 95% interval is at most 0.02 wide. The estimate is off by the factor 1 + median r, which a savings claim must apply first.",
+      "unreliable": "Anything else. No savings claim may be built on estimates for this broker."
+    },
+    "fleet": {
+      "question": "Do the fleet's own logged estimates cover what OpenRouter billed Odin's account over the same window?",
+      "inputs": "From Odin's routing log (rule-27 lines) and OpenRouter's account activity for the window, computed privately by fleet-cost-reconcile.mjs: the number of log rows, how many carry an estimate of exactly zero, how many name the key they spent on, and the ratio of the summed estimates to the account's billed total. Only that ratio and those counts are published; absolute dollar amounts stay private.",
+      "supports": "ratio between 0.9 and 1.1 AND at most 10% of rows carry a zero estimate: 'fleet estimates support a savings claim'.",
+      "otherwise": "'fleet estimates do not support a savings claim'. The routing log does not record which broker a row spent on, so a ratio near 1 could still be a coincidence; 'supports' is therefore necessary, not sufficient, and the note will say so."
+    },
+    "rule": {
+      "minCalls": 50,
+      "holdsWithin": 0.05,
+      "stableFactorMaxWidth": 0.02,
+      "fleet": { "ratioMin": 0.9, "ratioMax": 1.1, "maxZeroEstimateShare": 0.1 }
+    }
+  },
+  "calibration": {
+    "disclosed": "Before writing this record, the probe ran twice on 2026-10-23 (02:03Z and 02:03:30Z), 12 calls, about $0.0003 in total. Every broker returned usage.cost in the response. OpenRouter and Requesty billed exactly the price-book estimate; EUrouter billed 10% above it on both models (its own catalogue lists prices 10% above list). Requesty refused max_tokens 8 for openai/gpt-4o-mini (minimum 16), so the counted runs use 16. Over 2026-10-16..2026-10-23, 2,975 of 3,096 routing-log rows carried a zero estimate and the logged estimates came to about 1.3% of OpenRouter's billed total for the same days.",
+    "prediction": "OpenRouter and Requesty: 'estimate holds'. EUrouter: 'stable factor' near 1.10. Fleet: 'does not support a savings claim'. Written down so the result can contradict it."
+  },
+  "analysis": {
+    "script": "experiments/telemetry-truth/analyse.mjs",
+    "sha256": "72194455990c86294b29e6e05b9a665c50e7024b077552ab47816770e0b707e0",
+    "inputs": "capture/*.jsonl (the uploaded rows, copied unchanged) and fleet.json (the counts and ratio above).",
+    "check": "node experiments/telemetry-truth/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
+  },
+  "spend": {
+    "bound": "About $0.0001 per capture run, 56 runs: under $0.01 for the window. The probe stops a run whose estimated worst case would pass $0.05 (an estimate from list prices, not a guarantee); each key's broker-side limit is the hard ceiling.",
+    "stop": "If a broker key is revoked or a broker refuses the probe during the window, its capture stops; the calls made before that are reported with their n. Nothing is extrapolated."
+  },
+  "notBefore": "Counted calls are those with a timestamp inside the window. The window opens at least 24 hours after this record is merged to main of odin-labs-ai/odin-rnd, and after the capture workflow is on the default branch of the engineering repository; the freeze is the merge. Calls before the window opens are practice and are not counted.",
+  "limits": [
+    "Tiny, uncached, list-priced calls on two models. A broker's discounts, cache pricing, long prompts and reasoning tokens are outside this measurement, so 'estimate holds' says nothing about them.",
+    "Three brokers, one week. A price change during the window shows up as a gap, which is what it is.",
+    "The capture code and the routing log are private. Readers can check the hashes, the rows and the analysis, but cannot rerun the fleet half.",
+    "The fleet half compares totals, not calls: the routing log does not say which broker or key a row spent on."
+  ]
+}
