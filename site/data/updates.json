@@ -8,7 +8,7 @@
       "experiment": "EXP 018",
       "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
       "kind": "Results",
-      "text": "Eight real coding tasks, three arms, three runs each. Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%), always GPT-6 Luna 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "text": "Eight real coding tasks, three arms, three runs each, scored by the share of hidden test cases fixed (no task was fully solved). Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%) and always GPT-6 Luna paid 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
       "href": "journal/router-arm-results.html",
       "source": "data/router-arm/results.json",
       "date": "2026-10-23"
@@ -108,7 +108,7 @@
       "experiment": null,
       "title": "EXP 018: Does routing by our own rulebook beat one fixed model on real tasks?",
       "kind": "Field note",
-      "text": "Eight real coding tasks, three arms, three runs each. Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%), always GPT-6 Luna 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "text": "Eight real coding tasks, three arms, three runs each, scored by the share of hidden test cases fixed (no task was fully solved). Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%) and always GPT-6 Luna paid 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
       "href": "journal/router-arm-results.html",
       "source": "journal/router-arm-results.html",
       "date": "2026-10-23"
