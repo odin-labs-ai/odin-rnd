@@ -63,27 +63,35 @@ function fixture({ betaResults = false } = {}) {
   made.push(repo);
   const root = join(repo, 'site');
   const put = (path, value, base = root) => { mkdirSync(join(base, path, '..'), { recursive: true }); writeFileSync(join(base, path), typeof value === 'string' ? value : JSON.stringify(value)); };
+  // A frozen pre-registration: published under data/ and committed under experiments/ with its sha256 (quoteProblem).
+  const frozen = (slug, record) => {
+    const prereg = JSON.stringify(record);
+    put(`data/${slug}/preregistration.json`, prereg);
+    put(`experiments/${slug}/preregistration.json`, prereg, repo);
+    put(`experiments/${slug}/preregistration.sha256`, createHash('sha256').update(prereg).digest('hex') + '  preregistration.json\n', repo);
+  };
   // A measured experiment record is bound to its experiment folder and frozen pre-registration (recordProblem).
-  const prereg = JSON.stringify({ experiment: { id: 'EXP 901', title: 'Alpha question?' } });
+  frozen('alpha', { experiment: { id: 'EXP 901', title: 'Alpha question?' } });
   const results = JSON.stringify({ kind: 'odin-rnd.results', slug: 'alpha', preregistration: 'experiments/alpha/preregistration.json', n: 7 });
-  put('data/alpha/preregistration.json', prereg);
   put('data/alpha/results.json', results);
-  put('experiments/alpha/preregistration.json', prereg, repo);
-  put('experiments/alpha/preregistration.sha256', createHash('sha256').update(prereg).digest('hex') + '  preregistration.json\n', repo);
   put('experiments/alpha/results.json', results, repo);
   put('data/stray/results.json', { kind: 'odin-rnd.results', slug: 'stray', savings: 0.4 });
-  put('data/beta/preregistration.json', { experiment: { id: 'EXP 902', title: 'Beta question?' }, window: { from: '2026-11-01T00:00:00Z', to: '2026-11-08T00:00:00Z' } });
+  frozen('beta', { experiment: { id: 'EXP 902', title: 'Beta question?' }, window: { from: '2026-11-01T00:00:00Z', to: '2026-11-08T00:00:00Z' } });
   if (betaResults) put('data/beta/results.json', { n: 3 });
   put('data/provider-terms.json', JSON.parse(readFileSync('site/data/provider-terms.json', 'utf8')));
   put('data/broker-probe/2026-W43.json', JSON.parse(readFileSync('site/data/broker-probe/2026-W43.json', 'utf8')));
   put('data/provider-economics.json', { series: [{ slug: 'alpha' }, { slug: 'beta' }, { slug: null, title: 'Gamma question?', status: 'Not pre-registered yet.' }] });
-  return { root, read: siteReader(root) };
+  return { root, read: siteReader(root), frozen };
 }
+
+// Titles are quoted from the frozen pre-registration as <cite data-quote=…>; these assertions read the plain text.
+const plain = html => html.replace(/<cite data-quote="[^"]*">([^<]*)<\/cite>/g, '$1');
 
 test('an experiment with results is published; one without is listed as not yet published, with its window', () => {
   const { read } = fixture();
   const html = renderProviderEconomics(read, ['2026-W43']);
-  const [published, pending] = html.split('id="not-yet"');
+  assert.match(html, /<cite data-quote="data\/alpha\/preregistration\.json#\/experiment\/title">Alpha question\?<\/cite>/);
+  const [published, pending] = plain(html).split('id="not-yet"');
   assert.match(published, /EXP 901: Alpha question\?/);
   assert.match(published, /href="\.\.\/data\/alpha\/results\.json"/);
   assert.doesNotMatch(published, /EXP 902/);
@@ -96,32 +104,30 @@ test('an experiment with results is published; one without is listed as not yet 
 });
 
 test('a planned experiment shows its fallback until its pre-registration is published, then becomes a normal entry', () => {
-  const { read, root } = fixture();
+  const { read, root, frozen } = fixture();
   const config = { series: [{ slug: 'gamma', unregistered: { title: 'Gamma question?', status: 'Not pre-registered yet.' } }] };
   const withConfig = r => Object.assign(path => (path === 'data/provider-economics.json' ? config : r(path)), r);
   assert.match(renderProviderEconomics(withConfig(read), ['2026-W43']), /Gamma question\?<\/strong> Not pre-registered yet\./);
-  mkdirSync(join(root, 'data/gamma'), { recursive: true });
-  writeFileSync(join(root, 'data/gamma/preregistration.json'), JSON.stringify({ experiment: { id: 'EXP 903', title: 'Gamma, frozen?' } }));
-  const html = renderProviderEconomics(withConfig(siteReader(root)), ['2026-W43']);
+  frozen('gamma', { experiment: { id: 'EXP 903', title: 'Gamma, frozen?' } });
+  const html = plain(renderProviderEconomics(withConfig(siteReader(root)), ['2026-W43']));
   assert.match(html, /EXP 903: Gamma, frozen\?<\/strong> <a href="\.\.\/data\/gamma\/preregistration\.json">Pre-registered<\/a>/);
   assert.doesNotMatch(html, /Not pre-registered yet/);
 });
 
 test('on /evidence/ the router-arm item drops its "not pre-registered" fallback once the pre-registration exists', () => {
+  // EXP 018's pre-registration is on main (#60); "before" hides it, "after" is the committed site.
   const site = siteReader();
-  const without = path => (path === 'data/router-arm/preregistration.json' ? null : site(path));
-  const withPrereg = path => (path === 'data/router-arm/preregistration.json' ? { experiment: { id: 'EXP 018', title: 'Router arm?' } } : site(path));
-  for (const r of [without, withPrereg]) Object.assign(r, { recordProblem: site.recordProblem });
-  const before = renderEvidence(without), after = renderEvidence(withPrereg);
+  const without = Object.assign(path => (path === 'data/router-arm/preregistration.json' ? null : site(path)), site);
+  const before = renderEvidence(without), after = plain(renderEvidence(site));
   assert.match(before, /Not pre-registered yet\./);
   assert.doesNotMatch(after, /Not pre-registered yet/);
   assert.doesNotMatch(after, /assumes its baseline/);
-  assert.match(after, /EXP 018, “Router arm\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
+  assert.match(after, /EXP 018, “Does routing by our own rulebook beat one fixed model on real tasks\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
 });
 
 test('when a pre-registered experiment gains results, it moves to the published block without a page edit', () => {
   const { read } = fixture({ betaResults: true });
-  const [published, pending] = renderProviderEconomics(read, ['2026-W43']).split('id="not-yet"');
+  const [published, pending] = plain(renderProviderEconomics(read, ['2026-W43'])).split('id="not-yet"');
   assert.match(published, /EXP 902: Beta question\?/);
   assert.match(published, /href="\.\.\/data\/beta\/results\.json"/);
   assert.doesNotMatch(pending, /EXP 902/);
