@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { anonymise, anonymiseRow, errorClass } from '../experiments/broker-same-model/amendment-01/anonymise.mjs';
 import { letteredRecord } from '../experiments/broker-same-model/amendment-01/analyse-anon.mjs';
@@ -77,4 +78,13 @@ test('the frozen analysis gives the same numbers on the published rows as on the
     }
   }
   assert.equal(b.window.calls, a.window.calls);
+});
+
+test('no file in this public repository maps a broker to its EXP 016 letter (the assignment stays private)', () => {
+  const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(f => f && !/\.(png|jpe?g|webp|woff2?|ico|gif|mp4|webm|tar\.gz)$/.test(f));
+  const mapping = /"(openrouter|eurouter|requesty)"\s*:\s*"[A-Z]"/i;
+  const hits = files.filter(f => { try { return mapping.test(readFileSync(f, 'utf8')); } catch { return false; } });
+  assert.deepEqual(hits, [], 'a broker-to-letter mapping is published');
+  const published = readFileSync(`${dir}/amendment-01/anonymise.mjs`, 'utf8');
+  assert.ok(!mapping.test(published));
 });
