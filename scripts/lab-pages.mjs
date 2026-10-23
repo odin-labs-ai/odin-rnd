@@ -9,7 +9,7 @@
 // JSON pointers, never a number that is shown.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { format, NUMBER_WORDS, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
 
 export const PAGES = {
@@ -29,6 +29,7 @@ export function siteReader(root = 'site', repoRoot = join(root, '..')) {
   };
   // The same record check the build gate runs: a number comes only from a measured experiment record.
   read.recordProblem = path => { const full = join(root, path); return existsSync(full) ? recordProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
+  read.quoteProblem = path => { const full = join(root, path); return existsSync(full) ? quoteProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
   return read;
 }
 
@@ -65,7 +66,11 @@ const time = value => `<time datetime="${escape(value)}">${escape(/^\d{4}-W\d{2}
 export function experiment(read, slug) {
   const prereg = read(`data/${slug}/preregistration.json`);
   if (!prereg) throw new Error(`data/${slug}/preregistration.json does not exist`);
-  return { slug, id: prereg.experiment.id, title: prereg.experiment.title, prereg, results: read(`data/${slug}/results.json`) };
+  // The title is quoted from the frozen pre-registration, verbatim, as a <cite> the build gate checks again.
+  const why = read.quoteProblem ? read.quoteProblem(`data/${slug}/preregistration.json`) : 'the reader cannot check pre-registrations';
+  if (why) throw new Error(`EXP title of ${slug}: ${why}`);
+  const title = `<cite data-quote="data/${escape(slug)}/preregistration.json#/experiment/title">${escape(prereg.experiment.title)}</cite>`;
+  return { slug, id: prereg.experiment.id, title, prereg, results: read(`data/${slug}/results.json`) };
 }
 
 function unpublished(e, up = '../') {
@@ -136,8 +141,8 @@ export function renderProviderEconomics(read, weeks) {
     // An experiment planned but not yet pre-registered shows its fallback text until its pre-registration is published.
     if (!item.slug || (item.unregistered && !read(`data/${item.slug}/preregistration.json`))) { const f = item.unregistered ?? item; pending.push(`<li><strong>${escape(f.title)}</strong> ${escape(f.status)}</li>`); continue; }
     const e = experiment(read, item.slug);
-    const head = `<h3 id="${escape(item.slug)}">${escape(e.id)}: ${escape(e.title)}</h3>`;
-    if (!e.results) { pending.push(`<li><strong>${escape(e.id)}: ${escape(e.title)}</strong> ${unpublished(e)}</li>`); continue; }
+    const head = `<h3 id="${escape(item.slug)}">${escape(e.id)}: ${e.title}</h3>`;
+    if (!e.results) { pending.push(`<li><strong>${escape(e.id)}: ${e.title}</strong> ${unpublished(e)}</li>`); continue; }
     const body = item.slug === 'review-frontier' ? frontierBlock(read, e, item.note) : `<p>${publishedWithoutSummary(e, item.note)}</p>`;
     blocks.push(`<article class="lab-block">${head}${body}</article>`);
   }
@@ -220,7 +225,7 @@ export function renderEvidence(read) {
     // (unregistered: true), its why/planned fallback shows instead, and both disappear once it is.
     if (n.slug && (!n.unregistered || read(`data/${n.slug}/preregistration.json`))) {
       const e = experiment(read, n.slug);
-      status = `${escape(e.id)}, “${escape(e.title)}”: ${e.results ? publishedWithoutSummary(e, n.note) : unpublished(e)}`;
+      status = `${escape(e.id)}, “${e.title}”: ${e.results ? publishedWithoutSummary(e, n.note) : unpublished(e)}`;
       planned = null;
     }
     return `<li><strong>${escape(n.claim)}</strong> ${status}${planned ? ` <em>${escape(planned)}</em>` : ''}</li>`;
