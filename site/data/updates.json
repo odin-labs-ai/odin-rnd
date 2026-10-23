@@ -44,6 +44,16 @@
       "date": "2026-10-23"
     },
     {
+      "key": "exp-019-preregistration",
+      "experiment": "EXP 019",
+      "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "data/router-arm-fresh/preregistration.json",
+      "source": "data/router-arm-fresh/preregistration.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-018-preregistration",
       "experiment": "EXP 018",
       "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
