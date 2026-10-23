@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-019-results",
+      "experiment": "EXP 019",
+      "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",
+      "kind": "Results",
+      "text": "Pre-registered verdict: routing beats always-Opus, within a wide replicate allowance, and does not beat always-Luna.",
+      "href": "journal/router-arm-fresh-results.html",
+      "source": "data/router-arm-fresh/results.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-018-results",
       "experiment": "EXP 018",
       "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
@@ -41,6 +51,16 @@
       "text": "EXP 016's results are published with the three brokers shown as letters, not names.",
       "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/amendment-01.json",
+      "date": "2026-10-23"
+    },
+    {
+      "key": "exp-019-preregistration",
+      "experiment": "EXP 019",
+      "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/router-arm-fresh-results.html",
+      "source": "data/router-arm-fresh/preregistration.json",
       "date": "2026-10-23"
     },
     {
@@ -101,6 +121,16 @@
       "text": "Four models on one tool-free review seat caught between 26 and 31 of 60 defects, all within noise, at 0.06 to 8.3 cents a review. gpt-oss-120b, MiniMax M3.1 Flash and Claude Opus 5.5 are on the pre-registered frontier; Claude Sonnet 5.5 is not.",
       "href": "journal/review-frontier-results.html",
       "source": "journal/review-frontier-results.html",
+      "date": "2026-10-23"
+    },
+    {
+      "key": "note-router-arm-fresh-results",
+      "experiment": null,
+      "title": "EXP 019: Routing by our own rulebook, measured again",
+      "kind": "Field note",
+      "text": "Three fresh, complete runs of the routed arm on the same eight tasks, scored by the share of hidden test cases fixed. Routing paid 14.3 cents per case fixed (57% of cases), against EXP 018's 24.7 for always-Opus (65%) and 4.3 for always-Luna (52%). Pre-registered verdict: routing beats always-Opus, within a wide replicate allowance, and does not beat always-Luna.",
+      "href": "journal/router-arm-fresh-results.html",
+      "source": "journal/router-arm-fresh-results.html",
       "date": "2026-10-23"
     },
     {

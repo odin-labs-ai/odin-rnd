@@ -30,6 +30,8 @@ export const copies = [
   { id: 'EXP 017', record: 'experiments/review-frontier/results.json', pin: null, site: 'site/data/review-frontier/results.json' },
   { id: 'EXP 018', record: 'experiments/router-arm/preregistration.json', pin: 'experiments/router-arm/preregistration.sha256', site: 'site/data/router-arm/preregistration.json' },
   { id: 'EXP 018', record: 'experiments/router-arm/results.json', pin: null, site: 'site/data/router-arm/results.json' },
+  { id: 'EXP 019', record: 'experiments/router-arm-fresh/preregistration.json', pin: 'experiments/router-arm-fresh/preregistration.sha256', site: 'site/data/router-arm-fresh/preregistration.json' },
+  { id: 'EXP 019', record: 'experiments/router-arm-fresh/results.json', pin: null, site: 'site/data/router-arm-fresh/results.json' },
 ];
 
 /** The first token of a `sha256sum`-style pin file. */

@@ -208,6 +208,35 @@ test('a source must be a measured experiment record bound to its frozen pre-regi
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+// The hash-pinned shape (EXP 016): no kind/slug/preregistration; the pre-registration is named by sha256 and the
+// experiment by id, and both must equal the committed ones. vp-grow-odin-r-d bundle-4 (WO-VG-05).
+test('a hash-pinned record counts only when its sha256 and experiment id are the committed ones', () => {
+  const root = mkdtempSync(join(tmpdir(), 'np-pin-'));
+  try {
+    const dir = join(root, 'experiments/demo');
+    mkdirSync(dir, { recursive: true });
+    const prereg = JSON.stringify({ experiment: { id: 'EXP 900', title: 'Demo' } });
+    const sha = createHash('sha256').update(prereg).digest('hex');
+    writeFileSync(join(dir, 'preregistration.json'), prereg);
+    writeFileSync(join(dir, 'preregistration.sha256'), `${sha}  preregistration.json\n`);
+    const put = doc => { const raw = JSON.stringify(doc); writeFileSync(join(dir, 'results.json'), raw); return recordProblem('data/demo/results.json', raw, root); };
+    assert.equal(put({ experiment: 'EXP 900', preregistrationSha256: sha, n: 3 }), null);
+    assert.match(put({ experiment: 'EXP 900', preregistrationSha256: 'f'.repeat(64), n: 3 }), /names a pre-registration sha256 that is not/);
+    assert.match(put({ experiment: 'EXP 901', preregistrationSha256: sha, n: 3 }), /names experiment 'EXP 901'/);
+    assert.match(put({ experiment: 'EXP 900', n: 3 }), /does not name experiments\/demo\/preregistration\.json/, 'no hash, no binding');
+    // A record with any standard field must be the standard shape in full; the pinned path is not a fallback for it.
+    assert.match(put({ kind: 'odin-rnd.results', slug: 'demo', experiment: 'EXP 900', preregistrationSha256: sha }), /does not name experiments\/demo\/preregistration\.json/);
+    // A pinned record whose pre-registration no longer matches its pin still fails.
+    writeFileSync(join(dir, 'preregistration.sha256'), '0'.repeat(64) + '  preregistration.json\n');
+    assert.match(put({ experiment: 'EXP 900', preregistrationSha256: sha, n: 3 }), /does not match its preregistration\.sha256/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('EXP 016 is a source; EXP 018 (no pre-registration binding in its record) is still not', () => {
+  assert.equal(recordProblem('data/broker-same-model/results.json', readFileSync('site/data/broker-same-model/results.json', 'utf8')), null);
+  assert.match(recordProblem('data/router-arm/results.json', readFileSync('site/data/router-arm/results.json', 'utf8')), /does not name experiments\/router-arm\/preregistration\.json/);
+});
+
 test('the committed records the pages cite are bound to their experiments', () => {
   for (const slug of ['review-frontier', 'self-verify']) assert.equal(recordProblem(`data/${slug}/results.json`, readFileSync(`site/data/${slug}/results.json`, 'utf8')), null, slug);
 });

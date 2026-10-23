@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 019",
+    "slug": "router-arm-fresh",
+    "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-23",
+    "summary": "EXP 018 asked whether routing by our own rulebook beats always using one fixed model, and its answer was 'incomplete': one of its three routed runs lost its last task to its own spend stop. EXP 018 allows no re-runs, so this is a new experiment. It runs the same routed arm three more times — same table, same tasks, same agent, same sandbox — and compares those three runs with EXP 018's fixed-model arms exactly as published, under EXP 018's decision rule.",
+    "note": "Written, hashed and merged to main before any counted cell. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Is the rulebook's routed arm, run three fresh times, cheaper per case fixed than always using Claude Opus 5.5, and than always using GPT-6 Luna, without fixing a smaller share of the cases than the replicate spread allows? The claim under test is still 'routing as now specified': a frozen table copied from our written rule.",
+  "relation": {
+    "parent": "EXP 018 (experiments/router-arm/preregistration.json, sha256 99f92a4c0cb520ed0db90e48c572b4b95fe4d3cf24559f15218cea9533af92e7)",
+    "why": "EXP 018's routed arm completed 2 of 3 replicates (its third replicate's last cell was cut by the lane's own runner stop after one cell cost $12.95), so both of its comparisons are 'incomplete'. Its design says one attempt per cell and no re-runs, so its replicate 3 cannot be repeated inside EXP 018. EXP 018's result stands as published; this experiment does not change or replace it.",
+    "notPooled": "EXP 018's two complete routed replicates are NOT pooled with these three. Only the fixed arms are taken from EXP 018."
+  },
+  "arms": [
+    { "id": "router", "kind": "frozen rule-27 table, three fresh replicates", "table": "router-table-v2.json, the same file (sha256 in harness below) as EXP 018" }
+  ],
+  "comparison": {
+    "file": "experiments/router-arm/results.json",
+    "sha256": "255d11baebb40845aaeb0213662037ed8a1f43227ec7c34a51ef3616248d2b3a",
+    "arms": ["opus", "luna"],
+    "what": "EXP 018's fixed Claude Opus 5.5 and fixed GPT-6 Luna arms, exactly as published (odin-rnd #64, merged d11abb0): per arm its 3 complete replicates, mean $ per case fixed, mean share and share range. The analysis refuses to run if this file's bytes no longer match the hash.",
+    "timeGap": "Those fixed arms ran 2026-10-23 13:27Z-16:49Z. These routed cells run later, at the earliest the same evening. The models behind each OpenRouter id, their upstream hosts and their prices can change in between; this experiment cannot detect that, and a difference between arms could include it."
+  },
+  "corpus": {
+    "name": "odin-replay-v1",
+    "kind": "internal, sealed",
+    "tasks": 8,
+    "targetCases": 238,
+    "boundary": "The same eight private tasks as EXP 018. Only counts are published."
+  },
+  "design": {
+    "replicates": 3,
+    "lanes": [4, 5, 6],
+    "cells": "1 arm x 8 tasks x 3 replicates = 24 cells.",
+    "sequence": "The three replicates run ONE AFTER ANOTHER, as lanes router-r4, router-r5 and router-r6 of the same runner, each on its own dedicated OpenRouter key minted just before the lane starts. Within a lane the 8 tasks run one at a time in corpus order.",
+    "cell": "As EXP 018: a fresh history-free clone at the task's parent commit, odin-agent 6.88.22 headless with a 25-minute limit inside the OS sandbox whose only network is openrouter.ai, grading of the hidden tests with no network. One attempt per cell; no re-runs.",
+    "noPerCellGuard": "No separate per-cell spend guard is added. A cell cut by any stop is an error and leaves its replicate incomplete, whatever stop cut it, so a per-cell guard cannot raise the chance of a complete result; it would only change the harness EXP 018 used."
+  },
+  "harness": {
+    "privateCode": "Exactly the private replay bench EXP 018 ran, at the same commit of Odin's engineering repository (odin-labs-ai/odin-labs #8458), in a detached checkout not edited during the run. No file is changed for this experiment.",
+    "commit": "2613fa8bc3b51f86de7f5bcfcbfcade296dad41d",
+    "sha256": {
+      ".ai/bench/replay-corpus/router-table-v2.json": "79fcf5d371fd9d3d2215c045328a07574b24c4f2078876f43e8f36f4ef400ae0",
+      ".ai/bench/replay-corpus/run-replay-router.mjs": "f1a2c1c0a89dcbca51e4a64968c7bca28dfd4c2303e07980006f885a9e372735",
+      ".ai/bench/replay-corpus/run-replay.mjs": "a5732e664775ad5b237f55c0f51914c8d76abcbb3202401eb31a102367f5cc83",
+      ".ai/bench/replay-corpus/sandbox.mjs": "b46c402e255d99a85e998cd5e91cb7b880cf9d751574e4d3ec7366b9824322a0",
+      ".claude/scripts/replay-bench-sandbox.sh": "51d992328af877f9df8b84dfdf5a5de3e3269607c63c3d79057901ecebbf9dfe",
+      ".claude/scripts/replay-bench-egress-proxy.mjs": "9ec2c06d0f8dbd401dca81f273d869c3748661bec1d573a2dbd10858ade518f5",
+      ".ai/bench/replay-corpus/run-router-arm-replay.sh": "1d0cd12e2590016fa7c12236c2cdcb2735af34ee4d123c240d27de761b1c410d",
+      ".ai/bench/replay-corpus/export-router-arm.mjs": "a3ddc0628e0f61d54b6e23a2f9cc309abd03e336f81bb0754811563582c442ce",
+      ".ai/bench/replay-corpus/tasks.json": "001a039bb8c374a594f9f1dd3a7ef9b29792aa400af593bcae4f13e8371c8a17",
+      ".ai/bench/replay-corpus/baselines.json": "cec78a88b6b0b33cb78597a80632414432b8df8de6e93f4cdb6feae7d3549087",
+      ".claude/config/model-selector.json": "509ddd80ab89b38983be60c8e16ec64fc0443005311e448bbe01657e5829a9b2"
+    },
+    "invocation": "run-router-arm-replay.sh --arm router --replicate {4,5,6} (key odin-rnd-exp018-router-r{4,5,6}: the runner's own key-naming pattern; minted for this experiment), then export-router-arm.mjs --arms router --replicates 6 over this experiment's evidence directory, which holds only lanes 4 to 6.",
+    "agentPin": "odin-agent 6.88.22, the same frozen copy EXP 018 used."
+  },
+  "metric": {
+    "same": "EXP 018's metric, computed by EXP 018's own frozen functions (experiments/router-arm/analyse.mjs, sha256 0b2adbb39cc966c7fc962c1464aa2009fdebf10f336b266e585fa6dc3a964945), imported by this experiment's analysis: per replicate, billed = the lane key's usage after minus before, cases fixed and share over graded cells, $ per case fixed = billed / cases fixed; per arm, the mean over complete replicates with a 95% Student-t interval, the share range and the pooled $ per case.",
+    "parentAnalysis": { "file": "experiments/router-arm/analyse.mjs", "sha256": "0b2adbb39cc966c7fc962c1464aa2009fdebf10f336b266e585fa6dc3a964945", "enforced": "analyse.mjs refuses to load EXP 018's functions unless this file matches." },
+    "graded": "As EXP 018: an error cell (cut by a spend stop, no model response, sandbox escape) counts toward nothing and leaves its replicate incomplete."
+  },
+  "decision": {
+    "rule": "EXP 018's rule, unchanged: routing beats fixed X if its mean $ per case fixed is lower AND its mean share is not lower than X's by more than the replicate spread (the larger of the routed arm's share range here and X's share range in EXP 018). Evaluated for X = Opus and X = Luna.",
+    "incomplete": "If fewer than 3 routed replicates are complete, both comparisons are 'incomplete', reported with the finished counts. Nothing is extrapolated, and no replicate is re-run."
+  },
+  "calibration": {
+    "disclosed": "EXP 018's routed lanes billed $20.61, $18.27 and $27.87 (the last one missing its final cell, which would have cost about $1.2-1.9 by the other runs of that task). Its costliest single cell was $12.95. Resampling EXP 018's observed per-task routed costs (three observations per task; the last task's from all its Opus runs), three fresh replicates sum to $67.9 at the median and $79.5 at the 90th percentile; about 84% of resamples fit within $77. With three observations per task this understates the tails.",
+    "prediction": "All three replicates complete (about 0.8). Then, as EXP 018's descriptive figures suggest: routing beats fixed Opus, and routing does not beat fixed Luna. Written down so the result can contradict it."
+  },
+  "analysis": {
+    "script": "experiments/router-arm-fresh/analyse.mjs",
+    "sha256": "6b879472e5c84c6dc83787d3b843c7c776e232b3902bfc97ae539d978ed447aa",
+    "inputs": "data/cells.json and data/billing.json (the pinned export over lanes 4 to 6; the export's empty rows for lanes 1 to 3 are not read) and the pinned EXP 018 results file.",
+    "check": "node experiments/router-arm-fresh/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs and the reference still matches its hash."
+  },
+  "spend": {
+    "ceilingUsd": 78,
+    "priorReplayUsd": 196.661243,
+    "cumulativeCapUsd": 275,
+    "authority": "The founder's decision of 2026-10-23 approving the router-arm replay with a hard $275 cap; EXP 018 spent $196.66 of it, so at most $78 remains for the replay.",
+    "keys": "Adaptive and sequential: the key for replicate k is minted just before its lane starts, with a lifetime limit of $78 minus everything the earlier keys of this experiment billed (their usage after minus before). The lane's runner stop is that limit less $1. So the three keys' bills can never sum to more than $78, and the replay as a whole stays within $275.",
+    "accountGuard": "As EXP 018: a lane stops before a cell when the shared OpenRouter account has less than $100 left.",
+    "stop": "A cell cut by a stop is an error; its replicate is incomplete. If the remaining budget is below $5 when a replicate is due to start, it is not started and is reported as not run. Nothing is re-run."
+  },
+  "notBefore": "The first counted cell is started after this record is merged to main of odin-labs-ai/odin-rnd. The merge is the freeze.",
+  "limits": [
+    "The routed arm and the fixed arms ran at different times. Upstream model, host or price changes in between are not detected and would show up as an arm difference.",
+    "The routed replicates run one after another, the fixed arms in EXP 018 ran three at a time and six at a time. Machine load differs; a cell's 25-minute limit and its token count may depend on it.",
+    "Eight tasks from one repository, one work family. The router's picks were chosen on a run over 6 of them, so it is in-sample there.",
+    "Three replicates; with df = 2 the intervals are wide.",
+    "One broker (OpenRouter).",
+    "The corpus is private: readers can check the hashes, method, counts and bills, but cannot rerun the tasks."
+  ]
+}
