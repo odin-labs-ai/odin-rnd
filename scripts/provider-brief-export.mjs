@@ -16,27 +16,34 @@ export const BASE = 'https://odin-labs-ai.github.io/odin-rnd/';
 
 const decode = text => text.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-/** Rendered brief HTML (relative links from provider-brief/) to Markdown with absolute links. */
+/**
+ * Rendered brief HTML (relative links from provider-brief/) to Markdown with absolute links. The HTML is our own
+ * render, cut into tags and text once; tags map to Markdown marks and are otherwise dropped, text is decoded, and an
+ * angle bracket in decoded text is escaped, so no markup reaches the Markdown.
+ */
 export function toMarkdown(html, base = BASE) {
   const abs = href => (/^[a-z]+:/i.test(href) ? href : base + href.replace(/^\.\.\//, ''));
-  return decode(html
-    .replace(/<a class="lab-num" href="[^"]*" data-source="([^"]*)"[^>]*>([^<]*)<\/a>/g, (_, source, value) => `[${value}](${base}${source})`)
-    .replace(/<a href="([^"]*)"[^>]*>([^<]*)<\/a>/g, (_, href, text) => `[${text}](${abs(href)})`)
-    .replace(/<a href="([^"]*)"[^>]*><code>([^<]*)<\/code><\/a>/g, (_, href, text) => `[\`${text}\`](${abs(href)})`)
-    .replace(/<code>([^<]*)<\/code>/g, '`$1`')
-    .replace(/<time[^>]*>([^<]*)<\/time>/g, '$1')
-    .replace(/<strong>([^<]*)<\/strong>/g, '**$1**')
-    .replace(/<cite[^>]*>([^<]*)<\/cite>/g, '*$1*')
-    .replace(/<h2[^>]*>([^<]*)<\/h2>/g, '\n### $1\n\n')
-    .replace(/<\/p><p class="lab-source">/g, '\n  ')
-    .replace(/<li[^>]*>/g, '- ')
-    .replace(/<\/li>/g, '\n')
-    .replace(/<\/p>/g, '\n\n')
-    // Any tag left is dropped, then any stray angle bracket; entities are decoded after that, and an angle bracket
-    // the decoding brings back is escaped again below, so no markup reaches the Markdown.
-    .replace(/<[^>]*>/g, '').replace(/[<>]/g, ''))
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  const attr = (tag, name) => (tag.match(new RegExp(`\\s${name}="([^"]*)"`)) ?? [])[1];
+  let out = '';
+  const links = [];
+  for (const token of html.split(/(<[^>]*>)/)) {
+    if (!token.startsWith('<')) { out += decode(token).replaceAll('<', '&lt;').replaceAll('>', '&gt;'); continue; }
+    const m = token.match(/^<(\/?)([a-z0-9]+)/i);
+    if (!m) continue;
+    const [close, name] = [m[1] === '/', m[2].toLowerCase()];
+    if (name === 'a') {
+      if (!close) { const source = attr(token, 'data-source'); links.push(source ? base + source : abs(attr(token, 'href') ?? '')); out += '['; }
+      else out += `](${links.pop()})`;
+    } else if (name === 'code') out += '`';
+    else if (name === 'strong') out += '**';
+    else if (name === 'cite') out += '*';
+    else if (name === 'h2') out += close ? '\n\n' : '\n### ';
+    else if (name === 'li' && !close) out += '- ';
+    else if (name === 'li' && close) out += '\n';
+    else if (name === 'p' && close) out += '\n\n';
+    else if (name === 'p' && attr(token, 'class') === 'lab-source') out = out.replace(/\n+$/, '') + '\n  ';
+  }
+  return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
 /** The deck section: a provenance header, then the brief's measured claims and its not-a-result list. */
