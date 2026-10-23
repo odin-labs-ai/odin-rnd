@@ -199,7 +199,9 @@
     {
       "claim": "That Odin's routing saves money against a fixed-model baseline.",
       "why": "No experiment has measured it. The gateway's savings figure assumes its baseline rather than measuring it, and Odin's own cost log holds estimates, not bills.",
-      "planned": "Planned: a replay of real tasks under Odin's routing rule against fixed-model baselines. Not pre-registered yet."
+      "planned": "Planned: a replay of real tasks under Odin's routing rule against fixed-model baselines. Not pre-registered yet.",
+      "slug": "router-arm",
+      "unregistered": true
     },
     {
       "claim": "That Odin's per-call cost estimates match what the brokers bill.",

@@ -133,7 +133,8 @@ export function renderProviderEconomics(read, weeks) {
   const config = read(PAGES['provider-economics'].config);
   const blocks = [], pending = [];
   for (const item of config.series) {
-    if (!item.slug) { pending.push(`<li><strong>${escape(item.title)}</strong> ${escape(item.status)}</li>`); continue; }
+    // An experiment planned but not yet pre-registered shows its fallback text until its pre-registration is published.
+    if (!item.slug || (item.unregistered && !read(`data/${item.slug}/preregistration.json`))) { const f = item.unregistered ?? item; pending.push(`<li><strong>${escape(f.title)}</strong> ${escape(f.status)}</li>`); continue; }
     const e = experiment(read, item.slug);
     const head = `<h3 id="${escape(item.slug)}">${escape(e.id)}: ${escape(e.title)}</h3>`;
     if (!e.results) { pending.push(`<li><strong>${escape(e.id)}: ${escape(e.title)}</strong> ${unpublished(e)}</li>`); continue; }
@@ -214,7 +215,7 @@ export function renderEvidence(read) {
   const notYet = config.notMeasured.map(n => {
     if (statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' states a number`);
     let status = escape(n.why ?? '');
-    if (n.slug) {
+    if (n.slug && (!n.unregistered || read(`data/${n.slug}/preregistration.json`))) {
       const e = experiment(read, n.slug);
       status = `${escape(e.id)}, “${escape(e.title)}”: ${e.results ? publishedWithoutSummary(e, n.note) : unpublished(e)}`;
     }

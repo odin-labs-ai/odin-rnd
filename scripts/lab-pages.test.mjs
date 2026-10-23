@@ -94,6 +94,18 @@ test('an experiment with results is published; one without is listed as not yet 
   assert.equal((pending.match(/<li>/g) ?? []).length, 2);
 });
 
+test('a planned experiment shows its fallback until its pre-registration is published, then becomes a normal entry', () => {
+  const { read, root } = fixture();
+  const config = { series: [{ slug: 'gamma', unregistered: { title: 'Gamma question?', status: 'Not pre-registered yet.' } }] };
+  const withConfig = r => Object.assign(path => (path === 'data/provider-economics.json' ? config : r(path)), r);
+  assert.match(renderProviderEconomics(withConfig(read), ['2026-W43']), /Gamma question\?<\/strong> Not pre-registered yet\./);
+  mkdirSync(join(root, 'data/gamma'), { recursive: true });
+  writeFileSync(join(root, 'data/gamma/preregistration.json'), JSON.stringify({ experiment: { id: 'EXP 903', title: 'Gamma, frozen?' } }));
+  const html = renderProviderEconomics(withConfig(siteReader(root)), ['2026-W43']);
+  assert.match(html, /EXP 903: Gamma, frozen\?<\/strong> <a href="\.\.\/data\/gamma\/preregistration\.json">Pre-registered<\/a>/);
+  assert.doesNotMatch(html, /Not pre-registered yet/);
+});
+
 test('when a pre-registered experiment gains results, it moves to the published block without a page edit', () => {
   const { read } = fixture({ betaResults: true });
   const [published, pending] = renderProviderEconomics(read, ['2026-W43']).split('id="not-yet"');
