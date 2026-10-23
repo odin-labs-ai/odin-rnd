@@ -20,7 +20,8 @@ test('every lab page renders from the committed records and passes the number-pr
   assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
-    assert.ok((html.match(/data-source="/g) ?? []).length >= minimumSourced[page], `${page} shows sourced numbers`);
+    const sourced = (html.match(/data-source="/g) ?? []).length;
+    if (minimumSourced[page] === 0) assert.equal(sourced, 0, `${page} shows no number`); else assert.ok(sourced >= minimumSourced[page], `${page} shows sourced numbers`);
   }
 });
 
@@ -104,6 +105,18 @@ test('a planned experiment shows its fallback until its pre-registration is publ
   const html = renderProviderEconomics(withConfig(siteReader(root)), ['2026-W43']);
   assert.match(html, /EXP 903: Gamma, frozen\?<\/strong> <a href="\.\.\/data\/gamma\/preregistration\.json">Pre-registered<\/a>/);
   assert.doesNotMatch(html, /Not pre-registered yet/);
+});
+
+test('on /evidence/ the router-arm item drops its "not pre-registered" fallback once the pre-registration exists', () => {
+  const site = siteReader();
+  const without = path => (path === 'data/router-arm/preregistration.json' ? null : site(path));
+  const withPrereg = path => (path === 'data/router-arm/preregistration.json' ? { experiment: { id: 'EXP 018', title: 'Router arm?' } } : site(path));
+  for (const r of [without, withPrereg]) Object.assign(r, { recordProblem: site.recordProblem });
+  const before = renderEvidence(without), after = renderEvidence(withPrereg);
+  assert.match(before, /Not pre-registered yet\./);
+  assert.doesNotMatch(after, /Not pre-registered yet/);
+  assert.doesNotMatch(after, /assumes its baseline/);
+  assert.match(after, /EXP 018, “Router arm\?”: <a href="\.\.\/data\/router-arm\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
 });
 
 test('when a pre-registered experiment gains results, it moves to the published block without a page edit', () => {

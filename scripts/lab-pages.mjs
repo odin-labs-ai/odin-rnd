@@ -215,11 +215,15 @@ export function renderEvidence(read) {
   const notYet = config.notMeasured.map(n => {
     if (statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' states a number`);
     let status = escape(n.why ?? '');
+    let planned = n.planned;
+    // An item tied to an experiment shows that experiment's state; while the experiment is not yet pre-registered
+    // (unregistered: true), its why/planned fallback shows instead, and both disappear once it is.
     if (n.slug && (!n.unregistered || read(`data/${n.slug}/preregistration.json`))) {
       const e = experiment(read, n.slug);
       status = `${escape(e.id)}, “${escape(e.title)}”: ${e.results ? publishedWithoutSummary(e, n.note) : unpublished(e)}`;
+      planned = null;
     }
-    return `<li><strong>${escape(n.claim)}</strong> ${status}${n.planned ? ` <em>${escape(n.planned)}</em>` : ''}</li>`;
+    return `<li><strong>${escape(n.claim)}</strong> ${status}${planned ? ` <em>${escape(planned)}</em>` : ''}</li>`;
   }).join('');
   return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each claim below is a sentence whose numbers are read from the experiment record it cites, at build time. Each number links to that record.</p><ol class="lab-claims">${claims}</ol></div></section>`
     + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">What we have not measured yet.</h2><div class="company-prose"><p>These are things an investor or a provider might expect us to claim. Until a published result backs them, we do not.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
@@ -227,28 +231,35 @@ export function renderEvidence(read) {
 
 /**
  * The signed-partner list (vp-grow-odin-r-d bundle-3 WO-02). Only a signed agreement on record makes a partner: each
- * entry needs a name, a signedOn date and an evidence id (the private record of the signed agreement). Any other
- * field, a logo included, is refused, so a lead or a logo cannot reach the page through this file.
+ * entry needs a name, a signedOn date (real, not in the future) and an evidence id (the private record of the signed
+ * agreement). Any other field, a logo or a status included, is refused, so a lead, a free-text status or a logo cannot
+ * reach the page through this file.
  */
-export function partnerProblems(config) {
+export const PLACEHOLDER_EVIDENCE = /^(?:tbd|tba|todo|pending|none|null|unknown|na|n-a|to-be-signed|placeholder|draft)$/i;
+
+export function partnerProblems(config, today = new Date().toISOString().slice(0, 10)) {
   const problems = [];
   if (!Array.isArray(config?.partners)) return ['partners must be a list'];
   config.partners.forEach((p, i) => {
     const at = `partners[${i}]`;
-    for (const key of Object.keys(p ?? {})) if (!['name', 'signedOn', 'evidence', 'scope'].includes(key)) problems.push(`${at}: field '${key}' is not allowed`);
+    for (const key of Object.keys(p ?? {})) if (!['name', 'signedOn', 'evidence'].includes(key)) problems.push(`${at}: field '${key}' is not allowed`);
     if (typeof p?.name !== 'string' || !p.name.trim()) problems.push(`${at}: name is missing`);
-    if (typeof p?.signedOn !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.signedOn) || Number.isNaN(Date.parse(p.signedOn))) problems.push(`${at}: signedOn must be the date the agreement was signed (YYYY-MM-DD)`);
-    if (typeof p?.evidence !== 'string' || !p.evidence.trim() || /^https?:/i.test(p.evidence)) problems.push(`${at}: evidence must be the id of the private record of the signed agreement`);
+    // A real calendar date (it must survive a round trip, so 2026-02-30 fails) that is not in the future.
+    const d = typeof p?.signedOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.signedOn) ? new Date(`${p.signedOn}T00:00:00Z`) : null;
+    if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== p.signedOn) problems.push(`${at}: signedOn must be the date the agreement was signed (YYYY-MM-DD)`);
+    else if (p.signedOn > today) problems.push(`${at}: signedOn ${p.signedOn} is in the future; a planned signing is not a signed agreement`);
+    // The id of a private record: lower-case letters, digits and hyphens. A link of any form, or a placeholder, is not one.
+    if (typeof p?.evidence !== 'string' || !/^[a-z0-9][a-z0-9-]{2,63}$/.test(p.evidence) || PLACEHOLDER_EVIDENCE.test(p.evidence)) problems.push(`${at}: evidence must be the id of the private record of the signed agreement (lower-case letters, digits, hyphens; not a link or a placeholder)`);
   });
   return problems;
 }
 
-export function renderPartners(read) {
+export function renderPartners(read, today) {
   const config = read(PAGES.providers.config);
-  const problems = partnerProblems(config);
+  const problems = partnerProblems(config, today);
   if (problems.length) throw new Error(`site/${PAGES.providers.config} is refused:\n${problems.join('\n')}`);
   if (!config.partners.length) return '<p class="lab-empty">No partner agreement is signed yet.</p>';
-  return `<ul class="lab-partners">${config.partners.map(p => `<li><strong>${escape(p.name)}</strong>, agreement signed ${time(p.signedOn)}${p.scope ? `: ${escape(p.scope)}` : ''}</li>`).join('')}</ul>`;
+  return `<ul class="lab-partners">${config.partners.map(p => `<li><strong>${escape(p.name)}</strong>, agreement signed ${time(p.signedOn)}</li>`).join('')}</ul>`;
 }
 
 /** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
