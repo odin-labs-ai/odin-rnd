@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkPage, checkSite, format, PAGES, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { createHash } from 'node:crypto';
+import { checkPage, checkSite, format, PAGES, parseAttributes, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 
 // The realism ratchet for the lab's provider-economics and evidence pages (vp-grow-odin-r-d bundle-3 WO-04): every
 // visible number links to an experiment record and shows exactly the value its JSON pointer holds. These tests run
@@ -21,7 +22,9 @@ const exists = path => path in files;
 const FILE = 'evidence/index.html';
 const page = body => `<!doctype html><html><head><title>t 2026</title><link rel="stylesheet" href="../assets/style.css"></head><body><main>${body}</main></body></html>`;
 const sourced = (pointer, kind, shown, extra = '') => `<a href="../${RECORD}" data-source="${RECORD}#${pointer}" data-format="${kind}"${extra}>${shown}</a>`;
-const problems = body => checkPage(FILE, page(body), readData, exists);
+// In these unit cases the demo record stands in for a measured experiment record; recordProblem has its own tests below.
+const io = { readData, exists, recordProblem: path => (path === RECORD ? null : `${path} is not a measured experiment record`) };
+const problems = body => checkPage(FILE, page(body), io);
 
 test('a sourced number that links to its record and shows its value passes', () => {
   assert.deepEqual(problems(`<p>Caught ${sourced('/seats/0/caught', 'int', '31')} of ${sourced('/seats/0/caughtOf', 'int', '60')} at ${sourced('/seats/0/cost', 'usd', '$0.083274')} (${sourced('/seats/0/ci/0', 'pct', '39%')}).</p>`), []);
@@ -48,12 +51,12 @@ test('a dead link fails', () => {
 
 test('a page configuration file is never a source, even when its number matches', () => {
   const html = `<p><a href="../data/evidence.json" data-source="data/evidence.json#/typed" data-format="int">42</a></p>`;
-  assert.match(problems(html).join('\n'), /is not an experiment record/);
+  assert.match(problems(html).join('\n'), /not a measured experiment record/);
   assert.equal(SOURCE_FILE.test('data/evidence.json'), false);
   assert.equal(SOURCE_FILE.test('data/provider-economics.json'), false);
   assert.equal(SOURCE_FILE.test('data/provider-partners.json'), false);
   assert.equal(SOURCE_FILE.test('data/review-frontier/results.json'), true);
-  assert.equal(SOURCE_FILE.test('data/telemetry-truth/preregistration.json'), true);
+  assert.equal(SOURCE_FILE.test('data/telemetry-truth/preregistration.json'), false, 'a pre-registration holds planned values, not measured ones');
   assert.equal(SOURCE_FILE.test('data/broker-probe/2026-W43.json'), true);
   assert.equal(SOURCE_FILE.test('data/broker-probe/catalogue/openrouter.json'), false);
 });
@@ -61,6 +64,12 @@ test('a page configuration file is never a source, even when its number matches'
 test('a sourced number must be a link to its own record', () => {
   assert.match(problems(`<p><span data-source="${RECORD}#/seats/0/caught" data-format="int">31</span></p>`).join('\n'), /not a link to its record/);
   assert.match(problems(`<p><a href="../methods/" data-source="${RECORD}#/seats/0/caught" data-format="int">31</a></p>`).join('\n'), /not a link to its record/);
+  // data-href is not href: \b would have matched after the hyphen.
+  assert.match(problems(`<p><a data-href="../${RECORD}" data-source="${RECORD}#/seats/0/caught" data-format="int">31</a></p>`).join('\n'), /not a link to its record/);
+  assert.equal(parseAttributes(' data-href="x" x-data-source=\'y\'').get('href'), undefined);
+  assert.equal(parseAttributes(' data-href="x" x-data-source=\'y\'').get('data-source'), undefined);
+  // Single-quoted and unquoted attributes are read the same as double-quoted ones.
+  assert.deepEqual(problems(`<p><a href='../${RECORD}' data-source='${RECORD}#/seats/0/caught' data-format=int>31</a></p>`), []);
 });
 
 test('a missing record, an unresolved pointer, a non-number and an unknown format all fail', () => {
@@ -93,12 +102,23 @@ test('exemptions are exactly the enumerated ones', () => {
   assert.match(problems('<p>4xx</p>').join('\n'), /unsourced digit/);
 });
 
+test('digits of any script and numbers written as words fail', () => {
+  assert.match(problems('<p>Odin saves \uff14\uff10% on spend.</p>').join('\n'), /unsourced digit/, 'full-width digits');
+  assert.match(problems('<p>Odin saves \u0664\u0660 percent.</p>').join('\n'), /unsourced digit/, 'Arabic-Indic digits');
+  for (const phrase of ['in its two counted runs', 'on one sealed corpus', 'a hundredfold cheaper', 'the first week', 'twice as fast', 'dozens of models', 'Zero errors']) assert.match(problems(`<p>${phrase}</p>`).join('\n'), /number word/, phrase);
+  assert.deepEqual(problems('<p>Someone, anyone, alone, done, tone, often, tenant: words that only contain a number word pass.</p>'), []);
+});
+
 test('digits in SVG text and in aria-label, alt and title fail', () => {
   assert.match(problems('<svg><text x="1" y="2">$0.01</text></svg>').join('\n'), /unsourced digit/);
   assert.deepEqual(problems('<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="2"></circle><text x="1" y="2">opus</text></svg>'), [], 'geometry attributes are not text');
-  assert.match(problems('<div aria-label="saves 40%">x</div>').join('\n'), /digit in aria-label/);
-  assert.match(problems('<img src="../assets/style.css" alt="chart of 3 brokers">').join('\n'), /digit in alt/);
-  assert.match(problems('<abbr title="since 2024">x</abbr>').join('\n'), /digit in title/);
+  assert.match(problems('<div aria-label="saves 40%">x</div>').join('\n'), /aria-label=.*unsourced digit/);
+  assert.match(problems('<img src="../assets/style.css" alt="chart of 3 brokers">').join('\n'), /alt=.*unsourced digit/);
+  assert.match(problems('<abbr title="since 2024">x</abbr>').join('\n'), /title=.*unsourced digit/);
+  assert.match(problems("<div aria-label='saves 40%'>x</div>").join('\n'), /aria-label=.*unsourced digit/, 'single-quoted');
+  assert.match(problems('<div aria-label=saves40>x</div>').join('\n'), /aria-label=.*unsourced digit/, 'unquoted');
+  assert.match(problems('<input value="40%" placeholder="3 brokers">').join('\n'), /value=.*unsourced digit/);
+  assert.match(problems('<div aria-label="two brokers">x</div>').join('\n'), /aria-label=.*number word/);
 });
 
 test('text outside <body> is not scanned; comments, scripts and styles are not visible text', () => {
@@ -125,8 +145,40 @@ test('format and resolvePointer are exact', () => {
   assert.equal(format(16.85832, 'num'), '16.85832');
   assert.throws(() => format('31', 'int'), /not a finite number/);
   assert.throws(() => format(NaN, 'num'), /not a finite number/);
+  assert.throws(() => format(5e-7, 'usd'), /no plain decimal form/);
   assert.equal(resolvePointer({ 'a/b': { '~c': 5 } }, '/a~1b/~0c'), 5);
   assert.equal(resolvePointer({ a: [1, 2] }, '/a/1'), 2);
   assert.equal(resolvePointer({ a: 1 }, '/b'), undefined);
   assert.equal(resolvePointer({ a: 1 }, 'a'), undefined);
+});
+
+// recordProblem binds a source to a measured, pre-registered experiment in the checkout (finding: path shape alone let
+// any committed data/<slug>/results.json through).
+test('a source must be a measured experiment record bound to its frozen pre-registration', () => {
+  const root = mkdtempSync(join(tmpdir(), 'np-rec-'));
+  try {
+    const dir = join(root, 'experiments/demo');
+    mkdirSync(dir, { recursive: true });
+    const prereg = '{"kind":"odin-rnd.preregistration"}\n';
+    writeFileSync(join(dir, 'preregistration.json'), prereg);
+    writeFileSync(join(dir, 'preregistration.sha256'), createHash('sha256').update(prereg).digest('hex') + '  preregistration.json\n');
+    const results = JSON.stringify({ kind: 'odin-rnd.results', slug: 'demo', preregistration: 'experiments/demo/preregistration.json', n: 3 });
+    writeFileSync(join(dir, 'results.json'), results);
+    assert.equal(recordProblem('data/demo/results.json', results, root), null);
+    assert.match(recordProblem('data/demo/results.json', results.replace('3', '4'), root), /not byte for byte/);
+    assert.match(recordProblem('data/marketing/results.json', '{"savings":0.4}', root), /not byte for byte experiments\/marketing/);
+    assert.match(recordProblem('data/demo/preregistration.json', prereg, root), /not a results record/);
+    assert.match(recordProblem('data/evidence.json', '{}', root), /not a results record/);
+    writeFileSync(join(dir, 'preregistration.sha256'), '0'.repeat(64) + '  preregistration.json\n');
+    assert.match(recordProblem('data/demo/results.json', results, root), /does not match its preregistration\.sha256/);
+    const other = JSON.stringify({ kind: 'odin-rnd.results', slug: 'demo', preregistration: 'experiments/other/preregistration.json' });
+    writeFileSync(join(dir, 'results.json'), other);
+    assert.match(recordProblem('data/demo/results.json', other, root), /does not name experiments\/demo\/preregistration\.json/);
+    assert.equal(recordProblem('data/broker-probe/2026-W43.json', '{"kind":"odin-rnd.broker-probe","week":"2026-W43"}', root), null);
+    assert.match(recordProblem('data/broker-probe/2026-W43.json', '{"kind":"odin-rnd.broker-probe","week":"2026-W44"}', root), /not the probe record of week 2026-W43/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the committed records the pages cite are bound to their experiments', () => {
+  for (const slug of ['review-frontier', 'self-verify']) assert.equal(recordProblem(`data/${slug}/results.json`, readFileSync(`site/data/${slug}/results.json`, 'utf8')), null, slug);
 });

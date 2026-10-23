@@ -9,7 +9,7 @@
 // JSON pointers, never a number that is shown.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { format, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { format, NUMBER_WORDS, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
 
 export const PAGES = {
@@ -20,12 +20,20 @@ export const PAGES = {
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
 /** A reader over a site root (site/ in tests and the build): JSON by site-relative path, null when absent. */
-export function siteReader(root = 'site') {
+export function siteReader(root = 'site', repoRoot = join(root, '..')) {
   const cache = new Map();
-  return path => {
+  const read = path => {
     if (!cache.has(path)) { const full = join(root, path); cache.set(path, existsSync(full) ? JSON.parse(readFileSync(full, 'utf8')) : null); }
     return cache.get(path);
   };
+  // The same record check the build gate runs: a number comes only from a measured experiment record.
+  read.recordProblem = path => { const full = join(root, path); return existsSync(full) ? recordProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
+  return read;
+}
+
+/** Why `text` (page configuration prose) states a number: a digit of any script, or a number word. */
+export function statesNumber(text) {
+  return /\p{Nd}/u.test(text) || NUMBER_WORDS.test(text);
 }
 
 /** One sourced number: a link to its record, carrying the pointer the build check resolves again. `up` is '../'. */
@@ -34,6 +42,8 @@ export function num(read, source, kind, up = '../') {
   if (!SOURCE_FILE.test(path)) throw new Error(`${source}: a number may only come from an experiment record`);
   const doc = read(path);
   if (doc === null) throw new Error(`${source}: ${path} does not exist`);
+  const why = read.recordProblem ? read.recordProblem(path) : 'the reader cannot check records';
+  if (why) throw new Error(`${source}: ${why}`);
   const value = resolvePointer(doc, pointer);
   if (value === undefined) throw new Error(`${source}: the pointer does not resolve`);
   return `<a class="lab-num" href="${up}${escape(path)}" data-source="${escape(source)}" data-format="${escape(kind)}">${escape(format(value, kind))}</a>`;
@@ -70,18 +80,21 @@ function publishedWithoutSummary(e, note, up = '../') {
 export function frontierBlock(read, e, note) {
   const src = 'data/review-frontier/results.json';
   const on = new Set(e.results.decision.onFrontier);
+  const seats = e.results.seats;
+  if (!seats.length || seats.some(s => !(Number.isFinite(s.costPerReviewUsd) && s.costPerReviewUsd > 0))) throw new Error('EXP 017: every seat needs a positive cost per review for the log-scale scatter');
+  if (new Set(seats.map(s => s.caughtOf)).size !== 1) throw new Error('EXP 017: seats were scored out of different totals');
   const rows = e.results.seats.map((s, i) => {
     const p = `${src}#/seats/${i}`;
-    return `<tr><th scope="row">${escape(s.seat)}</th><td><code>${escape(s.model)}</code></td><td>${num(read, `${p}/caught`, 'int')} of ${num(read, `${p}/caughtOf`, 'int')} <span class="lab-ci">(${num(read, `${p}/caughtCI/0`, 'pct')} to ${num(read, `${p}/caughtCI/1`, 'pct')})</span></td><td>${num(read, `${p}/falseAlarms`, 'int')} of ${num(read, `${p}/falseAlarmsOf`, 'int')}</td><td>${num(read, `${p}/costPerReviewUsd`, 'usd')}</td><td>${on.has(s.seat) ? 'on' : 'off'}</td></tr>`;
+    return `<tr><th scope="row">${escape(s.seat)}</th><td><code>${escape(s.model)}</code></td><td>${num(read, `${p}/caught`, 'int')} of ${num(read, `${p}/caughtOf`, 'int')} <span class="lab-ci">(${num(read, `${p}/caughtCI/0`, 'pct')} to ${num(read, `${p}/caughtCI/1`, 'pct')})</span></td><td>${num(read, `${p}/falseAlarms`, 'int')} of ${num(read, `${p}/falseAlarmsOf`, 'int')}</td><td>${num(read, `${p}/costPerReviewUsd`, 'usd')}</td><td>${num(read, `${p}/runsComplete`, 'int')}</td><td>${on.has(s.seat) ? 'on' : 'off'}</td></tr>`;
   }).join('');
-  const table = `<div class="table-scroll" role="region" aria-label="Review cost and recall, per model" tabindex="0"><table><caption>Pooled over two runs per model. The interval is the Wilson interval on defects caught. Cost is what the broker billed, per review.</caption><thead><tr><th scope="col">Seat</th><th scope="col">Model</th><th scope="col">Defects caught</th><th scope="col">False alarms</th><th scope="col">Cost per review</th><th scope="col">Frontier</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const table = `<div class="table-scroll" role="region" aria-label="Review cost and recall, per model" tabindex="0"><table><caption>Pooled over each model's runs (the Runs column). The interval is the Wilson interval on defects caught. Cost is what the broker billed, per review.</caption><thead><tr><th scope="col">Seat</th><th scope="col">Model</th><th scope="col">Defects caught</th><th scope="col">False alarms</th><th scope="col">Cost per review</th><th scope="col">Runs</th><th scope="col">Frontier</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   // Scatter: x = log10(cost per review), y = caught. Positions only; the values are in the table above.
   const W = 560, H = 260, L = 40, R = 120, T = 20, B = 40;
   const xs = e.results.seats.map(s => Math.log10(s.costPerReviewUsd)), ys = e.results.seats.map(s => s.caught);
-  const [x0, x1] = [Math.min(...xs), Math.max(...xs)], yMax = e.results.seats[0].caughtOf;
+  const [x0, x1] = [Math.min(...xs), Math.max(...xs)], yMax = seats[0].caughtOf;
   const px = x => L + ((x - x0) / ((x1 - x0) || 1)) * (W - L - R), py = y => H - B - (y / yMax) * (H - T - B);
   const points = e.results.seats.map((s, i) => `<g class="${on.has(s.seat) ? 'lab-on' : 'lab-off'}"><circle cx="${px(xs[i]).toFixed(1)}" cy="${py(ys[i]).toFixed(1)}" r="6"></circle><text x="${(px(xs[i]) + 10).toFixed(1)}" y="${(py(ys[i]) + 4).toFixed(1)}">${escape(s.seat)}</text></g>`).join('');
-  const svg = `<figure class="lab-figure"><svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="frontier-figure-caption"><line class="lab-axis" x1="${L}" y1="${H - B}" x2="${W - R + 20}" y2="${H - B}"></line><line class="lab-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"></line><text class="lab-axis-label" x="${L}" y="${H - 10}">cost per review, log scale →</text><text class="lab-axis-label" x="${L + 6}" y="${T + 4}">defects caught ↑ (axis starts at zero)</text>${points}</svg><figcaption id="frontier-figure-caption">Each point is one model: further right costs more per review, higher catches more defects. Filled points are on the cost/recall frontier. The numbers are in the table above.</figcaption></figure>`;
+  const svg = `<figure class="lab-figure"><svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="frontier-figure-caption"><line class="lab-axis" x1="${L}" y1="${H - B}" x2="${W - R + 20}" y2="${H - B}"></line><line class="lab-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"></line><text class="lab-axis-label" x="${L}" y="${H - 10}">cost per review, log scale →</text><text class="lab-axis-label" x="${L + 6}" y="${T + 4}">defects caught ↑ (axis from none caught)</text>${points}</svg><figcaption id="frontier-figure-caption">Each point is a model: further right costs more per review, higher catches more defects. Filled points are on the cost/recall frontier. The numbers are in the table above.</figcaption></figure>`;
   const spend = `<p>The broker billed ${num(read, `${src}#/spend/brokerReportedUsd`, 'usd')} for all ${num(read, `${src}#/spend/reviews`, 'int')} reviews. <a href="../${escape(note)}">The field note</a> gives the method, the limits and what the result does not show; <a href="../${src}">the record</a> holds every figure.</p>`;
   return table + svg + spend;
 }
@@ -133,12 +146,14 @@ export function renderProviderEconomics(read, weeks) {
 
 /** Fill a claim's text: {name} placeholders become sourced numbers, model ids, broker names, words or dates. */
 export function fillClaim(read, claim) {
-  if (/\d/.test(claim.text)) throw new Error(`claim ${claim.id}: its text holds a digit; every number must be a sourced value`);
+  if (statesNumber(claim.text)) throw new Error(`claim ${claim.id}: its text states a number (a digit or a number word); every number must be a sourced value`);
   return escape(claim.text).replace(/\{([a-zA-Z0-9]+)\}/g, (whole, name) => {
     const v = claim.values?.[name];
     if (!v) throw new Error(`claim ${claim.id}: no value for {${name}}`);
     if (v.format === 'code') return `<code>${escape(str(read, v.source))}</code>`;
-    if (v.format === 'word') { const w = str(read, v.source); if (/\d/.test(w)) throw new Error(`claim ${claim.id}: word value '${w}' holds a digit`); return `<strong>${escape(w)}</strong>`; }
+    // The last key of a pointer that resolves (a model id keyed in its record), so a name and its counts share a path.
+    if (v.format === 'key') { const [path, pointer = ''] = v.source.split('#'); if (resolvePointer(read(path), pointer) === undefined) throw new Error(`claim ${claim.id}: ${v.source} does not resolve`); return `<code>${escape(pointer.split('/').pop().replaceAll('~1', '/').replaceAll('~0', '~'))}</code>`; }
+    if (v.format === 'word') { const w = str(read, v.source); if (statesNumber(w)) throw new Error(`claim ${claim.id}: word value '${w}' holds a digit`); return `<strong>${escape(w)}</strong>`; }
     if (v.format === 'date') return time(str(read, v.source));
     if (v.format === 'broker') return escape(displayNames(Object.keys(PROBE.brokers), read('data/provider-terms.json'))[v.id]);
     return num(read, v.source, v.format);
@@ -164,7 +179,17 @@ function claimWindow(read, w) {
  * Qualitative sentences in a claim ("the intervals overlap") are checked against the record here, so a sentence that
  * stops being true stops the build instead of staying on the page.
  */
+const listAt = (read, a) => { const [path, pointer = ''] = a.source.split('#'); const list = resolvePointer(read(path), pointer); return Array.isArray(list) ? list : null; };
 export const ASSERTS = {
+  // The item at `index` has the smallest (min-at) or largest (max-at) `field` in the list: "the cheapest", "the dearest".
+  'min-at': (read, a) => { const l = listAt(read, a); if (!l?.[a.index]) return 'no such item'; return l.every(x => x[a.field] >= l[a.index][a.field]) ? null : `item ${a.index} does not have the smallest ${a.field}`; },
+  'max-at': (read, a) => { const l = listAt(read, a); if (!l?.[a.index]) return 'no such item'; return l.every(x => x[a.field] <= l[a.index][a.field]) ? null : `item ${a.index} does not have the largest ${a.field}`; },
+  // max/min of `wide` exceeds max/min of `narrow`: "the price varied far more than what it caught" (factor `by`).
+  'spread-greater': (read, a) => {
+    const l = listAt(read, a); if (!l?.length) return 'no items';
+    const ratio = f => { const v = l.map(x => x[f]); return Math.max(...v) / Math.min(...v); };
+    return ratio(a.wide) > (a.by ?? 1) * ratio(a.narrow) ? null : `the spread of ${a.wide} is not more than ${a.by ?? 1}x the spread of ${a.narrow}`;
+  },
   'intervals-overlap': (read, a) => {
     const [path, pointer = ''] = a.source.split('#');
     const ivs = resolvePointer(read(path), pointer).map(x => x[a.field]);
@@ -186,7 +211,7 @@ export function renderEvidence(read) {
     return `<li id="${escape(c.id)}"><p>${fillClaim(read, c)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="../${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="../${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
   }).join('');
   const notYet = config.notMeasured.map(n => {
-    if (/\d/.test(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' holds a digit`);
+    if (statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' states a number`);
     let status = escape(n.why ?? '');
     if (n.slug) {
       const e = experiment(read, n.slug);

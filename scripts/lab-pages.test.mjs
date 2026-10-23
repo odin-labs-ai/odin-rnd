@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ASSERTS, fillClaim, num, renderEvidence, renderLabPages, renderProviderEconomics, siteReader } from './lab-pages.mjs';
-import { checkPage } from './number-provenance.mjs';
+import { ASSERTS, fillClaim, frontierBlock, num, renderEvidence, renderLabPages, renderProviderEconomics, siteReader, statesNumber } from './lab-pages.mjs';
+import { checkPage, recordProblem } from './number-provenance.mjs';
+import { createHash } from 'node:crypto';
 import { checkPages, loadTerms } from './provider-terms.mjs';
 
 // The provider-economics and evidence pages (vp-grow-odin-r-d bundle-3 WO-01, WO-03). `pnpm test` runs before
@@ -16,7 +17,7 @@ const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('si
 
 test('both pages render from the committed records and pass the number-provenance check', () => {
   for (const [page, html] of Object.entries(rendered)) {
-    assert.deepEqual(checkPage(`${page}/index.html`, html, readSite), [], page);
+    assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
     assert.ok((html.match(/data-source="/g) ?? []).length >= 10, `${page} shows sourced numbers`);
   }
 });
@@ -31,6 +32,8 @@ test('the pages carry no third-party image or logo', () => {
     const imgs = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/g)].map(m => m[1]);
     assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg'), [], page);
     assert.doesNotMatch(html, /double\s?word/i, `${page} names no lead without a record`);
+    // Brokers whose terms are under review appear only by letter; orq has no record on these pages at all.
+    assert.doesNotMatch(html, /eu\s?router|requesty|\borq\b/i, `${page} names no broker without leave`);
   }
 });
 
@@ -52,11 +55,19 @@ test('the pages are in the sitemap and linked from the home page and the methods
 const made = [];
 after(() => { for (const dir of made) rmSync(dir, { recursive: true, force: true }); });
 function fixture({ betaResults = false } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'lab-pages-'));
-  made.push(root);
-  const put = (path, value) => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), typeof value === 'string' ? value : JSON.stringify(value)); };
-  put('data/alpha/preregistration.json', { experiment: { id: 'EXP 901', title: 'Alpha question?' } });
-  put('data/alpha/results.json', { n: 7 });
+  const repo = mkdtempSync(join(tmpdir(), 'lab-pages-'));
+  made.push(repo);
+  const root = join(repo, 'site');
+  const put = (path, value, base = root) => { mkdirSync(join(base, path, '..'), { recursive: true }); writeFileSync(join(base, path), typeof value === 'string' ? value : JSON.stringify(value)); };
+  // A measured experiment record is bound to its experiment folder and frozen pre-registration (recordProblem).
+  const prereg = JSON.stringify({ experiment: { id: 'EXP 901', title: 'Alpha question?' } });
+  const results = JSON.stringify({ kind: 'odin-rnd.results', slug: 'alpha', preregistration: 'experiments/alpha/preregistration.json', n: 7 });
+  put('data/alpha/preregistration.json', prereg);
+  put('data/alpha/results.json', results);
+  put('experiments/alpha/preregistration.json', prereg, repo);
+  put('experiments/alpha/preregistration.sha256', createHash('sha256').update(prereg).digest('hex') + '  preregistration.json\n', repo);
+  put('experiments/alpha/results.json', results, repo);
+  put('data/stray/results.json', { kind: 'odin-rnd.results', slug: 'stray', savings: 0.4 });
   put('data/beta/preregistration.json', { experiment: { id: 'EXP 902', title: 'Beta question?' }, window: { from: '2026-11-01T00:00:00Z', to: '2026-11-08T00:00:00Z' } });
   if (betaResults) put('data/beta/results.json', { n: 3 });
   put('data/provider-terms.json', JSON.parse(readFileSync('site/data/provider-terms.json', 'utf8')));
@@ -93,11 +104,16 @@ test('a number may only come from an experiment record, never from page configur
   assert.match(num(read, 'data/alpha/results.json#/n', 'int'), /data-source="data\/alpha\/results\.json#\/n" data-format="int">7<\/a>/);
   assert.throws(() => num(read, 'data/provider-economics.json#/series', 'int'), /only come from an experiment record/);
   assert.throws(() => num(read, 'data/alpha/results.json#/missing', 'int'), /does not resolve/);
+  assert.throws(() => num(read, 'data/stray/results.json#/savings', 'pct'), /not byte for byte experiments\/stray/, 'a results file without an experiment behind it');
+  assert.throws(() => num(read, 'data/beta/preregistration.json#/window', 'int'), /only come from an experiment record/, 'a pre-registration holds planned values');
+  assert.throws(() => num(path => ({ n: 1 }), 'data/alpha/results.json#/n', 'int'), /cannot check records/, 'a reader without the record check is refused');
 });
 
 test('a claim whose text holds a digit, or names a value it does not define, is refused', () => {
   const { read } = fixture();
-  assert.throws(() => fillClaim(read, { id: 'x', text: 'Saves 40 percent.' }), /holds a digit/);
+  assert.throws(() => fillClaim(read, { id: 'x', text: 'Saves 40 percent.' }), /states a number/);
+  assert.throws(() => fillClaim(read, { id: 'x', text: 'Saves \uff14\uff10 percent.' }), /states a number/, 'full-width digits');
+  assert.throws(() => fillClaim(read, { id: 'x', text: 'In its two counted runs.' }), /states a number/, 'a number word');
   assert.throws(() => fillClaim(read, { id: 'x', text: 'Caught {n}.' , values: {} }), /no value for \{n\}/);
   assert.match(fillClaim(read, { id: 'x', text: 'Caught {n}.', values: { n: { source: 'data/alpha/results.json#/n', format: 'int' } } }), />7<\/a>\./);
 });
@@ -111,12 +127,38 @@ test('a comparison sentence is checked against its record', () => {
   const broken = { ...config, claims: [{ ...config.claims[0], asserts: [{ kind: 'no-such-check' }] }] };
   const read2 = path => (path === 'data/evidence.json' ? broken : siteReader()(path));
   assert.throws(() => renderEvidence(read2), /unknown assertion 'no-such-check'/);
+  const seats = path => ({ 'data/x/results.json': { seats: [{ cost: 0.01, caught: 30 }, { cost: 0.0005, caught: 29 }, { cost: 0.08, caught: 31 }] } })[path];
+  const at = { source: 'data/x/results.json#/seats', field: 'cost' };
+  assert.equal(ASSERTS['min-at'](seats, { ...at, index: 1 }), null);
+  assert.match(ASSERTS['min-at'](seats, { ...at, index: 0 }), /does not have the smallest/);
+  assert.equal(ASSERTS['max-at'](seats, { ...at, index: 2 }), null);
+  assert.match(ASSERTS['max-at'](seats, { ...at, index: 1 }), /does not have the largest/);
+  assert.equal(ASSERTS['spread-greater'](seats, { source: at.source, wide: 'cost', narrow: 'caught', by: 10 }), null);
+  assert.match(ASSERTS['spread-greater'](seats, { source: at.source, wide: 'caught', narrow: 'cost' }), /is not more than/);
+});
+
+test('a model name is the key its counts are read under, so a name and its numbers cannot drift apart', () => {
+  const read = siteReader();
+  assert.equal(fillClaim(read, { id: 'k', text: '{m}', values: { m: { source: 'data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini', format: 'key' } } }), '<code>gpt-4o-mini</code>');
+  assert.throws(() => fillClaim(read, { id: 'k', text: '{m}', values: { m: { source: 'data/broker-probe/2026-W43.json#/brokers/openrouter/models/no-such-model', format: 'key' } } }), /does not resolve/);
+  const probe = JSON.parse(readFileSync('site/data/evidence.json', 'utf8')).claims.find(c => c.id === 'probe-openrouter');
+  for (const [m, n] of [['modelA', ['okA', 'nA', 'mmA', 'fiveA']], ['modelB', ['okB', 'nB', 'mmB', 'fiveB']]]) {
+    assert.equal(probe.values[m].format, 'key');
+    for (const k of n) assert.ok(probe.values[k].source.startsWith(probe.values[m].source + '/'), `${k} is read under ${m}`);
+  }
+});
+
+test('the EXP 017 scatter refuses a cost it cannot place on a log scale', () => {
+  const read = siteReader();
+  const e = { results: JSON.parse(readFileSync('site/data/review-frontier/results.json', 'utf8')) };
+  e.results.seats[1].costPerReviewUsd = 0;
+  assert.throws(() => frontierBlock(read, e, 'journal/review-frontier-results.html'), /positive cost per review/);
 });
 
 test('page configuration holds no number that is shown: claim texts and not-measured items are digit-free', () => {
   const config = JSON.parse(readFileSync('site/data/evidence.json', 'utf8'));
-  for (const c of config.claims) assert.doesNotMatch(c.text, /\d/, c.id);
-  for (const n of config.notMeasured) assert.doesNotMatch(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`, /\d/, n.claim);
+  for (const c of config.claims) assert.equal(statesNumber(c.text), false, c.id);
+  for (const n of config.notMeasured) assert.equal(statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`), false, n.claim);
   const series = JSON.parse(readFileSync('site/data/provider-economics.json', 'utf8')).series;
-  for (const s of series) assert.doesNotMatch(`${s.title ?? ''} ${s.status ?? ''}`, /\d/);
+  for (const s of series) assert.equal(statesNumber(`${s.title ?? ''} ${s.status ?? ''}`), false, s.title ?? s.slug);
 });
