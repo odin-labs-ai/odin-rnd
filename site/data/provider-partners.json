@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.page-config",
+  "page": "providers/",
+  "note": "Signed provider agreements only. An entry needs name, signedOn (YYYY-MM-DD) and evidence (the id of the private record of the signed agreement, never the document itself); scripts/lab-pages.mjs refuses any other entry, and any logo. Leads and conversations are never listed.",
+  "partners": []
+}

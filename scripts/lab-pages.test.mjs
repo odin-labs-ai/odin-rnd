@@ -15,10 +15,12 @@ import { checkPages, loadTerms } from './provider-terms.mjs';
 const rendered = renderLabPages();
 const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
 
-test('both pages render from the committed records and pass the number-provenance check', () => {
+test('every lab page renders from the committed records and passes the number-provenance check', () => {
+  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0 };
+  assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
-    assert.ok((html.match(/data-source="/g) ?? []).length >= 10, `${page} shows sourced numbers`);
+    assert.ok((html.match(/data-source="/g) ?? []).length >= minimumSourced[page], `${page} shows sourced numbers`);
   }
 });
 
@@ -42,10 +44,11 @@ test('the evidence page lists what is not measured yet: at least routing savings
   for (const phrase of ["routing saves money against a fixed-model baseline", 'negotiated better prices', 'provider partnerships', "cost estimates match what the brokers bill"]) assert.ok(notMeasured.includes(phrase), phrase);
 });
 
-test('the pages are in the sitemap and linked from the home page and the methods page', () => {
+test('the pages are in the sitemap and linked from the home page, the methods page or provider economics', () => {
   const sitemap = readFileSync('site/sitemap.xml', 'utf8');
-  for (const page of ['provider-economics', 'evidence']) {
+  for (const page of ['provider-economics', 'evidence', 'providers']) {
     assert.match(sitemap, new RegExp(`<loc>https://odin-labs-ai\\.github\\.io/odin-rnd/${page}/</loc>`), page);
+    if (page === 'providers') { assert.match(rendered['provider-economics'], /href="\.\.\/providers\/"/, 'provider economics links the providers page'); continue; }
     assert.match(readFileSync('site/index.html', 'utf8'), new RegExp(`href="${page}/"`), `home links ${page}`);
     assert.match(readFileSync('site/methods/index.html', 'utf8'), new RegExp(`href="\\.\\./${page}/"`), `methods links ${page}`);
   }

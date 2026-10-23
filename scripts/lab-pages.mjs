@@ -15,6 +15,7 @@ import { displayNames, PROBE } from './broker-probe.mjs';
 export const PAGES = {
   'provider-economics': { marker: '<!--PROVIDER_ECONOMICS-->', config: 'data/provider-economics.json' },
   evidence: { marker: '<!--EVIDENCE-->', config: 'data/evidence.json' },
+  providers: { marker: '<!--PROVIDER_PARTNERS-->', config: 'data/provider-partners.json' },
 };
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -223,13 +224,39 @@ export function renderEvidence(read) {
     + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">What we have not measured yet.</h2><div class="company-prose"><p>These are things an investor or a provider might expect us to claim. Until a published result backs them, we do not.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
 }
 
-/** Render both pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
+/**
+ * The signed-partner list (vp-grow-odin-r-d bundle-3 WO-02). Only a signed agreement on record makes a partner: each
+ * entry needs a name, a signedOn date and an evidence id (the private record of the signed agreement). Any other
+ * field, a logo included, is refused, so a lead or a logo cannot reach the page through this file.
+ */
+export function partnerProblems(config) {
+  const problems = [];
+  if (!Array.isArray(config?.partners)) return ['partners must be a list'];
+  config.partners.forEach((p, i) => {
+    const at = `partners[${i}]`;
+    for (const key of Object.keys(p ?? {})) if (!['name', 'signedOn', 'evidence', 'scope'].includes(key)) problems.push(`${at}: field '${key}' is not allowed`);
+    if (typeof p?.name !== 'string' || !p.name.trim()) problems.push(`${at}: name is missing`);
+    if (typeof p?.signedOn !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.signedOn) || Number.isNaN(Date.parse(p.signedOn))) problems.push(`${at}: signedOn must be the date the agreement was signed (YYYY-MM-DD)`);
+    if (typeof p?.evidence !== 'string' || !p.evidence.trim() || /^https?:/i.test(p.evidence)) problems.push(`${at}: evidence must be the id of the private record of the signed agreement`);
+  });
+  return problems;
+}
+
+export function renderPartners(read) {
+  const config = read(PAGES.providers.config);
+  const problems = partnerProblems(config);
+  if (problems.length) throw new Error(`site/${PAGES.providers.config} is refused:\n${problems.join('\n')}`);
+  if (!config.partners.length) return '<p class="lab-empty">No partner agreement is signed yet.</p>';
+  return `<ul class="lab-partners">${config.partners.map(p => `<li><strong>${escape(p.name)}</strong>, agreement signed ${time(p.signedOn)}${p.scope ? `: ${escape(p.scope)}` : ''}</li>`).join('')}</ul>`;
+}
+
+/** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
 export function renderLabPages({ root = 'site', read = siteReader(root), weeks = probeWeeks(root) } = {}) {
   const out = {};
   for (const [page, { marker }] of Object.entries(PAGES)) {
     const template = readFileSync(join(root, page, 'index.html'), 'utf8');
     if (template.split(marker).length !== 2) throw new Error(`site/${page}/index.html must hold ${marker} exactly once`);
-    const body = page === 'evidence' ? renderEvidence(read) : renderProviderEconomics(read, weeks);
+    const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : renderProviderEconomics(read, weeks);
     out[page] = template.replace(marker, body);
     if (/<!--[A-Z_]+-->/.test(out[page])) throw new Error(`Unresolved content marker in ${page}`);
   }
