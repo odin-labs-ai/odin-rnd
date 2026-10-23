@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 016",
+    "slug": "broker-same-model",
+    "title": "Does the same model cost the same through every broker?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-23",
+    "summary": "Odin can reach the same model through several brokers. This experiment sends the identical request, for the same model, through three of them at the same moment, for each of 60 small code changes, twice. It measures what each broker bills for the call, how long the call takes, how often it fails, and whether the model that answers is the model that was asked for.",
+    "note": "Written, hashed and published before any counted call. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Called with the same request, for the same model, do the brokers bill the same, answer equally fast and reliably, and serve the model that was requested? If they bill the same, Odin's choice between them can rest on speed, reliability and jurisdiction alone. If they do not, the spread is a measured fact a routing decision has to price in.",
+  "brokers": ["openrouter", "eurouter", "requesty"],
+  "brokersNote": "In the published results the brokers are named only where site/data/provider-terms.json allows it; any other broker is shown as Broker A, B or C. Two other brokers are out of scope: one has no key the lab can use, and the terms of another require written consent before any benchmark.",
+  "arms": {
+    "sonnet": {
+      "family": "claude-sonnet-5-5",
+      "ids": { "openrouter": "anthropic/claude-sonnet-5.5", "eurouter": "claude-sonnet-5-5", "requesty": "anthropic/claude-sonnet-5-5" },
+      "upstream": "OpenRouter is pinned to Anthropic's own API (provider.order ['anthropic'], allow_fallbacks false). Requesty's 'anthropic/' id is Anthropic's own API. EUrouter offers no provider pin; in calibration it served this model from AWS Bedrock. So this arm compares the brokers as a buyer meets them, not one identical upstream: the served provider is recorded per call.",
+      "listPrice": { "inputPer1mUsd": 2.0, "outputPer1mUsd": 10.0, "source": "Odin's price book (local-agents packages/model-price-book/src/price-book.ts, row 'anthropic/claude-sonnet-5.5', line 500 at 8fbd0190), the same as each broker's catalogue list price for its standard endpoint on 2026-10-23 except EUrouter, which lists 10% above" },
+      "sampling": "No temperature is sent: the EUrouter catalogue does not list temperature as a supported parameter for this model, and the request must be identical on every broker."
+    },
+    "mini": {
+      "family": "gpt-4o-mini",
+      "ids": { "openrouter": "openai/gpt-4o-mini", "eurouter": "gpt-4o-mini", "requesty": "openai/gpt-4o-mini" },
+      "upstream": "OpenRouter is pinned to OpenAI (provider.order ['openai'], allow_fallbacks false). Requesty's 'openai/' id is OpenAI's own API. EUrouter served it from Microsoft Foundry in calibration.",
+      "listPrice": { "inputPer1mUsd": 0.15, "outputPer1mUsd": 0.6, "source": "Odin's price book (row 'openai/gpt-4o-mini', line 309 at 8fbd0190)" },
+      "sampling": "temperature 0."
+    }
+  },
+  "changes": {
+    "count": 60,
+    "what": "The 60 code changes of EXP 005, experiments/jev-gate/corpus/c001.patch to c060.patch (284 to 2,048 bytes each, 41,725 in total), already public and frozen by experiments/jev-gate/corpus.sha256.",
+    "corpusSha256File": "a83b222a1a4a64cc81ac755c827a47009baa2bb91b036e351e71422cc8d526a9",
+    "concatenatedPatchesSha256": "e832a722651e45daad3808442e314fa19999c9d08221a5956de18a77534ce6fd"
+  },
+  "request": {
+    "prompt": "A fixed review instruction (PROMPT_HEAD in lib.mjs) followed by the change's diff, as one user message.",
+    "maxTokens": 400,
+    "retries": "None. A failed call is a measured outcome.",
+    "timeoutMs": 120000
+  },
+  "replicates": 2,
+  "procedure": "run.mjs walks replicate 1 and then replicate 2 over the 60 changes in order. For each change and arm it calls the three brokers at the same moment, in parallel, and the arm order alternates from change to change, so time of day falls on every broker alike. Latency is wall-clock time from sending the request until the whole response body has arrived, measured on one client (a laptop in the Netherlands). The answer itself is kept only as its length, its sha256 and its first-line verdict: this experiment does not judge answer quality.",
+  "code": {
+    "runner": { "file": "experiments/broker-same-model/run.mjs", "sha256": "51bd129edbcf76732715125c5647f2be8c84ea79139448f9eaf009a576e2f5e0" },
+    "shared": { "file": "experiments/broker-same-model/lib.mjs", "sha256": "6633be14ecc41402f16052e6e72cf4cbe8601be1e83998c1df7386091996b2a9" },
+    "servedModelRule": "lib.mjs family(): the vendor or provider prefix, a region suffix, a variant suffix, a Bedrock version and a dated snapshot are dropped and dots become dashes; a served id matches when its family equals the arm's family. 'aws-bedrock/claude-sonnet-5-5', 'claude-sonnet-5-5' and 'gpt-4o-mini-2024-07-18' therefore match; a different model never does."
+  },
+  "metric": {
+    "billedToList": "Per call: the cost the broker reports in the response (usage.cost, in USD), divided by the list price of that call's own prompt and completion tokens (the arm's listPrice). 1.00 means the broker billed exactly list. Per broker and arm: the median.",
+    "billedPer60Changes": "Per broker and arm: the sum of usage.cost over one replicate's 60 calls, averaged over the two replicates. Answers differ in length from call to call, so this figure carries that noise as well as the price.",
+    "latency": "p50 and p95 of the successful calls' latency, with a distribution-free 95% interval for the median.",
+    "errorRate": "Failed calls (no HTTP 200, or no answer text) over attempted calls, with a Wilson 95% interval, and the count per HTTP status.",
+    "servedModel": "Share of successful calls whose served model id matches the requested model (servedModelRule); any mismatch is listed by id."
+  },
+  "decision": {
+    "price": "Per arm, on billedToList (the primary test, since it removes answer length): 'price-equivalent' when the largest broker median divided by the smallest is at most 1.05; otherwise 'measured price spread', reported as that ratio. The same rule is applied to billedPer60Changes and reported beside it. Either verdict is 'not enough calls' when a broker has fewer than 100 priced calls in the arm.",
+    "latency": "Descriptive. A broker is called faster than another only where the two medians' 95% intervals do not overlap.",
+    "reliability": "Descriptive: the error rate with its interval. No broker is called less reliable from a single run.",
+    "substitution": "Any served-model mismatch is reported by count and id as a silent substitution.",
+    "rule": { "equivalentWithin": 0.05, "minPricedCallsPerBroker": 100 }
+  },
+  "calibration": {
+    "disclosed": "Before writing this record, run.mjs made 6 calls on 2026-10-23 at 04:23Z (change c001, one replicate, both arms, the three brokers), $0.0074 reported in total. All six returned HTTP 200, usage.cost and the requested model family. Prompt tokens were identical across brokers (264 and 174). OpenRouter and Requesty billed exactly list for the call's tokens; EUrouter billed 10% above list on both arms, as its catalogue lists. The answer length differed between brokers for the same model (158, 198 and 186 completion tokens on the first arm), which is why billedToList is the primary test.",
+    "prediction": "Both arms: 'measured price spread' of about 1.10 (EUrouter 10% above, OpenRouter and Requesty at list). No served-model mismatch. Error rates below 2%. No prediction on latency. Written down so the result can contradict it."
+  },
+  "analysis": {
+    "script": "experiments/broker-same-model/analyse.mjs",
+    "sha256": "34ef0fdcffb509beb0a0e4a7ff49d7a8523d424ec5bfe140dda7ba5a46f32ed2",
+    "inputs": "runs/*.jsonl, the counted run's rows copied unchanged from run.mjs's output.",
+    "outputs": "results.json and spend-ledger.jsonl (one line per counted call).",
+    "check": "node experiments/broker-same-model/analyse.mjs --check exits 0 only if results.json and spend-ledger.jsonl are exactly what the frozen script computes from the committed rows."
+  },
+  "spend": {
+    "bound": "$3.00 for the counted run, enforced by run.mjs --cap-usd 3 (a call that reports no cost counts at its worst case). Calibration measured about $0.0025 per Sonnet call and $0.00006 per mini call, so 720 calls should cost about $1. The OpenRouter calls use a dedicated key with a $10 broker-side limit; EUrouter and Requesty run on the lab's existing keys, with their balances checked before the run.",
+    "stop": "If the cap is reached or a broker refuses the key, the run stops and is published as incomplete, with the finished counts. Nothing is extrapolated."
+  },
+  "notBefore": "2026-10-23T08:00:00Z",
+  "notBeforeNote": "Counted calls are those at or after notBefore, and the counted run starts only after this record is merged to main of odin-labs-ai/odin-rnd. Calls before that are practice and are not counted.",
+  "limits": [
+    "One client location, one run per replicate, two models and three brokers, on one day. Latency includes the client's own network path; it says how the brokers compare from here, not everywhere.",
+    "Small prompts (about 200 to 900 tokens) and short answers, uncached and list-priced. Discounts, caching, long contexts, batch tiers and reasoning tokens are outside this measurement.",
+    "The same model through different brokers reaches different upstream providers (Anthropic, AWS Bedrock, OpenAI, Microsoft Foundry), so a difference may belong to the upstream, not the broker. The served provider is recorded per call where the broker reports it.",
+    "Answer quality is not measured. The served-model check guards against a silent model swap, not against a weaker answer from the right model."
+  ]
+}

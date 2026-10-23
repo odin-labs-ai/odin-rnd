@@ -23,6 +23,7 @@ export const copies = [
   { id: 'EXP 012', record: 'experiments/self-verify/amendment-01/amendment.json', pin: 'experiments/self-verify/amendment-01/amendment.sha256', site: 'site/data/self-verify/amendment-01.json' },
   { id: 'EXP 012', record: 'experiments/self-verify/results.json', pin: null, site: 'site/data/self-verify/results.json' },
   { id: 'EXP 015', record: 'experiments/telemetry-truth/preregistration.json', pin: 'experiments/telemetry-truth/preregistration.sha256', site: 'site/data/telemetry-truth/preregistration.json' },
+  { id: 'EXP 016', record: 'experiments/broker-same-model/preregistration.json', pin: 'experiments/broker-same-model/preregistration.sha256', site: 'site/data/broker-same-model/preregistration.json' },
 ];
 
 /** The first token of a `sha256sum`-style pin file. */

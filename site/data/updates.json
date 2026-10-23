@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-016-preregistration",
+      "experiment": "EXP 016",
+      "title": "Does the same model cost the same through every broker?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "data/broker-same-model/preregistration.json",
+      "source": "data/broker-same-model/preregistration.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-015-preregistration",
       "experiment": "EXP 015",
       "title": "Does Odin's cost estimate match what the brokers bill?",
