@@ -25,6 +25,7 @@ export const copies = [
   { id: 'EXP 015', record: 'experiments/telemetry-truth/preregistration.json', pin: 'experiments/telemetry-truth/preregistration.sha256', site: 'site/data/telemetry-truth/preregistration.json' },
   { id: 'EXP 016', record: 'experiments/broker-same-model/preregistration.json', pin: 'experiments/broker-same-model/preregistration.sha256', site: 'site/data/broker-same-model/preregistration.json' },
   { id: 'EXP 017', record: 'experiments/review-frontier/preregistration.json', pin: 'experiments/review-frontier/preregistration.sha256', site: 'site/data/review-frontier/preregistration.json' },
+  { id: 'EXP 017', record: 'experiments/review-frontier/results.json', pin: null, site: 'site/data/review-frontier/results.json' },
 ];
 
 /** The first token of a `sha256sum`-style pin file. */
