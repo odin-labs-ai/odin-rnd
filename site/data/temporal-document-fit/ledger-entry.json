@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "experiment": { "id": "EXP 013", "title": "Does flexible workflow data need MongoDB?" },
+  "preregistered": false,
+  "numberedOn": "2026-10-23",
+  "source": "https://github.com/odin-labs-ai/odin-rnd/pull/42",
+  "note": "journal/mongodb-temporal-document-fit.html",
+  "why": "Published on 2026-10-19 with its protocol, raw evidence and hashes (experiments/temporal-document-fit/), but no pre-registration was frozen before it ran. It is numbered so it can be cited; the ledger marks it not pre-registered. Numbering decided 2026-10-23 (merge order, after EXP 012); the lab owner may move both studies outside the numbering instead."
+}

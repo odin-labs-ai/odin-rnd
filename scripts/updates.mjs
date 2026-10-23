@@ -89,8 +89,11 @@ export function candidates(root = '.') {
     for (const file of readdirSync(dir).filter(name => /^(amendment|erratum)-\d{2}\.json$/.test(name)).sort()) {
       const record = JSON.parse(readFileSync(join(dir, file), 'utf8'));
       const kind = file.startsWith('amendment') ? 'Amendment' : 'Erratum';
-      if (typeof record.title !== 'string' || !record.title) throw new Error(`Updates: data/${slug}/${file} has no title`);
-      add({ key: `exp-${n}-${file.replace(/\.json$/, '')}`, experiment: id, title, kind, text: titleSentence(record.title), href, source: `data/${slug}/${file}`, file: `site/data/${slug}/${file}`, ownDate: /^\d{4}-\d{2}-\d{2}$/.test(record.date ?? '') ? record.date : undefined });
+      // EXP 012's amendment 01 (frozen 2026-10-21) has no title; its own words are the first sentence of its `why`.
+      const own = typeof record.title === 'string' && record.title ? titleSentence(record.title) : typeof record.why === 'string' && record.why ? firstSentence(record.why) : '';
+      if (!own) throw new Error(`Updates: data/${slug}/${file} has no title and no why to quote`);
+      const date = [record.date, record.title ? undefined : record.authoredOn].find(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? ''));
+      add({ key: `exp-${n}-${file.replace(/\.json$/, '')}`, experiment: id, title, kind, text: own, href, source: `data/${slug}/${file}`, file: `site/data/${slug}/${file}`, ownDate: date });
     }
     if (existsSync(join(dir, 'results.json'))) {
       if (!listed) throw new Error(`Updates: ${id} publishes results but is not in the experiment ledger`);
