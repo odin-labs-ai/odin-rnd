@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.page-config",
+  "page": "provider-brief/",
+  "note": "Page configuration, not a record. The one-page brief for model providers and brokers (vp-grow-odin-r-d bundle-4 WO-01, WO-VG-05). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs) and linked to it. A claim's record must be a measured experiment record with a decided verdict: the router-arm records (EXP 018, verdict incomplete; EXP 019, not yet run) are never a claim's record, only an item in notResults. No broker or lead is named on this page; brokers appear by the letters their published records use. scripts/provider-brief-export.mjs renders the same claims as Markdown for the seed deck.",
+  "claims": [
+    {
+      "id": "broker-price",
+      "record": "data/broker-same-model/results.json",
+      "note": "journal/broker-same-model-results.html",
+      "text": "We sent identical requests for the same model through the brokers we use, at the same moment: {calls} counted calls. For {modelS}, the median billed price was {aS} times the list price through Broker A, {bS} through Broker B and {cS} through Broker C. For {modelM} it was {aM}, {bM} and {cM}. No broker answered with a different model than the model asked for: {subS} silent substitutions for {modelS} and {subM} for {modelM}.",
+      "values": {
+        "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
+        "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
+        "aS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/perBroker/A/billedToListMedian", "format": "num" },
+        "bS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/perBroker/B/billedToListMedian", "format": "num" },
+        "cS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/perBroker/C/billedToListMedian", "format": "num" },
+        "modelM": { "source": "data/broker-same-model/results.json#/perArm/mini/family", "format": "code" },
+        "aM": { "source": "data/broker-same-model/results.json#/perArm/mini/perBroker/A/billedToListMedian", "format": "num" },
+        "bM": { "source": "data/broker-same-model/results.json#/perArm/mini/perBroker/B/billedToListMedian", "format": "num" },
+        "cM": { "source": "data/broker-same-model/results.json#/perArm/mini/perBroker/C/billedToListMedian", "format": "num" },
+        "subS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/silentSubstitutions", "format": "int" },
+        "subM": { "source": "data/broker-same-model/results.json#/perArm/mini/silentSubstitutions", "format": "int" }
+      },
+      "window": {
+        "from": { "source": "data/broker-same-model/results.json#/window/firstCall" },
+        "to": { "source": "data/broker-same-model/results.json#/window/lastCall" }
+      },
+      "asserts": [
+        { "kind": "served-as-asked", "source": "data/broker-same-model/results.json#/perArm" }
+      ]
+    },
+    {
+      "id": "review-cost",
+      "record": "data/review-frontier/results.json",
+      "note": "journal/review-frontier-results.html",
+      "text": "On a sealed corpus of private changes, reviewed by every model through the same tool-free seat, the cheapest model, {cheapModel}, cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest, {dearModel}, cost {dearCost} per review and caught {dearCaught} of {dearOf}. The catch intervals of all models in the experiment overlap, so on this corpus the price of a review varied far more than what it caught.",
+      "values": {
+        "cheapModel": { "source": "data/review-frontier/results.json#/seats/1/model", "format": "code" },
+        "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
+        "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
+        "cheapOf": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" },
+        "dearModel": { "source": "data/review-frontier/results.json#/seats/3/model", "format": "code" },
+        "dearCost": { "source": "data/review-frontier/results.json#/seats/3/costPerReviewUsd", "format": "usd" },
+        "dearCaught": { "source": "data/review-frontier/results.json#/seats/3/caught", "format": "int" },
+        "dearOf": { "source": "data/review-frontier/results.json#/seats/3/caughtOf", "format": "int" }
+      },
+      "window": {
+        "from": { "source": "data/review-frontier/results.json#/runs", "field": "start" },
+        "to": { "source": "data/review-frontier/results.json#/runs", "field": "end" }
+      },
+      "asserts": [
+        { "kind": "min-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 1 },
+        { "kind": "max-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 3 },
+        { "kind": "intervals-overlap", "source": "data/review-frontier/results.json#/seats", "field": "caughtCI" },
+        { "kind": "spread-greater", "source": "data/review-frontier/results.json#/seats", "wide": "costPerReviewUsd", "narrow": "caught", "by": 10 }
+      ]
+    }
+  ],
+  "notResults": [
+    {
+      "claim": "Whether routing by Odin's own rulebook beats a fixed model on real tasks.",
+      "slug": "router-arm",
+      "verdict": "data/router-arm/results.json#/decision/0/verdict",
+      "note": "journal/router-arm-results.html"
+    },
+    {
+      "claim": "Whether the routed arm holds up over fresh runs.",
+      "slug": "router-arm-fresh"
+    },
+    {
+      "claim": "Whether Odin's per-call cost estimates match what the brokers bill.",
+      "slug": "telemetry-truth"
+    },
+    {
+      "claim": "That Odin's routing saves money against a fixed-model baseline.",
+      "why": "No experiment has measured it, and this brief makes no savings claim."
+    },
+    {
+      "claim": "How much traffic Odin can route to a provider.",
+      "why": "Not measured, and not promised here. Any volume would be agreed in writing."
+    },
+    {
+      "claim": "Negotiated prices.",
+      "why": "None exists. Every price the lab has paid so far is a broker's own published price, a promotion or prepaid credit."
+    },
+    {
+      "claim": "Provider partnerships.",
+      "why": "None is signed. A provider is named as a partner only after a signed agreement is on record."
+    }
+  ]
+}
