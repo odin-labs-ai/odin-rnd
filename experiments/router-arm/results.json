@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.results",
+  "experiment": "EXP 018",
+  "slug": "router-arm",
+  "corpus": {
+    "name": "odin-replay-v1",
+    "tasks": 8,
+    "outOfSampleTasks": [
+      "t7",
+      "t8"
+    ]
+  },
+  "arms": {
+    "router": {
+      "arm": "router",
+      "replicates": [
+        {
+          "replicate": 1,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 156,
+          "target": 238,
+          "share": 0.655462,
+          "billedUsd": 20.61233678,
+          "usdPerCaseFixed": 0.13213,
+          "models": {
+            "anthropic/claude-opus-5.5": 1,
+            "openai/gpt-6-luna": 3,
+            "openai/gpt-6-sol": 4
+          }
+        },
+        {
+          "replicate": 2,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 136,
+          "target": 238,
+          "share": 0.571429,
+          "billedUsd": 18.26949104,
+          "usdPerCaseFixed": 0.134334,
+          "models": {
+            "anthropic/claude-opus-5.5": 1,
+            "openai/gpt-6-luna": 3,
+            "openai/gpt-6-sol": 4
+          }
+        },
+        {
+          "replicate": 3,
+          "cells": 8,
+          "graded": 7,
+          "complete": false,
+          "errors": 1,
+          "fixed": 133,
+          "target": 216,
+          "share": 0.615741,
+          "billedUsd": 27.87127533,
+          "usdPerCaseFixed": 0.209558,
+          "models": {
+            "anthropic/claude-opus-5.5": 1,
+            "openai/gpt-6-luna": 3,
+            "openai/gpt-6-sol": 4
+          }
+        }
+      ],
+      "completeReplicates": 2,
+      "usdPerCaseFixed": {
+        "n": 2,
+        "mean": 0.133232,
+        "ci": [
+          0.11923,
+          0.147234
+        ]
+      },
+      "share": {
+        "n": 2,
+        "mean": 0.613446,
+        "ci": [
+          0.079584,
+          1.147307
+        ]
+      },
+      "shareRange": 0.084033,
+      "pooledUsdPerCaseFixed": 0.133157,
+      "billedUsd": 66.753103,
+      "outOfSample": {
+        "cells": 5,
+        "fixed": 47,
+        "target": 92,
+        "share": 0.51087
+      }
+    },
+    "opus": {
+      "arm": "opus",
+      "replicates": [
+        {
+          "replicate": 1,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 154,
+          "target": 238,
+          "share": 0.647059,
+          "billedUsd": 44.1390124,
+          "usdPerCaseFixed": 0.286617,
+          "models": {
+            "anthropic/claude-opus-5.5": 8
+          }
+        },
+        {
+          "replicate": 2,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 156,
+          "target": 238,
+          "share": 0.655462,
+          "billedUsd": 26.6062972,
+          "usdPerCaseFixed": 0.170553,
+          "models": {
+            "anthropic/claude-opus-5.5": 8
+          }
+        },
+        {
+          "replicate": 3,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 152,
+          "target": 238,
+          "share": 0.638655,
+          "billedUsd": 42.9953688,
+          "usdPerCaseFixed": 0.282864,
+          "models": {
+            "anthropic/claude-opus-5.5": 8
+          }
+        }
+      ],
+      "completeReplicates": 3,
+      "usdPerCaseFixed": {
+        "n": 3,
+        "mean": 0.246678,
+        "ci": [
+          0.082829,
+          0.410527
+        ]
+      },
+      "share": {
+        "n": 3,
+        "mean": 0.647059,
+        "ci": [
+          0.626182,
+          0.667936
+        ]
+      },
+      "shareRange": 0.016807,
+      "pooledUsdPerCaseFixed": 0.246192,
+      "billedUsd": 113.740678,
+      "outOfSample": {
+        "cells": 6,
+        "fixed": 55,
+        "target": 114,
+        "share": 0.482456
+      }
+    },
+    "luna": {
+      "arm": "luna",
+      "replicates": [
+        {
+          "replicate": 1,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 122,
+          "target": 238,
+          "share": 0.512605,
+          "billedUsd": 6.23492542,
+          "usdPerCaseFixed": 0.051106,
+          "models": {
+            "openai/gpt-6-luna": 8
+          }
+        },
+        {
+          "replicate": 2,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 127,
+          "target": 238,
+          "share": 0.533613,
+          "billedUsd": 4.17169147,
+          "usdPerCaseFixed": 0.032848,
+          "models": {
+            "openai/gpt-6-luna": 8
+          }
+        },
+        {
+          "replicate": 3,
+          "cells": 8,
+          "graded": 8,
+          "complete": true,
+          "errors": 0,
+          "fixed": 124,
+          "target": 238,
+          "share": 0.521008,
+          "billedUsd": 5.76084498,
+          "usdPerCaseFixed": 0.046458,
+          "models": {
+            "openai/gpt-6-luna": 8
+          }
+        }
+      ],
+      "completeReplicates": 3,
+      "usdPerCaseFixed": {
+        "n": 3,
+        "mean": 0.043471,
+        "ci": [
+          0.019898,
+          0.067043
+        ]
+      },
+      "share": {
+        "n": 3,
+        "mean": 0.522409,
+        "ci": [
+          0.49614,
+          0.548678
+        ]
+      },
+      "shareRange": 0.021008,
+      "pooledUsdPerCaseFixed": 0.043344,
+      "billedUsd": 16.167462,
+      "outOfSample": {
+        "cells": 6,
+        "fixed": 46,
+        "target": 114,
+        "share": 0.403509
+      }
+    }
+  },
+  "decision": [
+    {
+      "versus": "opus",
+      "verdict": "incomplete",
+      "why": "complete replicates: router 2, opus 3 (need 3 each)"
+    },
+    {
+      "versus": "luna",
+      "verdict": "incomplete",
+      "why": "complete replicates: router 2, luna 3 (need 3 each)"
+    }
+  ],
+  "spend": {
+    "billedUsd": 196.661243,
+    "capUsd": 275,
+    "withinCap": true
+  }
+}

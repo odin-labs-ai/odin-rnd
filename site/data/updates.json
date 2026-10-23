@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-018-results",
+      "experiment": "EXP 018",
+      "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
+      "kind": "Results",
+      "text": "Eight real coding tasks, three arms, three runs each. Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%), always GPT-6 Luna 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "href": "journal/router-arm-results.html",
+      "source": "data/router-arm/results.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-017-results",
       "experiment": "EXP 017",
       "title": "What does a defect caught in review cost, model by model?",
@@ -39,7 +49,7 @@
       "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/router-arm/preregistration.json",
+      "href": "journal/router-arm-results.html",
       "source": "data/router-arm/preregistration.json",
       "date": "2026-10-23"
     },
@@ -91,6 +101,16 @@
       "text": "Four models on one tool-free review seat caught between 26 and 31 of 60 defects, all within noise, at 0.06 to 8.3 cents a review. gpt-oss-120b, MiniMax M3.1 Flash and Claude Opus 5.5 are on the pre-registered frontier; Claude Sonnet 5.5 is not.",
       "href": "journal/review-frontier-results.html",
       "source": "journal/review-frontier-results.html",
+      "date": "2026-10-23"
+    },
+    {
+      "key": "note-router-arm-results",
+      "experiment": null,
+      "title": "EXP 018: Does routing by our own rulebook beat one fixed model on real tasks?",
+      "kind": "Field note",
+      "text": "Eight real coding tasks, three arms, three runs each. Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%), always GPT-6 Luna 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "href": "journal/router-arm-results.html",
+      "source": "journal/router-arm-results.html",
       "date": "2026-10-23"
     },
     {
