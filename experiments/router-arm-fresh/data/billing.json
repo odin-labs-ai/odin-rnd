@@ -1,0 +1,77 @@
+{
+ "corpus": "odin-replay-v1",
+ "tasks": 8,
+ "outOfSampleTasks": [
+  "t7",
+  "t8"
+ ],
+ "exportedAt": "2026-10-23T21:55:27.870Z",
+ "billing": [
+  {
+   "arm": "router",
+   "replicate": 1,
+   "keyName": null,
+   "limitUsd": null,
+   "usageBeforeUsd": null,
+   "usageAfterUsd": null,
+   "billedUsd": null,
+   "readBefore": null,
+   "readAfter": null
+  },
+  {
+   "arm": "router",
+   "replicate": 2,
+   "keyName": null,
+   "limitUsd": null,
+   "usageBeforeUsd": null,
+   "usageAfterUsd": null,
+   "billedUsd": null,
+   "readBefore": null,
+   "readAfter": null
+  },
+  {
+   "arm": "router",
+   "replicate": 3,
+   "keyName": null,
+   "limitUsd": null,
+   "usageBeforeUsd": null,
+   "usageAfterUsd": null,
+   "billedUsd": null,
+   "readBefore": null,
+   "readAfter": null
+  },
+  {
+   "arm": "router",
+   "replicate": 4,
+   "keyName": "odin-rnd-exp018-router-r4",
+   "limitUsd": 78,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 19.9155833,
+   "billedUsd": 19.9155833,
+   "readBefore": "2026-10-23T18:42:27.472350+00:00",
+   "readAfter": "2026-10-23T19:40:58.481998+00:00"
+  },
+  {
+   "arm": "router",
+   "replicate": 5,
+   "keyName": "odin-rnd-exp018-router-r5",
+   "limitUsd": 58.08,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 18.23625677,
+   "billedUsd": 18.23625677,
+   "readBefore": "2026-10-23T19:41:00.965323+00:00",
+   "readAfter": "2026-10-23T20:41:37.412170+00:00"
+  },
+  {
+   "arm": "router",
+   "replicate": 6,
+   "keyName": "odin-rnd-exp018-router-r6",
+   "limitUsd": 39.84,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 19.5194133,
+   "billedUsd": 19.5194133,
+   "readBefore": "2026-10-23T20:41:39.652296+00:00",
+   "readAfter": "2026-10-23T21:54:20.476541+00:00"
+  }
+ ]
+}
