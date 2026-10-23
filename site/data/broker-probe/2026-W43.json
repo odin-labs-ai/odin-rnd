@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W43",
+  "startedAt": "2026-10-23T05:52:52.813Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 935,
+          "latencyMsP95": 1050,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 677,
+          "latencyMsP95": 1357,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 468,
+        "sha256": "836ad2664f2b0402eb32ffaf88d9cca1afff89514e161201a75caeefae5f7e92",
+        "diff": null,
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-10-23T05:53:28.744Z"
+}
