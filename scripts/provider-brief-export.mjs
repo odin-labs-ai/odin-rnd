@@ -18,22 +18,27 @@ const decode = text => text.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replac
 
 /**
  * Rendered brief HTML (relative links from provider-brief/) to Markdown with absolute links. The HTML is our own
- * render, cut into tags and text once; tags map to Markdown marks and are otherwise dropped, text is decoded, and an
- * angle bracket in decoded text is escaped, so no markup reaches the Markdown.
+ * render, cut into tags and text once. Tags map to Markdown marks and are otherwise dropped. Text, and anything that
+ * looks like a tag but is not one, is decoded and its angle brackets escaped; attribute values are decoded and, as link
+ * destinations, carry angle brackets and spaces percent-encoded. So no angle bracket reaches the Markdown raw, and no
+ * text is dropped.
  */
+const escapeText = text => decode(text).replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const url = text => text.replaceAll('<', '%3C').replaceAll('>', '%3E').replaceAll(' ', '%20');
+
 export function toMarkdown(html, base = BASE) {
   const abs = href => (/^[a-z]+:/i.test(href) ? href : base + href.replace(/^\.\.\//, ''));
-  const attr = (tag, name) => (tag.match(new RegExp(`\\s${name}="([^"]*)"`)) ?? [])[1];
-  let out = '';
+  const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`)); return m ? decode(m[1]) : undefined; };
+  let out = '', last = '';
   const links = [];
-  for (const token of html.split(/(<[^>]*>)/)) {
-    if (!token.startsWith('<')) { out += decode(token).replaceAll('<', '&lt;').replaceAll('>', '&gt;'); continue; }
-    const m = token.match(/^<(\/?)([a-z0-9]+)/i);
-    if (!m) continue;
+  // A tag starts with '<' and a letter or '/', and runs to the first '>' outside a quoted attribute value.
+  for (const token of html.split(/(<\/?[a-z][^>"]*(?:"[^"]*"[^>"]*)*>)/i)) {
+    const m = token.match(/^<(\/?)([a-z][a-z0-9]*)\b/i);
+    if (!m) { out += escapeText(token); continue; }
     const [close, name] = [m[1] === '/', m[2].toLowerCase()];
     if (name === 'a') {
-      if (!close) { const source = attr(token, 'data-source'); links.push(source ? base + source : abs(attr(token, 'href') ?? '')); out += '['; }
-      else out += `](${links.pop()})`;
+      if (!close) { const source = attr(token, 'data-source'); links.push(url(source ? base + source : abs(attr(token, 'href') ?? ''))); out += '['; }
+      else if (links.length) out += `](${links.pop()})`;
     } else if (name === 'code') out += '`';
     else if (name === 'strong') out += '**';
     else if (name === 'cite') out += '*';
@@ -41,7 +46,9 @@ export function toMarkdown(html, base = BASE) {
     else if (name === 'li' && !close) out += '- ';
     else if (name === 'li' && close) out += '\n';
     else if (name === 'p' && close) out += '\n\n';
-    else if (name === 'p' && attr(token, 'class') === 'lab-source') out = out.replace(/\n+$/, '') + '\n  ';
+    // A source line directly after its claim paragraph joins it as an indented second line.
+    else if (name === 'p' && attr(token, 'class') === 'lab-source' && last === '/p') out = out.replace(/\n\n$/, '') + '\n  ';
+    last = `${close ? '/' : ''}${name}`;
   }
   return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
