@@ -63,6 +63,7 @@
   },
   "metric": {
     "same": "EXP 018's metric, computed by EXP 018's own frozen functions (experiments/router-arm/analyse.mjs, sha256 0b2adbb39cc966c7fc962c1464aa2009fdebf10f336b266e585fa6dc3a964945), imported by this experiment's analysis: per replicate, billed = the lane key's usage after minus before, cases fixed and share over graded cells, $ per case fixed = billed / cases fixed; per arm, the mean over complete replicates with a 95% Student-t interval, the share range and the pooled $ per case.",
+    "parentAnalysis": { "file": "experiments/router-arm/analyse.mjs", "sha256": "0b2adbb39cc966c7fc962c1464aa2009fdebf10f336b266e585fa6dc3a964945", "enforced": "analyse.mjs refuses to load EXP 018's functions unless this file matches." },
     "graded": "As EXP 018: an error cell (cut by a spend stop, no model response, sandbox escape) counts toward nothing and leaves its replicate incomplete."
   },
   "decision": {
@@ -75,7 +76,7 @@
   },
   "analysis": {
     "script": "experiments/router-arm-fresh/analyse.mjs",
-    "sha256": "88ee5a3cf2775e48bbe4195ce096671317b434dc5895df419cb74b1c969578fe",
+    "sha256": "6b879472e5c84c6dc83787d3b843c7c776e232b3902bfc97ae539d978ed447aa",
     "inputs": "data/cells.json and data/billing.json (the pinned export over lanes 4 to 6; the export's empty rows for lanes 1 to 3 are not read) and the pinned EXP 018 results file.",
     "check": "node experiments/router-arm-fresh/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs and the reference still matches its hash."
   },

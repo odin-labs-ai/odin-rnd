@@ -13,7 +13,7 @@ test('EXP 019 is frozen: pinned record, analysis, EXP 018 reference and EXP 018 
   assert.equal(prereg.experiment.id, 'EXP 019');
   assert.equal(prereg.analysis.sha256, sha(prereg.analysis.script));
   assert.equal(prereg.comparison.sha256, sha(prereg.comparison.file), 'EXP 018 results as published');
-  assert.match(prereg.metric.same, new RegExp(sha('experiments/router-arm/analyse.mjs')), 'EXP 018 analysis it imports');
+  assert.equal(prereg.metric.parentAnalysis.sha256, sha('experiments/router-arm/analyse.mjs'), 'EXP 018 analysis it imports');
   assert.deepEqual(prereg.design.lanes, [4, 5, 6]);
   assert.equal(prereg.spend.ceilingUsd, 78);
   assert.ok(prereg.spend.priorReplayUsd + prereg.spend.ceilingUsd <= prereg.spend.cumulativeCapUsd);
@@ -28,7 +28,9 @@ const tasks = n => Array.from({ length: n }, (_, i) => `t${i + 1}`);
 test('lanes 4..6 become replicates 1..3; any other lane or arm is refused', () => {
   const { cells, billing } = freshRouter({ cells: [cell(4, 't1', 1, 2), cell(6, 't1', 1, 2)] }, { billing: [{ arm: 'router', replicate: 1, billedUsd: null }, { arm: 'router', replicate: 5, billedUsd: 2 }] }, [4, 5, 6]);
   assert.deepEqual(cells.map(c => c.replicate), [1, 3]);
-  assert.deepEqual(billing, [{ arm: 'router', replicate: 2, billedUsd: 2 }], 'the export rows for lanes 1..3 are dropped');
+  assert.deepEqual(billing, [{ arm: 'router', replicate: 2, billedUsd: 2 }], 'the empty export rows for lanes 1..3 are dropped');
+  assert.throws(() => freshRouter({ cells: [] }, { billing: [{ arm: 'router', replicate: 2, billedUsd: 5 }] }, [4, 5, 6]), /carries a bill/);
+  assert.throws(() => freshRouter({ cells: [] }, { billing: [{ arm: 'opus', replicate: 4, billedUsd: 5 }] }, [4, 5, 6]), /billing arm/);
   assert.throws(() => freshRouter({ cells: [cell(2, 't1', 1, 2)] }, { billing: [] }, [4, 5, 6]), /unexpected cell/);
   assert.throws(() => freshRouter({ cells: [{ ...cell(4, 't1', 1, 2), arm: 'opus' }] }, { billing: [] }, [4, 5, 6]), /unexpected cell/);
 });

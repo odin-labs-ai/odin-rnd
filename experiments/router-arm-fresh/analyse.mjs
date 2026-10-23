@@ -9,12 +9,16 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { armSummary, decide } from '../router-arm/analyse.mjs';
-
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const round = (x, d = 6) => (x === null || x === undefined || !Number.isFinite(x) ? null : Math.round(x * 10 ** d) / 10 ** d);
 const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+
+// EXP 018's frozen functions are loaded only after their file is proven to be the one this record pins.
+const PREREG = JSON.parse(readFileSync(join(HERE, 'preregistration.json'), 'utf8'));
+const PARENT = join(HERE, '..', '..', PREREG.metric.parentAnalysis.file);
+if (sha(PARENT) !== PREREG.metric.parentAnalysis.sha256) throw new Error('EXP 019: EXP 018 analyse.mjs no longer matches its pinned sha256');
+const { armSummary, decide } = await import(pathToFileURL(PARENT).href);
 
 /** The fresh routed replicates: lanes 4..6 become replicates 1..3; any other lane is refused. */
 export function freshRouter(cellsDoc, billingDoc, lanes) {
@@ -23,7 +27,12 @@ export function freshRouter(cellsDoc, billingDoc, lanes) {
     if (c.arm !== 'router' || !map.has(c.replicate)) throw new Error(`EXP 019: unexpected cell ${c.arm} replicate ${c.replicate}`);
     return { ...c, replicate: map.get(c.replicate) };
   });
-  const billing = billingDoc.billing.filter(b => b.arm === 'router' && map.has(b.replicate)).map(b => ({ ...b, replicate: map.get(b.replicate) }));
+  // The export writes one row per lane 1..max; rows outside the experiment's lanes must be empty (no bill), else refuse.
+  for (const b of billingDoc.billing) {
+    if (b.arm !== 'router') throw new Error(`EXP 019: unexpected billing arm ${b.arm}`);
+    if (!map.has(b.replicate) && b.billedUsd !== null) throw new Error(`EXP 019: billing row for lane ${b.replicate} carries a bill`);
+  }
+  const billing = billingDoc.billing.filter(b => map.has(b.replicate)).map(b => ({ ...b, replicate: map.get(b.replicate) }));
   return { cells, billing };
 }
 
