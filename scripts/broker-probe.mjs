@@ -264,9 +264,11 @@ async function main() {
     const record = await probe({ week });
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, JSON.stringify(record, null, 2) + '\n');
-    const keyed = Object.values(record.brokers).filter(b => b.keyed).length;
-    console.log(`broker-probe: ${week}: ${keyed} keyed broker(s) -> ${out}`);
-    return keyed ? 0 : 3;
+    // A week in which no broker could be probed (every one held or without a key) is still a week: its record says so
+    // and is published like any other, so the page never goes silently stale.
+    const probed = Object.values(record.brokers).filter(b => b.keyed && !b.held).length;
+    console.log(`broker-probe: ${week}: ${probed} broker(s) probed -> ${out}`);
+    return 0;
   }
   if (mode === 'page') {
     const html = renderPage(weeks(), readTerms());

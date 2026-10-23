@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { family } from '../experiments/broker-same-model/lib.mjs';
+import { refusal } from './provider-terms.mjs';
 import { catalogueDiff, displayNames, isoWeek, normaliseCatalogue, PAGE, PROBE, probe, readTerms, renderPage, summarise, weeks } from './broker-probe.mjs';
 
 // No network: every broker answer below is a recorded shape (vp-grow-odin-r-d bundle-2 WO-04).
@@ -87,6 +89,16 @@ test('a broker whose terms are under review is not probed at all, even with a ke
   assert.match(r.brokers.openrouter.held, /no terms record/);
 });
 
+test('the two functions the probe consumes behave as it relies on: a swap is a different family, no terms record is a refusal', () => {
+  assert.equal(family('claude-haiku-4-5-20251001'), 'claude-haiku-4-5');
+  assert.equal(family('anthropic/claude-haiku-4.5'), 'claude-haiku-4-5');
+  assert.equal(family('gpt-4o-mini-2024-07-18'), 'gpt-4o-mini');
+  assert.notEqual(family('anthropic/claude-3-haiku'), 'claude-haiku-4-5');
+  assert.notEqual(family('openai/gpt-4o'), 'gpt-4o-mini');
+  assert.ok(refusal(undefined), 'no terms record is never a leave to probe');
+  assert.ok(refusal({ benchmarking: 'allowed', nameUse: 'plain-text', founderReview: { required: true }, readBy: 'human' }));
+});
+
 test('ISO weeks', () => {
   assert.equal(isoWeek(new Date('2026-10-23T12:00:00Z')), '2026-W43');
   assert.equal(isoWeek(new Date('2027-01-01T12:00:00Z')), '2026-W53');
@@ -99,8 +111,11 @@ test('the committed probe page is exactly what the committed data renders', () =
 
 test('the workflow never runs on a pull request and keeps the broker keys out of the write job', () => {
   const wf = readFileSync('.github/workflows/broker-probe.yml', 'utf8');
-  const on = wf.slice(wf.indexOf('\non:'), wf.indexOf('\npermissions:'));
-  assert.ok(!/pull_request/.test(on), 'no pull_request trigger');
+  // Every non-comment line of the whole file, so a trigger cannot hide anywhere, whatever the key order.
+  const code = wf.split('\n').filter(l => !/^\s*#/.test(l)).join('\n');
+  assert.ok(!/pull_request/.test(code), 'no pull_request or pull_request_target anywhere in the workflow');
+  assert.ok(!/\b(push|workflow_run|issue_comment|pull_request_review)\s*:/.test(code), 'no other event trigger');
+  const on = /^on:\n((?:[ \t]+.*\n)+)/m.exec(code)?.[1] ?? '';
   assert.match(on, /schedule:/);
   assert.match(on, /workflow_dispatch:/);
   const publish = wf.slice(wf.indexOf('\n  publish:'));
