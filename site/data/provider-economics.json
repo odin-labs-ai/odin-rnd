@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.page-config",
+  "page": "provider-economics/",
+  "note": "Page configuration, not a record. It names the experiments in the provider-economics series and holds words only: every number on the page is read from an experiment record (scripts/lab-pages.mjs), and scripts/number-provenance.mjs refuses this file as a source.",
+  "series": [
+    { "slug": "review-frontier", "note": "journal/review-frontier-results.html" },
+    { "slug": "broker-same-model" },
+    { "slug": "telemetry-truth" },
+    {
+      "slug": null,
+      "title": "Does Odin's routing beat a fixed-model baseline on real tasks?",
+      "status": "Not pre-registered yet. Until it is measured and published, this site makes no claim that Odin's routing saves money."
+    }
+  ]
+}

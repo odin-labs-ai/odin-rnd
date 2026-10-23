@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.page-config",
+  "page": "evidence/",
+  "note": "Page configuration, not a record. Claim texts hold no digits; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs). scripts/number-provenance.mjs refuses this file as a source.",
+  "claims": [
+    {
+      "id": "review-cost",
+      "record": "data/review-frontier/results.json",
+      "note": "journal/review-frontier-results.html",
+      "text": "On a sealed corpus of private changes, reviewed by every model through the same tool-free seat, the cheapest model, {cheapModel}, cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest, {dearModel}, cost {dearCost} per review and caught {dearCaught} of {dearOf}. The catch intervals of all models in the experiment overlap, so on this corpus the price of a review varied far more than what it caught.",
+      "values": {
+        "cheapModel": {
+          "source": "data/review-frontier/results.json#/seats/1/model",
+          "format": "code"
+        },
+        "cheapCost": {
+          "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd",
+          "format": "usd"
+        },
+        "cheapCaught": {
+          "source": "data/review-frontier/results.json#/seats/1/caught",
+          "format": "int"
+        },
+        "cheapOf": {
+          "source": "data/review-frontier/results.json#/seats/1/caughtOf",
+          "format": "int"
+        },
+        "dearModel": {
+          "source": "data/review-frontier/results.json#/seats/3/model",
+          "format": "code"
+        },
+        "dearCost": {
+          "source": "data/review-frontier/results.json#/seats/3/costPerReviewUsd",
+          "format": "usd"
+        },
+        "dearCaught": {
+          "source": "data/review-frontier/results.json#/seats/3/caught",
+          "format": "int"
+        },
+        "dearOf": {
+          "source": "data/review-frontier/results.json#/seats/3/caughtOf",
+          "format": "int"
+        }
+      },
+      "window": {
+        "from": {
+          "source": "data/review-frontier/results.json#/runs",
+          "field": "start"
+        },
+        "to": {
+          "source": "data/review-frontier/results.json#/runs",
+          "field": "end"
+        }
+      },
+      "asserts": [
+        {
+          "kind": "min-at",
+          "source": "data/review-frontier/results.json#/seats",
+          "field": "costPerReviewUsd",
+          "index": 1
+        },
+        {
+          "kind": "max-at",
+          "source": "data/review-frontier/results.json#/seats",
+          "field": "costPerReviewUsd",
+          "index": 3
+        },
+        {
+          "kind": "intervals-overlap",
+          "source": "data/review-frontier/results.json#/seats",
+          "field": "caughtCI"
+        },
+        {
+          "kind": "spread-greater",
+          "source": "data/review-frontier/results.json#/seats",
+          "wide": "costPerReviewUsd",
+          "narrow": "caught",
+          "by": 10
+        }
+      ]
+    },
+    {
+      "id": "review-spend",
+      "record": "data/review-frontier/results.json",
+      "note": "journal/review-frontier-results.html",
+      "text": "That experiment's {reviews} counted reviews were billed {usd} in total by the broker, read from the broker's own per-call cost.",
+      "values": {
+        "reviews": {
+          "source": "data/review-frontier/results.json#/spend/reviews",
+          "format": "int"
+        },
+        "usd": {
+          "source": "data/review-frontier/results.json#/spend/brokerReportedUsd",
+          "format": "usd"
+        }
+      },
+      "window": {
+        "from": {
+          "source": "data/review-frontier/results.json#/runs",
+          "field": "start"
+        },
+        "to": {
+          "source": "data/review-frontier/results.json#/runs",
+          "field": "end"
+        }
+      }
+    },
+    {
+      "id": "self-verify",
+      "record": "data/self-verify/results.json",
+      "note": "journal/self-verify-results.html",
+      "text": "A reviewer asked to re-check its own findings before answering still raised {faA} and {faB} false alarms on clean changes in its counted runs. The pre-registered answer to whether it can talk itself out of its false alarms is {decision}.",
+      "values": {
+        "faA": {
+          "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms",
+          "format": "int"
+        },
+        "faB": {
+          "source": "data/self-verify/results.json#/arms/A1-b/falseAlarms",
+          "format": "int"
+        },
+        "decision": {
+          "source": "data/self-verify/results.json#/decision",
+          "format": "word"
+        }
+      },
+      "window": {
+        "from": {
+          "source": "data/self-verify/results.json#/measured/start"
+        },
+        "to": {
+          "source": "data/self-verify/results.json#/measured/end"
+        }
+      }
+    },
+    {
+      "id": "probe-openrouter",
+      "record": "data/broker-probe/2026-W43.json",
+      "text": "In the week of {week}, the weekly broker probe found that {broker} answered {okA} of {nA} calls for {modelA} and {okB} of {nB} for {modelB}, with {mmA} and {mmB} answered by a different model than the model asked for, and {fiveA} and {fiveB} server errors.",
+      "values": {
+        "broker": {
+          "format": "broker",
+          "id": "openrouter"
+        },
+        "okA": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/claude-haiku-4-5/ok",
+          "format": "int"
+        },
+        "nA": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/claude-haiku-4-5/attempted",
+          "format": "int"
+        },
+        "modelA": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/claude-haiku-4-5",
+          "format": "key"
+        },
+        "okB": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini/ok",
+          "format": "int"
+        },
+        "nB": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini/attempted",
+          "format": "int"
+        },
+        "modelB": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini",
+          "format": "key"
+        },
+        "mmA": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/claude-haiku-4-5/servedMismatch",
+          "format": "int"
+        },
+        "mmB": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini/servedMismatch",
+          "format": "int"
+        },
+        "fiveA": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/claude-haiku-4-5/status5xx",
+          "format": "int"
+        },
+        "fiveB": {
+          "source": "data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini/status5xx",
+          "format": "int"
+        },
+        "week": {
+          "source": "data/broker-probe/2026-W43.json#/week",
+          "format": "date"
+        }
+      },
+      "window": {
+        "from": {
+          "source": "data/broker-probe/2026-W43.json#/startedAt"
+        }
+      }
+    }
+  ],
+  "notMeasured": [
+    {
+      "claim": "That Odin's routing saves money against a fixed-model baseline.",
+      "why": "No experiment has measured it. The gateway's savings figure assumes its baseline rather than measuring it, and Odin's own cost log holds estimates, not bills.",
+      "planned": "Planned: a replay of real tasks under Odin's routing rule against fixed-model baselines. Not pre-registered yet."
+    },
+    {
+      "claim": "That Odin's per-call cost estimates match what the brokers bill.",
+      "slug": "telemetry-truth"
+    },
+    {
+      "claim": "That the same model costs the same through every broker.",
+      "slug": "broker-same-model"
+    },
+    {
+      "claim": "That Odin has negotiated better prices with providers.",
+      "why": "No negotiated price exists. Every price the lab has paid so far is a broker's list price, a promotion or prepaid credit."
+    },
+    {
+      "claim": "That Odin has provider partnerships.",
+      "why": "None is signed. A lead is not a partner, and this site names a partner only after a signed agreement is on record."
+    },
+    {
+      "claim": "How reliable each broker is over time.",
+      "why": "A trend needs many weeks of the weekly probe, and a broker is probed only when its terms allow a published measurement."
+    }
+  ]
+}
