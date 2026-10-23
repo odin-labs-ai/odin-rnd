@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { anonymise, anonymiseRow, errorClass } from '../experiments/broker-same-model/amendment-01/anonymise.mjs';
@@ -99,4 +99,14 @@ test('no file in this public repository maps a broker to its EXP 016 letter (the
   assert.deepEqual(hits, [], 'a broker-to-letter mapping is published');
   const published = readFileSync(`${dir}/amendment-01/anonymise.mjs`, 'utf8');
   assert.ok(!mapping.test(published));
+});
+
+test('the published EXP 016 results and spend ledger are exactly what the amended analysis computes from runs-anon/', { skip: !existsSync(`${dir}/results.json`) }, () => {
+  const out = execFileSync(process.execPath, [`${dir}/amendment-01/analyse-anon.mjs`, '--check'], { encoding: 'utf8' });
+  assert.match(out, /recompute exactly/);
+  const r = JSON.parse(readFileSync(`${dir}/results.json`, 'utf8'));
+  assert.equal(r.window.calls, r.expectedCalls, 'every pre-registered call was made');
+  assert.ok(Date.parse(r.window.firstCall) >= Date.parse(prereg.notBefore));
+  for (const f of [`${dir}/results.json`, `${dir}/spend-ledger.jsonl`, ...execFileSync('git', ['ls-files', `${dir}/runs-anon`], { encoding: 'utf8' }).split('\n').filter(Boolean)])
+    assert.ok(!/openrouter|eurouter|requesty|bedrock|foundry/i.test(readFileSync(f, 'utf8')), `${f} names a broker or upstream`);
 });
