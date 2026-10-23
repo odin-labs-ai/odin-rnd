@@ -21,6 +21,14 @@ test('every repository path the methods page cites exists in the tree', () => {
   assert.deepEqual(missing, [], 'dead cites on the methods page');
 });
 
+test('every <code> cite that looks like a path is either checked or a known site-relative alias', () => {
+  // A cite with a slash that is NOT under a checked root would escape the dead-cite check: refuse it, except the one
+  // site-relative alias the page explains (data/ is site/data/ as served).
+  const slashy = [...html.matchAll(/<code>([^<\s]+\/[^<\s]*)<\/code>/g)].map(m => m[1]);
+  const unchecked = slashy.filter(p => !citedPaths(`<code>${p}</code>`).length && p !== 'data/');
+  assert.deepEqual(unchecked, [], 'path-like cites outside the checked roots');
+});
+
 test('the dead-cite check fails closed on a path that does not exist', () => {
   const fake = citedPaths('<p><code>experiments/no-such/preregistration.json</code> and <code>pnpm test</code></p>');
   assert.deepEqual(fake, ['experiments/no-such/preregistration.json'], 'commands are not paths; paths are');

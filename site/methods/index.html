@@ -47,7 +47,7 @@
       <h2 id="freeze-title">2. Frozen by sha256.</h2>
       <div class="company-prose">
         <p>Each pre-registration has a <code>.sha256</code> beside it, such as <code>experiments/self-verify/preregistration.sha256</code>, written when the record is pushed. The push time is the freeze time. After that the record does not change.</p>
-        <p>A change after the freeze is a new, dated file that names its parent by hash: an amendment (<code>experiments/jev-gate/amendment-01.json</code>, <code>experiments/self-verify/amendment-01/amendment.json</code>) or an erratum (<code>experiments/jev-gate/erratum-01.json</code>). The site build refuses to publish a record whose bytes no longer match its hash: see <code>scripts/jev-gate-prereg.mjs</code> and <code>scripts/ledger-publish.mjs</code>. The published copy under <code>data/</code> is the record, byte for byte.</p>
+        <p>A change after the freeze is a new, dated file that names its parent by hash: an amendment (<code>experiments/jev-gate/amendment-01.json</code>, <code>experiments/self-verify/amendment-01/amendment.json</code>) or an erratum (<code>experiments/jev-gate/erratum-01.json</code>). The site build refuses to publish a record whose bytes no longer match its hash: see <code>scripts/jev-gate-prereg.mjs</code> and <code>scripts/ledger-publish.mjs</code>. The published copy under <code>site/data/</code> (served as <code>data/</code> on this site) is the record, byte for byte.</p>
       </div>
     </section>
 
