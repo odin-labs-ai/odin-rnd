@@ -1,6 +1,7 @@
 // Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05). A built page may name a broker next to a measured
-// number only when site/data/provider-terms.json says that broker's terms allow it. scripts/check.mjs runs this over
-// every built HTML page; scripts/provider-terms.test.mjs pins the behaviour.
+// number only when site/data/provider-terms.json says that broker's terms allow it. scripts/build.mjs runs this over
+// every finished HTML page and refuses the build (scripts/check.mjs is pinned by EXP 006 and EXP 007 and stays
+// unchanged); scripts/provider-terms.test.mjs pins the behaviour.
 //
 // "Names a broker next to a measured number", narrowly: one block of the page (the text of a p, li, tr, td, th,
 // h1-h6, dt, dd, caption, figcaption, blockquote or pre element, tags stripped) contains a broker's name AND a

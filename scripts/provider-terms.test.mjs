@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { checkPages, loadTerms, namedMeasurements, refusal, staleEntries } from './provider-terms.mjs';
 
 // Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05).
@@ -56,4 +57,12 @@ test('a name without a measured number, or a number in another block, is not a n
 test('a read older than 90 days warns', () => {
   assert.deepEqual(staleEntries(terms, '2026-11-01'), []);
   assert.deepEqual(staleEntries(terms, '2027-02-01').map(e => e.id).sort(), ['doubleword', 'eurouter', 'openrouter', 'orq', 'requesty']);
+});
+
+test('the site build runs the check over every finished page, last', () => {
+  const build = readFileSync('scripts/build.mjs', 'utf8');
+  const at = build.indexOf("await import('./provider-terms.mjs')");
+  assert.ok(at > 0, 'scripts/build.mjs imports the check');
+  assert.ok(at > build.lastIndexOf("writeFileSync(file,source.replace(/(<header"), 'after the last page rewrite');
+  assert.match(build.slice(at), /checkPages\(htmlFiles\('dist'\)/);
 });

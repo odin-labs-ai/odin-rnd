@@ -59,14 +59,6 @@ for(const file of files.filter(file=>/\.(html|css|js|mjs|json|svg|md|txt)$/.test
     if(anchor){const dest=readFileSync(actual,'utf8');assert(dest.includes('id="'+anchor+'"'),'Missing anchor '+link);}
   }
 }
-{
-  // Provider terms before naming (bundle-2 WO-05): a built page names a broker next to a measured number only with leave.
-  const { checkPages, loadTerms, staleEntries } = await import('./provider-terms.mjs');
-  const terms = loadTerms();
-  const problems = checkPages(files.filter(file => file.endsWith('.html')).map(file => ({ file, html: readFileSync(file, 'utf8') })), terms);
-  assert.deepEqual(problems, [], 'Broker named next to a measured number without leave in site/data/provider-terms.json');
-  for (const { id, readOn } of staleEntries(terms)) console.warn(`WARN: the ${id} terms were read on ${readOn}, more than ${terms.staleAfterDays} days ago; read them again.`);
-}
 const { validateRecords } = await import('./witness-records.mjs');
 await validateRecords({directory:'dist/data/witnesses'});
 const report=JSON.parse(readFileSync('dist/data/experiments.json'));
