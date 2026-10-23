@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-018-results",
+      "experiment": "EXP 018",
+      "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
+      "kind": "Results",
+      "text": "Eight real coding tasks, three arms, three runs each, scored by the share of hidden test cases fixed (no task was fully solved). Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%) and always GPT-6 Luna paid 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "href": "journal/router-arm-results.html",
+      "source": "data/router-arm/results.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-017-results",
       "experiment": "EXP 017",
       "title": "What does a defect caught in review cost, model by model?",
@@ -14,12 +24,22 @@
       "date": "2026-10-23"
     },
     {
+      "key": "exp-016-results",
+      "experiment": "EXP 016",
+      "title": "Does the same model cost the same through every broker?",
+      "kind": "Results",
+      "text": "Measured on 720 identical calls: two brokers billed exactly list price for Claude Sonnet 5.5 and GPT-4o mini, the third 10% above it on both, a spread of 1.10 against a pre-registered bar of 1.05. No broker served a different model.",
+      "href": "journal/broker-same-model-results.html",
+      "source": "data/broker-same-model/results.json",
+      "date": "2026-10-23"
+    },
+    {
       "key": "exp-016-amendment-01",
       "experiment": "EXP 016",
       "title": "Does the same model cost the same through every broker?",
       "kind": "Amendment",
       "text": "EXP 016's results are published with the three brokers shown as letters, not names.",
-      "href": "data/broker-same-model/preregistration.json",
+      "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/amendment-01.json",
       "date": "2026-10-23"
     },
@@ -29,7 +49,7 @@
       "title": "Does routing by our own rulebook beat one fixed model on real tasks?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/router-arm/preregistration.json",
+      "href": "journal/router-arm-results.html",
       "source": "data/router-arm/preregistration.json",
       "date": "2026-10-23"
     },
@@ -49,7 +69,7 @@
       "title": "Does the same model cost the same through every broker?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/broker-same-model/preregistration.json",
+      "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/preregistration.json",
       "date": "2026-10-23"
     },
@@ -64,6 +84,16 @@
       "date": "2026-10-23"
     },
     {
+      "key": "note-broker-same-model-results",
+      "experiment": null,
+      "title": "EXP 016: Does the same model cost the same through every broker?",
+      "kind": "Field note",
+      "text": "Almost. Measured on 720 identical calls: two brokers billed exactly list price for Claude Sonnet 5.5 and GPT-4o mini, the third 10% above it on both, a spread of 1.10 against a pre-registered bar of 1.05. No broker served a different model.",
+      "href": "journal/broker-same-model-results.html",
+      "source": "journal/broker-same-model-results.html",
+      "date": "2026-10-23"
+    },
+    {
       "key": "note-review-frontier-results",
       "experiment": null,
       "title": "EXP 017: What does a defect caught in review cost, model by model?",
@@ -71,6 +101,16 @@
       "text": "Four models on one tool-free review seat caught between 26 and 31 of 60 defects, all within noise, at 0.06 to 8.3 cents a review. gpt-oss-120b, MiniMax M3.1 Flash and Claude Opus 5.5 are on the pre-registered frontier; Claude Sonnet 5.5 is not.",
       "href": "journal/review-frontier-results.html",
       "source": "journal/review-frontier-results.html",
+      "date": "2026-10-23"
+    },
+    {
+      "key": "note-router-arm-results",
+      "experiment": null,
+      "title": "EXP 018: Does routing by our own rulebook beat one fixed model on real tasks?",
+      "kind": "Field note",
+      "text": "Eight real coding tasks, three arms, three runs each, scored by the share of hidden test cases fixed (no task was fully solved). Per case fixed, a table copied from our routing rule paid 13.3 cents (61% of cases), always Opus 5.5 paid 24.7 (65%) and always GPT-6 Luna paid 4.3 (52%). The pre-registered verdict is incomplete: one routed cell hit its spend stop.",
+      "href": "journal/router-arm-results.html",
+      "source": "journal/router-arm-results.html",
       "date": "2026-10-23"
     },
     {
