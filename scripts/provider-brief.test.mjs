@@ -39,7 +39,8 @@ test('EXP 018 and EXP 019 are never a claim: no claim record or value reads them
   // The incomplete verdict is shown, read from the record, in the not-a-result list.
   const notResults = html.slice(html.indexOf('id="not-results"'));
   assert.match(notResults, /EXP 018, “<cite[^>]*>[^<]*<\/cite>”: its pre-registered verdict is <strong>incomplete<\/strong>, so this brief cites none of its figures\./);
-  assert.match(notResults, /EXP 019, “<cite[^>]*>[^<]*<\/cite>”: <a href="\.\.\/data\/router-arm-fresh\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
+  // EXP 019's results are published (verdict decided); the brief links them and cites none of its figures.
+  assert.match(notResults, /EXP 019, “<cite[^>]*>[^<]*<\/cite>”: Results are published: <a href="\.\.\/data\/router-arm-fresh\/results\.json">the record<\/a> and <a href="\.\.\/journal\/router-arm-fresh-results\.html">the field note<\/a>\. This page does not summarise them yet\./);
   assert.equal(html.indexOf('EXP 018') > html.indexOf('id="not-results"'), true, 'EXP 018 appears only after the measured list');
 });
 

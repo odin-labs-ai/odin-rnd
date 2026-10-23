@@ -255,8 +255,10 @@ export function renderEvidence(read) {
 /**
  * The provider brief (vp-grow-odin-r-d bundle-4 WO-01, WO-VG-05): a one-page summary for a model provider or broker.
  * Its measured claims use the evidence page's machinery. A claim's record must hold a decided result: a record whose
- * pre-registered verdict is incomplete (EXP 018) or that is not yet published (EXP 019) appears only in the list of
- * what is not a result, with that verdict read from its record, and none of its figures.
+ * pre-registered verdict is incomplete (EXP 018) appears only in the list of what is not a result, with that verdict
+ * read from its record, and none of its figures. EXP 019 (results published 2026-10-23, verdict decided) is listed there
+ * as published but not summarised by this brief: a link to its record and field note, none of its figures, until the
+ * brief's owner takes it into the claims.
  */
 export const NOT_A_CLAIM_RECORD = /^data\/router-arm(?:-fresh)?\//;
 /** Verdict words that are not a result: the not-a-result list refuses any other. */
@@ -285,6 +287,9 @@ export function renderProviderBrief(read) {
     if (!n.slug) return `<li><strong>${escape(n.claim)}</strong> ${escape(n.why)}</li>`;
     const e = experiment(read, n.slug);
     if (!e.results) return `<li><strong>${escape(n.claim)}</strong> ${escape(e.id)}, “${e.title}”: ${unpublished(e)}</li>`;
+    // A decided result this brief has not taken into its claims yet (EXP 019): link the record, cite none of its figures.
+    // Only an item marked `published: "not summarised"` may do this; any other item with results must name its verdict.
+    if (n.published === 'not summarised') return `<li><strong>${escape(n.claim)}</strong> ${escape(e.id)}, “${e.title}”: ${publishedWithoutSummary(e, n.note)}</li>`;
     // Results exist but the verdict is not a decided result: say so from the record and cite none of its figures.
     if (!n.verdict) throw new Error(`not-a-result item '${n.claim}': ${n.slug} has results; name the pointer to its verdict`);
     const verdict = str(read, n.verdict);

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "odin-rnd.page-config",
   "page": "provider-brief/",
-  "note": "Page configuration, not a record. The one-page brief for model providers and brokers (vp-grow-odin-r-d bundle-4 WO-01, WO-VG-05). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs) and linked to it. A claim's record must be a measured experiment record with a decided verdict: the router-arm records (EXP 018, verdict incomplete; EXP 019, not yet run) are never a claim's record, only an item in notResults. No broker or lead is named on this page; brokers appear by the letters their published records use. scripts/provider-brief-export.mjs renders the same claims as Markdown for the seed deck.",
+  "note": "Page configuration, not a record. The one-page brief for model providers and brokers (vp-grow-odin-r-d bundle-4 WO-01, WO-VG-05). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs) and linked to it. A claim's record must be a measured experiment record with a decided verdict: the router-arm records (EXP 018, verdict incomplete; EXP 019, results published but not yet summarised here) are never a claim's record, only an item in notResults. No broker or lead is named on this page; brokers appear by the letters their published records use. scripts/provider-brief-export.mjs renders the same claims as Markdown for the seed deck.",
   "claims": [
     {
       "id": "broker-price",
@@ -66,7 +66,9 @@
     },
     {
       "claim": "Whether the routed arm holds up over fresh runs.",
-      "slug": "router-arm-fresh"
+      "slug": "router-arm-fresh",
+      "published": "not summarised",
+      "note": "journal/router-arm-fresh-results.html"
     },
     {
       "claim": "Whether Odin's per-call cost estimates match what the brokers bill.",

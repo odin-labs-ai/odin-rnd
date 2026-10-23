@@ -1,8 +1,8 @@
 // The provider brief as Markdown, for the seed deck (vp-grow-odin-r-d bundle-4, WO-VG-05). It renders the same claims
 // as site/provider-brief/ (site/data/provider-brief.json through scripts/lab-pages.mjs), so the deck can say no more
 // than the published page: every number is a link to its experiment record on the public site, with the JSON pointer
-// it was read from as the fragment. EXP 018 (verdict incomplete) and EXP 019 (not yet run) appear only in the list
-// of what is not a result.
+// it was read from as the fragment. EXP 018 (verdict incomplete) and EXP 019 (published, not yet summarised by the brief)
+// appear only in the list of what is not a result.
 //
 //   node scripts/provider-brief-export.mjs > deck-evidence.md
 import { execFileSync } from 'node:child_process';
