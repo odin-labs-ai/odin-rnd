@@ -31,9 +31,11 @@ export function toMarkdown(html, base = BASE) {
   const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`)); return m ? decode(m[1]) : undefined; };
   let out = '', last = '';
   const links = [];
-  // A tag starts with '<' and a letter or '/', and runs to the first '>' outside a quoted attribute value.
-  for (const token of html.split(/(<\/?[a-z][^>"]*(?:"[^"]*"[^>"]*)*>)/i)) {
-    const m = token.match(/^<(\/?)([a-z][a-z0-9]*)\b/i);
+  // A tag starts with '<' and a letter or '/', holds no other '<' outside a quoted attribute value, and ends at the
+  // first '>' outside one. The split puts tags at the odd indices; every even index is text, whatever it looks like.
+  const tokens = html.split(/(<\/?[a-z][^<>"]*(?:"[^"]*"[^<>"]*)*>)/i);
+  for (const [i, token] of tokens.entries()) {
+    const m = i % 2 ? token.match(/^<(\/?)([a-z][a-z0-9]*)/i) : null;
     if (!m) { out += escapeText(token); continue; }
     const [close, name] = [m[1] === '/', m[2].toLowerCase()];
     if (name === 'a') {

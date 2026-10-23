@@ -123,6 +123,9 @@ test('toMarkdown: no raw angle bracket, decoded attributes, no dropped text, the
   assert.equal(toMarkdown('<p><a class="lab-num" href="#" data-source="data/x<y>/results.json#/n">1</a></p>'), `[1](${BASE}data/x%3Cy%3E/results.json#/n)\n`);
   assert.equal(toMarkdown('<p><a href="https://e.org/?a=1&amp;b=2">t</a></p>'), '[t](https://e.org/?a=1&b=2)\n');
   assert.equal(toMarkdown('<ul><li>< 5 ms</li></ul>'), '- &lt; 5 ms\n');
+  assert.equal(toMarkdown('<p><abc'), '&lt;abc\n', 'a tag-like fragment with no end is text');
+  assert.equal(toMarkdown('<p>n <k items</p>'), 'n &lt;k items\n', 'a stray < and a letter swallow nothing');
+  assert.equal(toMarkdown('<p><b"oops 5 ms</p>'), '&lt;b"oops 5 ms\n');
   assert.equal(toMarkdown('<p>x</p></a>'), 'x\n', 'an unmatched </a> is ignored');
   assert.equal(toMarkdown('<a href="../p/"><code>c</code></a>'), `[\`c\`](${BASE}p/)\n`);
   assert.equal(toMarkdown('<li><p>claim</p><p class="lab-source">Source.</p></li>'), '- claim\n  Source.\n');
