@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>How we run experiments — Odin R&amp;D</title>
+  <meta name="description" content="How the Odin R&amp;D lab works: questions written down and hashed before any counted run, a spend bound on every experiment, decision rules that can refute us, review before merge, and how to rerun it yourself.">
+  <meta property="og:title" content="How the Odin R&amp;D lab runs experiments">
+  <meta property="og:description" content="Pre-registration, sha256 freezing, spend bounds, refutation and how to reproduce a result.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/methods/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/methods/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <link rel="stylesheet" href="../assets/motion.css">
+  <script type="module" src="../assets/motion.mjs"></script>
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../#floor">Factory</a><a href="../#experiments">Experiments</a><a href="../updates/">Updates</a><a href="../#journal">Field notes</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="company-hero company-width" aria-labelledby="methods-title">
+      <div>
+        <h1 id="methods-title">How we run <br>experiments.</h1>
+        <p class="company-lead">You should be able to check any number on this site without asking us. This page says how: what we write down before a run, how it is frozen, what each experiment may spend, what would prove us wrong, who checks a change before it is published, and how to rerun it yourself. Every claim below points to a file in <a href="https://github.com/odin-labs-ai/odin-rnd">the repository</a>.</p>
+        <div class="company-actions"><a class="button button-primary" href="../#all-experiments">Every experiment and its status</a><a href="#reproduce">Rerun it yourself</a></div>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="pre-registration" aria-labelledby="prereg-title">
+      <h2 id="prereg-title">1. The question comes first.</h2>
+      <div class="company-prose">
+        <p>Before any counted run, an experiment's pre-registration is written down and published. It states the question, what is measured, how it is scored, the decision rule, what the experiment may spend and its known limits. Each one lives in its own folder, for example <code>experiments/self-verify/preregistration.json</code> (EXP 012) or <code>experiments/jev-gate/preregistration.json</code> (EXP 005).</p>
+        <p>Where the analysis is code, the code is frozen with the question: EXP 008 pins its analysis script <code>experiments/latent-handoff/analyse.mjs</code> by hash in a dated amendment (<code>experiments/latent-handoff/amendment-02.json</code>), and EXP 005 recomputes its published results from the committed runs with <code>experiments/jev-gate/results.mjs</code>.</p>
+        <p>Two studies on this site were published without a pre-registration: EXP 013 and EXP 014, the MongoDB studies. They are numbered so they can be cited, and the experiment list marks them “not pre-registered”: their method and data are published, but nothing about them was fixed before they ran.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="freezing" aria-labelledby="freeze-title">
+      <h2 id="freeze-title">2. Frozen by sha256.</h2>
+      <div class="company-prose">
+        <p>Each pre-registration has a <code>.sha256</code> beside it, such as <code>experiments/self-verify/preregistration.sha256</code>, written when the record is pushed. The push time is the freeze time. After that the record does not change.</p>
+        <p>A change after the freeze is a new, dated file that names its parent by hash: an amendment (<code>experiments/jev-gate/amendment-01.json</code>, <code>experiments/self-verify/amendment-01/amendment.json</code>) or an erratum (<code>experiments/jev-gate/erratum-01.json</code>). The site build refuses to publish a record whose bytes no longer match its hash: see <code>scripts/jev-gate-prereg.mjs</code> and <code>scripts/ledger-publish.mjs</code>. The published copy under <code>data/</code> is the record, byte for byte.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="spend" aria-labelledby="spend-title">
+      <h2 id="spend-title">3. A spend bound on every run.</h2>
+      <div class="company-prose">
+        <p>Every pre-registration bounds its spend (a <code>spend</code> block; EXP 005, the first, calls it <code>spendCap</code>): the most the run may cost and what happens when that bound is reached. In EXP 012, for example, the run stops and the experiment is published as incomplete, with the finished count; nothing is extrapolated.</p>
+        <p>Experiments that pay for model calls keep a per-call spend ledger next to their results, for example <code>experiments/jev-gate/spend-ledger.jsonl</code>, <code>experiments/nina-changes/spend-ledger.jsonl</code> and <code>experiments/blueprint-floor/spend-ledger.jsonl</code>.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="refutation" aria-labelledby="refute-title">
+      <h2 id="refute-title">4. Rules that can prove us wrong.</h2>
+      <div class="company-prose">
+        <p>The decision rule is part of the frozen record, so the result cannot choose its own bar. Results are published whatever they show, and a refuted claim stays refuted. So far that includes EXP 005 (the claim is refuted), EXP 007 (the premise is refuted), EXP 009 (its first prediction is refuted) and EXP 012 (the answer is no). Each status sentence on <a href="../#all-experiments">the experiment list</a> comes from the experiment's own note, unedited (<code>scripts/experiment-ledger.mjs</code>).</p>
+        <p>Before a pre-registration is written we sometimes run a few calibration calls. When we do, the record says so, and states what we expect, so the result can contradict it.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="review" aria-labelledby="review-title">
+      <h2 id="review-title">5. Checked before it is published.</h2>
+      <div class="company-prose">
+        <p>Changes to this site arrive as pull requests. On each one, the <code>verify</code> job in <code>.github/workflows/publish.yml</code> reruns the three recorded experiments with the released engine, runs every test, builds the site and checks it (links, anchors, transcript digests and the public export boundary, <code>scripts/check.mjs</code>). The same job runs again on every push to main, before the site is deployed.</p>
+        <p>An independent review examines the final change on its exact head before it is merged (<code>AGENTS.md</code>). The reviewer is never the author of the change.</p>
+        <p>One gap is disclosed here. On 22 October 2026 a pull request was merged while its <code>verify</code> job was still running; that job then failed on a fence test whose base had moved, while the push run on main passed. Since 23 October our landing tool refuses to merge a pull request in this repository until <code>verify</code> has passed on its exact head. A rule on GitHub's side that requires the same check is waiting on the repository owner; until it exists, the landing tool is what enforces it.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="reproduce" aria-labelledby="reproduce-title">
+      <h2 id="reproduce-title">6. Rerun it yourself.</h2>
+      <div class="company-prose">
+        <p>With Node 22 and pnpm 10.11.1:</p>
+        <pre><code>git clone https://github.com/odin-labs-ai/odin-rnd
+cd odin-rnd
+pnpm install --frozen-lockfile
+pnpm experiment   # rerun the three recorded blueprint experiments
+pnpm test         # every check on the recorded evidence
+pnpm build        # build the site from the records
+pnpm check        # links, digests, export boundary</code></pre>
+        <p>The commands are in <code>package.json</code> and <code>AGENTS.md</code>; <code>docs/VALIDATION.md</code> records how the site itself was validated. For a single experiment, its folder holds the inputs and the frozen analysis; its field note says which parts you can rerun and which depend on a private corpus.</p>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="limits" aria-labelledby="limits-title">
+      <h2 id="limits-title">7. What this does not prove.</h2>
+      <div class="company-prose">
+        <p>Most experiments here are small: one laptop, one model or a few dozen cases. Several use a private corpus, so you can check the hashes, the method and the counts but not rerun the cases. We wrote the experiments ourselves, about our own tools. A pre-registration stops us from moving the bar after the fact; it does not make a narrow question broad. Each field note states its own limits; read them before quoting a number.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="../" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact/">Contact Odin</a><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>
