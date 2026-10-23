@@ -28,7 +28,9 @@ export function toMarkdown(html, base = BASE) {
     .replace(/<li[^>]*>/g, '- ')
     .replace(/<\/li>/g, '\n')
     .replace(/<\/p>/g, '\n\n')
-    .replace(/<[^>]+>/g, ''))
+    // Any tag left is dropped, then any stray angle bracket, so no markup survives into the Markdown; entities are
+    // decoded last, from text that holds no tag.
+    .replace(/<[^>]*>/g, '').replace(/[<>]/g, ''))
     .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
