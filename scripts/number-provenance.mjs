@@ -9,7 +9,8 @@
 //     data-source="data/<file>#<JSON pointer>" and data-format="<kind>", so every number links to its run. The pointer
 //     must resolve to a finite number and the element's text must equal format(value, kind) exactly.
 //   - The record must be a measured experiment record (recordProblem): data/<slug>/results.json that is byte for byte
-//     experiments/<slug>/results.json, names experiments/<slug>/preregistration.json as its pre-registration, and that
+//     experiments/<slug>/results.json, names experiments/<slug>/preregistration.json as its pre-registration (or, in
+//     the hash-pinned shape EXP 016 uses, names its sha256 and experiment id, both equal to the committed ones), and that
 //     pre-registration matches its committed preregistration.sha256; or a weekly probe record whose kind and week match
 //     its file name. A pre-registration (planned values), page configuration (evidence.json and the like) or any other
 //     file is never a source. Limit: a whole fabricated experiment folder would pass this check; review of the PR that
@@ -31,7 +32,7 @@ import { join, posix } from 'node:path';
 import { MEASURED } from './provider-terms.mjs';
 
 /** Pages under dist/ that the rule covers. A page added here must exist in every build. */
-export const PAGES = ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html'];
+export const PAGES = ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html', 'provider-brief/index.html'];
 
 /** The only path shapes a number may come from: a results record or a weekly probe record. */
 export const SOURCE_FILE = /^data\/(?:[a-z0-9-]+\/results\.json|broker-probe\/\d{4}-W\d{2}\.json)$/;
@@ -88,11 +89,24 @@ export function recordProblem(path, raw, root = '.') {
   const dir = join(root, 'experiments', slug);
   const committed = join(dir, 'results.json');
   if (!existsSync(committed) || readFileSync(committed, 'utf8') !== raw) return `${path} is not byte for byte experiments/${slug}/results.json`;
-  if (doc.kind !== 'odin-rnd.results' || doc.slug !== slug || doc.preregistration !== `experiments/${slug}/preregistration.json`) return `${path} does not name experiments/${slug}/preregistration.json as its pre-registration`;
+  // Two record shapes bind a result to its pre-registration. The standard shape names it by path. The hash-pinned shape
+  // (EXP 016's analyse.mjs writes it; the record is frozen, so the gate learns its shape rather than the record changing)
+  // carries no kind, slug or preregistration field and names the pre-registration by its sha256 and the experiment by
+  // its id instead; both must equal the committed pin and the pre-registration's own experiment.id. Only a record with
+  // none of the standard fields may take that path, so a standard record with a wrong field still fails.
+  const standard = doc.kind === 'odin-rnd.results' && doc.slug === slug && doc.preregistration === `experiments/${slug}/preregistration.json`;
+  const pinned = !('kind' in doc) && !('slug' in doc) && !('preregistration' in doc) && typeof doc.preregistrationSha256 === 'string' && typeof doc.experiment === 'string';
+  if (!standard && !pinned) return `${path} does not name experiments/${slug}/preregistration.json as its pre-registration`;
   const prereg = join(dir, 'preregistration.json'), pin = join(dir, 'preregistration.sha256');
   if (!existsSync(prereg) || !existsSync(pin)) return `experiments/${slug} has no frozen pre-registration`;
   const want = readFileSync(pin, 'utf8').trim().split(/\s+/)[0];
   if (createHash('sha256').update(readFileSync(prereg)).digest('hex') !== want) return `experiments/${slug}/preregistration.json does not match its preregistration.sha256`;
+  if (pinned) {
+    if (doc.preregistrationSha256 !== want) return `${path} names a pre-registration sha256 that is not experiments/${slug}/preregistration.sha256`;
+    let id;
+    try { id = JSON.parse(readFileSync(prereg, 'utf8'))?.experiment?.id; } catch { id = undefined; }
+    if (doc.experiment !== id) return `${path} names experiment '${doc.experiment}', but experiments/${slug}/preregistration.json is '${id}'`;
+  }
   return null;
 }
 

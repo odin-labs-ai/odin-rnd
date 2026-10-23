@@ -16,6 +16,7 @@ export const PAGES = {
   'provider-economics': { marker: '<!--PROVIDER_ECONOMICS-->', config: 'data/provider-economics.json' },
   evidence: { marker: '<!--EVIDENCE-->', config: 'data/evidence.json' },
   providers: { marker: '<!--PROVIDER_PARTNERS-->', config: 'data/provider-partners.json' },
+  'provider-brief': { marker: '<!--PROVIDER_BRIEF-->', config: 'data/provider-brief.json' },
 };
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -205,9 +206,9 @@ export const ASSERTS = {
   },
 };
 
-export function renderEvidence(read) {
-  const config = read(PAGES.evidence.config);
-  const claims = config.claims.map(c => {
+/** Sourced claims as list items: each claim's asserts are checked, its numbers read from and linked to its record. */
+export function renderClaims(read, list) {
+  return list.map(c => {
     const [path] = (c.record ?? '').split('#');
     if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
     for (const a of c.asserts ?? []) {
@@ -217,6 +218,11 @@ export function renderEvidence(read) {
     }
     return `<li id="${escape(c.id)}"><p>${fillClaim(read, c)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="../${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="../${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
   }).join('');
+}
+
+export function renderEvidence(read) {
+  const config = read(PAGES.evidence.config);
+  const claims = renderClaims(read, config.claims);
   const notYet = config.notMeasured.map(n => {
     if (statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`)) throw new Error(`not-measured item '${n.claim}' states a number`);
     let status = escape(n.why ?? '');
@@ -232,6 +238,43 @@ export function renderEvidence(read) {
   }).join('');
   return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each claim below is a sentence whose numbers are read from the experiment record it cites, at build time. Each number links to that record.</p><ol class="lab-claims">${claims}</ol></div></section>`
     + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">What we have not measured yet.</h2><div class="company-prose"><p>These are things an investor or a provider might expect us to claim. Until a published result backs them, we do not.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
+}
+
+/**
+ * The provider brief (vp-grow-odin-r-d bundle-4 WO-01, WO-VG-05): a one-page summary for a model provider or broker.
+ * Its measured claims use the evidence page's machinery. A claim's record must hold a decided result: a record whose
+ * pre-registered verdict is incomplete (EXP 018) or that is not yet published (EXP 019) appears only in the list of
+ * what is not a result, with that verdict read from its record, and none of its figures.
+ */
+export const NOT_A_CLAIM_RECORD = /^data\/router-arm(?:-fresh)?\//;
+
+export function briefProblems(config) {
+  const problems = [];
+  for (const c of config?.claims ?? []) {
+    if (NOT_A_CLAIM_RECORD.test(c.record ?? '')) problems.push(`claim ${c.id}: ${c.record} has no decided result and may not back a claim`);
+    for (const [name, v] of Object.entries(c.values ?? {})) if (NOT_A_CLAIM_RECORD.test(v.source ?? '')) problems.push(`claim ${c.id}: {${name}} reads ${v.source}, which has no decided result`);
+  }
+  return problems;
+}
+
+export function renderProviderBrief(read) {
+  const config = read(PAGES['provider-brief'].config);
+  const problems = briefProblems(config);
+  if (problems.length) throw new Error(`site/${PAGES['provider-brief'].config} is refused:\n${problems.join('\n')}`);
+  const claims = renderClaims(read, config.claims);
+  const notResults = config.notResults.map(n => {
+    if (statesNumber(`${n.claim} ${n.why ?? ''}`)) throw new Error(`not-a-result item '${n.claim}' states a number`);
+    if (!n.slug) return `<li><strong>${escape(n.claim)}</strong> ${escape(n.why)}</li>`;
+    const e = experiment(read, n.slug);
+    if (!e.results) return `<li><strong>${escape(n.claim)}</strong> ${escape(e.id)}, “${e.title}”: ${unpublished(e)}</li>`;
+    // Results exist but the verdict is not a decided result: say so from the record and cite none of its figures.
+    if (!n.verdict) throw new Error(`not-a-result item '${n.claim}': ${n.slug} has results; name the pointer to its verdict`);
+    const verdict = str(read, n.verdict);
+    if (statesNumber(verdict)) throw new Error(`not-a-result item '${n.claim}': verdict '${verdict}' holds a digit`);
+    return `<li><strong>${escape(n.claim)}</strong> ${escape(e.id)}, “${e.title}”: its pre-registered verdict is <strong>${escape(verdict)}</strong>, so this brief cites none of its figures. <a href="../data/${escape(n.slug)}/results.json">The record</a>${n.note ? ` and <a href="../${escape(n.note)}">the field note</a>` : ''} say why.</li>`;
+  }).join('');
+  return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each number below is read from the published experiment record it links to, when the site is built.</p><ol class="lab-claims">${claims}</ol></div></section>`
+    + `<section class="company-section company-width" id="not-results" aria-labelledby="not-results-title"><h2 id="not-results-title">What is not a result yet.</h2><div class="company-prose"><ul class="lab-pending">${notResults}</ul></div></section>`;
 }
 
 /**
@@ -273,7 +316,7 @@ export function renderLabPages({ root = 'site', read = siteReader(root), weeks =
   for (const [page, { marker }] of Object.entries(PAGES)) {
     const template = readFileSync(join(root, page, 'index.html'), 'utf8');
     if (template.split(marker).length !== 2) throw new Error(`site/${page}/index.html must hold ${marker} exactly once`);
-    const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : renderProviderEconomics(read, weeks);
+    const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : page === 'provider-brief' ? renderProviderBrief(read) : renderProviderEconomics(read, weeks);
     out[page] = template.replace(marker, body);
     if (/<!--[A-Z_]+-->/.test(out[page])) throw new Error(`Unresolved content marker in ${page}`);
   }

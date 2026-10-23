@@ -1,0 +1,86 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { briefProblems, renderLabPages, renderProviderBrief, siteReader } from './lab-pages.mjs';
+import { checkPage, recordProblem, SOURCE_FILE } from './number-provenance.mjs';
+import { checkPages, loadTerms } from './provider-terms.mjs';
+import { BASE, deckMarkdown } from './provider-brief-export.mjs';
+
+// The provider brief (vp-grow-odin-r-d bundle-4 WO-01; WO-VG-05) and its Markdown export for the seed deck.
+const html = renderLabPages()['provider-brief'];
+const config = JSON.parse(readFileSync('site/data/provider-brief.json', 'utf8'));
+const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
+
+test('the brief passes the number-provenance gate and every number on it is sourced', () => {
+  assert.deepEqual(checkPage('provider-brief/index.html', html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), []);
+  const sources = [...html.matchAll(/data-source="([^"#]*)#/g)].map(m => m[1]);
+  assert.ok(sources.length >= 10, 'the brief shows sourced numbers');
+  assert.deepEqual([...new Set(sources)].sort(), ['data/broker-same-model/results.json', 'data/review-frontier/results.json']);
+});
+
+test('the brief names no broker and no lead, shows no logo, and claims no partner', () => {
+  assert.doesNotMatch(html, /open\s?router|eu\s?router|requesty|\borq\b|double\s?word/i);
+  const imgs = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/g)].map(m => m[1]);
+  assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg'), []);
+  assert.deepEqual(checkPages([{ file: 'provider-brief/index.html', html }], loadTerms()), []);
+  assert.doesNotMatch(html, /\b(?:partnered|in partnership with|our partners?\b(?! *agreement))/i);
+  assert.match(html, /None is signed\./);
+});
+
+test('EXP 018 and EXP 019 are never a claim: no claim record or value reads them, and the brief cites none of their figures', () => {
+  assert.deepEqual(briefProblems(config), []);
+  for (const c of config.claims) {
+    assert.doesNotMatch(c.record, /router-arm/, c.id);
+    for (const v of Object.values(c.values)) assert.doesNotMatch(v.source ?? '', /router-arm/, c.id);
+  }
+  assert.doesNotMatch(html, /data-source="data\/router-arm/);
+  // The incomplete verdict is shown, read from the record, in the not-a-result list.
+  const notResults = html.slice(html.indexOf('id="not-results"'));
+  assert.match(notResults, /EXP 018, “<cite[^>]*>[^<]*<\/cite>”: its pre-registered verdict is <strong>incomplete<\/strong>, so this brief cites none of its figures\./);
+  assert.match(notResults, /EXP 019, “<cite[^>]*>[^<]*<\/cite>”: <a href="\.\.\/data\/router-arm-fresh\/preregistration\.json">Pre-registered<\/a>; no result is published yet\./);
+  assert.equal(html.indexOf('EXP 018') > html.indexOf('id="not-results"'), true, 'EXP 018 appears only after the measured list');
+});
+
+test('a claim backed by EXP 018 or reading one of its values is refused', () => {
+  const bad = { claims: [{ id: 'x', record: 'data/router-arm/results.json', values: {} }] };
+  assert.match(briefProblems(bad).join('\n'), /has no decided result/);
+  const sneaky = { claims: [{ id: 'y', record: 'data/review-frontier/results.json', values: { v: { source: 'data/router-arm/results.json#/spend/billedUsd', format: 'usd' } } }] };
+  assert.match(briefProblems(sneaky).join('\n'), /\{v\} reads data\/router-arm/);
+  const read = siteReader();
+  const patched = path => (path === 'data/provider-brief.json' ? { ...config, claims: [...config.claims, ...bad.claims] } : read(path));
+  assert.throws(() => renderProviderBrief(patched), /is refused/);
+});
+
+test('the not-a-result list keeps savings, traffic, negotiated prices and partnerships out of the claims', () => {
+  const notResults = html.slice(html.indexOf('id="not-results"'));
+  for (const phrase of ['saves money against a fixed-model baseline', 'How much traffic Odin can route', 'Negotiated prices.', 'Provider partnerships.']) assert.ok(notResults.includes(phrase), phrase);
+});
+
+test('the brief is in the sitemap, linked from the providers page, and has a print stylesheet', () => {
+  assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/provider-brief\/<\/loc>/);
+  assert.match(renderLabPages().providers, /href="\.\.\/provider-brief\/"/);
+  assert.match(html, /<link rel="stylesheet" href="\.\.\/assets\/brief-print\.css" media="print">/);
+});
+
+test('the deck export says no more than the brief: every number is a link to its record, none to EXP 018', () => {
+  const md = deckMarkdown({ revision: 'a'.repeat(40) });
+  const links = [...md.matchAll(/\[([^\]]*)\]\((https:[^)\s]*)\)/g)];
+  const numberLinks = links.filter(([, text]) => /\d/.test(text));
+  assert.ok(numberLinks.length >= 10);
+  for (const [, text, url] of numberLinks) {
+    assert.ok(url.startsWith(BASE + 'data/'), url);
+    const [path, pointer] = url.slice(BASE.length).split('#');
+    assert.match(path, SOURCE_FILE, url);
+    assert.doesNotMatch(path, /router-arm/, url);
+    assert.ok(pointer && pointer.startsWith('/'), `${url} carries its JSON pointer`);
+    const value = pointer.slice(1).split('/').reduce((at, k) => at?.[k], JSON.parse(readSite(path)));
+    assert.equal(String(value), text.replace(/^\$/, ''), url);
+  }
+  // Outside the provenance header, number links, identifiers in backticks, dates and EXP ids, no digit remains.
+  const rest = md.split('\n').filter(line => !line.startsWith('>')).join('\n')
+    .replace(/\[([^\]]*)\]\((https:[^)\s]*)\)/g, (whole, text) => (/\d/.test(text) ? ' ' : text))
+    .replace(/`[^`]*`/g, ' ').replace(/\b\d{4}-\d{2}-\d{2}\b/g, ' ').replace(/\bEXP \d{3}\b/g, ' ');
+  assert.doesNotMatch(rest, /\d/);
+  assert.doesNotMatch(md, /open\s?router|eu\s?router|requesty|\borq\b|double\s?word/i);
+});
