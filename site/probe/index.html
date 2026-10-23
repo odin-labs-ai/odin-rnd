@@ -43,7 +43,7 @@
       <h2 id="method-title">How it is measured.</h2>
       <div class="company-prose">
         <p>The prompt is <q>Reply with the single word: pong</q>, at most 16 tokens back, temperature 0. A call counts as answered when it returns HTTP 200 with text. A served model counts as the requested one when the model id the broker returns names the same model family. The job runs on a GitHub-hosted runner under the lab's own GitHub identity, with dedicated, spend-capped keys, and only on its schedule or by hand: never on a pull request. The script is <code>scripts/broker-probe.mjs</code>; each week's record is <code>site/data/broker-probe/</code> plus the week, as JSON.</p>
-        <p>3 of 3 brokers are shown by letter: a broker is named next to a number only when its published terms, as recorded in <code>site/data/provider-terms.json</code>, allow it. A broker shown as "not keyed" had no dedicated capped key that week.</p>
+        <p>2 of 3 brokers are shown by letter: a broker is named next to a number only when its published terms, as recorded in <code>site/data/provider-terms.json</code>, allow it. A broker shown as "not keyed" had no dedicated capped key that week; one shown as "not probed" has terms that are still under review, so no call is made to it at all.</p>
         <p>Twenty calls a week cannot show a small error rate, and one runner location is not every location. This page reports what happened; it does not rank brokers.</p>
       </div>
     </section>

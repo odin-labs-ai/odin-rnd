@@ -29,7 +29,9 @@ test('the probe records every keyed broker, marks an unkeyed one, and finds a 5x
   mkdirSync(join(dataDir, 'catalogue'));
   writeFileSync(join(dataDir, 'catalogue', 'openrouter.json'), JSON.stringify({ models: { 'anthropic/claude-haiku-4.5': { in: 1, out: 5, currency: 'USD' }, 'openai/gpt-4o-mini': { in: 0.1, out: 0.6, currency: 'USD' }, 'gone/model': { in: 1, out: 1, currency: 'USD' } } }));
   const env = { BROKER_PROBE_OPENROUTER_KEY: 'k1', BROKER_PROBE_REQUESTY_KEY: 'k2' };
-  const r = await probe({ week: '2026-W43', env, fetchImpl: fakeFetch({ swapOn: 3, fail5xxOn: 5 }), dataDir, now: () => '2026-10-23T00:00:00Z' });
+  const open = { benchmarking: 'allowed', nameUse: 'plain-text', founderReview: { required: false }, readBy: 'human', name: 'X' };
+  const terms = { providers: { openrouter: open, requesty: open, eurouter: open } };
+  const r = await probe({ week: '2026-W43', env, fetchImpl: fakeFetch({ swapOn: 3, fail5xxOn: 5 }), dataDir, terms, now: () => '2026-10-23T00:00:00Z' });
   assert.deepEqual(r.brokers.eurouter, { keyed: false });
   const haiku = r.brokers.openrouter.models['claude-haiku-4-5'];
   assert.equal(haiku.attempted, PROBE.callsPerModel);
@@ -64,8 +66,25 @@ test('summaries never invent a cost', () => {
 test('a broker is named only when the terms record allows it; otherwise it gets a letter', () => {
   const brokers = ['openrouter', 'eurouter', 'requesty'];
   assert.deepEqual(displayNames(brokers, null), { openrouter: 'Broker A', eurouter: 'Broker B', requesty: 'Broker C' });
-  const terms = { providers: { openrouter: { benchmarking: 'allowed', nameUse: 'allowed', displayName: 'OpenRouter' }, eurouter: { benchmarking: 'unknown', displayName: 'EUrouter' } } };
-  assert.deepEqual(displayNames(brokers, terms), { openrouter: 'OpenRouter', eurouter: 'Broker B', requesty: 'Broker C' });
+  const terms = readTerms();
+  const names = displayNames(brokers, terms);
+  for (const b of brokers) {
+    const allowed = terms.providers[b].founderReview.required === false && terms.providers[b].benchmarking === 'allowed';
+    assert.equal(names[b] === terms.providers[b].name, allowed, `${b} is named only when its terms allow it`);
+  }
+});
+
+test('a broker whose terms are under review is not probed at all, even with a key', async t => {
+  const dataDir = mkdtempSync(join(tmpdir(), 'broker-probe-test-'));
+  t.after(() => rmSync(dataDir, { recursive: true, force: true }));
+  let calls = 0;
+  const counting = async (url, init) => { calls++; return fakeFetch()(url, init); };
+  const held = { benchmarking: 'allowed', nameUse: 'plain-text', founderReview: { required: true, reason: 'r' }, readBy: 'human' };
+  const r = await probe({ week: '2026-W43', env: { BROKER_PROBE_REQUESTY_KEY: 'k' }, fetchImpl: counting, dataDir, terms: { providers: { requesty: held } } });
+  assert.equal(calls, 0);
+  assert.equal(r.brokers.requesty.keyed, true);
+  assert.match(r.brokers.requesty.held, /review/);
+  assert.match(r.brokers.openrouter.held, /no terms record/);
 });
 
 test('ISO weeks', () => {

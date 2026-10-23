@@ -19,6 +19,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { family } from '../experiments/broker-same-model/lib.mjs';
+import { refusal } from './provider-terms.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = join(ROOT, 'site/data/broker-probe');
@@ -108,10 +109,14 @@ async function call(broker, modelKey, key, fetchImpl) {
 }
 
 /** Run the probe. `env` holds the keys, `fetchImpl` is injectable for the test. Returns the week's record. */
-export async function probe({ week, env = process.env, fetchImpl = fetch, dataDir = DATA, now = () => new Date().toISOString() }) {
+export async function probe({ week, env = process.env, fetchImpl = fetch, dataDir = DATA, terms = readTerms(), now = () => new Date().toISOString() }) {
   const record = { schemaVersion: 1, kind: 'odin-rnd.broker-probe', week, startedAt: now(), probe: { callsPerModel: PROBE.callsPerModel, prompt: PROBE.prompt, maxTokens: PROBE.maxTokens, models: Object.keys(PROBE.models) }, brokers: {} };
   for (const broker of Object.keys(PROBE.brokers)) {
     const key = env[PROBE.brokers[broker].keyEnv];
+    // A broker whose terms do not (yet) allow a published measurement under its name is not probed at all: nothing is
+    // measured that could not be published (site/data/provider-terms.json, scripts/provider-terms.mjs refusal()).
+    const held = refusal(terms?.providers?.[broker]);
+    if (held) { record.brokers[broker] = { keyed: Boolean(key), held }; continue; }
     if (!key) { record.brokers[broker] = { keyed: false }; continue; }
     const entry = { keyed: true, models: {} };
     for (const modelKey of Object.keys(PROBE.models)) {
@@ -152,8 +157,8 @@ export function displayNames(brokers, terms) {
   const names = {};
   let i = 0;
   for (const b of brokers) {
-    const t = terms?.providers?.[b] ?? (Array.isArray(terms?.providers) ? terms.providers.find(p => p.id === b) : null);
-    names[b] = t && t.benchmarking === 'allowed' && (t.nameUse === 'allowed' || t.nameUse === 'plain-text-only') && t.displayName ? t.displayName : `Broker ${letters[i]}`;
+    const t = terms?.providers?.[b];
+    names[b] = t && refusal(t) === null && t.name ? t.name : `Broker ${letters[i]}`;
     i++;
   }
   return names;
@@ -170,6 +175,7 @@ export function renderPage(records, terms) {
   const cell = v => (v === null || v === undefined ? '—' : escape(v));
   const rows = records.slice().reverse().map(r => brokers.map(b => {
     const e = r.brokers[b];
+    if (e?.held) return `<tr><td>${escape(r.week)}</td><td>${escape(names[b])}</td><td colspan="6">not probed: its terms are under review before any measurement is published</td></tr>`;
     if (!e || !e.keyed) return `<tr><td>${escape(r.week)}</td><td>${escape(names[b])}</td><td colspan="6">not keyed this week</td></tr>`;
     return Object.entries(e.models).map(([m, s]) => `<tr><td>${escape(r.week)}</td><td>${escape(names[b])}</td><td>${escape(m)}</td><td>${s.ok}/${s.attempted}</td><td>${s.status5xx}</td><td>${s.servedMismatch}</td><td>${cell(s.latencyMsP50)} / ${cell(s.latencyMsP95)}</td><td>${e.catalogue?.diff ? `+${e.catalogue.diff.added} −${e.catalogue.diff.removed} ~${e.catalogue.diff.repriced}` : 'first snapshot'}</td></tr>`).join('');
   }).join('')).join('');
@@ -222,7 +228,7 @@ export function renderPage(records, terms) {
       <h2 id="method-title">How it is measured.</h2>
       <div class="company-prose">
         <p>The prompt is <q>${escape(PROBE.prompt)}</q>, at most ${PROBE.maxTokens} tokens back, temperature 0. A call counts as answered when it returns HTTP 200 with text. A served model counts as the requested one when the model id the broker returns names the same model family. The job runs on a GitHub-hosted runner under the lab's own GitHub identity, with dedicated, spend-capped keys, and only on its schedule or by hand: never on a pull request. The script is <code>scripts/broker-probe.mjs</code>; each week's record is <code>site/data/broker-probe/</code> plus the week, as JSON.</p>
-        <p>${anonymised ? `${anonymised} of ${brokers.length} brokers are shown by letter: a broker is named next to a number only when its published terms, as recorded in <code>site/data/provider-terms.json</code>, allow it.` : 'Every broker shown is named under its published terms, as recorded in <code>site/data/provider-terms.json</code>.'} A broker shown as "not keyed" had no dedicated capped key that week.</p>
+        <p>${anonymised ? `${anonymised} of ${brokers.length} brokers are shown by letter: a broker is named next to a number only when its published terms, as recorded in <code>site/data/provider-terms.json</code>, allow it.` : 'Every broker shown is named under its published terms, as recorded in <code>site/data/provider-terms.json</code>.'} A broker shown as "not keyed" had no dedicated capped key that week; one shown as "not probed" has terms that are still under review, so no call is made to it at all.</p>
         <p>Twenty calls a week cannot show a small error rate, and one runner location is not every location. This page reports what happened; it does not rank brokers.</p>
       </div>
     </section>
