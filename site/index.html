@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#102b22">
-  <meta name="description" content="Odin R&amp;D is our open research workshop. We test what AI builds, publish every experiment with its result, and take on hard engineering work with partners, in the open or behind closed doors.">
-  <meta property="og:title" content="Odin R&amp;D — We test what AI builds, in the open">
-  <meta property="og:description" content="Experiments written down before they run, on any tool or vendor, with results published whatever they show.">
+  <meta name="description" content="Odin Labs R&amp;D is the lab where every model and vendor meets real work: tested in the open or behind closed doors, inside a running AI factory. Open experiments are published with their result; closed-door work stays private unless the partner decides otherwise. Partner with the lab as a compute sponsor, a company-AGI partner or through an innovation sprint.">
+  <meta property="og:title" content="Odin Labs R&amp;D — every model and vendor, tested on real work">
+  <meta property="og:description" content="Experiments on any tool or vendor: open ones are written down before they run and published whatever they show; closed-door work stays private.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/">
   <meta property="og:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png">
@@ -15,8 +15,8 @@
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:alt" content="Odin R&amp;D factory cutaway with six stations and the question: What should an agent’s work have to prove?">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Odin R&amp;D — We test what AI builds, in the open">
-  <meta name="twitter:description" content="Experiments written down before they run, on any tool or vendor, with results published whatever they show.">
+  <meta name="twitter:title" content="Odin Labs R&amp;D — every model and vendor, tested on real work">
+  <meta name="twitter:description" content="Experiments on any tool or vendor: open ones are written down before they run and published whatever they show; closed-door work stays private.">
   <meta name="twitter:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png">
   <meta name="twitter:image:alt" content="Odin R&amp;D factory cutaway with six stations and the question: What should an agent’s work have to prove?">
   <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/">
@@ -25,20 +25,22 @@
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/company.css">
   <link rel="stylesheet" href="assets/motion.css">
+  <link rel="stylesheet" href="assets/lab.css">
+  <link rel="stylesheet" href="assets/launch.css">
   <script type="module" src="assets/app.js"></script>
   <script type="module" src="assets/motion.mjs"></script>
-  <title>Odin R&D — Inside the software factory</title>
+  <title>Odin Labs R&amp;D — every model and vendor, tested on real work</title>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header dark-surface">
     <a href="./" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="./assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
-    <nav aria-label="Main navigation"><a href="#floor">Factory</a><a href="#experiments">Experiments</a><a href="updates/">Updates</a><a href="#journal">Field notes</a><a href="work-with-us/" data-contact-opened>Work with us</a></nav>
+    <nav aria-label="Main navigation"><a href="#floor">Factory</a><a href="#experiments">Experiments</a><a href="updates/">Updates</a><a href="#journal">Field notes</a><a href="work-with-us/" data-contact-opened>Work with us</a><a href="partners/">Partners</a></nav>
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
     <section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">
-      <div class="factory-premise"><h1 id="hero-title">We test what <br>AI builds, in the open.</h1><div><p>This is Odin’s research workshop. We decide what a piece of AI-built work has to prove, build the checks that can reject it, and publish the result, including the failures. <br>Open a station to see a real experiment.</p><a href="work-with-us/" data-contact-opened>Work with us</a></div></div>
+      <div class="factory-premise"><h1 id="hero-title">Every model and vendor, <br>on real work.</h1><div><p>Odin Labs R&amp;D is the lab where models, tools and vendors meet real work: tested in the open or behind closed doors, inside a running AI factory. Every open experiment is written down before it runs and published whatever it shows, including the failures; closed-door work stays private. <br>Open a station to see a real experiment.</p><a href="partners/">Partner with the lab</a> <a href="work-with-us/" data-contact-opened>Work with us</a></div></div>
       <div class="factory-drawing" data-view="floor">
         <div class="drawing-toolbar"><p>Open a station</p><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div>
         <div class="floor-art"><!--FLOOR--></div>
@@ -52,6 +54,37 @@
         <p id="station-status" class="sr-only" role="status" aria-live="polite"></p>
       </div>
       <p class="factory-boundary">Four ways to question a result, one decision model you can run yourself, and one experiment written down before it runs. These machines are a conceptual map; the records are real runs of authored fixtures, one measured model comparison and one pre-registration with no results yet. Selecting a station reads evidence. It does not run an agent or a model.</p>
+    </section>
+    <section class="lab-launch content-section" id="lab" aria-labelledby="lab-title">
+      <div class="section-heading"><h2 id="lab-title">Measured, and <br>linked to the record.</h2><p>A few results from the lab’s published experiments. Every number is read from its record when the site is built, and links to it. <a href="evidence/">Everything we have measured, and not</a></p></div>
+      <ol class="lab-claims proof-strip"><!--LAB_PROOF--></ol>
+    </section>
+    <section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">
+      <div class="section-heading"><h2 id="offer-title">Work with us, in the open <br>or behind closed doors.</h2><p>We take on hard engineering problems with partners and prove the result. Engagements run over months, scoped together, by proposal.</p></div>
+      <div class="mode-pair">
+        <article class="mode-card" data-mode="open" aria-labelledby="mode-open-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span></div><ul class="door-items"><li>PLAN</li><li>RESULT</li><li>PUBLIC RECORD</li></ul></div><div><span class="technical">MODE 01</span><h3 id="mode-open-title">In the open</h3><p>We run the work as a public experiment on this floor. The plan is written down first and the result is published whatever it shows. We test whatever fits the question, open source or commercial, from MongoDB to Factory.</p></div></article>
+        <article class="mode-card" data-mode="closed" aria-labelledby="mode-closed-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span><span class="door-lock"></span></div><ul class="door-items"><li>NDA</li><li>YOUR CODE</li><li>PRIVATE RECORD</li></ul></div><div><span class="technical">MODE 02</span><h3 id="mode-closed-title">Behind closed doors</h3><p>We do the same work privately, under NDA, on your code and data. Nothing is published unless you decide it should be.</p></div></article>
+      </div>
+      <ul class="offer-areas" aria-label="What we take on">
+        <li data-reveal><span class="technical">LEGACY CODE</span><p>Refactor and migrate old systems without changing what they do, and prove that they still do it.</p></li>
+        <li data-reveal><span class="technical">SECURITY</span><p>Find and fix weaknesses, then show that the fix holds and that nothing else broke.</p></li>
+        <li data-reveal><span class="technical">FRONTIER EXPERIMENTS</span><p>Space, robotics, vision models and machine learning: new directions we take on with partners, each run as a written experiment.</p></li>
+        <li data-reveal><span class="technical">BLUEPRINTS</span><p>Your architecture rules, written down once and checked by code on every change.</p></li>
+      </ul>
+      <div class="offer-actions"><a class="button button-primary" href="work-with-us/" data-contact-opened>How an engagement works <span aria-hidden="true">↗</span></a><a href="https://odin-labs.ai/contact/?topic=lab#contact-form" data-contact-opened>Start a conversation</a><a href="partners/">The partner programme</a></div>
+    </section>
+    <section class="partner-tracks content-section" id="partner-tracks" aria-labelledby="tracks-title">
+      <div class="section-heading"><h2 id="tracks-title">Three ways to <br>partner with the lab.</h2><p>For companies that want to build what comes next with us: long-term, scoped together, by proposal. No prices here, and no partnership is signed yet.</p></div>
+      <ol class="track-cards">
+        <li><a href="partners/#sponsors"><span class="technical">TRACK A</span><h3>Compute &amp; token sponsors</h3><p>Expose tokens or credits to the factory. Get real workloads and honest, pre-registered measurement. Sponsors never buy results.</p><span class="track-go">The sponsor track <span aria-hidden="true">↗</span></span></a></li>
+        <li><a href="partners/#company-agi"><span class="technical">TRACK B</span><h3>Company-AGI partners</h3><p>Build your own governed factory with us, following the Odin vision, and measure it by figures we can actually count.</p><span class="track-go">The partner track <span aria-hidden="true">↗</span></span></a></li>
+        <li><a href="partners/#sprints"><span class="technical">TRACK C</span><h3>Innovation sprints &amp; research licences</h3><p>A fixed-scope sprint on your hard question, with evidence after every phase. License the reports, datasets, methods and gates.</p><span class="track-go">The sprint track <span aria-hidden="true">↗</span></span></a></li>
+      </ol>
+      <p class="tracks-note">The lab’s research qualifies for innovation subsidies; an MIT application for Odin Next has been submitted, and the decision is pending. Read <a href="partners/">the partner programme</a> or <a href="one-pager/">the lab on a page</a>.</p>
+    </section>
+    <section class="agent-space dark-surface" id="agent-space" aria-labelledby="agent-space-title">
+      <div class="agent-space-copy"><span class="technical">AGENT SPACE · RECORDED LIVE SESSION</span><h2 id="agent-space-title">Agents you can see <br>and question.</h2><p>Instead of a chat window, a company’s agents stand in a shared space as characters. A visitor walks up and asks. Every answer comes with its proof card: the question, the answer, why, and where it came from, whether the live world, a knowledge base or a tool.</p><p class="agent-space-boundary">Answers with proof: the card shows where an answer came from, not that it is right. The figures are simple shapes; this is a research build, not a product.</p></div>
+      <figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/agent-space/agent-space-answers.jpg" aria-label="Recorded session in the Odin agent space: a visitor asks the agents questions and each answer appears with its proof card"><source src="assets/agent-space/agent-space-30s.webm" type="video/webm"><img src="assets/agent-space/agent-space-answers.jpg" width="1280" height="720" alt="The Odin agent space: a visitor asks the guide agent what is going on, and the answer appears with its proof card."></video><figcaption>A recorded live session in the agent space, with no sound. The guide answers from the live state of the space; a knowledge agent answers from its knowledge base.</figcaption></figure>
     </section>
     <!-- updates: rendered by scripts/updates.mjs --write from site/data/updates.json; do not edit by hand -->
     <section class="updates-feed content-section" id="updates" aria-labelledby="updates-title">
@@ -124,20 +157,6 @@ VIRTUAL_ENV=$PWD/.venv uv pip install -r requirements.txt
       <article class="project-row"><div class="project-number">003<span>ARTIFACTS</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/bce-paper-artifacts">The evidence workbench <span aria-hidden="true">↗</span></a></h3><p>Seeded defects, fixture trees, recorded gate runs and a standalone chain verifier. Inspect the research materials behind the blueprint-conformance paper.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/bce-paper-artifacts/tree/main/verify">Run the chain verifier</a></div><p class="project-note">An earlier research archive. Its engine-availability notes predate the public BCE release linked above.</p></div><dl class="project-spec"><div><dt>Type</dt><dd>Research archive</dd></div><div><dt>Checked</dt><dd>07 SEP 2026</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Public artifacts</dd></div></dl></article>
       <article class="project-row project-featured"><div class="project-number">004<span>TRIAGE</span></div><div class="project-description"><h3><a href="journal/jev-as-a-fast-gate.html">Jev as a fast gate</a></h3><p>A pre-registered test of a fast typed-decision model as the first gate against architectural drift. 60 authored changes, scored by the blueprint engine. Jev decides from the diff alone and an LLM reviewer takes what Jev is unsure of; the open-weight Laya answers the same inputs, and 2 model-free scripts set the bar. Published before any gate runs.</p><div class="project-links"><a href="journal/jev-as-a-fast-gate.html">The pre-registration</a><a href="data/jev-gate/preregistration.json">The record</a><a href="#station-triage">Station 06</a></div><p class="project-note">The LLM reviewer is nina (<a href="https://github.com/xhulz/nina">github.com/xhulz/nina</a>) — used with the permission of its author, as confirmed by Odin Labs.</p></div><dl class="project-spec"><div><dt>Experiment</dt><dd>EXP 005</dd></div><div><dt>Status</dt><dd>Pre-registered</dd></div><div><dt>Ground truth</dt><dd>bce-engine 0.3.1</dd></div><div><dt>Results</dt><dd>Not yet run</dd></div></dl></article>
       <article class="project-row"><div class="project-number">000<span>WORKSHOP</span></div><div class="project-description"><h3><a href="https://github.com/odin-labs-ai/odin-rnd">This floor is a project, too. <span aria-hidden="true">↗</span></a></h3><p>The drawings, the website and the experiment runner are here to inspect. Propose an experiment, reproduce a result, or help shape the next machine.</p><div class="project-links"><a href="https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml">Propose an experiment</a></div></div><dl class="project-spec"><div><dt>Revision</dt><dd>v0.2.0</dd></div><div><dt>Type</dt><dd>Public workshop</dd></div><div><dt>License</dt><dd>Apache-2.0</dd></div><div><dt>Access</dt><dd>Open source</dd></div></dl></article>
-    </section>
-    <section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">
-      <div class="section-heading"><h2 id="offer-title">Work with us, in the open <br>or behind closed doors.</h2><p>We take on hard engineering problems with partners and prove the result. Engagements run over months, scoped together, by proposal.</p></div>
-      <div class="mode-pair">
-        <article class="mode-card" data-mode="open" aria-labelledby="mode-open-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span></div><ul class="door-items"><li>PLAN</li><li>RESULT</li><li>PUBLIC RECORD</li></ul></div><div><span class="technical">MODE 01</span><h3 id="mode-open-title">In the open</h3><p>We run the work as a public experiment on this floor. The plan is written down first and the result is published whatever it shows. We test whatever fits the question, open source or commercial, from MongoDB to Factory.</p></div></article>
-        <article class="mode-card" data-mode="closed" aria-labelledby="mode-closed-title"><div class="door" aria-hidden="true"><div class="door-frame"><span class="door-light"></span><span class="door-panel"><span class="door-knob"></span></span><span class="door-lock"></span></div><ul class="door-items"><li>NDA</li><li>YOUR CODE</li><li>PRIVATE RECORD</li></ul></div><div><span class="technical">MODE 02</span><h3 id="mode-closed-title">Behind closed doors</h3><p>We do the same work privately, under NDA, on your code and data. Nothing is published unless you decide it should be.</p></div></article>
-      </div>
-      <ul class="offer-areas" aria-label="What we take on">
-        <li data-reveal><span class="technical">LEGACY CODE</span><p>Refactor and migrate old systems without changing what they do, and prove that they still do it.</p></li>
-        <li data-reveal><span class="technical">SECURITY</span><p>Find and fix weaknesses, then show that the fix holds and that nothing else broke.</p></li>
-        <li data-reveal><span class="technical">FRONTIER EXPERIMENTS</span><p>Space, robotics, vision models and machine learning: new directions we take on with partners, each run as a written experiment.</p></li>
-        <li data-reveal><span class="technical">BLUEPRINTS</span><p>Your architecture rules, written down once and checked by code on every change.</p></li>
-      </ul>
-      <div class="offer-actions"><a class="button button-primary" href="work-with-us/" data-contact-opened>How an engagement works <span aria-hidden="true">↗</span></a><a href="https://odin-labs.ai/contact/?topic=lab#contact-form" data-contact-opened>Start a conversation</a><a href="partners/">Five ways to partner (in Dutch)</a></div>
     </section>
     <section class="drawing-board content-section dark-surface" aria-labelledby="next-title">
       <div class="drawing-board-header"><h2 id="next-title">Two products we are <br>shaping with partners.</h2><p>Private collaboration<br><span>For internal teams, customers &amp; early adopter partners.</span></p></div>

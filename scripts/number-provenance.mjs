@@ -1,4 +1,5 @@
-// Number provenance (vp-grow-odin-r-d bundle-3 WO-04): on the lab's provider-economics, evidence and providers pages,
+// Number provenance (vp-grow-odin-r-d bundle-3 WO-04): on the lab's provider-economics, evidence and providers pages
+// (and, since the lab launch of 2026-10-24, the partner programme, the lab on a page and the home page's proof strip),
 // every number a reader can see must come from a published experiment record, and must link to it. scripts/build.mjs
 // runs this over the finished pages in dist/ and refuses the build (scripts/check.mjs is pinned by EXP 006 and EXP 007
 // and stays unchanged); scripts/number-provenance.test.mjs pins the behaviour.
@@ -32,7 +33,7 @@ import { join, posix } from 'node:path';
 import { MEASURED } from './provider-terms.mjs';
 
 /** Pages under dist/ that the rule covers. A page added here must exist in every build. */
-export const PAGES = ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html', 'provider-brief/index.html'];
+export const PAGES = ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html', 'provider-brief/index.html', 'partners/index.html', 'one-pager/index.html'];
 
 /** The only path shapes a number may come from: a results record or a weekly probe record. */
 export const SOURCE_FILE = /^data\/(?:[a-z0-9-]+\/results\.json|broker-probe\/\d{4}-W\d{2}\.json)$/;
@@ -248,8 +249,42 @@ export function isIdentifier(text) {
   return /^[A-Za-z0-9._\/:@+~-]+$/.test(text) && /[A-Za-z]{2}/.test(text) && !MEASURED.test(text);
 }
 
-/** Problems for every page in PAGES under `dist`, with records bound to the checkout at `root`. A missing page fails. */
-export function checkSite(dist = 'dist', pages = PAGES, root = '.') {
+/**
+ * Sections of pages outside PAGES that the rule covers on their own: the home page's proof strip (lab launch,
+ * 2026-10-24). The home page as a whole is not covered (its station records carry figures of their own), so the
+ * section is cut out by its id and checked as a page. A missing section, one with no sourced number, or one that still
+ * holds its marker fails (fail closed).
+ */
+export const HOME_PROOF = { page: 'index.html', id: 'lab', marker: '<!--LAB_PROOF-->' };
+
+/** The section with id `id` in `html`, matched to its own closing tag (nested sections included), or null. */
+export function sectionById(html, id) {
+  const start = html.search(new RegExp(`<section\\b[^>]*\\bid="${id}"`));
+  if (start === -1) return null;
+  const tags = /<\/?section\b[^>]*>/gi;
+  tags.lastIndex = start;
+  let depth = 0;
+  for (let m; (m = tags.exec(html));) {
+    depth += m[0][1] === '/' ? -1 : 1;
+    if (depth === 0) return html.slice(start, m.index + m[0].length);
+  }
+  return null;
+}
+
+/** Problems with the home proof strip in `html` (the built home page). */
+export function checkHomeProof(html, io, spec = HOME_PROOF) {
+  const section = sectionById(html, spec.id);
+  if (section === null) return [`${spec.page}: no section with id="${spec.id}" (the proof strip)`];
+  if (section.includes(spec.marker)) return [`${spec.page}: the proof strip still holds ${spec.marker}; it was never placed`];
+  if (!/data-source="/.test(section)) return [`${spec.page}: the proof strip shows no sourced number`];
+  return checkPage(spec.page, `<body>${section}</body>`, io);
+}
+
+/**
+ * Problems for every page in `pages` under `dist`, with records bound to the checkout at `root`. A missing page fails.
+ * The home proof strip (HOME_PROOF) is checked too unless the caller turns it off explicitly with `{ home: false }`.
+ */
+export function checkSite(dist = 'dist', pages = PAGES, root = '.', { home = true } = {}) {
   const readData = path => { const full = join(dist, path); return existsSync(full) ? readFileSync(full, 'utf8') : null; };
   const exists = path => existsSync(join(dist, path));
   const io = { readData, exists, recordProblem: (path, raw) => recordProblem(path, raw, root), quoteProblem: (path, raw) => quoteProblem(path, raw, root) };
@@ -258,6 +293,10 @@ export function checkSite(dist = 'dist', pages = PAGES, root = '.') {
     const full = join(dist, page);
     if (!existsSync(full)) { problems.push(`${page}: the page is listed in scripts/number-provenance.mjs PAGES but is not in the build`); continue; }
     problems.push(...checkPage(page, readFileSync(full, 'utf8'), io));
+  }
+  if (home) {
+    const file = join(dist, HOME_PROOF.page);
+    problems.push(...(existsSync(file) ? checkHomeProof(readFileSync(file, 'utf8'), io) : [`${HOME_PROOF.page}: the home page is not in the build`]));
   }
   return problems;
 }
