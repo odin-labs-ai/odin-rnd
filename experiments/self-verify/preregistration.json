@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 012",
+    "slug": "self-verify",
+    "title": "Can a reviewer talk itself out of its false alarms?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-21",
+    "summary": "Every model reviewer we have measured catches about half of 30 real defects but also flags about two-thirds of 30 clean changes. EXP 012 asks whether a second pass by the same model, which must name a concrete failing input for every finding or drop it, brings false alarms down to at most 2 of 30 while still catching at least 12 of 30 defects.",
+    "note": "Written, hashed and pushed to a public branch before any counted call. The counted run starts only after that push. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "A reviewer that flags most clean changes cannot be trusted to block a merge on its own. If the cheapest fix is to make the reviewer check its own alarms, the gap between a useful reviewer and a noisy one is a prompt, not a better model. If self-checking does not cut the alarms, or cuts the real catches with them, the gap needs something else: a different model, a second reviewer, or a narrower question.",
+  "model": {
+    "name": "minimax-m3.1-flash",
+    "provider": "Ollama Cloud (https://ollama.com/api/chat), one request per call, no tools, no file access",
+    "thinking": "on (the provider default for think: true)",
+    "price": "free until 2026-10-22 23:59 UTC; list price after that $0.15 per 1M input tokens, $0.60 per 1M output tokens",
+    "onlyModel": "Every counted call in this experiment uses this one model. No other model is called."
+  },
+  "corpus": {
+    "kind": "internal, sealed",
+    "boundary": "The 58 diffs come from our private repositories and are not published. Only counts and the sealed hashes below are public. The corpus was assembled on 2026-10-14 for a separate calibration, before this experiment existed.",
+    "version": "cv1-0f1b32c1",
+    "seeded": 30,
+    "clean": 30,
+    "bundles": 58,
+    "seededDefinition": "12 defects from the original corpus plus 18 harvested from the review record: a defect raised on a change, the named file changed after it, and a later approval.",
+    "cleanDefinition": "Merged changes with no later fix to the same file.",
+    "manifestSha256": "5f6d83a9540105f8e655fdff4736f2ade37b8280700d1875c5183f7c6836279e",
+    "bundlesArchiveSha256": "8601c792c45dae9312ee2b9f7b7212b65b1264c1cb9309ad6186e5f6772b038b"
+  },
+  "arms": [
+    {
+      "id": "A0",
+      "name": "Single review (baseline)",
+      "procedure": "One call with review-prompt.txt. The verdict and findings are used as given.",
+      "data": "ALREADY MEASURED before this record, disclosed: two runs on 2026-10-21 on the same corpus, model and engine. Defects caught 16 and 16 of 30; false alarms 21 and 19 of 30. A0 is not re-run.",
+      "counted": false
+    },
+    {
+      "id": "A1",
+      "name": "Review, then verify",
+      "procedure": "Pass 1 is exactly A0. When pass 1 is not SHIP and lists findings, pass 2 sends the same model the change description, the diff and the numbered findings with verify-prompt.txt. A finding survives only if pass 2 keeps it with a non-empty failing input. The final verdict is the pass-1 verdict with the surviving findings; if none survive it is SHIP.",
+      "runs": 2,
+      "counted": true
+    }
+  ],
+  "prompts": {
+    "review": {"file": "experiments/self-verify/review-prompt.txt", "note": "Placeholders: __CHANGE__ is the change description, __DIFF__ the diff."},
+    "verify": {"file": "experiments/self-verify/verify-prompt.txt", "note": "Placeholders: __CHANGE__, __DIFF__, and __FINDINGS__ (one line per finding: number, severity, file, note)."}
+  },
+  "scoring": {
+    "scorer": "The existing review-recall scorer, unchanged. A defect is caught when the verdict is not SHIP and a finding names the defect's file (plus the sealed pattern for the two shared-diff pairs). A false alarm is a clean change given a verdict other than SHIP.",
+    "noVerdict": "A pass-1 timeout, transport error or unparseable reply after one retry counts as FIX-NEEDED with no findings: a miss on a defect and a false alarm on a clean change. It is also reported separately.",
+    "verifyFailure": "If pass 2 fails after one retry (transport error, another model in the receipt, unparseable reply), the pass-1 result stands unchanged. The alarm is never dropped by a failure. The count of verify failures is reported.",
+    "intervals": "Wilson 95% per run."
+  },
+  "decision": {
+    "earnsItsKeep": "In BOTH A1 runs: false alarms at most 2 of 30 AND defects caught at least 12 of 30.",
+    "partial": "Not earnsItsKeep, but in both A1 runs false alarms at most 12 of 30 (at least 8 fewer than the A0 mean of 20) AND defects caught at least 12 of 30.",
+    "no": "Anything else. This includes cutting false alarms by also cutting catches below 12.",
+    "why12": "12 of 30 is the lowest recall any measured seat reached on P1 in the earlier calibration. A reviewer below it is no longer competitive on catches."
+  },
+  "secondary": [
+    "Per case, A1 against each A0 run: false alarms removed, catches lost.",
+    "How many pass-1 findings pass 2 kept and dropped.",
+    "Catches on the 12 original seeds versus the 18 harvested ones (harvested may be inflated, as the calibration noted).",
+    "Cost per review at list price and median latency."
+  ],
+  "spend": {
+    "model": "minimax-m3.1-flash only",
+    "bound": "Free during the run. At list price the bound is about $2 per 58-change run; the harness accounting cap is $60 per run because a failed call with no billed tokens is priced at a $9 placeholder.",
+    "stop": "If the free period ends before both A1 runs finish, the run stops and the experiment is published as incomplete, with the finished count. Nothing is extrapolated."
+  },
+  "notBefore": "The first counted call is made after this record is pushed to a public branch of odin-labs-ai/odin-rnd. The push time is the freeze time.",
+  "limits": [
+    "One model, one corpus, two runs. The a and b runs replay the same 60 cases, so they are not independent samples.",
+    "The corpus is private. Readers can check the hashes and the method but cannot rerun the cases.",
+    "The verifier is the same model as the reviewer. A different verifier is a different experiment.",
+    "Latency depends on shared provider load and is reported, not judged."
+  ],
+  "runner": {
+    "wrapper": {"file": "experiments/self-verify/runner/exp012-verify-seat.py", "sha256": "d562dfb29451a21ab8e0426cf0a7449bac42370b692961d816bd309ad6e712f0"},
+    "verifyPrompt": {"file": "experiments/self-verify/verify-prompt.txt", "sha256": "5c07d4392806a3190226bf65d6fb4cbd57d8a01bbb0499fac04551b546c96622"},
+    "privateAdapter": {"note": "The pass-1 seat is our private review-recall adapter (tool-free ollama-chat engine), byte-frozen for this run. Published here as hashes only.", "reviewerEngineSha256": "3c4900bdf4b72e33d19f706b9ef67fb8981aec5429184936f0d195c1ff667ef7", "ollamaChatHelperSha256": "6f276f2ec7315c6ac245b0d8f3a0a86327535ff97b3d6cb8054fd4a5dc1fb430"},
+    "smoke": "The runner was exercised once on a synthetic one-function diff that is not in the corpus (pass 1 found the planted bug, pass 2 kept it). No corpus case has been run through A1."
+  }
+}

@@ -1,0 +1,19 @@
+/* Provider-economics and evidence pages (scripts/lab-pages.mjs). */
+.lab-block+.lab-block{margin-top:48px}
+.lab-block h3{font-family:var(--display);font-size:24px;line-height:1.25;margin-bottom:16px}
+.lab-block table{border-collapse:collapse;width:100%;font-size:15px}
+.lab-block caption{text-align:left;font-size:14px;opacity:.8;margin-bottom:8px}
+.lab-block th,.lab-block td{text-align:left;padding:8px 10px;border-bottom:1px solid rgba(127,127,127,.3);vertical-align:top}
+.lab-num{font-variant-numeric:tabular-nums}
+.lab-ci{opacity:.75;white-space:nowrap}
+.lab-figure{margin:28px 0 8px}
+.lab-figure svg{width:100%;max-width:640px;height:auto;display:block}
+.lab-figure circle{stroke:currentColor;stroke-width:2}
+.lab-on circle{fill:currentColor}
+.lab-off circle{fill:none}
+.lab-figure text{font-size:13px;fill:currentColor}
+.lab-axis{stroke:currentColor;stroke-opacity:.5}
+.lab-axis-label{opacity:.75}
+.lab-figure figcaption{font-size:14px;opacity:.8;margin-top:8px}
+.lab-claims>li,.lab-pending>li{margin-top:18px}
+.lab-source{font-size:14px;opacity:.8}

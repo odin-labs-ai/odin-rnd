@@ -179,3 +179,8 @@
 @media(max-width:768px){.cutaway .station-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.cutaway .station-controls>a:nth-child(2n){border-right:0}.cutaway .station-controls>a:nth-child(-n+4){border-bottom:1px solid var(--rule)}.laya-introduction{margin-top:56px}.laya-bench .bench-menu{grid-template-columns:1fr}.laya-bench .bench-entry{font-size:15px;padding:16px 18px;border-top:0}.laya-primer{grid-template-columns:1fr}.laya-primer>div{padding:16px 14px}.laya-primer>div+div{border-left:0;border-top:1px solid var(--rule)}.laya-checks li{grid-template-columns:54px 1fr;gap:10px;font-size:12px}}
 .article-body .table-scroll{overflow-x:auto;max-width:100%}.article-body .table-scroll table{min-width:560px}
 @media(max-width:768px){.cutaway .station-controls>a:nth-child(-n+6){border-bottom:1px solid var(--rule)}.cutaway .station-controls>a:last-child:nth-child(odd){grid-column:1/-1}}
+
+/* The way back to odin-labs.ai, injected into every page's header by the build. */
+.parent-site-link{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 13px;border:1px solid var(--rule);border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;text-decoration:none;color:var(--brand)}.parent-site-link span{font-size:16px;line-height:1}.site-header a.parent-site-link:hover{color:var(--paper);border-color:var(--brand)}
+@media(min-width:761px){.site-header:has(.parent-site-link) nav{margin-inline:auto}}
+@media(max-width:760px){.parent-site-link{order:4;flex:0 0 100%;min-height:40px;padding:0;border:0;border-radius:0;border-top:1px solid var(--rule);font-size:12px;gap:8px}}

@@ -52,8 +52,12 @@ test('the built home page lists every experiment, in order, with the status its 
   const preregistered = readdirSync(join(root, 'dist/data'), { withFileTypes: true }).filter(e => e.isDirectory())
     .filter(e => readdirSync(join(root, 'dist/data', e.name)).includes('preregistration.json'))
     .map(e => JSON.parse(readFileSync(join(root, 'dist/data', e.name, 'preregistration.json'), 'utf8')).experiment.id);
-  const expected = [...report.runs.map((_, i) => `EXP ${String(i + 1).padStart(3, '0')}`), 'EXP 004', ...preregistered].sort();
-  assert.deepEqual(ids, expected, 'one row per recorded recipe, the Laya comparison and every pre-registration, in number order');
+  const notPreregistered = readdirSync(join(root, 'dist/data'), { withFileTypes: true }).filter(e => e.isDirectory())
+    .filter(e => readdirSync(join(root, 'dist/data', e.name)).includes('ledger-entry.json'))
+    .map(e => JSON.parse(readFileSync(join(root, 'dist/data', e.name, 'ledger-entry.json'), 'utf8')).experiment.id);
+  const expected = [...report.runs.map((_, i) => `EXP ${String(i + 1).padStart(3, '0')}`), 'EXP 004', ...preregistered, ...notPreregistered].sort();
+  assert.deepEqual(ids, expected, 'one row per recorded recipe, the Laya comparison, every pre-registration and every numbered study, in number order');
+  for (const id of ['EXP 010', 'EXP 012']) assert.ok(ids.includes(id), `${id} is on the ledger (vp-grow-odin-r-d bundle-1 WO-02)`);
   const rows = journalRows(page);
   for (const entry of ledgerEntries(page, report, join(root, 'dist'))) {
     assert.ok(entry.stage, `${entry.id} has a stage`);
@@ -111,4 +115,39 @@ test('a published results.json with no pre-registration beside it refuses the bu
   } finally {
     rmSync(orphan, { recursive: true, force: true });
   }
+});
+
+test('studies published without a pre-registration are numbered and say so in their stage', () => {
+  const root = builtCopy();
+  const dist = join(root, 'dist');
+  const page = readFileSync(join(dist, 'index.html'), 'utf8');
+  const report = JSON.parse(readFileSync(join(root, 'site/data/experiments.json'), 'utf8'));
+  const entries = ledgerEntries(page, report, dist);
+  for (const [id, href] of [['EXP 013', 'journal/mongodb-temporal-document-fit.html'], ['EXP 014', 'journal/mongodb-primitive-fit.html']]) {
+    const e = entries.find(x => x.id === id);
+    assert.ok(e, `${id} is listed`);
+    assert.equal(e.stage, 'Results published · not pre-registered');
+    assert.equal(e.href, href);
+  }
+  const exp010 = entries.find(x => x.id === 'EXP 010');
+  assert.equal(exp010.stage, 'Pre-registered · record in the repository');
+  assert.equal(exp010.href, 'https://github.com/odin-labs-ai/odin-rnd/blob/main/experiments/document-store/preregistration.json');
+  assert.match(exp010.status, /sha256 61f88f36e8ac/);
+  assert.match(stripTags(page.split('<div class="experiment-ledger" id="all-experiments">')[1]), /not pre-registered/);
+});
+
+test('a not-pre-registered entry beside a pre-registration, or naming no home-page note, refuses the build', () => {
+  const root = builtCopy();
+  const dist = join(root, 'dist');
+  const page = readFileSync(join(dist, 'index.html'), 'utf8');
+  const report = JSON.parse(readFileSync(join(root, 'site/data/experiments.json'), 'utf8'));
+  const both = join(dist, 'data/self-verify/ledger-entry.json');
+  writeFileSync(both, JSON.stringify({ experiment: { id: 'EXP 099', title: 'x' }, preregistered: false, numberedOn: '2026-10-23', source: 'pr', note: 'journal/self-verify-results.html' }));
+  try { assert.throws(() => ledgerEntries(page, report, dist), /has both a pre-registration and a not-pre-registered ledger entry/); } finally { rmSync(both); }
+  const entry = join(dist, 'data/temporal-document-fit/ledger-entry.json');
+  const saved = readFileSync(entry, 'utf8');
+  writeFileSync(entry, saved.replace('journal/mongodb-temporal-document-fit.html', 'journal/no-such-note.html'));
+  try { assert.throws(() => ledgerEntries(page, report, dist), /names field note journal\/no-such-note\.html, which is not a row/); } finally { writeFileSync(entry, saved); }
+  writeFileSync(entry, saved.replace('"preregistered": false', '"preregistered": true'));
+  try { assert.throws(() => ledgerEntries(page, report, dist), /needs record, pin and sha256/); } finally { writeFileSync(entry, saved); }
 });

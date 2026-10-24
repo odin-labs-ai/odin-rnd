@@ -1,0 +1,110 @@
+{
+ "corpus": "odin-replay-v1",
+ "tasks": 8,
+ "outOfSampleTasks": [
+  "t7",
+  "t8"
+ ],
+ "exportedAt": "2026-10-23T16:51:21.038Z",
+ "billing": [
+  {
+   "arm": "router",
+   "replicate": 1,
+   "keyName": "odin-rnd-exp018-router-r1",
+   "limitUsd": 30,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 20.61233678,
+   "billedUsd": 20.61233678,
+   "readBefore": "2026-10-23T13:28:16.404681+00:00",
+   "readAfter": "2026-10-23T14:48:27.599703+00:00"
+  },
+  {
+   "arm": "router",
+   "replicate": 2,
+   "keyName": "odin-rnd-exp018-router-r2",
+   "limitUsd": 30,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 18.269491035,
+   "billedUsd": 18.26949104,
+   "readBefore": "2026-10-23T14:49:15.782333+00:00",
+   "readAfter": "2026-10-23T15:57:53.822390+00:00"
+  },
+  {
+   "arm": "router",
+   "replicate": 3,
+   "keyName": "odin-rnd-exp018-router-r3",
+   "limitUsd": 30,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 27.87127533,
+   "billedUsd": 27.87127533,
+   "readBefore": "2026-10-23T14:50:15.969964+00:00",
+   "readAfter": "2026-10-23T15:52:40.107521+00:00"
+  },
+  {
+   "arm": "opus",
+   "replicate": 1,
+   "keyName": "odin-rnd-exp018-opus-r1",
+   "limitUsd": 50,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 44.1390124,
+   "billedUsd": 44.1390124,
+   "readBefore": "2026-10-23T13:27:56.401943+00:00",
+   "readAfter": "2026-10-23T14:42:15.653470+00:00"
+  },
+  {
+   "arm": "opus",
+   "replicate": 2,
+   "keyName": "odin-rnd-exp018-opus-r2",
+   "limitUsd": 50,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 26.6062972,
+   "billedUsd": 26.6062972,
+   "readBefore": "2026-10-23T14:48:55.734179+00:00",
+   "readAfter": "2026-10-23T15:39:56.593850+00:00"
+  },
+  {
+   "arm": "opus",
+   "replicate": 3,
+   "keyName": "odin-rnd-exp018-opus-r3",
+   "limitUsd": 50,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 42.9953688,
+   "billedUsd": 42.9953688,
+   "readBefore": "2026-10-23T14:49:55.847324+00:00",
+   "readAfter": "2026-10-23T15:52:57.641728+00:00"
+  },
+  {
+   "arm": "luna",
+   "replicate": 1,
+   "keyName": "odin-rnd-exp018-luna-r1",
+   "limitUsd": 11,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 6.23492542,
+   "billedUsd": 6.23492542,
+   "readBefore": "2026-10-23T13:28:36.439491+00:00",
+   "readAfter": "2026-10-23T15:42:16.433073+00:00"
+  },
+  {
+   "arm": "luna",
+   "replicate": 2,
+   "keyName": "odin-rnd-exp018-luna-r2",
+   "limitUsd": 11,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 4.171691465,
+   "billedUsd": 4.17169147,
+   "readBefore": "2026-10-23T14:49:35.850247+00:00",
+   "readAfter": "2026-10-23T16:38:12.317454+00:00"
+  },
+  {
+   "arm": "luna",
+   "replicate": 3,
+   "keyName": "odin-rnd-exp018-luna-r3",
+   "limitUsd": 11,
+   "usageBeforeUsd": 0,
+   "usageAfterUsd": 5.76084498,
+   "billedUsd": 5.76084498,
+   "readBefore": "2026-10-23T14:50:35.981906+00:00",
+   "readAfter": "2026-10-23T16:50:58.671570+00:00"
+  }
+ ]
+}

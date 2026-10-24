@@ -1,0 +1,22 @@
+{
+  "files": {
+    "PROTOCOL.md": "d755aecfb8d1e915e5fe09ebde41e4334f856770f6ae4eee78c915f0068e92d8",
+    "README.md": "1ff4659b2ab5fcd669adf900e4db058b5c4a3c29c8dadb3d40937796db55bb77",
+    "adapters.mjs": "153e72912f6ca043fba3e9095a7cc24daf25c46b1fc04f370effa14ace617580",
+    "adapters.test.mjs": "5e241732a5f310e4a72bd72f3f10682368772687be711ccc2b47c2cabe109b2c",
+    "evaluate.mjs": "38042e81a9a9a91a0efa4d3d5dee3c1521c1a87b8567a7d2c56cf9a93d004d48",
+    "evaluate.test.mjs": "19c54ca5765aa7471b45a3edfd973c777b9486a4afc8527de2fba6c7a0d2f132",
+    "fixtures.mjs": "b3877855678c16f72bc795689bc771d67f860262e09eff74712691ed64663109",
+    "native.test.mjs": "73e09f81f9936face1457dd184aac39dbd8182b2ac95363abd6e4311c400c8a0",
+    "oracle.mjs": "15f2f1876b0abf2961630c065fe24817c0040e9ded81578733efce98cf8d8d97",
+    "package.json": "e323e16717ddd7e436664d58d767c924d042adeb5dd7ae97bdbcc272167cbffe",
+    "pnpm-lock.yaml": "b7b07374822dca40fa60b953e4aefdbb1abeb7086fca0a55352e29d56d498179",
+    "protocol.json": "09e2c9bad3d545f4c62278b9f6d7f84dea25d70904ca7ac70c632d286f2be6e4",
+    "run.mjs": "ff6768a4b7a3d740904023a8d8efba4e596f9714e861e3584863dec5b7e2c2f1",
+    "runner.test.mjs": "021695732d913bd3cd6cb83e201cd50bb1ad13f50809b872280de0cc23b86206",
+    "runtime.mjs": "6f3e7aa2e4538a3d6c1e454187b2465239143d57877d7c5bc8f5a3bcc8b57ae1",
+    "runtime.test.mjs": "771fe0f200639c226e79ff7e9548e2c4938cd314517ee39b5e7ea45637075aa2",
+    "temporal-correctness.mjs": "de2ea182360ed81bb20b4a11a486d0b310d3805c6344b38720cf4d2148363ae2",
+    "workflows.cjs": "a1b9843e2cac08e771150bbca313a8fd3ccf58c2a6bed6676e1688c4b9c8e920"
+  }
+}

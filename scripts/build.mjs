@@ -125,6 +125,12 @@ html = addNinaEntry(html, loadEntryData());
 html = addLedger(html, report);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
+// The provider-economics and evidence pages (vp-grow-odin-r-d bundle-3): rendered from their templates and the published
+// experiment records into dist/ only, before the per-page passes below, so they get the same header, beacon and checks.
+{
+  const { renderLabPages } = await import('./lab-pages.mjs');
+  for (const [page, pageHtml] of Object.entries(renderLabPages())) writeFileSync(`dist/${page}/index.html`, pageHtml);
+}
 mkdirSync('dist/data', { recursive: true });
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
@@ -146,4 +152,38 @@ for (const file of htmlFiles('dist')) {
   const loadsActivity = [...source.matchAll(/<script\b[^>]*\btype="module"[^>]*\bsrc="([^"]+)"/g)]
     .some(([, src]) => resolve(dirname(file), src) === activityModule);
   if (!loadsActivity) writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
+}
+// Page views counted by odin-labs.ai (cookieless, path + referrer host only): GitHub Pages has no analytics and Vercel's
+// own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (odin-website-preview #50).
+// The beacon is this site's own file: no script from another origin runs on these pages. It loads async, so it never
+// holds up the page's own scripts or DOMContentLoaded.
+for (const file of htmlFiles('dist')) {
+  const tag = `<script async src="${relative(dirname(file),'dist/assets/view-beacon.js')}"></script>`;
+  const source = readFileSync(file,'utf8');
+  writeFileSync(file,source.replace('</head>',`${tag}\n</head>`));
+}
+// A way back to the main Odin Labs site in every built page's header (founder ask 2026-10-11). Fails closed on a page without exactly one site header.
+const parentSiteLink = '<a class="parent-site-link" href="https://odin-labs.ai/"><span aria-hidden="true">←</span> Back to odin-labs.ai</a>';
+for (const file of htmlFiles('dist')) {
+  const source = readFileSync(file,'utf8');
+  if ((source.match(/<header class="site-header[ "]/g) || []).length !== 1) throw new Error('Expected exactly one site header in '+file);
+  writeFileSync(file,source.replace(/(<header class="site-header[^"]*"[^>]*>[\s\S]*?)<\/header>/,`$1${parentSiteLink}</header>`));
+}
+// Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05): the build refuses a page that names a broker next to a
+// measured number unless site/data/provider-terms.json allows it (scripts/provider-terms.mjs; tests in
+// scripts/provider-terms.test.mjs). A read older than its staleAfterDays warns. Last, so it sees every finished page.
+{
+  const { checkPages, loadTerms, staleEntries } = await import('./provider-terms.mjs');
+  const terms = loadTerms();
+  const problems = checkPages(htmlFiles('dist').map(file => ({ file, html: readFileSync(file, 'utf8') })), terms);
+  if (problems.length) throw new Error('Broker named next to a measured number without leave in site/data/provider-terms.json:\n' + problems.join('\n'));
+  for (const { id, readOn } of staleEntries(terms)) console.warn(`WARN: the ${id} terms were read on ${readOn}, more than ${terms.staleAfterDays} days ago; read them again.`);
+}
+// Number provenance (vp-grow-odin-r-d bundle-3 WO-04): on the provider-economics and evidence pages every visible number
+// must be a link to an experiment record whose value it shows exactly (scripts/number-provenance.mjs; tests in
+// scripts/number-provenance.test.mjs). A listed page missing from the build fails. Last, so it sees every finished page.
+{
+  const { checkSite } = await import('./number-provenance.mjs');
+  const problems = checkSite('dist');
+  if (problems.length) throw new Error('Number provenance failed:\n' + problems.join('\n'));
 }

@@ -5,6 +5,7 @@
 // edit here. The status sentence is copied from the built home page's field-note row, after every qualify step has run.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { day } from './blueprint-floor-results-site.mjs';
+import { checkCopies, checkDist, checkLedgerEntry, repoBlob } from './ledger-publish.mjs';
 
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
@@ -71,6 +72,22 @@ export function ledgerEntries(html, report, dist = 'dist') {
   entries.push({ id: 'EXP 004', title: layaRow.heading, href: layaRow.href, stage: layaManifest.kind === 'measured' ? 'Measured' : 'Pre-registered', status: statusSentence(layaRow.text) });
   for (const slug of readdirSync(`${dist}/data`, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort()) {
     const prereg = `${dist}/data/${slug}/preregistration.json`;
+    const entryFile = `${dist}/data/${slug}/ledger-entry.json`;
+    if (existsSync(entryFile)) {
+      // A ledger entry (scripts/ledger-publish.mjs) is either a pre-registration listed from the repository (EXP 010, whose
+      // record the site check cannot publish) or a study published without a pre-registration, numbered so it can be
+      // cited, whose stage says so and which links its own field note, matched by the note path the entry names.
+      if (existsSync(prereg)) throw new Error(`Experiment ledger: data/${slug} has both a pre-registration and a not-pre-registered ledger entry`);
+      const entry = checkLedgerEntry(JSON.parse(readFileSync(entryFile, 'utf8')), `data/${slug}/ledger-entry.json`);
+      if (entry.preregistered) {
+        entries.push({ id: entry.experiment.id, title: entry.experiment.title, href: repoBlob(entry.record), stage: 'Pre-registered · record in the repository', status: `Pre-registration published in the repository, sha256 ${entry.sha256.slice(0, 12)}…; no field note yet.` });
+        continue;
+      }
+      const row = rows.find(r => r.href === entry.note);
+      if (!row) throw new Error(`Experiment ledger: ${entry.experiment.id} names field note ${entry.note}, which is not a row on the home page`);
+      entries.push({ id: entry.experiment.id, title: entry.experiment.title, href: row.href, stage: 'Results published · not pre-registered', status: statusSentence(row.text) });
+      continue;
+    }
     if (!existsSync(prereg)) continue;
     const { id, title } = JSON.parse(readFileSync(prereg, 'utf8')).experiment;
     if (!Number.isInteger(expNumber(id))) throw new Error(`Experiment ledger: ${prereg} names no experiment id of the form EXP 000`);
@@ -103,11 +120,14 @@ export function ledgerEntries(html, report, dist = 'dist') {
 
 export function renderLedger(entries) {
   const items = entries.map(e => `<li><a href="${escape(e.href)}"><span class="technical">${escape(e.id)}</span><span class="ledger-title">${escape(e.title)}</span><span class="ledger-stage technical">${escape(e.stage)}</span>${e.status ? `<span class="ledger-status">${escape(e.status)}</span>` : ''}</a></li>`).join('');
-  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment on this site, and where it stands.</h3><p>It lists each experiment whose pre-registration this site publishes; a record published only in the repository joins the list once its site copy does. EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited, or says it has no note yet. A refuted claim stays refuted.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
+  return `<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">Every experiment on this site, and where it stands.</h3><p>It lists each experiment whose pre-registration this site publishes, and the studies published without one, numbered so they can be cited and marked “not pre-registered”: for those, no question, metric or decision rule was frozen before they ran. A pre-registration the site cannot copy is listed with a link to its record in the repository and that record's sha256. EXP 001–003 show their recorded run: its date and the two scores, as published in the run's record. Every later experiment shows the status sentence from its own field note, unedited, or says it has no note yet. A refuted claim stays refuted. <a href="methods/">How we run experiments</a>.</p><ol aria-labelledby="all-experiments-title">${items}</ol></div>`;
 }
 
 /** Replaces the page's ledger marker with the ledger built from `dist`. */
 export function addLedger(html, report, dist = 'dist') {
   if (!html.includes('<!--EXPERIMENT_LEDGER-->')) throw new Error('Experiment ledger: the home page has no ledger marker');
+  // EXP 010 and EXP 012 join through byte-for-byte site copies of their frozen records (scripts/ledger-publish.mjs):
+  // each record must still match its committed .sha256, and the copy built into dist must still be the record's bytes.
+  checkDist(checkCopies(), dist);
   return html.replace('<!--EXPERIMENT_LEDGER-->', renderLedger(ledgerEntries(html, report, dist)));
 }

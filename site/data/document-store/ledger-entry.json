@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "experiment": {
+    "id": "EXP 010",
+    "title": "Would you notice it is not MongoDB?"
+  },
+  "preregistered": true,
+  "record": "experiments/document-store/preregistration.json",
+  "pin": "experiments/document-store/preregistration.sha256",
+  "sha256": "61f88f36e8acfc02741d44ed2169c7239ce35bc4467f811a717ecd247aafc339",
+  "why": "Frozen and merged 2026-10-11 (odin-rnd #32) but never copied to the site, so the ledger skipped it. Its record cites two upstream GitHub repositories, which the pinned site check refuses on a built page, so it is listed from the repository instead of copied."
+}

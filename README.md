@@ -41,6 +41,8 @@ The runner executes three packaged BCE recipes: TypeScript module layering, Pyth
 
 Results include the complete transcript, its SHA-256 digest, package/version/integrity, time, execution environment, base checkout revision, hashes of the actual experiment input files, and CI run URL. Local edits are identified by those input hashes; a base revision alone is not proof of an unchanged worktree. Selectors on the site inspect these recordings; the reproduction command runs locally. These are author-controlled mechanism tests, not measurements of agent effectiveness or production reliability.
 
+Every experiment the site lists is on the [experiment ledger](https://odin-labs-ai.github.io/odin-rnd/#all-experiments). Pre-registered experiments are frozen by sha256 before any counted run. EXP 013 and EXP 014 (the two MongoDB studies, `experiments/temporal-document-fit/` and `experiments/temporal-primitive-fit/`) were published with their protocol and raw evidence but **without** a pre-registration; the ledger lists them as "Results published · not pre-registered".
+
 GitHub Actions runs them on main, pull requests, manual dispatch and weekly. Failed discrimination retains its report as a workflow artifact and blocks publication. The previous successful site's timestamp remains unchanged. Artifact retention is 90 days; the site serves its current published record, and the checked-in initial local record is historical evidence, not a claim of continuous liveness.
 
 ## Contribute

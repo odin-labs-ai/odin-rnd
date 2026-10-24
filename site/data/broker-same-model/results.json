@@ -1,0 +1,304 @@
+{
+  "experiment": "EXP 016",
+  "preregistrationSha256": "8b618348ab005e3ed7fa24a100a3cfff2c1842c79155cb74267ec3bca0d12569",
+  "window": {
+    "firstCall": "2026-10-23T08:00:44.008Z",
+    "lastCall": "2026-10-23T08:13:53.040Z",
+    "calls": 720
+  },
+  "expectedCalls": 720,
+  "perArm": {
+    "sonnet": {
+      "family": "claude-sonnet-5-5",
+      "perBroker": {
+        "A": {
+          "attempted": 120,
+          "ok": 114,
+          "errors": 6,
+          "errorRate": 0.05,
+          "errorRateCi95": [
+            0.0231,
+            0.1048
+          ],
+          "statuses": {
+            "200": 120
+          },
+          "servedMatch": {
+            "matched": 114,
+            "of": 114,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 114,
+          "billedToListMedian": 1,
+          "billedToListRange": [
+            1,
+            1
+          ],
+          "billedUsdTotal": 0.428128,
+          "billedUsdPer60Changes": null,
+          "completeReplicates": 0,
+          "meanPromptTokens": 420.9,
+          "meanCompletionTokens": 291.4,
+          "latencyMs": {
+            "n": 114,
+            "p50": 3198,
+            "p95": 5145,
+            "p50Ci95": [
+              2950,
+              3466
+            ]
+          }
+        },
+        "B": {
+          "attempted": 120,
+          "ok": 113,
+          "errors": 7,
+          "errorRate": 0.0583,
+          "errorRateCi95": [
+            0.0285,
+            0.1155
+          ],
+          "statuses": {
+            "200": 113,
+            "503": 7
+          },
+          "servedMatch": {
+            "matched": 113,
+            "of": 113,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 113,
+          "billedToListMedian": 1.1,
+          "billedToListRange": [
+            1.1,
+            1.1
+          ],
+          "billedUsdTotal": 0.452932,
+          "billedUsdPer60Changes": null,
+          "completeReplicates": 0,
+          "meanPromptTokens": 422.4,
+          "meanCompletionTokens": 279.9,
+          "latencyMs": {
+            "n": 113,
+            "p50": 2967,
+            "p95": 5059,
+            "p50Ci95": [
+              2806,
+              3312
+            ]
+          }
+        },
+        "C": {
+          "attempted": 120,
+          "ok": 116,
+          "errors": 4,
+          "errorRate": 0.0333,
+          "errorRateCi95": [
+            0.013,
+            0.0826
+          ],
+          "statuses": {
+            "200": 120
+          },
+          "servedMatch": {
+            "matched": 116,
+            "of": 116,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 116,
+          "billedToListMedian": 1,
+          "billedToListRange": [
+            1,
+            1
+          ],
+          "billedUsdTotal": 0.436248,
+          "billedUsdPer60Changes": null,
+          "completeReplicates": 0,
+          "meanPromptTokens": 422.8,
+          "meanCompletionTokens": 291.5,
+          "latencyMs": {
+            "n": 116,
+            "p50": 3381,
+            "p95": 10080,
+            "p50Ci95": [
+              3170,
+              3855
+            ]
+          }
+        }
+      },
+      "rate": {
+        "spread": 0.1,
+        "verdict": "measured price spread"
+      },
+      "bill": {
+        "spread": null,
+        "verdict": "not measurable"
+      },
+      "latency": {
+        "fasterAtP50": [],
+        "rule": "a broker is faster only where the 95% intervals of the two medians do not overlap"
+      },
+      "silentSubstitutions": 0
+    },
+    "mini": {
+      "family": "gpt-4o-mini",
+      "perBroker": {
+        "A": {
+          "attempted": 120,
+          "ok": 120,
+          "errors": 0,
+          "errorRate": 0,
+          "errorRateCi95": [
+            0,
+            0.031
+          ],
+          "statuses": {
+            "200": 120
+          },
+          "servedMatch": {
+            "matched": 120,
+            "of": 120,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 120,
+          "billedToListMedian": 1,
+          "billedToListRange": [
+            1,
+            1
+          ],
+          "billedUsdTotal": 0.010198,
+          "billedUsdPer60Changes": 0.005099,
+          "completeReplicates": 2,
+          "meanPromptTokens": 265.3,
+          "meanCompletionTokens": 75.3,
+          "latencyMs": {
+            "n": 120,
+            "p50": 1594,
+            "p95": 2239,
+            "p50Ci95": [
+              1537,
+              1687
+            ]
+          }
+        },
+        "B": {
+          "attempted": 120,
+          "ok": 120,
+          "errors": 0,
+          "errorRate": 0,
+          "errorRateCi95": [
+            0,
+            0.031
+          ],
+          "statuses": {
+            "200": 120
+          },
+          "servedMatch": {
+            "matched": 120,
+            "of": 120,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 120,
+          "billedToListMedian": 1.1,
+          "billedToListRange": [
+            1.1,
+            1.1
+          ],
+          "billedUsdTotal": 0.011381,
+          "billedUsdPer60Changes": 0.005691,
+          "completeReplicates": 2,
+          "meanPromptTokens": 265.3,
+          "meanCompletionTokens": 77.4,
+          "latencyMs": {
+            "n": 120,
+            "p50": 1626,
+            "p95": 2891,
+            "p50Ci95": [
+              1521,
+              1751
+            ]
+          }
+        },
+        "C": {
+          "attempted": 120,
+          "ok": 120,
+          "errors": 0,
+          "errorRate": 0,
+          "errorRateCi95": [
+            0,
+            0.031
+          ],
+          "statuses": {
+            "200": 120
+          },
+          "servedMatch": {
+            "matched": 120,
+            "of": 120,
+            "rate": 1
+          },
+          "servedModels": [],
+          "servedProviders": [],
+          "mismatches": [],
+          "priced": 120,
+          "billedToListMedian": 1,
+          "billedToListRange": [
+            1,
+            1
+          ],
+          "billedUsdTotal": 0.010326,
+          "billedUsdPer60Changes": 0.005163,
+          "completeReplicates": 2,
+          "meanPromptTokens": 265.3,
+          "meanCompletionTokens": 77.1,
+          "latencyMs": {
+            "n": 120,
+            "p50": 1375,
+            "p95": 1739,
+            "p50Ci95": [
+              1337,
+              1449
+            ]
+          }
+        }
+      },
+      "rate": {
+        "spread": 0.1,
+        "verdict": "measured price spread"
+      },
+      "bill": {
+        "spread": 0.1161,
+        "verdict": "measured price spread"
+      },
+      "latency": {
+        "fasterAtP50": [
+          "C < A",
+          "C < B"
+        ],
+        "rule": "a broker is faster only where the 95% intervals of the two medians do not overlap"
+      },
+      "silentSubstitutions": 0
+    }
+  },
+  "amendment": {
+    "id": "01",
+    "file": "experiments/broker-same-model/amendment-01/amendment.json",
+    "sha256": "5af2b269cf301a4d754f5610a1ffd48173f161fb5521392161edaa28637189c8",
+    "brokers": "shown as letters"
+  }
+}

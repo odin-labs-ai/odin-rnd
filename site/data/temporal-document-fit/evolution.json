@@ -1,0 +1,1322 @@
+[
+  {
+    "repeat": 1,
+    "arm": "postgres",
+    "seed": 20261019,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 1,
+    "arm": "mongodb",
+    "seed": 20261019,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 2,
+    "arm": "mongodb",
+    "seed": 20261020,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 2,
+    "arm": "postgres",
+    "seed": 20261020,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 3,
+    "arm": "postgres",
+    "seed": 20261021,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 3,
+    "arm": "mongodb",
+    "seed": 20261021,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 4,
+    "arm": "mongodb",
+    "seed": 20261022,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 4,
+    "arm": "postgres",
+    "seed": 20261022,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 5,
+    "arm": "postgres",
+    "seed": 20261023,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  },
+  {
+    "repeat": 5,
+    "arm": "mongodb",
+    "seed": 20261023,
+    "tasks": [
+      {
+        "id": "E1",
+        "passed": true,
+        "applicationSteps": [
+          "new optional field write",
+          "old client unrelated patch",
+          "old/new projection reads",
+          "missing/null distinction"
+        ],
+        "ddl": false,
+        "backfill": false,
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E2",
+        "passed": true,
+        "expectedIDs": [
+          "record-0001",
+          "record-0031",
+          "record-0061",
+          "record-0091",
+          "record-0121",
+          "record-0151",
+          "record-0181",
+          "record-0211",
+          "record-0241",
+          "record-0271",
+          "record-0301",
+          "record-0331",
+          "record-0361",
+          "record-0391",
+          "record-0421",
+          "record-0451",
+          "record-0481",
+          "record-0511",
+          "record-0541",
+          "record-0571",
+          "record-0601",
+          "record-0631",
+          "record-0661",
+          "record-0691",
+          "record-0721",
+          "record-0751",
+          "record-0781",
+          "record-0811",
+          "record-0841",
+          "record-0871",
+          "record-0901",
+          "record-0931",
+          "record-0961",
+          "record-0991"
+        ],
+        "beforeCount": 34,
+        "afterCount": 34,
+        "indexResult": {
+          "phase": "add-index",
+          "indexCreated": true
+        },
+        "applicationSteps": [
+          "native tenant/model equality predicate",
+          "one native index creation"
+        ],
+        "compatibilityDefects": 0
+      },
+      {
+        "id": "E3",
+        "passed": true,
+        "interrupted": {
+          "scanned": 10,
+          "applied": 9,
+          "conflicts": 1,
+          "batches": 1,
+          "interrupted": true
+        },
+        "resumed": {
+          "scanned": 991,
+          "applied": 991,
+          "conflicts": 0,
+          "batches": 10,
+          "interrupted": false
+        },
+        "repeat": {
+          "scanned": 0,
+          "applied": 0,
+          "conflicts": 0,
+          "batches": 0,
+          "interrupted": false
+        },
+        "concurrent": {
+          "tenantId": "tenant-0",
+          "id": "record-0000",
+          "priority": 4
+        },
+        "applicationSteps": [
+          "dual-compatible priority writer",
+          "guarded batch backfill",
+          "interrupt after one batch",
+          "concurrent old writer",
+          "resume",
+          "idempotent repeat",
+          "old-write invalidation",
+          "mixed reader fallback",
+          "legacy reader rollback"
+        ],
+        "compatibilityDefects": 0,
+        "invariant": {
+          "ok": true,
+          "errors": [],
+          "records": 1000,
+          "events": 1005,
+          "receipts": 1005
+        }
+      }
+    ],
+    "interrupted": {
+      "scanned": 10,
+      "applied": 9,
+      "conflicts": 1,
+      "batches": 1,
+      "interrupted": true
+    },
+    "concurrent": {
+      "tenantId": "tenant-0",
+      "id": "record-0000",
+      "priority": 4
+    }
+  }
+]

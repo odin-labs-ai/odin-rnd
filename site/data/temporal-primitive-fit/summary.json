@@ -1,0 +1,2511 @@
+{
+  "excludedRuns": [
+    {
+      "runId": "smoke-2026-10-19T08-10-56.492Z",
+      "mode": "smoke",
+      "pooled": false,
+      "scope": "Uncounted smoke metadata only"
+    },
+    {
+      "runId": "smoke-2026-10-19T08-12-38.673Z",
+      "mode": "smoke",
+      "pooled": false,
+      "scope": "Uncounted smoke metadata only"
+    },
+    {
+      "runId": "main-2026-10-19T08-22-08.743Z",
+      "mode": "main",
+      "outcome": "failed",
+      "pooled": false,
+      "completedCells": 81,
+      "sourceFreezeVerified": true,
+      "protocolHash": "24c3c71ceaf780a06a1c250d02aa21c5ecac94fb1ba86053ed39d7c78100af11",
+      "reason": "Interrupted after a material macOS WAL/journal flush-semantics confound was identified. Complete normalized observed evidence and exact prior source archive are retained; results do not enter amended candidate decisions."
+    }
+  ],
+  "kind": "derived-study-summary",
+  "outcome": "jsonb-only-advantage",
+  "productionAdoption": false,
+  "runIds": {
+    "main": "main-2026-10-19T08-52-47.394Z",
+    "reproduction": "reproduction-2026-10-19T09-26-44.716Z"
+  },
+  "protocolHash": "09e2c9bad3d545f4c62278b9f6d7f84dea25d70904ca7ac70c632d286f2be6e4",
+  "sourceFreezeVerified": true,
+  "counts": {
+    "main": {
+      "attempted": 99000,
+      "completed": 99000,
+      "cells": 120
+    },
+    "reproduction": {
+      "attempted": 19800,
+      "completed": 19800,
+      "cells": 24
+    }
+  },
+  "elapsedMs": {
+    "main": 2007973,
+    "reproduction": 267171
+  },
+  "resources": {
+    "main": {
+      "samples": 679,
+      "maxRssBytes": 3325812736,
+      "maxDiskBytes": 5396684800
+    },
+    "reproduction": {
+      "samples": 136,
+      "maxRssBytes": 3013517312,
+      "maxDiskBytes": 5514960896
+    }
+  },
+  "checks": {
+    "main": 810,
+    "reproduction": 162,
+    "temporalMain": {
+      "outcome": "passed",
+      "mutations": 30,
+      "attempts": 33,
+      "checks": [
+        {
+          "design": "pg-monolithic",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "pg-monolithic",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "b4a77f6d044c757745d5876b51c890acfecac1a9632c990ba417ec3a451939b6"
+        },
+        {
+          "design": "pg-monolithic",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        },
+        {
+          "design": "pg-split",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "pg-split",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "b4a77f6d044c757745d5876b51c890acfecac1a9632c990ba417ec3a451939b6"
+        },
+        {
+          "design": "pg-split",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        },
+        {
+          "design": "mongo",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "mongo",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "b4a77f6d044c757745d5876b51c890acfecac1a9632c990ba417ec3a451939b6"
+        },
+        {
+          "design": "mongo",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        }
+      ],
+      "scope": "Dedicated isolated records: version and intended value verify a previously applied CAS. This is bounded CAS reconciliation, not a general idempotency receipt protocol; no timings pooled with kernels."
+    },
+    "temporalReproduction": {
+      "outcome": "passed",
+      "mutations": 30,
+      "attempts": 33,
+      "checks": [
+        {
+          "design": "pg-monolithic",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "pg-monolithic",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+        },
+        {
+          "design": "pg-monolithic",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        },
+        {
+          "design": "pg-split",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "pg-split",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+        },
+        {
+          "design": "pg-split",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        },
+        {
+          "design": "mongo",
+          "check": "duplicate-workflow-id-rejected",
+          "passed": true
+        },
+        {
+          "design": "mongo",
+          "check": "committed-CAS-reconciled-on-retry",
+          "passed": true,
+          "snapshotHash": "88c9f1d86f566e148145986b87bb92319d1340b382899719b3508d8d5c46e0eb"
+        },
+        {
+          "design": "mongo",
+          "check": "same-code-mutation-history-replay",
+          "passed": true
+        }
+      ],
+      "scope": "Dedicated isolated records: version and intended value verify a previously applied CAS. This is bounded CAS reconciliation, not a general idempotency receipt protocol; no timings pooled with kernels."
+    }
+  },
+  "scenarios": [
+    {
+      "scenario": "A/known-hot/8192",
+      "metric": "mixed",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9846538639677843,
+              "p95Ratio": 0.6717954862963536,
+              "storageRatio": 0.515869140625,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.9908780422055289,
+              "p95Ratio": 0.7554888358294679,
+              "storageRatio": 0.5026737967914439,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 0.6743981689126677,
+              "p95Ratio": 0.48371497496211074,
+              "storageRatio": 0.5104775828460039,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.9737832785196342,
+              "p95Ratio": 0.7746368819498524,
+              "storageRatio": 0.5127263827704356,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 0.9881442936828518,
+              "p95Ratio": 0.7582068579781412,
+              "storageRatio": 0.5152764306498545,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 1,
+          "medianLatencyRatio": 0.9846538639677843,
+          "medianP95Ratio": 0.7554888358294679,
+          "maxStorageRatio": 0.515869140625,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.008753788499929,
+              "p95Ratio": 1.0109882369526266,
+              "storageRatio": 0.9657221206581352,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.0353696321542407,
+              "p95Ratio": 1.0463088602370794,
+              "storageRatio": 0.9451553930530164,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.0030585753087868,
+              "p95Ratio": 0.7131967442983779,
+              "storageRatio": 0.9574954296160878,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.0143875600421823,
+              "p95Ratio": 1.3330746680677192,
+              "storageRatio": 0.9574954296160878,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.0396653951336028,
+              "p95Ratio": 1.0317333470465226,
+              "storageRatio": 0.9712065813528337,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.0143875600421823,
+          "medianP95Ratio": 1.0317333470465226,
+          "maxStorageRatio": 0.9712065813528337,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9682012038566761,
+              "p95Ratio": 0.7393941550040741,
+              "storageRatio": 0.5134737873591376,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 0.9682012038566761,
+          "medianP95Ratio": 0.7393941550040741,
+          "maxStorageRatio": 0.5134737873591376,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.0070745470466047,
+              "p95Ratio": 1.299740265323705,
+              "storageRatio": 0.9579524680073126,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.0070745470466047,
+          "medianP95Ratio": 1.299740265323705,
+          "maxStorageRatio": 0.9579524680073126,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "A/known-hot/65536",
+      "metric": "mixed",
+      "outcome": "jsonb-only-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.6626150876835524,
+              "p95Ratio": 0.6773544519936532,
+              "storageRatio": 0.6506353484790143,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.5289652769941801,
+              "p95Ratio": 0.4984777038578904,
+              "storageRatio": 0.5419209255021612,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 0.509933899531232,
+              "p95Ratio": 0.4728275693169811,
+              "storageRatio": 0.5416322379711435,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.5107299709761915,
+              "p95Ratio": 0.39964006054922036,
+              "storageRatio": 0.541415040366156,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 0.4899494817357007,
+              "p95Ratio": 0.27349892330409736,
+              "storageRatio": 0.5409070698088039,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 5,
+          "medianLatencyRatio": 0.5107299709761915,
+          "medianP95Ratio": 0.4728275693169811,
+          "maxStorageRatio": 0.6506353484790143,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.060290414912997,
+              "p95Ratio": 1.766960780836637,
+              "storageRatio": 1.0068525801453938,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.0537243876859614,
+              "p95Ratio": 1.4164672142122006,
+              "storageRatio": 1.0160290787748778,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.0375981025414136,
+              "p95Ratio": 1.0085851416842895,
+              "storageRatio": 1.0155523775473723,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.022780991786889,
+              "p95Ratio": 0.7818671194812923,
+              "storageRatio": 1.0148951382268827,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.0113588996998988,
+              "p95Ratio": 0.9953305976892317,
+              "storageRatio": 1.0147163965681603,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.0375981025414136,
+          "medianP95Ratio": 1.0085851416842895,
+          "maxStorageRatio": 1.0160290787748778,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.5993932595148118,
+              "p95Ratio": 0.5003067515755303,
+              "storageRatio": 0.5415209512303681,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 1,
+          "medianLatencyRatio": 0.5993932595148118,
+          "medianP95Ratio": 0.5003067515755303,
+          "maxStorageRatio": 0.5415209512303681,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9235994782743686,
+              "p95Ratio": 0.9365115149862595,
+              "storageRatio": 1.0149565010129902,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 0.9235994782743686,
+          "medianP95Ratio": 0.9365115149862595,
+          "maxStorageRatio": 1.0149565010129902,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "A/distributed-write-heavy/8192",
+      "metric": "mixed",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9319782595439974,
+              "p95Ratio": 0.7423593385905575,
+              "storageRatio": 0.2911989795918367,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.9816112275321696,
+              "p95Ratio": 0.7266213002485444,
+              "storageRatio": 0.29223102478916435,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.0135669575867827,
+              "p95Ratio": 0.867071358282795,
+              "storageRatio": 0.4092998585572843,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.9899435474552819,
+              "p95Ratio": 1.0187269433082886,
+              "storageRatio": 0.293147532600358,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 0.9719321289558646,
+              "p95Ratio": 0.6140689938978313,
+              "storageRatio": 0.29200715015321754,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 0.9816112275321696,
+          "medianP95Ratio": 0.7423593385905575,
+          "maxStorageRatio": 0.4092998585572843,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.0238539347877917,
+              "p95Ratio": 0.9607527189816832,
+              "storageRatio": 0.6943430656934306,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.0234121261559008,
+              "p95Ratio": 0.9671676640230558,
+              "storageRatio": 0.6976815131177547,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.0396120947715917,
+              "p95Ratio": 1.3702902378786415,
+              "storageRatio": 0.7027929568913176,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.027167737236586,
+              "p95Ratio": 1.376637517259981,
+              "storageRatio": 0.6952698605215282,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.0098113146364878,
+              "p95Ratio": 0.8653547203788827,
+              "storageRatio": 0.6981074481074481,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.0238539347877917,
+          "medianP95Ratio": 0.9671676640230558,
+          "maxStorageRatio": 0.7027929568913176,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9671065853922677,
+              "p95Ratio": 0.7708953081627621,
+              "storageRatio": 0.2827868852459016,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 0.9671065853922677,
+          "medianP95Ratio": 0.7708953081627621,
+          "maxStorageRatio": 0.2827868852459016,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.012831017591044,
+              "p95Ratio": 1.0355339289157333,
+              "storageRatio": 0.6670694864048339,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.012831017591044,
+          "medianP95Ratio": 1.0355339289157333,
+          "maxStorageRatio": 0.6670694864048339,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "A/distributed-write-heavy/65536",
+      "metric": "mixed",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.6764050682625592,
+              "p95Ratio": 0.4903393801214092,
+              "storageRatio": 0.4941452669410469,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.6736156379690181,
+              "p95Ratio": 0.6252176379281348,
+              "storageRatio": 0.4944898787773331,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 0.4925956862356754,
+              "p95Ratio": 0.40581585163545064,
+              "storageRatio": 0.3758590308370044,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.4802671692821697,
+              "p95Ratio": 0.415081967933294,
+              "storageRatio": 0.3795138277259116,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 0.7173218421560925,
+              "p95Ratio": 1.2899411358893582,
+              "storageRatio": 0.3797588134325074,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 4,
+          "medianLatencyRatio": 0.6736156379690181,
+          "medianP95Ratio": 0.4903393801214092,
+          "maxStorageRatio": 0.4944898787773331,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.0442774830535442,
+              "p95Ratio": 1.0298718943509073,
+              "storageRatio": 0.977468180254558,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.0111791509490475,
+              "p95Ratio": 0.6810453174135305,
+              "storageRatio": 0.9764631771847441,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 0.8794698091296922,
+              "p95Ratio": 0.9674655032030635,
+              "storageRatio": 0.9788893988067922,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.0037778004760298,
+              "p95Ratio": 0.9840184208316759,
+              "storageRatio": 0.9867185711014427,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.341990962228665,
+              "p95Ratio": 2.945050986766339,
+              "storageRatio": 0.9954430087678818,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.0111791509490475,
+          "medianP95Ratio": 0.9840184208316759,
+          "maxStorageRatio": 0.9954430087678818,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.152646673179649,
+              "p95Ratio": 1.253051417375294,
+              "storageRatio": 0.37761976047904194,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.152646673179649,
+          "medianP95Ratio": 1.253051417375294,
+          "maxStorageRatio": 0.37761976047904194,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.3303733408653433,
+              "p95Ratio": 2.5836546656586163,
+              "storageRatio": 0.9823044324819609,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.3303733408653433,
+          "medianP95Ratio": 2.5836546656586163,
+          "maxStorageRatio": 0.9823044324819609,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "A/distributed-read-heavy/8192",
+      "metric": "mixed",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.9875943038237117,
+              "p95Ratio": 0.5996102431326078,
+              "storageRatio": 0.38521855188521853,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.8229753205103892,
+              "p95Ratio": 0.6627766496761689,
+              "storageRatio": 0.3491918267764562,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.6078364324740801,
+              "p95Ratio": 0.8382618665875011,
+              "storageRatio": 0.3526267562614539,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.3257687472473283,
+              "p95Ratio": 0.9944769773311389,
+              "storageRatio": 0.4462430055955236,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.8911853022432292,
+              "p95Ratio": 0.6985971820424403,
+              "storageRatio": 0.35027305825242716,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 1,
+          "medianLatencyRatio": 0.9875943038237117,
+          "medianP95Ratio": 0.6985971820424403,
+          "maxStorageRatio": 0.4462430055955236,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.0125371116324988,
+              "p95Ratio": 0.8939270932585375,
+              "storageRatio": 0.7043929225137279,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.2534697753288773,
+              "p95Ratio": 1.0295945680925684,
+              "storageRatio": 0.6947815533980582,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 5.602242157313327,
+              "p95Ratio": 1.5490876652217125,
+              "storageRatio": 0.7001212856276531,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.9508220490505898,
+              "p95Ratio": 1.2096706655804177,
+              "storageRatio": 0.6738080869040435,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.7160912428482713,
+              "p95Ratio": 0.8483609789634674,
+              "storageRatio": 0.6996969696969697,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.2534697753288773,
+          "medianP95Ratio": 1.0295945680925684,
+          "maxStorageRatio": 0.7043929225137279,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.3591427123292135,
+              "p95Ratio": 0.7495126436827629,
+              "storageRatio": 0.34897896982627247,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 1,
+          "medianLatencyRatio": 0.3591427123292135,
+          "medianP95Ratio": 0.7495126436827629,
+          "maxStorageRatio": 0.34897896982627247,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.269627300877945,
+              "p95Ratio": 1.116009489570401,
+              "storageRatio": 0.6839904420549582,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.269627300877945,
+          "medianP95Ratio": 1.116009489570401,
+          "maxStorageRatio": 0.6839904420549582,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "A/distributed-read-heavy/65536",
+      "metric": "mixed",
+      "outcome": "jsonb-only-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.5107024887569913,
+              "p95Ratio": 0.4134120456464218,
+              "storageRatio": 0.45102915498174506,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 0.4035641236170301,
+              "p95Ratio": 0.599929994770682,
+              "storageRatio": 0.45533400327920875,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 0.40061535523613745,
+              "p95Ratio": 1.153390312556302,
+              "storageRatio": 0.5289756158093938,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 0.40654425230849245,
+              "p95Ratio": 1.291897104166258,
+              "storageRatio": 0.4515395196275526,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 0.6059481039702745,
+              "p95Ratio": 0.44414027817928237,
+              "storageRatio": 0.4508543617415225,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 5,
+          "medianLatencyRatio": 0.40654425230849245,
+          "medianP95Ratio": 0.599929994770682,
+          "maxStorageRatio": 0.5289756158093938,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.3691500007879254,
+              "p95Ratio": 0.7374576605525143,
+              "storageRatio": 0.9811233885819521,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.2633780483510886,
+              "p95Ratio": 0.9950059816976895,
+              "storageRatio": 0.9844482561463693,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.1456757317869088,
+              "p95Ratio": 1.5967138551712643,
+              "storageRatio": 0.9745656149977138,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.084847649445135,
+              "p95Ratio": 2.604502217370218,
+              "storageRatio": 0.9785599633111671,
+              "maintenanceRatio": 1
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.5741093553996428,
+              "p95Ratio": 1.0653525654755478,
+              "storageRatio": 0.9771268057784912,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.2633780483510886,
+          "medianP95Ratio": 1.0653525654755478,
+          "maxStorageRatio": 0.9844482561463693,
+          "medianMaintenanceRatio": 1
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-monolithic",
+          "passed": true,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 0.570508243260198,
+              "p95Ratio": 0.44469784846136207,
+              "storageRatio": 0.45148661517299754,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 1,
+          "medianLatencyRatio": 0.570508243260198,
+          "medianP95Ratio": 0.44469784846136207,
+          "maxStorageRatio": 0.45148661517299754,
+          "medianMaintenanceRatio": 1
+        },
+        {
+          "postgresDesign": "pg-split",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.3289164237701856,
+              "p95Ratio": 0.5632589169051574,
+              "storageRatio": 0.9792312105565117,
+              "maintenanceRatio": 1
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.3289164237701856,
+          "medianP95Ratio": 0.5632589169051574,
+          "maxStorageRatio": 0.9792312105565117,
+          "medianMaintenanceRatio": 1
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "mixed",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.9171457665937288,
+              "p95Ratio": 2.604668063234461,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.4831903783735854,
+              "p95Ratio": 3.4229100239433654,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.420015980635857,
+              "p95Ratio": 1.9368300310609534,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.8249598907999578,
+              "p95Ratio": 2.6142422411510307,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.2495183274193487,
+              "p95Ratio": 2.8350525450142086,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.9171457665937288,
+          "medianP95Ratio": 2.6142422411510307,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.615055336584382,
+              "p95Ratio": 2.747801853736423,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.0636661346346394,
+              "p95Ratio": 4.2919201130829645,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.799165101820006,
+              "p95Ratio": 3.656878555241992,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.5150235655720286,
+              "p95Ratio": 3.701391092322151,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.7080792630154034,
+              "p95Ratio": 3.27775934957339,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.7080792630154034,
+          "medianP95Ratio": 3.656878555241992,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.5294740377878533,
+              "p95Ratio": 3.4921787797519115,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.5294740377878533,
+          "medianP95Ratio": 3.4921787797519115,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.0161109463650853,
+              "p95Ratio": 3.809890632514075,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 3.0161109463650853,
+          "medianP95Ratio": 3.809890632514075,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "known/numeric-equality-positive",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.895149434035405,
+              "p95Ratio": 3.7092667601037674,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.9969694120612655,
+              "p95Ratio": 5.555970288281502,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.937312827878413,
+              "p95Ratio": 1.9536700703107872,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.849996129008076,
+              "p95Ratio": 4.295089141142497,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.8539242110199856,
+              "p95Ratio": 3.722806706953987,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.8539242110199856,
+          "medianP95Ratio": 3.722806706953987,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.620624464955795,
+              "p95Ratio": 2.0506772310491908,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.8669250112716687,
+              "p95Ratio": 4.748205119719944,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.6736096240496714,
+              "p95Ratio": 2.4116689261569864,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.5743372821739907,
+              "p95Ratio": 3.507674837785593,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.2589076906125127,
+              "p95Ratio": 2.5069095045862673,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.620624464955795,
+          "medianP95Ratio": 2.5069095045862673,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 4.007641086187981,
+              "p95Ratio": 4.619317848516484,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.007641086187981,
+          "medianP95Ratio": 4.619317848516484,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.89656815882586,
+              "p95Ratio": 3.4253970279823074,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.89656815882586,
+          "medianP95Ratio": 3.4253970279823074,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "known/string-equality-positive",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.8387204216041353,
+              "p95Ratio": 2.6078916478107685,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.319690019192699,
+              "p95Ratio": 5.003419840450912,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.4369408444411425,
+              "p95Ratio": 2.0611905038598595,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.7575386004400646,
+              "p95Ratio": 2.792246803115313,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.2251921720049848,
+              "p95Ratio": 2.6348373524524105,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.8387204216041353,
+          "medianP95Ratio": 2.6348373524524105,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.6089092026996608,
+              "p95Ratio": 2.2273053647011354,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 4.323338490592205,
+              "p95Ratio": 6.079896882203988,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.7608697834203078,
+              "p95Ratio": 3.5426756451058665,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.545746855284993,
+              "p95Ratio": 3.7477875852589246,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.771473909516009,
+              "p95Ratio": 3.200056100606488,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.7608697834203078,
+          "medianP95Ratio": 3.5426756451058665,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.3140753997702745,
+              "p95Ratio": 3.087820738897114,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.3140753997702745,
+          "medianP95Ratio": 3.087820738897114,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.897991180211007,
+              "p95Ratio": 4.111621312870895,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.897991180211007,
+          "medianP95Ratio": 4.111621312870895,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "known/numeric-range",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.5179697405538974,
+              "p95Ratio": 1.4720188085605148,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.7895259325134827,
+              "p95Ratio": 2.2091440557046864,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.162703779095608,
+              "p95Ratio": 1.2204745552109488,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.3710389124641578,
+              "p95Ratio": 1.5186260825165747,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.3329041685556726,
+              "p95Ratio": 1.8694070409365717,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.3710389124641578,
+          "medianP95Ratio": 1.5186260825165747,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.6854766952020983,
+              "p95Ratio": 1.084839978931477,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.8126490799821746,
+              "p95Ratio": 2.462070007003756,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.7903767122649665,
+              "p95Ratio": 2.650743782305141,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.6073378535956968,
+              "p95Ratio": 1.65879802870227,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.3475376904030605,
+              "p95Ratio": 1.5869042426341138,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.6854766952020983,
+          "medianP95Ratio": 1.65879802870227,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.8197164243334998,
+              "p95Ratio": 2.3675329113029115,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.8197164243334998,
+          "medianP95Ratio": 2.3675329113029115,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.8335823381563903,
+              "p95Ratio": 2.3282194964702607,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.8335823381563903,
+          "medianP95Ratio": 2.3282194964702607,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "known/explicit-null",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.6356080010433118,
+              "p95Ratio": 2.685425038607599,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.8159421844671253,
+              "p95Ratio": 4.212234883173147,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.3623552048546206,
+              "p95Ratio": 1.4473348602327465,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.0357755424704362,
+              "p95Ratio": 2.7165247394887895,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.3560304954465248,
+              "p95Ratio": 2.936578596709014,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.0357755424704362,
+          "medianP95Ratio": 2.7165247394887895,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.885272213735858,
+              "p95Ratio": 3.7629280011211996,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 4.541385738454829,
+              "p95Ratio": 8.875508365241929,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 4.331983235531978,
+              "p95Ratio": 5.988462051709419,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 4.114060195505678,
+              "p95Ratio": 6.1660187600675735,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 4.606738605736217,
+              "p95Ratio": 5.852442315590255,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.331983235531978,
+          "medianP95Ratio": 5.988462051709419,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.2082619396100465,
+              "p95Ratio": 3.8240976970382037,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.2082619396100465,
+          "medianP95Ratio": 3.8240976970382037,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 4.769273755918002,
+              "p95Ratio": 5.7327752388592685,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.769273755918002,
+          "medianP95Ratio": 5.7327752388592685,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "known/exists",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.3753798946915747,
+              "p95Ratio": 3.451199665933045,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.728515380554259,
+              "p95Ratio": 3.9198466729521275,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.9515328375832413,
+              "p95Ratio": 1.6484908845131319,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.4605376507029186,
+              "p95Ratio": 2.953346211931816,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.957900097606482,
+              "p95Ratio": 3.1087284889370657,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.4605376507029186,
+          "medianP95Ratio": 3.1087284889370657,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.251530480536151,
+              "p95Ratio": 2.0148016652230982,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.218075494005825,
+              "p95Ratio": 3.234598922891442,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.6036586813547036,
+              "p95Ratio": 2.9961141490197045,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.3131208155955876,
+              "p95Ratio": 2.966371994991393,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.394334390151111,
+              "p95Ratio": 2.2665586478370057,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.394334390151111,
+          "medianP95Ratio": 2.966371994991393,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.0541377131562366,
+              "p95Ratio": 5.08762789603976,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 3.0541377131562366,
+          "medianP95Ratio": 5.08762789603976,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.431041567970411,
+              "p95Ratio": 3.37300985688941,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.431041567970411,
+          "medianP95Ratio": 3.37300985688941,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "withheld/numeric-equality-positive",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.8974414879678485,
+              "p95Ratio": 4.4264738736531655,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.807017223996221,
+              "p95Ratio": 4.246054513114838,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.0122053397794484,
+              "p95Ratio": 3.01872980705892,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.8962713622838545,
+              "p95Ratio": 3.9024605946503015,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 3.2288467873173787,
+              "p95Ratio": 4.0749161780445595,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.8974414879678485,
+          "medianP95Ratio": 4.0749161780445595,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.6183415844146656,
+              "p95Ratio": 2.1890301960032437,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.9586957300484777,
+              "p95Ratio": 3.9721419708254944,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.8150877330146047,
+              "p95Ratio": 4.2517464523018464,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.7738091174527826,
+              "p95Ratio": 4.160948940300469,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.3742926988974844,
+              "p95Ratio": 2.9624670989100665,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.7738091174527826,
+          "medianP95Ratio": 3.9721419708254944,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 4.230305289025111,
+              "p95Ratio": 5.489923166337122,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.230305289025111,
+          "medianP95Ratio": 5.489923166337122,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.0948080999963072,
+              "p95Ratio": 3.8409674524806467,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 3.0948080999963072,
+          "medianP95Ratio": 3.8409674524806467,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "withheld/string-equality-positive",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.70606282068519,
+              "p95Ratio": 3.186601365120259,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.579344502613591,
+              "p95Ratio": 3.9789380698293284,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.3472513734577738,
+              "p95Ratio": 1.3573176744921487,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.595518526896059,
+              "p95Ratio": 2.6950748459486142,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.1596546221597333,
+              "p95Ratio": 3.4813506008082618,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.70606282068519,
+          "medianP95Ratio": 3.186601365120259,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.4861427946204033,
+              "p95Ratio": 3.179354582768444,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.1784120733684023,
+              "p95Ratio": 5.210676051260271,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.585069218145741,
+              "p95Ratio": 4.021813134132756,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.322697347188543,
+              "p95Ratio": 3.9215154518010586,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.6969377451800676,
+              "p95Ratio": 3.9534927952684877,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.585069218145741,
+          "medianP95Ratio": 3.9534927952684877,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.2966053616922593,
+              "p95Ratio": 3.368084784027459,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.2966053616922593,
+          "medianP95Ratio": 3.368084784027459,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.885963628262495,
+              "p95Ratio": 3.8223044969916735,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.885963628262495,
+          "medianP95Ratio": 3.8223044969916735,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "withheld/numeric-range",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.3546503528616498,
+              "p95Ratio": 2.0415722029851384,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.7936759765249384,
+              "p95Ratio": 3.4739226888720336,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.1138525405071755,
+              "p95Ratio": 1.8758952084414724,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.4306440443136477,
+              "p95Ratio": 1.3613823502263696,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.5842755606640546,
+              "p95Ratio": 2.628364511313677,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.4306440443136477,
+          "medianP95Ratio": 2.0415722029851384,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.5899837660829064,
+              "p95Ratio": 1.8630160318256435,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 1.8943282480642443,
+              "p95Ratio": 3.3553854481881538,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.7348802850067746,
+              "p95Ratio": 2.791898798947367,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.6000995784838838,
+              "p95Ratio": 1.5872140033943118,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 1.535180680013492,
+              "p95Ratio": 2.4078302962383904,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.6000995784838838,
+          "medianP95Ratio": 2.4078302962383904,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.9943880303409154,
+              "p95Ratio": 2.1981240634140344,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.9943880303409154,
+          "medianP95Ratio": 2.1981240634140344,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.043128541273991,
+              "p95Ratio": 1.9183329562019098,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.043128541273991,
+          "medianP95Ratio": 1.9183329562019098,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "withheld/explicit-null",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 1.4866510791392407,
+              "p95Ratio": 2.8573778926437856,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.887013130582163,
+              "p95Ratio": 3.329073816268812,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.5118917720830707,
+              "p95Ratio": 1.6495022175860403,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 1.8082264924488034,
+              "p95Ratio": 2.2837087114452035,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.419806541321083,
+              "p95Ratio": 3.302628633801271,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 1.8082264924488034,
+          "medianP95Ratio": 2.8573778926437856,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.6709587123002083,
+              "p95Ratio": 3.8775883220643808,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 4.499749142299405,
+              "p95Ratio": 7.735820618778149,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 4.714049685154758,
+              "p95Ratio": 7.907790441693165,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 3.8851411270329237,
+              "p95Ratio": 6.799971122030137,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 4.487075995108007,
+              "p95Ratio": 6.417770595083446,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.487075995108007,
+          "medianP95Ratio": 6.799971122030137,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.676008469955242,
+              "p95Ratio": 4.53591843761628,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 3.676008469955242,
+          "medianP95Ratio": 4.53591843761628,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 4.733924387092489,
+              "p95Ratio": 6.030336352621047,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 4.733924387092489,
+          "medianP95Ratio": 6.030336352621047,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    },
+    {
+      "scenario": "B/attributes/0",
+      "metric": "withheld/exists",
+      "outcome": "no-demonstrated-advantage",
+      "primary": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 3.3614728865129413,
+              "p95Ratio": 3.077654338063005,
+              "storageRatio": 0.8058252427184466,
+              "maintenanceRatio": 0.8585048769130379
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 3.253078160478396,
+              "p95Ratio": 4.689881139019839,
+              "storageRatio": 0.6610576923076923,
+              "maintenanceRatio": 0.8833355679195324
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 1.7704416194380825,
+              "p95Ratio": 2.3609861421853555,
+              "storageRatio": 0.6586826347305389,
+              "maintenanceRatio": 1.0172157674635718
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.62242726977737,
+              "p95Ratio": 3.469735849593115,
+              "storageRatio": 0.6656590084643289,
+              "maintenanceRatio": 0.987991888963219
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 3.106916545315499,
+              "p95Ratio": 3.2255399386101176,
+              "storageRatio": 0.6642512077294686,
+              "maintenanceRatio": 0.9601939530947151
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 3.106916545315499,
+          "medianP95Ratio": 3.2255399386101176,
+          "maxStorageRatio": 0.8058252427184466,
+          "medianMaintenanceRatio": 0.9601939530947151
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.6584741518606347,
+              "p95Ratio": 2.2725580171001765,
+              "storageRatio": 0.08880567072355222,
+              "maintenanceRatio": 0.8845635782426364
+            },
+            {
+              "repetition": 1,
+              "medianRatio": 2.3240110727209897,
+              "p95Ratio": 3.124608633407403,
+              "storageRatio": 0.07360813704496788,
+              "maintenanceRatio": 0.9936385247027025
+            },
+            {
+              "repetition": 2,
+              "medianRatio": 2.074576390853781,
+              "p95Ratio": 2.828034660465931,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 1.047583802327333
+            },
+            {
+              "repetition": 3,
+              "medianRatio": 2.091354880085039,
+              "p95Ratio": 3.160761260404717,
+              "storageRatio": 0.07362578574294504,
+              "maintenanceRatio": 1.0346336090234969
+            },
+            {
+              "repetition": 4,
+              "medianRatio": 2.1476374989847993,
+              "p95Ratio": 2.2063136228584397,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9989391161786406
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.1476374989847993,
+          "medianP95Ratio": 2.828034660465931,
+          "maxStorageRatio": 0.08880567072355222,
+          "medianMaintenanceRatio": 0.9989391161786406
+        }
+      ],
+      "reproduction": [
+        {
+          "postgresDesign": "pg-gin",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.6208210227641144,
+              "p95Ratio": 4.810036583281999,
+              "storageRatio": 0.6666666666666666,
+              "maintenanceRatio": 0.991342237541095
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.6208210227641144,
+          "medianP95Ratio": 4.810036583281999,
+          "maxStorageRatio": 0.6666666666666666,
+          "medianMaintenanceRatio": 0.991342237541095
+        },
+        {
+          "postgresDesign": "pg-attributes",
+          "passed": false,
+          "pairs": [
+            {
+              "repetition": 0,
+              "medianRatio": 2.133391431001226,
+              "p95Ratio": 3.6284284234889252,
+              "storageRatio": 0.07355891400294236,
+              "maintenanceRatio": 0.9962596582050349
+            }
+          ],
+          "winningRepetitions": 0,
+          "medianLatencyRatio": 2.133391431001226,
+          "medianP95Ratio": 3.6284284234889252,
+          "maxStorageRatio": 0.07355891400294236,
+          "medianMaintenanceRatio": 0.9962596582050349
+        }
+      ]
+    }
+  ],
+  "note": "Main and distinct-seed reproduction remain separate. Local synthetic screening; no production adoption or universal database ranking."
+}

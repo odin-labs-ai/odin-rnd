@@ -1,0 +1,47 @@
+# "R&D floor this week" into Mattermost every Monday. Runs on the org's own runners under the org's GitHub identity
+# (never on an operator laptop). Reads the committed updates feed and posts through an incoming webhook; see
+# scripts/rnd-weekly.mjs.
+#
+# Repository configuration (name only; the value is never committed):
+#   secrets.ODIN_MM_RND_WEBHOOK_URL   incoming webhook of the internal channel that receives the summary
+name: rnd-weekly
+
+on:
+  schedule:
+    - cron: '30 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      week_end:
+        description: 'Last UTC day of the week to report (YYYY-MM-DD); empty = yesterday'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rnd-weekly
+  cancel-in-progress: false
+
+jobs:
+  summary:
+    # GitHub-hosted, like publish.yml: this repo is public, and the self-hosted pool never picked up its jobs
+    # (run 38654899400 sat queued). The odin-labs.ai digest uses self-hosted because that repo is private.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            site/data/updates.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Post the weekly summary
+        env:
+          ODIN_MM_RND_WEBHOOK_URL: ${{ secrets.ODIN_MM_RND_WEBHOOK_URL }}
+          RND_WEEK_END: ${{ inputs.week_end }}
+        run: node scripts/rnd-weekly.mjs

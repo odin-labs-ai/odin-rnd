@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.results",
+  "experiment": "EXP 019",
+  "slug": "router-arm-fresh",
+  "corpus": {
+    "name": "odin-replay-v1",
+    "tasks": 8,
+    "outOfSampleTasks": [
+      "t7",
+      "t8"
+    ]
+  },
+  "router": {
+    "arm": "router",
+    "replicates": [
+      {
+        "replicate": 1,
+        "cells": 8,
+        "graded": 8,
+        "complete": true,
+        "errors": 0,
+        "fixed": 139,
+        "target": 238,
+        "share": 0.584034,
+        "billedUsd": 19.9155833,
+        "usdPerCaseFixed": 0.143278,
+        "models": {
+          "anthropic/claude-opus-5.5": 1,
+          "openai/gpt-6-luna": 3,
+          "openai/gpt-6-sol": 4
+        }
+      },
+      {
+        "replicate": 2,
+        "cells": 8,
+        "graded": 8,
+        "complete": true,
+        "errors": 0,
+        "fixed": 147,
+        "target": 238,
+        "share": 0.617647,
+        "billedUsd": 18.23625677,
+        "usdPerCaseFixed": 0.124056,
+        "models": {
+          "anthropic/claude-opus-5.5": 1,
+          "openai/gpt-6-luna": 3,
+          "openai/gpt-6-sol": 4
+        }
+      },
+      {
+        "replicate": 3,
+        "cells": 8,
+        "graded": 8,
+        "complete": true,
+        "errors": 0,
+        "fixed": 120,
+        "target": 238,
+        "share": 0.504202,
+        "billedUsd": 19.5194133,
+        "usdPerCaseFixed": 0.162662,
+        "models": {
+          "anthropic/claude-opus-5.5": 1,
+          "openai/gpt-6-luna": 3,
+          "openai/gpt-6-sol": 4
+        }
+      }
+    ],
+    "completeReplicates": 3,
+    "usdPerCaseFixed": {
+      "n": 3,
+      "mean": 0.143332,
+      "ci": [
+        0.095377,
+        0.191287
+      ]
+    },
+    "share": {
+      "n": 3,
+      "mean": 0.568628,
+      "ci": [
+        0.423864,
+        0.713391
+      ]
+    },
+    "shareRange": 0.113445,
+    "pooledUsdPerCaseFixed": 0.142047,
+    "billedUsd": 57.671253,
+    "billedUsdRaw": 57.67125337,
+    "outOfSample": {
+      "cells": 6,
+      "fixed": 23,
+      "target": 114,
+      "share": 0.201754
+    }
+  },
+  "reference": {
+    "experiment": "EXP 018",
+    "file": "experiments/router-arm/results.json",
+    "sha256": "255d11baebb40845aaeb0213662037ed8a1f43227ec7c34a51ef3616248d2b3a",
+    "arms": {
+      "opus": {
+        "arm": "opus",
+        "replicates": [
+          {
+            "replicate": 1,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 154,
+            "target": 238,
+            "share": 0.647059,
+            "billedUsd": 44.1390124,
+            "usdPerCaseFixed": 0.286617,
+            "models": {
+              "anthropic/claude-opus-5.5": 8
+            }
+          },
+          {
+            "replicate": 2,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 156,
+            "target": 238,
+            "share": 0.655462,
+            "billedUsd": 26.6062972,
+            "usdPerCaseFixed": 0.170553,
+            "models": {
+              "anthropic/claude-opus-5.5": 8
+            }
+          },
+          {
+            "replicate": 3,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 152,
+            "target": 238,
+            "share": 0.638655,
+            "billedUsd": 42.9953688,
+            "usdPerCaseFixed": 0.282864,
+            "models": {
+              "anthropic/claude-opus-5.5": 8
+            }
+          }
+        ],
+        "completeReplicates": 3,
+        "usdPerCaseFixed": {
+          "n": 3,
+          "mean": 0.246678,
+          "ci": [
+            0.082829,
+            0.410527
+          ]
+        },
+        "share": {
+          "n": 3,
+          "mean": 0.647059,
+          "ci": [
+            0.626182,
+            0.667936
+          ]
+        },
+        "shareRange": 0.016807,
+        "pooledUsdPerCaseFixed": 0.246192,
+        "billedUsd": 113.740678,
+        "outOfSample": {
+          "cells": 6,
+          "fixed": 55,
+          "target": 114,
+          "share": 0.482456
+        }
+      },
+      "luna": {
+        "arm": "luna",
+        "replicates": [
+          {
+            "replicate": 1,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 122,
+            "target": 238,
+            "share": 0.512605,
+            "billedUsd": 6.23492542,
+            "usdPerCaseFixed": 0.051106,
+            "models": {
+              "openai/gpt-6-luna": 8
+            }
+          },
+          {
+            "replicate": 2,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 127,
+            "target": 238,
+            "share": 0.533613,
+            "billedUsd": 4.17169147,
+            "usdPerCaseFixed": 0.032848,
+            "models": {
+              "openai/gpt-6-luna": 8
+            }
+          },
+          {
+            "replicate": 3,
+            "cells": 8,
+            "graded": 8,
+            "complete": true,
+            "errors": 0,
+            "fixed": 124,
+            "target": 238,
+            "share": 0.521008,
+            "billedUsd": 5.76084498,
+            "usdPerCaseFixed": 0.046458,
+            "models": {
+              "openai/gpt-6-luna": 8
+            }
+          }
+        ],
+        "completeReplicates": 3,
+        "usdPerCaseFixed": {
+          "n": 3,
+          "mean": 0.043471,
+          "ci": [
+            0.019898,
+            0.067043
+          ]
+        },
+        "share": {
+          "n": 3,
+          "mean": 0.522409,
+          "ci": [
+            0.49614,
+            0.548678
+          ]
+        },
+        "shareRange": 0.021008,
+        "pooledUsdPerCaseFixed": 0.043344,
+        "billedUsd": 16.167462,
+        "outOfSample": {
+          "cells": 6,
+          "fixed": 46,
+          "target": 114,
+          "share": 0.403509
+        }
+      }
+    }
+  },
+  "decision": [
+    {
+      "versus": "opus",
+      "verdict": "router beats",
+      "cheaper": true,
+      "shareNotLowerBeyondSpread": true,
+      "spread": 0.113445,
+      "routerUsdPerCaseFixed": 0.143332,
+      "fixedUsdPerCaseFixed": 0.246678,
+      "routerShare": 0.568628,
+      "fixedShare": 0.647059
+    },
+    {
+      "versus": "luna",
+      "verdict": "router does not beat",
+      "cheaper": false,
+      "shareNotLowerBeyondSpread": true,
+      "spread": 0.113445,
+      "routerUsdPerCaseFixed": 0.143332,
+      "fixedUsdPerCaseFixed": 0.043471,
+      "routerShare": 0.568628,
+      "fixedShare": 0.522409
+    }
+  ],
+  "spend": {
+    "billedUsd": 57.671253,
+    "ceilingUsd": 78,
+    "withinCeiling": true,
+    "cumulativeReplayUsd": 254.332496,
+    "cumulativeCapUsd": 275
+  }
+}
