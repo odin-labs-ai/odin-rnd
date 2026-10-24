@@ -1,0 +1,30 @@
+{
+  "engine": "postgres",
+  "phase": "prepare",
+  "seed": "842",
+  "tenant": "b",
+  "pid": 345,
+  "before": {
+    "values": {},
+    "next": []
+  },
+  "after": {
+    "values": {
+      "tenant": "b",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-b"
+    },
+    "next": [
+      "tool"
+    ]
+  },
+  "effects": [
+    {
+      "_id": "842:a:approval",
+      "tenant": "a",
+      "effect": "recorded",
+      "attempts": 2
+    }
+  ]
+}

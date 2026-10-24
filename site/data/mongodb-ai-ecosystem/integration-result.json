@@ -1,0 +1,2025 @@
+{
+  "startedAt": "2026-10-24T19:45:58.281993+00:00",
+  "command": "python database_trial.py",
+  "modelProtocol": {
+    "revision": 2,
+    "frozenAt": "2026-10-24T19:45:01.005477+00:00",
+    "model": "MongoDB/voyage-4-nano-GGUF",
+    "modelRevision": "03547551689253732502486d62de4cd0970d6564",
+    "quantization": "Q8_0",
+    "modelSha256": "c6ed6cc898d50ae1a4492809affadc6c0d023f8ac05c07a37abe20c563152560",
+    "runtime": "llama.cpp b11865; Darwin x86_64; CPU; authenticated UNIX socket",
+    "embedding": "2048 dimensions, first 512 then L2 normalization for database trial",
+    "prompts": {
+      "document": "Represent the document for retrieval: ",
+      "query": "Represent the query for retrieving supporting documents: "
+    },
+    "normalization": "Unicode NFC before tokenization",
+    "fixtureSha256": "0cf55246bbe41ddd2874823294bffd149689542e4caf780562962811058d7baa",
+    "qualityMethod": "Frozen researcher-authored expected document per query. Small closed-world fixture; not an independent human-labelled benchmark.",
+    "qualityTuning": "None; all questions and ranks retained, including misses.",
+    "databaseGate": "Both engines must match exhaustive in-tenant top-five IDs using identical model vectors; compare quality separately from correctness.",
+    "cacheDiagnostic": "Record the cosine similarity of contradictory permissions before selecting any cache threshold; no threshold fitted to this fixture.",
+    "paidInference": false,
+    "amendment": "amendment-01.json; explicit changed-policy premise in cache query, thresholds unchanged"
+  },
+  "recordedModelResultSha256": "73ce030dde0578d171d5e2443d86385537c8d81f0dd2a870f49b43d9d812ddf7",
+  "retrieval": [
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q01",
+      "expectedRelevantId": "a:rotation",
+      "exhaustiveTop5": [
+        "a:rotation",
+        "a:deletion",
+        "a:idempotency",
+        "a:cache",
+        "a:residency"
+      ],
+      "rows": [
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.8161420822143555
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.6577847003936768
+        },
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.6564103960990906
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6316671967506409
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.6275849342346191
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q01",
+      "expectedRelevantId": "a:rotation",
+      "exhaustiveTop5": [
+        "a:rotation",
+        "a:deletion",
+        "a:idempotency",
+        "a:cache",
+        "a:residency"
+      ],
+      "rows": [
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.6322843432426453
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.3155694603919983
+        },
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.3128208518028259
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.26333439350128174
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.255169883678549
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q02",
+      "expectedRelevantId": "a:snapshot",
+      "exhaustiveTop5": [
+        "a:snapshot",
+        "a:deletion",
+        "a:cache",
+        "a:readonly",
+        "a:filter"
+      ],
+      "rows": [
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.8254350423812866
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.7159062027931213
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.7013168334960938
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.698304295539856
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.6886768341064453
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q02",
+      "expectedRelevantId": "a:snapshot",
+      "exhaustiveTop5": [
+        "a:snapshot",
+        "a:deletion",
+        "a:cache",
+        "a:readonly",
+        "a:filter"
+      ],
+      "rows": [
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.6508700847625732
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.4318123459815979
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.4026336967945099
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.3966085910797119
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.3773536682128906
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q03",
+      "expectedRelevantId": "a:idempotency",
+      "exhaustiveTop5": [
+        "a:idempotency",
+        "a:deletion",
+        "a:rotation",
+        "a:readonly",
+        "a:distractor-snapshot"
+      ],
+      "rows": [
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.7799525260925293
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.6592462062835693
+        },
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.6089356541633606
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.6065084934234619
+        },
+        {
+          "id": "a:distractor-snapshot",
+          "tenant": "a",
+          "score": 0.5903978943824768
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q03",
+      "expectedRelevantId": "a:idempotency",
+      "exhaustiveTop5": [
+        "a:idempotency",
+        "a:deletion",
+        "a:rotation",
+        "a:readonly",
+        "a:distractor-snapshot"
+      ],
+      "rows": [
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.5599050092668837
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.31849245186127595
+        },
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.21787137442443893
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.21301702299764824
+        },
+        {
+          "id": "a:distractor-snapshot",
+          "tenant": "a",
+          "score": 0.18079578337682012
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q04",
+      "expectedRelevantId": "a:namespace",
+      "exhaustiveTop5": [
+        "a:namespace",
+        "a:cache",
+        "a:distractor-cache",
+        "a:readonly",
+        "a:residency"
+      ],
+      "rows": [
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.7748444080352783
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6681157350540161
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.6542827486991882
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.641975998878479
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.6400463581085205
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q04",
+      "expectedRelevantId": "a:namespace",
+      "exhaustiveTop5": [
+        "a:namespace",
+        "a:cache",
+        "a:distractor-cache",
+        "a:readonly",
+        "a:residency"
+      ],
+      "rows": [
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.5496888324525607
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.3362315397331579
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.3085655363966686
+        },
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.2839519466147409
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.2800928306662589
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q05",
+      "expectedRelevantId": "a:cache",
+      "exhaustiveTop5": [
+        "a:cache",
+        "a:residency",
+        "a:namespace",
+        "a:rotation",
+        "a:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.7437940239906311
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.7108393907546997
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.6905056238174438
+        },
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.6414154171943665
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.6377650499343872
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q05",
+      "expectedRelevantId": "a:cache",
+      "exhaustiveTop5": [
+        "a:cache",
+        "a:residency",
+        "a:namespace",
+        "a:rotation",
+        "a:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.4875880029078725
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.421678849012749
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.3810112291875849
+        },
+        {
+          "id": "a:rotation",
+          "tenant": "a",
+          "score": 0.28283084281774906
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.2755301676848583
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q06",
+      "expectedRelevantId": "a:filter",
+      "exhaustiveTop5": [
+        "a:filter",
+        "a:deletion",
+        "a:lexical",
+        "a:cache",
+        "a:snapshot"
+      ],
+      "rows": [
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.7859929800033569
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.6808579564094543
+        },
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.6475784778594971
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6446672677993774
+        },
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.643108606338501
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q06",
+      "expectedRelevantId": "a:filter",
+      "exhaustiveTop5": [
+        "a:filter",
+        "a:deletion",
+        "a:lexical",
+        "a:cache",
+        "a:snapshot"
+      ],
+      "rows": [
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.5719860196113586
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.36171597242355347
+        },
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.29515705392232716
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.28933465480804443
+        },
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.28621727228164673
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q07",
+      "expectedRelevantId": "a:lexical",
+      "exhaustiveTop5": [
+        "a:lexical",
+        "a:idempotency",
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.727807879447937
+        },
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.6602011322975159
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.6363550424575806
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6226822137832642
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.616187572479248
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q07",
+      "expectedRelevantId": "a:lexical",
+      "exhaustiveTop5": [
+        "a:lexical",
+        "a:idempotency",
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.45561578605269104
+        },
+        {
+          "id": "a:idempotency",
+          "tenant": "a",
+          "score": 0.32040227414376377
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.27271006324023217
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.24536449448360498
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.2323751816861387
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q08",
+      "expectedRelevantId": "a:embedding",
+      "exhaustiveTop5": [
+        "a:embedding",
+        "a:residency",
+        "a:lexical",
+        "a:filter",
+        "a:deletion"
+      ],
+      "rows": [
+        {
+          "id": "a:embedding",
+          "tenant": "a",
+          "score": 0.8018811941146851
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.7263283133506775
+        },
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.6440532207489014
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.6426304578781128
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.6283764243125916
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q08",
+      "expectedRelevantId": "a:embedding",
+      "exhaustiveTop5": [
+        "a:embedding",
+        "a:residency",
+        "a:lexical",
+        "a:filter",
+        "a:deletion"
+      ],
+      "rows": [
+        {
+          "id": "a:embedding",
+          "tenant": "a",
+          "score": 0.6037623882293701
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.4526567728910915
+        },
+        {
+          "id": "a:lexical",
+          "tenant": "a",
+          "score": 0.28810653949101406
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.28526097536087036
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.2567528188228607
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q09",
+      "expectedRelevantId": "a:extraction",
+      "exhaustiveTop5": [
+        "a:extraction",
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache",
+        "a:namespace"
+      ],
+      "rows": [
+        {
+          "id": "a:extraction",
+          "tenant": "a",
+          "score": 0.7313933968544006
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.7133843302726746
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6662698984146118
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.6657013893127441
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.6556807160377502
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q09",
+      "expectedRelevantId": "a:extraction",
+      "exhaustiveTop5": [
+        "a:extraction",
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache",
+        "a:namespace"
+      ],
+      "rows": [
+        {
+          "id": "a:extraction",
+          "tenant": "a",
+          "score": 0.46278679370880127
+        },
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.4267687201499939
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.33253973722457886
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.33140283823013306
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.3113614320755005
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q10",
+      "expectedRelevantId": "a:deletion",
+      "exhaustiveTop5": [
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache",
+        "a:filter",
+        "a:extraction"
+      ],
+      "rows": [
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.7304333448410034
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6546655297279358
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.6271734237670898
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.6237238645553589
+        },
+        {
+          "id": "a:extraction",
+          "tenant": "a",
+          "score": 0.6129094362258911
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q10",
+      "expectedRelevantId": "a:deletion",
+      "exhaustiveTop5": [
+        "a:deletion",
+        "a:cache",
+        "a:distractor-cache",
+        "a:filter",
+        "a:extraction"
+      ],
+      "rows": [
+        {
+          "id": "a:deletion",
+          "tenant": "a",
+          "score": 0.46086663007736206
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.3093310594558716
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.2543468475341797
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.24744772911071777
+        },
+        {
+          "id": "a:extraction",
+          "tenant": "a",
+          "score": 0.22581885755062103
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q11",
+      "expectedRelevantId": "a:readonly",
+      "exhaustiveTop5": [
+        "a:readonly",
+        "a:namespace",
+        "a:snapshot",
+        "a:cache",
+        "a:filter"
+      ],
+      "rows": [
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.816363513469696
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.6826198697090149
+        },
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.6660150289535522
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6652215123176575
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.6650234460830688
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q11",
+      "expectedRelevantId": "a:readonly",
+      "exhaustiveTop5": [
+        "a:readonly",
+        "a:namespace",
+        "a:snapshot",
+        "a:cache",
+        "a:filter"
+      ],
+      "rows": [
+        {
+          "id": "a:readonly",
+          "tenant": "a",
+          "score": 0.6327271461486816
+        },
+        {
+          "id": "a:namespace",
+          "tenant": "a",
+          "score": 0.36523979902267456
+        },
+        {
+          "id": "a:snapshot",
+          "tenant": "a",
+          "score": 0.3320299983024597
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.33044302463531494
+        },
+        {
+          "id": "a:filter",
+          "tenant": "a",
+          "score": 0.3300468325614929
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "a",
+      "query": "q12",
+      "expectedRelevantId": "a:residency",
+      "exhaustiveTop5": [
+        "a:embedding",
+        "a:residency",
+        "a:distractor-cache",
+        "a:distractor-thread",
+        "a:cache"
+      ],
+      "rows": [
+        {
+          "id": "a:embedding",
+          "tenant": "a",
+          "score": 0.7342342734336853
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.7262094020843506
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.7166988253593445
+        },
+        {
+          "id": "a:distractor-thread",
+          "tenant": "a",
+          "score": 0.6693788766860962
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.6611431837081909
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "a",
+      "query": "q12",
+      "expectedRelevantId": "a:residency",
+      "exhaustiveTop5": [
+        "a:embedding",
+        "a:residency",
+        "a:distractor-cache",
+        "a:distractor-thread",
+        "a:cache"
+      ],
+      "rows": [
+        {
+          "id": "a:embedding",
+          "tenant": "a",
+          "score": 0.4684686064720154
+        },
+        {
+          "id": "a:residency",
+          "tenant": "a",
+          "score": 0.45241889073961405
+        },
+        {
+          "id": "a:distractor-cache",
+          "tenant": "a",
+          "score": 0.4333975613117218
+        },
+        {
+          "id": "a:distractor-thread",
+          "tenant": "a",
+          "score": 0.33875772356987
+        },
+        {
+          "id": "a:cache",
+          "tenant": "a",
+          "score": 0.32228636741638184
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q01",
+      "expectedRelevantId": "b:rotation",
+      "exhaustiveTop5": [
+        "b:rotation",
+        "b:deletion",
+        "b:idempotency",
+        "b:cache",
+        "b:residency"
+      ],
+      "rows": [
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.8161420822143555
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.6577847003936768
+        },
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.6564103960990906
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6316671967506409
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.6275849342346191
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q01",
+      "expectedRelevantId": "b:rotation",
+      "exhaustiveTop5": [
+        "b:rotation",
+        "b:deletion",
+        "b:idempotency",
+        "b:cache",
+        "b:residency"
+      ],
+      "rows": [
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.6322843432426453
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.3155694603919983
+        },
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.3128208518028259
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.26333439350128174
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.255169883678549
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q02",
+      "expectedRelevantId": "b:snapshot",
+      "exhaustiveTop5": [
+        "b:snapshot",
+        "b:deletion",
+        "b:cache",
+        "b:readonly",
+        "b:filter"
+      ],
+      "rows": [
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.8254350423812866
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.7159062027931213
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.7013168334960938
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.698304295539856
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.6886768341064453
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q02",
+      "expectedRelevantId": "b:snapshot",
+      "exhaustiveTop5": [
+        "b:snapshot",
+        "b:deletion",
+        "b:cache",
+        "b:readonly",
+        "b:filter"
+      ],
+      "rows": [
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.6508700847625732
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.4318123459815979
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.4026336967945099
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.3966085910797119
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.3773536682128906
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q03",
+      "expectedRelevantId": "b:idempotency",
+      "exhaustiveTop5": [
+        "b:idempotency",
+        "b:deletion",
+        "b:rotation",
+        "b:readonly",
+        "b:distractor-snapshot"
+      ],
+      "rows": [
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.7799525260925293
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.6592462062835693
+        },
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.6089356541633606
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.6065084934234619
+        },
+        {
+          "id": "b:distractor-snapshot",
+          "tenant": "b",
+          "score": 0.5903978943824768
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q03",
+      "expectedRelevantId": "b:idempotency",
+      "exhaustiveTop5": [
+        "b:idempotency",
+        "b:deletion",
+        "b:rotation",
+        "b:readonly",
+        "b:distractor-snapshot"
+      ],
+      "rows": [
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.5599050092668837
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.31849245186127595
+        },
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.21787137442443893
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.21301702299764824
+        },
+        {
+          "id": "b:distractor-snapshot",
+          "tenant": "b",
+          "score": 0.18079578337682012
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q04",
+      "expectedRelevantId": "b:namespace",
+      "exhaustiveTop5": [
+        "b:namespace",
+        "b:cache",
+        "b:distractor-cache",
+        "b:readonly",
+        "b:residency"
+      ],
+      "rows": [
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.7748444080352783
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6681157350540161
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.6542827486991882
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.641975998878479
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.6400463581085205
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q04",
+      "expectedRelevantId": "b:namespace",
+      "exhaustiveTop5": [
+        "b:namespace",
+        "b:cache",
+        "b:distractor-cache",
+        "b:readonly",
+        "b:residency"
+      ],
+      "rows": [
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.5496888324525607
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.3362315397331579
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.3085655363966686
+        },
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.2839519466147409
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.2800928306662589
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q05",
+      "expectedRelevantId": "b:cache",
+      "exhaustiveTop5": [
+        "b:cache",
+        "b:residency",
+        "b:namespace",
+        "b:rotation",
+        "b:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.7437940239906311
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.7108393907546997
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.6905056238174438
+        },
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.6414154171943665
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.6377650499343872
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q05",
+      "expectedRelevantId": "b:cache",
+      "exhaustiveTop5": [
+        "b:cache",
+        "b:residency",
+        "b:namespace",
+        "b:rotation",
+        "b:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.4875880029078725
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.421678849012749
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.3810112291875849
+        },
+        {
+          "id": "b:rotation",
+          "tenant": "b",
+          "score": 0.28283084281774906
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.2755301676848583
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q06",
+      "expectedRelevantId": "b:filter",
+      "exhaustiveTop5": [
+        "b:filter",
+        "b:deletion",
+        "b:lexical",
+        "b:cache",
+        "b:snapshot"
+      ],
+      "rows": [
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.7859929800033569
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.6808579564094543
+        },
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.6475784778594971
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6446672677993774
+        },
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.643108606338501
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q06",
+      "expectedRelevantId": "b:filter",
+      "exhaustiveTop5": [
+        "b:filter",
+        "b:deletion",
+        "b:lexical",
+        "b:cache",
+        "b:snapshot"
+      ],
+      "rows": [
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.5719860196113586
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.36171597242355347
+        },
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.29515705392232716
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.28933465480804443
+        },
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.28621727228164673
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q07",
+      "expectedRelevantId": "b:lexical",
+      "exhaustiveTop5": [
+        "b:lexical",
+        "b:idempotency",
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.727807879447937
+        },
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.6602011322975159
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.6363550424575806
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6226822137832642
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.616187572479248
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q07",
+      "expectedRelevantId": "b:lexical",
+      "exhaustiveTop5": [
+        "b:lexical",
+        "b:idempotency",
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache"
+      ],
+      "rows": [
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.45561578605269104
+        },
+        {
+          "id": "b:idempotency",
+          "tenant": "b",
+          "score": 0.32040227414376377
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.27271006324023217
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.24536449448360498
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.2323751816861387
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q08",
+      "expectedRelevantId": "b:embedding",
+      "exhaustiveTop5": [
+        "b:embedding",
+        "b:residency",
+        "b:lexical",
+        "b:filter",
+        "b:deletion"
+      ],
+      "rows": [
+        {
+          "id": "b:embedding",
+          "tenant": "b",
+          "score": 0.8018811941146851
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.7263283133506775
+        },
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.6440532207489014
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.6426304578781128
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.6283764243125916
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q08",
+      "expectedRelevantId": "b:embedding",
+      "exhaustiveTop5": [
+        "b:embedding",
+        "b:residency",
+        "b:lexical",
+        "b:filter",
+        "b:deletion"
+      ],
+      "rows": [
+        {
+          "id": "b:embedding",
+          "tenant": "b",
+          "score": 0.6037623882293701
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.4526567728910915
+        },
+        {
+          "id": "b:lexical",
+          "tenant": "b",
+          "score": 0.28810653949101406
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.28526097536087036
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.2567528188228607
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q09",
+      "expectedRelevantId": "b:extraction",
+      "exhaustiveTop5": [
+        "b:extraction",
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache",
+        "b:namespace"
+      ],
+      "rows": [
+        {
+          "id": "b:extraction",
+          "tenant": "b",
+          "score": 0.7313933968544006
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.7133843302726746
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6662698984146118
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.6657013893127441
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.6556807160377502
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q09",
+      "expectedRelevantId": "b:extraction",
+      "exhaustiveTop5": [
+        "b:extraction",
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache",
+        "b:namespace"
+      ],
+      "rows": [
+        {
+          "id": "b:extraction",
+          "tenant": "b",
+          "score": 0.46278679370880127
+        },
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.4267687201499939
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.33253973722457886
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.33140283823013306
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.3113614320755005
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q10",
+      "expectedRelevantId": "b:deletion",
+      "exhaustiveTop5": [
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache",
+        "b:filter",
+        "b:extraction"
+      ],
+      "rows": [
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.7304333448410034
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6546655297279358
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.6271734237670898
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.6237238645553589
+        },
+        {
+          "id": "b:extraction",
+          "tenant": "b",
+          "score": 0.6129094362258911
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q10",
+      "expectedRelevantId": "b:deletion",
+      "exhaustiveTop5": [
+        "b:deletion",
+        "b:cache",
+        "b:distractor-cache",
+        "b:filter",
+        "b:extraction"
+      ],
+      "rows": [
+        {
+          "id": "b:deletion",
+          "tenant": "b",
+          "score": 0.46086663007736206
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.3093310594558716
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.2543468475341797
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.24744772911071777
+        },
+        {
+          "id": "b:extraction",
+          "tenant": "b",
+          "score": 0.22581885755062103
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q11",
+      "expectedRelevantId": "b:readonly",
+      "exhaustiveTop5": [
+        "b:readonly",
+        "b:namespace",
+        "b:snapshot",
+        "b:cache",
+        "b:filter"
+      ],
+      "rows": [
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.816363513469696
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.6826198697090149
+        },
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.6660150289535522
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6652215123176575
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.6650234460830688
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q11",
+      "expectedRelevantId": "b:readonly",
+      "exhaustiveTop5": [
+        "b:readonly",
+        "b:namespace",
+        "b:snapshot",
+        "b:cache",
+        "b:filter"
+      ],
+      "rows": [
+        {
+          "id": "b:readonly",
+          "tenant": "b",
+          "score": 0.6327271461486816
+        },
+        {
+          "id": "b:namespace",
+          "tenant": "b",
+          "score": 0.36523979902267456
+        },
+        {
+          "id": "b:snapshot",
+          "tenant": "b",
+          "score": 0.3320299983024597
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.33044302463531494
+        },
+        {
+          "id": "b:filter",
+          "tenant": "b",
+          "score": 0.3300468325614929
+        }
+      ]
+    },
+    {
+      "engine": "mongo",
+      "tenant": "b",
+      "query": "q12",
+      "expectedRelevantId": "b:residency",
+      "exhaustiveTop5": [
+        "b:embedding",
+        "b:residency",
+        "b:distractor-cache",
+        "b:distractor-thread",
+        "b:cache"
+      ],
+      "rows": [
+        {
+          "id": "b:embedding",
+          "tenant": "b",
+          "score": 0.7342342734336853
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.7262094020843506
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.7166988253593445
+        },
+        {
+          "id": "b:distractor-thread",
+          "tenant": "b",
+          "score": 0.6693788766860962
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.6611431837081909
+        }
+      ]
+    },
+    {
+      "engine": "postgres",
+      "tenant": "b",
+      "query": "q12",
+      "expectedRelevantId": "b:residency",
+      "exhaustiveTop5": [
+        "b:embedding",
+        "b:residency",
+        "b:distractor-cache",
+        "b:distractor-thread",
+        "b:cache"
+      ],
+      "rows": [
+        {
+          "id": "b:embedding",
+          "tenant": "b",
+          "score": 0.4684686064720154
+        },
+        {
+          "id": "b:residency",
+          "tenant": "b",
+          "score": 0.45241889073961405
+        },
+        {
+          "id": "b:distractor-cache",
+          "tenant": "b",
+          "score": 0.4333975613117218
+        },
+        {
+          "id": "b:distractor-thread",
+          "tenant": "b",
+          "score": 0.33875772356987
+        },
+        {
+          "id": "b:cache",
+          "tenant": "b",
+          "score": 0.32228636741638184
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Functional exact-retrieval agreement, not ANN scaling, latency or cost comparison.",
+    "Researcher-authored closed-world corpus and labels; no independent human relevance judgement.",
+    "Namespaced synthetic clients; no production tenant authorization proof.",
+    "Real embedding inference, no generative LLM or Agent Engine extraction service."
+  ],
+  "memoryLifecycle": {
+    "before": {
+      "a": [
+        {
+          "text": "The escalation owner for the amber service is Mara.",
+          "owner": "Mara",
+          "tenant": "a",
+          "version": 1
+        }
+      ],
+      "b": [
+        {
+          "text": "The escalation owner for the amber service is Nia.",
+          "owner": "Nia",
+          "tenant": "b",
+          "version": 1
+        }
+      ]
+    },
+    "corrected": [
+      {
+        "text": "The escalation owner for the amber service is Ivo. This replaces the earlier owner Mara.",
+        "owner": "Ivo",
+        "tenant": "a",
+        "version": 2
+      }
+    ],
+    "deletedSearch": [],
+    "neighborAfter": [
+      {
+        "text": "The escalation owner for the amber service is Nia.",
+        "owner": "Nia",
+        "tenant": "b",
+        "version": 1
+      }
+    ],
+    "source": "official MongoDBStore using recorded real Voyage embeddings"
+  },
+  "cacheContradictionChecks": [
+    {
+      "threshold": 0.8,
+      "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [
+        "AUTOMATIC RESTART ALLOWED"
+      ],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    },
+    {
+      "threshold": 0.9,
+      "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    },
+    {
+      "threshold": 0.95,
+      "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    }
+  ],
+  "endedAt": "2026-10-24T19:46:05.805271+00:00",
+  "status": "passed",
+  "exportedModelResultSha256": "1001a39520084b359345d74c4a02cbe8641c7bff90b1125e7037d27937301a24",
+  "modelResultHashScope": "recordedModelResultSha256 binds the original execution file; exportedModelResultSha256 binds the published copy after local filename metadata replacement. Vector values are unchanged."
+}

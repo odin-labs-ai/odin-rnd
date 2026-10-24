@@ -1,0 +1,140 @@
+{
+  "documents": [
+    {
+      "id": "rotation",
+      "text": "Rotate an expiring credential by creating a replacement, updating the worker secret, verifying new authentication, and only then revoking the old key. Preserve queued work during the change."
+    },
+    {
+      "id": "snapshot",
+      "text": "A tenant snapshot restores the captured tenant state. Writes acknowledged after capture are outside that snapshot and need a separate replay or recovery mechanism."
+    },
+    {
+      "id": "idempotency",
+      "text": "When a tool commits its effect and the worker dies before saving the checkpoint, replay may attempt the tool again. A stable operation identifier and a unique effect ledger prevent a duplicate effect."
+    },
+    {
+      "id": "namespace",
+      "text": "Conversation thread names and memory namespaces are routing identifiers. Derive their tenant component from authenticated application context; a caller-selected name is not authorization."
+    },
+    {
+      "id": "cache",
+      "text": "A private response cache must include trusted tenant, model, policy, and corpus versions. Similar questions alone do not establish that a cached answer is authorized or current."
+    },
+    {
+      "id": "filter",
+      "text": "Filtered approximate vector search can return too few neighbors when the tenant is rare. Verify actual query plans, iterative scanning, and an exhaustive in-tenant control."
+    },
+    {
+      "id": "lexical",
+      "text": "Hybrid retrieval combines lexical matching of opaque identifiers with vector similarity. Exact ticket and error codes can distinguish otherwise similar operations documents."
+    },
+    {
+      "id": "embedding",
+      "text": "An embedding model transforms text into vectors. The same vectors can be stored in different databases, so a better embedding model does not establish a better database."
+    },
+    {
+      "id": "extraction",
+      "text": "Conversation recording and extraction of long-term facts are different stages. The background extractor may take time; observe a usable long-term memory instead of assuming immediate availability."
+    },
+    {
+      "id": "deletion",
+      "text": "A corrected or deleted fact must disappear from semantic retrieval as well as direct lookup. Wait for search visibility and check that another tenant’s surviving memory is unchanged."
+    },
+    {
+      "id": "readonly",
+      "text": "A database agent tool should use read-only operation and a scoped database identity. Disabling write tools does not grant permission to read every tenant."
+    },
+    {
+      "id": "residency",
+      "text": "The database region and model inference region are separate choices. Confirm the inference endpoint and key scope independently from the location of stored vectors."
+    },
+    {
+      "id": "distractor-rotation",
+      "text": "Rotate an image in the document viewer using the toolbar. This changes the page orientation and does not update database credentials."
+    },
+    {
+      "id": "distractor-snapshot",
+      "text": "Take a screenshot of the dashboard to attach to a support ticket. A screenshot cannot restore database rows or replay writes."
+    },
+    {
+      "id": "distractor-thread",
+      "text": "Increase the CPU thread count when local inference underuses the processor. This setting does not identify a conversation or a tenant."
+    },
+    {
+      "id": "distractor-cache",
+      "text": "The operating system page cache stores recently read file blocks. Its contents are unrelated to authorization for cached language-model responses."
+    }
+  ],
+  "queries": [
+    {
+      "id": "q01",
+      "text": "How can we replace a soon-to-expire access key without losing waiting jobs?",
+      "expected": "rotation"
+    },
+    {
+      "id": "q02",
+      "text": "Will restoring yesterday’s captured tenant data also recover an insertion acknowledged this morning?",
+      "expected": "snapshot"
+    },
+    {
+      "id": "q03",
+      "text": "What stops a tool from producing its effect twice if a process dies immediately after committing it?",
+      "expected": "idempotency"
+    },
+    {
+      "id": "q04",
+      "text": "Can someone gain access to another organization by choosing its conversation identifier?",
+      "expected": "namespace"
+    },
+    {
+      "id": "q05",
+      "text": "Which context belongs in a key for reusing a private model answer safely?",
+      "expected": "cache"
+    },
+    {
+      "id": "q06",
+      "text": "Why can nearest-neighbor search miss the only surviving record for a very small tenant?",
+      "expected": "filter"
+    },
+    {
+      "id": "q07",
+      "text": "How can retrieval distinguish an exact error code when several notes have nearly the same meaning?",
+      "expected": "lexical"
+    },
+    {
+      "id": "q08",
+      "text": "If we improve the text-to-vector model, must we switch the database too?",
+      "expected": "embedding"
+    },
+    {
+      "id": "q09",
+      "text": "Does accepting a new chat message mean its long-term facts are already searchable?",
+      "expected": "extraction"
+    },
+    {
+      "id": "q10",
+      "text": "After removing a stale preference, what else must we verify besides direct document lookup?",
+      "expected": "deletion"
+    },
+    {
+      "id": "q11",
+      "text": "Does turning off mutating agent tools establish access control over every tenant’s information?",
+      "expected": "readonly"
+    },
+    {
+      "id": "q12",
+      "text": "Does storing embeddings in Europe prove that the model processed the text in Europe?",
+      "expected": "residency"
+    }
+  ],
+  "memory": {
+    "old-a": "The escalation owner for the amber service is Mara.",
+    "new-a": "The escalation owner for the amber service is Ivo. This replaces the earlier owner Mara.",
+    "b": "The escalation owner for the amber service is Nia.",
+    "query": "Who should receive an urgent amber service escalation?",
+    "allow": "The amber service may restart automatically after a failed readiness probe.",
+    "deny": "The amber service must not restart automatically after a failed readiness probe.",
+    "allow-query": "Is an unattended restart permitted when the amber service health check fails?",
+    "deny-query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "window": {
+    "startedAt": "2026-10-24T17:48:45.013683+00:00",
+    "endedAt": "2026-10-24T17:53:13.534080+00:00"
+  },
+  "workflowRecoveries": [
+    {
+      "engine": "mongo",
+      "repetition": "841",
+      "tenant": "a",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "a:policy-a",
+      "historyLength": 5
+    },
+    {
+      "engine": "mongo",
+      "repetition": "841",
+      "tenant": "b",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "b:policy-b",
+      "historyLength": 5
+    },
+    {
+      "engine": "mongo",
+      "repetition": "842",
+      "tenant": "a",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "a:policy-a",
+      "historyLength": 5
+    },
+    {
+      "engine": "mongo",
+      "repetition": "842",
+      "tenant": "b",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "b:policy-b",
+      "historyLength": 5
+    },
+    {
+      "engine": "postgres",
+      "repetition": "841",
+      "tenant": "a",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "a:policy-a",
+      "historyLength": 5
+    },
+    {
+      "engine": "postgres",
+      "repetition": "841",
+      "tenant": "b",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "b:policy-b",
+      "historyLength": 5
+    },
+    {
+      "engine": "postgres",
+      "repetition": "842",
+      "tenant": "a",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "a:policy-a",
+      "historyLength": 5
+    },
+    {
+      "engine": "postgres",
+      "repetition": "842",
+      "tenant": "b",
+      "workerExit": 73,
+      "effectAttempts": 2,
+      "effectRecords": 1,
+      "answer": "b:policy-b",
+      "historyLength": 5
+    }
+  ],
+  "memoryLifecycleTrials": [
+    {
+      "engine": "mongo",
+      "repetition": "841",
+      "updateSearchDeleteAndNeighbor": true
+    },
+    {
+      "engine": "mongo",
+      "repetition": "842",
+      "updateSearchDeleteAndNeighbor": true
+    },
+    {
+      "engine": "postgres",
+      "repetition": "841",
+      "updateSearchDeleteAndNeighbor": true
+    },
+    {
+      "engine": "postgres",
+      "repetition": "842",
+      "updateSearchDeleteAndNeighbor": true
+    }
+  ],
+  "assertedVectorHybridObservations": 16,
+  "lexicalArmChecks": 1,
+  "queryCountCaveat": "Polling retries are excluded; asserted observations are not total executed database queries."
+}

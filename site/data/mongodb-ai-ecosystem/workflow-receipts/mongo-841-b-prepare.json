@@ -1,0 +1,30 @@
+{
+  "engine": "mongo",
+  "phase": "prepare",
+  "seed": "841",
+  "tenant": "b",
+  "pid": 87,
+  "before": {
+    "values": {},
+    "next": []
+  },
+  "after": {
+    "values": {
+      "tenant": "b",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-b"
+    },
+    "next": [
+      "tool"
+    ]
+  },
+  "effects": [
+    {
+      "_id": "841:a:approval",
+      "attempts": 2,
+      "effect": "recorded",
+      "tenant": "a"
+    }
+  ]
+}

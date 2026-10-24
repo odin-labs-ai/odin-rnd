@@ -1,0 +1,22 @@
+{
+  "revision": 2,
+  "frozenAt": "2026-10-24T19:45:01.005477+00:00",
+  "model": "MongoDB/voyage-4-nano-GGUF",
+  "modelRevision": "03547551689253732502486d62de4cd0970d6564",
+  "quantization": "Q8_0",
+  "modelSha256": "c6ed6cc898d50ae1a4492809affadc6c0d023f8ac05c07a37abe20c563152560",
+  "runtime": "llama.cpp b11865; Darwin x86_64; CPU; authenticated UNIX socket",
+  "embedding": "2048 dimensions, first 512 then L2 normalization for database trial",
+  "prompts": {
+    "document": "Represent the document for retrieval: ",
+    "query": "Represent the query for retrieving supporting documents: "
+  },
+  "normalization": "Unicode NFC before tokenization",
+  "fixtureSha256": "0cf55246bbe41ddd2874823294bffd149689542e4caf780562962811058d7baa",
+  "qualityMethod": "Frozen researcher-authored expected document per query. Small closed-world fixture; not an independent human-labelled benchmark.",
+  "qualityTuning": "None; all questions and ranks retained, including misses.",
+  "databaseGate": "Both engines must match exhaustive in-tenant top-five IDs using identical model vectors; compare quality separately from correctness.",
+  "cacheDiagnostic": "Record the cosine similarity of contradictory permissions before selecting any cache threshold; no threshold fitted to this fixture.",
+  "paidInference": false,
+  "amendment": "amendment-01.json; explicit changed-policy premise in cache query, thresholds unchanged"
+}

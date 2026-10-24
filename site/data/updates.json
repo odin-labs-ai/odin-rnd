@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "note-mongodb-ai-ecosystem",
+      "experiment": null,
+      "title": "MongoDB beyond JSON: agents, memory and models",
+      "kind": "Field note",
+      "text": "Real local Voyage embeddings, eight workflow recoveries and memory/cache checks extend the investigation beyond storage. Both databases agree on the exact neighbors; replay-safe tools and policy-aware caches remain application contracts.",
+      "href": "journal/mongodb-ai-ecosystem.html",
+      "source": "journal/mongodb-ai-ecosystem.html",
+      "date": "2026-10-24"
+    },
+    {
       "key": "exp-019-results",
       "experiment": "EXP 019",
       "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",

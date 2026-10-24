@@ -1,0 +1,32 @@
+{
+  "engine": "mongo",
+  "phase": "memory",
+  "seed": "842",
+  "tenant": "a",
+  "pid": 533,
+  "updatedSearch": [
+    {
+      "tenant": "a",
+      "policy": "updated"
+    }
+  ],
+  "deletedTenantA": true,
+  "neighbor": {
+    "tenant": "b",
+    "policy": "policy-b"
+  },
+  "effects": [
+    {
+      "_id": "842:a:approval",
+      "attempts": 2,
+      "effect": "recorded",
+      "tenant": "a"
+    },
+    {
+      "_id": "842:b:approval",
+      "attempts": 2,
+      "effect": "recorded",
+      "tenant": "b"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "engine": "postgres",
+  "phase": "resume",
+  "seed": "841",
+  "tenant": "a",
+  "pid": 206,
+  "before": {
+    "values": {
+      "tenant": "a",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-a"
+    },
+    "next": [
+      "tool"
+    ]
+  },
+  "after": {
+    "values": {
+      "tenant": "a",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-a",
+      "effect": "recorded",
+      "answer": "a:policy-a"
+    },
+    "next": []
+  },
+  "effects": [
+    {
+      "_id": "841:a:approval",
+      "tenant": "a",
+      "effect": "recorded",
+      "attempts": 2
+    }
+  ],
+  "historyLength": 5
+}

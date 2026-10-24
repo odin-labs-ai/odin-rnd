@@ -1,0 +1,34 @@
+{
+  "status": "superseded-ambiguous-question",
+  "startedAt": "2026-10-24T19:43:47.815285+00:00",
+  "endedAt": "2026-10-24T19:43:57.671068+00:00",
+  "checks": [
+    {
+      "threshold": 0.8,
+      "query": "Is an unattended restart forbidden when the amber service health check fails?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [
+        "AUTOMATIC RESTART ALLOWED"
+      ],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    },
+    {
+      "threshold": 0.9,
+      "query": "Is an unattended restart forbidden when the amber service health check fails?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    },
+    {
+      "threshold": 0.95,
+      "query": "Is an unattended restart forbidden when the amber service health check fails?",
+      "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+      "oldContextAnswer": [],
+      "newPolicyCorpusContextAnswer": [],
+      "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+    }
+  ],
+  "scope": "Retained chronology only. Its question did not assert a changed policy, so no incorrect-answer claim is counted from this attempt."
+}

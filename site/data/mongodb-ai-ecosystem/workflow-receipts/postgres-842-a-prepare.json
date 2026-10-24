@@ -1,0 +1,23 @@
+{
+  "engine": "postgres",
+  "phase": "prepare",
+  "seed": "842",
+  "tenant": "a",
+  "pid": 298,
+  "before": {
+    "values": {},
+    "next": []
+  },
+  "after": {
+    "values": {
+      "tenant": "a",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-a"
+    },
+    "next": [
+      "tool"
+    ]
+  },
+  "effects": []
+}
