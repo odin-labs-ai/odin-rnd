@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ASSERTS, fillClaim, frontierBlock, num, renderEvidence, renderLabPages, renderProviderEconomics, siteReader, statesNumber } from './lab-pages.mjs';
+import { ASSERTS, fillClaim, frontierBlock, HOME_MARKER, num, placeHomeProof, renderEvidence, renderLabPages, renderLabProof, renderProviderEconomics, siteReader, statesNumber } from './lab-pages.mjs';
+import { checkHomeProof } from './number-provenance.mjs';
 import { checkPage, recordProblem } from './number-provenance.mjs';
 import { createHash } from 'node:crypto';
 import { checkPages, loadTerms } from './provider-terms.mjs';
@@ -16,7 +17,7 @@ const rendered = renderLabPages();
 const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
 
 test('every lab page renders from the committed records and passes the number-provenance check', () => {
-  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0, 'provider-brief': 10 };
+  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0, 'provider-brief': 10, 'one-pager': 8 };
   assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
@@ -33,7 +34,8 @@ test('no broker is named next to a number without leave in provider-terms.json',
 test('the pages carry no third-party image or logo', () => {
   for (const [page, html] of Object.entries(rendered)) {
     const imgs = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/g)].map(m => m[1]);
-    assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg'), [], page);
+    // The lab's own agent-space stills (one-pager/) are first-party images, not a logo or a third party's.
+    assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg' && !src.startsWith('../assets/agent-space/')), [], page);
     assert.doesNotMatch(html, /double\s?word/i, `${page} names no lead without a record`);
     // Brokers whose terms are under review appear only by letter; orq has no record on these pages at all.
     assert.doesNotMatch(html, /eu\s?router|requesty|\borq\b/i, `${page} names no broker without leave`);
@@ -200,4 +202,19 @@ test('page configuration holds no number that is shown: claim texts and not-meas
   for (const n of config.notMeasured) assert.equal(statesNumber(`${n.claim} ${n.why ?? ''} ${n.planned ?? ''}`), false, n.claim);
   const series = JSON.parse(readFileSync('site/data/provider-economics.json', 'utf8')).series;
   for (const s of series) assert.equal(statesNumber(`${s.title ?? ''} ${s.status ?? ''}`), false, s.title ?? s.slug);
+});
+
+// The home proof strip, on the real render path: placed at the marker, its links root-relative (no ../ from the home
+// page), and passing the home strip check against the committed records.
+test('the home proof strip renders from lab-proof.json with root-relative links and passes the strip check', () => {
+  const home = placeHomeProof(`<html><body><section id="lab"><ol>${HOME_MARKER}</ol></section></body></html>`);
+  assert.ok(!home.includes(HOME_MARKER));
+  const hrefs = [...home.matchAll(/href="([^"]*)"/g)].map(m => m[1]);
+  assert.ok(hrefs.length >= 6, 'the strip links its numbers and sources');
+  assert.deepEqual(hrefs.filter(h => h.startsWith('../')), [], 'no ../ link on the home page');
+  for (const h of hrefs) assert.ok(existsSync(join('site', h.split('#')[0])), `${h} exists in site/`);
+  assert.deepEqual(checkHomeProof(home, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), []);
+  assert.ok((home.match(/data-source="/g) ?? []).length >= 8);
+  assert.throws(() => placeHomeProof('<p>no marker</p>'), /exactly once/);
+  assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
 });

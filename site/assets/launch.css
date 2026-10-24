@@ -1,0 +1,125 @@
+/* The lab launch (2026-10-24): the home proof strip, partner tracks and agent space, the partner programme page and the
+   lab on a page (one-pager/, print-ready). Reuses the site's tokens from style.css; square records, 10px controls. */
+
+/* Home: proof strip. Each item is a sourced claim from data/lab-proof.json, rendered by scripts/lab-pages.mjs. */
+.proof-strip{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule)}
+.proof-strip>li{margin:0;padding:28px 28px 30px 0;display:flex;flex-direction:column;justify-content:space-between;gap:20px}
+.proof-strip>li+li{border-left:1px solid var(--rule);padding-left:28px}
+.proof-strip>li>p:first-child{font-size:17px;line-height:1.55}
+.proof-strip .lab-num{font-family:var(--display);font-weight:600;font-size:1.25em;color:var(--brand);text-decoration:none;border-bottom:1px solid currentColor}
+.proof-strip .lab-num:hover{color:var(--primary-hover)}
+.proof-strip .lab-source{font-size:12px;color:var(--steel);opacity:1}
+.proof-strip code{font-size:.85em;overflow-wrap:anywhere}
+
+/* Home: partner tracks as entry points. */
+.track-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.track-cards li+li{border-left:1px solid var(--rule)}
+.track-cards a{display:flex;flex-direction:column;gap:14px;height:100%;padding:28px 28px 30px;text-decoration:none;min-height:44px}
+.track-cards li:first-child a{padding-left:0}
+.track-cards a:hover h3{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px}
+.track-cards .technical{color:var(--steel)}
+.track-cards h3{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.2}
+.track-cards p{font-size:15px;color:var(--steel);flex:1}
+.track-go{font-size:14px;font-weight:500;color:var(--brand)}
+.tracks-note{margin-top:24px;font-size:14px;color:var(--steel);max-width:80ch}
+
+/* Home: the agent space. */
+.agent-space{margin:112px 4.2% 0;padding:48px 50px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:50px;align-items:center;border-radius:12px}
+.agent-space-copy .technical{color:var(--steel);display:block;margin-bottom:18px}
+.agent-space-copy h2{font-size:clamp(34px,3.6vw,52px)}
+.agent-space-copy p{margin-top:20px;color:var(--steel);font-size:16px;max-width:52ch}
+.agent-space-copy .agent-space-boundary{font-size:13px;border-top:1px solid var(--rule);padding-top:16px}
+.agent-space-media{margin:0}
+.agent-space-media video,.agent-space-media img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#000}
+.agent-space-media figcaption{margin-top:10px;font-size:12px;color:var(--steel)}
+
+/* Partner programme page. */
+.track-index{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--rule)}
+.track-index a{display:flex;flex-direction:column;gap:6px;padding:18px 20px;text-decoration:none;font-family:var(--display);font-size:20px;font-weight:600;line-height:1.2;min-height:44px}
+.track-index a+a{border-left:1px solid var(--rule)}
+.track-index a:hover{background:var(--panel)}
+.track-index .technical{color:var(--steel);font-weight:400}
+.track .company-section-heading .technical{display:block;color:var(--steel);margin-bottom:10px}
+.track-grid{display:grid;grid-template-columns:1fr 1fr .8fr;border-top:1px solid var(--rule)}
+.track-grid>div{padding:24px 24px 24px 0}
+.track-grid>div+div{border-left:1px solid var(--rule);padding-left:24px}
+.track-grid dt{font:10px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-bottom:10px}
+.track-grid dd{font-size:15px;line-height:1.6}
+.track-grid ul{margin:0;padding-left:18px}
+.track-grid li+li{margin-top:8px}
+.independence,.measure-box{margin-top:28px;padding:26px 28px;background:var(--panel);border:1px solid var(--rule);border-radius:12px}
+.independence h3,.measure-box h3{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.25;margin-bottom:12px}
+.independence ul,.measure-box ul{margin:0;padding-left:18px;font-size:15px;line-height:1.6}
+.independence li+li,.measure-box li+li{margin-top:8px}
+.independence>p,.measure-box>p{font-size:15px;margin-top:12px}
+.measure-box dl{margin-top:14px;border-top:1px solid var(--rule)}
+.measure-box dl>div{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.measure-box dt{font-weight:600}
+.measure-box dd{font-size:15px}
+.measure-box .status{display:block;margin-top:4px;font:11px/1.6 var(--mono);letter-spacing:.04em;color:var(--steel)}
+.tier-row{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.tier-row article{padding:20px 22px}
+.tier-row article:first-child{padding-left:0}
+.tier-row article+article{border-left:1px solid var(--rule)}
+.tier-row .technical{color:var(--steel)}
+.tier-row h3{font-family:var(--display);font-size:22px;font-weight:600;margin:6px 0 8px}
+.tier-row p{font-size:14px;color:var(--steel)}
+
+/* The lab on a page (one-pager/). */
+.onepager{max-width:1000px;margin:50px auto 80px;padding:0}
+.onepager-head .technical{color:var(--steel)}
+.onepager-head h1{font-size:clamp(40px,5vw,64px);margin:14px 0 20px;max-width:18ch}
+.onepager-block{margin-top:44px;padding-top:24px;border-top:1px solid var(--rule)}
+.onepager-block h2{font-size:clamp(26px,2.6vw,34px);margin-bottom:16px}
+.onepager-block>p{font-size:16px;max-width:75ch}
+.onepager-pair,.onepager-tracks{display:grid;gap:24px}
+.onepager-pair{grid-template-columns:1fr 1fr}
+.onepager-tracks{grid-template-columns:repeat(3,1fr);margin-bottom:18px}
+.onepager-pair dt,.onepager-tracks dt{font-weight:600;margin-bottom:6px}
+.onepager-pair dd,.onepager-tracks dd{font-size:15px;color:var(--steel)}
+.onepager-claims{padding-left:20px}
+.onepager-claims .lab-num{font-weight:600}
+.onepager-note{font-size:13px;color:var(--steel);margin-top:14px}
+.onepager-media{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
+.onepager-media img{width:100%;height:auto;border:1px solid var(--rule)}
+.onepager-media p{font-size:15px}
+.onepager-foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--rule);font:11px/1.8 var(--mono);color:var(--steel)}
+
+@media (max-width:900px){
+  .proof-strip,.track-cards,.track-index,.track-grid,.tier-row,.onepager-pair,.onepager-tracks,.onepager-media{grid-template-columns:1fr}
+  .proof-strip>li+li,.track-index a+a,.track-grid>div+div,.track-cards li+li,.tier-row article+article{border-left:0;padding-left:0;border-top:1px solid var(--rule)}
+  .track-cards a,.tier-row article{padding-left:0}
+  .agent-space{grid-template-columns:1fr;margin:66px 6% 0;padding:30px 24px;gap:28px}
+  .measure-box dl>div{grid-template-columns:1fr;gap:4px}
+  .onepager{margin:30px 6% 60px}
+}
+
+/* Printed, the lab on a page fits A4: no navigation, no parent-site link, links shown as text. */
+@media print{
+  @page{size:A4;margin:12mm 13mm 14mm}
+  .onepager-page{background:#fff;color:#111;font-size:9.5pt;line-height:1.38}
+  .onepager-page .skip,.onepager-page .site-header nav,.onepager-page .source-link,.onepager-page .parent-site-link,.onepager-page .site-footer,.onepager-page .site-header{display:none}
+  .onepager-page .site-header{height:auto;margin:0 0 3mm;padding-bottom:2mm}
+  .onepager-page .onepager{margin:0;max-width:none}
+  .onepager-page h1{font-size:20pt;margin:2mm 0 3mm}
+  .onepager-page h2{font-size:12pt;margin-bottom:1.5mm}
+  .onepager-page .company-lead,.onepager-page .onepager-block>p,.onepager-page dd,.onepager-page .onepager-media p{font-size:9.5pt}
+  .onepager-page .onepager-block{margin-top:3.5mm;padding-top:2.5mm;break-inside:avoid}
+  .onepager-page .lab-claims>li{margin-top:1.5mm;break-inside:avoid}
+  .onepager-page .lab-source{font-size:7.5pt}
+  .onepager-page .onepager-media{grid-template-columns:42% 1fr;gap:4mm}
+  .onepager-page a{color:inherit}
+  .onepager-page .onepager-foot{margin-top:4mm;padding-top:2mm;font-size:7.5pt}
+  .onepager-page{font-size:8.8pt}
+  .onepager-page .company-lead,.onepager-page .onepager-block>p,.onepager-page dd,.onepager-page .onepager-media p,.onepager-page .lab-claims p{font-size:8.8pt;line-height:1.32}
+  .onepager-page .onepager-media{grid-template-columns:32% 1fr}
+  .onepager-page .onepager-pair{grid-template-columns:1fr 1fr;gap:5mm}
+  .onepager-page .onepager-tracks{grid-template-columns:repeat(3,1fr);gap:5mm;margin-bottom:2mm}
+  .onepager-page .onepager-head h1{max-width:none}
+  .onepager-page .company-lead{max-width:none}
+  .onepager-page .onepager-note{font-size:7.5pt;margin-top:1.5mm}
+  *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
+
+/* Home hero: the premise carries two links side by side. */
+.factory-premise a+a{margin-left:22px}
