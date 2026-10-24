@@ -16,7 +16,7 @@ const rendered = renderLabPages();
 const readSite = path => (existsSync(join('site', path)) ? readFileSync(join('site', path), 'utf8') : null);
 
 test('every lab page renders from the committed records and passes the number-provenance check', () => {
-  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0, 'provider-brief': 10 };
+  const minimumSourced = { 'provider-economics': 10, evidence: 10, providers: 0, 'provider-brief': 10, 'one-pager': 8 };
   assert.deepEqual(Object.keys(rendered).sort(), Object.keys(minimumSourced).sort());
   for (const [page, html] of Object.entries(rendered)) {
     assert.deepEqual(checkPage(`${page}/index.html`, html, { readData: readSite, recordProblem: (path, raw) => recordProblem(path, raw) }), [], page);
@@ -33,7 +33,8 @@ test('no broker is named next to a number without leave in provider-terms.json',
 test('the pages carry no third-party image or logo', () => {
   for (const [page, html] of Object.entries(rendered)) {
     const imgs = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/g)].map(m => m[1]);
-    assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg'), [], page);
+    // The lab's own agent-space stills (one-pager/) are first-party images, not a logo or a third party's.
+    assert.deepEqual(imgs.filter(src => src !== '../assets/odin-logo.svg' && !src.startsWith('../assets/agent-space/')), [], page);
     assert.doesNotMatch(html, /double\s?word/i, `${page} names no lead without a record`);
     // Brokers whose terms are under review appear only by letter; orq has no record on these pages at all.
     assert.doesNotMatch(html, /eu\s?router|requesty|\borq\b/i, `${page} names no broker without leave`);

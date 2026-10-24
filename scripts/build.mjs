@@ -106,6 +106,9 @@ html = html.replace('<!--EXPERIMENT_BUTTONS-->', report.runs.map((run,index) => 
 html = html.replace('<!--FIRST_TRANSCRIPT-->', escape(report.runs[0].transcript));
 html = html.replace('<!--RUN_DATE-->', 'RECORDED '+escape(report.completedAt));
 html = html.replace('<!--RUN_ORIGIN-->', 'Recording environment: '+escape(report.environment)+'.');
+// The lab's proof strip (lab launch, 2026-10-24): sourced claims from site/data/lab-proof.json, each number a link to its
+// record. The number-provenance pass at the end checks the finished strip (HOME_PROOF in scripts/number-provenance.mjs).
+{ const { placeHomeProof } = await import('./lab-pages.mjs'); html = placeHomeProof(html); }
 html = html.replace('<strong id="clean-result">—</strong>', '<strong id="clean-result">GREEN / '+report.runs[0].cleanScore+'</strong>');
 html = html.replace('<strong id="drift-result">—</strong>', '<strong id="drift-result">RED / '+report.runs[0].driftScore+'</strong>');
 html = html.replace('</body>', '<script type="application/json" id="experiment-data">'+JSON.stringify(report).replaceAll('<','\\u003c')+'</script>\n</body>');

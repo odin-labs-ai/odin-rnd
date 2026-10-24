@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.page-config",
+  "page": "index.html, one-pager/",
+  "note": "Page configuration, not a record. The proof strip on the home page and the lab on a page (lab launch, 2026-10-24). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs renderLabProof) and linked to it, and the build checks the rendered strip with scripts/number-provenance.mjs. A claim's record must be a measured experiment record with a decided verdict (briefProblems refuses the router-arm records). Brokers appear by the letters their published records use; no provider is named.",
+  "claims": [
+    {
+      "id": "proof-review-cost",
+      "record": "data/review-frontier/results.json",
+      "note": "journal/review-frontier-results.html",
+      "text": "Price is not quality. On a sealed corpus of private changes, the cheapest reviewer cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest cost {dearCost} and caught {dearCaught}.",
+      "values": {
+        "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
+        "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
+        "cheapOf": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" },
+        "dearCost": { "source": "data/review-frontier/results.json#/seats/3/costPerReviewUsd", "format": "usd" },
+        "dearCaught": { "source": "data/review-frontier/results.json#/seats/3/caught", "format": "int" }
+      },
+      "window": {
+        "from": { "source": "data/review-frontier/results.json#/runs", "field": "start" },
+        "to": { "source": "data/review-frontier/results.json#/runs", "field": "end" }
+      },
+      "asserts": [
+        { "kind": "min-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 1 },
+        { "kind": "max-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 3 }
+      ]
+    },
+    {
+      "id": "proof-brokers",
+      "record": "data/broker-same-model/results.json",
+      "note": "journal/broker-same-model-results.html",
+      "text": "Brokers served what was asked. {calls} identical requests through the brokers we use, at the same moment: {subS} silent model substitutions for {modelS} and {subM} for {modelM}.",
+      "values": {
+        "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
+        "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
+        "subS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/silentSubstitutions", "format": "int" },
+        "modelM": { "source": "data/broker-same-model/results.json#/perArm/mini/family", "format": "code" },
+        "subM": { "source": "data/broker-same-model/results.json#/perArm/mini/silentSubstitutions", "format": "int" }
+      },
+      "window": {
+        "from": { "source": "data/broker-same-model/results.json#/window/firstCall" },
+        "to": { "source": "data/broker-same-model/results.json#/window/lastCall" }
+      },
+      "asserts": [
+        { "kind": "served-as-asked", "source": "data/broker-same-model/results.json#/perArm" }
+      ]
+    },
+    {
+      "id": "proof-self-verify",
+      "record": "data/self-verify/results.json",
+      "note": "journal/self-verify-results.html",
+      "text": "A negative result stays published. Can a reviewer model talk itself out of its own false alarms? The pre-registered answer was {decision}: with a verify pass, its false alarms on clean changes stayed at {faA} and {faB}.",
+      "values": {
+        "decision": { "source": "data/self-verify/results.json#/decision", "format": "word" },
+        "faA": { "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms", "format": "int" },
+        "faB": { "source": "data/self-verify/results.json#/arms/A1-b/falseAlarms", "format": "int" }
+      },
+      "window": {
+        "from": { "source": "data/self-verify/results.json#/measured/start" },
+        "to": { "source": "data/self-verify/results.json#/measured/end" }
+      }
+    }
+  ]
+}

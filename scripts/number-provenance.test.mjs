@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { checkPage, checkSite, format, PAGES, parseAttributes, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { checkHomeProof, checkPage, checkSite, format, HOME_PROOF, PAGES, parseAttributes, quoteProblem, recordProblem, resolvePointer, sectionById, SOURCE_FILE } from './number-provenance.mjs';
 
 // The realism ratchet for the lab's provider-economics and evidence pages (vp-grow-odin-r-d bundle-3 WO-04): every
 // visible number links to an experiment record and shows exactly the value its JSON pointer holds. These tests run
@@ -257,4 +257,19 @@ test('checkSite joins the gate to the real record and quote checks (a built page
     writeFileSync(join(dir, 'preregistration.sha256'), 'f'.repeat(64) + '  preregistration.json\n');
     assert.match(checkSite(dist, ['evidence/index.html'], root).join('\n'), /data-quote .*does not match its preregistration\.sha256/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// The home page's proof strip (lab launch, 2026-10-24): the home page is not a listed page, so its strip is cut out by
+// id and checked on its own. A missing strip, an unplaced marker, a strip with no sourced number or an unsourced number
+// in it fails.
+test('the home proof strip is checked on its own, and fails closed', () => {
+  const strip = inner => `<html><body><section class="hero" id="floor"><p>Station 07, 40 runs.</p></section><section class="lab-launch" id="${HOME_PROOF.id}"><ol>${inner}</ol></section></body></html>`;
+  const home = sourced('/seats/0/caught', 'int', '31').replaceAll('../', '');
+  assert.deepEqual(checkHomeProof(strip(`<li>Caught ${home} seeded defects.</li>`), io), [], 'figures outside the strip are not its business');
+  assert.match(checkHomeProof(strip(`<li>Caught ${home}, saving 40 percent.</li>`), io).join('\n'), /unsourced digit/);
+  assert.match(checkHomeProof(strip('<li>Every number links to its record.</li>'), io).join('\n'), /no sourced number/);
+  assert.match(checkHomeProof(strip(HOME_PROOF.marker), io).join('\n'), /never placed/);
+  assert.match(checkHomeProof('<html><body><p>no strip</p></body></html>', io).join('\n'), /no section with id="lab"/);
+  assert.equal(sectionById('<section id="a"><p>x</p></section><section id="lab"><p>y</p></section>', 'lab'), '<section id="lab"><p>y</p></section>');
+  assert.ok(PAGES.includes('partners/index.html') && PAGES.includes('one-pager/index.html'), 'the partner programme and the lab on a page are listed pages');
 });
