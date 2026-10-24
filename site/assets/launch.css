@@ -12,9 +12,11 @@
 .proof-strip code{font-size:.85em;overflow-wrap:anywhere}
 
 /* Home: partner tracks as entry points. */
-.track-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.track-cards a{display:flex;flex-direction:column;gap:14px;height:100%;padding:28px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;text-decoration:none;min-height:44px}
-.track-cards a:hover{border-color:var(--brand)}
+.track-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.track-cards li+li{border-left:1px solid var(--rule)}
+.track-cards a{display:flex;flex-direction:column;gap:14px;height:100%;padding:28px 28px 30px;text-decoration:none;min-height:44px}
+.track-cards li:first-child a{padding-left:0}
+.track-cards a:hover h3{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px}
 .track-cards .technical{color:var(--steel)}
 .track-cards h3{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.2}
 .track-cards p{font-size:15px;color:var(--steel);flex:1}
@@ -55,8 +57,10 @@
 .measure-box dt{font-weight:600}
 .measure-box dd{font-size:15px}
 .measure-box .status{display:block;margin-top:4px;font:11px/1.6 var(--mono);letter-spacing:.04em;color:var(--steel)}
-.tier-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
-.tier-row article{border:1px solid var(--rule);padding:20px 22px}
+.tier-row{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.tier-row article{padding:20px 22px}
+.tier-row article:first-child{padding-left:0}
+.tier-row article+article{border-left:1px solid var(--rule)}
 .tier-row .technical{color:var(--steel)}
 .tier-row h3{font-family:var(--display);font-size:22px;font-weight:600;margin:6px 0 8px}
 .tier-row p{font-size:14px;color:var(--steel)}
@@ -83,7 +87,8 @@
 
 @media (max-width:900px){
   .proof-strip,.track-cards,.track-index,.track-grid,.tier-row,.onepager-pair,.onepager-tracks,.onepager-media{grid-template-columns:1fr}
-  .proof-strip>li+li,.track-index a+a,.track-grid>div+div{border-left:0;padding-left:0;border-top:1px solid var(--rule)}
+  .proof-strip>li+li,.track-index a+a,.track-grid>div+div,.track-cards li+li,.tier-row article+article{border-left:0;padding-left:0;border-top:1px solid var(--rule)}
+  .track-cards a,.tier-row article{padding-left:0}
   .agent-space{grid-template-columns:1fr;margin:66px 6% 0;padding:30px 24px;gap:28px}
   .measure-box dl>div{grid-template-columns:1fr;gap:4px}
   .onepager{margin:30px 6% 60px}

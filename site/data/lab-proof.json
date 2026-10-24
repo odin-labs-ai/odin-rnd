@@ -8,13 +8,14 @@
       "id": "proof-review-cost",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "Price is not quality. On a sealed corpus of private changes, the cheapest reviewer cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest cost {dearCost} and caught {dearCaught}.",
+      "text": "Price is not quality. On a sealed corpus of private changes, the cheapest reviewer cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest cost {dearCost} and caught {dearCaught} of {dearOf}. The catch intervals of all reviewers overlap.",
       "values": {
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
         "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
         "cheapOf": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" },
         "dearCost": { "source": "data/review-frontier/results.json#/seats/3/costPerReviewUsd", "format": "usd" },
-        "dearCaught": { "source": "data/review-frontier/results.json#/seats/3/caught", "format": "int" }
+        "dearCaught": { "source": "data/review-frontier/results.json#/seats/3/caught", "format": "int" },
+        "dearOf": { "source": "data/review-frontier/results.json#/seats/3/caughtOf", "format": "int" }
       },
       "window": {
         "from": { "source": "data/review-frontier/results.json#/runs", "field": "start" },
@@ -22,7 +23,9 @@
       },
       "asserts": [
         { "kind": "min-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 1 },
-        { "kind": "max-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 3 }
+        { "kind": "max-at", "source": "data/review-frontier/results.json#/seats", "field": "costPerReviewUsd", "index": 3 },
+        { "kind": "intervals-overlap", "source": "data/review-frontier/results.json#/seats", "field": "caughtCI" },
+        { "kind": "spread-greater", "source": "data/review-frontier/results.json#/seats", "wide": "costPerReviewUsd", "narrow": "caught", "by": 10 }
       ]
     },
     {
