@@ -218,3 +218,17 @@ test('the home proof strip renders from lab-proof.json with root-relative links 
   assert.throws(() => placeHomeProof('<p>no marker</p>'), /exactly once/);
   assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
 });
+
+// The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results
+// must carry the closed-door exception, so no preview claims blanket publication (refute 2026-10-24, PR #70).
+test('home descriptions never claim blanket publication without the closed-door clause', () => {
+  const head = readFileSync('site/index.html', 'utf8').split('</head>')[0];
+  const get = attr => head.match(new RegExp(`<meta ${attr}="([^"]*)"`))?.[1];
+  const descriptions = { name: get('name="description" content'), og: get('property="og:description" content'), twitter: get('name="twitter:description" content') };
+  for (const [key, text] of Object.entries(descriptions)) {
+    assert.ok(text, `${key} description exists`);
+    if (/publish/i.test(text)) assert.match(text, /closed-door work stays private/i, `${key} description pairs publication with the closed-door exception`);
+    assert.doesNotMatch(text, /every experiment (?:is )?published|results published whatever they show/i, `${key} description makes no blanket claim`);
+  }
+  assert.equal(descriptions.og, descriptions.twitter, 'og and twitter descriptions are identical');
+});
