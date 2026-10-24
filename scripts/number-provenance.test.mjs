@@ -151,7 +151,7 @@ test('a listed page missing from the build fails the site check (fail closed)', 
   writeFileSync(join(dist, 'assets/style.css'), '');
   writeFileSync(join(dist, 'evidence/index.html'), page('<p>none</p>'));
   let p;
-  try { p = checkSite(dist, ['evidence/index.html', 'provider-economics/index.html']); } finally { rmSync(dist, { recursive: true, force: true }); }
+  try { p = checkSite(dist, ['evidence/index.html', 'provider-economics/index.html'], '.', { home: false }); } finally { rmSync(dist, { recursive: true, force: true }); }
   assert.equal(p.length, 1);
   assert.match(p[0], /provider-economics\/index\.html: the page is listed .* but is not in the build/);
   assert.ok(PAGES.includes('evidence/index.html') && PAGES.includes('provider-economics/index.html'));
@@ -253,9 +253,9 @@ test('checkSite joins the gate to the real record and quote checks (a built page
     const html = body => `<!doctype html><html><head></head><body>${body}</body></html>`;
     const good = `<p><cite data-quote="data/demo/preregistration.json#/experiment/title">Does it beat one fixed model?</cite> <a href="../data/demo/results.json" data-source="data/demo/results.json#/n" data-format="int">3</a></p>`;
     writeFileSync(join(dist, 'evidence/index.html'), html(good));
-    assert.deepEqual(checkSite(dist, ['evidence/index.html'], root), []);
+    assert.deepEqual(checkSite(dist, ['evidence/index.html'], root, { home: false }), []);
     writeFileSync(join(dir, 'preregistration.sha256'), 'f'.repeat(64) + '  preregistration.json\n');
-    assert.match(checkSite(dist, ['evidence/index.html'], root).join('\n'), /data-quote .*does not match its preregistration\.sha256/);
+    assert.match(checkSite(dist, ['evidence/index.html'], root, { home: false }).join('\n'), /data-quote .*does not match its preregistration\.sha256/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -271,5 +271,26 @@ test('the home proof strip is checked on its own, and fails closed', () => {
   assert.match(checkHomeProof(strip(HOME_PROOF.marker), io).join('\n'), /never placed/);
   assert.match(checkHomeProof('<html><body><p>no strip</p></body></html>', io).join('\n'), /no section with id="lab"/);
   assert.equal(sectionById('<section id="a"><p>x</p></section><section id="lab"><p>y</p></section>', 'lab'), '<section id="lab"><p>y</p></section>');
+  // A nested section does not cut the strip short: digits after it are still inside the checked section.
+  assert.equal(sectionById('<section id="lab"><section><p>a</p></section><p>99</p></section><p>z</p>', 'lab'), '<section id="lab"><section><p>a</p></section><p>99</p></section>');
   assert.ok(PAGES.includes('partners/index.html') && PAGES.includes('one-pager/index.html'), 'the partner programme and the lab on a page are listed pages');
+});
+
+// checkSite runs the home strip check by default, whatever list of pages it is given (an explicit { home: false } is
+// the only way out), so the build gate cannot lose it by passing a copy of PAGES.
+test('checkSite checks the home proof strip by default, for any page list', () => {
+  const dist = mkdtempSync(join(tmpdir(), 'np-home-'));
+  mkdirSync(join(dist, 'evidence'), { recursive: true });
+  mkdirSync(join(dist, 'assets'), { recursive: true });
+  writeFileSync(join(dist, 'assets/style.css'), '');
+  writeFileSync(join(dist, 'evidence/index.html'), page('<p>none</p>'));
+  const run = home => { writeFileSync(join(dist, 'index.html'), home); return checkSite(dist, [...['evidence/index.html']]).join('\n'); };
+  try {
+    assert.match(run('<html><body><p>no strip</p></body></html>'), /no section with id="lab"/);
+    assert.match(run(`<html><body><section id="lab">${HOME_PROOF.marker}</section></body></html>`), /never placed/);
+    assert.match(run('<html><body><section id="lab"><p>Saved 40 percent.</p></section></body></html>'), /no sourced number/);
+    rmSync(join(dist, 'index.html'));
+    assert.match(checkSite(dist, ['evidence/index.html']).join('\n'), /the home page is not in the build/);
+    assert.deepEqual(checkSite(dist, ['evidence/index.html'], '.', { home: false }), []);
+  } finally { rmSync(dist, { recursive: true, force: true }); }
 });

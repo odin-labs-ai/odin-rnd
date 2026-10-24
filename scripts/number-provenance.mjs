@@ -257,12 +257,18 @@ export function isIdentifier(text) {
  */
 export const HOME_PROOF = { page: 'index.html', id: 'lab', marker: '<!--LAB_PROOF-->' };
 
-/** The section with id `id` in `html` (outermost <section>, no nesting expected), or null. */
+/** The section with id `id` in `html`, matched to its own closing tag (nested sections included), or null. */
 export function sectionById(html, id) {
   const start = html.search(new RegExp(`<section\\b[^>]*\\bid="${id}"`));
   if (start === -1) return null;
-  const end = html.indexOf('</section>', start);
-  return end === -1 ? null : html.slice(start, end + '</section>'.length);
+  const tags = /<\/?section\b[^>]*>/gi;
+  tags.lastIndex = start;
+  let depth = 0;
+  for (let m; (m = tags.exec(html));) {
+    depth += m[0][1] === '/' ? -1 : 1;
+    if (depth === 0) return html.slice(start, m.index + m[0].length);
+  }
+  return null;
 }
 
 /** Problems with the home proof strip in `html` (the built home page). */
@@ -274,8 +280,11 @@ export function checkHomeProof(html, io, spec = HOME_PROOF) {
   return checkPage(spec.page, `<body>${section}</body>`, io);
 }
 
-/** Problems for every page in PAGES under `dist`, with records bound to the checkout at `root`. A missing page fails. */
-export function checkSite(dist = 'dist', pages = PAGES, root = '.') {
+/**
+ * Problems for every page in `pages` under `dist`, with records bound to the checkout at `root`. A missing page fails.
+ * The home proof strip (HOME_PROOF) is checked too unless the caller turns it off explicitly with `{ home: false }`.
+ */
+export function checkSite(dist = 'dist', pages = PAGES, root = '.', { home = true } = {}) {
   const readData = path => { const full = join(dist, path); return existsSync(full) ? readFileSync(full, 'utf8') : null; };
   const exists = path => existsSync(join(dist, path));
   const io = { readData, exists, recordProblem: (path, raw) => recordProblem(path, raw, root), quoteProblem: (path, raw) => quoteProblem(path, raw, root) };
@@ -285,9 +294,9 @@ export function checkSite(dist = 'dist', pages = PAGES, root = '.') {
     if (!existsSync(full)) { problems.push(`${page}: the page is listed in scripts/number-provenance.mjs PAGES but is not in the build`); continue; }
     problems.push(...checkPage(page, readFileSync(full, 'utf8'), io));
   }
-  if (pages === PAGES) {
-    const home = join(dist, HOME_PROOF.page);
-    problems.push(...(existsSync(home) ? checkHomeProof(readFileSync(home, 'utf8'), io) : [`${HOME_PROOF.page}: the home page is not in the build`]));
+  if (home) {
+    const file = join(dist, HOME_PROOF.page);
+    problems.push(...(existsSync(file) ? checkHomeProof(readFileSync(file, 'utf8'), io) : [`${HOME_PROOF.page}: the home page is not in the build`]));
   }
   return problems;
 }
