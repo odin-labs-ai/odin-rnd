@@ -5,7 +5,11 @@ import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2] / 'site/data/mongodb-ai-ecosystem'
-read = lambda name: json.loads((ROOT / name).read_text())
+def read(name):
+    path = ROOT / name
+    if not path.exists():
+        path = Path(__file__).resolve().parent / 'observations' / name
+    return json.loads(path.read_text())
 fixture, model, integration, summary = [read(n) for n in ['fixture.json', 'model-result.json', 'integration-result.json', 'summary.json']]
 assert model['protocol']['revision'] == 2 and model['status'] == integration['status'] == 'passed'
 assert hashlib.sha256(json.dumps(fixture, sort_keys=True).encode()).hexdigest() == model['protocol']['fixtureSha256']
@@ -62,4 +66,6 @@ for name, digest in read('workflow-phases.json')['sourceHashes'].items():
     assert hashlib.sha256((source / 'previous' / name).read_bytes()).hexdigest() == digest, name
 for name, digest in read('evidence-manifest.json')['sha256'].items():
     assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest, name
+for name, record in read('evidence-manifest.json')['repositoryObservations'].items():
+    assert hashlib.sha256((source / 'observations' / name).read_bytes()).hexdigest() == record['sha256'], name
 print(json.dumps({'status': 'passed', 'labelledQuestions': len(ranks), 'top1': 11, 'exactRetrievalObservations': 48, 'workflowRecoveries': 8, 'cacheQueryDocumentCosine': cosine, 'cacheMongoScore': (1+cosine)/2}))

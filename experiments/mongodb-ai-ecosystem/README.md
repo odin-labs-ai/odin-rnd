@@ -2,7 +2,9 @@
 
 This is a local integration investigation, not a platform or model leaderboard.
 The public observation packet is in `site/data/mongodb-ai-ecosystem/` and the field
-note is `site/journal/mongodb-ai-ecosystem.html`.
+note is `site/journal/mongodb-ai-ecosystem.html`. The large numerical model-output
+files are public under this directory's `observations/`, linked and hashed by the
+site's evidence manifest. They are not copied into the static website artifact.
 
 Run the calculation audit from the repository root:
 
