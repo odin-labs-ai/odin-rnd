@@ -17,6 +17,7 @@ export const PAGES = {
   evidence: { marker: '<!--EVIDENCE-->', config: 'data/evidence.json' },
   providers: { marker: '<!--PROVIDER_PARTNERS-->', config: 'data/provider-partners.json' },
   'provider-brief': { marker: '<!--PROVIDER_BRIEF-->', config: 'data/provider-brief.json' },
+  'one-pager': { marker: '<!--LAB_PROOF-->', config: 'data/lab-proof.json' },
 };
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -153,7 +154,7 @@ export function renderProviderEconomics(read, weeks) {
 }
 
 /** Fill a claim's text: {name} placeholders become sourced numbers, model ids, broker names, words or dates. */
-export function fillClaim(read, claim) {
+export function fillClaim(read, claim, up = '../') {
   if (statesNumber(claim.text)) throw new Error(`claim ${claim.id}: its text states a number (a digit or a number word); every number must be a sourced value`);
   return escape(claim.text).replace(/\{([a-zA-Z0-9]+)\}/g, (whole, name) => {
     const v = claim.values?.[name];
@@ -164,7 +165,7 @@ export function fillClaim(read, claim) {
     if (v.format === 'word') { const w = str(read, v.source); if (statesNumber(w)) throw new Error(`claim ${claim.id}: word value '${w}' holds a digit`); return `<strong>${escape(w)}</strong>`; }
     if (v.format === 'date') return time(str(read, v.source));
     if (v.format === 'broker') return escape(displayNames(Object.keys(PROBE.brokers), read('data/provider-terms.json'))[v.id]);
-    return num(read, v.source, v.format);
+    return num(read, v.source, v.format, up);
   });
 }
 
@@ -219,7 +220,7 @@ export const ASSERTS = {
 };
 
 /** Sourced claims as list items: each claim's asserts are checked, its numbers read from and linked to its record. */
-export function renderClaims(read, list) {
+export function renderClaims(read, list, up = '../') {
   return list.map(c => {
     const [path] = (c.record ?? '').split('#');
     if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
@@ -228,7 +229,7 @@ export function renderClaims(read, list) {
       const why = check ? check(read, a) : `unknown assertion '${a.kind}'`;
       if (why) throw new Error(`claim ${c.id}: ${a.kind}: ${why}`);
     }
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="../${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="../${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
   }).join('');
 }
 
@@ -302,6 +303,18 @@ export function renderProviderBrief(read) {
 }
 
 /**
+ * The lab's proof strip (lab launch, 2026-10-24): the home page and the lab on a page (one-pager/) show the same sourced
+ * claims from data/lab-proof.json, rendered by the evidence page's machinery, so the two never drift. `up` is '' on the
+ * home page and '../' on a page one folder down. Like the brief, a claim may not read a record without a decided result.
+ */
+export function renderLabProof(read, up = '../') {
+  const config = read(PAGES['one-pager'].config);
+  const problems = briefProblems(config);
+  if (problems.length) throw new Error(`site/${PAGES['one-pager'].config} is refused:\n${problems.join('\n')}`);
+  return renderClaims(read, config.claims, up);
+}
+
+/**
  * The signed-partner list (vp-grow-odin-r-d bundle-3 WO-02). Only a signed agreement on record makes a partner: each
  * entry needs a name, a signedOn date (real, not in the future) and an evidence id (the private record of the signed
  * agreement). Any other field, a logo or a status included, is refused, so a lead, a free-text status or a logo cannot
@@ -334,13 +347,26 @@ export function renderPartners(read, today) {
   return `<ul class="lab-partners">${config.partners.map(p => `<li><strong>${escape(p.name)}</strong>, agreement signed ${time(p.signedOn)}</li>`).join('')}</ul>`;
 }
 
+/**
+ * The home page's proof strip: scripts/build.mjs places it at this marker while it renders the home page. The
+ * number-provenance gate (HOME_PROOF in scripts/number-provenance.mjs) checks the finished strip in dist/index.html.
+ */
+export const HOME_MARKER = '<!--LAB_PROOF-->';
+
+/** The home page `html` with its proof strip placed at HOME_MARKER, which it must hold exactly once. */
+export function placeHomeProof(html, read = siteReader()) {
+  const parts = html.split(HOME_MARKER);
+  if (parts.length !== 2) throw new Error(`site/index.html must hold ${HOME_MARKER} exactly once`);
+  return parts.join(renderLabProof(read, ''));
+}
+
 /** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
 export function renderLabPages({ root = 'site', read = siteReader(root), weeks = probeWeeks(root) } = {}) {
   const out = {};
   for (const [page, { marker }] of Object.entries(PAGES)) {
     const template = readFileSync(join(root, page, 'index.html'), 'utf8');
     if (template.split(marker).length !== 2) throw new Error(`site/${page}/index.html must hold ${marker} exactly once`);
-    const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : page === 'provider-brief' ? renderProviderBrief(read) : renderProviderEconomics(read, weeks);
+    const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : page === 'provider-brief' ? renderProviderBrief(read) : page === 'one-pager' ? renderLabProof(read) : renderProviderEconomics(read, weeks);
     out[page] = template.replace(marker, body);
     if (/<!--[A-Z_]+-->/.test(out[page])) throw new Error(`Unresolved content marker in ${page}`);
   }
