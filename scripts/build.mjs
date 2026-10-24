@@ -4,7 +4,7 @@ import { validateRecords } from './witness-records.mjs';
 import { renderWitness } from './witness-render.mjs';
 const witnesses = await validateRecords();
 import { readFileSync, writeFileSync, cpSync, copyFileSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
-import { relative, dirname } from 'node:path';
+import { relative, dirname, resolve } from 'node:path';
 import { apiOrigin } from '../site/assets/activity.mjs';
 import { factoryFloor } from './floor.mjs';
 import { execFileSync } from 'node:child_process';
@@ -143,10 +143,15 @@ console.log('Built static GitHub Pages site with three recorded experiments.');
 
 for (const report of witnesses.reports) { const file = `projects/${report.project}/index.html`; writeFileSync(`dist/${file}`, renderWitness(readFileSync(`site/${file}`, 'utf8'), report)); }
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
+// Every page loads the collector once. The note generators already put it in their <head>; adding a second
+// copy there is what vp-rnd-frontier-residuals R7 found (activity-sitewide.test.mjs checks every built page).
+const activityModule = resolve('dist/assets/activity.mjs');
 for (const file of htmlFiles('dist')) {
   const modulePath = relative(dirname(file),'dist/assets/activity.mjs');
   const source = readFileSync(file,'utf8');
-  writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
+  const loadsActivity = [...source.matchAll(/<script\b[^>]*\btype="module"[^>]*\bsrc="([^"]+)"/g)]
+    .some(([, src]) => resolve(dirname(file), src) === activityModule);
+  if (!loadsActivity) writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
 }
 // Page views counted by odin-labs.ai (cookieless, path + referrer host only): GitHub Pages has no analytics and Vercel's
 // own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (odin-website-preview #50).
