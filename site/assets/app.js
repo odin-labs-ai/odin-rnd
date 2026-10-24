@@ -107,9 +107,9 @@ export function setupExperiments(document, environment = globalThis) {
     document.querySelector('#run-id').textContent = 'EXP / ' + String(index + 1).padStart(3, '0');
     document.querySelector('#run-title').textContent = run.title;
     document.querySelector('#run-question').textContent = run.question;
-    document.querySelector('#run-badge').textContent = run.passed ? 'DISCRIMINATION / PASS' : 'DISCRIMINATION / FAILED';
-    document.querySelector('#clean-result').textContent = run.cleanScore == null ? 'UNVERIFIED' : 'GREEN / ' + run.cleanScore;
-    document.querySelector('#drift-result').textContent = run.driftScore == null ? 'UNVERIFIED' : 'RED / ' + run.driftScore;
+    document.querySelector('#run-badge').textContent = run.passed ? 'TOLD APART / YES' : 'TOLD APART / NO';
+    document.querySelector('#clean-result').textContent = run.cleanScore == null ? 'UNVERIFIED' : 'SCORE ' + run.cleanScore;
+    document.querySelector('#drift-result').textContent = run.driftScore == null ? 'UNVERIFIED' : 'SCORE ' + run.driftScore;
     document.querySelector('#transcript').textContent = run.transcript;
     document.querySelector('#reproduce-command').textContent = `npm exec --yes --package=bce-engine@${report.engine.version} -- bce demo --recipe ${run.id}`;
     document.querySelector('#run-date').textContent = 'RECORDED ' + new Date(report.completedAt).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
