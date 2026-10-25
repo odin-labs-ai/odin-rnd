@@ -15,7 +15,7 @@
  "findings": [
   {
    "head": "Across the whole task set, the small local model keeps up.",
-   "text": "Our tuned 1 GB model finished {EXP-W01:tuned-1gb:of} tasks ({EXP-W01:tuned-1gb:rate}) on our own machine, at no cost per task. The best cloud model, Mistral Small 3.2, finished {EXP-W02:mistral-small-3.2:of}. Their 95 % intervals overlap, so by our rule there is no detectable difference."
+   "text": "Our tuned 1 GB model finished {EXP-W01:tuned-1gb:of} tasks ({EXP-W01:tuned-1gb:rate}) on our own machine, with no per-task charge (running it still takes the machine and its power). The best cloud model, Mistral Small 3.2, finished {EXP-W02:mistral-small-3.2:of}. Their 95 % intervals overlap, so by our rule there is no detectable difference."
   },
   {
    "head": "Following a person's instruction, the cloud models are clearly better.",
