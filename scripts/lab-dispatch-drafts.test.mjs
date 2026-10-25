@@ -99,6 +99,7 @@ test('a long question and answer: cut at a word to a verbatim prefix, and every 
   assert.equal(excerpt('short', 100), 'short');
   // X weighs an ellipsis or an emoji 2 and a curly quote 1.
   assert.equal(length('a…'), 3); assert.equal(length('“’”'), 3); assert.equal(length('😀'), 2);
+  assert.equal(excerpt('😀 '.repeat(50), 21), `${Array(6).fill('😀').join(' ')}…`, 'cut to what fits by weight, at a word');
 });
 
 test('a restricted term injected into the dispatch: refused, nothing written', () => {
