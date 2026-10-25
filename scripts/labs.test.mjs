@@ -14,7 +14,7 @@ const realDispatches = readDispatches();
 function emptyPages() {
   const root = mkdtempSync(join(tmpdir(), 'labs-empty-'));
   try {
-    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json']) {
+    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json']) {
       mkdirSync(join(root, file, '..'), { recursive: true });
       writeFileSync(join(root, file), readFileSync(join('site', file)));
     }
@@ -131,7 +131,7 @@ test('two dated sessions render newest first on the page and in the feed (order 
   const base = realDispatches[0];
   const root = mkdtempSync(join(tmpdir(), 'labs-order-'));
   try {
-    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json']) {
+    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json']) {
       mkdirSync(join(root, file, '..'), { recursive: true });
       writeFileSync(join(root, file), readFileSync(join('site', file)));
     }

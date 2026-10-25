@@ -4,6 +4,7 @@
 //   labs/index.html               the Labs index, from site/labs/index.html (<!--LABS_LIST-->)
 //   labs/agent-space/index.html   the lab page, from site/labs/agent-space/index.html (<!--LAB_*--> markers)
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
+// Its "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
 // The lab's words come from site/data/labs/agent-space.json; its dispatches from
 // site/data/labs/agent-space/dispatches/<session>.json, as scripts/lab-dispatch-publish.mjs writes them. Every dispatch
 // must match scripts/schemas/odin-lab-dispatch.schema.json and pass the publisher's screen again, or the build fails.
@@ -11,6 +12,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
+import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
@@ -132,6 +134,8 @@ export function renderLabs(root = 'site') {
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches), '<!--LAB_FOLLOW-->': renderFollow(lab),
+      // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
+      '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
     }),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
   };

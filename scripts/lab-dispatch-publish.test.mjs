@@ -172,6 +172,7 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   mkdirSync(join(root, 'data/labs'), { recursive: true });
   cpSync('site/labs', join(root, 'labs'), { recursive: true });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
+  cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   assert.deepEqual(publish({ sessionDir: dir, answerScreen: screen(name), site: root }).problems, []);
   const pages = renderLabs(root);
   const page = pages['labs/agent-space/index.html'];
@@ -314,6 +315,7 @@ test('older dispatches keep the heading order: session h4 under "Earlier session
   mkdirSync(join(root, 'data/labs'), { recursive: true });
   cpSync('site/labs', join(root, 'labs'), { recursive: true });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
+  cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   for (const date of ['2026-10-25', '2026-11-01']) {
     const one = session(m => { m.session = `session-${date}`; m.date = date; });
     assert.deepEqual(publish({ sessionDir: one.dir, answerScreen: screen(`session-${date}`), site: root }).problems, []);
