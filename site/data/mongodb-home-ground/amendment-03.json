@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 020",
+  "amendment": "03",
+  "title": "Both advocates accept the S2 pairing rule; the decision paragraph is rewritten as they required",
+  "authoredOn": "2026-10-25",
+  "amends": {
+    "preregistration": "experiments/mongodb-home-ground/preregistration.json",
+    "preregistrationSha256": "128087dbba8b09c97fcbf2ab4a873b1c4b9c656b27ad07291ba4693e26d83fec",
+    "frozenCommit": "0af2c4861c489531916884ceb6894ee771d0ec71",
+    "after": {
+      "amendment": "02",
+      "record": "experiments/mongodb-home-ground/amendment-02/amendment.json",
+      "sha256": "bda7f8c6bb877d3611a52e3c8cc62430686c5e4022fa6c744d35f6a7f880941d"
+    }
+  },
+  "why": "Amendment 02 asked both EXP 020 advocates to review its decision paragraph and rule, with veto power, before S2's verdict. Both reviewed it read-only, before the verdict was computed, without opening S2's result files. Both ACCEPT the rule. Both VETO the paragraph, narrowly, for completeness: it did not say which rule it replaces or what had been seen, and 'rather than one picked with the data in view' could be read as saying the data played no part. This amendment records both reviews and applies what they require. Amendment 02 was merged before their answer arrived; under its own terms a veto is resolved here.",
+  "reviews": {
+    "mongodbAdvocate": {
+      "verdict": "rule ACCEPT; paragraph VETO (narrow)",
+      "file": "experiments/mongodb-home-ground/reviews/amendment-02-mongodb-advocate.md"
+    },
+    "postgresqlAdvocate": {
+      "verdict": "rule ACCEPT; paragraph VETO (completeness only); asks for nothing more in PostgreSQL's favour",
+      "file": "experiments/mongodb-home-ground/reviews/amendment-02-postgresql-advocate.md"
+    },
+    "source": "Both reviews at private commit 482c552b482aaa0790cf604782aaaaca86718ae6, published with one substitution each (a machine name); source and published sha256 below.",
+    "combination": "The two paragraph fixes combine without conflict. The replacement below is the runner owner's combination of both, as posted: the PostgreSQL advocate's sentence naming the replaced rule, the interim ordering in the MongoDB advocate's wording (the PostgreSQL advocate's says the same), and the MongoDB advocate's remaining sentences. The sentences neither touched are kept."
+  },
+  "documents": [
+    {
+      "file": "experiments/mongodb-home-ground/reviews/amendment-02-mongodb-advocate.md",
+      "sourceSha256": "122e0a637401d641a0e8b2c9141268cef59fbc9a8eae363e1620c4a9e83e8a74",
+      "publishedSha256": "00e1660a35f0695b6a1c6dd9435da2e11545788b55be9022a703da6a8cbc7edd",
+      "substitutions": [
+        {
+          "was": "the interim ordering the Windows PC had posted earlier",
+          "now": "the interim ordering the runner's owner had posted earlier"
+        }
+      ]
+    },
+    {
+      "file": "experiments/mongodb-home-ground/reviews/amendment-02-postgresql-advocate.md",
+      "sourceSha256": "b2f29d9961fe0964dabec42b2ead82160f0d4b5e135cf603074258d7f1b80905",
+      "publishedSha256": "2b8564d562bacb12259a1731ba449fe35a9b5cb9814ebffd92ed6539d81c5858",
+      "substitutions": [
+        {
+          "was": "the interim ordering the Windows PC had posted earlier",
+          "now": "the interim ordering the runner's owner had posted earlier"
+        }
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "what": "Amendment 02's decision paragraph is replaced",
+      "replaces": "amendment-02 decision",
+      "decision": "The decision was made on 2026-10-25, before S2's verdict was computed, by the R&D orchestrator, not by either advocate. It was made with interim seed-1 results already seen, so it is not blind; and the rule itself selects using seed-1 results. It replaces PROTOCOL-S2.md's pairing (per repetition, the better passing PostgreSQL variant), which favours PostgreSQL. The interim seed-1 results seen were the order of the lag p95 medians: pgoutput lowest, then MongoDB, then the outbox. The same seed-1 results that select the variant are then used in the comparison, which leans slightly toward PostgreSQL. We chose the rule the EXP 021 advocates of both sides had already agreed was fair (EXP 021 FREEZE-NOTES-v1.1, A11). We did not write a new rule with this data in view, although the choice to adopt A11 here was made with it in view. Anyone who disagrees can reopen it only by a further dated amendment, published first."
+    },
+    {
+      "what": "Ties in the variant choice",
+      "replaces": "amendment 02's tie-break (lower maximum of the five seed-1 values)",
+      "rule": "A tie on the selection median is broken by the lower seed-1 mean of the per-cell lag p95 (the MongoDB advocate's clarification). If still tied, amendment 02's remaining order applies: fewer component kinds, then the pre-registration's listing order (pgoutput (a) before the outbox (b)). Amendment 02's 'lower maximum' step is withdrawn; no verdict had been computed under it."
+    },
+    {
+      "what": "Symmetry of the gate",
+      "rule": "MongoDB, which has one arm, passes the gate at a scale only if it passes every counted cell at that scale on both seeds: the same standard PostgreSQL's chosen variant meets (the MongoDB advocate's clarification)."
+    },
+    {
+      "what": "The secondary analysis, extended",
+      "rule": "Published with S2, labelled, and never deciding a verdict (the union of both advocates' lists):",
+      "items": [
+        "every PostgreSQL variant's gate outcome in every cell on both seeds, with each excluded variant and the reason;",
+        "for each scale, each candidate's selection number (the seed-1 median of the per-cell lag p95);",
+        "each passing PostgreSQL variant on its own against MongoDB under the unchanged verdict rule, on both seeds, as well as the per-repetition best;",
+        "each variant's component count, with the checklist items listed;",
+        "the variant a seed-2-based selection would have picked, and whether it matches the seed-1 choice;",
+        "one line per scale on whether the verdict differs between the primary rule, the per-repetition best and each single variant."
+      ]
+    }
+  ],
+  "remainingLean": "Both advocates note, and accept, that choosing the variant on seed 1 and comparing on seed 1 leans slightly toward PostgreSQL; seed 2 is a test on data the choice never saw.",
+  "unchanged": "Amendment 02's primary rule (one PostgreSQL variant per scale, chosen once among the variants that pass every counted cell on both seeds, by the lowest seed-1 median of the per-cell lag p95, used for every pair, the reproduction and the component tie-break) and its secondary analysis label stand. The frozen record and amendments 01 and 02 stay byte-identical; this amendment is where their changed parts are superseded. S1, S3 and S4 are not affected.",
+  "notBefore": "S2's verdict is computed only after this amendment is merged to main of odin-labs-ai/odin-rnd."
+}
