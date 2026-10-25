@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readDispatches, readLab, renderLabs } from './labs.mjs';
@@ -33,8 +33,15 @@ test('with no screened session, the lab page shows no dispatch and says the firs
   assert.match(empty['labs/agent-space/feed.xml'], new RegExp(`<updated>${lab.since}T00:00:00Z</updated>`));
 });
 
-test('every committed session is on the lab page and in the feed, newest first, and the empty box is gone', () => {
-  if (!realDispatches.length) return;
+test('the real site: with no dispatch it shows the empty box; with dispatches every one is on the page and in the feed, newest first', () => {
+  const dispatchDir = 'site/data/labs/agent-space/dispatches';
+  const onDisk = existsSync(dispatchDir) ? readdirSync(dispatchDir).filter(name => !name.startsWith('.')).length : 0;
+  assert.equal(realDispatches.length, onDisk, 'every dispatch file on disk is read');
+  if (!realDispatches.length) {
+    assert.match(page, /<div class="lab-empty" id="no-dispatch">/);
+    assert.doesNotMatch(page, /<video|class="lab-card"|assets\/labs\//);
+    return;
+  }
   assert.doesNotMatch(page, /id="no-dispatch"/);
   assert.match(page, /<video/);
   for (const dispatch of realDispatches) {
@@ -43,6 +50,13 @@ test('every committed session is on the lab page and in the feed, newest first, 
     assert.ok(pages['labs/agent-space/feed.xml'].includes(`#${dispatch.session}`), dispatch.session);
   }
   assert.equal((pages['labs/agent-space/feed.xml'].match(/<entry>/g) ?? []).length, realDispatches.length);
+  // newest first: realDispatches is sorted newest first; the page and the feed must show them in that order.
+  const order = text => realDispatches.map(d => text.indexOf(d.session));
+  for (const text of [page, pages['labs/agent-space/feed.xml']]) {
+    const at = order(text);
+    assert.ok(at.every(i => i >= 0), 'every session id appears');
+    assert.deepEqual([...at].sort((a, b) => a - b), at, 'sessions appear newest first');
+  }
 });
 
 test('the lab page says what the lab is, and asks through the ask-the-agents form', () => {
