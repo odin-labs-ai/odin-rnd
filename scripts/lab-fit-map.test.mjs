@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fitMapProblems, labsDigest, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
 import { vendor } from './vendor-fit-map.mjs';
+import { renderLabs } from './labs.mjs';
 
 // "Where each store fits" (mission rnd-labs-human-first-1024). The lab's own fit map is private, so every source here
 // is written by the test at run time, shaped like the real one; only the committed public file is read from site/.
@@ -58,8 +59,7 @@ test('the committed fit map passes the build gate and shows every cell pending, 
   for (const leak of ['.ai/', 'PREREG', 'DESIGN.md', 'RESULT.json', 'lab02-', '"dir"', 'odin_rnd', 'this_pc', 'Mac']) assert.ok(!raw.includes(leak) && !html.includes(leak), leak);
 });
 
-test('the Labs page carries the matrix, and the build reads it through renderLabs', async () => {
-  const { renderLabs } = await import('./labs.mjs');
+test('the Labs page carries the matrix, and the build reads it through renderLabs', () => {
   const page = renderLabs()['labs/index.html'];
   assert.match(page, /<section class="company-section company-width" id="fit-map" aria-labelledby="fit-map-title">/);
   assert.doesNotMatch(page, /<!--LABS_FIT_MAP-->/);
