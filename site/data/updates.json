@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-021-preregistration",
+      "experiment": "EXP 021",
+      "title": "Kill the database mid-session, does anyone notice?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/failover-pre-registration.html",
+      "source": "data/failover/preregistration.json",
+      "date": "2026-10-25"
+    },
+    {
       "key": "exp-020-preregistration",
       "experiment": "EXP 020",
       "title": "MongoDB on its home ground: where does it fit Odin?",
