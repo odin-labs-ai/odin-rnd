@@ -192,9 +192,12 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.equal(readDispatches(root).length, 1);
 });
 
-test('this repository holds no recorded session yet, and no restricted name in the Lab files', () => {
-  assert.ok(!existsSync('site/data/labs/agent-space/dispatches') || readdirSync('site/data/labs/agent-space/dispatches').length === 0);
-  assert.ok(!existsSync('site/assets/labs'));
+test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
+  const committed = readDispatches('site');
+  const referenced = new Set(committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]).map(src => join('site', src)));
+  const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
+  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch`);
+  for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
     'scripts/json-schema-lite.mjs', 'scripts/lab-screen-terms.json', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
     'scripts/schemas/README.md', 'site/data/labs/agent-space.json', 'site/labs/index.html', 'site/labs/agent-space/index.html',
@@ -203,7 +206,6 @@ test('this repository holds no recorded session yet, and no restricted name in t
   // The vendored schema differs from its upstream copy in one description only (scripts/schemas/README.md).
   const readme = readFileSync('scripts/schemas/README.md', 'utf8');
   assert.ok(readme.includes(createHash('sha256').update(readFileSync(SOURCE_SCHEMA_FILE)).digest('hex')), 'the README records the vendored hash');
-  assert.equal(execFileSync('git', ['ls-files', 'site/data/labs/agent-space/dispatches', 'site/assets/labs'], { encoding: 'utf8' }), '');
 });
 
 // Review of #75 (refute-rnd-75): each bypass below passed the first screen and is refused now.
