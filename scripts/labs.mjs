@@ -62,8 +62,9 @@ export function readDispatches(root = 'site') {
   return dispatches.sort((a, b) => b.date.localeCompare(a.date) || b.session.localeCompare(a.session));
 }
 
-const SOURCE_KIND = { 'world-checked': 'Something it can see in the world', wiki: 'A page it has read', tool: 'A tool it used' };
-const sourceKind = source => SOURCE_KIND[source] ?? `Source: ${source}`;
+export const SOURCE_KIND = { 'world-checked': 'Something it can see in the world', wiki: 'A page it has read', tool: 'A tool it used' };
+/** Where an answer came from, in the words its card on the page uses. */
+export const sourceKind = source => SOURCE_KIND[source] ?? `Source: ${source}`;
 
 // Headings nest: Dispatches (h2) > the latest session (h3) > its questions (h4); Earlier sessions (h3) > a session (h4) > its questions (h5).
 function dispatchCards(dispatch, level) {
