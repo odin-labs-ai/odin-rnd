@@ -8,203 +8,222 @@
     "status": "pre-registered",
     "statusText": "Pre-registered, not yet run",
     "authoredOn": "2026-10-25",
-    "summary": "Our two MongoDB studies (EXP 013 and EXP 014) tested PostgreSQL's home ground: one node, bounded JSON, partial updates and dynamic-attribute queries. This study tests MongoDB's. It takes the four pain points Odin has on record (EXP 010's design study, section 1): key order in hash-chained records, a change feed that survives restarts, expiry on append-only data, and aggregation over document values. Each store gets its best realistic design, checked by one reviewer arguing for each store. The verdict is per scenario; there is no overall winner.",
+    "summary": "On Odin's four recorded pain points (odin-rnd EXP 010 design study §1): S1, order-preserving records; S2, a durable, resumable change feed; S3, TTL on append-only data; S4, server-side aggregation over document values. Each store gets its best realistic design. The verdict is per scenario. There is no overall winner. The frozen plan is in prereg.text, with both advocate reviews and the freeze notes published beside it.",
     "note": "Written, hashed and merged to main before any counted run. Counted runs start only after the commit that publishes this record. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
   },
   "source": {
     "what": "Frozen design, two-advocate review, source commit bb364127 in a private repository; PREREG sha256 83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1.",
     "frozenOn": "2026-10-25",
-    "port": "This record is a faithful port of that frozen file (PREREG.md) into this lab's pre-registration format: the same question, arms, scenarios, gates, primary metrics, margins, component checklist, verdicts, predictions and named-next list. Nothing was added, softened or strengthened. The only wording changes are the neutral substitutions listed under publicCopy.",
     "inputs": {
-      "PREREG.md": { "sha256": "83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1", "published": "ported into this record, not copied (see publicCopy)" },
-      "DESIGN.md": { "sha256": "3b00d2b5509c04628a2aec930dca6cbb0cadb205d88560b50433e459466ed3ee", "published": "no: the design draft the two reviews answer; it stays in the private repository. Every veto against it, and how it was resolved, is in FREEZE-NOTES.md, published here." },
-      "FREEZE-NOTES.md": { "sha256": "abfc0aa5569718e1de64ea138b1663c584bbde1697ac6054a13c24106a16606e", "published": "yes, byte for byte: experiments/mongodb-home-ground/FREEZE-NOTES.md" },
-      "reviews/mongodb-advocate.md": { "sha256": "d2e0bec7481dfcfad3fad7804092590c8143803e8de85cbf1a669413ba8902a9", "published": "yes, with one substitution in its heading (see publicCopy)" },
-      "reviews/postgresql-advocate.md": { "sha256": "48deee0fe1c44a82171a85ca8df3ad379029246e89d6d63cdfd308fe4ffdf35f", "published": "yes, with one substitution in its heading (see publicCopy)" }
+      "PREREG.md": {
+        "sha256": "83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1",
+        "published": "as prereg.text, with exactly the substitutions in publicCopy.substitutions"
+      },
+      "DESIGN.md": {
+        "sha256": "3b00d2b5509c04628a2aec930dca6cbb0cadb205d88560b50433e459466ed3ee",
+        "published": "no: the design draft the two reviews answer; it stays in the private repository. Every veto against it, and how it was resolved, is in FREEZE-NOTES.md, published here."
+      },
+      "FREEZE-NOTES.md": {
+        "sha256": "abfc0aa5569718e1de64ea138b1663c584bbde1697ac6054a13c24106a16606e",
+        "published": "yes, byte for byte: experiments/mongodb-home-ground/FREEZE-NOTES.md"
+      },
+      "reviews/mongodb-advocate.md": {
+        "sha256": "d2e0bec7481dfcfad3fad7804092590c8143803e8de85cbf1a669413ba8902a9",
+        "published": "yes, byte for byte: experiments/mongodb-home-ground/reviews/mongodb-advocate.md"
+      },
+      "reviews/postgresql-advocate.md": {
+        "sha256": "48deee0fe1c44a82171a85ca8df3ad379029246e89d6d63cdfd308fe4ffdf35f",
+        "published": "yes, byte for byte: experiments/mongodb-home-ground/reviews/postgresql-advocate.md"
+      }
     }
   },
+  "port": {
+    "rule": "prereg.text is PREREG.md with exactly the substitutions listed in publicCopy.substitutions applied; nothing else in it differs. Undoing those substitutions gives back the frozen bytes (sha256 83f35a8c…). prereg.sections is the same text split at its headings: each entry is one list item or paragraph, with its list marker and indentation removed and its hard line wraps joined by one space. experiment.title is PREREG.md's first heading without its ' (pre-registration, frozen v1)' suffix. Every other field (experiment, source, port, publicCopy, relation, reviews, notBefore, files) is this lab's framing of the record and adds nothing to the frozen plan; where it and prereg.text differ, prereg.text is the plan."
+  },
   "publicCopy": {
-    "rule": "Private machine names, internal ids and a private commit id were replaced with neutral wording. No claim, number, threshold or prediction changed.",
+    "rule": "Machine names and internal ids in PREREG.md were replaced with neutral wording. No claim, number, threshold or prediction changed. FREEZE-NOTES.md and both reviews are published byte for byte, with no substitution.",
     "substitutions": [
-      { "file": "PREREG.md", "was": "Frozen on 2026-10-25 by the Windows PC (<internal project name>), co-owned with <internal lane name> (odin-rnd).", "now": "Frozen on 2026-10-25 by the design author, co-owned with this lab (source.frozenOn)." },
-      { "file": "PREREG.md", "was": "the Mac ports this file to odin-rnd as the next EXP number and publishes it first", "now": "this file is ported to odin-rnd as the next EXP number and published first (experiment.note, notBefore)" },
-      { "file": "PREREG.md", "was": "The Mac runs the same frozen source as a second-OS replication.", "now": "A macOS machine runs the same frozen source as a second-OS replication (host.replication)." },
-      { "file": "PREREG.md", "was": "This PC (draft predictions, corrected after the reviews)", "now": "The design author (draft predictions, corrected after the reviews) (predictions.designAuthor)" },
-      { "file": "reviews/mongodb-advocate.md", "was": "DESIGN.md (draft <private commit id>)", "now": "DESIGN.md (the design draft)" },
-      { "file": "reviews/postgresql-advocate.md", "was": "DESIGN.md (draft <private commit id>)", "now": "DESIGN.md (the design draft)" }
+      {
+        "file": "PREREG.md",
+        "was": "Frozen on 2026-10-25 by the Windows PC (<internal project name>), co-owned with <internal lane name> (odin-rnd).",
+        "now": "Frozen on 2026-10-25 by the design author, co-owned with this lab (odin-rnd)."
+      },
+      {
+        "file": "PREREG.md",
+        "was": "the Mac ports this file to odin-rnd as the next EXP number and publishes it first.",
+        "now": "this file is ported to odin-rnd as the next EXP number and published first."
+      },
+      {
+        "file": "PREREG.md",
+        "was": "The Mac runs the same frozen source as a second-OS replication.",
+        "now": "A macOS machine runs the same frozen source as a second-OS replication."
+      },
+      {
+        "file": "PREREG.md",
+        "was": "**This PC** (draft predictions, corrected after the reviews)",
+        "now": "**The design author** (draft predictions, corrected after the reviews)"
+      }
+    ]
+  },
+  "prereg": {
+    "text": "# MongoDB on its home ground: where does it fit Odin? (pre-registration, frozen v1)\n\nFrozen on 2026-10-25 by the design author, co-owned with this lab (odin-rnd).\n- **Before any counted run:** this file is ported to odin-rnd as the next EXP number and published first. Any\n  later change is a dated amendment.\n- **Inputs:** `DESIGN.md` (the draft), `reviews/mongodb-advocate.md`, `reviews/postgresql-advocate.md`, and\n  `FREEZE-NOTES.md` (each veto and its resolution).\n\n## Question\nOn Odin's four recorded pain points (odin-rnd EXP 010 design study §1), which store solves each one **correctly, with\nfewer operational components, at equal or better cost**, when each gets its best realistic design? The verdict is per\nscenario. There is no overall winner.\n\n## Arms (pinned before the first counted run; tags and digests recorded in the run manifest)\n- **MongoDB Community 8.0.x:** a one-member replica set (`replSet`, `rs.initiate`); auth on with a keyFile; writes\n  `w: majority, j: true`; PyMongo 4.x.\n- **PostgreSQL 16.x:** the official image, plus pinned derived images where an extension is used (`wal2json`,\n  `pg_cron`, `pg_partman`); `synchronous_commit = on`; psycopg 3.x. Each scenario also runs a no-extension variant.\n- **Equal resources and tuning, explicit on both arms:**\n  - the same `--memory` / `--cpus` (4 GB / 2 CPU per database container);\n  - MongoDB: WiredTiger cache 1.5 GB;\n  - PostgreSQL: `shared_buffers` 1 GB, `effective_cache_size` 2 GB, `work_mem` 64 MB,\n    `max_parallel_workers_per_gather` 2, `--shm-size` 1 GB;\n  - compression: the defaults on both (snappy, pglz), recorded;\n  - driver wire compression off.\n- **Host:** Windows + WSL2 Docker Desktop.\n  - Data is on named volumes on the WSL2 ext4 disk, never on NTFS bind mounts.\n  - `pg_test_fsync` and `fio --fsync=1` are run inside each container and recorded, together with mongod's\n    filesystem warning.\n  - The client runs in a container on the same Docker network, with equal pool sizes.\n  - A macOS machine runs the same frozen source as a second-OS replication.\n\n## Scenarios, gates and primary metrics\nData is synthetic, sized from Odin's recorded memory store (~15.5k rows / 270 MB): 1× and 10×. Before each cell, PostgreSQL runs\n`VACUUM ANALYZE` and `CHECKPOINT`; the cache state is the same for both arms (warm, after one discarded pass), and\ncheckpoint and autovacuum events are logged.\n\n**S1, order-preserving records.**\n- **The data:** hash-chained events; the payload is a nested field in authored key order.\n- **Arms:**\n  - MongoDB: BSON, decoded to `dict`; `RawBSONDocument` is used for a byte check.\n  - PostgreSQL: a `json` column with expression GIN / B-tree indexes on `(payload::jsonb …)`; variant: a stored\n    generated `jsonb` column.\n  - One serializer rule for both arms (keys in stored order).\n- **Gate:** 100 % of chains verify over the bytes the client reads back, and the nested queries (dot-notation /\n  expression paths only) equal the oracle.\n- **Primary:** nested-query p95.\n\n**S2, a durable, resumable change feed.**\n- **Arms:**\n  - MongoDB: `watch()` with a `$match`; the post-batch resume token persisted; `startAfter`; the driver's automatic\n    resume.\n  - PostgreSQL (a): logical decoding with `pgoutput`, resuming from `confirmed_flush_lsn`.\n  - PostgreSQL (b): a commit-order-safe outbox (an `xid8` horizon).\n  - LISTEN/NOTIFY: reference only.\n  - Either side may persist the token / cursor with the effect in one transaction.\n- **Faults:** the consumer is killed at seeded points; the database restarts once per cell; the consumer is down for\n  a frozen 10 minutes.\n- **Retention:** oplog and slot are given the same disk budget (`oplogMinRetentionHours` / size against\n  `max_slot_wal_keep_size`). Lost history is classified the same in both arms.\n- **Gate:** 0 lost and 0 duplicated effects.\n- **Primary:** end-to-end lag p95, with `maxAwaitTimeMS`, batch size and the poll interval frozen and recorded.\n- **Then:** components.\n\n**S3, TTL on append-only data.**\n- **\"Append-only\":** the application role cannot update or delete. It holds `INSERT, SELECT` only (PostgreSQL) or a\n  custom role with `find` + `insert` (MongoDB). An application update must fail (permission denied / code 13).\n- **Arms:**\n  - MongoDB: a TTL index, `expireAfterSeconds: 0`, on `expireAt`.\n  - PostgreSQL: range partitions on `expires_at` with DETACH CONCURRENTLY + DROP, or an owner-role batched DELETE\n    (index on `expires_at`).\n  - Scheduling by `pg_cron` or a sidecar; the no-extension variant always runs.\n  - A read filter (`expireAt > now` / row-level security) is allowed on both arms.\n- **Cells:**\n  - (a) default cadences, 60 s on both: grace 150 s at 1× and 240 s at 10×;\n  - (b) tuned cadences, 5 s (`ttlMonitorSleepSecs = 5`, a 5 s sweep): grace 30 s at 1× and 60 s at 10×.\n- **Gate:** no expired record visible past the grace; the append-only rule is never bypassed by the application role.\n- **Primary:** components (the checklist below).\n- **Reported:** physical and visible expiry lag p50 / p95, and write p95 during expiry.\n\n**S4, server-side aggregation over document values.**\n- **Arms:**\n  - MongoDB: a pipeline with `$match` / `$sort` first, `$group`, `$facet` or separate concurrent pipelines,\n    `allowDiskUse` explicit.\n  - PostgreSQL: SQL over JSONB with GROUP BY / GROUPING SETS / FILTER, LATERAL `jsonb_to_recordset`, and expression\n    or generated columns.\n  - Baseline: Odin's current pattern (fetch and aggregate in the application).\n  - Matching index allowances on both arms.\n- **Gate:** results equal the oracle.\n- **Primary:** p95 at 10×.\n- **Reported:** application peak memory, bytes over the wire, and 1×.\n\n**Repetitions:** 5 paired repetitions per cell, with the arm order alternating, plus a separate-seed reproduction of\nevery cell.\n\n## Components (frozen checklist; both counts published)\nOne component each for:\n- every process or container beyond the database server;\n- every extension not in core;\n- every server setting changed off its default **and needed for correctness**;\n- every persistent non-data object: a slot, publication, trigger, policy, partition scheme (one per scheme), TTL\n  index, custom role or keyFile;\n- every scheduled job;\n- every safety alarm an operator must watch (an oplog window, slot retention).\n\nMongoDB pays for its replica set, keyFile, oplog sizing and oplog alarm. PostgreSQL pays for its slot, publication,\n`wal_level`, jobs and partitions.\n\n## Verdicts (per scenario)\n- **`mongodb-fits`** / **`postgres-fits`.** The store passes the gate, and either:\n  - beats the other store's **best** variant on the primary latency metric by **≥ 20 % on the median, in ≥ 4 of 5\n    paired repetitions, with the same direction in the reproduction**; or\n  - for S3, and as a tie-break for S2, has **at least 2 fewer components**.\n- **`both-fit`:** both pass, and neither condition holds.\n- **`neither`:** neither passes. **`invalid`:** a cell is incomplete, or source / durability drifted.\n- **Publication:** every cell, every variant, every outcome.\n\n## Predictions (frozen with this file)\n- **The design author** (draft predictions, corrected after the reviews):\n  - S1 `both-fit` (the draft's \"json loses indexing\" was wrong);\n  - S2 `mongodb-fits`, low-to-moderate confidence;\n  - S3 `mongodb-fits` on components;\n  - S4 `both-fit`.\n- **The MongoDB advocate:** S1 `both-fit`; S2 `mongodb-fits` (moderate); S3 `mongodb-fits`; S4 `both-fit`, leaning\n  `postgres-fits` at 10×.\n- **The PostgreSQL advocate:** S1 `both-fit`, leaning `postgres-fits`; S2 `both-fit`; S3 `mongodb-fits` on components\n  is plausible; S4 `both-fit`.\n\n## Out of scope (named next, not judged)\nFailover with a 3-member replica set against Patroni (S5), sharding, multi-region, and search / vector search.\n",
+    "sections": [
+      {
+        "heading": "(before the first heading)",
+        "lines": [
+          "Frozen on 2026-10-25 by the design author, co-owned with this lab (odin-rnd).",
+          "**Before any counted run:** this file is ported to odin-rnd as the next EXP number and published first. Any later change is a dated amendment.",
+          "**Inputs:** `DESIGN.md` (the draft), `reviews/mongodb-advocate.md`, `reviews/postgresql-advocate.md`, and `FREEZE-NOTES.md` (each veto and its resolution)."
+        ]
+      },
+      {
+        "heading": "Question",
+        "lines": [
+          "On Odin's four recorded pain points (odin-rnd EXP 010 design study §1), which store solves each one **correctly, with fewer operational components, at equal or better cost**, when each gets its best realistic design? The verdict is per scenario. There is no overall winner."
+        ]
+      },
+      {
+        "heading": "Arms (pinned before the first counted run; tags and digests recorded in the run manifest)",
+        "lines": [
+          "**MongoDB Community 8.0.x:** a one-member replica set (`replSet`, `rs.initiate`); auth on with a keyFile; writes `w: majority, j: true`; PyMongo 4.x.",
+          "**PostgreSQL 16.x:** the official image, plus pinned derived images where an extension is used (`wal2json`, `pg_cron`, `pg_partman`); `synchronous_commit = on`; psycopg 3.x. Each scenario also runs a no-extension variant.",
+          "**Equal resources and tuning, explicit on both arms:**",
+          "the same `--memory` / `--cpus` (4 GB / 2 CPU per database container);",
+          "MongoDB: WiredTiger cache 1.5 GB;",
+          "PostgreSQL: `shared_buffers` 1 GB, `effective_cache_size` 2 GB, `work_mem` 64 MB, `max_parallel_workers_per_gather` 2, `--shm-size` 1 GB;",
+          "compression: the defaults on both (snappy, pglz), recorded;",
+          "driver wire compression off.",
+          "**Host:** Windows + WSL2 Docker Desktop.",
+          "Data is on named volumes on the WSL2 ext4 disk, never on NTFS bind mounts.",
+          "`pg_test_fsync` and `fio --fsync=1` are run inside each container and recorded, together with mongod's filesystem warning.",
+          "The client runs in a container on the same Docker network, with equal pool sizes.",
+          "A macOS machine runs the same frozen source as a second-OS replication."
+        ]
+      },
+      {
+        "heading": "Scenarios, gates and primary metrics",
+        "lines": [
+          "Data is synthetic, sized from Odin's recorded memory store (~15.5k rows / 270 MB): 1× and 10×. Before each cell, PostgreSQL runs `VACUUM ANALYZE` and `CHECKPOINT`; the cache state is the same for both arms (warm, after one discarded pass), and checkpoint and autovacuum events are logged.",
+          "**S1, order-preserving records.**",
+          "**The data:** hash-chained events; the payload is a nested field in authored key order.",
+          "**Arms:**",
+          "MongoDB: BSON, decoded to `dict`; `RawBSONDocument` is used for a byte check.",
+          "PostgreSQL: a `json` column with expression GIN / B-tree indexes on `(payload::jsonb …)`; variant: a stored generated `jsonb` column.",
+          "One serializer rule for both arms (keys in stored order).",
+          "**Gate:** 100 % of chains verify over the bytes the client reads back, and the nested queries (dot-notation / expression paths only) equal the oracle.",
+          "**Primary:** nested-query p95.",
+          "**S2, a durable, resumable change feed.**",
+          "**Arms:**",
+          "MongoDB: `watch()` with a `$match`; the post-batch resume token persisted; `startAfter`; the driver's automatic resume.",
+          "PostgreSQL (a): logical decoding with `pgoutput`, resuming from `confirmed_flush_lsn`.",
+          "PostgreSQL (b): a commit-order-safe outbox (an `xid8` horizon).",
+          "LISTEN/NOTIFY: reference only.",
+          "Either side may persist the token / cursor with the effect in one transaction.",
+          "**Faults:** the consumer is killed at seeded points; the database restarts once per cell; the consumer is down for a frozen 10 minutes.",
+          "**Retention:** oplog and slot are given the same disk budget (`oplogMinRetentionHours` / size against `max_slot_wal_keep_size`). Lost history is classified the same in both arms.",
+          "**Gate:** 0 lost and 0 duplicated effects.",
+          "**Primary:** end-to-end lag p95, with `maxAwaitTimeMS`, batch size and the poll interval frozen and recorded.",
+          "**Then:** components.",
+          "**S3, TTL on append-only data.**",
+          "**\"Append-only\":** the application role cannot update or delete. It holds `INSERT, SELECT` only (PostgreSQL) or a custom role with `find` + `insert` (MongoDB). An application update must fail (permission denied / code 13).",
+          "**Arms:**",
+          "MongoDB: a TTL index, `expireAfterSeconds: 0`, on `expireAt`.",
+          "PostgreSQL: range partitions on `expires_at` with DETACH CONCURRENTLY + DROP, or an owner-role batched DELETE (index on `expires_at`).",
+          "Scheduling by `pg_cron` or a sidecar; the no-extension variant always runs.",
+          "A read filter (`expireAt > now` / row-level security) is allowed on both arms.",
+          "**Cells:**",
+          "(a) default cadences, 60 s on both: grace 150 s at 1× and 240 s at 10×;",
+          "(b) tuned cadences, 5 s (`ttlMonitorSleepSecs = 5`, a 5 s sweep): grace 30 s at 1× and 60 s at 10×.",
+          "**Gate:** no expired record visible past the grace; the append-only rule is never bypassed by the application role.",
+          "**Primary:** components (the checklist below).",
+          "**Reported:** physical and visible expiry lag p50 / p95, and write p95 during expiry.",
+          "**S4, server-side aggregation over document values.**",
+          "**Arms:**",
+          "MongoDB: a pipeline with `$match` / `$sort` first, `$group`, `$facet` or separate concurrent pipelines, `allowDiskUse` explicit.",
+          "PostgreSQL: SQL over JSONB with GROUP BY / GROUPING SETS / FILTER, LATERAL `jsonb_to_recordset`, and expression or generated columns.",
+          "Baseline: Odin's current pattern (fetch and aggregate in the application).",
+          "Matching index allowances on both arms.",
+          "**Gate:** results equal the oracle.",
+          "**Primary:** p95 at 10×.",
+          "**Reported:** application peak memory, bytes over the wire, and 1×.",
+          "**Repetitions:** 5 paired repetitions per cell, with the arm order alternating, plus a separate-seed reproduction of every cell."
+        ]
+      },
+      {
+        "heading": "Components (frozen checklist; both counts published)",
+        "lines": [
+          "One component each for:",
+          "every process or container beyond the database server;",
+          "every extension not in core;",
+          "every server setting changed off its default **and needed for correctness**;",
+          "every persistent non-data object: a slot, publication, trigger, policy, partition scheme (one per scheme), TTL index, custom role or keyFile;",
+          "every scheduled job;",
+          "every safety alarm an operator must watch (an oplog window, slot retention).",
+          "MongoDB pays for its replica set, keyFile, oplog sizing and oplog alarm. PostgreSQL pays for its slot, publication, `wal_level`, jobs and partitions."
+        ]
+      },
+      {
+        "heading": "Verdicts (per scenario)",
+        "lines": [
+          "**`mongodb-fits`** / **`postgres-fits`.** The store passes the gate, and either:",
+          "beats the other store's **best** variant on the primary latency metric by **≥ 20 % on the median, in ≥ 4 of 5 paired repetitions, with the same direction in the reproduction**; or",
+          "for S3, and as a tie-break for S2, has **at least 2 fewer components**.",
+          "**`both-fit`:** both pass, and neither condition holds.",
+          "**`neither`:** neither passes. **`invalid`:** a cell is incomplete, or source / durability drifted.",
+          "**Publication:** every cell, every variant, every outcome."
+        ]
+      },
+      {
+        "heading": "Predictions (frozen with this file)",
+        "lines": [
+          "**The design author** (draft predictions, corrected after the reviews):",
+          "S1 `both-fit` (the draft's \"json loses indexing\" was wrong);",
+          "S2 `mongodb-fits`, low-to-moderate confidence;",
+          "S3 `mongodb-fits` on components;",
+          "S4 `both-fit`.",
+          "**The MongoDB advocate:** S1 `both-fit`; S2 `mongodb-fits` (moderate); S3 `mongodb-fits`; S4 `both-fit`, leaning `postgres-fits` at 10×.",
+          "**The PostgreSQL advocate:** S1 `both-fit`, leaning `postgres-fits`; S2 `both-fit`; S3 `mongodb-fits` on components is plausible; S4 `both-fit`."
+        ]
+      },
+      {
+        "heading": "Out of scope (named next, not judged)",
+        "lines": [
+          "Failover with a 3-member replica set against Patroni (S5), sharding, multi-region, and search / vector search."
+        ]
+      }
     ]
   },
   "relation": {
     "followUpTo": [
-      { "id": "EXP 013", "note": "RESEARCH NOTE 002, journal/mongodb-temporal-document-fit.html", "status": "results published, not pre-registered" },
-      { "id": "EXP 014", "note": "RESEARCH NOTE 003, journal/mongodb-primitive-fit.html", "status": "results published, not pre-registered" },
-      { "id": "EXP 010", "record": "experiments/document-store/preregistration.json", "status": "pre-registered", "used": "Its design study (experiments/document-store/DESIGN.md, section 1) lists Odin's four recorded pain points; this study measures them." }
+      {
+        "id": "EXP 013",
+        "note": "RESEARCH NOTE 002, journal/mongodb-temporal-document-fit.html",
+        "status": "results published, not pre-registered"
+      },
+      {
+        "id": "EXP 014",
+        "note": "RESEARCH NOTE 003, journal/mongodb-primitive-fit.html",
+        "status": "results published, not pre-registered"
+      },
+      {
+        "id": "EXP 010",
+        "record": "experiments/document-store/preregistration.json",
+        "status": "pre-registered",
+        "used": "Its design study (experiments/document-store/DESIGN.md §1) lists the four pain points this plan measures."
+      }
     ],
-    "why": "EXP 013 and EXP 014 asked whether MongoDB is faster at what PostgreSQL already does well, with PostgreSQL given its strongest tested design each time. They did not test what MongoDB is built for. Each of Odin's four recorded pain points maps onto a native MongoDB mechanism, and none was measured. EXP 013 and EXP 014 stand as published; this experiment does not change or replace them."
-  },
-  "question": "On Odin's four recorded pain points (odin-rnd EXP 010 design study, section 1), which store solves each one correctly, with fewer operational components, at equal or better cost, when each gets its best realistic design? The verdict is per scenario. There is no overall winner.",
-  "arms": [
-    {
-      "id": "mongodb",
-      "server": "MongoDB Community 8.0.x",
-      "setup": "A one-member replica set (replSet, rs.initiate); auth on with a keyFile; writes w: majority, j: true.",
-      "driver": "PyMongo 4.x",
-      "cache": "WiredTiger cache 1.5 GB"
-    },
-    {
-      "id": "postgresql",
-      "server": "PostgreSQL 16.x",
-      "setup": "The official image, plus pinned derived images where an extension is used (wal2json, pg_cron, pg_partman); synchronous_commit = on. Each scenario also runs a no-extension variant.",
-      "driver": "psycopg 3.x",
-      "tuning": "shared_buffers 1 GB, effective_cache_size 2 GB, work_mem 64 MB, max_parallel_workers_per_gather 2, --shm-size 1 GB"
-    }
-  ],
-  "pinning": "Arms are pinned before the first counted run; image tags and digests are recorded in the run manifest.",
-  "equalResources": {
-    "limits": "The same --memory / --cpus on both arms: 4 GB / 2 CPU per database container.",
-    "tuning": "Explicit on both arms, as listed per arm.",
-    "compression": "The defaults on both (snappy, pglz), recorded.",
-    "wireCompression": "Driver wire compression off."
-  },
-  "host": {
-    "platform": "Windows + WSL2 Docker Desktop.",
-    "storage": "Data is on named volumes on the WSL2 ext4 disk, never on NTFS bind mounts.",
-    "fsync": "pg_test_fsync and fio --fsync=1 are run inside each container and recorded, together with mongod's filesystem warning.",
-    "client": "The client runs in a container on the same Docker network, with equal pool sizes.",
-    "replication": "A macOS machine runs the same frozen source as a second-OS replication."
-  },
-  "data": {
-    "kind": "Synthetic, sized from Odin's recorded memory store (~15.5k rows / 270 MB).",
-    "scales": ["1×", "10×"],
-    "beforeEachCell": "PostgreSQL runs VACUUM ANALYZE and CHECKPOINT. The cache state is the same for both arms (warm, after one discarded pass). Checkpoint and autovacuum events are logged."
-  },
-  "scenarios": [
-    {
-      "id": "S1",
-      "name": "Order-preserving records",
-      "data": "Hash-chained events; the payload is a nested field in authored key order.",
-      "arms": {
-        "mongodb": "BSON, decoded to dict; RawBSONDocument is used for a byte check.",
-        "postgresql": "A json column with expression GIN / B-tree indexes on (payload::jsonb …); variant: a stored generated jsonb column.",
-        "both": "One serializer rule for both arms (keys in stored order)."
-      },
-      "gate": "100% of chains verify over the bytes the client reads back, and the nested queries (dot-notation / expression paths only) equal the oracle.",
-      "primary": "Nested-query p95."
-    },
-    {
-      "id": "S2",
-      "name": "A durable, resumable change feed",
-      "arms": {
-        "mongodb": "watch() with a $match; the post-batch resume token persisted; startAfter; the driver's automatic resume.",
-        "postgresql-a": "Logical decoding with pgoutput, resuming from confirmed_flush_lsn.",
-        "postgresql-b": "A commit-order-safe outbox (an xid8 horizon).",
-        "reference": "LISTEN/NOTIFY: reference only.",
-        "both": "Either side may persist the token / cursor with the effect in one transaction."
-      },
-      "faults": "The consumer is killed at seeded points; the database restarts once per cell; the consumer is down for a frozen 10 minutes.",
-      "retention": "Oplog and slot are given the same disk budget (oplogMinRetentionHours / size against max_slot_wal_keep_size). Lost history is classified the same in both arms.",
-      "gate": "0 lost and 0 duplicated effects.",
-      "primary": "End-to-end lag p95, with maxAwaitTimeMS, batch size and the poll interval frozen and recorded.",
-      "then": "Components."
-    },
-    {
-      "id": "S3",
-      "name": "TTL on append-only data",
-      "appendOnly": "The application role cannot update or delete. It holds INSERT, SELECT only (PostgreSQL) or a custom role with find + insert (MongoDB). An application update must fail (permission denied / code 13).",
-      "arms": {
-        "mongodb": "A TTL index, expireAfterSeconds: 0, on expireAt.",
-        "postgresql": "Range partitions on expires_at with DETACH CONCURRENTLY + DROP, or an owner-role batched DELETE (index on expires_at).",
-        "scheduling": "By pg_cron or a sidecar; the no-extension variant always runs.",
-        "both": "A read filter (expireAt > now / row-level security) is allowed on both arms."
-      },
-      "cells": [
-        { "id": "a", "cadence": "Default cadences, 60 s on both.", "grace": { "1×": "150 s", "10×": "240 s" } },
-        { "id": "b", "cadence": "Tuned cadences, 5 s (ttlMonitorSleepSecs = 5, a 5 s sweep).", "grace": { "1×": "30 s", "10×": "60 s" } }
-      ],
-      "gate": "No expired record visible past the grace; the append-only rule is never bypassed by the application role.",
-      "primary": "Components (the checklist below).",
-      "reported": "Physical and visible expiry lag p50 / p95, and write p95 during expiry."
-    },
-    {
-      "id": "S4",
-      "name": "Server-side aggregation over document values",
-      "arms": {
-        "mongodb": "A pipeline with $match / $sort first, $group, $facet or separate concurrent pipelines, allowDiskUse explicit.",
-        "postgresql": "SQL over JSONB with GROUP BY / GROUPING SETS / FILTER, LATERAL jsonb_to_recordset, and expression or generated columns.",
-        "baseline": "Odin's current pattern (fetch and aggregate in the application).",
-        "both": "Matching index allowances on both arms."
-      },
-      "gate": "Results equal the oracle.",
-      "primary": "p95 at 10×.",
-      "reported": "Application peak memory, bytes over the wire, and 1×."
-    }
-  ],
-  "repetitions": "5 paired repetitions per cell, with the arm order alternating, plus a separate-seed reproduction of every cell.",
-  "components": {
-    "rule": "A frozen checklist; both counts published. One component each for:",
-    "checklist": [
-      "every process or container beyond the database server;",
-      "every extension not in core;",
-      "every server setting changed off its default and needed for correctness;",
-      "every persistent non-data object: a slot, publication, trigger, policy, partition scheme (one per scheme), TTL index, custom role or keyFile;",
-      "every scheduled job;",
-      "every safety alarm an operator must watch (an oplog window, slot retention)."
-    ],
-    "eachPays": "MongoDB pays for its replica set, keyFile, oplog sizing and oplog alarm. PostgreSQL pays for its slot, publication, wal_level, jobs and partitions."
-  },
-  "decision": {
-    "perScenario": true,
-    "verdicts": {
-      "mongodb-fits / postgres-fits": "The store passes the gate, and either: beats the other store's best variant on the primary latency metric by ≥ 20 % on the median, in ≥ 4 of 5 paired repetitions, with the same direction in the reproduction; or, for S3, and as a tie-break for S2, has at least 2 fewer components.",
-      "both-fit": "Both pass, and neither condition holds.",
-      "neither": "Neither passes.",
-      "invalid": "A cell is incomplete, or source / durability drifted."
-    },
-    "publication": "Every cell, every variant, every outcome."
-  },
-  "predictions": {
-    "frozen": "Frozen with this record, from three parties, so the result can contradict them.",
-    "designAuthor": {
-      "who": "The design author (draft predictions, corrected after the reviews).",
-      "S1": "both-fit (the draft's \"json loses indexing\" was wrong)",
-      "S2": "mongodb-fits, low-to-moderate confidence",
-      "S3": "mongodb-fits on components",
-      "S4": "both-fit"
-    },
-    "mongodbAdvocate": {
-      "who": "The MongoDB advocate.",
-      "S1": "both-fit",
-      "S2": "mongodb-fits (moderate)",
-      "S3": "mongodb-fits",
-      "S4": "both-fit, leaning postgres-fits at 10×"
-    },
-    "postgresqlAdvocate": {
-      "who": "The PostgreSQL advocate.",
-      "S1": "both-fit, leaning postgres-fits",
-      "S2": "both-fit",
-      "S3": "mongodb-fits on components is plausible",
-      "S4": "both-fit"
-    }
+    "why": "A follow-up to EXP 013 and EXP 014, the two MongoDB studies published without a pre-registration, and to EXP 010, whose design study lists the four pain points. EXP 013 and EXP 014 stand as published; this experiment does not change or replace them."
   },
   "reviews": {
-    "how": "Before the freeze, one independent model reviewer (Claude, fresh context) argued for MongoDB's best realistic design and one for PostgreSQL's, each allowed to veto a strawman. Every veto was accepted; FREEZE-NOTES.md lists each veto and its resolution, and where the two reviewers differed.",
+    "how": "FREEZE-NOTES.md: \"Both reviews are verbatim in `reviews/`. Every veto was accepted.\" Each review names its reviewer and brief in its own first lines.",
     "mongodbAdvocate": "experiments/mongodb-home-ground/reviews/mongodb-advocate.md",
     "postgresqlAdvocate": "experiments/mongodb-home-ground/reviews/postgresql-advocate.md",
     "freezeNotes": "experiments/mongodb-home-ground/FREEZE-NOTES.md"
   },
-  "outOfScope": {
-    "rule": "Named next, not judged. The run does not imply anything about them.",
-    "named": [
-      "Failover with a 3-member replica set against Patroni (S5)",
-      "Sharding",
-      "Multi-region",
-      "Search / vector search"
-    ]
-  },
   "notBefore": "The first counted run starts after this record is merged to main of odin-labs-ai/odin-rnd. The merge commit is the publish sha and the freeze; any later change is a dated amendment, published first.",
   "files": {
     "experiments/mongodb-home-ground/FREEZE-NOTES.md": "abfc0aa5569718e1de64ea138b1663c584bbde1697ac6054a13c24106a16606e",
-    "experiments/mongodb-home-ground/reviews/mongodb-advocate.md": "d1aad34fd6a1823696efd071f7deceb2e3ba67934089827d9a8ae83d6870d429",
-    "experiments/mongodb-home-ground/reviews/postgresql-advocate.md": "875e59e73566cf101aa6fbc2a135b6b200c4d6e031c0dc205ec680c681ceb753"
+    "experiments/mongodb-home-ground/reviews/mongodb-advocate.md": "d2e0bec7481dfcfad3fad7804092590c8143803e8de85cbf1a669413ba8902a9",
+    "experiments/mongodb-home-ground/reviews/postgresql-advocate.md": "48deee0fe1c44a82171a85ca8df3ad379029246e89d6d63cdfd308fe4ffdf35f"
   }
 }

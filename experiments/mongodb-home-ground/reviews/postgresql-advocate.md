@@ -1,4 +1,4 @@
-# PostgreSQL advocate review of DESIGN.md (the design draft)
+# PostgreSQL advocate review of DESIGN.md (draft 4595905e)
 
 Reviewer: an independent model reviewer (Claude, fresh context), briefed to make sure PostgreSQL gets its best
 realistic design and to veto strawmen. 2026-10-25, before the freeze. Kept verbatim; how each veto was handled is in
