@@ -112,7 +112,14 @@ export function deliveryProblems(record, where = DELIVERY_FILE) {
   }
   for (const r of record.records) if (!prs.has(r.pr)) problems.push(`${where}: record ${r.id} is for #${r.pr}, which is not in the PR list`);
   const sorted = [...prs].sort((a, b) => a - b);
-  if (record.window.fromPr !== sorted[0] || record.window.toPr !== sorted.at(-1)) problems.push(`${where}: the window is not the PR list's first and last`);
+  if (record.window.fromPr > sorted[0] || record.window.toPr !== sorted.at(-1)) problems.push(`${where}: the window does not start at or before the first merged PR and end at the last`);
+  // Every number in the window is a merged PR in the list or one of otherNumbers, never both, never neither.
+  const others = new Set(record.window.otherNumbers);
+  for (let n = record.window.fromPr; n <= record.window.toPr; n++) {
+    if (prs.has(n) && others.has(n)) problems.push(`${where}: #${n} is both a merged PR and one of the window's other numbers`);
+    if (!prs.has(n) && !others.has(n)) problems.push(`${where}: #${n} is inside the window but neither a merged PR in the record nor one of its other numbers`);
+  }
+  for (const n of others) if (n < record.window.fromPr || n > record.window.toPr) problems.push(`${where}: other number #${n} is outside the window`);
   if (record.generatedFrom.latestPr !== record.window.toPr || JSON.stringify(record.generatedFrom.window) !== JSON.stringify(record.window)) problems.push(`${where}: generatedFrom does not match the window`);
   if (record.generatedFrom.verdictRowsRead < record.records.filter(r => r.kind === 'review').length) problems.push(`${where}: more review records than review rows read`);
   // Telemetry equals what the records say.
@@ -146,14 +153,19 @@ export const COPY = {
  */
 export function leadText(record) {
   const landedAt = pr => record.records.find(r => r.kind === 'landing' && r.pr === pr).at;
-  const before = kind => record.prs.filter(pr => record.records.some(r => r.pr === pr && r.kind === kind && r.at <= landedAt(pr))).length;
+  const counted = kind => record.records.filter(r => r.kind === kind && r.at <= landedAt(r.pr));
+  const before = kind => new Set(counted(kind).map(r => r.pr)).size;
   const n = record.prs.length, reviewed = before('review'), checked = before('ci');
   const unreviewed = n - reviewed, unchecked = n - checked;
-  const parts = [`Of the ${count(n, 'change')} merged from #${record.window.fromPr} to #${record.window.toPr}, ${WORDS[reviewed] ?? reviewed} went through at least one recorded AI review round before ${reviewed === 1 ? 'it was' : 'they were'} merged`];
+  // "automated" only when every counted round says so; otherwise no qualifier at all.
+  const rounds = counted('review');
+  const kind = rounds.length && rounds.every(r => r.reviewer === 'automated') ? 'automated ' : '';
+  const others = record.window.otherNumbers.length;
+  const scope = `Of the ${count(n, 'pull request')} merged between #${record.window.fromPr} and #${record.window.toPr} (${others ? `the other ${count(others, 'number', 'numbers')} in that range ${others === 1 ? 'is an issue or a pull request' : 'are issues or pull requests'} that ${others === 1 ? 'was' : 'were'} not merged` : 'every number in that range'})`;
+  const parts = [`${scope}, ${WORDS[reviewed] ?? reviewed} went through at least one recorded ${kind}review round before ${reviewed === 1 ? 'it was' : 'they were'} merged`];
   if (unreviewed) parts.push(`${WORDS[unreviewed] ?? unreviewed} ${unreviewed === 1 ? 'has' : 'have'} no recorded review round`);
   const ci = unchecked ? `${WORDS[checked] ?? checked} had CI runs recorded before merging, and ${WORDS[unchecked] ?? unchecked} did not.` : `every one had CI runs recorded before merging.`;
-  const sentence = `${parts.join('; ')}; ${ci}`;
-  return `This site is built in the open, one pull request at a time. ${sentence}`;
+  return `This site is built in the open, one pull request at a time. ${parts.join('; ')}; ${ci}`;
 }
 
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
@@ -190,9 +202,9 @@ function prTimeline(pr, record, telemetry) {
       round += 1;
       return `<li class="delivery-event delivery-review delivery-${r.state === 'SHIP' ? 'ship' : 'fix'}" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>Review round ${round}: <strong>${VERDICT[r.state]}</strong> (${escape(r.state)}) on version ${link(r, `<code>${short(r.ref)}</code>`)}. <span class="delivery-row">Row ${escape(r.source.replace(/^verdict-row:/, '').slice(0, 8))}</span></span></li>`;
     }
-    if (r.kind === 'ci') return `<li class="delivery-event delivery-ci" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${escape(r.workflow)} ${CONCLUSION[r.state] ?? escape(r.state)} on <code>${short(r.ref)}</code>${r.attempt > 1 ? ` (rerun, attempt ${r.attempt})` : ''}. ${link(r, 'See the run')}</span></li>`;
+    if (r.kind === 'ci') return `<li class="delivery-event delivery-ci" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${escape(r.workflow)} ${CONCLUSION[r.state] ?? escape(r.state)} on <code>${short(r.ref)}</code>${r.attempt > 1 ? ` (rerun, attempt ${r.attempt})` : ''}. ${link(r, `CI run ${escape(r.source.match(/runs\/(\d+)\//)[1])}, attempt ${r.attempt}`)}</span></li>`;
     if (r.kind === 'landing') return `<li class="delivery-event delivery-landing" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span><strong>Merged</strong> as ${link(r, `<code>${short(r.ref)}</code>`)}.</span></li>`;
-    return `<li class="delivery-event delivery-deploy" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>Published to this site: the deploy ${CONCLUSION[r.state] ?? escape(r.state)}. ${link(r, 'See the deploy')}</span></li>`;
+    return `<li class="delivery-event delivery-deploy" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>Published to this site: the deploy ${CONCLUSION[r.state] ?? escape(r.state)}. ${link(r, `Pages deploy of ${short(r.ref)}`)}</span></li>`;
   });
   return `<article class="delivery-pr" id="delivery-pr-${pr}" data-source="${escape(opened.id)}"><h4>${link(opened, `#${pr}`)} ${escape(opened.title)}</h4><p class="delivery-sentence">${escape(prSentence(pr, rows, telemetry))}</p><ol class="delivery-events">${events.join('')}</ol></article>`;
 }
@@ -249,7 +261,7 @@ export function renderDelivery(record) {
   if (copyProblems.length) throw new Error(`Delivery copy refused:\n  ${copyProblems.join('\n  ')}`);
   const telemetry = record.telemetry, t = telemetry.totals;
   const prs = [...record.prs].sort((a, b) => b - a);
-  const said = `${count(t.prs, 'change')} merged from #${record.window.fromPr} to #${record.window.toPr}: ${count(t.reviewRounds, 'review round')}, of which ${count(t.fixNeededRounds, 'sent the change back', 'sent the change back')}; ${count(t.ciRuns, 'CI run')} with ${count(t.ciReruns, 'rerun')}; ${count(t.deploys, 'deploy')} to this site. The median change landed ${duration(t.medianMinutesToLand)} after it was opened.`;
+  const said = `${count(t.prs, 'pull request')} merged between #${record.window.fromPr} and #${record.window.toPr}: ${count(t.reviewRounds, 'review round')}, of which ${count(t.fixNeededRounds, 'sent the change back', 'sent the change back')}; ${count(t.ciRuns, 'CI run')} with ${count(t.ciReruns, 'rerun')}; ${count(t.deploys, 'deploy')} to this site. The median change landed ${duration(t.medianMinutesToLand)} after it was opened.`;
   const summary = said[0].toUpperCase() + said.slice(1);
   const sentences = prs.map(pr => prSentence(pr, record.records.filter(r => r.pr === pr), telemetry));
   const lead = leadText(record);

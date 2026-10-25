@@ -4,14 +4,16 @@
   "repo": "odin-labs-ai/odin-rnd",
   "window": {
     "fromPr": 71,
-    "toPr": 79
+    "toPr": 79,
+    "otherNumbers": []
   },
   "generatedFrom": {
     "tool": "delivery-record-export",
     "toolVersion": 1,
     "window": {
       "fromPr": 71,
-      "toPr": 79
+      "toPr": 79,
+      "otherNumbers": []
     },
     "latestPr": 79,
     "ghFetchedAt": "2026-10-25T12:19:41Z",
@@ -48,7 +50,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "32075bbd403ef9d73084645b270862cf2491f165",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:7910350e-37cd-4068-91a7-d96c9a68f50a"
+      "source": "verdict-row:7910350e-37cd-4068-91a7-d96c9a68f50a",
+      "reviewer": "automated"
     },
     {
       "id": "pr-71/review/18d10802-2b03-49f7-acaf-75bb72816fc7",
@@ -58,7 +61,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "c61045b29593f5dc52a7452ca392751f993ed7e9",
       "state": "SHIP",
-      "source": "verdict-row:18d10802-2b03-49f7-acaf-75bb72816fc7"
+      "source": "verdict-row:18d10802-2b03-49f7-acaf-75bb72816fc7",
+      "reviewer": "automated"
     },
     {
       "id": "pr-71/ci/40142763122/1",
@@ -147,7 +151,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "a7d3a0b262da8620a88768292671aabdc1b13ad5",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:f2f69c04-7efb-4684-a3e5-113d1c26db0b"
+      "source": "verdict-row:f2f69c04-7efb-4684-a3e5-113d1c26db0b",
+      "reviewer": "automated"
     },
     {
       "id": "pr-72/review/c0a1bdac-40c3-4e5e-b3f8-cf33a85829f3",
@@ -157,7 +162,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "8bec7cb44a940fbbe8efceaa950e7efb8841f086",
       "state": "SHIP",
-      "source": "verdict-row:c0a1bdac-40c3-4e5e-b3f8-cf33a85829f3"
+      "source": "verdict-row:c0a1bdac-40c3-4e5e-b3f8-cf33a85829f3",
+      "reviewer": "automated"
     },
     {
       "id": "pr-72/ci/40153042922/1",
@@ -246,7 +252,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "7f17cb8a783668228ce0b806a7ed81705c6b1c3e",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:62ce9b7c-8b02-4ac7-9a2f-72a82a8a2227"
+      "source": "verdict-row:62ce9b7c-8b02-4ac7-9a2f-72a82a8a2227",
+      "reviewer": "automated"
     },
     {
       "id": "pr-73/review/68e1ad57-ada7-4c62-960a-cdffab22e3c9",
@@ -256,7 +263,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "18d407c98afc22a5fc574214180e0715c10c7c48",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:68e1ad57-ada7-4c62-960a-cdffab22e3c9"
+      "source": "verdict-row:68e1ad57-ada7-4c62-960a-cdffab22e3c9",
+      "reviewer": "automated"
     },
     {
       "id": "pr-73/review/6a3cb646-5eba-4f34-8350-fa22ee2000d3",
@@ -266,7 +274,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "70fee21ceb79a5edb219aa4f732b1683d612210e",
       "state": "SHIP",
-      "source": "verdict-row:6a3cb646-5eba-4f34-8350-fa22ee2000d3"
+      "source": "verdict-row:6a3cb646-5eba-4f34-8350-fa22ee2000d3",
+      "reviewer": "automated"
     },
     {
       "id": "pr-73/ci/40156505300/1",
@@ -379,7 +388,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "de104c40659809cf1b473b27c717037f16181cff",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:0d917fed-f833-460a-b876-f9de43d1a7d8"
+      "source": "verdict-row:0d917fed-f833-460a-b876-f9de43d1a7d8",
+      "reviewer": "automated"
     },
     {
       "id": "pr-74/review/56312ae2-faa2-4a92-8172-0536bdcb4c2e",
@@ -389,7 +399,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "91fd1b926b96d49910393dcccbecfbf63caa0f81",
       "state": "SHIP",
-      "source": "verdict-row:56312ae2-faa2-4a92-8172-0536bdcb4c2e"
+      "source": "verdict-row:56312ae2-faa2-4a92-8172-0536bdcb4c2e",
+      "reviewer": "automated"
     },
     {
       "id": "pr-74/ci/40154541965/1",
@@ -478,7 +489,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "0fd2d81e3e71fad603a327fad835f8a5a0bd0dc0",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:4e41dce2-07da-47ff-a3f8-fc2a95662730"
+      "source": "verdict-row:4e41dce2-07da-47ff-a3f8-fc2a95662730",
+      "reviewer": "automated"
     },
     {
       "id": "pr-75/review/4f1ebf9a-9315-458b-8acc-717992e12b19",
@@ -488,7 +500,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "f989e33082ab1183304adc1d86b45b8448f1f51d",
       "state": "SHIP",
-      "source": "verdict-row:4f1ebf9a-9315-458b-8acc-717992e12b19"
+      "source": "verdict-row:4f1ebf9a-9315-458b-8acc-717992e12b19",
+      "reviewer": "automated"
     },
     {
       "id": "pr-75/review/16f58358-bdde-4df8-9b63-4ca782bf25ed",
@@ -498,7 +511,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "d225ca525e835c08c859f5f0bf9f843b79c322ec",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:16f58358-bdde-4df8-9b63-4ca782bf25ed"
+      "source": "verdict-row:16f58358-bdde-4df8-9b63-4ca782bf25ed",
+      "reviewer": "automated"
     },
     {
       "id": "pr-75/review/116b948d-86ef-429a-abbc-c7b4b1b6b12a",
@@ -508,7 +522,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "3c40c1caad0e95a323fc943c79f72a3a39d1b450",
       "state": "SHIP",
-      "source": "verdict-row:116b948d-86ef-429a-abbc-c7b4b1b6b12a"
+      "source": "verdict-row:116b948d-86ef-429a-abbc-c7b4b1b6b12a",
+      "reviewer": "automated"
     },
     {
       "id": "pr-75/ci/40160348264/1",
@@ -645,7 +660,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "cb04fb36473ba306d14aa9f552126d03bc895674",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:c2834260-a282-4d32-a8fa-cabf5c9ded4a"
+      "source": "verdict-row:c2834260-a282-4d32-a8fa-cabf5c9ded4a",
+      "reviewer": "automated"
     },
     {
       "id": "pr-76/review/d101089d-4f92-4ff0-a795-41a14b1541c9",
@@ -655,7 +671,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "c311d11b1a50e925c8b1c767866bdaa95e43f46b",
       "state": "SHIP",
-      "source": "verdict-row:d101089d-4f92-4ff0-a795-41a14b1541c9"
+      "source": "verdict-row:d101089d-4f92-4ff0-a795-41a14b1541c9",
+      "reviewer": "automated"
     },
     {
       "id": "pr-76/ci/40158959841/1",
@@ -732,7 +749,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "535f4694d3499548c52745d46e86d768e97e4e7c",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:7b98b30a-4784-42c2-bca9-e433df35f6e7"
+      "source": "verdict-row:7b98b30a-4784-42c2-bca9-e433df35f6e7",
+      "reviewer": "automated"
     },
     {
       "id": "pr-77/review/392fc58d-0a0b-4c3d-bbaa-cdfe720db662",
@@ -742,7 +760,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "b3f9cd47c45690d69dd86d81a913b185c3d2610f",
       "state": "SHIP",
-      "source": "verdict-row:392fc58d-0a0b-4c3d-bbaa-cdfe720db662"
+      "source": "verdict-row:392fc58d-0a0b-4c3d-bbaa-cdfe720db662",
+      "reviewer": "automated"
     },
     {
       "id": "pr-77/ci/40162978124/1",
@@ -831,7 +850,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "8f6e53e01ee5dfdf8305a64b8e86421a42a501f8",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:0df83973-5472-4e9c-b6ca-cacd1ca9413f"
+      "source": "verdict-row:0df83973-5472-4e9c-b6ca-cacd1ca9413f",
+      "reviewer": "automated"
     },
     {
       "id": "pr-78/review/ccf6ad43-b822-4d88-a6ff-04d5a7df899f",
@@ -841,7 +861,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "15afdb4f8faf0bb73e0f165a6c42c083fadebafe",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:ccf6ad43-b822-4d88-a6ff-04d5a7df899f"
+      "source": "verdict-row:ccf6ad43-b822-4d88-a6ff-04d5a7df899f",
+      "reviewer": "automated"
     },
     {
       "id": "pr-78/review/e519c6d5-e035-4dd9-a293-13bdc7a4ac5e",
@@ -851,7 +872,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "15afdb4f8faf0bb73e0f165a6c42c083fadebafe",
       "state": "FIX-NEEDED",
-      "source": "verdict-row:e519c6d5-e035-4dd9-a293-13bdc7a4ac5e"
+      "source": "verdict-row:e519c6d5-e035-4dd9-a293-13bdc7a4ac5e",
+      "reviewer": "automated"
     },
     {
       "id": "pr-78/review/be5ec615-2d3b-411f-842d-4bbd1d74c553",
@@ -861,7 +883,8 @@
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "032cbb513f387b09040b6d809bc04c4e7ee5e7b8",
       "state": "SHIP",
-      "source": "verdict-row:be5ec615-2d3b-411f-842d-4bbd1d74c553"
+      "source": "verdict-row:be5ec615-2d3b-411f-842d-4bbd1d74c553",
+      "reviewer": "automated"
     },
     {
       "id": "pr-78/ci/40174202950/1",
