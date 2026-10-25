@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { publish } from './lab-dispatch-publish.mjs';
-import { DRAFT_FILES, X_LIMIT, dispatchUrl, draftProblems, drafts, excerpt, length, outProblems, writeDrafts } from './lab-dispatch-drafts.mjs';
+import { DRAFT_FILES, X_LIMIT, dispatchUrl, draftProblems, drafts, excerpt, length, outProblems, previewProblems, visibleText, writeDrafts } from './lab-dispatch-drafts.mjs';
 
 // The Lab 01 drafts generator (mission rnd-labs-human-first-1024). The dispatch here is published by the real publisher
 // from a session written at run time, so no recorded session or restricted name is committed: a restricted name is
@@ -83,6 +83,13 @@ test('a clean dispatch: four drafts and a preview, every draft links the dispatc
   assert.equal(xParts.length, dispatch.questions.length + 2);
   for (const part of xParts) assert.ok(length(part) <= X_LIMIT, `${length(part)} > ${X_LIMIT}: ${part}`);
   assert.ok(xParts.at(-1).includes(url));
+  // The Reddit title is the first question as it was asked, nothing added; a follow-up says it is one.
+  const reddit = readFileSync(join(out, 'reddit.md'), 'utf8');
+  assert.equal(reddit.split('## Title\n\n')[1].split('\n')[0], `Asked ${dispatch.questions[0].to}: “${dispatch.questions[0].text}”`);
+  assert.ok(dispatch.questions[2].followUp);
+  assert.ok(xParts[3].startsWith(`4/5 Asked ${dispatch.questions[2].to}, as a follow-up: “${dispatch.questions[2].text}”`));
+  assert.ok(readFileSync(join(out, 'github-discussion.md'), 'utf8').includes(`Asked ${dispatch.questions[2].to}, as a follow-up.`));
+  assert.deepEqual(previewProblems(preview, url), [], 'the real preview passes its own screen');
   // Every question's text and answer come from the dispatch, word for word.
   const github = readFileSync(join(out, 'github-discussion.md'), 'utf8');
   for (const q of dispatch.questions) { assert.ok(github.includes(q.text)); assert.ok(github.includes(q.answer)); }
@@ -143,6 +150,45 @@ test('--out under site/ or dist/ is refused before anything is written, through 
   // On a case-insensitive file system "SITE/" is site/; refused by identity. On a case-sensitive one it is another dir.
   const upper = join(here, '..', 'SITE', 'drafts');
   if (existsSync(join(here, '..', 'SITE'))) assert.match(outProblems(upper).join(), /drafts are never published/);
+});
+
+test('--out that is itself a symlink, or runs through one, into site/ is refused; so is a link that does not resolve yet', () => {
+  const { file, root } = site();
+  mkdirSync(join(root, 'sub'));
+  const sneaky = join(temp, 'sneaky');
+  symlinkSync(join(root, 'sub'), sneaky);
+  for (const out of [sneaky, join(sneaky, 'nested')]) {
+    assert.match(outProblems(out, [root]).join(), /drafts are never published/, out);
+    assert.equal(writeDrafts(file, out, [root]).problems.length, 1);
+  }
+  assert.deepEqual(readdirSync(join(root, 'sub')), [], 'nothing was written under site/');
+  const later = join(temp, 'sneaky-later');
+  symlinkSync(join(root, 'later'), later);
+  assert.match(outProblems(later, [root]).join(), /does not resolve/);
+  assert.match(outProblems(join(later, 'nested'), [root]).join(), /does not resolve/);
+  assert.equal(writeDrafts(file, later, [root]).problems.length, 1);
+  assert.equal(existsSync(join(root, 'later')), false, 'nothing was made through the dangling link');
+  mkdirSync(join(root, 'later'));
+  assert.match(outProblems(later, [root]).join(), /drafts are never published/, 'once it resolves, it resolves under site/');
+});
+
+test('the preview is screened too: a problem only in the preview refuses all five files and writes nothing', () => {
+  const { file, dispatch } = site();
+  const url = dispatchUrl(dispatch);
+  const tampered = [
+    [() => `<p>${url} built on ${privateProject}</p>`, /preview\.html: a restricted name/],
+    [() => `<p>${url} built on &#${privateProject.charCodeAt(0)};${privateProject.slice(1)}</p>`, /preview\.html: a restricted name/],
+    [() => `<p>${url}</p><a href="https://example.com/">more</a>`, /href "https:\/\/example\.com\/" is not the dispatch link/],
+    [() => `<p>${url}</p><style>body{background:url(https://example.com/x)}</style>`, /loads or embeds something/],
+    [() => `<p>${url}</p><script>1</script>`, /loads or embeds something/],
+    [() => '<p>no link</p>', /preview\.html: does not link the dispatch/],
+  ];
+  for (const [render, reason] of tampered) assert.match(drafts(dispatch, 'd', { render }).problems.join('\n'), reason);
+  const out = join(temp, 'out-preview-refused');
+  assert.ok(writeDrafts(file, out, undefined, { render: tampered[0][0] }).problems.length > 0);
+  assert.equal(existsSync(out), false, 'not one of the four markdown drafts was written either');
+  assert.deepEqual(previewProblems(`<p><a href="${url}">${url}</a></p>`, url), [], 'the dispatch link itself is allowed');
+  assert.equal(visibleText('<style>a{}</style><b>x &amp; y</b><!-- c -->'), '  x & y  ');
 });
 
 test('--cadence: days since the latest committed dispatch, exit 2 after ten quiet days', () => {

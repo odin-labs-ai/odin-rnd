@@ -3,7 +3,8 @@
 // post for each channel the lab is followed on, for the founder to read, edit and post by hand:
 //   <out>/linkedin.md            one post: the session, its first question, the answer and where it came from
 //   <out>/x.md                   a thread, every part counted and at most 280 characters
-//   <out>/reddit.md              a title and a body, with a note to check each subreddit's self-promotion rule
+//   <out>/reddit.md              a title (the first question, as asked) and a body, with a note to check each
+//                                subreddit's self-promotion rule
 //   <out>/github-discussion.md   every question with its answer, why, and where it came from
 //   <out>/preview.html           the four side by side, under a "DRAFT — the founder posts" banner
 //
@@ -15,13 +16,15 @@
 // text the dispatch carries (the question, who it was asked, the answer, its why and where it came from), around a few
 // fixed sentences. A long answer is cut at a word, never reworded.
 // It REFUSES (exit 1, every reason listed, nothing written, the out dir not even created) when the dispatch does not
-// pass the publisher's own checks (dispatchProblems), when any draft fails the publisher's text screen (screenHits; the
-// dispatch's own page link is the one link let through, after it passes urlProblems on the site's host), when an X
-// part is over 280 characters, or when --out is under site/ or dist/ (drafts are never published).
+// pass the publisher's own checks (dispatchProblems), when any draft, the preview's visible text included, fails the
+// publisher's text screen (screenHits; the dispatch's own page link is the one link let through, after it passes
+// urlProblems on the site's host, and the preview's only href or src may be that link), when an X part is over 280
+// characters, or when --out resolves, through any symlink, under site/ or dist/ (drafts are never published), or runs
+// through a link that does not resolve.
 // --cadence prints how many days have passed since the latest dispatch committed under site/ (by the dispatch's own
 // date), or, with none yet, since the lab opened; it exits 2 when that is more than 10 days: the lab has gone quiet.
 // Exit codes: 0 done, 1 refused, 2 quiet (--cadence only), 3 usage.
-import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dispatchProblems, screenHits, urlProblems } from './lab-dispatch-publish.mjs';
@@ -102,7 +105,7 @@ function x(parts) {
 function reddit(dispatch, url) {
   const [first] = dispatch.questions;
   return [`<!-- ${BANNER} Before posting in a subreddit, read its rules on self-promotion and links to your own work; many allow it only in a set thread, or not at all. Post where it is welcome, and only there. -->`, '',
-    `## Title`, '', `AI agents in a small 3D world answered ${plural(dispatch.questions.length, 'question')} live, and each answer says where it came from`, '',
+    `## Title`, '', `${asked(first)}: ${quoted(first.text)}`, '',
     `## Body`, '',
     `A session in the agent space, recorded live on ${longDate(dispatch.date)}. ${asked(first)}: ${quoted(first.text)}`, '',
     quote(excerpt(first.answer, 600)), '',
@@ -151,50 +154,85 @@ export function draftProblems(drafts, url, xParts = []) {
   return problems;
 }
 
-/** Every draft for one dispatch, in memory: { problems, files } where files maps a file name to its text. */
-export function drafts(dispatch, where = 'dispatch') {
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+/** What a reader of an HTML page sees: no style or script, no tags or comments, entities decoded. */
+export const visibleText = html => html.replace(/<(style|script)\b[\s\S]*?<\/\1\s*>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
+  .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, name) => name[0] === '#' ? String.fromCodePoint(name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : Number(name.slice(1))) : ENTITIES[name.toLowerCase()] ?? all);
+
+/**
+ * Why a preview page may not be written: the same screen over its visible text, and the same one-link rule over its
+ * markup: an href or src may only be the dispatch link, and nothing may load from anywhere (no script, frame, link
+ * element, form, CSS url() or @import).
+ */
+export function previewProblems(html, url) {
+  const problems = draftProblems({ 'preview.html': visibleText(html) }, url);
+  for (const m of html.matchAll(/\s(href|src|srcset|action|formaction|poster|data|background)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi)) {
+    const value = visibleText(m[2].replace(/^["']|["']$/g, ''));
+    if (value !== url) problems.push(`preview.html: ${m[1]} ${JSON.stringify(value)} is not the dispatch link`);
+  }
+  if (/<(script|iframe|frame|object|embed|link|form|base|img|video|audio|source)\b|url\s*\(|@import|http-equiv/i.test(html)) problems.push('preview.html: it loads or embeds something');
+  return problems;
+}
+
+/**
+ * Every draft for one dispatch, in memory: { problems, files } where files maps a file name to its text. All five are
+ * built first and all five screened; only when nothing is refused are they returned to be written. `render` replaces
+ * the preview renderer (for tests).
+ */
+export function drafts(dispatch, where = 'dispatch', { render = preview } = {}) {
   const problems = dispatchProblems(dispatch, where);
   if (problems.length) return { problems, files: {} };
   const url = dispatchUrl(dispatch);
   const parts = xThread(dispatch, url);
   const texts = { 'linkedin.md': linkedin(dispatch, url), 'x.md': x(parts), 'reddit.md': reddit(dispatch, url), 'github-discussion.md': githubDiscussion(dispatch, url) };
-  const refused = draftProblems(texts, url, parts);
+  const page = render(dispatch, texts);
+  const refused = [...draftProblems(texts, url, parts), ...previewProblems(page, url)];
   if (refused.length) return { problems: refused, files: {} };
-  return { problems: [], files: { ...texts, 'preview.html': preview(dispatch, texts) }, xParts: parts, url };
+  return { problems: [], files: { ...texts, 'preview.html': page }, xParts: parts, url };
 }
 
-// The nearest existing ancestor, through any symlink and in the file system's own letter case, plus the rest.
+// The path with every symlink resolved: the deepest existing ancestor (the target itself when it exists) through
+// realpath, in the file system's own letter case, plus the part that does not exist yet. `dangling` names a part that
+// does not resolve but is there as a link: it may point under site/ once its target is made, so it is refused.
 function real(path) {
-  let at = resolve(path), rest = [];
-  while (!existsSync(at) && dirname(at) !== at) { rest.unshift(at.slice(dirname(at).length + 1)); at = dirname(at); }
-  return join(realpathSync.native(at), ...rest);
+  let at = resolve(path), rest = [], dangling = null;
+  while (!existsSync(at) && dirname(at) !== at) {
+    try { lstatSync(at); dangling = at; } catch {}
+    rest.unshift(at.slice(dirname(at).length + 1)); at = dirname(at);
+  }
+  return { path: join(realpathSync.native(at), ...rest), dangling };
 }
 const within = (path, root) => { const r = relative(root, path); return r === '' || (!r.startsWith(`..${sep}`) && r !== '..' && !isAbsolute(r)); };
 const same = (a, b) => a.dev === b.dev && a.ino === b.ino;
 
-// Is `target` the directory `root` or under it? By identity (device and inode) for every existing ancestor, so neither a
-// symlink nor a case-insensitive spelling ("SITE/") gets past it; by path for a root that does not exist yet.
+// Is the resolved `target` the directory `root` or under it? By path against the root's own realpath, and by identity
+// (device and inode) for every existing ancestor of the resolved target, so neither a symlink (the out dir itself or
+// any ancestor) nor a case-insensitive spelling ("SITE/") gets past it.
 function under(target, root) {
-  if (!existsSync(root)) return within(real(target), real(root));
+  const rootReal = real(root).path;
+  if (within(target, rootReal)) return true;
+  if (!existsSync(root)) return false;
   const id = statSync(root);
-  for (let at = resolve(target); ; at = dirname(at)) {
+  for (let at = target; ; at = dirname(at)) {
     if (existsSync(at) && same(statSync(at), id)) return true;
     if (dirname(at) === at) return false;
   }
 }
 
-/** Why drafts may not go to `out`: anywhere under site/ or dist/ would publish them. */
+/** Why drafts may not go to `out`: anywhere under site/ or dist/ would publish them, and so might a dangling link. */
 export function outProblems(out, roots = [SITE_DIR, DIST_DIR]) {
-  return roots.filter(root => under(out, root)).map(root => `--out ${out} is under ${root}: drafts are never published`);
+  const { path, dangling } = real(out);
+  if (dangling) return [`--out ${out}: ${dangling} is a link that does not resolve; it could point under site/ once its target exists`];
+  return roots.filter(root => under(path, root)).map(root => `--out ${out} is under ${root}: drafts are never published`);
 }
 
 /** Write the drafts for the dispatch file into `out`; nothing is written unless every check passes. */
-export function writeDrafts(dispatchFile, out, roots) {
+export function writeDrafts(dispatchFile, out, roots, options) {
   const problems = outProblems(out, roots);
   let dispatch;
   try { dispatch = JSON.parse(readFileSync(dispatchFile, 'utf8')); } catch (error) { problems.push(`${dispatchFile}: ${error.message}`); }
   if (problems.length) return { problems };
-  const result = drafts(dispatch, dispatchFile);
+  const result = drafts(dispatch, dispatchFile, options);
   if (result.problems.length) return result;
   mkdirSync(out, { recursive: true });
   for (const [file, text] of Object.entries(result.files)) writeFileSync(join(out, file), text);
