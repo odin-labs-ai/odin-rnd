@@ -21,7 +21,7 @@
 // --cadence prints how many days have passed since the latest dispatch committed under site/ (by the dispatch's own
 // date), or, with none yet, since the lab opened; it exits 2 when that is more than 10 days: the lab has gone quiet.
 // Exit codes: 0 done, 1 refused, 2 quiet (--cadence only), 3 usage.
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dispatchProblems, screenHits, urlProblems } from './lab-dispatch-publish.mjs';
@@ -39,15 +39,20 @@ const BANNER = 'DRAFT — the founder posts. Nothing here is sent.';
 /** The dispatch's live place: its anchor on the lab page, as the Atom feed links it. */
 export const dispatchUrl = dispatch => `${SITE_URL}labs/agent-space/#${dispatch.session}`;
 
-/** Characters as X and a reader count them: code points, so an emoji or accented letter is never undercounted. */
-export const length = text => [...text].length;
+// X weighs a character 1 in these code point ranges (Latin, the common punctuation, curly quotes) and 2 everywhere else
+// (an ellipsis, an emoji, CJK). A link is counted at its full length, more than X's flat 23, so a part never runs over.
+const LIGHT = [[0, 4351], [8192, 8205], [8208, 8223], [8242, 8247]];
+
+/** Characters as X counts them: by code point, weighted as above, so nothing is undercounted. */
+export const length = text => [...text].reduce((sum, ch) => { const cp = ch.codePointAt(0); return sum + (LIGHT.some(([a, b]) => cp >= a && cp <= b) ? 1 : 2); }, 0);
 
 /** The text unchanged when it fits in `max` characters, else its longest prefix that ends at a word, plus "…". */
 export function excerpt(text, max) {
   if (length(text) <= max) return text;
   const cut = [...text].slice(0, Math.max(0, max - 1)).join('');
   const atWord = cut.replace(/\s+\S*$/, '');
-  return `${(atWord || cut).replace(/[\s,;:.]+$/, '')}…`;
+  const short = `${(atWord || cut).replace(/[\s,;:.]+$/, '')}…`;
+  return length(short) <= max || max <= 2 ? short : excerpt(text, max - 1);
 }
 
 const longDate = date => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -155,18 +160,29 @@ export function drafts(dispatch, where = 'dispatch') {
   return { problems: [], files: { ...texts, 'preview.html': preview(dispatch, texts) }, xParts: parts, url };
 }
 
-// The nearest existing ancestor, through any symlink, so a link into site/ is seen as site/.
+// The nearest existing ancestor, through any symlink and in the file system's own letter case, plus the rest.
 function real(path) {
   let at = resolve(path), rest = [];
   while (!existsSync(at) && dirname(at) !== at) { rest.unshift(at.slice(dirname(at).length + 1)); at = dirname(at); }
-  return join(realpathSync(at), ...rest);
+  return join(realpathSync.native(at), ...rest);
 }
 const within = (path, root) => { const r = relative(root, path); return r === '' || (!r.startsWith(`..${sep}`) && r !== '..' && !isAbsolute(r)); };
+const same = (a, b) => a.dev === b.dev && a.ino === b.ino;
+
+// Is `target` the directory `root` or under it? By identity (device and inode) for every existing ancestor, so neither a
+// symlink nor a case-insensitive spelling ("SITE/") gets past it; by path for a root that does not exist yet.
+function under(target, root) {
+  if (!existsSync(root)) return within(real(target), real(root));
+  const id = statSync(root);
+  for (let at = resolve(target); ; at = dirname(at)) {
+    if (existsSync(at) && same(statSync(at), id)) return true;
+    if (dirname(at) === at) return false;
+  }
+}
 
 /** Why drafts may not go to `out`: anywhere under site/ or dist/ would publish them. */
 export function outProblems(out, roots = [SITE_DIR, DIST_DIR]) {
-  const target = real(out);
-  return roots.filter(root => within(target, real(root))).map(root => `--out ${out} is under ${root}: drafts are never published`);
+  return roots.filter(root => under(out, root)).map(root => `--out ${out} is under ${root}: drafts are never published`);
 }
 
 /** Write the drafts for the dispatch file into `out`; nothing is written unless every check passes. */

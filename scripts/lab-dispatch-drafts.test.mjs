@@ -97,6 +97,8 @@ test('a long question and answer: cut at a word to a verbatim prefix, and every 
   const cut = excerpt(long, 100);
   assert.ok(length(cut) <= 100 && cut.endsWith('…') && long.startsWith(cut.slice(0, -1)), cut);
   assert.equal(excerpt('short', 100), 'short');
+  // X weighs an ellipsis or an emoji 2 and a curly quote 1.
+  assert.equal(length('a…'), 3); assert.equal(length('“’”'), 3); assert.equal(length('😀'), 2);
 });
 
 test('a restricted term injected into the dispatch: refused, nothing written', () => {
@@ -137,6 +139,9 @@ test('--out under site/ or dist/ is refused before anything is written, through 
   assert.equal(writeDrafts(file, join(link, 'drafts'), [root]).problems.length, 1);
   assert.equal(existsSync(join(root, 'drafts')), false);
   assert.deepEqual(outProblems(join(temp, 'elsewhere')), []);
+  // On a case-insensitive file system "SITE/" is site/; refused by identity. On a case-sensitive one it is another dir.
+  const upper = join(here, '..', 'SITE', 'drafts');
+  if (existsSync(join(here, '..', 'SITE'))) assert.match(outProblems(upper).join(), /drafts are never published/);
 });
 
 test('--cadence: days since the latest committed dispatch, exit 2 after ten quiet days', () => {
