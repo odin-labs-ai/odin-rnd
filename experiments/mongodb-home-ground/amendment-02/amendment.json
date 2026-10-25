@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 020",
+  "amendment": "02",
+  "title": "S2 compares MongoDB with one PostgreSQL variant per scale, chosen once",
+  "authoredOn": "2026-10-25",
+  "amends": {
+    "preregistration": "experiments/mongodb-home-ground/preregistration.json",
+    "preregistrationSha256": "128087dbba8b09c97fcbf2ab4a873b1c4b9c656b27ad07291ba4693e26d83fec",
+    "frozenCommit": "0af2c4861c489531916884ceb6894ee771d0ec71",
+    "after": {
+      "amendment": "01",
+      "record": "experiments/mongodb-home-ground/amendment-01/amendment.json",
+      "sha256": "2ab063dcde6ec3a45762a56b892906aa0f5fb15f18746e69d0091995e38766e9"
+    }
+  },
+  "why": "Amendment 01 recorded, and left open, a conflict between S2's runner protocol and this record. The protocol pairs MongoDB, in each repetition, with whichever passing PostgreSQL variant did better in that repetition. The record says MongoDB must beat 'the other store's best variant'. A per-repetition best is a best-of-two: even with two identical variants it shortens PostgreSQL's number, so it tilts the comparison toward PostgreSQL. This amendment settles the rule before S2's verdict is computed, so S2's report has one rule.",
+  "decision": "The decision was made on 2026-10-25, before S2's verdict was computed, by the R&D orchestrator, not by either advocate. It was made with interim seed-1 results already seen, so it is not blind; and the rule itself selects using seed-1 results. We chose the rule the EXP 021 advocates of both sides had already agreed was fair (EXP 021 FREEZE-NOTES-v1.1, A11), rather than one picked with the data in view. Anyone who disagrees can reopen it only by a further dated amendment, published first.",
+  "changes": [
+    {
+      "what": "One PostgreSQL variant per scale decides the S2 verdict (primary analysis)",
+      "rule": "For each S2 scale (1x and 10x) separately, PostgreSQL is represented by ONE variant, chosen once: among the PostgreSQL variants (pgoutput and the commit-order-safe outbox) that pass the gate in every counted cell at that scale on both seeds, the one with the lowest median, over its five seed-1 repetitions, of the cell's primary metric (phase A lag p95, as runner/PROTOCOL-S2.md defines it). That variant is then compared with MongoDB in all five seed-1 pairs and in the seed-2 reproduction, under the record's unchanged verdict rule (>= 20% on the median, in >= 4 of 5 paired repetitions, the same direction in the reproduction; the component tie-break at a difference of at least 2 uses the same variant's components). LISTEN/NOTIFY stays a reference only.",
+      "gate": "PostgreSQL's gate at a scale is judged per variant: it passes only if at least one variant passes every counted cell at that scale on both seeds. If none does, PostgreSQL does not pass the gate at that scale. This amendment does not change what the record's verdicts say in that case.",
+      "adapted": "EXP 021 phrases the rule as 'the lowest median of the seed-1 repetition medians', because each EXP 021 cell reports a median over writer threads. Each S2 cell reports a lag p95 instead, so here the selection is the median over seed-1 repetitions of that per-cell p95. Nothing else is changed in the transfer."
+    },
+    {
+      "what": "Per-repetition best is a labelled secondary analysis",
+      "rule": "The protocol's per-repetition pairing (MongoDB against the better passing PostgreSQL variant of each repetition) is computed and published too, labelled as a secondary analysis that favours PostgreSQL. It never decides a verdict. Every variant's every cell is published, as the record requires."
+    }
+  ],
+  "review": "Both EXP 020 advocates (the MongoDB and the PostgreSQL reviewer of the design) are asked, through the runner's owner, to review the decision paragraph with their usual veto power before S2's verdict is computed. S2's verdict is held until then. Their answer is recorded in a further dated amendment; a veto reopens the rule there.",
+  "unchanged": "The question, arms, scenarios, gates, primary metrics, margins, component checklist, verdicts, predictions and out-of-scope list are unchanged, and the frozen record and amendment 01 stay byte-identical. Only how S2 picks the PostgreSQL side of each comparison is fixed. S1, S3 and S4 are not affected.",
+  "limits": [
+    "Not blind: interim seed-1 results had been seen when this rule was chosen, and the selection uses seed-1 results.",
+    "The rule was transferred from EXP 021, a different experiment whose advocates agreed it; EXP 020's own advocates have not yet reviewed it (see review)."
+  ],
+  "notBefore": "S2's verdict is computed, and its report published, only after this amendment is merged to main of odin-labs-ai/odin-rnd and the advocates' answer is recorded."
+}
