@@ -1,0 +1,37 @@
+/* Lab 01, "How this site got built" (scripts/lab-delivery.mjs). Built on company.css and labs.css. */
+.delivery-summary{max-width:70ch;font-size:19px;line-height:1.6;margin-top:8px}
+.delivery-telemetry{margin-top:40px}
+.delivery-telemetry h3,.delivery-timeline h3{font-size:22px;margin-bottom:12px}
+.delivery-legend{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--steel);margin-bottom:12px}
+.delivery-key{display:inline-block;width:12px;height:12px;border-radius:2px}
+.delivery-legend .delivery-key-ship{margin-left:10px}
+.delivery-key-fix,.delivery-bar-fix{background:var(--orange);fill:var(--orange)}
+.delivery-key-ship,.delivery-bar-ship{background:var(--brand);fill:var(--brand)}
+.delivery-chart{width:100%;max-width:520px;height:auto;margin-bottom:24px}
+.delivery-chart text{font-family:var(--mono);font-size:12px;fill:var(--paper)}
+.delivery-table{border-collapse:collapse;width:100%;max-width:760px;font-size:14px;font-variant-numeric:tabular-nums}
+.delivery-table caption{caption-side:top;text-align:left;color:var(--steel);font-size:13px;margin-bottom:10px}
+.delivery-table th,.delivery-table td{padding:8px 10px;border-bottom:1px solid var(--rule);text-align:right}
+.delivery-table th:first-child{text-align:left}
+.delivery-table thead th{font-weight:600;color:var(--steel)}
+.delivery-table tfoot th,.delivery-table tfoot td{font-weight:600}
+.delivery-timeline{margin-top:56px}
+.delivery-timeline>p{max-width:72ch;color:var(--steel);line-height:1.6}
+.delivery-timeline>p+p{margin-top:10px}
+.delivery-private{font-size:14px}
+.delivery-pr{margin-top:36px;padding-top:24px;border-top:1px solid var(--rule)}
+.delivery-pr h4{font-size:18px;line-height:1.35}
+.delivery-sentence{margin-top:8px;max-width:72ch;line-height:1.6}
+.delivery-events{list-style:none;margin:16px 0 0;padding:0 0 0 18px;border-left:2px solid var(--rule);display:grid;gap:10px}
+.delivery-event{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 16px;font-size:15px;line-height:1.5;position:relative}
+.delivery-event::before{content:"";position:absolute;left:-25px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--ground);border:2px solid var(--steel)}
+.delivery-fix::before{border-color:var(--orange)}
+.delivery-ship::before,.delivery-landing::before{border-color:var(--brand);background:var(--brand)}
+.delivery-when{font-family:var(--mono);font-size:12px;color:var(--steel);padding-top:2px}
+.delivery-row{font-family:var(--mono);font-size:12px;color:var(--steel)}
+.delivery-event code,.delivery-pr code{font-family:var(--mono);font-size:13px}
+.delivery-cursor{margin-top:40px;color:var(--steel)}
+@media (max-width:640px){
+  .delivery-event{grid-template-columns:minmax(0,1fr)}
+  .delivery-table{display:block;overflow-x:auto}
+}

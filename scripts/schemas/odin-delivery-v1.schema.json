@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://odin-labs-ai.github.io/odin-rnd/schemas/odin-delivery-v1.schema.json",
+  "title": "odin-delivery v1: the public delivery record of this site's repository",
+  "description": "Every pull request merged in the window, each recorded review round (verdict and the head it judged), each CI run attempt, each landing and each Pages deploy, as records whose source is a public GitHub URL or a review row id. Written by the odin-labs exporter (delivery-record-export); scripts/lab-delivery.mjs checks it again when the site builds. No review or finding text, branch name, person or machine is carried.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "repo", "window", "generatedFrom", "prs", "records", "telemetry", "aggregates"],
+  "properties": {
+    "format": { "const": "odin-delivery" },
+    "version": { "const": 1 },
+    "repo": { "const": "odin-labs-ai/odin-rnd" },
+    "window": {
+      "description": "Merged pull requests numbered fromPr..toPr (both included).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromPr", "toPr"],
+      "properties": { "fromPr": { "type": "integer", "minimum": 1 }, "toPr": { "type": "integer", "minimum": 1 } }
+    },
+    "generatedFrom": {
+      "description": "The stream cursor: what was read, and when GitHub was asked.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "toolVersion", "window", "latestPr", "ghFetchedAt", "verdictRowsRead"],
+      "properties": {
+        "tool": { "const": "delivery-record-export" },
+        "toolVersion": { "const": 1 },
+        "window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fromPr", "toPr"],
+          "properties": { "fromPr": { "type": "integer", "minimum": 1 }, "toPr": { "type": "integer", "minimum": 1 } }
+        },
+        "latestPr": { "type": "integer", "minimum": 1 },
+        "ghFetchedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+        "verdictRowsRead": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "prs": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1, "uniqueItems": true },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "pr", "at", "repo", "ref", "state", "source", "title"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^pr-\\d+$" },
+              "kind": { "const": "pr" },
+              "pr": { "type": "integer", "minimum": 1 },
+              "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "repo": { "const": "odin-labs-ai/odin-rnd" },
+              "ref": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "state": { "const": "merged" },
+              "source": { "type": "string", "pattern": "^https://github\\.com/odin-labs-ai/odin-rnd/pull/\\d+$" },
+              "title": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "pr", "at", "repo", "ref", "state", "source"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^pr-\\d+/review/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+              "kind": { "const": "review" },
+              "pr": { "type": "integer", "minimum": 1 },
+              "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "repo": { "const": "odin-labs-ai/odin-rnd" },
+              "ref": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "state": { "type": "string", "pattern": "^(SHIP|FIX-NEEDED)$" },
+              "source": { "type": "string", "pattern": "^verdict-row:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "pr", "at", "repo", "ref", "state", "source", "workflow", "attempt"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^pr-\\d+/ci/\\d+/\\d+$" },
+              "kind": { "const": "ci" },
+              "pr": { "type": "integer", "minimum": 1 },
+              "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "repo": { "const": "odin-labs-ai/odin-rnd" },
+              "ref": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "state": { "type": "string", "pattern": "^(success|failure|cancelled|skipped|timed_out|action_required|neutral|stale|startup_failure)$" },
+              "source": { "type": "string", "pattern": "^https://github\\.com/odin-labs-ai/odin-rnd/actions/runs/\\d+/attempts/\\d+$" },
+              "workflow": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "attempt": { "type": "integer", "minimum": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "pr", "at", "repo", "ref", "state", "source"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^pr-\\d+/landing$" },
+              "kind": { "const": "landing" },
+              "pr": { "type": "integer", "minimum": 1 },
+              "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "repo": { "const": "odin-labs-ai/odin-rnd" },
+              "ref": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "state": { "const": "merged" },
+              "source": { "type": "string", "pattern": "^https://github\\.com/odin-labs-ai/odin-rnd/commit/[0-9a-f]{40}$" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "pr", "at", "repo", "ref", "state", "source"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^pr-\\d+/deploy/\\d+$" },
+              "kind": { "const": "deploy" },
+              "pr": { "type": "integer", "minimum": 1 },
+              "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "repo": { "const": "odin-labs-ai/odin-rnd" },
+              "ref": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "state": { "type": "string", "pattern": "^(success|failure|cancelled|skipped|timed_out)$" },
+              "source": { "type": "string", "pattern": "^https://github\\.com/odin-labs-ai/odin-rnd/actions/runs/\\d+$" }
+            }
+          }
+        ]
+      }
+    },
+    "telemetry": {
+      "description": "Figures computed from the records; the build recomputes them and refuses a difference.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["perPr", "totals"],
+      "properties": {
+        "perPr": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pr", "reviewRounds", "fixNeededRounds", "ciRuns", "ciReruns", "minutesToLand"],
+            "properties": {
+              "pr": { "type": "integer", "minimum": 1 },
+              "reviewRounds": { "type": "integer", "minimum": 0 },
+              "fixNeededRounds": { "type": "integer", "minimum": 0 },
+              "ciRuns": { "type": "integer", "minimum": 0 },
+              "ciReruns": { "type": "integer", "minimum": 0 },
+              "minutesToLand": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prs", "reviewRounds", "fixNeededRounds", "ciRuns", "ciReruns", "deploys", "medianMinutesToLand"],
+          "properties": {
+            "prs": { "type": "integer", "minimum": 0 },
+            "reviewRounds": { "type": "integer", "minimum": 0 },
+            "fixNeededRounds": { "type": "integer", "minimum": 0 },
+            "ciRuns": { "type": "integer", "minimum": 0 },
+            "ciReruns": { "type": "integer", "minimum": 0 },
+            "deploys": { "type": "integer", "minimum": 0 },
+            "medianMinutesToLand": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "aggregates": {
+      "description": "Private repositories, only as anonymous aggregates (odin-labs delivery-private-projection). Empty until a separately reviewed step publishes any.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "prCount", "ciPassPercent", "reviewRounds", "medianMinutesToLand"],
+        "properties": {
+          "label": { "type": "string", "pattern": "^repo-[0-9a-f]{12}$" },
+          "prCount": { "type": "integer", "minimum": 5 },
+          "ciPassPercent": { "type": "integer", "minimum": 0 },
+          "reviewRounds": { "type": "integer", "minimum": 0 },
+          "medianMinutesToLand": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}
