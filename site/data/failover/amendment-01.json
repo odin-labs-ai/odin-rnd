@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 021",
+  "amendment": "01",
+  "title": "The runner protocol and the design draft are published",
+  "authoredOn": "2026-10-25",
+  "amends": {
+    "preregistration": "experiments/failover/preregistration.json",
+    "preregistrationSha256": "7e2f3159484251478acbda3910b230fdcd838222a7ac89a4cfd4f09902f38c5a",
+    "frozenCommit": "b36684cefb3b8b0ad3723fc88cb728fafd369a3a"
+  },
+  "why": "EXP 021's frozen record cites two private inputs by sha256 only: the runner protocol (PROTOCOL-LAB02.md) and the design draft (DESIGN.md). A pre-registration should show how it will be run, not only what it predicts, so this amendment publishes both, screened. The record said the protocol's amendments and their resolutions are restated in FREEZE-NOTES-v1.1.md, which is true; but the protocol's own rules (the gates before any cell, the cell phases, the oracle, the plan's size and order, the runner decisions R1-R13) are restated nowhere. Nor are the design draft's own predictions, which the round-1 reviews answer, or its plan for the Labs page. Both are therefore published rather than left as hashes.",
+  "timing": "Written after the pre-registration was published (odin-rnd #83, merged 2026-10-25 20:11:56Z). It adds documents only. Whether any counted cell started before this amendment merged is recorded by the runner, whose counted cells carry the publish sha; this amendment changes no rule they ran under.",
+  "changes": [
+    {
+      "what": "The runner protocol is published",
+      "rule": "experiments/failover/runner/PROTOCOL-LAB02.md is runner/PROTOCOL-LAB02.md at the frozen source commit 5d0567654c6a61558eadd54abe9eca6f31967e90 (git blob 356d0faf23379e621033b62e521528a075268f3a, last changed at its parent 322cafb696, before the freeze), with the substitutions listed below. It is the protocol the frozen PREREG names as its runner contract.",
+      "file": "experiments/failover/runner/PROTOCOL-LAB02.md",
+      "sha256": "c4ebc3172b84b75bfb252189ddb3ec4cd6efd049d7a5e4313e6d865f46dcf86c"
+    },
+    {
+      "what": "The design draft is published",
+      "rule": "experiments/failover/DESIGN.md is DESIGN.md at the same commit, the draft the round-1 reviews answer, with the substitutions listed below. It is not the plan: where it and the frozen text differ (its tuned-cell outage prediction, its single F2, classic sync mode), the frozen text is the plan, as FREEZE-NOTES.md records.",
+      "file": "experiments/failover/DESIGN.md",
+      "sha256": "0734af4ce16d0e80a00b47947e09d66331121785a8b9e831cd89fd4c56ee7430"
+    }
+  ],
+  "documents": [
+    {
+      "file": "experiments/failover/runner/PROTOCOL-LAB02.md",
+      "source": "runner/PROTOCOL-LAB02.md",
+      "sourceSha256": "af9a35e061ef8de880d814a2f72ff067b59d486c84ee66dd3b12bd10facab732",
+      "publishedSha256": "c4ebc3172b84b75bfb252189ddb3ec4cd6efd049d7a5e4313e6d865f46dcf86c",
+      "substitutions": [
+        {
+          "was": "by the Windows PC, before any Lab 02 container",
+          "now": "by the design author, before any Lab 02 container"
+        },
+        {
+          "was": "for the founder and the Mac. **v1.1",
+          "now": "for the founder and this lab. **v1.1"
+        },
+        {
+          "was": "No counted cell runs before the Mac publishes the pre-registration.",
+          "now": "No counted cell runs before this lab publishes the pre-registration."
+        },
+        {
+          "was": "(`<a path in the private repository>` with a live pid)",
+          "now": "(EXP 020 S2's cell-lock file, with a live pid)"
+        },
+        {
+          "was": "other heavy work on the PC (filming",
+          "now": "other heavy work on the host (filming"
+        },
+        {
+          "was": "Shaped like `<a file path in the private repository>` (id",
+          "now": "Shaped like the agent space's own proof records (id"
+        },
+        {
+          "was": "this protocol to the Mac. A1–A12",
+          "now": "this protocol to this lab. A1–A12"
+        },
+        {
+          "was": "(v1.1, above). The Mac",
+          "now": "(v1.1, above). This lab"
+        }
+      ]
+    },
+    {
+      "file": "experiments/failover/DESIGN.md",
+      "source": "DESIGN.md",
+      "sourceSha256": "f8dd2dfae4c9badea5d337d9aaf935dcd9633613639b441e9f651725b3118b07",
+      "publishedSha256": "0734af4ce16d0e80a00b47947e09d66331121785a8b9e831cd89fd4c56ee7430",
+      "substitutions": [
+        {
+          "was": "Drafted 2026-10-25 by the Windows PC.",
+          "now": "Drafted 2026-10-25 by the design author."
+        },
+        {
+          "was": "The ledger is `<a path in the private repository>`.",
+          "now": "The ledger is in the private repository."
+        },
+        {
+          "was": "(`<a file path in the private repository>` shape)",
+          "now": "(the agent space's own proof-record shape)"
+        },
+        {
+          "was": "## Predictions (the PC's, written now)",
+          "now": "## Predictions (the design author's, written now)"
+        }
+      ]
+    }
+  ],
+  "substitutionRule": "Machine names (the Windows PC, the PC, the Mac), two paths in the private repository and the private mission-ledger path were replaced with neutral wording, the same rule as the record's publicCopy. Each `was` masks the private string. The lab checked privately that undoing each file's substitutions with the unmasked strings gives back its sourceSha256; the inverse mapping is withheld, so that check is the lab's attestation. File names inside the experiment's own runner are kept. 'Lab 02' is kept as written; the record's naming block maps it to Lab 03 (failover).",
+  "unchanged": "The question, arms, workload, faults, measures, gate, repetitions, verdict rule, predictions and out-of-scope list are unchanged, and every file the pre-registration published stays byte-identical. The record's source.inputs entries for the two documents ('published: no') describe the record as frozen; this amendment is where they are published.",
+  "notBefore": "Effective when merged to main of odin-labs-ai/odin-rnd. It changes no rule, so counted cells are not held for it."
+}

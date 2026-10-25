@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { COPY, DELIVERY_FILE, deliveryProblems, leadText, readDelivery, renderDelivery, renderedProblems, telemetryOf } from './lab-delivery.mjs';
+import { COPY, DELIVERY_FILE, aggregateProblems, aggregateWindow, deliveryProblems, leadText, readDelivery, renderAggregates, renderDelivery, renderedProblems, telemetryOf } from './lab-delivery.mjs';
 import { renderLabs } from './labs.mjs';
 
 // "How this site got built" (WO-NOTHEATRE-01/02). The committed record, the page rendered from it by the real build
@@ -13,6 +13,10 @@ const record = readDelivery();
 const page = renderLabs()['labs/agent-space/index.html'];
 const section = page.slice(page.indexOf('<div class="delivery" id="delivery">'), page.indexOf('id="follow"'));
 const clone = () => JSON.parse(JSON.stringify(record));
+// The window's size, in the words the page uses: the record grows with every merged PR, the facts below do not.
+const W = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+const w = n => W[n] ?? String(n);
+const N = record.prs.length, TO = record.window.toPr;
 
 /** Render the Labs pages from a copy of site/ whose delivery record is `changed`. */
 function renderWith(changed) {
@@ -162,21 +166,22 @@ test('free text runs through the publisher\'s screen; structured fields are held
   assert.ok(deliveryProblems(text).length > 0, 'a review record cannot carry review text');
 });
 
-test('aggregates are empty in this increment, and an aggregate field outside the allowlist is refused', () => {
-  assert.deepEqual(record.aggregates, []);
+test('an aggregate field outside the allowlist, a percent above 100 or a repository under five PRs is refused', () => {
   const leak = clone();
-  leak.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' });
+  leak.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' }];
   assert.match(deliveryProblems(leak).join('\n'), /aggregates\/0\/name: not allowed/);
   const over = clone();
-  over.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 });
+  over.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 }];
   assert.match(deliveryProblems(over).join('\n'), /above 100/);
   const small = clone();
-  small.aggregates.push({ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 });
+  small.aggregates = [{ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 }];
   assert.ok(deliveryProblems(small).length > 0, 'a repository with fewer than five PRs is not published even as an aggregate');
 });
 
-test('the window holds exactly the merged PRs #71 to #79, and #79 is the one without a recorded review round', () => {
-  assert.deepEqual(record.prs, [71, 72, 73, 74, 75, 76, 77, 78, 79]);
+test('the window holds every merged PR from #71 to its latest (at least #79), and #79 is the one without a recorded review round', () => {
+  assert.ok(TO >= 79);
+  assert.deepEqual(record.prs, Array.from({ length: TO - 70 }, (_, i) => 71 + i).filter(n => !record.window.otherNumbers.includes(n)));
+  assert.deepEqual(record.prs.filter(pr => !record.records.some(r => r.pr === pr && r.kind === 'review')), [79], 'only #79 has no recorded review round');
   assert.equal(record.records.filter(r => r.pr === 79 && r.kind === 'review').length, 0);
 });
 
@@ -197,7 +202,7 @@ test('every PR without a recorded review round says so, and no PR with one does'
 test('the lead is counted from the record, never a claim about every change', () => {
   const lead = leadText(record);
   assert.ok(section.includes(lead.replaceAll("'", '&#39;')) || section.includes(lead), 'the page shows the counted lead');
-  assert.match(lead, /^This site is built in the open, one pull request at a time\. Of the nine pull requests merged between #71 and #79 \(every number in that range\), eight went through at least one recorded automated review round before they were merged; one has no recorded review round; /);
+  assert.ok(lead.startsWith(`This site is built in the open, one pull request at a time. Of the ${w(N)} pull requests merged between #71 and #${TO} (every number in that range), ${w(N - 1)} went through at least one recorded automated review round before they were merged; one has no recorded review round; `), lead);
   const text = `${lead} ${Object.values(COPY).join(' ')}`;
   for (const universal of [/only then merged/i, /typed by hand\./i, /\bevery change is\b/i, /\bA change is read by an AI reviewer\b/]) assert.doesNotMatch(text, universal);
   assert.match(COPY.generated, /only the sentences around them are written by hand/);
@@ -205,11 +210,11 @@ test('the lead is counted from the record, never a claim about every change', ()
   const reviewed = clone();
   const land79 = reviewed.records.find(r => r.kind === 'landing' && r.pr === 79);
   reviewed.records.push({ id: 'pr-79/review/11111111-2222-4333-8444-555555555555', kind: 'review', pr: 79, at: '2026-10-25T07:10:00Z', repo: 'odin-labs-ai/odin-rnd', ref: land79.ref, state: 'SHIP', source: 'verdict-row:11111111-2222-4333-8444-555555555555', reviewer: 'automated' });
-  assert.match(leadText(reviewed), /nine went through at least one recorded automated review round before they were merged; every one had CI/);
+  assert.ok(leadText(reviewed).includes(`${w(N)} went through at least one recorded automated review round before they were merged; every one had CI`));
   // A review recorded only after the merge does not count as "before merge".
   const late = clone();
   late.records.push({ ...reviewed.records.at(-1), at: '2026-10-26T00:00:00Z' });
-  assert.match(leadText(late), /eight went through/);
+  assert.ok(leadText(late).includes(`, ${w(N - 1)} went through`));
 });
 
 test('a CI record\'s source is the attempt it names: /attempts/N equals its attempt field', () => {
@@ -239,7 +244,7 @@ test('the window accounts for every number from #fromPr to #toPr: a merged PR or
   declared.window = { ...declared.window, otherNumbers: [78] };
   declared.generatedFrom = { ...declared.generatedFrom, window: { ...declared.window } };
   assert.deepEqual(deliveryProblems(declared), []);
-  assert.match(leadText(declared), /Of the eight pull requests merged between #71 and #79 \(the other one number in that range is an issue or a pull request that was not merged\)/);
+  assert.ok(leadText(declared).includes(`Of the ${w(N - 1)} pull requests merged between #71 and #${TO} (the other one number in that range is an issue or a pull request that was not merged)`));
   const both = clone();
   both.window = { ...both.window, otherNumbers: [75] };
   both.generatedFrom = { ...both.generatedFrom, window: { ...both.window } };
@@ -255,7 +260,7 @@ test('"automated" review is said only when every counted round carries that revi
   const mixed = clone();
   mixed.records.find(r => r.kind === 'review').reviewer = 'unrecorded';
   assert.deepEqual(deliveryProblems(mixed), []);
-  assert.match(leadText(mixed), /eight went through at least one recorded review round before/);
+  assert.ok(leadText(mixed).includes(`${w(N - 1)} went through at least one recorded review round before`));
   assert.doesNotMatch(leadText(mixed), /automated|\bAI\b/);
   const missing = clone();
   delete missing.records.find(r => r.kind === 'review').reviewer;
@@ -286,7 +291,7 @@ test('a PR reviewed only after it was merged says so, apart from "no recorded re
   assert.ok(page.includes('#71 was reviewed only after it was merged: two review rounds, none before.'));
   assert.ok(!page.includes('#71 has no recorded review round.') && !page.includes('#71 needed'));
   assert.ok(page.includes('#79 has no recorded review round.'), 'zero records keeps its own sentence');
-  assert.match(leadText(late), /, seven went through at least one recorded automated review round before they were merged; one was reviewed only after it was merged; one has no recorded review round; /);
+  assert.ok(leadText(late).includes(`, ${w(N - 2)} went through at least one recorded automated review round before they were merged; one was reviewed only after it was merged; one has no recorded review round; `));
   const mixed = clone();
   const second = mixed.records.filter(r => r.kind === 'review' && r.pr === 71)[1];
   second.at = after;
@@ -314,16 +319,96 @@ test('only a successful deploy is "published"; a failed one renders its real sta
   const d79 = failed.records.find(r => r.kind === 'deploy' && r.pr === 79);
   d79.state = 'failure';
   failed.telemetry = telemetryOf(failed);
-  assert.equal(failed.telemetry.totals.deploys, 8);
+  assert.equal(failed.telemetry.totals.deploys, N - 1);
   const page = renderWith(failed)['labs/agent-space/index.html'];
   const li = page.slice(page.indexOf(`data-source="${d79.id}"`)).split('</li>')[0];
   assert.match(li, /Not published: the Pages deploy failed\./);
   assert.doesNotMatch(li, /Published to this site/);
-  assert.match(page, /eight deploys published to this site and one deploy that did not publish\./);
+  assert.ok(page.includes(`${w(N - 1)} deploys published to this site and one deploy that did not publish.`));
   const stale = clone();
   stale.records.find(r => r.kind === 'deploy' && r.pr === 79).state = 'cancelled';
   assert.match(deliveryProblems(stale).join('\n'), /telemetry: differs/, 'counting a cancelled deploy as published is refused');
   const wrongCommit = clone();
   wrongCommit.records.find(r => r.kind === 'deploy' && r.pr === 79).ref = wrongCommit.records.find(r => r.kind === 'landing' && r.pr === 78).ref;
   assert.match(deliveryProblems(wrongCommit).join('\n'), /is not of #79's merge commit/);
+});
+
+// "Beyond this site" (WO-NOTHEATRE-03b): the private repositories, anonymous.
+const AGG = [
+  { label: 'repo-0a1b2c3d4e5f', prCount: 12, ciPassPercent: 83, reviewRounds: 19, medianMinutesToLand: 47 },
+  { label: 'repo-f0e1d2c3b4a5', prCount: 5, ciPassPercent: 100, reviewRounds: 6, medianMinutesToLand: 22 },
+];
+const withAgg = (aggregates = AGG) => { const r = clone(); r.aggregates = aggregates.map(a => ({ ...a })); return r; };
+const panelOf = html => html.slice(html.indexOf('<div class="delivery-aggregates"'), html.indexOf('</div>', html.indexOf('<div class="delivery-aggregates"')) + 6);
+
+test('the panel shows one row per aggregate with exactly its four figures, no link, under the timeline', () => {
+  const html = renderDelivery(withAgg());
+  const panel = panelOf(html);
+  assert.ok(html.indexOf('delivery-aggregates') > html.indexOf('delivery-timeline'), 'the panel comes after the timeline');
+  assert.match(panel, new RegExp(COPY.aggregatesTitle));
+  for (const a of AGG) {
+    const row = panel.match(new RegExp(`<tr data-aggregate="${a.label}">([\\s\\S]*?)</tr>`))[1];
+    for (const k of ['prCount', 'ciPassPercent', 'reviewRounds', 'medianMinutesToLand']) assert.match(row, new RegExp(`data-figure="${k}">${a[k]}<`));
+  }
+  assert.doesNotMatch(panel, /<a\b/);
+  assert.deepEqual(aggregateProblems(html, withAgg()), []);
+  assert.deepEqual(renderedProblems(html, withAgg()), []);
+  const { since, until } = aggregateWindow(record);
+  assert.equal(since, record.records.filter(r => r.kind === 'pr').map(r => r.at).sort()[0]);
+  assert.equal(until, record.generatedFrom.ghFetchedAt);
+});
+
+test('the panel is held to the record: a changed figure, a missing, extra or doubled row, or a link is refused', () => {
+  const rec = withAgg(), html = renderDelivery(rec);
+  assert.match(aggregateProblems(html.replace('data-figure="ciPassPercent">83<', 'data-figure="ciPassPercent">93<'), rec).join('\n'), /ciPassPercent shows 93, the record says 83/);
+  const row = html.match(/<tr data-aggregate="repo-0a1b2c3d4e5f">[\s\S]*?<\/tr>/)[0];
+  assert.match(aggregateProblems(html.replace(row, ''), rec).join('\n'), /rendered 0 times/);
+  assert.match(aggregateProblems(html.replace(row, row + row), rec).join('\n'), /rendered 2 times/);
+  assert.match(aggregateProblems(html.replace(row, row + row.replaceAll('repo-0a1b2c3d4e5f', 'repo-999999abcdef')), rec).join('\n'), /no such aggregate/);
+  assert.match(aggregateProblems(html.replace('<h3>Beyond', '<h3><a href="https://example.com">x</a>Beyond'), rec).join('\n'), /links somewhere/);
+  assert.match(aggregateProblems(html.replace('data-aggregate="repo-0a1b2c3d4e5f"', 'data-aggregate="secret-name"'), rec).join('\n'), /not an anonymous label/);
+  assert.match(aggregateProblems(html.replace(/<div class="delivery-aggregates"[\s\S]*?<\/div>/, ''), rec).join('\n'), /panel is missing/);
+});
+
+test('the panel cannot be padded: a doubled cell, a changed visible label, a second panel or a stray row is refused', () => {
+  const rec = withAgg(), html = renderDelivery(rec);
+  const panel = html.match(/<div class="delivery-aggregates"[\s\S]*?<\/div>/)[0];
+  // A second cell for the same figure: the last one would win in a map, the page would show both.
+  const doubled = html.replace('<td data-figure="prCount">', '<td data-figure="prCount">999</td><td data-figure="prCount">');
+  assert.match(aggregateProblems(doubled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The label a reader sees, changed while the attribute keeps the valid one.
+  const relabelled = html.replace('<code>repo-0a1b2c3d4e5f</code>', '<code>secret-name</code>');
+  assert.match(aggregateProblems(relabelled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The whole panel twice.
+  const twice = html.replace(panel, panel + panel);
+  const problems = aggregateProblems(twice, rec).join('\n');
+  assert.match(problems, /panel appears 2 times, not once/);
+  assert.match(problems, /aggregate rows on the page, not the record's/);
+  // An aggregate row outside the panel.
+  const row = html.match(/<tr data-aggregate="repo-0a1b2c3d4e5f">[\s\S]*?<\/tr>/)[0];
+  const stray = html.replace('<p class="delivery-cursor', `<table><tbody>${row}</tbody></table><p class="delivery-cursor`);
+  assert.match(aggregateProblems(stray, rec).join('\n'), /aggregate rows on the page, not the record's/);
+  // And the page's own words say the label holds only while its key is kept.
+  assert.match(panel, /only while the private key behind it is kept/);
+});
+
+test('with no aggregate the panel says so honestly, and still names its window', () => {
+  const html = renderDelivery(withAgg([]));
+  const panel = panelOf(html);
+  assert.ok(panel.includes(COPY.aggregatesEmpty));
+  assert.match(panel, /Window: /);
+  assert.doesNotMatch(panel, /<table/);
+  assert.match(aggregateProblems(html.replace(COPY.aggregatesEmpty, ''), withAgg([])).join('\n'), /does not say so/);
+});
+
+test('a label that is not repo- plus 12 hex is refused by the schema, and the panel copy passes the publisher\'s screen', () => {
+  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'repo-odin-labs' }])).join('\n'), /aggregates\/0\/label/);
+  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'odin-command-center' }])).join('\n'), /aggregates\/0\/label/);
+  assert.deepEqual(deliveryProblems(withAgg()), []);
+  assert.doesNotThrow(() => renderAggregates(withAgg()));
+});
+
+test('the committed record\'s aggregates, if any, render on the real page and reconcile', () => {
+  assert.deepEqual(aggregateProblems(section, record), []);
+  for (const a of record.aggregates) assert.match(a.label, /^repo-[0-9a-f]{12}$/);
 });

@@ -1,0 +1,14 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "label": "Lab 03",
+ "title": "Failover",
+ "question": "When the database server a company writes to fails, which keeps the company's writes better: MongoDB or PostgreSQL?",
+ "how": "We stop the primary in the middle of a working session, on purpose, and check which acknowledged writes are still there afterwards. Each side's advocate wrote down what they expect before anything ran.",
+ "experiment": "failover",
+ "status": "Pre-registered, not yet run",
+ "links": [
+  { "label": "The pre-registration (EXP 021)", "href": "journal/failover-pre-registration.html" },
+  { "label": "Amendment 01: how it will be run", "href": "data/failover/amendment-01.json" }
+ ]
+}

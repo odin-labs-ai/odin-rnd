@@ -33,6 +33,11 @@ export const copies = [
   { id: 'EXP 019', record: 'experiments/router-arm-fresh/preregistration.json', pin: 'experiments/router-arm-fresh/preregistration.sha256', site: 'site/data/router-arm-fresh/preregistration.json' },
   { id: 'EXP 019', record: 'experiments/router-arm-fresh/results.json', pin: null, site: 'site/data/router-arm-fresh/results.json' },
   { id: 'EXP 020', record: 'experiments/mongodb-home-ground/preregistration.json', pin: 'experiments/mongodb-home-ground/preregistration.sha256', site: 'site/data/mongodb-home-ground/preregistration.json' },
+  { id: 'EXP 020', record: 'experiments/mongodb-home-ground/amendment-01/amendment.json', pin: 'experiments/mongodb-home-ground/amendment-01/amendment.sha256', site: 'site/data/mongodb-home-ground/amendment-01.json' },
+  { id: 'EXP 020', record: 'experiments/mongodb-home-ground/amendment-02/amendment.json', pin: 'experiments/mongodb-home-ground/amendment-02/amendment.sha256', site: 'site/data/mongodb-home-ground/amendment-02.json' },
+  { id: 'EXP 020', record: 'experiments/mongodb-home-ground/amendment-03/amendment.json', pin: 'experiments/mongodb-home-ground/amendment-03/amendment.sha256', site: 'site/data/mongodb-home-ground/amendment-03.json' },
+  { id: 'EXP 021', record: 'experiments/failover/preregistration.json', pin: 'experiments/failover/preregistration.sha256', site: 'site/data/failover/preregistration.json' },
+  { id: 'EXP 021', record: 'experiments/failover/amendment-01/amendment.json', pin: 'experiments/failover/amendment-01/amendment.sha256', site: 'site/data/failover/amendment-01.json' },
 ];
 
 /** The first token of a `sha256sum`-style pin file. */
