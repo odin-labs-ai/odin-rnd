@@ -123,7 +123,7 @@ export function renderFitMap(record, up = '../') {
   const short = sha => `<code title="${escape(sha)}">${escape(sha.slice(0, 8))}</code>`;
   const tables = record.labs.map((lab, i) => {
     const title = lab.page ? `<a href="${href(lab.page)}">${escape(lab.lab)}: ${escape(lab.title)}</a>` : `${escape(lab.lab)}: ${escape(lab.title)}`;
-    const recordLine = `${lab.record.kind === 'design' ? 'Design' : 'Pre-registration'} at commit ${short(lab.record.commit)}${lab.record.sha256 ? `, sha256 ${short(lab.record.sha256)}` : ''}${lab.published ? `; published here in pull request #${escape(lab.published.pr)}` : '; not yet published here'}.`;
+    const recordLine = `${lab.record.kind === 'design' ? 'Design' : 'Pre-registration'} at commit ${short(lab.record.commit)}${lab.record.sha256 ? `, sha256 ${short(lab.record.sha256)}` : ''}${lab.published ? `; published here in pull request #${escape(lab.published.pr)}` : lab.page ? '' : '; not yet published here'}.`;
     const rows = lab.cells.map(cell => {
       const verdict = cell.verdict === null ? '<span class="fit-pending">Pending</span>'
         : `<a class="fit-verdict" href="${href(cell.result)}">${escape(VERDICT_TEXT[cell.verdict])}</a>`;

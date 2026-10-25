@@ -16,8 +16,8 @@
    {
     "lab": "Lab 02 (v1.1)",
     "as": "Lab 03",
-    "title": "Failover: what happens when the primary goes away",
-    "page": null
+    "title": "Failover: kill the database mid-session, does anyone notice?",
+    "page": "journal/failover-pre-registration.html"
    },
    {
     "lab": "Lab 03",
@@ -127,9 +127,9 @@
   },
   {
    "lab": "Lab 03",
-   "title": "Failover: what happens when the primary goes away",
+   "title": "Failover: kill the database mid-session, does anyone notice?",
    "stage": "frozen, not yet published",
-   "page": null,
+   "page": "journal/failover-pre-registration.html",
    "published": null,
    "record": {
     "kind": "pre-registration",

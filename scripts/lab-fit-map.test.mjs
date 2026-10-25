@@ -54,7 +54,8 @@ test('the committed fit map passes the build gate and shows every cell pending, 
   assert.match(html, /<th scope="col">Predictions, frozen before the run<\/th>/);
   assert.match(html, /<li><span>PostgreSQL’s advocate:<\/span> both-fit, leaning postgres-fits<\/li>/);
   assert.match(html, /<a href="\.\.\/journal\/mongodb-home-ground-pre-registration\.html">EXP 020: /);
-  assert.match(html, /<h3 id="fit-1">Lab 03: [^<]+<\/h3>/, 'a lab without a public page is a plain label');
+  assert.match(html, /<a href="\.\.\/journal\/failover-pre-registration\.html">Lab 03: /, 'Lab 03 links its public pre-registration (EXP 021)');
+  assert.match(html, /<h3 id="fit-2">Lab 04: [^<]+<\/h3>/, 'a lab without a public page is a plain label');
   const raw = readFileSync('site/data/labs/fit-map.json', 'utf8');
   for (const leak of ['.ai/', 'PREREG', 'DESIGN.md', 'RESULT.json', 'lab02-', '"dir"', 'odin_rnd', 'this_pc', 'Mac']) assert.ok(!raw.includes(leak) && !html.includes(leak), leak);
 });
