@@ -50,6 +50,20 @@
      "href": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/schemas/odin-dispatch-v1.schema.json"
     }
    ]
+  },
+  {
+   "title": "The numbers are measured, and say how.",
+   "text": "The answer times above come from a live session in the space, shown beside a note on what the timing includes. Each engine figure names the claims row and commit it comes from, and a figure measured on a work branch says so.",
+   "links": [
+    {
+     "label": "Answer time per agent",
+     "href": "#space-measured"
+    },
+    {
+     "label": "The engine underneath",
+     "href": "#engine"
+    }
+   ]
   }
  ]
 }

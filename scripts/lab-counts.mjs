@@ -6,8 +6,8 @@
 // Every number names its source, "data/labs/agent-space/<record>.json#<JSON pointer>", and the build recomputes it from
 // there: with derive "value" (the default) the pointer must resolve to that number; with derive "count" it must
 // resolve to a list whose length (or, with `where`, the count of its items whose fields equal `where`'s) is that
-// number. A number without a source, a source that is not a committed lab record (SOURCE_RECORD: a published dispatch
-// or the films record, never this file or a page), or a value its source does not give fails the build, every reason
+// number. A number without a source, a source that is not a committed lab record (SOURCE_RECORD: a published dispatch,
+// the films record or the vendored telemetry pack, never this file or a page), or a value its source does not give fails the build, every reason
 // listed. Its words pass the dispatch publisher's screen. A new record kind widens SOURCE_RECORD in its own reviewed change.
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -17,8 +17,8 @@ import { format, resolvePointer } from './number-provenance.mjs';
 
 export const COUNTS_FILE = 'data/labs/agent-space/counts.json';
 export const COUNTS_SCHEMA_FILE = new URL('./schemas/odin-lab-counts.schema.json', import.meta.url);
-/** The only records a number may come from: a published dispatch, or the films record (both gated by their own checks). */
-export const SOURCE_RECORD = /^data\/labs\/agent-space\/(?:dispatches\/session-[a-z0-9-]+|films)\.json$/;
+/** The only records a number may come from: a published dispatch, the films record, or the vendored telemetry pack (each gated by its own check). */
+export const SOURCE_RECORD = /^data\/labs\/agent-space\/(?:dispatches\/session-[a-z0-9-]+|films|telemetry)\.json$/;
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const isPrimitive = v => v === null || ['string', 'number', 'boolean'].includes(typeof v);
@@ -28,7 +28,7 @@ export function sourceValue(bar, root) {
   const hash = bar.source.indexOf('#');
   const file = hash < 0 ? bar.source : bar.source.slice(0, hash), pointer = hash < 0 ? null : bar.source.slice(hash + 1);
   if (pointer === null) return { problem: 'the source names no JSON pointer (data/labs/agent-space/<record>.json#/<pointer>)' };
-  if (!SOURCE_RECORD.test(file)) return { problem: `${file} is not a committed lab record (a published dispatch or the films record)` };
+  if (!SOURCE_RECORD.test(file)) return { problem: `${file} is not a committed lab record (a published dispatch, the films record or the telemetry pack)` };
   if (!existsSync(join(root, file))) return { problem: `${file} is missing` };
   let target;
   try { target = resolvePointer(JSON.parse(readFileSync(join(root, file), 'utf8')), pointer); } catch (error) { return { problem: `${file} is not JSON (${error.message})` }; }

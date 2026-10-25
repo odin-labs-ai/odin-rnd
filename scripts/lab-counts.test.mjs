@@ -34,11 +34,21 @@ test('a number without a source fails the build', () => {
 });
 
 test('a source that is not a committed lab record is refused: not this file, a page, a pre-registration or another folder', () => {
-  for (const source of [`${COUNTS_FILE}#/panels/0/bars/0/value`, 'data/labs/agent-space/telemetry.json#/rule', 'labs/agent-space/index.html#/x', 'data/review-frontier/preregistration.json#/n',
+  for (const source of [`${COUNTS_FILE}#/panels/0/bars/0/value`, 'labs/agent-space/index.html#/x', 'data/review-frontier/preregistration.json#/n',
     'data/labs/agent-space.json#/since', 'data/labs/agent-space/dispatches/../telemetry.json#/x', 'data/labs/agent-space/dispatches/session-2026-01-01.json#/questions']) {
     const record = withBar(bar => { bar.source = source; bar.derive = 'value'; });
     assert.match(problems(record), /bars\/0\/source: .*(is not a committed lab record|is missing)/, source);
   }
+});
+
+test('the vendored telemetry pack is an allowed source: its numbers are recomputed like any other', () => {
+  const pack = 'data/labs/agent-space/telemetry.json';
+  const answered = JSON.parse(readFileSync(`site/${pack}`, 'utf8')).agent_space.per_agent.Odin.answered;
+  const bar = { label: 'Odin answered', value: answered, source: `${pack}#/agent_space/per_agent/Odin/answered` };
+  assert.equal(sourceValue(bar, 'site').value, answered);
+  assert.equal(problems(withBar(b => Object.assign(b, bar, { derive: 'value' }))), '');
+  assert.match(problems(withBar(b => Object.assign(b, bar, { derive: 'value', value: answered + 1 }))), /is not what its source gives/);
+  assert.match(problems(withBar(b => Object.assign(b, bar, { derive: 'value', source: `${pack}#/rule` }))), /is not a number/);
 });
 
 test('a value its source does not give is refused, as are a pointer that does not resolve and a misused derive', () => {
