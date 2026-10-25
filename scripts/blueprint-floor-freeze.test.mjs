@@ -157,11 +157,15 @@ function refusesBoth(prereg, git, repo, re, label) {
   assert.throws(() => gitBaseChecks(prereg, git, repo), re, label);
 }
 
-/** A scratch repository holding a byte-identical copy of the base tree at the same path (its tree id is the pinned one). */
+/** A scratch repository holding a byte-identical copy of the base tree at the same path (its tree id is the pinned one).
+ *  Auto maintenance is off: from git 2.55 the `git maintenance run --auto --detach` that `git commit` starts keeps
+ *  .git/objects/maintenance.lock in a detached child after the commit returns, so a test that then copies or edits
+ *  .git/objects races that child's unlink (cpSync ENOENT on the store, seen in CI). The repository is then still only
+ *  what the test wrote. */
 function baseRepo() {
   const repo = scratchDir('bf-base-repo');
   const git = gitIn(repo);
-  for (const a of [['init', '-q'], ['config', 'user.email', 'b@example.invalid'], ['config', 'user.name', 'b'], ['config', 'commit.gpgsign', 'false']]) git(a);
+  for (const a of [['init', '-q'], ['config', 'user.email', 'b@example.invalid'], ['config', 'user.name', 'b'], ['config', 'commit.gpgsign', 'false'], ['config', 'maintenance.auto', 'false'], ['config', 'gc.auto', '0']]) git(a);
   cpSync(join(REPO_ROOT, BASE_DIR), join(repo, BASE_DIR), { recursive: true });
   git(['add', '--', BASE_DIR]); git(['commit', '-q', '-m', 'base']);
   return { repo, git };
