@@ -80,7 +80,7 @@
       ]
     }
   ],
-  "remainingLean": "Both advocates note, and accept, that choosing the variant on seed 1 and comparing on seed 1 leans slightly toward PostgreSQL; seed 2 is a test on data the choice never saw.",
+  "remainingLean": "Both advocates note, and accept, that choosing the variant on seed 1 and comparing on seed 1 leans slightly toward PostgreSQL, and both call seed 2 out-of-sample. That holds for seed 2's lag values, which never enter the choice; seed 2's gate outcomes do enter it, since a candidate must pass every counted cell on both seeds.",
   "unchanged": "Amendment 02's primary rule (one PostgreSQL variant per scale, chosen once among the variants that pass every counted cell on both seeds, by the lowest seed-1 median of the per-cell lag p95, used for every pair, the reproduction and the component tie-break) and its secondary analysis label stand. The frozen record and amendments 01 and 02 stay byte-identical; this amendment is where their changed parts are superseded. S1, S3 and S4 are not affected.",
   "notBefore": "S2's verdict is computed only after this amendment is merged to main of odin-labs-ai/odin-rnd."
 }
