@@ -160,7 +160,7 @@
             "fixNeededRounds": { "type": "integer", "minimum": 0 },
             "ciRuns": { "type": "integer", "minimum": 0 },
             "ciReruns": { "type": "integer", "minimum": 0 },
-            "deploys": { "type": "integer", "minimum": 0 },
+            "deploys": { "description": "Successful Pages deploys only: a deploy that failed, was cancelled, skipped or timed out did not publish and is not counted.", "type": "integer", "minimum": 0 },
             "medianMinutesToLand": { "type": "integer", "minimum": 0 }
           }
         }

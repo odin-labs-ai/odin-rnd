@@ -70,7 +70,7 @@ export function telemetryOf(record) {
     perPr,
     totals: {
       prs: perPr.length, reviewRounds: sum('reviewRounds'), fixNeededRounds: sum('fixNeededRounds'),
-      ciRuns: sum('ciRuns'), ciReruns: sum('ciReruns'), deploys: record.records.filter(r => r.kind === 'deploy').length,
+      ciRuns: sum('ciRuns'), ciReruns: sum('ciReruns'), deploys: record.records.filter(r => r.kind === 'deploy' && r.state === 'success').length,
       medianMinutesToLand: median(perPr.map(row => row.minutesToLand)),
     },
   };
@@ -111,6 +111,18 @@ export function deliveryProblems(record, where = DELIVERY_FILE) {
     }
   }
   for (const r of record.records) if (!prs.has(r.pr)) problems.push(`${where}: record ${r.id} is for #${r.pr}, which is not in the PR list`);
+  // A review row backs exactly one PR, and the head it judged is a head of that PR (its own head or one CI ran on).
+  const rowUse = new Map();
+  for (const r of record.records.filter(r => r.kind === 'review')) {
+    if (rowUse.has(r.source)) problems.push(`${where}: review row ${r.source} backs both ${rowUse.get(r.source)} and ${r.id}`);
+    rowUse.set(r.source, r.id);
+    const heads = new Set(record.records.filter(x => x.pr === r.pr && (x.kind === 'pr' || x.kind === 'ci')).map(x => x.ref));
+    if (!heads.has(r.ref)) problems.push(`${where}: review ${r.id} judged ${r.ref}, which is not a head of #${r.pr} (its own head or one CI ran on)`);
+  }
+  // A deploy is the merge commit's deploy.
+  for (const r of record.records.filter(r => r.kind === 'deploy')) {
+    if (r.ref !== record.records.find(x => x.kind === 'landing' && x.pr === r.pr)?.ref) problems.push(`${where}: deploy ${r.id} is not of #${r.pr}'s merge commit`);
+  }
   const sorted = [...prs].sort((a, b) => a - b);
   if (record.window.fromPr > sorted[0] || record.window.toPr !== sorted.at(-1)) problems.push(`${where}: the window does not start at or before the first merged PR and end at the last`);
   // Every number in the window is a merged PR in the list or one of otherNumbers, never both, never neither.
@@ -156,13 +168,15 @@ export function leadText(record) {
   const counted = kind => record.records.filter(r => r.kind === kind && r.at <= landedAt(r.pr));
   const before = kind => new Set(counted(kind).map(r => r.pr)).size;
   const n = record.prs.length, reviewed = before('review'), checked = before('ci');
-  const unreviewed = n - reviewed, unchecked = n - checked;
+  const anyReview = new Set(record.records.filter(r => r.kind === 'review').map(r => r.pr)).size;
+  const afterOnly = anyReview - reviewed, unreviewed = n - anyReview, unchecked = n - checked;
   // "automated" only when every counted round says so; otherwise no qualifier at all.
   const rounds = counted('review');
   const kind = rounds.length && rounds.every(r => r.reviewer === 'automated') ? 'automated ' : '';
   const others = record.window.otherNumbers.length;
   const scope = `Of the ${count(n, 'pull request')} merged between #${record.window.fromPr} and #${record.window.toPr} (${others ? `the other ${count(others, 'number', 'numbers')} in that range ${others === 1 ? 'is an issue or a pull request' : 'are issues or pull requests'} that ${others === 1 ? 'was' : 'were'} not merged` : 'every number in that range'})`;
   const parts = [`${scope}, ${WORDS[reviewed] ?? reviewed} went through at least one recorded ${kind}review round before ${reviewed === 1 ? 'it was' : 'they were'} merged`];
+  if (afterOnly) parts.push(`${WORDS[afterOnly] ?? afterOnly} ${afterOnly === 1 ? 'was' : 'were'} reviewed only after ${afterOnly === 1 ? 'it was' : 'they were'} merged`);
   if (unreviewed) parts.push(`${WORDS[unreviewed] ?? unreviewed} ${unreviewed === 1 ? 'has' : 'have'} no recorded review round`);
   const ci = unchecked ? `${WORDS[checked] ?? checked} had CI runs recorded before merging, and ${WORDS[unchecked] ?? unchecked} did not.` : `every one had CI runs recorded before merging.`;
   return `This site is built in the open, one pull request at a time. ${parts.join('; ')}; ${ci}`;
@@ -183,12 +197,17 @@ const link = (r, body, cls = '') => `<a${cls ? ` class="${cls}"` : ''} href="${e
 /** One plain sentence about a PR, from its records only. */
 export function prSentence(pr, rows, telemetry) {
   const t = telemetry.perPr.find(row => row.pr === pr);
-  const reviews = rows.filter(r => r.kind === 'review');
-  const last = reviews.at(-1);
+  const landed = rows.find(r => r.kind === 'landing').at;
+  const reviews = rows.filter(r => r.kind === 'review').sort((a, b) => a.at.localeCompare(b.at));
+  // Rounds recorded after the merge did not gate it, so they are told apart and never counted as review before merging.
+  const before = reviews.filter(r => r.at <= landed), after = reviews.length - before.length;
+  const last = before.at(-1);
   let review;
   if (!reviews.length) review = `#${pr} has no recorded review round.`;
-  else if (reviews.length === 1) review = last.state === 'SHIP' ? `#${pr} was approved on its first review round.` : `#${pr} had one review round, and it sent the change back.`;
-  else review = last.state === 'SHIP' ? `#${pr} needed ${count(reviews.length, 'review round')} before it shipped — here is each one.` : `#${pr} had ${count(reviews.length, 'review round')}; the last one sent it back.`;
+  else if (!before.length) review = `#${pr} was reviewed only after it was merged: ${count(after, 'review round')}, none before.`;
+  else if (before.length === 1) review = last.state === 'SHIP' ? `#${pr} was approved on its first review round.` : `#${pr} had one review round before it was merged, and it sent the change back.`;
+  else review = last.state === 'SHIP' ? `#${pr} needed ${count(before.length, 'review round')} before it shipped — here is each one.` : `#${pr} had ${count(before.length, 'review round')} before it was merged; the last one sent it back.`;
+  if (before.length && after) { const more = count(after, 'more review round'); review += ` ${more[0].toUpperCase()}${more.slice(1)} came after it was merged.`; }
   const ci = t.ciRuns ? ` CI ran ${count(t.ciRuns, 'time')}${t.ciReruns ? `, with ${count(t.ciReruns, 'rerun')}` : ''}.` : ' No CI run is recorded for it.';
   return `${review}${ci} It landed ${duration(t.minutesToLand)} after it was opened.`;
 }
@@ -204,7 +223,8 @@ function prTimeline(pr, record, telemetry) {
     }
     if (r.kind === 'ci') return `<li class="delivery-event delivery-ci" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${escape(r.workflow)} ${CONCLUSION[r.state] ?? escape(r.state)} on <code>${short(r.ref)}</code>${r.attempt > 1 ? ` (rerun, attempt ${r.attempt})` : ''}. ${link(r, `CI run ${escape(r.source.match(/runs\/(\d+)\//)[1])}, attempt ${r.attempt}`)}</span></li>`;
     if (r.kind === 'landing') return `<li class="delivery-event delivery-landing" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span><strong>Merged</strong> as ${link(r, `<code>${short(r.ref)}</code>`)}.</span></li>`;
-    return `<li class="delivery-event delivery-deploy" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>Published to this site: the deploy ${CONCLUSION[r.state] ?? escape(r.state)}. ${link(r, `Pages deploy of ${short(r.ref)}`)}</span></li>`;
+    const deployed = r.state === 'success' ? 'Published to this site.' : `Not published: the Pages deploy ${CONCLUSION[r.state] ?? escape(r.state)}.`;
+    return `<li class="delivery-event delivery-deploy${r.state === 'success' ? '' : ' delivery-deploy-not'}" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${deployed} ${link(r, `Pages deploy of ${short(r.ref)}`)}</span></li>`;
   });
   return `<article class="delivery-pr" id="delivery-pr-${pr}" data-source="${escape(opened.id)}"><h4>${link(opened, `#${pr}`)} ${escape(opened.title)}</h4><p class="delivery-sentence">${escape(prSentence(pr, rows, telemetry))}</p><ol class="delivery-events">${events.join('')}</ol></article>`;
 }
@@ -261,7 +281,8 @@ export function renderDelivery(record) {
   if (copyProblems.length) throw new Error(`Delivery copy refused:\n  ${copyProblems.join('\n  ')}`);
   const telemetry = record.telemetry, t = telemetry.totals;
   const prs = [...record.prs].sort((a, b) => b - a);
-  const said = `${count(t.prs, 'pull request')} merged between #${record.window.fromPr} and #${record.window.toPr}: ${count(t.reviewRounds, 'review round')}, of which ${count(t.fixNeededRounds, 'sent the change back', 'sent the change back')}; ${count(t.ciRuns, 'CI run')} with ${count(t.ciReruns, 'rerun')}; ${count(t.deploys, 'deploy')} to this site. The median change landed ${duration(t.medianMinutesToLand)} after it was opened.`;
+  const notPublished = record.records.filter(r => r.kind === 'deploy' && r.state !== 'success').length;
+  const said = `${count(t.prs, 'pull request')} merged between #${record.window.fromPr} and #${record.window.toPr}: ${count(t.reviewRounds, 'review round')}, of which ${count(t.fixNeededRounds, 'sent the change back', 'sent the change back')}; ${count(t.ciRuns, 'CI run')} with ${count(t.ciReruns, 'rerun')}; ${count(t.deploys, 'deploy')} published to this site${notPublished ? ` and ${count(notPublished, 'deploy')} that did not publish` : ''}. The median change landed ${duration(t.medianMinutesToLand)} after it was opened.`;
   const summary = said[0].toUpperCase() + said.slice(1);
   const sentences = prs.map(pr => prSentence(pr, record.records.filter(r => r.pr === pr), telemetry));
   const lead = leadText(record);

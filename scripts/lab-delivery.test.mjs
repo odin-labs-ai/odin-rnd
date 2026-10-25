@@ -275,3 +275,55 @@ test('every CI and deploy link names what it opens; no two CI links share a name
   }
   assert.equal(new Set(names).size, names.length, 'link names are distinct');
 });
+
+test('a PR reviewed only after it was merged says so, apart from "no recorded review round", in its sentence and the lead', () => {
+  const late = clone();
+  const land71 = late.records.find(r => r.kind === 'landing' && r.pr === 71).at;
+  const after = new Date(Date.parse(land71) + 3600_000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  for (const r of late.records.filter(r => r.kind === 'review' && r.pr === 71)) r.at = after;
+  assert.deepEqual(deliveryProblems(late), []);
+  const page = renderWith(late)['labs/agent-space/index.html'];
+  assert.ok(page.includes('#71 was reviewed only after it was merged: two review rounds, none before.'));
+  assert.ok(!page.includes('#71 has no recorded review round.') && !page.includes('#71 needed'));
+  assert.ok(page.includes('#79 has no recorded review round.'), 'zero records keeps its own sentence');
+  assert.match(leadText(late), /, seven went through at least one recorded automated review round before they were merged; one was reviewed only after it was merged; one has no recorded review round; /);
+  const mixed = clone();
+  const second = mixed.records.filter(r => r.kind === 'review' && r.pr === 71)[1];
+  second.at = after;
+  const text = renderWith(mixed)['labs/agent-space/index.html'];
+  assert.ok(text.includes('#71 had one review round before it was merged, and it sent the change back. One more review round came after it was merged.'));
+});
+
+test('a review row backs exactly one PR, and judged a head of that PR', () => {
+  const reused = clone();
+  const row71 = reused.records.find(r => r.kind === 'review' && r.pr === 71);
+  const head72 = reused.records.find(r => r.kind === 'pr' && r.pr === 72).ref;
+  reused.records.push({ ...row71, id: `pr-72/review/${row71.source.replace('verdict-row:', '')}`, pr: 72, ref: head72 });
+  reused.telemetry = telemetryOf(reused);
+  assert.match(deliveryProblems(reused).join('\n'), /review row verdict-row:[0-9a-f-]+ backs both pr-71\/review\/[0-9a-f-]+ and pr-72\/review\//);
+  const foreign = clone();
+  foreign.records.find(r => r.kind === 'review' && r.pr === 71).ref = head72;
+  assert.match(deliveryProblems(foreign).join('\n'), /judged [0-9a-f]{40}, which is not a head of #71/);
+  assert.throws(() => renderWith(foreign), /Delivery record refused/);
+});
+
+test('only a successful deploy is "published"; a failed one renders its real state and is not counted', () => {
+  assert.ok(record.records.filter(r => r.kind === 'deploy').every(r => r.state === 'success'));
+  assert.equal(record.telemetry.totals.deploys, record.records.filter(r => r.kind === 'deploy' && r.state === 'success').length);
+  const failed = clone();
+  const d79 = failed.records.find(r => r.kind === 'deploy' && r.pr === 79);
+  d79.state = 'failure';
+  failed.telemetry = telemetryOf(failed);
+  assert.equal(failed.telemetry.totals.deploys, 8);
+  const page = renderWith(failed)['labs/agent-space/index.html'];
+  const li = page.slice(page.indexOf(`data-source="${d79.id}"`)).split('</li>')[0];
+  assert.match(li, /Not published: the Pages deploy failed\./);
+  assert.doesNotMatch(li, /Published to this site/);
+  assert.match(page, /eight deploys published to this site and one deploy that did not publish\./);
+  const stale = clone();
+  stale.records.find(r => r.kind === 'deploy' && r.pr === 79).state = 'cancelled';
+  assert.match(deliveryProblems(stale).join('\n'), /telemetry: differs/, 'counting a cancelled deploy as published is refused');
+  const wrongCommit = clone();
+  wrongCommit.records.find(r => r.kind === 'deploy' && r.pr === 79).ref = wrongCommit.records.find(r => r.kind === 'landing' && r.pr === 78).ref;
+  assert.match(deliveryProblems(wrongCommit).join('\n'), /is not of #79's merge commit/);
+});
