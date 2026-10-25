@@ -1,0 +1,111 @@
+{
+ "format": "odin-lab-dispatch",
+ "version": 1,
+ "lab": "agent-space",
+ "session": "session-2026-10-25-b",
+ "date": "2026-10-25",
+ "clip": {
+  "src": "assets/labs/agent-space/session-2026-10-25-b/clip.webm",
+  "bytes": 2092507,
+  "mime": "video/webm;codecs=vp9",
+  "seconds": 49
+ },
+ "poster": "assets/labs/agent-space/session-2026-10-25-b/poster.png",
+ "stills": [
+  "assets/labs/agent-space/session-2026-10-25-b/stills/01-s1-q1.png",
+  "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png",
+  "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3.png",
+  "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png"
+ ],
+ "questions": [
+  {
+   "id": "s1-q1",
+   "to": "Odin",
+   "text": "Who is here right now, and what is everyone doing?",
+   "followUp": false,
+   "answer": "Here is what I see: 4 of your agents are here: Atlas (Knowledge agent), Pulse (Status agent), Vega (Sales agent), Juno (Support agent); Atlas is reading in the library, Pulse is watching the ops screens, Vega is preparing a proposal in the meeting pavilion, Juno is at the help desk; 1 visitor here: Follower; the home (Odin Campus) stands with 22 structures on the owned ground h",
+   "why": "I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec.",
+   "source": "world-checked",
+   "evidence": "odin-381dbb-1"
+  },
+  {
+   "id": "s1-q2",
+   "to": "Atlas",
+   "text": "What should I check before I trust one of your answers?",
+   "followUp": false,
+   "answer": "Every answer here is an evidence record: a short why and its source, world-checked, wiki, tool or model. The lens stream carries it as a mark, and the VR client draws it as a panel over whoever answered.",
+   "why": "From my knowledge base entry 'evidence' (the evidence record format).",
+   "source": "wiki",
+   "evidence": "atlas-381dbb-1"
+  },
+  {
+   "id": "s1-q3",
+   "to": "Juno",
+   "text": "I'm new here. Where do I start?",
+   "followUp": false,
+   "answer": "Welcome! Walk with W A S D or the arrow keys, and walk up to any agent to ask it something in the chat. Odin knows what is happening here right now, Atlas answers from the company's knowledge base, and I help when something does not work. Every answer comes with a proof card: what was asked, the answer, why, and where it came from. Not sure whom to ask? Ask Odin \"who can help me with ...\" and he walks you there.",
+   "why": "From my support notes entry 'start' (moving, asking an agent, the proof card, Odin's concierge).",
+   "source": "wiki",
+   "evidence": "juno-381dbb-1"
+  },
+  {
+   "id": "s1-q4",
+   "to": "Odin",
+   "text": "How do you know?",
+   "followUp": true,
+   "answer": "How I know (world): I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec. The full evidence: evidence odin-381dbb-1. Sources: 4 of your agents are here: Atlas (Knowledge agent), Pulse (Status agent), Vega (Sales agent), Juno (Support agent); Atlas is reading in the library, Pulse is watching the ops screens, Vega is preparin",
+   "why": "I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec.",
+   "source": "world-checked",
+   "evidence": "odin-381dbb-1"
+  }
+ ],
+ "answersScreen": {
+  "by": "orchestrator-night-shift",
+  "answers": [
+   {
+    "evidence": "odin-381dbb-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-place",
+     "no-price",
+     "no-partner",
+     "stills-viewed"
+    ]
+   },
+   {
+    "evidence": "atlas-381dbb-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-place",
+     "no-price",
+     "no-partner",
+     "stills-viewed"
+    ]
+   },
+   {
+    "evidence": "juno-381dbb-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-place",
+     "no-price",
+     "no-partner",
+     "stills-viewed"
+    ]
+   }
+  ]
+ },
+ "source": {
+  "schema": "odin-dispatch-v1",
+  "schemaSha256": "ab6a19e8021056a1b61226e74901265810c36215445396c676ef62aac80f634e",
+  "manifestSha256": "c64804543374aa5320f40778b8b9830c0a7f0cf1c267d263977417d218c23a5b"
+ }
+}

@@ -53,6 +53,9 @@
    }
   },
   "proofs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^proofs/[a-z0-9-]+\\.json$"}},
+  "substitutions": {"type": "array", "description": "fields of the exported proofs replaced by their public label (dispatch.publicRecord); the internal value is not listed",
+                    "items": {"type": "object", "required": ["proof", "field", "to"], "additionalProperties": false,
+                              "properties": {"proof": {"type": "string"}, "field": {"type": "string"}, "to": {"type": "string"}}}},
   "answers_screened": {"const": false, "description": "the export never screens the answers: the site does, before publishing"},
   "note": {"type": "string"}
  }
