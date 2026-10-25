@@ -1,0 +1,27 @@
+{
+  "engine": "postgres",
+  "phase": "bootstrap",
+  "seed": "842",
+  "tenant": "a",
+  "pid": 281,
+  "negativeControls": {
+    "unscopedMemoryReadable": {
+      "value": "A-only fixture",
+      "tenant": "a"
+    },
+    "unscopedThreadReadable": {
+      "tenant": "a",
+      "answer": "A-only fixture"
+    }
+  },
+  "scopedPreferences": {
+    "a": {
+      "policy": "policy-a",
+      "tenant": "a"
+    },
+    "b": {
+      "policy": "policy-b",
+      "tenant": "b"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "engine": "mongo",
+  "phase": "resume",
+  "seed": "842",
+  "tenant": "a",
+  "pid": 459,
+  "before": {
+    "values": {
+      "tenant": "a",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-a"
+    },
+    "next": [
+      "tool"
+    ]
+  },
+  "after": {
+    "values": {
+      "tenant": "a",
+      "task": "approval",
+      "prepared": true,
+      "preference": "policy-a",
+      "effect": "recorded",
+      "answer": "a:policy-a"
+    },
+    "next": []
+  },
+  "effects": [
+    {
+      "_id": "842:a:approval",
+      "attempts": 2,
+      "effect": "recorded",
+      "tenant": "a"
+    }
+  ],
+  "historyLength": 5
+}

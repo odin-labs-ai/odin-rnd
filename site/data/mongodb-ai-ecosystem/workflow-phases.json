@@ -1,0 +1,529 @@
+{
+  "phases": [
+    {
+      "engine": "mongo",
+      "phase": "bootstrap",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "prepare",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "crash",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 73
+    },
+    {
+      "engine": "mongo",
+      "phase": "resume",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "prepare",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "crash",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 73
+    },
+    {
+      "engine": "mongo",
+      "phase": "resume",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "memory",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "bootstrap",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "prepare",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "crash",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 73
+    },
+    {
+      "engine": "postgres",
+      "phase": "resume",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "prepare",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "crash",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 73
+    },
+    {
+      "engine": "postgres",
+      "phase": "resume",
+      "seed": "841",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "memory",
+      "seed": "841",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "bootstrap",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "prepare",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "crash",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 73
+    },
+    {
+      "engine": "postgres",
+      "phase": "resume",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "prepare",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "crash",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 73
+    },
+    {
+      "engine": "postgres",
+      "phase": "resume",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "postgres",
+      "phase": "memory",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "bootstrap",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "prepare",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "crash",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 73
+    },
+    {
+      "engine": "mongo",
+      "phase": "resume",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "prepare",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "crash",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 73
+    },
+    {
+      "engine": "mongo",
+      "phase": "resume",
+      "seed": "842",
+      "tenant": "b",
+      "exit": 0
+    },
+    {
+      "engine": "mongo",
+      "phase": "memory",
+      "seed": "842",
+      "tenant": "a",
+      "exit": 0
+    }
+  ],
+  "sourceHashes": {
+    "workflow_trial.py": "3862bb16173c30b33481ae55764a3f9f067aaeb5c37ada2122dcffbbc78308d8",
+    "retrieval_trial.py": "c2293381711e93f9da1a6a24ebeea29ca4ced7cddf8ca5d4cf19ed6c2a8d5bd2",
+    "run_trial.py": "81d5f3defefa11fe4e40f9c14efafff7181360e316d02840b6376f789d2f9a39",
+    "requirements.lock": "cdf66837c26a8d89bf77ffe1e0952c0196ce74c60f379f2b157ef0786b1c83c1",
+    "Dockerfile": "37428b76aebebcd16c2a3332c5f5cfabf3a7e8b9ff91323a424481517a1f7ede"
+  },
+  "images": {
+    "mongo": {
+      "tag": "mongodb/mongodb-atlas-local:preview",
+      "id": "sha256:87e7d5b733329ad92bb14546715e3ce0e926baf83798e3be1f807f8d3c36452b",
+      "repoDigests": [
+        "mongodb/mongodb-atlas-local@sha256:ff75fd47e918952cc91094e888e8aeb7529aeb70f987b075aeef3944c9bd8014"
+      ]
+    },
+    "postgres": {
+      "tag": "pgvector/pgvector:pg17",
+      "id": "sha256:151aa1c2e849e7828ed8aef2183ae15f692cbe887d2f28921d8b44b26e154d7e",
+      "repoDigests": [
+        "pgvector/pgvector@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d"
+      ]
+    },
+    "worker": {
+      "tag": "odin-mongo-ai-probe:20261024",
+      "id": "sha256:9d7a20ec55d21bf5156e125aa54dcb628e2bb549351a19e1528f47ce1c41f87f",
+      "repoDigests": []
+    }
+  },
+  "versions": {
+    "mongo": "8.3.13",
+    "postgres": "17.11 (Debian 17.11-1.pgdg12+2)",
+    "pythonPackages": [
+      {
+        "name": "annotated-types",
+        "version": "0.8.0"
+      },
+      {
+        "name": "anyio",
+        "version": "4.15.1"
+      },
+      {
+        "name": "certifi",
+        "version": "2026.10.23"
+      },
+      {
+        "name": "charset-normalizer",
+        "version": "3.5.2"
+      },
+      {
+        "name": "distro",
+        "version": "1.9.0"
+      },
+      {
+        "name": "dnspython",
+        "version": "2.9.0"
+      },
+      {
+        "name": "h11",
+        "version": "0.16.0"
+      },
+      {
+        "name": "httpcore",
+        "version": "1.0.9"
+      },
+      {
+        "name": "httpcore2",
+        "version": "2.16.0"
+      },
+      {
+        "name": "httpx",
+        "version": "0.28.1"
+      },
+      {
+        "name": "httpx2",
+        "version": "2.16.0"
+      },
+      {
+        "name": "idna",
+        "version": "3.20"
+      },
+      {
+        "name": "jsonpatch",
+        "version": "1.36"
+      },
+      {
+        "name": "jsonpointer",
+        "version": "3.4"
+      },
+      {
+        "name": "langchain",
+        "version": "1.4.7"
+      },
+      {
+        "name": "langchain-classic",
+        "version": "1.0.8"
+      },
+      {
+        "name": "langchain-core",
+        "version": "1.7.0"
+      },
+      {
+        "name": "langchain-mongodb",
+        "version": "0.12.1"
+      },
+      {
+        "name": "langchain-protocol",
+        "version": "0.0.20"
+      },
+      {
+        "name": "langchain-text-splitters",
+        "version": "1.1.3"
+      },
+      {
+        "name": "langgraph",
+        "version": "1.2.17"
+      },
+      {
+        "name": "langgraph-checkpoint",
+        "version": "4.3.0"
+      },
+      {
+        "name": "langgraph-checkpoint-mongodb",
+        "version": "0.5.1"
+      },
+      {
+        "name": "langgraph-checkpoint-postgres",
+        "version": "3.2.0"
+      },
+      {
+        "name": "langgraph-prebuilt",
+        "version": "1.1.1"
+      },
+      {
+        "name": "langgraph-sdk",
+        "version": "0.4.9"
+      },
+      {
+        "name": "langgraph-store-mongodb",
+        "version": "0.4.0"
+      },
+      {
+        "name": "langsmith",
+        "version": "0.14.12"
+      },
+      {
+        "name": "lark",
+        "version": "1.3.1"
+      },
+      {
+        "name": "numpy",
+        "version": "2.4.6"
+      },
+      {
+        "name": "orjson",
+        "version": "3.13.0"
+      },
+      {
+        "name": "ormsgpack",
+        "version": "1.13.0"
+      },
+      {
+        "name": "packaging",
+        "version": "26.3"
+      },
+      {
+        "name": "pip",
+        "version": "25.0.1"
+      },
+      {
+        "name": "psycopg",
+        "version": "3.3.6"
+      },
+      {
+        "name": "psycopg-binary",
+        "version": "3.3.6"
+      },
+      {
+        "name": "psycopg-pool",
+        "version": "3.3.3"
+      },
+      {
+        "name": "pydantic",
+        "version": "2.14.1"
+      },
+      {
+        "name": "pydantic_core",
+        "version": "2.50.1"
+      },
+      {
+        "name": "pymongo",
+        "version": "4.19.0"
+      },
+      {
+        "name": "pymongo-search-utils",
+        "version": "0.3.1"
+      },
+      {
+        "name": "PyYAML",
+        "version": "6.0.3"
+      },
+      {
+        "name": "requests",
+        "version": "2.34.2"
+      },
+      {
+        "name": "requests-toolbelt",
+        "version": "1.0.0"
+      },
+      {
+        "name": "sniffio",
+        "version": "1.3.1"
+      },
+      {
+        "name": "SQLAlchemy",
+        "version": "2.1.6"
+      },
+      {
+        "name": "tenacity",
+        "version": "9.2.1"
+      },
+      {
+        "name": "truststore",
+        "version": "0.10.5"
+      },
+      {
+        "name": "typing_extensions",
+        "version": "4.16.0"
+      },
+      {
+        "name": "typing-inspection",
+        "version": "0.4.4"
+      },
+      {
+        "name": "urllib3",
+        "version": "2.8.0"
+      },
+      {
+        "name": "uuid_utils",
+        "version": "0.18.0"
+      },
+      {
+        "name": "websockets",
+        "version": "17.3"
+      },
+      {
+        "name": "xxhash",
+        "version": "4.0.2"
+      },
+      {
+        "name": "zstandard",
+        "version": "0.25.0"
+      }
+    ]
+  },
+  "protocol": {
+    "revision": 2,
+    "fixtureRepetitions": [
+      841,
+      842
+    ],
+    "repetitionNote": "The seed field is a namespace label, not a random corpus seed; fixture content is unchanged.",
+    "tenants": [
+      "a",
+      "b"
+    ],
+    "workflow": "prepare checkpoint -> new process -> tool ledger write -> os._exit(73) before checkpoint -> new process -> resume",
+    "matchedControl": "same LangGraph state graph and official MongoDB/PostgreSQL saver/store adapters",
+    "gates": [
+      "pending tool survives worker exit",
+      "one idempotent ledger effect despite two attempts",
+      "tenant-specific preference survives new process",
+      "memory update/delete preserves neighbor",
+      "shared-ID negative controls reproduce missing intrinsic tenancy",
+      "exact and semantic cache negative controls reproduce shared private answer; scoped alternatives pass",
+      "actual vector/hybrid/semantic Store integrations return fixture-correct tenant"
+    ],
+    "vectors": "deterministic four-dimensional keyword fixtures; not semantic relevance",
+    "spend": "no LLM/embedding API calls; no cloud provisioning",
+    "resources": {
+      "mongo": {
+        "cpus": 2,
+        "memoryMiB": 1024
+      },
+      "postgres": {
+        "cpus": 2,
+        "memoryMiB": 512
+      },
+      "worker": {
+        "cpus": 2,
+        "memoryMiB": 768
+      }
+    },
+    "limits": [
+      "functional comparison only; resources differ, no speed/cost winner",
+      "synthetic identities and privileged disposable DB users; no production authorization proof",
+      "simulated idempotent ledger effect; arbitrary tools are not made exactly-once",
+      "no model inference or extraction pipeline",
+      "single-node local development images; no HA, PITR or platform deployment claim"
+    ]
+  },
+  "cleanupVerified": true
+}

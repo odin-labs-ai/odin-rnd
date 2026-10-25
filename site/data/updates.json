@@ -14,6 +14,16 @@
       "date": "2026-10-25"
     },
     {
+      "key": "note-mongodb-ai-ecosystem",
+      "experiment": null,
+      "title": "MongoDB beyond JSON: agents, memory and models",
+      "kind": "Field note",
+      "text": "We tested MongoDB for agents and memory with real Voyage embeddings. Both databases found the same nearest results; tools can repeat after a crash and cached answers can outlive a policy change.",
+      "href": "journal/mongodb-ai-ecosystem.html",
+      "source": "journal/mongodb-ai-ecosystem.html",
+      "date": "2026-10-24"
+    },
+    {
       "key": "exp-019-results",
       "experiment": "EXP 019",
       "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",

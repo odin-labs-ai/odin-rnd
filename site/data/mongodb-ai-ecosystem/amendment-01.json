@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-24T19:44:53.175574+00:00",
+  "reason": "The first cache question asked whether restart was forbidden, without asserting a changed policy. ALLOWED can be a valid answer, so that question cannot establish a contradictory cached answer.",
+  "correction": "The amended query explicitly states that current policy forbids unattended restart, then asks whether restart is allowed.",
+  "unchanged": [
+    "same model and quantization",
+    "same document/query relevance corpus",
+    "cache thresholds .8, .9, .95",
+    "both database implementations"
+  ],
+  "retained": "superseded-cache-query-attempt-1 and original integration run1366bd6171; no pooling of repeated quality cases",
+  "scope": "fixture correction, not threshold tuning or an established product failure"
+}

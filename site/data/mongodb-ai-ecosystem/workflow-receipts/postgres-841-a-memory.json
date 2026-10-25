@@ -1,0 +1,32 @@
+{
+  "engine": "postgres",
+  "phase": "memory",
+  "seed": "841",
+  "tenant": "a",
+  "pid": 268,
+  "updatedSearch": [
+    {
+      "policy": "updated",
+      "tenant": "a"
+    }
+  ],
+  "deletedTenantA": true,
+  "neighbor": {
+    "policy": "policy-b",
+    "tenant": "b"
+  },
+  "effects": [
+    {
+      "_id": "841:a:approval",
+      "tenant": "a",
+      "effect": "recorded",
+      "attempts": 2
+    },
+    {
+      "_id": "841:b:approval",
+      "tenant": "b",
+      "effect": "recorded",
+      "attempts": 2
+    }
+  ]
+}

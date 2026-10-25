@@ -1,0 +1,27 @@
+{
+  "engine": "mongo",
+  "phase": "bootstrap",
+  "seed": "841",
+  "tenant": "a",
+  "pid": 13,
+  "negativeControls": {
+    "unscopedMemoryReadable": {
+      "tenant": "a",
+      "value": "A-only fixture"
+    },
+    "unscopedThreadReadable": {
+      "tenant": "a",
+      "answer": "A-only fixture"
+    }
+  },
+  "scopedPreferences": {
+    "a": {
+      "tenant": "a",
+      "policy": "policy-a"
+    },
+    "b": {
+      "tenant": "b",
+      "policy": "policy-b"
+    }
+  }
+}

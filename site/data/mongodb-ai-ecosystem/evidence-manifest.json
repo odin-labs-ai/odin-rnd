@@ -1,0 +1,58 @@
+{
+  "schema": "technical-evidence-files/1",
+  "sha256": {
+    "amendment-01.json": "736a8baacfed7faa25a3d55a66425f359cb5350a40c655aa7c1a21062ac9bffa",
+    "fixture.json": "b405007498a79e5fcba2321c58cf7a76ed8601c0e0bacee07d40343f7b39f0d3",
+    "integration-result.json": "2f06b7b3ff15c128783f1a7bd9d64edafc93669a388896f87b32c90461a01c92",
+    "protocol.json": "bcb241cf35dd0e3bdb7f034f03dce97fe3fdf1d6b450f603149b9ae2b5de7f90",
+    "summary.json": "37c98ab31ddf7e154728c12b01b609d50a4bcbb95f975aede41fffe04951862c",
+    "superseded-cache-attempt-1.json": "1c274e9b1537580a98e63f5e11bde44037c178feb0b7522bd906d40afe1b4290",
+    "workflow-phases.json": "2d70329b6435e81d51a5d21cf05a25059d7ba57babf2575b3400aa8f2c6b2627",
+    "workflow-receipts/mongo-841-a-bootstrap.json": "1eb6a578a9b96f0034c6904fcd4b41f4999ea1bc53974c5cf41ebba3a729b20f",
+    "workflow-receipts/mongo-841-a-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/mongo-841-a-memory.json": "324fefa8eb0e6c821864978d28ef1f69821f6805a6592a5e02a722c7ea5fe30e",
+    "workflow-receipts/mongo-841-a-prepare.json": "d8534712b3ca10c2df884d3ee108aa730b1a23cbc3440e980a81d64ac9490a78",
+    "workflow-receipts/mongo-841-a-resume.json": "7374769a7c491caca327389f97160007aeda09c478e7c67f41faaedbf52f770a",
+    "workflow-receipts/mongo-841-b-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/mongo-841-b-prepare.json": "e8abfe1daab2a2744e4a5a56d560c2fb6907bdab22390241ac52658bc0f6d57d",
+    "workflow-receipts/mongo-841-b-resume.json": "3aa748575dd9ee3ffcc000edaa1310bf0aeeb643d0ce43fe91460b637fbe52bf",
+    "workflow-receipts/mongo-842-a-bootstrap.json": "819af24c832d3f04a5c58d3f0219f67004fe5d07e36c6c531cac5b1f3f7f51d6",
+    "workflow-receipts/mongo-842-a-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/mongo-842-a-memory.json": "2c741398f13712aeac1ad40b6fbb1154b33273697568233fb18fee1974b0710f",
+    "workflow-receipts/mongo-842-a-prepare.json": "638ed410e2ed740166206645977be5632d2b41d179c1fb1d45eae91563b2f9c4",
+    "workflow-receipts/mongo-842-a-resume.json": "64b1fea68a544202a8525e35173127e6fae78976b8b3fa84b20e62e1f1253d9b",
+    "workflow-receipts/mongo-842-b-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/mongo-842-b-prepare.json": "2c450f7b3fee6613965cf73064f0ba7ed6fdb6973f45ff8e1eaef7d33ad4ee96",
+    "workflow-receipts/mongo-842-b-resume.json": "fee89a3092874c3db470f8d6d6a598890e5562ddccd962d38e2c2d9d8a07f502",
+    "workflow-receipts/postgres-841-a-bootstrap.json": "6482f8770750e62ddf80631d71d12635b6c2f24e9cd8431ee17ca5dc7d28b2ae",
+    "workflow-receipts/postgres-841-a-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/postgres-841-a-memory.json": "8507f9542cdfc61cf45169c884ab5dac9f3c4985193aeb3b55da6020b87fc2be",
+    "workflow-receipts/postgres-841-a-prepare.json": "aa5109bded3b14adf3b6e6f1e77ed6e12d06ec62ac86c8a4e3f4388dffa9fa51",
+    "workflow-receipts/postgres-841-a-resume.json": "5e79262330aaa2b9a7d673540e151be42ecb96bc4ef556c873b5d81412dc58ca",
+    "workflow-receipts/postgres-841-b-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/postgres-841-b-prepare.json": "a968683d0afde5b2c0733fb4cb1dbddae9b2259585a9e57cdc9f357392c8209e",
+    "workflow-receipts/postgres-841-b-resume.json": "0b38ab5cd3166b337a763b1617f72944d2d5293b64c5b5991b473df4995ff597",
+    "workflow-receipts/postgres-842-a-bootstrap.json": "e10dc7e1c7ba6d859c72c80ea9df19a7c3b2ae2de0d21f1682697fb9c8e43c2b",
+    "workflow-receipts/postgres-842-a-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/postgres-842-a-memory.json": "78acb83891f4e1e6a70f4f1eb02cd87ba20e94d7a4ad530b8cfc2e8a16e3c192",
+    "workflow-receipts/postgres-842-a-prepare.json": "15b68540cf7ab41e1cecb9c063ea8ca3e28a95e78adfb0c34e50d9f1e3031946",
+    "workflow-receipts/postgres-842-a-resume.json": "c3ab396c8334260f6433bbd14c6b78d0ad44d787458a24973026c224a4fd060a",
+    "workflow-receipts/postgres-842-b-crash.json": "87c7c500e70a7c9584b1c3e2ae068e666bfb23003a2204875878a8ccdb25f411",
+    "workflow-receipts/postgres-842-b-prepare.json": "d9ddc385ea5d271088e2d856fc3b7071ac6f40cb7156eb92f6dd0c2d4d719b7a",
+    "workflow-receipts/postgres-842-b-resume.json": "7e1d32bbad4d9889a47d0c41c803acf1108e4c1fd95c997163540b55ce85c102",
+    "workflow-recovery.json": "ca1ec2ee1ff38d939ddb3ba00cf6d89af4d836ac96888770945fe7f3cbbbdd2a"
+  },
+  "repositoryObservations": {
+    "model-result.json": {
+      "path": "experiments/mongodb-ai-ecosystem/observations/model-result.json",
+      "url": "https://github.com/odin-labs-ai/odin-rnd/blob/main/experiments/mongodb-ai-ecosystem/observations/model-result.json",
+      "sha256": "1001a39520084b359345d74c4a02cbe8641c7bff90b1125e7037d27937301a24"
+    },
+    "superseded-model-attempt-1.json": {
+      "path": "experiments/mongodb-ai-ecosystem/observations/superseded-model-attempt-1.json",
+      "url": "https://github.com/odin-labs-ai/odin-rnd/blob/main/experiments/mongodb-ai-ecosystem/observations/superseded-model-attempt-1.json",
+      "sha256": "ce5fe91085ec2b9a3623e1a68e57f7fef87df3d482a48f206d1bf2dc531fe341"
+    }
+  },
+  "scope": "Synthetic inputs/observations and source lineage. Local absolute response filenames replaced as recorded; no model weights or runtime binaries bundled. Large numerical model observations remain public in the source repository; web exports link their exact paths and digests."
+}

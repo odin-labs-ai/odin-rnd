@@ -1,0 +1,138 @@
+{
+  "schema": "mongodb-ai-ecosystem-observation/1",
+  "date": "2026-10-24",
+  "title": "MongoDB beyond JSON: agents, memory and models",
+  "status": "Local integration mechanisms pass; no database, model-quality or whole-platform superiority conclusion.",
+  "workflow": {
+    "command": "python previous/run_trial.py",
+    "window": {
+      "startedAt": "2026-10-24T17:48:45.013683+00:00",
+      "endedAt": "2026-10-24T17:53:13.534080+00:00"
+    },
+    "recoveries": 8,
+    "engines": [
+      "MongoDB",
+      "PostgreSQL"
+    ],
+    "repetitions": "Two fixed-fixture repetitions, not independent random corpora.",
+    "toolAttemptsPerRecovery": 2,
+    "idempotentEffectRecordsPerRecovery": 1
+  },
+  "model": {
+    "command": "python model_trial.py",
+    "window": {
+      "startedAt": "2026-10-24T19:45:02.078609+00:00",
+      "endedAt": "2026-10-24T19:45:07.479204+00:00"
+    },
+    "identity": "MongoDB/voyage-4-nano-GGUF",
+    "revision": "03547551689253732502486d62de4cd0970d6564",
+    "quantization": "Q8_0",
+    "runtime": "llama.cpp b11865; Darwin x86_64; CPU; authenticated UNIX socket",
+    "modelSha256": "c6ed6cc898d50ae1a4492809affadc6c0d023f8ac05c07a37abe20c563152560",
+    "uniqueDocuments": 16,
+    "uniqueLabelledQuestions": 12,
+    "top1Correct": 11,
+    "top5Correct": 12,
+    "labels": "Researcher-authored small closed-world cases, frozen locally; not independent human labels or public preregistration.",
+    "miss": "q12 intended residency document ranked second, after the generic embedding document.",
+    "paidInferenceCalls": 0
+  },
+  "integration": {
+    "command": "python run_integration.py",
+    "window": {
+      "startedAt": "2026-10-24T19:45:07.692013+00:00",
+      "endedAt": "2026-10-24T19:46:08.491796+00:00"
+    },
+    "exactRetrievalObservations": 48,
+    "qualityDenominator": "12 unique questions; mirrored tenants and engines repeat those questions.",
+    "memory": "Manually supplied fact update becomes visible in retrieved value; deletion disappears and neighbor survives. One item per namespace, not a ranking or embedding-freshness benchmark.",
+    "versions": {
+      "mongo": "8.3.13",
+      "postgres": "17.11 (Debian 17.11-1.pgdg12+2)"
+    },
+    "images": {
+      "mongo": {
+        "tag": "mongodb/mongodb-atlas-local:preview",
+        "id": "sha256:87e7d5b733329ad92bb14546715e3ce0e926baf83798e3be1f807f8d3c36452b",
+        "repoDigests": [
+          "mongodb/mongodb-atlas-local@sha256:ff75fd47e918952cc91094e888e8aeb7529aeb70f987b075aeef3944c9bd8014"
+        ]
+      },
+      "postgres": {
+        "tag": "pgvector/pgvector:pg17",
+        "id": "sha256:151aa1c2e849e7828ed8aef2183ae15f692cbe887d2f28921d8b44b26e154d7e",
+        "repoDigests": [
+          "pgvector/pgvector@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d"
+        ]
+      },
+      "worker": {
+        "tag": "odin-mongo-ai-probe:20261024",
+        "id": "sha256:9d7a20ec55d21bf5156e125aa54dcb628e2bb549351a19e1528f47ce1c41f87f",
+        "repoDigests": []
+      }
+    },
+    "resourceLimits": {
+      "mongoMemoryMiB": 1024,
+      "postgresMemoryMiB": 512,
+      "workerMemoryMiB": 768,
+      "cpusPerContainer": 2
+    },
+    "cleanupVerified": true
+  },
+  "cacheDiagnostic": {
+    "status": "Targeted post-observation query amendment; not a preregistered false-hit-rate study.",
+    "thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "thresholdScale": "MongoDB vectorSearchScore = (1 + cosine) / 2; not raw cosine.",
+    "queryDocumentCosine": 0.6919257867052357,
+    "queryDocumentMongoScore": 0.8459628933526179,
+    "documentDocumentOppositePermissionCosine": 0.9611093053342765,
+    "observations": [
+      {
+        "threshold": 0.8,
+        "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+        "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+        "oldContextAnswer": [
+          "AUTOMATIC RESTART ALLOWED"
+        ],
+        "newPolicyCorpusContextAnswer": [],
+        "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+      },
+      {
+        "threshold": 0.9,
+        "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+        "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+        "oldContextAnswer": [],
+        "newPolicyCorpusContextAnswer": [],
+        "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+      },
+      {
+        "threshold": 0.95,
+        "query": "The current policy forbids unattended restarts after a failed amber service health check. Is an automatic restart allowed?",
+        "cachedPrompt": "The amber service may restart automatically after a failed readiness probe.",
+        "oldContextAnswer": [],
+        "newPolicyCorpusContextAnswer": [],
+        "interpretation": "A hit reuses an opposite-permission fixture answer. Similarity alone is not an entailment or policy-validity test; no threshold is selected from these results."
+      }
+    ],
+    "newPolicyCorpusContextMissedAtAllThresholds": true
+  },
+  "notExercised": [
+    "Agent Engine background extraction, managed runtime or policy enforcement",
+    "Hosted Voyage models or rerankers",
+    "Authenticated production tenant access",
+    "Production availability, native PITR, scaling, comparative latency or cost"
+  ],
+  "sources": [
+    "https://www.mongodb.com/docs/atlas/ai-integrations/langgraph/",
+    "https://www.mongodb.com/docs/atlas/ai-integrations/langchain/memory-semantic-cache/",
+    "https://huggingface.co/MongoDB/voyage-4-nano-GGUF",
+    "https://huggingface.co/voyageai/voyage-4-nano",
+    "https://www.mongodb.com/docs/agentengine/",
+    "https://www.mongodb.com/docs/agentengine/add-features/memory-only/",
+    "https://www.mongodb.com/docs/agentengine/build/install-authenticate/"
+  ]
+}
