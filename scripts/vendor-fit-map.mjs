@@ -19,11 +19,11 @@
 // - a cell with a verdict needs the public page of its result (--result); without one the vendor refuses.
 // It refuses, every reason listed, on a field it does not know (anywhere), a lab without --as or --title, a verdict
 // outside the fit map's own words, or a mapping for a lab or cell the file does not have. The source file is recorded
-// by sha256 and `labsSha256` digests the public labs, so a hand edit is refused at build (scripts/lab-fit-map.mjs).
+// by sha256 and `recordSha256` digests the whole public record, so a hand edit is refused at build (scripts/lab-fit-map.mjs).
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { labsDigest, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { recordDigest, VERDICT_WORDS } from './lab-fit-map.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const HEX40 = /^[0-9a-f]{40}$/;
@@ -103,7 +103,7 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
     };
   });
   if (problems.length) throw new Error(`vendor-fit-map refused:\n  ${problems.join('\n  ')}`);
-  return {
+  const record = {
     format: map.format,
     version: map.version,
     vendored: {
@@ -111,7 +111,6 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
       commit,
       sourceSha256: sha256(fileBytes),
       builtAtCommit: map.built_at_commit,
-      labsSha256: labsDigest(labs),
       transform: map.labs.map(lab => ({ lab: lab.lab, as: as[lab.lab], title: title[lab.lab], page: page[lab.lab] ?? null })),
       reworded: String(map.rule).includes('RESULT.json') ? [{ field: 'rule', fromSha256: sha256('RESULT.json'), to: 'result record' }] : [],
       kept: 'the question, the rule, the verdict words and, per lab, its stage, its record\'s commit, status and sha256, and every cell\'s scenario, verdict and predictions',
@@ -123,6 +122,8 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
     verdictWords: map.verdict_words,
     labs,
   };
+  record.vendored.recordSha256 = recordDigest(record);
+  return record;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

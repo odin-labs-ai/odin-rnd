@@ -6,7 +6,6 @@
   "commit": "14a29c9dedc4b1d0c7edd6d3da78a55f5dadde61",
   "sourceSha256": "89870a85f42f025a79b01129a0ccae8c4292a4ab42920323ac109466199df1e5",
   "builtAtCommit": "5d0567654c6a61558eadd54abe9eca6f31967e90",
-  "labsSha256": "b572a6d104b1afea853c7eb93448d6488c42b7c849f787752042005e1206bb79",
   "transform": [
    {
     "lab": "EXP 020",
@@ -35,7 +34,8 @@
    }
   ],
   "kept": "the question, the rule, the verdict words and, per lab, its stage, its record's commit, status and sha256, and every cell's scenario, verdict and predictions",
-  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication"
+  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication",
+  "recordSha256": "9c3d254d528874d15bb20505342b80720389e515d1378cbee1295373295d2bef"
  },
  "question": "where does each store fit Odin? (per scenario; no overall winner)",
  "rule": "a verdict fills only from the experiment's committed result record; predictions are the frozen ones",

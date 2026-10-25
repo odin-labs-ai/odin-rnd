@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { fitMapProblems, labsDigest, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { fitMapProblems, recordDigest, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
 import { vendor } from './vendor-fit-map.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -76,7 +76,7 @@ test('vendoring is reproducible byte for byte and records every change it makes'
   assert.equal(cli, once);
   const record = JSON.parse(once);
   assert.deepEqual(fitMapProblems(record), []);
-  assert.equal(record.vendored.labsSha256, labsDigest(record.labs));
+  assert.equal(record.vendored.recordSha256, recordDigest(record));
   assert.deepEqual(record.vendored.reworded, [{ field: 'rule', fromSha256: createHash('sha256').update('RESULT.json').digest('hex'), to: 'result record' }]);
   assert.deepEqual(record.labs[0].published, { commit: hex(40, 'b'), pr: 76 });
   assert.deepEqual(record.labs[2].record, { kind: 'design', commit: hex(40, '1'), status: 'main', sha256: null });
@@ -106,9 +106,14 @@ test('the vendor refuses what it does not know: a field, a predictor, a status, 
 
 test('the build refuses a hand edit, an unknown verdict, a cell and its result out of step, and a link or text that may not be public', () => {
   const base = vendor({ commit: COMMIT, fileBytes: bytes(source()), ...mapping });
-  const redigest = r => { r.vendored.labsSha256 = labsDigest(r.labs); return r; };
+  const redigest = r => { r.vendored.recordSha256 = recordDigest(r); return r; };
   const cases = [
-    [r => { r.labs[0].cells[0].predictions.lab = 'postgres-fits'; }, /#\/labs: not the labs that were vendored/],
+    [r => { r.labs[0].cells[0].predictions.lab = 'postgres-fits'; }, /not the record that was vendored/],
+    [r => { r.vendored.commit = hex(40, '8'); }, /not the record that was vendored/],
+    [r => { r.vendored.sourceSha256 = hex(64, '7'); }, /not the record that was vendored/],
+    [r => { r.rule = 'a verdict fills from any result record'; }, /not the record that was vendored/],
+    [r => { r.vendored.transform[1].as = 'Lab 02'; redigest(r); }, /transform\/1: not the name, title and page lab 1 shows/],
+    [r => { r.vendored.transform.pop(); redigest(r); }, /transform: not one entry per lab/],
     [r => { r.labs[0].cells[0].verdict = 'mostly'; r.labs[0].cells[0].result = 'labs/'; redigest(r); }, /verdict: "mostly" is not a verdict word/],
     [r => { r.labs[0].cells[0].verdict = 'both-fit'; redigest(r); }, /cells\/0: a filled cell without a result link/],
     [r => { r.labs[0].cells[0].result = 'labs/'; redigest(r); }, /cells\/0: a pending cell with a result link/],
@@ -117,9 +122,9 @@ test('the build refuses a hand edit, an unknown verdict, a cell and its result o
     [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = '../secret/'; redigest(r); }, /result: not a page path of this site/],
     [r => { r.labs[1].cells[0].what = 'see .ai/experiments/x/PREREG.md'; redigest(r); }, /what: a file path or file name/],
     [r => { r.labs[1].title = `Failover in ${[...'nrooH'].reverse().join('')}`; r.vendored.transform[1].title = r.labs[1].title; redigest(r); }, /title: a place name/],
-    [r => { r.verdictWords = ['yes', 'no']; }, /verdictWords: not exactly/],
+    [r => { r.verdictWords = ['yes', 'no']; redigest(r); }, /verdictWords: not exactly/],
     [r => { r.labs[1].lab = 'Lab 02 (v1.1)'; redigest(r); }, /lab: does not match/],
-    [r => { r.rule = 'a verdict fills only from RESULT.json'; }, /rule: a file path[\s\S]*rule does not say result record/],
+    [r => { r.rule = 'a verdict fills only from RESULT.json'; redigest(r); }, /rule: a file path[\s\S]*rule does not say result record/],
   ];
   for (const [edit, expected] of cases) {
     const r = structuredClone(base); edit(r);
