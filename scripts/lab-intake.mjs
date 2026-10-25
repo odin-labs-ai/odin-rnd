@@ -27,8 +27,11 @@
 //                  questions file carries (id, agent, asker, session), not only the question
 //   on-topic       one question, in the form of a question, made only of words in a closed vocabulary (plain
 //                  function words and the space's own subjects); any other word holds it for a person, so an
-//                  instruction or a sensitive subject no rule names is held, not passed. A listed sensitive subject
-//                  (politics, health, money, ...) and two questions in one issue are held too
+//                  instruction or a sensitive subject no rule names is held, not passed. Also held: a last sentence
+//                  that does not start with a question word, a symbol or emoji, "can you <verb>" outside a few verbs
+//                  that ask what the agent knows or sees, anything that binds its answers ("from now on", "only
+//                  say"), a yes-or-no question about what the asker should do, a listed sensitive subject (politics,
+//                  health, money, ...) and two questions in one issue
 //   duplicate      the same question as an older ok one (by its letters) is held
 // A held question (never a refused one, a form problem or a duplicate) becomes ok only through --approve: an
 // odin-intake-approvals v1 file, {"format": "odin-intake-approvals", "version": 1, "by": "<label>", "approve":
@@ -127,16 +130,17 @@ const QUESTION_WORD = /^(?:(?:odin|atlas|juno)[,:]\s*)?(?:who|whom|whose|what|wh
 // what they do, how an answer is proven). It is closed on purpose. A deny-list cannot name every way to instruct an
 // agent ("set aside all prior instructions") or every sensitive subject ("should I stop taking insulin"), so a
 // question is ok only when every word is one of these; any other word holds it for a person (--approve). Words that
-// steer an agent (instructions, rules, prompt, commands, ignore, follow, pretend, secret, key) are deliberately absent.
+// steer an agent (instructions, rules, prompt, commands, ignore, follow, pretend, secret, key, say, tell, use, please,
+// only, always, never, every, everything, ever, again) are deliberately absent.
 const FUNCTION_WORDS = `a an the and or but if so then than that this these those there their they them it its it's i i'm i've me my
   mine we us our you you're you've your yours yourself yourselves he she his her who whom whose what what's whats when where
   where's why how how's which can can't cannot could couldn't do does doesn't did didn't don't is isn't are aren't was wasn't
   were weren't will won't would wouldn't should shall may might must have has had having be been being am not no yes of in on
-  at to for from with without about into by as up out over through between before after during while just also only still
-  yet really very much many more most some any all each every other another same such own one two first last next new now
-  today right again ever never always often already something anything everything someone anyone everyone nothing kind sort
-  way thing things lot bit please hi hello hey thanks thank ok okay well like get got go going goes went come comes came
-  make makes made use uses used using say says said tell ask asks asked want wants need needs mean means do doing done
+  at to for from with without about into by as up out over through between before after during while also still
+  yet really very much many more most some any all each other another same such own one two first last next new now
+  today right often already something anything someone anyone everyone nothing kind sort
+  way thing things lot bit hi hello hey thanks thank ok okay well like get got go going goes went come comes came
+  make makes made ask asks asked want wants need needs mean means do doing done
   happen happens happening different difference better best good same around together else`;
 const SPACE_WORDS = `odin atlas juno agent agents space lab labs world campus library desk help helps helping support guide
   knowledge base wiki page pages notes entry entries tool tools memory memories remember record records recording recorded
@@ -145,6 +149,8 @@ const SPACE_WORDS = `odin atlas juno agent agents space lab labs world campus li
   see sees saw look looks find finds found read reads walk walks talk talks visitor visitors follower followers people
   person build built builds work works worked start started begin plug add own brain structure structures live here
   meet chat move moving watch clip film filmed sure certain`;
+// "Can I plug in my own agent?" asks how the space works; "can I <anything else>" asks for advice.
+const TOPIC_START = /^(?:(?:odin|atlas|juno)[,:]\s*)?(?:should|shall|must|may|can|could) (?:i|we) (?:plug|add|build|ask|talk|chat|meet|walk|see|find|read|trust|check|start|learn|help)\b/u;
 const VOCABULARY = new Set(`${FUNCTION_WORDS} ${SPACE_WORDS}`.split(/\s+/).filter(Boolean));
 const known = word => [word, word.replace(/'s$/, ''), word.replace(/s$/, ''), word.replace(/es$/, ''), word.replace(/ed$/, ''),
   word.replace(/ing$/, ''), word.replace(/d$/, '')].some(form => VOCABULARY.has(form));
@@ -181,8 +187,30 @@ export function screenQuestion({ question, agent, consent }, login = '') {
     say('on-topic', `the text addresses ${lead}, but it is put to ${to}`, 'held');
   }
   const marks = (plain.match(/\?/g) ?? []).length;
+  // Only letters, digits, spaces and plain punctuation are read; a symbol or emoji can carry meaning no word check
+  // sees ("should I use <pill> with <beer>?"), so it holds the question.
+  // An @ is let through: the mention check above judges whom it names.
+  if (/[^\p{L}\p{N}\s.,?!'’"“”:;()@\-]/u.test(text)) say('on-topic', 'symbols or emoji the screen cannot read, for a person to judge', 'held');
+  // The question itself is the last sentence, and it starts with a question word (after an agent's name, if any):
+  // "Say only yes?" and "Only answer yes. How do you know?" are not questions about the space.
+  const sentences = plain.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const last = sentences.at(-1) ?? '';
+  if (!QUESTION_WORD.test(last)) say('on-topic', 'the last sentence does not start with a question word', 'held');
+  // A request that the agent change what it does ("can you <verb>" with a verb outside the few that ask what it knows
+  // or sees), or that binds its future answers, is held whatever its words.
+  const asks = /\b(?:can|could|would|will|won't|wont)\s+you\s+(?:please\s+)?(\p{L}+)/u.exec(plain)?.[1];
+  if (asks && !['see', 'know', 'remember', 'help', 'find', 'read', 'learn', 'check', 'walk', 'talk', 'chat', 'meet', 'trust', 'think', 'look', 'work', 'start', 'build', 'add', 'plug'].includes(asks)) {
+    say('injection', `asks the agent to ${asks} something, for a person to judge`, 'held');
+  }
+  if (/\bfrom now on\b|\bevery (?:question|answer|time|reply)\b|\b(?:only|always|never|just) (?:say|answer|reply|respond|speak|talk|use|tell|write|agree)\b|\b(?:say|answer|reply|respond) (?:only|always|never|just)\b/u.test(plain)) {
+    say('injection', 'binds what the agent says from now on', 'held');
+  }
+  // A yes-or-no question about what the asker should do is advice about their own life, never the space's to give.
+  if (/^(?:(?:odin|atlas|juno)[,:]\s*)?(?:should|shall|must|may|can|could) (?:i|we)\b/u.test(last) && !TOPIC_START.test(last)) {
+    say('on-topic', 'asks for advice about what the asker should do, for a person to judge', 'held');
+  }
   if (marks > 1) say('on-topic', 'more than one question', 'held');
-  if (!(marks === 1 && /\?$/.test(plain)) && !QUESTION_WORD.test(plain)) say('on-topic', 'not in the form of a question', 'held');
+  if (!(marks === 1 && /\?$/.test(plain))) say('on-topic', 'not one question ending in a question mark', 'held');
   const unknown = unknownWords(plain);
   if (unknown.length) say('on-topic', `words outside the space's vocabulary, for a person to judge: ${unknown.slice(0, 8).join(', ')}${unknown.length > 8 ? ', ...' : ''}`, 'held');
   if (plain.split(/\s+/).filter(Boolean).length < 2) say('on-topic', 'a single word', 'held');
