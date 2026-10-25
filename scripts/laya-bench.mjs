@@ -1,7 +1,7 @@
-// Renders the home-page Laya station and bench FROM the committed laya-vs-jev record; no figure is typed by hand.
-// The station compartment renders during the build. The bench sits outside any build marker, and build.mjs and
-// package.json are hash-pinned by the recorded experiments, so `--write` renders the bench into site/index.html
-// between the markers below and the build (via renderStations) refuses a page whose bench differs from the record.
+// Renders the home-page Laya station and the experiments-page bench FROM the committed laya-vs-jev record; no figure is
+// typed by hand. The station compartment renders during the build. The bench sits outside any build marker, and build.mjs
+// and package.json are hash-pinned by the recorded experiments, so `--write` renders the bench into site/experiments/
+// index.html between the markers below and the build (via renderStations) refuses a page whose bench differs from the record.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,9 @@ export const jevId = 'jev';
 export const readmePath = 'experiments/laya-vs-jev/README.md';
 export const browserHref = 'projects/laya-browser/';
 export const noteHref = `journal/${slug}.html`;
-export const pagePath = 'site/index.html';
+export const pagePath = 'site/experiments/index.html';
+// The bench lives one level down (site/experiments/), so its links to the site's own pages climb one level.
+const up = '../';
 export const benchBegin = '<!-- laya-bench: rendered by scripts/laya-bench.mjs --write from the committed record; do not edit by hand -->';
 export const benchEnd = '<!-- /laya-bench -->';
 
@@ -68,7 +70,7 @@ const state = verdict => verdict === 'GREEN' ? 'accepted' : 'rejected';
 // Body of the "05 / Decision" station compartment, in the same record-comparison vocabulary as stations 01–04.
 export function renderLayaExhibit({ results, manifest }) {
   const f = layaFigures(results);
-  return `<p class="artifact-label">${f.rows} typed questions. Open weights on a laptop against a hosted API.</p><div class="record-comparisons">${row('Accuracy / Laya, local', `${f.verdicts.accuracy} · ${f.layaAccuracy}`, state(f.verdicts.accuracy))}${row('Accuracy / Jev, hosted', f.jevAccuracy, '')}${row('Median time / local vs hosted, incl. network', `${f.layaP50} vs ${f.jevP50}`, state(f.verdicts.latency))}${row('Same answer as the reference code', f.parity, state(f.verdicts.parity))}</div><p class="station-implication">The local model needs no key and matches its reference on every row. It is ${escape(f.gapPoints)} points less accurate than Jev here, beyond the ${refutation.accuracyMarginPoints}-point limit set before the run.</p><div class="station-receipts"><a href="${browserHref}">Try it in your browser</a><a href="${noteHref}">Read the field note</a></div><p class="station-provenance">Laya typed-decisions · ${escape(f.measuredAt.slice(0,10))} · one laptop, ${f.rows} authored rows<br><a href="${recordHref(manifest)}">Recording and source provenance</a></p>`;
+  return `<p class="artifact-label">${f.rows} typed questions. Open weights on a laptop against a hosted API.</p><div class="record-comparisons">${row('Accuracy / Laya, local', `${f.verdicts.accuracy} · ${f.layaAccuracy}`, state(f.verdicts.accuracy))}${row('Accuracy / Jev, hosted', f.jevAccuracy, '')}${row('Median time / local vs hosted, incl. network', `${f.layaP50} vs ${f.jevP50}`, state(f.verdicts.latency))}${row('Same answer as the reference code', f.parity, state(f.verdicts.parity))}</div><p class="station-implication">The local model needs no key and matches its reference on every row. It is ${escape(f.gapPoints)} points less accurate than Jev here, beyond the ${refutation.accuracyMarginPoints}-point limit set before the run.</p><div class="station-receipts"><a href="${browserHref}">Try it in your browser</a><a href="${noteHref}">Read the field note</a></div><p class="station-provenance">Laya typed-decisions · ${escape(f.measuredAt.slice(0,10))} · one laptop, ${f.rows} hand-written rows<br><a href="${recordHref(manifest)}">Recording and source provenance</a></p>`;
 }
 
 const checkText = f => ({
@@ -84,9 +86,9 @@ export function renderLayaBench({ results, manifest }, readme) {
   const f = layaFigures(results), checks = checkText(f);
   const green = Object.values(f.verdicts).filter(v => v === 'GREEN').length;
   const measured = new Date(f.measuredAt).toISOString().replace('T', ' ').replace(/:\d\d(\.\d+)?Z$/, ' UTC');
-  return `<div class="bench-introduction laya-introduction"><h3>Then a decision you can own.</h3><p>A second bench, because this one compares two models rather than one rule on two trees: open weights on a laptop against a hosted API, on the same questions.</p></div>
+  return `<div class="bench-introduction laya-introduction"><h2>Then a decision you can own.</h2><p>A second bench, because this one compares two models rather than one rule on two trees: open weights on a laptop against a hosted API, on the same questions.</p></div>
       <div class="workbench laya-bench dark-surface" id="laya-bench">
-        <div class="bench-menu"><div class="bench-label technical">BENCH 02 / DECISIONS</div><p class="bench-entry"><span>EXP / 004</span><span>Laya vs Jev: typed decisions <span style="white-space:nowrap">without lock-in</span></span></p><a class="all-runs" href="${browserHref}">Try it in your browser <span aria-hidden="true">↗</span></a></div>
+        <div class="bench-menu"><div class="bench-label technical">BENCH 02 / DECISIONS</div><p class="bench-entry"><span>EXP / 004</span><span>Laya vs Jev: typed decisions <span style="white-space:nowrap">without lock-in</span></span></p><a class="all-runs" href="${up}${browserHref}">Try it in your browser <span aria-hidden="true">↗</span></a></div>
         <div class="bench-body">
           <div class="bench-status technical"><span>EXP / 004</span><span>ACCURACY / ${escape(f.verdicts.accuracy)} · ${green} OF 4 CHECKS GREEN</span></div>
           <h3>Can an open model answer the same typed decisions on a laptop, with no vendor key?</h3>
@@ -95,7 +97,7 @@ export function renderLayaBench({ results, manifest }, readme) {
           <p class="bench-explainer">Result: the local port gives the same decision as the model’s reference code on <strong id="laya-parity">${escape(f.parity)}</strong> rows, and its median call here took ${f.layaP50} on the laptop against ${f.jevP50} for the hosted call including its network round trip, but it is ${escape(f.gapPoints)} points less accurate than Jev. That is beyond the ${refutation.accuracyMarginPoints}-point limit set before the run, so the accuracy check is <strong>${escape(f.verdicts.accuracy)}</strong> and stays that way.</p>
           <ul class="laya-checks" aria-label="Checks written before the run">${Object.entries(checks).map(([key, [name, text]]) => `<li><strong class="verdict-${f.verdicts[key].toLowerCase()}">${escape(f.verdicts[key])}</strong><span><b>${escape(name)}.</b> ${escape(text)}</span></li>`).join('')}</ul>
           <div class="reproduce"><span class="technical">REPRODUCE / APPLE SILICON + UV · FROM A CLONE OF THIS REPOSITORY</span><pre id="laya-reproduce-command" tabindex="0">${escape(reproduceCommand(readme))}</pre><button data-copy-target="laya-reproduce-command" aria-label="Copy command: reproduce the Laya comparison">Copy command</button><span class="copy-status" role="status"></span></div>
-          <div class="run-meta"><span>MEASURED ${escape(measured)} · ${escape([f.machine, f.runtime].filter(Boolean).join(' · ').toUpperCase())}</span><a href="${recordHref(manifest)}">Full result &amp; provenance <span aria-hidden="true">↗</span></a><a href="${noteHref}">Read the field note <span aria-hidden="true">↗</span></a></div>
+          <div class="run-meta"><span>MEASURED ${escape(measured)} · ${escape([f.machine, f.runtime].filter(Boolean).join(' · ').toUpperCase())}</span><a href="${up}${recordHref(manifest)}">Full result &amp; provenance <span aria-hidden="true">↗</span></a><a href="${up}${noteHref}">Read the field note <span aria-hidden="true">↗</span></a></div>
           <p class="scope-note">${f.rows} hand-written rows on one busy laptop${f.load ? ` (load average ${escape(f.load)} during the run)` : ''} is a mechanism check, not a benchmark. It does not predict accuracy on your decisions. Jev’s latency includes the public internet; Laya’s confident-answer figure rests on ${escape(f.confident.split(' of ')[1])} answers. Opening this page runs nothing; the browser demo downloads and runs Laya only when you ask it to.</p>
         </div>
       </div>`;
@@ -109,15 +111,15 @@ export function loadLaya(root = '.') {
 
 export function benchBlock(html) {
   const parts = html.split(benchBegin);
-  assert.equal(parts.length, 2, 'Home page needs exactly one Laya bench begin marker');
+  assert.equal(parts.length, 2, 'The experiments page needs exactly one Laya bench begin marker');
   const end = parts[1].indexOf(benchEnd);
-  assert(end >= 0 && parts[1].split(benchEnd).length === 2, 'Home page needs exactly one Laya bench end marker');
+  assert(end >= 0 && parts[1].split(benchEnd).length === 2, 'The experiments page needs exactly one Laya bench end marker');
   return { before: parts[0], block: parts[1].slice(0, end), after: parts[1].slice(end) };
 }
 const framed = rendered => `\n      ${rendered}\n      `;
 export const spliceBench = (html, rendered) => { const { before, after } = benchBlock(html); return before + benchBegin + framed(rendered) + after; };
 export function assertBenchCurrent(html, laya, readme) {
-  assert.equal(benchBlock(html).block, framed(renderLayaBench(laya, readme)), 'The Laya bench in site/index.html differs from the committed record: run node scripts/laya-bench.mjs --write');
+  assert.equal(benchBlock(html).block, framed(renderLayaBench(laya, readme)), 'The Laya bench in site/experiments/index.html differs from the committed record: run node scripts/laya-bench.mjs --write');
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

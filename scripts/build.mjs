@@ -25,7 +25,7 @@ import { addNinaEntry, loadEntryData } from './nina-changes-spotlight.mjs';
 import { publishedPath as exp007PublishedPath, recordPath as exp007RecordPath } from './blueprint-floor-prereg.mjs';
 import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCurrent } from './blueprint-floor-note.mjs';
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
-import { addLedger } from './experiment-ledger.mjs';
+import { addLedger, foldJournal } from './experiment-ledger.mjs';
 import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
 import { assertSiteCurrent as assertExp011SiteCurrent } from './reviewer-keep-note.mjs';
 import { publishedPath as exp011PublishedPath, recordPath as exp011RecordPath } from './reviewer-keep-prereg.mjs';
@@ -102,16 +102,9 @@ html = html.replace('<!--STATION_EXHIBITS-->', renderStations(report,witnesses.r
 html = html.replace('</body>', '<script type="application/json" id="station-data">'+JSON.stringify(stations).replaceAll('<','\\u003c')+'</script>\n</body>');
 // Station 07's announced status is the one its heading shows, from the census gate.
 if (exp007Census) html = qualifyFloorStationData(html, exp007Census);
-html = html.replace('<!--EXPERIMENT_BUTTONS-->', report.runs.map((run,index) => '<button class="experiment-choice" data-experiment="'+index+'" aria-pressed="'+(index===0)+'"><span>EXP / '+String(index+1).padStart(3,'0')+'</span>'+escape(run.title)+'</button>').join(''));
-html = html.replace('<!--FIRST_TRANSCRIPT-->', escape(report.runs[0].transcript));
-html = html.replace('<!--RUN_DATE-->', 'RECORDED '+escape(report.completedAt));
-html = html.replace('<!--RUN_ORIGIN-->', 'Recording environment: '+escape(report.environment)+'.');
 // The lab's proof strip (lab launch, 2026-10-24): sourced claims from site/data/lab-proof.json, each number a link to its
 // record. The number-provenance pass at the end checks the finished strip (HOME_PROOF in scripts/number-provenance.mjs).
 { const { placeHomeProof } = await import('./lab-pages.mjs'); html = placeHomeProof(html); }
-html = html.replace('<strong id="clean-result">—</strong>', '<strong id="clean-result">GREEN / '+report.runs[0].cleanScore+'</strong>');
-html = html.replace('<strong id="drift-result">—</strong>', '<strong id="drift-result">RED / '+report.runs[0].driftScore+'</strong>');
-html = html.replace('</body>', '<script type="application/json" id="experiment-data">'+JSON.stringify(report).replaceAll('<','\\u003c')+'</script>\n</body>');
 // The parent's featured card says it was published before any gate runs; amendments 01 and 02 qualify it in place.
 html = qualifyHome02(qualifyHome(html, amendment.record), amendment02.record);
 // Once measured, row 004 and the journal row show it, and nina's card follows row 004 if its spotlight bar was met.
@@ -126,8 +119,32 @@ if (exp007Census) html = qualifyHomeExp007(html, exp007Census);
 html = addNinaEntry(html, loadEntryData());
 // The experiment ledger reads the finished field-note rows and the published records, so it runs last.
 html = addLedger(html, report);
+// Plain words on the home (mission rnd-labs-human-first-1024): featured row 004 is the pre-registration's pinned render,
+// so its source row cannot change; the built home says the same thing without the word "authored". Exactly once, or stop.
+{
+  const authored = /(\d+) authored changes, scored by the blueprint engine\./g;
+  if ((html.match(authored) || []).length !== 1) throw new Error('Plain words: featured row 004 must name its authored changes exactly once');
+  html = html.replace(authored, (_, items) => `${items} changes we wrote, scored by the blueprint engine.`);
+}
+// The home opens the latest five field notes and folds the rest (every note is also listed under updates/). Last, after
+// the ledger and every qualify step; the folded rows stay on the page, so everything that reads them is unchanged.
+html = foldJournal(html, 5);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
+// The two workbenches (the BCE rule bench and the Laya bench) live on their own page, linked from the home's Experiments
+// section (mission rnd-labs-human-first-1024): the recorded runs, transcripts and reproduce commands, from the same report.
+{
+  let benches = readFileSync('site/experiments/index.html', 'utf8');
+  benches = benches.replace('<!--EXPERIMENT_BUTTONS-->', report.runs.map((run,index) => '<button class="experiment-choice" data-experiment="'+index+'" aria-pressed="'+(index===0)+'"><span>EXP / '+String(index+1).padStart(3,'0')+'</span>'+escape(run.title)+'</button>').join(''));
+  benches = benches.replace('<!--FIRST_TRANSCRIPT-->', escape(report.runs[0].transcript));
+  benches = benches.replace('<!--RUN_DATE-->', 'RECORDED '+escape(report.completedAt));
+  benches = benches.replace('<!--RUN_ORIGIN-->', 'Recording environment: '+escape(report.environment)+'.');
+  benches = benches.replace('<strong id="clean-result">—</strong>', '<strong id="clean-result">GREEN / '+report.runs[0].cleanScore+'</strong>');
+  benches = benches.replace('<strong id="drift-result">—</strong>', '<strong id="drift-result">RED / '+report.runs[0].driftScore+'</strong>');
+  benches = benches.replace('</body>', '<script type="application/json" id="experiment-data">'+JSON.stringify(report).replaceAll('<','\\u003c')+'</script>\n</body>');
+  if (/<!--[A-Z_]+-->/.test(benches)) throw new Error('Unresolved content marker on the experiments page');
+  writeFileSync('dist/experiments/index.html', benches);
+}
 // The provider-economics and evidence pages (vp-grow-odin-r-d bundle-3): rendered from their templates and the published
 // experiment records into dist/ only, before the per-page passes below, so they get the same header, beacon and checks.
 {
