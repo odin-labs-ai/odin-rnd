@@ -165,7 +165,7 @@ export const COPY = {
   privateNote: 'The review log itself stays private, because it also covers work that is not public. Only the verdict, the version judged, the time and the row id leave it.',
   aggregatesTitle: 'Beyond this site: our other repositories, anonymous',
   aggregatesHow: 'We build the rest of our software in private repositories. For the same window as this record, each row is one of them: pull requests merged, the share of CI attempts on those pull requests that passed, recorded review rounds, and the median minutes from opening a pull request to merging it.',
-  aggregatesHidden: 'What is left out, and why: the names of these repositories, and every title, branch, person and machine, are never published, because the work is not public. A row is labelled by a keyed hash of the name instead, which stays the same from one record to the next and cannot be turned back into the name. A repository with fewer than five merged pull requests in the window is left out entirely, because so few could identify it. These figures come from data this page cannot show, so the build checks only that each one is the record\'s own.',
+  aggregatesHidden: 'What is left out, and why: the names of these repositories, and every title, branch, person and machine, are never published, because the work is not public. A row is labelled by a keyed hash of the name instead, which cannot be turned back into the name. The label stays the same from one record to the next only while the private key behind it is kept: a new key would give every repository a new label. A repository with fewer than five merged pull requests in the window is left out entirely, because so few could identify it. These figures come from data this page cannot show, so the build checks only that each one is the record\'s own.',
   aggregatesEmpty: 'No other repository is published for this window: none had enough merged pull requests to be shown without identifying it, or none was read.',
 };
 
@@ -309,10 +309,19 @@ export function renderAggregates(record) {
 
 /** Every way the rendered panel differs from the record's aggregates: a missing, extra or repeated row, a figure that is not the record's, a link. */
 export function aggregateProblems(html, record) {
-  const start = html.indexOf('<div class="delivery-aggregates" id="delivery-aggregates">');
+  const OPEN = '<div class="delivery-aggregates" id="delivery-aggregates">';
+  const start = html.indexOf(OPEN);
   if (start < 0) return ['the "Beyond this site" panel is missing'];
   const panel = html.slice(start, html.indexOf('</div>', start) + 6);
   const problems = [];
+  // Exactly one panel, and it is exactly the record's own rendering: a repeated cell, a changed label in the visible
+  // text or anything else added inside it differs from that rendering, whatever the row-level checks below make of it.
+  const panels = html.split('class="delivery-aggregates"').length - 1;
+  if (panels !== 1) problems.push(`the "Beyond this site" panel appears ${panels} times, not once`);
+  if (panel !== renderAggregates(record)) problems.push('the "Beyond this site" panel is not exactly the record\'s own rendering');
+  // No aggregate row anywhere else on the page either.
+  const rowsOnPage = (html.match(/data-aggregate=/g) ?? []).length;
+  if (rowsOnPage !== record.aggregates.length) problems.push(`${rowsOnPage} aggregate rows on the page, not the record's ${record.aggregates.length}`);
   if (/<a\b/.test(panel)) problems.push('the "Beyond this site" panel links somewhere; it has nothing public to link to');
   const byLabel = new Map(record.aggregates.map(a => [a.label, a]));
   const seen = new Map();

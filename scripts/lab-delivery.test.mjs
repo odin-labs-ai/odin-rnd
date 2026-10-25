@@ -370,6 +370,28 @@ test('the panel is held to the record: a changed figure, a missing, extra or dou
   assert.match(aggregateProblems(html.replace(/<div class="delivery-aggregates"[\s\S]*?<\/div>/, ''), rec).join('\n'), /panel is missing/);
 });
 
+test('the panel cannot be padded: a doubled cell, a changed visible label, a second panel or a stray row is refused', () => {
+  const rec = withAgg(), html = renderDelivery(rec);
+  const panel = html.match(/<div class="delivery-aggregates"[\s\S]*?<\/div>/)[0];
+  // A second cell for the same figure: the last one would win in a map, the page would show both.
+  const doubled = html.replace('<td data-figure="prCount">', '<td data-figure="prCount">999</td><td data-figure="prCount">');
+  assert.match(aggregateProblems(doubled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The label a reader sees, changed while the attribute keeps the valid one.
+  const relabelled = html.replace('<code>repo-0a1b2c3d4e5f</code>', '<code>secret-name</code>');
+  assert.match(aggregateProblems(relabelled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The whole panel twice.
+  const twice = html.replace(panel, panel + panel);
+  const problems = aggregateProblems(twice, rec).join('\n');
+  assert.match(problems, /panel appears 2 times, not once/);
+  assert.match(problems, /aggregate rows on the page, not the record's/);
+  // An aggregate row outside the panel.
+  const row = html.match(/<tr data-aggregate="repo-0a1b2c3d4e5f">[\s\S]*?<\/tr>/)[0];
+  const stray = html.replace('<p class="delivery-cursor', `<table><tbody>${row}</tbody></table><p class="delivery-cursor`);
+  assert.match(aggregateProblems(stray, rec).join('\n'), /aggregate rows on the page, not the record's/);
+  // And the page's own words say the label holds only while its key is kept.
+  assert.match(panel, /only while the private key behind it is kept/);
+});
+
 test('with no aggregate the panel says so honestly, and still names its window', () => {
   const html = renderDelivery(withAgg([]));
   const panel = panelOf(html);
