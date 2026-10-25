@@ -208,6 +208,37 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.equal(readDispatches(root).length, 1);
 });
 
+// Film files committed ahead of the page that shows them: listed in film-assets.json with their sha256 and size.
+const FILM_ASSETS = 'data/labs/agent-space/film-assets.json';
+const readFilmAssets = root => existsSync(join(root, FILM_ASSETS)) ? JSON.parse(readFileSync(join(root, FILM_ASSETS), 'utf8')).files : [];
+function filmAssetProblems(root) {
+  return readFilmAssets(root).flatMap(({ path, sha256, bytes }) => {
+    const file = join(root, path);
+    if (!/^assets\/labs\/agent-space\/films\/[a-z0-9][a-z0-9-]*\.(webm|png|jpg)$/.test(path)) return [`${path}: not a film file under the films folder`];
+    if (!existsSync(file)) return [`${path}: listed but missing`];
+    const data = readFileSync(file);
+    return [...(data.length === bytes ? [] : [`${path}: ${data.length} bytes, listed as ${bytes}`]),
+      ...(createHash('sha256').update(data).digest('hex') === sha256 ? [] : [`${path}: does not match its listed sha256`])];
+  });
+}
+
+test('a film file listed ahead of its page must be under the films folder and hash to its listed sha256 and size', () => {
+  const root = mkdtempSync(join(tmpdir(), 'film-assets-'));
+  try {
+    mkdirSync(join(root, 'assets/labs/agent-space/films'), { recursive: true });
+    mkdirSync(join(root, 'data/labs/agent-space'), { recursive: true });
+    const bytes = Buffer.from('film bytes');
+    writeFileSync(join(root, 'assets/labs/agent-space/films/a.webm'), bytes);
+    const list = files => writeFileSync(join(root, FILM_ASSETS), JSON.stringify({ files }));
+    const good = { path: 'assets/labs/agent-space/films/a.webm', sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+    list([good]); assert.deepEqual(filmAssetProblems(root), []);
+    list([{ ...good, sha256: '0'.repeat(64) }]); assert.match(filmAssetProblems(root).join(), /does not match its listed sha256/);
+    list([{ ...good, bytes: 1 }]); assert.match(filmAssetProblems(root).join(), /listed as 1/);
+    list([{ ...good, path: 'assets/labs/agent-space/films/b.webm' }]); assert.match(filmAssetProblems(root).join(), /listed but missing/);
+    list([{ ...good, path: 'assets/labs/other/a.webm' }]); assert.match(filmAssetProblems(root).join(), /not a film file under the films folder/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
   // readDispatches runs dispatchProblems (schema, text screen, answer screen) on every committed file and throws on any
   // problem; the explicit loop below repeats it so this test states, not implies, that each one passes.
@@ -223,6 +254,10 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
   }
   const referenced = new Set(committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]).map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
+  // A film file committed ahead of the page that shows it is listed, with its sha256 and size, in film-assets.json;
+  // it belongs only if its bytes are the listed ones.
+  assert.deepEqual(filmAssetProblems('site'), []);
+  for (const { path } of readFilmAssets('site')) referenced.add(join('site', path));
   for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch`);
   for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
