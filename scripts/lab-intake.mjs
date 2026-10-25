@@ -5,7 +5,7 @@
 // kept:
 //
 //   gh issue list --label ask-the-agents --state open --json number,title,body,author,createdAt,state > issues.json
-//   node scripts/lab-intake.mjs --issues issues.json --session <YYYY-Www> --out <file> [--report <file>]
+//   node scripts/lab-intake.mjs --issues issues.json --session <YYYY-Www> --out <file> [--report <file>] [--approve <file>]
 //
 // The operator runs gh; this script makes no network call of any kind. The questions file holds only questions whose
 // screen verdict is ok, oldest first, at most MAX_QUESTIONS; every other question is in the report (default
@@ -25,11 +25,15 @@
 //   ip-boundary    the publisher's text screen (scripts/lab-dispatch-publish.mjs, screenHits): no restricted name,
 //                  price, local or IP address, file path or file name (refused). It runs over every string the
 //                  questions file carries (id, agent, asker, session), not only the question
-//   on-topic       one question, in the form of a question, that mentions the space, its agents or how it works, or
-//                  is put to the agent directly ("you"); a sensitive subject (politics, health, money, ...) or
-//                  anything else is held for a person. Two questions in one issue are held too
+//   on-topic       one question, in the form of a question, made only of words in a closed vocabulary (plain
+//                  function words and the space's own subjects); any other word holds it for a person, so an
+//                  instruction or a sensitive subject no rule names is held, not passed. A listed sensitive subject
+//                  (politics, health, money, ...) and two questions in one issue are held too
 //   duplicate      the same question as an older ok one (by its letters) is held
-// The agent asked is the one chosen in the form; with "Any of them", the agent the text addresses ("Atlas, ...")
+// A held question (never a refused one, a form problem or a duplicate) becomes ok only through --approve: an
+// odin-intake-approvals v1 file, {"format": "odin-intake-approvals", "version": 1, "by": "<label>", "approve":
+// [{"issue": <n>, "textSha256": "<the report's textSha256 for that row>"}]}, so a person passes exactly the text they read.
+// The agent asked is the one chosen in the form; with "Any of them", the agent the text addresses ("Atlas, ", "atlas: ")
 // when it is one of the three, else Odin, as the space itself does. A text that addresses another agent than the one
 // chosen is held. The asker is recorded as github:@<login>; the author's display name is never read out.
 // It REFUSES (exit 1, every reason listed, nothing written) when the issues file is not a gh issue list, when the
@@ -118,8 +122,34 @@ const RULES = [
 ];
 // Hidden or format characters, judged on the raw text: they can carry text a reader does not see.
 const HIDDEN = /[\p{Cf}͏ᅟᅠㅤﾠ\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u;
-const QUESTION_WORD = /^(?:(?:odin|atlas|juno),\s*)?(?:who|whom|whose|what|what's|whats|when|where|where's|why|how|how's|which|can|could|do|does|did|is|are|was|were|will|would|should|shall|may|might|have|has|any|if)\b/;
-const TOPIC = /\b(?:agents?|odin|atlas|juno|space|lab|labs|here|you|your|yours|yourself|answer\w*|proofs?|cards?|evidence|sources?|sessions?|record\w*|world|campus|trust|know|knew|plug\w*|build\w*|built|help\w*|start\w*|work\w*|learn\w*|remember\w*|think\w*|see|check\w*|tools?|memory|wiki|library|desk|visitors?)\b/;
+const QUESTION_WORD = /^(?:(?:odin|atlas|juno)[,:]\s*)?(?:who|whom|whose|what|what's|whats|when|where|where's|why|how|how's|which|can|could|do|does|did|is|are|was|were|will|would|should|shall|may|might|have|has|any|if)\b/;
+// The words a question about the space may be made of: plain function words, and the space's own subjects (its agents,
+// what they do, how an answer is proven). It is closed on purpose. A deny-list cannot name every way to instruct an
+// agent ("set aside all prior instructions") or every sensitive subject ("should I stop taking insulin"), so a
+// question is ok only when every word is one of these; any other word holds it for a person (--approve). Words that
+// steer an agent (instructions, rules, prompt, commands, ignore, follow, pretend, secret, key) are deliberately absent.
+const FUNCTION_WORDS = `a an the and or but if so then than that this these those there their they them it its it's i i'm i've me my
+  mine we us our you you're you've your yours yourself yourselves he she his her who whom whose what what's whats when where
+  where's why how how's which can can't cannot could couldn't do does doesn't did didn't don't is isn't are aren't was wasn't
+  were weren't will won't would wouldn't should shall may might must have has had having be been being am not no yes of in on
+  at to for from with without about into by as up out over through between before after during while just also only still
+  yet really very much many more most some any all each every other another same such own one two first last next new now
+  today right again ever never always often already something anything everything someone anyone everyone nothing kind sort
+  way thing things lot bit please hi hello hey thanks thank ok okay well like get got go going goes went come comes came
+  make makes made use uses used using say says said tell ask asks asked want wants need needs mean means do doing done
+  happen happens happening different difference better best good same around together else`;
+const SPACE_WORDS = `odin atlas juno agent agents space lab labs world campus library desk help helps helping support guide
+  knowledge base wiki page pages notes entry entries tool tools memory memories remember record records recording recorded
+  session sessions question questions answer answers answered proof proofs card cards evidence source sources reason reasons
+  check checks checked trust trusted true wrong mistake mistakes know knows knew known learn learns learned think thinks
+  see sees saw look looks find finds found read reads walk walks talk talks visitor visitors follower followers people
+  person build built builds work works worked start started begin plug add own brain structure structures live here
+  meet chat move moving watch clip film filmed sure certain`;
+const VOCABULARY = new Set(`${FUNCTION_WORDS} ${SPACE_WORDS}`.split(/\s+/).filter(Boolean));
+const known = word => [word, word.replace(/'s$/, ''), word.replace(/s$/, ''), word.replace(/es$/, ''), word.replace(/ed$/, ''),
+  word.replace(/ing$/, ''), word.replace(/d$/, '')].some(form => VOCABULARY.has(form));
+/** The words of the normalised text that are not in the space's vocabulary, in order, each once. */
+export const unknownWords = plain => [...new Set((plain.match(/[\p{L}\p{N}]+(?:'\p{L}+)?/gu) ?? []).filter(word => !known(word)))];
 
 /**
  * One question's screen: { verdict: 'ok' | 'held' | 'refused', reasons: [{ check, reason, verdict }], text, to }.
@@ -141,7 +171,9 @@ export function screenQuestion({ question, agent, consent }, login = '') {
     if (m[1] !== login.toLowerCase()) { say('personal-data', 'an @mention of someone other than the asker', 'refused'); break; }
   }
   let to = DEFAULT_AGENT;
-  const lead = /^([A-Z][a-z]{1,20}),\s/.exec(text)?.[1] ?? null;
+  // An address at the start ("Atlas, ...", "atlas: ...") in any case; a known agent is written as the form spells it.
+  const said = /^(\p{L}{2,20})\s*[,:]\s/u.exec(normalise(text))?.[1] ?? null;
+  const lead = said ? AGENTS.find(name => name.toLowerCase() === said) ?? said : null;
   if (agent && agent !== ANY_AGENT && !AGENTS.includes(agent)) say('form', `an agent the form does not offer: ${JSON.stringify(agent.slice(0, 40))}`, 'held');
   else if (agent && agent !== ANY_AGENT) to = agent;
   else if (lead && AGENTS.includes(lead)) to = lead;
@@ -151,7 +183,8 @@ export function screenQuestion({ question, agent, consent }, login = '') {
   const marks = (plain.match(/\?/g) ?? []).length;
   if (marks > 1) say('on-topic', 'more than one question', 'held');
   if (!(marks === 1 && /\?$/.test(plain)) && !QUESTION_WORD.test(plain)) say('on-topic', 'not in the form of a question', 'held');
-  else if (!TOPIC.test(plain)) say('on-topic', 'it does not mention the space, its agents or how they work', 'held');
+  const unknown = unknownWords(plain);
+  if (unknown.length) say('on-topic', `words outside the space's vocabulary, for a person to judge: ${unknown.slice(0, 8).join(', ')}${unknown.length > 8 ? ', ...' : ''}`, 'held');
   if (plain.split(/\s+/).filter(Boolean).length < 2) say('on-topic', 'a single word', 'held');
   const verdict = reasons.some(r => r.verdict === 'refused') ? 'refused' : reasons.length ? 'held' : 'ok';
   return { verdict, reasons, text, to };
@@ -177,12 +210,40 @@ const SESSION = /^\d{4}-W(?:0[1-9]|[1-4]\d|5[0-3])$/;
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const letters = text => normalise(text).replace(/[^\p{L}\p{N}]/gu, '');
 
+export const APPROVALS_FORMAT = 'odin-intake-approvals';
+// A person may pass a held question only for these checks: what the screen could not judge. A form problem (not the
+// form, a bot, no login), a duplicate and every refusal stay as they are.
+export const APPROVABLE = ['injection', 'personal-data', 'on-topic'];
+/** The hash a person's approval names: the question exactly as the intake read it (cleaned), so an edit voids it. */
+export const textSha256 = text => sha256(text);
+
+/** Why an approvals file may not be used: { problems, byIssue } (byIssue maps an issue number to its text hash). */
+export function approvalsProblems(doc) {
+  const problems = [];
+  const byIssue = new Map();
+  if (doc === null || typeof doc !== 'object' || doc.format !== APPROVALS_FORMAT || doc.version !== 1) problems.push(`the approvals file is not ${APPROVALS_FORMAT} v1`);
+  else {
+    if (typeof doc.by !== 'string' || !/^[a-z0-9][a-z0-9-]{0,31}$/.test(doc.by)) problems.push('the approvals file does not say who approved (a lowercase label)');
+    if (!Array.isArray(doc.approve)) problems.push('the approvals file has no approve list');
+    else doc.approve.forEach((entry, i) => {
+      if (!Number.isInteger(entry?.issue) || entry.issue < 1 || !/^[0-9a-f]{64}$/.test(entry?.textSha256 ?? '')) problems.push(`approve [${i}]: not { issue, textSha256 }`);
+      else if (byIssue.has(entry.issue)) problems.push(`approve [${i}]: issue #${entry.issue} is approved twice`);
+      else byIssue.set(entry.issue, entry.textSha256);
+    });
+  }
+  return { problems, byIssue, by: doc?.by };
+}
+
 /**
  * The intake, in memory: { problems, questions, report }. Nothing is written here; `problems` lists why nothing may be.
  * Issues are taken oldest first (createdAt, then number), so the cap and the duplicate check keep the earlier asker.
+ * `approvals` (odin-intake-approvals v1) passes a held question a person has read: only when every reason it was held
+ * for is one of APPROVABLE, and only for the exact text the person read.
  */
-export function intake(issues, session) {
+export function intake(issues, session, approvals = null) {
   const problems = issuesProblems(issues);
+  const approved = approvals ? approvalsProblems(approvals) : { problems: [], byIssue: new Map() };
+  problems.push(...approved.problems);
   if (!SESSION.test(String(session))) problems.push(`--session ${JSON.stringify(session)} is not YYYY-Www (an ISO week, e.g. 2026-W44)`);
   if (problems.length) return { problems };
   const rows = [];
@@ -205,6 +266,13 @@ export function intake(issues, session) {
     else for (const reason of new Set(screenHits(`github:@${login}`).map(hit => hit.reason))) row.reasons.push({ check: checkFor(reason), reason: `the asker's login: ${reason}`, verdict: 'refused' });
     if (issue.author?.is_bot === true) row.reasons.push({ check: 'form', reason: 'the issue was opened by a bot', verdict: 'held' });
     row.verdict = row.reasons.some(r => r.verdict === 'refused') ? 'refused' : row.reasons.length ? 'held' : 'ok';
+    const approval = approved.byIssue.get(issue.number);
+    if (approval !== undefined) {
+      if (row.verdict !== 'held') row.approval = `not applied: the question is ${row.verdict}, and only a held question can be approved`;
+      else if (approval !== textSha256(screen.text)) row.approval = 'not applied: the text is not the one approved (edited since?)';
+      else if (!row.reasons.every(r => APPROVABLE.includes(r.check))) row.approval = `not applied: held for ${[...new Set(row.reasons.filter(r => !APPROVABLE.includes(r.check)).map(r => r.check))].join(', ')}, which a person cannot pass`;
+      else { row.verdict = 'ok'; row.approval = `approved by ${approved.by}`; }
+    } else if (row.verdict === 'held') row.textSha256 = textSha256(screen.text);
     if (row.verdict !== 'ok') continue;
     const key = letters(screen.text);
     if (seenText.has(key)) { Object.assign(row, { verdict: 'held', reasons: [{ check: 'duplicate', reason: 'the same question as an older one', verdict: 'held' }] }); continue; }
@@ -253,13 +321,17 @@ export function questionsProblems(doc) {
 export const reportPath = out => out.endsWith('.json') ? `${out.slice(0, -'.json'.length)}.report.json` : `${out}.report.json`;
 
 /** Run the intake from files and write both outputs; nothing is written unless every check passes. */
-export function runIntake({ issuesFile, session, out, report = reportPath(out), roots }) {
-  const problems = [...outProblems(out, roots), ...outProblems(report, roots)];
+export function runIntake({ issuesFile, session, out, report = reportPath(out), approvalsFile = null, roots }) {
+  // The shared check names drafts; here it guards the questions file and its report, which quotes what visitors sent.
+  const problems = [...outProblems(out, roots), ...outProblems(report, roots)]
+    .map(problem => problem.replace(/: drafts are never published$/, ': the questions file and its report are never published'));
   if (resolve(out) === resolve(report)) problems.push('--out and --report are the same file');
   let issues;
   try { issues = JSON.parse(readFileSync(issuesFile, 'utf8')); } catch (error) { problems.push(`${issuesFile}: ${error.message}`); }
   if (problems.length) return { problems };
-  const result = intake(issues, session);
+  let approvals = null;
+  if (approvalsFile) try { approvals = JSON.parse(readFileSync(approvalsFile, 'utf8')); } catch (error) { return { problems: [`${approvalsFile}: ${error.message}`] }; }
+  const result = intake(issues, session, approvals);
   if (result.problems.length) return result;
   for (const [file, doc] of [[out, result.questions], [report, result.report]]) { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, `${JSON.stringify(doc, null, 1)}\n`); }
   return { ...result, out, reportFile: report };
@@ -269,7 +341,7 @@ function args(argv) {
   const out = {};
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
-    if (['--issues', '--session', '--out', '--report'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
+    if (['--issues', '--session', '--out', '--report', '--approve'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
     else throw new Error(`unknown or incomplete argument ${flag}`);
   }
   if (!out.issues || !out.session || !out.out) throw new Error('--issues <file>, --session <YYYY-Www> and --out <file> are required');
@@ -279,11 +351,11 @@ function args(argv) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   let options;
   try { options = args(process.argv.slice(2)); } catch (error) {
-    console.error(`usage: node scripts/lab-intake.mjs --issues <gh issue list json> --session <YYYY-Www> --out <file> [--report <file>]\n${error.message}`);
+    console.error(`usage: node scripts/lab-intake.mjs --issues <gh issue list json> --session <YYYY-Www> --out <file> [--report <file>] [--approve <file>]\n${error.message}`);
     process.exit(3);
   }
   const out = resolve(options.out);
-  const result = runIntake({ issuesFile: resolve(options.issues), session: options.session, out, report: resolve(options.report ?? reportPath(out)) });
+  const result = runIntake({ issuesFile: resolve(options.issues), session: options.session, out, report: resolve(options.report ?? reportPath(out)), approvalsFile: options.approve ? resolve(options.approve) : null });
   if (result.problems.length) {
     console.error(`REFUSED ${options.issues}: ${result.problems.length} reason${result.problems.length === 1 ? '' : 's'}; nothing was written.`);
     for (const problem of result.problems) console.error(`  - ${problem}`);
