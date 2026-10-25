@@ -40,8 +40,30 @@ test('a faithful vendoring passes the build\'s checks and --verify, and records 
 
 test('an engine figure that is not its claims row is refused at vendoring', () => {
   assert.throws(() => run({ value: '42 -> 1.0' }), /"42" of its value "42 -> 1.0" is not in its claims row/);
-  assert.throws(() => run({ rowSource: '`99aa00bb` another run' }), /its commit 3b74a4e0 is not in its claims row's source/);
+  assert.throws(() => run({ rowSource: '`99aa00bb` another run' }), /its commit 3b74a4e0 is not in its claims row/);
+  // A code commit or merge the pack names must be in the row too (claims rows write commits short).
+  const withMerge = inputs({ rowSource: '`3b74a4e0` the router' });
+  const pack = JSON.parse(withMerge.packBytes); pack.engine[0].source.merge = 'e'.repeat(40);
+  assert.throws(() => vendor({ commit: 'd'.repeat(40), ...withMerge, packBytes: Buffer.from(JSON.stringify(pack)) }), /its merge e{40} is not in its claims row/);
+  assert.deepEqual(figureVsRow({ claim: 20, value: 'p50 17.5 ms', source: { commit: '7d7189935f64e31cb3c158d816d6fde199d01629', merge: 'e02a298f60abf95ad5bbbb22030c258080f9fc06' } },
+    { claim: 'server p50 17.5 ms per tick', statusCell: 'MAIN (merge `e02a298f`)', source: 'code `9cf5b9e2` (numbers in `7d718993`)' }), []);
   assert.deepEqual(figureVsRow({ claim: 10, value: '1,867 passed / 0 failed', source: { commit: '175f14d7' } }, claimRow('| 10 | Tests 1,867 passed / 0 failed | MAIN | `175f14d7` the log |', 10)), []);
+});
+
+test('the pack\'s own status must agree with the claims row, and every commit a main figure names must be an ancestor of main', () => {
+  const base = inputs();
+  const pack = JSON.parse(base.packBytes);
+  pack.engine[0].source.status = 'work-branch';
+  assert.throws(() => vendor({ commit: 'd'.repeat(40), ...base, packBytes: Buffer.from(JSON.stringify(pack)) }), /the pack says work-branch, its claims row says main/);
+  const merged = JSON.parse(base.packBytes);
+  merged.engine[0].source.merge = 'f'.repeat(40);
+  const claimsBytes = Buffer.from(base.claimsBytes.toString().replace('| MAIN |', `| MAIN (merge \`${'f'.repeat(8)}\`) |`));
+  assert.throws(() => vendor({ commit: 'd'.repeat(40), ...base, claimsBytes, packBytes: Buffer.from(JSON.stringify(merged)) }), new RegExp(`does not show commit ${'f'.repeat(40)} as an ancestor`));
+  const ancestry = { ...base.ancestry, commits: { ...base.ancestry.commits, ['f'.repeat(40)]: { status: 'ahead', behind_by: 0 } } };
+  const ok = vendor({ commit: 'd'.repeat(40), ...base, claimsBytes, ancestry, packBytes: Buffer.from(JSON.stringify({ ...merged, engine: [{ ...merged.engine[0], source: { ...merged.engine[0].source, note: 'at par with placeholders, not faster' } }] })) });
+  assert.equal(ok.engine[0].source.merge, 'f'.repeat(40));
+  assert.equal(ok.engine[0].source.note, 'at par with placeholders, not faster');
+  assert.deepEqual(telemetryProblems(ok), []);
 });
 
 test('a MAIN row whose commit is not an ancestor of main is refused; the label alone is not enough', () => {

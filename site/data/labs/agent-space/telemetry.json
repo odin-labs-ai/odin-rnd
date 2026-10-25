@@ -3,27 +3,18 @@
  "version": 1,
  "vendored": {
   "from": "the agent space's own telemetry pack, kept in its private repository",
-  "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
-  "packSha256": "9fb9ec2d0111d62fba0620bda41fc2b76de7c0617527f2b7966a99749975a81e",
-  "packBuiltAtCommit": "c8b36efd39192a904f0a97ff83935be018a633ba",
-  "claimsSha256": "82a7fab7ea83ee8f6929f7d6e27058131773e1c412ccdfc44d9c118c38f6bbb0",
-  "figuresSha256": "ddd92168328e45e0ffe15cfc259989b8ef256f5a3cb705e8b798eb4c525faa45",
+  "commit": "a67fa304dd4373fdeacb18d9ff9823a674e61c70",
+  "packSha256": "138b80a2af4531234923386fea97df69adf0d9ade341eed70c1e7e783acbc2f9",
+  "packBuiltAtCommit": "9d7fd98cd347f7734656170014182ae669eeffb8",
+  "claimsSha256": "711c6edbc0240b4c83fc1bf139f262072d9cefad76ca984ae833b6d6ebde8577",
+  "figuresSha256": "ae2188c6668860a719245d50e6d143b59272e7f278c4801fb3b45d0af6b9b109",
   "mainCheck": {
-   "main": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2",
+   "main": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e",
    "how": "GitHub compare API: GET compare/<commit>...<main>; behind_by 0 means the commit is an ancestor of main",
    "checked": "2026-10-25"
   },
   "pinned": [],
-  "omitted": [
-   {
-    "claim": "20",
-    "why": "the 1,000-agent tick figure: its claims row still says work branch, but that branch was merged into the main build before this pack was built, so the row is being corrected"
-   },
-   {
-    "claim": "d7",
-    "why": "the claims table at this commit has no row for it yet"
-   }
-  ],
+  "omitted": [],
   "kept": "rule, agent_space and engine, and the session's question rows; each engine figure's status from its claims row",
   "leftOut": "the benchmark rows (they belong to the brain benchmark lab), the session's run id (run ids are never published) and every private path"
  },
@@ -358,8 +349,8 @@
    "source": {
     "row": 7,
     "status": "main",
-    "commit": "3b74a4e0",
-    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+    "commit": "3b74a4e09655db0e4a6ba8df11a42363b6636a43",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
    }
   },
   {
@@ -370,8 +361,8 @@
    "source": {
     "row": 8,
     "status": "main",
-    "commit": "3b74a4e0",
-    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+    "commit": "3b74a4e09655db0e4a6ba8df11a42363b6636a43",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
    }
   },
   {
@@ -382,8 +373,8 @@
    "source": {
     "row": 9,
     "status": "main",
-    "commit": "23b3c762",
-    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+    "commit": "23b3c762eed1c8fc6b20d75f2bed264c2a3c1c22",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
    }
   },
   {
@@ -394,8 +385,8 @@
    "source": {
     "row": 10,
     "status": "main",
-    "commit": "175f14d7",
-    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+    "commit": "175f14d7e945d1a02411e748ab1dce8931ce42f1",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
    }
   },
   {
@@ -406,8 +397,38 @@
    "source": {
     "row": 15,
     "status": "main",
-    "commit": "fcecd472",
-    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+    "commit": "fcecd472b7f326671f993d8450a704ece280b1a4",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 20,
+   "what": "1,000 moving and talking agents in one campus: server time per tick at 10 Hz",
+   "value": "p50 17.5 ms / p95 29.6 ms",
+   "unit": "ms per tick",
+   "source": {
+    "row": 20,
+    "status": "main",
+    "commit": "7d7189935f64e31cb3c158d816d6fde199d01629",
+    "code_commit": "9cf5b9e225a77cdbf466726a2fa271b3225a0261",
+    "merge": "e02a298f60abf95ad5bbbb22030c258080f9fc06",
+    "note": "the numbers' commit; the code measured is its parent (the numbers' commit changed no engine file). The run did not stamp its revision.",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": "d7",
+   "what": "the campus scene's draw calls and frame time, instanced art + text LOD against placeholders",
+   "value": "405 draws / p50 7.9 ms vs 940 / 9.4 ms",
+   "unit": "draws, ms per frame",
+   "source": {
+    "row": "d7",
+    "status": "main",
+    "commit": "ed516f503946517e452aa18956d03a267765ea94",
+    "code_commit": "fc5627c1dc3bc54b644bb593ed37b9907abf2d14",
+    "merge": "499943f668cd927e6a3cb5def79b502c01662e8d",
+    "note": "like for like, placeholders with the same text LOD are 765 draws / 8.2 ms: the art is at par with them, not faster. The report did not stamp its revision; the code measured is the numbers' commit's parent.",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
    }
   }
  ]

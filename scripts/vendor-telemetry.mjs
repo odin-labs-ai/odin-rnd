@@ -49,13 +49,19 @@ function args(argv) {
   return out;
 }
 
-/** A claims row: its claim text, its status ("main" or "work-branch", null for any other label) and its source cell. */
+/** A claims row: its claim text, its status ("main" or "work-branch", null for any other label), its status cell and its source cell. */
 export function claimRow(table, row) {
   const line = table.split('\n').find(l => new RegExp(`^\\|\\s*${String(row).replace(/[^a-z0-9]/gi, '')}\\s*\\|`).test(l));
   if (!line) return null;
   const [, , claim = '', status = '', source = ''] = line.split('|').map(cell => cell.trim());
-  return { claim, source, status: /^MAIN\b/.test(status) ? 'main' : /^LANE\b/.test(status) ? 'work-branch' : null };
+  return { claim, source, statusCell: status, status: /^MAIN\b/.test(status) ? 'main' : /^LANE\b/.test(status) ? 'work-branch' : null };
 }
+
+/** The commits a figure's source names: the numbers' commit, and when the pack gives them the code measured and the merge into main. */
+const COMMIT_FIELDS = ['commit', 'code_commit', 'merge'];
+const commitsOf = source => COMMIT_FIELDS.map(k => source[k]).filter(c => /^[0-9a-f]{7,40}$/.test(c ?? ''));
+// A claims row writes commits short (8 hex): a figure's commit is in the row when the row holds a 7+ hex prefix of it.
+const rowHasCommit = (text, commit) => [...text.matchAll(/\b[0-9a-f]{7,40}\b/g)].some(([hex]) => commit.startsWith(hex) || hex.startsWith(commit));
 
 // The words and numbers of a value, the way they are compared with its claims row: lowercase, thousands commas and
 // arrows dropped ("1,867 passed" -> "1867", "passed"; "45.6 -> 1.0" -> "45.6", "1.0").
@@ -65,7 +71,10 @@ const tokens = text => text.toLowerCase().replace(/(\d),(?=\d{3}\b)/g, '$1').rep
 export function figureVsRow(figure, row) {
   const problems = [], claim = new Set(tokens(row.claim));
   for (const t of tokens(figure.value)) if (!claim.has(t)) problems.push(`claim ${figure.claim}: "${t}" of its value "${figure.value}" is not in its claims row`);
-  if (/^[0-9a-f]{7,40}$/.test(figure.source.commit ?? '') && !row.source.includes(figure.source.commit)) problems.push(`claim ${figure.claim}: its commit ${figure.source.commit} is not in its claims row's source`);
+  for (const field of COMMIT_FIELDS) {
+    const c = figure.source[field];
+    if (/^[0-9a-f]{7,40}$/.test(c ?? '') && !rowHasCommit(`${row.statusCell ?? ''} ${row.source}`, c)) problems.push(`claim ${figure.claim}: its ${field === 'commit' ? 'commit' : field.replace('_', ' ')} ${c} is not in its claims row`);
+  }
   return problems;
 }
 
@@ -84,16 +93,24 @@ export function vendor({ commit, packBytes, sessionBytes, claimsBytes, ancestry,
     if (!(pinHow[claim] ?? '').trim()) problems.push(`--pin ${claim}: no --pin-how saying how the commit was found`);
   }
   for (const claim of Object.keys(omit)) if (!pack.engine.some(f => String(f.claim) === claim)) problems.push(`--omit ${claim}: the pack has no such figure`);
-  const engine = pack.engine.filter(f => !(String(f.claim) in omit)).map(({ source: { claims_file, row, commit: c }, ...figure }) => {
+  const engine = pack.engine.filter(f => !(String(f.claim) in omit)).map(({ source: { claims_file, row, commit: c, status: packStatus, code_commit, merge, note }, ...figure }) => {
     const claimsRow = claimRow(claims, row);
     const status = claimsRow?.status ?? null;
     if (!status) problems.push(`claims row ${row}: missing, or its status is neither MAIN nor LANE`);
+    if (packStatus !== undefined && packStatus !== status) problems.push(`claim ${figure.claim}: the pack says ${packStatus}, its claims row says ${status}`);
     const pinned = HEX40.test(pin[String(figure.claim)] ?? '') ? pin[String(figure.claim)] : null;
     const source = { row, status, commit: /^[0-9a-f]{7,40}$/.test(c) ? c : pinned };
+    for (const [key, value] of Object.entries({ code_commit, merge })) if (value !== undefined) {
+      if (!HEX40.test(value)) problems.push(`claim ${figure.claim}: its ${key.replace('_', ' ')} is not a 40-hex commit`);
+      source[key] = value;
+    }
+    if (note !== undefined) source.note = note;
     if (claimsRow) problems.push(...figureVsRow({ ...figure, source }, claimsRow));
     if (status === 'main') {
-      const seen = source.commit ? ancestry?.commits?.[source.commit] : null;
-      if (!seen || seen.behind_by !== 0 || !['ahead', 'identical'].includes(seen.status)) problems.push(`claim ${figure.claim}: its claims row says MAIN, but the ancestry record does not show commit ${source.commit} as an ancestor of main ${ancestry?.main}`);
+      // Every commit the figure names (the numbers, the code measured, the merge) must be an ancestor of main.
+      const named = commitsOf(source);
+      const off = named.filter(commit => { const seen = ancestry?.commits?.[commit]; return !seen || seen.behind_by !== 0 || !['ahead', 'identical'].includes(seen.status); });
+      if (!named.length || off.length) problems.push(`claim ${figure.claim}: its claims row says MAIN, but the ancestry record does not show commit ${(off.length ? off : [source.commit]).join(', ')} as an ancestor of main ${ancestry?.main}`);
       else source.onMain = ancestry.main;
     }
     return { ...figure, source };

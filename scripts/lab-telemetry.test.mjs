@@ -14,6 +14,7 @@ const edit = fn => { const record = clone(real); fn(record); return problems(rec
 // An engine edit made the way an honest re-vendoring would make it: the figures' digest taken again.
 const editEngine = fn => edit(r => { fn(r); r.vendored.figuresSha256 = figuresDigest(r.engine); });
 const reverse = text => [...text].reverse().join('');
+const escapeHtml = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const page = renderLabs()['labs/agent-space/index.html'];
 
 test('the committed telemetry passes, names the pack it was vendored from, and leaves out the run id and the benchmark', () => {
@@ -122,8 +123,14 @@ test('the page shows the method note next to the numbers, a source under each, a
   assert.ok(space.includes(real.agent_space.source.run_commit.slice(0, 8)));
   for (const figure of real.engine) {
     const where = figure.source.status === 'main' ? 'in the main build (an ancestor of its main head)' : 'on a work branch';
-    const line = figure.source.commit ? `Source: claims row ${figure.source.row}, ${where}, commit <code>${figure.source.commit.slice(0, 8)}</code>.` : `Source: claims row ${figure.source.row}, ${where}. ${NO_COMMIT}`;
+    const more = [figure.source.code_commit && `the code measured <code>${figure.source.code_commit.slice(0, 8)}</code>`, figure.source.merge && `merged into main as <code>${figure.source.merge.slice(0, 8)}</code>`].filter(Boolean);
+    const line = figure.source.commit ? `Source: claims row ${figure.source.row}, ${where}, commit <code>${figure.source.commit.slice(0, 8)}</code>${more.length ? ` (${more.join(', ')})` : ''}.` : `Source: claims row ${figure.source.row}, ${where}. ${NO_COMMIT}`;
     assert.ok(page.includes(line), String(figure.claim));
+    // A figure's note (e.g. "at par, not faster") sits beside it, before its source line.
+    if (figure.source.note) {
+      const item = page.slice(page.indexOf(escapeHtml(figure.what)), page.indexOf(line) + line.length);
+      assert.ok(item.includes(`<p class="lab-engine-note"><strong>Note:</strong> ${escapeHtml(figure.source.note)}</p>`), `${figure.claim}: its note is beside it`);
+    }
   }
   const branchFigures = real.engine.filter(f => f.source.status !== 'main');
   assert.equal((page.match(new RegExp(WORK_BRANCH.replaceAll('.', '\\.'), 'g')) ?? []).length, branchFigures.length);
