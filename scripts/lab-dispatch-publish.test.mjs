@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { validate } from './json-schema-lite.mjs';
-import { prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
+import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
 
 // The Lab 01 publisher (mission rnd-labs-human-first-1024). Every session here is written by the test at run time, so
@@ -193,7 +193,18 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
 });
 
 test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
+  // readDispatches runs dispatchProblems (schema, text screen, answer screen) on every committed file and throws on any
+  // problem; the explicit loop below repeats it so this test states, not implies, that each one passes.
   const committed = readDispatches('site');
+  const dir = 'site/data/labs/agent-space/dispatches';
+  const dispatchFiles = existsSync(dir) ? readdirSync(dir).filter(name => !name.startsWith('.')) : [];
+  assert.equal(committed.length, dispatchFiles.length, 'every file in the dispatch folder is a read, checked dispatch');
+  for (const name of dispatchFiles) {
+    const dispatch = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+    assert.deepEqual(dispatchProblems(dispatch, `${dir}/${name}`, 'site'), [], name);
+    const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
+    for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
+  }
   const referenced = new Set(committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]).map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
   for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch`);
