@@ -6,8 +6,16 @@
   "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
   "packSha256": "9fb9ec2d0111d62fba0620bda41fc2b76de7c0617527f2b7966a99749975a81e",
   "packBuiltAtCommit": "c8b36efd39192a904f0a97ff83935be018a633ba",
-  "kept": "rule, agent_space and engine, copied unchanged except the session's run id",
-  "leftOut": "the benchmark rows (they belong to the brain benchmark lab) and the session's run id (run ids are never published)"
+  "claimsSha256": "82a7fab7ea83ee8f6929f7d6e27058131773e1c412ccdfc44d9c118c38f6bbb0",
+  "figuresSha256": "a8bd15f6aea48a9402dbee0610c590f7d3645d3a4d52063a81df32f3037dda68",
+  "omitted": [
+   {
+    "claim": "d7",
+    "why": "the claims table at this commit has no row for it yet"
+   }
+  ],
+  "kept": "rule, agent_space and engine, and the session's question rows; each engine figure's status from its claims row",
+  "leftOut": "the benchmark rows (they belong to the brain benchmark lab), the session's run id (run ids are never published) and every private path"
  },
  "rule": "every figure carries its source; nothing without one is published",
  "agent_space": {
@@ -78,16 +86,258 @@
     ]
    }
   },
-  "ok_rate": 1.0,
+  "ok_rate": 1,
   "rounds": 3,
   "questions_per_round": 8,
   "note": "latency = the visitor's line to the agent's proof record, wall time, one machine (Windows + WSL2); it INCLUDES the scripted visitor's measuring overhead (0.25 s polling + a fixed 0.6 s wait for multi-line answers), so the true answer time is about 0.6-0.85 s lower; the agents: Odin (concierge, world + rules), Atlas (knowledge base), Juno (support notes), Pulse (an external HTTP agent)",
   "source": {
-   "file": "evidence/lab01/telemetry/agent-space-session.json",
+   "record": "the session record",
    "sha256": "a44214878e391b233b19846cbe29582a0a2646d570e33ff386ed8ed8e504fb3e",
    "run_commit": "c8b36efd39192a904f0a97ff83935be018a633ba",
    "started": "2026-10-25T13:05:08"
-  }
+  },
+  "rows": [
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.12,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.14,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.13,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.36,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.1,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.93,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.68,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.15,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.92,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.63,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   }
+  ]
  },
  "engine": [
   {
@@ -96,8 +346,8 @@
    "value": "265/280 vs 270/280",
    "unit": "tasks won",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 7,
+    "status": "main",
     "commit": "3b74a4e0"
    }
   },
@@ -107,8 +357,8 @@
    "value": "45.6 -> 1.0",
    "unit": "calls / success",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 8,
+    "status": "main",
     "commit": "3b74a4e0"
    }
   },
@@ -118,8 +368,8 @@
    "value": "byte-identical",
    "unit": "lens stream",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 9,
+    "status": "main",
     "commit": "23b3c762"
    }
   },
@@ -129,8 +379,8 @@
    "value": "1,867 passed / 0 failed",
    "unit": "tests",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 10,
+    "status": "main",
     "commit": "175f14d7"
    }
   },
@@ -140,8 +390,8 @@
    "value": "FAIL->PASS; 5/5",
    "unit": "checks",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 15,
+    "status": "main",
     "commit": "fcecd472"
    }
   },
@@ -151,20 +401,9 @@
    "value": "p50 17.5 ms / p95 29.6 ms",
    "unit": "ms per tick (LANE, not on main)",
    "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
     "row": 20,
-    "commit": "lane/scale-1000"
-   }
-  },
-  {
-   "claim": "d7",
-   "what": "the campus scene's draw calls and frame time, instanced art + text LOD against placeholders",
-   "value": "405 draws / p50 7.9 ms vs 940 / 9.4 ms",
-   "unit": "draws, ms per frame",
-   "source": {
-    "claims_file": ".ai/docs/rnd-proof-claims.md",
-    "row": "d7",
-    "commit": "499943f6"
+    "status": "work-branch",
+    "commit": null
    }
   }
  ]

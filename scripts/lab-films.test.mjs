@@ -25,7 +25,10 @@ function scratch() {
     id: 'tour', title: 'A tour of the agent space', line: 'A visitor walks in and asks the agents questions.', real: 'A live session, recorded unedited.',
     src: 'assets/labs/agent-space/films/tour.webm', poster: 'assets/labs/agent-space/films/tour-poster.jpg', mime: 'video/webm;codecs=vp9',
     bytes: film.length, seconds: 83, sha256: { src: sha256(film), poster: sha256(poster) },
-    source: { commit: 'a'.repeat(40), note: 'Recorded live and unedited in the agent space.', originalSha256: sha256(original), originalBytes: original.length, reencoded: true } }] };
+    source: { commit: 'a'.repeat(40), note: 'Recorded live and unedited in the agent space.', originalSha256: sha256(original), originalBytes: original.length, reencoded: true },
+    screening: { method: 'one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human', at: '2026-10-25',
+      srcSha256: sha256(film), frames: Array.from({ length: 17 }, (_, i) => ({ t: i * 5, rgb24Sha256: sha256(`frame ${i}`) })),
+      checked: ['no file path', 'no local or network address', 'no machine details', 'no private name'], result: 'pass' } }] };
   return { root, record };
 }
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -131,4 +134,37 @@ test('the committed films pass, stay under the limit, and load lazily on the lab
   }
   assert.match(renderFilms(null), /The first films are being filmed/);
   for (const film of films.films) assert.ok(page.includes(`<strong>What is real here:</strong> ${film.real}`), film.id);
+});
+
+// The screening record (odin-rnd #81 review): bound to the film's bytes and covering the whole film, or refused.
+test('a screening record for other bytes, not passed, empty, gapped or short of the end is refused', () => {
+  const { root, record } = scratch();
+  try {
+    const refused = (mutate, pattern) => { const r = clone(record); mutate(r.films[0].screening, r.films[0]); assert.match(filmsProblems(r, FILMS_FILE, root).join('\n'), pattern); };
+    refused(s => { s.srcSha256 = '0'.repeat(64); }, /films\/0\/screening\/srcSha256: screened 000000000000, but the film is/);
+    refused(s => { s.result = 'fail'; }, /films\/0\/screening\/result: "fail", not "pass"/);
+    refused(s => { s.frames = []; }, /films\/0\/screening\/frames: fewer than 1 items/);
+    refused(s => { s.frames.splice(3, 1); }, /films\/0\/screening\/frames\/3: 10 s to 20 s is not a step of 1 to 5 s/);
+    refused(s => { s.frames = s.frames.slice(0, 10); }, /films\/0\/screening\/frames: the last frame is at 45 s of a 83 s film/);
+    refused(s => { s.frames.shift(); }, /films\/0\/screening\/frames: the first frame is at 5 s, not 0 s/);
+    refused(s => { s.frames.push({ t: 90, rgb24Sha256: '1'.repeat(64) }); }, /a frame at 90 s is past the 83 s film/);
+    refused(s => { delete s.frames; }, /does not match odin-lab-films v1/);
+    refused((s, f) => { delete f.screening; }, /does not match odin-lab-films v1/);
+    refused(s => { s.method = `viewed at ${town} by the ${studio} team, frame by frame`; }, /films\/0/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the page says each film was screened, how many frames, and by an AI agent', () => {
+  const { record } = scratch();
+  assert.match(renderFilms(record), /Screened: a frame every 5 s \(17 frames, each listed with its hash in the films record\), viewed by an AI agent\./);
+});
+
+test('the committed films carry a passing screening record that covers each film', () => {
+  const record = readFilms('site');
+  for (const film of record.films) {
+    assert.equal(film.screening.srcSha256, film.sha256.src);
+    assert.equal(film.screening.result, 'pass');
+    assert.match(film.screening.method, /AI agent/);
+    assert.match(film.screening.method, /not by a human$/);
+  }
 });
