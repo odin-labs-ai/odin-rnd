@@ -60,11 +60,11 @@ export function ledgerEntries(html, report, dist = 'dist') {
   const entries = report.runs.map((run, index) => ({
     id: `EXP ${String(index + 1).padStart(3, '0')}`,
     title: run.title,
-    href: '#bench',
+    href: 'experiments/#bench',
     stage: 'Recorded',
     // No field note exists for the bench recipes, so their status is composed from the recorded report's own fields
     // (completedAt, cleanScore, driftScore) and the intro says so. The build refuses a report with any failed recipe.
-    status: `Recorded ${day(report.completedAt)}: the same rule scored the conforming tree GREEN / ${run.cleanScore} and the drifted tree RED / ${run.driftScore}.`,
+    status: `Recorded ${day(report.completedAt)}: the same rule passed the copy that follows it (score ${run.cleanScore}) and flagged the copy we broke on purpose (score ${run.driftScore}).`,
   }));
   const layaManifest = JSON.parse(readFileSync(`${dist}/data/laya-vs-jev/manifest.json`, 'utf8'));
   const layaRow = rows.find(row => row.href === 'journal/system-1-decisions-without-lock-in.html');
@@ -130,4 +130,18 @@ export function addLedger(html, report, dist = 'dist') {
   // each record must still match its committed .sha256, and the copy built into dist must still be the record's bytes.
   checkDist(checkCopies(), dist);
   return html.replace('<!--EXPERIMENT_LEDGER-->', renderLedger(ledgerEntries(html, report, dist)));
+}
+
+/** The page with its first `keep` field-note rows open and the rest folded into one closed <details> after them, in
+ *  page order. The folded rows stay on the page, byte for byte, so everything that reads the rows still finds them.
+ *  Refuses a page with no more rows than it keeps, so a moved or renamed row cannot pass as a fold. */
+export function foldJournal(html, keep) {
+  const open = '<a class="journal-row" href="';
+  const starts = [];
+  for (let at = html.indexOf(open); at >= 0; at = html.indexOf(open, at + 1)) starts.push(at);
+  if (starts.length <= keep) throw new Error(`Field notes: the page has ${starts.length} rows, not more than the ${keep} the home keeps open`);
+  const last = html.indexOf('</a>', starts.at(-1));
+  if (last < 0) throw new Error('Field notes: the last row has no closing </a>');
+  const end = last + '</a>'.length, first = starts[keep], folded = starts.length - keep;
+  return html.slice(0, first) + `<details class="journal-more"><summary>Show the ${folded} earlier note${folded === 1 ? '' : 's'}</summary>` + html.slice(first, end) + '</details>' + html.slice(end);
 }

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>The workbenches — Odin R&amp;D</title>
+  <meta name="description" content="The two Odin R&amp;D workbenches in full: a written rule run on two copies of a project, and an open model on a laptop against a hosted API. Recorded output, the command to reproduce each run, and its limits.">
+  <meta property="og:title" content="The workbenches — Odin R&amp;D">
+  <meta property="og:description" content="Recorded output, the command to reproduce each run, and its limits.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/experiments/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/experiments/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <link rel="stylesheet" href="../assets/motion.css">
+  <link rel="stylesheet" href="../assets/lab.css">
+  <link rel="stylesheet" href="../assets/launch.css">
+  <script type="module" src="../assets/app.js"></script>
+  <script type="module" src="../assets/motion.mjs"></script>
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../#floor">Factory</a><a href="../#experiments">Experiments</a><a href="../updates/">Updates</a><a href="../#journal">Field notes</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="company-hero company-width" aria-labelledby="benches-page-title">
+      <div>
+        <h1 id="benches-page-title">The workbenches, <br>in full.</h1>
+        <p class="company-lead">Two experiments from the home page, with everything behind them: the recorded output, the command to run each one yourself, and what each run does not show. Opening this page runs nothing.</p>
+        <div class="company-actions"><a class="button button-primary" href="../#experiments">Back to the experiments</a><a href="../data/experiments.json">The rule bench record as JSON</a></div>
+      </div>
+    </section>
+    <section class="experiments content-section" id="benches" aria-label="The two workbenches">
+      <div class="bench-introduction"><h3>Can a written rule catch a change that breaks it?</h3><p>We write down one rule about how the code is built, for example “this part may not depend on that part.” Then we run it on two copies of a project: one that follows the rule, and one we broke on purpose. The check should pass the first and flag the second.</p></div>
+      <div class="workbench dark-surface" id="bench">
+        <div class="bench-menu"><div class="bench-label technical">SELECT EXPERIMENT</div><!--EXPERIMENT_BUTTONS--><a class="all-runs" href="https://github.com/odin-labs-ai/odin-rnd/actions/workflows/publish.yml">Watch the public runs <span aria-hidden="true">↗</span></a></div>
+        <div class="bench-body">
+          <div class="bench-status technical"><span id="run-id">EXP / 001</span><span id="run-badge" role="status">RECORDED RUN</span></div>
+          <h3 id="run-title">Can a dependency cross the line?</h3>
+          <p id="run-question">A domain module imports the application layer. Does the same blueprint distinguish it from a conforming tree?</p>
+          <div class="specimen-pair"><div><span class="technical">COPY A / FOLLOWS THE RULE</span><strong id="clean-result">—</strong><span>Should pass: it follows the rule.</span></div><div><span class="technical">COPY B / BROKEN ON PURPOSE</span><strong id="drift-result">—</strong><span>Should be flagged: the break was planted.</span></div></div>
+          <p class="bench-explainer">Same rule, two copies, each with its conformance score (100 means no rule broken). The experiment counts as a success only when the check tells the copies apart.</p>
+          <details class="transcript-panel"><summary>Read the engine output <span aria-hidden="true">+</span></summary><pre id="transcript" tabindex="0"><!--FIRST_TRANSCRIPT--></pre></details>
+          <div class="reproduce"><span class="technical">REPRODUCE / NODE 22+</span><pre id="reproduce-command" tabindex="0">npm exec --yes --package=bce-engine@0.3.1 -- bce demo --recipe module-layering</pre><button id="copy-command" aria-label="Copy command: reproduce the BCE recipe">Copy command</button><span id="copy-status" class="copy-status" role="status"></span></div>
+          <div class="run-meta"><span id="run-date"><!--RUN_DATE--></span><a href="../data/experiments.json">Full result & provenance <span aria-hidden="true">↗</span></a></div>
+          <p class="scope-note">Packaged fixtures, run with BCE 0.3.1. This tests the mechanism; it does not measure agent productivity or production reliability. <span id="run-origin"><!--RUN_ORIGIN--></span> Selectors inspect the recording; reproduction runs on your machine.</p>
+          <noscript><p>The first experiment’s transcript is available above. <a href="../data/experiments.json">Read all three results as JSON</a>. Interactive selection needs JavaScript.</p></noscript>
+        </div>
+      </div>
+      <!-- laya-bench: rendered by scripts/laya-bench.mjs --write from the committed record; do not edit by hand -->
+      <div class="bench-introduction laya-introduction"><h3>Then a decision you can own.</h3><p>A second bench, because this one compares two models rather than one rule on two trees: open weights on a laptop against a hosted API, on the same questions.</p></div>
+      <div class="workbench laya-bench dark-surface" id="laya-bench">
+        <div class="bench-menu"><div class="bench-label technical">BENCH 02 / DECISIONS</div><p class="bench-entry"><span>EXP / 004</span><span>Laya vs Jev: typed decisions <span style="white-space:nowrap">without lock-in</span></span></p><a class="all-runs" href="../projects/laya-browser/">Try it in your browser <span aria-hidden="true">↗</span></a></div>
+        <div class="bench-body">
+          <div class="bench-status technical"><span>EXP / 004</span><span>ACCURACY / RED · 3 OF 4 CHECKS GREEN</span></div>
+          <h3>Can an open model answer the same typed decisions on a laptop, with no vendor key?</h3>
+          <div class="laya-primer"><div><span class="technical">WHAT IS A SYSTEM-1 DECISION MODEL?</span><p>It answers a typed question about a situation: pick one of these options, give a score, or say yes or no. It returns that answer with a confidence. It does not write text, so software can branch on the answer directly.</p></div><div><span class="technical">WHY NO VENDOR LOCK-IN MATTERS</span><p>A decision inside your control flow is a dependency. Jev is a hosted API: every answer needs its key, its network and its price. Laya publishes open Apache-2.0 weights that run on your own machine, so the hosted model can become a comparison instead of a requirement.</p></div></div>
+          <div class="specimen-pair"><div><span class="technical">SPECIMEN A / LAYA · OPEN WEIGHTS, LOCAL</span><strong class="verdict-red" id="laya-accuracy">39 / 48</strong><span>correct · median <span id="laya-p50">9 ms</span> per decision</span></div><div><span class="technical">SPECIMEN B / JEV · HOSTED API</span><strong id="jev-accuracy">46 / 48</strong><span>correct · median <span id="jev-p50">378 ms</span>, including the network</span></div></div>
+          <p class="bench-explainer">Result: the local port gives the same decision as the model’s reference code on <strong id="laya-parity">48 / 48</strong> rows, and its median call here took 9 ms on the laptop against 378 ms for the hosted call including its network round trip, but it is 14.6 points less accurate than Jev. That is beyond the 10-point limit set before the run, so the accuracy check is <strong>RED</strong> and stays that way.</p>
+          <ul class="laya-checks" aria-label="Checks written before the run"><li><strong class="verdict-red">RED</strong><span><b>Within 10 points of Jev.</b> 39 / 48 against 46 / 48: 14.6 points behind.</span></li><li><strong class="verdict-green">GREEN</strong><span><b>Confident answers are right.</b> 2 of 2 answers at confidence ≥ 0.9 were correct, but only 2 of 48 reached it.</span></li><li><strong class="verdict-green">GREEN</strong><span><b>Same answers as the reference code.</b> 48 / 48 same decision; largest probability difference 0.0021 (limit 0.01).</span></li><li><strong class="verdict-green">GREEN</strong><span><b>Faster than the hosted call, network included.</b> Median 9 ms on the laptop against 378 ms for the hosted call, including the network.</span></li></ul>
+          <div class="reproduce"><span class="technical">REPRODUCE / APPLE SILICON + UV · FROM A CLONE OF THIS REPOSITORY</span><pre id="laya-reproduce-command" tabindex="0">cd experiments/laya-vs-jev
+uv venv -p 3.12 .venv
+VIRTUAL_ENV=$PWD/.venv uv pip install -r requirements.txt
+.venv/bin/python run.py            # add --out &lt;file&gt; to avoid overwriting today&#39;s recording</pre><button data-copy-target="laya-reproduce-command" aria-label="Copy command: reproduce the Laya comparison">Copy command</button><span class="copy-status" role="status"></span></div>
+          <div class="run-meta"><span>MEASURED 2026-09-24 13:34 UTC · APPLE M5 MAX · MLX 0.32.2</span><a href="../data/laya-vs-jev/laya-mlx-2026-09-24.json">Full result &amp; provenance <span aria-hidden="true">↗</span></a><a href="../journal/system-1-decisions-without-lock-in.html">Read the field note <span aria-hidden="true">↗</span></a></div>
+          <p class="scope-note">48 hand-written rows on one busy laptop (load average 36–47 during the run) is a mechanism check, not a benchmark. It does not predict accuracy on your decisions. Jev’s latency includes the public internet; Laya’s confident-answer figure rests on 2 answers. Opening this page runs nothing; the browser demo downloads and runs Laya only when you ask it to.</p>
+        </div>
+      </div>
+      <!-- /laya-bench -->
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="../" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact/">Contact Odin</a><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>

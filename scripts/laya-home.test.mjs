@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { stations } from './station-contract.mjs';
 import { renderStations, renderStationLinks } from './station-render.mjs';
 import { factoryFloor } from './floor.mjs';
-import { loadLaya, benchBlock, assertBenchCurrent, spliceBench, reproduceCommand, renderLayaBench, readmePath } from './laya-bench.mjs';
+import { loadLaya, benchBlock, assertBenchCurrent, spliceBench, reproduceCommand, renderLayaBench, readmePath, pagePath } from './laya-bench.mjs';
 
-// The home page is site/index.html (the bench, rendered by laya-bench.mjs --write) plus the station
-// compartments renderStations adds during the build. Both must show exactly what the committed record says.
-const page = readFileSync('site/index.html', 'utf8');
+// The bench is on the experiments page (site/experiments/index.html, rendered by laya-bench.mjs --write); the home page
+// (site/index.html) keeps the station compartment renderStations adds during the build and the featured project row.
+// Both must show exactly what the committed record says.
+const home = readFileSync('site/index.html', 'utf8');
+const page = readFileSync(pagePath, 'utf8');
 const laya = loadLaya();
 const record = JSON.parse(readFileSync(`site/data/laya-vs-jev/${laya.manifest.file}`, 'utf8'));
 const report = JSON.parse(readFileSync('site/data/experiments.json', 'utf8'));
@@ -36,7 +39,7 @@ test('home-page Laya numbers match the committed record', () => {
   assert.match(bench, new RegExp(`ACCURACY / ${expected.accuracyVerdict} ·`));
   assert.match(bench, new RegExp(`verdict-${expected.accuracyVerdict.toLowerCase()}">${expected.accuracyVerdict}<`));
   for (const value of [`${expected.accuracyVerdict} · ${expected.layaAccuracy}`, expected.jevAccuracy, `${expected.layaP50} vs ${expected.jevP50}`, expected.parity]) assert(exhibit.includes(`<strong>${value}</strong>`), `Station 05 is missing ${value}`);
-  assert(bench.includes(`href="data/laya-vs-jev/${laya.manifest.file}"`), 'Bench must link the exact record it renders');
+  assert(bench.includes(`href="../data/laya-vs-jev/${laya.manifest.file}"`), 'Bench must link the exact record it renders');
 });
 
 test('a drifted page or a changed record fails the build-time bench check', () => {
@@ -55,31 +58,34 @@ test('the bench explains the model, the lock-in, the result and the limits, and 
   const escaped = reproduceCommand(readFileSync(readmePath, 'utf8')).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
   assert(bench.includes(`id="laya-reproduce-command" tabindex="0">${escaped}</pre>`));
   assert(escaped.includes('run.py'));
-  assert.doesNotMatch(bench, /<script|<link|<img|<iframe|\bsrc=/, 'The bench adds no requests to the home page');
+  assert.doesNotMatch(bench, /<script|<link|<img|<iframe|\bsrc=/, 'The bench adds no requests to the experiments page');
 });
 
 test('station 05 exists on the floor, opens like the others and its links resolve', () => {
   const station = stations.find(s => s.id === 'decision');
   assert.equal(station?.number, '05');
-  assert.equal(station.href, '#laya-bench');
-  assert(renderStationLinks().includes('href="#laya-bench" data-station="decision"'));
+  assert.equal(station.href, 'experiments/#laya-bench');
+  assert(pagePath === 'site/experiments/index.html', 'The bench is on the experiments page');
+  assert(renderStationLinks().includes('href="experiments/#laya-bench" data-station="decision"'));
   const floor = factoryFloor();
   assert(floor.includes('data-floor-station="decision"') && floor.includes('>05</text>'));
   assert(factoryFloor({ crop: true }).includes('data-floor-station="decision"'));
   assert.equal(stations.length, [...floor.matchAll(/data-floor-station="/g)].length, 'Every station has floor geometry');
-  assert(exhibit.includes('href="#laya-bench"'), 'Station 05 leads to the Laya bench');
+  assert(exhibit.includes('href="experiments/#laya-bench"'), 'Station 05 leads to the Laya bench');
   assert(page.includes('id="laya-bench"'), 'The bench anchor exists');
-  const links = [...`${bench}${exhibit}`.matchAll(/href="([^"#]+)(?:#[^"]*)?"/g)].map(m => m[1]).filter(href => !/^https?:/.test(href));
-  for (const href of ['projects/laya-browser/', 'journal/system-1-decisions-without-lock-in.html', `data/laya-vs-jev/${laya.manifest.file}`]) assert(links.includes(href), `Missing link ${href}`);
-  for (const href of links) assert(existsSync(`site/${href.endsWith('/') ? href + 'index.html' : href}`), `Link does not resolve: ${href}`);
+  // Each link resolves from its own page: the bench's from site/experiments/, the station's from site/.
+  const local = (html, from) => [...html.matchAll(/href="([^"#]+)(?:#[^"]*)?"/g)].map(m => m[1]).filter(href => !/^https?:/.test(href)).map(href => join(from, href).replaceAll('\\', '/'));
+  const links = [...local(bench, dirname(pagePath)), ...local(exhibit, 'site')];
+  for (const href of ['projects/laya-browser/', 'journal/system-1-decisions-without-lock-in.html', `data/laya-vs-jev/${laya.manifest.file}`]) assert(links.includes(`site/${href}`), `Missing link ${href}`);
+  for (const link of links) assert(existsSync(link.endsWith('/') ? `${link}index.html` : link), `Link does not resolve: ${link}`);
 });
 
 test('project row 002 features Laya and the numbering stays consistent', () => {
-  const rows = [...page.matchAll(/<article class="project-row( project-featured)?"><div class="project-number">(\d{3})<span>([A-Z]+)<\/span>/g)].map(m => [m[2], m[3], Boolean(m[1])]);
+  const rows = [...home.matchAll(/<article class="project-row( project-featured)?"><div class="project-number">(\d{3})<span>([A-Z]+)<\/span>/g)].map(m => [m[2], m[3], Boolean(m[1])]);
   assert.deepEqual(rows, [['001', 'ENGINE', true], ['002', 'DECISIONS', true], ['003', 'ARTIFACTS', false], ['004', 'TRIAGE', true], ['000', 'WORKSHOP', false]]);
   assert.equal(new Set(rows.map(r => r[0])).size, rows.length, 'Project numbers are unique');
-  const featured = page.split('<div class="project-number">002')[1].split('</article>')[0];
-  for (const href of ['projects/laya-browser/', '#laya-bench', 'journal/system-1-decisions-without-lock-in.html']) assert(featured.includes(`href="${href}"`), `Featured row is missing ${href}`);
+  const featured = home.split('<div class="project-number">002')[1].split('</article>')[0];
+  for (const href of ['projects/laya-browser/', 'experiments/#laya-bench', 'journal/system-1-decisions-without-lock-in.html']) assert(featured.includes(`href="${href}"`), `Featured row is missing ${href}`);
 });
 
 test('the Laya copy button copies the rendered command and reports clipboard denial truthfully', async () => {
