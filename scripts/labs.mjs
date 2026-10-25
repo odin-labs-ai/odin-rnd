@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
+import { readTiles, renderTile } from './lab-tiles.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
@@ -132,7 +133,8 @@ export function renderLabs(root = 'site') {
   };
   return {
     'labs/index.html': fill('labs/index.html', {
-      '<!--LABS_LIST-->': renderLabsList(lab, dispatches),
+      // Lab 01's tile, then the experiment labs' tiles (scripts/lab-tiles.mjs gates them; the build fails on a problem).
+      '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
       '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
     }),
