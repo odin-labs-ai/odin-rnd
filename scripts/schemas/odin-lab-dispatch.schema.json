@@ -66,12 +66,13 @@
   },
   "source": {
    "type": "object",
-   "required": ["schema", "schemaSha256", "manifestSha256"],
+   "required": ["schema", "schemaSha256", "manifestSha256", "assetsSha256"],
    "additionalProperties": false,
    "properties": {
     "schema": {"const": "odin-dispatch-v1"},
     "schemaSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "manifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    "manifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "assetsSha256": {"type": "object", "description": "sha256 of every published asset, keyed by its site path; the build re-hashes each and refuses a mismatch", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
    }
   }
  }

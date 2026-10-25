@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { validate } from './json-schema-lite.mjs';
-import { prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
+import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
 
 // The Lab 01 publisher (mission rnd-labs-human-first-1024). Every session here is written by the test at run time, so
@@ -190,11 +190,40 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.throws(() => readDispatches(root), /#\/commit: not allowed/);
   writeFileSync(file, good);
   assert.equal(readDispatches(root).length, 1);
+  // The assets are pinned by sha256: one changed byte in the clip, a swapped still or a dropped hash fails the build.
+  const clip = join(root, `assets/labs/agent-space/${name}/clip.webm`);
+  const clipBytes = readFileSync(clip);
+  const flipped = Buffer.from(clipBytes); flipped[flipped.length - 1] ^= 0xff;
+  writeFileSync(clip, flipped);
+  assert.throws(() => readDispatches(root), /clip\.webm does not match its recorded sha256/);
+  writeFileSync(clip, clipBytes);
+  const noHash = JSON.parse(good); delete noHash.source.assetsSha256[noHash.poster];
+  writeFileSync(file, JSON.stringify(noHash));
+  assert.throws(() => readDispatches(root), /no recorded sha256 for/);
+  const extra = JSON.parse(good); extra.source.assetsSha256['assets/labs/agent-space/other/clip.webm'] = '0'.repeat(64);
+  writeFileSync(file, JSON.stringify(extra));
+  assert.throws(() => readDispatches(root), /is not one of this dispatch's assets/);
+  writeFileSync(file, good);
+  assert.equal(readDispatches(root).length, 1);
 });
 
-test('this repository holds no recorded session yet, and no restricted name in the Lab files', () => {
-  assert.ok(!existsSync('site/data/labs/agent-space/dispatches') || readdirSync('site/data/labs/agent-space/dispatches').length === 0);
-  assert.ok(!existsSync('site/assets/labs'));
+test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
+  // readDispatches runs dispatchProblems (schema, text screen, answer screen) on every committed file and throws on any
+  // problem; the explicit loop below repeats it so this test states, not implies, that each one passes.
+  const committed = readDispatches('site');
+  const dir = 'site/data/labs/agent-space/dispatches';
+  const dispatchFiles = existsSync(dir) ? readdirSync(dir).filter(name => !name.startsWith('.')) : [];
+  assert.equal(committed.length, dispatchFiles.length, 'every file in the dispatch folder is a read, checked dispatch');
+  for (const name of dispatchFiles) {
+    const dispatch = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+    assert.deepEqual(dispatchProblems(dispatch, `${dir}/${name}`, 'site'), [], name);
+    const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
+    for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
+  }
+  const referenced = new Set(committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]).map(src => join('site', src)));
+  const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
+  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch`);
+  for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
     'scripts/json-schema-lite.mjs', 'scripts/lab-screen-terms.json', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
     'scripts/schemas/README.md', 'site/data/labs/agent-space.json', 'site/labs/index.html', 'site/labs/agent-space/index.html',
@@ -203,7 +232,6 @@ test('this repository holds no recorded session yet, and no restricted name in t
   // The vendored schema differs from its upstream copy in one description only (scripts/schemas/README.md).
   const readme = readFileSync('scripts/schemas/README.md', 'utf8');
   assert.ok(readme.includes(createHash('sha256').update(readFileSync(SOURCE_SCHEMA_FILE)).digest('hex')), 'the README records the vendored hash');
-  assert.equal(execFileSync('git', ['ls-files', 'site/data/labs/agent-space/dispatches', 'site/assets/labs'], { encoding: 'utf8' }), '');
 });
 
 // Review of #75 (refute-rnd-75): each bypass below passed the first screen and is refused now.
