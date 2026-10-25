@@ -14,6 +14,16 @@
       "date": "2026-10-25"
     },
     {
+      "key": "exp-020-amendment-01",
+      "experiment": "EXP 020",
+      "title": "MongoDB on its home ground: where does it fit Odin?",
+      "kind": "Amendment",
+      "text": "S2's runner changes, the rule for which cells count, and the nine discarded cells are published.",
+      "href": "journal/mongodb-home-ground-pre-registration.html",
+      "source": "data/mongodb-home-ground/amendment-01.json",
+      "date": "2026-10-25"
+    },
+    {
       "key": "exp-021-preregistration",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",

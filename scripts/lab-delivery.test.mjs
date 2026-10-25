@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { COPY, DELIVERY_FILE, deliveryProblems, leadText, readDelivery, renderDelivery, renderedProblems, telemetryOf } from './lab-delivery.mjs';
+import { COPY, DELIVERY_FILE, aggregateProblems, aggregateWindow, deliveryProblems, leadText, readDelivery, renderAggregates, renderDelivery, renderedProblems, telemetryOf } from './lab-delivery.mjs';
 import { renderLabs } from './labs.mjs';
 
 // "How this site got built" (WO-NOTHEATRE-01/02). The committed record, the page rendered from it by the real build
@@ -166,16 +166,15 @@ test('free text runs through the publisher\'s screen; structured fields are held
   assert.ok(deliveryProblems(text).length > 0, 'a review record cannot carry review text');
 });
 
-test('aggregates are empty in this increment, and an aggregate field outside the allowlist is refused', () => {
-  assert.deepEqual(record.aggregates, []);
+test('an aggregate field outside the allowlist, a percent above 100 or a repository under five PRs is refused', () => {
   const leak = clone();
-  leak.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' });
+  leak.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' }];
   assert.match(deliveryProblems(leak).join('\n'), /aggregates\/0\/name: not allowed/);
   const over = clone();
-  over.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 });
+  over.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 }];
   assert.match(deliveryProblems(over).join('\n'), /above 100/);
   const small = clone();
-  small.aggregates.push({ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 });
+  small.aggregates = [{ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 }];
   assert.ok(deliveryProblems(small).length > 0, 'a repository with fewer than five PRs is not published even as an aggregate');
 });
 
@@ -332,4 +331,84 @@ test('only a successful deploy is "published"; a failed one renders its real sta
   const wrongCommit = clone();
   wrongCommit.records.find(r => r.kind === 'deploy' && r.pr === 79).ref = wrongCommit.records.find(r => r.kind === 'landing' && r.pr === 78).ref;
   assert.match(deliveryProblems(wrongCommit).join('\n'), /is not of #79's merge commit/);
+});
+
+// "Beyond this site" (WO-NOTHEATRE-03b): the private repositories, anonymous.
+const AGG = [
+  { label: 'repo-0a1b2c3d4e5f', prCount: 12, ciPassPercent: 83, reviewRounds: 19, medianMinutesToLand: 47 },
+  { label: 'repo-f0e1d2c3b4a5', prCount: 5, ciPassPercent: 100, reviewRounds: 6, medianMinutesToLand: 22 },
+];
+const withAgg = (aggregates = AGG) => { const r = clone(); r.aggregates = aggregates.map(a => ({ ...a })); return r; };
+const panelOf = html => html.slice(html.indexOf('<div class="delivery-aggregates"'), html.indexOf('</div>', html.indexOf('<div class="delivery-aggregates"')) + 6);
+
+test('the panel shows one row per aggregate with exactly its four figures, no link, under the timeline', () => {
+  const html = renderDelivery(withAgg());
+  const panel = panelOf(html);
+  assert.ok(html.indexOf('delivery-aggregates') > html.indexOf('delivery-timeline'), 'the panel comes after the timeline');
+  assert.match(panel, new RegExp(COPY.aggregatesTitle));
+  for (const a of AGG) {
+    const row = panel.match(new RegExp(`<tr data-aggregate="${a.label}">([\\s\\S]*?)</tr>`))[1];
+    for (const k of ['prCount', 'ciPassPercent', 'reviewRounds', 'medianMinutesToLand']) assert.match(row, new RegExp(`data-figure="${k}">${a[k]}<`));
+  }
+  assert.doesNotMatch(panel, /<a\b/);
+  assert.deepEqual(aggregateProblems(html, withAgg()), []);
+  assert.deepEqual(renderedProblems(html, withAgg()), []);
+  const { since, until } = aggregateWindow(record);
+  assert.equal(since, record.records.filter(r => r.kind === 'pr').map(r => r.at).sort()[0]);
+  assert.equal(until, record.generatedFrom.ghFetchedAt);
+});
+
+test('the panel is held to the record: a changed figure, a missing, extra or doubled row, or a link is refused', () => {
+  const rec = withAgg(), html = renderDelivery(rec);
+  assert.match(aggregateProblems(html.replace('data-figure="ciPassPercent">83<', 'data-figure="ciPassPercent">93<'), rec).join('\n'), /ciPassPercent shows 93, the record says 83/);
+  const row = html.match(/<tr data-aggregate="repo-0a1b2c3d4e5f">[\s\S]*?<\/tr>/)[0];
+  assert.match(aggregateProblems(html.replace(row, ''), rec).join('\n'), /rendered 0 times/);
+  assert.match(aggregateProblems(html.replace(row, row + row), rec).join('\n'), /rendered 2 times/);
+  assert.match(aggregateProblems(html.replace(row, row + row.replaceAll('repo-0a1b2c3d4e5f', 'repo-999999abcdef')), rec).join('\n'), /no such aggregate/);
+  assert.match(aggregateProblems(html.replace('<h3>Beyond', '<h3><a href="https://example.com">x</a>Beyond'), rec).join('\n'), /links somewhere/);
+  assert.match(aggregateProblems(html.replace('data-aggregate="repo-0a1b2c3d4e5f"', 'data-aggregate="secret-name"'), rec).join('\n'), /not an anonymous label/);
+  assert.match(aggregateProblems(html.replace(/<div class="delivery-aggregates"[\s\S]*?<\/div>/, ''), rec).join('\n'), /panel is missing/);
+});
+
+test('the panel cannot be padded: a doubled cell, a changed visible label, a second panel or a stray row is refused', () => {
+  const rec = withAgg(), html = renderDelivery(rec);
+  const panel = html.match(/<div class="delivery-aggregates"[\s\S]*?<\/div>/)[0];
+  // A second cell for the same figure: the last one would win in a map, the page would show both.
+  const doubled = html.replace('<td data-figure="prCount">', '<td data-figure="prCount">999</td><td data-figure="prCount">');
+  assert.match(aggregateProblems(doubled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The label a reader sees, changed while the attribute keeps the valid one.
+  const relabelled = html.replace('<code>repo-0a1b2c3d4e5f</code>', '<code>secret-name</code>');
+  assert.match(aggregateProblems(relabelled, rec).join('\n'), /not exactly the record's own rendering/);
+  // The whole panel twice.
+  const twice = html.replace(panel, panel + panel);
+  const problems = aggregateProblems(twice, rec).join('\n');
+  assert.match(problems, /panel appears 2 times, not once/);
+  assert.match(problems, /aggregate rows on the page, not the record's/);
+  // An aggregate row outside the panel.
+  const row = html.match(/<tr data-aggregate="repo-0a1b2c3d4e5f">[\s\S]*?<\/tr>/)[0];
+  const stray = html.replace('<p class="delivery-cursor', `<table><tbody>${row}</tbody></table><p class="delivery-cursor`);
+  assert.match(aggregateProblems(stray, rec).join('\n'), /aggregate rows on the page, not the record's/);
+  // And the page's own words say the label holds only while its key is kept.
+  assert.match(panel, /only while the private key behind it is kept/);
+});
+
+test('with no aggregate the panel says so honestly, and still names its window', () => {
+  const html = renderDelivery(withAgg([]));
+  const panel = panelOf(html);
+  assert.ok(panel.includes(COPY.aggregatesEmpty));
+  assert.match(panel, /Window: /);
+  assert.doesNotMatch(panel, /<table/);
+  assert.match(aggregateProblems(html.replace(COPY.aggregatesEmpty, ''), withAgg([])).join('\n'), /does not say so/);
+});
+
+test('a label that is not repo- plus 12 hex is refused by the schema, and the panel copy passes the publisher\'s screen', () => {
+  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'repo-odin-labs' }])).join('\n'), /aggregates\/0\/label/);
+  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'odin-command-center' }])).join('\n'), /aggregates\/0\/label/);
+  assert.deepEqual(deliveryProblems(withAgg()), []);
+  assert.doesNotThrow(() => renderAggregates(withAgg()));
+});
+
+test('the committed record\'s aggregates, if any, render on the real page and reconcile', () => {
+  assert.deepEqual(aggregateProblems(section, record), []);
+  for (const a of record.aggregates) assert.match(a.label, /^repo-[0-9a-f]{12}$/);
 });

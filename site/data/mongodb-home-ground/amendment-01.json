@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 020",
+  "amendment": "01",
+  "title": "S2's runner changes, the rule for which cells count, and the nine discarded cells are published",
+  "authoredOn": "2026-10-25",
+  "amends": {
+    "preregistration": "experiments/mongodb-home-ground/preregistration.json",
+    "preregistrationSha256": "128087dbba8b09c97fcbf2ab4a873b1c4b9c656b27ad07291ba4693e26d83fec",
+    "frozenCommit": "0af2c4861c489531916884ceb6894ee771d0ec71"
+  },
+  "why": "EXP 020's S2 runner (the change-feed scenario) was changed four times, and given a rule for which counted cells are kept, after this record was published and after S2's first counted cells ran. None of it was published on this site. The record says a change is a dated amendment, published first. These were not published first: they were applied by the runner and recorded in its private protocol. This amendment publishes them before S2's report, so the report is judged against rules a reader can see. The lab owns the gap. The runner's owner classified each change, at our request, as changing a measure, which cells count, the verdict rule, or only how a frozen rule is carried out; their answers are recorded below, with the changes that move the primary metric marked as such.",
+  "timing": "Recorded in the runner's protocol (sha256 c50a7d30..., one private commit c38e3cf1, 2026-10-25 05:38:26Z) after EXP 020 was published (odin-rnd #76, merge 0af2c486) and after S2's first two counted cells (2026-10-25 05:21-05:52 local), which ran on the old code and are discarded. The first kept counted cell started at 06:42:09 local, after that commit. Authored on 2026-10-25, while S2 is still running and before any S2 result is reported. S1, S3 and S4 are not affected.",
+  "changes": [
+    {
+      "id": "01",
+      "what": "The pgoutput cursor is the commit LSN",
+      "class": "runner mechanics: a runner bug that lost 1 event; the gate is unchanged",
+      "rule": "The cursor is the transaction's commit LSN (the Begin message's final_lsn), and a source transaction is applied whole."
+    },
+    {
+      "id": "02",
+      "what": "Every arm applies in batches",
+      "class": "runner mechanics by the letter (effect and cursor stay in one transaction), but it moves the primary metric by orders of magnitude, so it is treated as a change to the measure",
+      "rule": "Each consumer applies up to 100 available events in one transaction, with the cursor at the batch end. Before it, at 10x every arm fell behind: lag p50 0.75-4.7 s per event-transaction (the runner owner's figures from smoke cells and the discarded counted cells, not counted measurements)."
+    },
+    {
+      "id": "03",
+      "what": "The producer's schedule starts after its payloads and connections exist",
+      "class": "runner mechanics: a harness timing bug that restores the pre-registered rate; it also moves the measure, MongoDB's most",
+      "rule": "Seeded random payloads are built, and the writers created, before t0. Before it, every event started late (start-late p95 1.3-38 s in the runner owner's smoke and discarded cells, not counted measurements)."
+    },
+    {
+      "id": "04",
+      "what": "The MongoDB consumer applies once its locally buffered changes are exhausted",
+      "class": "runner mechanics for one arm only; by the runner owner's smoke cells (not counted measurements) it moves MongoDB's 1x lag from p50 2.5 s to about 5 ms, in MongoDB's favour, so it is published as a change to the measure",
+      "rule": "Apply when the cursor's local buffer is empty (PyMongo 4.10.1's private CommandCursor._data, pinned), the rule pgoutput already followed (an idle stream)."
+    },
+    {
+      "id": "disturbance",
+      "what": "The disturbance rule decides which counted cells count",
+      "class": "changes which cells count; not in the pre-registration",
+      "rule": "A counted cell that overlapped other heavy work on the host (a browser end-to-end run, filming, another benchmark) is discarded and re-run; a PAUSE file holds the plan between cells. Light single-core unit tests with no browser and no database are judged not heavy, and those cells are kept; that judgement is listed so a reader can disagree."
+    },
+    {
+      "id": "cell-lock",
+      "what": "One cell at a time",
+      "class": "runner mechanics",
+      "rule": "A lock file refuses a second cell on the stack."
+    }
+  ],
+  "documents": [
+    {
+      "file": "experiments/mongodb-home-ground/runner/PROTOCOL-S2.md",
+      "source": "runner/PROTOCOL-S2.md at private commit c38e3cf1896c2489a4bb922b8f1381f65172d4a7 (unchanged since)",
+      "sourceSha256": "c50a7d3020f0564c4c00b941324b6b1b723de5f1e07872018996edc93ec6554d",
+      "publishedSha256": "52d6b7d9a29503507a055f4a326ae2524ed184eaddea2ab55f9150e5994bfeff",
+      "substitutions": [
+        {
+          "was": "committed and posted to the Mac **before**",
+          "now": "committed and posted to this lab **before**"
+        },
+        {
+          "was": "other heavy work on the PC is discarded",
+          "now": "other heavy work on the host is discarded"
+        }
+      ],
+      "note": "Its heading says 'fixed before any counted cell' and that later changes are dated amendments; its own 'Runner amendments' section records that two counted cells ran first and were discarded. This amendment is where those changes are published."
+    }
+  ],
+  "discardedCells": {
+    "source": "the runner's private disturbance log, results/s2/DISTURBANCES.md at private commit b1b857b8ffaa670e6b00dbc928773ede209da8d4, sha256 b62df233d45492df93eec8be465c5fbd6ac33656861d9dc97ad0aeebe6cdce68. It is not published: it names private hosts, paths, ports and work items. The nine cells the log records as discarded, their windows and the reason class are copied from it here. At that commit the runner's discarded/ directory holds the files of the first two only; the log records the other seven as moved, or to be moved, by the runner.",
+    "cells": [
+      {
+        "cell": "mongo-x1-rep0-seed1",
+        "window": "2026-10-25 05:21-~05:38 local",
+        "why": "filming overlapped it; ran on the code before amendments 01-04"
+      },
+      {
+        "cell": "pgoutput-x1-rep0-seed1",
+        "window": "2026-10-25 05:35-~05:52 local",
+        "why": "filming overlapped it, including phase A; it also lost 1 event (the runner bug amendment 01 fixes); ran on the code before amendments 01-04"
+      },
+      {
+        "cell": "outbox-x10-rep4-seed1",
+        "window": "13:13-13:28 local",
+        "why": "a full test suite with browsers ran 13:07-14:18; first kept, discarded at ~21:35 local"
+      },
+      {
+        "cell": "mongo-x10-rep4-seed1",
+        "window": "13:28-13:41 local",
+        "why": "the same full test suite; first kept, discarded at ~21:35 local"
+      },
+      {
+        "cell": "mongo-x1-rep0-seed2",
+        "window": "13:41-13:55 local",
+        "why": "the same full test suite; first kept, discarded at ~21:35 local"
+      },
+      {
+        "cell": "pgoutput-x1-rep0-seed2",
+        "window": "13:55-14:08 local",
+        "why": "the same full test suite; first kept, discarded at ~21:35 local"
+      },
+      {
+        "cell": "outbox-x1-rep0-seed2",
+        "window": "14:08-14:23 local",
+        "why": "the same full test suite, until 14:18; first kept, discarded at ~21:35 local"
+      },
+      {
+        "cell": "pgoutput-x1-rep4-seed2",
+        "window": "from 17:02:45 local",
+        "why": "headless browser runs in its first minutes"
+      },
+      {
+        "cell": "mongo-x1-rep4-seed2",
+        "window": "running at 19:45 local",
+        "why": "headless browser runs while it ran"
+      }
+    ],
+    "rerun": "A second plan pass re-measures every missing cell under the same rules. Nothing is pooled.",
+    "disclosed": "Five of the nine (the 13:07-14:18 window) were first kept, and the log records them as discarded only when the runner's owner answered our question, at about 21:35 local on 2026-10-25. Interim seed-1 numbers posted earlier, privately, included two of them; the report is computed from the kept cells only."
+  },
+  "unchanged": "The question, arms, scenarios, gates, primary metrics, margins, component checklist, verdicts, predictions and out-of-scope list of the pre-registration are unchanged, and the frozen record stays byte-identical. Every change above is to how S2's runner carries out the frozen design and which of its cells count.",
+  "limits": [
+    "These changes were made, and run under, before they were published here, so they were not pre-registered in the strict sense: a reader has the runner owner's account of when each was made, with the commit time, not an earlier public record.",
+    "Amendments 02 and 04 move the primary metric a long way, and 04 applies to one arm only, in its favour. The S2 report should be read with them in mind.",
+    "Whether a disturbance was heavy is the runner owner's judgement, written in the log for each row; the light rows that were kept are not listed cell by cell here.",
+    "The protocol pairs MongoDB, per repetition, with the better passing PostgreSQL variant of that repetition. The pre-registration says 'the other store's best variant'. EXP 021's reviewers rejected a per-repetition best for EXP 021 (it is a best-of-two that tilts toward PostgreSQL). This amendment records the protocol as written and does not decide S2's pairing; any change to it is a further dated amendment, published before S2's report."
+  ],
+  "notBefore": "S2's report is published only after this amendment is merged to main of odin-labs-ai/odin-rnd."
+}
