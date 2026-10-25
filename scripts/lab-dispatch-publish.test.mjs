@@ -190,6 +190,21 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.throws(() => readDispatches(root), /#\/commit: not allowed/);
   writeFileSync(file, good);
   assert.equal(readDispatches(root).length, 1);
+  // The assets are pinned by sha256: one changed byte in the clip, a swapped still or a dropped hash fails the build.
+  const clip = join(root, `assets/labs/agent-space/${name}/clip.webm`);
+  const clipBytes = readFileSync(clip);
+  const flipped = Buffer.from(clipBytes); flipped[flipped.length - 1] ^= 0xff;
+  writeFileSync(clip, flipped);
+  assert.throws(() => readDispatches(root), /clip\.webm does not match its recorded sha256/);
+  writeFileSync(clip, clipBytes);
+  const noHash = JSON.parse(good); delete noHash.source.assetsSha256[noHash.poster];
+  writeFileSync(file, JSON.stringify(noHash));
+  assert.throws(() => readDispatches(root), /no recorded sha256 for/);
+  const extra = JSON.parse(good); extra.source.assetsSha256['assets/labs/agent-space/other/clip.webm'] = '0'.repeat(64);
+  writeFileSync(file, JSON.stringify(extra));
+  assert.throws(() => readDispatches(root), /is not one of this dispatch's assets/);
+  writeFileSync(file, good);
+  assert.equal(readDispatches(root).length, 1);
 });
 
 test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {

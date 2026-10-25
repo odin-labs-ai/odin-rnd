@@ -224,7 +224,11 @@ export function dispatchProblems(dispatch, where, root = null) {
     problems.push(...screenHits(path).filter(hit => !hit.reason.startsWith('a file path')).map(hit => `${where}#${at}: ${hit.reason} (${excerpt(normalise(path), hit.at)})`));
     if (!path.startsWith(`assets/labs/agent-space/${dispatch.session}/`)) problems.push(`${where}#${at}: not under its own session's assets`);
     if (root && !existsSync(join(root, path))) problems.push(`${where}#${at}: ${path} is missing`);
+    else if (root && sha256(readFileSync(join(root, path))) !== dispatch.source.assetsSha256[path]) problems.push(`${where}#${at}: ${path} does not match its recorded sha256`);
   }
+  const listed = new Set(assets.map(([, path]) => path));
+  for (const path of Object.keys(dispatch.source.assetsSha256)) if (!listed.has(path)) problems.push(`${where}#/source/assetsSha256: ${path} is not one of this dispatch's assets`);
+  for (const path of listed) if (!(path in dispatch.source.assetsSha256)) problems.push(`${where}#/source/assetsSha256: no recorded sha256 for ${path}`);
   if (!dispatch.session.startsWith(`session-${dispatch.date}`)) problems.push(`${where}#/session: the name does not carry the session date`);
   const screened = new Map(dispatch.answersScreen.answers.map(answer => [answer.evidence, answer]));
   for (const [i, question] of dispatch.questions.entries()) {
@@ -294,7 +298,9 @@ export function prepare(sessionDir, answerScreen) {
     poster: `${base}/poster.png`, stills: manifest.stills.map(still => `${base}/${still}`), questions,
     answersScreen: { by: answerScreen?.by ?? '', answers: (Array.isArray(answerScreen?.answers) ? answerScreen.answers : [])
       .filter(answer => proofs.has(answer?.evidence)).map(({ evidence, verdict, checks }) => ({ evidence, verdict, checks })) },
-    source: { schema: 'odin-dispatch-v1', schemaSha256: sha256(sourceSchemaRaw), manifestSha256: sha256(manifestRaw) },
+    source: { schema: 'odin-dispatch-v1', schemaSha256: sha256(sourceSchemaRaw), manifestSha256: sha256(manifestRaw),
+      // Every published asset's bytes, as copied unchanged from the session: the build re-hashes each one and refuses a mismatch.
+      assetsSha256: Object.fromEntries(files.filter(([from]) => existsSync(join(sessionDir, from))).map(([from, to]) => [to, sha256(readFileSync(join(sessionDir, from)))])) },
   };
   // The dispatch as it would be written is screened as a whole, so a session or file name carries nothing either.
   if (!problems.length) problems.push(...dispatchProblems(dispatch, 'dispatch'));

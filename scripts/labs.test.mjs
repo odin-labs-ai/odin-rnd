@@ -140,6 +140,7 @@ test('two dated sessions render newest first on the page and in the feed (order 
       const swap = src => src.replaceAll(base.session, session);
       const d = { ...JSON.parse(JSON.stringify(base)), session, date };
       d.clip = { ...d.clip, src: swap(d.clip.src) }; d.poster = swap(d.poster); d.stills = d.stills.map(swap);
+      d.source = { ...d.source, assetsSha256: Object.fromEntries(Object.entries(d.source.assetsSha256).map(([path, hash]) => [swap(path), hash])) };
       cpSync(join('site', 'assets/labs/agent-space', base.session), join(root, 'assets/labs/agent-space', session), { recursive: true });
       mkdirSync(join(root, 'data/labs/agent-space/dispatches'), { recursive: true });
       writeFileSync(join(root, 'data/labs/agent-space/dispatches', `${session}.json`), JSON.stringify(d));
