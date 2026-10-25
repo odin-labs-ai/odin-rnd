@@ -20,20 +20,20 @@ const studio = [...'tfolemag'].reverse().join('');
 const computePartner = [...'drowelbuod'].reverse().join('');
 
 const cleanProofs = () => [
-  { id: 'odin-a1b2c3-1', t: 1792887050.6, agent: 'Odin', asked_by: 'Follower', question: "Odin, what's going on here?",
+  { id: 'odin-a1b2c3-1', t: 1700000000.0, agent: 'Odin', asked_by: 'Follower', question: "Odin, what's going on here?",
     answer: 'Four agents are here. Atlas is reading in the library and Juno is at the help desk.',
     why: 'I read these just now: the agents’ states and the world’s structures.', source: 'world-checked',
     sources: [{ what: 'Atlas is reading in the library', ref: "the agents' states" }], via: 'rules:world', ok: true,
-    lens: { run: 'agent-space-live-1792887037', seq: 24 } },
-  { id: 'atlas-a1b2c3-1', t: 1792887060.9, agent: 'Atlas', asked_by: 'Follower', question: 'how do I plug in my own agent?',
+    lens: { run: 'agent-space-live-1700000000', seq: 24 } },
+  { id: 'atlas-a1b2c3-1', t: 1700000010.0, agent: 'Atlas', asked_by: 'Follower', question: 'how do I plug in my own agent?',
     answer: 'Add an entry to agents.json: a name, a look, a home spot and a brain.', why: "From my knowledge base entry 'plug-in'.",
     source: 'wiki', sources: [{ what: 'knowledge base: plug-in', ref: 'knowledge.json#plug-in' }], via: 'scripted', ok: true, ms: 5,
-    lens: { run: 'agent-space-live-1792887037', seq: 43 } },
+    lens: { run: 'agent-space-live-1700000000', seq: 43 } },
 ];
 const screened = { ok: true, by: 'intake', note: '', checks: ['injection', 'personal-data', 'ip-boundary', 'on-topic'] };
 const cleanManifest = (session, clipBytes) => ({
   format: 'odin-dispatch', version: 1, session, questions_session: '2026-W44', date: session.slice(8, 18),
-  commit: 'f70b5d0265def7ab89c278eb3be71d8837e17717', space: { url: 'http://127.0.0.1:57342/' },
+  commit: '0000000000000000000000000000000000000001', space: { url: 'http://127.0.0.1:57342/' },
   clip: { file: 'clip.webm', bytes: clipBytes, mime: 'video/webm;codecs=vp9', bps: 300000, seconds: 38 },
   poster: 'poster.png', stills: ['stills/01-s1-q1.png'],
   questions: [
@@ -104,9 +104,9 @@ test('a clean session passes: the dispatch matches both schemas and carries only
 
 test('the real sample’s shape is refused: a restricted label on a card, a file path, a run id, unscreened answers', () => {
   const { dir, name, manifest } = session((m, proofs) => {
-    proofs[0].sources.push({ what: `the home stands on the owned ground ${privateProject}-heightfield-v1 (spec 01ae03fe6f66)`, ref: 'the terrain spec' });
-    proofs[1].why = "From my knowledge base entry 'plug-in' (the agents.json format v1, engine/agents/space/config.py).";
-    m.questions[2].reply = 'The full evidence: evidence odin-a1b2c3-1 (lens agent-space-live-1792887037 #24).';
+    proofs[0].sources.push({ what: `the home stands on the owned ground ${privateProject}-heightfield-v1 (spec 0000deadbeef)`, ref: 'the terrain spec' });
+    proofs[1].why = "From my knowledge base entry 'plug-in' (the agents.json format, space/config.py).";
+    m.questions[2].reply = 'The full evidence: evidence odin-a1b2c3-1 (lens agent-space-live-1700000000 #24).';
   });
   assert.deepEqual(validate(sourceSchema, manifest), [], 'the refusal is the screen, not the schema');
   const site = join(temp, 'site-refused');
@@ -135,11 +135,11 @@ test('the screen names each kind of text that may not be public, and passes plai
     'we sit at 1012 AB': 'a postcode', 'at 12 Main Street': 'a street address', 'Keizersgracht 12': 'a street address',
     'open http://localhost:3000': 'a local or IP address', 'on 10.0.0.12': 'a local or IP address',
     'see https://example.com/x': 'a link to somewhere other than this lab', 'in src/space/config.py': 'a file path',
-    'under /Users/someone': 'a file path', 'run 1792887037': 'a phone number',
+    'under /Users/someone': 'a file path', 'run 1700000000': 'a phone number',
   };
   for (const [text, reason] of Object.entries(cases)) assert.ok(screenText(text).some(r => r.startsWith(reason)), `${text} -> ${reason}: ${screenText(text)}`);
   for (const text of ['Add an entry to agents.json: a name, a look and a brain.', 'Four agents are here, 22 structures on the ground.',
-    'Juno is at the help desk', 'Odin Campus', 'Session of 2026-10-25', 'evidence odin-3d5072-1', 'See https://github.com/odin-labs-ai/odin-rnd']) {
+    'Juno is at the help desk', 'Odin Campus', 'Session of 2026-10-25', 'evidence odin-a1b2c3-1', 'See https://github.com/odin-labs-ai/odin-rnd']) {
     assert.deepEqual(screenText(text), [], text);
   }
 });
@@ -185,7 +185,7 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   const tampered = JSON.parse(good); tampered.questions[0].answer += ` (with help from ${computePartner})`;
   writeFileSync(file, JSON.stringify(tampered));
   assert.throws(() => readDispatches(root), /questions\/0\/answer: a restricted name/);
-  writeFileSync(file, JSON.stringify({ ...JSON.parse(good), commit: 'f70b5d0265def7ab89c278eb3be71d8837e17717' }));
+  writeFileSync(file, JSON.stringify({ ...JSON.parse(good), commit: '0000000000000000000000000000000000000001' }));
   assert.throws(() => readDispatches(root), /#\/commit: not allowed/);
   writeFileSync(file, good);
   assert.equal(readDispatches(root).length, 1);

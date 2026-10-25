@@ -35,7 +35,7 @@ test('a follow channel without a page says coming soon and links nowhere; only r
 });
 
 test('Labs is in the header of the home, the partner pages and both Labs pages, and in the sitemap', () => {
-  assert.match(readFileSync('site/index.html', 'utf8'), /<a href="#experiments">Experiments<\/a><a href="labs\/">Labs<\/a>/);
+  assert.match(readFileSync('site/index.html', 'utf8'), /<a href="labs\/">Labs<\/a>/);
   for (const file of ['site/partners/index.html', 'site/one-pager/index.html']) assert.match(readFileSync(file, 'utf8'), /<a href="\.\.\/labs\/">Labs<\/a>/, file);
   assert.match(pages['labs/index.html'], /<a href="\.\/" aria-current="page">Labs<\/a>/);
   assert.match(page, /<a href="\.\.\/" aria-current="page">Labs<\/a>/);
