@@ -167,7 +167,7 @@
       }
     },
     "aggregates": {
-      "description": "Private repositories, only as anonymous aggregates (odin-labs delivery-private-projection). Empty until a separately reviewed step publishes any.",
+      "description": "Private repositories, only as anonymous aggregates (odin-labs delivery-private-projection: label = repo- plus 12 hex of a keyed hash of the name, and four integers), for the record's own window: from the first pull request opened to generatedFrom.ghFetchedAt. Only repositories on the exporter's version-controlled allowlist, each checked private on GitHub, with at least five merged pull requests in the window; empty when none qualifies.",
       "type": "array",
       "items": {
         "type": "object",

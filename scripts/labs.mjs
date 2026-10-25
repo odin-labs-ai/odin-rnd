@@ -19,6 +19,7 @@ import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
+import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
@@ -179,7 +180,11 @@ export function renderLabs(root = 'site') {
     return html;
   };
   return {
-    'labs/index.html': fill('labs/index.html', { '<!--LABS_LIST-->': renderLabsList(lab, dispatches) }),
+    'labs/index.html': fill('labs/index.html', {
+      '<!--LABS_LIST-->': renderLabsList(lab, dispatches),
+      // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
+      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
+    }),
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches), '<!--LAB_FOLLOW-->': renderFollow(lab),
