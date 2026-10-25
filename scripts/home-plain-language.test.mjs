@@ -23,11 +23,14 @@ export const jargon = [
 
 const decode = text => text.replace(/&#39;|&quot;|&lt;|&gt;|&nbsp;/g, m => ({ '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' })[m]).replaceAll('&amp;', '&');
 
-/** What a visitor reads on a page: text outside script, style and svg, plus aria-label, alt and title values. The Tools
- *  row 001 heading is the one place the engine's product name may stand, so it is read without its heading. */
+/** What a visitor reads on a page: text outside script, style and svg, plus aria-label, alt and title values. Inside the
+ *  Tools row 001 heading only the product name itself is set aside (its full name, or link text that is exactly "BCE");
+ *  every other word in that heading is read like the rest of the page. */
+export const productName = 'Blueprint Conformance Engine';
 export function readable(html) {
-  const tool = /(<div class="project-number">001<span>ENGINE<\/span><\/div><div class="project-description"><h3>)[\s\S]*?(<\/h3>)/;
-  const body = stripBlocks(html.replace(tool, '$1$2'), ['script', 'style', 'svg']);
+  const tool = /(<div class="project-number">001<span>ENGINE<\/span><\/div><div class="project-description"><h3>)([\s\S]*?)(<\/h3>)/;
+  const named = html.replace(tool, (_, open, heading, close) => open + heading.replaceAll(productName, ' ').replace(/>BCE</g, '> <') + close);
+  const body = stripBlocks(named, ['script', 'style', 'svg']);
   const attributes = [...body.matchAll(/\b(?:aria-label|alt|title)="([^"]*)"/g)].map(m => m[1]);
   return decode(`${stripTags(body)} ${attributes.join(' ')}`).replace(/\s+/g, ' ');
 }
@@ -51,8 +54,12 @@ test('the reader catches every listed word in text and in what assistive technol
   assert.deepEqual(jargonIn(readable('<a class="specimen-pair" href="https://example.invalid/fixtures/x" id="recipe">A rule</a>')), [], 'links, ids and class names are not read');
   assert.deepEqual(jargonIn(readable('<script>const recipe = 1;</script><p>npm exec --package=bce-engine@0.3.1</p>')), [], 'scripts and the lowercase package name are not read');
   assert.deepEqual(jargonIn(readable('<p>Blueprint Conformance Engine</p>')), [], '"Conformance" is not "conforming"');
-  const tools = '<div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="x">BCE</a></h3><p>The BCE way.</p>';
-  assert.equal(jargonIn(readable(tools)).length, 1, 'the abbreviation may stand only in the Tools row 001 heading');
+  const heading = inner => `<div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3>${inner}</h3><p>Rules.</p>`;
+  assert.deepEqual(jargonIn(readable(heading(`<a href="x">${productName} <span aria-hidden="true">↗</span></a>`))), [], 'the product name stands in its heading');
+  assert.deepEqual(jargonIn(readable(heading('<a href="x">BCE</a>'))), [], 'link text that is exactly the product abbreviation stands');
+  assert.equal(jargonIn(readable(heading(`<a href="x">${productName}</a> runs recipes`))).length, 1, 'a listed word inside the same heading is caught');
+  assert.equal(jargonIn(readable(heading('<a href="x">The BCE engine</a>'))).length, 1, 'the abbreviation inside a longer heading text is caught');
+  assert.equal(jargonIn(readable(`${heading(`<a href="x">${productName}</a>`)}<p>The BCE way.</p>`)).length, 1, 'outside that heading the abbreviation is caught');
 });
 
 test('the built home page carries none of the lab\'s working words', { timeout: 600_000 }, () => {

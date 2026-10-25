@@ -64,7 +64,7 @@ export function ledgerEntries(html, report, dist = 'dist') {
     stage: 'Recorded',
     // No field note exists for the bench recipes, so their status is composed from the recorded report's own fields
     // (completedAt, cleanScore, driftScore) and the intro says so. The build refuses a report with any failed recipe.
-    status: `Recorded ${day(report.completedAt)}: the same rule passed the copy that follows it (score ${run.cleanScore}) and flagged the copy we broke on purpose (score ${run.driftScore}).`,
+    status: `Recorded ${day(report.completedAt)}: the same rule passed the copy that follows it (green, score ${run.cleanScore}) and flagged the copy we broke on purpose (red, score ${run.driftScore}).`,
   }));
   const layaManifest = JSON.parse(readFileSync(`${dist}/data/laya-vs-jev/manifest.json`, 'utf8'));
   const layaRow = rows.find(row => row.href === 'journal/system-1-decisions-without-lock-in.html');
