@@ -1,0 +1,65 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-dispatch-v1",
+ "title": "odin-lab-dispatch v1: the public part of one Lab 01 session, as scripts/lab-dispatch-publish.mjs writes it to site/data/labs/agent-space/dispatches/<session>.json",
+ "type": "object",
+ "required": ["format", "version", "lab", "session", "date", "clip", "poster", "stills", "questions", "answersScreen", "source"],
+ "additionalProperties": false,
+ "properties": {
+  "format": {"const": "odin-lab-dispatch"},
+  "version": {"const": 1},
+  "lab": {"const": "agent-space"},
+  "session": {"type": "string", "pattern": "^session-\\d{4}-\\d{2}-\\d{2}(-[a-z0-9]+)*$"},
+  "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+  "clip": {
+   "type": "object",
+   "required": ["src", "bytes", "mime", "seconds"],
+   "additionalProperties": false,
+   "properties": {
+    "src": {"type": "string", "pattern": "^assets/labs/agent-space/session-[a-z0-9-]+/clip\\.webm$"},
+    "bytes": {"type": "integer", "minimum": 1},
+    "mime": {"type": "string", "pattern": "^video/webm"},
+    "seconds": {"type": "integer", "minimum": 0}
+   }
+  },
+  "poster": {"type": "string", "pattern": "^assets/labs/agent-space/session-[a-z0-9-]+/poster\\.png$"},
+  "stills": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^assets/labs/agent-space/session-[a-z0-9-]+/stills/\\d{2}-[a-z0-9][a-z0-9-]{0,31}\\.png$"}},
+  "questions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": ["id", "to", "text", "followUp", "answer", "why", "source", "evidence"],
+    "additionalProperties": false,
+    "properties": {
+     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"},
+     "to": {"type": "string", "minLength": 1},
+     "text": {"type": "string", "minLength": 1, "maxLength": 300},
+     "followUp": {"type": "boolean"},
+     "answer": {"type": "string", "minLength": 1},
+     "why": {"type": "string"},
+     "source": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+     "evidence": {"type": "string", "pattern": "^[a-z0-9-]+$"}
+    }
+   }
+  },
+  "answersScreen": {
+   "type": "object",
+   "required": ["by", "checks"],
+   "additionalProperties": false,
+   "properties": {
+    "by": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"},
+    "checks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9-]+$"}}
+   }
+  },
+  "source": {
+   "type": "object",
+   "required": ["schema", "schemaSha256", "manifestSha256"],
+   "additionalProperties": false,
+   "properties": {
+    "schema": {"const": "odin-dispatch-v1"},
+    "schemaSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+   }
+  }
+ }
+}

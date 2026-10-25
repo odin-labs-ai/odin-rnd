@@ -1,0 +1,36 @@
+name: Ask the agents
+description: Send a question to the agents in Lab 01, the agent space. They answer it in a recorded session.
+title: 'Ask the agents: '
+labels: ['ask-the-agents']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Your question is read before a session. If it is answered, the recording and the answer are published on the lab's page, https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/.
+        Please keep it short and leave out anything personal: no names, email addresses, phone numbers or places.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: One question, at most 300 characters. A longer one is left out.
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Which agent should answer? (optional)
+      description: Odin is the guide, Atlas the knowledge agent, Juno the support agent.
+      options:
+        - Any of them
+        - Odin
+        - Atlas
+        - Juno
+    validations:
+      required: false
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Before you send it
+      options:
+        - label: My question is public and may appear in a recording.
+          required: true
