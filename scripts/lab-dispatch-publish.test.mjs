@@ -296,3 +296,46 @@ test('older dispatches keep the heading order: session h4 under "Earlier session
   assert.deepEqual(levels.slice(0, 6), [2, 3, 4, 4, 4, 3]);
   assert.ok(levels.includes(5));
 });
+
+// Review 3 of #75: each case below passed the previous screen.
+test('a link in public text counts as this lab only on exactly github.com under the lab repository, after decoding', () => {
+  for (const url of ['https://github.com/odin-labs-ai/odin-rnd.evil.com', 'https://github.com/odin-labs-ai/odin-rnd%2eevil.com/x',
+    'https://github.com/odin-labs-ai/odin-rnd-extra', 'https://github.com.evil.example/odin-labs-ai/odin-rnd', 'http://github.com/odin-labs-ai/odin-rnd',
+    'https://github.com:444/odin-labs-ai/odin-rnd', 'ftp://example.com/x']) {
+    assert.ok(screenText(`see ${url} for more`).includes('a link to somewhere other than this lab'), url);
+  }
+  for (const url of ['https://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd/issues']) {
+    assert.deepEqual(screenText(`see ${url}.`), [], url);
+  }
+});
+
+test('a Dutch postcode is caught in any case, and a year before a short word is not', () => {
+  for (const text of ['at 1012 AB', 'at 1012ab', 'at 1012 Ab', 'at 1012 aB']) assert.ok(screenText(text).includes('a postcode'), text);
+  for (const text of ['in 2026 we met', 'since 2024 in the space', '1999 to now']) assert.ok(!screenText(text).includes('a postcode'), text);
+});
+
+test('every field of a proof and a question is walked: unpublished ones by shape and name, unknown ones as page text', () => {
+  const cases = [
+    [(m, p) => { p[0].lens.run = `${privateProject}-live-run`; }, /proofs\/odin-a1b2c3-1\.json#\/lens\/run: a restricted name/],
+    [(m, p) => { p[0].lens.note = 'anything'; }, /proofs\/odin-a1b2c3-1\.json#\/lens: not the expected shape/],
+    [(m, p) => { p[0].t = 'yesterday at 12'; }, /proofs\/odin-a1b2c3-1\.json#\/t: not the expected shape/],
+    [(m, p) => { p[1].ms = -1; }, /proofs\/atlas-a1b2c3-1\.json#\/ms: not the expected shape/],
+    [(m, p) => { p[1].card_note = 'mail someone@example.com'; }, /proofs\/atlas-a1b2c3-1\.json#\/card_note: an email address/],
+    [(m, p) => { p[1].extra = { deep: [{ where: `in ${[...'nrooH'].reverse().join('')}` }] }; }, /#\/extra\/deep\/0\/where: a place name/],
+    [m => { m.questions[0].asked_by = `sample:${privateProject}-windows`; }, /manifest\.json#\/questions\/0\/asked_by: a restricted name/],
+    [m => { m.questions[0].asked_by = 'someone@example.com'; }, /questions\/0\/asked_by: not the expected shape/],
+  ];
+  for (const [edit, expected] of cases) {
+    const one = session(edit);
+    assert.match(prepare(one.dir, screen(one.name)).problems.join('\n'), expected, String(expected));
+  }
+  // The public dispatch cannot carry them: its schema refuses an unpublished field by name.
+  const dispatch = { ...JSON.parse(JSON.stringify(cleanPublic())), };
+  dispatch.questions[0].lens = { run: 'agent-space-live-1700000000' };
+  assert.match(validate(publicSchema, dispatch).join(), /\/questions\/0\/lens: not allowed/);
+});
+
+function cleanPublic() {
+  const one = session();
+  return prepare(one.dir, screen(one.name)).dispatch;
+}

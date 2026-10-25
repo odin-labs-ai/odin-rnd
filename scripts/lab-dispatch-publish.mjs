@@ -11,13 +11,16 @@
 // clip's card shows. It drops the space's local URL, the source commit, the run ids, who asked, timings and file refs.
 // It REFUSES (exit 1, every reason listed, nothing written) when the manifest does not match the vendored schema, when
 // the answers' human screen is not recorded for every proof, or when any text the clip's cards or the page show, or
-// any string of the dispatch it would write (session name, file names, screen labels), contains:
+// any string of the dispatch it would write (session name, file names, screen labels), contains what is listed below.
+// Every field of every proof and question it reads is walked, known or not; the few that are never published (when and
+// how long, the run, the asker, the intake screen) must have their expected shape and carry no restricted name or place.
+// The text screen refuses:
 //   - a restricted name or a listed place (scripts/lab-screen-terms.json, hashed): matched after Unicode NFKC, with
 //     format and combining characters removed and common Cyrillic/Greek look-alikes folded, on single words, on runs of
 //     up to six adjacent words written together ("x y z", "x.y.z") and, for terms of seven letters or more, anywhere
 //     in the letters of the text;
 //   - a price or currency amount, an email address, a phone number or long number, a postcode or street address, a
-//     local or IP address, a link to anywhere but this lab, or a file path or file name with a code or config extension.
+//     local or IP address, a link anywhere but exactly github.com under this lab's repository, or a file path or file name with a code or config extension.
 // What it does NOT catch: a place or name missing from the term list, a name spelled with digits or deliberately
 // misspelled, and anything burned into the clip, poster or stills (it cannot read pixels). Those rest on the human
 // answer screen, which is mandatory. scripts/labs.mjs runs the same checks (dispatchProblems) over every committed
@@ -85,44 +88,63 @@ function termHits(text) {
   return hits;
 }
 
+const SHORT_WORDS = ['am', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'if', 'in', 'is', 'it', 'me', 'my', 'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we'];
 const PATTERNS = [
   [/[€$£¥]\s?\d|\d\s?(?:[€$£¥¢]|(?:eur|usd|gbp|euros?|dollars?|cents?)(?![\p{L}]))|\b(?:eur|usd|gbp)\s?\d/iu, 'a price or currency amount'],
   [/[\w.+-]+@[\w-]+\.[\w.-]+/u, 'an email address'],
   [/\d{9,}|\+\d[\d ().-]{7,}\d|(?:\(\d{2,4}\)|\b\d{2,4})[ .-]\d{3,4}[ .-]\d{3,4}\b/u, 'a phone number, timestamp or long internal id'],
-  [/\b\d{4} ?[A-Z]{2}\b/u, 'a postcode'],
+  // A Dutch postcode in any case (1234 AB, 1234ab, 1234 Ab); in lower or mixed case not when the two letters are a
+  // common short word ("in 2026 we"), which an upper-case postcode never needs.
+  [new RegExp(`\\b\\d{4} ?[A-Z]{2}\\b|\\b\\d{4} ?(?!(?:${SHORT_WORDS.map(w => [...w].map(c => `[${c}${c.toUpperCase()}]`).join('')).join('|')})\\b)[A-Za-z]{2}\\b`, 'u'), 'a postcode'],
   [/\b\d+[a-z]?,? (?:\p{L}+ )+(?:street|road|avenue|lane|boulevard)\b|\p{L}+(?:straat|weg|laan|plein|gracht|kade|dreef|singel)\s+\d+/iu, 'a street address'],
   [/localhost|\b127\.\d|\b\d{1,3}(?:\.\d{1,3}){3}\b|\[::1\]/iu, 'a local or IP address'],
-  [/https?:\/\/(?!github\.com\/odin-labs-ai\/odin-rnd\b)/iu, 'a link to somewhere other than this lab'],
   [/\/users\/|\/home\/|\b[a-z]:\\|[\w.-]+\/[\w./-]*\.[a-z0-9]{1,5}\b|\b[\w-]+\.(?:py|mjs|cjs|js|jsx|ts|tsx|json|jsonl|ya?ml|sh|bash|toml|ini|cfg|conf|env|lock|md|txt|csv|sql|db|sqlite|log|cpp|hpp|cc|c|h|cs|rs|go|java|kt|rb|php|lua|gd|uasset|umap)\b/iu, 'a file path or file name'],
 ];
 
-/** Why one public string may not be published: [{ reason, at }] (empty when it may). `links` lists allowed URL prefixes. */
-export function screenHits(text, { links = [] } = {}) {
+// The lab's own repository, the only place a public text may link to.
+const LAB_REPO = '/odin-labs-ai/odin-rnd';
+
+/** The URL, parsed: null when it is not one. Its path is percent-decoded, so an escaped dot or slash is seen. */
+function parseUrl(url) {
+  try { const u = new URL(url); return { protocol: u.protocol, host: u.hostname, port: u.port, user: u.username || u.password, path: decodeURIComponent(u.pathname), rest: decodeURIComponent(`${u.search} ${u.hash}`) }; }
+  catch { return null; }
+}
+
+/** A link into this lab's repository: https, exactly github.com, the repository's path or a path under it (decoded, no dot segments). */
+export function isLabLink(url) {
+  const u = parseUrl(url);
+  return !!u && u.protocol === 'https:' && u.host === 'github.com' && !u.port && !u.user && !/(^|\/)\.{1,2}(\/|$)|\\/.test(u.path)
+    && (u.path === LAB_REPO || u.path.startsWith(`${LAB_REPO}/`));
+}
+
+/** Why one public string may not be published: [{ reason, at }] (empty when it may). */
+export function screenHits(text) {
   const hits = termHits(text).map(({ kind, at }) => ({ at, reason: kind === 'names'
     ? 'a restricted name (the private project, a game studio, a partner or a customer)' : 'a place name' }));
-  let rest = fold(text);
-  for (const prefix of links) rest = rest.split(prefix).join(' '.repeat(prefix.length));
+  const rest = fold(text);
   for (const [pattern, reason] of PATTERNS) { const match = pattern.exec(rest); if (match) hits.push({ reason, at: match.index }); }
+  const away = [...rest.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>()]+/giu)].find(m => !isLabLink(m[0].replace(/[.,;:!?]+$/, '')));
+  if (away) hits.push({ reason: 'a link to somewhere other than this lab', at: away.index });
   return hits;
 }
 
 /** The reasons alone. */
-export const screenText = (text, options) => screenHits(text, options).map(hit => hit.reason);
+export const screenText = text => screenHits(text).map(hit => hit.reason);
 
-/** A URL the page links to: https, under one of `prefixes`, and its host, path and query pass the screen. */
-export function urlProblems(url, prefixes) {
+/**
+ * A URL the page links to: https, its host exactly one of `hosts` (on github.com only this lab's repository), and its
+ * host, path and query pass the screen. `templates` lets the query name a form template file.
+ */
+export function urlProblems(url, hosts, { templates = false } = {}) {
   if (typeof url !== 'string' || !/^https:\/\/[^\s"<>]+$/.test(url)) return ['not an https URL'];
+  const u = parseUrl(url);
+  if (!u) return ['not a URL'];
   const problems = [];
-  if (!prefixes.some(prefix => url.startsWith(prefix))) problems.push(`not under an allowed link prefix (${prefixes.join(', ')})`);
-  let where, query;
-  try {
-    const u = new URL(url);
-    where = decodeURIComponent(`${u.hostname} ${u.pathname.replaceAll('/', ' ')}`);
-    query = decodeURIComponent(`${u.search} ${u.hash}`.replace(/[?&=#]/g, ' '));
-  } catch { return [...problems, 'not a URL']; }
-  problems.push(...screenText(where));
-  // The query may name a form template (ask-the-agents.yml); every other check still applies to it.
-  problems.push(...screenText(query).filter(reason => !reason.startsWith('a file path')));
+  if (!hosts.includes(u.host) || u.port || u.user) problems.push(`not on an allowed host (${hosts.join(', ')})`);
+  else if (u.host === 'github.com' && !isLabLink(url)) problems.push('a GitHub link outside this lab\'s repository');
+  problems.push(...screenText(`${u.host} ${u.path.replaceAll('/', ' ')}`));
+  const query = screenText(u.rest.replace(/[?&=#]/g, ' '));
+  problems.push(...(templates ? query.filter(reason => !reason.startsWith('a file path')) : query));
   return problems;
 }
 
@@ -132,18 +154,42 @@ const excerpt = (text, at) => {
   return JSON.stringify(`${from > 0 ? '...' : ''}${text.slice(from, to)}${to < text.length ? '...' : ''}`);
 };
 
-/** Screen every string under `value` (skipping `skip` keys); each hit is "<where>#<pointer>: <reason> (<excerpt>)". */
-export function screenTree(value, where, skip = new Set(), at = '') {
+/**
+ * Screen every field under `value`; each hit is "<where>#<pointer>: <reason> (<excerpt>)". Nothing is skipped: a key
+ * named in `internal` (top level only) is a field the public dispatch never carries, and instead of the page-text screen
+ * it must have its expected shape and still carry no restricted name or place. Every other field, known or not, is
+ * screened as page text.
+ */
+export function screenTree(value, where, internal = {}, at = '') {
   if (typeof value === 'string') return screenHits(value).map(hit => `${where}#${at || '/'}: ${hit.reason} (${excerpt(normalise(value), hit.at)})`);
   if (value === null || typeof value !== 'object') return [];
-  return Object.entries(value).flatMap(([key, child]) => skip.has(key) ? [] : screenTree(child, where, skip, `${at}/${key}`));
+  return Object.entries(value).flatMap(([key, child]) => key in internal
+    ? internalProblems(child, internal[key], where, `${at}/${key}`)
+    : screenTree(child, where, {}, `${at}/${key}`));
 }
 
-// Fields of a proof record that never reach the page: when it was recorded, how long it took and which run (the lens).
-// Every other string of a proof is screened, because the clip shows the whole card, whether or not the page repeats it.
-// A question's asker, issue number and intake screen stay out of the page and are not screened here.
-const PROOF_INTERNAL = new Set(['t', 'ms', 'lens']);
-const QUESTION_INTERNAL = new Set(['asked_by', 'issue', 'screened']);
+function internalProblems(value, shape, where, at) {
+  if (!shape(value)) return [`${where}#${at}: not the expected shape for a field that is not published`];
+  const strings = [];
+  (function walk(v, p) { if (typeof v === 'string') strings.push([v, p]); else if (v && typeof v === 'object') for (const [k, c] of Object.entries(v)) walk(c, `${p}/${k}`); })(value, at);
+  return strings.flatMap(([text, p]) => screenHits(text).filter(hit => /^a (restricted|place) name/.test(hit.reason))
+    .map(hit => `${where}#${p}: ${hit.reason} (${excerpt(normalise(text), hit.at)})`));
+}
+
+const isNumber = v => typeof v === 'number' && Number.isFinite(v);
+const exactKeys = (v, keys) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every(k => keys.includes(k));
+// Fields of a proof record that never reach the page: when it was recorded (t), how long it took (ms) and which run
+// (lens). The public dispatch is built from a fixed list of fields, so these cannot reach it, and its schema refuses
+// them by name. They must still look like what they are, and hold no restricted name or place.
+const PROOF_INTERNAL = {
+  t: isNumber, ms: v => Number.isInteger(v) && v >= 0,
+  lens: v => exactKeys(v, ['run', 'seq']) && typeof v.run === 'string' && /^[a-z0-9-]{1,64}$/.test(v.run) && (v.seq === undefined || Number.isInteger(v.seq)),
+};
+// A question's asker, issue number and intake screen stay out of the page, under the same rule.
+const QUESTION_INTERNAL = {
+  asked_by: v => typeof v === 'string' && /^[a-z0-9-]+:@?[\w.-]{1,39}$/i.test(v), issue: v => Number.isInteger(v) && v > 0,
+  screened: v => exactKeys(v, ['ok', 'by', 'note', 'checks']),
+};
 
 /** The answer-screening record this site keeps for a session (odin-answers-screen v1); a list of problems. */
 export function answerScreenProblems(screen, session, evidenceIds) {

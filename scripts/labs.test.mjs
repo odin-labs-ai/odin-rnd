@@ -48,7 +48,8 @@ test('Labs is in the header of the home, the partner pages and both Labs pages, 
 test('the ask form asks for a short public question, an optional agent and consent, and nothing personal', () => {
   const form = readFileSync('.github/ISSUE_TEMPLATE/ask-the-agents.yml', 'utf8');
   assert.match(form, /^labels: \['ask-the-agents'\]$/m);
-  assert.match(form, /at most 300 characters/);
+  assert.match(form, /a session can only ask a question of up to 300 characters/);
+  assert.doesNotMatch(form, /left out|at most 300/, 'the form does not claim to enforce the cap');
   assert.match(form, /- label: My question is public and may appear in a recording\.\n {10}required: true/);
   assert.match(form, /id: agent[\s\S]*- Odin\n {8}- Atlas\n {8}- Juno\n {4}validations:\n {6}required: false/);
   assert.deepEqual([...form.matchAll(/^ {4}id: (\S+)$/gm)].map(m => m[1]), ['question', 'agent', 'public']);
@@ -64,7 +65,13 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
     const cases = [
       [withLink(`https://www.linkedin.com/company/${studio}`), /follow\/0\/url: a restricted name/],
       [withLink(`https://www.linkedin.com/company/odin-labs-${town}`), /follow\/0\/url: a place name/],
-      [withLink('https://example.com/odin-labs'), /follow\/0\/url: not under an allowed link prefix/],
+      [withLink('https://example.com/odin-labs'), /follow\/0\/url: not on an allowed host/],
+      [withLink('https://www.linkedin.com.evil.example/company/odin-labs'), /follow\/0\/url: not on an allowed host/],
+      [withLink('https://github.com/odin-labs-ai/odin-rnd.evil.com'), /follow\/0\/url: a GitHub link outside this lab's repository/],
+      [withLink('https://github.com/odin-labs-ai/odin-rnd%2eevil.com'), /follow\/0\/url: a GitHub link outside this lab's repository/],
+      [withLink('https://github.com/odin-labs-ai/odin-rnd-extra'), /follow\/0\/url: a GitHub link outside this lab's repository/],
+      [withLink('https://github.com/odin-labs-ai/odin-rnd%2F..%2Fother'), /follow\/0\/url: a GitHub link outside this lab's repository|a file path/],
+      [withLink('https://user@www.linkedin.com/company/odin-labs'), /follow\/0\/url: not on an allowed host/],
       [withLink('http://www.linkedin.com/company/odin-labs'), /follow\/0\/url: not an https URL/],
       [withLink('https://www.linkedin.com/company/odin%2Dlabs/config.py'), /follow\/0\/url: a file path/],
       [{ ...good, ask: { ...good.ask, url: `https://github.com/odin-labs-ai/odin-rnd/issues/new?template=ask-${studio}.yml` } }, /ask\/url: a restricted name/],
@@ -73,7 +80,10 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
       writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(lab));
       assert.throws(() => readLab(root), expected, String(expected));
     }
-    writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(withLink('https://www.linkedin.com/company/odin-labs-rnd')));
-    assert.equal(readLab(root).follow[0].url, 'https://www.linkedin.com/company/odin-labs-rnd');
+    for (const url of ['https://www.linkedin.com/company/odin-labs-rnd', 'https://x.com/odinlabs', 'https://twitter.com/odinlabs',
+      'https://www.reddit.com/r/odinlabs/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd/discussions']) {
+      writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(withLink(url)));
+      assert.equal(readLab(root).follow[0].url, url);
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

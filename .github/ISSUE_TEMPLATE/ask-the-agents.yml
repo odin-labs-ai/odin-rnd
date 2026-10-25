@@ -12,7 +12,7 @@ body:
     id: question
     attributes:
       label: Your question
-      description: One question, at most 300 characters. A longer one is left out.
+      description: One question, please keep it short. The form does not stop a longer one, but a session can only ask a question of up to 300 characters.
     validations:
       required: true
   - type: dropdown

@@ -15,10 +15,8 @@ import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publis
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
-// Where a follow link may point: the channel's own site, or this lab's repository. Anything else is refused.
-export const FOLLOW_PREFIXES = ['https://www.linkedin.com/', 'https://linkedin.com/', 'https://www.reddit.com/', 'https://reddit.com/',
-  'https://x.com/', 'https://github.com/odin-labs-ai/odin-rnd'];
-const ASK_PREFIXES = ['https://github.com/odin-labs-ai/odin-rnd/issues/new?template='];
+// Where a follow link may point: exactly these hosts (on github.com only this lab's repository). Anything else is refused.
+export const FOLLOW_HOSTS = ['www.linkedin.com', 'linkedin.com', 'www.reddit.com', 'reddit.com', 'x.com', 'twitter.com', 'github.com'];
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const time = date => `<time datetime="${escape(date)}">${escape(new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }))}</time>`;
@@ -33,11 +31,11 @@ export function readLab(root = 'site') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(lab.since ?? '')) problems.push('since is not a date');
   if (!/^https:\/\/github\.com\/odin-labs-ai\/odin-rnd\/issues\/new\?template=ask-the-agents\.yml$/.test(lab.ask?.url ?? '')) problems.push('ask.url is not the ask-the-agents form');
   if (!Array.isArray(lab.follow) || !lab.follow.length) problems.push('follow is missing');
-  // A follow link is null ("coming soon") or a URL under FOLLOW_PREFIXES whose host, path and query pass the screen.
+  // A follow link is null ("coming soon") or a URL on FOLLOW_HOSTS whose host, path and query pass the screen.
   for (const [i, link] of (lab.follow ?? []).entries()) {
-    if (link.url !== null) problems.push(...urlProblems(link.url, FOLLOW_PREFIXES).map(reason => `follow/${i}/url: ${reason}`));
+    if (link.url !== null) problems.push(...urlProblems(link.url, FOLLOW_HOSTS).map(reason => `follow/${i}/url: ${reason}`));
   }
-  problems.push(...urlProblems(lab.ask?.url, ASK_PREFIXES).map(reason => `ask/url: ${reason}`));
+  problems.push(...urlProblems(lab.ask?.url, ['github.com'], { templates: true }).map(reason => `ask/url: ${reason}`));
   // Every other string is screened as page text (the URLs above were screened as URLs).
   const { ask: { url: askUrl, ...ask } = {}, follow = [], ...words } = lab;
   problems.push(...screenTree({ ...words, ask, follow: follow.map(({ url, ...rest }) => rest) }, LAB_FILE));
