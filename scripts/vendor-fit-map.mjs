@@ -5,7 +5,7 @@
 //
 //   node scripts/vendor-fit-map.mjs --commit <40-hex> --file <fit-map.json> \
 //     --as '<lab>=<EXP nnn|Lab nn>' --title '<lab>=<public title>' [--page '<lab>=<site path>'] \
-//     [--result '<lab>/<scenario>=<site path>']... > site/data/labs/fit-map.json
+//     [--result '<lab>/<scenario>=<site path>']... [--pin-out scripts/fit-map.pin.json] > site/data/labs/fit-map.json
 //
 // What it changes, and nothing else (every lab's mapping is recorded in `vendored.transform`):
 // - each lab gets this site's name and a public title (--as, --title): the site numbers its labs itself, so the
@@ -15,15 +15,18 @@
 // - a publication note becomes the pull request number it names; the note itself is left out;
 // - the rule's file name (RESULT.json) is said in words, "result record", recorded in `vendored.reworded` by the
 //   sha256 of what it replaced, so the public file does not spell the file name;
-// - the predictions are renamed to who made them (the lab, MongoDB's advocate, PostgreSQL's advocate), unchanged;
+// - the predictions are keyed by who made them (the lab, MongoDB's advocate, PostgreSQL's advocate), text unchanged;
+//   each key rename is recorded in `vendored.renamed` by the sha256 of the source key;
 // - a cell with a verdict needs the public page of its result (--result); without one the vendor refuses.
 // It refuses, every reason listed, on a field it does not know (anywhere), a lab without --as or --title, a verdict
 // outside the fit map's own words, or a mapping for a lab or cell the file does not have. The source file is recorded
-// by sha256 and `recordSha256` digests the whole public record, so a hand edit is refused at build (scripts/lab-fit-map.mjs).
+// by sha256; --pin-out writes scripts/fit-map.pin.json with the output's own sha256, which the build checks
+// (scripts/lab-fit-map.mjs), so a hand edit of the data file is refused unless the pin is changed with it.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { recordDigest, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { writeFileSync } from 'node:fs';
+import { pinFor, VERDICT_WORDS } from './lab-fit-map.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const HEX40 = /^[0-9a-f]{40}$/;
@@ -112,6 +115,8 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
       sourceSha256: sha256(fileBytes),
       builtAtCommit: map.built_at_commit,
       transform: map.labs.map(lab => ({ lab: lab.lab, as: as[lab.lab], title: title[lab.lab], page: page[lab.lab] ?? null })),
+      renamed: Object.entries(PREDICTOR_KEYS).filter(([from]) => map.labs.some(lab => lab.cells.some(cell => from in (cell.predictions ?? {}))))
+        .map(([from, to]) => ({ field: 'predictions', fromSha256: sha256(from), to })),
       reworded: String(map.rule).includes('RESULT.json') ? [{ field: 'rule', fromSha256: sha256('RESULT.json'), to: 'result record' }] : [],
       kept: 'the question, the rule, the verdict words and, per lab, its stage, its record\'s commit, status and sha256, and every cell\'s scenario, verdict and predictions',
       leftOut: 'Left out: every path into the private repository, and the note on who posted a publication',
@@ -122,12 +127,13 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
     verdictWords: map.verdict_words,
     labs,
   };
-  record.vendored.recordSha256 = recordDigest(record);
   return record;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = args(process.argv.slice(2));
   const record = vendor({ commit: a.commit, fileBytes: readFileSync(a.file), as: a.as, title: a.title, page: a.page, result: a.result });
-  process.stdout.write(`${JSON.stringify(record, null, 1)}\n`);
+  const out = `${JSON.stringify(record, null, 1)}\n`;
+  if (a['pin-out']) writeFileSync(a['pin-out'], `${JSON.stringify(pinFor(Buffer.from(out), record), null, 1)}\n`);
+  process.stdout.write(out);
 }

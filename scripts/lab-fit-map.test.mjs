@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { fitMapProblems, recordDigest, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { fitMapProblems, pinFor, pinProblems, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
 import { vendor } from './vendor-fit-map.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -76,7 +76,7 @@ test('vendoring is reproducible byte for byte and records every change it makes'
   assert.equal(cli, once);
   const record = JSON.parse(once);
   assert.deepEqual(fitMapProblems(record), []);
-  assert.equal(record.vendored.recordSha256, recordDigest(record));
+  assert.deepEqual(record.vendored.renamed.map(r => [r.fromSha256, r.to]), ['this_pc', 'mongodb_advocate', 'postgres_advocate'].map((k, i) => [createHash('sha256').update(k).digest('hex'), ['lab', 'mongodbAdvocate', 'postgresAdvocate'][i]]));
   assert.deepEqual(record.vendored.reworded, [{ field: 'rule', fromSha256: createHash('sha256').update('RESULT.json').digest('hex'), to: 'result record' }]);
   assert.deepEqual(record.labs[0].published, { commit: hex(40, 'b'), pr: 76 });
   assert.deepEqual(record.labs[2].record, { kind: 'design', commit: hex(40, '1'), status: 'main', sha256: null });
@@ -106,25 +106,23 @@ test('the vendor refuses what it does not know: a field, a predictor, a status, 
 
 test('the build refuses a hand edit, an unknown verdict, a cell and its result out of step, and a link or text that may not be public', () => {
   const base = vendor({ commit: COMMIT, fileBytes: bytes(source()), ...mapping });
-  const redigest = r => { r.vendored.recordSha256 = recordDigest(r); return r; };
   const cases = [
-    [r => { r.labs[0].cells[0].predictions.lab = 'postgres-fits'; }, /not the record that was vendored/],
-    [r => { r.vendored.commit = hex(40, '8'); }, /not the record that was vendored/],
-    [r => { r.vendored.sourceSha256 = hex(64, '7'); }, /not the record that was vendored/],
-    [r => { r.rule = 'a verdict fills from any result record'; }, /not the record that was vendored/],
-    [r => { r.vendored.transform[1].as = 'Lab 02'; redigest(r); }, /transform\/1: not the name, title and page lab 1 shows/],
-    [r => { r.vendored.transform.pop(); redigest(r); }, /transform: not one entry per lab/],
-    [r => { r.labs[0].cells[0].verdict = 'mostly'; r.labs[0].cells[0].result = 'labs/'; redigest(r); }, /verdict: "mostly" is not a verdict word/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; redigest(r); }, /cells\/0: a filled cell without a result link/],
-    [r => { r.labs[0].cells[0].result = 'labs/'; redigest(r); }, /cells\/0: a pending cell with a result link/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs/missing/'; redigest(r); }, /result: labs\/missing\/ is not a page of this site/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'https://example.com/r'; redigest(r); }, /result: a link outside this lab/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = '../secret/'; redigest(r); }, /result: not a page path of this site/],
-    [r => { r.labs[1].cells[0].what = 'see .ai/experiments/x/PREREG.md'; redigest(r); }, /what: a file path or file name/],
-    [r => { r.labs[1].title = `Failover in ${[...'nrooH'].reverse().join('')}`; r.vendored.transform[1].title = r.labs[1].title; redigest(r); }, /title: a place name/],
-    [r => { r.verdictWords = ['yes', 'no']; redigest(r); }, /verdictWords: not exactly/],
-    [r => { r.labs[1].lab = 'Lab 02 (v1.1)'; redigest(r); }, /lab: does not match/],
-    [r => { r.rule = 'a verdict fills only from RESULT.json'; redigest(r); }, /rule: a file path[\s\S]*rule does not say result record/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs'; }, /result: labs is not a page \(a page ends in \/ or \.html\)/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'data/labs/fit-map.json'; }, /is not a page \(a page ends in/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs/nope.html'; }, /result: labs\/nope\.html is not a page of this site/],
+    [r => { r.vendored.transform[1].as = 'Lab 02'; }, /transform\/1: not the name, title and page lab 1 shows/],
+    [r => { r.vendored.transform.pop(); }, /transform: not one entry per lab/],
+    [r => { r.labs[0].cells[0].verdict = 'mostly'; r.labs[0].cells[0].result = 'labs/'; }, /verdict: "mostly" is not a verdict word/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; }, /cells\/0: a filled cell without a result link/],
+    [r => { r.labs[0].cells[0].result = 'labs/'; }, /cells\/0: a pending cell with a result link/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs/missing/'; }, /result: labs\/missing\/ is not a page of this site/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'https://example.com/r'; }, /result: a link outside this lab/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = '../secret/'; }, /result: not a page path of this site/],
+    [r => { r.labs[1].cells[0].what = 'see .ai/experiments/x/PREREG.md'; }, /what: a file path or file name/],
+    [r => { r.labs[1].title = `Failover in ${[...'nrooH'].reverse().join('')}`; r.vendored.transform[1].title = r.labs[1].title; }, /title: a place name/],
+    [r => { r.verdictWords = ['yes', 'no']; }, /verdictWords: not exactly/],
+    [r => { r.labs[1].lab = 'Lab 02 (v1.1)'; }, /lab: does not match/],
+    [r => { r.rule = 'a verdict fills only from RESULT.json'; }, /rule: a file path[\s\S]*rule does not say result record/],
   ];
   for (const [edit, expected] of cases) {
     const r = structuredClone(base); edit(r);
@@ -134,9 +132,42 @@ test('the build refuses a hand edit, an unknown verdict, a cell and its result o
   const root = join(temp, 'site');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
   cpSync('site/journal', join(root, 'journal'), { recursive: true });
+  const good = Buffer.from(`${JSON.stringify(base, null, 1)}\n`);
+  const pinFile = join(temp, 'fit-map.pin.json');
+  writeFileSync(pinFile, JSON.stringify(pinFor(good, base)));
+  writeFileSync(join(root, 'data/labs/fit-map.json'), good);
+  assert.equal(readFitMap(root, pinFile).labs.length, 3);
   const bad = structuredClone(base); bad.labs[0].cells[0].predictions.lab = 'neither';
   writeFileSync(join(root, 'data/labs/fit-map.json'), JSON.stringify(bad));
-  assert.throws(() => readFitMap(root), /Fit map refused/);
-  writeFileSync(join(root, 'data/labs/fit-map.json'), JSON.stringify(base));
-  assert.equal(readFitMap(root).labs.length, 3);
+  assert.throws(() => readFitMap(root, pinFile), /Fit map refused/);
+});
+
+test('the pin is a separate file: a hand edit of the data, even one that keeps it valid, fails until the pin is changed too', () => {
+  const base = vendor({ commit: COMMIT, fileBytes: bytes(source()), ...mapping });
+  const good = Buffer.from(`${JSON.stringify(base, null, 1)}\n`);
+  const pin = pinFor(good, base);
+  assert.deepEqual(pinProblems(good, base, pin), []);
+  const edits = [
+    r => { r.labs[0].cells[0].predictions.lab = 'postgres-fits'; },
+    r => { r.vendored.commit = hex(40, '8'); },
+    r => { r.vendored.sourceSha256 = hex(64, '7'); },
+    r => { r.rule = 'a verdict fills from any result record'; },
+  ];
+  for (const edit of edits) {
+    const r = structuredClone(base); edit(r);
+    const b = Buffer.from(`${JSON.stringify(r, null, 1)}\n`);
+    assert.deepEqual(fitMapProblems(r), [], 'the edit alone is a valid record');
+    assert.match(pinProblems(b, r, pin).join('\n'), /fileSha256 is .* the pin in scripts\/fit-map\.pin\.json says/);
+  }
+  assert.match(pinProblems(good, base, null).join('\n'), /the pin in scripts\/fit-map\.pin\.json says undefined/);
+  // The committed file matches the committed pin.
+  const committedPin = JSON.parse(readFileSync('scripts/fit-map.pin.json', 'utf8'));
+  assert.deepEqual(pinProblems(readFileSync('site/data/labs/fit-map.json'), committed, committedPin), []);
+  // The vendor CLI writes the pin for exactly the bytes it prints.
+  const file = join(temp, 'src-pin.json'), pinOut = join(temp, 'pin-out.json');
+  writeFileSync(file, bytes(source()));
+  const out = execFileSync(process.execPath, ['scripts/vendor-fit-map.mjs', '--commit', COMMIT, '--file', file, '--pin-out', pinOut,
+    '--as', 'EXP 020=EXP 020', '--title', 'EXP 020=Home ground', '--page', 'EXP 020=journal/mongodb-home-ground-pre-registration.html',
+    '--as', 'Lab 02 (v1.1)=Lab 03', '--title', 'Lab 02 (v1.1)=Failover', '--as', 'Lab 03=Lab 04', '--title', 'Lab 03=The company store']);
+  assert.deepEqual(pinProblems(out, JSON.parse(out), JSON.parse(readFileSync(pinOut, 'utf8'))), []);
 });

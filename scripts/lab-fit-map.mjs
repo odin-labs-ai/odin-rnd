@@ -4,15 +4,18 @@
 // site/data/labs/fit-map.json; this module checks that file and renders it; scripts/labs.mjs fills <!--LABS_FIT_MAP-->.
 // The build fails, and nothing is rendered, on:
 //   - a file that misses scripts/schemas/odin-fit-map-public.schema.json;
-//   - a record whose digest is not the one taken when it was vendored (a hand edit anywhere: a cell, a prediction, the
-//     provenance commit or sha256, the transform), or a transform that is not the labs' own names, titles and pages;
+//   - a committed file whose bytes are not the ones pinned when it was vendored (scripts/fit-map.pin.json: the file's
+//     sha256, the source commit and the source sha256). The pin is a second, separately reviewed file, so a hand edit of
+//     the data has to change it too, in plain sight; what neither can prove is that the private source says what the
+//     file says: only re-running the vendor on that source can;
+//   - a transform that is not the labs' own names, titles and pages;
 //   - a verdict word outside the five the fit map defines, or a verdict list that is not exactly those five;
 //   - a filled cell without a result link, or a pending cell with one; a result or page link that is not a page of
 //     this site (or a link into this lab's repository);
 //   - free text that fails the publisher's screen (names, places, paths, links, personal data); commits and digests are
 //     held to their shape instead and still screened for restricted names and places.
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isLabLink, screenHits, screenTree } from './lab-dispatch-publish.mjs';
@@ -28,20 +31,33 @@ export const PREDICTORS = [['lab', 'The lab'], ['mongodbAdvocate', 'MongoDB’s 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 export const canonicalJson = value => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v)
   ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v));
-/** The digest of the whole public record except the digest itself, taken when it is vendored and again at every build. */
-export function recordDigest(record) {
-  const { vendored: { recordSha256, ...vendored }, ...rest } = record;
-  return createHash('sha256').update(canonicalJson({ ...rest, vendored })).digest('hex');
+export const FIT_MAP_PIN_FILE = join(here, 'fit-map.pin.json');
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+
+/** The pin the vendor writes beside the file: the file's own sha256 and the source it came from. */
+export const pinFor = (fileBytes, record) => ({ format: 'odin-fit-map-pin', version: 1, file: `site/${FIT_MAP_FILE}`,
+  fileSha256: sha256(fileBytes), commit: record.vendored.commit, sourceSha256: record.vendored.sourceSha256 });
+
+/** Why the committed bytes are not the pinned ones (empty when they are). */
+export function pinProblems(fileBytes, record, pin) {
+  const want = pinFor(fileBytes, record);
+  return Object.keys(want).filter(key => pin?.[key] !== want[key])
+    .map(key => `${FIT_MAP_FILE}: ${key} is ${JSON.stringify(want[key])}, the pin in scripts/fit-map.pin.json says ${JSON.stringify(pin?.[key])}; re-vendor with scripts/vendor-fit-map.mjs --pin-out`);
 }
 
 const nameOrPlace = (text, where) => screenHits(text).filter(hit => /^a (restricted|place) name/.test(hit.reason)).map(hit => `${where}: ${hit.reason}`);
 
-/** A link the matrix may show: a page of this site (site-relative, no dot segments) that exists, or this lab's repository. */
+/**
+ * A link the matrix may show: an HTML page of this site (site-relative, no dot segments; a directory path ending in "/"
+ * whose index.html exists, or an existing .html file), or this lab's repository. A data file, a stylesheet or a bare
+ * directory is not a page.
+ */
 function linkProblem(href, root) {
   if (/^https:/.test(href)) return isLabLink(href) ? null : 'a link outside this lab';
   if (!/^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9.-]*)*\/?$/.test(href) || /(^|\/)\.\.?(\/|$)/.test(href)) return 'not a page path of this site';
+  if (!href.endsWith('/') && !href.endsWith('.html')) return `${href} is not a page (a page ends in / or .html)`;
   const target = join(root, href.endsWith('/') ? `${href}index.html` : href);
-  return existsSync(target) ? null : `${href} is not a page of this site`;
+  return existsSync(target) && statSync(target).isFile() ? null : `${href} is not a page of this site`;
 }
 
 /** Every reason the vendored fit map may not be published (empty when it may). */
@@ -49,8 +65,6 @@ export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
   const problems = validate(JSON.parse(readFileSync(FIT_MAP_SCHEMA_FILE, 'utf8')), record).map(p => `${where}#${p} (does not match odin-fit-map public)`);
   if (problems.length) return problems;
   if (canonicalJson(record.verdictWords) !== canonicalJson(VERDICT_WORDS)) problems.push(`${where}#/verdictWords: not exactly ${VERDICT_WORDS.join(', ')}`);
-  const digest = recordDigest(record);
-  if (digest !== record.vendored.recordSha256) problems.push(`${where}: not the record that was vendored (sha256 ${digest}, vendored ${record.vendored.recordSha256}); re-vendor with scripts/vendor-fit-map.mjs`);
   if (record.vendored.transform.length !== record.labs.length) problems.push(`${where}#/vendored/transform: not one entry per lab`);
   for (const [i, t] of record.vendored.transform.entries()) {
     const lab = record.labs[i];
@@ -71,12 +85,13 @@ export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
     }
   }
   // Words are screened as page text; commits, digests and page paths are held to their shape above and below.
-  const { vendored: { commit, sourceSha256, builtAtCommit, recordSha256, transform, reworded, ...vendoredWords }, labs, ...words } = record;
+  const { vendored: { commit, sourceSha256, builtAtCommit, transform, reworded, renamed, ...vendoredWords }, labs, ...words } = record;
   problems.push(...screenTree({ ...words, vendored: vendoredWords }, where));
   // The transform names the source labs and this site's pages: names screened as text, each page as a page link.
   for (const [i, { page, ...names }] of transform.entries()) {
     problems.push(...screenTree(names, where, {}, `/vendored/transform/${i}`));
   }
+  for (const [i, r] of renamed.entries()) problems.push(...screenTree({ to: r.to }, where, {}, `/vendored/renamed/${i}`));
   // A rewording records what it replaced by sha256 only; the replacement is page text and must be in its field.
   for (const [i, { fromSha256, ...rest }] of reworded.entries()) {
     problems.push(...screenTree(rest, where, {}, `/vendored/reworded/${i}`));
@@ -92,10 +107,11 @@ export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
 }
 
 /** The committed fit map, checked; the build throws on any problem. Null when no fit map is published yet. */
-export function readFitMap(root = 'site') {
+export function readFitMap(root = 'site', pinFile = FIT_MAP_PIN_FILE) {
   if (!existsSync(join(root, FIT_MAP_FILE))) return null;
-  const record = JSON.parse(readFileSync(join(root, FIT_MAP_FILE), 'utf8'));
-  const problems = fitMapProblems(record, root);
+  const bytes = readFileSync(join(root, FIT_MAP_FILE));
+  const record = JSON.parse(bytes);
+  const problems = [...fitMapProblems(record, root), ...pinProblems(bytes, record, existsSync(pinFile) ? JSON.parse(readFileSync(pinFile, 'utf8')) : null)];
   if (problems.length) throw new Error(`Fit map refused:\n  ${problems.join('\n  ')}`);
   return record;
 }

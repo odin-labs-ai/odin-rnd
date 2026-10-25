@@ -26,6 +26,23 @@
     "page": null
    }
   ],
+  "renamed": [
+   {
+    "field": "predictions",
+    "fromSha256": "fca832ea55a47fbf0ec7138228f10150d77312db8b289bee985c40bcb24906ab",
+    "to": "lab"
+   },
+   {
+    "field": "predictions",
+    "fromSha256": "5d10383c08553633f15e7c2c493e6059699a6ebad16b3399d7c9067d0b84283a",
+    "to": "mongodbAdvocate"
+   },
+   {
+    "field": "predictions",
+    "fromSha256": "afc02a15a213e02046a2bd5fbf9e178d2288e1ec3967dc29813711e7651d2c97",
+    "to": "postgresAdvocate"
+   }
+  ],
   "reworded": [
    {
     "field": "rule",
@@ -34,8 +51,7 @@
    }
   ],
   "kept": "the question, the rule, the verdict words and, per lab, its stage, its record's commit, status and sha256, and every cell's scenario, verdict and predictions",
-  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication",
-  "recordSha256": "9c3d254d528874d15bb20505342b80720389e515d1378cbee1295373295d2bef"
+  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication"
  },
  "question": "where does each store fit Odin? (per scenario; no overall winner)",
  "rule": "a verdict fills only from the experiment's committed result record; predictions are the frozen ones",

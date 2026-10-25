@@ -10,14 +10,13 @@
   "version": {"const": 1},
   "vendored": {
    "type": "object",
-   "required": ["from", "commit", "sourceSha256", "builtAtCommit", "recordSha256", "transform", "reworded", "kept", "leftOut"],
+   "required": ["from", "commit", "sourceSha256", "builtAtCommit", "transform", "renamed", "reworded", "kept", "leftOut"],
    "additionalProperties": false,
    "properties": {
     "from": {"type": "string", "minLength": 1},
     "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "builtAtCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-    "recordSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "transform": {
      "type": "array",
      "minItems": 1,
@@ -31,6 +30,15 @@
        "title": {"type": "string", "minLength": 1},
        "page": {"type": ["string", "null"]}
       }
+     }
+    },
+    "renamed": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": ["field", "fromSha256", "to"],
+      "additionalProperties": false,
+      "properties": {"field": {"const": "predictions"}, "fromSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "to": {"type": "string", "pattern": "^(lab|mongodbAdvocate|postgresAdvocate)$"}}
      }
     },
     "reworded": {
