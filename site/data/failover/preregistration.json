@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 021",
+    "slug": "failover",
+    "title": "Kill the database mid-session, does anyone notice?",
+    "label": "Lab 03 (failover)",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-10-25",
+    "summary": "While the agent space writes proof records and a feed turns them into lens marks, the database's primary fails. Which store keeps every acknowledged write and the feed intact, with the shortest client-visible write outage and the fewest operational component kinds, when each gets its best realistic HA design: a MongoDB 8.0 PSS replica set, or PostgreSQL 16 with Patroni 4.x and etcd 3.5.x? The verdict is per scenario. There is no overall winner. The frozen plan is prereg.text.",
+    "note": "Written, hashed and merged to main before any counted run. Counted runs start only after the commit that publishes this record. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "naming": {
+    "site": "Lab 03 (failover)",
+    "private": "Lab 02",
+    "why": "The private files number this lab 02. On this site it is Lab 03 (failover), because this site's Lab 02 is the brain bench. The frozen text and the published supporting files keep their own number, unchanged: where they say 'Lab 02', they mean this experiment. The private text's 'the company store as Lab 03' names a different lab, which is not published here."
+  },
+  "source": {
+    "what": "Frozen design v1.1, two advocate reviews in each of two rounds, source commit 5d0567654c6a61558eadd54abe9eca6f31967e90 in a private repository; PREREG sha256 f3630380a9b100dd631bbe73d51e6bcaef280a9a9a54ba02ebd543b8ac843913.",
+    "frozenOn": "2026-10-25",
+    "history": "v1 (private commit 8e55a4bb972b5daa78e2127e3807c6823ce10ad3, PREREG sha256 905df0501ac99c4024aaab9e0eede3ff845a1d9db5c0d84a6259b17a8617f6c0) was frozen the same day and superseded by v1.1 before any cell ran. It is history only: never published, never counted, not the plan. v1.1 keeps v1's predictions as frozen and adds both advocates' updates.",
+    "inputs": {
+      "PREREG.md": {
+        "sha256": "f3630380a9b100dd631bbe73d51e6bcaef280a9a9a54ba02ebd543b8ac843913",
+        "published": "as prereg.text, with exactly the substitutions in publicCopy.substitutions"
+      },
+      "DESIGN.md": {
+        "sha256": "f8dd2dfae4c9badea5d337d9aaf935dcd9633613639b441e9f651725b3118b07",
+        "published": "no: the design draft the v1 reviews answer. Every veto against it, and its resolution, is in FREEZE-NOTES.md, published here."
+      },
+      "runner/PROTOCOL-LAB02.md": {
+        "sha256": "af9a35e061ef8de880d814a2f72ff067b59d486c84ee66dd3b12bd10facab732",
+        "published": "no: the runner protocol, which says of itself that it is not a PREREG amendment. Its proposed amendments A1-A12 and every resolution of them are restated in FREEZE-NOTES-v1.1.md, published here."
+      },
+      "FREEZE-NOTES.md": {
+        "sha256": "9a963b88ccc1fa10c99b8cdb79554795650af5dda49a06793d14a65a94dbffe0",
+        "published": "yes, byte for byte: experiments/failover/FREEZE-NOTES.md"
+      },
+      "FREEZE-NOTES-v1.1.md": {
+        "sha256": "e6145a1ff24129b9ffde60da13469a20ebed559153527f969b75460d352983c9",
+        "published": "yes, with the one substitution below: experiments/failover/FREEZE-NOTES-v1.1.md",
+        "publishedSha256": "f26600de3ee7fceed7af0a7ced7090eb6d4a71e8075e26f32ee659ad3418848a",
+        "substitutions": [
+          {
+            "was": "<private repository name> `",
+            "now": "private commit `"
+          }
+        ]
+      },
+      "reviews/mongodb-advocate.md": {
+        "sha256": "4d98beaa9bc855f87c5e17b883e87ad48d258ce2de3d27af6fa56247a41e808d",
+        "published": "yes, byte for byte: experiments/failover/reviews/mongodb-advocate.md"
+      },
+      "reviews/postgresql-advocate.md": {
+        "sha256": "2205433330d6841d6e97a0e36ea6eb47e1bb0408c78f6e418e68603331ca4426",
+        "published": "yes, byte for byte: experiments/failover/reviews/postgresql-advocate.md"
+      },
+      "reviews/v1.1-mongodb-advocate.md": {
+        "sha256": "78be04942d99459535262db85f1dc7022996a6351fa32d6314bd39d3ca8c0f21",
+        "published": "yes, with the one substitution below: experiments/failover/reviews/v1.1-mongodb-advocate.md",
+        "publishedSha256": "bea0896b9a9ee2483545408acfb71f363869ca567077fb7873a7bb22e2b81b02",
+        "substitutions": [
+          {
+            "was": "<private repository name> `",
+            "now": "private commit `"
+          }
+        ]
+      },
+      "reviews/v1.1-postgresql-advocate.md": {
+        "sha256": "00bd6f31951234842eddf6a6a0e962e824c034ea00fce595e034f91c836b331a",
+        "published": "yes, with the one substitution below: experiments/failover/reviews/v1.1-postgresql-advocate.md",
+        "publishedSha256": "c3e6034671a784aa29c3a035ccfd17d084c2c8b1790cd5cafadefc1ee961ca8f",
+        "substitutions": [
+          {
+            "was": "<private repository name> `",
+            "now": "private commit `"
+          }
+        ]
+      }
+    }
+  },
+  "port": {
+    "rule": "prereg.text is PREREG.md with exactly the substitutions listed in publicCopy.substitutions applied; nothing else in it differs. Undoing those substitutions gives back the frozen bytes (sha256 f3630380…). prereg.sections is the same text split at its headings: each entry is one list item, table row or paragraph, with its list marker and indentation removed and its hard line wraps joined by one space. experiment.title is PREREG.md's first heading without its 'Lab 02: ' prefix and its ' (pre-registration, frozen v1.1)' suffix, with its first letter capitalised; experiment.label is this site's name for the lab (see naming). Every other field (experiment, naming, source, port, publicCopy, relation, limits, reviews, notBefore, files) is this lab's framing of the record and adds nothing to the frozen plan; where it and prereg.text differ, prereg.text is the plan."
+  },
+  "publicCopy": {
+    "rule": "Machine names, the private repository's name, an internal id and a file path in the private repository were replaced with neutral wording. No claim, number, threshold or prediction changed. File names inside the experiment's own runner (for example lab02lib/verdict.py, client/lab02_client.py, pg-node/patroni.yml) are kept: they name the experiment's own artefacts, not the private repository's layout. FREEZE-NOTES.md and the two v1 reviews are published byte for byte. FREEZE-NOTES-v1.1.md and the two v1.1 reviews each carry one substitution, the private repository's name before a commit id; source.inputs lists each file's source sha256, its published sha256 and the substitution. The frozen texts call the reviews 'verbatim': that is true of the private copies, and of the published v1 reviews; the published v1.1 reviews differ from their private copies by that one listed substitution only.",
+    "substitutions": [
+      {
+        "file": "PREREG.md",
+        "was": "by the Windows PC (<internal project name>), for the Mac (odin-rnd) to publish",
+        "now": "by the design author, for this lab (odin-rnd) to publish"
+      },
+      {
+        "file": "PREREG.md",
+        "was": "v1 is <private repository name> `8e55a4bb`",
+        "now": "v1 is private commit `8e55a4bb`"
+      },
+      {
+        "file": "PREREG.md",
+        "was": "Proof records shaped like `<a file path in the private repository>`,",
+        "now": "Proof records shaped like the agent space's own proof records,"
+      },
+      {
+        "file": "PREREG.md",
+        "was": "- **This PC:** the gate passes",
+        "now": "- **The design author:** the gate passes"
+      },
+      {
+        "file": "PREREG.md",
+        "was": "  - **This PC:** unchanged.",
+        "now": "  - **The design author:** unchanged."
+      }
+    ]
+  },
+  "prereg": {
+    "text": "# Lab 02: kill the database mid-session, does anyone notice? (pre-registration, frozen v1.1)\n\nFrozen on 2026-10-25 by the design author, for this lab (odin-rnd) to publish as the next EXP before any\ncounted run. The inputs are `DESIGN.md` (the draft), `reviews/` (both advocates, verbatim) and `FREEZE-NOTES.md`\n(16 vetoes, all accepted). **v1.1** (same day, before any cell ran; v1 is private commit `8e55a4bb`): building the runner surfaced\n12 ambiguities, both advocates reviewed them (`reviews/v1.1-*.md`, verbatim, 6 vetoes) and `FREEZE-NOTES-v1.1.md`\nresolves every one. The runner that implements this file is `runner/` (`PROTOCOL-LAB02.md`). The founder's choice of this lab: \"1 2 and 3\" (failover first, the company store as\nLab 03).\n\n## Question\nWhile the agent space writes proof records and a feed turns them into lens marks, the database's primary fails. Which\nstore keeps every acknowledged write and the feed intact, with the **shortest client-visible write outage** and the\n**fewest operational component kinds**, when each gets its best realistic HA design? The verdict is per scenario.\nThere is no overall winner.\n\n## Arms (pinned before the first counted run: image digests, driver versions and the validator output go in the run manifest)\n- **MongoDB 8.0 Community: a PSS replica set.**\n  - 3 data members, priority 1 / votes 1, no arbiter.\n  - keyFile + auth; 2 GB and 2 CPU per member, `wiredTigerCacheSizeGB` 0.75.\n  - Writes `{w: \"majority\", j: true}`, explicit.\n  - PyMongo 4.10:\n    - a seed list of all 3 members, `replicaSet=`;\n    - `retryWrites` / `retryReads` on;\n    - `timeoutMS` 5000, `serverSelectionTimeoutMS` 30000;\n    - monitoring at its default.\n  - Default cell: `electionTimeoutMillis` 10000 / `heartbeatIntervalMillis` 2000. Tuned cell: 5000 / 1000.\n- **PostgreSQL 16 + Patroni 4.x + etcd 3.5.x.**\n  - 3 node containers, each running PG16, Patroni (`etcd3:` API) and an etcd member; 2 GB and 2 CPU per node.\n  - `synchronous_mode: quorum` (ANY 1); variant: classic `synchronous_mode: true`. `synchronous_commit = on`.\n  - `initdb --data-checksums` + `use_pg_rewind`.\n  - The client: psycopg 3 / libpq multi-host `target_session_attrs=read-write`, `connect_timeout=2`,\n    `tcp_user_timeout=5000`, keepalives, `statement_timeout` 5 s; writes idempotent by proof id\n    (`ON CONFLICT DO NOTHING`).\n  - Default cell: ttl 30 / loop_wait 10 / retry_timeout 10. Tuned cell: **20 / 4 / 8**, the most aggressive\n    documented, supported setting (ttl at the validator's floor of 20, loop_wait + 2 x retry_timeout = ttl; v1.1, the\n    PostgreSQL advocate's veto). The validator's floor 20 / 1 / 3 runs as a labelled line (a steady cell + F1).\n  - If the smoke cells show acknowledgements while a new primary's `synchronous_standby_names` is empty (a\n    single-copy window), the compared variants become `synchronous_mode_strict: true` (v1.1).\n  - Labelled variants: HAProxy (a single point of failure on one host), and plain pgoutput (expected to fail its feed\n    after a failover).\n- **The feed (both arms):**\n  - Effect and cursor in one transaction.\n  - MongoDB: a change stream, the token persisted with the effect.\n  - PostgreSQL: the commit-order-safe outbox (primary), and pgoutput + Patroni permanent logical slots\n    (`hot_standby_feedback = on`) as the second variant. **One** variant is compared per scenario (v1.1, below).\n  - A labelled block bounds the feed variants' overhead: outbox only, `wal_level=replica`, no slots, F1 at both\n    timings, 5 repetitions on seed 1.\n  - EXP 020 S2's runner rules apply (amendments 01–04).\n- **The host:** Windows + WSL2 Docker. Two networks, `app` (the client) and `ha` (peer and replication traffic). Named\n  volumes. Runs only when no other benchmark measures (PAUSE, the cell lock).\n\n## The workload\n- Proof records shaped like the agent space's own proof records, about 2 KB each, at 20 / s from 8 writer threads, with\n  ids chosen by the client.\n- One shared application retry loop (the same id, 0.5 s backoff, a 90 s budget). A duplicate key on a retry means the\n  first attempt committed.\n- Hidden driver retries are logged (a PyMongo CommandListener).\n\n## Faults (seeded instants; each fault waits for full recovery before the next)\n| | Fault | How |\n|---|---|---|\n| F1 | node death | `docker kill -s KILL` of the primary's node container |\n| F1b (labelled) | process death | kill only `mongod` / the postmaster |\n| F2a | full isolation | the primary disconnected from `app` and `ha` |\n| F2b | peer-only partition | the primary disconnected from `ha` only: the client still reaches it |\n| F3 | planned switchover | `replSetStepDown` against `patronictl switchover --candidate <sync standby> --force` |\n\n## Measures\n- **Gate:**\n  - 0 acknowledged writes lost: every acknowledged id is read back from the final primary, with read concern majority\n    / after the failover.\n  - 0 duplicated or missing feed effects.\n  - Ambiguous commits are resolved by the oracle.\n  - In F2b, writes accepted but never acknowledged (rolled back / rewound) are reported as their own number, never as\n    a loss.\n- **Primary metric:** the **client-visible write outage**, from the fault to the first acknowledged write after it,\n  per writer thread. The median over the 8 threads is used; the max is also reported. **F3 (v1.1):** a planned\n  switchover has no fault instant that stops writes, so its compared number is the median over the 8 threads of the\n  longest gap between acknowledged writes that ends in (the fault, the end of the hold]; the literal number is\n  published too.\n- **Acknowledged (v1.1):** a duplicate on a retry counts as committed only when the database confirmed durability\n  (MongoDB: no write-concern error; PostgreSQL: the transaction waited for the sync standby).\n- **F2a / F2b's accepted-never-acknowledged writes** are exact on both arms (MongoDB: the rollback files; PostgreSQL:\n  the old primary read before the heal), in one column, never counted as a loss.\n- **Steady cells (v1.1):** a false failover in an arm's 10-minute steady cell at a timing means that arm cannot get a\n  `-fits` verdict at that timing (its lines become `both-fit`, flagged `unstable`); a steady cell's gate failure fails\n  that arm's gate at that timing.\n- **Full redundancy (v1.1):** lag <= 1 s on both arms; PostgreSQL also needs, on every replica, the permanent slot,\n  no pending restart and its name in `synchronous_standby_names`.\n- **Also:**\n  - detection, promotion and rediscovery, split where they are observable;\n  - the longest single write;\n  - the time to a resumed feed, counted from the first acknowledged write after the fault;\n  - the time to full redundancy (rejoin, rewind / rollback, catch-up);\n  - false failovers in a 10-minute steady phase;\n  - etcd fsync latency.\n- **Components:** EXP 020's checklist, counted in **kinds** for the verdict, with processes published too. Data\n  members cancel on both sides. Defaults are not components. v1.1: retention is charged on both arms (an oplog-window\n  alarm; a physical-slot WAL-retention alarm); the client-chosen idempotent id is counted on neither (the same\n  mechanism on both).\n\n## Repetitions\n5 repetitions per (arm, variant, cell, fault), on seed 1, plus a reproduction of every cell on seed 2. Labelled\nlines (the Patroni floor, the feed-overhead block, HAProxy) are published and never decide a verdict.\n\n## Verdicts (per fault scenario and for components)\n- **A fault verdict** (gate + outage only): `mongodb-fits` / `postgres-fits` when the gate passes and the median\n  outage is ≥ 20 % shorter than the other arm's compared variant in ≥ 4 of 5 paired repetitions, with the same\n  direction in the reproduction (the median of its 5 paired differences has the same sign).\n- **The compared PostgreSQL variant (v1.1):** one per (timing, fault): among the variants that pass the gate in\n  **every** cell on both seeds, the one with the lowest median of its seed-1 repetition medians. The same rule picks\n  one feed variant. The per-repetition best is published, never compared.\n- **The components verdict** (its own line): ≥ 2 fewer component kinds.\n- **Only one arm passes the gate:** that arm fits, labelled `gate-only` (v1.1).\n- **Otherwise:** `both-fit`, `neither` or `invalid`. A thread that never recovers is an infinite outage (the cell is\n  valid, never re-run).\n- **Publication:** every cell, variant and outcome.\n\n## Predictions (frozen with this file)\n- **The design author:** the gate passes on both arms (with these settings). F1 / F2a / F2b `mongodb-fits` at both the default\n  and the tuned cells. F3 `both-fit`. Feed `both-fit` (outbox). Components `mongodb-fits`.\n- **The MongoDB advocate:**\n  - F1: `mongodb-fits` at defaults (about 10–13 s against 30–40 s); tuned `both-fit`, leaning MongoDB, low confidence.\n  - F2: as F1.\n  - F3: `both-fit`.\n  - Components: `mongodb-fits`, high confidence (about 5 against 14–15).\n- **The PostgreSQL advocate:**\n  - F1 and F2: `mongodb-fits`, moderate-high confidence (defaults about 11–14 s against 22–33 s; tuned about 4–7 s\n    against 13–20 s, because of the ttl floor).\n  - F3: `both-fit`, leaning MongoDB.\n  - Feed: `both-fit` (outbox).\n  - Components: `mongodb-fits`, high confidence (at least 2 more kinds: Patroni, etcd).\n\n- **v1.1 updates** (both advocates, verbatim in `reviews/v1.1-*.md`; the v1 lines above are kept as frozen):\n  - **The MongoDB advocate:** F1 default `mongodb-fits`, high (about 11–16 s against 30–42 s); F1 tuned\n    `mongodb-fits`, moderate-high (changed from `both-fit`); F2a / F2b as F1; F3 `both-fit`, leaning MongoDB, low;\n    components `mongodb-fits`, high.\n  - **The PostgreSQL advocate:** F1 / F2a / F2b `mongodb-fits`, high (tuned about 5.5–7 s against 19–23 s, the ttl\n    floor dominates); F3 `mongodb-fits` about 55 % / `both-fit` about 45 %, low; components `mongodb-fits`, high;\n    feed `both-fit`.\n  - **The design author:** unchanged.\n\n## Out of scope (named next)\nMulti-host networks, sharding, Kubernetes operators; HAProxy / pg_auto_failover as primary arms.\n",
+    "sections": [
+      {
+        "heading": "(before the first heading)",
+        "lines": [
+          "Frozen on 2026-10-25 by the design author, for this lab (odin-rnd) to publish as the next EXP before any counted run. The inputs are `DESIGN.md` (the draft), `reviews/` (both advocates, verbatim) and `FREEZE-NOTES.md` (16 vetoes, all accepted). **v1.1** (same day, before any cell ran; v1 is private commit `8e55a4bb`): building the runner surfaced 12 ambiguities, both advocates reviewed them (`reviews/v1.1-*.md`, verbatim, 6 vetoes) and `FREEZE-NOTES-v1.1.md` resolves every one. The runner that implements this file is `runner/` (`PROTOCOL-LAB02.md`). The founder's choice of this lab: \"1 2 and 3\" (failover first, the company store as Lab 03)."
+        ]
+      },
+      {
+        "heading": "Question",
+        "lines": [
+          "While the agent space writes proof records and a feed turns them into lens marks, the database's primary fails. Which store keeps every acknowledged write and the feed intact, with the **shortest client-visible write outage** and the **fewest operational component kinds**, when each gets its best realistic HA design? The verdict is per scenario. There is no overall winner."
+        ]
+      },
+      {
+        "heading": "Arms (pinned before the first counted run: image digests, driver versions and the validator output go in the run manifest)",
+        "lines": [
+          "**MongoDB 8.0 Community: a PSS replica set.**",
+          "3 data members, priority 1 / votes 1, no arbiter.",
+          "keyFile + auth; 2 GB and 2 CPU per member, `wiredTigerCacheSizeGB` 0.75.",
+          "Writes `{w: \"majority\", j: true}`, explicit.",
+          "PyMongo 4.10:",
+          "a seed list of all 3 members, `replicaSet=`;",
+          "`retryWrites` / `retryReads` on;",
+          "`timeoutMS` 5000, `serverSelectionTimeoutMS` 30000;",
+          "monitoring at its default.",
+          "Default cell: `electionTimeoutMillis` 10000 / `heartbeatIntervalMillis` 2000. Tuned cell: 5000 / 1000.",
+          "**PostgreSQL 16 + Patroni 4.x + etcd 3.5.x.**",
+          "3 node containers, each running PG16, Patroni (`etcd3:` API) and an etcd member; 2 GB and 2 CPU per node.",
+          "`synchronous_mode: quorum` (ANY 1); variant: classic `synchronous_mode: true`. `synchronous_commit = on`.",
+          "`initdb --data-checksums` + `use_pg_rewind`.",
+          "The client: psycopg 3 / libpq multi-host `target_session_attrs=read-write`, `connect_timeout=2`, `tcp_user_timeout=5000`, keepalives, `statement_timeout` 5 s; writes idempotent by proof id (`ON CONFLICT DO NOTHING`).",
+          "Default cell: ttl 30 / loop_wait 10 / retry_timeout 10. Tuned cell: **20 / 4 / 8**, the most aggressive documented, supported setting (ttl at the validator's floor of 20, loop_wait + 2 x retry_timeout = ttl; v1.1, the PostgreSQL advocate's veto). The validator's floor 20 / 1 / 3 runs as a labelled line (a steady cell + F1).",
+          "If the smoke cells show acknowledgements while a new primary's `synchronous_standby_names` is empty (a single-copy window), the compared variants become `synchronous_mode_strict: true` (v1.1).",
+          "Labelled variants: HAProxy (a single point of failure on one host), and plain pgoutput (expected to fail its feed after a failover).",
+          "**The feed (both arms):**",
+          "Effect and cursor in one transaction.",
+          "MongoDB: a change stream, the token persisted with the effect.",
+          "PostgreSQL: the commit-order-safe outbox (primary), and pgoutput + Patroni permanent logical slots (`hot_standby_feedback = on`) as the second variant. **One** variant is compared per scenario (v1.1, below).",
+          "A labelled block bounds the feed variants' overhead: outbox only, `wal_level=replica`, no slots, F1 at both timings, 5 repetitions on seed 1.",
+          "EXP 020 S2's runner rules apply (amendments 01–04).",
+          "**The host:** Windows + WSL2 Docker. Two networks, `app` (the client) and `ha` (peer and replication traffic). Named volumes. Runs only when no other benchmark measures (PAUSE, the cell lock)."
+        ]
+      },
+      {
+        "heading": "The workload",
+        "lines": [
+          "Proof records shaped like the agent space's own proof records, about 2 KB each, at 20 / s from 8 writer threads, with ids chosen by the client.",
+          "One shared application retry loop (the same id, 0.5 s backoff, a 90 s budget). A duplicate key on a retry means the first attempt committed.",
+          "Hidden driver retries are logged (a PyMongo CommandListener)."
+        ]
+      },
+      {
+        "heading": "Faults (seeded instants; each fault waits for full recovery before the next)",
+        "lines": [
+          "| | Fault | How |",
+          "|---|---|---|",
+          "| F1 | node death | `docker kill -s KILL` of the primary's node container |",
+          "| F1b (labelled) | process death | kill only `mongod` / the postmaster |",
+          "| F2a | full isolation | the primary disconnected from `app` and `ha` |",
+          "| F2b | peer-only partition | the primary disconnected from `ha` only: the client still reaches it |",
+          "| F3 | planned switchover | `replSetStepDown` against `patronictl switchover --candidate <sync standby> --force` |"
+        ]
+      },
+      {
+        "heading": "Measures",
+        "lines": [
+          "**Gate:**",
+          "0 acknowledged writes lost: every acknowledged id is read back from the final primary, with read concern majority / after the failover.",
+          "0 duplicated or missing feed effects.",
+          "Ambiguous commits are resolved by the oracle.",
+          "In F2b, writes accepted but never acknowledged (rolled back / rewound) are reported as their own number, never as a loss.",
+          "**Primary metric:** the **client-visible write outage**, from the fault to the first acknowledged write after it, per writer thread. The median over the 8 threads is used; the max is also reported. **F3 (v1.1):** a planned switchover has no fault instant that stops writes, so its compared number is the median over the 8 threads of the longest gap between acknowledged writes that ends in (the fault, the end of the hold]; the literal number is published too.",
+          "**Acknowledged (v1.1):** a duplicate on a retry counts as committed only when the database confirmed durability (MongoDB: no write-concern error; PostgreSQL: the transaction waited for the sync standby).",
+          "**F2a / F2b's accepted-never-acknowledged writes** are exact on both arms (MongoDB: the rollback files; PostgreSQL: the old primary read before the heal), in one column, never counted as a loss.",
+          "**Steady cells (v1.1):** a false failover in an arm's 10-minute steady cell at a timing means that arm cannot get a `-fits` verdict at that timing (its lines become `both-fit`, flagged `unstable`); a steady cell's gate failure fails that arm's gate at that timing.",
+          "**Full redundancy (v1.1):** lag <= 1 s on both arms; PostgreSQL also needs, on every replica, the permanent slot, no pending restart and its name in `synchronous_standby_names`.",
+          "**Also:**",
+          "detection, promotion and rediscovery, split where they are observable;",
+          "the longest single write;",
+          "the time to a resumed feed, counted from the first acknowledged write after the fault;",
+          "the time to full redundancy (rejoin, rewind / rollback, catch-up);",
+          "false failovers in a 10-minute steady phase;",
+          "etcd fsync latency.",
+          "**Components:** EXP 020's checklist, counted in **kinds** for the verdict, with processes published too. Data members cancel on both sides. Defaults are not components. v1.1: retention is charged on both arms (an oplog-window alarm; a physical-slot WAL-retention alarm); the client-chosen idempotent id is counted on neither (the same mechanism on both)."
+        ]
+      },
+      {
+        "heading": "Repetitions",
+        "lines": [
+          "5 repetitions per (arm, variant, cell, fault), on seed 1, plus a reproduction of every cell on seed 2. Labelled lines (the Patroni floor, the feed-overhead block, HAProxy) are published and never decide a verdict."
+        ]
+      },
+      {
+        "heading": "Verdicts (per fault scenario and for components)",
+        "lines": [
+          "**A fault verdict** (gate + outage only): `mongodb-fits` / `postgres-fits` when the gate passes and the median outage is ≥ 20 % shorter than the other arm's compared variant in ≥ 4 of 5 paired repetitions, with the same direction in the reproduction (the median of its 5 paired differences has the same sign).",
+          "**The compared PostgreSQL variant (v1.1):** one per (timing, fault): among the variants that pass the gate in **every** cell on both seeds, the one with the lowest median of its seed-1 repetition medians. The same rule picks one feed variant. The per-repetition best is published, never compared.",
+          "**The components verdict** (its own line): ≥ 2 fewer component kinds.",
+          "**Only one arm passes the gate:** that arm fits, labelled `gate-only` (v1.1).",
+          "**Otherwise:** `both-fit`, `neither` or `invalid`. A thread that never recovers is an infinite outage (the cell is valid, never re-run).",
+          "**Publication:** every cell, variant and outcome."
+        ]
+      },
+      {
+        "heading": "Predictions (frozen with this file)",
+        "lines": [
+          "**The design author:** the gate passes on both arms (with these settings). F1 / F2a / F2b `mongodb-fits` at both the default and the tuned cells. F3 `both-fit`. Feed `both-fit` (outbox). Components `mongodb-fits`.",
+          "**The MongoDB advocate:**",
+          "F1: `mongodb-fits` at defaults (about 10–13 s against 30–40 s); tuned `both-fit`, leaning MongoDB, low confidence.",
+          "F2: as F1.",
+          "F3: `both-fit`.",
+          "Components: `mongodb-fits`, high confidence (about 5 against 14–15).",
+          "**The PostgreSQL advocate:**",
+          "F1 and F2: `mongodb-fits`, moderate-high confidence (defaults about 11–14 s against 22–33 s; tuned about 4–7 s against 13–20 s, because of the ttl floor).",
+          "F3: `both-fit`, leaning MongoDB.",
+          "Feed: `both-fit` (outbox).",
+          "Components: `mongodb-fits`, high confidence (at least 2 more kinds: Patroni, etcd).",
+          "**v1.1 updates** (both advocates, verbatim in `reviews/v1.1-*.md`; the v1 lines above are kept as frozen):",
+          "**The MongoDB advocate:** F1 default `mongodb-fits`, high (about 11–16 s against 30–42 s); F1 tuned `mongodb-fits`, moderate-high (changed from `both-fit`); F2a / F2b as F1; F3 `both-fit`, leaning MongoDB, low; components `mongodb-fits`, high.",
+          "**The PostgreSQL advocate:** F1 / F2a / F2b `mongodb-fits`, high (tuned about 5.5–7 s against 19–23 s, the ttl floor dominates); F3 `mongodb-fits` about 55 % / `both-fit` about 45 %, low; components `mongodb-fits`, high; feed `both-fit`.",
+          "**The design author:** unchanged."
+        ]
+      },
+      {
+        "heading": "Out of scope (named next)",
+        "lines": [
+          "Multi-host networks, sharding, Kubernetes operators; HAProxy / pg_auto_failover as primary arms."
+        ]
+      }
+    ]
+  },
+  "relation": {
+    "parent": {
+      "id": "EXP 020",
+      "record": "experiments/mongodb-home-ground/preregistration.json",
+      "why": "EXP 020 named 'Failover with a 3-member replica set against Patroni (S5)' as out of scope, the next study. This is that study."
+    },
+    "reuses": "The frozen text applies EXP 020's component checklist and EXP 020 S2's runner rules (its amendments 01-04) to the feed."
+  },
+  "limits": [
+    "The frozen text binds the feed to 'EXP 020 S2's runner rules (amendments 01-04)', and FREEZE-NOTES.md M7 cites 'amendment 04's buffer rule'. Those are runner amendments in the private repository. EXP 020's published record carries no amendment, so a reader cannot check those four rules here.",
+    "The runner protocol and the runner code are private. A reader can check the frozen plan, the reviews, the freeze notes and the hashes here, but not the runner."
+  ],
+  "reviews": {
+    "how": "Two rounds, each with a MongoDB advocate and a PostgreSQL advocate, each an independent model reviewer (Claude, fresh context) briefed to give its store its best realistic HA design and to veto strawmen. Round 1 reviewed the design draft (16 vetoes, all accepted: FREEZE-NOTES.md). Round 2 (v1.1) reviewed the runner's 12 open questions (6 vetoes, all accepted: FREEZE-NOTES-v1.1.md).",
+    "v1": {
+      "mongodbAdvocate": "experiments/failover/reviews/mongodb-advocate.md",
+      "postgresqlAdvocate": "experiments/failover/reviews/postgresql-advocate.md",
+      "freezeNotes": "experiments/failover/FREEZE-NOTES.md"
+    },
+    "v1.1": {
+      "mongodbAdvocate": "experiments/failover/reviews/v1.1-mongodb-advocate.md",
+      "postgresqlAdvocate": "experiments/failover/reviews/v1.1-postgresql-advocate.md",
+      "freezeNotes": "experiments/failover/FREEZE-NOTES-v1.1.md"
+    }
+  },
+  "notBefore": "The first counted run starts after this record is merged to main of odin-labs-ai/odin-rnd. The merge commit is the publish sha and the freeze; any later change is a dated amendment, published first.",
+  "files": {
+    "experiments/failover/FREEZE-NOTES.md": "9a963b88ccc1fa10c99b8cdb79554795650af5dda49a06793d14a65a94dbffe0",
+    "experiments/failover/FREEZE-NOTES-v1.1.md": "f26600de3ee7fceed7af0a7ced7090eb6d4a71e8075e26f32ee659ad3418848a",
+    "experiments/failover/reviews/mongodb-advocate.md": "4d98beaa9bc855f87c5e17b883e87ad48d258ce2de3d27af6fa56247a41e808d",
+    "experiments/failover/reviews/postgresql-advocate.md": "2205433330d6841d6e97a0e36ea6eb47e1bb0408c78f6e418e68603331ca4426",
+    "experiments/failover/reviews/v1.1-mongodb-advocate.md": "bea0896b9a9ee2483545408acfb71f363869ca567077fb7873a7bb22e2b81b02",
+    "experiments/failover/reviews/v1.1-postgresql-advocate.md": "c3e6034671a784aa29c3a035ccfd17d084c2c8b1790cd5cafadefc1ee961ca8f"
+  }
+}
