@@ -8,7 +8,7 @@
       "experiment": null,
       "title": "MongoDB beyond JSON: agents, memory and models",
       "kind": "Field note",
-      "text": "Real local Voyage embeddings, eight workflow recoveries and memory/cache checks extend the investigation beyond storage. Both databases agree on the exact neighbors; replay-safe tools and policy-aware caches remain application contracts.",
+      "text": "We tested MongoDB for agents and memory with real Voyage embeddings. Both databases found the same nearest results; tools can repeat after a crash and cached answers can outlive a policy change.",
       "href": "journal/mongodb-ai-ecosystem.html",
       "source": "journal/mongodb-ai-ecosystem.html",
       "date": "2026-10-24"
