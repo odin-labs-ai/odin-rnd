@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-020-preregistration",
+      "experiment": "EXP 020",
+      "title": "MongoDB on its home ground: where does it fit Odin?",
+      "kind": "Pre-registered",
+      "text": "The question and how it will be scored were published before any counted run.",
+      "href": "journal/mongodb-home-ground-pre-registration.html",
+      "source": "data/mongodb-home-ground/preregistration.json",
+      "date": "2026-10-25"
+    },
+    {
       "key": "exp-019-results",
       "experiment": "EXP 019",
       "title": "Routing by our own rulebook, measured again: three fresh runs of the routed arm",
