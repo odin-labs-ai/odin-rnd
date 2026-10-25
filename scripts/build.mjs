@@ -151,6 +151,12 @@ writeFileSync('dist/index.html', html);
   const { renderLabPages } = await import('./lab-pages.mjs');
   for (const [page, pageHtml] of Object.entries(renderLabPages())) writeFileSync(`dist/${page}/index.html`, pageHtml);
 }
+// Labs (mission rnd-labs-human-first-1024): the Labs index, Lab 01's page and its Atom feed, rendered from
+// site/data/labs/ into dist/ only. scripts/labs.mjs refuses a dispatch that misses its schema or the public screen.
+{
+  const { renderLabs } = await import('./labs.mjs');
+  for (const [file, body] of Object.entries(renderLabs())) writeFileSync(`dist/${file}`, body);
+}
 mkdirSync('dist/data', { recursive: true });
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();

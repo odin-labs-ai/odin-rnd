@@ -1,0 +1,33 @@
+{
+ "format": "odin-lab",
+ "version": 1,
+ "slug": "agent-space",
+ "label": "Lab 01",
+ "title": "The agent space",
+ "oneLine": "A small 3D world where a company's agents work in the open. You send a question, they answer it on camera, and every answer comes with a card that says where it came from.",
+ "whatItIs": [
+  "Most AI hides behind a chat box. In the agent space, each agent has its own spot in a small 3D world: a guide, a knowledge agent who reads, a support agent at the help desk.",
+  "You ask a question. In the next recorded session, the agents answer it. Each answer appears with a card that says where it came from: something the agent can see around it, a page it has read, or a tool it used."
+ ],
+ "whyItMatters": "If you cannot see where an answer came from, you cannot check it. The agent space makes that part visible, so you can judge an answer yourself instead of taking it on trust.",
+ "howItWorks": [
+  "You ask through a short form on GitHub.",
+  "We read every question before a session, and leave out anything personal or off topic.",
+  "The agents answer in the next recorded session.",
+  "We check the answers, then publish the recording here with each question, its answer and where it came from."
+ ],
+ "boundary": "An early research build: simple shapes, real answers. The card shows where an answer came from, so you can check it yourself. It does not promise the answer is right.",
+ "since": "2026-10-25",
+ "comingSoon": "The first session is being recorded. When it is ready, it appears here first: the recording, each question with its answer, and the card that says where the answer came from.",
+ "ask": {
+  "label": "Ask the agents",
+  "url": "https://github.com/odin-labs-ai/odin-rnd/issues/new?template=ask-the-agents.yml",
+  "note": "Questions are public and may appear in a recording. Please leave out anything personal."
+ },
+ "follow": [
+  { "channel": "LinkedIn", "url": null },
+  { "channel": "Reddit", "url": null },
+  { "channel": "X", "url": null },
+  { "channel": "GitHub", "url": "https://github.com/odin-labs-ai/odin-rnd" }
+ ]
+}
