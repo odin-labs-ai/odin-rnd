@@ -7,7 +7,12 @@
   "packSha256": "9fb9ec2d0111d62fba0620bda41fc2b76de7c0617527f2b7966a99749975a81e",
   "packBuiltAtCommit": "c8b36efd39192a904f0a97ff83935be018a633ba",
   "claimsSha256": "82a7fab7ea83ee8f6929f7d6e27058131773e1c412ccdfc44d9c118c38f6bbb0",
-  "figuresSha256": "6608a6756f04cc1d19e9f8e5d2f0205991bffd33a81ab2fc1d142c6073e8b0cd",
+  "figuresSha256": "ddd92168328e45e0ffe15cfc259989b8ef256f5a3cb705e8b798eb4c525faa45",
+  "mainCheck": {
+   "main": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2",
+   "how": "GitHub compare API: GET compare/<commit>...<main>; behind_by 0 means the commit is an ancestor of main",
+   "checked": "2026-10-25"
+  },
   "pinned": [],
   "omitted": [
    {
@@ -353,7 +358,8 @@
    "source": {
     "row": 7,
     "status": "main",
-    "commit": "3b74a4e0"
+    "commit": "3b74a4e0",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
    }
   },
   {
@@ -364,7 +370,8 @@
    "source": {
     "row": 8,
     "status": "main",
-    "commit": "3b74a4e0"
+    "commit": "3b74a4e0",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
    }
   },
   {
@@ -375,7 +382,8 @@
    "source": {
     "row": 9,
     "status": "main",
-    "commit": "23b3c762"
+    "commit": "23b3c762",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
    }
   },
   {
@@ -386,7 +394,8 @@
    "source": {
     "row": 10,
     "status": "main",
-    "commit": "175f14d7"
+    "commit": "175f14d7",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
    }
   },
   {
@@ -397,7 +406,8 @@
    "source": {
     "row": 15,
     "status": "main",
-    "commit": "fcecd472"
+    "commit": "fcecd472",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
    }
   }
  ]

@@ -121,7 +121,7 @@ test('the page shows the method note next to the numbers, a source under each, a
   for (const [name, a] of Object.entries(real.agent_space.per_agent)) assert.ok(space.includes(`<th scope="row">${name}</th><td>${a.asked}</td><td>${a.answered}</td><td>${a.with_proof}</td>`), name);
   assert.ok(space.includes(real.agent_space.source.run_commit.slice(0, 8)));
   for (const figure of real.engine) {
-    const where = figure.source.status === 'main' ? 'in the main build' : 'on a work branch';
+    const where = figure.source.status === 'main' ? 'in the main build (an ancestor of its main head)' : 'on a work branch';
     const line = figure.source.commit ? `Source: claims row ${figure.source.row}, ${where}, commit <code>${figure.source.commit.slice(0, 8)}</code>.` : `Source: claims row ${figure.source.row}, ${where}. ${NO_COMMIT}`;
     assert.ok(page.includes(line), String(figure.claim));
   }

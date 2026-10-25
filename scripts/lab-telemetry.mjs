@@ -8,10 +8,17 @@
 // session's own question rows give (every per-agent count, both latencies, the sources, the brains and the ok rate are
 // recomputed from the rows, the way the space's measuring script computes them), or asked is not rounds times
 // questions per round; when an engine figure differs from the digest taken when it was vendored (figuresSha256); when
-// a figure in the main build has no commit; or when any text, a source included, fails the dispatch publisher's
+// a figure in the main build has no commit, or does not name the main head the vendoring checked it is an ancestor of
+// (vendored.mainCheck); or when any text, a source included, fails the dispatch publisher's
 // screen (a source is a public label, a date or a commit: a path is refused). While agent_space is "pending" the
 // page says it is being measured and shows no number. A figure whose claims row says LANE is labelled a work branch
 // on the page, and one whose commit is not yet published says so.
+//
+// What this build cannot check: that the file came from the private pack, session record and claims table. They are
+// not readable here, and a digest kept beside the values can be recomputed by whoever edits them. That provenance is
+// checked by `scripts/vendor-telemetry.mjs --verify`, which vendors the private files again and refuses unless the
+// result is this file; it compares every engine figure with its claims row and every "main build" commit with the
+// private main head. The page says so next to the figures.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -98,11 +105,13 @@ export function telemetryProblems(record, where = TELEMETRY_FILE) {
   }
   for (const [i, figure] of record.engine.entries()) {
     if (figure.source.status === 'main' && !figure.source.commit) problems.push(`${where}#/engine/${i}/source: a figure in the main build without its commit`);
+    if (figure.source.status === 'main' && figure.source.onMain !== record.vendored.mainCheck.main) problems.push(`${where}#/engine/${i}/source/onMain: a figure in the main build must name the main head its commit was checked against (${record.vendored.mainCheck.main})`);
+    if (figure.source.status !== 'main' && 'onMain' in figure.source) problems.push(`${where}#/engine/${i}/source/onMain: only a figure in the main build is checked against main`);
     problems.push(...sourceProblems(figure.source, `${where}#/engine/${i}/source`));
   }
   // Every other string is page text.
-  const { agent_space: { source, ...spaceText }, engine, vendored: { commit, packSha256, packBuiltAtCommit, claimsSha256, figuresSha256, ...vendored }, ...rest } = record;
-  problems.push(...screenTree({ ...rest, vendored, agent_space: spaceText, engine: engine.map(({ source: s, ...figure }) => figure) }, where));
+  const { agent_space: { source, ...spaceText }, engine, vendored: { commit, packSha256, packBuiltAtCommit, claimsSha256, figuresSha256, mainCheck: { main, ...mainCheck }, ...vendored }, ...rest } = record;
+  problems.push(...screenTree({ ...rest, vendored: { ...vendored, mainCheck }, agent_space: spaceText, engine: engine.map(({ source: s, ...figure }) => figure) }, where));
   return problems;
 }
 
@@ -142,7 +151,7 @@ function renderSpace(space) {
 }
 
 function engineSource(source, pin) {
-  const where = source.status === 'main' ? 'in the main build' : 'on a work branch';
+  const where = source.status === 'main' ? 'in the main build (an ancestor of its main head)' : 'on a work branch';
   if (!source.commit) return `Source: claims row ${escape(source.row)}, ${where}. ${NO_COMMIT}`;
   return `Source: claims row ${escape(source.row)}, ${where}, commit <code>${escape(source.commit.slice(0, 8))}</code>.${pin ? ` How that commit was found: ${escape(pin.how)}` : ''}`;
 }
@@ -156,5 +165,5 @@ export function renderTelemetry(record, { benchLink = false } = {}) {
   if (!record) return '<p class="lab-none">The agent space\'s own numbers are being measured.</p>';
   const v = record.vendored;
   const bench = benchLink ? 'The brain benchmark from the same pack has <a href="../brain-bench/">its own lab</a>.' : 'The brain benchmark from the same pack gets its own lab.';
-  return `<h3 class="lab-subhead">The agent space, measured</h3>${renderSpace(record.agent_space)}<h3 class="lab-subhead" id="engine">The engine underneath</h3><p class="lab-telemetry-note">${escape(record.rule[0].toUpperCase() + record.rule.slice(1))}.</p>${renderEngine(record.engine, v.pinned)}<p class="lab-source lab-vendored">From ${escape(v.from)}, at commit <code>${escape(v.commit.slice(0, 8))}</code> (sha256 <code>${escape(v.packSha256.slice(0, 12))}</code>). Kept: ${escape(v.kept)}. Left out: ${escape(v.leftOut)}.${v.omitted.map(o => ` Left out until it has a source: claim ${escape(o.claim)} (${escape(o.why)}).`).join('')} The engine figures come from a claims table kept in a private repository (sha256 <code>${escape(v.claimsSha256.slice(0, 12))}</code>): this page cannot check them against it, but anyone with access can, and the build refuses a figure that differs from the ones vendored. ${bench}</p>`;
+  return `<h3 class="lab-subhead">The agent space, measured</h3>${renderSpace(record.agent_space)}<h3 class="lab-subhead" id="engine">The engine underneath</h3><p class="lab-telemetry-note">${escape(record.rule[0].toUpperCase() + record.rule.slice(1))}.</p>${renderEngine(record.engine, v.pinned)}<p class="lab-source lab-vendored">From ${escape(v.from)}, at commit <code>${escape(v.commit.slice(0, 8))}</code> (sha256 <code>${escape(v.packSha256.slice(0, 12))}</code>). Kept: ${escape(v.kept)}. Left out: ${escape(v.leftOut)}.${v.omitted.map(o => ` Left out until it has a source: claim ${escape(o.claim)} (${escape(o.why)}).`).join('')} The engine figures come from a claims table kept in a private repository (sha256 <code>${escape(v.claimsSha256.slice(0, 12))}</code>). When they were vendored, each was compared with its claims row, and each commit was checked against the private main head <code>${escape(v.mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(v.mainCheck.checked)}">${escape(v.mainCheck.checked)}</time> (${escape(v.mainCheck.how)}). This page's build cannot read those private files, so it checks only that the figures are the ones vendored; anyone with access can check the rest again with the vendoring script's --verify. ${bench}</p>`;
 }

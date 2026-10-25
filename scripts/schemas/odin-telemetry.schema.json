@@ -31,7 +31,8 @@
     "pinned",
     "omitted",
     "kept",
-    "leftOut"
+    "leftOut",
+    "mainCheck"
    ],
    "additionalProperties": false,
    "properties": {
@@ -111,6 +112,29 @@
         "type": "string",
         "minLength": 20
        }
+      }
+     }
+    },
+    "mainCheck": {
+     "type": "object",
+     "required": [
+      "main",
+      "how",
+      "checked"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "main": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{40}$"
+      },
+      "how": {
+       "type": "string",
+       "minLength": 20
+      },
+      "checked": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
       }
      }
     }
@@ -376,6 +400,10 @@
          "null"
         ],
         "pattern": "^[0-9a-f]{7,40}$"
+       },
+       "onMain": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
        }
       }
      }
