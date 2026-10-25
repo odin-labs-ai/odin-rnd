@@ -1,0 +1,137 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-films-v1",
+ "title": "odin-lab-films v1: the films on Lab 01's page (site/data/labs/agent-space/films.json): only real recordings of the live space, each with its source commit, a line on what is real in it, and every file pinned by its sha256",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "lab",
+  "films"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-films"
+  },
+  "version": {
+   "const": 1
+  },
+  "lab": {
+   "const": "agent-space"
+  },
+  "films": {
+   "type": "array",
+   "minItems": 0,
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "line",
+     "real",
+     "src",
+     "poster",
+     "mime",
+     "bytes",
+     "seconds",
+     "sha256",
+     "source"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,47}$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "line": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+     },
+     "real": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "src": {
+      "type": "string",
+      "pattern": "^assets/labs/agent-space/films/[a-z0-9][a-z0-9-]{0,47}\\.webm$"
+     },
+     "poster": {
+      "type": "string",
+      "pattern": "^assets/labs/agent-space/films/[a-z0-9][a-z0-9-]{0,47}\\.(jpg|png)$"
+     },
+     "mime": {
+      "type": "string",
+      "pattern": "^video/webm"
+     },
+     "bytes": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "seconds": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "sha256": {
+      "type": "object",
+      "required": [
+       "src",
+       "poster"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "src": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       "poster": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     },
+     "source": {
+      "type": "object",
+      "required": [
+       "commit",
+       "note",
+       "originalSha256",
+       "originalBytes",
+       "reencoded"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "note": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+       },
+       "originalSha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       "originalBytes": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "reencoded": {
+        "type": "boolean"
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

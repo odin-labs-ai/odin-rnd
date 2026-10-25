@@ -1,0 +1,29 @@
+{
+ "format": "odin-lab-films",
+ "version": 1,
+ "lab": "agent-space",
+ "films": [
+  {
+   "id": "agent-space-30s",
+   "title": "Thirty seconds in the agent space",
+   "line": "A visitor asks Odin what is going on and Atlas how to plug in an agent. Each answer comes with its proof card: the question, the answer, why, and the source.",
+   "real": "A live session, recorded unedited.",
+   "src": "assets/labs/agent-space/films/agent-space-30s.webm",
+   "poster": "assets/labs/agent-space/films/agent-space-30s-poster.png",
+   "mime": "video/webm;codecs=vp9",
+   "bytes": 1613667,
+   "seconds": 27,
+   "sha256": {
+    "src": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "poster": "c4831eca46f8d32f4f751229cfea960af612ca8145b6fa66443bb9d98d9bbc91"
+   },
+   "source": {
+    "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
+    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "originalSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "originalBytes": 1613667,
+    "reencoded": false
+   }
+  }
+ ]
+}

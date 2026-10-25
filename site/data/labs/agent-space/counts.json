@@ -1,0 +1,117 @@
+{
+ "format": "odin-lab-counts",
+ "version": 1,
+ "lab": "agent-space",
+ "title": "Counted from the published records",
+ "note": "These count what the records on this page show. Each number links to its record, and the build recomputes it from there.",
+ "panels": [
+  {
+   "id": "first-session",
+   "title": "The first session, counted",
+   "line": "What the first recorded session holds, counted from its published dispatch.",
+   "unit": "count",
+   "bars": [
+    {
+     "label": "Questions answered",
+     "value": 4,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/questions",
+     "derive": "count"
+    },
+    {
+     "label": "Follow-ups",
+     "value": 1,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/questions",
+     "derive": "count",
+     "where": {
+      "followUp": true
+     }
+    },
+    {
+     "label": "Evidence records behind the answers",
+     "value": 3,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/answersScreen/answers",
+     "derive": "count"
+    }
+   ]
+  },
+  {
+   "id": "source-kinds",
+   "title": "Where the answers came from",
+   "line": "The kind of source each answer's card names, in the first session.",
+   "unit": "answers",
+   "bars": [
+    {
+     "label": "Something it can see in the world",
+     "value": 2,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/questions",
+     "derive": "count",
+     "where": {
+      "source": "world-checked"
+     }
+    },
+    {
+     "label": "A page it has read",
+     "value": 2,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/questions",
+     "derive": "count",
+     "where": {
+      "source": "wiki"
+     }
+    },
+    {
+     "label": "A tool it used",
+     "value": 0,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/questions",
+     "derive": "count",
+     "where": {
+      "source": "tool"
+     }
+    }
+   ]
+  },
+  {
+   "id": "checks",
+   "title": "Checked before it went out",
+   "line": "Each evidence record passed a human screen before it was published. These are the checks recorded for each one.",
+   "unit": "checks",
+   "bars": [
+    {
+     "label": "Odin's record",
+     "value": 7,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/answersScreen/answers/0/checks",
+     "derive": "count"
+    },
+    {
+     "label": "Atlas's record",
+     "value": 7,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/answersScreen/answers/1/checks",
+     "derive": "count"
+    },
+    {
+     "label": "Juno's record",
+     "value": 7,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/answersScreen/answers/2/checks",
+     "derive": "count"
+    }
+   ]
+  },
+  {
+   "id": "film",
+   "title": "Recorded on film",
+   "line": "Seconds of live, unedited recording on this page.",
+   "unit": "seconds",
+   "bars": [
+    {
+     "label": "Thirty seconds in the agent space",
+     "value": 27,
+     "source": "data/labs/agent-space/films.json#/films/0/seconds"
+    },
+    {
+     "label": "The first session",
+     "value": 49,
+     "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/clip/seconds"
+    }
+   ]
+  }
+ ]
+}

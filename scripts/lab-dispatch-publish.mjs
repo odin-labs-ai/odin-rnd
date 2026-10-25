@@ -209,6 +209,19 @@ export function answerScreenProblems(screen, session, evidenceIds) {
 }
 
 /**
+ * Why one published asset path may not ship: it carries a restricted name or place (being a path, it is not refused as
+ * a path), it is not under `under`, or, with `root`, it is missing there or its bytes do not hash to `sha`. The
+ * dispatches and the lab's films (scripts/lab-films.mjs) pin their bytes through this one check.
+ */
+export function pinnedAssetProblems(path, at, { under, underLabel = under, root = null, sha }) {
+  const problems = screenHits(path).filter(hit => !hit.reason.startsWith('a file path')).map(hit => `${at}: ${hit.reason} (${excerpt(normalise(path), hit.at)})`);
+  if (!path.startsWith(under)) problems.push(`${at}: not under ${underLabel}`);
+  if (root && !existsSync(join(root, path))) problems.push(`${at}: ${path} is missing`);
+  else if (root && sha256(readFileSync(join(root, path))) !== sha) problems.push(`${at}: ${path} does not match its recorded sha256`);
+  return problems;
+}
+
+/**
  * Everything that makes a public dispatch unpublishable, for the publisher (before it writes) and the build (for every
  * committed dispatch): the public schema, the screen over every string it carries (asset paths are screened for names
  * and places; being paths, they are not refused as paths), a passing human screen for every evidence id it shows, and
@@ -221,10 +234,7 @@ export function dispatchProblems(dispatch, where, root = null) {
   const { source, poster, stills, clip: { src, ...clip }, ...rest } = dispatch;
   problems.push(...screenTree({ ...rest, clip }, where));
   for (const [at, path] of assets) {
-    problems.push(...screenHits(path).filter(hit => !hit.reason.startsWith('a file path')).map(hit => `${where}#${at}: ${hit.reason} (${excerpt(normalise(path), hit.at)})`));
-    if (!path.startsWith(`assets/labs/agent-space/${dispatch.session}/`)) problems.push(`${where}#${at}: not under its own session's assets`);
-    if (root && !existsSync(join(root, path))) problems.push(`${where}#${at}: ${path} is missing`);
-    else if (root && sha256(readFileSync(join(root, path))) !== dispatch.source.assetsSha256[path]) problems.push(`${where}#${at}: ${path} does not match its recorded sha256`);
+    problems.push(...pinnedAssetProblems(path, `${where}#${at}`, { under: `assets/labs/agent-space/${dispatch.session}/`, underLabel: 'its own session\'s assets', root, sha: dispatch.source.assetsSha256[path] }));
   }
   const listed = new Set(assets.map(([, path]) => path));
   for (const path of Object.keys(dispatch.source.assetsSha256)) if (!listed.has(path)) problems.push(`${where}#/source/assetsSha256: ${path} is not one of this dispatch's assets`);
