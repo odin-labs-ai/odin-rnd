@@ -4,18 +4,23 @@
 //   labs/index.html               the Labs index, from site/labs/index.html (<!--LABS_LIST-->)
 //   labs/agent-space/index.html   the lab page, from site/labs/agent-space/index.html (<!--LAB_*--> markers)
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
-// Its "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
+//   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
+// Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
 // The lab's words come from site/data/labs/agent-space.json; its dispatches from
 // site/data/labs/agent-space/dispatches/<session>.json, as scripts/lab-dispatch-publish.mjs writes them. Every dispatch
 // must match scripts/schemas/odin-lab-dispatch.schema.json and pass the publisher's screen again, or the build fails.
 // Until a screened session exists there is no dispatch, and the page says the first session is being recorded.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
+import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 
+// The site this repository publishes, where Lab 02 is required.
+const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
@@ -119,9 +124,12 @@ export function renderFeed(lab, dispatches) {
 }
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
-export function renderLabs(root = 'site') {
+export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
+  // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
+  // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
+  const bench = requireBench || existsSync(join(root, BENCH_NOTES)) ? renderBench(root) : { pages: {} };
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -134,6 +142,7 @@ export function renderLabs(root = 'site') {
   return {
     'labs/index.html': fill('labs/index.html', {
       // Lab 01's tile, then the experiment labs' tiles (scripts/lab-tiles.mjs gates them; the build fails on a problem).
+      // Lab 02's tile follows in its own change, through that gate.
       '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
       '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
@@ -145,5 +154,6 @@ export function renderLabs(root = 'site') {
       '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
     }),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
+    ...bench.pages,
   };
 }

@@ -1,0 +1,61 @@
+{
+ "format": "odin-brain-bench-private-map",
+ "version": 1,
+ "about": "Test fixture: every name here is made up. The real map is private and never committed.",
+ "commit": "0123456789abcdef0123456789abcdef01234567",
+ "experiments": [
+  {
+   "id": "EXP-W91",
+   "dir": "EXP-W91-fixture-mixed",
+   "leaderboard": "results/leaderboard.json",
+   "summary": "results/summary.json",
+   "runSpend": {
+    "file": "results/summary.json",
+    "after": "/_key_usage_usd"
+   }
+  },
+  {
+   "id": "EXP-W92",
+   "dir": "EXP-W92-fixture-rerun",
+   "summary": "results/summary.json",
+   "runSpend": {
+    "file": "results/summary.json",
+    "before": "/_usage_before",
+    "after": "/_usage_after"
+   },
+   "sensitivity": {
+    "file": "sensitivity/rerun.jsonl",
+    "brain": "hybrid@v3.1:demo-cloud-model",
+    "world": "beta-dock"
+   }
+  }
+ ],
+ "worlds": {
+  "alpha-vale": "a",
+  "beta-dock": "b"
+ },
+ "tasks": {
+  "build": "a",
+  "follow_instruction": "follow"
+ },
+ "kinds": {
+  "kill": "deal",
+  "give": "hand",
+  "go_to": "meet",
+  "buy_for": "buy"
+ },
+ "brains": {
+  "scripted": "rules",
+  "hybrid@v3.1:demo-local-1b": "demo-local",
+  "hybrid@v3.1:demo-cloud-model": "demo-cloud"
+ },
+ "pack": {
+  "file": "made-up/telemetry/pack.json",
+  "commit": "dddddddddddddddddddddddddddddddddddddddd",
+  "brains": {
+   "rules only (no model)|null": "rules",
+   "made-up/cloud-model|v3.1": "demo-cloud",
+   "a made-up local model|v3.1": "demo-local"
+  }
+ }
+}

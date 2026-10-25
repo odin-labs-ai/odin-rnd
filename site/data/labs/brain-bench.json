@@ -1,0 +1,315 @@
+{
+ "format": "odin-lab-bench",
+ "version": 1,
+ "slug": "brain-bench",
+ "label": "Lab 02",
+ "title": "Every brain on the same tasks",
+ "question": "Can a 1 GB model on your own machine do real agent tasks as well as the cloud models?",
+ "oneLine": "Small local models, cloud models and a set of hand-written rules, all on the same seeded tasks. We write down what we expect before each run, then count.",
+ "since": "2026-10-25",
+ "whatItIs": [
+  "An agent is a program that keeps deciding what to do next: walk somewhere, buy something, help someone who asks. Its brain is whatever makes that decision. Here a brain is one of three things: a set of hand-written rules, a small language model running on our own desktop PC, or a cloud model reached over the internet.",
+  "Every brain plays the same small test worlds on the same seeds, so each one meets exactly the same situations. A task counts as done only when the world itself says it is done.",
+  "Before each run we write down what we expect and commit it. Afterwards we score those predictions by a rule fixed in advance, and we publish the ones that fail too."
+ ],
+ "findings": [
+  {
+   "head": "Across the whole task set, the small local model keeps up.",
+   "text": "Our tuned 1 GB model finished {EXP-W01:tuned-1gb:of} tasks ({EXP-W01:tuned-1gb:rate}) on our own machine, at no cost per task. The best cloud model, Mistral Small 3.2, finished {EXP-W02:mistral-small-3.2:of}. Their 95 % intervals overlap, so by our rule there is no detectable difference."
+  },
+  {
+   "head": "Following a person's instruction, the cloud models are clearly better.",
+   "text": "When a person tells the agent what to do, the cloud models win, and with enough episodes the gap is real: Mistral Small 3.2 finished {EXP-W03:mistral-small-3.2:of} against {EXP-W03:tuned-1gb:of} for our model, and the intervals ({EXP-W03:mistral-small-3.2:ci} against {EXP-W03:tuned-1gb:ci}) do not overlap. Fixing a bench bug narrowed the gap. It did not close it."
+  },
+  {
+   "head": "Every model beats the rules.",
+   "text": "In every experiment, every model brain finished more tasks than the hand-written rules, with intervals that do not overlap. On instructions alone, the rules managed {EXP-W03:rules:of}."
+  },
+  {
+   "head": "What we got wrong, and say so.",
+   "text": "The bench showed a shop's price for one item while the seller charged for the whole stack, so some buys an agent thought it could afford were refused. The first three experiments ran with that bug; the fourth ran after the fix, and the two are never compared as one measurement. In the fourth, our boldest prediction held as registered, but only because the cloud model's service failed for part of the run. With those {EXP-W04:mistral-small-3.2:rerun} episodes re-run it finished {EXP-W04:mistral-small-3.2:sensitivity}, so we do not claim that prediction."
+  }
+ ],
+ "howItWasRun": [
+  "Pre-registered. The question, the brains, the worlds, the seeds, the predictions and the decision rule are written down and committed before the first episode. Each experiment below names that commit.",
+  "Seeded. Every brain plays the same seeds, so it meets the same situations. No experiment reuses another's seeds.",
+  "Counted, with intervals. A result is tasks finished out of episodes, with a Wilson 95 % interval. Two brains differ only when their intervals do not overlap; otherwise we say there is no detectable difference.",
+  "How a model brain works. The rules handle routine moves, and the model decides when a person speaks to the agent or a choice matters. When a model's reply cannot be used, the rules decide instead. We count those moments as fallbacks.",
+  "Where it ran. The local models ran on one desktop PC, with 12 logical CPUs and 32 GB of memory. The cloud models were reached through a commercial model broker, at temperature 0, on a key with a hard spending cap.",
+  "Cost. We tracked what each run cost. This site does not publish money figures, so cost appears only as which predictions about it held.",
+  "What it does not measure. How fast a brain answers on your hardware, how it does outside these five small worlds, or with real people giving the instructions: here the instructions come from a fixed set of phrasings. A cloud model's time includes the network; a local model's time was measured on one shared, sometimes busy PC.",
+  "Names. The test worlds come from a private test game, so this page calls them World A to World E and names each task family by what it asks, not by the game's own words."
+ ],
+ "boundary": "Small test worlds, not your workload. A brain that does well here has done well on these tasks, on these seeds, on this bench. It does not promise the same on yours.",
+ "sourceAbout": "Counted from the result files of a private repository at the commit below, and checked row by row against the telemetry pack recomputed from the same files. Each figure names its experiment, its file, the rows or field it came from, and its pack row.",
+ "labels": {
+  "where": {
+   "rules": "Rules",
+   "local": "Local",
+   "cloud": "Cloud"
+  },
+  "worlds": {
+   "a": "World A",
+   "b": "World B",
+   "c": "World C",
+   "d": "World D",
+   "e": "World E"
+  },
+  "tasks": {
+   "a": "Task family A: build",
+   "b": "Task family B: a group challenge",
+   "c": "Task family C: earn money",
+   "d": "Task family D: help a newcomer",
+   "e": "Task family E: a chain of goals",
+   "f": "Task family F: survive a sudden event",
+   "follow": "Follow a person's instruction"
+  },
+  "kinds": {
+   "deal": "Deal with a threat",
+   "hand": "Hand something over",
+   "meet": "Go and meet someone",
+   "buy": "Buy something for them"
+  }
+ },
+ "brains": {
+  "rules": {
+   "label": "Hand-written rules",
+   "where": "rules",
+   "model": "The control: no model at all."
+  },
+  "tuned-1gb": {
+   "label": "Our tuned 1 GB model",
+   "where": "local",
+   "model": "Qwen2.5 1.5B, tuned on our own decisions."
+  },
+  "tuned-1gb-v3.2": {
+   "label": "Our tuned 1 GB model, brain v3.2",
+   "where": "local",
+   "model": "The same model, with named arguments and the agent's bag and money stated."
+  },
+  "qwen2.5-1.5b": {
+   "label": "Qwen2.5 1.5B, untuned",
+   "where": "local",
+   "model": "The base our model was tuned from."
+  },
+  "llama3.2-3b": {
+   "label": "Llama 3.2 3B",
+   "where": "local",
+   "model": "A general model from another family, about 2 GB."
+  },
+  "mistral-small-3.2": {
+   "label": "Mistral Small 3.2",
+   "where": "cloud",
+   "model": "Mistral Small 3.2, 24B, instruct."
+  },
+  "llama-3.3-70b": {
+   "label": "Llama 3.3 70B",
+   "where": "cloud",
+   "model": "Llama 3.3 70B, instruct."
+  },
+  "gpt-4o-mini": {
+   "label": "GPT-4o mini",
+   "where": "cloud",
+   "model": "GPT-4o mini."
+  },
+  "claude-haiku-4.5": {
+   "label": "Claude Haiku 4.5",
+   "where": "cloud",
+   "model": "Claude Haiku 4.5."
+  },
+  "gemini-2.5-flash": {
+   "label": "Gemini 2.5 Flash",
+   "where": "cloud",
+   "model": "Gemini 2.5 Flash."
+  }
+ },
+ "experiments": [
+  {
+   "id": "EXP-W01",
+   "title": "Which small local model makes the best agent brain?",
+   "question": "Four brains on our own machine, on the whole task set: does a general model from another family play as well as our tuned 1 GB model, and how much does the tuning add?",
+   "date": "2026-10-24",
+   "prereg": {
+    "commit": "3d7137a3",
+    "sha256": "7191ed201db39f7a1e842fb80c11d7d5646cb949eb999a231335b4a350fbea83"
+   },
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "Our tuned model finishes at least as many tasks as Llama 3.2 3B.",
+     "verdict": "holds on the point estimate, no detectable difference",
+     "detail": "{EXP-W01:tuned-1gb:of} against {EXP-W01:llama3.2-3b:of}, and the intervals overlap ({EXP-W01:tuned-1gb:ci} against {EXP-W01:llama3.2-3b:ci}). A general model of another family plays about as well, at twice the memory."
+    },
+    {
+     "id": "P2",
+     "text": "Both model brains beat the rules on following an instruction by at least 15 of 40.",
+     "verdict": "fails",
+     "detail": "Our tuned model clears it ({EXP-W01:tuned-1gb:task.follow} against the rules' {EXP-W01:rules:task.follow}). Llama 3.2 3B does not ({EXP-W01:llama3.2-3b:task.follow})."
+    },
+    {
+     "id": "P3",
+     "text": "The untuned Qwen2.5 1.5B scores below our tuned model, with intervals that do not overlap.",
+     "verdict": "not supported",
+     "detail": "{EXP-W01:qwen2.5-1.5b:of} against {EXP-W01:tuned-1gb:of}; the intervals overlap ({EXP-W01:qwen2.5-1.5b:ci} against {EXP-W01:tuned-1gb:ci})."
+    }
+   ],
+   "unpredicted": [
+    "Every model brain beats the rules overall, with intervals that do not overlap: the rules at {EXP-W01:rules:ci}, the lowest model brain at {EXP-W01:qwen2.5-1.5b:ci}.",
+    "The tuning shows in the fallbacks, not the headline: the untuned base fell back to the rules {EXP-W01:qwen2.5-1.5b:fallbacks} times, our tuned model {EXP-W01:tuned-1gb:fallbacks} times."
+   ],
+   "caveats": [
+    "Ran on harness h4, which showed a shop's price for one item while the seller charged for the whole stack, so some buys an agent believed it could afford were refused. The bug was found in EXP-W03's traces and fixed in h5, before EXP-W04. These rows are never compared with h5 rows as the same measurement.",
+    "The local model server stopped serving the models several times mid-run. The bench recorded those episodes as skipped and the run was resumed with the identical command, so only the missing episodes ran. Every brain has its full count of episodes; the skipped rows hold no result and are not counted.",
+    "The run paused several times when the PC was short of free memory, because other work was running on it. These were pauses, not aborts.",
+    "The untuned model's fallbacks are spread over all five worlds and none sits near an outage, so they are the model's own.",
+    "On following an instruction, our tuned model scored {EXP-W01:tuned-1gb:task.follow} and the untuned base {EXP-W01:qwen2.5-1.5b:task.follow}: the largest gap in the table, but with this few episodes the intervals still overlap. EXP-W03 was run to settle the question."
+   ]
+  },
+  {
+   "id": "EXP-W02",
+   "title": "Do cloud models make better agent brains than our tuned local model?",
+   "question": "Five cloud models on the same seeds, worlds and tasks as EXP-W01: does any of them beat our tuned 1 GB model?",
+   "date": "2026-10-24",
+   "prereg": {
+    "commit": "c3fa1656",
+    "sha256": "09d4adcd58c5216bcf8063fc78766e557c1d3877340c901d38d3ec5d6cb672e4"
+   },
+   "comparators": [
+    "EXP-W01"
+   ],
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "No cloud model beats our tuned local model overall with intervals that do not overlap.",
+     "verdict": "holds",
+     "detail": "The best, Mistral Small 3.2 at {EXP-W02:mistral-small-3.2:ci}, still overlaps our tuned model at {EXP-W01:tuned-1gb:ci}."
+    },
+    {
+     "id": "P2",
+     "text": "At least one cloud model beats our tuned model on following an instruction by 5 of 40 or more.",
+     "verdict": "holds",
+     "detail": "Mistral Small 3.2 {EXP-W02:mistral-small-3.2:task.follow}, Llama 3.3 70B {EXP-W02:llama-3.3-70b:task.follow}, GPT-4o mini {EXP-W02:gpt-4o-mini:task.follow} and Claude Haiku 4.5 {EXP-W02:claude-haiku-4.5:task.follow}, against our model's {EXP-W01:tuned-1gb:task.follow}. None of these is a difference by the interval rule yet."
+    },
+    {
+     "id": "P3",
+     "text": "Every cloud model stays under the cost per successful task set before the run.",
+     "verdict": "holds",
+     "detail": "By a wide margin. Cost was tracked, but this site does not publish money figures."
+    },
+    {
+     "id": "P4",
+     "text": "All five beat the rules with intervals that do not overlap.",
+     "verdict": "holds",
+     "detail": "The lowest, Gemini 2.5 Flash at {EXP-W02:gemini-2.5-flash:ci}, is above the rules at {EXP-W01:rules:ci}."
+    }
+   ],
+   "unpredicted": [
+    "Gemini 2.5 Flash fell back to the rules {EXP-W02:gemini-2.5-flash:fallbacks} times, far more than any other model. Its replies did not fit the bench's strict reply format. That is a fit problem between this model and our format, not a verdict on the model in general, and it is why Gemini trails on following an instruction."
+   ],
+   "caveats": [
+    "Ran on harness h4, with the shop-price bug described under EXP-W01. These rows are never compared with h5 rows as the same measurement.",
+    "A second bench bug: the bench's own cost column read zero for every cloud model in this run, so its leaderboard labelled them free and local. They were not free. The bug was fixed after the run; the result files are unchanged.",
+    "The cloud models are compared with EXP-W01's local rows: the same seeds, worlds, tasks, harness and brain version, measured earlier the same day and not re-run.",
+    "Every cloud model ran all its episodes, with no service errors, skips or spending-cap hits."
+   ]
+  },
+  {
+   "id": "EXP-W03",
+   "title": "Are the cloud models really better at following a person's instruction?",
+   "question": "EXP-W02's largest gap, powered: only the instruction task, on five times as many seeds, for our tuned model, the two best-value cloud models and the rules.",
+   "date": "2026-10-24",
+   "prereg": {
+    "commit": "1f75de87",
+    "sha256": "2357a516ac3b9487e0a565bc43e4b0b79dd19652e886334eaeb2b881b7480a4c"
+   },
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "Mistral Small 3.2 beats our tuned local model on following an instruction, with intervals that do not overlap.",
+     "verdict": "holds",
+     "detail": "{EXP-W03:mistral-small-3.2:ci} against {EXP-W03:tuned-1gb:ci}."
+    },
+    {
+     "id": "P2",
+     "text": "GPT-4o mini does too.",
+     "verdict": "holds",
+     "detail": "{EXP-W03:gpt-4o-mini:ci} against {EXP-W03:tuned-1gb:ci}."
+    },
+    {
+     "id": "P3",
+     "text": "Every model brain beats the rules, with intervals that do not overlap.",
+     "verdict": "holds",
+     "detail": "The lowest model, ours at {EXP-W03:tuned-1gb:ci}, against the rules at {EXP-W03:rules:ci}."
+    },
+    {
+     "id": "P4",
+     "text": "The whole run stays under the cost ceiling set before it.",
+     "verdict": "holds",
+     "detail": "By the real spend on the key, which matches the bench's own estimate. Cost was tracked, but this site does not publish money figures."
+    }
+   ],
+   "unpredicted": [
+    "Mistral Small 3.2 against GPT-4o mini shows no detectable difference: {EXP-W03:mistral-small-3.2:ci} against {EXP-W03:gpt-4o-mini:ci}.",
+    "Where our model loses is mostly one world: World A, {EXP-W03:tuned-1gb:world.a} against Mistral Small 3.2's {EXP-W03:mistral-small-3.2:world.a}. World B is hard for every brain."
+   ],
+   "caveats": [
+    "Ran on harness h4, with the shop-price bug described under EXP-W01. Reading this experiment's failed episodes is how the bug was found. EXP-W04 asks the same question after the fix, on new seeds; the two are never compared as one measurement.",
+    "No skips and no service errors, and the bench's cost column now prices the cloud models."
+   ]
+  },
+  {
+   "id": "EXP-W04",
+   "title": "After fixing the bench, is the gap still there?",
+   "question": "The instruction task again, on new seeds, under harness h5 (the shop-price fix) and with a second version of our model's brain that names its arguments.",
+   "date": "2026-10-25",
+   "prereg": {
+    "commit": "5a01a950",
+    "sha256": "cd25acbc7ff10e7d3f5f7275c72add458c402d20485bd5ccfd8f6eadaa6c1ebb"
+   },
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "Under h5, our tuned model with brain v3.1 finishes at least 165 of 200.",
+     "verdict": "holds",
+     "detail": "It finished {EXP-W04:tuned-1gb:of}."
+    },
+    {
+     "id": "P2",
+     "text": "Brain v3.2 against v3.1 on our tuned model: no detectable difference.",
+     "verdict": "holds",
+     "detail": "{EXP-W04:tuned-1gb-v3.2:of} against {EXP-W04:tuned-1gb:of}; the intervals overlap."
+    },
+    {
+     "id": "P3",
+     "text": "Mistral Small 3.2 against our tuned model on brain v3.2: no detectable difference. The bold one.",
+     "verdict": "holds as registered, not claimed",
+     "detail": "The intervals overlap, narrowly ({EXP-W04:mistral-small-3.2:ci} against {EXP-W04:tuned-1gb-v3.2:ci}). It is not robust: part of the cloud model's run hit service errors. With those {EXP-W04:mistral-small-3.2:rerun} episodes re-run, it finishes {EXP-W04:mistral-small-3.2:sensitivity} ({EXP-W04:mistral-small-3.2:sensitivityCi}), clearly better than ours. We do not claim this prediction."
+    },
+    {
+     "id": "P4",
+     "text": "Every model brain beats the rules, with intervals that do not overlap.",
+     "verdict": "holds",
+     "detail": "The rules at {EXP-W04:rules:ci}."
+    },
+    {
+     "id": "P5",
+     "text": "The run stays under the cost ceiling set before it.",
+     "verdict": "holds",
+     "detail": "By the bench's own estimate for the cloud model's episodes. Cost was tracked, but this site does not publish money figures."
+    }
+   ],
+   "unpredicted": [
+    "Brain v3.2 does not measurably help on top of the fix. It does better at buying something for the person ({EXP-W04:tuned-1gb-v3.2:kind.buy} against {EXP-W04:tuned-1gb:kind.buy}) and gives back on handing something over ({EXP-W04:tuned-1gb-v3.2:kind.hand} against {EXP-W04:tuned-1gb:kind.hand}).",
+    "Where our model still loses is going to meet someone and buying for them: the indirect phrasings, such as being asked to meet by someone rather than to go somewhere."
+   ],
+   "caveats": [
+    "Ran on harness h5, which shows the cost of one purchase, and is never compared with EXP-W03's h4 rows as if they were the same measurement.",
+    "The first launch skipped the cloud model: an old, dead key in the PC's environment was refused. The arm was resumed with the identical command and the live key, so only the missing episodes ran.",
+    "In World D, seeds {EXP-W04:mistral-small-3.2:errorSeeds}, the cloud model's calls returned errors: a call gave no reply, and the rules decided instead. From the next seed on, World D is normal. This biases the result against the cloud model, and the run log does not record the error status, so an outage looks like a weak model. The bench should record a service error apart from an unusable reply.",
+    "Sensitivity check, disclosed and not part of the registered result: those {EXP-W04:mistral-small-3.2:rerun} episodes were re-run with the same command and seeds, and {EXP-W04:mistral-small-3.2:rerunWon} of them finished, with only ordinary fallbacks and no service errors.",
+    "The real spend on the key cannot be used for this run, because other work spent on the same key at the same time; P5 rests on the bench's own estimate.",
+    "The PC was short of memory at times. Episodes waited; none were dropped."
+   ]
+  }
+ ]
+}
