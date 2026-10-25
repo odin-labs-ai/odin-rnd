@@ -49,10 +49,13 @@ export const length = text => [...text].reduce((sum, ch) => { const cp = ch.code
 /** The text unchanged when it fits in `max` characters, else its longest prefix that ends at a word, plus "…". */
 export function excerpt(text, max) {
   if (length(text) <= max) return text;
-  const cut = [...text].slice(0, Math.max(0, max - 1)).join('');
-  const atWord = cut.replace(/\s+\S*$/, '');
-  const short = `${(atWord || cut).replace(/[\s,;:.]+$/, '')}…`;
-  return length(short) <= max || max <= 2 ? short : excerpt(text, max - 1);
+  const chars = [...text];
+  // Every character weighs at least 1, so no more than max - 1 of them fit before the "…".
+  for (let take = Math.min(chars.length, max) - 1; ; take--) {
+    const cut = chars.slice(0, Math.max(0, take)).join('');
+    const short = `${(cut.replace(/\s+\S*$/, '') || cut).replace(/[\s,;:.]+$/, '')}…`;
+    if (length(short) <= max || take <= 0) return short;
+  }
 }
 
 const longDate = date => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
