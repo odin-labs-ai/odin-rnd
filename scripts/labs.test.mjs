@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readDispatches, readLab, renderLabs } from './labs.mjs';
@@ -122,6 +122,34 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
       'https://www.reddit.com/r/odinlabs/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd/discussions']) {
       writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(withLink(url)));
       assert.equal(readLab(root).follow[0].url, url);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('two dated sessions render newest first on the page and in the feed (order checked against the dates, not the sort)', () => {
+  if (!realDispatches.length) return assert.ok(true, 'needs one committed dispatch to clone; the empty state is tested above');
+  const base = realDispatches[0];
+  const root = mkdtempSync(join(tmpdir(), 'labs-order-'));
+  try {
+    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json']) {
+      mkdirSync(join(root, file, '..'), { recursive: true });
+      writeFileSync(join(root, file), readFileSync(join('site', file)));
+    }
+    const made = [['session-2026-01-02', '2026-01-02'], ['session-2026-03-04', '2026-03-04']];
+    for (const [session, date] of made) {
+      const swap = src => src.replaceAll(base.session, session);
+      const d = { ...JSON.parse(JSON.stringify(base)), session, date };
+      d.clip = { ...d.clip, src: swap(d.clip.src) }; d.poster = swap(d.poster); d.stills = d.stills.map(swap);
+      cpSync(join('site', 'assets/labs/agent-space', base.session), join(root, 'assets/labs/agent-space', session), { recursive: true });
+      mkdirSync(join(root, 'data/labs/agent-space/dispatches'), { recursive: true });
+      writeFileSync(join(root, 'data/labs/agent-space/dispatches', `${session}.json`), JSON.stringify(d));
+    }
+    const out = renderLabs(root);
+    const newestFirst = [...made].sort((a, b) => b[1].localeCompare(a[1])).map(([session]) => session);
+    assert.deepEqual(newestFirst, ['session-2026-03-04', 'session-2026-01-02']);
+    for (const text of [out['labs/agent-space/index.html'], out['labs/agent-space/feed.xml']]) {
+      const [a, b] = newestFirst.map(session => text.indexOf(session));
+      assert.ok(a >= 0 && b >= 0 && a < b, 'the March session comes before the January one');
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

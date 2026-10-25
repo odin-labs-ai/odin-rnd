@@ -69,10 +69,10 @@
      "on-topic",
      "no-personal-data",
      "no-restricted-name",
-     "no-place",
+     "no-real-world-place",
      "no-price",
      "no-partner",
-     "stills-viewed"
+     "stills-and-clip-frames-viewed"
     ]
    },
    {
@@ -82,10 +82,10 @@
      "on-topic",
      "no-personal-data",
      "no-restricted-name",
-     "no-place",
+     "no-real-world-place",
      "no-price",
      "no-partner",
-     "stills-viewed"
+     "stills-and-clip-frames-viewed"
     ]
    },
    {
@@ -95,10 +95,10 @@
      "on-topic",
      "no-personal-data",
      "no-restricted-name",
-     "no-place",
+     "no-real-world-place",
      "no-price",
      "no-partner",
-     "stills-viewed"
+     "stills-and-clip-frames-viewed"
     ]
    }
   ]
