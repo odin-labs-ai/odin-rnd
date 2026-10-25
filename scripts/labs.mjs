@@ -4,6 +4,7 @@
 //   labs/index.html               the Labs index, from site/labs/index.html (<!--LABS_LIST-->)
 //   labs/agent-space/index.html   the lab page, from site/labs/agent-space/index.html (<!--LAB_*--> markers)
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
+// Its "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
 // (scripts/lab-films.mjs), the space's own measurements from telemetry.json (scripts/lab-telemetry.mjs), the counts of
 // its published records from counts.json (scripts/lab-counts.mjs), "The hard parts" from
@@ -14,6 +15,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { dispatchProblems, isLabLink, screenHits, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
+import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
@@ -182,6 +184,8 @@ export function renderLabs(root = 'site') {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches), '<!--LAB_FOLLOW-->': renderFollow(lab),
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
+      // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
+      '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
     }),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
   };
