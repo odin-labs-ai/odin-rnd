@@ -1,0 +1,39 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-dispatch-questions-v1",
+ "title": "The questions a Lab 01 session asks (film.mjs --cut ask): ours (odin-dispatch-questions v1) or the site intake's (odin-questions v1)",
+ "oneOf": [
+  {
+   "type": "object",
+   "required": ["format", "version", "questions"],
+   "properties": {
+    "format": {"const": "odin-dispatch-questions"},
+    "version": {"const": 1},
+    "questions": {"type": "array", "items": {
+     "type": "object", "required": ["id", "to", "text", "screened"],
+     "properties": {
+      "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"},
+      "to": {"type": "string"}, "text": {"type": "string"},
+      "screened": {"type": "object", "required": ["ok", "by"],
+                   "properties": {"ok": {"type": "boolean"}, "by": {"type": "string"}, "note": {"type": "string"}}}
+     }}}
+   }
+  },
+  {
+   "type": "object",
+   "required": ["format", "questions"],
+   "properties": {
+    "format": {"const": "odin-questions v1"},
+    "session": {"type": "string"},
+    "questions": {"type": "array", "items": {
+     "type": "object", "required": ["id", "text", "screen"],
+     "properties": {
+      "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"},
+      "text": {"type": "string"}, "to": {"type": "string"}, "askedBy": {"type": "string"}, "issue": {"type": "integer"},
+      "screen": {"type": "object", "required": ["verdict"],
+                 "properties": {"verdict": {"type": "string"}, "checks": {"type": "array", "items": {"type": "string"}}}}
+     }}}
+   }
+  }
+ ]
+}

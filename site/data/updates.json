@@ -24,6 +24,26 @@
       "date": "2026-10-25"
     },
     {
+      "key": "exp-020-amendment-02",
+      "experiment": "EXP 020",
+      "title": "MongoDB on its home ground: where does it fit Odin?",
+      "kind": "Amendment",
+      "text": "S2 compares MongoDB with one PostgreSQL variant per scale, chosen once.",
+      "href": "journal/mongodb-home-ground-pre-registration.html",
+      "source": "data/mongodb-home-ground/amendment-02.json",
+      "date": "2026-10-25"
+    },
+    {
+      "key": "exp-020-amendment-03",
+      "experiment": "EXP 020",
+      "title": "MongoDB on its home ground: where does it fit Odin?",
+      "kind": "Amendment",
+      "text": "Both advocates accept the S2 pairing rule; the decision paragraph is rewritten as they required.",
+      "href": "journal/mongodb-home-ground-pre-registration.html",
+      "source": "data/mongodb-home-ground/amendment-03.json",
+      "date": "2026-10-25"
+    },
+    {
       "key": "exp-021-preregistration",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",

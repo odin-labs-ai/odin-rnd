@@ -222,7 +222,8 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
     for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
   }
-  // The lab's films (scripts/lab-films.mjs, pinned the same way) are the only other Lab assets.
+  // The lab's films are the only other Lab assets. films.json owns each film file: readFilms refuses (throws) a film
+  // or poster whose bytes do not hash to its recorded sha256 and size, so ownership here is hash-checked.
   const films = readFilms('site')?.films ?? [];
   const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster])].map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];

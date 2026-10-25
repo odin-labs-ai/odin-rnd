@@ -17,6 +17,10 @@
 .lab-tile h2{margin-top:12px;font-size:clamp(28px,2.6vw,38px)}
 .lab-tile p{margin-top:14px;color:var(--steel);line-height:1.65}
 .lab-tile .lab-tile-status{font-size:14px}
+.lab-tile-static:hover{border-color:var(--rule)}
+.lab-tile-links{list-style:none;margin:16px 0 0;padding:0}
+.lab-tile-links li{min-height:44px;display:flex;align-items:center}
+.lab-tile-links a{font-weight:600;text-underline-offset:5px}
 .lab-empty{padding:36px;border:1px dashed var(--rule);border-radius:12px;max-width:70ch}
 .lab-empty .technical{color:var(--steel);margin-bottom:12px}
 .lab-empty p+p{font-size:19px;line-height:1.6}
