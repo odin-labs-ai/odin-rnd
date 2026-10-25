@@ -61,18 +61,31 @@ test('every session figure is recomputed from the question rows: a figure the ro
 
 test('an engine figure edited by hand is refused: its value must be the one vendored', () => {
   assert.match(edit(r => { r.engine[0].value = '42'; }), /engine: the figures are not the ones vendored/);
-  assert.match(edit(r => { r.engine[0].source.status = 'main'; r.engine.at(-1).source.status = 'main'; }), /engine: the figures are not the ones vendored/);
+  assert.match(edit(r => { r.engine[0].source.status = 'work-branch'; }), /engine: the figures are not the ones vendored/);
   assert.equal(editEngine(() => {}), '');
 });
 
 test('the main-build label comes from the claims row, never from what the commit looks like', () => {
-  const branchIndex = real.engine.findIndex(f => f.source.status === 'work-branch');
   // A hex sha on a work branch stays labelled a work branch.
-  const html = renderTelemetry({ ...clone(real), engine: real.engine.map((f, i) => (i === branchIndex ? { ...f, source: { ...f.source, commit: 'deadbeef' } } : f)) });
-  assert.ok(html.includes(`Source: claims row ${real.engine[branchIndex].source.row}, on a work branch, commit <code>deadbeef</code>.`));
+  const branch = clone(real);
+  branch.engine[0].source = { ...branch.engine[0].source, status: 'work-branch', commit: 'deadbeef' };
+  const html = renderTelemetry(branch);
+  assert.ok(html.includes(`Source: claims row ${real.engine[0].source.row}, on a work branch, commit <code>deadbeef</code>.`));
   assert.equal((html.match(new RegExp(WORK_BRANCH.replaceAll('.', '\\.'), 'g')) ?? []).length, 1);
   assert.match(editEngine(r => { r.engine[0].source.commit = null; }), /engine\/0\/source: a figure in the main build without its commit/);
   assert.match(editEngine(r => { r.engine[0].source.status = 'merged'; }), /engine\/0\/source\/status: does not match/);
+});
+
+test('a pinned commit says how it was found, and must be its figure\'s commit', () => {
+  const pinned = clone(real);
+  pinned.engine[0].source.commit = 'a'.repeat(40);
+  pinned.vendored.figuresSha256 = figuresDigest(pinned.engine);
+  pinned.vendored.pinned = [{ claim: String(pinned.engine[0].claim), commit: 'a'.repeat(40), how: 'from git history: the run did not stamp its revision' }];
+  assert.equal(problems(pinned), '');
+  assert.ok(renderTelemetry(pinned).includes('How that commit was found: from git history: the run did not stamp its revision'));
+  pinned.vendored.pinned[0].commit = 'b'.repeat(40);
+  assert.match(problems(pinned), /vendored\/pinned: claim \S+'s pin is not its figure's commit/);
+  assert.match(edit(r => { r.vendored.pinned = [{ claim: '7', commit: 'a'.repeat(40), how: 'short' }]; }), /vendored\/pinned\/0\/how: shorter than/);
 });
 
 test('all-zero latencies chart at 0, never NaN', () => {

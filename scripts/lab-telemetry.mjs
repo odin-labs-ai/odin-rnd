@@ -21,7 +21,7 @@ import { format } from './number-provenance.mjs';
 
 export const TELEMETRY_FILE = 'data/labs/agent-space/telemetry.json';
 export const TELEMETRY_SCHEMA_FILE = new URL('./schemas/odin-telemetry.schema.json', import.meta.url);
-export const WORK_BRANCH = 'Measured on a work branch, not yet in the main build.';
+export const WORK_BRANCH = 'Measured on a work branch: its claims row says LANE, not MAIN.';
 export const NO_COMMIT = 'Its commit is not published yet, so this figure cannot be checked yet.';
 
 /** JSON with every object's keys sorted: the form the digests are taken over. */
@@ -92,6 +92,10 @@ export function telemetryProblems(record, where = TELEMETRY_FILE) {
   }
   const digest = figuresDigest(record.engine);
   if (digest !== record.vendored.figuresSha256) problems.push(`${where}#/engine: the figures are not the ones vendored (sha256 ${digest}, vendored ${record.vendored.figuresSha256}); re-vendor them with scripts/vendor-telemetry.mjs`);
+  for (const pin of record.vendored.pinned) {
+    const figure = record.engine.find(f => String(f.claim) === pin.claim);
+    if (!figure || figure.source.commit !== pin.commit) problems.push(`${where}#/vendored/pinned: claim ${pin.claim}'s pin is not its figure's commit`);
+  }
   for (const [i, figure] of record.engine.entries()) {
     if (figure.source.status === 'main' && !figure.source.commit) problems.push(`${where}#/engine/${i}/source: a figure in the main build without its commit`);
     problems.push(...sourceProblems(figure.source, `${where}#/engine/${i}/source`));
@@ -137,13 +141,14 @@ function renderSpace(space) {
   return `<figure class="lab-panel lab-panel-wide" id="space-measured"><h3 id="space-latency-title">Answer time per agent</h3><p class="lab-method"><strong>How this was measured:</strong> ${escape(space.note)}</p>${latencyChart(agents)}<p>${total} questions in ${space.rounds} rounds of ${space.questions_per_round}: ${answered} answered, ${proofs} with a proof card of their own, and ${ok} of those ${proofs} proof records say the answer was checked ok. A follow-up ("How do you know?") points at the record of the answer before it, so it is counted apart from the proof cards.</p><div class="lab-table-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">Asked</th><th scope="col">Answered</th><th scope="col">With a proof card</th><th scope="col">Follow-ups</th><th scope="col">p50</th><th scope="col">p95</th><th scope="col">Answers from</th><th scope="col">Brain</th></tr></thead><tbody>${rows}</tbody></table></div><p class="lab-source">Source: the record of a live session on <time datetime="${escape(space.source.started.slice(0, 10))}">${escape(space.source.started.slice(0, 10))}</time>, run at commit <code>${escape(space.source.run_commit.slice(0, 8))}</code> (sha256 <code>${escape(space.source.sha256.slice(0, 12))}</code>, kept in a private repository). Its ${space.rows.length} question rows are copied here unchanged, and every number above is recomputed from them each time this page is built.</p></figure>`;
 }
 
-function engineSource(source) {
+function engineSource(source, pin) {
   const where = source.status === 'main' ? 'in the main build' : 'on a work branch';
-  return source.commit ? `Source: claims row ${escape(source.row)}, ${where}, commit <code>${escape(source.commit.slice(0, 8))}</code>.` : `Source: claims row ${escape(source.row)}, ${where}. ${NO_COMMIT}`;
+  if (!source.commit) return `Source: claims row ${escape(source.row)}, ${where}. ${NO_COMMIT}`;
+  return `Source: claims row ${escape(source.row)}, ${where}, commit <code>${escape(source.commit.slice(0, 8))}</code>.${pin ? ` How that commit was found: ${escape(pin.how)}` : ''}`;
 }
 
-function renderEngine(engine) {
-  return `<ul class="lab-engine">${engine.map(f => `<li><p class="lab-engine-what">${escape(f.what)}</p><p class="lab-engine-value"><strong>${escape(f.value.replaceAll('->', '→'))}</strong> <span>${escape(f.unit)}</span></p>${f.source.status === 'main' ? '' : `<p class="lab-engine-branch">${WORK_BRANCH}</p>`}<p class="lab-source">${engineSource(f.source)}</p></li>`).join('')}</ul>`;
+function renderEngine(engine, pinned = []) {
+  return `<ul class="lab-engine">${engine.map(f => `<li><p class="lab-engine-what">${escape(f.what)}</p><p class="lab-engine-value"><strong>${escape(f.value.replaceAll('->', '→'))}</strong> <span>${escape(f.unit)}</span></p>${f.source.status === 'main' ? '' : `<p class="lab-engine-branch">${WORK_BRANCH}</p>`}<p class="lab-source">${engineSource(f.source, pinned.find(p => p.claim === String(f.claim)))}</p></li>`).join('')}</ul>`;
 }
 
 /** The space's measurements and the engine figures, each with its source; the vendoring noted under them. */
@@ -151,5 +156,5 @@ export function renderTelemetry(record, { benchLink = false } = {}) {
   if (!record) return '<p class="lab-none">The agent space\'s own numbers are being measured.</p>';
   const v = record.vendored;
   const bench = benchLink ? 'The brain benchmark from the same pack has <a href="../brain-bench/">its own lab</a>.' : 'The brain benchmark from the same pack gets its own lab.';
-  return `<h3 class="lab-subhead">The agent space, measured</h3>${renderSpace(record.agent_space)}<h3 class="lab-subhead" id="engine">The engine underneath</h3><p class="lab-telemetry-note">${escape(record.rule[0].toUpperCase() + record.rule.slice(1))}.</p>${renderEngine(record.engine)}<p class="lab-source lab-vendored">From ${escape(v.from)}, at commit <code>${escape(v.commit.slice(0, 8))}</code> (sha256 <code>${escape(v.packSha256.slice(0, 12))}</code>). Kept: ${escape(v.kept)}. Left out: ${escape(v.leftOut)}.${v.omitted.map(o => ` Left out until it has a source: claim ${escape(o.claim)} (${escape(o.why)}).`).join('')} The engine figures come from a claims table kept in a private repository (sha256 <code>${escape(v.claimsSha256.slice(0, 12))}</code>): this page cannot check them against it, but anyone with access can, and the build refuses a figure that differs from the ones vendored. ${bench}</p>`;
+  return `<h3 class="lab-subhead">The agent space, measured</h3>${renderSpace(record.agent_space)}<h3 class="lab-subhead" id="engine">The engine underneath</h3><p class="lab-telemetry-note">${escape(record.rule[0].toUpperCase() + record.rule.slice(1))}.</p>${renderEngine(record.engine, v.pinned)}<p class="lab-source lab-vendored">From ${escape(v.from)}, at commit <code>${escape(v.commit.slice(0, 8))}</code> (sha256 <code>${escape(v.packSha256.slice(0, 12))}</code>). Kept: ${escape(v.kept)}. Left out: ${escape(v.leftOut)}.${v.omitted.map(o => ` Left out until it has a source: claim ${escape(o.claim)} (${escape(o.why)}).`).join('')} The engine figures come from a claims table kept in a private repository (sha256 <code>${escape(v.claimsSha256.slice(0, 12))}</code>): this page cannot check them against it, but anyone with access can, and the build refuses a figure that differs from the ones vendored. ${bench}</p>`;
 }

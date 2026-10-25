@@ -7,8 +7,13 @@
   "packSha256": "9fb9ec2d0111d62fba0620bda41fc2b76de7c0617527f2b7966a99749975a81e",
   "packBuiltAtCommit": "c8b36efd39192a904f0a97ff83935be018a633ba",
   "claimsSha256": "82a7fab7ea83ee8f6929f7d6e27058131773e1c412ccdfc44d9c118c38f6bbb0",
-  "figuresSha256": "a8bd15f6aea48a9402dbee0610c590f7d3645d3a4d52063a81df32f3037dda68",
+  "figuresSha256": "6608a6756f04cc1d19e9f8e5d2f0205991bffd33a81ab2fc1d142c6073e8b0cd",
+  "pinned": [],
   "omitted": [
+   {
+    "claim": "20",
+    "why": "the 1,000-agent tick figure: its claims row still says work branch, but that branch was merged into the main build before this pack was built, so the row is being corrected"
+   },
    {
     "claim": "d7",
     "why": "the claims table at this commit has no row for it yet"
@@ -393,17 +398,6 @@
     "row": 15,
     "status": "main",
     "commit": "fcecd472"
-   }
-  },
-  {
-   "claim": 20,
-   "what": "1,000 moving and talking agents in one campus: server time per tick at 10 Hz",
-   "value": "p50 17.5 ms / p95 29.6 ms",
-   "unit": "ms per tick (LANE, not on main)",
-   "source": {
-    "row": 20,
-    "status": "work-branch",
-    "commit": null
    }
   }
  ]

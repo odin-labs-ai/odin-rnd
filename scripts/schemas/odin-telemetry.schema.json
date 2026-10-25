@@ -28,6 +28,7 @@
     "packBuiltAtCommit",
     "claimsSha256",
     "figuresSha256",
+    "pinned",
     "omitted",
     "kept",
     "leftOut"
@@ -83,6 +84,32 @@
        "why": {
         "type": "string",
         "minLength": 10
+       }
+      }
+     }
+    },
+    "pinned": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "claim",
+       "commit",
+       "how"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "claim": {
+        "type": "string",
+        "minLength": 1
+       },
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "how": {
+        "type": "string",
+        "minLength": 20
        }
       }
      }
