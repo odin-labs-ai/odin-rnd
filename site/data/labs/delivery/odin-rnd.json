@@ -4,7 +4,7 @@
   "repo": "odin-labs-ai/odin-rnd",
   "window": {
     "fromPr": 71,
-    "toPr": 79,
+    "toPr": 80,
     "otherNumbers": []
   },
   "generatedFrom": {
@@ -12,12 +12,12 @@
     "toolVersion": 1,
     "window": {
       "fromPr": 71,
-      "toPr": 79,
+      "toPr": 80,
       "otherNumbers": []
     },
-    "latestPr": 79,
-    "ghFetchedAt": "2026-10-25T12:19:41Z",
-    "verdictRowsRead": 21
+    "latestPr": 80,
+    "ghFetchedAt": "2026-10-25T14:59:41Z",
+    "verdictRowsRead": 23
   },
   "prs": [
     71,
@@ -28,7 +28,8 @@
     76,
     77,
     78,
-    79
+    79,
+    80
   ],
   "records": [
     {
@@ -126,7 +127,7 @@
       "id": "pr-71/deploy/40143388941",
       "kind": "deploy",
       "pr": 71,
-      "at": "2026-10-24T23:35:55Z",
+      "at": "2026-10-24T23:41:48Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "a6b90ba3fb828bc3aedf1e4f2f671dbb543b2db0",
       "state": "success",
@@ -227,7 +228,7 @@
       "id": "pr-72/deploy/40153707728",
       "kind": "deploy",
       "pr": 72,
-      "at": "2026-10-25T02:14:37Z",
+      "at": "2026-10-25T02:22:37Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "e3f103ecb9828eb0102b3f4548105fd04f560e50",
       "state": "success",
@@ -363,7 +364,7 @@
       "id": "pr-73/deploy/40157014075",
       "kind": "deploy",
       "pr": 73,
-      "at": "2026-10-25T03:06:59Z",
+      "at": "2026-10-25T03:12:05Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "d5fbcf220bd48f7200d1be02f7b02bfccf222d3f",
       "state": "success",
@@ -464,7 +465,7 @@
       "id": "pr-74/deploy/40155168398",
       "kind": "deploy",
       "pr": 74,
-      "at": "2026-10-25T02:37:40Z",
+      "at": "2026-10-25T02:43:34Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "2849e99a6a2c57d1709358882bac54b08ddb405c",
       "state": "success",
@@ -635,7 +636,7 @@
       "id": "pr-75/deploy/40161064659",
       "kind": "deploy",
       "pr": 75,
-      "at": "2026-10-25T04:12:57Z",
+      "at": "2026-10-25T04:20:42Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "1481e7e7bb99d8074d52ba8fa7a85644021da9be",
       "state": "success",
@@ -724,7 +725,7 @@
       "id": "pr-76/deploy/40159419333",
       "kind": "deploy",
       "pr": 76,
-      "at": "2026-10-25T03:46:00Z",
+      "at": "2026-10-25T03:53:43Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "0af2c4861c489531916884ceb6894ee771d0ec71",
       "state": "success",
@@ -825,7 +826,7 @@
       "id": "pr-77/deploy/40163476224",
       "kind": "deploy",
       "pr": 77,
-      "at": "2026-10-25T04:52:35Z",
+      "at": "2026-10-25T05:00:14Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "3f8d4065e5920767028b59cd498f5450ffdd5d13",
       "state": "success",
@@ -1020,7 +1021,7 @@
       "id": "pr-78/deploy/40177039969",
       "kind": "deploy",
       "pr": 78,
-      "at": "2026-10-25T08:32:40Z",
+      "at": "2026-10-25T08:40:19Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "c6b314013ec9d5ad5e4d9336c562bd28d6473b53",
       "state": "success",
@@ -1075,11 +1076,160 @@
       "id": "pr-79/deploy/40172052632",
       "kind": "deploy",
       "pr": 79,
-      "at": "2026-10-25T07:14:53Z",
+      "at": "2026-10-25T07:23:12Z",
       "repo": "odin-labs-ai/odin-rnd",
       "ref": "642eb6b509a3c30cf0707a5820b20082137ff09c",
       "state": "success",
       "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40172052632"
+    },
+    {
+      "id": "pr-80",
+      "kind": "pr",
+      "pr": 80,
+      "at": "2026-10-25T13:23:25Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "a3c3cdaff439c2a034257e213f8c4ceeea8d5b75",
+      "state": "merged",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/pull/80",
+      "title": "feat(labs): How this site got built — the real delivery record of odin-rnd on Lab 01 (no theatre)"
+    },
+    {
+      "id": "pr-80/review/bd58833b-5d7b-4bb9-bf10-959d79c5c8fe",
+      "kind": "review",
+      "pr": 80,
+      "at": "2026-10-25T14:22:39Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "5962cca527551387594c0d90e8bd90f9b1c9956a",
+      "state": "FIX-NEEDED",
+      "source": "verdict-row:bd58833b-5d7b-4bb9-bf10-959d79c5c8fe",
+      "reviewer": "automated"
+    },
+    {
+      "id": "pr-80/review/c02d5ea2-a889-46ed-87a2-175c982bb95e",
+      "kind": "review",
+      "pr": 80,
+      "at": "2026-10-25T14:38:20Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "a3c3cdaff439c2a034257e213f8c4ceeea8d5b75",
+      "state": "SHIP",
+      "source": "verdict-row:c02d5ea2-a889-46ed-87a2-175c982bb95e",
+      "reviewer": "automated"
+    },
+    {
+      "id": "pr-80/ci/40202893596/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T14:34:45Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "a3c3cdaff439c2a034257e213f8c4ceeea8d5b75",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40202893596/attempts/1",
+      "workflow": "Public experiments & Pages",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40202891665/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T14:34:43Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "a3c3cdaff439c2a034257e213f8c4ceeea8d5b75",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40202891665/attempts/1",
+      "workflow": "CodeQL",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40201519871/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T14:17:15Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "5962cca527551387594c0d90e8bd90f9b1c9956a",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40201519871/attempts/1",
+      "workflow": "Public experiments & Pages",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40201517252/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T14:17:13Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "5962cca527551387594c0d90e8bd90f9b1c9956a",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40201517252/attempts/1",
+      "workflow": "CodeQL",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40199481600/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T13:50:47Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "c4dcc366bbc57108c6e2db250a8a3b75de15bd93",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40199481600/attempts/1",
+      "workflow": "Public experiments & Pages",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40199479312/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T13:50:45Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "c4dcc366bbc57108c6e2db250a8a3b75de15bd93",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40199479312/attempts/1",
+      "workflow": "CodeQL",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40197388460/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T13:23:29Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "94fc758585204d9caf6b29217dbe1e871883ba08",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40197388460/attempts/1",
+      "workflow": "Public experiments & Pages",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/ci/40197386013/1",
+      "kind": "ci",
+      "pr": 80,
+      "at": "2026-10-25T13:23:27Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "94fc758585204d9caf6b29217dbe1e871883ba08",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40197386013/attempts/1",
+      "workflow": "CodeQL",
+      "attempt": 1
+    },
+    {
+      "id": "pr-80/landing",
+      "kind": "landing",
+      "pr": 80,
+      "at": "2026-10-25T14:43:45Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "30fd41f37f53190ea5e94f4ab3f4a4a9fb008a54",
+      "state": "merged",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/commit/30fd41f37f53190ea5e94f4ab3f4a4a9fb008a54"
+    },
+    {
+      "id": "pr-80/deploy/40203599016",
+      "kind": "deploy",
+      "pr": 80,
+      "at": "2026-10-25T14:52:48Z",
+      "repo": "odin-labs-ai/odin-rnd",
+      "ref": "30fd41f37f53190ea5e94f4ab3f4a4a9fb008a54",
+      "state": "success",
+      "source": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40203599016"
     }
   ],
   "telemetry": {
@@ -1155,16 +1305,24 @@
         "ciRuns": 2,
         "ciReruns": 0,
         "minutesToLand": 14
+      },
+      {
+        "pr": 80,
+        "reviewRounds": 2,
+        "fixNeededRounds": 1,
+        "ciRuns": 8,
+        "ciReruns": 0,
+        "minutesToLand": 80
       }
     ],
     "totals": {
-      "prs": 9,
-      "reviewRounds": 21,
-      "fixNeededRounds": 12,
-      "ciRuns": 44,
+      "prs": 10,
+      "reviewRounds": 23,
+      "fixNeededRounds": 13,
+      "ciRuns": 52,
       "ciReruns": 1,
-      "deploys": 9,
-      "medianMinutesToLand": 19
+      "deploys": 10,
+      "medianMinutesToLand": 26
     }
   },
   "aggregates": []
