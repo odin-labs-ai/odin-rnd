@@ -10,13 +10,14 @@
 //     file says: only re-running the vendor on that source can;
 //   - a transform that is not the labs' own names, titles and pages;
 //   - a verdict word outside the five the fit map defines, or a verdict list that is not exactly those five;
-//   - a filled cell without a result link, or a pending cell with one; a result or page link that is not a page of
-//     this site (or a link into this lab's repository);
+//   - a filled cell without a result link, or a pending cell with one; a result link that is not the published results
+//     record of the lab's own experiment; a page link that is not an HTML page of this site (or this lab's repository);
+//   - a pin (scripts/fit-map.pin.json) whose data file is missing;
 //   - free text that fails the publisher's screen (names, places, paths, links, personal data); commits and digests are
 //     held to their shape instead and still screened for restricted names and places.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isLabLink, screenHits, screenTree } from './lab-dispatch-publish.mjs';
 import { validate } from './json-schema-lite.mjs';
@@ -60,6 +61,18 @@ function linkProblem(href, root) {
   return existsSync(target) && statSync(target).isFile() ? null : `${href} is not a page of this site`;
 }
 
+/**
+ * A verdict's link: the published results record of this lab's own experiment, data/<slug>/results.json, where the
+ * lab's page is that experiment's pre-registration note, journal/<slug>-pre-registration.html. Any other page, even
+ * one of this site, is not a result. The gate ties the verdict to that record; it does not read the verdict out of it.
+ */
+function resultProblem(href, lab, root) {
+  const slug = /^data\/([a-z0-9-]+)\/results\.json$/.exec(href)?.[1];
+  if (!slug) return `${href} is not an experiment's published results record (data/<slug>/results.json)`;
+  if (lab.page !== `journal/${slug}-pre-registration.html`) return `${href} is not the results of this lab's own experiment (its page is ${lab.page ?? 'none'})`;
+  return existsSync(join(root, href)) && statSync(join(root, href)).isFile() ? null : `${href} is not published on this site`;
+}
+
 /** Every reason the vendored fit map may not be published (empty when it may). */
 export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
   const problems = validate(JSON.parse(readFileSync(FIT_MAP_SCHEMA_FILE, 'utf8')), record).map(p => `${where}#${p} (does not match odin-fit-map public)`);
@@ -81,7 +94,7 @@ export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
       if (cell.verdict !== null && !VERDICT_WORDS.includes(cell.verdict)) problems.push(`${c}/verdict: ${JSON.stringify(cell.verdict)} is not a verdict word`);
       if (cell.verdict !== null && cell.result === null) problems.push(`${c}: a filled cell without a result link`);
       if (cell.verdict === null && cell.result !== null) problems.push(`${c}: a pending cell with a result link`);
-      if (cell.result !== null) { const why = linkProblem(cell.result, root); if (why) problems.push(`${c}/result: ${why}`); }
+      if (cell.result !== null) { const why = resultProblem(cell.result, lab, root); if (why) problems.push(`${c}/result: ${why}`); }
     }
   }
   // Words are screened as page text; commits, digests and page paths are held to their shape above and below.
@@ -107,11 +120,18 @@ export function fitMapProblems(record, root = 'site', where = FIT_MAP_FILE) {
 }
 
 /** The committed fit map, checked; the build throws on any problem. Null when no fit map is published yet. */
-export function readFitMap(root = 'site', pinFile = FIT_MAP_PIN_FILE) {
-  if (!existsSync(join(root, FIT_MAP_FILE))) return null;
+// The pin belongs to this repository's own site/; another site root (a test fixture) carries no pin unless given one.
+const REPO_SITE = resolve(here, '..', 'site');
+
+export function readFitMap(root = 'site', pinFile = resolve(root) === REPO_SITE ? FIT_MAP_PIN_FILE : null) {
+  // No data and no pin: nothing is published yet. A pin without its data is a removal, and refuses like an edit.
+  if (!existsSync(join(root, FIT_MAP_FILE))) {
+    if (pinFile && existsSync(pinFile)) throw new Error(`Fit map refused:\n  ${FIT_MAP_FILE} is missing, but scripts/fit-map.pin.json pins it`);
+    return null;
+  }
   const bytes = readFileSync(join(root, FIT_MAP_FILE));
   const record = JSON.parse(bytes);
-  const problems = [...fitMapProblems(record, root), ...pinProblems(bytes, record, existsSync(pinFile) ? JSON.parse(readFileSync(pinFile, 'utf8')) : null)];
+  const problems = [...fitMapProblems(record, root), ...pinProblems(bytes, record, pinFile && existsSync(pinFile) ? JSON.parse(readFileSync(pinFile, 'utf8')) : null)];
   if (problems.length) throw new Error(`Fit map refused:\n  ${problems.join('\n  ')}`);
   return record;
 }
@@ -135,5 +155,5 @@ export function renderFitMap(record, up = '../') {
   }).join('');
   const filled = record.labs.flatMap(lab => lab.cells).filter(cell => cell.verdict !== null).length;
   const total = record.labs.flatMap(lab => lab.cells).length;
-  return `<section class="company-section company-width" id="fit-map" aria-labelledby="fit-map-title"><div class="company-section-heading"><h2 id="fit-map-title">Where each store fits.</h2><p>Per scenario, not overall: there is no single winner. A verdict appears only when an experiment’s committed result says so; until then a cell says pending, and the predictions beside it are predictions, frozen before anything ran.</p></div><p class="fit-summary">${filled} of ${total} cells have a verdict.</p>${tables}<p class="fit-source">Vendored from the lab’s own fit map at commit ${short(record.vendored.commit)} (sha256 ${short(record.vendored.sourceSha256)}). ${escape(record.vendored.leftOut)}.</p></section>`;
+  return `<section class="company-section company-width" id="fit-map" aria-labelledby="fit-map-title"><div class="company-section-heading"><h2 id="fit-map-title">Where each store fits.</h2><p>Per scenario, not overall: there is no single winner. A verdict comes only from an experiment’s committed result in the lab’s own fit map, and shows here only with a link to that experiment’s results as published on this site; until then a cell says pending, and the predictions beside it are predictions, frozen before anything ran.</p></div><p class="fit-summary">${filled} of ${total} cells have a verdict.</p>${tables}<p class="fit-source">Vendored from the lab’s own fit map at commit ${short(record.vendored.commit)} (sha256 ${short(record.vendored.sourceSha256)}). ${escape(record.vendored.leftOut)}.</p></section>`;
 }

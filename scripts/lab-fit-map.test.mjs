@@ -100,25 +100,40 @@ test('the vendor refuses what it does not know: a field, a predictor, a status, 
   refuse(s => { s.verdict_words.push('maybe'); }, /verdict_words: not exactly/);
   refuse(() => {}, /--result Lab 03\/F9: the fit map has no such cell/, { result: { 'Lab 03/F9': 'labs/' } });
   const filled = source(); filled.labs[1].cells[0].verdict = 'mongodb-fits';
-  const record = vendor({ commit: COMMIT, fileBytes: bytes(filled), ...mapping, result: { 'Lab 02 (v1.1)/F1': 'labs/agent-space/' } });
-  assert.deepEqual(fitMapProblems(record), []);
-  assert.match(renderFitMap(record), /<a class="fit-verdict" href="\.\.\/labs\/agent-space\/">MongoDB fits<\/a>/);
+  // A filled cell links its own experiment's published results record; in a site where that record exists it passes.
+  const filledHome = source(); filledHome.labs[0].cells[0].verdict = 'both-fit';
+  const record = vendor({ commit: COMMIT, fileBytes: bytes(filledHome), ...mapping, result: { 'EXP 020/S1': 'data/mongodb-home-ground/results.json' } });
+  const root = join(temp, 'site-results');
+  mkdirSync(join(root, 'data/mongodb-home-ground'), { recursive: true });
+  cpSync('site/journal', join(root, 'journal'), { recursive: true });
+  assert.match(fitMapProblems(record, root).join(), /data\/mongodb-home-ground\/results\.json is not published on this site/);
+  writeFileSync(join(root, 'data/mongodb-home-ground/results.json'), '{}');
+  assert.deepEqual(fitMapProblems(record, root), []);
+  assert.match(renderFitMap(record), /<a class="fit-verdict" href="\.\.\/data\/mongodb-home-ground\/results\.json">Both fit<\/a>/);
+  // A lab page, or another experiment's results, is not this cell's result.
+  const other = vendor({ commit: COMMIT, fileBytes: bytes(filled), ...mapping, result: { 'Lab 02 (v1.1)/F1': 'labs/agent-space/' } });
+  assert.match(fitMapProblems(other).join(), /labs\/agent-space\/ is not an experiment's published results record/);
+  const elsewhere = vendor({ commit: COMMIT, fileBytes: bytes(filledHome), ...mapping, result: { 'EXP 020/S1': 'data/blueprint-floor/results.json' } });
+  assert.match(fitMapProblems(elsewhere).join(), /is not the results of this lab's own experiment/);
 });
 
 test('the build refuses a hand edit, an unknown verdict, a cell and its result out of step, and a link or text that may not be public', () => {
   const base = vendor({ commit: COMMIT, fileBytes: bytes(source()), ...mapping });
   const cases = [
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs'; }, /result: labs is not a page \(a page ends in \/ or \.html\)/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'data/labs/fit-map.json'; }, /is not a page \(a page ends in/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs/nope.html'; }, /result: labs\/nope\.html is not a page of this site/],
+    [r => { r.labs[0].page = 'labs'; r.vendored.transform[0].page = 'labs'; }, /page: labs is not a page \(a page ends in \/ or \.html\)/],
+    [r => { r.labs[0].page = 'data/labs/fit-map.json'; r.vendored.transform[0].page = r.labs[0].page; }, /page: data\/labs\/fit-map\.json is not a page \(a page ends in/],
+    [r => { r.labs[0].page = 'labs/nope.html'; r.vendored.transform[0].page = r.labs[0].page; }, /page: labs\/nope\.html is not a page of this site/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'journal/mongodb-home-ground-pre-registration.html'; }, /result: .* is not an experiment's published results record/],
     [r => { r.vendored.transform[1].as = 'Lab 02'; }, /transform\/1: not the name, title and page lab 1 shows/],
     [r => { r.vendored.transform.pop(); }, /transform: not one entry per lab/],
     [r => { r.labs[0].cells[0].verdict = 'mostly'; r.labs[0].cells[0].result = 'labs/'; }, /verdict: "mostly" is not a verdict word/],
     [r => { r.labs[0].cells[0].verdict = 'both-fit'; }, /cells\/0: a filled cell without a result link/],
     [r => { r.labs[0].cells[0].result = 'labs/'; }, /cells\/0: a pending cell with a result link/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'labs/missing/'; }, /result: labs\/missing\/ is not a page of this site/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'https://example.com/r'; }, /result: a link outside this lab/],
-    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = '../secret/'; }, /result: not a page path of this site/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'data/mongodb-home-ground/results.json'; }, /result: data\/mongodb-home-ground\/results\.json is not published on this site/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = 'https://example.com/r'; }, /result: https:\/\/example\.com\/r is not an experiment's published results record/],
+    [r => { r.labs[0].cells[0].verdict = 'both-fit'; r.labs[0].cells[0].result = '../data/x/results.json'; }, /result: .* is not an experiment's published results record/],
+    [r => { r.labs[0].page = 'https://example.com/p'; r.vendored.transform[0].page = r.labs[0].page; }, /page: a link outside this lab/],
+    [r => { r.labs[0].page = '../secret/'; r.vendored.transform[0].page = r.labs[0].page; }, /page: not a page path of this site/],
     [r => { r.labs[1].cells[0].what = 'see .ai/experiments/x/PREREG.md'; }, /what: a file path or file name/],
     [r => { r.labs[1].title = `Failover in ${[...'nrooH'].reverse().join('')}`; r.vendored.transform[1].title = r.labs[1].title; }, /title: a place name/],
     [r => { r.verdictWords = ['yes', 'no']; }, /verdictWords: not exactly/],
@@ -141,6 +156,10 @@ test('the build refuses a hand edit, an unknown verdict, a cell and its result o
   const bad = structuredClone(base); bad.labs[0].cells[0].predictions.lab = 'neither';
   writeFileSync(join(root, 'data/labs/fit-map.json'), JSON.stringify(bad));
   assert.throws(() => readFitMap(root, pinFile), /Fit map refused/);
+  // Removing the data while its pin stays is refused too; with neither, nothing is published.
+  rmSync(join(root, 'data/labs/fit-map.json'));
+  assert.throws(() => readFitMap(root, pinFile), /fit-map\.json is missing, but scripts\/fit-map\.pin\.json pins it/);
+  assert.equal(readFitMap(root, join(temp, 'no-pin.json')), null);
 });
 
 test('the pin is a separate file: a hand edit of the data, even one that keeps it valid, fails until the pin is changed too', () => {
