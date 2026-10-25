@@ -218,7 +218,7 @@
       "experiment": null,
       "title": "Where would MongoDB earn a place in Odin?",
       "kind": "Field note",
-      "text": "99,000 requests and a separate 19,800-request repeat found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives. All seventeen outcomes and the durability amendment are retained.",
+      "text": "99,000 requests and a separate 19,800-request repeat found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives, for these workloads on one machine. All seventeen outcomes and the durability amendment are retained.",
       "href": "journal/mongodb-primitive-fit.html",
       "source": "journal/mongodb-primitive-fit.html",
       "date": "2026-10-19"
@@ -228,7 +228,7 @@
       "experiment": null,
       "title": "Does flexible workflow data need MongoDB?",
       "kind": "Field note",
-      "text": "Both stores passed 20,000 operations, 42 correctness checks and ten evolution suites behind Temporal activities. A MongoDB advantage remains unresolved; flexible JSON alone gives no demonstrated reason to switch.",
+      "text": "Both stores passed 20,000 operations, 42 correctness checks and ten evolution suites behind Temporal activities. For this workload, a MongoDB advantage remains unresolved and flexible JSON alone gave no demonstrated reason to switch.",
       "href": "journal/mongodb-temporal-document-fit.html",
       "source": "journal/mongodb-temporal-document-fit.html",
       "date": "2026-10-19"
@@ -418,7 +418,7 @@
       "experiment": "EXP 004",
       "title": "System-1 decisions without lock-in: Jev vs open-weight Laya",
       "kind": "Measured",
-      "text": "Measured on one laptop, 48 authored rows.",
+      "text": "Measured on one laptop, 48 hand-written rows.",
       "href": "journal/system-1-decisions-without-lock-in.html",
       "source": "data/laya-vs-jev/manifest.json",
       "date": "2026-09-24"
@@ -429,7 +429,7 @@
       "title": "Three blueprint recipes",
       "kind": "Recorded",
       "text": "Each recipe applies one unchanged architectural rule to a conforming tree and to a deliberately drifted tree; the engine scored every conforming tree GREEN and every drifted tree RED.",
-      "href": "#bench",
+      "href": "experiments/#bench",
       "source": "data/experiments.json",
       "date": "2026-09-23"
     },

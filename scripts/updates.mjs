@@ -72,7 +72,7 @@ export function candidates(root = '.') {
 
   // The three recorded BCE recipes, as one entry. CI re-records the report on every publish, so its run date is used only
   // when the entry is first written; the text names no date or score that a re-recording could change.
-  add({ key: 'exp-001-003-recorded', experiment: 'EXP 001–003', title: 'Three blueprint recipes', kind: 'Recorded', text: 'Each recipe applies one unchanged architectural rule to a conforming tree and to a deliberately drifted tree; the engine scored every conforming tree GREEN and every drifted tree RED.', href: '#bench', source: 'data/experiments.json', file: 'site/data/experiments.json', ownDate: dayOf(report.completedAt) });
+  add({ key: 'exp-001-003-recorded', experiment: 'EXP 001–003', title: 'Three blueprint recipes', kind: 'Recorded', text: 'Each recipe applies one unchanged architectural rule to a conforming tree and to a deliberately drifted tree; the engine scored every conforming tree GREEN and every drifted tree RED.', href: 'experiments/#bench', source: 'data/experiments.json', file: 'site/data/experiments.json', ownDate: dayOf(report.completedAt) });
 
   const laya = byId.get('EXP 004');
   if (laya) add({ key: 'exp-004-measured', experiment: 'EXP 004', title: laya.title, kind: 'Measured', text: laya.status, href: laya.href, source: 'data/laya-vs-jev/manifest.json', file: 'site/data/laya-vs-jev/manifest.json', ownDate: dayOf(JSON.parse(readFileSync(join(dist, 'data/laya-vs-jev/manifest.json'), 'utf8')).copiedAt) });
@@ -161,7 +161,7 @@ export function renderHome(feed) {
   const latest = feed.updates.slice(0, HOME_LATEST).map(entry => item(entry, './')).join('');
   return `${HOME_START}
     <section class="updates-feed content-section" id="updates" aria-labelledby="updates-title">
-      <div class="section-heading"><h2 id="updates-title">Latest from <br>the floor.</h2><p>Every record we publish, newest first: plans written down before a run, results, corrections and new tools. <a href="updates/">See all updates</a></p></div>
+      <div class="section-heading"><h2 id="updates-title">Latest from <br>the floor.</h2><p>What we published most recently: plans written down before a run, results, corrections and new tools. <a href="updates/">See all updates</a></p></div>
       <ol class="update-list" aria-labelledby="updates-title">${latest}</ol>
     </section>
     ${HOME_END}`;
