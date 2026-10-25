@@ -1,0 +1,105 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-fit-map-public-v1",
+ "title": "The public fit map: site/data/labs/fit-map.json, as scripts/vendor-fit-map.mjs writes it from the lab's odin-fit-map v1",
+ "type": "object",
+ "required": ["format", "version", "vendored", "question", "rule", "verdictWords", "labs"],
+ "additionalProperties": false,
+ "properties": {
+  "format": {"const": "odin-fit-map"},
+  "version": {"const": 1},
+  "vendored": {
+   "type": "object",
+   "required": ["from", "commit", "sourceSha256", "builtAtCommit", "labsSha256", "transform", "reworded", "kept", "leftOut"],
+   "additionalProperties": false,
+   "properties": {
+    "from": {"type": "string", "minLength": 1},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "builtAtCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "labsSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "transform": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": ["lab", "as", "title", "page"],
+      "additionalProperties": false,
+      "properties": {
+       "lab": {"type": "string", "minLength": 1},
+       "as": {"type": "string", "pattern": "^(EXP [0-9]{3}|Lab [0-9]{2})$"},
+       "title": {"type": "string", "minLength": 1},
+       "page": {"type": ["string", "null"]}
+      }
+     }
+    },
+    "reworded": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": ["field", "fromSha256", "to"],
+      "additionalProperties": false,
+      "properties": {"field": {"type": "string", "pattern": "^(question|rule)$"}, "fromSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "to": {"type": "string", "minLength": 1}}
+     }
+    },
+    "kept": {"type": "string", "minLength": 1},
+    "leftOut": {"type": "string", "minLength": 1}
+   }
+  },
+  "question": {"type": "string", "minLength": 1},
+  "rule": {"type": "string", "minLength": 1},
+  "verdictWords": {"type": "array", "items": {"type": "string"}},
+  "labs": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": ["lab", "title", "stage", "page", "published", "record", "cells"],
+    "additionalProperties": false,
+    "properties": {
+     "lab": {"type": "string", "pattern": "^(EXP [0-9]{3}|Lab [0-9]{2})$"},
+     "title": {"type": "string", "minLength": 1},
+     "stage": {"type": "string", "minLength": 1},
+     "page": {"type": ["string", "null"]},
+     "published": {
+      "type": ["object", "null"],
+      "required": ["commit", "pr"],
+      "additionalProperties": false,
+      "properties": {"commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "pr": {"type": "integer", "minimum": 1}}
+     },
+     "record": {
+      "type": "object",
+      "required": ["kind", "commit", "status", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+       "kind": {"type": "string", "pattern": "^(pre-registration|design)$"},
+       "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+       "status": {"type": "string", "pattern": "^(main|work-branch)$"},
+       "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+     },
+     "cells": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "object",
+       "required": ["scenario", "what", "verdict", "result", "predictions"],
+       "additionalProperties": false,
+       "properties": {
+        "scenario": {"type": "string", "pattern": "^[A-Za-z0-9-]{1,32}$"},
+        "what": {"type": "string", "minLength": 1},
+        "verdict": {"type": ["string", "null"]},
+        "result": {"type": ["string", "null"]},
+        "predictions": {
+         "type": "object",
+         "additionalProperties": false,
+         "properties": {"lab": {"type": "string", "minLength": 1}, "mongodbAdvocate": {"type": "string", "minLength": 1}, "postgresAdvocate": {"type": "string", "minLength": 1}}
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,205 @@
+{
+ "format": "odin-fit-map",
+ "version": 1,
+ "vendored": {
+  "from": "the lab's own fit map, kept in the agent space's private repository",
+  "commit": "14a29c9dedc4b1d0c7edd6d3da78a55f5dadde61",
+  "sourceSha256": "89870a85f42f025a79b01129a0ccae8c4292a4ab42920323ac109466199df1e5",
+  "builtAtCommit": "5d0567654c6a61558eadd54abe9eca6f31967e90",
+  "labsSha256": "b572a6d104b1afea853c7eb93448d6488c42b7c849f787752042005e1206bb79",
+  "transform": [
+   {
+    "lab": "EXP 020",
+    "as": "EXP 020",
+    "title": "MongoDB on its home ground: where does it fit Odin?",
+    "page": "journal/mongodb-home-ground-pre-registration.html"
+   },
+   {
+    "lab": "Lab 02 (v1.1)",
+    "as": "Lab 03",
+    "title": "Failover: what happens when the primary goes away",
+    "page": null
+   },
+   {
+    "lab": "Lab 03",
+    "as": "Lab 04",
+    "title": "The company store: records for a company of agents",
+    "page": null
+   }
+  ],
+  "reworded": [
+   {
+    "field": "rule",
+    "fromSha256": "f839974959b7dc6f08073158214ca84cd7005ca6f1c18e9e322bc8b54121751c",
+    "to": "result record"
+   }
+  ],
+  "kept": "the question, the rule, the verdict words and, per lab, its stage, its record's commit, status and sha256, and every cell's scenario, verdict and predictions",
+  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication"
+ },
+ "question": "where does each store fit Odin? (per scenario; no overall winner)",
+ "rule": "a verdict fills only from the experiment's committed result record; predictions are the frozen ones",
+ "verdictWords": [
+  "mongodb-fits",
+  "postgres-fits",
+  "both-fit",
+  "neither",
+  "invalid"
+ ],
+ "labs": [
+  {
+   "lab": "EXP 020",
+   "title": "MongoDB on its home ground: where does it fit Odin?",
+   "stage": "pre-registered",
+   "page": "journal/mongodb-home-ground-pre-registration.html",
+   "published": {
+    "commit": "0af2c4861c489531916884ceb6894ee771d0ec71",
+    "pr": 76
+   },
+   "record": {
+    "kind": "pre-registration",
+    "commit": "bb3641271171ea8f1188061d25f4449127400b2a",
+    "status": "main",
+    "sha256": "83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1"
+   },
+   "cells": [
+    {
+     "scenario": "S1",
+     "what": "order-preserving records",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "both-fit",
+      "mongodbAdvocate": "both-fit",
+      "postgresAdvocate": "both-fit, leaning postgres-fits"
+     }
+    },
+    {
+     "scenario": "S2",
+     "what": "a durable, resumable change feed",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits (low-to-moderate)",
+      "mongodbAdvocate": "mongodb-fits (moderate)",
+      "postgresAdvocate": "both-fit"
+     }
+    },
+    {
+     "scenario": "S3",
+     "what": "TTL on append-only data",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits (components)",
+      "mongodbAdvocate": "mongodb-fits",
+      "postgresAdvocate": "mongodb-fits on components is plausible"
+     }
+    },
+    {
+     "scenario": "S4",
+     "what": "server-side aggregation over document values",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "both-fit",
+      "mongodbAdvocate": "both-fit, leaning postgres-fits at 10x",
+      "postgresAdvocate": "both-fit"
+     }
+    }
+   ]
+  },
+  {
+   "lab": "Lab 03",
+   "title": "Failover: what happens when the primary goes away",
+   "stage": "frozen, not yet published",
+   "page": null,
+   "published": null,
+   "record": {
+    "kind": "pre-registration",
+    "commit": "5d0567654c6a61558eadd54abe9eca6f31967e90",
+    "status": "main",
+    "sha256": "f3630380a9b100dd631bbe73d51e6bcaef280a9a9a54ba02ebd543b8ac843913"
+   },
+   "cells": [
+    {
+     "scenario": "F1",
+     "what": "node death (the primary's container killed)",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits (default and tuned)",
+      "mongodbAdvocate": "mongodb-fits (default high, tuned moderate-high)",
+      "postgresAdvocate": "mongodb-fits (high)"
+     }
+    },
+    {
+     "scenario": "F2a",
+     "what": "full isolation of the primary",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits",
+      "mongodbAdvocate": "as F1",
+      "postgresAdvocate": "mongodb-fits (high)"
+     }
+    },
+    {
+     "scenario": "F2b",
+     "what": "peer-only partition (the client still reaches the old primary)",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits",
+      "mongodbAdvocate": "as F1",
+      "postgresAdvocate": "mongodb-fits (high)"
+     }
+    },
+    {
+     "scenario": "F3",
+     "what": "planned switchover (compared: the longest gap between acknowledged writes)",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "both-fit",
+      "mongodbAdvocate": "both-fit, leaning mongodb, low",
+      "postgresAdvocate": "mongodb-fits ~55% / both-fit ~45%, low"
+     }
+    },
+    {
+     "scenario": "components",
+     "what": "operational component kinds for HA",
+     "verdict": null,
+     "result": null,
+     "predictions": {
+      "lab": "mongodb-fits",
+      "mongodbAdvocate": "mongodb-fits (high)",
+      "postgresAdvocate": "mongodb-fits (high)"
+     }
+    }
+   ]
+  },
+  {
+   "lab": "Lab 04",
+   "title": "The company store: records for a company of agents",
+   "stage": "design",
+   "page": null,
+   "published": null,
+   "record": {
+    "kind": "design",
+    "commit": "4be2262df5c0bfc712866905e159d2372553523f",
+    "status": "main",
+    "sha256": null
+   },
+   "cells": [
+    {
+     "scenario": "company-store",
+     "what": "the 1,000-agent company's records (design; not yet frozen)",
+     "verdict": null,
+     "result": null,
+     "predictions": {}
+    }
+   ]
+  }
+ ]
+}

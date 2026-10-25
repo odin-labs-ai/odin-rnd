@@ -13,6 +13,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
+import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
@@ -130,7 +131,11 @@ export function renderLabs(root = 'site') {
     return html;
   };
   return {
-    'labs/index.html': fill('labs/index.html', { '<!--LABS_LIST-->': renderLabsList(lab, dispatches) }),
+    'labs/index.html': fill('labs/index.html', {
+      '<!--LABS_LIST-->': renderLabsList(lab, dispatches),
+      // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
+      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
+    }),
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches), '<!--LAB_FOLLOW-->': renderFollow(lab),
