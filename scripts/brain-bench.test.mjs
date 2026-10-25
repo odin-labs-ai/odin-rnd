@@ -3,19 +3,27 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { benchScreen, build, serialise, wilson } from './brain-bench-import.mjs';
+import { createHash } from 'node:crypto';
+import { benchScreen, build, clearScreenCache, serialise, wilson, WORLD_TERMS } from './brain-bench-import.mjs';
+import { fingerprint } from './lab-dispatch-publish.mjs';
 import { figures, pageTextProblems, prose, readBench, renderBench } from './brain-bench.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 02 (mission rnd-labs-human-first-1024). The import runs on a committed fixture of made-up rows (the real sources
 // are private); the page and the record are the real site's. A name from the private test game is never written in
-// this repo, so the tests that inject one build it from character codes at run time.
+// this repo, in any form: the screen tests add a made-up name's hash to the term list at run time instead.
 const FIXTURE = 'scripts/fixtures/brain-bench';
 const json = file => JSON.parse(readFileSync(join(FIXTURE, file), 'utf8'));
 const fixture = () => ({ src: join(FIXTURE, 'src'), map: json('map.json'), notes: json('notes.json'), pack: json('pack.json') });
-// A world name and a character name from the private test game, spelled only at run time.
-const WORLD_NAME = String.fromCharCode(76, 97, 110, 116, 101, 114, 110, 32, 83, 116, 97, 116, 105, 111, 110);
-const CHARACTER_NAME = String.fromCharCode(82, 117, 115, 116, 106, 97, 119);
+// Made-up names (not from the private game), added to the screen's term list for these tests only.
+const WORLD_NAME = 'Quorlith Spire';
+const CHARACTER_NAME = 'Vexmoran';
+function withMadeUpTerms(fn) {
+  const added = [WORLD_NAME, CHARACTER_NAME].map(fingerprint).filter(hash => !WORLD_TERMS.has(hash));
+  for (const hash of added) WORLD_TERMS.add(hash);
+  clearScreenCache();
+  try { return fn(); } finally { for (const hash of added) WORLD_TERMS.delete(hash); clearScreenCache(); }
+}
 
 test('the import is deterministic: two runs on the fixture write the same bytes, and they are the committed expected output', () => {
   const first = build(fixture()), second = build(fixture());
@@ -60,6 +68,53 @@ test('the telemetry pack is a second source: each brain keeps its pack row, and 
   }
 });
 
+test('the import refuses unequal episode counts, an experiment with nothing to check against, and keeps counting after one fails', () => {
+  {
+    const input = fixture();
+    // Drop one result row of one brain: that experiment's brains no longer have equal counts.
+    input.src = mkdtempSync(join(tmpdir(), 'bench-unequal-'));
+    try {
+      cpSync(join(FIXTURE, 'src'), input.src, { recursive: true });
+      const file = join(input.src, 'EXP-W92-fixture-rerun/results/results.jsonl');
+      writeFileSync(file, readFileSync(file, 'utf8').split('\n').slice(1).join('\n'));
+      const { problems } = build(input);
+      assert.ok(problems.some(p => /EXP-W92: brains have unequal episode counts/.test(p)), problems.join('\n'));
+    } finally { rmSync(input.src, { recursive: true, force: true }); }
+  }
+  {
+    const input = fixture();
+    delete input.map.pack;
+    input.pack = null;
+    const { problems } = build(input);
+    assert.ok(problems.some(p => /EXP-W92: no leaderboard and no telemetry pack/.test(p)), problems.join('\n'));
+  }
+  {
+    // A problem in the first experiment does not stop the second from being counted and checked.
+    const input = fixture();
+    delete input.map.worlds['alpha-vale'];
+    input.map.experiments[1].leaderboard = 'results/missing.json';
+    const { problems } = build(input);
+    assert.ok(problems.some(p => /EXP-W91 results line/.test(p)), problems.join('\n'));
+    assert.ok(problems.some(p => /EXP-W92 leaderboard/.test(p)), 'the second experiment was still read');
+  }
+});
+
+test('a figure must cite its rows: a pointer alone, or malformed line ranges, is refused at build', () => {
+  const root = mkdtempSync(join(tmpdir(), 'bench-rows-'));
+  try {
+    mkdirSync(join(root, 'data/labs/brain-bench'), { recursive: true });
+    cpSync('site/data/labs/brain-bench.json', join(root, 'data/labs/brain-bench.json'));
+    for (const change of [s => { s.lines = undefined; s.pointer = '/brains/0'; }, s => { s.lines = [[0, 3]]; }, s => { s.lines = [[5, 'x']]; }]) {
+      const tampered = structuredClone(record);
+      change(tampered.experiments[0].brains[0].source);
+      const raw = JSON.stringify(tampered);
+      writeFileSync(join(root, 'data/labs/brain-bench/results.json'), raw);
+      writeFileSync(join(root, 'data/labs/brain-bench/results.sha256'), `${createHash('sha256').update(raw).digest('hex')}  results.json\n`);
+      assert.throws(() => readBench(root), /the source names no rows/);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('the import refuses a row whose world, task, kind or brain the map does not label', () => {
   const input = fixture();
   delete input.map.worlds['beta-dock'];
@@ -68,27 +123,29 @@ test('the import refuses a row whose world, task, kind or brain the map does not
 });
 
 test('the screen refuses a name from the private test game, however it is written, wherever it sits', () => {
-  for (const text of [WORLD_NAME, WORLD_NAME.toLowerCase().replace(' ', '-'), WORLD_NAME.toUpperCase().replace(' ', ''), `the ${WORLD_NAME.replace(' ', '.')} world`, `a ${CHARACTER_NAME} sighting`]) {
-    assert.ok(benchScreen(text).includes('a name from the private test game (a world, a character or an item)'), text);
-    assert.ok(benchScreen(text, { source: true }).length > 0, `${text} (in a source field)`);
-  }
-  // In the public words, in a neutral label and in a brain's label: each is refused, and nothing is written.
-  const cases = [
-    input => { input.notes.experiments[0].caveats.push(`It ran in ${WORLD_NAME}.`); },
-    input => { input.notes.labels.worlds.a = WORLD_NAME; },
-    input => { input.notes.brains['demo-local'].label = `${CHARACTER_NAME} model`; },
-  ];
-  for (const change of cases) {
-    const input = fixture();
-    change(input);
-    const { problems } = build(input);
-    assert.ok(problems.some(p => /a name from the private test game/.test(p)), problems.join('\n'));
-  }
+  assert.deepEqual(benchScreen(WORLD_NAME), [], 'a made-up name passes until its hash is listed');
+  withMadeUpTerms(() => {
+    for (const text of [WORLD_NAME, WORLD_NAME.toLowerCase().replace(' ', '-'), WORLD_NAME.toUpperCase().replace(' ', ''), `the ${WORLD_NAME.replace(' ', '.')} world`, `a ${CHARACTER_NAME} sighting`]) {
+      assert.ok(benchScreen(text).includes('a name from the private test game (a world, a character or an item)'), text);
+      assert.ok(benchScreen(text, { source: true }).length > 0, `${text} (in a source field)`);
+    }
+    // In the public words, in a neutral label and in a brain's label: each is refused, and nothing is written.
+    const cases = [
+      input => { input.notes.experiments[0].caveats.push(`It ran in ${WORLD_NAME}.`); },
+      input => { input.notes.labels.worlds.a = WORLD_NAME; },
+      input => { input.notes.brains['demo-local'].label = `${CHARACTER_NAME} model`; },
+    ];
+    for (const change of cases) {
+      const input = fixture();
+      change(input);
+      const { problems } = build(input);
+      assert.ok(problems.some(p => /a name from the private test game/.test(p)), problems.join('\n'));
+    }
+  });
 });
 
-test('the screen also refuses the private project, a price in prose and a file path, but lets a source hold a file name', () => {
-  const project = String.fromCharCode(79, 65, 67);
-  assert.ok(benchScreen(`our ${project} bench`).some(r => /restricted name/.test(r)));
+test('the screen also refuses a price in prose and a file path, but lets a source hold a file name', () => {
+  // The publisher's own restricted names are tested in lab-dispatch-publish.test.mjs; benchScreen runs that screen first.
   assert.ok(benchScreen('it cost $0.33').includes('a price or currency amount'));
   assert.ok(benchScreen('see results/leaderboard.json').includes('a file path or file name'));
   assert.deepEqual(benchScreen('results/leaderboard.json', { source: true }), []);
@@ -207,7 +264,9 @@ test('on the published site Lab 02 is required: its words missing refuse the Lab
       mkdirSync(join(root, file, '..'), { recursive: true });
       cpSync(join('site', file), join(root, file));
     }
-    assert.throws(() => renderLabs(root, { requireBench: true }), /ENOENT|brain-bench/);
+    assert.throws(() => renderLabs(root, { requireBench: true }), /^Error: Lab 02 is required on the published site: data\/labs\/brain-bench\.json is missing$/m);
+    // The same root without the requirement renders, with no Lab 02 page: the gate is the requirement, not a missing file.
+    assert.ok(!('labs/brain-bench/index.html' in renderLabs(root, { requireBench: false })));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

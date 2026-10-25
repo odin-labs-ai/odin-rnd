@@ -31,7 +31,7 @@ function figureProblems(figure, at, commit) {
   const problems = [];
   const s = figure.source;
   if (!s || s.commit !== commit || typeof s.file !== 'string' || !s.file || !/^EXP-W\d{2}$/.test(s.experiment ?? '')) problems.push(`${at}: no source (experiment, file and the private commit)`);
-  else if (!(Array.isArray(s.lines) && s.lines.length && s.lines.every(r => Array.isArray(r) && r.length === 2 && Number.isInteger(r[0]) && r[0] <= r[1])) && typeof s.pointer !== 'string') problems.push(`${at}: the source names no rows`);
+  else if (!(Array.isArray(s.lines) && s.lines.length && s.lines.every(r => Array.isArray(r) && r.length === 2 && Number.isInteger(r[0]) && Number.isInteger(r[1]) && r[0] >= 1 && r[0] <= r[1]))) problems.push(`${at}: the source names no rows`);
   else if (Array.isArray(s.lines)) {
     // A sensitivity figure is its brain's rows with some re-run: its source holds the re-run rows and the rows they replace.
     const count = lines => (lines ?? []).reduce((t, [a, b]) => t + b - a + 1, 0);
@@ -77,6 +77,7 @@ export function readBench(root = 'site') {
       if (want !== have && !(key === 'comparators' && !words[key] && !exp[key]?.length)) problems.push(`${RESULTS} ${exp.id}/${key}: differs from ${NOTES} (run the import again)`);
     }
     if (exp.prereg?.sha256 !== words.prereg.sha256) problems.push(`${RESULTS} ${exp.id}/prereg: the pre-registration hash differs from ${NOTES}`);
+    if (exp.brains.some(b => b.n !== exp.design?.episodesPerBrain)) problems.push(`${RESULTS} ${exp.id}: a brain's episode count is not the experiment's episodes per brain`);
     for (const brain of exp.brains) if (!notes.brains[brain.id]) problems.push(`${RESULTS} ${exp.id}/${brain.id}: no label in ${NOTES}`);
     // This site publishes no money figures: the record carries none, and the rendered page is screened for them below.
     if ('runSpendUsd' in exp || exp.brains.some(b => ['costPerTaskUsd', 'totalCostUsd', 'listPriceEstimateUsd'].some(k => k in b))) problems.push(`${RESULTS} ${exp.id}: a money figure in the record`);

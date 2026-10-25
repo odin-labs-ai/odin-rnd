@@ -40,7 +40,8 @@ export const NOTES_FILE = join(here, '..', 'site/data/labs/brain-bench.json');
 export const OUT_FILE = join(here, '..', 'site/data/labs/brain-bench/results.json');
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 
-const WORLD_TERMS = new Set(JSON.parse(readFileSync(WORLD_TERMS_FILE, 'utf8')).terms);
+// Exported so a test can add a made-up term's hash: the real names are never written in this repo, not even in a test.
+export const WORLD_TERMS = new Set(JSON.parse(readFileSync(WORLD_TERMS_FILE, 'utf8')).terms);
 
 /** Offsets where the text names one of the test game's listed world, character or item names. */
 function worldHits(text) {
@@ -70,6 +71,8 @@ export function benchScreen(text, { source = false } = {}) {
   return (source ? hits.filter(hit => /^a (restricted name|place name|name from the private)/.test(hit.reason)) : hits).map(hit => hit.reason);
 }
 const screened = new Map();
+/** Forget screened strings (after WORLD_TERMS changes). */
+export const clearScreenCache = () => screened.clear();
 
 const COST_FIELDS = ['costPerTaskUsd', 'costBasis', 'totalCostUsd', 'listPriceEstimateUsd', 'costSource'];
 const SOURCE_KEYS = new Set(['source', 'prereg', 'costSource', 'runSpendSource']);
@@ -188,6 +191,9 @@ export function build({ src, map, notes, pack = null }) {
     const resultsSha = hashes(join(dir, 'results/results.jsonl'));
     const rows = all.filter(r => !('skip' in r.row));
     const skipped = all.length - rows.length;
+    const before = problems.length;
+    // Every experiment is cross-checked against at least one recomputation: its leaderboard, the telemetry pack, or both.
+    if (!exp.leaderboard && !map.pack) problems.push(`${exp.id}: no leaderboard and no telemetry pack to check the counts against`);
     const board = exp.leaderboard ? readJson(join(dir, exp.leaderboard), problems, `${exp.id} leaderboard`) : null;
     const summary = exp.summary ? readJson(join(dir, exp.summary), problems, `${exp.id} summary`) : null;
     const prereg = readFileSync(join(dir, 'PREREG.md'));
@@ -198,7 +204,8 @@ export function build({ src, map, notes, pack = null }) {
       label('brains', row.brain, 'brain', where); label('worlds', row.game, 'world', where); label('tasks', row.task, 'task', where);
       if (row.instruction) label('kinds', row.instruction.kind, 'instruction kind', where);
     }
-    if (problems.length) continue;
+    // Only this experiment's own problems stop it; the others are still counted, so every failure is reported.
+    if (problems.length > before) continue;
     const brainKeys = [...new Set(rows.map(r => r.row.brain))];
     const brains = [];
     for (const key of brainKeys) {
@@ -279,13 +286,15 @@ export function build({ src, map, notes, pack = null }) {
     }
     if (map.pack && pack) packCheck({ exp, brains, pack, map, packUsed, resultsSha, problems });
     brains.sort((a, b) => b.successes - a.successes || a.id.localeCompare(b.id));
+    // The page states one episodes-per-brain count, so every brain must have exactly that many episodes.
+    if (new Set(brains.map(b => b.n)).size > 1) problems.push(`${exp.id}: brains have unequal episode counts (${brains.map(b => `${b.id} ${b.n}`).join(', ')})`);
     const seeds = [...new Set(rows.map(r => r.row.seed))].sort((a, b) => a - b);
     experiments.push({
       id: exp.id, title: words.title, question: words.question, date: words.date,
       design: {
         tasks: new Set(rows.map(r => r.row.task)).size, worlds: new Set(rows.map(r => r.row.game)).size,
         seeds: { from: seeds[0], to: seeds.at(-1), count: seeds.length }, brains: brains.length,
-        episodesPerBrain: Math.max(...brains.map(b => b.n)), episodes: rows.length, skippedRows: skipped,
+        episodesPerBrain: brains[0]?.n ?? 0, episodes: rows.length, skippedRows: skipped,
         harness: [...new Set(rows.map(r => r.row.harness))].sort(),
         source: { ...ctx, file: 'results/results.jsonl', lines: ranges(all.map(r => r.line)) },
       },

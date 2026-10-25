@@ -129,6 +129,7 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   const dispatches = readDispatches(root);
   // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
   // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
+  if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
   const bench = requireBench || existsSync(join(root, BENCH_NOTES)) ? renderBench(root) : { pages: {} };
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
