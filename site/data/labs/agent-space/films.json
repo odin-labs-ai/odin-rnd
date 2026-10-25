@@ -24,6 +24,28 @@
     "originalBytes": 1613667,
     "reencoded": false
    }
+  },
+  {
+   "id": "agent-space-tour",
+   "title": "A tour of the agent space",
+   "line": "A visitor walks in through the arch and asks three agents a question: Odin what is going on and how he knows, Atlas how to plug in an agent, Pulse how long it has been running. Every answer comes with its proof card.",
+   "real": "A live session, recorded unedited; Pulse is a separate HTTP service answering from its own process.",
+   "src": "assets/labs/agent-space/films/agent-space-tour.webm",
+   "poster": "assets/labs/agent-space/films/agent-space-tour-poster.png",
+   "mime": "video/webm;codecs=vp9",
+   "bytes": 5765850,
+   "seconds": 78,
+   "sha256": {
+    "src": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "poster": "1864b04d670fcab5ba760f6fe2216d2d5e191453a67474557242df9955da06af"
+   },
+   "source": {
+    "commit": "ae5816089c95aa98f165c3c887a3cefc6510c691",
+    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "originalSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "originalBytes": 5765850,
+    "reencoded": false
+   }
   }
  ]
 }

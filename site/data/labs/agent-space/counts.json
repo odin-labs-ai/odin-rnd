@@ -107,6 +107,11 @@
      "source": "data/labs/agent-space/films.json#/films/0/seconds"
     },
     {
+     "label": "A tour of the agent space",
+     "value": 78,
+     "source": "data/labs/agent-space/films.json#/films/1/seconds"
+    },
+    {
      "label": "The first session",
      "value": 49,
      "source": "data/labs/agent-space/dispatches/session-2026-10-25-b.json#/clip/seconds"
