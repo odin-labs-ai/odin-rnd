@@ -7,7 +7,7 @@
 //   - its status says "not yet run" while the experiment's results record (data/<experiment>/results.json) exists, or
 //     the experiment has no published pre-registration (data/<experiment>/preregistration.json).
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { screenTree } from './lab-dispatch-publish.mjs';
 import { validate } from './json-schema-lite.mjs';
@@ -35,11 +35,15 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
 }
 
 /** The committed tiles, checked; the build throws on any problem. */
-export function readTiles(root = 'site') {
+// The site this repository publishes. Its listed tiles are required; another site root (a test fixture) renders the
+// tiles it carries unless the caller requires them too.
+const REPO_SITE = resolve(here, '..', 'site');
+
+export function readTiles(root = 'site', { required = resolve(root) === REPO_SITE } = {}) {
   const problems = [];
-  // Every listed tile is required: a missing file refuses the build, never a silent page without the lab.
+  // On the published site every listed tile is required: a missing file refuses the build, never a page without the lab.
   const tiles = TILE_FILES.map(file => {
-    if (!isFile(join(root, file))) { problems.push(`${file}: missing (listed in TILE_FILES in scripts/lab-tiles.mjs)`); return null; }
+    if (!isFile(join(root, file))) { if (required) problems.push(`${file}: missing (listed in TILE_FILES in scripts/lab-tiles.mjs)`); return null; }
     const tile = JSON.parse(readFileSync(join(root, file), 'utf8'));
     problems.push(...tileProblems(tile, root, file));
     return tile;

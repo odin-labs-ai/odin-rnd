@@ -28,6 +28,11 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
   assert.doesNotMatch(page, /LAB 02/, 'the Lab 02 slot is left to its own pull request');
 });
 
+test('the published site requires every listed tile: the repository\'s own site/ root defaults to required', () => {
+  assert.equal(readTiles('site').length, 1);
+  assert.equal(readTiles(join(process.cwd(), 'site')).length, 1);
+});
+
 test('the build refuses a tile with a number, a missing or outside link, an unscreened word, or a stale status', () => {
   const root = join(temp, 'site');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
@@ -47,8 +52,9 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
     const t = structuredClone(committed); edit(t);
     assert.match(tileProblems(t, root).join('\n'), expected, String(expected));
   }
-  // A listed tile that is missing refuses the build.
-  assert.throws(() => readTiles(root), /data\/labs\/failover\.json: missing \(listed in TILE_FILES/);
+  // A listed tile that is missing refuses the build of the published site (required), and a fixture that asks for it.
+  assert.throws(() => readTiles(root, { required: true }), /data\/labs\/failover\.json: missing \(listed in TILE_FILES/);
+  assert.deepEqual(readTiles(root), [], 'a fixture site without the tile renders none');
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.equal(readTiles(root).length, 1);
   // Once results are published, "not yet run" is refused until the tile is updated.
