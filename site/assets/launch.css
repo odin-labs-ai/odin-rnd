@@ -123,3 +123,10 @@
 
 /* Home hero: the premise carries two links side by side. */
 .factory-premise a+a{margin-left:22px}
+
+/* Home field notes: the latest five open, the rest folded behind one control (build.mjs foldJournal). */
+.journal-more{border-top:1px solid var(--rule)}
+.journal-more>summary{cursor:pointer;padding:22px 0;font:12px/1.8 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.journal-more>summary:hover{color:var(--brand)}
+.journal-more[open]>summary{border-bottom:1px solid var(--rule)}
+.journal-more .journal-row:first-of-type{border-top:0}

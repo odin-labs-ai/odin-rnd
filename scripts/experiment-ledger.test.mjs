@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { addLedger, journalRows, ledgerEntries, renderLedger, statusSentence, textOf } from './experiment-ledger.mjs';
+import { addLedger, foldJournal, journalRows, ledgerEntries, renderLedger, statusSentence, textOf } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
 import { stripTags } from './test-html-text.mjs';
 
@@ -27,6 +27,15 @@ test('journalRows reads each field-note row in page order', () => {
   const withAttributes = '<a class="journal-row" href="journal/c.html"><h3 class="t">EXP 011: C</h3><p class="s">Pre-registered; not yet run.</p></a>';
   assert.deepEqual(journalRows(withAttributes), [{ href: 'journal/c.html', heading: 'EXP 011: C', text: 'Pre-registered; not yet run.' }], 'attributes on h3 or p do not hide the row');
   assert.equal(journalRows('<a class="journal-row" href="x"><header>H</header><p>t</p></a>')[0].heading, '', '<header> is not an h3');
+});
+
+test('foldJournal keeps the first rows open and folds the rest unchanged, and refuses a page with too few rows', () => {
+  const row = n => `<a class="journal-row" href="journal/${n}.html"><h3>${n}</h3><p>Note ${n}.</p></a>`;
+  const page = `<section>\n      ${[1, 2, 3].map(row).join('\n      ')}\n    </section>`;
+  const folded = foldJournal(page, 2);
+  assert.equal(folded, `<section>\n      ${row(1)}\n      ${row(2)}\n      <details class="journal-more"><summary>Show the 1 earlier note</summary>${row(3)}</details>\n    </section>`);
+  assert.deepEqual(journalRows(folded), journalRows(page), 'every row is still on the page, in order');
+  assert.throws(() => foldJournal(page, 3), /not more than the 3/);
 });
 
 test('renderLedger escapes every value it prints', () => {
