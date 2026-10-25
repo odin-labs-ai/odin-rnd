@@ -26,8 +26,8 @@ const cleanProofs = () => [
     sources: [{ what: 'Atlas is reading in the library', ref: "the agents' states" }], via: 'rules:world', ok: true,
     lens: { run: 'agent-space-live-1700000000', seq: 24 } },
   { id: 'atlas-a1b2c3-1', t: 1700000010.0, agent: 'Atlas', asked_by: 'Follower', question: 'how do I plug in my own agent?',
-    answer: 'Add an entry to agents.json: a name, a look, a home spot and a brain.', why: "From my knowledge base entry 'plug-in'.",
-    source: 'wiki', sources: [{ what: 'knowledge base: plug-in', ref: 'knowledge.json#plug-in' }], via: 'scripted', ok: true, ms: 5,
+    answer: 'Add an entry to the agents file: a name, a look, a home spot and a brain.', why: "From my knowledge base entry 'plug-in'.",
+    source: 'wiki', sources: [{ what: 'knowledge base: plug-in', ref: 'knowledge base: plug-in' }], via: 'scripted', ok: true, ms: 5,
     lens: { run: 'agent-space-live-1700000000', seq: 43 } },
 ];
 const screened = { ok: true, by: 'intake', note: '', checks: ['injection', 'personal-data', 'ip-boundary', 'on-topic'] };
@@ -93,7 +93,7 @@ test('a clean session passes: the dispatch matches both schemas and carries only
   assert.deepEqual(written.questions[1], { id: 's1-q2', to: 'Atlas', text: 'How do I plug in my own agent?', followUp: false,
     answer: cleanProofs()[1].answer, why: cleanProofs()[1].why, source: 'wiki', evidence: 'atlas-a1b2c3-1' });
   const raw = JSON.stringify(written);
-  for (const dropped of ['127.0.0.1', manifest.commit, 'agent-space-live', 'odin-labs:seed', 'github:@someone', 'Follower', 'knowledge.json', 'rules:world']) {
+  for (const dropped of ['127.0.0.1', manifest.commit, 'agent-space-live', 'odin-labs:seed', 'github:@someone', 'Follower', 'rules:world']) {
     assert.ok(!raw.includes(dropped), `drops ${dropped}`);
   }
   assert.equal(written.source.manifestSha256, createHash('sha256').update(readFileSync(join(dir, 'manifest.json'))).digest('hex'));
@@ -136,9 +136,10 @@ test('the screen names each kind of text that may not be public, and passes plai
     'open http://localhost:3000': 'a local or IP address', 'on 10.0.0.12': 'a local or IP address',
     'see https://example.com/x': 'a link to somewhere other than this lab', 'in src/space/config.py': 'a file path',
     'under /Users/someone': 'a file path', 'run 1700000000': 'a phone number',
+    'edit config.py': 'a file path', 'add it to agents.json': 'a file path', 'see settings.yaml': 'a file path',
   };
   for (const [text, reason] of Object.entries(cases)) assert.ok(screenText(text).some(r => r.startsWith(reason)), `${text} -> ${reason}: ${screenText(text)}`);
-  for (const text of ['Add an entry to agents.json: a name, a look and a brain.', 'Four agents are here, 22 structures on the ground.',
+  for (const text of ['Add an entry to the agents file: a name, a look and a brain.', 'approach the coach', 'in 2026 we met', 'Four agents are here, 22 structures on the ground.',
     'Juno is at the help desk', 'Odin Campus', 'Session of 2026-10-25', 'evidence odin-a1b2c3-1', 'See https://github.com/odin-labs-ai/odin-rnd']) {
     assert.deepEqual(screenText(text), [], text);
   }
@@ -195,7 +196,7 @@ test('this repository holds no recorded session yet, and no restricted name in t
   assert.ok(!existsSync('site/data/labs/agent-space/dispatches') || readdirSync('site/data/labs/agent-space/dispatches').length === 0);
   assert.ok(!existsSync('site/assets/labs'));
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
-    'scripts/json-schema-lite.mjs', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
+    'scripts/json-schema-lite.mjs', 'scripts/lab-screen-terms.json', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
     'scripts/schemas/README.md', 'site/data/labs/agent-space.json', 'site/labs/index.html', 'site/labs/agent-space/index.html',
     '.github/ISSUE_TEMPLATE/ask-the-agents.yml'];
   for (const file of files) assert.ok(!screenText(readFileSync(file, 'utf8')).some(r => r.startsWith('a restricted name')), file);
@@ -203,4 +204,95 @@ test('this repository holds no recorded session yet, and no restricted name in t
   const readme = readFileSync('scripts/schemas/README.md', 'utf8');
   assert.ok(readme.includes(createHash('sha256').update(readFileSync(SOURCE_SCHEMA_FILE)).digest('hex')), 'the README records the vendored hash');
   assert.equal(execFileSync('git', ['ls-files', 'site/data/labs/agent-space/dispatches', 'site/assets/labs'], { encoding: 'utf8' }), '');
+});
+
+// Review of #75 (refute-rnd-75): each bypass below passed the first screen and is refused now.
+const reverse = text => [...text].reverse().join('');
+const NAME = 'a restricted name', PLACE = 'a place name';
+// Invisible and look-alike characters are written as code points, so this file holds none of them.
+const ch = (...codes) => String.fromCharCode(...codes);
+
+test('a restricted name is caught through invisible, fullwidth, look-alike, accented, split and camelCase spellings', () => {
+  const [a, b, c] = privateProject;
+  const spellings = [
+    `${a}${ch(0x200b)}${b}${ch(0x200b)}${c}-heightfield-v1`, `${a}${ch(0xad)}${b}${ch(0xad)}${c}`, `${a}${ch(0x2060)}${b}${c}`, `${a}${ch(0xfeff)}${b}${c}`,
+    [...privateProject].map(ch => String.fromCharCode(ch.charCodeAt(0) + 0xfee0)).join(''),
+    `${ch(0x43e, 0x430, 0x441)} build`, `${a}${ch(0x301)}${b}${c}`, `${a}.${b}.${c}`, `${a} ${b} ${c}`, `${a.toUpperCase()}${b.toUpperCase()}${c.toUpperCase()}Engine`,
+    `the ${studio.slice(0, 4)}${ch(0x200b)}${studio.slice(4)} build`, `${studio.toUpperCase()}STUDIO`, `with ${computePartner}x`,
+  ];
+  for (const text of spellings) assert.ok(screenText(text).includes(`${NAME} (the private project, a game studio, a partner or a customer)`), JSON.stringify(text));
+});
+
+test('the listed places are caught: the lab’s own town, provinces, large cities, split and inside other words', () => {
+  const places = [reverse('nrooH'), reverse('dnalloH-drooN'), reverse('dnalloH dziuZ'), reverse('gaaH neD'), reverse('madretsmA'),
+    reverse('thcertU'), reverse('nedrawueeL'), reverse('dnaleeZ'), reverse('grubmiL'), reverse('redleH neD'), reverse('madrettoR')];
+  for (const place of places) assert.ok(screenText(`we met in ${place} last week`).includes(PLACE), place);
+  assert.ok(screenText(`${reverse('oH')}${ch(0xad)}${reverse('nro')}`).includes(PLACE), 'soft hyphen inside the town');
+  assert.ok(screenText(`${reverse('madretsmA')}centrum`).includes(PLACE), 'a long place inside a longer word');
+  for (const text of ['the help desk', 'Juno answers', 'a horn sounds', 'approach the coach']) assert.ok(!screenText(text).includes(PLACE), text);
+});
+
+test('the dispatch it would write is screened whole: a session or still name carrying a restricted name is refused, nothing written', () => {
+  const bySession = session(m => { m.session = `${m.session}-${privateProject}`; });
+  // The session name itself is the only carrier (the dir name is irrelevant to the dispatch).
+  const s1 = screen(bySession.manifest.session);
+  const out1 = join(temp, 'site-session-name');
+  const r1 = publish({ sessionDir: bySession.dir, answerScreen: s1, site: out1 });
+  assert.match(r1.problems.join('\n'), /^dispatch#\/session: a restricted name/m);
+  assert.ok(!existsSync(out1));
+  const byStill = session(m => { m.stills = [`stills/01-${privateProject}-view.png`]; });
+  writeFileSync(join(byStill.dir, `stills/01-${privateProject}-view.png`), 'still');
+  const out2 = join(temp, 'site-still-name');
+  const r2 = publish({ sessionDir: byStill.dir, answerScreen: screen(byStill.name), site: out2 });
+  assert.match(r2.problems.join('\n'), /^dispatch#\/stills\/0: a restricted name/m);
+  assert.ok(!existsSync(out2));
+});
+
+test('the build refuses a hand-committed dispatch without a passing answer screen for every evidence id, or with no question', () => {
+  const { dir, name } = session();
+  const root = join(temp, 'site-hand');
+  assert.deepEqual(publish({ sessionDir: dir, answerScreen: screen(name), site: root }).problems, []);
+  const file = join(root, `data/labs/agent-space/dispatches/${name}.json`);
+  const good = JSON.parse(readFileSync(file, 'utf8'));
+  assert.deepEqual(good.answersScreen.answers.map(a => a.evidence), ['odin-a1b2c3-1', 'atlas-a1b2c3-1'], 'per-evidence verdicts are kept');
+  const cases = [
+    [d => { d.answersScreen.answers = []; }, /answers: fewer than 1 items/],
+    [d => { d.answersScreen.answers[0].checks = []; }, /checks: fewer than 1 items/],
+    [d => { d.answersScreen.answers[1].verdict = 'held'; }, /verdict: must be "ok"/],
+    [d => { d.answersScreen.answers.pop(); }, /atlas-a1b2c3-1 has no passing answer screen/],
+    [d => { delete d.answersScreen; }, /missing answersScreen/],
+    [d => { d.questions = []; }, /questions: fewer than 1 items/],
+    [d => { d.questions[0].answer = `seen in ${reverse('nrooH')}`; }, /questions\/0\/answer: a place name/],
+  ];
+  for (const [edit, expected] of cases) {
+    const bad = structuredClone(good); edit(bad);
+    writeFileSync(file, JSON.stringify(bad));
+    assert.throws(() => readDispatches(root), expected, String(expected));
+  }
+  writeFileSync(file, JSON.stringify(good));
+  assert.equal(readDispatches(root).length, 1);
+});
+
+test('the schema checker applies additionalProperties as a schema, and refuses forms it does not apply', () => {
+  assert.deepEqual(validate({ type: 'object', additionalProperties: { type: 'string' } }, { a: 'x' }), []);
+  assert.deepEqual(validate({ type: 'object', additionalProperties: { type: 'string' } }, { a: 1 }), ['/a: expected string, found integer']);
+  assert.match(validate({ type: 'object', additionalProperties: 'no' }, {}).join(), /form of additionalProperties this checker does not apply/);
+  assert.match(validate({ type: 'array', items: [{ type: 'string' }] }, ['x']).join(), /form of items this checker does not apply/);
+  assert.deepEqual(validate({ type: 'array', minItems: 1 }, []), ['/: fewer than 1 items']);
+});
+
+test('older dispatches keep the heading order: session h4 under "Earlier sessions" h3, its questions h5', () => {
+  const root = join(temp, 'site-two');
+  mkdirSync(join(root, 'data/labs'), { recursive: true });
+  cpSync('site/labs', join(root, 'labs'), { recursive: true });
+  cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
+  for (const date of ['2026-10-25', '2026-11-01']) {
+    const one = session(m => { m.session = `session-${date}`; m.date = date; });
+    assert.deepEqual(publish({ sessionDir: one.dir, answerScreen: screen(`session-${date}`), site: root }).problems, []);
+  }
+  const page = renderLabs(root)['labs/agent-space/index.html'];
+  const levels = [...page.slice(page.indexOf('id="dispatches-title"') - 4).matchAll(/<h([1-6])\b/g)].map(m => Number(m[1]));
+  for (let i = 1; i < levels.length; i++) assert.ok(levels[i] <= levels[i - 1] + 1, `heading jumps from h${levels[i - 1]} to h${levels[i]}`);
+  assert.deepEqual(levels.slice(0, 6), [2, 3, 4, 4, 4, 3]);
+  assert.ok(levels.includes(5));
 });

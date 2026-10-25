@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { readLab, renderLabs } from './labs.mjs';
 
 // The Labs pages (mission rnd-labs-human-first-1024). `pnpm test` runs before `pnpm build`, so these render in memory
@@ -50,4 +52,28 @@ test('the ask form asks for a short public question, an optional agent and conse
   assert.match(form, /- label: My question is public and may appear in a recording\.\n {10}required: true/);
   assert.match(form, /id: agent[\s\S]*- Odin\n {8}- Atlas\n {8}- Juno\n {4}validations:\n {6}required: false/);
   assert.deepEqual([...form.matchAll(/^ {4}id: (\S+)$/gm)].map(m => m[1]), ['question', 'agent', 'public']);
+});
+
+test('a follow or ask link is screened as a URL: allowed hosts only, and no restricted name, place or path in it', () => {
+  const root = mkdtempSync(join(tmpdir(), 'labs-url-'));
+  try {
+    mkdirSync(join(root, 'data/labs'), { recursive: true });
+    const good = JSON.parse(readFileSync('site/data/labs/agent-space.json', 'utf8'));
+    const studio = [...'tfolemag'].reverse().join(''), town = [...'nrooH'].reverse().join('');
+    const withLink = url => { const lab = structuredClone(good); lab.follow[0].url = url; return lab; };
+    const cases = [
+      [withLink(`https://www.linkedin.com/company/${studio}`), /follow\/0\/url: a restricted name/],
+      [withLink(`https://www.linkedin.com/company/odin-labs-${town}`), /follow\/0\/url: a place name/],
+      [withLink('https://example.com/odin-labs'), /follow\/0\/url: not under an allowed link prefix/],
+      [withLink('http://www.linkedin.com/company/odin-labs'), /follow\/0\/url: not an https URL/],
+      [withLink('https://www.linkedin.com/company/odin%2Dlabs/config.py'), /follow\/0\/url: a file path/],
+      [{ ...good, ask: { ...good.ask, url: `https://github.com/odin-labs-ai/odin-rnd/issues/new?template=ask-${studio}.yml` } }, /ask\/url: a restricted name/],
+    ];
+    for (const [lab, expected] of cases) {
+      writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(lab));
+      assert.throws(() => readLab(root), expected, String(expected));
+    }
+    writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(withLink('https://www.linkedin.com/company/odin-labs-rnd')));
+    assert.equal(readLab(root).follow[0].url, 'https://www.linkedin.com/company/odin-labs-rnd');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

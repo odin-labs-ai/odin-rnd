@@ -10,12 +10,15 @@
 // Until a screened session exists there is no dispatch, and the page says the first session is being recorded.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { validate } from './json-schema-lite.mjs';
-import { PUBLIC_SCHEMA_FILE, screenTree } from './lab-dispatch-publish.mjs';
+import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
+// Where a follow link may point: the channel's own site, or this lab's repository. Anything else is refused.
+export const FOLLOW_PREFIXES = ['https://www.linkedin.com/', 'https://linkedin.com/', 'https://www.reddit.com/', 'https://reddit.com/',
+  'https://x.com/', 'https://github.com/odin-labs-ai/odin-rnd'];
+const ASK_PREFIXES = ['https://github.com/odin-labs-ai/odin-rnd/issues/new?template='];
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const time = date => `<time datetime="${escape(date)}">${escape(new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }))}</time>`;
@@ -30,8 +33,14 @@ export function readLab(root = 'site') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(lab.since ?? '')) problems.push('since is not a date');
   if (!/^https:\/\/github\.com\/odin-labs-ai\/odin-rnd\/issues\/new\?template=ask-the-agents\.yml$/.test(lab.ask?.url ?? '')) problems.push('ask.url is not the ask-the-agents form');
   if (!Array.isArray(lab.follow) || !lab.follow.length) problems.push('follow is missing');
-  for (const link of lab.follow ?? []) if (link.url !== null && !/^https:\/\/[^\s"<>]+$/.test(link.url ?? '')) problems.push(`follow ${link.channel}: a link is a https URL or null`);
-  problems.push(...screenTree(lab, LAB_FILE, new Set(['url'])));
+  // A follow link is null ("coming soon") or a URL under FOLLOW_PREFIXES whose host, path and query pass the screen.
+  for (const [i, link] of (lab.follow ?? []).entries()) {
+    if (link.url !== null) problems.push(...urlProblems(link.url, FOLLOW_PREFIXES).map(reason => `follow/${i}/url: ${reason}`));
+  }
+  problems.push(...urlProblems(lab.ask?.url, ASK_PREFIXES).map(reason => `ask/url: ${reason}`));
+  // Every other string is screened as page text (the URLs above were screened as URLs).
+  const { ask: { url: askUrl, ...ask } = {}, follow = [], ...words } = lab;
+  problems.push(...screenTree({ ...words, ask, follow: follow.map(({ url, ...rest }) => rest) }, LAB_FILE));
   if (problems.length) throw new Error(`${LAB_FILE}:\n  ${problems.join('\n  ')}`);
   return lab;
 }
@@ -40,17 +49,15 @@ export function readLab(root = 'site') {
 export function readDispatches(root = 'site') {
   const dir = join(root, DISPATCH_DIR);
   if (!existsSync(dir)) return [];
-  const schema = JSON.parse(readFileSync(PUBLIC_SCHEMA_FILE, 'utf8'));
   const dispatches = [];
   const problems = [];
   for (const name of readdirSync(dir).filter(name => !name.startsWith('.')).sort()) {
     const file = `${DISPATCH_DIR}/${name}`;
     if (!name.endsWith('.json')) { problems.push(`${file}: only <session>.json files belong here`); continue; }
     const dispatch = JSON.parse(readFileSync(join(root, file), 'utf8'));
-    problems.push(...validate(schema, dispatch).map(problem => `${file}#${problem}`));
+    // The publisher's own checks, run again: a hand-written dispatch fails the build exactly as it fails to publish.
+    problems.push(...dispatchProblems(dispatch, file, root));
     if (dispatch.session !== name.slice(0, -'.json'.length)) problems.push(`${file}: the file name is not its session`);
-    problems.push(...screenTree(dispatch, file, new Set(['source'])));
-    for (const asset of [dispatch.clip?.src, dispatch.poster, ...(dispatch.stills ?? [])]) if (asset && !existsSync(join(root, asset))) problems.push(`${file}: ${asset} is missing`);
     dispatches.push(dispatch);
   }
   if (problems.length) throw new Error(`Lab dispatches refused:\n  ${problems.join('\n  ')}`);
@@ -60,13 +67,14 @@ export function readDispatches(root = 'site') {
 const SOURCE_KIND = { 'world-checked': 'Something it can see in the world', wiki: 'A page it has read', tool: 'A tool it used' };
 const sourceKind = source => SOURCE_KIND[source] ?? `Source: ${source}`;
 
-function dispatchCards(dispatch) {
-  return dispatch.questions.map(q => `<article class="lab-card"><p class="lab-card-to">Asked ${escape(q.to)}${q.followUp ? ', as a follow-up' : ''}</p><h4>${escape(q.text)}</h4><p class="lab-card-answer">${escape(q.answer)}</p>${q.why ? `<p class="lab-card-why"><strong>Why:</strong> ${escape(q.why)}</p>` : ''}<p class="lab-card-source"><span>${escape(sourceKind(q.source))}</span><code>evidence ${escape(q.evidence)}</code></p></article>`).join('');
+// Headings nest: Dispatches (h2) > the latest session (h3) > its questions (h4); Earlier sessions (h3) > a session (h4) > its questions (h5).
+function dispatchCards(dispatch, level) {
+  return dispatch.questions.map(q => `<article class="lab-card"><p class="lab-card-to">Asked ${escape(q.to)}${q.followUp ? ', as a follow-up' : ''}</p><h${level} class="lab-card-question">${escape(q.text)}</h${level}><p class="lab-card-answer">${escape(q.answer)}</p>${q.why ? `<p class="lab-card-why"><strong>Why:</strong> ${escape(q.why)}</p>` : ''}<p class="lab-card-source"><span>${escape(sourceKind(q.source))}</span><code>evidence ${escape(q.evidence)}</code></p></article>`).join('');
 }
 
 function dispatchBlock(dispatch, up, latest) {
-  const heading = latest ? 'h3' : 'h4';
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded live, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch)}</div></article>`;
+  const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded live, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
