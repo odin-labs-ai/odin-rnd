@@ -1,7 +1,7 @@
 // Tiles on the Labs index for labs that are an experiment rather than a running space (mission rnd-labs-human-first-1024).
 // Lab 03 (failover, EXP 021) is the first: site/data/labs/failover.json holds its words and links; scripts/labs.mjs
 // renders the tile after Lab 01's. The build fails, and nothing is rendered, when:
-//   - the file misses scripts/schemas/odin-lab-tile.schema.json;
+//   - a tile listed in TILE_FILES is missing, or misses scripts/schemas/odin-lab-tile.schema.json;
 //   - its words fail the publisher's screen, or its question, how or status carry a number (a tile states no result);
 //   - a link is not an existing page or record of this site (site-relative, no dot segments);
 //   - its status says "not yet run" while the experiment's results record (data/<experiment>/results.json) exists, or
@@ -37,11 +37,13 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
 /** The committed tiles, checked; the build throws on any problem. */
 export function readTiles(root = 'site') {
   const problems = [];
-  const tiles = TILE_FILES.filter(file => existsSync(join(root, file))).map(file => {
+  // Every listed tile is required: a missing file refuses the build, never a silent page without the lab.
+  const tiles = TILE_FILES.map(file => {
+    if (!isFile(join(root, file))) { problems.push(`${file}: missing (listed in TILE_FILES in scripts/lab-tiles.mjs)`); return null; }
     const tile = JSON.parse(readFileSync(join(root, file), 'utf8'));
     problems.push(...tileProblems(tile, root, file));
     return tile;
-  });
+  }).filter(Boolean);
   if (problems.length) throw new Error(`Lab tiles refused:\n  ${problems.join('\n  ')}`);
   return tiles;
 }

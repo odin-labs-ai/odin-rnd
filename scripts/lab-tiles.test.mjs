@@ -47,6 +47,8 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
     const t = structuredClone(committed); edit(t);
     assert.match(tileProblems(t, root).join('\n'), expected, String(expected));
   }
+  // A listed tile that is missing refuses the build.
+  assert.throws(() => readTiles(root), /data\/labs\/failover\.json: missing \(listed in TILE_FILES/);
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.equal(readTiles(root).length, 1);
   // Once results are published, "not yet run" is refused until the tile is updated.
