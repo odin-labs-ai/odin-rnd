@@ -16,7 +16,7 @@
       "otherNumbers": []
     },
     "latestPr": 80,
-    "ghFetchedAt": "2026-10-25T20:09:08Z",
+    "ghFetchedAt": "2026-10-25T19:48:25Z",
     "verdictRowsRead": 23
   },
   "prs": [
@@ -1325,5 +1325,41 @@
       "medianMinutesToLand": 26
     }
   },
-  "aggregates": []
+  "aggregates": [
+    {
+      "label": "repo-045bccfc6e8c",
+      "prCount": 32,
+      "ciPassPercent": 83,
+      "reviewRounds": 68,
+      "medianMinutesToLand": 163
+    },
+    {
+      "label": "repo-5c8d4df445b9",
+      "prCount": 8,
+      "ciPassPercent": 81,
+      "reviewRounds": 28,
+      "medianMinutesToLand": 1042
+    },
+    {
+      "label": "repo-8b8d98d00dfd",
+      "prCount": 100,
+      "ciPassPercent": 90,
+      "reviewRounds": 166,
+      "medianMinutesToLand": 28
+    },
+    {
+      "label": "repo-f32f40bd8bba",
+      "prCount": 5,
+      "ciPassPercent": 88,
+      "reviewRounds": 10,
+      "medianMinutesToLand": 102
+    },
+    {
+      "label": "repo-fcf67d377b43",
+      "prCount": 13,
+      "ciPassPercent": 72,
+      "reviewRounds": 29,
+      "medianMinutesToLand": 194
+    }
+  ]
 }

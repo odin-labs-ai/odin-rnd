@@ -168,13 +168,13 @@ test('free text runs through the publisher\'s screen; structured fields are held
 
 test('an aggregate field outside the allowlist, a percent above 100 or a repository under five PRs is refused', () => {
   const leak = clone();
-  leak.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' });
+  leak.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 90, reviewRounds: 12, medianMinutesToLand: 30, name: 'a private repo' }];
   assert.match(deliveryProblems(leak).join('\n'), /aggregates\/0\/name: not allowed/);
   const over = clone();
-  over.aggregates.push({ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 });
+  over.aggregates = [{ label: 'repo-0123456789ab', prCount: 9, ciPassPercent: 101, reviewRounds: 12, medianMinutesToLand: 30 }];
   assert.match(deliveryProblems(over).join('\n'), /above 100/);
   const small = clone();
-  small.aggregates.push({ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 });
+  small.aggregates = [{ label: 'repo-0123456789ab', prCount: 2, ciPassPercent: 100, reviewRounds: 1, medianMinutesToLand: 30 }];
   assert.ok(deliveryProblems(small).length > 0, 'a repository with fewer than five PRs is not published even as an aggregate');
 });
 
