@@ -1,0 +1,9 @@
+{
+  "originalEmbedScriptSha256": "7895067b1498c6d23918aae7b2d5c6d4e926d19332cbc2ed959c7aabbfb16ba2",
+  "exportedEmbedScriptSha256": "3154c669b100a0d696f1a0ff5e6f363752231b39dc374b322f77e48b416ea775",
+  "change": "Only asset-directory resolution changes to explicit VOYAGE_FIXTURE_ASSETS. Inference request, model checks, prefixes, numerical processing and cleanup are unchanged.",
+  "executedPayload": "The eight files in payload-manifest.json are byte-identical to the counted hosted execution.",
+  "originalAuditScriptSha256": "0a22d00c095f576cebf3cf139bb1e375ade8ca96e3633dfbac91f4a4e39ef06e",
+  "exportedAuditScriptSha256": "492f3d5bcf0881d08d8686a8ed01997bc3981e6dbe0d2caf748faffa63d51755",
+  "auditChange": "The public saved-observation audit reports to stdout without writing into the source tree. Its arithmetic and evidence checks are unchanged."
+}

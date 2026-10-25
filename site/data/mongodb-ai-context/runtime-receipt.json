@@ -1,0 +1,589 @@
+{
+  "schema": "mongodb-ai-context-runtime-public-export/1",
+  "runId": "40235752175",
+  "runAttempt": "1",
+  "sourceRevision": "004554acfec2a4454b4d6fd62481e4eb235e2cc7",
+  "payload": {
+    "schema": "mongodb-ai-context-payload/1",
+    "files": {
+      "Dockerfile": "ce05e7e769f948882d6f2bbf30356b8a8243da18d6984482014465e92a30ba19",
+      "database_probe.py": "0dcbacdd63e1117e2153989fed790f291c1324c4b1189033640f04ca4e80441d",
+      "fixture.json": "3e72a161d54a98d79e51486016b72efb086865b03814e59e21cd1313d6a47a83",
+      "protocol.json": "e22350e82158b943a38e602523e6326b48cdefd5f16b053fc7a70b84080666a3",
+      "requirements.lock": "de6de8b75ffba4101efa6d37af6286ab42e1b8940e50370ddb9eedee53fa553a",
+      "run_hosted.py": "f4635aa6329540d65335e3c5e17f479b75ec8a32f9921cc3227622d0ac790f11",
+      "score_fixture.py": "f986f828fd6fb9dec4c3277918e0d336176790e2e572d579d72a0da683f009ae",
+      "vectors.json": "0283d2715638dd9efe95a421d2b017ff08b88db95b01ae8f91f874c5b1084bf9"
+    }
+  },
+  "manifestSha256": "2aa195f0d32b743ef949a49dc382ca0fc12408003f325f1ddadd1a16554e596a",
+  "images": {
+    "mongo": {
+      "reference": "mongodb/mongodb-atlas-local@sha256:51af3809fb7652d3e433ec1c95784339f782071a8675ac6098748ac165dec0c6",
+      "id": "sha256:87e7d5b733329ad92bb14546715e3ce0e926baf83798e3be1f807f8d3c36452b",
+      "repoDigests": [
+        "mongodb/mongodb-atlas-local@sha256:51af3809fb7652d3e433ec1c95784339f782071a8675ac6098748ac165dec0c6"
+      ],
+      "architecture": "amd64"
+    },
+    "postgres": {
+      "reference": "pgvector/pgvector@sha256:cd4ccfdaf62cbfeb5c6ee19ef0dd663406d4ed740c320b324d016a90e85385b3",
+      "id": "sha256:151aa1c2e849e7828ed8aef2183ae15f692cbe887d2f28921d8b44b26e154d7e",
+      "repoDigests": [
+        "pgvector/pgvector@sha256:cd4ccfdaf62cbfeb5c6ee19ef0dd663406d4ed740c320b324d016a90e85385b3"
+      ],
+      "architecture": "amd64"
+    },
+    "python": {
+      "reference": "python@sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe",
+      "id": "sha256:df18428df8a0f9189c84e7424d214b4c50092af1f9dca5842a00c41c39bda316",
+      "repoDigests": [
+        "python@sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe"
+      ],
+      "architecture": "amd64"
+    },
+    "worker": {
+      "id": "sha256:29a22cb0b3d04f7a862feaf788de5c9f987835dae8e953c493bb86a78e6e908b",
+      "architecture": "amd64",
+      "dockerfileSha256": "ce05e7e769f948882d6f2bbf30356b8a8243da18d6984482014465e92a30ba19",
+      "requirementsSha256": "de6de8b75ffba4101efa6d37af6286ab42e1b8940e50370ddb9eedee53fa553a"
+    }
+  },
+  "startedAt": "2026-10-25T21:30:06.359056+00:00",
+  "repetitions": [
+    251,
+    252
+  ],
+  "cleanup": [
+    {
+      "container": "mai-context-40235752175-1-worker",
+      "removed": true
+    },
+    {
+      "container": "mai-context-40235752175-1-postgres",
+      "removed": true
+    },
+    {
+      "container": "mai-context-40235752175-1-mongo",
+      "removed": true
+    },
+    {
+      "container": "mai-context-40235752175-1-filesystem-baseline",
+      "removed": true
+    }
+  ],
+  "status": "passed",
+  "boundary": "Fixed fixture repeated with separate database names; functional correctness only.",
+  "searchStorageBoundary": "Owned 512 MiB scratch tmpfs inside the unchanged container memory cap; no index durability claim. Prior timeout cause remains unproven.",
+  "defaultSearchFilesystem": {
+    "filesystemType": "overlayfs",
+    "blockSize": 4096,
+    "blocks": 18771278,
+    "blocksFree": 2618857,
+    "blocksAvailable": 2614761
+  },
+  "isolation": {
+    "mongo": {
+      "networkMode": "mai-context-40235752175-1",
+      "portBindings": {}
+    },
+    "postgres": {
+      "networkMode": "mai-context-40235752175-1",
+      "portBindings": {}
+    },
+    "worker": {
+      "networkMode": "container:c56b1acd33cd9d8aa5bd42cc62dab1119617d19af9a839a79405fd7c595938ef",
+      "portBindings": {}
+    }
+  },
+  "packages": [
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.10.23"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2"
+    },
+    {
+      "name": "distro",
+      "version": "1.9.0"
+    },
+    {
+      "name": "dnspython",
+      "version": "2.9.0"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9"
+    },
+    {
+      "name": "httpcore2",
+      "version": "2.16.0"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1"
+    },
+    {
+      "name": "httpx2",
+      "version": "2.16.0"
+    },
+    {
+      "name": "idna",
+      "version": "3.20"
+    },
+    {
+      "name": "jsonpatch",
+      "version": "1.36"
+    },
+    {
+      "name": "jsonpointer",
+      "version": "3.4"
+    },
+    {
+      "name": "langchain",
+      "version": "1.4.7"
+    },
+    {
+      "name": "langchain-classic",
+      "version": "1.0.8"
+    },
+    {
+      "name": "langchain-core",
+      "version": "1.7.0"
+    },
+    {
+      "name": "langchain-mongodb",
+      "version": "0.12.1"
+    },
+    {
+      "name": "langchain-protocol",
+      "version": "0.0.20"
+    },
+    {
+      "name": "langchain-text-splitters",
+      "version": "1.1.3"
+    },
+    {
+      "name": "langgraph",
+      "version": "1.2.17"
+    },
+    {
+      "name": "langgraph-checkpoint",
+      "version": "4.3.0"
+    },
+    {
+      "name": "langgraph-checkpoint-mongodb",
+      "version": "0.5.1"
+    },
+    {
+      "name": "langgraph-checkpoint-postgres",
+      "version": "3.2.0"
+    },
+    {
+      "name": "langgraph-prebuilt",
+      "version": "1.1.1"
+    },
+    {
+      "name": "langgraph-sdk",
+      "version": "0.4.9"
+    },
+    {
+      "name": "langgraph-store-mongodb",
+      "version": "0.4.0"
+    },
+    {
+      "name": "langsmith",
+      "version": "0.14.12"
+    },
+    {
+      "name": "lark",
+      "version": "1.3.1"
+    },
+    {
+      "name": "numpy",
+      "version": "2.4.6"
+    },
+    {
+      "name": "orjson",
+      "version": "3.13.0"
+    },
+    {
+      "name": "ormsgpack",
+      "version": "1.13.0"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3"
+    },
+    {
+      "name": "pip",
+      "version": "25.0.1"
+    },
+    {
+      "name": "psycopg",
+      "version": "3.3.6"
+    },
+    {
+      "name": "psycopg-binary",
+      "version": "3.3.6"
+    },
+    {
+      "name": "psycopg-pool",
+      "version": "3.3.3"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.14.1"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.50.1"
+    },
+    {
+      "name": "pymongo",
+      "version": "4.19.0"
+    },
+    {
+      "name": "pymongo-search-utils",
+      "version": "0.3.1"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2"
+    },
+    {
+      "name": "requests-toolbelt",
+      "version": "1.0.0"
+    },
+    {
+      "name": "sniffio",
+      "version": "1.3.1"
+    },
+    {
+      "name": "SQLAlchemy",
+      "version": "2.1.6"
+    },
+    {
+      "name": "tenacity",
+      "version": "9.2.1"
+    },
+    {
+      "name": "truststore",
+      "version": "0.10.5"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0"
+    },
+    {
+      "name": "uuid_utils",
+      "version": "0.18.0"
+    },
+    {
+      "name": "websockets",
+      "version": "17.3"
+    },
+    {
+      "name": "xxhash",
+      "version": "4.0.2"
+    },
+    {
+      "name": "zstandard",
+      "version": "0.25.0"
+    }
+  ],
+  "resources": [
+    {
+      "stage": "ready",
+      "at": "2026-10-25T21:31:40.791638+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 3.47MB",
+            "CPUPerc": "6.64%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "26.25%",
+            "MemUsage": "403.2MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "1.43kB / 126B",
+            "PIDs": "233"
+          },
+          "cgroupPids": "pids.current\n235\npids.max\n1024\npids.events\nmax 0\npids.peak\n253\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 131066,
+            "blocksAvailable": 131066
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536846336.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 4.57763671875e-05
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 52.4MB",
+            "CPUPerc": "0.03%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "4.92%",
+            "MemUsage": "25.2MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "1.28kB / 126B",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n12\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.20%",
+            "MemUsage": "1.523MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "1.43kB / 126B",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n7\n"
+        }
+      }
+    },
+    {
+      "stage": "after-worker-251",
+      "at": "2026-10-25T21:32:01.745011+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 4.15MB",
+            "CPUPerc": "10.49%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "33.12%",
+            "MemUsage": "508.8MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "50.1kB / 1.38MB",
+            "PIDs": "266"
+          },
+          "cgroupPids": "pids.current\n265\npids.max\n1024\npids.events\nmax 0\npids.peak\n274\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 131001,
+            "blocksAvailable": 131001
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536580096.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 0.00054168701171875
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 53.9MB",
+            "CPUPerc": "0.02%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "5.48%",
+            "MemUsage": "28.04MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "1.38MB / 48.8kB",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n12\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 19MB",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.41%",
+            "MemUsage": "3.133MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "50.1kB / 1.38MB",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n9\n"
+        }
+      }
+    },
+    {
+      "stage": "after-worker-252",
+      "at": "2026-10-25T21:32:19.222691+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 5.1MB",
+            "CPUPerc": "8.06%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "34.27%",
+            "MemUsage": "526.4MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "98.9kB / 2.75MB",
+            "PIDs": "264"
+          },
+          "cgroupPids": "pids.current\n266\npids.max\n1024\npids.events\nmax 0\npids.peak\n274\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 130932,
+            "blocksAvailable": 130932
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536350720.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 0.00096893310546875
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 54.8MB",
+            "CPUPerc": "0.03%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "5.63%",
+            "MemUsage": "28.8MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "2.75MB / 97.5kB",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n13\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 38MB",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.41%",
+            "MemUsage": "3.176MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "98.9kB / 2.75MB",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n9\n"
+        }
+      }
+    }
+  ],
+  "results": [
+    {
+      "repetitionLabel": "251",
+      "sha256": "6e904d2cb944856cea1fc8cf3d751ef13127f109dd8cedc83d1ebf10778e2855",
+      "cacheLookups": 240,
+      "postgresObservations": 48
+    },
+    {
+      "repetitionLabel": "252",
+      "sha256": "b9c77a9c6528fee9487a3751d553aa2a55694356ab5487f663e3c3a873ebbc07",
+      "cacheLookups": 240,
+      "postgresObservations": 48
+    }
+  ],
+  "networkRemoved": true,
+  "endedAt": "2026-10-25T21:32:25.546253+00:00",
+  "artifactDigestScope": "Completed files only; the enclosing live orchestrator.log and this receipt are excluded.",
+  "artifacts": {
+    "database-result-251.json": "6e904d2cb944856cea1fc8cf3d751ef13127f109dd8cedc83d1ebf10778e2855",
+    "database-result-252.json": "b9c77a9c6528fee9487a3751d553aa2a55694356ab5487f663e3c3a873ebbc07"
+  },
+  "originalRuntimeReceiptSha256": "e6b81607d63e0a4c50a09726b081fe1df0ad7aeb26495389a095d1a4fc467651",
+  "exportTransformation": "Artifact digest map contains the two exported database-result files only. Administrative infrastructure logs remain private. All measurement, source, image, resource and cleanup values are unchanged."
+}

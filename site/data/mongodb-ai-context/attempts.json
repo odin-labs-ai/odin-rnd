@@ -1,0 +1,107 @@
+{
+  "schema": "context-attempt-history/1",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "startedAt": "2026-10-25T20:47:24.484736+00:00",
+      "endedAt": "2026-10-25T20:51:54.134476+00:00",
+      "originalRuntimeReceiptSha256": "a0d3b1c6d71ad96dc2c25045fc355adb84faa729309f54ce764e224f00774432",
+      "cacheObservations": 0,
+      "error": "docker exec mai-context-40232379286-1-worker exited 1: {\"status\": \"failed\", \"error\": \"TimeoutError: index_name='cache_vector' did not complete in 180!\"}\n{\"status\": \"failed\", \"repetitionLabel\": \"251\", \"actualCacheLookups\": 0, \"postgresExactObservations\": 0}\nTraceback (most recent call last):\n  File \"/work/database_probe.py\", line 223, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/work/database_probe.py\", line 220, in main\n    assert result['status']=='passed'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "cleanup": [
+        {
+          "container": "mai-context-40232379286-1-worker",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40232379286-1-postgres",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40232379286-1-mongo",
+          "removed": true
+        }
+      ],
+      "networkRemoved": true,
+      "countedInCurrentTable": false,
+      "note": "Earlier operational attempt; raw administrative logs remain private. The first completed pair is preserved as an earlier success; final-head verification is counted below."
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "startedAt": "2026-10-25T20:57:17.877247+00:00",
+      "endedAt": "2026-10-25T21:02:07.747121+00:00",
+      "originalRuntimeReceiptSha256": "79e33a26f0d901d11e86f30b17bb623120f0b2abf802b458d17be5359bb41a0e",
+      "cacheObservations": 0,
+      "error": "docker exec mai-context-40233143414-1-worker exited 1: {\"status\": \"failed\", \"error\": \"TimeoutError: index_name='cache_vector' did not complete in 180!\"}\n{\"status\": \"failed\", \"repetitionLabel\": \"251\", \"actualCacheLookups\": 0, \"postgresExactObservations\": 0}\nTraceback (most recent call last):\n  File \"/work/database_probe.py\", line 223, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/work/database_probe.py\", line 220, in main\n    assert result['status']=='passed'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "cleanup": [
+        {
+          "container": "mai-context-40233143414-1-worker",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40233143414-1-postgres",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40233143414-1-mongo",
+          "removed": true
+        }
+      ],
+      "networkRemoved": true,
+      "countedInCurrentTable": false,
+      "note": "Earlier operational attempt; raw administrative logs remain private. The first completed pair is preserved as an earlier success; final-head verification is counted below."
+    },
+    {
+      "attempt": 3,
+      "status": "passed",
+      "startedAt": "2026-10-25T21:14:52.679950+00:00",
+      "endedAt": "2026-10-25T21:17:02.017788+00:00",
+      "originalRuntimeReceiptSha256": "3c6d4c96cf9f88ae23fee8e7c6444bf13e99b894dd3b01da009895329008b1a5",
+      "cacheObservations": 480,
+      "error": null,
+      "cleanup": [
+        {
+          "container": "mai-context-40234557903-1-worker",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40234557903-1-postgres",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40234557903-1-mongo",
+          "removed": true
+        },
+        {
+          "container": "mai-context-40234557903-1-filesystem-baseline",
+          "removed": true
+        }
+      ],
+      "networkRemoved": true,
+      "countedInCurrentTable": false,
+      "note": "Earlier operational attempt; raw administrative logs remain private. The first completed pair is preserved as an earlier success; final-head verification is counted below."
+    },
+    {
+      "attempt": 4,
+      "status": "passed",
+      "startedAt": "2026-10-25T21:30:06.359056+00:00",
+      "endedAt": "2026-10-25T21:32:25.546253+00:00",
+      "originalRuntimeReceiptSha256": "e6b81607d63e0a4c50a09726b081fe1df0ad7aeb26495389a095d1a4fc467651",
+      "cacheObservations": 480,
+      "countedInCurrentTable": true,
+      "note": "Same scientific values after whitespace-only vector formatting made the entire file reviewable. Two fresh database names, not new corpora."
+    }
+  ],
+  "vectorFormatting": {
+    "at": "2026-10-25T21:25:34.813025+00:00",
+    "reason": "Required automated reviewer could not split a single691KB diff line; JSON whitespace formatting makes every value reviewable through the existing chunker. No gate/omission/number changes.",
+    "beforeSha256": "1a6aa1513f9e386f833a56cc2c71799a1e966e8e65dd6c9d07e71d414355f384",
+    "afterSha256": "0283d2715638dd9efe95a421d2b017ff08b88db95b01ae8f91f874c5b1084bf9",
+    "decodedObjectExactlyEqual": true,
+    "maximumLineBytes": 88,
+    "originalPreserved": "vectors-compact-original.json",
+    "sourceReviewFailure": "reviewer-forensics-eacd/review-raw.scrubbed.txt"
+  }
+}

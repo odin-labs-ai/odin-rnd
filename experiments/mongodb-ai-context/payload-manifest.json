@@ -1,0 +1,13 @@
+{
+  "schema": "mongodb-ai-context-payload/1",
+  "files": {
+    "Dockerfile": "ce05e7e769f948882d6f2bbf30356b8a8243da18d6984482014465e92a30ba19",
+    "database_probe.py": "0dcbacdd63e1117e2153989fed790f291c1324c4b1189033640f04ca4e80441d",
+    "fixture.json": "3e72a161d54a98d79e51486016b72efb086865b03814e59e21cd1313d6a47a83",
+    "protocol.json": "e22350e82158b943a38e602523e6326b48cdefd5f16b053fc7a70b84080666a3",
+    "requirements.lock": "de6de8b75ffba4101efa6d37af6286ab42e1b8940e50370ddb9eedee53fa553a",
+    "run_hosted.py": "f4635aa6329540d65335e3c5e17f479b75ec8a32f9921cc3227622d0ac790f11",
+    "score_fixture.py": "f986f828fd6fb9dec4c3277918e0d336176790e2e572d579d72a0da683f009ae",
+    "vectors.json": "0283d2715638dd9efe95a421d2b017ff08b88db95b01ae8f91f874c5b1084bf9"
+  }
+}

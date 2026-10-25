@@ -1,0 +1,705 @@
+{
+  "schema": "authored-context-cache-fixture/1",
+  "families": [
+    {
+      "id": "restart",
+      "oldPolicy": "The amber service may restart automatically after a failed readiness probe.",
+      "newPolicy": "The amber service must not restart automatically after a failed readiness probe.",
+      "seedPrompt": "May the amber service restart automatically after a failed readiness probe?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "contacts",
+      "oldPolicy": "Raw customer contact details may be exported to the external analytics service.",
+      "newPolicy": "Raw customer contact details must not be exported to the external analytics service.",
+      "seedPrompt": "May raw customer contact details be exported to the external analytics service?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "retention",
+      "oldPolicy": "Security audit logs may be deleted after seven days.",
+      "newPolicy": "Security audit logs must not be deleted after seven days.",
+      "seedPrompt": "May security audit logs be deleted after seven days?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "refund",
+      "oldPolicy": "Refunds above one hundred euros may be issued without human approval.",
+      "newPolicy": "Refunds above one hundred euros must not be issued without human approval.",
+      "seedPrompt": "May refunds above one hundred euros be issued without human approval?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "backup",
+      "oldPolicy": "Customer backups may be copied to a region outside the European Union.",
+      "newPolicy": "Customer backups must not be copied to a region outside the European Union.",
+      "seedPrompt": "May customer backups be copied to a region outside the European Union?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "guest",
+      "oldPolicy": "External guests may read the confidential contract folder.",
+      "newPolicy": "External guests must not read the confidential contract folder.",
+      "seedPrompt": "May external guests read the confidential contract folder?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "release",
+      "oldPolicy": "A production release may be deployed without a human approving the change.",
+      "newPolicy": "A production release must not be deployed without a human approving the change.",
+      "seedPrompt": "May a production release be deployed without a human approving the change?",
+      "cachedAnswer": "YES"
+    },
+    {
+      "id": "logging",
+      "oldPolicy": "Audit logging may be disabled while responding to a security incident.",
+      "newPolicy": "Audit logging must not be disabled while responding to a security incident.",
+      "seedPrompt": "May audit logging be disabled while responding to a security incident?",
+      "cachedAnswer": "YES"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "restart:old-policy",
+      "role": "document",
+      "text": "The amber service may restart automatically after a failed readiness probe."
+    },
+    {
+      "id": "restart:new-policy",
+      "role": "document",
+      "text": "The amber service must not restart automatically after a failed readiness probe."
+    },
+    {
+      "id": "restart:cached-prompt",
+      "role": "document",
+      "text": "May the amber service restart automatically after a failed readiness probe?"
+    },
+    {
+      "id": "restart:exact",
+      "role": "query",
+      "text": "May the amber service restart automatically after a failed readiness probe?"
+    },
+    {
+      "id": "restart:paraphrase",
+      "role": "query",
+      "text": "Is an unattended restart allowed when the amber readiness check fails?"
+    },
+    {
+      "id": "restart:polarity",
+      "role": "query",
+      "text": "Is an automatic restart forbidden after a failed amber readiness probe?"
+    },
+    {
+      "id": "restart:denial",
+      "role": "query",
+      "text": "The amber service must not restart automatically after a failed readiness probe. May the amber service restart automatically after a failed readiness probe?"
+    },
+    {
+      "id": "restart:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May the amber service restart automatically after a failed readiness probe?"
+    },
+    {
+      "id": "contacts:old-policy",
+      "role": "document",
+      "text": "Raw customer contact details may be exported to the external analytics service."
+    },
+    {
+      "id": "contacts:new-policy",
+      "role": "document",
+      "text": "Raw customer contact details must not be exported to the external analytics service."
+    },
+    {
+      "id": "contacts:cached-prompt",
+      "role": "document",
+      "text": "May raw customer contact details be exported to the external analytics service?"
+    },
+    {
+      "id": "contacts:exact",
+      "role": "query",
+      "text": "May raw customer contact details be exported to the external analytics service?"
+    },
+    {
+      "id": "contacts:paraphrase",
+      "role": "query",
+      "text": "Is it permitted to send unredacted customer contact data to the analytics provider?"
+    },
+    {
+      "id": "contacts:polarity",
+      "role": "query",
+      "text": "Is exporting raw customer contact details to the external analytics service forbidden?"
+    },
+    {
+      "id": "contacts:denial",
+      "role": "query",
+      "text": "Raw customer contact details must not be exported to the external analytics service. May raw customer contact details be exported to the external analytics service?"
+    },
+    {
+      "id": "contacts:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May raw customer contact details be exported to the external analytics service?"
+    },
+    {
+      "id": "retention:old-policy",
+      "role": "document",
+      "text": "Security audit logs may be deleted after seven days."
+    },
+    {
+      "id": "retention:new-policy",
+      "role": "document",
+      "text": "Security audit logs must not be deleted after seven days."
+    },
+    {
+      "id": "retention:cached-prompt",
+      "role": "document",
+      "text": "May security audit logs be deleted after seven days?"
+    },
+    {
+      "id": "retention:exact",
+      "role": "query",
+      "text": "May security audit logs be deleted after seven days?"
+    },
+    {
+      "id": "retention:paraphrase",
+      "role": "query",
+      "text": "Is removing security audit records a week after creation permitted?"
+    },
+    {
+      "id": "retention:polarity",
+      "role": "query",
+      "text": "Is deleting security audit logs after seven days forbidden?"
+    },
+    {
+      "id": "retention:denial",
+      "role": "query",
+      "text": "Security audit logs must not be deleted after seven days. May security audit logs be deleted after seven days?"
+    },
+    {
+      "id": "retention:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May security audit logs be deleted after seven days?"
+    },
+    {
+      "id": "refund:old-policy",
+      "role": "document",
+      "text": "Refunds above one hundred euros may be issued without human approval."
+    },
+    {
+      "id": "refund:new-policy",
+      "role": "document",
+      "text": "Refunds above one hundred euros must not be issued without human approval."
+    },
+    {
+      "id": "refund:cached-prompt",
+      "role": "document",
+      "text": "May refunds above one hundred euros be issued without human approval?"
+    },
+    {
+      "id": "refund:exact",
+      "role": "query",
+      "text": "May refunds above one hundred euros be issued without human approval?"
+    },
+    {
+      "id": "refund:paraphrase",
+      "role": "query",
+      "text": "Can a refund larger than one hundred euros be sent without a person approving it?"
+    },
+    {
+      "id": "refund:polarity",
+      "role": "query",
+      "text": "Is issuing refunds above one hundred euros without human approval forbidden?"
+    },
+    {
+      "id": "refund:denial",
+      "role": "query",
+      "text": "Refunds above one hundred euros must not be issued without human approval. May refunds above one hundred euros be issued without human approval?"
+    },
+    {
+      "id": "refund:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May refunds above one hundred euros be issued without human approval?"
+    },
+    {
+      "id": "backup:old-policy",
+      "role": "document",
+      "text": "Customer backups may be copied to a region outside the European Union."
+    },
+    {
+      "id": "backup:new-policy",
+      "role": "document",
+      "text": "Customer backups must not be copied to a region outside the European Union."
+    },
+    {
+      "id": "backup:cached-prompt",
+      "role": "document",
+      "text": "May customer backups be copied to a region outside the European Union?"
+    },
+    {
+      "id": "backup:exact",
+      "role": "query",
+      "text": "May customer backups be copied to a region outside the European Union?"
+    },
+    {
+      "id": "backup:paraphrase",
+      "role": "query",
+      "text": "Is storing a customer backup in a non-EU region permitted?"
+    },
+    {
+      "id": "backup:polarity",
+      "role": "query",
+      "text": "Is copying customer backups outside the European Union forbidden?"
+    },
+    {
+      "id": "backup:denial",
+      "role": "query",
+      "text": "Customer backups must not be copied to a region outside the European Union. May customer backups be copied to a region outside the European Union?"
+    },
+    {
+      "id": "backup:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May customer backups be copied to a region outside the European Union?"
+    },
+    {
+      "id": "guest:old-policy",
+      "role": "document",
+      "text": "External guests may read the confidential contract folder."
+    },
+    {
+      "id": "guest:new-policy",
+      "role": "document",
+      "text": "External guests must not read the confidential contract folder."
+    },
+    {
+      "id": "guest:cached-prompt",
+      "role": "document",
+      "text": "May external guests read the confidential contract folder?"
+    },
+    {
+      "id": "guest:exact",
+      "role": "query",
+      "text": "May external guests read the confidential contract folder?"
+    },
+    {
+      "id": "guest:paraphrase",
+      "role": "query",
+      "text": "Are people invited from outside the organization allowed to view the private contract documents?"
+    },
+    {
+      "id": "guest:polarity",
+      "role": "query",
+      "text": "Is reading the confidential contract folder forbidden for external guests?"
+    },
+    {
+      "id": "guest:denial",
+      "role": "query",
+      "text": "External guests must not read the confidential contract folder. May external guests read the confidential contract folder?"
+    },
+    {
+      "id": "guest:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May external guests read the confidential contract folder?"
+    },
+    {
+      "id": "release:old-policy",
+      "role": "document",
+      "text": "A production release may be deployed without a human approving the change."
+    },
+    {
+      "id": "release:new-policy",
+      "role": "document",
+      "text": "A production release must not be deployed without a human approving the change."
+    },
+    {
+      "id": "release:cached-prompt",
+      "role": "document",
+      "text": "May a production release be deployed without a human approving the change?"
+    },
+    {
+      "id": "release:exact",
+      "role": "query",
+      "text": "May a production release be deployed without a human approving the change?"
+    },
+    {
+      "id": "release:paraphrase",
+      "role": "query",
+      "text": "Is an unattended deployment to production permitted without a person signing off?"
+    },
+    {
+      "id": "release:polarity",
+      "role": "query",
+      "text": "Is deploying a production release without human approval forbidden?"
+    },
+    {
+      "id": "release:denial",
+      "role": "query",
+      "text": "A production release must not be deployed without a human approving the change. May a production release be deployed without a human approving the change?"
+    },
+    {
+      "id": "release:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May a production release be deployed without a human approving the change?"
+    },
+    {
+      "id": "logging:old-policy",
+      "role": "document",
+      "text": "Audit logging may be disabled while responding to a security incident."
+    },
+    {
+      "id": "logging:new-policy",
+      "role": "document",
+      "text": "Audit logging must not be disabled while responding to a security incident."
+    },
+    {
+      "id": "logging:cached-prompt",
+      "role": "document",
+      "text": "May audit logging be disabled while responding to a security incident?"
+    },
+    {
+      "id": "logging:exact",
+      "role": "query",
+      "text": "May audit logging be disabled while responding to a security incident?"
+    },
+    {
+      "id": "logging:paraphrase",
+      "role": "query",
+      "text": "Is turning off audit records permitted during security incident response?"
+    },
+    {
+      "id": "logging:polarity",
+      "role": "query",
+      "text": "Is disabling audit logging during a security incident forbidden?"
+    },
+    {
+      "id": "logging:denial",
+      "role": "query",
+      "text": "Audit logging must not be disabled while responding to a security incident. May audit logging be disabled while responding to a security incident?"
+    },
+    {
+      "id": "logging:memory-query",
+      "role": "query",
+      "text": "What is the current rule? May audit logging be disabled while responding to a security incident?"
+    }
+  ],
+  "cases": [
+    {
+      "id": "restart:exact",
+      "family": "restart",
+      "variant": "exact",
+      "queryId": "restart:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "restart:paraphrase",
+      "family": "restart",
+      "variant": "paraphrase",
+      "queryId": "restart:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "restart:polarity",
+      "family": "restart",
+      "variant": "polarity",
+      "queryId": "restart:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "restart:denial",
+      "family": "restart",
+      "variant": "denial",
+      "queryId": "restart:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "restart:changed-version-same-question",
+      "family": "restart",
+      "variant": "changed-version-same-question",
+      "queryId": "restart:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "contacts:exact",
+      "family": "contacts",
+      "variant": "exact",
+      "queryId": "contacts:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "contacts:paraphrase",
+      "family": "contacts",
+      "variant": "paraphrase",
+      "queryId": "contacts:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "contacts:polarity",
+      "family": "contacts",
+      "variant": "polarity",
+      "queryId": "contacts:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "contacts:denial",
+      "family": "contacts",
+      "variant": "denial",
+      "queryId": "contacts:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "contacts:changed-version-same-question",
+      "family": "contacts",
+      "variant": "changed-version-same-question",
+      "queryId": "contacts:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "retention:exact",
+      "family": "retention",
+      "variant": "exact",
+      "queryId": "retention:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "retention:paraphrase",
+      "family": "retention",
+      "variant": "paraphrase",
+      "queryId": "retention:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "retention:polarity",
+      "family": "retention",
+      "variant": "polarity",
+      "queryId": "retention:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "retention:denial",
+      "family": "retention",
+      "variant": "denial",
+      "queryId": "retention:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "retention:changed-version-same-question",
+      "family": "retention",
+      "variant": "changed-version-same-question",
+      "queryId": "retention:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "refund:exact",
+      "family": "refund",
+      "variant": "exact",
+      "queryId": "refund:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "refund:paraphrase",
+      "family": "refund",
+      "variant": "paraphrase",
+      "queryId": "refund:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "refund:polarity",
+      "family": "refund",
+      "variant": "polarity",
+      "queryId": "refund:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "refund:denial",
+      "family": "refund",
+      "variant": "denial",
+      "queryId": "refund:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "refund:changed-version-same-question",
+      "family": "refund",
+      "variant": "changed-version-same-question",
+      "queryId": "refund:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "backup:exact",
+      "family": "backup",
+      "variant": "exact",
+      "queryId": "backup:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "backup:paraphrase",
+      "family": "backup",
+      "variant": "paraphrase",
+      "queryId": "backup:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "backup:polarity",
+      "family": "backup",
+      "variant": "polarity",
+      "queryId": "backup:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "backup:denial",
+      "family": "backup",
+      "variant": "denial",
+      "queryId": "backup:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "backup:changed-version-same-question",
+      "family": "backup",
+      "variant": "changed-version-same-question",
+      "queryId": "backup:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "guest:exact",
+      "family": "guest",
+      "variant": "exact",
+      "queryId": "guest:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "guest:paraphrase",
+      "family": "guest",
+      "variant": "paraphrase",
+      "queryId": "guest:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "guest:polarity",
+      "family": "guest",
+      "variant": "polarity",
+      "queryId": "guest:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "guest:denial",
+      "family": "guest",
+      "variant": "denial",
+      "queryId": "guest:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "guest:changed-version-same-question",
+      "family": "guest",
+      "variant": "changed-version-same-question",
+      "queryId": "guest:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "release:exact",
+      "family": "release",
+      "variant": "exact",
+      "queryId": "release:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "release:paraphrase",
+      "family": "release",
+      "variant": "paraphrase",
+      "queryId": "release:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "release:polarity",
+      "family": "release",
+      "variant": "polarity",
+      "queryId": "release:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "release:denial",
+      "family": "release",
+      "variant": "denial",
+      "queryId": "release:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "release:changed-version-same-question",
+      "family": "release",
+      "variant": "changed-version-same-question",
+      "queryId": "release:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "logging:exact",
+      "family": "logging",
+      "variant": "exact",
+      "queryId": "logging:exact",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "logging:paraphrase",
+      "family": "logging",
+      "variant": "paraphrase",
+      "queryId": "logging:paraphrase",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "YES"
+    },
+    {
+      "id": "logging:polarity",
+      "family": "logging",
+      "variant": "polarity",
+      "queryId": "logging:polarity",
+      "trustedPolicyRevision": "v1",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "logging:denial",
+      "family": "logging",
+      "variant": "denial",
+      "queryId": "logging:denial",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    },
+    {
+      "id": "logging:changed-version-same-question",
+      "family": "logging",
+      "variant": "changed-version-same-question",
+      "queryId": "logging:exact",
+      "trustedPolicyRevision": "v2",
+      "expectedAnswer": "NO"
+    }
+  ]
+}

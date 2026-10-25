@@ -1,0 +1,99 @@
+{
+  "schema": "context-research-summary/1",
+  "date": "2026-10-25",
+  "question": "Can a semantic cache reuse a yes/no answer after a policy or question polarity changes?",
+  "status": "completed fixed-fixture diagnostic",
+  "modelWindow": {
+    "startedAt": "2026-10-25T20:34:16.406569+00:00",
+    "endedAt": "2026-10-25T20:34:26.962218+00:00",
+    "command": "python3 embed_fixture.py"
+  },
+  "adapterWindow": {
+    "startedAt": "2026-10-25T21:30:06.359056+00:00",
+    "endedAt": "2026-10-25T21:32:25.546253+00:00",
+    "command": "python3 research/mongodb-ai-context-20261025/run_hosted.py; worker python /work/database_probe.py 251 and252"
+  },
+  "counts": {
+    "policyDomains": 8,
+    "uniqueAuthoredCases": 40,
+    "thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "cacheKeyArms": 2,
+    "repetitions": 2,
+    "actualCacheLookups": 480,
+    "postgresExactObservations": 96,
+    "persistedVectorReplacements": 16,
+    "checkedCurrentIndexScores": 256
+  },
+  "perRepetition": [
+    {
+      "threshold": 0.8,
+      "arm": "model-only",
+      "cases": 40,
+      "hits": 35,
+      "incompatibleReuses": 24,
+      "validHits": 11,
+      "validOpportunities": 16
+    },
+    {
+      "threshold": 0.8,
+      "arm": "trusted-tenant-model-policy-corpus",
+      "cases": 40,
+      "hits": 19,
+      "incompatibleReuses": 8,
+      "validHits": 11,
+      "validOpportunities": 16
+    },
+    {
+      "threshold": 0.9,
+      "arm": "model-only",
+      "cases": 40,
+      "hits": 0,
+      "incompatibleReuses": 0,
+      "validHits": 0,
+      "validOpportunities": 16
+    },
+    {
+      "threshold": 0.9,
+      "arm": "trusted-tenant-model-policy-corpus",
+      "cases": 40,
+      "hits": 0,
+      "incompatibleReuses": 0,
+      "validHits": 0,
+      "validOpportunities": 16
+    },
+    {
+      "threshold": 0.95,
+      "arm": "model-only",
+      "cases": 40,
+      "hits": 0,
+      "incompatibleReuses": 0,
+      "validHits": 0,
+      "validOpportunities": 16
+    },
+    {
+      "threshold": 0.95,
+      "arm": "trusted-tenant-model-policy-corpus",
+      "cases": 40,
+      "hits": 0,
+      "incompatibleReuses": 0,
+      "validHits": 0,
+      "validOpportunities": 16
+    }
+  ],
+  "memory": "Each repetition replaces eight tenant-a embeddings and checks 128 semantic scores against current vectors. Deleting tenant a leaves eight tenant-b records unchanged by live equality assertion and matching full-document hashes.",
+  "scoreScale": "MongoDB score=(1+cosine)/2; PostgreSQL control reports cosine.",
+  "modelRoleCaveat": "Stored cache questions use document instruction; lookup questions use query instruction. Higher-threshold misses are specific to this asymmetric configuration. Symmetric cache embeddings were not tested.",
+  "methodTiming": "Cases, labels and thresholds frozen locally before inference. Index-score validation was added after embedding observations but before any database execution. No public preregistration or universal threshold recommendation.",
+  "scope": "Official MongoDB cache/store adapters; PostgreSQL is an exact-vector control, not a competing semantic-cache implementation.",
+  "limitations": [
+    "Authored fictional policies and YES/NO cache fixtures, not generated answers or representative traffic.",
+    "Two repeats of the same frozen model outputs/cases are not independent corpora.",
+    "Namespaced privileged fixtures, not production identity authorization.",
+    "Search-index data uses a bounded RAM filesystem; no index durability or platform performance/cost result.",
+    "Full neighboring-document equality is asserted in the live worker; raw neighboring documents are not independently reconstructed by the audit."
+  ]
+}

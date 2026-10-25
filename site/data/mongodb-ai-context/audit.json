@@ -1,0 +1,400 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-10-25T21:33:27.155352+00:00",
+  "command": "python3 audit_adapter_results.py <downloaded-artifact-root>",
+  "scope": "Separate arithmetic on saved observations and source/hash/cleanup checks; not an independent database execution or production authorization proof",
+  "runId": "40235752175",
+  "runAttempt": "1",
+  "executionRevision": "004554acfec2a4454b4d6fd62481e4eb235e2cc7",
+  "manifestSha256": "2aa195f0d32b743ef949a49dc382ca0fc12408003f325f1ddadd1a16554e596a",
+  "repetitions": [
+    {
+      "repetitionLabel": "251",
+      "resultSha256": "6e904d2cb944856cea1fc8cf3d751ef13127f109dd8cedc83d1ebf10778e2855",
+      "cacheLookups": 240,
+      "postgresExactObservations": 48,
+      "updatedMemoryVectors": 8,
+      "indexScoreObservations": 128,
+      "summaries": [
+        {
+          "threshold": 0.8,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 35,
+          "incompatibleReuses": 24,
+          "validHits": 11,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.8,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 19,
+          "incompatibleReuses": 8,
+          "validHits": 11,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.9,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.9,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.95,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.95,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        }
+      ]
+    },
+    {
+      "repetitionLabel": "252",
+      "resultSha256": "b9c77a9c6528fee9487a3751d553aa2a55694356ab5487f663e3c3a873ebbc07",
+      "cacheLookups": 240,
+      "postgresExactObservations": 48,
+      "updatedMemoryVectors": 8,
+      "indexScoreObservations": 128,
+      "summaries": [
+        {
+          "threshold": 0.8,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 35,
+          "incompatibleReuses": 24,
+          "validHits": 11,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.8,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 19,
+          "incompatibleReuses": 8,
+          "validHits": 11,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.9,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.9,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.95,
+          "arm": "model-only",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        },
+        {
+          "threshold": 0.95,
+          "arm": "trusted-tenant-model-policy-corpus",
+          "cases": 40,
+          "hits": 0,
+          "incompatibleReuses": 0,
+          "validHits": 0,
+          "validOpportunities": 16
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "stage": "ready",
+      "at": "2026-10-25T21:31:40.791638+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 3.47MB",
+            "CPUPerc": "6.64%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "26.25%",
+            "MemUsage": "403.2MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "1.43kB / 126B",
+            "PIDs": "233"
+          },
+          "cgroupPids": "pids.current\n235\npids.max\n1024\npids.events\nmax 0\npids.peak\n253\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 131066,
+            "blocksAvailable": 131066
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536846336.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 4.57763671875e-05
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 52.4MB",
+            "CPUPerc": "0.03%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "4.92%",
+            "MemUsage": "25.2MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "1.28kB / 126B",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n12\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.20%",
+            "MemUsage": "1.523MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "1.43kB / 126B",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n7\n"
+        }
+      }
+    },
+    {
+      "stage": "after-worker-251",
+      "at": "2026-10-25T21:32:01.745011+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 4.15MB",
+            "CPUPerc": "10.49%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "33.12%",
+            "MemUsage": "508.8MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "50.1kB / 1.38MB",
+            "PIDs": "266"
+          },
+          "cgroupPids": "pids.current\n265\npids.max\n1024\npids.events\nmax 0\npids.peak\n274\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 131001,
+            "blocksAvailable": 131001
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536580096.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 0.00054168701171875
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 53.9MB",
+            "CPUPerc": "0.02%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "5.48%",
+            "MemUsage": "28.04MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "1.38MB / 48.8kB",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n12\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 19MB",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.41%",
+            "MemUsage": "3.133MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "50.1kB / 1.38MB",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n9\n"
+        }
+      }
+    },
+    {
+      "stage": "after-worker-252",
+      "at": "2026-10-25T21:32:19.222691+00:00",
+      "containers": {
+        "mongo": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 1024
+          },
+          "stats": {
+            "BlockIO": "0B / 5.1MB",
+            "CPUPerc": "8.06%",
+            "Container": "mai-context-40235752175-1-mongo",
+            "ID": "c56b1acd33cd",
+            "MemPerc": "34.27%",
+            "MemUsage": "526.4MiB / 1.5GiB",
+            "Name": "mai-context-40235752175-1-mongo",
+            "NetIO": "98.9kB / 2.75MB",
+            "PIDs": "264"
+          },
+          "cgroupPids": "pids.current\n266\npids.max\n1024\npids.events\nmax 0\npids.peak\n274\n",
+          "searchFilesystem": {
+            "filesystemType": "tmpfs",
+            "blockSize": 4096,
+            "blocks": 131072,
+            "blocksFree": 130932,
+            "blocksAvailable": 130932
+          },
+          "searchMount": {
+            "/data/mongot": "rw,nosuid,nodev,noexec,size=512m,uid=1000,gid=1000,mode=0700"
+          },
+          "diskMetrics": {
+            "freeBytes": 536350720.0,
+            "totalBytes": 536870912.0,
+            "usedFraction": 0.00096893310546875
+          }
+        },
+        "postgres": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 54.8MB",
+            "CPUPerc": "0.03%",
+            "Container": "mai-context-40235752175-1-postgres",
+            "ID": "5f9723941744",
+            "MemPerc": "5.63%",
+            "MemUsage": "28.8MiB / 512MiB",
+            "Name": "mai-context-40235752175-1-postgres",
+            "NetIO": "2.75MB / 97.5kB",
+            "PIDs": "6"
+          },
+          "cgroupPids": "pids.current\n8\npids.max\n256\npids.events\nmax 0\npids.peak\n13\n"
+        },
+        "worker": {
+          "state": {
+            "oomKilled": false,
+            "exitCode": 0,
+            "status": "running",
+            "pidsLimit": 256
+          },
+          "stats": {
+            "BlockIO": "0B / 38MB",
+            "CPUPerc": "0.00%",
+            "Container": "mai-context-40235752175-1-worker",
+            "ID": "2d3475d65d06",
+            "MemPerc": "0.41%",
+            "MemUsage": "3.176MiB / 768MiB",
+            "Name": "mai-context-40235752175-1-worker",
+            "NetIO": "98.9kB / 2.75MB",
+            "PIDs": "1"
+          },
+          "cgroupPids": "pids.current\n3\npids.max\n256\npids.events\nmax 0\npids.peak\n9\n"
+        }
+      }
+    }
+  ],
+  "defaultSearchFilesystem": {
+    "filesystemType": "overlayfs",
+    "blockSize": 4096,
+    "blocks": 18771278,
+    "blocksFree": 2618857,
+    "blocksAvailable": 2614761
+  },
+  "earlierAttempts": [
+    "40232379286 and40233143414 failed beforesemanticobservations; both retained separately"
+  ],
+  "notes": [
+    "Two repeats of the same authored fixture are not independent corpora.",
+    "Neighbor full-document preservation is attested by the live worker equality assertion plus equal before/after digests; raw neighbor documents are not independently reconstructed by this audit.",
+    "The search index uses a disposable bounded RAM filesystem; this is not an index-durability or production-storage result."
+  ]
+}

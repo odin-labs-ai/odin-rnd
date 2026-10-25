@@ -1,0 +1,68 @@
+{
+  "schema": "mongodb-ai-context-protocol/1",
+  "revision": 1,
+  "frozenAt": "2026-10-25T20:34:15.056925+00:00",
+  "fixtureSha256": "df76406b572d78867eb1ab32e34b3fe9302dfd45e6cc14f48c71d5aaebbaa497",
+  "model": {
+    "id": "MongoDB/voyage-4-nano-GGUF",
+    "revision": "03547551689253732502486d62de4cd0970d6564",
+    "quantization": "Q8_0",
+    "sha256": "c6ed6cc898d50ae1a4492809affadc6c0d023f8ac05c07a37abe20c563152560"
+  },
+  "embeddings": {
+    "rawDimensions": 2048,
+    "retainedDimensions": 512,
+    "normalization": "Unicode NFC; first 512 coordinates then L2 normalization",
+    "documentPrefix": "Represent the document for retrieval: ",
+    "queryPrefix": "Represent the query for retrieving supporting documents: "
+  },
+  "runtime": "llama.cpp b11865, Darwin x86_64 CPU, authenticated UNIX socket; no paid inference",
+  "counts": {
+    "families": 8,
+    "embeddingInputs": 64,
+    "cacheCases": 40,
+    "thresholds": 3,
+    "cacheArms": 2
+  },
+  "thresholds": [
+    0.8,
+    0.9,
+    0.95
+  ],
+  "cacheArms": [
+    "model-only",
+    "trusted-tenant-model-policy-corpus"
+  ],
+  "cacheCandidates": "One independently scoped cached question and YES answer per family; no cross-family competition in the cache diagnostic.",
+  "scores": "MongoDB cosine score is (1 + cosine)/2; report raw cosine separately. Threshold comparison uses MongoDB score.",
+  "hypotheses": [
+    "Identical cached question with a changed trusted policy revision can reuse an obsolete answer under a model-only key.",
+    "Trusted revision binding excludes changed-policy cache entries, while a polarity reversal within the same revision may still reuse an incompatible answer.",
+    "Raising a fixed similarity threshold may reduce both incompatible reuse and valid paraphrase hits; select no winning threshold from this authored fixture.",
+    "A memory correction must change the persisted embedding as well as direct and semantic value visibility; deletion must preserve the neighboring namespace."
+  ],
+  "cacheMeasures": [
+    "Hits and incompatible YES reuse by variant/arm/threshold",
+    "Valid exact/paraphrase hit retention; report all cases and scores, including misses"
+  ],
+  "adapterPlan": {
+    "engine": "Official pinned MongoDBAtlasSemanticCache and MongoDBStore; PostgreSQL exact-vector control if available",
+    "repetitions": [
+      251,
+      252
+    ],
+    "memoryChecks": "Capture persisted old/new embeddings and semantic values; require new embedding matches recorded replacement text, old state absent after visibility; delete tenant a, retain tenant b",
+    "isolation": "Only labeled disposable resources; no host-bound database ports or cloud credentials"
+  },
+  "interpretationLimits": [
+    "Researcher-authored, explicitly paired questions and labels; not a population false-hit rate or independent human benchmark.",
+    "No generative LLM answer or autonomous extraction is run; YES/NO answers are authored cache fixtures.",
+    "Context binding uses trusted application metadata; namespace/filter tests are not a production authorization audit.",
+    "Score analysis and context-key oracle alone do not establish adapter runtime behavior; record database stages as unrun until executed.",
+    "No production readiness, comparative performance, cost or platform-winner claim."
+  ],
+  "sources": [
+    "https://langchain-mongodb.readthedocs.io/en/latest/_modules/langchain_mongodb/cache.html",
+    "https://langchain-mongodb.readthedocs.io/en/latest/langgraph_store_mongodb/base/langgraph.store.mongodb.base.MongoDBStore.html"
+  ]
+}
