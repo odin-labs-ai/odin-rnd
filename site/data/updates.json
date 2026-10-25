@@ -208,7 +208,7 @@
       "experiment": null,
       "title": "Where would MongoDB earn a place in Odin?",
       "kind": "Field note",
-      "text": "99,000 requests and a separate 19,800-request repeat found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives, for these workloads on one machine. All seventeen outcomes and the durability amendment are retained; a study of MongoDB's own mechanisms exists as a design draft and has not run.",
+      "text": "99,000 requests and a separate 19,800-request repeat found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives, for these workloads on one machine. All seventeen outcomes and the durability amendment are retained.",
       "href": "journal/mongodb-primitive-fit.html",
       "source": "journal/mongodb-primitive-fit.html",
       "date": "2026-10-19"
@@ -218,7 +218,7 @@
       "experiment": null,
       "title": "Does flexible workflow data need MongoDB?",
       "kind": "Field note",
-      "text": "Both stores passed 20,000 operations, 42 correctness checks and ten evolution suites behind Temporal activities. For this workload, a MongoDB advantage remains unresolved and flexible JSON alone gave no demonstrated reason to switch; a study of MongoDB's own mechanisms exists as a design draft and has not run.",
+      "text": "Both stores passed 20,000 operations, 42 correctness checks and ten evolution suites behind Temporal activities. For this workload, a MongoDB advantage remains unresolved and flexible JSON alone gave no demonstrated reason to switch.",
       "href": "journal/mongodb-temporal-document-fit.html",
       "source": "journal/mongodb-temporal-document-fit.html",
       "date": "2026-10-19"
