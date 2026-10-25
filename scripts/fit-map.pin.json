@@ -1,0 +1,8 @@
+{
+ "format": "odin-fit-map-pin",
+ "version": 1,
+ "file": "site/data/labs/fit-map.json",
+ "fileSha256": "d35f6ee7cf2293469a47cea151a345600b5118971836e6537f740ae4458e38e0",
+ "commit": "14a29c9dedc4b1d0c7edd6d3da78a55f5dadde61",
+ "sourceSha256": "89870a85f42f025a79b01129a0ccae8c4292a4ab42920323ac109466199df1e5"
+}
