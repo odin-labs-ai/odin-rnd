@@ -100,9 +100,10 @@ export function vendor({ commit, packBytes, sessionBytes, claimsBytes, ancestry,
     if (packStatus !== undefined && packStatus !== status) problems.push(`claim ${figure.claim}: the pack says ${packStatus}, its claims row says ${status}`);
     const pinned = HEX40.test(pin[String(figure.claim)] ?? '') ? pin[String(figure.claim)] : null;
     const source = { row, status, commit: /^[0-9a-f]{7,40}$/.test(c) ? c : pinned };
+    // A code commit or merge enters the source only once it is a 40-hex commit; anything else is refused, never copied.
     for (const [key, value] of Object.entries({ code_commit, merge })) if (value !== undefined) {
-      if (!HEX40.test(value)) problems.push(`claim ${figure.claim}: its ${key.replace('_', ' ')} is not a 40-hex commit`);
-      source[key] = value;
+      if (HEX40.test(value)) source[key] = value;
+      else problems.push(`claim ${figure.claim}: its ${key.replace('_', ' ')} ${JSON.stringify(value)} is not a 40-hex commit`);
     }
     if (note !== undefined) source.note = note;
     if (claimsRow) problems.push(...figureVsRow({ ...figure, source }, claimsRow));

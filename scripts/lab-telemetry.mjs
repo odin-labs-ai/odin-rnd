@@ -68,12 +68,14 @@ const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').r
 
 // Strings under a `source` are public labels, dates and commits, screened like every other word: a path is refused.
 // A commit is a run of hex digits, so it may hold nine digits in a row; for a commit field that is exactly a commit,
-// that one reason (a long number) is not a hit. Every other reason, a name or a place included, still is.
+// that one reason (LONG_NUMBER, matched exactly) is not a hit. Every other reason, a name or a place included, still is.
 const COMMIT_KEY = /(^|\/)(commit|code_commit|merge|run_commit|onMain)$/;
+export const LONG_NUMBER = 'a phone number, timestamp or long internal id';
+export const isCommitField = (path, value) => COMMIT_KEY.test(path) && /^[0-9a-f]{7,40}$/.test(value);
 function sourceProblems(source, at) {
   const out = [];
   (function walk(v, p) {
-    if (typeof v === 'string') out.push(...screenHits(v).filter(hit => !(COMMIT_KEY.test(p) && /^[0-9a-f]{7,40}$/.test(v) && hit.reason.startsWith('a phone number'))).map(hit => `${p}: ${hit.reason}`));
+    if (typeof v === 'string') out.push(...screenHits(v).filter(hit => !(isCommitField(p, v) && hit.reason === LONG_NUMBER)).map(hit => `${p}: ${hit.reason}`));
     else if (v && typeof v === 'object') for (const [k, c] of Object.entries(v)) walk(c, `${p}/${k}`);
   })(source, at);
   return out;

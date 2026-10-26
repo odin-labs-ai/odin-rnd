@@ -66,6 +66,12 @@ test('the pack\'s own status must agree with the claims row, and every commit a 
   assert.deepEqual(telemetryProblems(ok), []);
 });
 
+test('a code commit or merge that is not a 40-hex commit is refused and never copied into the source', () => {
+  const base = inputs();
+  const pack = JSON.parse(base.packBytes); pack.engine[0].source.merge = 'lane/scale-1000';
+  assert.throws(() => vendor({ commit: 'd'.repeat(40), ...base, packBytes: Buffer.from(JSON.stringify(pack)) }), /its merge "lane\/scale-1000" is not a 40-hex commit/);
+});
+
 test('a MAIN row whose commit is not an ancestor of main is refused; the label alone is not enough', () => {
   assert.throws(() => run({ behind: 3 }), /does not show commit 3b74a4e0 as an ancestor of main/);
   assert.throws(() => vendor({ commit: 'd'.repeat(40), ...inputs(), ancestry: { ...inputs().ancestry, commits: {} } }), /as an ancestor of main/);
