@@ -11,15 +11,20 @@
 //   - it misses the schema: every object is closed, so an internal field (a post id, a channel, a user, a run id, a
 //     private path) is refused by name;
 //   - a record has evidence in neither tier. Tier 1, "checkable here": a PR or commit of a public repository
-//     (PUBLIC_REPOS, its link naming exactly that PR or commit), a proof id a published dispatch shows, or a link to
-//     this site or a public repository that resolves to something published here. Tier 2, "cited by hash": a full
+//     (PUBLIC_REPOS) that this site's delivery record shows as published (a merged PR, or a head, merge or deploy
+//     commit; the build has no network and a shallow checkout, so that record is the proof of existence), its link
+//     naming exactly that PR or commit; a proof id a published dispatch shows, linked to a page that shows it (Lab 01,
+//     its session anchor or its dispatch record); or a link to this site or a public repository that resolves to
+//     something published here. A link carries no query, a fragment only as a plain #anchor, and its path text passes
+//     the screen. Tier 2, "cited by hash": a full
 //     40-hex private commit, with no repository name or path, checked when produced to be an ancestor of the private
 //     main head the record names (mainCheck {main, how, checked}; each such item's onMain is that head). The page says
 //     beside it that it cannot check it, and anyone with access can;
 //   - its counts do not reconcile with its records, or a quote is longer than 25 words, or any text fails the
 //     publisher's screen or the private test game's world terms (benchScreen);
 //   - a sentence mentions a review, reviewer, jury, judge or advocate without saying, in that sentence, that it is AI;
-//   - records are out of date order, outside the record's window, or dated after the build;
+//   - a date is not a real calendar date (2026-99-99 is refused, never compared), the window runs backwards, or
+//     records are out of date order, outside the record's window, or dated after the build;
 //   - an id repeats or does not match its kind, or a picture is not a file already published under this lab's assets.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -81,26 +86,84 @@ function resolves(url, root) {
   return path === '/odin-labs-ai/odin-rnd' || /^\/odin-labs-ai\/odin-rnd\/(pull\/\d+|commit\/[0-9a-f]{40})$/.test(path);
 }
 
-/** Every proof id a published dispatch shows. */
+/** Every proof id a published dispatch shows, mapped to the sessions (dispatch names) that show it. */
 function publishedProofIds(root) {
   const dir = join(root, 'data/labs/agent-space/dispatches');
-  if (!existsSync(dir)) return new Set();
-  return new Set(readdirSync(dir).filter(n => n.endsWith('.json')).flatMap(n => {
-    const d = JSON.parse(readFileSync(join(dir, n), 'utf8'));
-    return [...(d.questions ?? []).map(q => q.evidence), ...(d.answersScreen?.answers ?? []).map(a => a.evidence)];
-  }));
+  const ids = new Map();
+  if (!existsSync(dir)) return ids;
+  for (const name of readdirSync(dir).filter(n => n.endsWith('.json'))) {
+    const d = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+    for (const id of [...(d.questions ?? []).map(q => q.evidence), ...(d.answersScreen?.answers ?? []).map(a => a.evidence)]) {
+      ids.set(id, new Set([...(ids.get(id) ?? []), name.replace(/\.json$/, '')]));
+    }
+  }
+  return ids;
 }
 
+export const DELIVERY_FILE = 'data/labs/delivery/odin-rnd.json';
+/**
+ * The PRs and commits this site's own delivery record (scripts/lab-delivery.mjs gates it) shows as published: each
+ * merged PR's number, and every head, merge and deploy commit it names. The build has no network and the CI checkout
+ * is shallow (one commit), so this record, not GitHub and not git history, is what proves a PR or commit exists.
+ */
+export function publishedObjects(root) {
+  const file = join(root, DELIVERY_FILE);
+  if (!existsSync(file)) return { prs: new Set(), commits: new Set() };
+  const record = JSON.parse(readFileSync(file, 'utf8'));
+  const repo = PUBLIC_REPOS[0];
+  const rows = (record.records ?? []).filter(r => r.repo === repo);
+  return {
+    prs: new Set(rows.filter(r => r.kind === 'pr' && r.state === 'merged').map(r => r.pr)),
+    commits: new Set(rows.filter(r => /^[0-9a-f]{40}$/.test(r.ref ?? '')).map(r => r.ref)),
+  };
+}
+
+const SITE_ROOT = 'https://odin-labs-ai.github.io/odin-rnd/';
+/** The pages that show a proof: Lab 01 (optionally at the session's anchor) and each published dispatch that holds it. */
+const proofPages = sessions => [`${SITE_ROOT}labs/agent-space/`, ...[...sessions].flatMap(s => [`${SITE_ROOT}labs/agent-space/#${s}`, `${SITE_ROOT}data/labs/agent-space/dispatches/${s}.json`])];
+
 /** Why one evidence item is not evidence (empty when it is). Tier 2 (private-commit) is checked against mainCheck by the caller. */
-export function evidenceProblems(item, at, root, proofIds = publishedProofIds(root)) {
+export function evidenceProblems(item, at, root, proofIds = publishedProofIds(root), objects = publishedObjects(root)) {
   if (item.type === 'private-commit') return [];
   const problems = [];
   if (!isPublicUrl(item.url)) return [`${at}: ${item.url} is not a public repository or this site`];
-  if (item.type === 'pr' && item.url !== `https://github.com/${PUBLIC_REPOS[0]}/pull/${item.number}`) problems.push(`${at}: the link is not PR #${item.number} of ${PUBLIC_REPOS[0]}`);
-  if (item.type === 'commit' && item.url !== `https://github.com/${PUBLIC_REPOS[0]}/commit/${item.sha}`) problems.push(`${at}: the link is not commit ${item.sha} of ${PUBLIC_REPOS[0]}`);
-  if (item.type === 'proof' && !proofIds.has(item.id)) problems.push(`${at}: proof ${item.id} is not shown by any published dispatch`);
+  // No free text rides in a link: no query at all, and a fragment only as a plain page anchor.
+  const u = new URL(item.url);
+  if (u.search || item.url.includes('?')) problems.push(`${at}: a link carries no query (${item.url})`);
+  if (u.hash && !/^#[a-z0-9-]+$/.test(u.hash)) problems.push(`${at}: a link's fragment is a plain page anchor (#[a-z0-9-]+), not ${JSON.stringify(u.hash)}`);
+  if (item.type === 'pr') {
+    if (item.url !== `https://github.com/${PUBLIC_REPOS[0]}/pull/${item.number}`) problems.push(`${at}: the link is not PR #${item.number} of ${PUBLIC_REPOS[0]}`);
+    if (!objects.prs.has(item.number)) problems.push(`${at}: PR #${item.number} is not a merged PR in this site's delivery record (${DELIVERY_FILE})`);
+  }
+  if (item.type === 'commit') {
+    if (item.url !== `https://github.com/${PUBLIC_REPOS[0]}/commit/${item.sha}`) problems.push(`${at}: the link is not commit ${item.sha} of ${PUBLIC_REPOS[0]}`);
+    if (!objects.commits.has(item.sha)) problems.push(`${at}: commit ${item.sha} is not a head, merge or deploy commit in this site's delivery record (${DELIVERY_FILE})`);
+  }
+  if (item.type === 'proof') {
+    const sessions = proofIds.get(item.id);
+    if (!sessions) problems.push(`${at}: proof ${item.id} is not shown by any published dispatch`);
+    else if (!proofPages(sessions).includes(item.url)) problems.push(`${at}: ${item.url} is not a page that shows proof ${item.id} (Lab 01, its session anchor or its dispatch record)`);
+  }
   if (!resolves(item.url, root)) problems.push(`${at}: ${item.url} does not resolve to anything this site or repository publishes`);
   return problems;
+}
+
+/** The free text in a public link (its decoded path), screened for everything but being a path. */
+export function urlTextProblems(url) {
+  let u;
+  try { u = new URL(url); } catch { return []; }
+  const text = `${decodeURIComponent(u.pathname)} ${decodeURIComponent(u.search)} ${decodeURIComponent(u.hash)}`.replace(/[/?&=#]+/g, ' ');
+  return benchScreen(text).filter(reason => !reason.startsWith('a file path'));
+}
+
+// A date the schema's pattern accepts must also be a real one: 2026-99-99 or 25:61 is refused, never compared.
+export function realDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?Z)?$/.exec(iso ?? '');
+  if (!m) return null;
+  const [, y, mo, d, h = '0', mi = '0', se = '0'] = m.map(v => v);
+  const date = new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +se));
+  const ok = date.getUTCFullYear() === +y && date.getUTCMonth() === +mo - 1 && date.getUTCDate() === +d && date.getUTCHours() === +h && date.getUTCMinutes() === +mi && date.getUTCSeconds() === +se;
+  return ok ? date : null;
 }
 
 const ACTOR_SENTENCE = /\b(review\w*|jury|juries|judge\w*|advocate\w*|refute\w*)\b/i;
@@ -110,7 +173,12 @@ const sentences = text => text.split(/(?<=[.!?:])\s+/);
 export function milestonesProblems(record, { root = 'site', now = new Date(), where = MILESTONES_FILE } = {}) {
   const problems = validate(JSON.parse(readFileSync(MILESTONES_SCHEMA_FILE, 'utf8')), record).map(problem => `${where}#${problem} (does not match odin-milestones v1)`);
   if (problems.length) return problems;
-  const proofIds = publishedProofIds(root);
+  const proofIds = publishedProofIds(root), objects = publishedObjects(root);
+  const from = realDate(record.window.from), to = realDate(record.window.to);
+  if (!from) problems.push(`${where}#/window/from: ${record.window.from} is not a real date`);
+  if (!to) problems.push(`${where}#/window/to: ${record.window.to} is not a real date`);
+  if (from && to && from > to) problems.push(`${where}#/window: from ${record.window.from} is after to ${record.window.to}`);
+  if (record.mainCheck && !realDate(record.mainCheck.checked)) problems.push(`${where}#/mainCheck/checked: ${record.mainCheck.checked} is not a real date`);
   const screen = (text, at) => benchScreen(text).map(reason => `${at}: ${reason}`);
   const ids = new Set();
   let last = null;
@@ -124,11 +192,14 @@ export function milestonesProblems(record, { root = 'site', now = new Date(), wh
     if (ids.has(item.id)) problems.push(`${at}/id: ${item.id} is listed twice`);
     ids.add(item.id);
     if (!item.id.startsWith(`${item.kind}-`)) problems.push(`${at}/id: ${item.id} is not a ${item.kind} id`);
-    const when = new Date(item.at);
-    if (when > now) problems.push(`${at}/at: ${item.at} is after this build (${now.toISOString()})`);
-    if (last && when < last) problems.push(`${at}/at: ${item.at} comes before the record above it`);
-    if (when < new Date(record.window.from) || when > new Date(record.window.to)) problems.push(`${at}/at: ${item.at} is outside the record's window`);
-    last = when;
+    const when = realDate(item.at);
+    if (!when) problems.push(`${at}/at: ${item.at} is not a real date`);
+    else {
+      if (when > now) problems.push(`${at}/at: ${item.at} is after this build (${now.toISOString()})`);
+      if (last && when < last) problems.push(`${at}/at: ${item.at} comes before the record above it`);
+      if (!from || !to || when < from || when > to) problems.push(`${at}/at: ${item.at} is outside the record's window`);
+      last = when;
+    }
     const texts = { title: item.title, body: item.body, ...(item.quote ? { quote: item.quote } : {}) };
     for (const [field, text] of Object.entries(texts)) {
       problems.push(...screen(text, `${at}/${field}`));
@@ -136,8 +207,8 @@ export function milestonesProblems(record, { root = 'site', now = new Date(), wh
     }
     if (item.quote && words(item.quote) > MAX_QUOTE_WORDS) problems.push(`${at}/quote: ${words(item.quote)} words, over ${MAX_QUOTE_WORDS}`);
     for (const [j, ev] of item.evidence.entries()) {
-      problems.push(...evidenceProblems(ev, `${at}/evidence/${j}`, root, proofIds));
-      if (ev.url) problems.push(...benchScreen(ev.url).filter(r => /^a (restricted name|place name|name from the private)/.test(r)).map(r => `${at}/evidence/${j}: ${r}`));
+      problems.push(...evidenceProblems(ev, `${at}/evidence/${j}`, root, proofIds, objects));
+      if (ev.url) problems.push(...urlTextProblems(ev.url).map(r => `${at}/evidence/${j}: ${r}`));
       if (ev.type === 'private-commit' && record.mainCheck && ev.onMain !== record.mainCheck.main) problems.push(`${at}/evidence/${j}/onMain: a private commit must name the main head it was checked against (${record.mainCheck.main})`);
     }
     if (item.visual) {
@@ -166,7 +237,7 @@ export function readMilestones(root = 'site', { now = new Date(), pin } = {}) {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const when = iso => { const d = new Date(iso); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC</time>`; };
+const when = iso => { const d = realDate(iso) ?? new Date(NaN); if (Number.isNaN(d.getTime())) throw new Error(`not a real date: ${iso}`); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC</time>`; };
 /** One evidence item as a link a reader can follow (tier 2 as a plain statement: there is nothing public to open). */
 export function evidenceLink(ev) {
   switch (ev.type) {

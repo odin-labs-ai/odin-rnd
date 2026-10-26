@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink, tierOf } from './lab-milestones.mjs';
+import { MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, publishedObjects, realDate, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink, tierOf } from './lab-milestones.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 01's story gate (founder plans 1 and 2): evidence in one of two tiers, short screened quotes, date order, AI
@@ -133,4 +133,42 @@ test('the story page template never ships without its record', () => {
     writeFileSync(join(root, STORY_PAGE), readFileSync('site/labs/agent-space/story/index.html'));
     assert.throws(() => renderLabs(root), /the story page ships without its record/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// Review of #99 (row FIX-NEEDED, step 2): each bypass below passed the first gate and is refused now.
+test('a PR or commit must exist in this site\'s delivery record: an invented one is refused', () => {
+  const objects = publishedObjects('site');
+  assert.ok(objects.prs.has(81) && objects.prs.has(78), 'the delivery record shows merged PRs');
+  assert.match(dispatch(r => { r.evidence[0] = { type: 'pr', number: 9999, url: 'https://github.com/odin-labs-ai/odin-rnd/pull/9999' }; }), /PR #9999 is not a merged PR in this site's delivery record/);
+  const zero = '0'.repeat(40);
+  assert.match(dispatch(r => { r.evidence[0] = { type: 'commit', sha: zero, url: `https://github.com/odin-labs-ai/odin-rnd/commit/${zero}` }; }), /commit 0{40} is not a head, merge or deploy commit in this site's delivery record/);
+  const real = [...objects.commits][0];
+  assert.equal(dispatch(r => { r.evidence[0] = { type: 'commit', sha: real, url: `https://github.com/odin-labs-ai/odin-rnd/commit/${real}` }; }), '');
+});
+
+test('a proof is linked to a page that shows it, never to an unrelated file that happens to exist', () => {
+  assert.match(dispatch(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/assets/lab-story.css'; }), /is not a page that shows proof odin-381dbb-1/);
+  assert.match(dispatch(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/'; }), /is not a page that shows proof/);
+  for (const url of ['https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/#session-2026-10-25-b', 'https://odin-labs-ai.github.io/odin-rnd/data/labs/agent-space/dispatches/session-2026-10-25-b.json']) {
+    assert.equal(dispatch(r => { r.evidence[1].url = url; }), '', url);
+  }
+});
+
+test('a link carries no query and only a plain anchor, and its path text passes every screen', () => {
+  assert.match(films(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/?note=It cost €40'; }), /a link carries no query/);
+  assert.match(films(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/?note=It%20cost%20%E2%82%AC40'; }), /a link carries no query[\s\S]*a price or currency amount|a price or currency amount[\s\S]*a link carries no query|a link carries no query/);
+  assert.match(films(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/#It costs €40'; }), /fragment is a plain page anchor/);
+  assert.match(films(r => { r.evidence[1].url = `https://odin-labs-ai.github.io/odin-rnd/labs/${reverse('nrooH')}/`; }), /a place name/);
+  assert.equal(films(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/#built'; }), '');
+});
+
+test('an invalid date is refused, never compared; the window must run forwards', () => {
+  assert.equal(realDate('2026-99-99T00:00:00Z'), null);
+  assert.equal(realDate('2026-02-30T00:00:00Z'), null);
+  assert.equal(realDate('2026-10-25T24:00:00Z'), null);
+  assert.ok(realDate('2026-10-25T08:40:00Z'));
+  assert.match(dispatch(r => { r.at = '2026-99-99T00:00:00Z'; }), /records\/1\/at: 2026-99-99T00:00:00Z is not a real date/);
+  assert.match(dispatch((r, rec) => { rec.window.to = '2026-13-01T00:00:00Z'; }), /window\/to: .* is not a real date/);
+  assert.match(dispatch((r, rec) => { rec.window = { from: rec.window.to, to: rec.window.from }; }), /window: from .* is after to/);
+  assert.match(tier2((r, rec) => { rec.mainCheck.checked = '2026-02-30'; }), /mainCheck\/checked: 2026-02-30 is not a real date/);
 });
