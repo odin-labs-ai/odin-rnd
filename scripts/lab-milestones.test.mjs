@@ -1,34 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { tierOf, MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink } from './lab-milestones.mjs';
+import { MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink, tierOf } from './lab-milestones.mjs';
 import { renderLabs } from './labs.mjs';
 
-// Lab 01's story gate (founder plans 1 and 2): public evidence only, short screened quotes, date order, AI reviewers
-// labelled, bytes pinned. These run against a hand-made fixture (scripts/fixtures/milestones/), not the real record.
+// Lab 01's story gate (founder plans 1 and 2): evidence in one of two tiers, short screened quotes, date order, AI
+// reviewers labelled in the same sentence, counts reconciled, bytes pinned. These run against a hand-made fixture
+// (scripts/fixtures/milestones/), in the producer's shape, not the real record.
 const FIXTURE = JSON.parse(readFileSync('scripts/fixtures/milestones/milestones.json', 'utf8'));
 const clone = value => JSON.parse(JSON.stringify(value));
 const NOW = new Date('2026-10-26T12:00:00Z');
 const problems = record => milestonesProblems(record, { root: 'site', now: NOW }).join('\n');
 const reverse = text => [...text].reverse().join('');
-const withBeat = fn => { const r = clone(FIXTURE); fn(r.beats[0], r); return problems(r); };
-const withMoment = fn => { const r = clone(FIXTURE); fn(r.moments[0], r); return problems(r); };
+const at = i => fn => { const r = clone(FIXTURE); fn(r.records[i], r); return problems(r); };
+const tier2 = at(0), dispatch = at(1), moment = at(2), correction = at(3), films = at(4);
 
-test('the fixture passes: public evidence, screened words, date order, an AI reviewer labelled', () => {
+test('the fixture passes: both tiers, screened words, date order, AI reviews labelled', () => {
   assert.equal(problems(FIXTURE), '');
 });
 
-test('evidence must be public: a private repository, an unknown proof id, a film moment past its end, a link elsewhere are refused', () => {
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'commit', repo: 'odin-labs-ai/private-engine', sha: 'a'.repeat(40) }]; }), /is not a public repository/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'pr', repo: 'odin-labs-ai/private-engine', number: 3 }]; }), /is not a public repository/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'proof', id: 'odin-000000-9', record: 'data/labs/agent-space/dispatches/session-2026-10-25-b.json' }]; }), /proof odin-000000-9 is not in/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'proof', id: 'odin-381dbb-1', record: 'data/labs/agent-space/dispatches/session-2026-01-01.json' }]; }), /is not a published dispatch/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'film', film: 'agent-space-tour', atSeconds: 9999 }]; }), /past the end of agent-space-tour/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'film', film: 'a-staged-demo', atSeconds: 1 }]; }), /is not a published film/);
-  assert.match(withBeat(b => { b.evidence = [{ kind: 'url', url: 'https://example.com/proof' }]; }), /is not a public repository or this site/);
-  assert.match(withBeat(b => { b.evidence = []; }), /evidence: shorter than|evidence: .*minItems|fewer than/i);
+test('tier 1 evidence must be public and resolve here: a private repo, a link naming another PR, an unknown proof, a missing page are refused', () => {
+  assert.match(dispatch(r => { r.evidence = [{ type: 'pr', number: 3, url: 'https://github.com/odin-labs-ai/private-engine/pull/3' }]; }), /is not a public repository or this site/);
+  assert.match(dispatch(r => { r.evidence[0].number = 79; }), /the link is not PR #79 of odin-labs-ai\/odin-rnd/);
+  assert.match(dispatch(r => { r.evidence = [{ type: 'commit', sha: 'a'.repeat(40), url: 'https://github.com/odin-labs-ai/odin-rnd/commit/' + 'b'.repeat(40) }]; }), /the link is not commit a{40}/);
+  assert.match(dispatch(r => { r.evidence[1].id = 'odin-000000-9'; }), /proof odin-000000-9 is not shown by any published dispatch/);
+  assert.match(films(r => { r.evidence[1].url = 'https://odin-labs-ai.github.io/odin-rnd/assets/labs/agent-space/films/staged-demo.webm'; }), /does not resolve to anything this site or repository publishes/);
+  assert.match(films(r => { r.evidence[1].url = 'https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/no-such-file.mjs'; }), /does not resolve/);
+  assert.match(films(r => { r.evidence[1].url = 'https://example.com/proof'; }), /is not a public repository or this site/);
+  assert.match(dispatch(r => { r.evidence = []; }), /evidence: /);
   for (const url of ['https://github.com/odin-labs-ai/odin-rnd/pull/81', 'https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/']) assert.equal(isPublicUrl(url), true, url);
   for (const url of ['http://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd-private', 'https://github.com/odin-labs-ai/odin-rnd/../x', 'https://odin-labs-ai.github.io/other/']) assert.equal(isPublicUrl(url), false, url);
 });
@@ -38,35 +39,53 @@ test('every public repository counted as evidence is one the site already export
   for (const repo of PUBLIC_REPOS) assert.ok(check.includes(`'${repo}'`), repo);
 });
 
+test('tier 2: a private commit is cited by hash only with a full sha and the checked main head, and never with a repo name or path', () => {
+  assert.equal(tierOf(FIXTURE.records[0]), 2);
+  assert.equal(tierOf(FIXTURE.records[1]), 1);
+  assert.match(tier2(r => { r.evidence[0].sha = 'f'.repeat(8); }), /does not match/);
+  assert.match(tier2(r => { r.evidence[0].repo = 'odin-labs-ai/private-engine'; }), /does not match|not allowed/);
+  assert.match(tier2(r => { r.evidence[0].path = 'engine/agents/space.py'; }), /does not match|not allowed/);
+  assert.match(tier2(r => { r.evidence[0].onMain = 'd'.repeat(40); }), /onMain: a private commit must name the main head it was checked against/);
+  assert.match(tier2((r, rec) => { delete rec.mainCheck; }), /a private commit is cited by hash, but the record has no mainCheck/);
+  const html = renderBeats(FIXTURE);
+  assert.ok(html.includes(`Private commit <code>${'f'.repeat(8)}</code>, cited by hash; this page cannot check it, anyone with access can.`));
+  assert.match(html, /<span class="story-tier story-tier-2">Cited by hash<\/span>/);
+  assert.match(html, /<span class="story-tier story-tier-1">Checkable here<\/span>/);
+});
+
 test('an internal field is refused by name, anywhere', () => {
-  assert.match(withBeat(b => { b.postId = 'abc123'; }), /postId: not allowed/);
-  assert.match(withMoment(m => { m.who.userId = 'u1'; }), /userId: not allowed/);
-  assert.match(withBeat((b, r) => { r.producer.channel = 'odin-orq'; }), /channel: not allowed/);
-  assert.match(withBeat(b => { b.evidence[0].lensRun = 'x'; }), /does not match|not allowed/);
+  assert.match(dispatch(r => { r.postId = 'abc123'; }), /postId: not allowed/);
+  assert.match(dispatch((r, rec) => { rec.channel = 'odin-orq'; }), /channel: not allowed/);
+  assert.match(dispatch(r => { r.evidence[0].author = 'someone'; }), /does not match|not allowed/);
 });
 
 test('quotes are at most 25 words, and every word passes the publisher screen and the world terms', () => {
-  assert.match(withMoment(m => { m.quote = Array.from({ length: MAX_QUOTE_WORDS + 1 }, (_, i) => `word${i}`).join(' '); }), /quote: 26 words, over 25/);
-  assert.match(withMoment(m => { m.quote = `Built at ${reverse('tfolemag')}.`; }), /quote: a restricted name/);
-  assert.match(withBeat(b => { b.line = `We met in ${reverse('nrooH')} that week.`; }), /line: a place name/);
-  assert.match(withBeat(b => { b.title = 'It cost €40 to run'; }), /title: a price or currency amount/);
-  assert.match(withMoment(m => { m.why = 'Logged at /Users/someone/notes.md for later.'; }), /why: a file path or file name/);
+  assert.match(moment(r => { r.quote = Array.from({ length: MAX_QUOTE_WORDS + 1 }, (_, i) => `word${i}`).join(' '); }), /quote: 26 words, over 25/);
+  assert.match(moment(r => { r.quote = `Built at ${reverse('tfolemag')}.`; }), /quote: a restricted name/);
+  assert.match(dispatch(r => { r.body = `We met in ${reverse('nrooH')} that week.`; }), /body: a place name/);
+  assert.match(dispatch(r => { r.title = 'It cost €40 to run'; }), /title: a price or currency amount/);
+  assert.match(moment(r => { r.body = 'Logged at /Users/someone/notes.md for later.'; }), /body: a file path or file name/);
 });
 
-test('beats and moments run in date order, and none is dated after the build', () => {
-  assert.match(withBeat((b, r) => { r.beats[1].at = '2026-10-20T00:00:00Z'; }), /beats\/1\/at: .* comes before the beat above it/);
-  assert.match(withBeat(b => { b.at = '2026-10-27T00:00:00Z'; }), /is after this build/);
-  assert.match(withMoment(m => { m.at = '2027-01-01T00:00:00Z'; }), /moments\/0\/at: .* is after this build/);
-  assert.match(withBeat(b => { b.at = '23 Oct 03:38'; }), /at: does not match/);
+test('records run in date order, inside the window, and none is dated after the build', () => {
+  assert.match(dispatch(r => { r.at = '2026-10-23T00:00:00Z'; }), /comes before the record above it|outside the record's window/);
+  assert.match(films(r => { r.at = '2026-10-27T00:00:00Z'; }), /is after this build/);
+  assert.match(films(r => { r.at = '2026-10-26T00:00:00Z'; }), /outside the record's window/);
+  assert.match(dispatch(r => { r.at = '25 Oct 08:40'; }), /at: does not match/);
 });
 
-test('a review, reviewer, jury or judge is always labelled an AI model', () => {
-  assert.match(withBeat(b => { b.line = 'The jury picked this build.'; }), /does not say it was an AI model/);
-  assert.match(withBeat((b, r) => { delete r.beats[2].review; }), /beats\/2: it mentions a review/);
-  assert.match(withMoment(m => { m.who = { label: 'the reviewer', kind: 'human' }; m.review = { by: 'a model', kind: 'ai-model' }; }), /who: a reviewer, jury or judge is an AI model here/);
-  assert.match(withBeat((b, r) => { r.beats[2].review.kind = 'human'; }), /review\/kind: must be "ai-model"/);
-  const html = renderBeats(FIXTURE);
-  assert.match(html, /Reviewed by an AI model \(an adversarial code reviewer\), not a human\./);
+test('a review, reviewer, jury, judge or advocate is called AI in the same sentence', () => {
+  assert.match(correction(r => { r.body = 'The review caught an overstated headline.'; }), /without saying, in the same sentence, that it is AI/);
+  assert.match(moment(r => { r.quote = 'Neither reviewer opened the files.'; }), /quote: a review, reviewer/);
+  assert.match(dispatch(r => { r.body = 'The jury picked this build. It was AI.'; }), /without saying, in the same sentence/);
+  assert.equal(correction(r => { r.body = 'The AI review caught it. Both AI model advocates agreed.'; }), '');
+});
+
+test('the counts reconcile with the records, and the page states the tally plainly', () => {
+  assert.match(dispatch((r, rec) => { rec.counts.beat = 4; }), /counts\/beat: 4, but the record holds 3/);
+  assert.match(dispatch((r, rec) => { delete rec.counts.leftOut; }), /missing leftOut/);
+  assert.match(renderBeats(FIXTURE), /<p class="story-tally">3 steps checkable here, 1 cited by hash, 1 left out for having no evidence\.<\/p>/);
+  assert.match(renderMoments(FIXTURE), /<p class="story-tally">1 moments checkable here, 0 cited by hash, 0 left out/);
 });
 
 test('the bytes are pinned: an edit after production, or a pin without its sources, is refused', () => {
@@ -79,32 +98,27 @@ test('the bytes are pinned: an edit after production, or a pin without its sourc
 });
 
 test('a picture must be one this lab already publishes', () => {
-  assert.match(withBeat(b => { b.asset = 'assets/labs/agent-space/films/missing.png'; }), /asset: .* is not published/);
-  assert.match(withBeat(b => { b.asset = 'assets/odin-logo.png'; }), /asset: not under this lab's published assets/);
+  assert.match(dispatch(r => { r.visual = 'assets/labs/agent-space/films/missing.png'; }), /visual: .* is not published/);
+  assert.match(dispatch(r => { r.visual = 'assets/odin-logo.png'; }), /visual: not under this lab's published assets/);
 });
 
-// A site root holding the real site plus the fixture record, its pin and the story page template.
-function storySite() {
+test('with a record, Lab 01 links its story page, and the page shows every record with its evidence', () => {
   const root = mkdtempSync(join(tmpdir(), 'lab-story-'));
-  cpSync('site', root, { recursive: true });
-  const bytes = readFileSync('scripts/fixtures/milestones/milestones.json');
-  writeFileSync(join(root, MILESTONES_FILE), bytes);
-  mkdirSync(join(root, 'labs/agent-space/story'), { recursive: true });
-  writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
-  return { root, pin: pinFor(bytes, { sourceSha256: 'b'.repeat(64), commit: 'c'.repeat(40) }) };
-}
-
-test('with a record, Lab 01 links its story page, and the page shows every beat and moment with its evidence', () => {
-  const { root, pin } = storySite();
   try {
+    cpSync('site', root, { recursive: true });
+    const bytes = readFileSync('scripts/fixtures/milestones/milestones.json');
+    writeFileSync(join(root, MILESTONES_FILE), bytes);
+    mkdirSync(join(root, 'labs/agent-space/story'), { recursive: true });
+    if (!existsSync(join(root, STORY_PAGE))) writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
+    const pin = pinFor(bytes, { sourceSha256: 'b'.repeat(64), commit: 'c'.repeat(40) });
     assert.ok(readMilestones(root, { now: NOW, pin }));
     assert.throws(() => readMilestones(root, { now: NOW, pin: { ...pin, fileSha256: '0'.repeat(64) } }), /Lab 01 story refused:[\s\S]*edited after it was produced/);
-    const html = renderMoments(FIXTURE) + renderBeats(FIXTURE);
-    for (const b of FIXTURE.beats) assert.ok(html.includes(`id="beat-${b.id}"`), b.id);
-    for (const m of FIXTURE.moments) assert.ok(html.includes(`<blockquote><p>${m.quote}</p></blockquote>`), m.id);
+    const html = renderBeats(FIXTURE) + renderMoments(FIXTURE);
+    for (const r of FIXTURE.records) assert.ok(html.includes(`id="${r.id}"`), r.id);
+    assert.match(html, /<span class="story-correction">Correction<\/span>/);
+    assert.match(html, /<blockquote><p>How do you know\?<\/p><\/blockquote>/);
     assert.match(html, /<a href="https:\/\/github\.com\/odin-labs-ai\/odin-rnd\/pull\/81">odin-rnd #81<\/a>/);
-    assert.match(html, /<a href="\.\.\/#session-2026-10-25-b">proof <code>odin-381dbb-1<\/code><\/a>/);
-    assert.match(html, /<a href="\.\.\/#film-agent-space-tour">the film, at 0:20<\/a>/);
+    assert.match(html, /proof <code>odin-381dbb-1<\/code>/);
     assert.match(renderStoryLink(FIXTURE), /<a class="button" href="story\/">Read the story<\/a>/);
     assert.equal(renderStoryLink(null), '');
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -114,29 +128,9 @@ test('the story page template never ships without its record', () => {
   const root = mkdtempSync(join(tmpdir(), 'lab-story-none-'));
   try {
     cpSync('site', root, { recursive: true });
+    rmSync(join(root, MILESTONES_FILE), { force: true });
     mkdirSync(join(root, 'labs/agent-space/story'), { recursive: true });
     writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
     assert.throws(() => renderLabs(root), /the story page ships without its record/);
   } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test('tier 2: a private commit is cited by hash only with a full sha, the main head it was checked against, and no repository name', () => {
-  assert.equal(tierOf(FIXTURE.beats[0]), 2);
-  assert.equal(tierOf(FIXTURE.beats[1]), 1);
-  assert.match(withBeat(b => { b.evidence[0].sha = 'f'.repeat(8); }), /does not match/);
-  assert.match(withBeat(b => { b.evidence[0].repo = 'odin-labs-ai/private-engine'; }), /does not match|not allowed/);
-  assert.match(withBeat(b => { b.evidence[0].path = 'engine/agents/space.py'; }), /does not match|not allowed/);
-  assert.match(withBeat(b => { b.evidence[0].onMain = 'd'.repeat(40); }), /onMain: a private commit must name the main head it was checked against/);
-  assert.match(withBeat((b, r) => { delete r.mainCheck; }), /a private commit is cited by hash, but the record has no mainCheck/);
-  const html = renderBeats(FIXTURE);
-  assert.ok(html.includes(`Private commit <code>${'f'.repeat(8)}</code>, cited by hash; this page cannot check it, anyone with access can.`));
-  assert.match(html, /<span class="story-tier story-tier-2">Cited by hash<\/span>/);
-  assert.match(html, /<span class="story-tier story-tier-1">Checkable here<\/span>/);
-});
-
-test('the tally reconciles: considered = shown + left out, and the page states it plainly', () => {
-  assert.match(withBeat((b, r) => { r.tally.beats.considered += 1; }), /tally\/beats: considered 5, but 3 shown \+ 1 left out is 4/);
-  assert.match(withMoment((m, r) => { r.tally.moments.leftOut = 2; }), /tally\/moments: considered 1, but 1 shown \+ 2 left out is 3/);
-  assert.match(renderBeats(FIXTURE), /<p class="story-tally">2 steps checkable here, 1 cited by hash, 1 left out for having no evidence\.<\/p>/);
-  assert.match(withBeat((b, r) => { delete r.tally; }), /missing tally/);
 });

@@ -20,3 +20,6 @@
 .story-tally{margin-bottom:22px;font-size:14px;color:var(--steel)}
 .story-tier{display:inline-block;padding:1px 8px;margin-right:6px;border:1px solid var(--rule);border-radius:999px;font-size:12px;font-weight:600}
 .story-tier-2{border-style:dashed}
+.story-correction{display:inline-block;padding:1px 8px;margin-right:6px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--orange)}
+.story-quote{margin:10px 0 0;padding-left:12px;border-left:3px solid var(--brand);font-style:italic}
+.story-moment h3{margin-top:10px;font-size:17px;line-height:1.35}
