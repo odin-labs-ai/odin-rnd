@@ -79,9 +79,14 @@ export function build(dir) {
     const notes = [];
     for (const id of ids) {
       if (!before[id]) notes.push(`${CLAIM_LABELS[id]}: recorded, ${rows[id].status === 'main' ? 'in the main build' : 'on a work branch'}`);
-      else if (before[id].status !== rows[id].status) notes.push(`${CLAIM_LABELS[id]}: ${rows[id].status === 'main' ? 'moved from a work branch into the main build' : 'moved back to a work branch'}`);
+      else if (before[id].status !== rows[id].status) notes.push(`${CLAIM_LABELS[id]}: ${rows[id].status === 'main' ? 'moved from a work branch into the main build' : rows[id].status === 'work-branch' ? 'moved back to a work branch' : 'lost its status'}`);
     }
-    if (notes.length) status.push(point(c, { on_main: main, recorded: ids.length }, notes.join('; ')));
+    for (const id of Object.keys(before)) if (!rows[id]) notes.push(`${CLAIM_LABELS[id]}: removed from the claims table`);
+    // A point whenever either count changes, or a claim's status does; a change with no note would be a bug, so refuse it.
+    const counts = { on_main: main, recorded: ids.length }, last = status.at(-1)?.values;
+    const countsChanged = !last || last.on_main !== counts.on_main || last.recorded !== counts.recorded;
+    if (countsChanged && !notes.length) problems.push(`commit ${c.sha}: the counts changed with no claim recorded, moved or removed`);
+    if (notes.length) status.push(point(c, counts, notes.join('; ')));
     before = rows;
   }
 
@@ -119,6 +124,7 @@ export function build(dir) {
     { id: 'answer-time', title: 'Answer time per agent', unit: 'seconds', note: 'From a visitor\'s question to the agent\'s proof record, including the scripted visitor\'s own overhead.', points: latency },
   ];
   if (problems.length) throw new Error(`vendor-engine-history refused:\n  ${problems.join('\n  ')}`);
+  const sourceSha256 = sha256([...claimsCommits.map(c => `${c.sha} claims ${sha256(readFileSync(join(dir, `claims/${c.sha}.md`)))}`), ...packCommits.map(c => `${c.sha} pack ${sha256(readFileSync(join(dir, `pack/${c.sha}.json`)))}`)].sort().join('\n'));
   const record = {
     format: 'odin-engine-history', version: 1,
     vendored: {
@@ -126,10 +132,10 @@ export function build(dir) {
       rule: 'a point is a commit that changed a figure; a figure restated unchanged adds no point, and nothing is drawn between points',
       mainCheck: { main: ancestry.main, how: ancestry.how, checked: ancestry.checked },
       commitsRead: { claims: claimsCommits.length, pack: packCommits.length },
+      sourceSha256,
     },
     series,
   };
-  const sourceSha256 = sha256([...claimsCommits.map(c => `${c.sha} claims ${sha256(readFileSync(join(dir, `claims/${c.sha}.md`)))}`), ...packCommits.map(c => `${c.sha} pack ${sha256(readFileSync(join(dir, `pack/${c.sha}.json`)))}`)].sort().join('\n'));
   return { record, sourceSha256 };
 }
 

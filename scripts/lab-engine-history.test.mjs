@@ -65,13 +65,32 @@ test('the gate refuses a bad commit, another main head, a fake date, disorder, t
   assert.match(edit(r => { r.series[1].points[0].repo = 'odin-labs-ai/private'; }), /repo: not allowed/);
 }));
 
-test('the bytes are pinned', () => withDir(dir => {
+test('the bytes are pinned, and the pin must name the record\'s own main head and source digest', () => withDir(dir => {
   const { record, sourceSha256 } = build(dir);
   const bytes = Buffer.from(serialise(record));
-  const pin = pinFor(bytes, sourceSha256, MAIN);
-  assert.deepEqual(pinProblems(bytes, { ...pin, file: `site/${ENGINE_HISTORY_FILE}` }), []);
-  assert.match(pinProblems(Buffer.from(`${bytes} `), { ...pin, file: `site/${ENGINE_HISTORY_FILE}` }).join(), /re-vendor/);
+  const pin = { ...pinFor(bytes, sourceSha256, MAIN), file: `site/${ENGINE_HISTORY_FILE}` };
+  assert.equal(record.vendored.sourceSha256, sourceSha256);
+  assert.deepEqual(pinProblems(bytes, pin), []);
+  assert.match(pinProblems(Buffer.from(`${bytes} `), pin).join(), /re-vendor/);
+  assert.match(pinProblems(bytes, { ...pin, commit: 'a'.repeat(40) }).join(), /is not the main head the record was checked against/);
+  assert.match(pinProblems(bytes, { ...pin, sourceSha256: '0'.repeat(64) }).join(), /sourceSha256 0{64} is not the record's/);
 }));
+
+test('a claim that disappears from the table is a change too: its point is recorded, never skipped', () => {
+  const dir = history();
+  try {
+    const later = { sha: sha(6), date: '2026-10-24T12:00:00Z' };
+    writeFileSync(join(dir, `claims/${later.sha}.md`), `| # | Claim | Status | Source |\n${row(10, 'Tests 1,901 passed / 0 failed', 'MAIN')}\n`);
+    const commits = JSON.parse(readFileSync(join(dir, 'claims-commits.json'), 'utf8'));
+    writeFileSync(join(dir, 'claims-commits.json'), JSON.stringify([...commits, later]));
+    const ancestry = JSON.parse(readFileSync(join(dir, 'ancestry.json'), 'utf8'));
+    ancestry.commits[later.sha] = { status: 'ahead', behind_by: 0 };
+    writeFileSync(join(dir, 'ancestry.json'), JSON.stringify(ancestry));
+    const status = build(dir).record.series.find(s => s.id === 'claims-on-main').points;
+    assert.deepEqual(status.at(-1).values, { on_main: 1, recorded: 1 });
+    assert.match(status.at(-1).change, /agents as QA, on a real outage: removed from the claims table/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 
 test('the page: one dot per point, nothing between them; a single point says so; every point cites its commit', () => withDir(dir => {
   const { record } = build(dir);

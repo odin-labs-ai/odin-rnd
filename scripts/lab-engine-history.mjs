@@ -36,7 +36,12 @@ export function realInstant(iso) {
   return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d && date.getUTCHours() === h && date.getUTCMinutes() === mi && date.getUTCSeconds() === s ? date : null;
 }
 
-/** Why the committed bytes are not the pinned ones. */
+/**
+ * Why the committed bytes are not the pinned ones. The pin is a second, separately reviewed file: it must name the same
+ * file sha256, the same private-source sha256 and the same private main head the record itself carries, so neither can
+ * be edited alone. (Whether that source sha256 is what the private history gives is --verify's job; the build cannot
+ * read the history.)
+ */
 export function pinProblems(bytes, pin) {
   if (!pin || pin.format !== 'odin-engine-history-pin' || pin.version !== 1) return ['scripts/engine-history.pin.json: missing, or not odin-engine-history-pin v1'];
   const problems = [];
@@ -44,6 +49,12 @@ export function pinProblems(bytes, pin) {
   if (!/^[0-9a-f]{64}$/.test(pin.sourceSha256 ?? '')) problems.push('scripts/engine-history.pin.json: sourceSha256 is not a sha256');
   if (!/^[0-9a-f]{40}$/.test(pin.commit ?? '')) problems.push('scripts/engine-history.pin.json: commit is not a 40-hex commit');
   if (pin.fileSha256 !== sha256(bytes)) problems.push(`${ENGINE_HISTORY_FILE}: its sha256 is ${sha256(bytes)}, the pin says ${pin.fileSha256}; re-vendor with scripts/vendor-engine-history.mjs`);
+  let record = null;
+  try { record = JSON.parse(bytes); } catch { problems.push(`${ENGINE_HISTORY_FILE}: not JSON`); }
+  if (record?.vendored) {
+    if (pin.commit !== record.vendored.mainCheck?.main) problems.push(`scripts/engine-history.pin.json: commit ${pin.commit} is not the main head the record was checked against (${record.vendored.mainCheck?.main})`);
+    if (pin.sourceSha256 !== record.vendored.sourceSha256) problems.push(`scripts/engine-history.pin.json: sourceSha256 ${pin.sourceSha256} is not the record's (${record.vendored.sourceSha256})`);
+  }
   return problems;
 }
 

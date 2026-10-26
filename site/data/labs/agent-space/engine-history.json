@@ -12,7 +12,8 @@
   "commitsRead": {
    "claims": 16,
    "pack": 5
-  }
+  },
+  "sourceSha256": "ec813eb1381427e464a2f0cb6ab048ca71702403e0c7ec088ae6e745658827fa"
  },
  "series": [
   {

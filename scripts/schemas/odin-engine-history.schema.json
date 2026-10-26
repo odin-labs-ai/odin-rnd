@@ -23,7 +23,8 @@
     "from",
     "rule",
     "mainCheck",
-    "commitsRead"
+    "commitsRead",
+    "sourceSha256"
    ],
    "additionalProperties": false,
    "properties": {
@@ -78,6 +79,10 @@
        "minimum": 1
       }
      }
+    },
+    "sourceSha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
     }
    }
   },
