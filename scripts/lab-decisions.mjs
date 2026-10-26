@@ -21,7 +21,7 @@
 // mentions a review, reviewer, jury, judge or advocate must say, in that sentence, that it is AI; a quote that does is
 // followed by a note saying the reviewers it names are AI models.
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { benchScreen } from './brain-bench-import.mjs';
 
 export const DECISIONS_FILE = 'data/labs/how-we-decide.json';
@@ -51,6 +51,8 @@ export function parseReview(text, where) {
       if (/^##\s/.test(line)) break;
       const item = /^(?:\d+\.|-)\s+\*\*(.+?)\*\*/.exec(line);
       if (item) vetoes.push(item[1].replace(/^V\d+[,:]\s*/, '').replace(/[.:]$/, '').trim());
+      // A list item without a **title** would be dropped from the count: refuse it rather than stop silently.
+      else if (/^(?:\d+\.|-)\s/.test(line)) throw new Error(`${where}: a veto list item has no **title**, so it cannot be counted ("${line.slice(0, 60)}")`);
       else if (vetoes.length && /^\S/.test(line)) break;
     }
   }
@@ -84,9 +86,12 @@ export function readDecisions(root = 'site') {
   const problems = [];
   const read = path => {
     const base = path.startsWith('experiments/') ? repo : path.startsWith('data/') ? root : null;
-    if (!base) { problems.push(`${path}: not a file this site or its repository publishes (experiments/… or data/…)`); return null; }
-    if (!existsSync(join(base, path))) { problems.push(`${path}: is not published`); return null; }
-    return readFileSync(join(base, path), 'utf8');
+    // A source stays inside what is published: experiments/ in this repository, data/ on this site, no "..".
+    const full = base && resolve(base, path);
+    const inside = base && path.split('/').every(part => part && part !== '.' && part !== '..') && full.startsWith(resolve(base, path.split('/')[0]) + sep);
+    if (!inside) { problems.push(`${path}: not a file this site or its repository publishes (experiments/… or data/…, no "..")`); return null; }
+    if (!existsSync(full)) { problems.push(`${path}: is not published`); return null; }
+    return readFileSync(full, 'utf8');
   };
   const quoted = (path, quote, what) => {
     const text = read(path);
@@ -100,6 +105,7 @@ export function readDecisions(root = 'site') {
     if (record.experiment?.id !== exp.id) problems.push(`${exp.record}: is not ${exp.id}`);
     const pinText = read(exp.record.replace(/\.json$/, '.sha256'));
     const rounds = (exp.rounds ?? []).map(round => {
+      if (new Set(round.reviews).size !== round.reviews.length) problems.push(`${round.name}: a review is listed twice, which would count its vetoes twice`);
       const reviews = round.reviews.map(path => {
         const text = read(path);
         if (text == null) return null;
@@ -193,6 +199,7 @@ export function ledgerTextProblems({ config, experiments, bench }) {
   for (const [i, p] of (config.why ?? []).entries()) own(p, `${DECISIONS_FILE}#/why/${i}`);
   own(config.benchNote ?? '', `${DECISIONS_FILE}#/benchNote`);
   for (const e of experiments) {
+    out.push(...screen(e.title, e.record, { quote: true }), ...screen(e.id, e.record));
     for (const r of e.rounds) {
       own(r.name, `${e.id} round`);
       for (const v of r.reviews) for (const t of [...v.vetoes, ...v.accepts, v.model]) out.push(...screen(t, `${v.file}`, { quote: true }));
@@ -202,7 +209,7 @@ export function ledgerTextProblems({ config, experiments, bench }) {
     for (const d of e.disclosures) out.push(...screen(d.quote, d.file, { quote: true }));
     if (e.history) out.push(...screen(e.history.quote, e.record, { quote: true }));
   }
-  for (const b of bench) for (const t of [b.title, ...Object.keys(b.tally)]) out.push(...screen(t, BENCH_RESULTS, { quote: true }));
+  for (const b of bench) for (const t of [b.id, b.title, ...Object.keys(b.tally)]) out.push(...screen(t, BENCH_RESULTS, { quote: true }));
   return out;
 }
 

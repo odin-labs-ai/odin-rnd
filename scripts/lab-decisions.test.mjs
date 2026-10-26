@@ -87,3 +87,22 @@ test('every block on the rendered page that names a reviewer or advocate says AI
   assert.deepEqual(bad, []);
   for (const href of html.matchAll(/href="([^"]+)"/g)) assert.match(href[1], /^(https:\/\/github\.com\/odin-labs-ai\/odin-rnd\/blob\/main\/|\.\.\/\.\.\/)/);
 });
+
+test('a source outside what is published, even through "..", is refused', () => refuses(fixture(dir => {
+  const c = config(dir); c.experiments[0].disclosures.push({ file: 'experiments/../../outside.json', pointer: '/x' }); writeConfig(dir, c);
+  writeFileSync(join(dir, '..', 'outside.json'), '{"x":["a secret"]}');
+}), /outside\.json: not a file this site or its repository publishes/));
+
+test('a review listed twice in a round is refused', () => refuses(fixture(dir => {
+  const c = config(dir); c.experiments[0].rounds[0].reviews.push(c.experiments[0].rounds[0].reviews[0]); writeConfig(dir, c);
+}), /a review is listed twice/));
+
+test('a veto list item without a title is refused, never silently dropped', () => refuses(fixture(dir => {
+  const f = join(dir, 'experiments/failover/reviews/v1.1-mongodb-advocate.md');
+  writeFileSync(f, readFileSync(f, 'utf8').replace('- **V2, the change stream consumer.**', '- V2, the change stream consumer.'));
+}), /a veto list item has no \*\*title\*\*/));
+
+test('a record title that fails the screen is refused', () => refuses(fixture(dir => {
+  const f = join(dir, 'experiments/failover/preregistration.json');
+  const r = JSON.parse(readFileSync(f, 'utf8')); r.experiment.title = 'Call +31 6 1234 5678'; writeFileSync(f, JSON.stringify(r));
+}), /phone number/));
