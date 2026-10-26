@@ -125,3 +125,14 @@
 .decision-ai{display:inline-block;font-size:.8rem;padding:1px 6px;border:1px solid currentColor;border-radius:999px;opacity:.85}
 .decision-ai-note{color:var(--steel);font-size:.9rem}
 .decision-disclosures{display:grid;gap:10px;max-width:80ch}
+.engine-series h4{font-size:18px}
+.engine-plot{max-width:420px}
+.engine-dot{fill:var(--brand)}
+.engine-axis{stroke:var(--rule);stroke-width:1}
+.engine-one{margin-top:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.engine-dot-key{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--brand)}
+.engine-points{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:14px;font-size:14px}
+.engine-points li{padding-top:12px;border-top:1px solid var(--rule)}
+.engine-points p+p{margin-top:4px}
+.engine-unit{color:var(--steel)}
+.engine-when{font-size:13px;color:var(--steel)}
