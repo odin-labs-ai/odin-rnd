@@ -17,3 +17,6 @@
 .story-moment figcaption p{margin-top:10px;line-height:1.55}
 .story-who{font-size:13px;color:var(--steel)}
 @media(max-width:760px){.story-moments{grid-template-columns:1fr}}
+.story-tally{margin-bottom:22px;font-size:14px;color:var(--steel)}
+.story-tier{display:inline-block;padding:1px 8px;margin-right:6px;border:1px solid var(--rule);border-radius:999px;font-size:12px;font-weight:600}
+.story-tier-2{border-style:dashed}

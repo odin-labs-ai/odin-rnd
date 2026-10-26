@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink } from './lab-milestones.mjs';
+import { tierOf, MAX_QUOTE_WORDS, MILESTONES_FILE, PUBLIC_REPOS, STORY_PAGE, isPublicUrl, milestonesProblems, pinFor, pinProblems, readMilestones, renderBeats, renderMoments, renderStoryLink } from './lab-milestones.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 01's story gate (founder plans 1 and 2): public evidence only, short screened quotes, date order, AI reviewers
@@ -62,9 +62,9 @@ test('beats and moments run in date order, and none is dated after the build', (
 
 test('a review, reviewer, jury or judge is always labelled an AI model', () => {
   assert.match(withBeat(b => { b.line = 'The jury picked this build.'; }), /does not say it was an AI model/);
-  assert.match(withBeat((b, r) => { delete r.beats[1].review; }), /beats\/1: it mentions|beats\/1: .*AI model/);
+  assert.match(withBeat((b, r) => { delete r.beats[2].review; }), /beats\/2: it mentions a review/);
   assert.match(withMoment(m => { m.who = { label: 'the reviewer', kind: 'human' }; m.review = { by: 'a model', kind: 'ai-model' }; }), /who: a reviewer, jury or judge is an AI model here/);
-  assert.match(withBeat((b, r) => { r.beats[1].review.kind = 'human'; }), /review\/kind: must be "ai-model"/);
+  assert.match(withBeat((b, r) => { r.beats[2].review.kind = 'human'; }), /review\/kind: must be "ai-model"/);
   const html = renderBeats(FIXTURE);
   assert.match(html, /Reviewed by an AI model \(an adversarial code reviewer\), not a human\./);
 });
@@ -118,4 +118,25 @@ test('the story page template never ships without its record', () => {
     writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
     assert.throws(() => renderLabs(root), /the story page ships without its record/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('tier 2: a private commit is cited by hash only with a full sha, the main head it was checked against, and no repository name', () => {
+  assert.equal(tierOf(FIXTURE.beats[0]), 2);
+  assert.equal(tierOf(FIXTURE.beats[1]), 1);
+  assert.match(withBeat(b => { b.evidence[0].sha = 'f'.repeat(8); }), /does not match/);
+  assert.match(withBeat(b => { b.evidence[0].repo = 'odin-labs-ai/private-engine'; }), /does not match|not allowed/);
+  assert.match(withBeat(b => { b.evidence[0].path = 'engine/agents/space.py'; }), /does not match|not allowed/);
+  assert.match(withBeat(b => { b.evidence[0].onMain = 'd'.repeat(40); }), /onMain: a private commit must name the main head it was checked against/);
+  assert.match(withBeat((b, r) => { delete r.mainCheck; }), /a private commit is cited by hash, but the record has no mainCheck/);
+  const html = renderBeats(FIXTURE);
+  assert.ok(html.includes(`Private commit <code>${'f'.repeat(8)}</code>, cited by hash; this page cannot check it, anyone with access can.`));
+  assert.match(html, /<span class="story-tier story-tier-2">Cited by hash<\/span>/);
+  assert.match(html, /<span class="story-tier story-tier-1">Checkable here<\/span>/);
+});
+
+test('the tally reconciles: considered = shown + left out, and the page states it plainly', () => {
+  assert.match(withBeat((b, r) => { r.tally.beats.considered += 1; }), /tally\/beats: considered 5, but 3 shown \+ 1 left out is 4/);
+  assert.match(withMoment((m, r) => { r.tally.moments.leftOut = 2; }), /tally\/moments: considered 1, but 1 shown \+ 2 left out is 3/);
+  assert.match(renderBeats(FIXTURE), /<p class="story-tally">2 steps checkable here, 1 cited by hash, 1 left out for having no evidence\.<\/p>/);
+  assert.match(withBeat((b, r) => { delete r.tally; }), /missing tally/);
 });

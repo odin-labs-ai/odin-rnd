@@ -8,6 +8,19 @@
  },
  "beats": [
   {
+   "id": "first-filmable-space",
+   "at": "2026-10-23T03:38:00Z",
+   "title": "The first space we could film",
+   "line": "The agent space ran end to end for the first time, in a form a camera could record.",
+   "evidence": [
+    {
+     "kind": "private-commit",
+     "sha": "ffffffffffffffffffffffffffffffffffffffff",
+     "onMain": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+   ]
+  },
+  {
    "id": "first-dispatch",
    "at": "2026-10-25T08:40:00Z",
    "title": "The first dispatch",
@@ -67,5 +80,20 @@
     }
    ]
   }
- ]
+ ],
+ "tally": {
+  "beats": {
+   "considered": 4,
+   "leftOut": 1
+  },
+  "moments": {
+   "considered": 1,
+   "leftOut": 0
+  }
+ },
+ "mainCheck": {
+  "main": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "how": "GitHub compare API at production time: behind_by 0 means an ancestor of main",
+  "checked": "2026-10-26"
+ }
 }

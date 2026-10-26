@@ -9,9 +9,14 @@
 //     sha256 of the private inputs and the commit the projection was built at);
 //   - it misses the schema: every object is closed, so an internal field (a post id, a channel, a user, a run id, a
 //     private path) is refused by name;
-//   - a beat or moment has no PUBLIC evidence: a commit or PR in a public repository (PUBLIC_REPOS), a proof id that
-//     occurs in a published dispatch, a moment in a published film (films.json, within its length), or a link to a
-//     public repository or this site. A private repository's commit is not evidence here;
+//   - a beat or moment has evidence in neither tier. Tier 1, "checkable here": a commit or PR in a public repository
+//     (PUBLIC_REPOS), a proof id that occurs in a published dispatch, a moment in a published film (films.json, within
+//     its length), or a link to a public repository or this site. Tier 2, "cited by hash": a full 40-hex commit in a
+//     private repository, with no repository name or path, checked when the record was produced to be an ancestor of
+//     the private main head the record names (mainCheck {main, how, checked}; each such item's onMain is that head).
+//     This page cannot check a tier 2 commit and says so beside it; anyone with access can;
+//   - the tally does not reconcile: for beats and for moments, considered = shown + leftOut (the items the producer
+//     left out for having no evidence);
 //   - a quote is longer than 25 words, or any text fails the publisher's screen or the private test game's world terms
 //     (benchScreen: names, places, prices, paths, links elsewhere, world names);
 //   - beats or moments are out of date order, or dated after the build;
@@ -85,6 +90,8 @@ export function evidenceProblems(item, at, root, films) {
     }
     case 'url':
       return isPublicUrl(item.url) ? [] : [`${at}: ${item.url} is not a public repository or this site`];
+    case 'private-commit':
+      return [];   // tier 2: checked against the record's mainCheck in milestonesProblems
     default:
       return [`${at}: unknown evidence kind`];
   }
@@ -98,7 +105,11 @@ export function milestonesProblems(record, { root = 'site', now = new Date(), wh
   const screen = (text, at) => benchScreen(text).map(reason => `${at}: ${reason}`);
   problems.push(...screen(record.producer.from, `${where}#/producer/from`));
   const ids = new Set();
+  const cited = [record.beats, record.moments].flat().flatMap(item => item.evidence.filter(ev => ev.kind === 'private-commit'));
+  if (cited.length && !record.mainCheck) problems.push(`${where}: a private commit is cited by hash, but the record has no mainCheck (the private main head it was checked against, how and when)`);
   for (const kind of ['beats', 'moments']) {
+    const t = record.tally[kind];
+    if (t.considered !== record[kind].length + t.leftOut) problems.push(`${where}#/tally/${kind}: considered ${t.considered}, but ${record[kind].length} shown + ${t.leftOut} left out is ${record[kind].length + t.leftOut}`);
     let last = null;
     for (const [i, item] of record[kind].entries()) {
       const at = `${where}#/${kind}/${i}`;
@@ -119,6 +130,7 @@ export function milestonesProblems(record, { root = 'site', now = new Date(), wh
       if (kind === 'moments' && /\b(reviewer|jury|judge)\b/i.test(item.who.label) && item.who.kind !== 'ai-model') problems.push(`${at}/who: a reviewer, jury or judge is an AI model here (kind "ai-model")`);
       for (const [j, ev] of item.evidence.entries()) {
         problems.push(...evidenceProblems(ev, `${at}/evidence/${j}`, root, films));
+        if (ev.kind === 'private-commit' && record.mainCheck && ev.onMain !== record.mainCheck.main) problems.push(`${at}/evidence/${j}/onMain: a private commit must name the main head it was checked against (${record.mainCheck.main})`);
         if (ev.kind === 'url') problems.push(...benchScreen(ev.url).filter(r => /^a (restricted name|place name|name from the private)/.test(r)).map(r => `${at}/evidence/${j}: ${r}`));
       }
       if (item.asset) {
@@ -129,6 +141,9 @@ export function milestonesProblems(record, { root = 'site', now = new Date(), wh
   }
   return problems;
 }
+
+/** An item's evidence tier: 1 ("checkable here") when any of its evidence is public, else 2 ("cited by hash"). */
+export const tierOf = item => item.evidence.some(ev => ev.kind !== 'private-commit') ? 1 : 2;
 
 /** The committed record, pinned and checked; null when there is none. A record without its pin is refused. */
 export function readMilestones(root = 'site', { now = new Date(), pin } = {}) {
@@ -154,24 +169,32 @@ export function evidenceLink(ev, up = '../../../') {
     case 'proof': { const session = ev.record.split('/').pop().replace(/\.json$/, ''); return `<a href="../#${escape(session)}">proof <code>${escape(ev.id)}</code></a>`; }
     case 'film': return `<a href="../#film-${escape(ev.film)}">the film, at ${mmss(ev.atSeconds)}</a>`;
     case 'url': return `<a href="${escape(ev.url)}">${escape(new URL(ev.url).hostname)}${escape(new URL(ev.url).pathname.replace(/\/$/, ''))}</a>`;
+    case 'private-commit': return `Private commit <code>${escape(ev.sha.slice(0, 8))}</code>, cited by hash; this page cannot check it, anyone with access can.`;
     default: return '';
   }
 }
 
 const reviewNote = item => item.review ? `<p class="story-review">Reviewed by an AI model (${escape(item.review.by)}), not a human.</p>` : '';
-const evidenceList = (item, up) => `<p class="story-evidence"><span>Evidence:</span> ${item.evidence.map(ev => evidenceLink(ev, up)).join(' · ')}</p>`;
+const TIER = { 1: 'Checkable here', 2: 'Cited by hash' };
+const evidenceList = (item, up) => `<p class="story-evidence"><span class="story-tier story-tier-${tierOf(item)}">${TIER[tierOf(item)]}</span> <span>Evidence:</span> ${item.evidence.map(ev => evidenceLink(ev, up)).join(' · ')}</p>`;
+
+/** The plain count under each heading: how many are checkable here, cited by hash, and left out. */
+export function tallyLine(record, kind) {
+  const items = record[kind], one = items.filter(i => tierOf(i) === 1).length, noun = kind === 'beats' ? 'steps' : 'moments';
+  return `<p class="story-tally">${one} ${noun} checkable here, ${items.length - one} cited by hash, ${record.tally[kind].leftOut} left out for having no evidence.</p>`;
+}
 const picture = (item, up) => item.asset && !item.asset.endsWith('.webm') ? `<img class="story-picture" src="${up}${escape(item.asset)}" alt="" loading="lazy">` : '';
 const WHO = { human: '', agent: ' (an agent)', 'ai-model': ' (an AI model)' };
 
 /** "How the agent space was born": the beats as a dated list. */
 export function renderBeats(record, up = '../../../') {
-  return `<ol class="story-beats">${record.beats.map(b => `<li class="story-beat" id="beat-${escape(b.id)}"><p class="story-when">${when(b.at)}</p><h3>${escape(b.title)}</h3><p>${escape(b.line)}</p>${picture(b, up)}${reviewNote(b)}${evidenceList(b, up)}</li>`).join('')}</ol>`;
+  return `${tallyLine(record, 'beats')}<ol class="story-beats">${record.beats.map(b => `<li class="story-beat" id="beat-${escape(b.id)}"><p class="story-when">${when(b.at)}</p><h3>${escape(b.title)}</h3><p>${escape(b.line)}</p>${picture(b, up)}${reviewNote(b)}${evidenceList(b, up)}</li>`).join('')}</ol>`;
 }
 
 /** "Moments": each quote, who said it, why it mattered and its evidence. */
 export function renderMoments(record, up = '../../../') {
-  if (!record.moments.length) return '<p class="lab-none">No moments yet.</p>';
-  return `<div class="story-moments">${record.moments.map(m => `<figure class="story-moment" id="moment-${escape(m.id)}"><blockquote><p>${escape(m.quote)}</p></blockquote><figcaption><p class="story-who">${escape(m.who.label)}${WHO[m.who.kind]}, ${when(m.at)}</p><p>${escape(m.why)}</p>${picture(m, up)}${reviewNote(m)}${evidenceList(m, up)}</figcaption></figure>`).join('')}</div>`;
+  if (!record.moments.length) return `${tallyLine(record, 'moments')}<p class="lab-none">No moments yet.</p>`;
+  return `${tallyLine(record, 'moments')}<div class="story-moments">${record.moments.map(m => `<figure class="story-moment" id="moment-${escape(m.id)}"><blockquote><p>${escape(m.quote)}</p></blockquote><figcaption><p class="story-who">${escape(m.who.label)}${WHO[m.who.kind]}, ${when(m.at)}</p><p>${escape(m.why)}</p>${picture(m, up)}${reviewNote(m)}${evidenceList(m, up)}</figcaption></figure>`).join('')}</div>`;
 }
 
 /** The link block on Lab 01's page: empty while there is no record. */
