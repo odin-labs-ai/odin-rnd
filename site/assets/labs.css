@@ -102,3 +102,16 @@
 .fit-predictions li+li{margin-top:6px}
 .fit-predictions span,.fit-none{color:var(--steel)}
 .fit-source{margin-top:36px;font-size:13px;color:var(--steel)}
+/* This week in Lab 01 (scripts/lab-week.mjs) */
+.week{max-width:78ch}
+.week-window{color:var(--steel);margin-bottom:12px}
+.week-quiet{font-size:19px;line-height:1.6}
+.week-lines{padding-left:1.2em;font-size:18px;line-height:1.6}
+.week-lines>li+li{margin-top:6px}
+.week-list{margin-top:14px}
+.week-list summary{cursor:pointer;font-weight:600}
+.week-list ul{padding-left:1.2em;margin-top:8px}
+.week-list li{margin-top:6px;overflow-wrap:anywhere}
+.week-kind{color:var(--steel);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.week-when{color:var(--steel);font-size:14px;white-space:nowrap}
+.week-note,.week-how{color:var(--steel);font-size:15px;margin-top:14px}

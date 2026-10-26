@@ -10,6 +10,13 @@
 //
 //   node scripts/lab-dispatch-drafts.mjs --dispatch <file> --out <dir>
 //   node scripts/lab-dispatch-drafts.mjs --cadence [--site <dir>] [--today YYYY-MM-DD]
+//   node scripts/lab-dispatch-drafts.mjs --week --out <dir> [--site <dir>] [--now <ISO time>]
+//
+// --week drafts the same five files from "This week in Lab 01" (scripts/lab-week.mjs): the same weekOf() over the same
+// records the page section is built from, and renderWeek() is run on it first, so a week the page would refuse is
+// refused here too. Every draft links that section (labs/agent-space/#this-week) and carries only the section's own
+// sentences, the window it states, and the titles of the records in it (story entries, merged pull requests), verbatim.
+// It writes to --out (for the mission: its deliverables/ folder), never under site/ or dist/, under the same checks.
 //
 // Nothing here posts, sends or calls anything: the script makes no network call of any kind, and posting stays the
 // founder's own act (odin-labs rule 36). Every draft links the dispatch's live place on the lab page and carries only
@@ -29,6 +36,10 @@ import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dispatchProblems, screenHits, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDispatches, readLab, SITE_URL, sourceKind } from './labs.mjs';
+import { readDelivery } from './lab-delivery.mjs';
+import { readMilestones } from './lab-milestones.mjs';
+import { PROOFS_PAGE } from './lab-proofs.mjs';
+import { WEEK_ANCHOR, coverageNotes, renderWeek, visibleText, weekOf, weekSentences } from './lab-week.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const SITE_DIR = join(here, '..', 'site');
@@ -125,7 +136,10 @@ function githubDiscussion(dispatch, url) {
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
-function preview(dispatch, drafts) {
+// The preview's heading: a week names its window, a dispatch its session's date.
+const previewHeading = subject => subject.window ? `Drafts for this week in Lab 01, ${subject.window.label}` : `Drafts for the session of ${longDate(subject.date)}`;
+
+function preview(subject, drafts) {
   const columns = [['LinkedIn', 'linkedin.md'], ['X (a thread)', 'x.md'], ['Reddit', 'reddit.md'], ['GitHub Discussions', 'github-discussion.md']]
     .map(([label, file]) => `<section><h2>${escape(label)}</h2><pre>${escape(drafts[file])}</pre></section>`).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Dispatch drafts</title><style>
@@ -137,7 +151,7 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1
 section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;min-width:0}
 h1{margin:16px 16px 0;font-size:18px}h2{margin:0 0 8px;font-size:16px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,monospace;margin:0}
-</style></head><body><div class="banner" role="note">${escape(BANNER)}</div><h1>Drafts for the session of ${escape(longDate(dispatch.date))}</h1><main>${columns}</main></body></html>\n`;
+</style></head><body><div class="banner" role="note">${escape(BANNER)}</div><h1>${escape(previewHeading(subject))}</h1><main>${columns}</main></body></html>\n`;
 }
 
 /**
@@ -154,10 +168,8 @@ export function draftProblems(drafts, url, xParts = []) {
   return problems;
 }
 
-const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
-/** What a reader of an HTML page sees: no style or script, no tags or comments, entities decoded. */
-export const visibleText = html => html.replace(/<(style|script)\b[\s\S]*?<\/\1\s*>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
-  .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, name) => name[0] === '#' ? String.fromCodePoint(name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : Number(name.slice(1))) : ENTITIES[name.toLowerCase()] ?? all);
+/** What a reader of an HTML page sees (one definition, in scripts/lab-week.mjs). */
+export { visibleText };
 
 /**
  * Why a preview page may not be written: the same screen over its visible text, and the same one-link rule over its
@@ -184,11 +196,79 @@ export function drafts(dispatch, where = 'dispatch', { render = preview } = {}) 
   if (problems.length) return { problems, files: {} };
   const url = dispatchUrl(dispatch);
   const parts = xThread(dispatch, url);
-  const texts = { 'linkedin.md': linkedin(dispatch, url), 'x.md': x(parts), 'reddit.md': reddit(dispatch, url), 'github-discussion.md': githubDiscussion(dispatch, url) };
-  const page = render(dispatch, texts);
+  return screened(dispatch, { 'linkedin.md': linkedin(dispatch, url), 'x.md': x(parts), 'reddit.md': reddit(dispatch, url), 'github-discussion.md': githubDiscussion(dispatch, url) }, parts, url, render);
+}
+
+// The four drafts and their preview, all screened together; nothing is returned to be written unless all five pass.
+function screened(subject, texts, parts, url, render) {
+  const page = render(subject, texts);
   const refused = [...draftProblems(texts, url, parts), ...previewProblems(page, url)];
   if (refused.length) return { problems: refused, files: {} };
   return { problems: [], files: { ...texts, 'preview.html': page }, xParts: parts, url };
+}
+
+/** The week section's live place on Lab 01. */
+export const weekUrl = () => `${SITE_URL}labs/agent-space/#${WEEK_ANCHOR}`;
+
+// A week's sentences as the drafts carry them: the section's own, in its order, the quiet line first when there is one.
+const weekLines = week => { const s = weekSentences(week); return [...(s.quiet ? [s.quiet] : []), s.delivery, s.story, s.sessions]; };
+const KIND = { beat: 'Step', moment: 'Moment', correction: 'Correction' };
+const STORY_SHOWN = 5;
+
+function weekLinkedin(week, url) {
+  const story = week.story.slice(0, STORY_SHOWN);
+  return [`<!-- ${BANNER} -->`, '', `This week in Lab 01, ${week.window.label}.`, '', ...weekLines(week).flatMap(line => [line, '']),
+    ...(story.length ? [`From the story${week.story.length > story.length ? `, the newest ${story.length} of ${week.story.length}` : ''}:`, ...story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
+    `Every line, linked to its record: ${url}`, ''].join('\n');
+}
+
+/** The week's thread: the window and the delivery line, the story and sessions, up to three story titles, the link. */
+export function weekThread(week, url) {
+  const s = weekSentences(week);
+  const body = [
+    `This week in Lab 01, ${week.window.label}. ${s.quiet ?? s.delivery}`,
+    ...(s.quiet ? [] : [`${s.story} ${s.sessions}`]),
+    ...week.story.slice(0, 3).map(r => `${KIND[r.kind]}: ${quoted(r.title)}`),
+  ];
+  const total = body.length + 1;
+  const parts = [...body, `Every line, linked to its record: ${url}`].map((text, i) => `${i + 1}/${total} ${text}`);
+  return parts.map(part => excerpt(part, X_LIMIT));
+}
+
+function weekReddit(week, url) {
+  const story = week.story.slice(0, STORY_SHOWN);
+  return [`<!-- ${BANNER} Before posting in a subreddit, read its rules on self-promotion and links to your own work; many allow it only in a set thread, or not at all. Post where it is welcome, and only there. -->`, '',
+    `## Title`, '', `This week in Lab 01, ${week.window.label}`, '',
+    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']),
+    ...(story.length ? [...story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
+    `Every line, linked to its record: ${url}`, ''].join('\n');
+}
+
+function weekGithub(week, url) {
+  return [`<!-- ${BANNER} For the repository's Discussions, in the category for show and tell. -->`, '',
+    `## Title`, '', `This week in Lab 01, ${week.window.label}`, '',
+    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']), `Every line, linked to its record: ${url}`, '',
+    ...(week.merged.length ? ['### Merged', '', ...week.merged.map(m => `- #${m.pr} ${m.title}`), ''] : []),
+    ...(week.story.length ? ['### In the story', '', ...week.story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
+    ...(week.sessions.length ? ['### Sessions', '', ...week.sessions.map(d => `- Session of ${d.date}: ${plural(d.questions, 'question')}`), ''] : []),
+    ...(week.proofs.length ? ['### Proof cards', '', ...week.proofs.map(p => `- \`${p.id}\``), ''] : []),
+    ...coverageNotes(week).flatMap(note => [`_${note}_`, '']), ''].join('\n');
+}
+
+/**
+ * Every draft for one week, in memory, under the same checks as a dispatch's. The week must also pass the page's own
+ * gates (renderWeek throws on a count, link or word that does not hold), so a draft never says what the page refuses.
+ */
+export function weekDrafts(week, { render = preview } = {}) {
+  try { renderWeek(week); } catch (error) { return { problems: [error.message], files: {} }; }
+  const url = weekUrl();
+  const parts = weekThread(week, url);
+  return screened(week, { 'linkedin.md': weekLinkedin(week, url), 'x.md': x(parts), 'reddit.md': weekReddit(week, url), 'github-discussion.md': weekGithub(week, url) }, parts, url, render);
+}
+
+/** The week as the site would build it now (or at `now`), from the records under `site`. */
+export function siteWeek(site = SITE_DIR, now = new Date()) {
+  return weekOf({ delivery: readDelivery(site), milestones: readMilestones(site, { now }), dispatches: readDispatches(site), proofs: existsSync(join(site, PROOFS_PAGE)), now });
 }
 
 // The path with every symlink resolved: the deepest existing ancestor (the target itself when it exists) through
@@ -232,7 +312,19 @@ export function writeDrafts(dispatchFile, out, roots, options) {
   let dispatch;
   try { dispatch = JSON.parse(readFileSync(dispatchFile, 'utf8')); } catch (error) { problems.push(`${dispatchFile}: ${error.message}`); }
   if (problems.length) return { problems };
-  const result = drafts(dispatch, dispatchFile, options);
+  return written(drafts(dispatch, dispatchFile, options), out);
+}
+
+/** Write the week's drafts into `out`, from the records under `site` at `now`; nothing is written unless all pass. */
+export function writeWeekDrafts(out, { site = SITE_DIR, now = new Date(), roots, render } = {}) {
+  const problems = outProblems(out, roots);
+  if (problems.length) return { problems };
+  let week;
+  try { week = siteWeek(site, now); } catch (error) { return { problems: [error.message] }; }
+  return { ...written(weekDrafts(week, render ? { render } : {}), out), week };
+}
+
+function written(result, out) {
   if (result.problems.length) return result;
   mkdirSync(out, { recursive: true });
   for (const [file, text] of Object.entries(result.files)) writeFileSync(join(out, file), text);
@@ -253,21 +345,23 @@ export function cadence(site = SITE_DIR, today = new Date().toISOString().slice(
 }
 
 function args(argv) {
-  const out = { cadence: false };
+  const out = { cadence: false, week: false };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
-    if (flag === '--cadence') out.cadence = true;
-    else if (['--dispatch', '--out', '--site', '--today'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
+    if (flag === '--cadence' || flag === '--week') out[flag.slice(2)] = true;
+    else if (['--dispatch', '--out', '--site', '--today', '--now'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
     else throw new Error(`unknown or incomplete argument ${flag}`);
   }
-  if (!out.cadence && (!out.dispatch || !out.out)) throw new Error('--dispatch <file> and --out <dir> are required (or --cadence)');
+  if (out.week && (!out.out || out.dispatch || out.cadence)) throw new Error('--week takes --out <dir> (and no --dispatch or --cadence)');
+  if (out.now && (!out.week || Number.isNaN(Date.parse(out.now)))) throw new Error('--now takes an ISO time, with --week');
+  if (!out.cadence && !out.week && (!out.dispatch || !out.out)) throw new Error('--dispatch <file> and --out <dir> are required (or --cadence, or --week)');
   return out;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   let options;
   try { options = args(process.argv.slice(2)); } catch (error) {
-    console.error(`usage: node scripts/lab-dispatch-drafts.mjs --dispatch <file> --out <dir>\n       node scripts/lab-dispatch-drafts.mjs --cadence [--site <dir>] [--today YYYY-MM-DD]\n${error.message}`);
+    console.error(`usage: node scripts/lab-dispatch-drafts.mjs --dispatch <file> --out <dir>\n       node scripts/lab-dispatch-drafts.mjs --cadence [--site <dir>] [--today YYYY-MM-DD]\n       node scripts/lab-dispatch-drafts.mjs --week --out <dir> [--site <dir>] [--now <ISO time>]\n${error.message}`);
     process.exit(3);
   }
   if (options.cadence) {
@@ -276,9 +370,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.log(result.line);
     process.exit(result.quiet ? 2 : 0);
   }
-  const result = writeDrafts(resolve(options.dispatch), resolve(options.out));
+  const result = options.week
+    ? writeWeekDrafts(resolve(options.out), { site: resolve(options.site ?? SITE_DIR), now: options.now ? new Date(options.now) : new Date() })
+    : writeDrafts(resolve(options.dispatch), resolve(options.out));
   if (result.problems.length) {
-    console.error(`REFUSED ${options.dispatch}: ${result.problems.length} reason${result.problems.length === 1 ? '' : 's'}; nothing was written.`);
+    console.error(`REFUSED ${options.week ? '--week' : options.dispatch}: ${result.problems.length} reason${result.problems.length === 1 ? '' : 's'}; nothing was written.`);
     for (const problem of result.problems) console.error(`  - ${problem}`);
     process.exit(1);
   }
