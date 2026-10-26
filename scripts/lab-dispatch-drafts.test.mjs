@@ -214,6 +214,6 @@ test('--cadence: days since the latest committed dispatch, exit 2 after ten quie
 test('no network: the script imports and calls nothing that could reach one', () => {
   const source = readFileSync(script, 'utf8');
   const imports = [...source.matchAll(/^import .* from '([^']+)';$/gm)].map(m => m[1]);
-  assert.deepEqual(imports.sort(), ['./lab-dispatch-publish.mjs', './labs.mjs', 'node:fs', 'node:path', 'node:url']);
+  assert.deepEqual(imports.sort(), ['./lab-delivery.mjs', './lab-dispatch-publish.mjs', './lab-milestones.mjs', './lab-proofs.mjs', './lab-week.mjs', './labs.mjs', 'node:fs', 'node:path', 'node:url']);
   assert.doesNotMatch(source, /\bfetch\(|\bimport\(|\brequire\(|XMLHttpRequest|WebSocket|node:(?:http|https|net|dns|tls|dgram|child_process)/);
 });

@@ -5,7 +5,8 @@
 //   labs/agent-space/index.html   the lab page, from site/labs/agent-space/index.html (<!--LAB_*--> markers)
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
-// Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
+// Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
+// its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
 // (scripts/lab-films.mjs), the space's own measurements from telemetry.json (scripts/lab-telemetry.mjs), the counts of
 // its published records from counts.json (scripts/lab-counts.mjs), "The hard parts" from
@@ -26,6 +27,7 @@ import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
+import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -179,11 +181,12 @@ function checkedProofs(html, dispatches) {
 }
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
-export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE } = {}) {
+export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
-  const story = readMilestones(root);
+  const story = readMilestones(root, { now });
+  const delivery = readDelivery(root);
   // The story page's template ships only with its record: without one, its markers would reach dist/ unfilled.
   if (!story && existsSync(join(root, STORY_PAGE))) throw new Error(`${STORY_PAGE}: the story page ships without its record (data/labs/agent-space/milestones.json)`);
   // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
@@ -222,7 +225,9 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
-      '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
+      '<!--LAB_DELIVERY-->': renderDelivery(delivery),
+      // "This week in Lab 01": the seven days ending on the build's date, from the same records (scripts/lab-week.mjs).
+      '<!--LAB_WEEK-->': renderWeek(weekOf({ delivery, milestones: story, dispatches, proofs, now })),
       // "How it was born": a link to the story page, empty while there is no milestones record (scripts/lab-milestones.mjs).
       '<!--LAB_STORY_LINK-->': renderStoryLink(story),
     }),
