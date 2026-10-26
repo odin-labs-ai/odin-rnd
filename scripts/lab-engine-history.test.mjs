@@ -101,17 +101,22 @@ test('the claims series is a step chart: a value is held until it changes, and e
   const points = record.series.find(s => s.id === 'claims-on-main').points;
   assert.equal((svg.match(/class="engine-step"/g) ?? []).length, 2 * (points.length - 1), 'one flat and one riser per change');
   assert.equal((svg.match(/<circle/g) ?? []).length, points.length);
-  for (const p of points) assert.ok(html.includes(`Private commit <code>${p.commit.slice(0, 8)}</code>, cited by hash`), p.commit);
+  for (const p of points) assert.ok(html.includes(`Private commit <code>${p.commit.slice(0, 8)}</code>, cited by hash, checked as part of the private main <code>${MAIN.slice(0, 8)}</code> on <time datetime="2026-10-26">2026-10-26</time>`), p.commit);
   assert.match(html, /A figure measured once becomes a series by itself/);
 }));
 
 test('a figure measured once is stated, never drawn; it becomes a line only when a later commit changes it', () => withDir(dir => {
   const { record } = build(dir);
   const once = measuredLine(record, 'answer-time');
-  assert.match(once, /^<p class="engine-once">Measured once so far, on <time datetime="2026-10-25T12:00:00Z">25 Oct<\/time>\. Private commit <code>5{8}<\/code>, cited by hash/);
+  assert.match(once, /^<p class="engine-once">Measured once so far, on <time datetime="2026-10-25T12:00:00Z">25 Oct<\/time>\. Private commit <code>5{8}<\/code>, cited by hash, checked as part of the private main <code>e{8}<\/code> on <time datetime="2026-10-26">2026-10-26<\/time>/);
   assert.doesNotMatch(once, /<svg|<line|<path/);
   assert.equal(measuredLine(record, 'tick-1000'), '', 'no point: nothing at all');
-  assert.match(measuredLine(record, 'test-suite'), /Changed 1 time since <time[^>]*>23 Oct<\/time>, last on <time[^>]*>24 Oct<\/time>/);
+  // Two points: it becomes a series by itself, drawn as a step chart, and EVERY point is cited with the main head.
+  const twice = measuredLine(record, 'test-suite');
+  assert.match(twice, /Measured 2 times, from <time[^>]*>23 Oct<\/time> to <time[^>]*>24 Oct<\/time>/);
+  assert.match(twice, /<svg class="lab-chart engine-plot"/);
+  for (const p of record.series.find(x => x.id === 'test-suite').points) assert.ok(twice.includes(`Private commit <code>${p.commit.slice(0, 8)}</code>, cited by hash, checked as part of the private main <code>${MAIN.slice(0, 8)}</code>`), p.commit);
+  assert.doesNotMatch(twice, /<path|<polyline|<polygon/);
   const single = clone(record); const s = single.series.find(x => x.id === 'claims-on-main'); s.points = s.points.slice(0, 1);
   assert.doesNotMatch(renderClaimsOverTime(single), /<svg/, 'a one-point claims series is not drawn');
 }));

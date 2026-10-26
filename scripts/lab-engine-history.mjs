@@ -112,7 +112,8 @@ export function readEngineHistory(root = 'site', { now = new Date(), pin } = {})
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const day = iso => { const d = realInstant(iso); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC</time>`; };
 const values = vals => Object.entries(vals).map(([k, v]) => `${escape(k.replaceAll('_', ' '))}: <strong>${escape(v.toLocaleString('en-GB'))}</strong>`).join(' · ');
-const cite = p => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash; this page cannot check it, anyone with access can.`;
+// Every stated or drawn point cites its commit AND the private main head it was checked to be part of, and when.
+const cite = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
 
 /** Which engine-history series follows each engine figure Lab 01 shows (by claim), and the agent space's answer time. */
 export const SERIES_FOR_CLAIM = { 10: 'test-suite', 20: 'tick-1000', d7: 'campus-draws' };
@@ -124,9 +125,13 @@ const shortDay = iso => { const d = realInstant(iso); return `<time datetime="${
 // A step chart for a series with two or more points: each value is held flat until the next point changes it, then
 // steps. A value is never estimated between points (a step is "it stayed this until it changed", which the history
 // records); a series with one point is never drawn, only stated.
+/** Which value each series' chart draws (the rest are listed under it); default: its first value. */
+export const CHART_KEY = { 'tick-1000': 'p50_ms', 'campus-draws': 'p50_ms', 'answer-time': 'Odin_p50_s' };
+
 function stepChart(s) {
   if (s.points.length < 2) throw new Error(`${s.id}: a step chart needs two or more points`);
-  const W = 320, H = 130, PAD = 28, key = Object.keys(s.points[0].values)[0];
+  const first = Object.keys(s.points[0].values), key = first.includes(CHART_KEY[s.id]) ? CHART_KEY[s.id] : first[0];
+  const W = 320, H = 130, PAD = 28;
   const times = s.points.map(p => realInstant(p.at).getTime()), ys = s.points.map(p => p.values[key]);
   const t0 = times[0], t1 = times.at(-1), y1 = Math.max(...ys, 1);
   const x = t => (PAD + (W - 2 * PAD) * (t - t0) / (t1 - t0)).toFixed(1);
@@ -138,22 +143,26 @@ function stepChart(s) {
   return `<svg class="lab-chart engine-plot" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="engine-${escape(s.id)}-title engine-${escape(s.id)}-desc"><desc id="engine-${escape(s.id)}-desc">${escape(key.replaceAll('_', ' '))}, held until each change: ${escape(desc)}</desc>${axis}${steps}${dots}</svg>`;
 }
 
-/** The plain line beside a figure: "measured once so far, on <date>" for one point; nothing for none. */
+/**
+ * A figure's history beside it: nothing for no point; "Measured once so far, on <date>" with its citation for one point
+ * (never drawn); a step chart and every point with its citation for two or more. So a figure measured once becomes a
+ * series by itself, here and in the chart, the first time a later commit changes it: re-vendoring is all it takes.
+ */
 export function measuredLine(history, id) {
   const s = seriesById(history, id);
   if (!s || !s.points.length) return '';
-  const p = s.points[0];
-  if (s.points.length === 1) return `<p class="engine-once">Measured once so far, on ${shortDay(p.at)}. ${cite(p)}</p>`;
-  const last = s.points.at(-1);
-  return `<p class="engine-once">Changed ${s.points.length - 1} time${s.points.length === 2 ? '' : 's'} since ${shortDay(p.at)}, last on ${shortDay(last.at)}. ${cite(last)}</p>`;
+  const mc = history.vendored.mainCheck;
+  if (s.points.length === 1) return `<p class="engine-once">Measured once so far, on ${shortDay(s.points[0].at)}. ${cite(s.points[0], mc)}</p>`;
+  return `<div class="engine-history"><p class="engine-once">Measured ${s.points.length} times, from ${shortDay(s.points[0].at)} to ${shortDay(s.points.at(-1).at)}.</p>${stepChart(s)}${pointList(s, mc, 'Each measurement, with its commit')}</div>`;
 }
+
+const pointList = (s, mc, summary) => `<details class="lab-panel-table"><summary>${escape(summary)}</summary><ol class="engine-points">${s.points.map(p => `<li><p class="engine-when">${day(p.at)}</p><p>${values(p.values)}</p><p>${escape(p.change[0].toUpperCase() + p.change.slice(1))}.</p><p class="lab-source">${cite(p, mc)}</p></li>`).join('')}</ol></details>`;
 
 /** "Engine claims in the main build over time": the step chart and every point with its citation. Nothing for no history. */
 export function renderClaimsOverTime(history) {
   const s = seriesById(history, CLAIMS_ON_MAIN);
   if (!s || !s.points.length) return '';
   if (s.points.length === 1) return `<div class="lab-panel engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">Engine claims in the main build over time</h4>${measuredLine(history, s.id)}</div>`;
-  const rows = s.points.map(p => `<li><p class="engine-when">${day(p.at)}</p><p>${values(p.values)}</p><p>${escape(p.change[0].toUpperCase() + p.change.slice(1))}.</p><p class="lab-source">${cite(p)}</p></li>`).join('');
   const v = history.vendored;
-  return `<figure class="lab-panel lab-panel-wide engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">Engine claims in the main build over time</h4><p>${escape(s.note)}</p>${stepChart(s)}<details class="lab-panel-table"><summary>Each change, with its commit</summary><ol class="engine-points">${rows}</ol></details><p class="lab-source">From ${escape(v.from)}: ${escape(v.commitsRead.claims)} versions of the claims table and ${escape(v.commitsRead.pack)} of the telemetry pack. The rule: ${escape(v.rule)}. A figure measured once becomes a series by itself the first time a later commit changes it. Every commit was checked against the private main head <code>${escape(v.mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(v.mainCheck.checked)}">${escape(v.mainCheck.checked)}</time> (${escape(v.mainCheck.how)}).</p></figure>`;
+  return `<figure class="lab-panel lab-panel-wide engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">Engine claims in the main build over time</h4><p>${escape(s.note)}</p>${stepChart(s)}${pointList(s, v.mainCheck, 'Each change, with its commit')}<p class="lab-source">From ${escape(v.from)}: ${escape(v.commitsRead.claims)} versions of the claims table and ${escape(v.commitsRead.pack)} of the telemetry pack. The rule: ${escape(v.rule)}. A figure measured once becomes a series by itself the first time a later commit changes it. Every commit was checked against the private main head <code>${escape(v.mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(v.mainCheck.checked)}">${escape(v.mainCheck.checked)}</time> (${escape(v.mainCheck.how)}).</p></figure>`;
 }
