@@ -171,7 +171,8 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   const { dir, name } = session();
   const root = join(temp, 'site-render');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
-  cpSync('site/labs', join(root, 'labs'), { recursive: true });
+  // The story page ships only with its record (scripts/lab-milestones.mjs), which these roots do not carry.
+  cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
   cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   assert.deepEqual(publish({ sessionDir: dir, answerScreen: screen(name), site: root }).problems, []);
@@ -179,7 +180,9 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   const page = pages['labs/agent-space/index.html'];
   assert.match(page, new RegExp(`<source src="\\.\\./\\.\\./assets/labs/agent-space/${name}/clip\\.webm" type="video/webm">`));
   assert.equal((page.match(/class="lab-card"/g) ?? []).length, 3);
-  assert.match(page, /A page it has read<\/span><code>evidence atlas-a1b2c3-1<\/code>/);
+  // The fixture carries the proof-card explorer's template, so each card's evidence id links to its entry there.
+  assert.match(page, /A page it has read<\/span><a href="proofs\/#proof-atlas-a1b2c3-1"><code>evidence atlas-a1b2c3-1<\/code><\/a>/);
+  assert.match(pages['labs/agent-space/proofs/index.html'], /<article class="proof-entry" id="proof-atlas-a1b2c3-1"/);
   assert.doesNotMatch(page, /id="no-dispatch"/);
   assert.match(pages['labs/agent-space/feed.xml'], new RegExp(`<entry><id>https://odin-labs-ai\\.github\\.io/odin-rnd/labs/agent-space/#${name}</id>`));
   assert.match(pages['labs/agent-space/feed.xml'], /<updated>2026-10-25T00:00:00Z<\/updated>/);
@@ -320,7 +323,8 @@ test('the schema checker applies additionalProperties as a schema, and refuses f
 test('older dispatches keep the heading order: session h4 under "Earlier sessions" h3, its questions h5', () => {
   const root = join(temp, 'site-two');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
-  cpSync('site/labs', join(root, 'labs'), { recursive: true });
+  // The story page ships only with its record (scripts/lab-milestones.mjs), which these roots do not carry.
+  cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
   cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   for (const date of ['2026-10-25', '2026-11-01']) {
