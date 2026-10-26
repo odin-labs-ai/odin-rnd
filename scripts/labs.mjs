@@ -142,8 +142,8 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   };
   return {
     'labs/index.html': fill('labs/index.html', {
-      // Lab 01's tile, then the experiment labs' tiles (scripts/lab-tiles.mjs gates them; the build fails on a problem).
-      // Lab 02's tile follows in its own change, through that gate.
+      // Lab 01's tile, then the experiment labs' tiles, Lab 02 then Lab 03 (scripts/lab-tiles.mjs gates them; the build
+      // fails on a problem).
       '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
       '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),

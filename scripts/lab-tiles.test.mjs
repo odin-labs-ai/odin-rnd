@@ -25,12 +25,15 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-01\.json">Amendment 01: how it will be run<\/a>/);
   assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 01/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
   assert.doesNotMatch(tile, /fits|predict|winner|faster|safer/i, 'no prediction or verdict');
-  assert.doesNotMatch(page, /LAB 02/, 'the Lab 02 slot is left to its own pull request');
+  // Lab 02's tile (a results lab) sits between Lab 01 and Lab 03, once.
+  const lab02 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-brain-bench">');
+  assert.ok(lab01 < lab02 && lab02 < lab03, 'Lab 02 sits between Lab 01 and Lab 03');
+  assert.equal((page.match(/LAB 02/g) ?? []).length, 1);
 });
 
 test('the published site requires every listed tile: the repository\'s own site/ root defaults to required', () => {
-  assert.equal(readTiles('site').length, 1);
-  assert.equal(readTiles(join(process.cwd(), 'site')).length, 1);
+  assert.deepEqual(readTiles('site').map(t => t.label), ['Lab 02', 'Lab 03']);
+  assert.equal(readTiles(join(process.cwd(), 'site')).length, 2);
 });
 
 test('the build refuses a tile with a number, a missing or outside link, an unscreened word, or a stale status', () => {
@@ -61,4 +64,39 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   writeFileSync(join(root, 'data/failover/results.json'), '{}');
   assert.throws(() => readTiles(root), /status: says not yet run, but data\/failover\/results\.json is published/);
   assert.match(renderTile(committed), /^<article class="lab-tile lab-tile-static"/);
+});
+
+const results = JSON.parse(readFileSync('site/data/labs/brain-bench-tile.json', 'utf8'));
+
+test('Lab 02 is a results lab: it links its page and its pinned record, says its pre-registrations are private, and carries no number', () => {
+  assert.deepEqual(tileProblems(results), []);
+  const tile = renderTile(results);
+  assert.match(tile, /<span class="technical">LAB 02<\/span><h2 id="lab-tile-brain-bench">Every brain on the same tasks<\/h2>/);
+  assert.match(tile, /<p class="lab-tile-status">Results published · pre-registrations private, cited by hash\.<\/p>/);
+  assert.match(tile, /<a href="\.\.\/labs\/brain-bench\/index\.html">/);
+  assert.match(tile, /<a href="\.\.\/data\/labs\/brain-bench\/results\.json">/);
+  assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 02/g, ''), /\d/);
+});
+
+test('a results lab is refused without its record, without a matching pin, or without a link to the record', () => {
+  const root = join(temp, 'results-site');
+  const copy = file => { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); };
+  for (const file of ['labs/brain-bench/index.html', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256']) copy(file);
+  assert.deepEqual(tileProblems(results, root), []);
+  const cases = [
+    [t => { delete t.record; }, /must have required property|record/],
+    [t => { t.record.pin = 'data/labs/brain-bench/missing.sha256'; }, /record\/pin: data\/labs\/brain-bench\/missing\.sha256 is not on this site/],
+    [t => { t.record.href = 'data/labs/brain-bench/results.sha256'; }, /record\/href: not a record \(\.json\) path/],
+    [t => { t.record.pin = '../results.sha256'; }, /record\/pin: not a pin \(\.sha256\) path/],
+    [t => { t.links = t.links.slice(0, 1); }, /the tile does not link its record/],
+    [t => { t.status = 'Results published, cited by hash, not yet run'; }, /a results lab has run/],
+    [t => { delete t.kind; }, /only a results lab \(kind "results"\) carries a record/],
+  ];
+  for (const [edit, expected] of cases) {
+    const t = structuredClone(results); edit(t);
+    assert.match(tileProblems(t, root).join('\n'), expected, String(expected));
+  }
+  // A record that changes without its pin is refused.
+  writeFileSync(join(root, 'data/labs/brain-bench/results.json'), `${readFileSync('site/data/labs/brain-bench/results.json', 'utf8')} `);
+  assert.match(tileProblems(results, root).join('\n'), /record\/pin: data\/labs\/brain-bench\/results\.sha256 does not pin the sha256 of data\/labs\/brain-bench\/results\.json/);
 });

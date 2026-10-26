@@ -270,7 +270,7 @@ test('on the published site Lab 02 is required: its words missing refuse the Lab
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('Lab 02 is in the sitemap; its Labs tile comes in its own change, through the lab-tiles gate', () => {
+test('Lab 02 is in the sitemap; its Labs tile goes through the lab-tiles gate (scripts/lab-tiles.test.mjs)', () => {
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/</loc>'));
   assert.ok(renderLabs()['labs/brain-bench/index.html'].includes('<h1 id="lab-title">Every brain on the same tasks.</h1>'));
 });

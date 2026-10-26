@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "odin-lab-tile-v1",
- "title": "A tile on the Labs index for a lab that is an experiment: site/data/labs/<slug>.json",
+ "title": "A tile on the Labs index for a lab that is an experiment: site/data/labs/<slug>.json (<slug>-tile.json when <slug>.json holds the lab's words)",
  "type": "object",
  "required": ["format", "version", "label", "title", "question", "how", "experiment", "status", "links"],
  "additionalProperties": false,
@@ -14,6 +14,13 @@
   "how": {"type": "string", "minLength": 1, "maxLength": 300},
   "experiment": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"},
   "status": {"type": "string", "minLength": 1, "maxLength": 60},
+  "kind": {"type": "string", "pattern": "^(preregistered|results)$", "description": "preregistered (the default): its pre-registration is published under data/<experiment>/. results: a results lab whose pre-registrations stay private; its record and the record's sha256 pin must be published."},
+  "record": {
+   "type": "object",
+   "required": ["href", "pin"],
+   "additionalProperties": false,
+   "properties": {"href": {"type": "string", "minLength": 1}, "pin": {"type": "string", "minLength": 1}}
+  },
   "links": {
    "type": "array",
    "minItems": 1,
@@ -24,5 +31,6 @@
     "properties": {"label": {"type": "string", "minLength": 1, "maxLength": 80}, "href": {"type": "string", "minLength": 1}}
    }
   }
- }
+ },
+ "allOf": [{"if": {"required": ["kind"], "properties": {"kind": {"const": "results"}}}, "then": {"required": ["record"]}}]
 }
