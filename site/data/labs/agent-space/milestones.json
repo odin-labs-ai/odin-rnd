@@ -2,22 +2,43 @@
   "format": "odin-milestones",
   "version": 1,
   "projection": "public",
-  "selection": "Selected by an AI editor from 777 candidates; not exhaustive. Every quote is machine-checked verbatim against its source, and every item's evidence resolves on the public record.",
+  "selection": "Selected by an AI editor from 777 candidates; not exhaustive. Every quote is machine-checked verbatim against its source. Evidence is checkable here (on the public record) or a private commit cited by hash, checked as part of the private main on the date given.",
+  "mainCheck": {
+    "main": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223",
+    "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+    "checked": "2026-10-26"
+  },
   "window": {
-    "from": "2026-10-23T03:29:59Z",
+    "from": "2026-10-23T03:24:19Z",
     "to": "2026-10-26T01:17:03Z"
   },
   "counts": {
-    "beat": 29,
-    "moment": 10,
-    "correction": 3,
+    "beat": 31,
+    "moment": 12,
+    "correction": 4,
     "leftOut": {
-      "beat": 4,
-      "moment": 3,
-      "correction": 2
+      "beat": 2,
+      "moment": 1,
+      "correction": 1
     }
   },
   "records": [
+    {
+      "id": "correction-20261023-1",
+      "kind": "correction",
+      "at": "2026-10-23T03:24:19Z",
+      "title": "Two figures relabelled: measured, but not yet merged",
+      "body": "Two figures shared earlier came from a work branch, not from the main code. They were relabelled as such until they landed.",
+      "quote": "measured but not merged on main yet",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "0aa4d76af220f091fbfdafbb84f875e582dc4470",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
     {
       "id": "moment-20261023-1",
       "kind": "moment",
@@ -57,6 +78,22 @@
       "visual": "assets/agent-space/agent-space-overview.jpg"
     },
     {
+      "id": "moment-20261024-1",
+      "kind": "moment",
+      "at": "2026-10-24T00:54:02Z",
+      "title": "A second client walks into the live agent space",
+      "body": "Over a short-lived tunnel, a client built in another engine joined our live agent space and asked the same questions. The same answers came back, with the same proof ids.",
+      "quote": "The engine is truly client-independent",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "95613a15fe23d325126f7e97870cafd17ae6ec3c",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
       "id": "beat-20261024-1",
       "kind": "beat",
       "at": "2026-10-24T03:18:37Z",
@@ -65,9 +102,16 @@
       "quote": "Verified independently: PR state MERGED",
       "evidence": [
         {
-          "type": "pr",
-          "number": 52,
-          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/52"
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/work-with-us/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/partners/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/one-pager/"
         }
       ],
       "visual": null
@@ -157,19 +201,38 @@
       "kind": "beat",
       "at": "2026-10-24T21:12:26Z",
       "title": "Odin Labs R&D launches as a lab",
-      "body": "The R&D site relaunched as a lab: a new home, a partner programme and the lab on a single page.",
+      "body": "The R&D site relaunched as a lab, with a partner programme and the whole lab on a single page.",
       "quote": "odin-rnd #52, #69 and #70 are merged and live",
       "evidence": [
         {
-          "type": "pr",
-          "number": 70,
-          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/70"
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/partners/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/one-pager/"
         }
       ],
       "visual": null
     },
     {
-      "id": "moment-20261024-1",
+      "id": "beat-20261024-8",
+      "kind": "beat",
+      "at": "2026-10-24T22:22:10Z",
+      "title": "Why our model loses: it picks the wrong action",
+      "body": "Replaying the lost games showed the model never breaks the reply format. It chooses the wrong action: asked to share an item, it tries to buy one it already has; asked to meet somewhere, it says it is on its way and never moves.",
+      "quote": "I replayed the losing games with full decision logs",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "540b48d110bfe619b3dfe72e70d85d26a8aa3624",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261024-2",
       "kind": "moment",
       "at": "2026-10-24T23:15:29Z",
       "title": "The agent space becomes Lab 01",
@@ -185,7 +248,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261024-8",
+      "id": "beat-20261024-9",
       "kind": "beat",
       "at": "2026-10-24T23:35:52Z",
       "title": "The first human-first rewrite goes live",
@@ -201,7 +264,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261024-9",
+      "id": "beat-20261024-10",
       "kind": "beat",
       "at": "2026-10-24T23:37:26Z",
       "title": "Lab 01's export contract is agreed",
@@ -248,6 +311,27 @@
       "visual": null
     },
     {
+      "id": "moment-20261025-2",
+      "kind": "moment",
+      "at": "2026-10-25T02:33:14Z",
+      "title": "Take one failed two questions, so we fixed the agents, not the clip",
+      "body": "In the first recorded session Odin did not recognise 'who is here' as a question about the world, and Juno had no getting-started note. Both were fixed at the source, with tests, and the session was filmed again.",
+      "quote": "It's the lab being a lab.",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "eab573555928da793754de9d86410439d26b4357",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        },
+        {
+          "type": "proof",
+          "id": "juno-381dbb-1",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/"
+        }
+      ],
+      "visual": "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3.png"
+    },
+    {
       "id": "correction-20261025-2",
       "kind": "correction",
       "at": "2026-10-25T02:38:01Z",
@@ -264,7 +348,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-2",
+      "id": "moment-20261025-3",
       "kind": "moment",
       "at": "2026-10-25T02:39:37Z",
       "title": "Two AI advocates freeze the MongoDB study: 11 vetoes, all accepted",
@@ -313,6 +397,22 @@
     {
       "id": "beat-20261025-3",
       "kind": "beat",
+      "at": "2026-10-25T03:40:53Z",
+      "title": "Odin stops saying internal ids aloud",
+      "body": "Odin's answers used to carry an internal hash and a run id. They were removed where the agent speaks, not in the export, so the clip and the record always agree, and a test now refuses them.",
+      "quote": "Fixed where it's said, not in the export",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "ac790b11e5fe35cf8dba5c4577b28bf49ea5a7dc",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-4",
+      "kind": "beat",
       "at": "2026-10-25T03:54:02Z",
       "title": "EXP 020 is published before any counted run",
       "body": "'MongoDB on its home ground' went public as EXP 020: the frozen text in full, with four listed substitutions that the build undoes and checks against the original hash.",
@@ -331,7 +431,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-3",
+      "id": "moment-20261025-4",
       "kind": "moment",
       "at": "2026-10-25T04:21:50Z",
       "title": "The publisher refuses the first session, correctly",
@@ -352,7 +452,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-4",
+      "id": "beat-20261025-5",
       "kind": "beat",
       "at": "2026-10-25T04:52:32Z",
       "title": "Every dispatch becomes drafts for four channels",
@@ -368,7 +468,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-5",
+      "id": "beat-20261025-6",
       "kind": "beat",
       "at": "2026-10-25T05:11:04Z",
       "title": "The second take passes the publisher",
@@ -384,7 +484,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-4",
+      "id": "moment-20261025-5",
       "kind": "moment",
       "at": "2026-10-25T08:41:23Z",
       "title": "Lab 01's first dispatch goes live",
@@ -405,7 +505,7 @@
       "visual": "assets/labs/agent-space/session-2026-10-25-b/poster.png"
     },
     {
-      "id": "moment-20261025-5",
+      "id": "moment-20261025-6",
       "kind": "moment",
       "at": "2026-10-25T11:30:13Z",
       "title": "Even PostgreSQL's AI advocate predicts MongoDB wins failover",
@@ -425,7 +525,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-6",
+      "id": "moment-20261025-7",
       "kind": "moment",
       "at": "2026-10-25T11:32:10Z",
       "title": "'Nice, but where is the real work?'",
@@ -441,7 +541,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-7",
+      "id": "moment-20261025-8",
       "kind": "moment",
       "at": "2026-10-25T12:01:15Z",
       "title": "No feature theatre",
@@ -457,7 +557,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-6",
+      "id": "beat-20261025-7",
       "kind": "beat",
       "at": "2026-10-25T12:14:50Z",
       "title": "The agent space is measured",
@@ -477,7 +577,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-7",
+      "id": "beat-20261025-8",
       "kind": "beat",
       "at": "2026-10-25T13:51:50Z",
       "title": "The tour is re-filmed for the public",
@@ -492,7 +592,7 @@
       "visual": "assets/labs/agent-space/films/agent-space-tour-poster.png"
     },
     {
-      "id": "beat-20261025-8",
+      "id": "beat-20261025-9",
       "kind": "beat",
       "at": "2026-10-25T14:43:45Z",
       "title": "How this site got built: the real delivery record",
@@ -533,7 +633,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-9",
+      "id": "beat-20261025-10",
       "kind": "beat",
       "at": "2026-10-25T20:23:07Z",
       "title": "The failover study is published: kill the database mid-session",
@@ -553,7 +653,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-10",
+      "id": "beat-20261025-11",
       "kind": "beat",
       "at": "2026-10-25T20:49:07Z",
       "title": "The failover runner's protocol goes public",
@@ -569,7 +669,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-11",
+      "id": "beat-20261025-12",
       "kind": "beat",
       "at": "2026-10-25T20:54:29Z",
       "title": "Where each store fits: the fit map",
@@ -585,7 +685,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-12",
+      "id": "beat-20261025-13",
       "kind": "beat",
       "at": "2026-10-25T21:09:09Z",
       "title": "Beyond this site: our other repositories, as counts",
@@ -601,7 +701,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-13",
+      "id": "beat-20261025-14",
       "kind": "beat",
       "at": "2026-10-25T21:33:09Z",
       "title": "EXP 020 owns a gap, in writing",
@@ -617,7 +717,7 @@
       "visual": null
     },
     {
-      "id": "moment-20261025-8",
+      "id": "moment-20261025-9",
       "kind": "moment",
       "at": "2026-10-25T21:56:40Z",
       "title": "The AI advocates accept the rule and veto the paragraph",
@@ -638,7 +738,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-14",
+      "id": "beat-20261025-15",
       "kind": "beat",
       "at": "2026-10-25T22:33:40Z",
       "title": "Amendment 03: the verdict may now be computed",
@@ -654,7 +754,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-15",
+      "id": "beat-20261025-16",
       "kind": "beat",
       "at": "2026-10-25T23:32:31Z",
       "title": "Ask the agents: questions in, answers back",
@@ -670,7 +770,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-16",
+      "id": "beat-20261025-17",
       "kind": "beat",
       "at": "2026-10-25T23:46:15Z",
       "title": "The film files are pinned before the page shows them",
@@ -686,7 +786,7 @@
       "visual": null
     },
     {
-      "id": "beat-20261025-17",
+      "id": "beat-20261025-18",
       "kind": "beat",
       "at": "2026-10-25T23:47:50Z",
       "title": "Lab 02 goes live: every brain on the same tasks",

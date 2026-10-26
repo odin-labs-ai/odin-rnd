@@ -2,7 +2,7 @@
  "format": "odin-milestones-pin",
  "version": 1,
  "file": "site/data/labs/agent-space/milestones.json",
- "fileSha256": "56abc8dd3337ada06d066a11557da83eaef0a1f37b0e6adb428990a9c56caba5",
- "sourceSha256": "92758439d702394161dc39ffee5f82ebdb7c13a26695180145ebbb21b080c63f",
- "commit": "5260d10d1abb0cbba6dd743db65670df4c57ebe6"
+ "fileSha256": "de0d7bb7af76542e2e71cbaea0ff7daecf0027f0925356ecb547192acde6f735",
+ "sourceSha256": "6d7f280cb9167c13be5d15a72cda9ac73f76a0a29dc562666872bdf1823c62fc",
+ "commit": "5d75e47a7f4c75abd8a342dc618de74cd49fd2b5"
 }
