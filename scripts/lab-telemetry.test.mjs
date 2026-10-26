@@ -14,6 +14,7 @@ const edit = fn => { const record = clone(real); fn(record); return problems(rec
 // An engine edit made the way an honest re-vendoring would make it: the figures' digest taken again.
 const editEngine = fn => edit(r => { fn(r); r.vendored.figuresSha256 = figuresDigest(r.engine); });
 const reverse = text => [...text].reverse().join('');
+const escapeHtml = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const page = renderLabs()['labs/agent-space/index.html'];
 
 test('the committed telemetry passes, names the pack it was vendored from, and leaves out the run id and the benchmark', () => {
@@ -122,8 +123,14 @@ test('the page shows the method note next to the numbers, a source under each, a
   assert.ok(space.includes(real.agent_space.source.run_commit.slice(0, 8)));
   for (const figure of real.engine) {
     const where = figure.source.status === 'main' ? 'in the main build (an ancestor of its main head)' : 'on a work branch';
-    const line = figure.source.commit ? `Source: claims row ${figure.source.row}, ${where}, commit <code>${figure.source.commit.slice(0, 8)}</code>.` : `Source: claims row ${figure.source.row}, ${where}. ${NO_COMMIT}`;
+    const more = [figure.source.code_commit && `the code measured <code>${figure.source.code_commit.slice(0, 8)}</code>`, figure.source.merge && `merged into main as <code>${figure.source.merge.slice(0, 8)}</code>`].filter(Boolean);
+    const line = figure.source.commit ? `Source: claims row ${figure.source.row}, ${where}, commit <code>${figure.source.commit.slice(0, 8)}</code>${more.length ? ` (${more.join(', ')})` : ''}.` : `Source: claims row ${figure.source.row}, ${where}. ${NO_COMMIT}`;
     assert.ok(page.includes(line), String(figure.claim));
+    // A figure's note (e.g. "at par, not faster") sits beside it, before its source line.
+    if (figure.source.note) {
+      const item = page.slice(page.indexOf(escapeHtml(figure.what)), page.indexOf(line) + line.length);
+      assert.ok(item.includes(`<p class="lab-engine-note"><strong>Note:</strong> ${escapeHtml(figure.source.note)}</p>`), `${figure.claim}: its note is beside it`);
+    }
   }
   const branchFigures = real.engine.filter(f => f.source.status !== 'main');
   assert.equal((page.match(new RegExp(WORK_BRANCH.replaceAll('.', '\\.'), 'g')) ?? []).length, branchFigures.length);
@@ -133,4 +140,30 @@ test('the page shows the method note next to the numbers, a source under each, a
   assert.doesNotMatch(space, /answered: \d+%/);
   for (const o of real.vendored.omitted) assert.ok(page.includes(`claim ${o.claim} (${o.why})`), o.claim);
   assert.match(page, /The brain benchmark from the same pack (has|gets) /);
+});
+
+test('claims 20 and d7 carry their notes, and d7 says plainly the art is at par, not faster', () => {
+  // Unconditional: dropping a note from the vendored file, or from the page, fails here.
+  const byClaim = Object.fromEntries(real.engine.map(f => [String(f.claim), f]));
+  for (const claim of ['20', 'd7']) {
+    const figure = byClaim[claim];
+    assert.ok(figure, `claim ${claim} is on the page`);
+    assert.ok(figure.source.note && figure.source.note.length >= 10, `claim ${claim} carries its note`);
+    assert.match(figure.source.merge ?? '', /^[0-9a-f]{40}$/, `claim ${claim} names its merge into main`);
+    assert.ok(page.includes(`<p class="lab-engine-note"><strong>Note:</strong> ${escapeHtml(figure.source.note)}</p>`), `claim ${claim}'s note is on the page`);
+  }
+  assert.match(byClaim.d7.source.note, /at par/);
+  assert.match(byClaim.d7.source.note, /not faster/);
+  const noNote = clone(real); delete noNote.engine.find(f => String(f.claim) === 'd7').source.note; noNote.vendored.figuresSha256 = figuresDigest(noNote.engine);
+  assert.doesNotMatch(renderTelemetry(noNote), /at par with them, not faster/, 'without the note the page cannot show it');
+});
+
+test('a commit field skips only the long-number reason, and only for an exact hex commit', () => {
+  const nine = 'a1b2c3d4e5f6071829304152637485960718293a'.replace(/[a-f]/g, '1');
+  // An exact hex commit made of digits passes in a commit field...
+  assert.equal(editEngine(r => { r.engine[0].source.commit = nine.slice(0, 40); r.engine[0].source.onMain = r.vendored.mainCheck.main; }).includes('long internal id'), false);
+  // ...but the same digits are refused anywhere that is not a commit field,
+  assert.match(edit(r => { r.agent_space.note = `measured over ${nine.slice(0, 12)} frames on one machine, wall time`; }), /agent_space\/note: a phone number, timestamp or long internal id/);
+  // and a commit field that is not exactly a commit gets every reason, a restricted name included.
+  assert.match(editEngine(r => { r.engine[0].source.commit = `${reverse('tfolemag')}-build`; }), /engine\/0\/source\/commit: (a restricted name|does not match)/);
 });

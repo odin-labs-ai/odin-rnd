@@ -404,6 +404,19 @@
        "onMain": {
         "type": "string",
         "pattern": "^[0-9a-f]{40}$"
+       },
+       "code_commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "merge": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "note": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 400
        }
       }
      }
