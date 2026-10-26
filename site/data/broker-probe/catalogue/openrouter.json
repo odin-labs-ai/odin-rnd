@@ -1,6 +1,6 @@
 {
  "broker": "openrouter",
- "week": "2026-W43",
+ "week": "2026-W44",
  "models": {
   "~anthropic/claude-fable-latest": {
    "in": 10,
@@ -23,12 +23,12 @@
    "currency": "USD"
   },
   "~deepseek/deepseek-flash-latest": {
-   "in": 0.07,
-   "out": 0.5,
+   "in": 0.02,
+   "out": 1,
    "currency": "USD"
   },
   "~deepseek/deepseek-pro-latest": {
-   "in": 0.2247,
+   "in": 0.2565,
    "out": 8,
    "currency": "USD"
   },
@@ -48,8 +48,8 @@
    "currency": "USD"
   },
   "~moonshotai/kimi-latest": {
-   "in": 0.238,
-   "out": 16,
+   "in": 0.152,
+   "out": 20,
    "currency": "USD"
   },
   "~openai/gpt-astra-latest": {
@@ -88,12 +88,12 @@
    "currency": "USD"
   },
   "~z-ai/glm-flash-latest": {
-   "in": 0.0052,
-   "out": 0.1985,
+   "in": 0.0413,
+   "out": 0.0758,
    "currency": "USD"
   },
   "~z-ai/glm-latest": {
-   "in": 0.079,
+   "in": 0.0699,
    "out": 1.4,
    "currency": "USD"
   },
@@ -438,18 +438,18 @@
    "currency": "USD"
   },
   "deepseek/deepseek-v4-pro-0813": {
-   "in": 0.66,
-   "out": 1.98,
+   "in": 1.32,
+   "out": 3.96,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash": {
-   "in": 0.165,
-   "out": 0.66,
+   "in": 0.02,
+   "out": 1,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash-1017": {
-   "in": 0.15,
-   "out": 0.6,
+   "in": 0.3,
+   "out": 1.2,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash:batch": {
@@ -648,8 +648,8 @@
    "currency": "USD"
   },
   "google/gemma-4-26b-a4b-it": {
-   "in": 0.0765,
-   "out": 0.255,
+   "in": 0.09,
+   "out": 0.3,
    "currency": "USD"
   },
   "google/gemma-4-26b-a4b-it:free": {
@@ -658,8 +658,8 @@
    "currency": "USD"
   },
   "google/gemma-4-31b-it": {
-   "in": 0.2,
-   "out": 0.4,
+   "in": 0.1,
+   "out": 0.34,
    "currency": "USD"
   },
   "google/gemma-4-31b-it:free": {
@@ -732,6 +732,11 @@
    "out": 0.15,
    "currency": "USD"
   },
+  "liquid/lfm-2.5-2.6b": {
+   "in": 0.35,
+   "out": 0.5,
+   "currency": "USD"
+  },
   "liquid/lfm-2.5-2.6b:free": {
    "in": 0,
    "out": 0,
@@ -768,8 +773,8 @@
    "currency": "USD"
   },
   "meta-llama/llama-3.2-3b-instruct": {
-   "in": 0.0509,
-   "out": 0.335,
+   "in": 0.05,
+   "out": 0.33,
    "currency": "USD"
   },
   "meta-llama/llama-3.3-70b-instruct": {
@@ -863,8 +868,8 @@
    "currency": "USD"
   },
   "minimax/minimax-m2.5": {
-   "in": 0.27,
-   "out": 0.95,
+   "in": 0.3,
+   "out": 1.2,
    "currency": "USD"
   },
   "minimax/minimax-m2.7": {
@@ -1053,13 +1058,18 @@
    "currency": "USD"
   },
   "moonshotai/kimi-k3": {
-   "in": 0.239,
-   "out": 11.936,
+   "in": 0.152,
+   "out": 20,
    "currency": "USD"
   },
   "moonshotai/kimi-k3:batch": {
    "in": 2.28,
    "out": 11.4,
+   "currency": "USD"
+  },
+  "moonshotai/kimi-k3.1-pro": {
+   "in": 2,
+   "out": 10,
    "currency": "USD"
   },
   "morph/morph-v3-fast": {
@@ -1162,11 +1172,6 @@
    "out": -1000000,
    "currency": "USD"
   },
-  "openai/gpt-3.5-turbo": {
-   "in": 0.5,
-   "out": 1.5,
-   "currency": "USD"
-  },
   "openai/gpt-3.5-turbo-0613": {
    "in": 1,
    "out": 2,
@@ -1175,16 +1180,6 @@
   "openai/gpt-3.5-turbo-16k": {
    "in": 3,
    "out": 4,
-   "currency": "USD"
-  },
-  "openai/gpt-3.5-turbo-instruct": {
-   "in": 1.5,
-   "out": 2,
-   "currency": "USD"
-  },
-  "openai/gpt-3.5-turbo:batch": {
-   "in": 0.25,
-   "out": 0.75,
    "currency": "USD"
   },
   "openai/gpt-4": {
@@ -1878,8 +1873,8 @@
    "currency": "USD"
   },
   "qwen/qwen3.5-122b-a10b": {
-   "in": 0.4,
-   "out": 3.2,
+   "in": 0.26,
+   "out": 2.08,
    "currency": "USD"
   },
   "qwen/qwen3.5-27b": {
@@ -1918,8 +1913,8 @@
    "currency": "USD"
   },
   "qwen/qwen3.6-27b": {
-   "in": 0.25,
-   "out": 2,
+   "in": 0.32,
+   "out": 3.2,
    "currency": "USD"
   },
   "qwen/qwen3.6-35b-a3b": {
@@ -2308,13 +2303,13 @@
    "currency": "USD"
   },
   "z-ai/glm-5.3": {
-   "in": 0.079,
+   "in": 0.0699,
    "out": 1.4,
    "currency": "USD"
   },
   "z-ai/glm-5.3-flash": {
-   "in": 0.0052,
-   "out": 0.1985,
+   "in": 0.15,
+   "out": 0.5,
    "currency": "USD"
   },
   "z-ai/glm-5.3-flash:batch": {

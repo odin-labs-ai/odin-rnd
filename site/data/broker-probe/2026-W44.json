@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W44",
+  "startedAt": "2026-10-26T07:44:11.270Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 737,
+          "latencyMsP95": 1322,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 578,
+          "latencyMsP95": 1209,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 467,
+        "sha256": "1c8fd6e3a6f4213097727afdb125b36eaa559b83e4d01ced93ed7adabfed5e95",
+        "diff": {
+          "added": 2,
+          "removed": 3,
+          "repriced": 17,
+          "addedIds": [
+            "liquid/lfm-2.5-2.6b",
+            "moonshotai/kimi-k3.1-pro"
+          ],
+          "removedIds": [
+            "openai/gpt-3.5-turbo",
+            "openai/gpt-3.5-turbo-instruct",
+            "openai/gpt-3.5-turbo:batch"
+          ],
+          "repricedIds": [
+            "~deepseek/deepseek-flash-latest",
+            "~deepseek/deepseek-pro-latest",
+            "~moonshotai/kimi-latest",
+            "~z-ai/glm-flash-latest",
+            "~z-ai/glm-latest",
+            "deepseek/deepseek-v4-pro-0813",
+            "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017",
+            "google/gemma-4-26b-a4b-it",
+            "google/gemma-4-31b-it",
+            "meta-llama/llama-3.2-3b-instruct",
+            "minimax/minimax-m2.5",
+            "moonshotai/kimi-k3",
+            "qwen/qwen3.5-122b-a10b",
+            "qwen/qwen3.6-27b",
+            "z-ai/glm-5.3",
+            "z-ai/glm-5.3-flash"
+          ]
+        },
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-10-26T07:44:44.344Z"
+}
