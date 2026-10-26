@@ -301,7 +301,7 @@ test('every CI and deploy link names what it opens; no two CI links share a name
   const deploys = record.records.filter(r => r.kind === 'deploy');
   for (const r of record.records.filter(r => r.kind === 'ci' || r.kind === 'deploy')) {
     const again = deploys.filter(x => x.pr === r.pr && x.ref === r.ref).length > 1;
-    const name = r.kind === 'ci' ? `CI run ${r.source.split('/runs/')[1].split('/')[0]}, attempt ${r.attempt}` : `Pages deploy of ${r.ref.slice(0, 7)}${again ? `, run ${r.source.split('/runs/')[1]}` : ''}`;
+    const name = r.kind === 'ci' ? `CI run ${r.source.split('/runs/')[1].split('/')[0]}, attempt ${r.attempt}` : `Pages deploy of ${r.ref.slice(0, 7)}${again ? `, run ${r.source.match(/\/runs\/(\d+)$/)[1]}` : ''}`;
     assert.ok(section.includes(`href="${r.source}" data-source="${r.id}">${name}</a>`), r.id);
     names.push(name);
   }
@@ -312,8 +312,13 @@ test('every CI and deploy link names what it opens; no two CI links share a name
   twice.records.push({ ...d, id: d.id.replace(/\d+$/, '1'), source: d.source.replace(/\d+$/, '1'), at: new Date(Date.parse(d.at) + 60_000).toISOString().replace(/\.\d{3}Z$/, 'Z') });
   twice.telemetry = telemetryOf(twice);
   assert.deepEqual(deliveryProblems(twice), []);
-  const html = sectionOf(twice), run = d.source.split('/runs/')[1];
+  const html = sectionOf(twice), run = d.source.match(/\/runs\/(\d+)$/)[1];
   assert.ok(html.includes(`data-source="${d.id}">Pages deploy of ${d.ref.slice(0, 7)}, run ${run}</a>`) && html.includes(`>Pages deploy of ${d.ref.slice(0, 7)}, run 1</a>`));
+  // A deploy whose source is not a run URL ending in its run never reaches the renderer: the gate refuses it first.
+  const odd = clone();
+  odd.records.find(r => r.id === d.id).source = `${d.source}/`;
+  assert.ok(deliveryProblems(odd).length > 0, 'the schema refuses a deploy source that does not end in its run');
+  assert.throws(() => renderWith(odd), /Delivery record refused/);
 });
 
 test('a PR reviewed only after it was merged says so, apart from "no recorded review round", in its sentence and the lead', () => {

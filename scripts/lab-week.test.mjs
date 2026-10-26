@@ -56,6 +56,10 @@ test('the section: every count checked, every line links its record, the window 
   for (const m of w.merged) assert.ok(html.includes(`<a href="https://github.com/odin-labs-ai/odin-rnd/pull/${m.pr}" data-source="pr-${m.pr}">`));
   for (const r of w.story) assert.ok(html.includes(`<a href="story/#${r.id}" data-source="milestone:${r.id}">`));
   // Read before the build, the record says when; read after it (a later refresh), nothing past the build is counted, so there is no note.
+  // The wording is checked on a week whose record was read at 04:55 on the build day, whatever the committed record's read time.
+  const early = { ...w, coverage: { ...w.coverage, delivery: '2026-10-26T04:55:12Z' } };
+  assert.match(renderWeek(early), /The delivery record was read from GitHub on 26 Oct, 04:55 UTC; a pull request merged after that is not counted yet\./);
+  assert.deepEqual(weekProblems(renderWeek(early), early), []);
   const read = w.coverage.delivery;
   if (read < w.window.now) assert.ok(html.includes(`The delivery record was read from GitHub on ${new Date(read).getUTCDate()} ${new Date(read).toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' })}, ${read.slice(11, 16)} UTC; a pull request merged after that is not counted yet.`), read);
   else assert.doesNotMatch(html, /The delivery record was read from GitHub/);
