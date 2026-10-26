@@ -1,0 +1,69 @@
+{
+ "format": "odin-lab-hard-parts",
+ "version": 1,
+ "lab": "agent-space",
+ "parts": [
+  {
+   "title": "Every answer carries its evidence.",
+   "text": "Each answer is saved as an evidence record: a short why, the kind of source, and the sources it used. The card under each answer shows the record's id, and when you ask \"How do you know?\" the agent reads its sources back.",
+   "links": [
+    {
+     "label": "The first session's dispatch",
+     "href": "data/labs/agent-space/dispatches/session-2026-10-25-b.json"
+    },
+    {
+     "label": "The record format",
+     "href": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/schemas/odin-dispatch-v1.schema.json"
+    }
+   ]
+  },
+  {
+   "title": "A follow-up stands on the record before it.",
+   "text": "A follow-up answer points at the record it explains, instead of making a new claim. In the first session, \"How do you know?\" carries the same evidence id as the answer before it.",
+   "links": [
+    {
+     "label": "The follow-up, in the first session",
+     "href": "#session-2026-10-25-b"
+    }
+   ]
+  },
+  {
+   "title": "Nothing private gets out, and every byte is pinned.",
+   "text": "The publisher refuses a session, with every reason listed, if any text carries a private name, a place, a price, an address or a link to somewhere else. It records the sha256 of every clip and picture, and the site will not build if one byte changes. The films above pass the same check. It cannot read pixels, so every recording is also watched before it goes out.",
+   "links": [
+    {
+     "label": "The publisher",
+     "href": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/lab-dispatch-publish.mjs"
+    },
+    {
+     "label": "The films check",
+     "href": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/lab-films.mjs"
+    }
+   ]
+  },
+  {
+   "title": "Internal ids are replaced where the record is made.",
+   "text": "Before a record leaves the space, its exporter swaps internal file references for their public label and lists each swap. The publisher then drops run ids, timings and who asked.",
+   "links": [
+    {
+     "label": "Where the format lists each swap",
+     "href": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/schemas/odin-dispatch-v1.schema.json"
+    }
+   ]
+  },
+  {
+   "title": "The numbers are measured, and say how.",
+   "text": "The answer times above come from a live session in the space, shown beside a note on what the timing includes. Each engine figure names the claims row and commit it comes from, and a figure measured on a work branch says so.",
+   "links": [
+    {
+     "label": "Answer time per agent",
+     "href": "#space-measured"
+    },
+    {
+     "label": "The engine underneath",
+     "href": "#engine"
+    }
+   ]
+  }
+ ]
+}

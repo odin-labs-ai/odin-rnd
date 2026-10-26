@@ -1,0 +1,107 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-counts-v1",
+ "title": "odin-lab-counts v1: the 'Counted from the published records' panels on Lab 01's page (site/data/labs/agent-space/counts.json). Every number names the committed record it comes from, and the build recomputes it from there",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "lab",
+  "title",
+  "note",
+  "panels"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-counts"
+  },
+  "version": {
+   "const": 1
+  },
+  "lab": {
+   "const": "agent-space"
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 80
+  },
+  "note": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 400
+  },
+  "panels": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "line",
+     "unit",
+     "bars"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,47}$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "line": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+     },
+     "unit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 24
+     },
+     "bars": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "object",
+       "required": [
+        "label",
+        "value",
+        "source"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "label": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 60
+        },
+        "value": {
+         "type": "number",
+         "minimum": 0
+        },
+        "source": {
+         "type": "string",
+         "minLength": 1
+        },
+        "derive": {
+         "type": "string",
+         "pattern": "^(value|count)$"
+        },
+        "where": {
+         "type": "object"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -6,15 +6,21 @@
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs).
-// The lab's words come from site/data/labs/agent-space.json; its dispatches from
+// The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
+// (scripts/lab-films.mjs), the space's own measurements from telemetry.json (scripts/lab-telemetry.mjs), the counts of
+// its published records from counts.json (scripts/lab-counts.mjs), "The hard parts" from
+// hard-parts.json (readHardParts); its dispatches from
 // site/data/labs/agent-space/dispatches/<session>.json, as scripts/lab-dispatch-publish.mjs writes them. Every dispatch
 // must match scripts/schemas/odin-lab-dispatch.schema.json and pass the publisher's screen again, or the build fails.
 // Until a screened session exists there is no dispatch, and the page says the first session is being recorded.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dispatchProblems, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
+import { dispatchProblems, isLabLink, screenHits, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
+import { readFilms, renderFilms } from './lab-films.mjs';
+import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
+import { readCounts, renderCounts } from './lab-counts.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
@@ -24,6 +30,7 @@ const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site')
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
+export const HARD_PARTS_FILE = 'data/labs/agent-space/hard-parts.json';
 // Where a follow link may point: exactly these hosts (on github.com only this lab's repository). Anything else is refused.
 export const FOLLOW_HOSTS = ['www.linkedin.com', 'linkedin.com', 'www.reddit.com', 'reddit.com', 'x.com', 'twitter.com', 'github.com'];
 
@@ -50,6 +57,36 @@ export function readLab(root = 'site') {
   problems.push(...screenTree({ ...words, ask, follow: follow.map(({ url, ...rest }) => rest) }, LAB_FILE));
   if (problems.length) throw new Error(`${LAB_FILE}:\n  ${problems.join('\n  ')}`);
   return lab;
+}
+
+/**
+ * "The hard parts" (site/data/labs/agent-space/hard-parts.json): what makes the answers checkable, each part linked to
+ * the record it stands on — its own page (#anchor, which must land on something there), this lab's repository, or a lab
+ * record this site publishes. Its words pass the publisher's screen. Null when there is none.
+ */
+export function readHardParts(root = 'site') {
+  if (!existsSync(join(root, HARD_PARTS_FILE))) return null;
+  const record = JSON.parse(readFileSync(join(root, HARD_PARTS_FILE), 'utf8'));
+  const problems = [];
+  if (record.format !== 'odin-lab-hard-parts' || record.version !== 1 || record.lab !== 'agent-space') problems.push('not odin-lab-hard-parts v1 for agent-space');
+  if (!Array.isArray(record.parts) || !record.parts.length) problems.push('parts is missing');
+  for (const [i, part] of (record.parts ?? []).entries()) {
+    if (typeof part.title !== 'string' || !part.title || typeof part.text !== 'string' || !part.text) problems.push(`parts/${i}: a title and a text are required`);
+    if (!Array.isArray(part.links) || !part.links.length) problems.push(`parts/${i}/links: link the record it stands on`);
+    for (const [j, link] of (part.links ?? []).entries()) {
+      const href = link?.href, at = `parts/${i}/links/${j}/href`;
+      if (typeof link?.label !== 'string' || !link.label) problems.push(`parts/${i}/links/${j}/label is missing`);
+      if (typeof href !== 'string') { problems.push(`${at}: missing`); continue; }
+      if (/^#[a-z0-9][a-z0-9-]*$/.test(href)) continue;
+      if (/^https:/.test(href) ? !isLabLink(href) : !/^data\/labs\/agent-space\/[a-z0-9/-]+\.json$/.test(href) || !existsSync(join(root, href))) problems.push(`${at}: not this page, this lab's repository or a published lab record`);
+      // Being a path, it is not refused as a path; it may still carry no restricted name or place.
+      problems.push(...screenHits(href).filter(hit => !/^a (file path|link to)/.test(hit.reason)).map(hit => `${at}: ${hit.reason}`));
+    }
+  }
+  const { parts = [], ...rest } = record;
+  problems.push(...screenTree({ ...rest, parts: parts.map(({ links = [], ...part }) => ({ ...part, links: links.map(link => ({ label: link?.label })) })) }, HARD_PARTS_FILE));
+  if (problems.length) throw new Error(`${HARD_PARTS_FILE}:\n  ${problems.join('\n  ')}`);
+  return record;
 }
 
 /** Every committed dispatch, newest first; the build fails on one that does not match the schema or the screen. */
@@ -108,6 +145,13 @@ export function renderAbout(lab) {
   return `${lab.whatItIs.map(line => `<p>${escape(line)}</p>`).join('')}<h3>Why it matters</h3><p>${escape(lab.whyItMatters)}</p><h3>How a question becomes a dispatch</h3><ol class="lab-steps">${lab.howItWorks.map(line => `<li>${escape(line)}</li>`).join('')}</ol><p class="lab-boundary">${escape(lab.boundary)}</p>`;
 }
 
+/** The hard parts: what makes the answers checkable, each linked to the record it stands on. */
+export function renderHardParts(record, up = '../../') {
+  if (!record) return '<p class="lab-none">Written up with the next session.</p>';
+  const href = h => h.startsWith('#') || h.startsWith('https:') ? h : `${up}${h}`;
+  return `<div class="lab-hard">${record.parts.map(part => `<article class="lab-hard-part"><h3>${escape(part.title)}</h3><p>${escape(part.text)}</p><ul class="lab-hard-links">${part.links.map(link => `<li><a href="${escape(href(link.href))}">${escape(link.label)}${link.href.startsWith('https:') ? ' <span aria-hidden="true">↗</span>' : ''}</a></li>`).join('')}</ul></article>`).join('')}</div>`;
+}
+
 export function renderLabsList(lab, dispatches) {
   const latest = dispatches[0] ? `Latest session: ${time(dispatches[0].date)}.` : 'The first session is being recorded.';
   return `<a class="lab-tile" href="agent-space/"><span class="technical">${escape(lab.label.toUpperCase())}</span><h2>${escape(lab.title)}</h2><p>${escape(lab.oneLine)}</p><p class="lab-tile-status">${latest}</p></a>`;
@@ -127,6 +171,7 @@ export function renderFeed(lab, dispatches) {
 export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
+  const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
   // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
   // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
   if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
@@ -138,6 +183,10 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
       html = html.replace(marker, () => value);
     }
     if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${template}: unresolved content marker`);
+    // A hard part that links to its own page must land on something there.
+    for (const part of template === 'labs/agent-space/index.html' ? hardParts?.parts ?? [] : []) for (const { href } of part.links) {
+      if (href.startsWith('#') && !html.includes(` id="${href.slice(1)}"`)) throw new Error(`${HARD_PARTS_FILE}: the link ${href} lands on nothing on the page`);
+    }
     return html;
   };
   return {
@@ -151,6 +200,7 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches), '<!--LAB_FOLLOW-->': renderFollow(lab),
+      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
     }),

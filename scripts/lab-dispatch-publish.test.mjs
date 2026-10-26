@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { validate } from './json-schema-lite.mjs';
 import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
+import { readFilms } from './lab-films.mjs';
 
 // The Lab 01 publisher (mission rnd-labs-human-first-1024). Every session here is written by the test at run time, so
 // no recorded session, clip or restricted name is committed: a restricted name is built from character codes.
@@ -208,37 +209,6 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.equal(readDispatches(root).length, 1);
 });
 
-// Film files committed ahead of the page that shows them: listed in film-assets.json with their sha256 and size.
-const FILM_ASSETS = 'data/labs/agent-space/film-assets.json';
-const readFilmAssets = root => existsSync(join(root, FILM_ASSETS)) ? JSON.parse(readFileSync(join(root, FILM_ASSETS), 'utf8')).files : [];
-function filmAssetProblems(root) {
-  return readFilmAssets(root).flatMap(({ path, sha256, bytes }) => {
-    const file = join(root, path);
-    if (!/^assets\/labs\/agent-space\/films\/[a-z0-9][a-z0-9-]*\.(webm|png|jpg)$/.test(path)) return [`${path}: not a film file under the films folder`];
-    if (!existsSync(file)) return [`${path}: listed but missing`];
-    const data = readFileSync(file);
-    return [...(data.length === bytes ? [] : [`${path}: ${data.length} bytes, listed as ${bytes}`]),
-      ...(createHash('sha256').update(data).digest('hex') === sha256 ? [] : [`${path}: does not match its listed sha256`])];
-  });
-}
-
-test('a film file listed ahead of its page must be under the films folder and hash to its listed sha256 and size', () => {
-  const root = mkdtempSync(join(tmpdir(), 'film-assets-'));
-  try {
-    mkdirSync(join(root, 'assets/labs/agent-space/films'), { recursive: true });
-    mkdirSync(join(root, 'data/labs/agent-space'), { recursive: true });
-    const bytes = Buffer.from('film bytes');
-    writeFileSync(join(root, 'assets/labs/agent-space/films/a.webm'), bytes);
-    const list = files => writeFileSync(join(root, FILM_ASSETS), JSON.stringify({ files }));
-    const good = { path: 'assets/labs/agent-space/films/a.webm', sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
-    list([good]); assert.deepEqual(filmAssetProblems(root), []);
-    list([{ ...good, sha256: '0'.repeat(64) }]); assert.match(filmAssetProblems(root).join(), /does not match its listed sha256/);
-    list([{ ...good, bytes: 1 }]); assert.match(filmAssetProblems(root).join(), /listed as 1/);
-    list([{ ...good, path: 'assets/labs/agent-space/films/b.webm' }]); assert.match(filmAssetProblems(root).join(), /listed but missing/);
-    list([{ ...good, path: 'assets/labs/other/a.webm' }]); assert.match(filmAssetProblems(root).join(), /not a film file under the films folder/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
 test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
   // readDispatches runs dispatchProblems (schema, text screen, answer screen) on every committed file and throws on any
   // problem; the explicit loop below repeats it so this test states, not implies, that each one passes.
@@ -252,18 +222,20 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
     for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
   }
-  const referenced = new Set(committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]).map(src => join('site', src)));
+  // The lab's films are the only other Lab assets. films.json owns each film file: readFilms refuses (throws) a film
+  // or poster whose bytes do not hash to its recorded sha256 and size, so ownership here is hash-checked.
+  const films = readFilms('site')?.films ?? [];
+  const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster])].map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
-  // A film file committed ahead of the page that shows it is listed, with its sha256 and size, in film-assets.json;
-  // it belongs only if its bytes are the listed ones.
-  assert.deepEqual(filmAssetProblems('site'), []);
-  for (const { path } of readFilmAssets('site')) referenced.add(join('site', path));
-  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch`);
+  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch or film`);
   for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
     'scripts/json-schema-lite.mjs', 'scripts/lab-screen-terms.json', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
     'scripts/schemas/README.md', 'site/data/labs/agent-space.json', 'site/labs/index.html', 'site/labs/agent-space/index.html',
-    '.github/ISSUE_TEMPLATE/ask-the-agents.yml'];
+    '.github/ISSUE_TEMPLATE/ask-the-agents.yml', 'scripts/lab-films.mjs', 'scripts/lab-telemetry.mjs', 'scripts/lab-counts.mjs', 'scripts/schemas/odin-lab-films.schema.json',
+    'scripts/schemas/odin-telemetry.schema.json', 'scripts/schemas/odin-lab-counts.schema.json', 'site/data/labs/agent-space/films.json',
+    'site/data/labs/agent-space/telemetry.json', 'site/data/labs/agent-space/counts.json',
+    'site/data/labs/agent-space/hard-parts.json'];
   for (const file of files) assert.ok(!screenText(readFileSync(file, 'utf8')).some(r => r.startsWith('a restricted name')), file);
   // The vendored schema differs from its upstream copy in one description only (scripts/schemas/README.md).
   const readme = readFileSync('scripts/schemas/README.md', 'utf8');
