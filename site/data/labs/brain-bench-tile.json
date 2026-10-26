@@ -1,0 +1,16 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 02",
+ "title": "Every brain on the same tasks",
+ "question": "Can a small model on your own machine do real agent tasks as well as the cloud models?",
+ "how": "Hand-written rules, small local models and cloud models play the same seeded tasks. We write down what we expect before each run, then count, with an interval on every result and every caveat stated.",
+ "experiment": "brain-bench",
+ "status": "Results published · pre-registrations private, cited by hash",
+ "record": { "href": "data/labs/brain-bench/results.json", "pin": "data/labs/brain-bench/results.sha256" },
+ "links": [
+  { "label": "The results, with every caveat", "href": "labs/brain-bench/index.html" },
+  { "label": "The record, pinned by its hash", "href": "data/labs/brain-bench/results.json" }
+ ]
+}
