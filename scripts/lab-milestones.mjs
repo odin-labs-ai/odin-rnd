@@ -131,6 +131,13 @@ export function evidenceProblems(item, at, root, proofIds = publishedProofIds(ro
   const u = new URL(item.url);
   if (u.search || item.url.includes('?')) problems.push(`${at}: a link carries no query (${item.url})`);
   if (u.hash && !/^#[a-z0-9-]+$/.test(u.hash)) problems.push(`${at}: a link's fragment is a plain page anchor (#[a-z0-9-]+), not ${JSON.stringify(u.hash)}`);
+  // Whatever the evidence type says, a link to a PR or commit of the public repository must name one the delivery
+  // record shows: a plain "url" item cannot carry an invented PR or commit past the type-specific checks below.
+  const linked = decodeURIComponent(u.pathname).match(/^\/odin-labs-ai\/odin-rnd\/(?:pull\/(\d+)|commit\/([0-9a-f]{40}))$/);
+  if (u.hostname === 'github.com' && linked && item.type !== 'pr' && item.type !== 'commit') {
+    if (linked[1] && !objects.prs.has(Number(linked[1]))) problems.push(`${at}: ${item.url} links PR #${linked[1]}, which is not a merged PR in this site's delivery record (${DELIVERY_FILE})`);
+    if (linked[2] && !objects.commits.has(linked[2])) problems.push(`${at}: ${item.url} links commit ${linked[2]}, which is not a head, merge or deploy commit in this site's delivery record (${DELIVERY_FILE})`);
+  }
   if (item.type === 'pr') {
     if (item.url !== `https://github.com/${PUBLIC_REPOS[0]}/pull/${item.number}`) problems.push(`${at}: the link is not PR #${item.number} of ${PUBLIC_REPOS[0]}`);
     if (!objects.prs.has(item.number)) problems.push(`${at}: PR #${item.number} is not a merged PR in this site's delivery record (${DELIVERY_FILE})`);

@@ -144,6 +144,10 @@ test('a PR or commit must exist in this site\'s delivery record: an invented one
   assert.match(dispatch(r => { r.evidence[0] = { type: 'commit', sha: zero, url: `https://github.com/odin-labs-ai/odin-rnd/commit/${zero}` }; }), /commit 0{40} is not a head, merge or deploy commit in this site's delivery record/);
   const real = [...objects.commits][0];
   assert.equal(dispatch(r => { r.evidence[0] = { type: 'commit', sha: real, url: `https://github.com/odin-labs-ai/odin-rnd/commit/${real}` }; }), '');
+  // A plain "url" item gets the same existence check when it links a PR or commit.
+  assert.match(dispatch(r => { r.evidence[0] = { type: 'url', url: 'https://github.com/odin-labs-ai/odin-rnd/pull/9999' }; }), /links PR #9999, which is not a merged PR in this site's delivery record/);
+  assert.match(dispatch(r => { r.evidence[0] = { type: 'url', url: `https://github.com/odin-labs-ai/odin-rnd/commit/${zero}` }; }), /links commit 0{40}, which is not a head, merge or deploy commit/);
+  assert.equal(dispatch(r => { r.evidence[0] = { type: 'url', url: 'https://github.com/odin-labs-ai/odin-rnd/pull/81' }; }), '');
 });
 
 test('a proof is linked to a page that shows it, never to an unrelated file that happens to exist', () => {
