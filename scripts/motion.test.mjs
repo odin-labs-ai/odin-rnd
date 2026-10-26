@@ -43,10 +43,24 @@ function fixture(elements, { reduced = false, hidden = false, observer = true, v
   const media = { matches:reduced, addEventListener:(name, fn) => preferenceEvents.set(name, fn) };
   const observations = [];
   class Observer {
-    constructor(callback, options) { this.callback = callback; this.options = options; this.observed = new Set(); observations.push(this); }
-    observe(element) { this.observed.add(element); }
+    constructor(callback, options) {
+      this.callback = callback; this.options = options; this.observed = new Set(); this.initial = [];
+      observations.push(this);
+    }
+    observe(element) {
+      if (this.observed.has(element)) return;
+      this.observed.add(element);
+      this.initial.push(element);
+    }
     unobserve(element) { this.observed.delete(element); }
     disconnect() { this.disconnected = true; this.observed.clear(); }
+    flushInitial() {
+      const queued = this.initial.splice(0);
+      if (queued.length) this.callback(queued.map(target => ({
+        target, isIntersecting:inView(target.getBoundingClientRect(), viewport)
+      })));
+      return queued.length;
+    }
     enter(element) { this.callback([{ target:element, isIntersecting:true }]); }
     leave(element) { this.callback([{ target:element, isIntersecting:false }]); }
   }
@@ -186,24 +200,26 @@ test('turning on reduced motion cancels every in-flight reveal and retires futur
   assert.equal(later.animations.length, 0, 'toggling preferences cannot replay an entrance');
 });
 
-test('a hidden tab settles played motion but preserves the first entrance of unseen diagrams after return', async () => {
+test('returning from a hidden tab requests a fresh initial observation without another geometry change', async () => {
   const step = root('.story-step', [['.record-line', 3], ['.record-stamp', 1]]);
   const later = root('.story-step', [['.sheet-line', 2], ['.sheet-rule', 1]]);
   const f = fixture([step, later]);
   const observer = f.observations[0];
   observer.enter(step);
   const first = animations(step);
+  // Its initial observation is already pending when this diagram reaches view.
+  // Deliver it while hidden, then keep its geometry unchanged across return.
+  later.rect = { top:30, bottom:250 };
   f.document.hidden = true; f.events.get('visibilitychange')();
   assert(first.length > 0 && first.every(animation => animation.canceled));
   assert.equal(observer.observed.has(step), false, 'the settled entrance remains played');
   assert.equal(observer.observed.has(later), true, 'an unseen diagram remains eligible for its first entrance');
   assert.notEqual(observer.disconnected, true);
-  observer.enter(later);
+  observer.flushInitial();
   assert.equal(animations(later).length, 0, 'observer delivery while hidden must not consume the entrance');
   f.document.hidden = false; f.events.get('visibilitychange')();
-  observer.enter(step);
+  observer.flushInitial();
   assert.equal(animations(step).length, first.length);
-  observer.enter(later);
   const entrance = animations(later);
   assert.equal(entrance.length, 3);
   for (const animation of entrance) {
@@ -214,9 +230,24 @@ test('a hidden tab settles played motion but preserves the first entrance of uns
   assert.equal(observer.observed.has(later), false);
   f.document.hidden = true; f.events.get('visibilitychange')();
   f.document.hidden = false; f.events.get('visibilitychange')();
-  observer.enter(step); observer.enter(later);
+  assert.equal(observer.flushInitial(), 0, 'played targets must not be observed again');
   assert.equal(animations(step).length, first.length);
   assert.equal(animations(later).length, entrance.length, 'returning to the tab never replays a completed entrance');
+});
+
+test('returning from a hidden tab cannot rearm motion retired by a reduced-motion preference', () => {
+  const later = root('[data-reveal]');
+  const f = fixture([later]);
+  const observer = f.observations[0];
+  later.rect = { top:30, bottom:250 };
+  f.document.hidden = true; f.events.get('visibilitychange')();
+  observer.flushInitial();
+  f.media.matches = true; f.preferenceEvents.get('change')();
+  f.media.matches = false; f.preferenceEvents.get('change')();
+  f.document.hidden = false; f.events.get('visibilitychange')();
+  assert.equal(observer.observed.size, 0, 'permanently retired targets remain disconnected');
+  assert.equal(observer.flushInitial(), 0, 'returning must not request new notifications after retirement');
+  assert.equal(animations(later).length, 0);
 });
 
 test('leaving the viewport or focusing an animated record cancels only that finite sequence', () => {

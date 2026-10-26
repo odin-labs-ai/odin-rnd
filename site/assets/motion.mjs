@@ -116,9 +116,16 @@ export function setupMotion(document, environment = globalThis) {
     else observer.observe(element);
   }
   const onReduced = () => { if (reduced?.matches) stop(); };
-  // A hidden tab settles played entrances; unseen diagrams still get their one
-  // entrance when encountered after return. Only explicit stop/reduced motion retires them.
-  const onVisibility = () => { if (document.hidden) settle(); };
+  const onVisibility = () => {
+    if (document.hidden) { settle(); return; }
+    if (stopped || reduced?.matches) return;
+    // A hidden delivery may have consumed the last threshold notification.
+    // Reobserve unseen targets for a fresh initial notification, even if geometry is unchanged.
+    for (const element of elements) if (!played.has(element)) {
+      observer.unobserve(element);
+      observer.observe(element);
+    }
+  };
   reduced?.addEventListener?.('change', onReduced);
   document.addEventListener('visibilitychange', onVisibility);
   // Keyboard navigation should never arrive halfway through a decorative reveal.
