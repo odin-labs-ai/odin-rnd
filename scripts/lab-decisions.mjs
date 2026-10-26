@@ -20,7 +20,7 @@
 // a verbatim quote may name a file (it is the record's own text), nothing else. A sentence in the page's own words that
 // mentions a review, reviewer, jury, judge or advocate must say, in that sentence, that it is AI; a quote that does is
 // followed by a note saying the reviewers it names are AI models.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { benchScreen } from './brain-bench-import.mjs';
 
@@ -91,6 +91,9 @@ export function readDecisions(root = 'site') {
     const inside = base && path.split('/').every(part => part && part !== '.' && part !== '..') && full.startsWith(resolve(base, path.split('/')[0]) + sep);
     if (!inside) { problems.push(`${path}: not a file this site or its repository publishes (experiments/… or data/…, no "..")`); return null; }
     if (!existsSync(full)) { problems.push(`${path}: is not published`); return null; }
+    // Canonical containment: after every symlink is followed, the file must still be inside its published root.
+    const top = realpathSync(resolve(base, path.split('/')[0]));
+    if (!realpathSync(full).startsWith(top + sep)) { problems.push(`${path}: resolves outside ${path.split('/')[0]}/ (a symlink), so it is not published here`); return null; }
     return readFileSync(full, 'utf8');
   };
   const quoted = (path, quote, what) => {
@@ -111,6 +114,9 @@ export function readDecisions(root = 'site') {
         if (text == null) return null;
         try { return { file: path, ...parseReview(text, path) }; } catch (error) { problems.push(error.message); return null; }
       }).filter(Boolean);
+      // A round is one AI model advocate per side: exactly one MongoDB and one PostgreSQL review.
+      const sides = reviews.map(r => r.side).sort().join(',');
+      if (reviews.length === round.reviews.length && sides !== 'MongoDB,PostgreSQL') problems.push(`${round.name}: a round needs exactly one MongoDB and one PostgreSQL advocate review, not ${sides || 'none'}`);
       const vetoes = reviews.reduce((n, r) => n + r.vetoes.length, 0);
       if (round.freezeNotes && round.tableIds) {
         const ids = tableIds(read(round.freezeNotes) ?? '').sort();

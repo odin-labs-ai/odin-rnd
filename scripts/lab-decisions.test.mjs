@@ -2,7 +2,7 @@
 // should, and the rendered page labels every reviewer and advocate an AI model.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DECISIONS_FILE, parseReview, readDecisions, renderDecisions, statedCount, tableIds, totals } from './lab-decisions.mjs';
@@ -106,3 +106,13 @@ test('a record title that fails the screen is refused', () => refuses(fixture(di
   const f = join(dir, 'experiments/failover/preregistration.json');
   const r = JSON.parse(readFileSync(f, 'utf8')); r.experiment.title = 'Call +31 6 1234 5678'; writeFileSync(f, JSON.stringify(r));
 }), /phone number/));
+
+test('a source that is a symlink out of its published root is refused', () => refuses(fixture(dir => {
+  writeFileSync(join(dir, 'outside-linked.json'), '{"x":["a secret"]}');
+  symlinkSync(join(dir, 'outside-linked.json'), join(dir, 'experiments/linked.json'));
+  const c = config(dir); c.experiments[0].disclosures.push({ file: 'experiments/linked.json', pointer: '/x' }); writeConfig(dir, c);
+}), /linked\.json: resolves outside experiments\//));
+
+test('a round needs exactly one advocate per side', () => refuses(fixture(dir => {
+  const c = config(dir); c.experiments[0].rounds[1].reviews[1] = 'experiments/mongodb-home-ground/reviews/mongodb-advocate.md'; writeConfig(dir, c);
+}), /exactly one MongoDB and one PostgreSQL advocate review, not MongoDB,MongoDB/));
