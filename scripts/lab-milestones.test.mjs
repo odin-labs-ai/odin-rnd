@@ -118,7 +118,7 @@ test('with a record, Lab 01 links its story page, and the page shows every recor
     assert.match(html, /<span class="story-correction">Correction<\/span>/);
     assert.match(html, /<blockquote><p>How do you know\?<\/p><\/blockquote>/);
     assert.match(html, /<a href="https:\/\/github\.com\/odin-labs-ai\/odin-rnd\/pull\/81">odin-rnd #81<\/a>/);
-    assert.match(html, /proof <code>odin-381dbb-1<\/code>/);
+    assert.match(html, /<a href="\.\.\/proofs\/#proof-odin-381dbb-1">proof <code>odin-381dbb-1<\/code>/);
     assert.match(renderStoryLink(FIXTURE), /<a class="button" href="story\/">Read the story<\/a>/);
     assert.equal(renderStoryLink(null), '');
   } finally { rmSync(root, { recursive: true, force: true }); }
