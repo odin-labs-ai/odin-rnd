@@ -41,8 +41,8 @@ test('the counts are the records\' own, recomputed here, and nothing after the b
   for (const kind of ['beat', 'moment', 'correction']) assert.equal(w.counts[kind], milestones.records.filter(r => r.kind === kind && inside(r.at)).length);
   assert.equal(w.counts.sessions, dispatches.filter(d => d.date >= '2026-10-20' && d.date <= '2026-10-26').length);
   assert.ok(w.counts.merged > 0 && w.counts.beat > 0 && w.counts.sessions > 0, 'the published records do have a week here');
-  // A build an hour before the last landing does not count it.
-  const last = delivery.records.filter(r => r.kind === 'landing').map(r => r.at).sort().at(-1);
+  // A build an hour before the build's last landing does not count it (the record refreshes weekly, so it can hold later ones).
+  const last = delivery.records.filter(r => r.kind === 'landing' && Date.parse(r.at) <= NOW.getTime()).map(r => r.at).sort().at(-1);
   const before = week(new Date(Date.parse(last) - 3_600_000));
   assert.ok(before.merged.every(m => m.at <= new Date(Date.parse(last) - 3_600_000).toISOString()));
   assert.ok(before.counts.merged < w.counts.merged);
@@ -55,7 +55,14 @@ test('the section: every count checked, every line links its record, the window 
   assert.equal((html.match(/data-list="merged"/g) ?? []).length, w.counts.merged);
   for (const m of w.merged) assert.ok(html.includes(`<a href="https://github.com/odin-labs-ai/odin-rnd/pull/${m.pr}" data-source="pr-${m.pr}">`));
   for (const r of w.story) assert.ok(html.includes(`<a href="story/#${r.id}" data-source="milestone:${r.id}">`));
-  assert.match(html, /The delivery record was read from GitHub on 26 Oct, 04:55 UTC; a pull request merged after that is not counted yet\./);
+  // Read before the build, the record says when; read after it (a later refresh), nothing past the build is counted, so there is no note.
+  // The wording is checked on a week whose record was read at 04:55 on the build day, whatever the committed record's read time.
+  const early = { ...w, coverage: { ...w.coverage, delivery: '2026-10-26T04:55:12Z' } };
+  assert.match(renderWeek(early), /The delivery record was read from GitHub on 26 Oct, 04:55 UTC; a pull request merged after that is not counted yet\./);
+  assert.deepEqual(weekProblems(renderWeek(early), early), []);
+  const read = w.coverage.delivery;
+  if (read < w.window.now) assert.ok(html.includes(`The delivery record was read from GitHub on ${new Date(read).getUTCDate()} ${new Date(read).toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' })}, ${read.slice(11, 16)} UTC; a pull request merged after that is not counted yet.`), read);
+  else assert.doesNotMatch(html, /The delivery record was read from GitHub/);
   const page = renderLabs('site', { now: NOW })['labs/agent-space/index.html'];
   assert.ok(page.includes('id="this-week"') && page.includes(html), 'Lab 01 carries the section as rendered');
   // Every story anchor it links lands on the story page.

@@ -234,7 +234,11 @@ function prTimeline(pr, record, telemetry) {
     if (r.kind === 'ci') return `<li class="delivery-event delivery-ci" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${escape(r.workflow)} ${CONCLUSION[r.state] ?? escape(r.state)} on <code>${short(r.ref)}</code>${r.attempt > 1 ? ` (rerun, attempt ${r.attempt})` : ''}. ${link(r, `CI run ${escape(r.source.match(/runs\/(\d+)\//)[1])}, attempt ${r.attempt}`)}</span></li>`;
     if (r.kind === 'landing') return `<li class="delivery-event delivery-landing" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span><strong>Merged</strong> as ${link(r, `<code>${short(r.ref)}</code>`)}.</span></li>`;
     const deployed = r.state === 'success' ? 'Published to this site.' : `Not published: the Pages deploy ${CONCLUSION[r.state] ?? escape(r.state)}.`;
-    return `<li class="delivery-event delivery-deploy${r.state === 'success' ? '' : ' delivery-deploy-not'}" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${deployed} ${link(r, `Pages deploy of ${short(r.ref)}`)}</span></li>`;
+    // A commit deployed more than once (a rerun of the Pages deploy) names each deploy by its run, so no two links share a
+    // name. The run is the last segment of the id, which the gate holds equal to recordId(r) (the run in its source).
+    const again = rows.filter(x => x.kind === 'deploy' && x.ref === r.ref).length > 1;
+    const name = `Pages deploy of ${short(r.ref)}${again ? `, run ${escape(r.id.slice(r.id.lastIndexOf('/') + 1))}` : ''}`;
+    return `<li class="delivery-event delivery-deploy${r.state === 'success' ? '' : ' delivery-deploy-not'}" data-source="${escape(r.id)}"><span class="delivery-when">${when(r.at)}</span><span>${deployed} ${link(r, name)}</span></li>`;
   });
   return `<article class="delivery-pr" id="delivery-pr-${pr}" data-source="${escape(opened.id)}"><h4>${link(opened, `#${pr}`)} ${escape(opened.title)}</h4><p class="delivery-sentence">${escape(prSentence(pr, rows, telemetry))}</p><ol class="delivery-events">${events.join('')}</ol></article>`;
 }
