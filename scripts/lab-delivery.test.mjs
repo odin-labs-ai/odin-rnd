@@ -250,9 +250,9 @@ test('the window accounts for every number from #fromPr to #toPr: a merged PR or
   both.generatedFrom = { ...both.generatedFrom, window: { ...both.window } };
   assert.match(deliveryProblems(both).join('\n'), /#75 is both a merged PR/);
   const outside = clone();
-  outside.window = { ...outside.window, otherNumbers: [90] };
+  outside.window = { ...outside.window, otherNumbers: [TO + 1] };
   outside.generatedFrom = { ...outside.generatedFrom, window: { ...outside.window } };
-  assert.match(deliveryProblems(outside).join('\n'), /other number #90 is outside the window/);
+  assert.ok(deliveryProblems(outside).join('\n').includes(`other number #${TO + 1} is outside the window`));
 });
 
 test('"automated" review is said only when every counted round carries that reviewer kind', () => {
@@ -315,16 +315,17 @@ test('a review row backs exactly one PR, and judged a head of that PR', () => {
 test('only a successful deploy is "published"; a failed one renders its real state and is not counted', () => {
   assert.ok(record.records.filter(r => r.kind === 'deploy').every(r => r.state === 'success'));
   assert.equal(record.telemetry.totals.deploys, record.records.filter(r => r.kind === 'deploy' && r.state === 'success').length);
+  const published = record.telemetry.totals.deploys;
   const failed = clone();
   const d79 = failed.records.find(r => r.kind === 'deploy' && r.pr === 79);
   d79.state = 'failure';
   failed.telemetry = telemetryOf(failed);
-  assert.equal(failed.telemetry.totals.deploys, N - 1);
+  assert.equal(failed.telemetry.totals.deploys, published - 1);
   const page = renderWith(failed)['labs/agent-space/index.html'];
   const li = page.slice(page.indexOf(`data-source="${d79.id}"`)).split('</li>')[0];
   assert.match(li, /Not published: the Pages deploy failed\./);
   assert.doesNotMatch(li, /Published to this site/);
-  assert.ok(page.includes(`${w(N - 1)} deploys published to this site and one deploy that did not publish.`));
+  assert.ok(page.includes(`${w(published - 1)} deploys published to this site and one deploy that did not publish.`));
   const stale = clone();
   stale.records.find(r => r.kind === 'deploy' && r.pr === 79).state = 'cancelled';
   assert.match(deliveryProblems(stale).join('\n'), /telemetry: differs/, 'counting a cancelled deploy as published is refused');
