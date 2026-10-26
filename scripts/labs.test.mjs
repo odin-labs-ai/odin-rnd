@@ -12,11 +12,13 @@ const lab = readLab();
 const page = pages['labs/agent-space/index.html'];
 const realDispatches = readDispatches();
 // Lab 03's tile is required on every Labs index, so a fixture site carries it and the records it links.
+// Lab 02 (scripts/brain-bench.mjs): its template, words, record and the record's pin.
+const LAB02_FILES = ['labs/brain-bench/index.html', 'data/labs/brain-bench.json', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256'];
 const LAB03_FILES = ['data/labs/failover.json', 'data/failover/preregistration.json', 'data/failover/amendment-01.json', 'journal/failover-pre-registration.html'];
 function emptyPages() {
   const root = mkdtempSync(join(tmpdir(), 'labs-empty-'));
   try {
-    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json', ...LAB03_FILES]) {
+    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json', ...LAB02_FILES, ...LAB03_FILES]) {
       mkdirSync(join(root, file, '..'), { recursive: true });
       writeFileSync(join(root, file), readFileSync(join('site', file)));
     }
@@ -133,7 +135,7 @@ test('two dated sessions render newest first on the page and in the feed (order 
   const base = realDispatches[0];
   const root = mkdtempSync(join(tmpdir(), 'labs-order-'));
   try {
-    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json', ...LAB03_FILES]) {
+    for (const file of ['labs/index.html', 'labs/agent-space/index.html', 'data/labs/agent-space.json', 'data/labs/delivery/odin-rnd.json', ...LAB02_FILES, ...LAB03_FILES]) {
       mkdirSync(join(root, file, '..'), { recursive: true });
       writeFileSync(join(root, file), readFileSync(join('site', file)));
     }

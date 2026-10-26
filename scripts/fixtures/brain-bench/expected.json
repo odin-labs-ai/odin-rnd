@@ -1,0 +1,954 @@
+{
+ "format": "odin-brain-bench",
+ "version": 1,
+ "source": {
+  "repository": "private",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "about": "A test fixture: made-up rows, never run.",
+  "pack": {
+   "format": "odin-telemetry",
+   "version": 1,
+   "file": "made-up/telemetry/pack.json",
+   "commit": "dddddddddddddddddddddddddddddddddddddddd",
+   "builtAtCommit": "0123456789abcdef0123456789abcdef01234567",
+   "rule": "a test fixture: every row made up"
+  }
+ },
+ "labels": {
+  "where": {
+   "rules": "Rules",
+   "local": "Local",
+   "cloud": "Cloud"
+  },
+  "costBasis": {
+   "local": "runs on our machine",
+   "bench-estimate": "the bench's estimate",
+   "list-price-estimate": "estimated from list prices"
+  },
+  "worlds": {
+   "a": "World A",
+   "b": "World B"
+  },
+  "tasks": {
+   "a": "Task family A: build",
+   "follow": "Follow a person's instruction"
+  },
+  "kinds": {
+   "deal": "Deal with a threat",
+   "hand": "Hand something over",
+   "meet": "Go and meet someone",
+   "buy": "Buy something for them"
+  }
+ },
+ "experiments": [
+  {
+   "id": "EXP-W91",
+   "title": "A mixed fixture",
+   "question": "Does the import count it?",
+   "date": "2026-01-01",
+   "design": {
+    "tasks": 2,
+    "worlds": 2,
+    "seeds": {
+     "from": 1,
+     "to": 2,
+     "count": 2
+    },
+    "brains": 3,
+    "episodesPerBrain": 8,
+    "episodes": 24,
+    "skippedRows": 1,
+    "harness": [
+     "h4"
+    ],
+    "source": {
+     "experiment": "EXP-W91",
+     "commit": "0123456789abcdef0123456789abcdef01234567",
+     "file": "results/results.jsonl",
+     "lines": [
+      [
+       1,
+       25
+      ]
+     ]
+    }
+   },
+   "prereg": {
+    "commit": "aaaaaaaa",
+    "sha256": "b093e1a45dc992b06badd584b2670e0452084c622d08a79005c24b08abb270f1",
+    "file": "PREREG.md",
+    "experiment": "EXP-W91"
+   },
+   "comparators": [],
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "The local model beats the rules.",
+     "verdict": "holds",
+     "detail": "{EXP-W91:demo-local:of} against {EXP-W91:rules:of}."
+    }
+   ],
+   "unpredicted": [],
+   "caveats": [
+    "A made-up caveat for {EXP-W91:demo-cloud:task.follow}."
+   ],
+   "brains": [
+    {
+     "id": "rules",
+     "label": "Hand-written rules",
+     "where": "rules",
+     "model": "The control.",
+     "brainVersion": null,
+     "harness": "h4",
+     "n": 8,
+     "successes": 6,
+     "rate": 0.75,
+     "ci": [
+      0.409,
+      0.929
+     ],
+     "source": {
+      "experiment": "EXP-W91",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "file": "results/results.jsonl",
+      "lines": [
+       [
+        1,
+        8
+       ]
+      ],
+      "sha256": "8710e18f5e1c5976ba5aa4ca0b43317e71fe2b32919514adaaf3dd5eca299127",
+      "checkedAgainst": {
+       "file": "results/leaderboard.json",
+       "pointer": "/brains/0"
+      },
+      "pack": {
+       "file": "made-up/telemetry/pack.json",
+       "commit": "dddddddddddddddddddddddddddddddddddddddd",
+       "pointer": "/benchmark/0",
+       "results": {
+        "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+        "commit": "cccccccc",
+        "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e",
+        "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+       }
+      }
+     },
+     "fallbacks": 0,
+     "tokensPerTask": 0,
+     "modelMsPerTask": 0,
+     "breakdown": {
+      "task": {
+       "a": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           1,
+           2
+          ],
+          [
+           5,
+           6
+          ]
+         ]
+        }
+       },
+       "follow": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           3,
+           4
+          ],
+          [
+           7,
+           8
+          ]
+         ]
+        }
+       }
+      },
+      "kind": {
+       "deal": {
+        "n": 2,
+        "successes": 2,
+        "rate": 1,
+        "ci": [
+         0.342,
+         1
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           3,
+           3
+          ],
+          [
+           7,
+           7
+          ]
+         ]
+        }
+       },
+       "hand": {
+        "n": 2,
+        "successes": 1,
+        "rate": 0.5,
+        "ci": [
+         0.095,
+         0.905
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           4,
+           4
+          ],
+          [
+           8,
+           8
+          ]
+         ]
+        }
+       }
+      }
+     },
+     "packNote": "a made-up note"
+    },
+    {
+     "id": "demo-cloud",
+     "label": "A made-up cloud model",
+     "where": "cloud",
+     "model": "Made up.",
+     "brainVersion": "v3.1",
+     "harness": "h4",
+     "n": 8,
+     "successes": 5,
+     "rate": 0.625,
+     "ci": [
+      0.306,
+      0.863
+     ],
+     "source": {
+      "experiment": "EXP-W91",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "file": "results/results.jsonl",
+      "lines": [
+       [
+        17,
+        24
+       ]
+      ],
+      "sha256": "8710e18f5e1c5976ba5aa4ca0b43317e71fe2b32919514adaaf3dd5eca299127",
+      "checkedAgainst": {
+       "file": "results/leaderboard.json",
+       "pointer": "/brains/2"
+      },
+      "pack": {
+       "file": "made-up/telemetry/pack.json",
+       "commit": "dddddddddddddddddddddddddddddddddddddddd",
+       "pointer": "/benchmark/1",
+       "results": {
+        "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+        "commit": "cccccccc",
+        "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e",
+        "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+       }
+      }
+     },
+     "fallbacks": 0,
+     "tokensPerTask": 100,
+     "modelMsPerTask": 500,
+     "breakdown": {
+      "task": {
+       "a": {
+        "n": 4,
+        "successes": 2,
+        "rate": 0.5,
+        "ci": [
+         0.15,
+         0.85
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           17,
+           18
+          ],
+          [
+           21,
+           22
+          ]
+         ]
+        }
+       },
+       "follow": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           19,
+           20
+          ],
+          [
+           23,
+           24
+          ]
+         ]
+        }
+       }
+      },
+      "kind": {
+       "deal": {
+        "n": 2,
+        "successes": 1,
+        "rate": 0.5,
+        "ci": [
+         0.095,
+         0.905
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           19,
+           19
+          ],
+          [
+           23,
+           23
+          ]
+         ]
+        }
+       },
+       "hand": {
+        "n": 2,
+        "successes": 2,
+        "rate": 1,
+        "ci": [
+         0.342,
+         1
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           20,
+           20
+          ],
+          [
+           24,
+           24
+          ]
+         ]
+        }
+       }
+      }
+     },
+     "packNote": "a made-up note"
+    },
+    {
+     "id": "demo-local",
+     "label": "A made-up local model",
+     "where": "local",
+     "model": "Made up.",
+     "brainVersion": "v3.1",
+     "harness": "h4",
+     "n": 8,
+     "successes": 5,
+     "rate": 0.625,
+     "ci": [
+      0.306,
+      0.863
+     ],
+     "source": {
+      "experiment": "EXP-W91",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "file": "results/results.jsonl",
+      "lines": [
+       [
+        9,
+        16
+       ]
+      ],
+      "sha256": "8710e18f5e1c5976ba5aa4ca0b43317e71fe2b32919514adaaf3dd5eca299127",
+      "checkedAgainst": {
+       "file": "results/leaderboard.json",
+       "pointer": "/brains/1"
+      },
+      "pack": {
+       "file": "made-up/telemetry/pack.json",
+       "commit": "dddddddddddddddddddddddddddddddddddddddd",
+       "pointer": "/benchmark/2",
+       "results": {
+        "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+        "commit": "cccccccc",
+        "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e",
+        "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+       }
+      }
+     },
+     "fallbacks": 4,
+     "tokensPerTask": 100,
+     "modelMsPerTask": 500,
+     "breakdown": {
+      "task": {
+       "a": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           9,
+           10
+          ],
+          [
+           13,
+           14
+          ]
+         ]
+        }
+       },
+       "follow": {
+        "n": 4,
+        "successes": 2,
+        "rate": 0.5,
+        "ci": [
+         0.15,
+         0.85
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           11,
+           12
+          ],
+          [
+           15,
+           16
+          ]
+         ]
+        }
+       }
+      },
+      "kind": {
+       "deal": {
+        "n": 2,
+        "successes": 1,
+        "rate": 0.5,
+        "ci": [
+         0.095,
+         0.905
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           11,
+           11
+          ],
+          [
+           15,
+           15
+          ]
+         ]
+        }
+       },
+       "hand": {
+        "n": 2,
+        "successes": 1,
+        "rate": 0.5,
+        "ci": [
+         0.095,
+         0.905
+        ],
+        "source": {
+         "experiment": "EXP-W91",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           12,
+           12
+          ],
+          [
+           16,
+           16
+          ]
+         ]
+        }
+       }
+      }
+     },
+     "packNote": "a made-up note"
+    }
+   ]
+  },
+  {
+   "id": "EXP-W92",
+   "title": "A rerun fixture",
+   "question": "Does the sensitivity check add up?",
+   "date": "2026-01-02",
+   "design": {
+    "tasks": 1,
+    "worlds": 2,
+    "seeds": {
+     "from": 10,
+     "to": 13,
+     "count": 4
+    },
+    "brains": 2,
+    "episodesPerBrain": 8,
+    "episodes": 16,
+    "skippedRows": 0,
+    "harness": [
+     "h5"
+    ],
+    "source": {
+     "experiment": "EXP-W92",
+     "commit": "0123456789abcdef0123456789abcdef01234567",
+     "file": "results/results.jsonl",
+     "lines": [
+      [
+       1,
+       16
+      ]
+     ]
+    }
+   },
+   "prereg": {
+    "commit": "bbbbbbbb",
+    "sha256": "bee875e59fc38eb72f5c575c8b3ea1e7665593b5024d11c6f765298937e7a525",
+    "file": "PREREG.md",
+    "experiment": "EXP-W92"
+   },
+   "comparators": [],
+   "predictions": [
+    {
+     "id": "P1",
+     "text": "The cloud model beats the rules.",
+     "verdict": "holds as registered, not claimed",
+     "detail": "{EXP-W92:demo-cloud:sensitivity} after the re-run."
+    }
+   ],
+   "unpredicted": [],
+   "caveats": [
+    "Seeds {EXP-W92:demo-cloud:errorSeeds} were re-run."
+   ],
+   "brains": [
+    {
+     "id": "demo-cloud",
+     "label": "A made-up cloud model",
+     "where": "cloud",
+     "model": "Made up.",
+     "brainVersion": "v3.1",
+     "harness": "h5",
+     "n": 8,
+     "successes": 6,
+     "rate": 0.75,
+     "ci": [
+      0.409,
+      0.929
+     ],
+     "source": {
+      "experiment": "EXP-W92",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "file": "results/results.jsonl",
+      "lines": [
+       [
+        9,
+        16
+       ]
+      ],
+      "sha256": "c7221f482689d837c44f2902ac4ad7c8f5e968b0006731e01d20d410dd9cc740",
+      "pack": {
+       "file": "made-up/telemetry/pack.json",
+       "commit": "dddddddddddddddddddddddddddddddddddddddd",
+       "pointer": "/benchmark/3",
+       "results": {
+        "file": "made-up/EXP-W92-fixture-rerun/results/results.jsonl",
+        "commit": "cccccccc",
+        "sha256": "a10a6b168b21e44f5d4105184c000a43b89623592b4353791d51dc55c83290e6",
+        "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+       }
+      }
+     },
+     "fallbacks": 4,
+     "tokensPerTask": 150,
+     "modelMsPerTask": 300,
+     "breakdown": {
+      "world": {
+       "a": {
+        "n": 4,
+        "successes": 4,
+        "rate": 1,
+        "ci": [
+         0.51,
+         1
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           9,
+           12
+          ]
+         ]
+        }
+       },
+       "b": {
+        "n": 4,
+        "successes": 2,
+        "rate": 0.5,
+        "ci": [
+         0.15,
+         0.85
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           13,
+           16
+          ]
+         ]
+        }
+       }
+      },
+      "kind": {
+       "buy": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           9,
+           9
+          ],
+          [
+           11,
+           11
+          ],
+          [
+           13,
+           13
+          ],
+          [
+           15,
+           15
+          ]
+         ]
+        }
+       },
+       "meet": {
+        "n": 4,
+        "successes": 3,
+        "rate": 0.75,
+        "ci": [
+         0.301,
+         0.954
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           10,
+           10
+          ],
+          [
+           12,
+           12
+          ],
+          [
+           14,
+           14
+          ],
+          [
+           16,
+           16
+          ]
+         ]
+        }
+       }
+      }
+     },
+     "sensitivity": {
+      "world": "b",
+      "seeds": {
+       "from": 10,
+       "to": 11
+      },
+      "rerun": 2,
+      "rerunWon": 2,
+      "rerunFallbacks": 0,
+      "n": 8,
+      "successes": 8,
+      "ci": [
+       0.676,
+       1
+      ],
+      "emptyReplyEpisodes": 2,
+      "source": {
+       "experiment": "EXP-W92",
+       "commit": "0123456789abcdef0123456789abcdef01234567",
+       "file": "sensitivity/",
+       "fileIs": "the only file in this folder, identified by its sha256",
+       "sha256": "543b72093800e68e5f6ef9f0ee238d757eb2701bd18230e973863c03b4eaab6d",
+       "lines": [
+        [
+         1,
+         2
+        ]
+       ],
+       "replaces": {
+        "file": "results/results.jsonl",
+        "sha256": "c7221f482689d837c44f2902ac4ad7c8f5e968b0006731e01d20d410dd9cc740",
+        "lines": [
+         [
+          13,
+          14
+         ]
+        ]
+       },
+       "pack": {
+        "file": "made-up/telemetry/pack.json",
+        "commit": "dddddddddddddddddddddddddddddddddddddddd",
+        "pointer": "/benchmark/4",
+        "results": {
+         "file": "made-up/sensitivity/",
+         "commit": "cccccccc",
+         "sha256": "b9b45901fd8f4f72839e54e62178924e2adb10b548922c8d8616c5fd90c8f754",
+         "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+        }
+       }
+      },
+      "packNote": "not the registered result: made up",
+      "registered": false
+     },
+     "packNote": "a made-up note"
+    },
+    {
+     "id": "rules",
+     "label": "Hand-written rules",
+     "where": "rules",
+     "model": "The control.",
+     "brainVersion": null,
+     "harness": "h5",
+     "n": 8,
+     "successes": 4,
+     "rate": 0.5,
+     "ci": [
+      0.215,
+      0.785
+     ],
+     "source": {
+      "experiment": "EXP-W92",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "file": "results/results.jsonl",
+      "lines": [
+       [
+        1,
+        8
+       ]
+      ],
+      "sha256": "c7221f482689d837c44f2902ac4ad7c8f5e968b0006731e01d20d410dd9cc740",
+      "pack": {
+       "file": "made-up/telemetry/pack.json",
+       "commit": "dddddddddddddddddddddddddddddddddddddddd",
+       "pointer": "/benchmark/5",
+       "results": {
+        "file": "made-up/EXP-W92-fixture-rerun/results/results.jsonl",
+        "commit": "cccccccc",
+        "sha256": "a10a6b168b21e44f5d4105184c000a43b89623592b4353791d51dc55c83290e6",
+        "sha256Of": "the file as a Windows checkout reads it (CRLF line endings)"
+       }
+      }
+     },
+     "fallbacks": 0,
+     "tokensPerTask": 200,
+     "modelMsPerTask": 400,
+     "breakdown": {
+      "world": {
+       "a": {
+        "n": 4,
+        "successes": 2,
+        "rate": 0.5,
+        "ci": [
+         0.15,
+         0.85
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           1,
+           4
+          ]
+         ]
+        }
+       },
+       "b": {
+        "n": 4,
+        "successes": 2,
+        "rate": 0.5,
+        "ci": [
+         0.15,
+         0.85
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           5,
+           8
+          ]
+         ]
+        }
+       }
+      },
+      "kind": {
+       "buy": {
+        "n": 4,
+        "successes": 4,
+        "rate": 1,
+        "ci": [
+         0.51,
+         1
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           1,
+           1
+          ],
+          [
+           3,
+           3
+          ],
+          [
+           5,
+           5
+          ],
+          [
+           7,
+           7
+          ]
+         ]
+        }
+       },
+       "meet": {
+        "n": 4,
+        "successes": 0,
+        "rate": 0,
+        "ci": [
+         0,
+         0.49
+        ],
+        "source": {
+         "experiment": "EXP-W92",
+         "commit": "0123456789abcdef0123456789abcdef01234567",
+         "file": "results/results.jsonl",
+         "lines": [
+          [
+           2,
+           2
+          ],
+          [
+           4,
+           4
+          ],
+          [
+           6,
+           6
+          ],
+          [
+           8,
+           8
+          ]
+         ]
+        }
+       }
+      }
+     },
+     "packNote": "a made-up note"
+    }
+   ]
+  }
+ ]
+}
