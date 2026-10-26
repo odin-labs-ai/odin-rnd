@@ -3,6 +3,8 @@
 // commit that CHANGED a figure is one dated point (date = the commit's date, value = the figure at that commit), cited by
 // its full sha and checked to be an ancestor of the private main head (tier 2, as scripts/vendor-telemetry.mjs does). A
 // figure restated unchanged in a later commit is not a new measurement and adds no point.
+// A figure measured once becomes a series by itself the first time a later commit changes it: re-run --fetch and
+// --from, and the new point appears, with nothing to change here or on the page.
 //
 //   node scripts/vendor-engine-history.mjs --fetch <dir> --repo <owner/name> --claims-path <path> --pack-path <path>
 //        (reads both files' history with gh into <dir>; the repository, its paths and <dir> are private, are given

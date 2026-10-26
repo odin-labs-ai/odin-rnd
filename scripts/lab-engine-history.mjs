@@ -9,9 +9,12 @@
 //   - a point has no full commit, names another main head than the one recorded (vendored.mainCheck), is not a real date,
 //     is dated after the build, or is out of date order; or a value is not a finite number;
 //   - any text fails the publisher's screen.
-// The page draws each point as a dot on a time axis and nothing between points: no line, no interpolation. A series with
-// one point says "One measurement so far". Every point cites its commit by hash; this page cannot check a private commit,
-// and says so; anyone with access can re-derive the file with the vendor script's --verify.
+// Lab 01's "The engine underneath" shows it (scripts/lab-telemetry.mjs): the one series with several points, engine
+// claims in the main build, as a step chart (a value held until a commit changes it; never estimated between points),
+// and beside each engine figure with one point, "Measured once so far, on <date>". A figure with one point is never
+// drawn. Every point cites its commit by hash; this page cannot check a private commit, and says so; anyone with access
+// can re-derive the file with the vendor script's --verify. A figure becomes a series by itself the first time a later
+// commit changes it: re-vendoring is all it takes.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -23,7 +26,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const ENGINE_HISTORY_FILE = 'data/labs/agent-space/engine-history.json';
 export const ENGINE_HISTORY_SCHEMA = join(here, 'schemas/odin-engine-history.schema.json');
 export const ENGINE_HISTORY_PIN = join(here, 'engine-history.pin.json');
-export const ONE_POINT = 'One measurement so far.';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
@@ -110,32 +112,57 @@ export function readEngineHistory(root = 'site', { now = new Date(), pin } = {})
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const day = iso => { const d = realInstant(iso); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC</time>`; };
 const values = vals => Object.entries(vals).map(([k, v]) => `${escape(k.replaceAll('_', ' '))}: <strong>${escape(v.toLocaleString('en-GB'))}</strong>`).join(' · ');
-const cite = p => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash; this page cannot check it, anyone with access can.`;
+// Every stated or drawn point cites its commit AND the private main head it was checked to be part of, and when.
+const cite = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
 
-// A dot plot on a time axis for a series with two or more points: one dot per point, its height the first value;
-// nothing is drawn between dots, so a gap reads as a gap.
-function dotPlot(s) {
-  const W = 320, H = 120, PAD = 28;
-  const times = s.points.map(p => realInstant(p.at).getTime()), key = Object.keys(s.points[0].values)[0];
-  const ys = s.points.map(p => p.values[key]);
-  const t0 = Math.min(...times), t1 = Math.max(...times), y1 = Math.max(...ys, 1);
-  const x = t => PAD + (t1 > t0 ? (W - 2 * PAD) * (t - t0) / (t1 - t0) : (W - 2 * PAD) / 2);
-  const y = v => H - PAD - (H - 2 * PAD) * v / y1;
-  const dots = s.points.map((p, i) => `<circle class="engine-dot" cx="${x(times[i]).toFixed(1)}" cy="${y(ys[i]).toFixed(1)}" r="5"></circle><text class="lab-chart-value" x="${x(times[i]).toFixed(1)}" y="${(y(ys[i]) - 9).toFixed(1)}" text-anchor="middle">${escape(ys[i])}</text>`).join('');
+/** Which engine-history series follows each engine figure Lab 01 shows (by claim), and the agent space's answer time. */
+export const SERIES_FOR_CLAIM = { 10: 'test-suite', 20: 'tick-1000', d7: 'campus-draws' };
+export const ANSWER_TIME = 'answer-time';
+export const CLAIMS_ON_MAIN = 'claims-on-main';
+const seriesById = (history, id) => history?.series.find(s => s.id === id) ?? null;
+const shortDay = iso => { const d = realInstant(iso); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}</time>`; };
+
+// A step chart for a series with two or more points: each value is held flat until the next point changes it, then
+// steps. A value is never estimated between points (a step is "it stayed this until it changed", which the history
+// records); a series with one point is never drawn, only stated.
+/** Which value each series' chart draws (the rest are listed under it); default: its first value. */
+export const CHART_KEY = { 'tick-1000': 'p50_ms', 'campus-draws': 'p50_ms', 'answer-time': 'Odin_p50_s' };
+
+function stepChart(s) {
+  if (s.points.length < 2) throw new Error(`${s.id}: a step chart needs two or more points`);
+  const first = Object.keys(s.points[0].values), key = first.includes(CHART_KEY[s.id]) ? CHART_KEY[s.id] : first[0];
+  const W = 320, H = 130, PAD = 28;
+  const times = s.points.map(p => realInstant(p.at).getTime()), ys = s.points.map(p => p.values[key]);
+  const t0 = times[0], t1 = times.at(-1), y1 = Math.max(...ys, 1);
+  const x = t => (PAD + (W - 2 * PAD) * (t - t0) / (t1 - t0)).toFixed(1);
+  const y = v => (H - PAD - (H - 2 * PAD) * v / y1).toFixed(1);
+  const steps = s.points.slice(1).map((p, i) => `<line class="engine-step" x1="${x(times[i])}" y1="${y(ys[i])}" x2="${x(times[i + 1])}" y2="${y(ys[i])}"></line><line class="engine-step" x1="${x(times[i + 1])}" y1="${y(ys[i])}" x2="${x(times[i + 1])}" y2="${y(ys[i + 1])}"></line>`).join('');
+  const dots = s.points.map((p, i) => `<circle class="engine-dot" cx="${x(times[i])}" cy="${y(ys[i])}" r="4.5"></circle><text class="lab-chart-value" x="${x(times[i])}" y="${(+y(ys[i]) - 9).toFixed(1)}" text-anchor="middle">${escape(ys[i])}</text>`).join('');
   const axis = `<line class="engine-axis" x1="${PAD}" x2="${W - PAD}" y1="${H - PAD}" y2="${H - PAD}"></line><text class="lab-chart-label" x="${PAD}" y="${H - 8}">${escape(s.points[0].at.slice(0, 10))}</text><text class="lab-chart-label" x="${W - PAD}" y="${H - 8}" text-anchor="end">${escape(s.points.at(-1).at.slice(0, 10))}</text>`;
-  const desc = s.points.map(p => `${p.at.slice(0, 10)}: ${key.replaceAll('_', ' ')} ${p.values[key]}`).join('; ');
-  return `<svg class="lab-chart engine-plot" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="engine-${escape(s.id)}-title engine-${escape(s.id)}-desc"><desc id="engine-${escape(s.id)}-desc">${escape(key.replaceAll('_', ' '))} at each point, with nothing drawn between points: ${escape(desc)}</desc>${axis}${dots}</svg>`;
+  const desc = s.points.map(p => `${p.at.slice(0, 10)}: ${p.values[key]}`).join('; ');
+  return `<svg class="lab-chart engine-plot" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="engine-${escape(s.id)}-title engine-${escape(s.id)}-desc"><desc id="engine-${escape(s.id)}-desc">${escape(key.replaceAll('_', ' '))}, held until each change: ${escape(desc)}</desc>${axis}${steps}${dots}</svg>`;
 }
 
-/** The section: one panel per series, every point with its date, values, what changed and its citation. */
-export function renderEngineHistory(record) {
-  if (!record) return '';
-  const panels = record.series.filter(s => s.points.length).map(s => {
-    const one = s.points.length === 1;
-    const rows = s.points.map(p => `<li><p class="engine-when">${day(p.at)}</p><p>${values(p.values)} <span class="engine-unit">(${escape(s.unit)})</span></p><p>${escape(p.change[0].toUpperCase() + p.change.slice(1))}.</p><p class="lab-source">${cite(p)}</p></li>`).join('');
-    return `<figure class="lab-panel engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">${escape(s.title)}</h4><p>${escape(s.note)}</p>${one ? `<p class="engine-one"><span class="engine-dot-key" aria-hidden="true"></span>${ONE_POINT}</p>` : dotPlot(s)}<ol class="engine-points">${rows}</ol></figure>`;
-  }).join('');
-  const v = record.vendored;
-  const empty = record.series.filter(s => !s.points.length).map(s => s.title);
-  return `<section class="company-section company-width" id="engine-over-time" aria-labelledby="engine-over-time-title"><div class="company-section-heading"><h2 id="engine-over-time-title">The engine, measured over time.</h2><p>Each dot is a moment a figure changed in the agent space's own records: one commit, cited by its hash. Nothing is drawn between dots: a gap is a gap, not a guess.</p></div><p class="lab-telemetry-note">From ${escape(v.from)}: ${escape(v.commitsRead.claims)} versions of the claims table and ${escape(v.commitsRead.pack)} of the telemetry pack. The rule: ${escape(v.rule)}. Every commit was checked against the private main head <code>${escape(v.mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(v.mainCheck.checked)}">${escape(v.mainCheck.checked)}</time> (${escape(v.mainCheck.how)}).${empty.length ? ` Not measured yet: ${escape(empty.join(', '))}.` : ''}</p><div class="lab-panels">${panels}</div></section>`;
+/**
+ * A figure's history beside it: nothing for no point; "Measured once so far, on <date>" with its citation for one point
+ * (never drawn); a step chart and every point with its citation for two or more. So a figure measured once becomes a
+ * series by itself, here and in the chart, the first time a later commit changes it: re-vendoring is all it takes.
+ */
+export function measuredLine(history, id) {
+  const s = seriesById(history, id);
+  if (!s || !s.points.length) return '';
+  const mc = history.vendored.mainCheck;
+  if (s.points.length === 1) return `<p class="engine-once">Measured once so far, on ${shortDay(s.points[0].at)}. ${cite(s.points[0], mc)}</p>`;
+  return `<div class="engine-history"><p class="engine-once">Measured ${s.points.length} times, from ${shortDay(s.points[0].at)} to ${shortDay(s.points.at(-1).at)}.</p>${stepChart(s)}${pointList(s, mc, 'Each measurement, with its commit')}</div>`;
+}
+
+const pointList = (s, mc, summary) => `<details class="lab-panel-table"><summary>${escape(summary)}</summary><ol class="engine-points">${s.points.map(p => `<li><p class="engine-when">${day(p.at)}</p><p>${values(p.values)}</p><p>${escape(p.change[0].toUpperCase() + p.change.slice(1))}.</p><p class="lab-source">${cite(p, mc)}</p></li>`).join('')}</ol></details>`;
+
+/** "Engine claims in the main build over time": the step chart and every point with its citation. Nothing for no history. */
+export function renderClaimsOverTime(history) {
+  const s = seriesById(history, CLAIMS_ON_MAIN);
+  if (!s || !s.points.length) return '';
+  if (s.points.length === 1) return `<div class="lab-panel engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">Engine claims in the main build over time</h4>${measuredLine(history, s.id)}</div>`;
+  const v = history.vendored;
+  return `<figure class="lab-panel lab-panel-wide engine-series" id="engine-${escape(s.id)}"><h4 id="engine-${escape(s.id)}-title">Engine claims in the main build over time</h4><p>${escape(s.note)}</p>${stepChart(s)}${pointList(s, v.mainCheck, 'Each change, with its commit')}<p class="lab-source">From ${escape(v.from)}: ${escape(v.commitsRead.claims)} versions of the claims table and ${escape(v.commitsRead.pack)} of the telemetry pack. The rule: ${escape(v.rule)}. A figure measured once becomes a series by itself the first time a later commit changes it. Every commit was checked against the private main head <code>${escape(v.mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(v.mainCheck.checked)}">${escape(v.mainCheck.checked)}</time> (${escape(v.mainCheck.how)}).</p></figure>`;
 }

@@ -22,7 +22,7 @@ import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
-import { readEngineHistory, renderEngineHistory } from './lab-engine-history.mjs';
+import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
@@ -224,9 +224,7 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }),
       // The link to the explorer, only when it is rendered (so it always lands on a page).
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
-      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts),
-      // "The engine, measured over time" (scripts/lab-engine-history.mjs gates it; nothing while there is no record).
-      '<!--LAB_ENGINE_HISTORY-->': renderEngineHistory(readEngineHistory(root)), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
+      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
       // "This week in Lab 01": the seven days ending on the build's date, from the same records (scripts/lab-week.mjs).
