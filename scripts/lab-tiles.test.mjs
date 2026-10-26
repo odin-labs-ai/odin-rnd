@@ -2,6 +2,7 @@ import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { readTiles, renderTile, tileProblems } from './lab-tiles.mjs';
 import { validate } from './json-schema-lite.mjs';
@@ -136,4 +137,28 @@ test('the schema itself applies the condition: kind "results" requires a record,
   assert.deepEqual(validate(schema, { ...results, kind: 'other' }), ['/kind: does not match ^(preregistered|results)$']);
   // A keyword the checker does not know is refused, never skipped: the schema cannot grow past what is applied.
   assert.match(validate({ ...schema, dependentRequired: {} }, results).join('\n'), /does not know: dependentRequired/);
+});
+
+// scripts/fixtures/lab-tiles/schema-condition.txt states, for a reader of the diff, the validator lines that apply the
+// condition and what validate() returns for each case. This recomputes it; a changed validator or schema fails here.
+function schemaConditionReceipt() {
+  const schema = JSON.parse(readFileSync('scripts/schemas/odin-lab-tile.schema.json', 'utf8'));
+  const lite = readFileSync('scripts/json-schema-lite.mjs', 'utf8');
+  const noRecord = structuredClone(results); delete noRecord.record;
+  const noKind = structuredClone(noRecord); delete noKind.kind;
+  const cases = { 'results tile': results, 'results, no record': noRecord, 'preregistered, no record': { ...noRecord, kind: 'preregistered' }, 'no kind, no record': noKind };
+  const lines = lite.split('\n');
+  return `What scripts/json-schema-lite.mjs does with the tile schema's results condition (allOf + if/then).
+scripts/lab-tiles.test.mjs recomputes every line below on each run and fails if one differs, so this file cannot drift.
+
+scripts/json-schema-lite.mjs sha256 ${createHash('sha256').update(lite).digest('hex')}
+${[6, 45, 46].map(n => `  ${n}: ${lines[n - 1]}`).join('\n')}
+
+validate(odin-lab-tile schema, tile):
+${Object.entries(cases).map(([k, v]) => `  ${k}: ${JSON.stringify(validate(schema, v))}`).join('\n')}
+`;
+}
+
+test('the schema-condition receipt is what the validator does now', () => {
+  assert.equal(readFileSync('scripts/fixtures/lab-tiles/schema-condition.txt', 'utf8'), schemaConditionReceipt());
 });
