@@ -4,6 +4,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writ
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readTiles, renderTile, tileProblems } from './lab-tiles.mjs';
+import { validate } from './json-schema-lite.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 03's tile on the Labs index (mission rnd-labs-human-first-1024): what the lab asks, its status, and links to its
@@ -119,4 +120,20 @@ test('a results lab is refused without its record, without a matching pin, or wi
   // A record that changes without its pin is refused.
   writeFileSync(join(root, 'data/labs/brain-bench/results.json'), `${readFileSync('site/data/labs/brain-bench/results.json', 'utf8')} `);
   assert.match(tileProblems(results, root).join('\n'), /record\/pin: data\/labs\/brain-bench\/results\.sha256 does not pin the sha256 of data\/labs\/brain-bench\/results\.json/);
+});
+
+test('the schema itself applies the condition: kind "results" requires a record, any other kind does not', () => {
+  // scripts/json-schema-lite.mjs applies allOf and if/then (and refuses a keyword it does not know); this calls it
+  // directly on the committed schema, with no gate code in between.
+  const schema = JSON.parse(readFileSync('scripts/schemas/odin-lab-tile.schema.json', 'utf8'));
+  assert.deepEqual(validate(schema, results), []);
+  const noRecord = structuredClone(results); delete noRecord.record;
+  assert.deepEqual(validate(schema, noRecord), ['/: missing record']);
+  const preregistered = { ...noRecord, kind: 'preregistered' };
+  assert.deepEqual(validate(schema, preregistered), [], 'the condition does not fire for a pre-registered lab');
+  const noKind = structuredClone(noRecord); delete noKind.kind;
+  assert.deepEqual(validate(schema, noKind), [], 'nor for a tile with no kind');
+  assert.deepEqual(validate(schema, { ...results, kind: 'other' }), ['/kind: does not match ^(preregistered|results)$']);
+  // A keyword the checker does not know is refused, never skipped: the schema cannot grow past what is applied.
+  assert.match(validate({ ...schema, dependentRequired: {} }, results).join('\n'), /does not know: dependentRequired/);
 });
