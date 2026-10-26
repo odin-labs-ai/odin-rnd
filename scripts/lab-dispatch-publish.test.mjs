@@ -171,7 +171,8 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   const { dir, name } = session();
   const root = join(temp, 'site-render');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
-  cpSync('site/labs', join(root, 'labs'), { recursive: true });
+  // The story page ships only with its record (scripts/lab-milestones.mjs), which these roots do not carry.
+  cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
   cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   assert.deepEqual(publish({ sessionDir: dir, answerScreen: screen(name), site: root }).problems, []);
@@ -320,7 +321,8 @@ test('the schema checker applies additionalProperties as a schema, and refuses f
 test('older dispatches keep the heading order: session h4 under "Earlier sessions" h3, its questions h5', () => {
   const root = join(temp, 'site-two');
   mkdirSync(join(root, 'data/labs'), { recursive: true });
-  cpSync('site/labs', join(root, 'labs'), { recursive: true });
+  // The story page ships only with its record (scripts/lab-milestones.mjs), which these roots do not carry.
+  cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') });
   cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
   cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
   for (const date of ['2026-10-25', '2026-11-01']) {

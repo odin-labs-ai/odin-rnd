@@ -1,0 +1,116 @@
+{
+ "format": "odin-milestones",
+ "version": 1,
+ "projection": "public",
+ "selection": "Selected by hand for a test fixture; not the real record and not exhaustive.",
+ "window": {
+  "from": "2026-10-23T03:38:00Z",
+  "to": "2026-10-25T23:40:00Z"
+ },
+ "counts": {
+  "beat": 3,
+  "moment": 1,
+  "correction": 1,
+  "leftOut": {
+   "beat": 1,
+   "moment": 0,
+   "correction": 0
+  }
+ },
+ "mainCheck": {
+  "main": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "how": "GitHub compare API at production time: behind_by 0 means an ancestor of main",
+  "checked": "2026-10-26"
+ },
+ "records": [
+  {
+   "id": "beat-20261023-1",
+   "kind": "beat",
+   "at": "2026-10-23T03:38:00Z",
+   "title": "The first space we could film",
+   "body": "The agent space ran end to end for the first time, in a form a camera could record.",
+   "quote": null,
+   "evidence": [
+    {
+     "type": "private-commit",
+     "sha": "ffffffffffffffffffffffffffffffffffffffff",
+     "onMain": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+   ],
+   "visual": "assets/agent-space/agent-space-overview.jpg"
+  },
+  {
+   "id": "beat-20261025-1",
+   "kind": "beat",
+   "at": "2026-10-25T08:40:00Z",
+   "title": "The first dispatch",
+   "body": "Four questions answered live, each with its proof card.",
+   "quote": null,
+   "evidence": [
+    {
+     "type": "pr",
+     "number": 78,
+     "url": "https://github.com/odin-labs-ai/odin-rnd/pull/78"
+    },
+    {
+     "type": "proof",
+     "id": "odin-381dbb-1",
+     "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/"
+    }
+   ],
+   "visual": null
+  },
+  {
+   "id": "moment-20261025-1",
+   "kind": "moment",
+   "at": "2026-10-25T08:40:00Z",
+   "title": "How do you know?",
+   "body": "The follow-up that makes an agent point at its own evidence.",
+   "quote": "How do you know?",
+   "evidence": [
+    {
+     "type": "proof",
+     "id": "odin-381dbb-1",
+     "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/"
+    }
+   ],
+   "visual": null
+  },
+  {
+   "id": "correction-20261025-1",
+   "kind": "correction",
+   "at": "2026-10-25T12:00:00Z",
+   "title": "A headline now states its scope",
+   "body": "The AI review caught an overstated headline, and it was corrected before the merge.",
+   "quote": null,
+   "evidence": [
+    {
+     "type": "pr",
+     "number": 72,
+     "url": "https://github.com/odin-labs-ai/odin-rnd/pull/72"
+    }
+   ],
+   "visual": null
+  },
+  {
+   "id": "beat-20261025-2",
+   "kind": "beat",
+   "at": "2026-10-25T23:40:00Z",
+   "title": "Films, measured numbers and the hard parts",
+   "body": "Lab 01 shows its films and the space's own measurements, each sourced, after an AI review.",
+   "quote": null,
+   "evidence": [
+    {
+     "type": "pr",
+     "number": 81,
+     "url": "https://github.com/odin-labs-ai/odin-rnd/pull/81"
+    },
+    {
+     "type": "url",
+     "url": "https://odin-labs-ai.github.io/odin-rnd/assets/labs/agent-space/films/agent-space-tour.webm"
+    }
+   ],
+   "visual": "assets/labs/agent-space/films/agent-space-tour-poster.png"
+  }
+ ]
+}

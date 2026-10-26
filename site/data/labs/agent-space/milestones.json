@@ -1,0 +1,841 @@
+{
+  "format": "odin-milestones",
+  "version": 1,
+  "projection": "public",
+  "selection": "Selected by an AI editor from 777 candidates; not exhaustive. Every quote is machine-checked verbatim against its source. Evidence is checkable here (on the public record) or a private commit cited by hash, checked as part of the private main on the date given.",
+  "mainCheck": {
+    "main": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223",
+    "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+    "checked": "2026-10-26"
+  },
+  "window": {
+    "from": "2026-10-23T03:24:19Z",
+    "to": "2026-10-26T01:17:03Z"
+  },
+  "counts": {
+    "beat": 31,
+    "moment": 12,
+    "correction": 4,
+    "leftOut": {
+      "beat": 2,
+      "moment": 1,
+      "correction": 1
+    }
+  },
+  "records": [
+    {
+      "id": "correction-20261023-1",
+      "kind": "correction",
+      "at": "2026-10-23T03:24:19Z",
+      "title": "Two figures relabelled: measured, but not yet merged",
+      "body": "Two figures shared earlier came from a work branch, not from the main code. They were relabelled as such until they landed.",
+      "quote": "measured but not merged on main yet",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "0aa4d76af220f091fbfdafbb84f875e582dc4470",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261023-1",
+      "kind": "moment",
+      "at": "2026-10-23T03:29:59Z",
+      "title": "The line between public and private is drawn",
+      "body": "The founder decided that only the engine and the agent space go public; the game project stays internal proof. Every film published since shows the agent space and nothing else.",
+      "quote": "for public visuals we need agent-space footage",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/data/labs/agent-space/films.json"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/assets/labs/agent-space/films/agent-space-30s.webm"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261023-1",
+      "kind": "beat",
+      "at": "2026-10-23T03:55:14Z",
+      "title": "The agent space can be filmed",
+      "body": "A small 3D world of our own: a visitor walks in and asks the agents real questions, and every answer appears with a proof card that says where it came from. The published films are live sessions, recorded unedited.",
+      "quote": "Nothing is staged: the answers come from the running agents.",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/data/labs/agent-space/films.json"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/assets/agent-space/agent-space-overview.jpg"
+        }
+      ],
+      "visual": "assets/agent-space/agent-space-overview.jpg"
+    },
+    {
+      "id": "moment-20261024-1",
+      "kind": "moment",
+      "at": "2026-10-24T00:54:02Z",
+      "title": "A second client walks into the live agent space",
+      "body": "Over a short-lived tunnel, a client built in another engine joined our live agent space and asked the same questions. The same answers came back, with the same proof ids.",
+      "quote": "The engine is truly client-independent",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "95613a15fe23d325126f7e97870cafd17ae6ec3c",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-1",
+      "kind": "beat",
+      "at": "2026-10-24T03:18:37Z",
+      "title": "The lab gets its own entity and a partner page",
+      "body": "Odin Labs R&D B.V. becomes the lab entity, with a partner page and a one-pager for the work it does with others.",
+      "quote": "Verified independently: PR state MERGED",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/work-with-us/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/partners/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/one-pager/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-2",
+      "kind": "beat",
+      "at": "2026-10-24T03:43:28Z",
+      "title": "Which small local model makes the best agent brain? Frozen before the first episode",
+      "body": "Four brains, five of our own engine games, 280 seeded episodes each. The question, the predictions and the decision rule were written down and hashed before the run started.",
+      "quote": "a difference counts only with non-overlapping Wilson 95 % intervals",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-3",
+      "kind": "beat",
+      "at": "2026-10-24T06:10:37Z",
+      "title": "A thousand agents in one space",
+      "body": "One thousand agents moving and talking, with ten visitors, in a single space: the server tick took 17.5 ms at the median. That run did not stamp its code revision, and the page says so.",
+      "quote": "1,000 moving, talking crowd agents plus 10 visitors walking and talking",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 96,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/96"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/data/labs/agent-space/telemetry.json"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-4",
+      "kind": "beat",
+      "at": "2026-10-24T08:14:06Z",
+      "title": "Our tuned 1 GB model scores 95 %, and the honest reading is a tie",
+      "body": "The tuned local model solved 266 of 280 episodes, ahead on points, but by our own rule there is no detectable difference between the model brains.",
+      "quote": "resumed with the identical command, 280/280 complete per brain",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-5",
+      "kind": "beat",
+      "at": "2026-10-24T15:59:05Z",
+      "title": "Five cloud models on the same seeded tasks",
+      "body": "Five vendor models ran the same 280 seeded episodes. None beat our local model by the interval rule. They were ahead on following instructions, not yet significantly.",
+      "quote": "no vendor model beats our local model by the interval rule (P1 holds)",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-6",
+      "kind": "beat",
+      "at": "2026-10-24T19:40:53Z",
+      "title": "On following instructions, the cloud models are clearly better",
+      "body": "A dedicated run on following a person's instruction, 200 episodes per brain. This time the intervals do not overlap: the cloud models are better at it than our local model.",
+      "quote": "that settles EXP-W02's open gap",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-7",
+      "kind": "beat",
+      "at": "2026-10-24T21:12:26Z",
+      "title": "Odin Labs R&D launches as a lab",
+      "body": "The R&D site relaunched as a lab, with a partner programme and the whole lab on a single page.",
+      "quote": "odin-rnd #52, #69 and #70 are merged and live",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/partners/"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/one-pager/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-8",
+      "kind": "beat",
+      "at": "2026-10-24T22:22:10Z",
+      "title": "Why our model loses: it picks the wrong action",
+      "body": "Replaying the lost games showed the model never breaks the reply format. It chooses the wrong action: asked to share an item, it tries to buy one it already has; asked to meet somewhere, it says it is on its way and never moves.",
+      "quote": "I replayed the losing games with full decision logs",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "540b48d110bfe619b3dfe72e70d85d26a8aa3624",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261024-2",
+      "kind": "moment",
+      "at": "2026-10-24T23:15:29Z",
+      "title": "The agent space becomes Lab 01",
+      "body": "The founder asked for the agent space to become a lab people can follow and take part in: send a question, and the agents answer it in the next recorded session, each answer with its proof card.",
+      "quote": "The work is the content.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 75,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/75"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-9",
+      "kind": "beat",
+      "at": "2026-10-24T23:35:52Z",
+      "title": "The first human-first rewrite goes live",
+      "body": "The agent space section, the experiment rows and the boundary bench were rewritten for people first, with the jargon moved one click down.",
+      "quote": "Pages run success at a6b90ba3",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 71,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/71"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261024-10",
+      "kind": "beat",
+      "at": "2026-10-24T23:37:26Z",
+      "title": "Lab 01's export contract is agreed",
+      "body": "Each session exports a short clip, a poster, stills and one proof record per answer. The schema lives in the public repository, and the site build refuses any dispatch that does not match it.",
+      "quote": "Please put the schema in the repo; the site build will validate every dispatch against it and refuse one that doesn't match.",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/schemas/odin-dispatch-v1.schema.json"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-1",
+      "kind": "moment",
+      "at": "2026-10-25T01:53:20Z",
+      "title": "Our MongoDB notes read harsher than their evidence",
+      "body": "Rereading two published notes, we found headlines broader than the studies behind them: both had tested PostgreSQL's home ground. The decision: fix the wording first, then design a fair study of where MongoDB fits.",
+      "quote": "Our two published notes read harsher than their scope supports.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 72,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/72"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "correction-20261025-1",
+      "kind": "correction",
+      "at": "2026-10-25T02:15:02Z",
+      "title": "The note's headline now states its scope",
+      "body": "The headline now says the result holds for the two workloads tested, followed by the limits the note already listed, and that a study of what MongoDB is built for exists only as a design draft.",
+      "quote": "the note's own limits say one shared, throttled machine, synthetic sizes, partial writes and attribute queries",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 72,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/72"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-2",
+      "kind": "moment",
+      "at": "2026-10-25T02:33:14Z",
+      "title": "Take one failed two questions, so we fixed the agents, not the clip",
+      "body": "In the first recorded session Odin did not recognise 'who is here' as a question about the world, and Juno had no getting-started note. Both were fixed at the source, with tests, and the session was filmed again.",
+      "quote": "It's the lab being a lab.",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "eab573555928da793754de9d86410439d26b4357",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        },
+        {
+          "type": "proof",
+          "id": "juno-381dbb-1",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/"
+        }
+      ],
+      "visual": "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3.png"
+    },
+    {
+      "id": "correction-20261025-2",
+      "kind": "correction",
+      "at": "2026-10-25T02:38:01Z",
+      "title": "Add scope, never soften the evidence",
+      "body": "The second wording fix was held to one rule: say where a result applies, but never make it sound softer or claim something the study did not measure. The AI review caught one changed verb, and it was restored.",
+      "quote": "add scope, never soften the evidence or add a new claim.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 74,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/74"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-3",
+      "kind": "moment",
+      "at": "2026-10-25T02:39:37Z",
+      "title": "Two AI advocates freeze the MongoDB study: 11 vetoes, all accepted",
+      "body": "Before any run, two AI model advocates, one arguing for MongoDB and one for PostgreSQL, reviewed the design and could veto it. Every one of the 11 vetoes was fixed, and one caught a factual error in the draft.",
+      "quote": "MongoDB pays for its replica set, keyFile and oplog too",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 76,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/76"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-1",
+      "kind": "beat",
+      "at": "2026-10-25T02:45:51Z",
+      "title": "A bench fix lifts every brain, and the bold prediction is not claimed",
+      "body": "After a bug in the benchmark itself was fixed, every brain scored higher. Our model's bold prediction held by the rule only because an API outage made the cloud model look weak, so we do not claim it.",
+      "quote": "So we don't claim P3.",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-2",
+      "kind": "beat",
+      "at": "2026-10-25T03:13:39Z",
+      "title": "The R&D home reads human-first",
+      "body": "The whole home was rewritten for people first. The benches and technical panels moved to their own pages, one click down.",
+      "quote": "the whole R&D home now reads human-first",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 73,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/73"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-3",
+      "kind": "beat",
+      "at": "2026-10-25T03:40:53Z",
+      "title": "Odin stops saying internal ids aloud",
+      "body": "Odin's answers used to carry an internal hash and a run id. They were removed where the agent speaks, not in the export, so the clip and the record always agree, and a test now refuses them.",
+      "quote": "Fixed where it's said, not in the export",
+      "evidence": [
+        {
+          "type": "private-commit",
+          "sha": "ac790b11e5fe35cf8dba5c4577b28bf49ea5a7dc",
+          "onMain": "8907d6b7d9b549ef3ca2019abaa288dfbe9c3223"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-4",
+      "kind": "beat",
+      "at": "2026-10-25T03:54:02Z",
+      "title": "EXP 020 is published before any counted run",
+      "body": "'MongoDB on its home ground' went public as EXP 020: the frozen text in full, with four listed substitutions that the build undoes and checks against the original hash.",
+      "quote": "How faithfulness is proven, not just claimed",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 76,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/76"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/journal/mongodb-home-ground-pre-registration.html"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-4",
+      "kind": "moment",
+      "at": "2026-10-25T04:21:50Z",
+      "title": "The publisher refuses the first session, correctly",
+      "body": "The Lab 01 page went live, and the publisher that turns a session into a public dispatch refused session one on three points: two file names in its sources and an internal id. It never rewrites text, so the fix went to the source and the session was filmed again.",
+      "quote": "It never rewrites text, because the clip shows the same card",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 78,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/78"
+        },
+        {
+          "type": "pr",
+          "number": 75,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/75"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-5",
+      "kind": "beat",
+      "at": "2026-10-25T04:52:32Z",
+      "title": "Every dispatch becomes drafts for four channels",
+      "body": "A generator turns each published dispatch into drafts for LinkedIn, X, Reddit and GitHub. It sends nothing: a person posts.",
+      "quote": "drafts only, no network",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 77,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/77"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-6",
+      "kind": "beat",
+      "at": "2026-10-25T05:11:04Z",
+      "title": "The second take passes the publisher",
+      "body": "The re-filmed session was screened answer by answer and passed the publisher with nothing rewritten. It went into AI review as the first dispatch.",
+      "quote": "The publisher then wrote the public dispatch with nothing rewritten.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 78,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/78"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-5",
+      "kind": "moment",
+      "at": "2026-10-25T08:41:23Z",
+      "title": "Lab 01's first dispatch goes live",
+      "body": "Four questions, answered live in the agent space, each with its proof card. Every published file is pinned by its hash, and the site build refuses a changed byte.",
+      "quote": "every published asset is now pinned by sha256 in the dispatch, and the site build refuses a changed byte",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 78,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/78"
+        },
+        {
+          "type": "proof",
+          "id": "odin-381dbb-1",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/"
+        }
+      ],
+      "visual": "assets/labs/agent-space/session-2026-10-25-b/poster.png"
+    },
+    {
+      "id": "moment-20261025-6",
+      "kind": "moment",
+      "at": "2026-10-25T11:30:13Z",
+      "title": "Even PostgreSQL's AI advocate predicts MongoDB wins failover",
+      "body": "In the failover study's review, the AI model advocate for PostgreSQL showed its failover cannot notice a dead primary in under about 20 seconds, and still predicted MongoDB fits better. The prediction was frozen before any run.",
+      "quote": "Fair, and honest: this is exactly the \"named next\" home ground from EXP 020.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 83,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/83"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/data/labs/fit-map.json"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-7",
+      "kind": "moment",
+      "at": "2026-10-25T11:32:10Z",
+      "title": "'Nice, but where is the real work?'",
+      "body": "The founder's verdict on Lab 01's first version: one short question-and-answer clip is not enough. The page needed the best footage, measured telemetry and the hard engineering behind it.",
+      "quote": "agent-space is nice but doesn't show the nice videos and telemetry and hard stuff",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 81,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/81"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-8",
+      "kind": "moment",
+      "at": "2026-10-25T12:01:15Z",
+      "title": "No feature theatre",
+      "body": "A standing rule from the founder: the lab shows our actual delivery, not staged demos. The site now carries the real delivery record of this repository, every element linked to its source.",
+      "quote": "we dont go for feature theatre",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 80,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/80"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-7",
+      "kind": "beat",
+      "at": "2026-10-25T12:14:50Z",
+      "title": "The agent space is measured",
+      "body": "Four agents, 24 public questions in three rounds, every answer with its proof. The times include the scripted visitor's own overhead, and the page says so.",
+      "quote": "real answers are faster",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/data/labs/agent-space/telemetry.json"
+        },
+        {
+          "type": "pr",
+          "number": 81,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/81"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-8",
+      "kind": "beat",
+      "at": "2026-10-25T13:51:50Z",
+      "title": "The tour is re-filmed for the public",
+      "body": "A 78-second walk through the agent space: three agents answer live, each with its proof card, re-filmed with today's labels and no machine details.",
+      "quote": "A visitor walks in through the arch",
+      "evidence": [
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/assets/labs/agent-space/films/agent-space-tour.webm"
+        }
+      ],
+      "visual": "assets/labs/agent-space/films/agent-space-tour-poster.png"
+    },
+    {
+      "id": "beat-20261025-9",
+      "kind": "beat",
+      "at": "2026-10-25T14:43:45Z",
+      "title": "How this site got built: the real delivery record",
+      "body": "Lab 01 now shows the actual record of this repository: every pull request, each AI review round with its verdict, CI runs, landings and deploys, each linked to its source.",
+      "quote": "final recheck SHIP; CI verify green",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 80,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/80"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/#built"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "correction-20261025-3",
+      "kind": "correction",
+      "at": "2026-10-25T17:06:25Z",
+      "title": "A stale label is caught before it goes public",
+      "body": "Before putting the 1,000-agent figure on the page, we checked its source and found its 'not on main' label was already out of date. Publishing it would have been false, so the figure was held until its row was fixed, then restored with its sources.",
+      "quote": "Publishing \"not on main\" would be false, so I'm not publishing it.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 81,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/81"
+        },
+        {
+          "type": "pr",
+          "number": 96,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/96"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-10",
+      "kind": "beat",
+      "at": "2026-10-25T20:23:07Z",
+      "title": "The failover study is published: kill the database mid-session",
+      "body": "EXP 021, now Lab 03, asks whether anyone notices when the database is killed in the middle of a session. Its rules and predictions are public before a single counted run.",
+      "quote": "Counted cells may start now (after this commit, not before).",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 83,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/83"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/journal/failover-pre-registration.html"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-11",
+      "kind": "beat",
+      "at": "2026-10-25T20:49:07Z",
+      "title": "The failover runner's protocol goes public",
+      "body": "The runner protocol and the design draft behind the failover study were published as amendment 01: documents only, with no rule, measure or prediction changed.",
+      "quote": "It is labelled \"the draft, not the plan\".",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 86,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/86"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-12",
+      "kind": "beat",
+      "at": "2026-10-25T20:54:29Z",
+      "title": "Where each store fits: the fit map",
+      "body": "A map of where MongoDB and PostgreSQL each fit, built from our own studies. Today every cell is still pending, each with its frozen predictions; results fill it in as the runs finish.",
+      "quote": "0 of 10 cells, all pending w/ frozen predictions",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 85,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/85"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-13",
+      "kind": "beat",
+      "at": "2026-10-25T21:09:09Z",
+      "title": "Beyond this site: our other repositories, as counts",
+      "body": "Our private repositories appear on Lab 01 only as anonymous counts: pull requests, CI pass rate, AI review rounds and time to land, under labels that cannot be traced back without a private key.",
+      "quote": "0 private repo names on the live page",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 87,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/87"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-14",
+      "kind": "beat",
+      "at": "2026-10-25T21:33:09Z",
+      "title": "EXP 020 owns a gap, in writing",
+      "body": "Runner changes and nine discarded cells were published before the study's report, labelled as changes to the measure where they were. Some rules ran before they were published, and the amendment says exactly that.",
+      "quote": "these rules were applied before they were published, so S2 isn't pre-registered in the strict sense on those points",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 88,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/88"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "moment-20261025-9",
+      "kind": "moment",
+      "at": "2026-10-25T21:56:40Z",
+      "title": "The AI advocates accept the rule and veto the paragraph",
+      "body": "Asked to review how the study pairs MongoDB with PostgreSQL, both AI model advocates accepted the rule and vetoed the paragraph explaining it, for completeness. Their fixes combined without conflict and went into amendments 02 and 03.",
+      "quote": "the two fixes combine without conflict",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 90,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/90"
+        },
+        {
+          "type": "pr",
+          "number": 91,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/91"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-15",
+      "kind": "beat",
+      "at": "2026-10-25T22:33:40Z",
+      "title": "Amendment 03: the verdict may now be computed",
+      "body": "Both AI advocates' reviews were published and the paragraph was rewritten as they required. Our own check corrected one phrase they used, and the record says which.",
+      "quote": "That changes no rule.",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 91,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/91"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-16",
+      "kind": "beat",
+      "at": "2026-10-25T23:32:31Z",
+      "title": "Ask the agents: questions in, answers back",
+      "body": "Tooling to take visitors' questions from the form, screen them, and draft the answer back after a session. It drafts; a person sends.",
+      "quote": "intake + answer-back tooling",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 82,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/82"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-17",
+      "kind": "beat",
+      "at": "2026-10-25T23:46:15Z",
+      "title": "The film files are pinned before the page shows them",
+      "body": "The two public films landed first, each pinned by its hash, so the page that shows them can only show these exact bytes.",
+      "quote": "Lab 01 film bytes + hash-checked film-assets list",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 93,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/93"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261025-18",
+      "kind": "beat",
+      "at": "2026-10-25T23:47:50Z",
+      "title": "Lab 02 goes live: every brain on the same tasks",
+      "body": "The model benchmark becomes Lab 02: local and cloud brains on the same pre-registered, seeded tasks, every number linked to its run.",
+      "quote": "Every brain on the same tasks",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 94,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/94"
+        },
+        {
+          "type": "url",
+          "url": "https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/"
+        }
+      ],
+      "visual": null
+    },
+    {
+      "id": "beat-20261026-1",
+      "kind": "beat",
+      "at": "2026-10-26T00:15:12Z",
+      "title": "Lab 01 in full: films, measured telemetry, the hard parts",
+      "body": "Two screened films, the measured agent space and the hard engineering are on the page, each figure and frame with its source.",
+      "quote": "Lab 01 LIVE in full",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 81,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/81"
+        }
+      ],
+      "visual": "assets/labs/agent-space/films/agent-space-30s-poster.png"
+    },
+    {
+      "id": "beat-20261026-2",
+      "kind": "beat",
+      "at": "2026-10-26T01:17:03Z",
+      "title": "The Labs index gets its second lab",
+      "body": "Lab 02 gets its tile on the Labs index, shown only while its pinned record checks out.",
+      "quote": "Lab 02 tile",
+      "evidence": [
+        {
+          "type": "pr",
+          "number": 95,
+          "url": "https://github.com/odin-labs-ai/odin-rnd/pull/95"
+        }
+      ],
+      "visual": null
+    }
+  ]
+}
