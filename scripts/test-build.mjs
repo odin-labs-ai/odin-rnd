@@ -43,8 +43,8 @@ export function builtCopy() {
     const git = (...args) => execFileSync('git', ['-c', 'user.name=build-copy', '-c', 'user.email=build-copy@example.invalid', '-c', 'commit.gpgsign=false', ...args], { cwd: dir, stdio: 'pipe', env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' } });
     // Auto maintenance off, in the copy's own config so every later git in it (build.mjs's too) sees it: from git 2.55
     // the commit below starts a detached `git maintenance run --auto` that, for a copy this size (~1,800 loose objects),
-    // repacks .git/objects for seconds after the commit returns. Those pack writes race the cleanup below, which can
-    // then leave a jev-gate-build- dir in TMPDIR (jev-gate-tempdirs, odin-rnd #97 verify).
+    // repacks .git/objects for seconds after the commit returns. A precaution, so nothing writes into the copy behind
+    // the test's back; it is not shown to cause the jev-gate-tempdirs leftover (odin-rnd #105).
     git('init', '-q'); git('config', 'maintenance.auto', 'false'); git('config', 'gc.auto', '0');
     git('add', '-A'); git('commit', '-qm', 'build copy');
     execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: dir, stdio: 'pipe' });

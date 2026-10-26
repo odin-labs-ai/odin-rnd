@@ -48,7 +48,7 @@ test('the jev-gate and laya tests leave nothing in the temp directory (run with 
     const leftAnswer = execFileSync('find', [tmp, '-type', 'f'], { encoding: 'utf8' }).split('\n').filter(Boolean).filter(p => answer.has(p.slice(p.lastIndexOf('/') + 1)));
     assert.deepEqual(leftAnswer, [], `answer-file copies left in TMPDIR: ${leftAnswer.join(', ')}`);
     // On a failure, show what is inside the leftover too (a .git/objects/pack remnant and a whole copy have different causes).
-    const inside = () => execFileSync('find', [tmp, '-mindepth', '1', '-maxdepth', '4'], { encoding: 'utf8' }).split('\n').filter(Boolean).slice(0, 40).join('\n');
+    const inside = () => { try { return execFileSync('find', [tmp, '-mindepth', '1', '-maxdepth', '4'], { encoding: 'utf8' }).split('\n').filter(Boolean).slice(0, 40).join('\n'); } catch (error) { return `(could not list: ${error.message})`; } };
     assert.deepEqual(readdirSync(tmp), [], `left behind in TMPDIR: ${readdirSync(tmp).join(', ')}\n${readdirSync(tmp).length ? inside() : ''}`);
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 });
