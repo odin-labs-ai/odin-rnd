@@ -24,7 +24,7 @@ import { readCounts, renderCounts } from './lab-counts.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
-import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs } from './lab-proofs.mjs';
+import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -110,9 +110,8 @@ export function readDispatches(root = 'site') {
   return dispatches.sort((a, b) => b.date.localeCompare(a.date) || b.session.localeCompare(a.session));
 }
 
-export const SOURCE_KIND = { 'world-checked': 'Something it can see in the world', wiki: 'A page it has read', tool: 'A tool it used' };
-/** Where an answer came from, in the words its card on the page uses. */
-export const sourceKind = source => SOURCE_KIND[source] ?? `Source: ${source}`;
+/** Where an answer came from, in the words its card on the page uses (one map, defined in scripts/lab-proofs.mjs). */
+export { SOURCE_KIND, sourceKind };
 
 // Headings nest: Dispatches (h2) > the latest session (h3) > its questions (h4); Earlier sessions (h3) > a session (h4) > its questions (h5).
 function dispatchCards(dispatch, level, proofs = false) {
@@ -217,7 +216,9 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     }),
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
-      '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }), '<!--LAB_FOLLOW-->': renderFollow(lab),
+      '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }),
+      // The link to the explorer, only when it is rendered (so it always lands on a page).
+      '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),

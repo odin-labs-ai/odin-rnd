@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PROOFS_PAGE, proofIndex, proofProblems, renderProofs } from './lab-proofs.mjs';
+import { PROOFS_PAGE, proofIndex, proofProblems, renderProofs, stillFor } from './lab-proofs.mjs';
+import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { readDispatches, renderLabs } from './labs.mjs';
 
 // The proof-card explorer (founder plan 8): every proof id a published dispatch shows has an entry with its record
@@ -60,4 +63,36 @@ test('the dispatch cards and the story page link each proof to its entry, and th
   assert.ok(storyProofs.length > 0, 'the story cites proofs');
   for (const [, anchor, id] of storyProofs) { assert.equal(anchor, id); assert.match(page, new RegExp(`id="proof-${id}"`), id); }
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/agent-space/proofs/</loc>'));
+});
+
+// Review 1 of #103: each case passed the first gate.
+test('the screen covers the whole body (header, footer, alt text) and a page without body or main fails closed', () => {
+  const town = [...'nrooH'].reverse().join('');
+  assert.match(proofProblems(page.replace('>Contact Odin<', `>Contact Odin in ${town}<`), dispatches).join('\n'), /a place name in "/);
+  assert.match(proofProblems(page.replace('alt="The moment in the recording', `alt="Seen in ${town}, the moment`), dispatches).join('\n'), /a place name in "Seen in/);
+  assert.match(proofProblems(page.replace('<main id="main">', '<div id="main">').replace('</main>', '</div>'), dispatches).join('\n'), /no <main in the page; nothing can be checked/);
+});
+
+test('each question shows exactly its published still, and nothing else; the still rule is stills/NN-<question id>.png', () => {
+  const d = dispatches[0], q = d.questions[0], key = `${d.session}/${q.id}`;
+  const other = d.stills.find(s => s !== stillFor(d, q));
+  assert.match(proofProblems(page.replace(`data-still="${key}" src="../../../${stillFor(d, q)}"`, `data-still="${key}" src="../../../${other}"`), dispatches).join('\n'), new RegExp(`${key} does not show exactly its published still`));
+  assert.match(proofProblems(page.replace('<main id="main">', '<main id="main"><img src="../../../assets/odin-logo.svg" alt="">'), dispatches).join('\n'), /an image that is not a dispatch still/);
+  const without = dispatches.map(x => ({ ...x, stills: x.stills.filter(s => !s.endsWith(`-${q.id}.png`)) }));
+  assert.match(proofProblems(page, without).join('\n'), new RegExp(`${key} shows a still, but its dispatch publishes none for it`));
+  assert.equal(stillFor({ stills: ['assets/x/stills/01-xs1-q1.png'] }, { id: 's1-q1' }), null, 'a longer name ending in the id is not its still');
+  assert.equal(stillFor({ stills: ['assets/x/stills/01-s1-q1.png', 'assets/x/stills/02-s1-q1.png'] }, { id: 's1-q1' }), null, 'two candidates are not one still');
+});
+
+test('the Lab 01 link to the explorer appears only when the explorer is rendered', () => {
+  const root = mkdtempSync(join(tmpdir(), 'lab-proofs-'));
+  try {
+    for (const dir of ['labs', 'data/labs']) mkdirSync(join(root, dir), { recursive: true });
+    cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') && !src.includes('labs/agent-space/proofs') });
+    cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
+    cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
+    const lab = renderLabs(root)['labs/agent-space/index.html'];
+    assert.doesNotMatch(lab, /href="proofs\//);
+    assert.match(pages['labs/agent-space/index.html'], /<a href="proofs\/">Every proof card, in one place\.<\/a>/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
