@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readTiles, renderTile, tileProblems } from './lab-tiles.mjs';
@@ -84,7 +84,7 @@ test('a results lab is refused without its record, without a matching pin, or wi
   for (const file of ['labs/brain-bench/index.html', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256']) copy(file);
   assert.deepEqual(tileProblems(results, root), []);
   const cases = [
-    [t => { delete t.record; }, /must have required property|record/],
+    [t => { delete t.record; }, /tile#\/: missing record \(does not match odin-lab-tile v1\)/],
     [t => { t.record.pin = 'data/labs/brain-bench/missing.sha256'; }, /record\/pin: data\/labs\/brain-bench\/missing\.sha256 is not on this site/],
     [t => { t.record.href = 'data/labs/brain-bench/results.sha256'; }, /record\/href: not a record \(\.json\) path/],
     [t => { t.record.pin = '../results.sha256'; }, /record\/pin: not a pin \(\.sha256\) path/],
@@ -96,6 +96,26 @@ test('a results lab is refused without its record, without a matching pin, or wi
     const t = structuredClone(results); edit(t);
     assert.match(tileProblems(t, root).join('\n'), expected, String(expected));
   }
+  // A record or pin that is a symbolic link (to an identical file outside the site, or a folder on the way) is refused.
+  const outside = join(temp, 'outside');
+  mkdirSync(outside, { recursive: true });
+  for (const name of ['results.json', 'results.sha256']) {
+    const file = join(root, 'data/labs/brain-bench', name);
+    cpSync(file, join(outside, name));
+    rmSync(file);
+    symlinkSync(join(outside, name), file);
+    assert.match(tileProblems(results, root).join('\n'), new RegExp(`record/(href|pin): data/labs/brain-bench/${name.replace('.', '\\.')} is a link or resolves outside the site`), name);
+    rmSync(file);
+    cpSync(join(outside, name), file);
+  }
+  assert.deepEqual(tileProblems(results, root), []);
+  const folder = join(root, 'data/labs/brain-bench');
+  cpSync(folder, join(outside, 'brain-bench'), { recursive: true });
+  rmSync(folder, { recursive: true, force: true });
+  symlinkSync(join(outside, 'brain-bench'), folder);
+  assert.match(tileProblems(results, root).join('\n'), /record\/href: data\/labs\/brain-bench\/results\.json is a link or resolves outside the site/);
+  rmSync(folder);
+  cpSync(join(outside, 'brain-bench'), folder, { recursive: true });
   // A record that changes without its pin is refused.
   writeFileSync(join(root, 'data/labs/brain-bench/results.json'), `${readFileSync('site/data/labs/brain-bench/results.json', 'utf8')} `);
   assert.match(tileProblems(results, root).join('\n'), /record\/pin: data\/labs\/brain-bench\/results\.sha256 does not pin the sha256 of data\/labs\/brain-bench\/results\.json/);

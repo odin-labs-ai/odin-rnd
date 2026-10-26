@@ -10,9 +10,9 @@
 //   - a results lab (kind "results", Lab 02 the first, its pre-registrations kept private and cited by commit and
 //     sha256 in the record): its record or the record's sha256 pin is missing, the pin does not match the record's
 //     bytes, or the tile does not link the record.
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { screenHits, screenTree } from './lab-dispatch-publish.mjs';
 import { validate } from './json-schema-lite.mjs';
@@ -46,12 +46,21 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
 // A results lab publishes its record and a one-line sha256 pin beside it ("<hex>  <record file name>\n"); the tile
 // is refused unless both exist, the pin matches the record's bytes, and the tile links the record.
 const PATH = /^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9.-]*)*\.[a-z0-9]+$/;
+// The record and its pin are read for their bytes, so neither they nor any folder on the way may be a symbolic link,
+// and the real path must stay inside the real site root.
+function insideSite(root, path) {
+  const parts = path.split('/');
+  for (let i = 1; i <= parts.length; i++) if (lstatSync(join(root, ...parts.slice(0, i))).isSymbolicLink()) return false;
+  const base = realpathSync(root);
+  return realpathSync(join(root, path)).startsWith(base + sep);
+}
 function resultsProblems(tile, root, where) {
   const problems = [];
   const { href, pin } = tile.record;
   for (const [key, path, ext] of [['href', href, /\.json$/], ['pin', pin, /\.sha256$/]]) {
     if (!PATH.test(path) || /(^|\/)\.\.?(\/|$)/.test(path) || !ext.test(path)) problems.push(`${where}#/record/${key}: not a ${key === 'href' ? 'record (.json)' : 'pin (.sha256)'} path of this site`);
     else if (!isFile(join(root, path))) problems.push(`${where}#/record/${key}: ${path} is not on this site`);
+    else if (!insideSite(root, path)) problems.push(`${where}#/record/${key}: ${path} is a link or resolves outside the site`);
     // A path is still screened for names and places, as the publisher screens an asset path.
     problems.push(...screenHits(path).filter(h => !h.reason.startsWith('a file path')).map(h => `${where}#/record/${key}: ${h.reason}`));
   }
