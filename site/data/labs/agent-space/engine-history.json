@@ -1,0 +1,168 @@
+{
+ "format": "odin-engine-history",
+ "version": 1,
+ "vendored": {
+  "from": "the git history of the agent space's claims table and telemetry pack, kept in its private repository",
+  "rule": "a point is a commit that changed a figure; a figure restated unchanged adds no point, and nothing is drawn between points",
+  "mainCheck": {
+   "main": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+   "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-10-26"
+  },
+  "commitsRead": {
+   "claims": 16,
+   "pack": 5
+  }
+ },
+ "series": [
+  {
+   "id": "claims-on-main",
+   "title": "Engine claims in the main build",
+   "unit": "claims",
+   "note": "Of the engine claims Lab 01 shows, how many were in the main build, each time that changed. A claim measured on a work branch counts only once it is merged.",
+   "points": [
+    {
+     "at": "2026-10-23T03:23:54Z",
+     "commit": "0aa4d76af220f091fbfdafbb84f875e582dc4470",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 4,
+      "recorded": 4
+     },
+     "change": "the fine-tuned 1.5B model against the larger stack: recorded, in the main build; model calls per successful task: recorded, in the main build; byte-identical seeded replays: recorded, in the main build; the full test suite: recorded, in the main build"
+    },
+    {
+     "at": "2026-10-23T06:34:17Z",
+     "commit": "1a2037ce428402dba19ef69cbb5acd532ecfe92c",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 4,
+      "recorded": 5
+     },
+     "change": "agents as QA, on a real outage: recorded, on a work branch"
+    },
+    {
+     "at": "2026-10-23T12:50:57Z",
+     "commit": "d41779de6b94ecf6fe59a3bc8786e0a2a9a7d871",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 5,
+      "recorded": 5
+     },
+     "change": "agents as QA, on a real outage: moved from a work branch into the main build"
+    },
+    {
+     "at": "2026-10-24T06:48:57Z",
+     "commit": "ff7c1a5f7d1141a21fa31c8bfda363baa45d2653",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 5,
+      "recorded": 6
+     },
+     "change": "1,000 agents in one campus: recorded, on a work branch"
+    },
+    {
+     "at": "2026-10-25T12:22:51Z",
+     "commit": "813601cb63830e14347ca0b02183f67edef97972",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 6,
+      "recorded": 6
+     },
+     "change": "1,000 agents in one campus: moved from a work branch into the main build"
+    },
+    {
+     "at": "2026-10-25T17:12:20Z",
+     "commit": "9d7fd98cd347f7734656170014182ae669eeffb8",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "on_main": 7,
+      "recorded": 7
+     },
+     "change": "the campus scene's draw calls and frame time: recorded, in the main build"
+    }
+   ]
+  },
+  {
+   "id": "test-suite",
+   "title": "The full test suite",
+   "unit": "tests",
+   "note": "Tests passed and failed in the engine's full suite.",
+   "points": [
+    {
+     "at": "2026-10-23T03:23:54Z",
+     "commit": "0aa4d76af220f091fbfdafbb84f875e582dc4470",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "passed": 1867,
+      "failed": 0
+     },
+     "change": "first recorded"
+    }
+   ]
+  },
+  {
+   "id": "tick-1000",
+   "title": "Server time per tick, with 1,000 agents",
+   "unit": "ms per tick",
+   "note": "1,000 moving and talking agents in one campus, at 10 ticks a second.",
+   "points": [
+    {
+     "at": "2026-10-24T06:48:57Z",
+     "commit": "ff7c1a5f7d1141a21fa31c8bfda363baa45d2653",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "agents": 1000,
+      "p50_ms": 17.5,
+      "p95_ms": 29.6
+     },
+     "change": "first recorded"
+    }
+   ]
+  },
+  {
+   "id": "campus-draws",
+   "title": "The campus scene: draw calls and frame time",
+   "unit": "draws, ms per frame",
+   "note": "Instanced art and text level-of-detail against the placeholders.",
+   "points": [
+    {
+     "at": "2026-10-25T17:12:20Z",
+     "commit": "9d7fd98cd347f7734656170014182ae669eeffb8",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "draws": 405,
+      "p50_ms": 7.9,
+      "placeholder_draws": 940,
+      "placeholder_p50_ms": 9.4
+     },
+     "change": "first recorded"
+    }
+   ]
+  },
+  {
+   "id": "answer-time",
+   "title": "Answer time per agent",
+   "unit": "seconds",
+   "note": "From a visitor's question to the agent's proof record, including the scripted visitor's own overhead.",
+   "points": [
+    {
+     "at": "2026-10-25T12:14:13Z",
+     "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
+     "onMain": "23d4eee25d0cb7cda991b4f6a9e931473fe2638e",
+     "values": {
+      "Atlas_p50_s": 1.13,
+      "Atlas_p95_s": 1.16,
+      "Juno_p50_s": 0.93,
+      "Juno_p95_s": 1.16,
+      "Odin_p50_s": 1.11,
+      "Odin_p95_s": 1.12,
+      "Pulse_p50_s": 1.63,
+      "Pulse_p95_s": 1.68
+     },
+     "change": "first measured, in a seeded live session"
+    }
+   ]
+  }
+ ]
+}
