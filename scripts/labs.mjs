@@ -26,6 +26,7 @@ import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
+import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -229,6 +230,8 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...(story ? { [STORY_PAGE]: fill(STORY_PAGE, storyValues(story)) } : {}),
     ...(proofs ? { [PROOFS_PAGE]: checkedProofs(fill(PROOFS_PAGE, { '<!--LAB_PROOFS-->': renderProofs(dispatches) }), dispatches) } : {}),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
+    // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).
+    ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
   };
 }

@@ -1,0 +1,73 @@
+{
+  "format": "odin-decision-ledger",
+  "version": 1,
+  "title": "How we decide",
+  "lead": "Before we run an experiment, we write down the question, how it will be scored and what we expect, and we let two AI model advocates try to break the plan, one arguing for each side. This page is the record of every plan we froze, every veto, every change after the freeze and every gap we admitted.",
+  "why": [
+    "A result is only as fair as its plan. If the plan quietly favours one side, the numbers come out favouring that side, however carefully they are measured.",
+    "So each plan gets two AI model advocates before it is frozen, one for each side of the comparison. Each AI model advocate is told to make sure its side gets its best realistic design, and may veto anything that would handicap it. A veto is not a suggestion: the plan changes, or the veto is answered in writing.",
+    "After the freeze, nothing may change except by a dated amendment, published before the result it affects. When we break that rule, the amendment says so in plain words, and the gap stays listed below.",
+    "Every row on this page links the published file it comes from, and every count is computed from those files when the site is built, so a number here cannot drift from its source."
+  ],
+  "boundary": "This page covers the pre-registrations this site publishes with their AI model review rounds, plus the brain bench's pre-registrations, which are cited by hash. Older experiments have their own records and amendments on their pages; they are not in this ledger yet.",
+  "benchNote": "The brain bench's plans are frozen in a private repository and cited here by commit and sha256, so you can check a hash but not open the plan. They had no AI model advocate round; each prediction was written before its run and scored by a rule fixed in advance.",
+  "experiments": [
+    {
+      "id": "EXP 020",
+      "record": "experiments/mongodb-home-ground/preregistration.json",
+      "page": "journal/mongodb-home-ground-pre-registration.html",
+      "rounds": [
+        {
+          "name": "The AI model advocates' design review, before the freeze",
+          "reviews": ["experiments/mongodb-home-ground/reviews/mongodb-advocate.md", "experiments/mongodb-home-ground/reviews/postgresql-advocate.md"],
+          "freezeNotes": "experiments/mongodb-home-ground/FREEZE-NOTES.md",
+          "tableIds": { "M": "experiments/mongodb-home-ground/reviews/mongodb-advocate.md", "P": "experiments/mongodb-home-ground/reviews/postgresql-advocate.md" },
+          "outcome": { "file": "experiments/mongodb-home-ground/FREEZE-NOTES.md", "quote": "Every veto was accepted.", "accepted": "all" }
+        },
+        {
+          "name": "The AI model advocates' review of amendment 02, before S2's verdict",
+          "reviews": ["experiments/mongodb-home-ground/reviews/amendment-02-mongodb-advocate.md", "experiments/mongodb-home-ground/reviews/amendment-02-postgresql-advocate.md"],
+          "outcome": { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "quote": "This amendment records both reviews and applies what they require.", "accepted": "all" }
+        }
+      ],
+      "amendments": [
+        "experiments/mongodb-home-ground/amendment-01/amendment.json",
+        "experiments/mongodb-home-ground/amendment-02/amendment.json",
+        "experiments/mongodb-home-ground/amendment-03/amendment.json"
+      ],
+      "disclosures": [
+        { "file": "experiments/mongodb-home-ground/amendment-01/amendment.json", "pointer": "/limits" },
+        { "file": "experiments/mongodb-home-ground/amendment-02/amendment.json", "pointer": "/limits" },
+        { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "pointer": "/remainingLean" }
+      ]
+    },
+    {
+      "id": "EXP 021",
+      "record": "experiments/failover/preregistration.json",
+      "page": "journal/failover-pre-registration.html",
+      "history": "It is history only: never published, never counted, not the plan.",
+      "rounds": [
+        {
+          "name": "The AI model advocates' design review, before the v1 freeze",
+          "reviews": ["experiments/failover/reviews/mongodb-advocate.md", "experiments/failover/reviews/postgresql-advocate.md"],
+          "freezeNotes": "experiments/failover/FREEZE-NOTES.md",
+          "tableIds": { "M": "experiments/failover/reviews/mongodb-advocate.md", "P": "experiments/failover/reviews/postgresql-advocate.md" },
+          "claims": [{ "in": "experiments/failover/FREEZE-NOTES.md", "quote": "All 16 vetoes were accepted.", "of": "all" }],
+          "outcome": { "file": "experiments/failover/FREEZE-NOTES.md", "quote": "All 16 vetoes were accepted.", "accepted": "all" }
+        },
+        {
+          "name": "The AI model advocates' review of the runner's open questions, before the v1.1 freeze",
+          "reviews": ["experiments/failover/reviews/v1.1-mongodb-advocate.md", "experiments/failover/reviews/v1.1-postgresql-advocate.md"],
+          "claims": [
+            { "in": "experiments/failover/FREEZE-NOTES-v1.1.md", "quote": "`reviews/v1.1-mongodb-advocate.md` (4 vetoes)", "of": "experiments/failover/reviews/v1.1-mongodb-advocate.md" },
+            { "in": "experiments/failover/FREEZE-NOTES-v1.1.md", "quote": "`reviews/v1.1-postgresql-advocate.md` (2 vetoes)", "of": "experiments/failover/reviews/v1.1-postgresql-advocate.md" }
+          ],
+          "outcome": { "file": "experiments/failover/FREEZE-NOTES-v1.1.md", "quote": "Every veto is accepted.", "accepted": "all" }
+        }
+      ],
+      "amendments": ["experiments/failover/amendment-01/amendment.json"],
+      "disclosures": [{ "file": "experiments/failover/preregistration.json", "pointer": "/limits" }]
+    }
+  ],
+  "bench": { "results": "data/labs/brain-bench/results.json" }
+}
