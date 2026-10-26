@@ -186,17 +186,37 @@ test('turning on reduced motion cancels every in-flight reveal and retires futur
   assert.equal(later.animations.length, 0, 'toggling preferences cannot replay an entrance');
 });
 
-test('a hidden tab settles current work and never resumes a half-played sequence', () => {
+test('a hidden tab settles played motion but preserves the first entrance of unseen diagrams after return', async () => {
   const step = root('.story-step', [['.record-line', 3], ['.record-stamp', 1]]);
-  const f = fixture([step]);
-  f.observations[0].enter(step);
+  const later = root('.story-step', [['.sheet-line', 2], ['.sheet-rule', 1]]);
+  const f = fixture([step, later]);
+  const observer = f.observations[0];
+  observer.enter(step);
   const first = animations(step);
   f.document.hidden = true; f.events.get('visibilitychange')();
   assert(first.length > 0 && first.every(animation => animation.canceled));
-  assert.equal(f.observations[0].disconnected, true);
+  assert.equal(observer.observed.has(step), false, 'the settled entrance remains played');
+  assert.equal(observer.observed.has(later), true, 'an unseen diagram remains eligible for its first entrance');
+  assert.notEqual(observer.disconnected, true);
+  observer.enter(later);
+  assert.equal(animations(later).length, 0, 'observer delivery while hidden must not consume the entrance');
   f.document.hidden = false; f.events.get('visibilitychange')();
-  f.observations[0].enter(step);
+  observer.enter(step);
   assert.equal(animations(step).length, first.length);
+  observer.enter(later);
+  const entrance = animations(later);
+  assert.equal(entrance.length, 3);
+  for (const animation of entrance) {
+    assert.equal(animation.options.iterations, 1);
+    animation.finish();
+  }
+  await Promise.resolve();
+  assert.equal(observer.observed.has(later), false);
+  f.document.hidden = true; f.events.get('visibilitychange')();
+  f.document.hidden = false; f.events.get('visibilitychange')();
+  observer.enter(step); observer.enter(later);
+  assert.equal(animations(step).length, first.length);
+  assert.equal(animations(later).length, entrance.length, 'returning to the tab never replays a completed entrance');
 });
 
 test('leaving the viewport or focusing an animated record cancels only that finite sequence', () => {

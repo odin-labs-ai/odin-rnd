@@ -36,7 +36,12 @@ export function setupFactory(document, environment = globalThis) {
   // The drawing is always complete in HTML/CSS. A cancelled or unsupported animation exposes that final state.
   const animate = (element, frames, duration, delay = 0) => {
     if (!element?.animate || reduce?.matches || document.hidden) return;
-    const animation = element.animate(frames, { duration, delay, easing:'cubic-bezier(.16,1,.3,1)', fill:'backwards' });
+    let animation;
+    try {
+      animation = element.animate(frames, { duration, delay, easing:'cubic-bezier(.16,1,.3,1)', fill:'backwards' });
+    } catch {
+      return; // A partial animation implementation must leave the rendered record usable.
+    }
     animations.add(animation);
     animation.onfinish = () => animations.delete(animation);
     return animation;

@@ -6,9 +6,11 @@ The factory is an authored illustration. Its assembly entrance, selected-station
 
 Motion is finite and interruptible. Selecting another station settles the previous sequence, while the record and pressed state change immediately. Reduced motion uses the same final content; changing that preference, hiding the page or taking the factory out of view settles the visual sequence. The default HTML and CSS remain readable without JavaScript or animation APIs.
 
+Returning from a hidden tab preserves the first entrance of diagrams the reader has not reached; completed entrances do not replay. If an animation API throws, selection, blueprint view and replay still expose the final content.
+
 ## Architectural guard
 
-`.ai/blueprints/rnd-factory-surface.engineering-blueprint.json` was authored with the released engine's `bce author` command. It scans the four production rendering surfaces and refuses the legacy crop pipeline. This is a textual guard for that known regression, not a claim to prove every possible duplicate or browser behavior. `scripts/factory-surface.test.mjs` also counts the generated drawing and station groups, and deliberately introduces a second drawing to prove the assertion fails.
+`.ai/blueprints/rnd-factory-surface.engineering-blueprint.json` was authored with the released engine's `bce author` command. It scans the four production rendering surfaces and refuses the legacy crop pipeline. This is a textual guard for that known regression, not a claim to prove every possible duplicate or browser behavior. `scripts/factory-surface.test.mjs` also requires a real build in a disposable checkout, counts its drawing and station groups, then modifies that checkout's builder to emit a second drawing without legacy crop strings. It regenerates the bound witness records and rebuilds before requiring the output assertion to fail. The test never skips for a missing local `dist/`.
 
 Run from the repository root with the Node version in `package.json`:
 

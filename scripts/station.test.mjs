@@ -73,6 +73,7 @@ function fixture({reduced=false,invalid=false,missing=false,hash,observer=false,
   const environment={matchMedia:()=>preference,location:{hash:hash??''},addEventListener(key,fn){if(key==='hashchange')this.onhash=fn;}};
   if(observer)environment.IntersectionObserver=class{constructor(callback){environment.onIntersection=callback;}observe(element){environment.observed=element;}};
   if(!waapi)for(const element of [...single.values(),...layers,...geometry.flatMap(g=>[g,...g.children.values()]),...exhibits])element.animate=undefined;
+  if(waapi==='throw')for(const element of [...single.values(),...layers,...geometry.flatMap(g=>[g,...g.children.values()]),...exhibits])element.animate=()=>{environment.animationAttempts=(environment.animationAttempts??0)+1;throw new TypeError('Unsupported animation frames');};
   const controller=setupFactory(document,environment);
   return {controls,exhibits,geometry,layers,single,document,controller,environment,preference};
 }
@@ -180,4 +181,19 @@ test('reduced motion at load and absent animation APIs retain complete selection
     assert.equal(f.layers.flatMap(e=>e.animations).length,0);
     assert.equal(f.single.get('.drafting-scan').animations.length,0);
   }
+});
+
+test('throwing animation APIs leave assembly, selection, blueprint and replay usable', () => {
+  const f=fixture({waapi:'throw',observer:true});
+  assert.doesNotThrow(()=>f.environment.onIntersection([{isIntersecting:true}]));
+  assert.doesNotThrow(()=>f.controls[3].fire('click'));
+  assert.equal(f.controls[3].getAttribute('aria-pressed'),'true');
+  assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,i)=>i!==3));
+  assert.doesNotThrow(()=>f.single.get('#blueprint-toggle').fire('click'));
+  assert.equal(f.single.get('.factory-drawing').dataset.view,'blueprint');
+  assert.equal(f.single.get('.station-compartment').dataset.view,'blueprint');
+  assert.doesNotThrow(()=>f.single.get('#factory-replay').fire('click'));
+  assert.equal(f.exhibits[3].hidden,false);
+  assert.equal(f.single.get('#station-unavailable').hidden,true);
+  assert(f.environment.animationAttempts>13,'the failure path was exercised across assembly and later actions');
 });

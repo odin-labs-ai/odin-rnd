@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseBlueprint, resolveExtraction, makeExtractor, evaluate } from 'bce-engine';
 import { factoryFloor } from './floor.mjs';
 import { stations } from './station-contract.mjs';
+import { builtCopy } from './test-build.mjs';
 
 const root = resolve('.');
 const blueprint = parseBlueprint(JSON.parse(readFileSync('.ai/blueprints/rnd-factory-surface.engineering-blueprint.json', 'utf8')));
@@ -65,6 +67,22 @@ test('the same blueprint refuses the legacy crop pipeline in each production sur
   }
 });
 
-test('the finished build also contains one factory', { skip: !existsSync('dist/index.html') && 'Run pnpm build to examine the published artifact' }, () => {
-  assertSingleFactory(readFileSync('dist/index.html', 'utf8'));
+test('the real disposable build contains one factory and exposes a double mount in the builder', { timeout: 600_000 }, () => {
+  const built=builtCopy();
+  const output=join(built,'dist/index.html');
+  assertSingleFactory(readFileSync(output,'utf8'));
+  const builder=join(built,'scripts/build.mjs');
+  const source=readFileSync(builder,'utf8');
+  const mount="html = html.replace('<!--FLOOR-->', factoryFloor());";
+  assert.equal(source.split(mount).length,2,'the mutation targets the actual build mount exactly once');
+  try {
+    // This duplicate uses none of the legacy crop strings: the finished-output check must catch it.
+    writeFileSync(builder,source.replace(mount,mount.replace('factoryFloor()','factoryFloor() + factoryFloor()')));
+    // The builder is a bound witness input: regenerate real records for this disposable mutation.
+    execFileSync(process.execPath,['scripts/run-roi-demos.mjs'],{cwd:built,stdio:'pipe'});
+    execFileSync(process.execPath,['scripts/build.mjs'],{cwd:built,stdio:'pipe'});
+    assert.throws(()=>assertSingleFactory(readFileSync(output,'utf8')),/one canonical factory/);
+  } finally {
+    writeFileSync(builder,source);
+  }
 });

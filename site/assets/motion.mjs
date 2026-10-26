@@ -116,7 +116,9 @@ export function setupMotion(document, environment = globalThis) {
     else observer.observe(element);
   }
   const onReduced = () => { if (reduced?.matches) stop(); };
-  const onVisibility = () => { if (document.hidden) stop(); };
+  // A hidden tab settles played entrances; unseen diagrams still get their one
+  // entrance when encountered after return. Only explicit stop/reduced motion retires them.
+  const onVisibility = () => { if (document.hidden) settle(); };
   reduced?.addEventListener?.('change', onReduced);
   document.addEventListener('visibilitychange', onVisibility);
   // Keyboard navigation should never arrive halfway through a decorative reveal.
