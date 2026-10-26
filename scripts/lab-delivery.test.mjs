@@ -16,7 +16,23 @@ const clone = () => JSON.parse(JSON.stringify(record));
 // The window's size, in the words the page uses: the record grows with every merged PR, the facts below do not.
 const W = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const w = n => W[n] ?? String(n);
-const N = record.prs.length, TO = record.window.toPr;
+const N = record.prs.length, TO = record.window.toPr, K = record.window.otherNumbers.length;
+// The lead's note on the numbers in the window that are not merged PRs, as the page words it.
+const RANGE = k => k === 0 ? '(every number in that range)' : k === 1 ? '(the other one number in that range is an issue or a pull request that was not merged)' : `(the other ${w(k)} numbers in that range are issues or pull requests that were not merged)`;
+// The record refreshes every week, so the sentences below are checked on a fixed shape built from it, whatever the
+// window has grown to: every review round automated and before its merge, and #79 with no review round at all.
+function shaped() {
+  const s = clone();
+  s.records = s.records.filter(r => !(r.kind === 'review' && r.pr === 79));
+  for (const r of s.records.filter(r => r.kind === 'review')) {
+    r.reviewer = 'automated';
+    const landed = s.records.find(x => x.kind === 'landing' && x.pr === r.pr).at;
+    if (r.at > landed) r.at = new Date(Date.parse(landed) - 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  }
+  s.telemetry = telemetryOf(s);
+  return s;
+}
+const sectionOf = rec => { const p = renderWith(rec)['labs/agent-space/index.html']; return p.slice(p.indexOf('<div class="delivery" id="delivery">'), p.indexOf('id="follow"')); };
 
 /** Render the Labs pages from a copy of site/ whose delivery record is `changed`. */
 function renderWith(changed) {
@@ -141,8 +157,8 @@ test('counts reconcile with the record\'s own PR list', () => {
   dropped.prs = dropped.prs.filter(pr => pr !== 75);
   assert.match(deliveryProblems(dropped).join('\n'), /is for #75, which is not in the PR list/);
   const extra = clone();
-  extra.prs.push(99);
-  assert.match(deliveryProblems(extra).join('\n'), /#99 has 0 pr records/);
+  extra.prs.push(TO + 1);
+  assert.ok(deliveryProblems(extra).join('\n').includes(`#${TO + 1} has 0 pr records`));
   const twice = clone();
   twice.records.push({ ...twice.records.find(r => r.kind === 'landing') });
   assert.match(deliveryProblems(twice).join('\n'), /duplicate id|has 2 landing records/);
@@ -178,21 +194,26 @@ test('an aggregate field outside the allowlist, a percent above 100 or a reposit
   assert.ok(deliveryProblems(small).length > 0, 'a repository with fewer than five PRs is not published even as an aggregate');
 });
 
-test('the window holds every merged PR from #71 to its latest (at least #79), and #79 is the one without a recorded review round', () => {
+test('the window holds every merged PR from #71 to its latest (at least #79); the shape below passes the gate with #79 as its one PR without a review round', () => {
   assert.ok(TO >= 79);
   assert.deepEqual(record.prs, Array.from({ length: TO - 70 }, (_, i) => 71 + i).filter(n => !record.window.otherNumbers.includes(n)));
-  assert.deepEqual(record.prs.filter(pr => !record.records.some(r => r.pr === pr && r.kind === 'review')), [79], 'only #79 has no recorded review round');
-  assert.equal(record.records.filter(r => r.pr === 79 && r.kind === 'review').length, 0);
+  const s = shaped();
+  assert.deepEqual(deliveryProblems(s), []);
+  assert.deepEqual(s.prs.filter(pr => !s.records.some(r => r.pr === pr && r.kind === 'review')), [79], 'only #79 has no recorded review round');
+  assert.deepEqual(s.telemetry.perPr.filter(row => row.reviewRounds === 0).map(row => row.pr), [79]);
 });
 
 test('every PR without a recorded review round says so, and no PR with one does', () => {
-  const without = record.telemetry.perPr.filter(row => row.reviewRounds === 0).map(row => row.pr);
-  assert.deepEqual(without, record.prs.filter(pr => !record.records.some(r => r.pr === pr && r.kind === 'review')));
-  assert.ok(without.length >= 1, 'the record has a PR without a review round (#79)');
-  for (const pr of record.prs) {
-    const has = section.includes(`#${pr} has no recorded review round.`);
-    assert.equal(has, without.includes(pr), `#${pr}: the no-review sentence appears exactly when it has no review round`);
+  const s = shaped();
+  for (const [rec, html] of [[record, section], [s, sectionOf(s)]]) {
+    const without = rec.telemetry.perPr.filter(row => row.reviewRounds === 0).map(row => row.pr);
+    assert.deepEqual(without, rec.prs.filter(pr => !rec.records.some(r => r.pr === pr && r.kind === 'review')));
+    for (const pr of rec.prs) {
+      const has = html.includes(`#${pr} has no recorded review round.`);
+      assert.equal(has, without.includes(pr), `#${pr}: the no-review sentence appears exactly when it has no review round`);
+    }
   }
+  assert.ok(sectionOf(s).includes('#79 has no recorded review round.'), 'the shape has a PR without a review round (#79)');
   const r78 = record.telemetry.perPr.find(row => row.pr === 78);
   assert.ok(section.includes(`#78 needed ${['', '', 'two', 'three', 'four', 'five', 'six', 'seven'][r78.reviewRounds]} review rounds before it shipped`));
   assert.equal(renderDelivery(record), section.slice(0, section.lastIndexOf('</div>') + 6));
@@ -200,20 +221,22 @@ test('every PR without a recorded review round says so, and no PR with one does'
 });
 
 test('the lead is counted from the record, never a claim about every change', () => {
-  const lead = leadText(record);
-  assert.ok(section.includes(lead.replaceAll("'", '&#39;')) || section.includes(lead), 'the page shows the counted lead');
-  assert.ok(lead.startsWith(`This site is built in the open, one pull request at a time. Of the ${w(N)} pull requests merged between #71 and #${TO} (every number in that range), ${w(N - 1)} went through at least one recorded automated review round before they were merged; one has no recorded review round; `), lead);
-  const text = `${lead} ${Object.values(COPY).join(' ')}`;
+  const live = leadText(record);
+  assert.ok(section.includes(live.replaceAll("'", '&#39;')) || section.includes(live), 'the page shows the counted lead');
+  const s = shaped(), lead = leadText(s);
+  assert.ok(sectionOf(s).includes(lead.replaceAll("'", '&#39;')) || sectionOf(s).includes(lead), 'a page built from the shape shows its counted lead');
+  assert.ok(lead.startsWith(`This site is built in the open, one pull request at a time. Of the ${w(N)} pull requests merged between #71 and #${TO} ${RANGE(K)}, ${w(N - 1)} went through at least one recorded automated review round before they were merged; one has no recorded review round; `), lead);
+  const text = `${live} ${lead} ${Object.values(COPY).join(' ')}`;
   for (const universal of [/only then merged/i, /typed by hand\./i, /\bevery change is\b/i, /\bA change is read by an AI reviewer\b/]) assert.doesNotMatch(text, universal);
   assert.match(COPY.generated, /only the sentences around them are written by hand/);
   // With a review added to #79, the count moves: the sentence comes from the records, not from the page.
-  const reviewed = clone();
+  const reviewed = shaped();
   const land79 = reviewed.records.find(r => r.kind === 'landing' && r.pr === 79);
   reviewed.records.push({ id: 'pr-79/review/11111111-2222-4333-8444-555555555555', kind: 'review', pr: 79, at: '2026-10-25T07:10:00Z', repo: 'odin-labs-ai/odin-rnd', ref: land79.ref, state: 'SHIP', source: 'verdict-row:11111111-2222-4333-8444-555555555555', reviewer: 'automated' });
   assert.ok(leadText(reviewed).includes(`${w(N)} went through at least one recorded automated review round before they were merged; every one had CI`));
   // A review recorded only after the merge does not count as "before merge".
-  const late = clone();
-  late.records.push({ ...reviewed.records.at(-1), at: '2026-10-26T00:00:00Z' });
+  const late = shaped();
+  late.records.push({ ...reviewed.records.at(-1), at: new Date(Date.parse(land79.at) + 3600_000).toISOString().replace(/\.\d{3}Z$/, 'Z') });
   assert.ok(leadText(late).includes(`, ${w(N - 1)} went through`));
 });
 
@@ -231,7 +254,8 @@ test('a CI record\'s source is the attempt it names: /attempts/N equals its atte
 });
 
 test('the window accounts for every number from #fromPr to #toPr: a merged PR or one of its other numbers, never a gap', () => {
-  assert.deepEqual(record.window.otherNumbers, []);
+  const range = Array.from({ length: TO - record.window.fromPr + 1 }, (_, i) => record.window.fromPr + i);
+  assert.deepEqual([...record.prs, ...record.window.otherNumbers].sort((a, b) => a - b), range, 'each number is a merged PR or an other number, once');
   const gap = clone();
   gap.prs = gap.prs.filter(pr => pr !== 78);
   gap.records = gap.records.filter(r => r.pr !== 78);
@@ -241,10 +265,10 @@ test('the window accounts for every number from #fromPr to #toPr: a merged PR or
   // Declared as a number that is not a merged PR, the same record passes, and the lead says so.
   const declared = clone();
   Object.assign(declared, { prs: gap.prs, records: gap.records, telemetry: gap.telemetry });
-  declared.window = { ...declared.window, otherNumbers: [78] };
+  declared.window = { ...declared.window, otherNumbers: [...declared.window.otherNumbers, 78].sort((a, b) => a - b) };
   declared.generatedFrom = { ...declared.generatedFrom, window: { ...declared.window } };
   assert.deepEqual(deliveryProblems(declared), []);
-  assert.ok(leadText(declared).includes(`Of the ${w(N - 1)} pull requests merged between #71 and #${TO} (the other one number in that range is an issue or a pull request that was not merged)`));
+  assert.ok(leadText(declared).includes(`Of the ${w(N - 1)} pull requests merged between #71 and #${TO} ${RANGE(K + 1)}`));
   const both = clone();
   both.window = { ...both.window, otherNumbers: [75] };
   both.generatedFrom = { ...both.generatedFrom, window: { ...both.window } };
@@ -256,8 +280,9 @@ test('the window accounts for every number from #fromPr to #toPr: a merged PR or
 });
 
 test('"automated" review is said only when every counted round carries that reviewer kind', () => {
-  assert.ok(record.records.filter(r => r.kind === 'review').every(r => r.reviewer === 'automated'));
-  const mixed = clone();
+  assert.ok(record.records.filter(r => r.kind === 'review').every(r => ['automated', 'unrecorded'].includes(r.reviewer)));
+  assert.equal(leadText(record).includes('automated'), record.records.filter(r => r.kind === 'review').every(r => r.reviewer === 'automated'));
+  const mixed = shaped();
   mixed.records.find(r => r.kind === 'review').reviewer = 'unrecorded';
   assert.deepEqual(deliveryProblems(mixed), []);
   assert.ok(leadText(mixed).includes(`${w(N - 1)} went through at least one recorded review round before`));
@@ -273,16 +298,31 @@ test('"automated" review is said only when every counted round carries that revi
 test('every CI and deploy link names what it opens; no two CI links share a name', () => {
   assert.doesNotMatch(section, /See the run|See the deploy/);
   const names = [];
+  const deploys = record.records.filter(r => r.kind === 'deploy');
   for (const r of record.records.filter(r => r.kind === 'ci' || r.kind === 'deploy')) {
-    const name = r.kind === 'ci' ? `CI run ${r.source.split('/runs/')[1].split('/')[0]}, attempt ${r.attempt}` : `Pages deploy of ${r.ref.slice(0, 7)}`;
+    const again = deploys.filter(x => x.pr === r.pr && x.ref === r.ref).length > 1;
+    const name = r.kind === 'ci' ? `CI run ${r.source.split('/runs/')[1].split('/')[0]}, attempt ${r.attempt}` : `Pages deploy of ${r.ref.slice(0, 7)}${again ? `, run ${r.source.match(/\/runs\/(\d+)$/)[1]}` : ''}`;
     assert.ok(section.includes(`href="${r.source}" data-source="${r.id}">${name}</a>`), r.id);
     names.push(name);
   }
   assert.equal(new Set(names).size, names.length, 'link names are distinct');
+  // A commit whose Pages deploy ran twice: each link names its run.
+  const twice = clone();
+  const d = twice.records.find(r => r.kind === 'deploy' && r.pr === 79);
+  twice.records.push({ ...d, id: d.id.replace(/\d+$/, '1'), source: d.source.replace(/\d+$/, '1'), at: new Date(Date.parse(d.at) + 60_000).toISOString().replace(/\.\d{3}Z$/, 'Z') });
+  twice.telemetry = telemetryOf(twice);
+  assert.deepEqual(deliveryProblems(twice), []);
+  const html = sectionOf(twice), run = d.source.match(/\/runs\/(\d+)$/)[1];
+  assert.ok(html.includes(`data-source="${d.id}">Pages deploy of ${d.ref.slice(0, 7)}, run ${run}</a>`) && html.includes(`>Pages deploy of ${d.ref.slice(0, 7)}, run 1</a>`));
+  // A deploy whose source is not a run URL ending in its run never reaches the renderer: the gate refuses it first.
+  const odd = clone();
+  odd.records.find(r => r.id === d.id).source = `${d.source}/`;
+  assert.ok(deliveryProblems(odd).length > 0, 'the schema refuses a deploy source that does not end in its run');
+  assert.throws(() => renderWith(odd), /Delivery record refused/);
 });
 
 test('a PR reviewed only after it was merged says so, apart from "no recorded review round", in its sentence and the lead', () => {
-  const late = clone();
+  const late = shaped();
   const land71 = late.records.find(r => r.kind === 'landing' && r.pr === 71).at;
   const after = new Date(Date.parse(land71) + 3600_000).toISOString().replace(/\.\d{3}Z$/, 'Z');
   for (const r of late.records.filter(r => r.kind === 'review' && r.pr === 71)) r.at = after;
@@ -292,7 +332,7 @@ test('a PR reviewed only after it was merged says so, apart from "no recorded re
   assert.ok(!page.includes('#71 has no recorded review round.') && !page.includes('#71 needed'));
   assert.ok(page.includes('#79 has no recorded review round.'), 'zero records keeps its own sentence');
   assert.ok(leadText(late).includes(`, ${w(N - 2)} went through at least one recorded automated review round before they were merged; one was reviewed only after it was merged; one has no recorded review round; `));
-  const mixed = clone();
+  const mixed = shaped();
   const second = mixed.records.filter(r => r.kind === 'review' && r.pr === 71)[1];
   second.at = after;
   const text = renderWith(mixed)['labs/agent-space/index.html'];
