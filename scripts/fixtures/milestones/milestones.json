@@ -2,6 +2,7 @@
  "format": "odin-milestones",
  "version": 1,
  "projection": "public",
+ "selection": "Selected by hand for a test fixture; not the real record and not exhaustive.",
  "window": {
   "from": "2026-10-23T03:38:00Z",
   "to": "2026-10-25T23:40:00Z"

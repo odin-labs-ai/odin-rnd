@@ -109,7 +109,7 @@ test('with a record, Lab 01 links its story page, and the page shows every recor
     const bytes = readFileSync('scripts/fixtures/milestones/milestones.json');
     writeFileSync(join(root, MILESTONES_FILE), bytes);
     mkdirSync(join(root, 'labs/agent-space/story'), { recursive: true });
-    if (!existsSync(join(root, STORY_PAGE))) writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
+    if (!existsSync(join(root, STORY_PAGE))) writeFileSync(join(root, STORY_PAGE), readFileSync('site/labs/agent-space/story/index.html'));
     const pin = pinFor(bytes, { sourceSha256: 'b'.repeat(64), commit: 'c'.repeat(40) });
     assert.ok(readMilestones(root, { now: NOW, pin }));
     assert.throws(() => readMilestones(root, { now: NOW, pin: { ...pin, fileSha256: '0'.repeat(64) } }), /Lab 01 story refused:[\s\S]*edited after it was produced/);
@@ -130,7 +130,7 @@ test('the story page template never ships without its record', () => {
     cpSync('site', root, { recursive: true });
     rmSync(join(root, MILESTONES_FILE), { force: true });
     mkdirSync(join(root, 'labs/agent-space/story'), { recursive: true });
-    writeFileSync(join(root, STORY_PAGE), readFileSync('scripts/fixtures/milestones/story-index.html'));
+    writeFileSync(join(root, STORY_PAGE), readFileSync('site/labs/agent-space/story/index.html'));
     assert.throws(() => renderLabs(root), /the story page ships without its record/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
