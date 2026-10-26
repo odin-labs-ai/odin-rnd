@@ -316,8 +316,9 @@ export function writeDrafts(dispatchFile, out, roots, options) {
 }
 
 /** Write the week's drafts into `out`, from the records under `site` at `now`; nothing is written unless all pass. */
-export function writeWeekDrafts(out, { site = SITE_DIR, now = new Date(), roots, render } = {}) {
-  const problems = outProblems(out, roots);
+export function writeWeekDrafts(out, { site = SITE_DIR, now = new Date(), roots = [SITE_DIR, DIST_DIR], render } = {}) {
+  // The site the week is read from is protected too, with its dist/ beside it: a draft never lands in a publication tree.
+  const problems = outProblems(out, [...new Set([...roots, resolve(site), resolve(site, '..', 'dist')])]);
   if (problems.length) return { problems };
   let week;
   try { week = siteWeek(site, now); } catch (error) { return { problems: [error.message] }; }

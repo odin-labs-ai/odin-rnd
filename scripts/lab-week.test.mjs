@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -32,7 +32,7 @@ test('the window: seven UTC days ending on the build date, stated in words, a ne
 
 test('the counts are the records\' own, recomputed here, and nothing after the build is counted', () => {
   const w = week();
-  const inside = iso => iso.slice(0, 10) >= '2026-10-20' && iso <= NOW.toISOString();
+  const inside = iso => iso.slice(0, 10) >= '2026-10-20' && Date.parse(iso) <= NOW.getTime();
   const rows = delivery.records.filter(r => inside(r.at));
   assert.equal(w.counts.merged, rows.filter(r => r.kind === 'landing').length);
   assert.equal(w.counts.reviewRounds, rows.filter(r => r.kind === 'review').length);
@@ -63,6 +63,16 @@ test('the section: every count checked, every line links its record, the window 
   for (const r of w.story) assert.ok(story.includes(` id="${r.id}"`), r.id);
 });
 
+test('a record at the build\'s own second counts, and a proof without the explorer links its session', () => {
+  const last = delivery.records.filter(r => r.kind === 'landing').map(r => r.at).sort().at(-1);
+  const at = new Date(Date.parse(last) + 500);
+  assert.ok(week(at).merged.some(m => m.at === last), 'a record 500 ms before the build is in the window');
+  const w = weekOf({ delivery, milestones, dispatches, proofs: false, now: NOW });
+  assert.ok(w.proofs.length > 0);
+  for (const p of w.proofs) assert.match(p.href, /^#session-/);
+  assert.deepEqual(weekProblems(renderWeek(w), w), []);
+});
+
 test('an empty week says so, and still checks every count (as zero)', () => {
   const w = week(QUIET);
   assert.deepEqual(Object.values(w.counts), Array(Object.keys(w.counts).length).fill(0));
@@ -82,6 +92,13 @@ test('the gates: a changed count, a moved or unknown link, a dropped line or a r
   assert.match(weekProblems(`${html}<a href="#x" data-source="pr-1">x</a>`, w).join(), /names pr-1, which is not a record of this week/);
   assert.match(weekProblems(`${html}<a href="#x">x</a>`, w).join(), /a link with no source record/);
   assert.match(weekProblems(html.replace(/<li data-list="merged">[\s\S]*?<\/li>/, ''), w).join(), /the merged list shows \d+ lines, the count is/);
+  // A record line whose link is taken off (the text kept) or pointed at another record's line is refused.
+  const unlinked = html.replace(new RegExp(`<a href="[^"]*" data-source="${m.id}">(#${m.pr})</a>`), '$1');
+  assert.notEqual(unlinked, html);
+  assert.match(weekProblems(unlinked, w).join(), /the merged list, line 1: links nothing, not its record/);
+  const [r1, r2] = w.story;
+  const swapped = html.replace(`data-source="milestone:${r1.id}">`, `data-source="milestone:${r2.id}" data-x>`).replace(`href="${r1.href}"`, `href="${r2.href}"`);
+  assert.match(weekProblems(swapped, w).join(), /the story list, line 1: links milestone:/);
   assert.match(weekProblems(`${html}<p>built on ${privateProject}</p>`, w).join(), /the rendered section: a restricted name/);
   const tainted = structuredClone(w); tainted.story[0].title = `A step on ${privateProject}`;
   assert.throws(() => renderWeek(tainted), /This week in Lab 01 refused[\s\S]*restricted name/);
@@ -111,6 +128,13 @@ test('--week drafts: five files, the banner, the week link, only the week\'s own
 });
 
 test('--week drafts refuse: under site/, a week the page refuses, a problem only in the preview; nothing written', () => {
+  // A site picked with --site is protected too, and so is the dist/ beside it.
+  const other = join(temp, 'other-checkout', 'site');
+  cpSync(join(here, '..', 'site', 'data'), join(other, 'data'), { recursive: true });
+  for (const target of [join(other, 'drafts'), join(other, '..', 'dist', 'drafts')]) {
+    assert.match(writeWeekDrafts(target, { site: other, now: NOW }).problems.join(), /drafts are never published/);
+    assert.equal(existsSync(target), false);
+  }
   const site = run('--week', '--out', join(here, '..', 'site', 'dg-week-should-not-exist'), '--now', NOW.toISOString());
   assert.equal(site.status, 1);
   assert.match(site.stderr, /drafts are never published/);

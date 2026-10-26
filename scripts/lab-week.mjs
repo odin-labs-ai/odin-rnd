@@ -43,8 +43,9 @@ export function weekWindow(now) {
   return { from, to, now: now.toISOString(), label };
 }
 
-// A date (a dispatch's) is in the window when its day is; a time (a record's) also must not be after the build.
-const inWindow = (iso, window) => dayOf(iso) >= window.from && dayOf(iso) <= window.to && (iso.length === 10 || iso <= window.now);
+// A date (a dispatch's) is in the window when its day is; a time (a record's) also must not be after the build,
+// compared as instants (a record's "…:00Z" and the build's "…:00.500Z" do not order as strings).
+const inWindow = (iso, window) => dayOf(iso) >= window.from && dayOf(iso) <= window.to && (iso.length === 10 || Date.parse(iso) <= Date.parse(window.now));
 
 /**
  * The week, from the records alone. `delivery` is the checked delivery record, `milestones` the checked milestones
@@ -74,7 +75,8 @@ export function weekOf({ delivery, milestones = null, dispatches = [], proofs = 
     },
     story,
     sessions: sessions.map(d => ({ session: d.session, date: d.date, questions: d.questions.length, href: `#${d.session}` })),
-    proofs: proofIds.map(id => ({ id, href: proofs ? `proofs/#${proofAnchor(id)}` : null })),
+    // A proof links to its card in the explorer, or, while the explorer is not published, to the session that shows it.
+    proofs: proofIds.map(id => ({ id, href: proofs ? `proofs/#${proofAnchor(id)}` : `#${sessions.find(d => d.questions.some(q => q.evidence === id)).session}` })),
   };
 }
 
@@ -129,7 +131,7 @@ export function renderWeek(week) {
     group(`The ${n(c.merged, 'pull request')} merged`, week.merged.map(m => `<li data-list="merged">${link(m.id, m.href, `#${m.pr}`)} ${escape(m.title)} <span class="week-when">${escape(stamp(m.at))}</span></li>`)),
     group(`The ${n(week.story.length, 'story entry', 'story entries')}`, week.story.map(r => `<li data-list="story"><span class="week-kind">${KIND[r.kind]}</span> ${link(`milestone:${r.id}`, r.href, escape(r.title))} <span class="week-when">${escape(stamp(r.at))}</span></li>`)),
     group(`The ${n(c.sessions, 'session')}`, week.sessions.map(d => `<li data-list="sessions">${link(`dispatch:${d.session}`, d.href, `Session of ${escape(d.date)}`)}: ${n(d.questions, 'question')}</li>`)),
-    group(`The ${n(c.proofs, 'proof card')}`, week.proofs.map(p => `<li data-list="proofs">${p.href ? link(`proof:${p.id}`, p.href, `<code>${escape(p.id)}</code>`) : `<code>${escape(p.id)}</code>`}</li>`)),
+    group(`The ${n(c.proofs, 'proof card')}`, week.proofs.map(p => `<li data-list="proofs">${link(`proof:${p.id}`, p.href, `<code>${escape(p.id)}</code>`)}</li>`)),
   ].join('');
   const html = `<div class="week" id="week-body"><p class="week-window technical" data-window="${escape(week.window.from)}/${escape(week.window.to)}">${escape(week.window.label.toUpperCase())}</p>`
     + (s.quiet ? `<p class="week-quiet">${escape(s.quiet)}</p>` : '')
@@ -151,9 +153,18 @@ export function weekProblems(html, week) {
   }
   for (const [key, value] of Object.entries(week.counts)) if (shown[key] !== value) problems.push(`count ${key} shows ${shown[key]}, the records say ${value}`);
   for (const key of Object.keys(shown)) if (!(key in week.counts)) problems.push(`count ${key} is not a count of the week`);
-  const listed = key => (html.match(new RegExp(`data-list="${key}"`, 'g')) ?? []).length;
-  for (const [key, expected] of [['merged', week.counts.merged], ['story', week.counts.beat + week.counts.moment + week.counts.correction], ['sessions', week.counts.sessions], ['proofs', week.counts.proofs]]) {
-    if (listed(key) !== expected) problems.push(`the ${key} list shows ${listed(key)} lines, the count is ${expected}`);
+  // Every record line, in order, carries exactly one link, and it is to the record that line stands for.
+  const expected = {
+    merged: week.merged.map(m => m.id), story: week.story.map(r => `milestone:${r.id}`),
+    sessions: week.sessions.map(d => `dispatch:${d.session}`), proofs: week.proofs.map(p => `proof:${p.id}`),
+  };
+  for (const [key, sources] of Object.entries(expected)) {
+    const lines = [...html.matchAll(new RegExp(`<li data-list="${key}">([\\s\\S]*?)</li>`, 'g'))].map(m => m[1]);
+    if (lines.length !== sources.length) problems.push(`the ${key} list shows ${lines.length} lines, the count is ${sources.length}`);
+    lines.forEach((line, i) => {
+      const linked = [...line.matchAll(/<a\b[^>]*data-source="([^"]*)"/g)].map(m => m[1].replaceAll('&amp;', '&'));
+      if (linked.length !== 1 || linked[0] !== sources[i]) problems.push(`the ${key} list, line ${i + 1}: links ${linked.length ? linked.join(', ') : 'nothing'}, not its record ${sources[i] ?? '(none)'}`);
+    });
   }
   const places = new Map([
     ['section:built', '#built'],
