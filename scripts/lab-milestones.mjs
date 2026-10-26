@@ -214,5 +214,5 @@ export function renderStoryLink(record) {
 
 /** The story page's markers, filled. */
 export function storyValues(record) {
-  return { '<!--STORY_PRODUCER-->': `the team's own chat, projected by its delivery-record pipeline (<time datetime="${escape(record.window.from)}">${escape(record.window.from.slice(0, 10))}</time> to <time datetime="${escape(record.window.to)}">${escape(record.window.to.slice(0, 10))}</time>). ${escape(record.selection)}`, '<!--STORY_BEATS-->': renderBeats(record), '<!--STORY_MOMENTS-->': renderMoments(record) };
+  return { '<!--STORY_PRODUCER-->': `the team's own chat, projected by its delivery-record pipeline (<time datetime="${escape(record.window.from)}">${escape(record.window.from.slice(0, 10))}</time> to <time datetime="${escape(record.window.to)}">${escape(record.window.to.slice(0, 10))}</time>). ${escape(record.selection.replace(/([^.!?])$/, '$1.'))}`, '<!--STORY_BEATS-->': renderBeats(record), '<!--STORY_MOMENTS-->': renderMoments(record) };
 }
