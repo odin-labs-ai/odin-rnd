@@ -1,0 +1,71 @@
+{
+ "format": "odin-milestones",
+ "version": 1,
+ "lab": "agent-space",
+ "producer": {
+  "from": "a hand-made test fixture, not the real record",
+  "builtAt": "2026-10-26T09:00:00Z"
+ },
+ "beats": [
+  {
+   "id": "first-dispatch",
+   "at": "2026-10-25T08:40:00Z",
+   "title": "The first dispatch",
+   "line": "Four questions answered live, each with its proof card.",
+   "evidence": [
+    {
+     "kind": "pr",
+     "repo": "odin-labs-ai/odin-rnd",
+     "number": 78
+    },
+    {
+     "kind": "proof",
+     "id": "odin-381dbb-1",
+     "record": "data/labs/agent-space/dispatches/session-2026-10-25-b.json"
+    }
+   ]
+  },
+  {
+   "id": "films-live",
+   "at": "2026-10-25T23:40:00Z",
+   "title": "Films, measured numbers and the hard parts",
+   "line": "Lab 01 shows its films and the space's own measurements, each sourced, after an adversarial review.",
+   "evidence": [
+    {
+     "kind": "pr",
+     "repo": "odin-labs-ai/odin-rnd",
+     "number": 81
+    },
+    {
+     "kind": "film",
+     "film": "agent-space-tour",
+     "atSeconds": 20
+    }
+   ],
+   "asset": "assets/labs/agent-space/films/agent-space-tour-poster.png",
+   "review": {
+    "by": "an adversarial code reviewer",
+    "kind": "ai-model"
+   }
+  }
+ ],
+ "moments": [
+  {
+   "id": "how-do-you-know",
+   "at": "2026-10-25T08:40:00Z",
+   "quote": "How do you know?",
+   "who": {
+    "label": "a visitor",
+    "kind": "human"
+   },
+   "why": "The follow-up that makes an agent point at its own evidence.",
+   "evidence": [
+    {
+     "kind": "proof",
+     "id": "odin-381dbb-1",
+     "record": "data/labs/agent-space/dispatches/session-2026-10-25-b.json"
+    }
+   ]
+  }
+ ]
+}

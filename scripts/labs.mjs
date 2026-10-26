@@ -21,6 +21,7 @@ import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
+import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
@@ -172,6 +173,9 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
+  const story = readMilestones(root);
+  // The story page's template ships only with its record: without one, its markers would reach dist/ unfilled.
+  if (!story && existsSync(join(root, STORY_PAGE))) throw new Error(`${STORY_PAGE}: the story page ships without its record (data/labs/agent-space/milestones.json)`);
   // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
   // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
   if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
@@ -203,7 +207,11 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(readDelivery(root)),
+      // "How it was born": a link to the story page, empty while there is no milestones record (scripts/lab-milestones.mjs).
+      '<!--LAB_STORY_LINK-->': renderStoryLink(story),
     }),
+    // Lab 01's story: its own page, when the milestones record exists (its template ships in site/ only with it).
+    ...(story ? { [STORY_PAGE]: fill(STORY_PAGE, storyValues(story)) } : {}),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
     ...bench.pages,
   };
