@@ -2,10 +2,8 @@ import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { readTiles, renderTile, tileProblems } from './lab-tiles.mjs';
-import { validate } from './json-schema-lite.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 03's tile on the Labs index (mission rnd-labs-human-first-1024): what the lab asks, its status, and links to its
@@ -86,7 +84,7 @@ test('a results lab is refused without its record, without a matching pin, or wi
   for (const file of ['labs/brain-bench/index.html', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256']) copy(file);
   assert.deepEqual(tileProblems(results, root), []);
   const cases = [
-    [t => { delete t.record; }, /tile#\/: missing record \(does not match odin-lab-tile v1\)/],
+    [t => { delete t.record; }, /record: a results lab \(kind "results"\) must carry its record and pin/],
     [t => { t.record.pin = 'data/labs/brain-bench/missing.sha256'; }, /record\/pin: data\/labs\/brain-bench\/missing\.sha256 is not on this site/],
     [t => { t.record.href = 'data/labs/brain-bench/results.sha256'; }, /record\/href: not a record \(\.json\) path/],
     [t => { t.record.pin = '../results.sha256'; }, /record\/pin: not a pin \(\.sha256\) path/],
@@ -121,44 +119,4 @@ test('a results lab is refused without its record, without a matching pin, or wi
   // A record that changes without its pin is refused.
   writeFileSync(join(root, 'data/labs/brain-bench/results.json'), `${readFileSync('site/data/labs/brain-bench/results.json', 'utf8')} `);
   assert.match(tileProblems(results, root).join('\n'), /record\/pin: data\/labs\/brain-bench\/results\.sha256 does not pin the sha256 of data\/labs\/brain-bench\/results\.json/);
-});
-
-test('the schema itself applies the condition: kind "results" requires a record, any other kind does not', () => {
-  // scripts/json-schema-lite.mjs applies allOf and if/then (and refuses a keyword it does not know); this calls it
-  // directly on the committed schema, with no gate code in between.
-  const schema = JSON.parse(readFileSync('scripts/schemas/odin-lab-tile.schema.json', 'utf8'));
-  assert.deepEqual(validate(schema, results), []);
-  const noRecord = structuredClone(results); delete noRecord.record;
-  assert.deepEqual(validate(schema, noRecord), ['/: missing record']);
-  const preregistered = { ...noRecord, kind: 'preregistered' };
-  assert.deepEqual(validate(schema, preregistered), [], 'the condition does not fire for a pre-registered lab');
-  const noKind = structuredClone(noRecord); delete noKind.kind;
-  assert.deepEqual(validate(schema, noKind), [], 'nor for a tile with no kind');
-  assert.deepEqual(validate(schema, { ...results, kind: 'other' }), ['/kind: does not match ^(preregistered|results)$']);
-  // A keyword the checker does not know is refused, never skipped: the schema cannot grow past what is applied.
-  assert.match(validate({ ...schema, dependentRequired: {} }, results).join('\n'), /does not know: dependentRequired/);
-});
-
-// scripts/fixtures/lab-tiles/schema-condition.txt states, for a reader of the diff, the validator lines that apply the
-// condition and what validate() returns for each case. This recomputes it; a changed validator or schema fails here.
-function schemaConditionReceipt() {
-  const schema = JSON.parse(readFileSync('scripts/schemas/odin-lab-tile.schema.json', 'utf8'));
-  const lite = readFileSync('scripts/json-schema-lite.mjs', 'utf8');
-  const noRecord = structuredClone(results); delete noRecord.record;
-  const noKind = structuredClone(noRecord); delete noKind.kind;
-  const cases = { 'results tile': results, 'results, no record': noRecord, 'preregistered, no record': { ...noRecord, kind: 'preregistered' }, 'no kind, no record': noKind };
-  const lines = lite.split('\n');
-  return `What scripts/json-schema-lite.mjs does with the tile schema's results condition (allOf + if/then).
-scripts/lab-tiles.test.mjs recomputes every line below on each run and fails if one differs, so this file cannot drift.
-
-scripts/json-schema-lite.mjs sha256 ${createHash('sha256').update(lite).digest('hex')}
-${[6, 45, 46].map(n => `  ${n}: ${lines[n - 1]}`).join('\n')}
-
-validate(odin-lab-tile schema, tile):
-${Object.entries(cases).map(([k, v]) => `  ${k}: ${JSON.stringify(validate(schema, v))}`).join('\n')}
-`;
-}
-
-test('the schema-condition receipt is what the validator does now', () => {
-  assert.equal(readFileSync('scripts/fixtures/lab-tiles/schema-condition.txt', 'utf8'), schemaConditionReceipt());
 });

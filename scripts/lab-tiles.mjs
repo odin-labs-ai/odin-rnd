@@ -36,7 +36,9 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
     if (!/^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9.-]*)*\.(html|json)$/.test(href) || /(^|\/)\.\.?(\/|$)/.test(href)) problems.push(`${where}#/links/${i}/href: not a page or record path of this site`);
     else if (!isFile(join(root, href))) problems.push(`${where}#/links/${i}/href: ${href} is not on this site`);
   }
-  if (tile.kind === 'results') return [...problems, ...resultsProblems(tile, root, where)];
+  // The pairing kind "results" <-> record is enforced here, in plain code, not by a schema condition.
+  if (tile.kind === 'results' && !tile.record) problems.push(`${where}#/record: a results lab (kind "results") must carry its record and pin`);
+  if (tile.kind === 'results') return tile.record ? [...problems, ...resultsProblems(tile, root, where)] : problems;
   if (tile.record) problems.push(`${where}#/record: only a results lab (kind "results") carries a record`);
   if (!isFile(join(root, `data/${tile.experiment}/preregistration.json`))) problems.push(`${where}#/experiment: data/${tile.experiment}/preregistration.json is not published`);
   if (/not yet run/i.test(tile.status) && isFile(join(root, `data/${tile.experiment}/results.json`))) problems.push(`${where}#/status: says not yet run, but data/${tile.experiment}/results.json is published`);
