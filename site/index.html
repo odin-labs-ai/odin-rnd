@@ -42,13 +42,12 @@
     <section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">
       <div class="factory-premise"><h1 id="hero-title">Every model and vendor, <br>on real work.</h1><div><p>Odin Labs R&amp;D tests AI models, tools and vendors on real work, inside an AI factory that is actually running. Open experiments are written down before they run and published whatever they show, failures included. Work behind closed doors stays private. <br>Open a station to see a real experiment.</p><a href="partners/">Partner with the lab</a> <a href="work-with-us/" data-contact-opened>Work with us</a></div></div>
       <div class="factory-drawing" data-view="floor">
-        <div class="drawing-toolbar"><p>Open a station</p><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div>
+        <div class="drawing-toolbar"><p>Open a station</p><div class="drawing-actions"><button id="factory-replay" hidden>Replay drawing <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5a5 5 0 1 1-1 4M3 1v4h4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div></div>
         <div class="floor-art"><!--FLOOR--></div>
         <nav class="station-controls" aria-label="Open a factory station"><!--STATION_LINKS--></nav>
         <div class="drawing-key"><span>Concept drawing. Separate experiments.</span><span>Odin / R&amp;D</span></div>
       </div>
       <div class="station-compartment" aria-label="Selected experiment">
-        <!--STATION_CROP-->
         <!--STATION_EXHIBITS-->
         <p id="station-unavailable" hidden>Station evidence is unavailable. Follow the station’s full experiment link, or <a href="https://github.com/odin-labs-ai/odin-rnd">inspect the source</a>.</p>
         <p id="station-status" class="sr-only" role="status" aria-live="polite"></p>

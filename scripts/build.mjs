@@ -96,7 +96,6 @@ if (Object.keys(intakeConfig).join(',') !== 'apiOrigin') throw new Error('Unexpe
 apiOrigin(intakeConfig.apiOrigin);
 let html = readFileSync('site/index.html', 'utf8');
 html = html.replace('<!--FLOOR-->', factoryFloor());
-html = html.replace('<!--STATION_CROP-->', factoryFloor({crop:true}));
 html = html.replace('<!--STATION_LINKS-->', renderStationLinks());
 html = html.replace('<!--STATION_EXHIBITS-->', renderStations(report,witnesses.reports));
 html = html.replace('</body>', '<script type="application/json" id="station-data">'+JSON.stringify(stations).replaceAll('<','\\u003c')+'</script>\n</body>');
