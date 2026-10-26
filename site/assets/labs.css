@@ -84,6 +84,7 @@
 .lab-engine-value{margin-top:10px;font-size:15px}
 .lab-engine-value strong{font-size:22px;font-family:var(--display)}
 .lab-engine-branch{margin-top:8px;font-size:13px;font-weight:600}
+.lab-engine-note{margin-top:8px;font-size:13px;line-height:1.5;padding-left:10px;border-left:3px solid var(--brand)}
 .lab-vendored{margin-top:24px;max-width:90ch}
 @media(max-width:760px){.labs-hero{padding-block:46px 24px}.lab-empty{padding:24px}.lab-cards,.lab-tiles,.lab-films,.lab-panels,.lab-hard,.lab-engine{grid-template-columns:1fr}}
 .fit-summary{margin-bottom:28px;color:var(--steel)}

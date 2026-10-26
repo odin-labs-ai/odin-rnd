@@ -67,10 +67,15 @@ export function sessionFromRows(rows, agents) {
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
 // Strings under a `source` are public labels, dates and commits, screened like every other word: a path is refused.
+// A commit is a run of hex digits, so it may hold nine digits in a row; for a commit field that is exactly a commit,
+// that one reason (LONG_NUMBER, matched exactly) is not a hit. Every other reason, a name or a place included, still is.
+const COMMIT_KEY = /(^|\/)(commit|code_commit|merge|run_commit|onMain)$/;
+export const LONG_NUMBER = 'a phone number, timestamp or long internal id';
+export const isCommitField = (path, value) => COMMIT_KEY.test(path) && /^[0-9a-f]{7,40}$/.test(value);
 function sourceProblems(source, at) {
   const out = [];
   (function walk(v, p) {
-    if (typeof v === 'string') out.push(...screenHits(v).map(hit => `${p}: ${hit.reason}`));
+    if (typeof v === 'string') out.push(...screenHits(v).filter(hit => !(isCommitField(p, v) && hit.reason === LONG_NUMBER)).map(hit => `${p}: ${hit.reason}`));
     else if (v && typeof v === 'object') for (const [k, c] of Object.entries(v)) walk(c, `${p}/${k}`);
   })(source, at);
   return out;
@@ -153,11 +158,12 @@ function renderSpace(space) {
 function engineSource(source, pin) {
   const where = source.status === 'main' ? 'in the main build (an ancestor of its main head)' : 'on a work branch';
   if (!source.commit) return `Source: claims row ${escape(source.row)}, ${where}. ${NO_COMMIT}`;
-  return `Source: claims row ${escape(source.row)}, ${where}, commit <code>${escape(source.commit.slice(0, 8))}</code>.${pin ? ` How that commit was found: ${escape(pin.how)}` : ''}`;
+  const more = [source.code_commit && `the code measured <code>${escape(source.code_commit.slice(0, 8))}</code>`, source.merge && `merged into main as <code>${escape(source.merge.slice(0, 8))}</code>`].filter(Boolean);
+  return `Source: claims row ${escape(source.row)}, ${where}, commit <code>${escape(source.commit.slice(0, 8))}</code>${more.length ? ` (${more.join(', ')})` : ''}.${pin ? ` How that commit was found: ${escape(pin.how)}` : ''}`;
 }
 
 function renderEngine(engine, pinned = []) {
-  return `<ul class="lab-engine">${engine.map(f => `<li><p class="lab-engine-what">${escape(f.what)}</p><p class="lab-engine-value"><strong>${escape(f.value.replaceAll('->', '→'))}</strong> <span>${escape(f.unit)}</span></p>${f.source.status === 'main' ? '' : `<p class="lab-engine-branch">${WORK_BRANCH}</p>`}<p class="lab-source">${engineSource(f.source, pinned.find(p => p.claim === String(f.claim)))}</p></li>`).join('')}</ul>`;
+  return `<ul class="lab-engine">${engine.map(f => `<li><p class="lab-engine-what">${escape(f.what)}</p><p class="lab-engine-value"><strong>${escape(f.value.replaceAll('->', '→'))}</strong> <span>${escape(f.unit)}</span></p>${f.source.status === 'main' ? '' : `<p class="lab-engine-branch">${WORK_BRANCH}</p>`}${f.source.note ? `<p class="lab-engine-note"><strong>Note:</strong> ${escape(f.source.note)}</p>` : ''}<p class="lab-source">${engineSource(f.source, pinned.find(p => p.claim === String(f.claim)))}</p></li>`).join('')}</ul>`;
 }
 
 /** The space's measurements and the engine figures, each with its source; the vendoring noted under them. */
