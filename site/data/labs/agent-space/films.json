@@ -1,0 +1,167 @@
+{
+ "format": "odin-lab-films",
+ "version": 1,
+ "lab": "agent-space",
+ "films": [
+  {
+   "id": "agent-space-30s",
+   "title": "Thirty seconds in the agent space",
+   "line": "A visitor asks Odin what is going on and Atlas how to plug in an agent. Each answer comes with its proof card: the question, the answer, why, and the source.",
+   "real": "A live session, recorded unedited.",
+   "src": "assets/labs/agent-space/films/agent-space-30s.webm",
+   "poster": "assets/labs/agent-space/films/agent-space-30s-poster.png",
+   "mime": "video/webm;codecs=vp9",
+   "bytes": 1613667,
+   "seconds": 27,
+   "sha256": {
+    "src": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "poster": "c4831eca46f8d32f4f751229cfea960af612ca8145b6fa66443bb9d98d9bbc91"
+   },
+   "source": {
+    "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
+    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "originalSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "originalBytes": 1613667,
+    "reencoded": false
+   },
+   "screening": {
+    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-10-25",
+    "srcSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "d8e8a775034b03feef3be35ce2fc84597495dd3e4650afd9c45cba0c3bf5c7c7"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "6bf5d69fc339742e339a1220c6669cc515d559fa31a234b88dabf45a6626ee4d"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "8d0f0f252f00b5f15c4bf0161b265909915f52098f0e56db42d2fb1602bffdf4"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "d96beaecfc05a56e1bf1355db81da9125223f2be012832bf1f97bc2aa7d091b8"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "725bb80d9be298bc9471dc64210b1cea93386eb7dafd7b38f6aa8587815dfb92"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "03589316bf51f0659f29c54d9b94ce706abfbc721788ad13b14b30c82aae023c"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "id": "agent-space-tour",
+   "title": "A tour of the agent space",
+   "line": "A visitor walks in through the arch and asks three agents a question: Odin what is going on and how he knows, Atlas how to plug in an agent, Pulse how long it has been running. Every answer comes with its proof card.",
+   "real": "A live session, recorded unedited; Pulse is a separate HTTP service answering from its own process.",
+   "src": "assets/labs/agent-space/films/agent-space-tour.webm",
+   "poster": "assets/labs/agent-space/films/agent-space-tour-poster.png",
+   "mime": "video/webm;codecs=vp9",
+   "bytes": 5765850,
+   "seconds": 78,
+   "sha256": {
+    "src": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "poster": "1864b04d670fcab5ba760f6fe2216d2d5e191453a67474557242df9955da06af"
+   },
+   "source": {
+    "commit": "ae5816089c95aa98f165c3c887a3cefc6510c691",
+    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "originalSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "originalBytes": 5765850,
+    "reencoded": false
+   },
+   "screening": {
+    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-10-25",
+    "srcSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "9aafd4ec5cef8c174ff1e4517e9a7fb087f46bcc5b9d98f382aaf997cac69cba"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "4cdc86d2d50670607bfaa317a532397bfc3f71f91c18cee090011b4c62d78a77"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "5fc1477d18713f40cbfad699ca8f2a3d2c826ab0e786b745d877fef3f8651051"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "104004b39086bd9dbf10a6bfe770b0e9b646d3c58a96e17b65127c6957db2a13"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "f4ad5d0729da71619deea9f3a82b58c06e6a6e655eb5ea11acabcec9705dcf2c"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "e783566ce25debeea30fbeb1a87d61a056fcc07ad374c2edf107b925d8c45091"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "8a9e84405b757f5fd535397a8a95cf6f87f16be59f46cb3d764007a75d02f9b3"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "23db6fcd70a9bace9c062843c35abb1d2d0d7064321e126375e4238a60468921"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "5c7e6c2ae79314eab03dc2ad7448cd4c4ca2b6a081b1799257b464d0a98a31d2"
+     },
+     {
+      "t": 45,
+      "rgb24Sha256": "ed3e9bb44c56c7591e6fd846b9cf62471f9123e110c2329f3833ae904908c5b0"
+     },
+     {
+      "t": 50,
+      "rgb24Sha256": "25f1ea9860b0d08a9519fef96ff402df295b5fe32a43b83c0a9fa8cb61dfa299"
+     },
+     {
+      "t": 55,
+      "rgb24Sha256": "a39fdf713f187c3fa83643aeeef7b2db4a53b0fb0d321036d13b8884cafa42cc"
+     },
+     {
+      "t": 60,
+      "rgb24Sha256": "bd21efd62682b48bc80d322216c408b3953afa9045709d695d81060eb848e076"
+     },
+     {
+      "t": 65,
+      "rgb24Sha256": "d3ef7b70b7fe8c1575745a8cb3f1ed5a86b4007eb6b9c62b24737b7a9f61052b"
+     },
+     {
+      "t": 70,
+      "rgb24Sha256": "0a86c3eead30f19dfe536c3093824e621c8138f0820f9cee281c0ffe8274824f"
+     },
+     {
+      "t": 75,
+      "rgb24Sha256": "fd32d80fc3bfc3ec2b2668d662f04dfdba8f1a0bd27a6dc1f3f5c43307704bf3"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name"
+    ],
+    "result": "pass"
+   }
+  }
+ ]
+}

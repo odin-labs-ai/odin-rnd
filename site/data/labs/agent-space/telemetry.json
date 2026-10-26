@@ -1,0 +1,414 @@
+{
+ "format": "odin-telemetry",
+ "version": 1,
+ "vendored": {
+  "from": "the agent space's own telemetry pack, kept in its private repository",
+  "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
+  "packSha256": "9fb9ec2d0111d62fba0620bda41fc2b76de7c0617527f2b7966a99749975a81e",
+  "packBuiltAtCommit": "c8b36efd39192a904f0a97ff83935be018a633ba",
+  "claimsSha256": "82a7fab7ea83ee8f6929f7d6e27058131773e1c412ccdfc44d9c118c38f6bbb0",
+  "figuresSha256": "ddd92168328e45e0ffe15cfc259989b8ef256f5a3cb705e8b798eb4c525faa45",
+  "mainCheck": {
+   "main": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2",
+   "how": "GitHub compare API: GET compare/<commit>...<main>; behind_by 0 means the commit is an ancestor of main",
+   "checked": "2026-10-25"
+  },
+  "pinned": [],
+  "omitted": [
+   {
+    "claim": "20",
+    "why": "the 1,000-agent tick figure: its claims row still says work branch, but that branch was merged into the main build before this pack was built, so the row is being corrected"
+   },
+   {
+    "claim": "d7",
+    "why": "the claims table at this commit has no row for it yet"
+   }
+  ],
+  "kept": "rule, agent_space and engine, and the session's question rows; each engine figure's status from its claims row",
+  "leftOut": "the benchmark rows (they belong to the brain benchmark lab), the session's run id (run ids are never published) and every private path"
+ },
+ "rule": "every figure carries its source; nothing without one is published",
+ "agent_space": {
+  "status": "measured",
+  "per_agent": {
+   "Odin": {
+    "asked": 9,
+    "answered": 9,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 1.11,
+     "p95": 1.12
+    },
+    "follow_ups": 3,
+    "sources": [
+     "world-checked"
+    ],
+    "brain_kinds": [
+     "rules"
+    ]
+   },
+   "Atlas": {
+    "asked": 6,
+    "answered": 6,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 1.13,
+     "p95": 1.16
+    },
+    "follow_ups": 0,
+    "sources": [
+     "wiki"
+    ],
+    "brain_kinds": [
+     "scripted"
+    ]
+   },
+   "Juno": {
+    "asked": 6,
+    "answered": 6,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 0.93,
+     "p95": 1.16
+    },
+    "follow_ups": 0,
+    "sources": [
+     "wiki"
+    ],
+    "brain_kinds": [
+     "scripted"
+    ]
+   },
+   "Pulse": {
+    "asked": 3,
+    "answered": 3,
+    "with_proof": 3,
+    "latency_s": {
+     "p50": 1.63,
+     "p95": 1.68
+    },
+    "follow_ups": 0,
+    "sources": [
+     "tool"
+    ],
+    "brain_kinds": [
+     "http"
+    ]
+   }
+  },
+  "ok_rate": 1,
+  "rounds": 3,
+  "questions_per_round": 8,
+  "note": "latency = the visitor's line to the agent's proof record, wall time, one machine (Windows + WSL2); it INCLUDES the scripted visitor's measuring overhead (0.25 s polling + a fixed 0.6 s wait for multi-line answers), so the true answer time is about 0.6-0.85 s lower; the agents: Odin (concierge, world + rules), Atlas (knowledge base), Juno (support notes), Pulse (an external HTTP agent)",
+  "source": {
+   "record": "the session record",
+   "sha256": "a44214878e391b233b19846cbe29582a0a2646d570e33ff386ed8ed8e504fb3e",
+   "run_commit": "c8b36efd39192a904f0a97ff83935be018a633ba",
+   "started": "2026-10-25T13:05:08"
+  },
+  "rows": [
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.12,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.14,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.13,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.36,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.1,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.93,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.68,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.15,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.92,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.63,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   }
+  ]
+ },
+ "engine": [
+  {
+   "claim": 7,
+   "what": "a fine-tuned 1.5B model (~1 GB) against the larger v3 stack, on 280 seeded agent tasks",
+   "value": "265/280 vs 270/280",
+   "unit": "tasks won",
+   "source": {
+    "row": 7,
+    "status": "main",
+    "commit": "3b74a4e0",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+   }
+  },
+  {
+   "claim": 8,
+   "what": "model calls per successful task, before and after the v3 router (rules for mechanics, model for language)",
+   "value": "45.6 -> 1.0",
+   "unit": "calls / success",
+   "source": {
+    "row": 8,
+    "status": "main",
+    "commit": "3b74a4e0",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+   }
+  },
+  {
+   "claim": 9,
+   "what": "seeded replays of a recorded run",
+   "value": "byte-identical",
+   "unit": "lens stream",
+   "source": {
+    "row": 9,
+    "status": "main",
+    "commit": "23b3c762",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+   }
+  },
+  {
+   "claim": 10,
+   "what": "the full test suite",
+   "value": "1,867 passed / 0 failed",
+   "unit": "tests",
+   "source": {
+    "row": 10,
+    "status": "main",
+    "commit": "175f14d7",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+   }
+  },
+  {
+   "claim": 15,
+   "what": "agents as QA: a real outage found and its fix confirmed; reachable places",
+   "value": "FAIL->PASS; 5/5",
+   "unit": "checks",
+   "source": {
+    "row": 15,
+    "status": "main",
+    "commit": "fcecd472",
+    "onMain": "0d715ea72fb97190f9ee6616fc6d64164edb7cd2"
+   }
+  }
+ ]
+}
