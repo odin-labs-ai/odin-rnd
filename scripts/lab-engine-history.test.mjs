@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ENGINE_HISTORY_FILE, ONE_POINT, engineHistoryProblems, pinProblems, readEngineHistory, renderEngineHistory } from './lab-engine-history.mjs';
+import { ENGINE_HISTORY_FILE, engineHistoryProblems, measuredLine, pinProblems, readEngineHistory, renderClaimsOverTime } from './lab-engine-history.mjs';
 import { build, pinFor, serialise } from './vendor-engine-history.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -92,26 +92,39 @@ test('a claim that disappears from the table is a change too: its point is recor
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('the page: one dot per point, nothing between them; a single point says so; every point cites its commit', () => withDir(dir => {
+test('the claims series is a step chart: a value is held until it changes, and every point cites its commit', () => withDir(dir => {
   const { record } = build(dir);
-  const html = renderEngineHistory(record);
-  assert.match(html, /The engine, measured over time\./);
-  const plots = html.match(/<svg class="lab-chart engine-plot"[\s\S]*?<\/svg>/g) ?? [];
-  assert.equal(plots.length, 2, 'claims-on-main and test-suite have two or more points');
-  for (const svg of plots) {
-    assert.doesNotMatch(svg, /<path|<polyline|<polygon/, 'no line between points');
-    assert.equal((svg.match(/<line /g) ?? []).length, 1, 'only the time axis');
-  }
-  assert.equal((html.match(new RegExp(ONE_POINT.replace('.', '\\.'), 'g')) ?? []).length, 1, 'answer time has one point');
-  assert.doesNotMatch(html, /id="engine-tick-1000"/, 'a series with no point is not drawn');
-  for (const s of record.series) for (const p of s.points) assert.ok(html.includes(`Private commit <code>${p.commit.slice(0, 8)}</code>, cited by hash`), p.commit);
+  const html = renderClaimsOverTime(record);
+  assert.match(html, /Engine claims in the main build over time/);
+  const svg = html.match(/<svg class="lab-chart engine-plot"[\s\S]*?<\/svg>/)[0];
+  assert.doesNotMatch(svg, /<path|<polyline|<polygon/, 'no free line, no curve');
+  const points = record.series.find(s => s.id === 'claims-on-main').points;
+  assert.equal((svg.match(/class="engine-step"/g) ?? []).length, 2 * (points.length - 1), 'one flat and one riser per change');
+  assert.equal((svg.match(/<circle/g) ?? []).length, points.length);
+  for (const p of points) assert.ok(html.includes(`Private commit <code>${p.commit.slice(0, 8)}</code>, cited by hash`), p.commit);
+  assert.match(html, /A figure measured once becomes a series by itself/);
 }));
 
-test('the committed record passes, and Lab 01 shows it', () => {
+test('a figure measured once is stated, never drawn; it becomes a line only when a later commit changes it', () => withDir(dir => {
+  const { record } = build(dir);
+  const once = measuredLine(record, 'answer-time');
+  assert.match(once, /^<p class="engine-once">Measured once so far, on <time datetime="2026-10-25T12:00:00Z">25 Oct<\/time>\. Private commit <code>5{8}<\/code>, cited by hash/);
+  assert.doesNotMatch(once, /<svg|<line|<path/);
+  assert.equal(measuredLine(record, 'tick-1000'), '', 'no point: nothing at all');
+  assert.match(measuredLine(record, 'test-suite'), /Changed 1 time since <time[^>]*>23 Oct<\/time>, last on <time[^>]*>24 Oct<\/time>/);
+  const single = clone(record); const s = single.series.find(x => x.id === 'claims-on-main'); s.points = s.points.slice(0, 1);
+  assert.doesNotMatch(renderClaimsOverTime(single), /<svg/, 'a one-point claims series is not drawn');
+}));
+
+test('the committed record passes, and Lab 01 shows it inside "The engine underneath"', () => {
   const record = readEngineHistory('site', { now: NOW });
   assert.ok(record);
   const page = renderLabs()['labs/agent-space/index.html'];
-  assert.match(page, /id="engine-over-time"/);
-  for (const s of record.series.filter(x => x.points.length === 1)) assert.ok(page.slice(page.indexOf(`id="engine-${s.id}"`)).includes(ONE_POINT), s.id);
-  assert.doesNotMatch(page.slice(page.indexOf('id="engine-over-time"')), /\boac\b/i);
+  const engine = page.slice(page.indexOf('id="engine"'));
+  assert.match(engine, /Engine claims in the main build over time/);
+  const singles = record.series.filter(x => x.points.length === 1).length;
+  assert.equal((page.match(/Measured once so far, on /g) ?? []).length, singles, 'one line per single-point figure');
+  assert.equal((page.match(/<svg class="lab-chart engine-plot"/g) ?? []).length, record.series.filter(x => x.points.length > 1).length);
+  assert.doesNotMatch(page, /id="engine-over-time"/, 'no separate section');
+  assert.doesNotMatch(page, /\boac\b/i);
 });

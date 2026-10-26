@@ -136,3 +136,5 @@
 .engine-points p+p{margin-top:4px}
 .engine-unit{color:var(--steel)}
 .engine-when{font-size:13px;color:var(--steel)}
+.engine-step{stroke:var(--brand);stroke-width:2}
+.engine-once{margin-top:8px;font-size:13px;color:var(--steel);line-height:1.5}
