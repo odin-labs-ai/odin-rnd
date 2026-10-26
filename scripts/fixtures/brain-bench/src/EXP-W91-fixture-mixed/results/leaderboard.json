@@ -1,0 +1,43 @@
+{
+ "cells": [],
+ "brains": [
+  {
+   "harness": "h4",
+   "brain": "scripted",
+   "brain_version": "v3.1",
+   "n": 8,
+   "successes": 6,
+   "success_rate": 0.75,
+   "success_ci": [
+    0.409,
+    0.929
+   ]
+  },
+  {
+   "harness": "h4",
+   "brain": "hybrid@v3.1:demo-local-1b",
+   "brain_version": "v3.1",
+   "n": 8,
+   "successes": 5,
+   "success_rate": 0.625,
+   "success_ci": [
+    0.306,
+    0.863
+   ]
+  },
+  {
+   "harness": "h4",
+   "brain": "hybrid@v3.1:demo-cloud-model",
+   "brain_version": "v3.1",
+   "n": 8,
+   "successes": 5,
+   "success_rate": 0.625,
+   "success_ci": [
+    0.306,
+    0.863
+   ]
+  }
+ ],
+ "meta": {},
+ "skipped": []
+}

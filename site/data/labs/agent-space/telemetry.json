@@ -1,0 +1,435 @@
+{
+ "format": "odin-telemetry",
+ "version": 1,
+ "vendored": {
+  "from": "the agent space's own telemetry pack, kept in its private repository",
+  "commit": "a67fa304dd4373fdeacb18d9ff9823a674e61c70",
+  "packSha256": "138b80a2af4531234923386fea97df69adf0d9ade341eed70c1e7e783acbc2f9",
+  "packBuiltAtCommit": "9d7fd98cd347f7734656170014182ae669eeffb8",
+  "claimsSha256": "711c6edbc0240b4c83fc1bf139f262072d9cefad76ca984ae833b6d6ebde8577",
+  "figuresSha256": "ae2188c6668860a719245d50e6d143b59272e7f278c4801fb3b45d0af6b9b109",
+  "mainCheck": {
+   "main": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e",
+   "how": "GitHub compare API: GET compare/<commit>...<main>; behind_by 0 means the commit is an ancestor of main",
+   "checked": "2026-10-25"
+  },
+  "pinned": [],
+  "omitted": [],
+  "kept": "rule, agent_space and engine, and the session's question rows; each engine figure's status from its claims row",
+  "leftOut": "the benchmark rows (they belong to the brain benchmark lab), the session's run id (run ids are never published) and every private path"
+ },
+ "rule": "every figure carries its source; nothing without one is published",
+ "agent_space": {
+  "status": "measured",
+  "per_agent": {
+   "Odin": {
+    "asked": 9,
+    "answered": 9,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 1.11,
+     "p95": 1.12
+    },
+    "follow_ups": 3,
+    "sources": [
+     "world-checked"
+    ],
+    "brain_kinds": [
+     "rules"
+    ]
+   },
+   "Atlas": {
+    "asked": 6,
+    "answered": 6,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 1.13,
+     "p95": 1.16
+    },
+    "follow_ups": 0,
+    "sources": [
+     "wiki"
+    ],
+    "brain_kinds": [
+     "scripted"
+    ]
+   },
+   "Juno": {
+    "asked": 6,
+    "answered": 6,
+    "with_proof": 6,
+    "latency_s": {
+     "p50": 0.93,
+     "p95": 1.16
+    },
+    "follow_ups": 0,
+    "sources": [
+     "wiki"
+    ],
+    "brain_kinds": [
+     "scripted"
+    ]
+   },
+   "Pulse": {
+    "asked": 3,
+    "answered": 3,
+    "with_proof": 3,
+    "latency_s": {
+     "p50": 1.63,
+     "p95": 1.68
+    },
+    "follow_ups": 0,
+    "sources": [
+     "tool"
+    ],
+    "brain_kinds": [
+     "http"
+    ]
+   }
+  },
+  "ok_rate": 1,
+  "rounds": 3,
+  "questions_per_round": 8,
+  "note": "latency = the visitor's line to the agent's proof record, wall time, one machine (Windows + WSL2); it INCLUDES the scripted visitor's measuring overhead (0.25 s polling + a fixed 0.6 s wait for multi-line answers), so the true answer time is about 0.6-0.85 s lower; the agents: Odin (concierge, world + rules), Atlas (knowledge base), Juno (support notes), Pulse (an external HTTP agent)",
+  "source": {
+   "record": "the session record",
+   "sha256": "a44214878e391b233b19846cbe29582a0a2646d570e33ff386ed8ed8e504fb3e",
+   "run_commit": "c8b36efd39192a904f0a97ff83935be018a633ba",
+   "started": "2026-10-25T13:05:08"
+  },
+  "rows": [
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.12,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.14,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.13,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.11,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 0,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.36,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.1,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 1.11,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.93,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 1,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.68,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 0.86,
+    "source": "world-checked",
+    "via": "rules",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Odin",
+    "answered": true,
+    "s": 25.04,
+    "source": null,
+    "via": null,
+    "ok": null,
+    "proof": false
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 0.86,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Atlas",
+    "answered": true,
+    "s": 1.15,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 0.92,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Juno",
+    "answered": true,
+    "s": 1.16,
+    "source": "wiki",
+    "via": "scripted",
+    "ok": true,
+    "proof": true
+   },
+   {
+    "round": 2,
+    "agent": "Pulse",
+    "answered": true,
+    "s": 1.63,
+    "source": "tool",
+    "via": "http",
+    "ok": true,
+    "proof": true
+   }
+  ]
+ },
+ "engine": [
+  {
+   "claim": 7,
+   "what": "a fine-tuned 1.5B model (~1 GB) against the larger v3 stack, on 280 seeded agent tasks",
+   "value": "265/280 vs 270/280",
+   "unit": "tasks won",
+   "source": {
+    "row": 7,
+    "status": "main",
+    "commit": "3b74a4e09655db0e4a6ba8df11a42363b6636a43",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 8,
+   "what": "model calls per successful task, before and after the v3 router (rules for mechanics, model for language)",
+   "value": "45.6 -> 1.0",
+   "unit": "calls / success",
+   "source": {
+    "row": 8,
+    "status": "main",
+    "commit": "3b74a4e09655db0e4a6ba8df11a42363b6636a43",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 9,
+   "what": "seeded replays of a recorded run",
+   "value": "byte-identical",
+   "unit": "lens stream",
+   "source": {
+    "row": 9,
+    "status": "main",
+    "commit": "23b3c762eed1c8fc6b20d75f2bed264c2a3c1c22",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 10,
+   "what": "the full test suite",
+   "value": "1,867 passed / 0 failed",
+   "unit": "tests",
+   "source": {
+    "row": 10,
+    "status": "main",
+    "commit": "175f14d7e945d1a02411e748ab1dce8931ce42f1",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 15,
+   "what": "agents as QA: a real outage found and its fix confirmed; reachable places",
+   "value": "FAIL->PASS; 5/5",
+   "unit": "checks",
+   "source": {
+    "row": 15,
+    "status": "main",
+    "commit": "fcecd472b7f326671f993d8450a704ece280b1a4",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": 20,
+   "what": "1,000 moving and talking agents in one campus: server time per tick at 10 Hz",
+   "value": "p50 17.5 ms / p95 29.6 ms",
+   "unit": "ms per tick",
+   "source": {
+    "row": 20,
+    "status": "main",
+    "commit": "7d7189935f64e31cb3c158d816d6fde199d01629",
+    "code_commit": "9cf5b9e225a77cdbf466726a2fa271b3225a0261",
+    "merge": "e02a298f60abf95ad5bbbb22030c258080f9fc06",
+    "note": "the numbers' commit; the code measured is its parent (the numbers' commit changed no engine file). The run did not stamp its revision.",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  },
+  {
+   "claim": "d7",
+   "what": "the campus scene's draw calls and frame time, instanced art + text LOD against placeholders",
+   "value": "405 draws / p50 7.9 ms vs 940 / 9.4 ms",
+   "unit": "draws, ms per frame",
+   "source": {
+    "row": "d7",
+    "status": "main",
+    "commit": "ed516f503946517e452aa18956d03a267765ea94",
+    "code_commit": "fc5627c1dc3bc54b644bb593ed37b9907abf2d14",
+    "merge": "499943f668cd927e6a3cb5def79b502c01662e8d",
+    "note": "like for like, placeholders with the same text LOD are 765 draws / 8.2 ms: the art is at par with them, not faster. The report did not stamp its revision; the code measured is the numbers' commit's parent.",
+    "onMain": "80bc1d6c6d294e7027b54f5775c8ff6a86d7626e"
+   }
+  }
+ ]
+}

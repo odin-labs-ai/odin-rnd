@@ -1,0 +1,26 @@
+{
+ "format": "odin-lab-bench",
+ "version": 1,
+ "slug": "brain-bench",
+ "sourceAbout": "A test fixture: made-up rows, never run.",
+ "labels": {
+  "where": { "rules": "Rules", "local": "Local", "cloud": "Cloud" },
+  "costBasis": { "local": "runs on our machine", "bench-estimate": "the bench's estimate", "list-price-estimate": "estimated from list prices" },
+  "worlds": { "a": "World A", "b": "World B" },
+  "tasks": { "a": "Task family A: build", "follow": "Follow a person's instruction" },
+  "kinds": { "deal": "Deal with a threat", "hand": "Hand something over", "meet": "Go and meet someone", "buy": "Buy something for them" }
+ },
+ "brains": {
+  "rules": { "label": "Hand-written rules", "where": "rules", "model": "The control." },
+  "demo-local": { "label": "A made-up local model", "where": "local", "model": "Made up." },
+  "demo-cloud": { "label": "A made-up cloud model", "where": "cloud", "model": "Made up." }
+ },
+ "experiments": [
+  { "id": "EXP-W91", "title": "A mixed fixture", "question": "Does the import count it?", "date": "2026-01-01", "prereg": { "commit": "aaaaaaaa" },
+    "predictions": [{ "id": "P1", "text": "The local model beats the rules.", "verdict": "holds", "detail": "{EXP-W91:demo-local:of} against {EXP-W91:rules:of}." }],
+    "caveats": ["A made-up caveat for {EXP-W91:demo-cloud:task.follow}."] },
+  { "id": "EXP-W92", "title": "A rerun fixture", "question": "Does the sensitivity check add up?", "date": "2026-01-02", "prereg": { "commit": "bbbbbbbb" },
+    "predictions": [{ "id": "P1", "text": "The cloud model beats the rules.", "verdict": "holds as registered, not claimed", "detail": "{EXP-W92:demo-cloud:sensitivity} after the re-run." }],
+    "caveats": ["Seeds {EXP-W92:demo-cloud:errorSeeds} were re-run."] }
+ ]
+}

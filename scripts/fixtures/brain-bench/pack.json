@@ -1,0 +1,128 @@
+{
+ "format": "odin-telemetry",
+ "version": 1,
+ "built_at_commit": "0123456789abcdef0123456789abcdef01234567",
+ "rule": "a test fixture: every row made up",
+ "benchmark": [
+  {
+   "experiment": "EXP-W91",
+   "brain": "rules only (no model)",
+   "brain_version": null,
+   "kind": "rules",
+   "successes": 6,
+   "episodes": 8,
+   "ci95": [
+    0.4093,
+    0.9285
+   ],
+   "usd_per_task": 0,
+   "harness": "h4",
+   "note": "a made-up note",
+   "source": {
+    "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+    "commit": "cccccccc",
+    "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e"
+   }
+  },
+  {
+   "experiment": "EXP-W91",
+   "brain": "made-up/cloud-model",
+   "brain_version": "v3.1",
+   "kind": "cloud",
+   "successes": 5,
+   "episodes": 8,
+   "ci95": [
+    0.3057,
+    0.8632
+   ],
+   "usd_per_task": null,
+   "harness": "h4",
+   "note": "a made-up note",
+   "source": {
+    "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+    "commit": "cccccccc",
+    "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e"
+   }
+  },
+  {
+   "experiment": "EXP-W91",
+   "brain": "a made-up local model",
+   "brain_version": "v3.1",
+   "kind": "local",
+   "successes": 5,
+   "episodes": 8,
+   "ci95": [
+    0.3057,
+    0.8632
+   ],
+   "usd_per_task": 0,
+   "harness": "h4",
+   "note": "a made-up note",
+   "source": {
+    "file": "made-up/EXP-W91-fixture-mixed/results/results.jsonl",
+    "commit": "cccccccc",
+    "sha256": "92f127861384a14300aa7b6b89af07ad68abb97f69ccd6b0bce6fcbdefd1165e"
+   }
+  },
+  {
+   "experiment": "EXP-W92",
+   "brain": "made-up/cloud-model",
+   "brain_version": "v3.1",
+   "kind": "cloud",
+   "successes": 6,
+   "episodes": 8,
+   "ci95": [
+    0.4093,
+    0.9285
+   ],
+   "usd_per_task": 0.0001,
+   "harness": "h5",
+   "note": "a made-up note",
+   "source": {
+    "file": "made-up/EXP-W92-fixture-rerun/results/results.jsonl",
+    "commit": "cccccccc",
+    "sha256": "a10a6b168b21e44f5d4105184c000a43b89623592b4353791d51dc55c83290e6"
+   }
+  },
+  {
+   "experiment": "EXP-W92",
+   "brain": "made-up/cloud-model",
+   "brain_version": "v3.1",
+   "kind": "cloud (sensitivity)",
+   "successes": 8,
+   "episodes": 8,
+   "ci95": [
+    0.6756,
+    1
+   ],
+   "usd_per_task": 0.0001,
+   "harness": "h5",
+   "note": "not the registered result: made up",
+   "source": {
+    "file": "made-up/sensitivity/rerun.jsonl",
+    "commit": "cccccccc",
+    "sha256": "b9b45901fd8f4f72839e54e62178924e2adb10b548922c8d8616c5fd90c8f754"
+   }
+  },
+  {
+   "experiment": "EXP-W92",
+   "brain": "rules only (no model)",
+   "brain_version": null,
+   "kind": "rules",
+   "successes": 4,
+   "episodes": 8,
+   "ci95": [
+    0.2152,
+    0.7848
+   ],
+   "usd_per_task": 0,
+   "harness": "h5",
+   "note": "a made-up note",
+   "source": {
+    "file": "made-up/EXP-W92-fixture-rerun/results/results.jsonl",
+    "commit": "cccccccc",
+    "sha256": "a10a6b168b21e44f5d4105184c000a43b89623592b4353791d51dc55c83290e6"
+   }
+  }
+ ]
+}
