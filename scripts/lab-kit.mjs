@@ -21,7 +21,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
-import { screenHits } from './lab-dispatch-publish.mjs';
+import { fold, screenHits } from './lab-dispatch-publish.mjs';
 
 export { validate, screenHits };
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -127,7 +127,7 @@ export function sidecarPinProblems(root, bytes, { pinFile, file, vendor }) {
  * schema's to check.
  */
 export function screenRecord(value, where, at = '') {
-  if (typeof value === 'string') return /^[0-9a-f]{16,64}$/.test(value) ? [] : [...screenHits(value).map(hit => hit.reason), ...LEAKS.filter(([re]) => re.test(value)).map(([, reason]) => reason)].map(reason => `${where}#${at}: ${reason}`);
+  if (typeof value === 'string') return /^[0-9a-f]{16,64}$/.test(value) ? [] : [...screenHits(value).map(hit => hit.reason), ...LEAKS.filter(([re]) => re.test(value) || re.test(fold(value))).map(([, reason]) => reason)].map(reason => `${where}#${at}: ${reason}`);
   if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => screenRecord(v, where, `${at}/${k}`));
   return [];
 }
@@ -193,11 +193,12 @@ export function recordHashes(record) {
  */
 export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
-  // A script or style is not shown: dropped with nothing in its place, so the text on either side reads as one.
-  const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
+  // A script, a style or a comment is not shown: dropped with nothing in its place, so the text on either side reads
+  // as one (a comment first, whole, so a ">" inside it cannot leave text behind).
+  const body = html.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
   // A character reference this screen does not decode is refused, never read as something else (fail closed): only
   // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
-  for (const m of stripTags(body, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(m[1] in NAMED_REFS && m[0].endsWith(';'))) problems.push(`a character reference this screen does not decode (${m[0]})`);
+  for (const m of stripTags(body, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) problems.push(`a character reference this screen does not decode (${m[0]})`);
   const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
   // The markup as written, and with percent-encoded slashes decoded (a link's path).
   leak('', body);
@@ -206,7 +207,13 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   // escaped reference is never decoded twice), screened twice more through LEAKS: once with every tag dropped and
   // nothing in its place, so text split by any tag at all (<wbr>, <label>, a made-up one) reads as one; and once with
   // block tags as line breaks. A leak in any of the three refuses the page.
-  leak(' (as shown, every tag dropped)', decode(stripTags(body, '')));
+  const shown = decode(stripTags(body, ''));
+  leak(' (as shown, every tag dropped)', shown);
+  // As a reader sees it: invisible format and combining characters removed and look-alike letters from other scripts
+  // folded to the Latin ones they imitate (the publisher's fold), so "local\u200bhost" or a Cyrillic "o" is caught too.
+  leak(' (as shown, folded)', fold(shown));
+  // Text direction controls reorder what is shown (a reversed word reads forwards), so none is allowed at all.
+  if (/[\u202a-\u202e\u2066-\u2069]/.test(shown)) problems.push('a text direction control character');
   // The lines a reader sees: a block tag ends one; any other tag (inline, or one this list does not know) joins the
   // text on either side.
   const text = decode(stripTags(body.replace(BLOCK_TAGS, '\n'), ''));
@@ -244,7 +251,7 @@ export const NAMED_REFS = { lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a
 export function decode(text) {
   const char = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '\ufffd');
   return text.replace(/&#[xX]([0-9a-fA-F]+);?/g, (_, h) => char(parseInt(h, 16))).replace(/&#(\d+);?/g, (_, d) => char(Number(d)))
-    .replace(/&([A-Za-z][A-Za-z0-9]*);/g, (ref, name) => (name !== 'amp' && name in NAMED_REFS ? NAMED_REFS[name] : ref)).replaceAll('&amp;', '&');
+    .replace(/&([A-Za-z][A-Za-z0-9]*);/g, (ref, name) => (name !== 'amp' && Object.hasOwn(NAMED_REFS, name) ? NAMED_REFS[name] : ref)).replaceAll('&amp;', '&');
 }
 
 // The marked boxes. What is staged, an estimate, a summary that cannot be reproduced here, a fixture we wrote, or a

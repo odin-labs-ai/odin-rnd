@@ -52,7 +52,8 @@ const CONFUSABLE = { 'а': 'a', 'в': 'b', 'е': 'e', 'ё': 'e', 'к': 'k', 'м'
 export const normalise = text => fold(text).toLowerCase();
 
 // The same, keeping case (a postcode is digits and capitals). Hangul fillers and U+034F are invisible but not \p{Cf}.
-function fold(text) {
+// Exported for the lab kit's page screen (scripts/lab-kit.mjs).
+export function fold(text) {
   return text.normalize('NFKD').replace(/[\p{Cf}\p{M}\u034f\u115f\u1160\u3164\uffa0]/gu, '').normalize('NFKC')
     .replace(/./gsu, ch => { const lower = ch.toLowerCase(), latin = CONFUSABLE[lower]; return !latin ? ch : ch === lower ? latin : latin.toUpperCase(); });
 }
