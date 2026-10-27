@@ -195,7 +195,9 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
   // A script, a style or a comment is not shown: dropped with nothing in its place, so the text on either side reads
   // as one (a comment first, whole, so a ">" inside it cannot leave text behind).
-  const body = html.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
+  // Again and again until nothing changes, so a block rebuilt by removing an inner one is removed too.
+  let body = html, before;
+  do { before = body; body = body.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, ''); } while (body !== before);
   // A character reference this screen does not decode is refused, never read as something else (fail closed): only
   // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
   for (const m of stripTags(body, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) problems.push(`a character reference this screen does not decode (${m[0]})`);
