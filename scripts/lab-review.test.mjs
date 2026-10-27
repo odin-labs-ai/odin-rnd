@@ -5,8 +5,8 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderReview, reviewProblems } from './lab-review.mjs';
-import { PLAN_ONLY, RECEIPTS, SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
+import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderReview, reviewProblems } from './lab-review.mjs';
+import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -124,6 +124,8 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.gallery[0].pr = 76; }, /#76 is not one of this site's receipt pull requests/);
   refused(r => { r.gallery[1].pr = r.gallery[0].pr; }, /is listed twice/);
   refused(r => { r.gallery[0].receipt = ['Review row x was fine.']; }, /not a FIX-NEEDED receipt/);
+  refused(r => { r.gallery[0].receipt = ['FIX-NEEDED on deadbeef1234, a passage nobody wrote']; }, /not the passage chosen for #84/);
+  refused(r => { r.planOnly = [56, 54, 53]; r.gallery.push({ ...r.gallery[0], pr: 50 }); }, /planOnly: not 56, 54, 53, 50/);
   refused(r => { r.planOnly.pop(); }, /every receipt pull request is in the gallery or listed/);
   refused(r => { r.frontier.seats[0].costUsd = 1.7; }, /does not match odin-lab-review v1/);
   refused(r => { r.frontier.seats[0].model = 'minimax/minimax-m3.1-flash'; }, /does not match odin-lab-review v1/);

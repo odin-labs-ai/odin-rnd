@@ -16,27 +16,13 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RECEIPT_PRS, SOURCES, deriveFrontier, deriveNina, deriveSelfVerify } from './lab-review.mjs';
+import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, SOURCES, deriveFrontier, deriveNina, deriveSelfVerify } from './lab-review.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/review/record.json';
 export const PIN_FILE = 'site/data/labs/review/record.sha256';
 // The commit that last wrote each source (its results PR's merge).
 export const SOURCE_COMMITS = { frontier: '9c379579e150113e61221cd07ec3cb901cd2efdf', nina: 'a4c01980201b7c6363566a79f33cbcca43c8377e', 'self-verify': '3d870da3537e1528e175227c45a66182ae6dd349' };
-// The receipt passage quoted from each pull request's description (verbatim; --verify checks it).
-export const RECEIPTS = {
-  84: ['2 recorded review rounds (FIX-NEEDED on 5962cca, SHIP on a3c3cda), 8 CI runs, landed 30fd41f'],
-  82: ['Review round 1 (FIX-NEEDED 5f3ca4ce) was fixed in f48471c; the recheck (07ead9cc) confirmed finding 3 fixed. Findings 1, 2 and 4 are fixed in ff02879: the directive, symbol and advice holds cover 1 and 2, and the narrowed provenance claim covers 4.'],
-  80: ['21 recorded review rounds (12 FIX-NEEDED, 9 SHIP; verdict + head sha + row id only, never review text)'],
-  62: ['Review row f6bf03aa (FIX-NEEDED) is addressed in the follow-up commit, item by item; see the commit message.'],
-  58: ['Review row c6c46629 (FIX-NEEDED) is addressed in 076f75e, item by item; see the commit message.'],
-  52: ["FIX-NEEDED — one-pager's Laya-vs-Jev claim was internally inconsistent (48/48 identical decisions alongside a 14.6pp accuracy gap).", 'real figures are 37/48 (77.1%) decision agreement, 81.3% vs 95.8% accuracy'],
-  45: ['Review: FIX-NEEDED on 215cfe2 (rnd-pr45-refute-1) → fixed in ca048cd; bounded recheck (rnd-pr45-refute-2) on ca048cd: F3–F5 FIXED, F1/F2 NOT-FIXED on remaining wording + this description → fixed in 2172aa4 and here.'],
-  27: ['Independent review: r1–r3 FIX-NEEDED fixed forward; r4 SHIP on the same patch'],
-};
-// Their descriptions name the review step in the landing plan only: no FIX-NEEDED of their own.
-export const PLAN_ONLY = [56, 54, 53, 50];
-
 const gitCli = (...args) => execFileSync('git', args, { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
 const pr = n => JSON.parse(execFileSync('gh', ['pr', 'view', String(n), '--repo', 'odin-labs-ai/odin-rnd', '--json', 'number,title,body,state,mergeCommit'], { encoding: 'utf8' }));
 const DERIVE = { frontier: deriveFrontier, nina: deriveNina, 'self-verify': deriveSelfVerify };
