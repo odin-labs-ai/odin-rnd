@@ -174,7 +174,7 @@ export const LEAKS = [
   [/\/Users\/|\/home\/|~\/\.|\b[A-Z]:\\/, 'a machine path'],
   [/localhost|\b127\.0\.0\.1\b|\b\d{1,3}(?:\.\d{1,3}){3}\b|\[::1\]|:\d{4,5}\b/, 'a local host, address or port'],
   [/\bghp_|\bgithub_pat_|\bgh[osu]_[A-Za-z0-9]|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-|\bBearer\s+\w/, 'a credential'],
-  [/odin-labs-ai\/(?!odin-rnd\b)[\w.-]/, 'another repository'],
+  [/odin-labs-ai\/(?!odin-rnd(?![\w.-]))[\w.-]/i, 'another repository'],
 ];
 
 /** Every commit and sha256 the record holds: the only hex tokens pageLeaks masks (a token must be a prefix of one). */
@@ -195,11 +195,17 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
   const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
   const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
+  // The markup as written, and with percent-encoded slashes decoded (a link's path).
   leak('', body);
-  // What a browser shows: inline tags (<wbr>, <span>, <code>, ...) dropped with nothing in their place, so text split
-  // by them reads as one; every other tag a line break; character references decoded (numeric ones too, so "&#47;" is
-  // a slash), &amp; last, so an escaped reference is never decoded twice. The shown text goes through LEAKS as well.
-  const text = decode(body.replace(INLINE_TAGS, '').replace(/<[^>]+>/g, '\n'));
+  leak(' (percent-decoded)', body.replace(/%2f/gi, '/'));
+  // What a browser shows, character references decoded (numeric ones too, so "&#47;" is a slash; &amp; last, so an
+  // escaped reference is never decoded twice), screened twice more through LEAKS: once with every tag dropped and
+  // nothing in its place, so text split by any tag at all (<wbr>, <label>, a made-up one) reads as one; and once with
+  // block tags as line breaks. A leak in any of the three refuses the page.
+  leak(' (as shown, every tag dropped)', decode(body.replace(/<[^>]+>/g, '')));
+  // The lines a reader sees: a block tag ends one; any other tag (inline, or one this list does not know) joins the
+  // text on either side.
+  const text = decode(body.replace(BLOCK_TAGS, '\n').replace(/<[^>]+>/g, ''));
   leak(' (as shown)', text.replace(/\n+/g, ' '));
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
@@ -216,8 +222,8 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   return problems;
 }
 
-// Tags a browser lays out inline: removing one joins the text on either side, as the reader sees it.
-const INLINE_TAGS = /<\/?(?:a|abbr|b|bdi|bdo|cite|code|data|dfn|em|i|kbd|mark|q|s|samp|small|span|strong|sub|sup|time|u|var|wbr)\b[^>]*>/gi;
+// Tags that end a line of text as a reader sees it. Any other tag is taken as inline: dropped, joining its neighbours.
+const BLOCK_TAGS = /<\/?(?:address|article|aside|blockquote|br|caption|dd|desc|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|img|li|main|nav|ol|option|p|pre|section|summary|svg|table|tbody|td|text|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
 
 /** Character references decoded as a browser decodes them: numeric (decimal, hex) and the few named ones; &amp; last. */
 export function decode(text) {

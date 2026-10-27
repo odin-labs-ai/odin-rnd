@@ -162,10 +162,12 @@ test('the leak screen has a failing negative for every class it guards', () => {
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${kit.escape(plant)}</p>` }), e => reason.test(e.message), `${name} on the page: ${plant}`);
   }
   // Encoded on the page, as a browser would show it: still caught.
-  for (const [encoded, reason] of [['odin-labs-ai&#47;some-private-repo', /another repository \(as shown\)/], ['odin-labs-ai&#x2f;x', /another repository/], ['odin-labs-ai&#47;<wbr>some-private-repo', /another repository \(as shown\)/], ['<span>/Us</span><span>ers/someone</span>', /machine path/], ['&#47;Users&#47;someone', /machine path/], ['local&#104;ost', /local host/], ['&#8364;40', /price or currency/]]) {
+  for (const [encoded, reason] of [['odin-labs-ai&#47;some-private-repo', /another repository \(as shown\)/], ['odin-labs-ai&#x2f;x', /another repository/], ['odin-labs-ai&#47;<wbr>some-private-repo', /another repository \(as shown\)/], ['<span>/Us</span><span>ers/someone</span>', /machine path/], ['odin-labs-ai&#47;<label>some-private-repo</label>', /another repository/], ['odin-labs-ai/<x-made-up>some-private-repo</x-made-up>', /another repository/], ['local<output>host</output>', /local host/], ['<p>odin-labs-ai/</p><p>some-private-repo</p>', /another repository/], ['odin-labs-ai/odin-rnd-private', /another repository/], ['Odin-Labs-AI/secret', /another repository/], ['<a href="https://github.com/odin-labs-ai%2Fsecret">x</a>', /another repository/], ['&#47;Users&#47;someone', /machine path/], ['local&#104;ost', /local host/], ['&#8364;40', /price or currency/]]) {
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${encoded}</p>` }), e => reason.test(e.message), encoded);
   }
   assert.equal(decode('a&#47;b&#x2F;c&amp;#47;'), 'a/b/c&#47;', 'decoded once, &amp; last');
+  // This lab's own repository is not another repository.
+  assert.deepEqual(pageLeaks('<main><p><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/README.md">odin-labs-ai/odin-rnd</a></p></main>').filter(p => /another repository/.test(p)), []);
   // A lane-only sha is the sixth class: held above, by the record contract and the page screen.
   assert.doesNotThrow(() => buildFixture(fixture()), 'the clean fixture still builds');
 });
