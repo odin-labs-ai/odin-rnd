@@ -7,10 +7,11 @@ import * as kit from './lab-kit.mjs';
 import * as engine from './lab-engine-history.mjs';
 import * as rogue from './lab-rogue.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { renderLabs } from './labs.mjs';
 
 // The lab kit (scripts/lab-kit.mjs). Lab 01's engine history and Lab 05 are built on it, so their own tests hold the
 // refactor; these hold the kit itself, and give every class the leak screen guards a planted value that fails a build.
-const { box, BOX_LABELS, cite, instantProblems, pageLeaks, parsePin, pinProblems, readPinned, realInstant, recordHashes, screenRecord, sha256, sidecarPinProblems, vendoredProblems } = kit;
+const { box, BOX_LABELS, cite, decode, instantProblems, onMainCommits, pageLeaks, parsePin, pinProblems, readPinned, realInstant, recordHashes, screenRecord, sha256, sidecarPinProblems, vendoredProblems } = kit;
 const MAIN = 'a1b2c3d4'.repeat(5), ON_MAIN = 'b2c3d4e5'.repeat(5), LANE = 'c3d4e5f6'.repeat(5);
 const NOW = new Date('2026-10-27T12:00:00Z');
 
@@ -38,7 +39,7 @@ function buildFixture(record, { page = render } = {}) {
     const r = readPinned({ root, file: FILE, pin: b => sidecarPinProblems(root, b, { pinFile: PIN, file: FILE, vendor: 'the vendor script' }),
       check: rec => [...vendoredProblems(rec.vendored, { where: FILE, now: NOW }), ...screenRecord(rec, FILE)], refused: 'fixture refused' });
     const html = page(r);
-    const leaks = pageLeaks(html, recordHashes(r));
+    const leaks = pageLeaks(html, recordHashes(r), { onMain: onMainCommits(r.vendored.mainCheck) });
     if (leaks.length) throw new Error(`fixture page fails the screen:\n  ${leaks.join('\n  ')}`);
     return html;
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -89,6 +90,13 @@ test('the build is fail-closed: an absent record renders nothing, a broken one t
     assert.throws(read, e => /^refused:/.test(e.message) && /record\.sha256: missing/.test(e.message) && /not JSON/.test(e.message) && !/a check/.test(e.message));
     writeFileSync(join(root, FILE), '{}');
     assert.throws(read, e => /record\.sha256: missing/.test(e.message) && /a check/.test(e.message), 'the pin and the check are both reported');
+    // A present record that parses to something other than an object is refused, never taken for an absent one, even
+    // when it is correctly pinned.
+    for (const value of ['null', '0', '[]', '"x"']) {
+      writeFileSync(join(root, FILE), value);
+      writeFileSync(join(root, PIN), `${sha256(value)}  record.json\n`);
+      assert.throws(read, e => /not a JSON object/.test(e.message), value);
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
   assert.match(buildFixture(fixture()), /Every command was refused\./, 'the clean fixture builds');
 });
@@ -109,11 +117,28 @@ test('a lane-only commit is never cited: the record contract and the page screen
   // On the page: a hash the record does not hold is refused; one it holds is not.
   assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>see commit <code>${LANE.slice(0, 8)}</code></p>` }), /a hash the record does not hold \(c3d4e5f6\)/);
   assert.doesNotThrow(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>file <code>${'d'.repeat(12)}</code></p>` }));
+  // A lane-only commit hidden in another field of the record is still never cited: cite() refuses it, and a cite
+  // sentence written by hand is refused by the page screen.
+  const hidden = { ...fixture(), note: LANE };
+  assert.throws(() => buildFixture(hidden, { page: rec => `${render(rec)}<p>${cite({ commit: LANE }, rec.vendored.mainCheck)}</p>` }), /a commit only on a lane is never cited/);
+  const byHand = `${render(hidden)}<p>Private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, checked as part of the private main <code>${MAIN.slice(0, 8)}</code></p>`;
+  assert.throws(() => buildFixture(hidden, { page: () => byHand }), /a cited commit not shown as part of the private main \(c3d4e5f6\)/);
+  assert.throws(() => cite({ commit: LANE }, { main: MAIN, checked: '2026-10-27', commits: [ON_MAIN] }), /never cited/);
+  // On Lab 05's real page the cite check is live: with no commit allowed, every cite sentence is refused.
+  const lab05 = renderLabs()[rogue.ROGUE_TEMPLATE];
+  const lab05Record = rogue.readRogue();
+  assert.ok(pageLeaks(lab05, recordHashes(lab05Record), { onMain: [] }).filter(p => /a cited commit not shown/.test(p)).length >= 4);
   const bad = fixture();
   bad.vendored.mainCheck.commits = ['xyz'];
   assert.match(vendoredProblems(bad.vendored, { where: FILE, now: NOW }).join(), /mainCheck\/commits: not a list of 40-hex commits/);
   assert.match(vendoredProblems({ ...fixture().vendored, files: [] }, { where: FILE, now: NOW }).join(), /each source file once/);
   assert.match(vendoredProblems({ ...fixture().vendored, cites: [] }, { where: FILE, now: NOW }).join(), /no cited commit/);
+  // Provenance said in words: where it was read, how main was checked, what each cite and file is, each file's role.
+  const omit = edit => { const r = fixture(); edit(r.vendored); return vendoredProblems(r.vendored, { where: FILE, now: NOW }).join('\n'); };
+  assert.match(omit(v => { delete v.from; }), /vendored\/from: missing/);
+  assert.match(omit(v => { v.mainCheck.how = ' '; }), /mainCheck\/how: missing/);
+  assert.match(omit(v => { delete v.cites[0].what; }), /cites\/0\/what: missing/);
+  assert.match(omit(v => { v.files = [{ sha256: 'd'.repeat(64) }]; }), /files\/0\/role: missing[\s\S]*files\/0\/what: missing/);
 });
 
 // The leak screen, class by class: each planted value fails the fixture's build, in the record and on the page. The
@@ -136,6 +161,11 @@ test('the leak screen has a failing negative for every class it guards', () => {
     // On the page only (the record is clean).
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${kit.escape(plant)}</p>` }), e => reason.test(e.message), `${name} on the page: ${plant}`);
   }
+  // Encoded on the page, as a browser would show it: still caught.
+  for (const [encoded, reason] of [['odin-labs-ai&#47;some-private-repo', /another repository \(as shown\)/], ['odin-labs-ai&#x2f;x', /another repository/], ['&#47;Users&#47;someone', /machine path/], ['local&#104;ost', /local host/], ['&#8364;40', /price or currency/]]) {
+    assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${encoded}</p>` }), e => reason.test(e.message), encoded);
+  }
+  assert.equal(decode('a&#47;b&#x2F;c&amp;#47;'), 'a/b/c&#47;', 'decoded once, &amp; last');
   // A lane-only sha is the sixth class: held above, by the record contract and the page screen.
   assert.doesNotThrow(() => buildFixture(fixture()), 'the clean fixture still builds');
 });

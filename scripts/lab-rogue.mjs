@@ -150,7 +150,9 @@ export function renderRogue(root = 'site', { now = new Date() } = {}) {
     html = html.replace(marker, () => value);
   }
   if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${ROGUE_TEMPLATE}: unresolved content marker`);
-  const leaks = pageLeaks(html, recordHashes(record));
+  // Every cited commit is the record's own commit or one of its cites, which the vendor checked against main.
+  const v = record.vendored;
+  const leaks = pageLeaks(html, recordHashes(record), { onMain: [v.commit, v.mainCheck.main, ...v.cites.map(c => c.commit)] });
   if (leaks.length) throw new Error(`${ROGUE_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [ROGUE_TEMPLATE]: html } };
 }

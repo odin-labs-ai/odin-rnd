@@ -45,8 +45,15 @@ export function instantProblems(iso, at, now = new Date()) {
 }
 
 // Every private commit is cited with this sentence: by hash, with the private main head it was checked to be part of,
-// and when; the page cannot check it, and says so.
-export const cite = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
+// and when; the page cannot check it, and says so. When the record lists the commits shown to be part of main
+// (mainCheck.commits, the kit record contract), a commit that is neither one of them nor the main head itself is never
+// cited: it throws.
+export const onMainCommits = mainCheck => [mainCheck.main, ...(Array.isArray(mainCheck.commits) ? mainCheck.commits : [])];
+export const cite = (p, mainCheck) => {
+  if (Array.isArray(mainCheck.commits) && !onMainCommits(mainCheck).includes(p.commit)) throw new Error(`cite: ${String(p.commit).slice(0, 8)} is not shown as part of the private main ${mainCheck.main.slice(0, 8)}; a commit only on a lane is never cited`);
+  return citeText(p, mainCheck);
+};
+const citeText = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
 
 /**
  * One pin, from the bytes it is committed as: a sha256sum line ("<hex>  <file name>\n") or a JSON pin (an object, or
@@ -98,9 +105,12 @@ export function readPinned({ root = 'site', file, pin, check, refused }) {
   if (!existsSync(path)) return null;
   const bytes = readFileSync(path);
   const problems = [...pin(bytes)];
-  let record = null;
-  try { record = JSON.parse(bytes); } catch { if (!problems.some(p => p === `${file}: not JSON`)) problems.push(`${file}: not JSON`); }
-  if (record) problems.push(...check(record));
+  let record = null, parsed = false;
+  try { record = JSON.parse(bytes); parsed = true; } catch { if (!problems.some(p => p === `${file}: not JSON`)) problems.push(`${file}: not JSON`); }
+  // A present record is always checked: a parsed value that is not an object (null, a number, a list) is refused here,
+  // never taken for an absent record.
+  if (parsed && (record === null || typeof record !== 'object' || Array.isArray(record))) problems.push(`${file}: not a JSON object`);
+  else if (parsed) problems.push(...check(record));
   if (problems.length) throw new Error(`${refused}:\n  ${problems.join('\n  ')}`);
   return record;
 }
@@ -132,6 +142,9 @@ export function vendoredProblems(v, { where, now = new Date() }) {
   if (!v || typeof v !== 'object') return [`${where}#/vendored: missing`];
   const problems = [];
   const mc = v.mainCheck ?? {};
+  const said = (value, at) => { if (typeof value !== 'string' || !value.trim()) problems.push(`${where}#${at}: missing (it must say it in words)`); };
+  said(v.from, '/vendored/from');
+  said(mc.how, '/vendored/mainCheck/how');
   if (!HEX40.test(mc.main ?? '')) problems.push(`${where}#/vendored/mainCheck/main: not a 40-hex commit`);
   if (!Array.isArray(mc.commits) || mc.commits.some(c => !HEX40.test(c))) problems.push(`${where}#/vendored/mainCheck/commits: not a list of 40-hex commits`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(mc.checked ?? '')) problems.push(`${where}#/vendored/mainCheck/checked: not a date`);
@@ -139,6 +152,7 @@ export function vendoredProblems(v, { where, now = new Date() }) {
   const onMain = new Set([mc.main, ...(Array.isArray(mc.commits) ? mc.commits : [])]);
   for (const [i, c] of (Array.isArray(v.cites) ? v.cites : []).entries()) {
     const at = `${where}#/vendored/cites/${i}`;
+    said(c.what, `/vendored/cites/${i}/what`);
     if (!HEX40.test(c.commit ?? '')) problems.push(`${at}/commit: not a 40-hex commit`);
     else if (!onMain.has(c.commit)) problems.push(`${at}/commit: ${c.commit.slice(0, 8)} is not shown as part of the private main ${String(mc.main).slice(0, 8)}; a commit only on a lane is never cited`);
     problems.push(...instantProblems(c.at, `${at}/at`, now));
@@ -146,7 +160,11 @@ export function vendoredProblems(v, { where, now = new Date() }) {
   if (!Array.isArray(v.cites) || !v.cites.length) problems.push(`${where}#/vendored/cites: no cited commit`);
   const roles = (Array.isArray(v.files) ? v.files : []).map(f => f.role);
   if (!roles.length || new Set(roles).size !== roles.length) problems.push(`${where}#/vendored/files: each source file once, by role`);
-  for (const [i, f] of (Array.isArray(v.files) ? v.files : []).entries()) if (!HEX64.test(f.sha256 ?? '')) problems.push(`${where}#/vendored/files/${i}/sha256: not a sha256`);
+  for (const [i, f] of (Array.isArray(v.files) ? v.files : []).entries()) {
+    said(f.role, `/vendored/files/${i}/role`);
+    said(f.what, `/vendored/files/${i}/what`);
+    if (!HEX64.test(f.sha256 ?? '')) problems.push(`${where}#/vendored/files/${i}/sha256: not a sha256`);
+  }
   return problems;
 }
 
@@ -173,12 +191,17 @@ export function recordHashes(record) {
  * looks like a hash (digits and letters a-f) is refused outright: it is a commit or digest the record does not hold,
  * such as one only on a lane.
  */
-export function pageLeaks(html, known = []) {
+export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
   const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
-  for (const [pattern, reason] of LEAKS) { const m = pattern.exec(body); if (m) problems.push(`${reason}: ${JSON.stringify(body.slice(Math.max(0, m.index - 40), m.index + 40))}`); }
-  // &amp; is decoded last, so an escaped entity is never decoded twice.
-  const text = body.replace(/<[^>]+>/g, '\n').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&');
+  const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
+  leak('', body);
+  // What a browser shows: tags dropped, character references decoded (numeric ones too, so "&#47;" is a slash), and
+  // &amp; last, so an escaped reference is never decoded twice. The shown text goes through LEAKS as well.
+  const text = decode(body.replace(/<[^>]+>/g, '\n'));
+  leak(' (as shown)', text.replace(/\n+/g, ' '));
+  // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
+  if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
   for (const line of text.split('\n').map(t => t.trim()).filter(Boolean)) {
     const unknown = [];
     const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => {
@@ -190,6 +213,13 @@ export function pageLeaks(html, known = []) {
     problems.push(...screenHits(masked).map(hit => `${hit.reason}: ${JSON.stringify(line.slice(0, 100))}`));
   }
   return problems;
+}
+
+/** Character references decoded as a browser decodes them: numeric (decimal, hex) and the few named ones; &amp; last. */
+export function decode(text) {
+  const char = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '\ufffd');
+  return text.replace(/&#[xX]([0-9a-fA-F]+);?/g, (_, h) => char(parseInt(h, 16))).replace(/&#(\d+);?/g, (_, d) => char(Number(d)))
+    .replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll('&sol;', '/').replaceAll('&colon;', ':').replaceAll('&period;', '.').replaceAll('&amp;', '&');
 }
 
 // The marked boxes. What is staged, an estimate, a summary that cannot be reproduced here, a fixture we wrote, or a
