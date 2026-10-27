@@ -138,3 +138,21 @@
 .engine-when{font-size:13px;color:var(--steel)}
 .engine-step{stroke:var(--brand);stroke-width:2}
 .engine-once{margin-top:8px;font-size:13px;color:var(--steel);line-height:1.5}
+/* Lab 05, can an agent go rogue (scripts/lab-rogue.mjs). */
+.rogue-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.rogue-list{padding-left:1.2em;line-height:1.65}
+.rogue-list li+li{margin-top:8px}
+.rogue-list code,.rogue-guards dd,.rogue-act code{overflow-wrap:anywhere}
+.rogue-hashes code{font-size:12px;word-break:break-all}
+.rogue-attack{margin:20px 0;padding:18px 22px;border:2px dashed var(--brand);border-radius:10px;font-family:var(--mono,monospace);font-size:14px;line-height:1.6}
+.rogue-attack .technical{font-family:inherit;color:var(--steel);margin-bottom:8px;letter-spacing:.06em}
+.rogue-estimate{margin-top:24px;border-style:dashed}
+.rogue-estimate .technical{color:var(--steel);margin-bottom:8px}
+.rogue-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:18px}
+.rogue-act .technical{color:var(--steel);margin-bottom:8px}
+.rogue-guards{margin:12px 0 0;font-size:14px;line-height:1.5}
+.rogue-guards div+div{margin-top:8px}
+.rogue-guards dt{font-weight:600}
+.rogue-guards dd{margin:2px 0 0;color:var(--steel)}
+.rogue-outcome{margin-top:12px;font-weight:600}
+@media(max-width:760px){.rogue-split,.rogue-acts{grid-template-columns:1fr}}

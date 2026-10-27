@@ -5,6 +5,7 @@
 //   labs/agent-space/index.html   the lab page, from site/labs/agent-space/index.html (<!--LAB_*--> markers)
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
+//   labs/rogue/index.html         Lab 05's page, rendered by scripts/lab-rogue.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -30,6 +31,7 @@ import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sou
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
+import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -198,6 +200,10 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   if (resolve(root) === REPO_SITE && !existsSync(join(root, PROOFS_PAGE))) throw new Error(`${PROOFS_PAGE}: the proof-card explorer is required on the published site`);
   const proofs = existsSync(join(root, PROOFS_PAGE));
   const bench = requireBench || existsSync(join(root, BENCH_NOTES)) ? renderBench(root) : { pages: {} };
+  // Lab 05's page: required on the published site, as Lab 02's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, ROGUE_RECORD))) throw new Error(`Lab 05 is required on the published site: ${ROGUE_RECORD} is missing`);
+  // Its dates are checked against the build's own clock (as Lab 01's engine history is), not a caller's `now`.
+  const rogue = renderRogue(root);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -239,5 +245,6 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
+    ...rogue.pages,
   };
 }
