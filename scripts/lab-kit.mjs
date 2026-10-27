@@ -196,9 +196,10 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
   const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
   leak('', body);
-  // What a browser shows: tags dropped, character references decoded (numeric ones too, so "&#47;" is a slash), and
-  // &amp; last, so an escaped reference is never decoded twice. The shown text goes through LEAKS as well.
-  const text = decode(body.replace(/<[^>]+>/g, '\n'));
+  // What a browser shows: inline tags (<wbr>, <span>, <code>, ...) dropped with nothing in their place, so text split
+  // by them reads as one; every other tag a line break; character references decoded (numeric ones too, so "&#47;" is
+  // a slash), &amp; last, so an escaped reference is never decoded twice. The shown text goes through LEAKS as well.
+  const text = decode(body.replace(INLINE_TAGS, '').replace(/<[^>]+>/g, '\n'));
   leak(' (as shown)', text.replace(/\n+/g, ' '));
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
@@ -214,6 +215,9 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   }
   return problems;
 }
+
+// Tags a browser lays out inline: removing one joins the text on either side, as the reader sees it.
+const INLINE_TAGS = /<\/?(?:a|abbr|b|bdi|bdo|cite|code|data|dfn|em|i|kbd|mark|q|s|samp|small|span|strong|sub|sup|time|u|var|wbr)\b[^>]*>/gi;
 
 /** Character references decoded as a browser decodes them: numeric (decimal, hex) and the few named ones; &amp; last. */
 export function decode(text) {

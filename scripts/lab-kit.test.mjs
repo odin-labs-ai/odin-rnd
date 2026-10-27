@@ -162,7 +162,7 @@ test('the leak screen has a failing negative for every class it guards', () => {
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${kit.escape(plant)}</p>` }), e => reason.test(e.message), `${name} on the page: ${plant}`);
   }
   // Encoded on the page, as a browser would show it: still caught.
-  for (const [encoded, reason] of [['odin-labs-ai&#47;some-private-repo', /another repository \(as shown\)/], ['odin-labs-ai&#x2f;x', /another repository/], ['&#47;Users&#47;someone', /machine path/], ['local&#104;ost', /local host/], ['&#8364;40', /price or currency/]]) {
+  for (const [encoded, reason] of [['odin-labs-ai&#47;some-private-repo', /another repository \(as shown\)/], ['odin-labs-ai&#x2f;x', /another repository/], ['odin-labs-ai&#47;<wbr>some-private-repo', /another repository \(as shown\)/], ['<span>/Us</span><span>ers/someone</span>', /machine path/], ['&#47;Users&#47;someone', /machine path/], ['local&#104;ost', /local host/], ['&#8364;40', /price or currency/]]) {
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${encoded}</p>` }), e => reason.test(e.message), encoded);
   }
   assert.equal(decode('a&#47;b&#x2F;c&amp;#47;'), 'a/b/c&#47;', 'decoded once, &amp; last');
