@@ -193,34 +193,41 @@ export function recordHashes(record) {
  */
 export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
-  // A script, a style or a comment is not shown: dropped with nothing in its place, so the text on either side reads
-  // as one (a comment first, whole, so a ">" inside it cannot leave text behind).
-  const body = html.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
-  // A character reference this screen does not decode is refused, never read as something else (fail closed): only
-  // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
-  for (const m of stripTags(body, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) problems.push(`a character reference this screen does not decode (${m[0]})`);
-  const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
-  // The markup as written, and with percent-encoded slashes decoded (a link's path).
-  leak('', body);
-  leak(' (percent-decoded)', body.replace(/%2f/gi, '/'));
-  // What a browser shows, character references decoded (numeric ones too, so "&#47;" is a slash; &amp; last, so an
-  // escaped reference is never decoded twice), screened twice more through LEAKS: once with every tag dropped and
-  // nothing in its place, so text split by any tag at all (<wbr>, <label>, a made-up one) reads as one; and once with
-  // block tags as line breaks. A leak in any of the three refuses the page.
-  const shown = decode(stripTags(body, ''));
-  leak(' (as shown, every tag dropped)', shown);
-  // As a reader sees it: invisible format and combining characters removed and look-alike letters from other scripts
-  // folded to the Latin ones they imitate (the publisher's fold), so "local\u200bhost" or a Cyrillic "o" is caught too.
-  leak(' (as shown, folded)', fold(shown));
-  // Text direction controls reorder what is shown (a reversed word reads forwards), so none is allowed at all.
-  if (/[\u202a-\u202e\u2066-\u2069]/.test(shown)) problems.push('a text direction control character');
-  // The lines a reader sees: a block tag ends one; any other tag (inline, or one this list does not know) joins the
-  // text on either side.
-  const text = decode(stripTags(body.replace(BLOCK_TAGS, '\n'), ''));
-  leak(' (as shown)', text.replace(/\n+/g, ' '));
+  // Two sources, and every view below is taken of BOTH, so removing something can only ever add a view, never hide
+  // text: the markup exactly as written, and the markup with what a browser does not show (scripts, styles, comments)
+  // dropped with nothing in its place, so the text on either side reads as one. The removal repeats until nothing
+  // changes, so a block rebuilt by removing an inner one is removed too.
+  let hidden = html, before;
+  do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, ''); } while (hidden !== before);
+  const sources = [['', html], [', hidden parts dropped', hidden]];
+  const seen = new Set();
+  const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); const p = m && `${reason}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`; if (p && !seen.has(p)) { seen.add(p); problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } } };
+  for (const [label, src] of sources) {
+    // A character reference this screen does not decode is refused, never read as something else (fail closed): only
+    // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
+    for (const m of stripTags(src, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) { const p = `a character reference this screen does not decode (${m[0]})`; if (!seen.has(p)) { seen.add(p); problems.push(p); } }
+    // The markup, and with percent-encoded slashes decoded (a link's path).
+    leak(label && ` (markup${label})`, src);
+    leak(` (percent-decoded${label})`, src.replace(/%2f/gi, '/'));
+    // What a browser shows, character references decoded (numeric ones too, so "&#47;" is a slash; &amp; last, so an
+    // escaped reference is never decoded twice): with every tag dropped and nothing in its place, so text split by any
+    // tag at all reads as one; then folded as a reader sees it (invisible format and combining characters removed,
+    // look-alike letters folded to the Latin ones they imitate: the publisher's fold); and with block tags as breaks.
+    const shown = decode(stripTags(src, ''));
+    leak(` (as shown, every tag dropped${label})`, shown);
+    leak(` (as shown, folded${label})`, fold(shown));
+    // Text direction controls reorder what is shown (a reversed word reads forwards), so none is allowed at all.
+    if (/[\u202a-\u202e\u2066-\u2069]/.test(shown) && !seen.has('bidi')) { seen.add('bidi'); problems.push('a text direction control character'); }
+    leak(` (as shown${label})`, decode(stripTags(src.replace(BLOCK_TAGS, '\n'), '')).replace(/\n+/g, ' '));
+  }
+  // The lines a reader sees, for the publisher's screen and the hash rules: a block tag ends one; any other tag (inline,
+  // or one this list does not know) joins the text on either side. Taken of both sources too, each line once.
+  const lineOf = src => decode(stripTags(src.replace(BLOCK_TAGS, '\n'), ''));
+  const text = lineOf(hidden);
+  const lines = [...new Set([text, lineOf(html)].flatMap(t => t.split('\n').map(l => l.trim()).filter(Boolean)))];
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
-  for (const line of text.split('\n').map(t => t.trim()).filter(Boolean)) {
+  for (const line of lines) {
     const unknown = [];
     const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => {
       if (known.some(h => h.startsWith(token))) return 'HASH';
@@ -236,7 +243,8 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
 /** Every tag replaced by `by`, again and again until none is left (a tag rebuilt by removing an inner one is removed too). */
 export function stripTags(html, by = '') {
   let out = html, prev;
-  do { prev = out; out = out.replace(/<[^<>]*>/g, by); } while (out !== prev);
+  // A tag opens only with a letter, "/", "!" or "?" after the "<", as in HTML: "a < b > c" is text, and is kept.
+  do { prev = out; out = out.replace(/<[A-Za-z/!?][^<>]*>/g, by); } while (out !== prev);
   return out;
 }
 
