@@ -193,7 +193,11 @@ export function recordHashes(record) {
  */
 export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
-  const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
+  // A script or style is not shown: dropped with nothing in its place, so the text on either side reads as one.
+  const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
+  // A character reference this screen does not decode is refused, never read as something else (fail closed): only
+  // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
+  for (const m of stripTags(body, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(m[1] in NAMED_REFS && m[0].endsWith(';'))) problems.push(`a character reference this screen does not decode (${m[0]})`);
   const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
   // The markup as written, and with percent-encoded slashes decoded (a link's path).
   leak('', body);
@@ -232,11 +236,15 @@ export function stripTags(html, by = '') {
 // Tags that end a line of text as a reader sees it. Any other tag is taken as inline: dropped, joining its neighbours.
 const BLOCK_TAGS = /<\/?(?:address|article|aside|blockquote|br|caption|dd|desc|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|img|li|main|nav|ol|option|p|pre|section|summary|svg|table|tbody|td|text|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
 
-/** Character references decoded as a browser decodes them: numeric (decimal, hex) and the few named ones; &amp; last. */
+// The named character references the screen decodes (pageLeaks refuses any other): what escape() writes, and a few
+// common ones. Adding one here is how a page may use it.
+export const NAMED_REFS = { lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0', middot: '\u00b7', mdash: '\u2014', ndash: '\u2013', rarr: '\u2192', hellip: '\u2026', amp: '&' };
+
+/** Character references decoded as a browser decodes them: numeric (decimal, hex) and NAMED_REFS, &amp; last. */
 export function decode(text) {
   const char = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '\ufffd');
   return text.replace(/&#[xX]([0-9a-fA-F]+);?/g, (_, h) => char(parseInt(h, 16))).replace(/&#(\d+);?/g, (_, d) => char(Number(d)))
-    .replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll('&sol;', '/').replaceAll('&colon;', ':').replaceAll('&period;', '.').replaceAll('&amp;', '&');
+    .replace(/&([A-Za-z][A-Za-z0-9]*);/g, (ref, name) => (name !== 'amp' && name in NAMED_REFS ? NAMED_REFS[name] : ref)).replaceAll('&amp;', '&');
 }
 
 // The marked boxes. What is staged, an estimate, a summary that cannot be reproduced here, a fixture we wrote, or a
