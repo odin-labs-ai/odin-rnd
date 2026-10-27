@@ -1,0 +1,15 @@
+{
+  "vectorsFileSha256": "0283d2715638dd9efe95a421d2b017ff08b88db95b01ae8f91f874c5b1084bf9",
+  "modelId": "MongoDB/voyage-4-nano-GGUF",
+  "weightSha256": "c6ed6cc898d50ae1a4492809affadc6c0d023f8ac05c07a37abe20c563152560",
+  "binarySha256": "bdb7b995d15d8cff860afb577f0fedd06cd8a23a685eac4c7e284a7cebe4b603",
+  "startedAt": "2026-10-25T20:34:16.406569+00:00",
+  "endedAt": "2026-10-25T20:34:26.962218+00:00",
+  "command": "python3 embed_fixture.py",
+  "inputs": 64,
+  "rawDimensions": 2048,
+  "retainedDimensions": 512,
+  "originalInferenceSha256": "ac25f2647c8cbc88e79b0c09476ff2516a4e33ea9565bbbcf51cb8f7119a179a",
+  "exportedInferenceSha256": "96d92a8156f92d7e05665b4282003ca8e238a65aa7a4de95805e2435e3adff78",
+  "exportTransformation": "JSON whitespace compacted only; decoded original inference record is identical. The recorded inference itself already declares normalization of response model identifiers to the official ID."
+}

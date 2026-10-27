@@ -1,0 +1,34 @@
+{
+  "schema": "mongodb-ai-context-evidence/1",
+  "date": "2026-10-25",
+  "webFiles": {
+    "attempts.json": "bb0fb1ea5d33613e3d7d38eb460a81a9b5d9aa3216d5663dd1c79d2953a2ac55",
+    "audit.json": "b74245ccb16f787bba047fd3361854ba21611119ed50d6234d2be672325aa091",
+    "database-result-251.json": "6e904d2cb944856cea1fc8cf3d751ef13127f109dd8cedc83d1ebf10778e2855",
+    "database-result-252.json": "b9c77a9c6528fee9487a3751d553aa2a55694356ab5487f663e3c3a873ebbc07",
+    "fixture.json": "3e72a161d54a98d79e51486016b72efb086865b03814e59e21cd1313d6a47a83",
+    "model-provenance.json": "e2e5c36ee242ada4990a41a29b276f980c33c7ab5f13cce74d930db28293c797",
+    "protocol.json": "e22350e82158b943a38e602523e6326b48cdefd5f16b053fc7a70b84080666a3",
+    "runtime-receipt.json": "ff0a70b79ab15469fbdc87d97a60822d95216f57a507e0b10b6098ebe1a6ae61",
+    "source-export.json": "4bac869f862eedb90f369978baee32d5cead13f75d0d666202e397aea8aecc13",
+    "summary.json": "335ce5324bcb770d6a6e9dcae0e9221bc1088a292583b406c6387e5a1d5b2ecd"
+  },
+  "sourceFiles": {
+    "Dockerfile": "ce05e7e769f948882d6f2bbf30356b8a8243da18d6984482014465e92a30ba19",
+    "README.md": "a4f48b3c613390c998ebc7c60c162c52a51f532b4c16791e6329a56c157230f1",
+    "audit.py": "492f3d5bcf0881d08d8686a8ed01997bc3981e6dbe0d2caf748faffa63d51755",
+    "database_probe.py": "0dcbacdd63e1117e2153989fed790f291c1324c4b1189033640f04ca4e80441d",
+    "embed_fixture.py": "3154c669b100a0d696f1a0ff5e6f363752231b39dc374b322f77e48b416ea775",
+    "fixture.json": "3e72a161d54a98d79e51486016b72efb086865b03814e59e21cd1313d6a47a83",
+    "hosted-workflow.yml": "7025d17cad0b97240f9276189a5eec9c45a974ad2603ca27f64b27290888b3e8",
+    "observations/model-result.json": "96d92a8156f92d7e05665b4282003ca8e238a65aa7a4de95805e2435e3adff78",
+    "payload-manifest.json": "2aa195f0d32b743ef949a49dc382ca0fc12408003f325f1ddadd1a16554e596a",
+    "prepare.py": "107928022be75d18aa631a73df4f91f252d17f29d8b0b075e060f5075516b373",
+    "protocol.json": "e22350e82158b943a38e602523e6326b48cdefd5f16b053fc7a70b84080666a3",
+    "requirements.lock": "de6de8b75ffba4101efa6d37af6286ab42e1b8940e50370ddb9eedee53fa553a",
+    "run_hosted.py": "f4635aa6329540d65335e3c5e17f479b75ec8a32f9921cc3227622d0ac790f11",
+    "score_fixture.py": "f986f828fd6fb9dec4c3277918e0d336176790e2e572d579d72a0da683f009ae",
+    "vectors.json": "0283d2715638dd9efe95a421d2b017ff08b88db95b01ae8f91f874c5b1084bf9"
+  },
+  "scope": "Reviewed synthetic technical evidence only; exact scientific observations, explicit administrative projection and source export lineage."
+}

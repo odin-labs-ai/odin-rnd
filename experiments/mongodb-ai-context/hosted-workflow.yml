@@ -1,0 +1,59 @@
+name: MongoDB AI context correctness probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mongodb-ai-context-probe.yml'
+      - 'research/mongodb-ai-context-20261025/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mongodb-ai-context-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PAYLOAD_MANIFEST_SHA256: 2aa195f0d32b743ef949a49dc382ca0fc12408003f325f1ddadd1a16554e596a
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Run the frozen synthetic fixture twice on owned disposable databases
+        timeout-minutes: 25
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mongodb-ai-context-results"
+          python3 research/mongodb-ai-context-20261025/run_hosted.py 2>&1 | tee "$RUNNER_TEMP/mongodb-ai-context-results/orchestrator.log"
+      - name: Remove only this disposable job's labelled resources
+        if: always()
+        shell: bash
+        run: |
+          label="odin.mongo-ai-context=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          containers=$(docker ps -aq --filter "label=$label")
+          while IFS= read -r container; do
+            [ -z "$container" ] || docker rm -fv "$container"
+          done <<< "$containers"
+          networks=$(docker network ls -q --filter "label=$label")
+          while IFS= read -r network; do
+            [ -z "$network" ] || docker network rm "$network"
+          done <<< "$networks"
+          images=$(docker image ls -q --filter "label=$label")
+          while IFS= read -r image; do
+            [ -z "$image" ] || docker image rm "$image"
+          done <<< "$images"
+      - name: Retain raw results, partial logs and exact runtime evidence privately
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mongodb-ai-context-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mongodb-ai-context-results/
+          retention-days: 30
+          if-no-files-found: error

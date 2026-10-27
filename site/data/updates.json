@@ -64,6 +64,16 @@
       "date": "2026-10-25"
     },
     {
+      "key": "note-mongodb-ai-context",
+      "experiment": null,
+      "title": "When a cached yes answers the opposite question",
+      "kind": "Field note",
+      "text": "We changed the rules behind saved AI answers and reworded questions so yes meant the opposite. Versions kept old answers out, but similar wording still caused wrong replies.",
+      "href": "journal/mongodb-ai-context.html",
+      "source": "journal/mongodb-ai-context.html",
+      "date": "2026-10-25"
+    },
+    {
       "key": "note-mongodb-ai-ecosystem",
       "experiment": null,
       "title": "MongoDB beyond JSON: agents, memory and models",
