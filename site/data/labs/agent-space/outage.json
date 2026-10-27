@@ -1,0 +1,133 @@
+{
+ "format": "odin-lab-outage",
+ "version": 1,
+ "lab": "agent-space",
+ "number": 2,
+ "title": "The agents caught a real outage",
+ "date": "2026-10-27",
+ "line": "A visitor asks Odin to check the agents. Then one agent's server is stopped for real, and Odin finds it, says what is wrong, and confirms the fix.",
+ "film": {
+  "src": "assets/labs/agent-space/outage/dispatch-2-outage.webm",
+  "poster": "assets/labs/agent-space/outage/dispatch-2-outage-poster.png",
+  "mime": "video/webm;codecs=vp9",
+  "bytes": 1511547,
+  "seconds": 51,
+  "sha256": {
+   "src": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
+   "poster": "f6532a30fed7adc63681dd663249ce40d843fdb5e04d9dbd445040b0817b8fa4"
+  },
+  "original": {
+   "sha256": "bcd0cd339e715eb1525b276a83820f94ebd6341437c4313ee5fbfac7bc2c5ceb",
+   "bytes": 1511106,
+   "note": "The recording, rewrapped without re-encoding so its header carries its length: the same 378 frames, the picture unchanged."
+  }
+ },
+ "source": {
+  "commit": "d02ee74b96a997095950185a20afa05a908a2ff0",
+  "onMain": false,
+  "baseMain": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+  "filmedOn": "2026-10-27",
+  "machine": "a second machine (the Mac)",
+  "changes": [
+   "the port check works on macOS",
+   "the outage card names the agent instead of its address"
+  ]
+ },
+ "staged": "The outage was staged on purpose, on a throwaway copy of the space started only for this film. The failure itself was real: the agent's server process was stopped, by its own process id, and nothing answered until it was started again.",
+ "steps": [
+  {
+   "ask": "Odin, check the agents",
+   "verdict": "pass",
+   "evidence": "ia-4e58a3",
+   "said": "Good news: all 4 agents answered: Atlas (scripted), Pulse (http), Vega (scripted), Juno (scripted)."
+  },
+  {
+   "event": "Pulse's server process is stopped by its own process id: a real outage, not a mock."
+  },
+  {
+   "ask": "Odin, check the agents",
+   "verdict": "fail",
+   "evidence": "ia-709326",
+   "said": "I found a problem: 3 of 4 agents answered; Pulse did not answer (its http brain failed: connection refused (nothing listens there))."
+  },
+  {
+   "event": "Pulse's server is started again with the space's own start command, for that agent only."
+  },
+  {
+   "ask": "Odin, check agent Pulse",
+   "verdict": "pass",
+   "evidence": "ia-d7d01a",
+   "said": "Good news: it answered: Pulse (http)."
+  },
+  {
+   "ask": "Odin, check the paths",
+   "verdict": "pass",
+   "evidence": "ip-7318d7",
+   "said": "Good news: 4 of 4 places can be reached on foot from the entrance."
+  }
+ ],
+ "screening": {
+  "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human; every frame at 2 per second, and the three poster frames, also read by text recognition",
+  "at": "2026-10-27",
+  "srcSha256": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
+  "frames": [
+   {
+    "t": 0,
+    "rgb24Sha256": "eab9d32a25fcef2107d33f7039fadbca785ab3622cfa308962a09f05a47defb0"
+   },
+   {
+    "t": 5,
+    "rgb24Sha256": "16cbe0fa856f14899cabd35176c646976fe9f2da7b1a0cd5cb7c0418b6269e36"
+   },
+   {
+    "t": 10,
+    "rgb24Sha256": "84b6436555b605e8c919b011c5c1a3bf13f9a0640c772f5202d83c6efc68944c"
+   },
+   {
+    "t": 15,
+    "rgb24Sha256": "ee26112c785652e3cd6d23747f8ec5e1931b8231036a956a21ee986a4f70bd7b"
+   },
+   {
+    "t": 20,
+    "rgb24Sha256": "a05b60627a2e2f48f0411e75cd2c2758ac2fc48e44d322788b525a4ecaa55fcd"
+   },
+   {
+    "t": 25,
+    "rgb24Sha256": "199b921b11fc4909141ce2f0ec9c833199022adfd4f2fc481eebefa1a9e6da12"
+   },
+   {
+    "t": 30,
+    "rgb24Sha256": "975f6379ac792d1e24cd54201bf653205a554e173ec150f2d78c528ea14f4aca"
+   },
+   {
+    "t": 35,
+    "rgb24Sha256": "dee6439830759b4f7b08b3e3d5eb74f459d0fb77b16a4f94b91e70b8de42ac84"
+   },
+   {
+    "t": 40,
+    "rgb24Sha256": "a9f6abc277048973b357a096d1ce309e22feaa2a45b125bda9d8d0337d39dd7a"
+   },
+   {
+    "t": 45,
+    "rgb24Sha256": "c2a149a908b4c7d74d317640f6e6b8444b9e73e54b93c6dfe1786962c60cad24"
+   },
+   {
+    "t": 50,
+    "rgb24Sha256": "ef7ceb1f9cb52f2c8e8aa1855da7796e06d89fb0dc4bae1923fa6b07fc533c80"
+   }
+  ],
+  "textRead": {
+   "images": 105,
+   "hits": 0
+  },
+  "checked": [
+   "no file path",
+   "no local or network address",
+   "no port",
+   "no machine details",
+   "no memory or processor counts",
+   "no private name"
+  ],
+  "result": "pass"
+ }
+}
