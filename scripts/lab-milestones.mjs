@@ -250,7 +250,8 @@ export function evidenceLink(ev) {
   switch (ev.type) {
     case 'pr': return `<a href="${escape(ev.url)}">odin-rnd #${escape(ev.number)}</a>`;
     case 'commit': return `<a href="${escape(ev.url)}">commit <code>${escape(ev.sha.slice(0, 8))}</code></a>`;
-    case 'proof': return `<a href="${escape(ev.url)}">proof <code>${escape(ev.id)}</code></a>`;
+    // A proof links to its entry in the proof-card explorer (a site-relative anchor, so scripts/check.mjs resolves it).
+    case 'proof': return `<a href="../proofs/#proof-${escape(ev.id)}">proof <code>${escape(ev.id)}</code></a>`;
     case 'url': { const u = new URL(ev.url); return `<a href="${escape(ev.url)}">${escape(u.pathname.replace(/^\/odin-rnd\/?/, '/').replace(/\/$/, '') || '/')}${escape(u.hash)}</a>`; }
     case 'private-commit': return `Private commit <code>${escape(ev.sha.slice(0, 8))}</code>, cited by hash; this page cannot check it, anyone with access can.`;
     default: return '';

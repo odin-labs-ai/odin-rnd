@@ -69,7 +69,8 @@ test('station 05 exists on the floor, opens like the others and its links resolv
   assert(renderStationLinks().includes('href="experiments/#laya-bench" data-station="decision"'));
   const floor = factoryFloor();
   assert(floor.includes('data-floor-station="decision"') && floor.includes('>05</text>'));
-  assert(factoryFloor({ crop: true }).includes('data-floor-station="decision"'));
+  assert.equal((floor.match(/id="factory-geometry"/g)||[]).length,1,'There is one drawing on mobile and desktop');
+  assert.doesNotMatch(floor,/station-crop|factory-crop-geometry/,'No redundant mobile drawing is emitted');
   assert.equal(stations.length, [...floor.matchAll(/data-floor-station="/g)].length, 'Every station has floor geometry');
   assert(exhibit.includes('href="experiments/#laya-bench"'), 'Station 05 leads to the Laya bench');
   assert(page.includes('id="laya-bench"'), 'The bench anchor exists');

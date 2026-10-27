@@ -2,7 +2,7 @@
 import { stations } from './station-contract.mjs';
 // The description names the number of station links, from the station contract (refute r2: seven since station 07).
 const stationCountWord = ['zero','one','two','three','four','five','six','seven','eight','nine','ten'][stations.length] ?? String(stations.length);
-export function factoryFloor({crop = false} = {}) {
+export function factoryFloor() {
   const p = (x, y, z = 0) => [(x - y) * .92 + 350, (x + y) * .43 + 86 - z];
   const pts = points => points.map(v => p(...v).map(n => n.toFixed(2)).join(',')).join(' ');
   const poly = (points, cls) => '<polygon class="' + cls + '" points="' + pts(points) + '"/>';
@@ -14,7 +14,7 @@ export function factoryFloor({crop = false} = {}) {
   const marker = (x,y,z,n) => {const [a,b]=p(x,y,z);return '<g class="station-marker"><circle cx="'+a+'" cy="'+b+'" r="12"/><text x="'+a+'" y="'+(b+.5)+'">'+n+'</text></g>'};
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
   let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Use the '+stationCountWord+' station links below to explore each part.</desc>';
-  svg += '<g id="factory-geometry">';
+  svg += '<g id="factory-geometry"><g data-factory-layer="floor">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
   for(let y=0;y<=380;y+=25) svg+=line([0,y,-7],[500,y,-7],'gridline');
@@ -22,14 +22,16 @@ export function factoryFloor({crop = false} = {}) {
   for(const x of [0,500])svg+=line([x,-40,-5],[x,-20,-5],'dimension');
   for(const y of [0,380])svg+=line([-40,y,-5],[-20,y,-5],'dimension');
   svg += screenText(542,170,'INTENT → EVIDENCE')+screenText(85,250,'FLOOR 000');
+  svg += '</g><g data-factory-layer="services">';
   // Service rail behind the workcell and two electrical cabinets.
   svg += box(203,25,0,13,13,170,'machine')+box(393,25,0,13,13,170,'machine')+box(198,23,170,212,18,14,'machine');
   svg += line([210,44,160],[398,44,160],'detail')+box(327,18,153,35,28,21,'orange');
   svg += box(430,48,0,37,48,98,'machine')+box(469,48,0,22,48,98,'machine');
   for(let z=18;z<80;z+=10)svg+=line([431,97,z],[462,97,z]);
   svg += box(436,98,63,13,2,18,'orange');
+  svg += '</g>';
   // Drafting station, engineered paper and rule marks.
-  svg += '<g data-floor-station="blueprint" class="station-geometry active">';
+  svg += '<g data-floor-station="blueprint" class="station-geometry active"><g class="station-assembly">';
   for(const [x,y] of [[25,50],[132,50],[25,127],[132,127]])svg+=box(x,y,0,7,7,57,'machine');
   svg += box(17,42,57,131,100,7,'machine');
   svg += poly([[30,54,65],[132,54,65],[132,129,65],[30,129,65]],'top');
@@ -39,9 +41,9 @@ export function factoryFloor({crop = false} = {}) {
   svg+=line([98,76,66],[120,76,66])+line([98,84,66],[120,84,66])+line([98,92,66],[112,92,66]);
   svg+=box(28,47,66,105,3,2,'orange')+box(150,50,0,28,38,78,'machine');
   svg+=line([150,89,49],[177,89,49])+line([150,89,23],[177,89,23]);
-  svg+=marker(66,123,102,'01')+'</g>';
+  svg+=marker(66,123,102,'01')+'</g></g>';
   // Triage bench: changes arrive in the hopper, a reader sorts them into two trays. Raised so it clears the conveyor.
-  svg += '<g data-floor-station="triage" class="station-geometry">';
+  svg += '<g data-floor-station="triage" class="station-geometry"><g class="station-assembly">';
   for(const [x,y] of [[30,158],[132,158],[30,190],[132,190]])svg+=box(x,y,0,6,6,36,'machine');
   svg+=box(26,154,36,116,44,6,'machine')+box(34,160,42,26,32,30,'machine');
   svg+=poly([[38,164,72],[56,164,72],[56,188,72],[38,188,72]],'detail');
@@ -49,9 +51,9 @@ export function factoryFloor({crop = false} = {}) {
   for(const z of [52,60,68])svg+=line([74,163,z],[74,189,z],'ghost');
   svg+=box(84,162,42,22,28,12,'orange')+box(112,162,42,22,28,12,'machine');
   svg+=line([88,176,54],[102,176,54])+line([116,176,54],[130,176,54]);
-  svg+=marker(84,178,104,'06')+'</g>';
+  svg+=marker(84,178,104,'06')+'</g></g>';
   // Central workcell, base, turntable and articulated tool arm.
-  svg += '<g data-floor-station="workcell" class="station-geometry">';
+  svg += '<g data-floor-station="workcell" class="station-geometry"><g class="station-assembly">';
   svg += box(226,102,0,126,98,8,'machine')+box(251,130,8,53,47,34,'machine');
   const arm=[[276,153,42],[267,158,109],[312,191,158],[332,234,119]];
   for(let i=0;i<arm.length-1;i++){
@@ -63,30 +65,34 @@ export function factoryFloor({crop = false} = {}) {
   for(const a of arm.slice(0,-1)){const [x,y]=p(...a);svg+='<circle cx="'+x+'" cy="'+y+'" r="11" fill="#263c30" stroke="#9db399"/><circle cx="'+x+'" cy="'+y+'" r="4" fill="#627e67"/>'}
   svg += line([332,234,119],[332,234,94],'detail heavy')+line([332,234,96],[324,234,90],'detail heavy')+line([332,234,96],[340,234,90],'detail heavy');
   svg+=line([242,171,9],[214,194,9],'conduit')+line([214,194,9],[171,194,9],'conduit')+line([171,194,9],[171,102,9],'conduit');
-  svg+=marker(240,105,134,'02')+'</g>';
+  svg+=marker(240,105,134,'02')+'</g></g>';
+  svg += '<g data-factory-layer="conveyor">';
   // Conveyor: repeated rollers and driven legs.
   for(const x of [40,130,240,350,448])svg+=box(x,217,0,8,52,34,'machine');
   svg+=box(23,211,34,451,66,10,'belt');
   for(let x=27;x<471;x+=10)svg+=line([x,215,45],[x,273,45],'detail');
   svg+=box(20,207,43,457,5,5,'machine')+box(20,276,43,457,5,5,'machine');
   for(const x of [86,174,310,429])svg+=box(x,223,47,34,38,14,x===310?'orange':'machine');
+  svg += '</g>';
   // Conformance gate: two posts and crossbeam over the conveyor.
-  svg += '<g data-floor-station="gate" class="station-geometry">';
+  svg += '<g data-floor-station="gate" class="station-geometry"><g class="station-assembly">';
   svg+=box(365,194,0,19,17,119,'machine')+box(365,281,0,19,17,119,'machine')+box(359,190,119,31,113,18,'machine');
   svg+=poly([[366,212,119],[366,278,119],[366,278,49],[366,212,49]],'ghost');
   svg+=box(373,304,0,34,28,82,'machine')+box(377,333,52,23,2,19,'orange');
-  svg+=line([375,280,50],[375,216,50],'conduit')+marker(373,277,156,'03')+'</g>';
+  svg+=line([375,280,50],[375,216,50],'conduit')+marker(373,277,156,'03')+'</g></g>';
   // Record trays and stacked output plates.
-  svg += '<g data-floor-station="record" class="station-geometry">';
+  svg += '<g data-floor-station="record" class="station-geometry"><g class="station-assembly">';
   svg+=box(447,302,0,47,64,20,'machine');
   for(let z=21;z<65;z+=8)svg+=box(443,302,z,55,62,4,'machine');
   svg+=line([451,350,66],[475,350,66])+line([451,343,66],[480,343,66])+line([451,336,66],[469,336,66]);
-  svg+=marker(472,350,114,'04')+'</g>';
+  svg+=marker(472,350,114,'04')+'</g></g>';
+  svg += '<g data-factory-layer="wayfinding">';
   // Floor markings carry wayfinding, never pretend telemetry.
   svg+=line([18,310,0],[375,310,0],'conduit')+line([375,310,0],[410,345,0],'conduit');
   for(let x=25;x<400;x+=18)svg+=line([x,324,0],[x+8,324,0],'dimension');
+  svg += '</g>';
   // Decision console: typed questions in the tray, one answer out. Drawn after the floor markings it stands on.
-  svg += '<g data-floor-station="decision" class="station-geometry">';
+  svg += '<g data-floor-station="decision" class="station-geometry"><g class="station-assembly">';
   svg+=line([194,328,0],[194,310,0],'conduit')+box(162,328,0,92,44,8,'machine')+box(170,334,8,46,34,50,'machine');
   svg+=poly([[174,338,58],[212,338,58],[212,364,58],[174,364,58]],'top');
   for(const y of [344,351,358])svg+=line([179,y,58],[207,y,58],'ghost');
@@ -94,25 +100,19 @@ export function factoryFloor({crop = false} = {}) {
   svg+=line([176,369,24],[212,369,24])+line([176,369,18],[200,369,18]);
   svg+=box(226,336,8,24,30,12,'machine');
   for(const z of [21,25,29])svg+=box(228,338,z,20,26,2,'machine');
-  svg+=marker(194,350,92,'05')+'</g>';
+  svg+=marker(194,350,92,'05')+'</g></g>';
   // Floor inspection plate (station 07): a sieve over a low bench sorts rules a checker decides from those it cannot.
-  svg += '<g data-floor-station="floor" class="station-geometry">';
+  svg += '<g data-floor-station="floor" class="station-geometry"><g class="station-assembly">';
   for(const [x,y] of [[280,334],[336,334],[280,362],[336,362]])svg+=box(x,y,0,6,6,22,'machine');
   svg+=box(276,330,22,70,40,6,'machine')+poly([[282,336,28],[340,336,28],[340,364,28],[282,364,28]],'top');
   for(let x=290;x<340;x+=10)svg+=line([x,338,28],[x,362,28],'ghost');
   svg+=box(284,340,28,18,20,10,'orange')+box(316,340,28,18,20,4,'machine');
-  svg+=marker(310,350,70,'07')+'</g>';
-  svg+='<text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
-  svg+='</g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
+  svg+=marker(310,350,70,'07')+'</g></g>';
+  svg+='<g data-factory-layer="annotation"><text class="floor-word" transform="matrix(.92 .43 -.92 .43 108 342)">ODIN / RESEARCH &amp; DEVELOPMENT</text>';
+  svg+='</g></g><path class="station-trace" d="M298 65L555 65L795 150" pathLength="1" aria-hidden="true"/>';
   svg+=screenText(45,550,'ORTHOGRAPHIC ASSEMBLY / CONCEPT DRAWING')+screenText(662,550,'DWG. OD-000 / A');
   svg+='<path class="dimension" d="M40 565H860M40 559v12M860 559v12"/>';
   svg+=screenText(43,589,'BLUEPRINT → WORKCELL → GATE → RECORD')+screenText(703,589,'NOT TO SCALE');
-  svg += '</svg>';
-  if (crop) return svg
-    .replace('class="factory-svg"', 'class="factory-svg station-crop"')
-    .replace('viewBox="-20 -20 865 540"', 'viewBox="210 40 270 220"')
-    .replace('role="img" aria-labelledby="floor-title floor-description"', 'aria-hidden="true"')
-    .replaceAll('id="floor-', 'id="crop-floor-')
-    .replace('id="factory-geometry"', 'id="factory-crop-geometry"');
+  svg += '<path class="drafting-scan" d="M0 -20V520" aria-hidden="true"/></svg>';
   return svg;
 }

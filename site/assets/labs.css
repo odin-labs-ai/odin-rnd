@@ -102,3 +102,39 @@
 .fit-predictions li+li{margin-top:6px}
 .fit-predictions span,.fit-none{color:var(--steel)}
 .fit-source{margin-top:36px;font-size:13px;color:var(--steel)}
+/* This week in Lab 01 (scripts/lab-week.mjs) */
+.week{max-width:78ch}
+.week-window{color:var(--steel);margin-bottom:12px}
+.week-quiet{font-size:19px;line-height:1.6}
+.week-lines{padding-left:1.2em;font-size:18px;line-height:1.6}
+.week-lines>li+li{margin-top:6px}
+.week-list{margin-top:14px}
+.week-list summary{cursor:pointer;font-weight:600}
+.week-list ul{padding-left:1.2em;margin-top:8px}
+.week-list li{margin-top:6px;overflow-wrap:anywhere}
+.week-kind{color:var(--steel);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.week-when{color:var(--steel);font-size:14px;white-space:nowrap}
+.week-note,.week-how{color:var(--steel);font-size:15px;margin-top:14px}
+/* How we decide (scripts/lab-decisions.mjs). */
+.decision-why{display:grid;gap:12px;max-width:72ch}
+.decision-totals{font-size:1.05rem;max-width:72ch;margin-bottom:32px}
+.decision-experiment{margin-block:40px}
+.decision-experiment h3{margin-bottom:8px}
+.decision-experiment td p{margin:0 0 10px}
+.decision-meta{color:var(--steel);font-weight:400}
+.decision-ai{display:inline-block;font-size:.8rem;padding:1px 6px;border:1px solid currentColor;border-radius:999px;opacity:.85}
+.decision-ai-note{color:var(--steel);font-size:.9rem}
+.decision-disclosures{display:grid;gap:10px;max-width:80ch}
+.engine-series h4{font-size:18px}
+.engine-plot{max-width:420px}
+.engine-dot{fill:var(--brand)}
+.engine-axis{stroke:var(--rule);stroke-width:1}
+.engine-one{margin-top:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.engine-dot-key{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--brand)}
+.engine-points{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:14px;font-size:14px}
+.engine-points li{padding-top:12px;border-top:1px solid var(--rule)}
+.engine-points p+p{margin-top:4px}
+.engine-unit{color:var(--steel)}
+.engine-when{font-size:13px;color:var(--steel)}
+.engine-step{stroke:var(--brand);stroke-width:2}
+.engine-once{margin-top:8px;font-size:13px;color:var(--steel);line-height:1.5}

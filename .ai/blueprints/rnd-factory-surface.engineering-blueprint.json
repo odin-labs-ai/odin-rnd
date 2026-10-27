@@ -1,0 +1,61 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "approvals": [
+    {
+      "role": "blueprint-steward",
+      "stage": "ratify"
+    }
+  ],
+  "architecture": {
+    "components": [],
+    "relationships": []
+  },
+  "constraints": [
+    {
+      "id": "forbidden-pattern-station-crop-station-crop-factory-crop-geometry",
+      "pattern": "station-crop|STATION_CROP|factory-crop-geometry",
+      "severity": "high",
+      "type": "forbiddenPattern"
+    }
+  ],
+  "evidenceRequirements": [
+    {
+      "onMissing": "block",
+      "required": true,
+      "type": "staticAst"
+    }
+  ],
+  "extraction": {
+    "minFiles": 4,
+    "paths": [
+      "scripts/build.mjs",
+      "scripts/floor.mjs",
+      "site/index.html",
+      "site/assets/app.js"
+    ],
+    "profile": "plugin-surface"
+  },
+  "intentRefs": [
+    "docs/mobile-motion.md"
+  ],
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "rnd-factory-surface",
+    "name": "One canonical R&D factory drawing",
+    "ownerRole": "rnd-maintainer",
+    "status": "draft",
+    "stewardRole": "rnd-maintainer",
+    "version": "0.1.0"
+  },
+  "scope": {
+    "paths": [
+      "scripts/build.mjs",
+      "scripts/floor.mjs",
+      "site/index.html",
+      "site/assets/app.js"
+    ],
+    "repositories": [
+      "odin-labs-ai/odin-rnd"
+    ]
+  }
+}
