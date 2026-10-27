@@ -155,4 +155,9 @@
 .rogue-guards dt{font-weight:600}
 .rogue-guards dd{margin:2px 0 0;color:var(--steel)}
 .rogue-outcome{margin-top:12px;font-weight:600}
+/* Lab 06, which model should review your code (scripts/lab-review.mjs). */
+.review-fixture,.review-summary,.review-judge{margin:20px 0;border-style:dashed}
+.review-fixture>.technical,.review-summary>.technical,.review-judge>.technical{color:var(--steel);margin-bottom:8px}
+.review-receipt blockquote{margin:10px 0;padding-left:14px;border-left:3px solid var(--brand);font-size:14px;line-height:1.55}
+.review-receipt h4{margin:4px 0 0;font-size:15px}
 @media(max-width:760px){.rogue-split,.rogue-acts{grid-template-columns:1fr}}

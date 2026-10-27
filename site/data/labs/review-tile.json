@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 06",
+ "title": "Which model should review your code?",
+ "question": "Which models catch the defects in a change, which flag changes that were fine, and what does our own reviewer say no to?",
+ "how": "The same changes reviewed by four models, twice each, and by a reviewer that runs as a tool, re-derived from the experiments' committed records; and the review verdicts on this site's own pull requests.",
+ "experiment": "review",
+ "status": "Measured · every count re-derived from committed records",
+ "record": {
+  "href": "data/labs/review/record.json",
+  "pin": "data/labs/review/record.sha256"
+ },
+ "links": [
+  {
+   "label": "Catches and false alarms, model by model",
+   "href": "labs/review/index.html"
+  },
+  {
+   "label": "The record, pinned by its hash",
+   "href": "data/labs/review/record.json"
+  }
+ ]
+}
