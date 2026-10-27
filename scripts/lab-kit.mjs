@@ -202,10 +202,10 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   // escaped reference is never decoded twice), screened twice more through LEAKS: once with every tag dropped and
   // nothing in its place, so text split by any tag at all (<wbr>, <label>, a made-up one) reads as one; and once with
   // block tags as line breaks. A leak in any of the three refuses the page.
-  leak(' (as shown, every tag dropped)', decode(body.replace(/<[^>]+>/g, '')));
+  leak(' (as shown, every tag dropped)', decode(stripTags(body, '')));
   // The lines a reader sees: a block tag ends one; any other tag (inline, or one this list does not know) joins the
   // text on either side.
-  const text = decode(body.replace(BLOCK_TAGS, '\n').replace(/<[^>]+>/g, ''));
+  const text = decode(stripTags(body.replace(BLOCK_TAGS, '\n'), ''));
   leak(' (as shown)', text.replace(/\n+/g, ' '));
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
@@ -220,6 +220,13 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
     problems.push(...screenHits(masked).map(hit => `${hit.reason}: ${JSON.stringify(line.slice(0, 100))}`));
   }
   return problems;
+}
+
+/** Every tag replaced by `by`, again and again until none is left (a tag rebuilt by removing an inner one is removed too). */
+export function stripTags(html, by = '') {
+  let out = html, prev;
+  do { prev = out; out = out.replace(/<[^<>]*>/g, by); } while (out !== prev);
+  return out;
 }
 
 // Tags that end a line of text as a reader sees it. Any other tag is taken as inline: dropped, joining its neighbours.

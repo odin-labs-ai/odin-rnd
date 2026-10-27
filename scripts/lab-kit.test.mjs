@@ -166,6 +166,7 @@ test('the leak screen has a failing negative for every class it guards', () => {
     assert.throws(() => buildFixture(fixture(), { page: rec => `${render(rec)}<p>${encoded}</p>` }), e => reason.test(e.message), encoded);
   }
   assert.equal(decode('a&#47;b&#x2F;c&amp;#47;'), 'a/b/c&#47;', 'decoded once, &amp; last');
+  assert.equal(kit.stripTags('a<<b>i>c<x>/Users'), 'ac/Users', 'a tag rebuilt by removing an inner one is removed too');
   // This lab's own repository is not another repository.
   assert.deepEqual(pageLeaks('<main><p><a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/README.md">odin-labs-ai/odin-rnd</a></p></main>').filter(p => /another repository/.test(p)), []);
   // A lane-only sha is the sixth class: held above, by the record contract and the page screen.
