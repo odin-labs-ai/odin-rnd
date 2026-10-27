@@ -54,6 +54,15 @@ export function rogueProblems(record, { now = new Date(), where = ROGUE_RECORD }
   const roles = v.files.map(f => f.role);
   if (new Set(roles).size !== roles.length || roles.length !== 6) problems.push(`${where}#/vendored/files: each of the six files, once`);
 
+  // The page says the run with no controls ran every command, and states its damage as measured on the sandbox: the
+  // record must say the same, and its counts must agree with each other.
+  const u = record.ungoverned, d = u.damage, sb = record.staged.sandbox;
+  u.steps.forEach((s, i) => { if (s.ran !== true) problems.push(`${where}#/ungoverned/steps/${i}/ran: the page says every command ran`); });
+  if (u.before.mainCommits !== sb.mainCommits || !u.before.exists) problems.push(`${where}#/ungoverned/before: not the seeded sandbox`);
+  if (d.commitsLostFromMain !== u.before.mainCommits - u.after.mainCommits) problems.push(`${where}#/ungoverned/damage/commitsLostFromMain: not main before minus main after`);
+  if (d.repositoryDeleted !== !u.after.exists) problems.push(`${where}#/ungoverned/damage/repositoryDeleted: not what the state after says`);
+  if (d.prBranchesDeleted > sb.prBranches || d.prBranchesDeleted > u.before.branches - u.after.branches) problems.push(`${where}#/ungoverned/damage/prBranchesDeleted: more than the branches that went`);
+  if (d.ciRunsStopped !== (d.repositoryDeleted ? sb.ciRuns : 0)) problems.push(`${where}#/ungoverned/damage/ciRunsStopped: not the sandbox's CI runs when the repository went`);
   const r = record.ungoverned.repairEstimate;
   const sum = Math.round(r.rows.reduce((t, row) => t + row.hours, 0) * 10) / 10;
   if (sum !== r.hours) problems.push(`${where}#/ungoverned/repairEstimate/hours: ${r.hours}, but its rows add up to ${sum}`);
@@ -73,6 +82,7 @@ export function rogueProblems(record, { now = new Date(), where = ROGUE_RECORD }
     if (!step || step.command !== a.command) problems.push(`${where}#/governed/acts/${i}/command: not the same command as the run with no controls`);
   });
   if (rows.filter(row => row.act === 'refused').length !== g.acts.length) problems.push(`${where}#/governed/journal/rows: one refused row per command`);
+  if (new Set(g.acts.map(a => a.journalRow)).size !== g.acts.length) problems.push(`${where}#/governed/acts: each command names its own journal row`);
   if (g.breaches !== 0 || !g.repositoryUnchanged) problems.push(`${where}#/governed: a guard let a command through; this page says every command was refused`);
 
   record.reproductions.forEach((p, i) => {
@@ -80,6 +90,9 @@ export function rogueProblems(record, { now = new Date(), where = ROGUE_RECORD }
     if (p.at.slice(0, 10) !== p.on) problems.push(`${where}#/reproductions/${i}/on: not the date of its run`);
     if (!record.stateHash.startsWith(p.committed)) problems.push(`${where}#/reproductions/${i}/committed: not the record's state hash`);
     if (p.verdict !== (p.now === p.committed ? 'SAME' : 'DIFFERENT')) problems.push(`${where}#/reproductions/${i}/verdict: not what its two hashes say`);
+    // The page shows the re-run beside "every command was refused": only a re-run that matched, with no breach, says that.
+    if (p.verdict !== 'SAME' || p.breaches !== 0) problems.push(`${where}#/reproductions/${i}: the re-run did not match with no breach; this page would misstate it`);
+    if (p.tests.failed !== 0) problems.push(`${where}#/reproductions/${i}/tests: a test failed`);
   });
   return problems;
 }
@@ -106,17 +119,26 @@ const LEAKS = [
   [/\bghp_|\bgithub_pat_|\bgh[osu]_[A-Za-z0-9]|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-|\bBearer\s+\w/, 'a credential'],
 ];
 
+/** Every commit and sha256 the record holds: the only hex tokens pageLeaks masks (a token must be a prefix of one). */
+export function recordHashes(record) {
+  const out = [];
+  (function walk(v) { if (typeof v === 'string' && /^[0-9a-f]{16,64}$/.test(v)) out.push(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk); })(record);
+  return out;
+}
+
 /**
- * Why a rendered page may not be published: every visible text, with hex tokens masked (they are commits and sha256s
- * the schema checked), through the publisher's screen and the LEAKS above; and the markup itself for LEAKS.
+ * Why a rendered page may not be published: every visible text through the publisher's screen and the LEAKS above, and
+ * the markup itself through LEAKS. Before the screen, a hex token of 8 or more characters is masked only when it is a
+ * prefix of a hash the record holds (`known`, from recordHashes): any other token is screened as it is.
  */
-export function pageLeaks(html) {
+export function pageLeaks(html, known = []) {
   const problems = [];
   const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
   for (const [pattern, reason] of LEAKS) { const m = pattern.exec(body); if (m) problems.push(`${reason}: ${JSON.stringify(body.slice(Math.max(0, m.index - 40), m.index + 40))}`); }
-  const text = body.replace(/<[^>]+>/g, '\n').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"');
+  // &amp; is decoded last, so an escaped entity is never decoded twice.
+  const text = body.replace(/<[^>]+>/g, '\n').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&');
   for (const line of text.split('\n').map(t => t.trim()).filter(Boolean)) {
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, 'HASH');
+    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => known.some(h => h.startsWith(token)) ? 'HASH' : token);
     problems.push(...screenHits(masked).map(hit => `${hit.reason}: ${JSON.stringify(line.slice(0, 100))}`));
   }
   return problems;
@@ -177,7 +199,7 @@ export function renderRogue(root = 'site', { now = new Date() } = {}) {
     html = html.replace(marker, () => value);
   }
   if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${ROGUE_TEMPLATE}: unresolved content marker`);
-  const leaks = pageLeaks(html);
+  const leaks = pageLeaks(html, recordHashes(record));
   if (leaks.length) throw new Error(`${ROGUE_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [ROGUE_TEMPLATE]: html } };
 }

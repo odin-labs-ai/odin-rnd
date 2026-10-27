@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pageLeaks, readRogue, renderRogue, rogueProblems, ROGUE_PIN, ROGUE_RECORD, ROGUE_TEMPLATE } from './lab-rogue.mjs';
+import { pageLeaks, readRogue, recordHashes, renderRogue, rogueProblems, ROGUE_PIN, ROGUE_RECORD, ROGUE_TEMPLATE } from './lab-rogue.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 
@@ -15,7 +15,7 @@ const record = JSON.parse(raw);
 const pages = renderLabs();
 const page = pages[ROGUE_TEMPLATE];
 const main = page.split('<main id="main">')[1].split('</main>')[0];
-const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replace(/\s+/g, ' ');
+const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&').replace(/\s+/g, ' ');
 const clone = () => JSON.parse(raw);
 const sha256 = s => createHash('sha256').update(s).digest('hex');
 
@@ -48,7 +48,9 @@ test('the page says the refusals are real: the engine\'s own guards, run, and a 
     assert.ok(textOf(main).includes(`${act.door}`), `act ${i}: the read-only door's words`);
     assert.ok(textOf(main).includes(`${act.trust}`), `act ${i}: the trust wall's words`);
   }
-  assert.equal((main.match(/<p class="rogue-outcome">Refused\. Journal row \d\.<\/p>/g) ?? []).length, record.governed.acts.length);
+  const outcomes = [...main.matchAll(/<p class="rogue-outcome">Refused\. Journal row (\d+)\.<\/p>/g)].map(m => Number(m[1]));
+  assert.equal(outcomes.length, record.governed.acts.length);
+  assert.equal(new Set(outcomes).size, outcomes.length, 'each command names its own journal row');
 });
 
 test('the repair time is an estimate, and reads as one: its figures appear only inside the estimate box, which says so', () => {
@@ -104,7 +106,7 @@ test('leak screen: no machine path, local host, address, port, credential or oth
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     for (const re of LEAK_SHAPES) assert.doesNotMatch(text, re, `${name}: ${re}`);
   }
-  assert.deepEqual(pageLeaks(page), [], 'the rendered page passes the screen');
+  assert.deepEqual(pageLeaks(page, recordHashes(record)), [], 'the rendered page passes the screen');
   assert.deepEqual(rogueProblems(record), [], 'the record passes its checks and the screen');
   // The scripts that build this lab name no restricted name either (they may name paths: they are code).
   for (const file of ['scripts/lab-rogue.mjs', 'scripts/vendor-rogue.mjs', 'scripts/schemas/odin-lab-rogue.schema.json']) {
@@ -118,7 +120,10 @@ test('the screen catches what it says it catches (the test of the test)', () => 
   for (const [inject, reason] of [['/Users/someone/x', /machine path/], ['C:\\work', /machine path/], ['served on localhost', /local host/], ['10.0.0.12', /local host/], ['port :6488', /local host/], [credential, /credential/], ['the oac repository', /restricted name/]]) {
     assert.ok(pageLeaks(`<main><p>${inject}</p></main>`).some(p => reason.test(p)), inject);
   }
-  assert.deepEqual(pageLeaks('<main><p>commit <code>e41d9422648239dd</code></p></main>'), [], 'a cited hash is not a leak');
+  assert.deepEqual(pageLeaks('<main><p>commit <code>e41d9422648239dd</code></p></main>', recordHashes(record)), [], 'a hash the record holds is masked');
+  // A hex token the record does not hold is screened as it is: the mask hides nothing else.
+  assert.ok(pageLeaks('<main><p>id <code>1234567890abcdef</code></p></main>', recordHashes(record)).some(p => /long internal id/.test(p)));
+  assert.ok(pageLeaks('<main><p>commit <code>e41d9422648239dd</code></p></main>').some(p => /long internal id/.test(p)), 'without the record, nothing is masked');
 });
 
 test('the record is refused when it would make the page say something untrue', () => {
@@ -138,6 +143,15 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.staged.about = 'see games/agent_space/talk/rogue.py'; }, /a file path or file name/);
   refused(r => { r.staged.path = 'anything'; }, /not allowed/);
   refused(r => { r.staged.sandbox.network = true; }, /does not match odin-lab-rogue v1/);
+  refused(r => { for (const a of r.governed.acts) a.journalRow = 1; }, /each command names its own journal row/);
+  refused(r => { r.ungoverned.steps[2].ran = false; }, /the page says every command ran/);
+  refused(r => { r.reproductions[0].breaches = 2; }, /did not match with no breach/);
+  refused(r => { r.reproductions[0].tests.failed = 1; }, /a test failed/);
+  refused(r => { r.ungoverned.damage.commitsLostFromMain = 1; }, /not main before minus main after/);
+  refused(r => { r.ungoverned.damage.repositoryDeleted = false; }, /repositoryDeleted: not what the state after says/);
+  refused(r => { r.ungoverned.damage.prBranchesDeleted = 9; }, /more than the branches that went/);
+  refused(r => { r.ungoverned.damage.ciRunsStopped = 3; }, /ciRunsStopped/);
+  refused(r => { r.ungoverned.before.mainCommits = 30; }, /not the seeded sandbox/);
 });
 
 test('the record is pinned: a changed byte refuses the build until the pin is re-written', () => {
