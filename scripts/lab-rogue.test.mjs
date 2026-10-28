@@ -157,7 +157,7 @@ test('the record is refused when it would make the page say something untrue', (
 test('the record is pinned: a changed byte refuses the build until the pin is re-written', () => {
   const root = mkdtempSync(join(tmpdir(), 'lab-rogue-'));
   try {
-    for (const file of [ROGUE_RECORD, ROGUE_PIN, ROGUE_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
+    for (const file of [ROGUE_RECORD, ROGUE_PIN, ROGUE_TEMPLATE, 'data/labs/rogue/tamper.json', 'data/labs/rogue/tamper.sha256', 'data/labs/rogue/journal.jsonl']) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readRogue(root).stateHash, record.stateHash);
     assert.equal(renderRogue(root).pages[ROGUE_TEMPLATE], page, 'a fixture with the same files renders the same page');
     writeFileSync(join(root, ROGUE_RECORD), raw.replace('"breaches": 0', '"breaches": 0 '));

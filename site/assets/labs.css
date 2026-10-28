@@ -155,6 +155,11 @@
 .rogue-guards dt{font-weight:600}
 .rogue-guards dd{margin:2px 0 0;color:var(--steel)}
 .rogue-outcome{margin-top:12px;font-weight:600}
+.rogue-tamper-gallery{margin-top:24px;border-style:dashed}
+.rogue-tamper-gallery>.technical{color:var(--steel);margin-bottom:8px}
+.rogue-tamper-case h4{margin:0 0 8px}
+.rogue-tamper-case code{overflow-wrap:anywhere}
+.rogue-tamper-case table{font-size:13px}
 /* Lab 06, which model should review your code (scripts/lab-review.mjs). */
 .review-fixture,.review-summary,.review-judge{margin:20px 0;border-style:dashed}
 .review-fixture>.technical,.review-summary>.technical,.review-judge>.technical{color:var(--steel);margin-bottom:8px}
