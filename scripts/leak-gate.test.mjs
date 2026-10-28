@@ -539,6 +539,14 @@ test('the lab screen can only gain names, only under node --test, never in a bui
   assert.equal(namesRestricted('a xqzjx token'), false, 'a short name inside a word is not a token match');
   assert.equal(namesRestricted('a xqzjx token', { anyWindow: true }), true, 'anyWindow reads every letter run of 3 or more');
   const call = env => spawnSync(process.execPath, ['--input-type=module', '-e', "const m = await import('./scripts/lab-dispatch-publish.mjs'); m.addScreenNames('zqbcdfgh');"], { env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
+  // An ordinary *.test.mjs run by hand with the runner's variable set: its parent is not the test runner, so refused.
+  const dir = mkdtempSync(join(tmpdir(), 'hook-'));
+  try {
+    writeFileSync(join(dir, 'spoof.test.mjs'), `const m = await import(${JSON.stringify(join(process.cwd(), 'scripts/lab-dispatch-publish.mjs'))}); m.addScreenNames('zqbcdfgh');\n`);
+    const spoof = spawnSync(process.execPath, [join(dir, 'spoof.test.mjs')], { env: { PATH: process.env.PATH, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' });
+    assert.notEqual(spoof.status, 0, 'a test file run by hand');
+    assert.match(spoof.stderr, /for the tests only/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
   for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
     const r = call(env);
     assert.notEqual(r.status, 0, name);

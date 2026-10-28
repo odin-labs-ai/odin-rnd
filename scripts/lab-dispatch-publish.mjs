@@ -29,6 +29,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
 
@@ -65,14 +66,14 @@ export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, 
  * spelling a real restricted name in this public repository (the site's leak gate refuses the real ones in source).
  */
 export function addScreenNames(...names) {
-  // Test-scoped: only under `node --test`, never in a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
-  // A test file is a *.test.mjs the runner started (it sets NODE_TEST_CONTEXT); an inline script or a build is refused.
-  // The variables can be set by hand, so this is a guard against accidents, not a security boundary; the boundary is
-  // that the hook can only ADD names (a call can never weaken a screen) and that only test code may call it (a test
-  // in leak-gate.test.mjs refuses any other caller in the tracked tree).
-  const testFile = /\.test\.mjs$/.test(process.argv[1] ?? '');
-  if (!process.env.NODE_TEST_CONTEXT || !testFile || process.env.ODIN_SITE_BUILD) throw new Error('addScreenNames is for the tests only (node --test), never a build');
+  // Only in a *.test.mjs whose parent process is the node test runner (its command line carries --test), and never in
+  // a site build (the publish workflow's verify job sets ODIN_SITE_BUILD). And whatever runs it, it can only ADD names:
+  // no call can weaken a screen.
+  if (!process.env.NODE_TEST_CONTEXT || !/\.test\.mjs$/.test(process.argv[1] ?? '') || process.env.ODIN_SITE_BUILD || !underTestRunner()) throw new Error('addScreenNames is for the tests only (node --test), never a build');
   for (const name of names) NAMES.add(fingerprint(name));
+}
+function underTestRunner() {
+  try { return /(^|\s)--test(\s|=|$)/.test(execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' })); } catch { return false; }
 }
 /**
  * True when the text names a restricted name (any listed or added one), by the same screen. With anyWindow, every run
