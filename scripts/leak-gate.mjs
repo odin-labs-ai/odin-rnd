@@ -23,7 +23,7 @@
 import { createHash, hash as oneShot } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { gunzipSync } from 'node:zlib';
+import { inflateRawSync } from 'node:zlib';
 import { join, relative } from 'node:path';
 
 export const MAX_WORDS = 4;
@@ -74,7 +74,7 @@ export function commitmentOf(salt, terms, canaries, heads) {
 export function checkCommitment(secret, raw) {
   let want;
   try { want = JSON.parse(raw); } catch { throw new Error('leak gate: the term-set commitment is not JSON'); }
-  if (!want || want.format !== 'odin-leak-gate-set' || want.version !== 1) throw new Error('leak gate: the term-set commitment has the wrong format');
+  if (!want || want.format !== 'odin-leak-gate-set' || want.version !== 1 || !Number.isInteger(want.terms) || !Number.isInteger(want.canaries) || !/^[0-9a-f]{64}$/.test(want.sha256 ?? '')) throw new Error('leak gate: the term-set commitment has the wrong format');
   const got = secret.commitment;
   if (want.terms !== got.terms || want.canaries !== got.canaries || want.sha256 !== got.sha256) throw new Error(`leak gate: the term set is not the committed one (committed ${want.terms} terms, ${want.canaries} canaries; got ${got.terms}, ${got.canaries})`);
 }
@@ -169,12 +169,14 @@ export const decoded = text => decodedReading(identity(text)).text;
 /** Tags removed (their line breaks kept): a term split by markup reads whole. */
 // A comment runs to its "-->" (or the end), whatever it holds; a tag ends at the first ">" outside a quoted attribute
 // value, as in HTML: <span title=">"> is one tag.
-const TAG = /<!--[\s\S]*?(?:-->|$)|<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+// HTML also closes a comment at "<!-->", "<!--->" and "--!>".
+const TAG = /<!--(?:-?>|[\s\S]*?(?:--!?>|$))|<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
 const untagged = r => mapped(r, TAG, tag => tag.replace(/[^\n]/g, ''));
 /** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
 const spaced = r => mapped(r, TAG, () => ' ');
 /** NFKC and lower case, character by character, so every offset still maps back. */
-const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
+// A base character and the combining marks after it fold together ("e" + U+0301 is "é", as the term is normalised).
+const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /\P{M}\p{M}+|[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
 
 const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (starts[mid] <= pos) lo = mid; else hi = mid - 1; } return lo + 1; };
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
@@ -284,6 +286,21 @@ export function* tarEntries(buf, shown) {
   throw new Error(`leak gate: ${shown} is not a readable tar archive`);
 }
 
+/**
+ * A gzip file, decompressed, when it is one member with no header text: a file name, a comment or an extra field in
+ * the header, or a second member or bytes after the first, is text or data the gate would not read, and stops the build.
+ */
+export function gunzipStrict(buf, shown) {
+  if (buf.length < 18 || buf[0] !== 0x1f || buf[1] !== 0x8b || buf[2] !== 8) throw new Error(`leak gate: ${shown} does not decompress`);
+  const flags = buf[3];
+  if (flags & 0xfc) throw new Error(`leak gate: ${shown} carries gzip header text the gate does not read`);
+  const start = 10 + (flags & 2 ? 2 : 0);
+  let out;
+  try { out = inflateRawSync(buf.subarray(start), { info: true }); } catch { throw new Error(`leak gate: ${shown} does not decompress`); }
+  if (start + out.engine.bytesWritten + 8 !== buf.length) throw new Error(`leak gate: ${shown} has more than one gzip member, or bytes after it`);
+  return out.buffer;
+}
+
 /** -> {files, texts, binaries, hits:[{file, line, kind, hash?}]}. A path's name is scanned too, and so is every file inside a tar archive. */
 export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
   const cache = new Map();
@@ -297,7 +314,7 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
     // A read error names the path; it is reported by the name shown instead, which is redacted when it holds a leak.
     let bytes;
     try { bytes = read(); } catch (error) { throw new Error(`leak gate: ${shown} cannot be read (${error.code ?? 'error'})`); }
-    if (/\.(gz|tgz)$/i.test(path)) { try { bytes = gunzipSync(bytes); } catch { throw new Error(`leak gate: ${shown} does not decompress`); } }
+    if (/\.(gz|tgz)$/i.test(path)) bytes = gunzipStrict(bytes, shown);
     if (/\.(tar|tar\.gz|tgz)$/i.test(path)) {
       result.binaries++;
       const meta = [];
@@ -335,7 +352,8 @@ export const report = hit => `LEAK ${hit.file}:${hit.line} ${hit.kind}${hit.hash
  * A canary can never be a known occurrence.
  */
 export function loadKnown(raw) {
-  const d = JSON.parse(raw);
+  let d;
+  try { d = JSON.parse(raw); } catch { throw new Error('leak gate: the known-occurrence list is not JSON'); }
   if (!d || d.format !== 'odin-leak-gate-known' || d.version !== 1 || !Array.isArray(d.known)) throw new Error('leak gate: the known-occurrence list has the wrong format');
   for (const row of d.known) {
     if (typeof row.file !== 'string' || typeof row.kind !== 'string' || !Number.isInteger(row.count) || row.count < 1 || typeof row.reason !== 'string' || row.reason.length < 10) throw new Error('leak gate: a known occurrence needs file, kind, count and a reason');
