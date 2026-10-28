@@ -165,12 +165,6 @@
    "extract": "ffmpeg -fps_mode passthrough, the frame by its number (select), as PNG",
    "hits": 0
   },
-  "attested": {
-   "by": "the agent that filmed it",
-   "statement": "Before publishing, it viewed each screened frame, and read every frame at 2 per second plus the three poster frames by text recognition, with no hit for a path, an address, a port, a host name or a machine count.",
-   "images": 105,
-   "hits": 0
-  },
   "checked": [
    "no file path",
    "no local or network address",

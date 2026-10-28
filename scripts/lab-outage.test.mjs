@@ -177,14 +177,19 @@ test('the outage is a failing check between passing ones, each with its own evid
 
 // Review round 2 (#5): the screening is the filming agent's own statement, so the page puts it in the kit's
 // "summary only" box; what anyone can repeat is that each screened frame is one of the film's own decoded frames.
-test('only the filming agent\'s viewing sits in the "summary only" box; the repeatable checks are stated outside it', () => {
-  const html = renderOutage(committed());
-  const m = /<div class="lab-panel outage-screened" id="dispatch-2-screened"><p class="technical">SUMMARY ONLY, NOT REPRODUCIBLE HERE<\/p>([\s\S]*?)<\/div>/.exec(html);
-  assert.ok(m, 'the marked box');
-  assert.match(m[1], /Stated by the agent that filmed it, and not repeatable here: Before publishing, it viewed each screened frame/);
-  const rest = html.replace(m[0], '');
-  assert.doesNotMatch(rest, /viewed|picture is unchanged/, 'no unrepeatable claim outside the box');
-  assert.match(rest, /the film decodes to 378 frames; each of the 11 screened frames \(one every 5 s\) is one of them, in order, by its hash; and reading each of those frames gives text with the hash the record lists, with 0 hits/);
+test('the page and the record claim only what can be repeated: no attested or viewing claim anywhere', () => {
+  const record = committed(), html = renderOutage(record);
+  const schema = JSON.parse(readFileSync('scripts/schemas/odin-lab-outage.schema.json', 'utf8'));
+  const keys = [];
+  (function walk(v) { if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { keys.push(k); walk(x); } })(schema.properties.screening);
+  assert.ok(!keys.some(k => /attest|claim|viewed|viewing/i.test(k)), `a screening claim field in the schema: ${keys.join(', ')}`);
+  assert.equal(schema.properties.screening.additionalProperties, false, 'no field can be added unchecked');
+  const withClaim = clone(record);
+  withClaim.screening.attested = { by: 'the agent that filmed it', statement: 'it viewed each frame' };
+  assert.ok(outageProblems(withClaim).length, 'a record carrying an attested claim is refused');
+  assert.doesNotMatch(html, /viewed|viewing|SUMMARY ONLY|picture is unchanged/i);
+  assert.doesNotMatch(JSON.stringify(record), /viewed|viewing|attest/i);
+  assert.match(html, /the film decodes to 378 frames; each of the 11 screened frames \(one every 5 s\) is one of them, in order, by its hash; and reading each of those frames gives text with the hash the record lists, with 0 hits/);
 });
 
 test('screening frames: each must be one of the film\'s frames, in order, and the frame count must match', () => {

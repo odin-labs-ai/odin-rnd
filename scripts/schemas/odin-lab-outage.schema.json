@@ -286,7 +286,6 @@
     "srcSha256",
     "frames",
     "textRecognition",
-    "attested",
     "checked",
     "result"
    ],
@@ -384,36 +383,6 @@
        "type": "string",
        "minLength": 1,
        "maxLength": 160
-      },
-      "hits": {
-       "type": "integer",
-       "minimum": 0
-      }
-     }
-    },
-    "attested": {
-     "type": "object",
-     "required": [
-      "by",
-      "statement",
-      "images",
-      "hits"
-     ],
-     "additionalProperties": false,
-     "properties": {
-      "by": {
-       "type": "string",
-       "minLength": 1,
-       "maxLength": 80
-      },
-      "statement": {
-       "type": "string",
-       "minLength": 1,
-       "maxLength": 300
-      },
-      "images": {
-       "type": "integer",
-       "minimum": 1
       },
       "hits": {
        "type": "integer",

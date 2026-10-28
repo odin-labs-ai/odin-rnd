@@ -17,14 +17,15 @@
 // poster is missing, a different size than recorded, or does not hash to its recorded sha256, or the film is over
 // MAX_FILM_BYTES; when the film is not a WebM whose own header gives the recorded length, or the poster not a PNG of
 // the film's frame size; when the screening record does not cover the film (the films gate's rule, lab-films.mjs).
-// What the gate cannot do is read pixels. What can be repeated is recorded and tested where the tools exist (the
-// frames by hash, their text by hash); what cannot, the filming agent's viewing, is marked as its own statement. The rendered section is screened again as a whole.
+// What the gate cannot do is read pixels. The page claims only what can be repeated, and the record holds only that:
+// the frames by hash, their recognised text by hash, tested where the tools exist (lead ruling 10-28: a viewing
+// statement adds nothing a reader can check, so it lives in the mission ledger, not on a lab page). The rendered section is screened again as a whole.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LEAKS, box, cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
+import { LEAKS, cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
 import { MAX_FILM_BYTES, screeningProblems } from './lab-films.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -172,7 +173,7 @@ export function outageProblems(record, { where = OUTAGE_RECORD, root = null } = 
   if (source.onMain && source.mainCheck && source.mainCheck.checked < source.filmedOn) problems.push(`${where}#/source/mainCheck/checked: before the film was made`);
   problems.push(...screeningProblems({ ...film, screening: record.screening }, `${where}#/screening`));
   problems.push(...fileProblems(record, root, where));
-  if (record.screening.result !== 'pass' || record.screening.textRecognition.hits !== 0 || record.screening.attested.hits !== 0) problems.push(`${where}#/screening: the film did not pass its screen`);
+  if (record.screening.result !== 'pass' || record.screening.textRecognition.hits !== 0) problems.push(`${where}#/screening: the film did not pass its screen`);
   const asks = record.steps.filter(s => s.ask);
   if (!asks.some(s => s.verdict === 'fail') || asks.at(-1).verdict !== 'pass') problems.push(`${where}#/steps: an outage film shows a failing check and ends on a passing one`);
   if (new Set(asks.map(s => s.evidence)).size !== asks.length) problems.push(`${where}#/steps: each check has its own evidence id`);
@@ -219,7 +220,7 @@ export function renderOutage(record, up = '../../') {
   const steps = record.steps.map(s => s.event
     ? `<li class="outage-event">${escape(s.event)}</li>`
     : `<li><strong>"${escape(s.ask)}"</strong> <span class="outage-verdict outage-${escape(s.verdict)}">${escape(s.verdict.toUpperCase())}</span><br>${escape(s.said)} <span class="lab-source">Evidence <code>${escape(s.evidence)}</code>.</span></li>`).join('');
-  const html = `<figure class="lab-film" id="dispatch-${escape(record.number)}"><video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="Dispatch #${escape(record.number)}: ${escape(record.title)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>Dispatch #${escape(record.number)}: ${escape(record.title)}</h3><p>${escape(record.line)}</p><p class="lab-film-meta"><span>0:${String(film.seconds).padStart(2, '0')}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>Staged, and real:</strong> ${escape(record.staged)}</p></figcaption></figure><ol class="lab-steps outage-steps">${steps}</ol><p class="lab-film-source">${citeSource(record.source)}</p>${box('summary', { cls: 'outage-screened', id: 'dispatch-2-screened', body: `<p>Stated by ${escape(record.screening.attested.by)}, and not repeatable here: ${escape(record.screening.attested.statement)}</p>` })}<p class="lab-film-screened">${escape(film.original.note)} What anyone can repeat with ffmpeg and tesseract ${escape(record.screening.textRecognition.version)}, and the lab's tests do where those are installed: the film decodes to ${escape(film.frames)} frames; each of the ${record.screening.frames.length} screened frames (one every 5 s) is one of them, in order, by its hash; and reading each of those frames gives text with the hash the record lists, with ${escape(record.screening.textRecognition.hits)} hits for a path, an address, a port, a host name or a machine count.</p>`;
+  const html = `<figure class="lab-film" id="dispatch-${escape(record.number)}"><video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="Dispatch #${escape(record.number)}: ${escape(record.title)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>Dispatch #${escape(record.number)}: ${escape(record.title)}</h3><p>${escape(record.line)}</p><p class="lab-film-meta"><span>0:${String(film.seconds).padStart(2, '0')}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>Staged, and real:</strong> ${escape(record.staged)}</p></figcaption></figure><ol class="lab-steps outage-steps">${steps}</ol><p class="lab-film-source">${citeSource(record.source)}</p><p class="lab-film-screened">${escape(film.original.note)} What anyone can repeat with ffmpeg and tesseract ${escape(record.screening.textRecognition.version)}, and the lab's tests do where those are installed: the film decodes to ${escape(film.frames)} frames; each of the ${record.screening.frames.length} screened frames (one every 5 s) is one of them, in order, by its hash; and reading each of those frames gives text with the hash the record lists, with ${escape(record.screening.textRecognition.hits)} hits for a path, an address, a port, a host name or a machine count.</p>`;
   const leaks = sectionLeaks(html, record);
   if (leaks.length) throw new Error(`Lab 01 Dispatch #2: the rendered section fails the screen:\n  ${leaks.join('\n  ')}`);
   return html;
