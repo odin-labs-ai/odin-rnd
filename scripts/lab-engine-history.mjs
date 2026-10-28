@@ -104,7 +104,7 @@ const shortDay = iso => { const d = realInstant(iso); return `<time datetime="${
 /** Which value each series' chart draws (the rest are listed under it); default: its first value. */
 export const CHART_KEY = { 'tick-1000': 'p50_ms', 'campus-draws': 'p50_ms', 'answer-time': 'Odin_p50_s' };
 
-function stepChart(s) {
+export function stepChart(s) {
   if (s.points.length < 2) throw new Error(`${s.id}: a step chart needs two or more points`);
   const first = Object.keys(s.points[0].values), key = first.includes(CHART_KEY[s.id]) ? CHART_KEY[s.id] : first[0];
   const W = 320, H = 130, PAD = 28;
