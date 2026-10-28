@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LINK_PIN, LINK_RECORD, LINK_TEMPLATE, linkSafetyProblems, readLinkSafety, renderLinkSafety } from './lab-link-safety.mjs';
-import { fixturesOf, LABELS_FILE } from './vendor-link-safety.mjs';
+import { fixturesOf, LABELS_FILE, parseList } from './vendor-link-safety.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
@@ -89,7 +89,7 @@ test('both private commits are cited the way Lab 01 cites them, each against its
 
 test('no poisoned URL reaches the page, the record or the tile as itself', () => {
   for (const [name, text] of [['page', page], ['record', raw], ['tile', tile], ['labels', readFileSync(LABELS_FILE, 'utf8')]]) {
-    for (const re of [/javascript:alert/i, /evil\.(?:io|example)/, /\b1\.2\.3\.4\b/, /xn--/, /[‮​іｇ]/, /win\.ini/, /onmouseover/]) assert.doesNotMatch(text, re, `${name}: ${re}`);
+    for (const re of [/javascript:alert/i, /evil\.(?:io|example)/, /\b1\.2\.3\.4\b/, /xn--/, /[\u202e\u200b\u0456\uff47]/, /win\.ini/, /onmouseover/]) assert.doesNotMatch(text, re, `${name}: ${re}`);
   }
   // Every label in the labels file names a fixture in the record, and every fixture shown by a label has one.
   const labels = JSON.parse(readFileSync(LABELS_FILE, 'utf8'));
@@ -101,12 +101,19 @@ test('no poisoned URL reaches the page, the record or the tile as itself', () =>
   for (const x of [...record.unsafeLines, ...record.safeLines]) if (x.shown !== null) assert.equal(x.sha256, sha256(x.shown), 'a shown line is the line its sha256 names');
 });
 
-test('the vendor reads the fixtures in a context that reaches nothing', () => {
-  const src = (extra = '') => `const GOOD = ['https://github.com/x'];\nconst POISON = [\n  'javascript:x',${extra}\n];\nconst LOOKALIKES = ['https://github.com.example/x'];\nconst OPENER_SINKS = [\n  /window\\.open\\(/,\n];\nfunction auditText(label, text) {\n  return OPENER_SINKS.some(re => re.test(text)) ? [text] : [];\n}\n  const UNSAFE = [\n    "window.open(u)",\n  ];\n    for (const line of ["window.open(v)"]) {\n        assert.equal(auditText('fixture', line).length, 1, 'x');\n  const SAFE = ["openSafe(u)"];\n`;
-  const f = fixturesOf(src());
-  assert.deepEqual([[...f.POISON], [...f.UNSAFE], f.auditText('fixture', 'window.open(x)').length, f.auditText('fixture', 'openSafe(x)').length], [['javascript:x'], ['window.open(u)', 'window.open(v)'], 1, 0]);
-  for (const hostile of [' process.exit(1),', " require('node:fs'),", ' globalThis.process.env,']) assert.throws(() => fixturesOf(src(hostile)), /is not defined|Cannot read properties of undefined/, hostile);
-  assert.throws(() => fixturesOf('const GOOD = [];'), /has no "const POISON = \["|second list/);
+test('the vendor parses the fixture lists as literals and evaluates no code of the test', () => {
+  assert.deepEqual(parseList(`[\n  'a' + 'b'.repeat(3), "c\\td", '\\u0456', // a comment\n  'e\\\\f',\n]`), ['abbb', 'c\td', '\u0456', 'e\\f']);
+  assert.deepEqual(parseList('[]'), []);
+  // The review's escape, and every other shape of code, is refused, never run.
+  for (const hostile of ["[this.constructor.constructor('return process')().version]", "['a', process.exit(1)]", "[`x${1}`]", "['a'.toString()]", "['a', require('node:fs')]", "['a'] + x", "[('a')]", "['a' 'b']", "['\\x41']"]) {
+    assert.throws(() => parseList(hostile), /only string literals are read/, hostile);
+  }
+  const src = `const GOOD = ['https://github.com/x'];\nconst POISON = [\n  'javascript:x',\n];\nconst LOOKALIKES = ['https://github.com.example/x'];\n  const UNSAFE = [\n    "window.open(u)", "a[b]",\n  ];\n    for (const line of ["window.open(v)"]) {\n        assert.equal(auditText('fixture', line).length, 1, 'x');\n  const SAFE = ["openSafe(u)"];\n`;
+  const f = fixturesOf(src);
+  assert.deepEqual([f.GOOD, f.POISON, f.LOOKALIKES, f.UNSAFE, f.SAFE], [['https://github.com/x'], ['javascript:x'], ['https://github.com.example/x'], ['window.open(u)', 'a[b]', 'window.open(v)'], ['openSafe(u)']]);
+  assert.throws(() => fixturesOf(src.replace("'javascript:x',", "'javascript:x', globalThis.process,")), /only string literals are read/);
+  assert.throws(() => fixturesOf('const GOOD = [];'), /second list/);
+  assert.doesNotMatch(readFileSync('scripts/vendor-link-safety.mjs', 'utf8'), /node:vm|\bnew Function\b|\beval\(/, 'the vendor has no evaluator at all');
 });
 
 // The leak screen: on the rendered page, the record, the tile and the labels.
@@ -139,6 +146,9 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.lookalikes[1].allowlisted = 'kept'; }, /every lookalike is refused under the allowlist/);
   refused(r => { r.lookalikes[0].open = 'refused'; }, /a lookalike is a link without the allowlist/);
   refused(r => { r.good[0].open = 'refused'; }, /every good URL is kept/);
+  refused(r => { r.good.find(x => x.host === 'other').allowlisted = 'kept'; }, /keeps a good URL on its host and refuses one on another/);
+  refused(r => { r.good.find(x => x.host === 'allowlisted').allowlisted = 'refused'; }, /keeps a good URL on its host and refuses one on another/);
+  refused(r => { r.lookalikes[0].host = 'allowlisted'; }, /a lookalike is a link on another host/);
   refused(r => { r.unsafeLines[5].caught = 0; }, /catches every unsafe opener line/);
   refused(r => { r.safeLines[2].caught = 1; }, /lets every safe line through/);
   refused(r => { r.unsafeLines[0].label = 'x'; }, /shown as it is, or by its label/);

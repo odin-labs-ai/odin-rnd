@@ -68,10 +68,10 @@
   }
  },
  "run": {
-  "at": "2026-10-28T00:51:18Z",
+  "at": "2026-10-28T01:14:52Z",
   "on": "2026-10-28",
   "host": "a Mac",
-  "how": "Node's own test runner, with nothing installed",
+  "how": "Node's own test runner, with nothing installed, in a clean snapshot of the commit",
   "node": "v22.22.2",
   "tests": {
    "total": 7,
@@ -89,6 +89,7 @@
    "label": "a javascript: URL that runs a script in the visitor's page",
    "sha256": "31595281b8a19110a94db64ae90fd2941a4e68ce388e3aecda632ded588d0c89",
    "length": 33,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -96,6 +97,7 @@
    "label": "the same javascript: scheme in mixed case",
    "sha256": "6e46e73507f29325160e9549b655d437abf0f2b453c733173b9eac771869c8a7",
    "length": 19,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -103,6 +105,7 @@
    "label": "a javascript: scheme with a tab inside the word",
    "sha256": "ee775e38058544d66d6e9bc5a2377e852605fa10243563bfbbfc7f79cfc8add2",
    "length": 20,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -110,6 +113,7 @@
    "label": "a javascript: URL with a leading space",
    "sha256": "d93f9e9b31b2cea33a1da63137c80cad09ddc30f9424c2ba78b378d260dccbc7",
    "length": 20,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -117,6 +121,7 @@
    "label": "a javascript: URL dressed up with two slashes and the trusted host's name",
    "sha256": "cc2a267044bb228a7f1474bc83f5e64adaaa5010d41456dbeb80c1166f87404f",
    "length": 35,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -124,6 +129,7 @@
    "label": "a data: URL holding a whole HTML page with a script",
    "sha256": "698294f522aa7133bd40e36f971b11141cc4388abc89145399cfa6a050b44f12",
    "length": 58,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -131,6 +137,7 @@
    "label": "a vbscript: URL",
    "sha256": "4207cb1b9e097131ed57ba21439136e318cd8f30b1b6fd91675f21109615cef9",
    "length": 18,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -138,6 +145,7 @@
    "label": "a file: URL pointing into the visitor's own disk",
    "sha256": "2a47fc1f8ec683030c1fbb4fb87160b17c28e40691af229c4eb491010487250d",
    "length": 26,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -145,6 +153,7 @@
    "label": "plain http, unencrypted, on an unknown host",
    "sha256": "7a45245d7ffc5e4d1bef8ef865d18792cc84e069a7d71c88bbb9185345796f5d",
    "length": 21,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -152,6 +161,7 @@
    "label": "the trusted host, with the scheme in capitals",
    "sha256": "e18c8d5e8ef3fa610bea70550e38f6aa87b2e20f070893c4788eeea84c9d66d4",
    "length": 20,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -159,6 +169,7 @@
    "label": "a user name and password written into the URL before the trusted host",
    "sha256": "95d3c1e49dda2b8b4400e5a321d19394a2a92edde6b0729ee062462a314e6a5e",
    "length": 30,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -166,6 +177,7 @@
    "label": "the trusted host's name used as a user name, so the real host is another one",
    "sha256": "3a18ed89e0b4527446cbb231a34b66ecd421f73eec8d4e89468d827d8544aefb",
    "length": 28,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -173,6 +185,7 @@
    "label": "the same trick with a port after the trusted host's name",
    "sha256": "7451e28379e4e04fa4f3d04c36b152c495197270d5075c6864f7733e59197972",
    "length": 32,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -180,6 +193,7 @@
    "label": "the same trick behind a backslash",
    "sha256": "b4db5f4ee50f8cdcaaee850a82e6751cd76641566211b9319876e02dc11044ae",
    "length": 29,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -187,6 +201,7 @@
    "label": "a scheme-relative URL, two slashes and another host",
    "sha256": "3a7a9f361c905b261041682e2070f6c38813a50ddc847472240f71f2ef7ea364",
    "length": 11,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -194,6 +209,7 @@
    "label": "a backslash where the path's slash should be",
    "sha256": "101184f07609a40a84a01a66752394d37ed04e05e2370e908e4923e8f163c290",
    "length": 17,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -201,6 +217,7 @@
    "label": "a URL about five thousand characters long",
    "sha256": "f113abb64d62b49b1de298a4cd7589fe9d0682ce924b9392d486fb34550d1f2c",
    "length": 4998,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -208,6 +225,7 @@
    "label": "the trusted host's name with one Cyrillic letter that looks Latin",
    "sha256": "2eaf0a7049f0603585701559ed1374b95509623a18ca3688e032399b932e6bd5",
    "length": 20,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -215,6 +233,7 @@
    "label": "the trusted host's name with a fullwidth first letter",
    "sha256": "b5bcc69870c3fe7eec471d0a519085408776a58769636154d3784ef04208c04b",
    "length": 20,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -222,6 +241,7 @@
    "label": "a right-to-left override in the path, so a program's name reads as a picture's",
    "sha256": "607a9dda6a20ef7eacd360a378a11e16c20ac90f3ab91dc70209004f6e32dce1",
    "length": 27,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -229,6 +249,7 @@
    "label": "a zero-width space hidden in the path",
    "sha256": "7dca0c7d201b92b5ebf9bd2d59cd9977a720fb669f96900c54b6d4e54379910e",
    "length": 21,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -236,6 +257,7 @@
    "label": "the punycode spelling of a lookalike of the trusted host",
    "sha256": "60496be5ad58b2a0ad704279fac410641d1fd22ac870bb6579c54f24ef01e838",
    "length": 27,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -243,6 +265,7 @@
    "label": "a trailing newline after an otherwise good URL",
    "sha256": "5427785dfbc94780390c1b129718b64f7f8955d8bde56baab7bd82da84dda35e",
    "length": 21,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -250,6 +273,7 @@
    "label": "a space inside the path",
    "sha256": "da654bda41b1e8fc6cda2f1cb4d247f5ca971cb71580cce870b5fc5c5ab8c746",
    "length": 22,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -257,6 +281,7 @@
    "label": "a quote that breaks out of the link into a script attribute",
    "sha256": "97c866cba2c74573494660e8859146a9565e8b1569707c981282d53d35764f38",
    "length": 41,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -264,6 +289,7 @@
    "label": "a script tag in the path",
    "sha256": "a893de4fd1a9106a25b9b04962ecd96582c99655bc8c99d413827945a9ff2ae0",
    "length": 27,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -271,6 +297,7 @@
    "label": "a bare IP address as the host",
    "sha256": "8b7ec980ecce4e47f2ca7d1a42a467a22ecfc7b2d0164221e70658ce2012ca5f",
    "length": 17,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -278,6 +305,7 @@
    "label": "the visitor's own machine as the host",
    "sha256": "17c235961c9f62abffb55486bd0ab503e599e90e46d8fc4cd0aebc69716e63e1",
    "length": 19,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -285,6 +313,7 @@
    "label": "the scheme with no slashes at all",
    "sha256": "e902711ee36b6587a00e4c7c1517e570f07c825b2cce75759d41ff95cda49f03",
    "length": 18,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   },
@@ -292,6 +321,7 @@
    "label": "the scheme and nothing else",
    "sha256": "66dfeeedabf1f022d223bd6b9f464d1ca241d6da54ab7ade5b2c7758b4e08fa8",
    "length": 8,
+   "host": "none",
    "open": "refused",
    "allowlisted": "refused"
   }
@@ -301,6 +331,7 @@
    "label": "the trusted host's name as the first part of another host",
    "sha256": "02404bbfd3ae9f81f85ef0d3de42566e2dc9096769f2fe3c0e4520feb94324b5",
    "length": 28,
+   "host": "other",
    "open": "kept",
    "allowlisted": "refused"
   },
@@ -308,6 +339,7 @@
    "label": "the trusted host's name with a word in front, one host",
    "sha256": "3da6897178186d0966e8b3ca73c4575e1d029155442d4d80cac9afda8a2995b1",
    "length": 24,
+   "host": "other",
    "open": "kept",
    "allowlisted": "refused"
   },
@@ -315,6 +347,7 @@
    "label": "a subdomain of the trusted host as the first part of another host",
    "sha256": "4925399cc29a93fb748b2aaa7fed065485e2ff02b65e6ac67a942bfe174790e5",
    "length": 32,
+   "host": "other",
    "open": "kept",
    "allowlisted": "refused"
   }
@@ -324,6 +357,7 @@
    "label": "a pull request on the trusted host",
    "sha256": "37243f1b599e75ae9916400bc9635196ac676446350e129210e975243fbda6d5",
    "length": 42,
+   "host": "allowlisted",
    "open": "kept",
    "allowlisted": "kept"
   },
@@ -331,6 +365,7 @@
    "label": "a CI run's step on the trusted host, with a query and a fragment",
    "sha256": "026f60bc41ad01341633c8112c150e040003ce60a060714804a8b2c14f6b4dfa",
    "length": 73,
+   "host": "allowlisted",
    "open": "kept",
    "allowlisted": "kept"
   },
@@ -338,6 +373,7 @@
    "label": "a page on another real-looking host, with a port and an escaped space",
    "sha256": "9e7677d90eda5c50e5088e1930c2e14fc8c710a1325d8bc8b37861bf70296bcb",
    "length": 45,
+   "host": "other",
    "open": "kept",
    "allowlisted": "refused"
   }

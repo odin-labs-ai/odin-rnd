@@ -371,6 +371,7 @@
      "label",
      "sha256",
      "length",
+     "host",
      "open",
      "allowlisted"
     ],
@@ -388,6 +389,10 @@
      "length": {
       "type": "integer",
       "minimum": 0
+     },
+     "host": {
+      "type": "string",
+      "pattern": "^(allowlisted|other|none)$"
      },
      "open": {
       "type": "string",
@@ -409,6 +414,7 @@
      "label",
      "sha256",
      "length",
+     "host",
      "open",
      "allowlisted"
     ],
@@ -426,6 +432,10 @@
      "length": {
       "type": "integer",
       "minimum": 0
+     },
+     "host": {
+      "type": "string",
+      "pattern": "^(allowlisted|other|none)$"
      },
      "open": {
       "type": "string",
@@ -447,6 +457,7 @@
      "label",
      "sha256",
      "length",
+     "host",
      "open",
      "allowlisted"
     ],
@@ -464,6 +475,10 @@
      "length": {
       "type": "integer",
       "minimum": 0
+     },
+     "host": {
+      "type": "string",
+      "pattern": "^(allowlisted|other|none)$"
      },
      "open": {
       "type": "string",
