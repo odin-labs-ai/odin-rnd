@@ -34,7 +34,7 @@
     {
       "id": "public-workflows-call-no-reusable-workflow-from-another-repository",
       "path": ".github/workflows/**",
-      "pattern": "^(?!\\s*#).*\\buses:\\s*[\"']?[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/\\.github/workflows/",
+      "pattern": "^(?!\\s*#).*[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/\\.github/workflows/",
       "severity": "critical",
       "type": "forbiddenPattern"
     },

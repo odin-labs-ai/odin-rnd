@@ -137,7 +137,10 @@ test('a .yaml workflow, a flow-style job, an escaped key and a reusable workflow
     assert.equal(grade(dir, BAR).verdict, 'pass', 'a hosted .yaml workflow passes');
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', 'runs-on: self-hosted'), 'public-workflows-run-on-hosted-runners-only');
     refuses(dir, BAR, extra, s => s.replace("jobs:\n  a:\n    runs-on: ubuntu-latest\n", 'jobs: { a: { runs-on: self-hosted } }\n  b:\n    runs-on: ubuntu-latest\n'), 'public-workflows-run-on-hosted-runners-only');
-    refuses(dir, BAR, extra, s => s.replace("    runs-on: ubuntu-latest\n    steps:\n      - run: true\n", '    uses: some-org/some-repo/.github/workflows/build.yml@main\n'), 'public-workflows-call-no-reusable-workflow-from-another-repository');
+    for (const call of ['    uses: some-org/some-repo/.github/workflows/build.yml@main\n', '    "uses": some-org/some-repo/.github/workflows/build.yml@main\n', "    'uses': 'some-org/some-repo/.github/workflows/build.yml@main'\n"]) {
+      refuses(dir, BAR, extra, s => s.replace("    runs-on: ubuntu-latest\n    steps:\n      - run: true\n", () => call), 'public-workflows-call-no-reusable-workflow-from-another-repository');
+    }
+    refuses(dir, BAR, extra, s => s.replace("jobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n", () => 'jobs: { call: { uses: some-org/some-repo/.github/workflows/build.yml@main } }\n'), 'public-workflows-call-no-reusable-workflow-from-another-repository');
     // A YAML escape can spell runs-on without the substring; no workflow here needs an escape, so any is refused.
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"\\u0072uns-on": self-hosted'), 'public-workflows-carry-no-escaped-characters');
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"runs\\x2don": self-hosted'), 'public-workflows-carry-no-escaped-characters');
