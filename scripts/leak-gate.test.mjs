@@ -15,7 +15,7 @@ const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx'];
 const CANARY = 'odncanary-0123456789abcdef';
 const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])) });
 const SECRET = secretOf();
-const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.stringify({ format: 'odin-leak-gate-set', version: 1, ...commitmentOf(d.terms, d.canaries, d.heads) }); };
+const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.stringify({ format: 'odin-leak-gate-set', version: 1, ...commitmentOf(d.salt, d.terms, d.canaries, d.heads) }); };
 const PAGE = '<p>Terms <span data-leak-screen="terms">-</span> canaries <span data-leak-screen="canaries">-</span> <time data-leak-screen="scanned" datetime="">-</time> <code data-leak-screen="commit">-</code> <span data-leak-screen="files">0</span> <span data-leak-screen="hits">-</span> <span data-leak-screen="known">-</span></p>';
 const COMMIT = 'a'.repeat(40);
 /** A minimal ustar archive, for the vendored-bundle case. */
@@ -116,6 +116,8 @@ test('a term set that differs from the public commitment stops the build, even w
     assert.match(r.out, /not the committed one \(committed 4 terms, 1 canaries; got 3, 1\)/);
     assert.throws(() => checkCommitment(loadSecret(SECRET), setFile(secretOf(TERMS, [CANARY, 'odncanary-ffffffffffffffff']))), /not the committed one/);
     checkCommitment(loadSecret(SECRET), setFile());
+    const resalted = SECRET.replace(SALT, 'another-salt-of-enough-length');
+    assert.throws(() => checkCommitment(loadSecret(resalted), setFile()), /not the committed one/, 'only the salt changed');
     const noSet = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), 'dist'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' });
     assert.equal(noSet.status, 2);
     assert.match(noSet.stderr, /--set/);

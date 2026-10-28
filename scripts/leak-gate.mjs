@@ -56,13 +56,15 @@ export function loadSecret(raw) {
   const kinds = new Map();
   for (const h of d.terms) kinds.set(h, 'term');
   for (const h of d.canaries) kinds.set(h, 'canary');
-  return { salt: d.salt, kinds, heads: new Set(d.heads), terms: new Set(d.terms).size, canaries: new Set(d.canaries).size, commitment: commitmentOf(d.terms, d.canaries, d.heads) };
+  return { salt: d.salt, kinds, heads: new Set(d.heads), terms: new Set(d.terms).size, canaries: new Set(d.canaries).size, commitment: commitmentOf(d.salt, d.terms, d.canaries, d.heads) };
 }
 
 /** The public commitment to one exact term set: its counts and the sha256 of its sorted hashes (no term, no salt). */
-export function commitmentOf(terms, canaries, heads) {
+export function commitmentOf(salt, terms, canaries, heads) {
   const [t, c, f] = [terms, canaries, heads].map(list => [...new Set(list)].sort());
-  return { terms: t.length, canaries: c.length, sha256: createHash('sha256').update(`terms\n${t.join('\n')}\ncanaries\n${c.join('\n')}\nheads\n${f.join('\n')}\n`).digest('hex') };
+  // The salt is hashed in too (a random 128-bit value: its hash gives nothing away), so a set with the right hashes
+  // but another salt, which would match nothing, is a different set.
+  return { terms: t.length, canaries: c.length, sha256: createHash('sha256').update(`salt\n${salt}\nterms\n${t.join('\n')}\ncanaries\n${c.join('\n')}\nheads\n${f.join('\n')}\n`).digest('hex') };
 }
 
 /**
