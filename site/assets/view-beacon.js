@@ -1,5 +1,5 @@
 // R&D site page-view beacon, served from this site (no other origin's code runs here). Copied from
-// odin-website-preview public/rnd-beacon.js (#50). Sends this page's path and the referring
+// the main website's own R&D beacon (#50). Sends this page's path and the referring
 // site's host name to odin-labs.ai/api/rnd-hit/, which counts it as a cookieless Vercel Web Analytics event. No cookie,
 // no storage, no identifier. Skipped when the browser signals Global Privacy Control or Do Not Track.
 (() => {

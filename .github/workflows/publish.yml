@@ -54,6 +54,10 @@ jobs:
         run: |
           pnpm build
           pnpm check
+      - name: Leak screen, fail closed on any protected term or canary
+        env:
+          LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: node scripts/leak-gate.mjs --known scripts/leak-gate-known.json --page dist/leak-screen/index.html dist
       - name: Upload Pages
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

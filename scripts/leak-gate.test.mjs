@@ -1,0 +1,140 @@
+// The leak gate on fixtures, with a TEST salt and made-up terms: the real term set is a repository secret and never
+// appears here. Every class of leak must stop the build, a clean site must pass, and a missing or empty term set must
+// stop it too.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
+import { digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+
+const SALT = 'test-salt-not-the-real-one-0001';
+const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host'];
+const CANARY = 'odncanary-0123456789abcdef';
+const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))) });
+const SECRET = secretOf();
+const PAGE = '<p>Terms <span data-leak-screen="terms">-</span> canaries <span data-leak-screen="canaries">-</span> <time data-leak-screen="scanned" datetime="">-</time> <code data-leak-screen="commit">-</code> <span data-leak-screen="files">0</span> <span data-leak-screen="hits">-</span> <span data-leak-screen="known">-</span></p>';
+const COMMIT = 'a'.repeat(40);
+
+function site(extra = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-'));
+  const files = { 'dist/index.html': '<h1>A clean page</h1><p>Nothing private here, 2026-10-28.</p>', 'dist/data/record.json': '{"note":"a clean record"}', 'dist/leak-screen/index.html': PAGE, ...extra };
+  for (const [file, body] of Object.entries(files)) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), body); }
+  return root;
+}
+function gate(root, env = { LEAK_SCREEN_SECRET: SECRET }, args = []) {
+  const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), ...args, 'dist'], { cwd: root, env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
+  return { code: r.status, out: r.stdout + r.stderr };
+}
+
+test('a clean site passes and the Leak screen page is filled with counts, the commit and 0 hits', () => {
+  const root = site();
+  try {
+    const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
+    assert.equal(r.code, 0, r.out);
+    const page = readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8');
+    assert.match(page, /data-leak-screen="terms">3</);
+    assert.match(page, /data-leak-screen="canaries">1</);
+    assert.match(page, /data-leak-screen="hits">0</);
+    assert.match(page, new RegExp(`data-leak-screen="commit">${COMMIT}<`));
+    assert.match(page, /datetime="\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ"/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+const LEAKS = {
+  'a planted canary in a draft lab page': ['dist/labs/draft/index.html', `<p>Draft.</p>\n<p>copied: ${CANARY}</p>`, /dist\/labs\/draft\/index\.html:2 canary hash [0-9a-f]{8}/],
+  'a protected term, split by case, an entity and markup': ['dist/labs/draft/index.html', '<p>We ran it for ZEPHYR&nbsp;<b>quarry</b>.</p>', /:1 term hash [0-9a-f]{8}/],
+  'a protected term inside a gzipped record': ['dist/data/vendored.json.gz', gzipSync('{"host":"ostrel-nine-host"}'), /vendored\.json\.gz:1 term/],
+  'a protected term as a JSON escape': ['dist/data/r.json', '{"a":"\\u0062lorvak"}', /r\.json:1 term/],
+  'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
+  'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
+  'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
+  'a token shape': ['dist/index.html', `<p>ghp_${'A1'.repeat(18)}</p>`, /index\.html:1 github-token/],
+};
+for (const [name, [file, body, want]] of Object.entries(LEAKS)) {
+  test(`${name} stops the build, and the output never holds the text`, () => {
+    const root = site({ [file]: body });
+    try {
+      const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
+      assert.equal(r.code, 1, r.out);
+      assert.match(r.out, want);
+      for (const secret of [CANARY, ...TERMS, 'someone', '192.168.4.20', 'ghp_']) assert.ok(!r.out.toLowerCase().includes(secret.toLowerCase()), `output holds ${secret}`);
+      assert.match(readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8'), /data-leak-screen="hits">-</, 'a failed scan never fills the page');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
+
+test('a missing, empty, broken or partial term set stops the build: it is never a pass', () => {
+  const root = site();
+  try {
+    const cases = {
+      missing: {},
+      empty: { LEAK_SCREEN_SECRET: '' },
+      blank: { LEAK_SCREEN_SECRET: '  \n' },
+      'not JSON': { LEAK_SCREEN_SECRET: 'terms' },
+      'wrong format': { LEAK_SCREEN_SECRET: '{}' },
+      'no terms': { LEAK_SCREEN_SECRET: secretOf([]) },
+      'no canaries': { LEAK_SCREEN_SECRET: secretOf(TERMS, []) },
+      'no salt': { LEAK_SCREEN_SECRET: SECRET.replace(SALT, '') },
+    };
+    for (const [name, env] of Object.entries(cases)) {
+      const r = gate(root, env);
+      assert.equal(r.code, 2, `${name}: ${r.out}`);
+      assert.match(r.out, /leak gate: the term set/, name);
+    }
+    assert.throws(() => loadSecret(JSON.stringify({ ...JSON.parse(SECRET), terms: ['not-a-hash'] })), /24-hex/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a path that does not exist, or a scan that reads no text, stops the build', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-'));
+  try {
+    assert.equal(gate(root).code, 2);
+    mkdirSync(join(root, 'dist'));
+    writeFileSync(join(root, 'dist/only.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0]));
+    const r = gate(root);
+    assert.equal(r.code, 2);
+    assert.match(r.out, /no text was read/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a known occurrence covers exactly its count: one more is a hit, one fewer is stale, a canary is never known', () => {
+  const secret = loadSecret(SECRET);
+  const hits = scanText('blorvak\nblorvak', secret).map(h => ({ file: 'dist/a.json', ...h }));
+  const hash = hits[0].hash;
+  const row = n => ({ file: 'dist/a.json', kind: 'term', hash, count: n, reason: 'pinned pre-registration' });
+  assert.deepEqual(settle(hits, [row(2)]), { fresh: [], stale: [], known: 2 });
+  assert.equal(settle(hits, [row(1)]).stale.length, 1);
+  assert.equal(settle(hits, [row(3)]).stale.length, 1);
+  assert.equal(settle(hits, []).fresh.length, 2);
+  assert.equal(settle([], [row(1)]).stale[0].seen, 0);
+  const canary = scanText(CANARY, secret).map(h => ({ file: 'dist/a.json', ...h }));
+  assert.equal(settle(canary, [{ file: 'dist/a.json', kind: 'canary', hash: canary[0].hash, count: 1, reason: 'never allowed' }]).fresh.length, 1);
+  const list = rows => JSON.stringify({ format: 'odin-leak-gate-known', version: 1, known: rows });
+  assert.throws(() => loadKnown(list([{ ...row(1), kind: 'canary' }])), /canary/);
+  assert.throws(() => loadKnown(list([{ ...row(1), reason: '' }])), /reason/);
+  assert.throws(() => loadKnown(list([{ ...row(1), hash: undefined }])), /hash prefix/);
+  assert.equal(loadKnown(list([row(1)])).length, 1);
+});
+
+test('the committed known-occurrence list is well formed and lists no canary', () => {
+  const rows = loadKnown(readFileSync('scripts/leak-gate-known.json', 'utf8'));
+  for (const row of rows) assert.match(row.file, /^dist\//);
+});
+
+test('the Leak screen page carries every slot the gate fills', () => {
+  const page = readFileSync('site/leak-screen/index.html', 'utf8');
+  const filled = fillPage(page, { terms: 1, canaries: 1, scanned: '2026-10-28T00:00:00Z', commit: COMMIT, files: 1, hits: 0, known: 0 });
+  assert.match(filled, /datetime="2026-10-28T00:00:00Z"/);
+  assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
+});
+
+test('the publish workflow runs the gate after the build, before the upload, with the secret', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const at = s => { const i = wf.indexOf(s); assert.notEqual(i, -1, s); return i; };
+  assert.ok(at('pnpm check') < at('node scripts/leak-gate.mjs') && at('node scripts/leak-gate.mjs') < at('upload-pages-artifact'));
+  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.doesNotMatch(wf.slice(at('Leak screen'), at('Upload Pages')), /continue-on-error|\|\| true/);
+});

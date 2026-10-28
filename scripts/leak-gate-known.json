@@ -1,0 +1,12 @@
+{
+ "format": "odin-leak-gate-known",
+ "version": 1,
+ "about": "Reviewed hits of the site's leak gate (scripts/leak-gate.mjs) that cannot be edited away here. Each row covers exactly `count` hits of that kind (and salted hash prefix) in that file: one more is a new leak and one fewer is a stale row, and both fail the deploy. A canary is never listed. The list only shrinks: a row goes when its pre-registration is amended.",
+ "known": [
+  { "file": "dist/data/broker-same-model/preregistration.json", "kind": "term", "hash": "0719f76c", "count": 1, "reason": "A private repository name in a hash-pinned pre-registration (the price book's source). Fixed only by an amendment." },
+  { "file": "dist/data/telemetry-truth/preregistration.json", "kind": "term", "hash": "0719f76c", "count": 1, "reason": "A private repository name in a hash-pinned pre-registration (the price book's source). Fixed only by an amendment." },
+  { "file": "dist/data/composable-harness/preregistration.json", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "A private repository name in a hash-pinned pre-registration (the baseline's pinned source). Fixed only by an amendment." },
+  { "file": "dist/journal/composable-harness-pre-registration.html", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "The same name, in the article that renders that pre-registration word for word." },
+  { "file": "dist/data/nina-changes/reviewer.json", "kind": "loopback", "count": 7, "reason": "A fictional fixture repository's config default (a local cache address and port), quoted in recorded reviewer output. Not a machine of ours." }
+ ]
+}
