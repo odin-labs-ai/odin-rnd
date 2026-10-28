@@ -29,7 +29,7 @@ function png(chunks) {
 }
 /** A minimal JPEG: SOI, a comment segment, SOS-less EOI. */
 const seg = (marker, data) => { const d = Buffer.from(data), h = Buffer.from([0xff, marker, 0, 0]); h.writeUInt16BE(d.length + 2, 2); return Buffer.concat([h, d]); };
-const SCAN = Buffer.concat([seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56])]);
+const SCAN = Buffer.concat([seg(0xc0, Buffer.from([8, 0, 1, 0, 1, 1, 1, 0x11, 0])), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56])]);
 function jpeg(comment, { after = false } = {}) { return Buffer.concat([Buffer.from([0xff, 0xd8]), ...(after ? [SCAN, seg(0xfe, comment)] : [seg(0xfe, comment), SCAN]), Buffer.from([0xff, 0xd9])]); }
 /** A minimal WebM: EBML header, a segment of unknown size with an Info title and an unknown-size cluster. */
 function webm(title) {
@@ -431,7 +431,7 @@ test('a short term in the raw compressed bytes of a binary is not matched; in it
 test('a binary of a parsed type that does not parse stops the build', () => {
   const iendOnly = (() => { const p = png({}); return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]), p.subarray(p.length - 12)]); })();
   const badCrc = Buffer.from(png({ tEXt: 'Comment\0ok' })); badCrc[40] ^= 1;
-  for (const [file, bytes] of [['dist/assets/bad.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0])], ['dist/assets/iend.png', iendOnly], ['dist/assets/crc.png', badCrc], ['dist/assets/bad.jpg', Buffer.from([0xff, 0xd8, 0, 1, 2])], ['dist/assets/sos.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xda])], ['dist/assets/noeoi.jpg', Buffer.concat([Buffer.from([0xff, 0xd8]), SCAN])], ['dist/assets/bad.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f])]]) {
+  for (const [file, bytes] of [['dist/assets/bad.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0])], ['dist/assets/iend.png', iendOnly], ['dist/assets/crc.png', badCrc], ['dist/assets/bad.jpg', Buffer.from([0xff, 0xd8, 0, 1, 2])], ['dist/assets/sos.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xda])], ['dist/assets/sos2.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xda, 0, 2, 0xff, 0xd9])], ['dist/assets/noframe.jpg', Buffer.concat([Buffer.from([0xff, 0xd8]), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0xff, 0xd9])])], ['dist/assets/noeoi.jpg', Buffer.concat([Buffer.from([0xff, 0xd8]), SCAN])], ['dist/assets/bad.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f])]]) {
     const root = site({ [file]: bytes });
     try { const r = gate(root); assert.equal(r.code, 2, `${file}: ${r.out}`); assert.match(r.out, /does not parse/); } finally { rmSync(root, { recursive: true, force: true }); }
   }

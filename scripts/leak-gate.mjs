@@ -356,7 +356,7 @@ export function binaryMetadata(path, b, shown) {
     // (stuffed FF00, restart markers and fill bytes stay inside it). A file without SOS or EOI does not parse.
     if (b.length < 4 || b[0] !== 0xff || b[1] !== 0xd8) throw bad();
     const out = [];
-    let scans = 0;
+    let scans = 0, frame = false;
     for (let at = 2; ;) {
       if (at + 2 > b.length || b[at] !== 0xff) throw bad();
       const marker = b[at + 1];
@@ -366,6 +366,10 @@ export function binaryMetadata(path, b, shown) {
       const len = b.readUInt16BE(at + 2);
       if (len < 2 || at + 2 + len > b.length) throw bad();
       if ((marker >= 0xe0 && marker <= 0xef) || marker === 0xfe) out.push(text(b.subarray(at + 4, at + 2 + len)));
+      // A frame header (SOFn: precision, height, width, 1-4 components of 3 bytes) must come before the first scan, and
+      // every scan header (SOS: 1-4 components of 2 bytes, then 3 bytes) must be complete.
+      if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) { const n = b[at + 9]; if (len !== 8 + 3 * n || n < 1 || n > 4) throw bad(); frame = true; }
+      if (marker === 0xda) { const n = b[at + 4]; if (!frame || n < 1 || n > 4 || len !== 6 + 2 * n) throw bad(); }
       at += 2 + len;
       if (marker === 0xda) {
         scans++;
