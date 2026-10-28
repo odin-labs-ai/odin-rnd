@@ -5,7 +5,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } fr
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { laneCite } from './lab-kit.mjs';
-import { FRAME, MAIN_WORD, OUTAGE_RECORD, citeSource, outageProblems, pngSize, readOutage, renderOutage, sectionLeaks, webmSeconds } from './lab-outage.mjs';
+import { FRAME, MAIN_WORD, OUTAGE_RECORD, citeSource, decodeFrames, screeningFrameProblems, outageProblems, pngSize, readOutage, renderOutage, sectionLeaks, webmSeconds } from './lab-outage.mjs';
 
 // Lab 01's Dispatch #2 (lane dispatch2-film): the film and poster pinned by sha256 and size, the film's own header
 // checked against the record, its screen, and a citation that never claims the private main for a commit not on it.
@@ -173,4 +173,37 @@ test('the outage is a failing check between passing ones, each with its own evid
   assert.match(asks[3].said, /4 of 4 places/);
   record.steps = record.steps.filter(s => s.verdict !== 'fail');
   assert.ok(outageProblems(record).some(p => p.includes('a failing check')));
+});
+
+// Review round 2 (#5): the screening is the filming agent's own statement, so the page puts it in the kit's
+// "summary only" box; what anyone can repeat is that each screened frame is one of the film's own decoded frames.
+test('the screening statement sits in the "summary only" box and says what can and cannot be repeated', () => {
+  const html = renderOutage(committed());
+  const m = /<div class="lab-panel outage-screened" id="dispatch-2-screened"><p class="technical">SUMMARY ONLY, NOT REPRODUCIBLE HERE<\/p>([\s\S]*?)<\/div>/.exec(html);
+  assert.ok(m, 'the marked box');
+  assert.match(m[1], /That viewing is its own statement: this page cannot repeat it\./);
+  assert.match(m[1], /the film decodes to 378 frames, and each screened frame's hash, listed in the record, is one of them, in order/);
+  assert.doesNotMatch(html.replace(m[0], ''), /viewed|text recognition/, 'no screening claim outside the box');
+});
+
+test('screening frames: each must be one of the film\'s frames, in order, and the frame count must match', () => {
+  const record = committed(), listed = record.screening.frames.map(f => f.rgb24Sha256);
+  const decoded = Array.from({ length: record.film.frames }, (_, i) => sha256(`other ${i}`));
+  listed.forEach((h, i) => { decoded[i * 30] = h; });
+  assert.deepEqual(screeningFrameProblems(record, decoded), []);
+  assert.ok(screeningFrameProblems(record, decoded.slice(1)).some(p => p.includes('#/film/frames')));
+  const swapped = [...decoded];
+  [swapped[0], swapped[30]] = [swapped[30], swapped[0]];
+  assert.ok(screeningFrameProblems(record, swapped).some(p => p.includes('#/screening/frames/')), 'out of order');
+  const tampered = clone(record);
+  tampered.screening.frames[3].rgb24Sha256 = sha256('a frame that is not in the film');
+  assert.ok(screeningFrameProblems(tampered, decoded).some(p => p.includes('#/screening/frames/3')));
+});
+
+test('the committed film, decoded with ffmpeg: 378 frames, and every screened frame is one of them, in order', async t => {
+  const record = committed();
+  const d = await decodeFrames(join('site', record.film.src));
+  if (d.problem && /cannot run here/.test(d.problem)) return t.skip(`ffmpeg is not installed here (${d.problem}); run where it is to repeat this check`);
+  assert.equal(d.problem, undefined, d.problem);
+  assert.deepEqual(screeningFrameProblems(record, d.frames), []);
 });

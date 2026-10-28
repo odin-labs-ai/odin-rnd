@@ -13,6 +13,7 @@
   "bytes": 1511547,
   "posterBytes": 395118,
   "seconds": 51,
+  "frames": 378,
   "sha256": {
    "src": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
    "poster": "f6532a30fed7adc63681dd663249ce40d843fdb5e04d9dbd445040b0817b8fa4"
@@ -20,7 +21,7 @@
   "original": {
    "sha256": "bcd0cd339e715eb1525b276a83820f94ebd6341437c4313ee5fbfac7bc2c5ceb",
    "bytes": 1511106,
-   "note": "The recording, rewrapped without re-encoding so its header carries its length: the same 378 frames, the picture unchanged."
+   "note": "The recording, rewrapped without re-encoding so its header carries its length; the picture is unchanged."
   }
  },
  "source": {

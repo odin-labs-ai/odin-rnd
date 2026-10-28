@@ -19,10 +19,12 @@
 // the film's frame size; when the screening record does not cover the film (the films gate's rule, lab-films.mjs).
 // What the gate cannot do is read pixels: the pictures rest on the screening record (frames hashed, viewed, read by
 // text recognition before commit), as Lab 01's films do. The rendered section is screened again as a whole.
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
+import { box, cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
 import { MAX_FILM_BYTES, screeningProblems } from './lab-films.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -61,6 +63,45 @@ export function webmSeconds(bytes) {
 export function pngSize(bytes) {
   if (bytes.length < 24 || bytes.readUInt32BE(0) !== 0x89504e47 || bytes.toString('latin1', 12, 16) !== 'IHDR') return { problem: 'not a PNG' };
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+/**
+ * The screening frames, re-derived from the film's own bytes by anyone with ffmpeg (the page cannot run it, the tests
+ * do where ffmpeg is installed): every frame decoded as raw rgb24 and hashed, in order. -> { frames: [sha256...] }, or
+ * { problem } when ffmpeg is missing or fails. ffmpeg gets its arguments as an argv list, never through a shell.
+ */
+export function decodeFrames(file, { width = FRAME.width, height = FRAME.height, ffmpeg = 'ffmpeg' } = {}) {
+  const size = width * height * 3;
+  return new Promise(resolve => {
+    const out = [];
+    let hash = createHash('sha256'), filled = 0;
+    const child = spawn(ffmpeg, ['-v', 'error', '-i', file, '-fps_mode', 'passthrough', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let err = '';
+    child.on('error', e => resolve({ problem: `ffmpeg cannot run here (${e.code || e.message})` }));
+    child.stderr.on('data', d => { err += d; });
+    child.stdout.on('data', chunk => {
+      for (let at = 0; at < chunk.length;) {
+        const take = Math.min(size - filled, chunk.length - at);
+        hash.update(chunk.subarray(at, at + take));
+        filled += take; at += take;
+        if (filled === size) { out.push(hash.digest('hex')); hash = createHash('sha256'); filled = 0; }
+      }
+    });
+    child.on('close', code => resolve(code === 0 && filled === 0 ? { frames: out } : { problem: `ffmpeg exited ${code}${filled ? ', with a partial frame' : ''}: ${err.trim().slice(0, 200)}` }));
+  });
+}
+
+/** Every screening frame the record lists must be one of the film's decoded frames, in order; the count must match. */
+export function screeningFrameProblems(record, decoded, where = OUTAGE_RECORD) {
+  const problems = [];
+  if (decoded.length !== record.film.frames) problems.push(`${where}#/film/frames: the film decodes to ${decoded.length} frames, the record says ${record.film.frames}`);
+  let after = -1;
+  for (const [i, f] of record.screening.frames.entries()) {
+    const at = decoded.indexOf(f.rgb24Sha256, after + 1);
+    if (at < 0) problems.push(`${where}#/screening/frames/${i}: the frame at ${f.t} s is not one of the film's frames (after frame ${after})`);
+    else after = at;
+  }
+  return problems;
 }
 
 function fileProblems(record, root, where) {
@@ -156,7 +197,7 @@ export function renderOutage(record, up = '../../') {
   const steps = record.steps.map(s => s.event
     ? `<li class="outage-event">${escape(s.event)}</li>`
     : `<li><strong>"${escape(s.ask)}"</strong> <span class="outage-verdict outage-${escape(s.verdict)}">${escape(s.verdict.toUpperCase())}</span><br>${escape(s.said)} <span class="lab-source">Evidence <code>${escape(s.evidence)}</code>.</span></li>`).join('');
-  const html = `<figure class="lab-film" id="dispatch-${escape(record.number)}"><video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="Dispatch #${escape(record.number)}: ${escape(record.title)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>Dispatch #${escape(record.number)}: ${escape(record.title)}</h3><p>${escape(record.line)}</p><p class="lab-film-meta"><span>0:${String(film.seconds).padStart(2, '0')}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>Staged, and real:</strong> ${escape(record.staged)}</p></figcaption></figure><ol class="lab-steps outage-steps">${steps}</ol><p class="lab-film-source">${citeSource(record.source)}</p><p class="lab-film-screened">${escape(film.original.note)} Screened: a frame every 5 s (${record.screening.frames.length} frames, each listed with its hash in the record), viewed by an AI agent, and ${escape(record.screening.textRead.images)} frames read by text recognition, with ${escape(record.screening.textRead.hits)} hits for a path, an address, a port, a host name or a machine count.</p>`;
+  const html = `<figure class="lab-film" id="dispatch-${escape(record.number)}"><video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="Dispatch #${escape(record.number)}: ${escape(record.title)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>Dispatch #${escape(record.number)}: ${escape(record.title)}</h3><p>${escape(record.line)}</p><p class="lab-film-meta"><span>0:${String(film.seconds).padStart(2, '0')}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>Staged, and real:</strong> ${escape(record.staged)}</p></figcaption></figure><ol class="lab-steps outage-steps">${steps}</ol><p class="lab-film-source">${citeSource(record.source)}</p>${box('summary', { cls: 'outage-screened', id: 'dispatch-2-screened', body: `<p>${escape(film.original.note)} Before it was published, the agent that filmed it viewed a frame every 5 s (${record.screening.frames.length} frames) and read ${escape(record.screening.textRead.images)} frames by text recognition, with ${escape(record.screening.textRead.hits)} hits for a path, an address, a port, a host name or a machine count. That viewing is its own statement: this page cannot repeat it. What anyone can repeat: the film decodes to ${escape(film.frames)} frames, and each screened frame's hash, listed in the record, is one of them, in order (the lab's tests decode the film with ffmpeg and check it).</p>` })}`;
   const leaks = sectionLeaks(html, record);
   if (leaks.length) throw new Error(`Lab 01 Dispatch #2: the rendered section fails the screen:\n  ${leaks.join('\n  ')}`);
   return html;
