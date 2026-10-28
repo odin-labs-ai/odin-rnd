@@ -6,6 +6,8 @@
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
 //   labs/rogue/index.html         Lab 05's page, rendered by scripts/lab-rogue.mjs
+//   labs/review/index.html        Lab 06's page, rendered by scripts/lab-review.mjs
+//   labs/link-safety/index.html   Lab 07's page, rendered by scripts/lab-link-safety.mjs
 //   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
@@ -34,6 +36,8 @@ import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
+import { REVIEW_RECORD, renderReview } from './lab-review.mjs';
+import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 
@@ -208,6 +212,12 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   if (requireBench && !existsSync(join(root, ROGUE_RECORD))) throw new Error(`Lab 05 is required on the published site: ${ROGUE_RECORD} is missing`);
   // Its dates are checked against the build's own clock (as Lab 01's engine history is), not a caller's `now`.
   const rogue = renderRogue(root);
+  // Lab 06's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, REVIEW_RECORD))) throw new Error(`Lab 06 is required on the published site: ${REVIEW_RECORD} is missing`);
+  const review = renderReview(root);
+  // Lab 07's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, LINK_RECORD))) throw new Error(`Lab 07 is required on the published site: ${LINK_RECORD} is missing`);
+  const linkSafety = renderLinkSafety(root);
   // Lab 08's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
   if (requireBench && !existsSync(join(root, RED_RECORD))) throw new Error(`Lab 08 is required on the published site: ${RED_RECORD} is missing`);
   const redBuild = renderRedBuild(root);
@@ -256,6 +266,8 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
     ...rogue.pages,
+    ...review.pages,
+    ...linkSafety.pages,
     ...redBuild.pages,
     ...blind.pages,
   };
