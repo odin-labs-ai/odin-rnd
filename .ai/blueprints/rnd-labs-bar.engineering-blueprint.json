@@ -20,14 +20,14 @@
     {
       "id": "no-money-figure-in-a-lab-record",
       "path": "site/data/labs/**",
-      "pattern": "(?:[$€£¥]|\\\\u00(?:24|[aA]3|[aA]5)|\\\\u20[aA][cC]|&#0*36;|&#[xX]0*24;|&#0*8364;|&#[xX]0*20[aA][cC];|&#0*163;|&#[xX]0*[aA]3;|&(?:dollar|euro|pound|yen);|%24|%E2%82%AC|%C2%A3)\\s?[0-9]|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
+      "pattern": "(?:[$€£¥])\\s?[0-9]|\\\\u00(?:24|[aA]3|[aA]5)|\\\\u20[aA][cC]|&#0*36;|&#[xX]0*24;|&#0*8364;|&#[xX]0*20[aA][cC];|&#0*163;|&#[xX]0*[aA]3;|&#0*165;|&#[xX]0*[aA]5;|&(?:dollar|euro|pound|yen);|%24|%E2%82%AC|%C2%A3|%C2%A5|[$€£¥]\\s?(?:&#|\\\\u|%[0-9A-Fa-f]{2})|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
       "severity": "high",
       "type": "forbiddenPattern"
     },
     {
       "id": "no-money-figure-on-a-lab-page",
       "path": "site/labs/**",
-      "pattern": "(?:[$€£¥]|\\\\u00(?:24|[aA]3|[aA]5)|\\\\u20[aA][cC]|&#0*36;|&#[xX]0*24;|&#0*8364;|&#[xX]0*20[aA][cC];|&#0*163;|&#[xX]0*[aA]3;|&(?:dollar|euro|pound|yen);|%24|%E2%82%AC|%C2%A3)\\s?[0-9]|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
+      "pattern": "(?:[$€£¥])\\s?[0-9]|\\\\u00(?:24|[aA]3|[aA]5)|\\\\u20[aA][cC]|&#0*36;|&#[xX]0*24;|&#0*8364;|&#[xX]0*20[aA][cC];|&#0*163;|&#[xX]0*[aA]3;|&#0*165;|&#[xX]0*[aA]5;|&(?:dollar|euro|pound|yen);|%24|%E2%82%AC|%C2%A3|%C2%A5|[$€£¥]\\s?(?:&#|\\\\u|%[0-9A-Fa-f]{2})|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
       "severity": "high",
       "type": "forbiddenPattern"
     },
@@ -35,6 +35,13 @@
       "id": "public-workflows-call-no-reusable-workflow-from-another-repository",
       "path": ".github/workflows/**",
       "pattern": "^(?!\\s*#).*\\buses:\\s*[\"']?[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/\\.github/workflows/",
+      "severity": "critical",
+      "type": "forbiddenPattern"
+    },
+    {
+      "id": "public-workflows-carry-no-escaped-characters",
+      "path": ".github/workflows/**",
+      "pattern": "\\\\[uUx][0-9a-fA-F]",
       "severity": "critical",
       "type": "forbiddenPattern"
     },

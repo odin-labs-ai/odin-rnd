@@ -82,10 +82,10 @@ test('a money figure on a lab page or in a lab record is refused', () => {
   const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
   try {
     assert.equal(grade(dir, BAR).verdict, 'pass');
-    for (const figure of ['€ 4 a month', '$12', 'USD 30', '15 euros', '&#36;12', '&#x24;12', '&dollar;12', '&euro;4', '%2412']) {
-      refuses(dir, BAR, page, s => s.replace('</main>', `<p>${figure}</p>\n</main>`), 'no-money-figure-on-a-lab-page');
+    for (const figure of ['€ 4 a month', '$12', 'USD 30', '15 euros', '&#36;12', '&#x24;12', '&dollar;12', '&euro;4', '%2412', '&#36;&#49;2', '$&#49;2', '&dollar;&#49;2']) {
+      refuses(dir, BAR, page, s => s.replace('</main>', () => `<p>${figure}</p>\n</main>`), 'no-money-figure-on-a-lab-page');
     }
-    for (const price of ['$0.30', '\\u00240.30', '\\u20ac4']) {
+    for (const price of ['$0.30', '\\u00240.30', '\\u20ac4', '\\u0024\\u0030.30', '$\\u0030.30']) {
       refuses(dir, BAR, record, s => `${s}\n"price": "${price}"\n`, 'no-money-figure-in-a-lab-record');
     }
   } finally {
@@ -129,7 +129,7 @@ test('a workflow job on anything but one approved GitHub-hosted label is refused
   }
 });
 
-test('a .yaml workflow, a flow-style job and a reusable workflow from another repository are refused too', () => {
+test('a .yaml workflow, a flow-style job, an escaped key and a reusable workflow from another repository are refused too', () => {
   const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
   const extra = '.github/workflows/extra.yaml';
   try {
@@ -138,6 +138,9 @@ test('a .yaml workflow, a flow-style job and a reusable workflow from another re
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', 'runs-on: self-hosted'), 'public-workflows-run-on-hosted-runners-only');
     refuses(dir, BAR, extra, s => s.replace("jobs:\n  a:\n    runs-on: ubuntu-latest\n", 'jobs: { a: { runs-on: self-hosted } }\n  b:\n    runs-on: ubuntu-latest\n'), 'public-workflows-run-on-hosted-runners-only');
     refuses(dir, BAR, extra, s => s.replace("    runs-on: ubuntu-latest\n    steps:\n      - run: true\n", '    uses: some-org/some-repo/.github/workflows/build.yml@main\n'), 'public-workflows-call-no-reusable-workflow-from-another-repository');
+    // A YAML escape can spell runs-on without the substring; no workflow here needs an escape, so any is refused.
+    refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"\\u0072uns-on": self-hosted'), 'public-workflows-carry-no-escaped-characters');
+    refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"runs\\x2don": self-hosted'), 'public-workflows-carry-no-escaped-characters');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -15,9 +15,15 @@ Two blueprints in `.ai/blueprints/` hold the bar. `scripts/labs-bar-blueprint.te
 
 - **A commit that is only on a lane is cited only through the kit's `laneCite`.** Its sentence ("…cited by hash, on a pushed branch that is not yet part of the private main…") may come from `scripts/lab-kit.mjs` and nowhere else. A builder, a lab page or a lab record that writes that wording out by hand fails. This holds the shape of the cite, not the facts behind it: whether a commit really is only on a lane is the kit's check (`laneCiteProblems`), against what the record holds. `laneCite` arrives in the kit with pull request #112 and is not on main yet. Until it lands, no page cites a lane commit at all, and this rule passes because nothing writes the wording.
 
-- **No money figure on a lab page or in a lab record** (`site/labs/**`, `site/data/labs/**`). A currency sign, plain or encoded, next to a number fails: a JSON `\u` escape, an HTML entity such as `&#36;` or `&euro;`, or a percent code. So does a currency code or word next to a number. A figure split across lines or across tags (`$<b>12</b>`) is not caught: this reads lines, not rendered text.
+- **No money figure on a lab page or in a lab record** (`site/labs/**`, `site/data/labs/**`). Three kinds of line fail:
+  - a plain currency sign next to a digit;
+  - a currency sign written in any encoding, such as a JSON `\u` escape, an HTML entity like `&#36;` or `&euro;`, or a percent code. These fail anywhere, digit or not, because no lab text needs an encoded currency sign;
+  - a plain sign followed by an encoded character, or a currency code or word next to a number.
+
+  This rule reads source lines; it is not a decoder. Two things still escape it: a figure split across lines or tags (`$<b>12</b>`), and an obfuscation it has no pattern for.
 - **Every workflow job runs on one approved GitHub-hosted label.** This repository is public, so a self-hosted runner must never take a job from it. Any line in `.github/workflows/` (`.yml` or `.yaml`) that names `runs-on`, with the key quoted or not, in block or flow style, fails unless it is exactly one of: `ubuntu-latest`, `ubuntu-24.04`, `ubuntu-22.04`, `ubuntu-24.04-arm`, `ubuntu-22.04-arm`, `macos-latest`, `macos-15`, `macos-14`, `macos-13`, `windows-latest`, `windows-2025`, `windows-2022`. A list, a runner group, an alias, a matrix expression or any other label fails too, on purpose. The rule relies on one assumption: no self-hosted runner that can serve this repository carries one of those names. On 28 October 2026 the repository had no runners of its own. Organization runner groups are not visible from here.
 - **No workflow calls a reusable workflow from another repository**: that workflow's `runs-on` lives where this rule cannot read it.
+- **No workflow carries an escaped character** (`\u…`, `\U…`, `\x…`). A double-quoted YAML key can spell `runs-on` without containing the text, and no workflow here needs an escape.
 
 Run from the repository root:
 
