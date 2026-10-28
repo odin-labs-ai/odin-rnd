@@ -1,0 +1,546 @@
+{
+ "format": "odin-lab-link-safety",
+ "version": 1,
+ "vendored": {
+  "from": "the web client of the engine's private repository: its link rule and its link-safety test, read and run at one commit",
+  "commit": "5afcbbf3270377911a66b5bd0ca8911173ab86ca",
+  "committed": "2026-10-26T21:37:32Z",
+  "mainCheck": {
+   "main": "55543194adeea17e86700f3181048bc8fe2b6464",
+   "how": "GitHub compare of the cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-10-28",
+   "commits": [
+    "5afcbbf3270377911a66b5bd0ca8911173ab86ca"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "5afcbbf3270377911a66b5bd0ca8911173ab86ca",
+    "what": "the web client draws a URL from data as text unless it is a link, with the test that holds the fixtures",
+    "at": "2026-10-26T21:37:32Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "rule",
+    "what": "the link rule, the one function a click on a URL from data goes through",
+    "sha256": "2c83dc5ff377806c165f2bce3917e0b2b86575f92ce34e6d44a3f8f3d88d51df"
+   },
+   {
+    "role": "test",
+    "what": "the link-safety test: the poisoned, lookalike and good URLs, and the opener audit with its fixture lines",
+    "sha256": "832e4ff8b5ebf9d2466482e840dc15a607af0809d3f708d98f8e5e2d3cddcaf8"
+   }
+  ]
+ },
+ "note": {
+  "from": "the link-safety note in the agent space's private repository, read at its main",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "GitHub compare of the cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-10-28",
+   "commits": [
+    "4c9cba5831163324fbb6c8a94e45ad41896ceb32"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "4c9cba5831163324fbb6c8a94e45ad41896ceb32",
+    "what": "the note's red/green table: the new tests run against the old code",
+    "at": "2026-10-24T22:04:52Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "note",
+    "what": "the link-safety note",
+    "sha256": "71a0c35acca3d9a42b22e186c474c8070ffa7a3b39d68cd4ecb7deaf9a0be1c7"
+   }
+  ],
+  "oldCode": {
+   "tests": 83,
+   "failed": 66,
+   "passed": 17
+  },
+  "newCode": {
+   "tests": 83,
+   "passed": 83
+  }
+ },
+ "run": {
+  "at": "2026-10-28T00:51:18Z",
+  "on": "2026-10-28",
+  "host": "a Mac",
+  "how": "Node's own test runner, with nothing installed",
+  "node": "v22.22.2",
+  "tests": {
+   "total": 7,
+   "passed": 7,
+   "failed": 0,
+   "skipped": 0
+  }
+ },
+ "allowlist": [
+  "github.com"
+ ],
+ "maxLength": 300,
+ "poison": [
+  {
+   "label": "a javascript: URL that runs a script in the visitor's page",
+   "sha256": "31595281b8a19110a94db64ae90fd2941a4e68ce388e3aecda632ded588d0c89",
+   "length": 33,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the same javascript: scheme in mixed case",
+   "sha256": "6e46e73507f29325160e9549b655d437abf0f2b453c733173b9eac771869c8a7",
+   "length": 19,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a javascript: scheme with a tab inside the word",
+   "sha256": "ee775e38058544d66d6e9bc5a2377e852605fa10243563bfbbfc7f79cfc8add2",
+   "length": 20,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a javascript: URL with a leading space",
+   "sha256": "d93f9e9b31b2cea33a1da63137c80cad09ddc30f9424c2ba78b378d260dccbc7",
+   "length": 20,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a javascript: URL dressed up with two slashes and the trusted host's name",
+   "sha256": "cc2a267044bb228a7f1474bc83f5e64adaaa5010d41456dbeb80c1166f87404f",
+   "length": 35,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a data: URL holding a whole HTML page with a script",
+   "sha256": "698294f522aa7133bd40e36f971b11141cc4388abc89145399cfa6a050b44f12",
+   "length": 58,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a vbscript: URL",
+   "sha256": "4207cb1b9e097131ed57ba21439136e318cd8f30b1b6fd91675f21109615cef9",
+   "length": 18,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a file: URL pointing into the visitor's own disk",
+   "sha256": "2a47fc1f8ec683030c1fbb4fb87160b17c28e40691af229c4eb491010487250d",
+   "length": 26,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "plain http, unencrypted, on an unknown host",
+   "sha256": "7a45245d7ffc5e4d1bef8ef865d18792cc84e069a7d71c88bbb9185345796f5d",
+   "length": 21,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the trusted host, with the scheme in capitals",
+   "sha256": "e18c8d5e8ef3fa610bea70550e38f6aa87b2e20f070893c4788eeea84c9d66d4",
+   "length": 20,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a user name and password written into the URL before the trusted host",
+   "sha256": "95d3c1e49dda2b8b4400e5a321d19394a2a92edde6b0729ee062462a314e6a5e",
+   "length": 30,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the trusted host's name used as a user name, so the real host is another one",
+   "sha256": "3a18ed89e0b4527446cbb231a34b66ecd421f73eec8d4e89468d827d8544aefb",
+   "length": 28,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the same trick with a port after the trusted host's name",
+   "sha256": "7451e28379e4e04fa4f3d04c36b152c495197270d5075c6864f7733e59197972",
+   "length": 32,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the same trick behind a backslash",
+   "sha256": "b4db5f4ee50f8cdcaaee850a82e6751cd76641566211b9319876e02dc11044ae",
+   "length": 29,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a scheme-relative URL, two slashes and another host",
+   "sha256": "3a7a9f361c905b261041682e2070f6c38813a50ddc847472240f71f2ef7ea364",
+   "length": 11,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a backslash where the path's slash should be",
+   "sha256": "101184f07609a40a84a01a66752394d37ed04e05e2370e908e4923e8f163c290",
+   "length": 17,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a URL about five thousand characters long",
+   "sha256": "f113abb64d62b49b1de298a4cd7589fe9d0682ce924b9392d486fb34550d1f2c",
+   "length": 4998,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the trusted host's name with one Cyrillic letter that looks Latin",
+   "sha256": "2eaf0a7049f0603585701559ed1374b95509623a18ca3688e032399b932e6bd5",
+   "length": 20,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the trusted host's name with a fullwidth first letter",
+   "sha256": "b5bcc69870c3fe7eec471d0a519085408776a58769636154d3784ef04208c04b",
+   "length": 20,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a right-to-left override in the path, so a program's name reads as a picture's",
+   "sha256": "607a9dda6a20ef7eacd360a378a11e16c20ac90f3ab91dc70209004f6e32dce1",
+   "length": 27,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a zero-width space hidden in the path",
+   "sha256": "7dca0c7d201b92b5ebf9bd2d59cd9977a720fb669f96900c54b6d4e54379910e",
+   "length": 21,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the punycode spelling of a lookalike of the trusted host",
+   "sha256": "60496be5ad58b2a0ad704279fac410641d1fd22ac870bb6579c54f24ef01e838",
+   "length": 27,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a trailing newline after an otherwise good URL",
+   "sha256": "5427785dfbc94780390c1b129718b64f7f8955d8bde56baab7bd82da84dda35e",
+   "length": 21,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a space inside the path",
+   "sha256": "da654bda41b1e8fc6cda2f1cb4d247f5ca971cb71580cce870b5fc5c5ab8c746",
+   "length": 22,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a quote that breaks out of the link into a script attribute",
+   "sha256": "97c866cba2c74573494660e8859146a9565e8b1569707c981282d53d35764f38",
+   "length": 41,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a script tag in the path",
+   "sha256": "a893de4fd1a9106a25b9b04962ecd96582c99655bc8c99d413827945a9ff2ae0",
+   "length": 27,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a bare IP address as the host",
+   "sha256": "8b7ec980ecce4e47f2ca7d1a42a467a22ecfc7b2d0164221e70658ce2012ca5f",
+   "length": 17,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the visitor's own machine as the host",
+   "sha256": "17c235961c9f62abffb55486bd0ab503e599e90e46d8fc4cd0aebc69716e63e1",
+   "length": 19,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the scheme with no slashes at all",
+   "sha256": "e902711ee36b6587a00e4c7c1517e570f07c825b2cce75759d41ff95cda49f03",
+   "length": 18,
+   "open": "refused",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the scheme and nothing else",
+   "sha256": "66dfeeedabf1f022d223bd6b9f464d1ca241d6da54ab7ade5b2c7758b4e08fa8",
+   "length": 8,
+   "open": "refused",
+   "allowlisted": "refused"
+  }
+ ],
+ "lookalikes": [
+  {
+   "label": "the trusted host's name as the first part of another host",
+   "sha256": "02404bbfd3ae9f81f85ef0d3de42566e2dc9096769f2fe3c0e4520feb94324b5",
+   "length": 28,
+   "open": "kept",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "the trusted host's name with a word in front, one host",
+   "sha256": "3da6897178186d0966e8b3ca73c4575e1d029155442d4d80cac9afda8a2995b1",
+   "length": 24,
+   "open": "kept",
+   "allowlisted": "refused"
+  },
+  {
+   "label": "a subdomain of the trusted host as the first part of another host",
+   "sha256": "4925399cc29a93fb748b2aaa7fed065485e2ff02b65e6ac67a942bfe174790e5",
+   "length": 32,
+   "open": "kept",
+   "allowlisted": "refused"
+  }
+ ],
+ "good": [
+  {
+   "label": "a pull request on the trusted host",
+   "sha256": "37243f1b599e75ae9916400bc9635196ac676446350e129210e975243fbda6d5",
+   "length": 42,
+   "open": "kept",
+   "allowlisted": "kept"
+  },
+  {
+   "label": "a CI run's step on the trusted host, with a query and a fragment",
+   "sha256": "026f60bc41ad01341633c8112c150e040003ce60a060714804a8b2c14f6b4dfa",
+   "length": 73,
+   "open": "kept",
+   "allowlisted": "kept"
+  },
+  {
+   "label": "a page on another real-looking host, with a port and an escaped space",
+   "sha256": "9e7677d90eda5c50e5088e1930c2e14fc8c710a1325d8bc8b37861bf70296bcb",
+   "length": 45,
+   "open": "kept",
+   "allowlisted": "refused"
+  }
+ ],
+ "unsafeLines": [
+  {
+   "sha256": "772bd63d7dc35078cf1138689cfcdfc4fa0521cc8b1a62c4a0aef842a7a76167",
+   "shown": "window.open(receipt.ref)",
+   "caught": 1
+  },
+  {
+   "sha256": "cd6076d3ea1f2c46b3b0b9a0042f01e29c431a70eeb65e614e7a14b9b0a37d18",
+   "shown": "globalThis.open(receipt.ref, '_blank')",
+   "caught": 1
+  },
+  {
+   "sha256": "121ed7da246d711debb357ea402d63fb33a47f0758562d08bfe31b40e2735c22",
+   "shown": "self.open(u)",
+   "caught": 1
+  },
+  {
+   "sha256": "273e63830287a06d73fa2f8a051d2e98334d3eb4d482dd0af2cdb12b4b3d2da0",
+   "shown": "open(receipt.ref)",
+   "caught": 1
+  },
+  {
+   "sha256": "bf374e1052cab7948a46635b2767d1794ca26e7f2fc32516f8390f73a81f20fc",
+   "shown": "location = receipt.ref",
+   "caught": 1
+  },
+  {
+   "sha256": "3f153b08c34a0e7f0d9b83ec0c362eaa72892e77ccd4a538d9ee9172abf4b87c",
+   "shown": "document.location = receipt.ref",
+   "caught": 1
+  },
+  {
+   "sha256": "dcc979af1d233e8f5f20b7393310cba1a6197f61c0e95948f01536772dcb096b",
+   "shown": "window.location.href = u",
+   "caught": 1
+  },
+  {
+   "sha256": "c8b7ca08d4688d408da0dec87d03e9b42080056dfd6afa4fad71b5d1fd7d6b3e",
+   "shown": "location.href=u",
+   "caught": 1
+  },
+  {
+   "sha256": "4bbe8b95a412794eed911621b8ce97f6964eb9320e405be452fb7f6eefe66263",
+   "shown": "location.assign(u)",
+   "caught": 1
+  },
+  {
+   "sha256": "a11b123cb8fc57125f588f8201ec358b3b06bdaca7f56ed2ae01abef67fedfa9",
+   "shown": "window.location.replace(u)",
+   "caught": 1
+  },
+  {
+   "sha256": "ef7f1c8efeb61c52afb0b2ef7a3fc4c77ed46c777109b58c01a2cad09aca252e",
+   "shown": "a.href = receipt.ref",
+   "caught": 1
+  },
+  {
+   "sha256": "09098c8f61a082ac938f89a85b6aed7517708aded7889b8595d5e4fa14bc9361",
+   "shown": "img.src = u",
+   "caught": 1
+  },
+  {
+   "sha256": "6ded4c6d4f4925df26095e3395d3bcdf52771993e77dbac75a39a4e86518e593",
+   "shown": "f.srcdoc = html",
+   "caught": 1
+  },
+  {
+   "sha256": "8bb38f85e7f7a5cddea39641f64667622d70d41081bbf2208ec994e2f52b67e4",
+   "shown": "form.action = u",
+   "caught": 1
+  },
+  {
+   "sha256": "491061e6a8900aea61f9d839c3e77406c6dd4383c58ca4b73908f48f2e8009f2",
+   "shown": "const o = document.createElement('object')",
+   "caught": 1
+  },
+  {
+   "sha256": "8afc565cc974dc45e2cda8f406538c58f5aec81a2d6ebad4862eea5f2d53bf6a",
+   "shown": "link.setAttribute('href', receipt.ref)",
+   "caught": 1
+  },
+  {
+   "sha256": "32aa1ee6b238837e7f10ad4db83fcb40457c70cb6e1aeb8d9efdc5e4f7dcfefd",
+   "shown": "el.setAttribute(\"src\", u)",
+   "caught": 1
+  },
+  {
+   "sha256": "e149c2602ba29e0bbe0a8cf2a658097dcf6168803623595031c42bb37ea4259a",
+   "shown": "svg.setAttributeNS(ns, 'xlink:href', u)",
+   "caught": 1
+  },
+  {
+   "sha256": "f3373dcbcc608de55ce801516e48be979b950b954a1d96e4f62e1ba9dba0cffc",
+   "shown": "el.innerHTML = `<a href=\"${u}\">x</a>`",
+   "caught": 1
+  },
+  {
+   "sha256": "60ae2398915574ed95b5e73e358b143404859137050824a70ef2a87c44618153",
+   "shown": "el.innerHTML = '<iframe src=' + u + '>'",
+   "caught": 1
+  },
+  {
+   "sha256": "7cda1c1855c8346a5c0a679e58a2837bfd3df0bcb248ca966453c685ad52126e",
+   "shown": "const a = document.createElement('a')",
+   "caught": 1
+  },
+  {
+   "sha256": "c718a198df5f3ebbe7a22c26c5f228b31a8ac70e82931efa7d8748d25e43ddb7",
+   "shown": "document.createElement(\"iframe\")",
+   "caught": 1
+  },
+  {
+   "sha256": "5400c9b01559e28eff2d3d8a2444d7edbcf80973e1121df7de426b06735b2fea",
+   "shown": "navigation.navigate(u)",
+   "caught": 1
+  },
+  {
+   "label": "the browser history rewritten to a URL on another host",
+   "sha256": "4620b230f578a50bed90a71f46473451165d39f1035e1aa43e22e3e4fcc36f6e",
+   "shown": null,
+   "caught": 1
+  },
+  {
+   "sha256": "894a6bf30e2b33203f25e57bc7b0253e757cc56a7bee72562e02f2f0a9db04cb",
+   "shown": "img.src = receipt.ref",
+   "caught": 1
+  },
+  {
+   "label": "an image's source set to a fixed URL on another host",
+   "sha256": "8d4815f070b92f53efbf95526546fda60f347e487c1bcf4386da0aad9d992085",
+   "shown": null,
+   "caught": 1
+  },
+  {
+   "sha256": "003138908db1f2fbef1c53494ec24166689ce4175164131321b9509c047a81f9",
+   "shown": "o.setAttribute('data', u)",
+   "caught": 1
+  },
+  {
+   "sha256": "579835a63b8324398808d20c717ac1c99fda795b7a84f39c0d472431f608e4ae",
+   "shown": "f.src = u",
+   "caught": 1
+  }
+ ],
+ "safeLines": [
+  {
+   "sha256": "6dc6fe5e39093d73cfc55e0480f37babecbc9c3398b42d88e38271bf1e1cb1dd",
+   "shown": "if (a == b) x()",
+   "caught": 0
+  },
+  {
+   "sha256": "2c1932e3d55bd1a55501b170c39b32e5a723bf105a9c252c7728227716f47aa3",
+   "shown": "const href = safeUrl(u)",
+   "caught": 0
+  },
+  {
+   "sha256": "7f135eb0221a0ad7022a52e3de4eb4d8627bc19ae331da508c5d4adde79070f3",
+   "shown": "return { href: ok }",
+   "caught": 0
+  },
+  {
+   "sha256": "85c9ac3a8df3a39da54e493a1b29fa1001f2165ff57089ed4b5b1c0781a44b91",
+   "shown": "// window.open(u) in a comment",
+   "caught": 0
+  },
+  {
+   "sha256": "29690fce5ea6c73ca4e3a9a9730c8a2bd023210e5dd4e35f2c1795d75201ebed",
+   "shown": "x.hrefLang = 'en'",
+   "caught": 0
+  },
+  {
+   "sha256": "ed65c3edb37df03c8d26735ffa46e3fd3a3e57bfbb3514d53dbdc79e4de2c919",
+   "shown": "openSafe(u, opts)",
+   "caught": 0
+  },
+  {
+   "sha256": "445bae64a336c2f4756bb42fc1ab5091b79dc619aa868b1a430e87c9c88fbff9",
+   "shown": "const isOpen = panel.open",
+   "caught": 0
+  },
+  {
+   "sha256": "8725cc0a28211d1edadfc8d52219aaa6826963eed36fc313e0309d1a52f01d7b",
+   "shown": "el.textContent = refText(u)",
+   "caught": 0
+  },
+  {
+   "sha256": "379a9bdd843793e9c7e2cf7ebf64c1c8d632ba0d2d32a73ade7eb7cde6a987dc",
+   "shown": "entry.src = { stop() {} };",
+   "caught": 0
+  },
+  {
+   "sha256": "0388c4b0dcefdadada5b7c7796b268622cbe0c1d5e13242e85142cf7474969f7",
+   "shown": "existing.data = parseCreateObject(p);",
+   "caught": 0
+  },
+  {
+   "sha256": "1b334ad4d2773c87242b786e6eff415034097640e7e859c62f861eba5bb9b9e6",
+   "shown": "this.data = null",
+   "caught": 0
+  }
+ ]
+}

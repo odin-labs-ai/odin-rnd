@@ -1,0 +1,564 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-link-safety-v1",
+ "title": "Lab 07, can data trick a click: site/data/labs/link-safety/record.json, written by scripts/vendor-link-safety.mjs. Every object is closed, so no path, repository name or machine name can ride along.",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "vendored",
+  "note",
+  "run",
+  "allowlist",
+  "maxLength",
+  "poison",
+  "lookalikes",
+  "good",
+  "unsafeLines",
+  "safeLines"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-link-safety"
+  },
+  "version": {
+   "const": 1
+  },
+  "vendored": {
+   "type": "object",
+   "required": [
+    "from",
+    "commit",
+    "committed",
+    "mainCheck",
+    "cites",
+    "files"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "from": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 300
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "committed": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "mainCheck": {
+     "type": "object",
+     "required": [
+      "main",
+      "how",
+      "checked",
+      "commits"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "main": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{40}$"
+      },
+      "how": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 300
+      },
+      "checked": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "commits": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       }
+      }
+     }
+    },
+    "cites": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "commit",
+       "what",
+       "at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+       },
+       "at": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+       }
+      }
+     }
+    },
+    "files": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "role",
+       "what",
+       "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "role": {
+        "type": "string",
+        "pattern": "^[a-z][a-z-]*$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     }
+    }
+   }
+  },
+  "note": {
+   "type": "object",
+   "required": [
+    "from",
+    "mainCheck",
+    "cites",
+    "files",
+    "oldCode",
+    "newCode"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "from": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 300
+    },
+    "mainCheck": {
+     "type": "object",
+     "required": [
+      "main",
+      "how",
+      "checked",
+      "commits"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "main": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{40}$"
+      },
+      "how": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 300
+      },
+      "checked": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "commits": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       }
+      }
+     }
+    },
+    "cites": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "commit",
+       "what",
+       "at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+       },
+       "at": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+       }
+      }
+     }
+    },
+    "files": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "role",
+       "what",
+       "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "role": {
+        "type": "string",
+        "pattern": "^[a-z][a-z-]*$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     }
+    },
+    "oldCode": {
+     "type": "object",
+     "required": [
+      "tests",
+      "failed",
+      "passed"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "tests": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "failed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "passed": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "newCode": {
+     "type": "object",
+     "required": [
+      "tests",
+      "passed"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "tests": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "passed": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  "run": {
+   "type": "object",
+   "required": [
+    "at",
+    "on",
+    "host",
+    "how",
+    "node",
+    "tests"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "on": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "host": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 80
+    },
+    "how": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 160
+    },
+    "node": {
+     "type": "string",
+     "pattern": "^v\\d+\\.\\d+\\.\\d+$"
+    },
+    "tests": {
+     "type": "object",
+     "required": [
+      "total",
+      "passed",
+      "failed",
+      "skipped"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "total": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "passed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "failed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "skipped": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  "allowlist": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string",
+    "pattern": "^[a-z0-9.-]+$"
+   }
+  },
+  "poison": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "label",
+     "sha256",
+     "length",
+     "open",
+     "allowlisted"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "length": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "open": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     },
+     "allowlisted": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     }
+    }
+   }
+  },
+  "lookalikes": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "label",
+     "sha256",
+     "length",
+     "open",
+     "allowlisted"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "length": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "open": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     },
+     "allowlisted": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     }
+    }
+   }
+  },
+  "good": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "label",
+     "sha256",
+     "length",
+     "open",
+     "allowlisted"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "length": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "open": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     },
+     "allowlisted": {
+      "type": "string",
+      "pattern": "^(refused|kept|changed)$"
+     }
+    }
+   }
+  },
+  "unsafeLines": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "sha256",
+     "shown",
+     "caught"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "shown": {
+      "oneOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      ]
+     },
+     "caught": {
+      "type": "integer",
+      "minimum": 0
+     }
+    }
+   }
+  },
+  "safeLines": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "sha256",
+     "shown",
+     "caught"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     },
+     "shown": {
+      "oneOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      ]
+     },
+     "caught": {
+      "type": "integer",
+      "minimum": 0
+     }
+    }
+   }
+  },
+  "maxLength": {
+   "type": "integer",
+   "minimum": 1
+  }
+ }
+}
