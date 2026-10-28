@@ -41,7 +41,7 @@
     {
       "id": "public-workflows-carry-no-escaped-characters",
       "path": ".github/workflows/**",
-      "pattern": "\\\\[uUx][0-9a-fA-F]",
+      "pattern": "\\\\[uUx/]|\\S\\\\[ \\t]*$",
       "severity": "critical",
       "type": "forbiddenPattern"
     },

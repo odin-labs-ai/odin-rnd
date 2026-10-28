@@ -144,6 +144,18 @@ test('a .yaml workflow, a flow-style job, an escaped key and a reusable workflow
     // A YAML escape can spell runs-on without the substring; no workflow here needs an escape, so any is refused.
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"\\u0072uns-on": self-hosted'), 'public-workflows-carry-no-escaped-characters');
     refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', '"runs\\x2don": self-hosted'), 'public-workflows-carry-no-escaped-characters');
+    // An escaped slash, or a double-quoted scalar that escapes its line break right after a character, rebuilds a path the other rules read literally.
+    const call = "    runs-on: ubuntu-latest\n    steps:\n      - run: true\n";
+    for (const hidden of [
+      '    uses: "some-org\\/some-repo\\/.github\\/workflows\\/build.yml@main"\n',
+      '    uses: "some-org/some-re\\\n      po/.github/workflows/build.yml@main"\n',
+      '    "ru\\\n      ns-on": self-hosted\n',
+    ]) refuses(dir, BAR, extra, s => s.replace(call, () => hidden), 'public-workflows-carry-no-escaped-characters');
+    // A shell continuation (a space before the backslash) is not an escape and passes.
+    const path = join(dir, extra), original = readFileSync(path, 'utf8');
+    writeFileSync(path, original.replace('      - run: true\n', () => '      - run: |\n          echo one \\\n            two\n'));
+    assert.equal(grade(dir, BAR).verdict, 'pass', 'a shell line continuation passes');
+    writeFileSync(path, original);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
