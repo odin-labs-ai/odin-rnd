@@ -99,7 +99,14 @@ test('the tamper record is refused when it would make the page say something unt
   refused(r => { r.head = r.rows[0].hash; }, /head: not the journal's last hash/);
   refused(r => { r.cases[0].caught.check = 'head'; }, /caught by head; the page says own-hash/);
   refused(r => { r.cases[1].result[2].prevLink = 'OK'; }, /not what JavaScript finds for the same copy/);
-  refused(r => { r.cases[1].result[0].ownHash = 'MISMATCH'; r.cases[1].caught = { check: 'prev-link', position: 1, n: 1 }; }, /every own hash must still match/);
+  refused(r => { r.cases[1].result[0].ownHash = 'MISMATCH'; r.cases[1].caught = { check: 'prev-link', position: 1, n: 1 }; }, /not what JavaScript finds for the same copy/);
+  // The review's case: the flipped copy's table says its own hash passed and its link broke, the outcome unchanged.
+  refused(r => { r.cases[0].result[1].ownHash = 'OK'; r.cases[0].result[1].prevLink = 'BROKEN'; }, /not what JavaScript finds for the same copy[\s\S]*|the first failing check is prev-link, not own-hash/);
+  refused(r => { r.cases[0].result[1].ownHash = 'OK'; r.cases[0].result[1].prevLink = 'BROKEN'; }, /the first failing check is prev-link, not own-hash/);
+  refused(r => { r.cases[0].result[3].ownHash = 'MISMATCH'; }, /not what JavaScript finds for the same copy/);
+  refused(r => { r.cases[2].result[1].n = 2; }, /not what JavaScript finds for the same copy/);
+  refused(r => { r.cases[4].result[2].prevLink = 'BROKEN'; }, /the rewritten copy must show every check passing/);
+  refused(r => { r.cases[1].did = 'row 2 removed, every other row kept byte for byte'; }, /cases\/1\/did: says/);
   refused(r => { r.cases[3].result[0].prevLink = 'BROKEN'; }, /a row check fails, but the page says only the head catches this copy/);
   refused(r => { r.cases[4].head = r.head; }, /the head is unchanged, so nothing would catch this copy/);
   refused(r => { r.cases[0].head = r.cases[4].head; }, /the head changed; the page says the head alone does not catch this copy/);

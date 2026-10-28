@@ -77,12 +77,34 @@ export function tamperProblems(record, journalBytes, rogueRecord, { now = new Da
   // The tampered copies.
   const ids = record.cases.map(c => c.id);
   if (JSON.stringify(ids) !== JSON.stringify(Object.keys(CASES))) problems.push(`${where}#/cases: not the five copies this page describes, in order (${Object.keys(CASES).join(', ')})`);
-  const expectLinks = { 'drop-row': links(rows.filter(r => r.n !== 3)), reorder: links([rows[0], rows[2], rows[1], ...rows.slice(3)]), 'drop-last': links(rows.slice(0, -1)) };
+  // What JavaScript can work out for each copy without re-hashing: its rows in order, which row's content changed (so
+  // whose own hash must fail and whose must pass), and every link. Only the rewritten copy's hashes need Python; its
+  // table must then show every check passing, which is what the page says of it.
+  const flipped = record.cases.find(c => c.id === 'byte-flip');
+  const flippedRow = rows.map(r => (r.n === flipped?.row ? { ...r, [flipped.field]: flipped.after } : r));
+  const expect = {
+    'byte-flip': { rows: flippedRow, changed: new Set([flipped?.row]) },
+    'drop-row': { rows: rows.filter(r => r.n !== 3), changed: new Set() },
+    reorder: { rows: [rows[0], rows[2], rows[1], ...rows.slice(3)], changed: new Set() },
+    'drop-last': { rows: rows.slice(0, -1), changed: new Set() },
+  };
   record.cases.forEach((c, i) => {
     const at = `${where}#/cases/${i}`, want = CASES[c.id];
     if (!want) return;
+    // What the copy did, in the page's words, must be what JavaScript reconstructs above.
+    const did = { 'byte-flip': `one byte of row ${c.row} changed: in its ${c.field}, one letter's case flipped`, 'drop-row': 'row 3 removed, every other row kept byte for byte', reorder: 'rows 2 and 3 swapped, each kept byte for byte', 'drop-last': `the last row, row ${rows.at(-1)?.n}, removed`, 'rewrite-chain': `the same byte flip, then every row's prev and hash from row ${flipped?.row} on recomputed by the rule` }[c.id];
+    if (c.did !== did) problems.push(`${at}/did: says ${JSON.stringify(c.did)}; the copy is ${JSON.stringify(did)}`);
     if (c.caught.check !== want.caughtBy) problems.push(`${at}/caught: caught by ${c.caught.check}; the page says ${want.caughtBy}`);
     const failing = c.result.filter(r => r.ownHash !== 'OK' || r.prevLink !== 'OK');
+    // The table: for a copy JavaScript can work out, every row, own hash and link exactly as it finds them.
+    const e = expect[c.id];
+    if (e) {
+      const want_ = e.rows.map((r, k) => ({ position: k + 1, n: r.n, ownHash: e.changed.has(r.n) ? 'MISMATCH' : 'OK', prevLink: links(e.rows)[k] }));
+      if (JSON.stringify(c.result) !== JSON.stringify(want_)) problems.push(`${at}/result: not what JavaScript finds for the same copy (rows, own hashes and links)`);
+    } else if (failing.length) problems.push(`${at}/result: the rewritten copy must show every check passing`);
+    // The check named is the first that fails, in the order the engine checks a row (own hash, then link).
+    const firstFail = failing[0] && (failing[0].ownHash !== 'OK' ? 'own-hash' : 'prev-link');
+    if (failing.length && firstFail !== c.caught.check) problems.push(`${at}/caught: the first failing check is ${firstFail}, not ${c.caught.check}`);
     if (want.caughtBy === 'head') {
       if (failing.length) problems.push(`${at}/result: a row check fails, but the page says only the head catches this copy`);
       if (c.head === head) problems.push(`${at}/head: the head is unchanged, so nothing would catch this copy`);
@@ -91,8 +113,6 @@ export function tamperProblems(record, journalBytes, rogueRecord, { now = new Da
       if (!first || first.position !== c.caught.position || first.n !== c.caught.n) problems.push(`${at}/caught: not the first row that fails`);
       if (c.head !== head) problems.push(`${at}/head: the head changed; the page says the head alone does not catch this copy`);
     }
-    if (expectLinks[c.id] && JSON.stringify(c.result.map(r => r.prevLink)) !== JSON.stringify(expectLinks[c.id])) problems.push(`${at}/result: its links are not what JavaScript finds for the same copy`);
-    if (expectLinks[c.id] && c.result.some(r => r.ownHash !== 'OK')) problems.push(`${at}/result: no row's content changed, so every own hash must still match`);
     // The flipped copy shows its change: the journal's own text before, and after, one bit of one letter flipped.
     if (c.id === 'byte-flip') {
       const row = rows[(c.row ?? 0) - 1];
