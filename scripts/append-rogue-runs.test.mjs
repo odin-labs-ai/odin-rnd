@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { appendDay, dayProblems } from './append-rogue-runs.mjs';
 import { recordHash } from './lab-record.mjs';
 import { readRogue } from './lab-rogue.mjs';
-import { RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
+import { runAnchor, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
 import { renderLabs } from './labs.mjs';
 
 // The lab runner's record PR (WO-04) appends one day of org-runner records to Lab 05's runs[]. The fixtures are the
@@ -72,6 +72,42 @@ test('two legs that differ on the day are appended as such, each naming the othe
     writeFileSync(join(root, 'data/labs/rogue/record.sha256'), `${createHash('sha256').update(bytes).digest('hex')}  record.json\n`);
     assert.equal(state(build(root)), 'different');
   });
+});
+
+// Lab 05's record with `days` appended one at a time, each through appendDay (the record PR's path), written and pinned
+// on a temporary root; returns the rendered pages.
+function afterDays(root, days) {
+  let r = record;
+  for (const d of days) r = appendDay(r, d);
+  const bytes = `${JSON.stringify(r, null, 1)}\n`;
+  writeFileSync(join(root, 'data/labs/rogue/record.json'), bytes);
+  writeFileSync(join(root, 'data/labs/rogue/record.sha256'), `${createHash('sha256').update(bytes).digest('hex')}  record.json\n`);
+  return build(root);
+}
+
+test('a different hash is sticky for its commit (#128): day 1 differ, day 2 agree on the same commit -> still "different"; a new commit agreeing -> "reproduced"', () => {
+  const otherInputs = { inputs: [{ role: 'runner', sha256: 'c'.repeat(64) }, mac.inputs[1]] };
+  const d1hosted = leg('github-hosted', 'ubuntu-latest', '2026-10-27T12:00:00Z', otherInputs);
+  const d1org = leg('org-hosted', 'org-ci-heavy', '2026-10-27T12:00:40Z');
+  const d2hosted = leg('github-hosted', 'ubuntu-latest', '2026-10-27T18:00:00Z');
+  const d2org = leg('org-hosted', 'org-ci-heavy', '2026-10-27T18:00:40Z');
+  const day1 = day(d1hosted, d1org), day2 = day(d2hosted, d2org);
+  assert.ok(day1.every(r => r.differedOn.length === 1 && !r.replicatedOn.length) && day2.every(r => r.replicatedOn.length === 1 && !r.differedOn.length));
+  assert.deepEqual(dayProblems([...record.runs, ...day1], day2), []);
+  inSite(root => {
+    const html = afterDays(root, [day1, day2])['labs/index.html'];
+    assert.equal(/data-state="([a-z]+)"/.exec(html)[1], 'different', 'a later matching day never clears it');
+    // Both hashes listed, each with its newest run per class, linked to its row on the runs page.
+    assert.ok(html.includes(`record <code>${d2org.recordHash.slice(0, 12)}</code> on `));
+    assert.ok(html.includes(`record <code>${d1hosted.recordHash.slice(0, 12)}</code> on <a href="runs/#${runAnchor(d1hosted)}">`));
+    assert.ok(html.includes(`<a href="runs/#${runAnchor(d2org)}">`) && html.includes(`<a href="runs/#${runAnchor(d2hosted)}">`));
+    assert.doesNotMatch(/<div class="lab-provenance [^]*?<\/div>/.exec(html)[0], /same hash/i);
+  });
+  // A new commit starts fresh. Its record hash starts with a letter (f46d5534): a hash with three or more leading
+  // digits trips the feeds' screen today (reported to bundle 2; switch this to 'd' once that fix is on main).
+  const fresh = { commit: { sha: 'a'.repeat(40), mainHead: 'a'.repeat(40), compare: 'identical', onMain: true } };
+  const day3 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-27T20:00:00Z', fresh), leg('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:40Z', fresh));
+  inSite(root => assert.equal(state(afterDays(root, [day1, day2, day3])), 'reproduced'));
 });
 
 test('refused: one record, a laptop run, a wrong lab, two commits, one class twice', () => {
