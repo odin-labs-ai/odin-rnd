@@ -90,7 +90,20 @@ export const PATTERNS = [
   ['private-key', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
 ];
 
-const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', shy: '' };
+// Every HTML named reference for an ASCII punctuation mark, plus the spaces and dashes (names are case-sensitive). Any
+// other named reference is a finding of its own (unknown-reference): the gate does not guess what it reads as.
+const NAMED = {
+  Tab: ' ', NewLine: ' ', excl: '!', quot: '"', QUOT: '"', num: '#', dollar: '$', percnt: '%', amp: '&', AMP: '&', apos: "'",
+  lpar: '(', rpar: ')', ast: '*', midast: '*', plus: '+', comma: ',', period: '.', sol: '/', colon: ':', semi: ';',
+  lt: '<', LT: '<', equals: '=', gt: '>', GT: '>', quest: '?', commat: '@', lsqb: '[', lbrack: '[', bsol: '\\', rsqb: ']',
+  rbrack: ']', Hat: '^', lowbar: '_', UnderBar: '_', grave: '`', DiacriticalGrave: '`', lcub: '{', lbrace: '{',
+  verbar: '|', vert: '|', VerticalLine: '|', rcub: '}', rbrace: '}', nbsp: ' ', NonBreakingSpace: ' ', ensp: ' ',
+  emsp: ' ', emsp13: ' ', emsp14: ' ', numsp: ' ', puncsp: ' ', thinsp: ' ', ThinSpace: ' ', hairsp: ' ',
+  VeryThinSpace: ' ', MediumSpace: ' ', ZeroWidthSpace: '', NegativeVeryThinSpace: '', NegativeThinSpace: '',
+  NegativeMediumSpace: '', NegativeThickSpace: '', NoBreak: '', zwnj: '', zwj: '', shy: '', hyphen: '-', dash: '-',
+  ndash: '-', mdash: '-', hellip: '...', lsquo: "'", rsquo: "'", ldquo: '"', rdquo: '"',
+};
+const UNKNOWN_REF = /&([A-Za-z][A-Za-z0-9]*);/g;
 
 // A reading of a text keeps, for every character, the offset in the ORIGINAL text it came from. Two readings that see
 // the same occurrence therefore name the same offset, and one occurrence counts once however many readings see it.
@@ -138,8 +151,7 @@ function percentRun(run) {
 function decodedReading(r) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
-  // Any other named reference (&ensp;, &NewLine;, ...) reads as one space, never as a word.
-  r = mapped(r, /&([a-z][a-z0-9]*);/gi, (m, n) => NAMED[n.toLowerCase()] ?? ' ');
+  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*);/g, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
@@ -195,11 +207,13 @@ function scanOne(r, secret, cache) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-export function scanText(text, secret, cache = new Map()) {
+// refs: report a named reference the gate does not know (off for a binary's printable runs, where `&xy;` is chance).
+export function scanText(text, secret, cache = new Map(), refs = true) {
   const raw = identity(text);
   const dec = decodedReading(raw);
   const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
+  if (refs) for (const m of text.matchAll(UNKNOWN_REF)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
@@ -275,7 +289,7 @@ export function scanPaths(paths, secret) {
       result.binaries++;
       // Read whole, never in windows (a term could straddle a window's edge); a binary too large to read whole stops the build.
       if (bytes.length > MAX_BINARY) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
-      for (const hit of scanText(printable(bytes), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
+      for (const hit of scanText(printable(bytes), secret, cache, false)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
     result.texts++;
