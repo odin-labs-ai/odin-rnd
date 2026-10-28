@@ -132,7 +132,7 @@ test('refused: a class that already holds a run at that second, and a record the
   refused(once, day(hosted, org), /already holds a run at 2026-10-28T03:00:00Z/);
   const [a, b] = day(hosted, org);
   refused(record.runs, [{ ...a, recordHash: 'e'.repeat(64) }, b], /recordHash|replicatedOn/);
-  refused(record.runs, day(leg('github-hosted', 'ubuntu-latest', '2999-01-01T00:00:00Z'), org), /ranAt/);
+  refused(record.runs, day(leg('github-hosted', 'ubuntu-latest', '2999-01-01T00:00:00Z'), leg('org-hosted', 'org-ci-heavy', '2999-01-01T00:00:40Z')), /ranAt: after the check/);
 });
 
 test('the command line refuses a refused day with exit 1 and writes nothing, and refuses a number not written as an integer', () => {
