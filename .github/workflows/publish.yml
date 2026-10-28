@@ -55,7 +55,9 @@ jobs:
           path: site/data/experiments.json
           retention-days: 90
       - name: Check recorded evidence and interaction failure handling
-        run: pnpm test
+        run: |
+          echo "nproc=$(nproc) availableParallelism=$(node -p "require('os').availableParallelism()")"
+          pnpm test
       - name: Build and validate public site
         run: |
           pnpm build
