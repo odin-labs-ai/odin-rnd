@@ -187,6 +187,17 @@ test('the page and the record claim only what can be repeated: no attested or vi
   const withClaim = clone(record);
   withClaim.screening.attested = { by: 'the agent that filmed it', statement: 'it viewed each frame' };
   assert.ok(outageProblems(withClaim).length, 'a record carrying an attested claim is refused');
+  // Recheck 7c0055e4 #5: no free-text field is left to carry a viewing claim. The procedure fields are fixed text,
+  // and the screening holds no list of "checked" labels (what is screened is what the tests run).
+  for (const [at, set] of [['method', s => { s.method = 'I viewed every frame'; }], ['textRecognition/extract', s => { s.textRecognition.extract = 'viewed by an AI agent'; }],
+    ['checked', s => { s.checked = ['viewed by an AI agent']; }], ['textRecognition/args', s => { s.textRecognition.args = ['viewed by an AI agent']; }]]) {
+    const r = clone(record);
+    set(r.screening);
+    assert.ok(outageProblems(r).some(p => p.includes('/screening')), `a viewing claim in screening ${at} is refused`);
+  }
+  const free = [];
+  (function walk(v, at) { if (v && typeof v === 'object') { if (v.type === 'string' && !v.pattern && !('const' in v)) free.push(at); for (const [k, x] of Object.entries(v)) walk(x, `${at}/${k}`); } })(schema.properties.screening, '');
+  assert.deepEqual(free, [], `free-text screening fields: ${free.join(', ')}`);
   assert.doesNotMatch(html, /viewed|viewing|SUMMARY ONLY|picture is unchanged/i);
   assert.doesNotMatch(JSON.stringify(record), /viewed|viewing|attest/i);
   assert.match(html, /the film decodes to 378 frames; each of the 11 screened frames \(one every 5 s\) is one of them, in order, by its hash; and reading each of those frames gives text with the hash the record lists, with 0 hits/);

@@ -165,14 +165,6 @@
    "extract": "ffmpeg -fps_mode passthrough, the frame by its number (select), as PNG",
    "hits": 0
   },
-  "checked": [
-   "no file path",
-   "no local or network address",
-   "no port",
-   "no machine details",
-   "no memory or processor counts",
-   "no private name"
-  ],
   "result": "pass"
  }
 }
