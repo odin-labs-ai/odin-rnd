@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { feedProblems, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId } from './lab-feeds.mjs';
+import { checkedFeeds, feedProblems, feedText, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId } from './lab-feeds.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
 import { readLabRuns, runAnchor, withLabRuns } from './lab-runs.mjs';
@@ -135,4 +135,23 @@ test('a lab\'s runs feed never replaces a feed already rendered at its path', ()
   const pages = renderLabs();
   const index = pages['labs/index.html'].replace(/<div class="lab-provenance [^]*?<\/div>(?=<ul class="lab-tile-links">)/, '').replace(/<p class="lab-runs-link">[^]*?<\/p>/g, '').replace(/\n *<link rel="(stylesheet" href="\.\.\/assets\/lab-runs\.css|alternate" type="application\/atom\+xml" title="Odin Labs R&amp;D[^"]*" href="\.\.\/feed\.xml)">/g, '');
   assert.throws(() => withLabRuns({ 'labs/index.html': index, 'labs/rogue/index.html': renderRogue().pages['labs/rogue/index.html'], 'labs/rogue/feed.xml': '<?xml version="1.0" encoding="utf-8"?>\n<feed/>\n' }), /labs\/rogue\/feed\.xml is already rendered/);
+});
+
+test('the leak screen reads a feed piece by piece: a hash glued to the next element\'s text is still its own hash', () => {
+  // runner-b1's WO-04 case (odin-rnd #129): a two-leg day on commit d..d at 20:00:00Z gives record 237b291c..., whose
+  // digits ("...9936756766") read as a long id when the id ran into the title ("...6766Lab 05").
+  const fresh = { runner: 'github-hosted', machineClass: 'ubuntu-latest', ranAt: '2026-10-27T20:00:00Z', commit: { sha: 'd'.repeat(40), mainHead: 'd'.repeat(40), compare: 'identical', onMain: true } };
+  const leg = change => { const r = { ...structuredClone(golden), ...fresh, ...change }; return { ...r, recordHash: recordHash(r) }; };
+  const runs = [leg({}), leg({ runner: 'org-hosted', machineClass: 'org-ci-heavy' })];
+  assert.ok(runs[0].recordHash.startsWith('237b291c'), 'the reported hash');
+  const feeds = renderFeeds(lab(runs), [update], { anchor: runAnchor });
+  const known = runs.flatMap(recordHashes);
+  assert.doesNotThrow(() => checkedFeeds(feeds, known));
+  // Each element's text is its own block for the screen.
+  assert.ok(feedText(feeds['labs/rogue/feed.xml']).includes(`<p>${runEntryId(runs[0])}</p><p>Lab 05: a run on ubuntu-latest`));
+  // The screen still refuses what it must: a hash no run holds, a long number in an entry, a machine path in the markup.
+  assert.throws(() => checkedFeeds(feeds, []), /a hash the record does not hold/);
+  const title = '<title>Lab 05: a run on ubuntu-latest';
+  assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': feeds['labs/rogue/feed.xml'].replace(title, `${title} 123456789012`) }, known), /a phone number, timestamp or long internal id/);
+  assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': feeds['labs/rogue/feed.xml'].replace('rel="self"', 'rel="self" xml:base="/Users/x/"') }, known), /a machine path \(markup\)/);
 });

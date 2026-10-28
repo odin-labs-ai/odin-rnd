@@ -17,7 +17,7 @@
 // own URL, every entry has an alternate link, entries are newest first, and the feed's updated is its newest entry's.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { escape, pageLeaks, realInstant, recordHashes } from './lab-kit.mjs';
+import { escape, LEAKS, pageLeaks, realInstant, recordHashes } from './lab-kit.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const SITE_FEED = 'feed.xml';
@@ -190,12 +190,29 @@ export function feedProblems(source, { self, where = self } = {}) {
   return problems;
 }
 
+/**
+ * What a feed reader shows, for the leak screen: every element's text, each as its own block (attribute values are
+ * markup, as on a page, and meet the LEAKS shapes with the rest of it). XML elements are not HTML blocks, so the feed read as a page would join one element's text to the next
+ * ("...<hash></id><title>Lab 05" reads as "...<hash>Lab 05"): a hash glued to a word is no longer a whole token, is not
+ * masked, and its digits read as a long id. Each piece on its own is how a reader sees it.
+ */
+export function feedText(source) {
+  const { tree, problems } = parseXml(source);
+  if (problems.length) return null;
+  const pieces = [];
+  (function walk(el) { pieces.push(el.text); el.children.forEach(walk); })(tree);
+  return pieces.filter(p => p.trim()).map(p => `<p>${escape(p)}</p>`).join('');
+}
+
 /** Every feed checked and screened; the build throws on any problem. `known` are the hashes the runs hold. */
 export function checkedFeeds(feeds, known) {
   const problems = [];
   for (const [path, source] of Object.entries(feeds)) {
     problems.push(...feedProblems(source, { self: `${SITE_URL}${path}`, where: path }));
-    problems.push(...pageLeaks(source, known).map(p => `${path}: ${p}`));
+    // The kit's screen over what a reader sees, piece by piece; the markup itself still meets the LEAKS shapes whole.
+    const text = feedText(source);
+    if (text !== null) problems.push(...pageLeaks(text, known).map(p => `${path}: ${p}`));
+    for (const [pattern, reason] of LEAKS) if (pattern.test(source)) problems.push(`${path}: ${reason} (markup)`);
   }
   if (problems.length) throw new Error(`Atom feeds refused:\n  ${problems.join('\n  ')}`);
   return feeds;
