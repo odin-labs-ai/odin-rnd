@@ -1,0 +1,385 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-review-v1",
+ "title": "Lab 06, which model should review your code: site/data/labs/review/record.json, written by scripts/vendor-review.mjs from public sources in this repository. Every object is closed: no price, no time, no model id rides along.",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "sources",
+  "frontier",
+  "nina",
+  "selfVerify",
+  "gallery",
+  "planOnly"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-review"
+  },
+  "version": {
+   "const": 1
+  },
+  "sources": {
+   "type": "array",
+   "minItems": 3,
+   "items": {
+    "type": "object",
+    "required": [
+     "role",
+     "file",
+     "commit",
+     "sha256"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "role": {
+      "type": "string",
+      "pattern": "^(frontier|nina|self-verify)$"
+     },
+     "file": {
+      "type": "string",
+      "pattern": "^experiments/[a-z0-9/-]+\\.json$"
+     },
+     "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "frontier": {
+   "type": "object",
+   "required": [
+    "experiment",
+    "seats",
+    "onFrontier",
+    "offFrontier"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "experiment": {
+     "type": "string",
+     "pattern": "^EXP \\d{3}$"
+    },
+    "seats": {
+     "type": "array",
+     "minItems": 2,
+     "items": {
+      "type": "object",
+      "required": [
+       "seat",
+       "name",
+       "caught",
+       "caughtOf",
+       "caughtPerRun",
+       "falseAlarms",
+       "falseAlarmsOf",
+       "falseAlarmsPerRun",
+       "noVerdict",
+       "runs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "seat": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,20}$"
+       },
+       "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+       },
+       "caught": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "caughtOf": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "caughtPerRun": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "falseAlarms": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "falseAlarmsOf": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "falseAlarmsPerRun": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "noVerdict": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "runs": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     }
+    },
+    "onFrontier": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,20}$"
+     }
+    },
+    "offFrontier": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,20}$"
+     }
+    }
+   }
+  },
+  "nina": {
+   "type": "object",
+   "required": [
+    "experiment",
+    "verdict",
+    "manipulation",
+    "countedRuns",
+    "blindRuns",
+    "maxBlindRuns",
+    "missedDrift",
+    "falseReject",
+    "selfAgreement",
+    "harnessFailures"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "experiment": {
+     "type": "string",
+     "pattern": "^EXP \\d{3}$"
+    },
+    "verdict": {
+     "type": "string",
+     "pattern": "^(PASS|FAIL)$"
+    },
+    "manipulation": {
+     "type": "string",
+     "pattern": "^(PASS|FAIL)$"
+    },
+    "countedRuns": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "blindRuns": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "maxBlindRuns": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "missedDrift": {
+     "type": "object",
+     "required": [
+      "x",
+      "n",
+      "holds"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "n": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "holds": {
+       "type": "boolean"
+      }
+     }
+    },
+    "falseReject": {
+     "type": "object",
+     "required": [
+      "x",
+      "n",
+      "holds"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "n": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "holds": {
+       "type": "boolean"
+      }
+     }
+    },
+    "selfAgreement": {
+     "type": "object",
+     "required": [
+      "x",
+      "n",
+      "holds"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "n": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "holds": {
+       "type": "boolean"
+      }
+     }
+    },
+    "harnessFailures": {
+     "type": "object",
+     "required": [
+      "x",
+      "n",
+      "holds"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "n": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "holds": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  "selfVerify": {
+   "type": "object",
+   "required": [
+    "experiment",
+    "decision",
+    "runs"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "experiment": {
+     "type": "string",
+     "pattern": "^EXP \\d{3}$"
+    },
+    "decision": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 20
+    },
+    "runs": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "id",
+       "caught",
+       "falseAlarms",
+       "of"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "id": {
+        "type": "string",
+        "pattern": "^A1-[ab]$"
+       },
+       "caught": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "falseAlarms": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "of": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     }
+    }
+   }
+  },
+  "gallery": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "pr",
+     "title",
+     "mergeCommit",
+     "receipt"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "pr": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "mergeCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+     },
+     "receipt": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 400
+      }
+     }
+    }
+   }
+  },
+  "planOnly": {
+   "type": "array",
+   "items": {
+    "type": "integer",
+    "minimum": 1
+   }
+  }
+ }
+}

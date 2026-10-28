@@ -1,0 +1,228 @@
+{
+ "format": "odin-lab-review",
+ "version": 1,
+ "sources": [
+  {
+   "role": "frontier",
+   "file": "experiments/review-frontier/results.json",
+   "commit": "9c379579e150113e61221cd07ec3cb901cd2efdf",
+   "sha256": "fb01a382cf425e3619f861b8435e84242b183e3e8b4d7ef2fe60e9a05bb086e0"
+  },
+  {
+   "role": "nina",
+   "file": "experiments/nina-changes/results/results.json",
+   "commit": "a4c01980201b7c6363566a79f33cbcca43c8377e",
+   "sha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c"
+  },
+  {
+   "role": "self-verify",
+   "file": "experiments/self-verify/results.json",
+   "commit": "3d870da3537e1528e175227c45a66182ae6dd349",
+   "sha256": "f2e9d313681d0576c4bf1ced44e3147eadec34fcab8dfdb946bfbb4fac86b652"
+  }
+ ],
+ "frontier": {
+  "experiment": "EXP 017",
+  "seats": [
+   {
+    "seat": "flash",
+    "name": "MiniMax M3.1 Flash",
+    "caught": 30,
+    "caughtOf": 60,
+    "caughtPerRun": [
+     14,
+     16
+    ],
+    "falseAlarms": 48,
+    "falseAlarmsOf": 60,
+    "falseAlarmsPerRun": [
+     22,
+     26
+    ],
+    "noVerdict": 21,
+    "runs": 2
+   },
+   {
+    "seat": "gpt-oss",
+    "name": "gpt-oss 120B",
+    "caught": 29,
+    "caughtOf": 60,
+    "caughtPerRun": [
+     15,
+     14
+    ],
+    "falseAlarms": 42,
+    "falseAlarmsOf": 60,
+    "falseAlarmsPerRun": [
+     22,
+     20
+    ],
+    "noVerdict": 0,
+    "runs": 2
+   },
+   {
+    "seat": "sonnet",
+    "name": "Claude Sonnet 5.5",
+    "caught": 26,
+    "caughtOf": 60,
+    "caughtPerRun": [
+     13,
+     13
+    ],
+    "falseAlarms": 30,
+    "falseAlarmsOf": 60,
+    "falseAlarmsPerRun": [
+     15,
+     15
+    ],
+    "noVerdict": 0,
+    "runs": 2
+   },
+   {
+    "seat": "opus",
+    "name": "Claude Opus 5.5",
+    "caught": 31,
+    "caughtOf": 60,
+    "caughtPerRun": [
+     18,
+     13
+    ],
+    "falseAlarms": 36,
+    "falseAlarmsOf": 60,
+    "falseAlarmsPerRun": [
+     16,
+     20
+    ],
+    "noVerdict": 0,
+    "runs": 2
+   }
+  ],
+  "onFrontier": [
+   "flash",
+   "gpt-oss",
+   "opus"
+  ],
+  "offFrontier": [
+   "sonnet"
+  ]
+ },
+ "nina": {
+  "experiment": "EXP 006",
+  "verdict": "PASS",
+  "manipulation": "PASS",
+  "countedRuns": 180,
+  "blindRuns": 3,
+  "maxBlindRuns": 18,
+  "missedDrift": {
+   "x": 1,
+   "n": 90,
+   "holds": true
+  },
+  "falseReject": {
+   "x": 2,
+   "n": 90,
+   "holds": true
+  },
+  "selfAgreement": {
+   "x": 57,
+   "n": 60,
+   "holds": true
+  },
+  "harnessFailures": {
+   "x": 0,
+   "n": 180,
+   "holds": true
+  }
+ },
+ "selfVerify": {
+  "experiment": "EXP 012",
+  "decision": "no",
+  "runs": [
+   {
+    "id": "A1-a",
+    "caught": 13,
+    "falseAlarms": 20,
+    "of": 30
+   },
+   {
+    "id": "A1-b",
+    "caught": 14,
+    "falseAlarms": 22,
+    "of": 30
+   }
+  ]
+ },
+ "gallery": [
+  {
+   "pr": 84,
+   "title": "fix(labs): the delivery record adds #80 and times each deploy by its Pages deployment",
+   "mergeCommit": "22a9fe15f3052dc08d225e3c444b0c1c1c5e2267",
+   "receipt": [
+    "2 recorded review rounds (FIX-NEEDED on 5962cca, SHIP on a3c3cda), 8 CI runs, landed 30fd41f"
+   ]
+  },
+  {
+   "pr": 82,
+   "title": "feat(labs): Lab 01 question intake and answer-back drafts (operator tooling, no sends)",
+   "mergeCommit": "1f10383c90649ef74e29a25d0f006054171330ed",
+   "receipt": [
+    "Review round 1 (FIX-NEEDED 5f3ca4ce) was fixed in f48471c; the recheck (07ead9cc) confirmed finding 3 fixed. Findings 1, 2 and 4 are fixed in ff02879: the directive, symbol and advice holds cover 1 and 2, and the narrowed provenance claim covers 4."
+   ]
+  },
+  {
+   "pr": 80,
+   "title": "feat(labs): How this site got built — the real delivery record of odin-rnd on Lab 01 (no theatre)",
+   "mergeCommit": "30fd41f37f53190ea5e94f4ab3f4a4a9fb008a54",
+   "receipt": [
+    "21 recorded review rounds (12 FIX-NEEDED, 9 SHIP; verdict + head sha + row id only, never review text)"
+   ]
+  },
+  {
+   "pr": 62,
+   "title": "feat(site): a page for model providers — what the lab offers, what it asks, and partners only when signed",
+   "mergeCommit": "68160a0b7db9d60761c59660d04d95c0fc8c8d02",
+   "receipt": [
+    "Review row f6bf03aa (FIX-NEEDED) is addressed in the follow-up commit, item by item; see the commit message."
+   ]
+  },
+  {
+   "pr": 58,
+   "title": "feat(site): provider economics + evidence pages, and a build gate that every number links to its record",
+   "mergeCommit": "c5947aa6a4d7fc95ff276f4343f074bfb1830c4c",
+   "receipt": [
+    "Review row c6c46629 (FIX-NEEDED) is addressed in 076f75e, item by item; see the commit message."
+   ]
+  },
+  {
+   "pr": 52,
+   "title": "feat(site): Odin Labs R&D B.V. as lab entity + partner page + one-pager",
+   "mergeCommit": "dbcffc3170b2a25984378f72f2be11f8cc80c747",
+   "receipt": [
+    "FIX-NEEDED — one-pager's Laya-vs-Jev claim was internally inconsistent (48/48 identical decisions alongside a 14.6pp accuracy gap).",
+    "real figures are 37/48 (77.1%) decision agreement, 81.3% vs 95.8% accuracy"
+   ]
+  },
+  {
+   "pr": 45,
+   "title": "feat(journal): two field notes — a free model on our own bug history, and on our review bench",
+   "mergeCommit": "1a995ace429f454520ce7ed8e1b2c0f49b5d396a",
+   "receipt": [
+    "Review: FIX-NEEDED on 215cfe2 (rnd-pr45-refute-1) → fixed in ca048cd; bounded recheck (rnd-pr45-refute-2) on ca048cd: F3–F5 FIXED, F1/F2 NOT-FIXED on remaining wording + this description → fixed in 2172aa4 and here."
+   ]
+  },
+  {
+   "pr": 27,
+   "title": "feat(latent-handoff): EXP 008 amendment 01 — the confirmatory analysis script, published before any counted run",
+   "mergeCommit": "cf91fa37e057e28160cd51f83d2211d5dc2e1d19",
+   "receipt": [
+    "Independent review: r1–r3 FIX-NEEDED fixed forward; r4 SHIP on the same patch"
+   ]
+  }
+ ],
+ "planOnly": [
+  56,
+  54,
+  53,
+  50
+ ]
+}
