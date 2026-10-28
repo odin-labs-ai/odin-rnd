@@ -12,7 +12,53 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  # The test suite is CPU-bound: on every run, main and pull request alike, the sum of test time over wall time
+  # is 2.05-2.17, so wall time is total work / ~2.1, and total work swings 960-1520 s with the hosted VM's speed
+  # (measured on 9 runs, 2026-10-28). One job crossed the 12-minute ceiling on slow VMs; three shards of the
+  # test files (node --test-shard) each carry a third of it, and the ceiling stays as it is.
+  test:
+    name: test (shard ${{ matrix.shard }} of 3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the
+          # change is judged against (scripts/latent-handoff-fences.mjs diffBase, HEAD^1) is already there.
+          # At depth 1 every test file deepened the shallow clone itself and raced the others on shallow.lock,
+          # which pushed PR runs past the 12-minute ceiling while main stayed near 450-600 s.
+          fetch-depth: 2
+      - name: Clear checked-in historical observation before this run
+        run: rm -f site/data/experiments.json site/data/witnesses/*.json
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.11.1
+      - name: Install released engine
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Re-execute all three Java fixture projects
+        run: node scripts/run-roi-demos.mjs
+      - name: Run public experiments
+        run: pnpm experiment
+      - name: Check recorded evidence and interaction failure handling (this shard)
+        # package.json is pinned by experiment pre-registrations, so it stays as it is; this step refuses unless its
+        # `test` script is exactly the command sharded here, so the three shards always run the file set it runs.
+        run: |
+          want='node --test scripts/*.test.mjs'
+          got=$(node -p "require('./package.json').scripts.test")
+          [ "$got" = "$want" ] || { echo "::error::package.json's test script is now '$got'; shard that command instead"; exit 1; }
+          node --test --test-shard=${{ matrix.shard }}/3 scripts/*.test.mjs
   verify:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -54,8 +100,6 @@ jobs:
           name: experiment-record-${{ github.run_id }}-${{ github.run_attempt }}
           path: site/data/experiments.json
           retention-days: 90
-      - name: Check recorded evidence and interaction failure handling
-        run: pnpm test
       - name: Build and validate public site
         run: |
           pnpm build
