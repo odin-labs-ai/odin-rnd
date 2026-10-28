@@ -16,11 +16,13 @@
 // end. The lab kit's page screen (scripts/lab-kit.mjs pageLeaks) refuses any path shown on a page; maskKit() lets
 // through exactly the block renderKit() rendered, once, and nothing else on the page, before the screen runs; the
 // site's leak gate still reads every byte of the built page.
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { lstatSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { escape } from './lab-kit.mjs';
+import { LAB_SHAPES, recordHash } from './lab-record.mjs';
 // A cycle with lab-review.mjs (which renders the block): each uses the other only inside functions.
 import { readReview } from './lab-review.mjs';
 
@@ -133,13 +135,51 @@ export function runKit(lab, record, { cwd = REPO_ROOT, spawn = spawnSync, ...opt
   });
 }
 
+const sha256 = data => createHash('sha256').update(data).digest('hex');
+
+/**
+ * One run of a lab's kit as record v1 (docs/lab-record.md), for the org runners (vision-plan bundle 3, WO-03). The kit
+ * decides the result: `committed` is the sha256 of every line it must print, `now` the sha256 of every line it did
+ * print (in step order, one line end each; a step that failed carries its exit status), so SAME means every step exited 0
+ * and printed exactly its line; `breaches` counts the
+ * steps that did not exit 0 or printed anything else. `inputs` are the sha256 of the source files the kit re-derives,
+ * as read at the run. Where and when (runner, class, image, time, commit) come from the caller.
+ */
+export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, machineClass, image = null, ranAt, commit }) {
+  const shape = LAB_SHAPES[lab];
+  if (!shape) throw new Error(`${lab}: no record shape for this lab`);
+  const lines = rs => sha256(rs.map(r => `${r}\n`).join(''));
+  // A step that failed counts as printing something else even if its text matched: its exit status joins its line.
+  const committed = lines(results.map(r => r.prints)), now = lines(results.map(r => (r.ok ? r.got : `${r.got} [exit ${r.status}]`)));
+  const inputs = shape.roles.map(role => ({ role, sha256: sha256(readFileSync(join(root, record.sources.find(s => s.role === role).file))) }));
+  const run = {
+    format: 'odin-lab-record', version: 1, lab, runner, machineClass, image,
+    commit: { sha: commit, mainHead: commit, compare: 'identical', onMain: true },
+    command: shape.command, inputs,
+    result: { verdict: committed === now ? 'SAME' : 'DIFFERENT', committed, now, breaches: results.filter(r => !r.ok).length },
+    ranAt, replicatedOn: [], differedOn: [],
+  };
+  return { ...run, recordHash: recordHash(run) };
+}
+
+// node scripts/lab-rerun.mjs <lab> --record --runner R --machine-class C --image I --ran-at T --commit SHA: run the kit and
+// print its record v1 (the steps' own output goes to stderr); exit 0 when a record was printed, whatever its verdict.
 // node scripts/lab-rerun.mjs <lab>: run its kit, print each command and what it printed, exit 1 unless every step
 // exited 0 and printed exactly the expected line.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const lab = process.argv[2];
   const readers = { review: () => readReview('site') };
   if (!readers[lab]) { console.error(`usage: node scripts/lab-rerun.mjs <${Object.keys(readers).join('|')}>`); process.exit(2); }
-  const results = runKit(lab, readers[lab]());
+  const record = readers[lab]();
+  const results = runKit(lab, record);
+  const flags = process.argv.slice(3);
+  if (flags[0] === '--record') {
+    const opt = {};
+    for (let i = 1; i < flags.length; i += 2) opt[flags[i].replace(/^--/, '').replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = flags[i + 1];
+    for (const r of results) console.error(`$ ${r.command}: ${r.ok ? 'OK' : `FAIL exit ${r.status}`}`);
+    process.stdout.write(`${JSON.stringify(kitRecord(lab, results, { record, ...opt }), null, 1)}\n`);
+    process.exit(0);
+  }
   for (const r of results) {
     console.log(`$ ${r.command}\n${r.got}\n${r.ok ? 'OK  printed the expected line' : `FAIL exit ${r.status}; expected:\n${r.prints}${r.stderr ? `\n${r.stderr.trimEnd()}` : ''}`}`);
   }
