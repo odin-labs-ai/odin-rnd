@@ -205,3 +205,31 @@ test('the marked boxes say what they are in their own label', () => {
 test('the kit and the screen terms name no restricted name', () => {
   for (const file of ['scripts/lab-kit.mjs']) assert.deepEqual(screenHits(readFileSync(file, 'utf8')).filter(h => h.reason.startsWith('a restricted name')), [], file);
 });
+
+// ADR 2026-10-28-rnd-lane-evidence-onmain-false: a lane commit is never cited AS MAIN; laneCite is its one sentence.
+test('laneCite: a lane commit is cited only with every field, never as main, never when the record knows it is on main', () => {
+  const full = { onMain: false, commit: LANE, lane: 'lane/a-variant', baseMain: MAIN, checkedAt: '2026-10-27' };
+  const words = kit.laneCite(full);
+  assert.match(words, /private commit <code>c3d4e5f6<\/code>, cited by hash, on a pushed branch that is not yet part of the private main \(checked on <time datetime="2026-10-27">2026-10-27<\/time>\), built on the private main <code>a1b2c3d4<\/code>/);
+  assert.doesNotMatch(words, /lane\/a-variant/, 'the lane name is kept for the re-cite, not shown');
+  // A bare lane cite through cite() and the record contract are still refused (the rule above is unchanged).
+  assert.throws(() => kit.cite({ commit: LANE }, { main: MAIN, checked: '2026-10-27', commits: [ON_MAIN] }), /never cited/);
+  // Every field is required, and onMain must be false.
+  for (const [field, bad] of [['onMain', true], ['onMain', undefined], ['commit', 'c3d4'], ['lane', ''], ['lane', undefined], ['baseMain', 'main'], ['checkedAt', '2026-02-30'], ['checkedAt', undefined]]) {
+    assert.throws(() => kit.laneCite({ ...full, [field]: bad }), /laneCite: /, `${field}=${bad}`);
+  }
+  // A commit the record knows to be part of main is cited with cite(), never as a lane.
+  assert.throws(() => kit.laneCite({ ...full, commit: MAIN }), /is part of the private main; cite it with cite\(\)/);
+  assert.throws(() => kit.laneCite(full, { mainCommits: [LANE] }), /is part of the private main/);
+  assert.deepEqual(kit.laneCiteProblems(full, { mainCommits: [ON_MAIN] }), []);
+});
+
+test('laneCite on the page: a lane commit in a main cite, or a lane cite that also claims main, is refused', () => {
+  const known = [LANE, MAIN];
+  const page = body => `<p>${body}</p>`;
+  assert.deepEqual(kit.pageLeaks(page(`Filmed from ${kit.laneCite({ onMain: false, commit: LANE, lane: 'lane/x', baseMain: MAIN, checkedAt: '2026-10-27' })}.`), known, { lane: [LANE] }), []);
+  const asMain = page(`Private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, checked as part of the private main <code>${MAIN.slice(0, 8)}</code>.`);
+  assert.ok(kit.pageLeaks(asMain, known, { lane: [LANE] }).some(p => /a lane commit cited as part of the private main/.test(p)));
+  const both = page(`Filmed from private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, on a pushed branch that is not yet part of the private main, and it is part of the private main.`);
+  assert.ok(kit.pageLeaks(both, known, { lane: [LANE] }).some(p => /a lane cite that also claims the private main/.test(p)));
+});

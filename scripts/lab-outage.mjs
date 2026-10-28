@@ -4,8 +4,9 @@
 // one agent's server was stopped for real, the verdicts Odin gave with their evidence ids, and the private commit it
 // was filmed from. It builds on the lab kit (scripts/lab-kit.mjs): its screen, leak list, cite sentence and hashes.
 //
-// The citation is fixed here, not in the record. A commit the record marks onMain: false is cited by citeSource() as
-// "not yet part of the private main", with the main it was built on, and no other text of the record or the section
+// The citation is fixed here, not in the record. A commit the record marks onMain: false is cited through the kit's
+// laneCite (ADR 2026-10-28-rnd-lane-evidence-onmain-false): "not yet part of the private main", with the main it was
+// built on, the lane's name kept in the record and the date it was checked not to be on main; and no other text of the record or the section
 // may mention main at all: the record's free text is refused on the word, and the rendered section, with that one
 // sentence taken out, is refused on it too. Only a record with onMain: true AND a mainCheck is cited with the kit's
 // cite() sentence ("checked as part of the private main"). When the commit lands on main, a re-cite flips onMain and
@@ -21,7 +22,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cite, escape, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
+import { cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
 import { MAX_FILM_BYTES, screeningProblems } from './lab-films.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -103,6 +104,8 @@ export function outageProblems(record, { where = OUTAGE_RECORD, root = null } = 
   })(text, '');
   if (source.onMain && !source.mainCheck) problems.push(`${where}#/source: onMain is true, but there is no mainCheck naming the main it was checked against`);
   if (!source.onMain && source.mainCheck) problems.push(`${where}#/source/mainCheck: a main check for a commit marked not on main`);
+  if (!source.onMain) problems.push(...laneCiteProblems(source).map(p => `${where}#/source: ${p}`));
+  if (!source.onMain && source.checkedAt < source.filmedOn) problems.push(`${where}#/source/checkedAt: before the film was made`);
   if (source.onMain && source.mainCheck && source.mainCheck.checked < source.filmedOn) problems.push(`${where}#/source/mainCheck/checked: before the film was made`);
   problems.push(...screeningProblems({ ...film, screening: record.screening }, `${where}#/screening`));
   problems.push(...fileProblems(record, root, where));
@@ -134,14 +137,14 @@ export function citeSource(source) {
   const filmed = `Filmed on <time datetime="${escape(source.filmedOn)}">${escape(longDate(source.filmedOn))}</time> on ${escape(source.machine)}`;
   if (source.onMain) return `${filmed}. ${cite(source, source.mainCheck)}`;
   const n = source.changes.length;
-  return `${filmed} from private commit <code>${escape(source.commit.slice(0, 8))}</code>, on a pushed branch that is not yet part of the private main. It is the main of ${escape(dayMonth(source.filmedOn))} (<code>${escape(source.baseMain.slice(0, 8))}</code>) plus ${escape(COUNT[n] ?? String(n))} change${n === 1 ? '' : 's'}: ${escape(list(source.changes))}. Cited by hash; this page cannot check it, anyone with access can.`;
+  return `${filmed} from ${laneCite(source)}. It is the main of ${escape(dayMonth(source.filmedOn))} plus ${escape(COUNT[n] ?? String(n))} change${n === 1 ? '' : 's'}: ${escape(list(source.changes))}. This page cannot check it, anyone with access can.`;
 }
 
 /** Why a rendered section may not be published: the kit's pageLeaks, MACHINE_LEAKS, and main outside the citation. */
 export function sectionLeaks(html, record) {
   const cited = citeSource(record.source);
   const visible = html.split(cited).join(' ').replace(/<[^>]+>/g, ' ');
-  return [...pageLeaks(html, recordHashes(record)),
+  return [...pageLeaks(html, recordHashes(record), record.source.onMain ? {} : { lane: [record.source.commit] }),
     ...MACHINE_LEAKS.filter(([re]) => re.test(html.replace(/<[^>]+>/g, ' '))).map(([, reason]) => reason),
     ...(!record.source.onMain && MAIN_WORD.test(visible) ? ['mentions main outside the citation, for a commit that is not on it'] : [])];
 }

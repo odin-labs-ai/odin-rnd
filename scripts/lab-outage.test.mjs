@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { laneCite } from './lab-kit.mjs';
 import { FRAME, MAIN_WORD, OUTAGE_RECORD, citeSource, outageProblems, pngSize, readOutage, renderOutage, sectionLeaks, webmSeconds } from './lab-outage.mjs';
 
 // Lab 01's Dispatch #2 (lane dispatch2-film): the film and poster pinned by sha256 and size, the film's own header
@@ -72,11 +73,13 @@ test('while onMain is false the citation says "not yet part of the private main"
   assert.equal(record.source.onMain, false);
   assert.match(record.source.baseMain, /^[0-9a-f]{40}$/);
   const words = citeSource(record.source);
-  assert.match(words, /on a pushed branch that is not yet part of the private main\./);
+  // Through the kit's laneCite (ADR 2026-10-28-rnd-lane-evidence-onmain-false), never the main cite.
+  assert.ok(words.includes(laneCite(record.source)));
+  assert.match(words, /from private commit <code>d02ee74b<\/code>, cited by hash, on a pushed branch that is not yet part of the private main \(checked on <time datetime="2026-10-28">2026-10-28<\/time>\), built on the private main <code>aa35e6db<\/code>\./);
   assert.doesNotMatch(words, /checked as part of the private main/);
-  assert.match(words, /from private commit <code>d02ee74b<\/code>/);
-  assert.match(words, /the main of 27 October \(<code>aa35e6db<\/code>\) plus two changes: the port check works on macOS, and the outage card names the agent instead of its address\./);
-  assert.match(words, /Cited by hash; this page cannot check it, anyone with access can\./);
+  assert.match(words, /It is the main of 27 October plus two changes: the port check works on macOS, and the outage card names the agent instead of its address\./);
+  assert.match(words, /This page cannot check it, anyone with access can\./);
+  assert.doesNotMatch(words, /mac-qa-public/, 'the lane name stays in the record');
   const html = renderOutage(record);
   assert.doesNotMatch(html, /checked as part of the private main/);
   assert.equal(html.split(words).length, 2, 'the citation appears once');
@@ -94,6 +97,20 @@ for (const claim of CLAIMS) {
     assert.ok(sectionLeaks(`<p>${claim}</p><p>${citeSource(record.source)}</p>`, record).some(p => p.includes('mentions main')), claim);
   });
 }
+
+test('a lane cite needs the lane and the date it was checked, and refuses the base main itself', () => {
+  for (const field of ['lane', 'checkedAt']) {
+    const record = clone(committed());
+    delete record.source[field];
+    assert.notDeepEqual(outageProblems(record), [], `no ${field}`);
+  }
+  const onBase = clone(committed());
+  onBase.source.commit = onBase.source.baseMain;
+  assert.ok(outageProblems(onBase).some(p => p.includes('is part of the private main; cite it with cite()')));
+  const early = clone(committed());
+  early.source.checkedAt = '2026-10-26';
+  assert.ok(outageProblems(early).some(p => p.includes('#/source/checkedAt: before the film was made')));
+});
 
 test('flipping onMain needs a main check, a main check needs onMain, and a re-cite then uses the kit\'s sentence', () => withScratch(root => {
   const flipped = clone(committed());

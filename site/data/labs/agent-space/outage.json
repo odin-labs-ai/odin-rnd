@@ -27,6 +27,8 @@
   "commit": "d02ee74b96a997095950185a20afa05a908a2ff0",
   "onMain": false,
   "baseMain": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+  "lane": "lane/mac-qa-public",
+  "checkedAt": "2026-10-28",
   "filmedOn": "2026-10-27",
   "machine": "a second machine (the Mac)",
   "changes": [
