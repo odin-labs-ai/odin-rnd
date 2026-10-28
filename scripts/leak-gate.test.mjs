@@ -13,9 +13,9 @@ import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
 import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
-const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
+const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA', 'vkz'];
 const CANARY = 'odncanary-0123456789abcdef';
-const STRICT = ['Zephyr Quarry'];
+const STRICT = ['Zephyr Quarry', 'vkz'];
 const secretOf = (terms = TERMS, canaries = [CANARY], strict = STRICT.filter(t => terms.includes(t)).length ? STRICT.filter(t => terms.includes(t)) : [terms[0]]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])), strict: strict.map(t => digest(SALT, normalise(t))) });
 const SECRET = secretOf();
 const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.stringify({ format: 'odin-leak-gate-set', version: 1, ...commitmentOf(d.salt, d.terms, d.canaries, d.heads, d.strict) }); };
@@ -70,7 +70,7 @@ test('a clean site passes and the Leak screen page is filled with counts, the co
     const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
     assert.equal(r.code, 0, r.out);
     const page = readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8');
-    assert.match(page, /data-leak-screen="terms">7</);
+    assert.match(page, /data-leak-screen="terms">8</);
     assert.match(page, /data-leak-screen="canaries">1</);
     assert.match(page, /data-leak-screen="hits">0</);
     assert.match(page, new RegExp(`data-leak-screen="commit">${COMMIT}<`));
@@ -167,7 +167,7 @@ test('a term set that differs from the public commitment stops the build, even w
     const partial = secretOf(TERMS.slice(1));
     const r = gate(root, { LEAK_SCREEN_SECRET: partial });
     assert.equal(r.code, 2, r.out);
-    assert.match(r.out, /not the committed one \(committed 7 terms, 1 canaries; got 6, 1\)/);
+    assert.match(r.out, /not the committed one \(committed 8 terms, 1 canaries; got 7, 1\)/);
     assert.throws(() => checkCommitment(loadSecret(SECRET), setFile(secretOf(TERMS, [CANARY, 'odncanary-ffffffffffffffff']))), /not the committed one/);
     checkCommitment(loadSecret(SECRET), setFile());
     const resalted = SECRET.replace(SALT, 'another-salt-of-enough-length');
@@ -483,4 +483,21 @@ test('a strict-class term (client, employer, publisher) can never be a known occ
 test('the committed known list carries a valid review stamp and no strict-class row', () => {
   const d = JSON.parse(readFileSync('scripts/leak-gate-known.json', 'utf8'));
   assert.equal(d.reviewed.rowsSha256, rowsDigest(d.known));
+});
+
+test('a short strict-class term in raw binary bytes fails the build, and no row can ever cover it', () => {
+  const bytes = Buffer.from('\0\x01vkz\0\x02', 'latin1');
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const root = site({ 'dist/assets/noise.mp4': bytes });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 1, r.out);
+    const m = r.out.match(/noise\.mp4:0 term hash ([0-9a-f]{8}) at offset 2 of sha256/);
+    assert.ok(m, r.out);
+    const exact = { file: 'dist/assets/noise.mp4', kind: 'term', hash: m[1], sha256: sha, offset: 2, count: 1, reason: 'a chance spelling in this exact file' };
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([exact])));
+    const withRow = gate(root, undefined, ['--known', 'known.json']);
+    assert.equal(withRow.code, 2, withRow.out);
+    assert.match(withRow.out, /no allowlist/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

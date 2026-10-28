@@ -11,54 +11,67 @@
    "src": "assets/labs/agent-space/films/agent-space-30s.webm",
    "poster": "assets/labs/agent-space/films/agent-space-30s-poster.png",
    "mime": "video/webm;codecs=vp9",
-   "bytes": 1613667,
+   "bytes": 4505489,
    "seconds": 27,
    "sha256": {
-    "src": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "src": "3823875cedadfd18ea52122dee125fba71cb82474ff63fb918b2b0917d2448a6",
     "poster": "c4831eca46f8d32f4f751229cfea960af612ca8145b6fa66443bb9d98d9bbc91"
    },
    "source": {
     "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
-    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "note": "Recorded in the agent space's own viewer, with its poster frame; re-encoded once (VP9, CRF 34, same size and timing) to remove a chance byte sequence of a protected term. SSIM 0.988 against the original.",
     "originalSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
     "originalBytes": 1613667,
-    "reencoded": false
+    "reencoded": true,
+    "reencode": {
+     "argv": "ffmpeg -i original.webm -c:v libvpx-vp9 -b:v 0 -crf 34 -pass 1|2 -deadline good -cpu-used 4 -row-mt 1 -an -fps_mode passthrough reencoded.webm",
+     "reason": "Re-encoded to remove a chance byte sequence of a protected term; the content is unchanged in substance.",
+     "ssim": 0.988439,
+     "psnrDb": 44.02
+    }
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
-    "srcSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "method": "after the re-encode: one frame every 5 s at the same times, decoded with ffmpeg as raw rgb24, OCR run through the leak gate (0 hits) and viewed by an AI agent, not by a human",
+    "at": "2026-10-28",
+    "srcSha256": "3823875cedadfd18ea52122dee125fba71cb82474ff63fb918b2b0917d2448a6",
     "frames": [
      {
       "t": 0,
-      "rgb24Sha256": "d8e8a775034b03feef3be35ce2fc84597495dd3e4650afd9c45cba0c3bf5c7c7"
+      "rgb24Sha256": "7309aa022af26b93c072250d542c8347ca8925a964320ffd567d6beb222bbe16",
+      "ocrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
      },
      {
       "t": 5,
-      "rgb24Sha256": "6bf5d69fc339742e339a1220c6669cc515d559fa31a234b88dabf45a6626ee4d"
+      "rgb24Sha256": "c75779637474f772132cd095c9f77ed4a5542ed180a35f4d6adfeeadd0c24a04",
+      "ocrSha256": "93444de8034003d424b7def493213501939cc02419056968b1971220312089f6"
      },
      {
       "t": 10,
-      "rgb24Sha256": "8d0f0f252f00b5f15c4bf0161b265909915f52098f0e56db42d2fb1602bffdf4"
+      "rgb24Sha256": "7d1a59099284b5fc3d1a2dd483c9c4641ac0f576cfacd6ff76b10fb134d364d5",
+      "ocrSha256": "89ff839e7db5cf1493d5b0ce24d70c9836919fc20d1d2fed01bd3f741a5952fd"
      },
      {
       "t": 15,
-      "rgb24Sha256": "d96beaecfc05a56e1bf1355db81da9125223f2be012832bf1f97bc2aa7d091b8"
+      "rgb24Sha256": "e34a646e456abd7bb664f8bce98a38f7d1ba01c1157afb757085a97180f64afd",
+      "ocrSha256": "30274cfd59dc881b95e3a270203dde5a4a435403dca29634f581c840b3739052"
      },
      {
       "t": 20,
-      "rgb24Sha256": "725bb80d9be298bc9471dc64210b1cea93386eb7dafd7b38f6aa8587815dfb92"
+      "rgb24Sha256": "16fe3d246ac3919b695110fb09a1455767287bfb4d14457cff8c4dceb32b497d",
+      "ocrSha256": "e268e89c32108aa0e63098b281d683d8f752ad9ccbe7241447a2b7953b042946"
      },
      {
       "t": 25,
-      "rgb24Sha256": "03589316bf51f0659f29c54d9b94ce706abfbc721788ad13b14b30c82aae023c"
+      "rgb24Sha256": "d94850e745dd1ead69ca1ced6a7de08e9a0439b0c786e796a27644f42502d6f3",
+      "ocrSha256": "3f8cf3fc943a99c0e37af3ae178117edcdbdb431c6ca57703521386b2b9d66cf"
      }
     ],
     "checked": [
      "no file path",
      "no local or network address",
      "no machine details",
-     "no private name"
+     "no private name",
+     "OCR text through the leak gate: 0 hits"
     ],
     "result": "pass"
    }
@@ -71,94 +84,117 @@
    "src": "assets/labs/agent-space/films/agent-space-tour.webm",
    "poster": "assets/labs/agent-space/films/agent-space-tour-poster.png",
    "mime": "video/webm;codecs=vp9",
-   "bytes": 5765850,
+   "bytes": 5758465,
    "seconds": 78,
    "sha256": {
-    "src": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "src": "cbf788fb1cf5a79727901cb29ff5a2aef07ad212173385a5726f4c741ceb7aca",
     "poster": "1864b04d670fcab5ba760f6fe2216d2d5e191453a67474557242df9955da06af"
    },
    "source": {
     "commit": "ae5816089c95aa98f165c3c887a3cefc6510c691",
-    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "note": "Recorded in the agent space's own viewer, with its poster frame; re-encoded once (VP9, CRF 53, same size and timing) to remove a chance byte sequence of a protected term. SSIM 0.974 against the original.",
     "originalSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
     "originalBytes": 5765850,
-    "reencoded": false
+    "reencoded": true,
+    "reencode": {
+     "argv": "ffmpeg -i original.webm -c:v libvpx-vp9 -b:v 0 -crf 53 -pass 1|2 -deadline good -cpu-used 4 -row-mt 1 -an -fps_mode passthrough reencoded.webm",
+     "reason": "Re-encoded to remove a chance byte sequence of a protected term; the content is unchanged in substance.",
+     "ssim": 0.97437,
+     "psnrDb": 39.1
+    }
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
-    "srcSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "method": "after the re-encode: one frame every 5 s at the same times, decoded with ffmpeg as raw rgb24, OCR run through the leak gate (0 hits) and viewed by an AI agent, not by a human",
+    "at": "2026-10-28",
+    "srcSha256": "cbf788fb1cf5a79727901cb29ff5a2aef07ad212173385a5726f4c741ceb7aca",
     "frames": [
      {
       "t": 0,
-      "rgb24Sha256": "9aafd4ec5cef8c174ff1e4517e9a7fb087f46bcc5b9d98f382aaf997cac69cba"
+      "rgb24Sha256": "9268db85a74a08a722d8c45701bd2ad7611e9766f40edf7f46622dc41cf77caf",
+      "ocrSha256": "1326e67e3203a06c804e749bd2857b34f098cfff1991093961397af2f6b3db80"
      },
      {
       "t": 5,
-      "rgb24Sha256": "4cdc86d2d50670607bfaa317a532397bfc3f71f91c18cee090011b4c62d78a77"
+      "rgb24Sha256": "45a84a7de05f7fd67ac679304475a595682abbb48c0726830fbde62c54c4e746",
+      "ocrSha256": "43ff1baef176271052b5e60cae64fb9b9a94320f0107672218e8239a694a1cf2"
      },
      {
       "t": 10,
-      "rgb24Sha256": "5fc1477d18713f40cbfad699ca8f2a3d2c826ab0e786b745d877fef3f8651051"
+      "rgb24Sha256": "936c5fd8c47050ab0efeeb600b05c54a630127565a331484018da214cf35ae39",
+      "ocrSha256": "3a663d937e0f5c7af71e417575ca9a6229a7f74fe0160a1ac9d2babf2f73d793"
      },
      {
       "t": 15,
-      "rgb24Sha256": "104004b39086bd9dbf10a6bfe770b0e9b646d3c58a96e17b65127c6957db2a13"
+      "rgb24Sha256": "e15faa5115429edbcf873b699fcf5dacfbe22911111ca7f1502d85de620999d8",
+      "ocrSha256": "187ec95228b9993e94e10e1a19855fcdf16b1af101b2db67a6a4a0cb1b4ff52d"
      },
      {
       "t": 20,
-      "rgb24Sha256": "f4ad5d0729da71619deea9f3a82b58c06e6a6e655eb5ea11acabcec9705dcf2c"
+      "rgb24Sha256": "8b6b030187c9cbaffa12b20dd00e54a56bf520083adb63ceb1cbd3505d45f26f",
+      "ocrSha256": "934ff8a0123c45d37407b2b50de7f9fe2734f01391531ac897108bb7b6c5e042"
      },
      {
       "t": 25,
-      "rgb24Sha256": "e783566ce25debeea30fbeb1a87d61a056fcc07ad374c2edf107b925d8c45091"
+      "rgb24Sha256": "557a07b46d25e15026af55956558a0761e18323b6ea538aede2912d75857102b",
+      "ocrSha256": "a53323bb2af74a0e9a40314feedbfd70913c5567f9f688a5fb1549feaf41f0b7"
      },
      {
       "t": 30,
-      "rgb24Sha256": "8a9e84405b757f5fd535397a8a95cf6f87f16be59f46cb3d764007a75d02f9b3"
+      "rgb24Sha256": "4a0b2ca2eeb05f55fb5cfebb9b5a14582d7fa6dd6f1321005408424e4109a187",
+      "ocrSha256": "98cc2d04f15e598d354f8ad27a8c80bc69ef422d26b7853bb2022c323d0196e1"
      },
      {
       "t": 35,
-      "rgb24Sha256": "23db6fcd70a9bace9c062843c35abb1d2d0d7064321e126375e4238a60468921"
+      "rgb24Sha256": "0b5ce0790aa2ebdb18257c9ed9cacfe0456dd9f00eddafaa88fb5beb213ee434",
+      "ocrSha256": "b83ea6b8f94373e929a55cbf38c52de7f55c335531774d58c47f37c2a905e475"
      },
      {
       "t": 40,
-      "rgb24Sha256": "5c7e6c2ae79314eab03dc2ad7448cd4c4ca2b6a081b1799257b464d0a98a31d2"
+      "rgb24Sha256": "9d75f646bcbdef589ee0c49ee5a0fcac46f8c92e0be9a0b9bb76cdb493ebbee6",
+      "ocrSha256": "38e7e269bf453ae633a02a51d7916bc3ceebb61d644973f9b023f26826856e0f"
      },
      {
       "t": 45,
-      "rgb24Sha256": "ed3e9bb44c56c7591e6fd846b9cf62471f9123e110c2329f3833ae904908c5b0"
+      "rgb24Sha256": "dd55a6d8781f4040cb503c2474e63037d0d8cf741f32bd0d4ae475be870a559a",
+      "ocrSha256": "600a740c3d416b5ef154c12d427d6cc51fd07962869931fc5680ce864cbbd883"
      },
      {
       "t": 50,
-      "rgb24Sha256": "25f1ea9860b0d08a9519fef96ff402df295b5fe32a43b83c0a9fa8cb61dfa299"
+      "rgb24Sha256": "501f4b35fc43306be8c793932ba68ea42c1e5fd3d490b56e42be1abdaadc9690",
+      "ocrSha256": "7f8f17ca9eefa8618500905c5bce80a4112e9925742545df61c6e8ecb1ea4601"
      },
      {
       "t": 55,
-      "rgb24Sha256": "a39fdf713f187c3fa83643aeeef7b2db4a53b0fb0d321036d13b8884cafa42cc"
+      "rgb24Sha256": "d870af2317851a48775b8285e2c1a054eeaaef956abf2e89de0608bb9fa0c166",
+      "ocrSha256": "9e047e1b29d39dde9825275f4d33bed1fa39a5908c6caa8558d7da1f2303a843"
      },
      {
       "t": 60,
-      "rgb24Sha256": "bd21efd62682b48bc80d322216c408b3953afa9045709d695d81060eb848e076"
+      "rgb24Sha256": "61fcd8f4b94cb38c36aeaacc3d989be5cb20d38f4dad48b68b0dab6e9e0d028e",
+      "ocrSha256": "5c28e6e8e0315af4445b4e5d9340e26c93327e11272638887b3d5756aeee86e5"
      },
      {
       "t": 65,
-      "rgb24Sha256": "d3ef7b70b7fe8c1575745a8cb3f1ed5a86b4007eb6b9c62b24737b7a9f61052b"
+      "rgb24Sha256": "8dde84debeacf2daf33e64cea94063c44120143a8d69fbf57d238f6c88f5fb3e",
+      "ocrSha256": "1c4224ed6a6cca9d751c69eac07cca9e7c9b7ee50fe9ffe0775fd27f42cbda10"
      },
      {
       "t": 70,
-      "rgb24Sha256": "0a86c3eead30f19dfe536c3093824e621c8138f0820f9cee281c0ffe8274824f"
+      "rgb24Sha256": "5e83b0399bfe7d554fd9ce0d48fbe707563e3dbd2fbf6838aa5d5f6664fd9625",
+      "ocrSha256": "7e680b051e347ab859ef308409bf2cb36136147b78b32cd9243e2d53c06f9018"
      },
      {
       "t": 75,
-      "rgb24Sha256": "fd32d80fc3bfc3ec2b2668d662f04dfdba8f1a0bd27a6dc1f3f5c43307704bf3"
+      "rgb24Sha256": "e0cc6ce3a8158fd8df4f50aa99ef7687262c97dee0d60a6a962b8cca8e10291f",
+      "ocrSha256": "e422995e083a7bad25364d16f4ee0f54707a0938adc10acb3c0106bed9fac990"
      }
     ],
     "checked": [
      "no file path",
      "no local or network address",
      "no machine details",
-     "no private name"
+     "no private name",
+     "OCR text through the leak gate: 0 hits"
     ],
     "result": "pass"
    }

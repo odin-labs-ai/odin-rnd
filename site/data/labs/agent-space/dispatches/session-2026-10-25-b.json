@@ -111,9 +111,21 @@
    "assets/labs/agent-space/session-2026-10-25-b/clip.webm": "0955535ad0434178f5569576be92a77dc6586052dcd9b564f447b1fec84c60bc",
    "assets/labs/agent-space/session-2026-10-25-b/poster.png": "2637bec8dcb582a5f5c6b595baa65855244c55978268b2d64b5ac23b70d5124f",
    "assets/labs/agent-space/session-2026-10-25-b/stills/01-s1-q1.png": "2637bec8dcb582a5f5c6b595baa65855244c55978268b2d64b5ac23b70d5124f",
-   "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png": "57beddd4ed583f589954724719ab10c844e7ce6b34e82b31e338ebb2b80ba561",
+   "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png": "527cac6da8c89eb61a6abfa6d1982a6a0729891a95c2d89a592129ffe1a220f2",
    "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3.png": "5411b2a357d4ab67b02d3dd74d97ec545e92151bfde0f3956c589c7be90cf21f",
-   "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png": "f13bef522740a4d58f5ded29ed834f7943ea2f2596ab4ba65ad012068ce51dcf"
+   "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png": "303f7aa25fad2e907884ead7ebf3146d286a5fa08f1718d959ff34b8165f5512"
+  },
+  "repacked": {
+   "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png": {
+    "originalSha256": "57beddd4ed583f589954724719ab10c844e7ce6b34e82b31e338ebb2b80ba561",
+    "rgbaSha256": "311fa0f1bdc40bf968d334fa284a58852645c50345de3a7062482cf78e88a194",
+    "note": "Re-packed losslessly (zlib level 9, same filtered scanlines) to remove a chance byte sequence of a protected term; pixels identical."
+   },
+   "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png": {
+    "originalSha256": "f13bef522740a4d58f5ded29ed834f7943ea2f2596ab4ba65ad012068ce51dcf",
+    "rgbaSha256": "39979214d0d56bb27a9a6994bc49a56824916b09b88e1084a8112e4ac37acf0e",
+    "note": "Re-packed losslessly (zlib level 9, same filtered scanlines) to remove a chance byte sequence of a protected term; pixels identical."
+   }
   }
  }
 }

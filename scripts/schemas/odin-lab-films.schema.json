@@ -128,6 +128,36 @@
        },
        "reencoded": {
         "type": "boolean"
+       },
+       "reencode": {
+        "type": "object",
+        "required": [
+         "argv",
+         "reason",
+         "ssim",
+         "psnrDb"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "argv": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 300
+         },
+         "reason": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 300
+         },
+         "ssim": {
+          "type": "number",
+          "minimum": 0
+         },
+         "psnrDb": {
+          "type": "number",
+          "minimum": 0
+         }
+        }
        }
       }
      },
@@ -172,6 +202,10 @@
            "minimum": 0
           },
           "rgb24Sha256": {
+           "type": "string",
+           "pattern": "^[0-9a-f]{64}$"
+          },
+          "ocrSha256": {
            "type": "string",
            "pattern": "^[0-9a-f]{64}$"
           }

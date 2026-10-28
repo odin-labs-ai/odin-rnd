@@ -72,7 +72,8 @@
     "schema": {"const": "odin-dispatch-v1"},
     "schemaSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "manifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "assetsSha256": {"type": "object", "description": "sha256 of every published asset, keyed by its site path; the build re-hashes each and refuses a mismatch", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    "assetsSha256": {"type": "object", "description": "sha256 of every published asset, keyed by its site path; the build re-hashes each and refuses a mismatch", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "repacked": {"type": "object", "description": "an asset re-packed losslessly after the session: its original sha256, the decoded-pixel sha256 shared by both, and why", "additionalProperties": {"type": "object", "required": ["originalSha256", "rgbaSha256", "note"], "additionalProperties": false, "properties": {"originalSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "rgbaSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "note": {"type": "string", "minLength": 10, "maxLength": 300}}}}
    }
   }
  }
