@@ -537,7 +537,7 @@ test('--tree reads every tracked file of the checkout for terms and canaries: re
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('the lab screen can only gain names, only under node --test, never in a build; a random made-up name is refused like a real one', async () => {
+test('the lab screen can only gain names (the boundary); never in a build; outside the runner an accident guard refuses; a random made-up name is refused like a real one', async () => {
   const made = `zq${[...createHash('sha256').update(String(Math.random())).digest('hex')].filter(c => /[a-f]/.test(c)).join('').slice(0, 10)}`;
   assert.equal(namesRestricted(`a ${made} lender`), false);
   addScreenNames(made);

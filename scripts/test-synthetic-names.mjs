@@ -1,5 +1,5 @@
 // Made-up restricted names for the lab tests: random consonants, new on every test run, added to the lab screen
-// (addScreenNames, test-scoped) so a test plants one where a real restricted name would stand. A real one is never
+// (addScreenNames: add-only, called only from test code) so a test plants one where a real restricted name would stand. A real one is never
 // spelled in this public repository: the site's leak gate screens the tracked source too.
 import { randomBytes } from 'node:crypto';
 import { addScreenNames } from './lab-dispatch-publish.mjs';

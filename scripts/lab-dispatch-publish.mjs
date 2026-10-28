@@ -66,9 +66,12 @@ export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, 
  * spelling a real restricted name in this public repository (the site's leak gate refuses the real ones in source).
  */
 export function addScreenNames(...names) {
-  // Only in a *.test.mjs whose parent process is the node test runner (its command line carries --test), and never in
-  // a site build (the publish workflow's verify job sets ODIN_SITE_BUILD). And whatever runs it, it can only ADD names:
-  // no call can weaken a screen.
+  // THE BOUNDARY (lead ruling 2026-10-28): (a) this only ADDS names, so no caller, whoever runs it, can weaken a screen;
+  // (b) only test code may call it (a test in leak-gate.test.mjs fails on any other tracked caller); (c) it refuses in
+  // a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
+  // The "only under node --test" check below is an ACCIDENT GUARD, not a security boundary: a test child gets nothing
+  // from the runner that the same user cannot fake (measured: only NODE_TEST_CONTEXT, no execArgv or argv; a parent's
+  // command line and process.title can be set too), so it stops mistakes, not someone determined.
   if (!process.env.NODE_TEST_CONTEXT || !/\.test\.mjs$/.test(process.argv[1] ?? '') || process.env.ODIN_SITE_BUILD || !underTestRunner()) throw new Error('addScreenNames is for the tests only (node --test), never a build');
   for (const name of names) NAMES.add(fingerprint(name));
 }
@@ -76,9 +79,8 @@ function underTestRunner() {
   try { return isTestRunnerCommand(execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' }), process.execPath); } catch { return false; }
 }
 /**
- * Whether a process command line is node itself run with --test among its own options, before any script and before
- * "--" ("node --test …"). A launcher run as "node launcher.mjs --test" carries the flag as a script argument, and after
- * "--" everything is a script: both are refused.
+ * Whether a process command line reads as node itself run with --test among its own options, before any script and
+ * before "--" ("node --test …"); part of the hook's accident guard (a displayed command line can be faked).
  */
 export function isTestRunnerCommand(line, execPath = '') {
   const [bin, ...args] = String(line).trim().split(/\s+/);
