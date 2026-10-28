@@ -161,3 +161,12 @@
 .rogue-tamper-case code{overflow-wrap:anywhere}
 .rogue-tamper-case table{font-size:13px}
 @media(max-width:760px){.rogue-split,.rogue-acts{grid-template-columns:1fr}}
+/* Lab 14, can an AI jury judge how a room looks (scripts/lab-ai-jury.mjs). */
+.jury-list{padding-left:1.2em;line-height:1.65}
+.jury-list li+li{margin-top:8px}
+.jury-hashes code{font-size:12px;word-break:break-all}
+.jury-judge,.jury-fixture{margin-top:8px;border-style:dashed}
+.jury-judge .technical,.jury-fixture .technical{color:var(--steel);margin-bottom:8px}
+.jury-table td,.jury-table th{text-align:left}
+.jury-n{font-size:13px;color:var(--steel)}
+.jury-median th,.jury-median td{font-weight:600}

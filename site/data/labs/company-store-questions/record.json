@@ -1,0 +1,54 @@
+{
+ "format": "odin-lab-question-set",
+ "version": 1,
+ "vendored": {
+  "from": "the agent space's private repository: the frozen question set of Lab 04's agent-query experiment, its gold answers and the lab's draft pre-registration, read at the main head",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "git merge-base --is-ancestor of the cited commit against the private main head, in a clone of the private repository",
+   "checked": "2026-10-28",
+   "commits": [
+    "e31fdc52e1fd23dcea3ed85af471803a266ba749"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "e31fdc52e1fd23dcea3ed85af471803a266ba749",
+    "what": "merged the frozen question set and its gold answers into main",
+    "at": "2026-10-25T20:55:32Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "questions",
+    "what": "the frozen question set",
+    "sha256": "ec18314a4a96ba8de932ce8afa9dbe9b0ea31a3ae9b2831b7c9be6fef5b01a05"
+   },
+   {
+    "role": "gold",
+    "what": "the gold answers, frozen with it",
+    "sha256": "395666a6662358d100897ed73f0e36a33bcb9ab83f5004368c8934ff6754762a"
+   },
+   {
+    "role": "prereg",
+    "what": "the lab's pre-registration, still a draft (not published)",
+    "sha256": "82fdf850b449667ae27ef520c1dcfa01356ee5b8c4263fdb5fe17cbca870a2b2"
+   }
+  ]
+ },
+ "lab": "Lab 04",
+ "questions": 131,
+ "categories": 9,
+ "perCategory": {
+  "aggregation": 15,
+  "filter": 15,
+  "join": 15,
+  "lookup": 15,
+  "multi_hop": 14,
+  "negation": 14,
+  "nested_array": 15,
+  "ordering": 14,
+  "temporal": 14
+ },
+ "preregistration": "not yet frozen"
+}

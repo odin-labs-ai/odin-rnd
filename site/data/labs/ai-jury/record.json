@@ -1,0 +1,488 @@
+{
+ "format": "odin-lab-ai-jury",
+ "version": 1,
+ "vendored": {
+  "from": "the agent space's private repository: the design jury's two committed rounds, their scores and calibration, the rubric's rule and the aggregation code, read at the main head",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "git merge-base --is-ancestor of each cited commit against the private main head, in a clone of the private repository",
+   "checked": "2026-10-28",
+   "commits": [
+    "f2b53edfd24b6ba2532684a048c0016eb1d090ed",
+    "9a79a6bc4d948a6e0827163761f3b91d1ec54b2b",
+    "60dfae0577b9243b6f064d27df7a7403408bf4c3",
+    "201fd6500c6685ef7179204fa46e2bef85afc742"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "f2b53edfd24b6ba2532684a048c0016eb1d090ed",
+    "what": "last changed the rubric and the aggregation",
+    "at": "2026-10-26T01:02:56Z"
+   },
+   {
+    "commit": "9a79a6bc4d948a6e0827163761f3b91d1ec54b2b",
+    "what": "last changed the calibration pair",
+    "at": "2026-10-26T01:49:53Z"
+   },
+   {
+    "commit": "60dfae0577b9243b6f064d27df7a7403408bf4c3",
+    "what": "committed both rounds' scores",
+    "at": "2026-10-26T06:03:37Z"
+   },
+   {
+    "commit": "201fd6500c6685ef7179204fa46e2bef85afc742",
+    "what": "committed the report and the comparison table",
+    "at": "2026-10-26T07:01:07Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "round-1",
+    "what": "round one's scores: every juror, every picture, the calibration",
+    "sha256": "bfed03043c9034f5742ae3887e7c7e74eeb3924fa30c4fcf1ab153f076a4b5d6"
+   },
+   {
+    "role": "round-2",
+    "what": "round two's scores, the same",
+    "sha256": "3492354519678b59332d97ad79f9226743eab46cfefe2dd066b8108f3128635d"
+   },
+   {
+    "role": "round-1-report",
+    "what": "round one's own report, which says what each juror saw",
+    "sha256": "075c1b14cc31e96fe079d4899c913b30420ca42310e49fc0e6d9560b104f2f94"
+   },
+   {
+    "role": "round-2-report",
+    "what": "round two's own report, the same",
+    "sha256": "6bd3e5cb4e4ff44b2389c9408661fc625ae1caabc758aa560b4dcf1d676edfc4"
+   },
+   {
+    "role": "table",
+    "what": "the comparison table of both rounds",
+    "sha256": "8de3a4a9611a9a1847f420f8620210ee43dfbe46d2e8d4debeb15af71d0fe93c"
+   },
+   {
+    "role": "report",
+    "what": "the jury's report of both rounds",
+    "sha256": "911b3d54fc5d293c04f45f6ebddd67527328afd604ff46ddd392e7e100c2e969"
+   },
+   {
+    "role": "rubric",
+    "what": "the jury's one rubric, with the calibration rule",
+    "sha256": "c7d627f479dcb5dab2690bba454aa2a6d47e2664a4e7d52b4dfc66a4c248619d"
+   },
+   {
+    "role": "calibration",
+    "what": "the calibration pair, pinned by sha256",
+    "sha256": "8d5c3a7e38525ea0fad2ff14e9cb4cf59c7cf585b103b7323988bb1fd2281778"
+   },
+   {
+    "role": "aggregate",
+    "what": "the code that turns scores into medians and the calibration verdict",
+    "sha256": "e4754dd4ddf0ce559dd7e95c62c9e0f9bbac8a5505112f5fcab0a7bc47aa2c6f"
+   }
+  ]
+ },
+ "rubric": {
+  "criteria": [
+   "composition",
+   "typography",
+   "lighting",
+   "materials and texture",
+   "style consistency",
+   "readability on a projector from 10 m",
+   "whether a board would take it seriously as a product presentation"
+  ],
+  "scale": "1 to 10",
+  "overall": "a juror's overall score for a picture is the mean of its seven criterion scores; a picture's score is the median of the jurors' overall scores",
+  "minMargin": 1.5,
+  "minJury": 3
+ },
+ "rooms": "eleven rooms of a 3D presentation space, each staging one slide of a talk; none was reworked between the rounds, but each was photographed again for round two",
+ "blinding": "each juror saw one picture at a time with the rubric alone: no build, version, round or room name; the pictures were re-encoded under random names, in a different order for each juror, with the calibration pair mixed in",
+ "calibrationPair": "a known-good reference picture we rendered, and the same picture deliberately ruined",
+ "rounds": [
+  {
+   "round": 1,
+   "on": "2026-10-26",
+   "valid": true,
+   "jury": [
+    "jury-a",
+    "jury-b",
+    "jury-c",
+    "jury-d"
+   ],
+   "juryGood": 5.643,
+   "juryBad": 2.143,
+   "juryMargin": 3.5,
+   "reviewers": [
+    {
+     "id": "jury-a",
+     "model": "Claude Haiku 5.5 (Anthropic)",
+     "kind": "cloud",
+     "good": 6.143,
+     "bad": 1.429,
+     "margin": 4.714,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-b",
+     "model": "GPT-6 Luna (OpenAI)",
+     "kind": "cloud",
+     "good": 7,
+     "bad": 2.857,
+     "margin": 4.143,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-c",
+     "model": "Gemini 3.8 Flash (Google)",
+     "kind": "cloud",
+     "good": 5.143,
+     "bad": 3.143,
+     "margin": 2,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-d",
+     "model": "Qwen3.8 Flash (Qwen)",
+     "kind": "cloud",
+     "good": 4.714,
+     "bad": 1.143,
+     "margin": 3.571,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "floor",
+     "model": "Gemma 3 4B, run locally",
+     "kind": "local",
+     "good": 6.714,
+     "bad": 3,
+     "margin": 3.714,
+     "passes": true,
+     "unreadable": []
+    }
+   ],
+   "rooms": [
+    {
+     "label": "room 1",
+     "median": 3.785,
+     "n": 4,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 4.714,
+      "jury-c": 3.714,
+      "jury-d": 3.714
+     }
+    },
+    {
+     "label": "room 2",
+     "median": 3.714,
+     "n": 4,
+     "by": {
+      "jury-a": 3.714,
+      "jury-b": 4.429,
+      "jury-c": 3.714,
+      "jury-d": 3.571
+     }
+    },
+    {
+     "label": "room 3",
+     "median": 4.357,
+     "n": 4,
+     "by": {
+      "jury-a": 4.143,
+      "jury-b": 4.857,
+      "jury-c": 3.714,
+      "jury-d": 4.571
+     }
+    },
+    {
+     "label": "room 4",
+     "median": 3.857,
+     "n": 4,
+     "by": {
+      "jury-a": 4.286,
+      "jury-b": 4.143,
+      "jury-c": 3.571,
+      "jury-d": 3.143
+     }
+    },
+    {
+     "label": "room 5",
+     "median": 3.857,
+     "n": 3,
+     "by": {
+      "jury-a": 4.143,
+      "jury-b": 3.714,
+      "jury-c": 3.857
+     }
+    },
+    {
+     "label": "room 6",
+     "median": 4.072,
+     "n": 4,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 4.286,
+      "jury-c": 3.571,
+      "jury-d": 4.286
+     }
+    },
+    {
+     "label": "room 7",
+     "median": 3.929,
+     "n": 4,
+     "by": {
+      "jury-a": 3.714,
+      "jury-b": 4,
+      "jury-c": 3.857,
+      "jury-d": 4
+     }
+    },
+    {
+     "label": "room 8",
+     "median": 4.215,
+     "n": 4,
+     "by": {
+      "jury-a": 4.429,
+      "jury-b": 4.571,
+      "jury-c": 4,
+      "jury-d": 3.714
+     }
+    },
+    {
+     "label": "room 9",
+     "median": 4,
+     "n": 3,
+     "by": {
+      "jury-a": 4,
+      "jury-b": 4.286,
+      "jury-c": 3.429
+     }
+    },
+    {
+     "label": "room 10",
+     "median": 3.785,
+     "n": 4,
+     "by": {
+      "jury-a": 3.714,
+      "jury-b": 4.714,
+      "jury-c": 3.857,
+      "jury-d": 3.429
+     }
+    },
+    {
+     "label": "room 11",
+     "median": 3.643,
+     "n": 4,
+     "by": {
+      "jury-a": 3.286,
+      "jury-b": 4.286,
+      "jury-c": 3.571,
+      "jury-d": 3.714
+     }
+    }
+   ],
+   "median": 3.857
+  },
+  {
+   "round": 2,
+   "on": "2026-10-26",
+   "valid": true,
+   "jury": [
+    "jury-a",
+    "jury-b",
+    "jury-c"
+   ],
+   "juryGood": 6.286,
+   "juryBad": 2.286,
+   "juryMargin": 4,
+   "reviewers": [
+    {
+     "id": "jury-a",
+     "model": "Claude Haiku 5.5 (Anthropic)",
+     "kind": "cloud",
+     "good": 6.286,
+     "bad": 1.571,
+     "margin": 4.715,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-b",
+     "model": "GPT-6 Luna (OpenAI)",
+     "kind": "cloud",
+     "good": 6.571,
+     "bad": 2.286,
+     "margin": 4.285,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-c",
+     "model": "Gemini 3.8 Flash (Google)",
+     "kind": "cloud",
+     "good": 5.143,
+     "bad": 3,
+     "margin": 2.143,
+     "passes": true,
+     "unreadable": []
+    },
+    {
+     "id": "jury-d",
+     "model": "Qwen3.8 Flash (Qwen)",
+     "kind": "cloud",
+     "good": null,
+     "bad": 1,
+     "margin": null,
+     "passes": false,
+     "unreadable": [
+      {
+       "picture": "good",
+       "replies": 2
+      }
+     ]
+    },
+    {
+     "id": "floor",
+     "model": "Gemma 3 4B, run locally",
+     "kind": "local",
+     "good": 7,
+     "bad": 2.714,
+     "margin": 4.286,
+     "passes": true,
+     "unreadable": []
+    }
+   ],
+   "rooms": [
+    {
+     "label": "room 1",
+     "median": 4.286,
+     "n": 3,
+     "by": {
+      "jury-a": 4.286,
+      "jury-b": 4.714,
+      "jury-c": 3.429
+     }
+    },
+    {
+     "label": "room 2",
+     "median": 4.286,
+     "n": 3,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 4.714,
+      "jury-c": 4.286
+     }
+    },
+    {
+     "label": "room 3",
+     "median": 4,
+     "n": 3,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 4.286,
+      "jury-c": 4
+     }
+    },
+    {
+     "label": "room 4",
+     "median": 3.571,
+     "n": 3,
+     "by": {
+      "jury-a": 3.429,
+      "jury-b": 4.286,
+      "jury-c": 3.571
+     }
+    },
+    {
+     "label": "room 5",
+     "median": 3.857,
+     "n": 3,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 3.714,
+      "jury-c": 4.143
+     }
+    },
+    {
+     "label": "room 6",
+     "median": 3.857,
+     "n": 3,
+     "by": {
+      "jury-a": 3.857,
+      "jury-b": 4.429,
+      "jury-c": 3.571
+     }
+    },
+    {
+     "label": "room 7",
+     "median": 4,
+     "n": 3,
+     "by": {
+      "jury-a": 3.429,
+      "jury-b": 4,
+      "jury-c": 4.143
+     }
+    },
+    {
+     "label": "room 8",
+     "median": 4.571,
+     "n": 3,
+     "by": {
+      "jury-a": 4.857,
+      "jury-b": 4.571,
+      "jury-c": 4
+     }
+    },
+    {
+     "label": "room 9",
+     "median": 4,
+     "n": 3,
+     "by": {
+      "jury-a": 4,
+      "jury-b": 4.571,
+      "jury-c": 3.714
+     }
+    },
+    {
+     "label": "room 10",
+     "median": 4.143,
+     "n": 3,
+     "by": {
+      "jury-a": 4.143,
+      "jury-b": 4.571,
+      "jury-c": 4.143
+     }
+    },
+    {
+     "label": "room 11",
+     "median": 3.571,
+     "n": 3,
+     "by": {
+      "jury-a": 3.571,
+      "jury-b": 3.857,
+      "jury-c": 3.571
+     }
+    }
+   ],
+   "median": 4
+  }
+ ],
+ "excluded": [
+  {
+   "round": "2b",
+   "why": "run on a lane only, never on the private main"
+  },
+  {
+   "round": "2c",
+   "why": "run on a lane only, never on the private main"
+  }
+ ]
+}

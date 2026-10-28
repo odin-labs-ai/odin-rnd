@@ -6,6 +6,7 @@
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
 //   labs/rogue/index.html         Lab 05's page, rendered by scripts/lab-rogue.mjs
+//   labs/ai-jury/index.html       Lab 14's page, rendered by scripts/lab-ai-jury.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -25,13 +26,14 @@ import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
 import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
-import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
+import { readFitMap, readQuestionSet, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
+import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -204,6 +206,9 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   if (requireBench && !existsSync(join(root, ROGUE_RECORD))) throw new Error(`Lab 05 is required on the published site: ${ROGUE_RECORD} is missing`);
   // Its dates are checked against the build's own clock (as Lab 01's engine history is), not a caller's `now`.
   const rogue = renderRogue(root);
+  // Lab 14's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
+  const jury = renderAiJury(root);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -223,7 +228,7 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
       // fails on a problem).
       '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
-      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
+      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root), '../', { questions: readQuestionSet(root) }),
     }),
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
@@ -246,5 +251,6 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
     ...rogue.pages,
+    ...jury.pages,
   };
 }
