@@ -239,6 +239,8 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
   assert.throws(() => loadKnown(list([{ ...row(1), reason: '' }])), /reason/);
   assert.throws(() => loadKnown(list([{ ...row(1), hash: undefined }])), /hash prefix/);
   assert.throws(() => loadKnown(list([{ ...row(1), kind: 'blorvak' }])), /kind the gate does not report/);
+  assert.throws(() => loadKnown(list([{ file: 'dist/missing.html', kind: 'loopback', hash: 'blorvak', count: 1, reason: 'reviewed fixture' }])), /only a known term carries a hash/);
+  assert.throws(() => loadKnown(list([{ ...row(1), note: 'blorvak' }])), /field the gate does not read/);
   assert.equal(loadKnown(list([row(1)])).length, 1);
 });
 

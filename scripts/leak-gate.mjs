@@ -336,6 +336,9 @@ export function loadKnown(raw) {
     if (row.kind === 'canary') throw new Error('leak gate: a canary can never be a known occurrence');
     if (row.kind !== 'term' && !PATTERNS.some(([kind]) => kind === row.kind)) throw new Error('leak gate: a known occurrence names a kind the gate does not report');
     if (row.kind === 'term' && !/^[0-9a-f]{8}$/.test(row.hash ?? '')) throw new Error('leak gate: a known term needs its 8-hex hash prefix');
+    if (row.kind !== 'term' && row.hash !== undefined) throw new Error('leak gate: only a known term carries a hash');
+    const extra = Object.keys(row).filter(k => !['file', 'kind', 'hash', 'count', 'reason'].includes(k));
+    if (extra.length) throw new Error('leak gate: a known occurrence has a field the gate does not read');
   }
   return d.known;
 }
