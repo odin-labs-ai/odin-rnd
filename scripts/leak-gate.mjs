@@ -29,7 +29,8 @@ import { join, relative } from 'node:path';
 export const MAX_WORDS = 4;
 const HEX24 = /^[0-9a-f]{24}$/;
 const WORD = /[\p{L}\p{N}]+/gu;
-const MAX_GAP = 3;
+// The most separator characters (after white space is collapsed) between two words of one term, as in `", "` or `</b> <b>`.
+const MAX_GAP = 8;
 export const MAX_BINARY = 256 * 1024 * 1024;
 
 export function digest(salt, words) {
@@ -112,18 +113,25 @@ function mapped(r, re, fn) {
 function decodedReading(r) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
-  r = mapped(r, /&([a-z]+);/gi, (m, n) => NAMED[n.toLowerCase()] ?? m);
+  // Any other named reference (&ensp;, &NewLine;, ...) reads as one space, never as a word.
+  r = mapped(r, /&([a-z][a-z0-9]*);/gi, (m, n) => NAMED[n.toLowerCase()] ?? ' ');
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /\\x([0-9a-f]{2})/gi, (_, h) => { const c = Number.parseInt(h, 16); return c < 0x20 || c === 0x7f ? ' ' : String.fromCharCode(c); });
   r = mapped(r, /\\[nrtbf]/g, () => ' ');
-  r = mapped(r, /%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : c < 0x20 || c === 0x7f ? ' ' : m; });
-  return mapped(r, /[\u200b-\u200d\u2060\ufeff]/g, () => '');
+  // A run of percent codes decodes as UTF-8 (%C2%A0 is a no-break space); a run that is not valid UTF-8 decodes byte by
+  // byte. Control characters read as white space.
+  const byByte = run => run.replace(/%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : c < 0x20 || c === 0x7f ? ' ' : m; });
+  r = mapped(r, /(?:%[0-9a-f]{2})+/gi, run => { try { return decodeURIComponent(run).replace(/[\x00-\x1f\x7f]/g, ' '); } catch { return byByte(run); } });
+  // Invisible format characters (zero-width spaces, a soft hyphen, direction marks) vanish, as they do on screen.
+  return mapped(r, /\p{Cf}/gu, () => '');
 }
 export const decoded = text => decodedReading(identity(text)).text;
 /** Tags removed (their line breaks kept): a term split by markup reads whole. */
 const untagged = r => mapped(r, /<[^>]*>/g, tag => tag.replace(/[^\n]/g, ''));
+/** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
+const spaced = r => mapped(r, /<[^>]*>/g, () => ' ');
 /** NFKC and lower case, character by character, so every offset still maps back. */
 const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
 
@@ -168,7 +176,7 @@ function scanOne(r, secret, cache) {
 export function scanText(text, secret, cache = new Map()) {
   const raw = identity(text);
   const dec = decodedReading(raw);
-  const readings = [raw, dec, untagged(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
+  const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
@@ -194,7 +202,7 @@ function printable(bytes) {
 function walk(dir) {
   let entries;
   try { entries = readdirSync(dir, { withFileTypes: true }); } catch (error) { throw new Error(`leak gate: a directory cannot be read (${error.code ?? 'error'})`); }
-  return entries.flatMap(e => (e.name === '.git' || e.name === 'node_modules' ? [] : e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
+  return entries.flatMap(e => (e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
 }
 
 /**
