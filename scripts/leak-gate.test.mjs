@@ -371,3 +371,12 @@ test('a malformed known list or commitment is reported with a fixed message, nev
     assert.equal(r.status, 2); assert.match(r.stderr, /commitment has the wrong format/); assert.ok(!(r.stdout + r.stderr).includes('blorvak'));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('a long run whose normalisation cannot be mapped stops the build instead of merging occurrences', () => {
+  const root = site({ 'dist/index.html': `<p>${'\u3131\u314f\u3000' + '\uff42\uff4c\uff4f\uff52\uff56\uff41\uff4b\u3000'.repeat(512)}</p>` });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 2, r.out);
+    assert.match(r.out, /cannot be screened/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

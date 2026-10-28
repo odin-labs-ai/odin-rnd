@@ -179,7 +179,7 @@ const spaced = r => mapped(r, TAG, () => ' ');
 // normalised, while every output character keeps the offset of the grapheme that produced it. When the run folds
 // grapheme by grapheme to the same text (nearly always), that is the mapping; otherwise the run is normalised as a
 // growing prefix and each new output character takes the offset of the grapheme just added. A run above 4,096
-// graphemes that needs this maps every character to the run's start (its hits may then count as one occurrence).
+// graphemes that needs this stops the build (fail closed) rather than lose its occurrences' offsets.
 const GRAPHEMES = new Intl.Segmenter('und', { granularity: 'grapheme' });
 const fold = t => t.normalize('NFKC').toLowerCase();
 function foldRun(run) {
@@ -189,7 +189,7 @@ function foldRun(run) {
   const from = [];
   for (const { segment, index } of segs) { const f = fold(segment); text += f; for (let k = 0; k < f.length; k++) from.push(index); }
   if (text === whole) return { text, from };
-  if (segs.length > 4096) return { text: whole, from: Array.from({ length: whole.length }, () => 0) };
+  if (segs.length > 4096) throw new Error('leak gate: a long run of text normalises in a way the gate cannot map to its source; the file cannot be screened');
   let prev = '', offs = [], raw = '';
   for (const { segment, index } of segs) {
     raw += segment;
@@ -364,7 +364,9 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
       return;
     }
     result.texts++;
-    for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache)) result.hits.push({ file: shown, ...hit });
+    let hits;
+    try { hits = scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache); } catch (error) { throw new Error(`${error.message} (${shown})`); }
+    for (const hit of hits) result.hits.push({ file: shown, ...hit });
   };
   for (const root of paths) {
     if (!existsSync(root)) throw new Error('leak gate: a path to scan does not exist');
