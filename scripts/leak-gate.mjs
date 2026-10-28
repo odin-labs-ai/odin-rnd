@@ -83,7 +83,7 @@ export function checkCommitment(secret, raw) {
 export const PATTERNS = [
   ['home-path', /(?<![\w.])\/(?:Users|home)\/[A-Za-z][\w.-]*|\b[A-Za-z]:\\{1,2}Users\\{1,2}[^\\\s"'<>]+/],
   ['private-address', /\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b/],
-  ['loopback', /\b127\.0\.0\.1\b|\[::1\]:\d|\blocalhost:\d/i],
+  ['loopback', /\b127\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\[::1\]|\blocalhost:\d/i],
   ['github-token', /\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})/],
   ['api-key', /\bsk-(?:ant-|or-v1-|proj-)?[A-Za-z0-9_-]{20,}|\bAKIA[0-9A-Z]{16}\b|\bAIza[0-9A-Za-z_-]{35}\b|\bxox[abprs]-[A-Za-z0-9-]{10,}/],
   ['jwt', /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/],
@@ -167,9 +167,11 @@ function decodedReading(r) {
 }
 export const decoded = text => decodedReading(identity(text)).text;
 /** Tags removed (their line breaks kept): a term split by markup reads whole. */
-const untagged = r => mapped(r, /<[^>]*>/g, tag => tag.replace(/[^\n]/g, ''));
+// A tag ends at the first ">" outside a quoted attribute value, as in HTML: <span title=">"> is one tag.
+const TAG = /<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const untagged = r => mapped(r, TAG, tag => tag.replace(/[^\n]/g, ''));
 /** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
-const spaced = r => mapped(r, /<[^>]*>/g, () => ' ');
+const spaced = r => mapped(r, TAG, () => ' ');
 /** NFKC and lower case, character by character, so every offset still maps back. */
 const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
 
@@ -213,8 +215,9 @@ function scanOne(r, secret, cache) {
  */
 export function scanText(text, secret, cache = new Map()) {
   const raw = identity(text);
-  const dec = decodedReading(raw);
-  const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
+  // Decoded twice as well: a script's escape can spell a reference (\u0026#111; is &#111;, which HTML then reads).
+  const dec = decodedReading(raw), twice = decodedReading(dec);
+  const readings = [raw, dec, untagged(dec), spaced(dec), twice, untagged(twice), spaced(twice)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
@@ -245,7 +248,7 @@ function walk(dir) {
 
 /**
  * The files of a tar archive (a vendored bundle of raw evidence), each as {name, bytes}. ustar names with their prefix,
- * GNU long names and pax paths are read; anything that is not a regular file is skipped. A truncated or malformed
+ * GNU long names and pax paths are read; entries that are not regular files are read as metadata (see below). A truncated or malformed
  * archive throws: an archive the gate cannot read is never a pass.
  */
 export function* tarEntries(buf, shown) {
@@ -262,6 +265,11 @@ export function* tarEntries(buf, shown) {
     if (type === 'L') longName = body.toString('utf8').replace(/\0.*$/s, '');
     else if (type === 'x') { const m = body.toString('utf8').match(/^\d+ path=(.*)$/m); if (m) longName = m[1]; }
     else if (type === '0' || type === '7') yield { name, bytes: body };
+    // Everything else an archive carries is read too: a link's target, the owner names, and the whole header and body
+    // of any entry that is not a regular file (a directory, a link, a pax or GNU record).
+    // Each text field on its own line, so no field runs into the next ("2" + "/Users/..." would hide the path).
+    const fields = [[157, 100], [265, 32], [297, 32], ...(type === '0' || type === '7' ? [] : [[0, 100], [345, 155]])].map(([from, len]) => field(h, from, len));
+    yield { meta: Buffer.concat([Buffer.from(fields.join('\n') + '\n'), type === '0' || type === '7' ? Buffer.alloc(0) : body]) };
     at += 512 + Math.ceil(size / 512) * 512;
   }
   // No end-of-archive block: the archive is cut short.
@@ -269,7 +277,7 @@ export function* tarEntries(buf, shown) {
 }
 
 /** -> {files, texts, binaries, hits:[{file, line, kind, hash?}]}. A path's name is scanned too, and so is every file inside a tar archive. */
-export function scanPaths(paths, secret) {
+export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
   const cache = new Map();
   const result = { files: 0, texts: 0, binaries: 0, hits: [] };
   const one = (path, read) => {
@@ -284,13 +292,18 @@ export function scanPaths(paths, secret) {
     if (/\.(gz|tgz)$/i.test(path)) { try { bytes = gunzipSync(bytes); } catch { throw new Error(`leak gate: ${shown} does not decompress`); } }
     if (/\.(tar|tar\.gz|tgz)$/i.test(path)) {
       result.binaries++;
-      for (const entry of tarEntries(bytes, shown)) one(`${shown}!${entry.name}`, () => entry.bytes);
+      const meta = [];
+      for (const entry of tarEntries(bytes, shown)) {
+        if (entry.meta) meta.push(entry.meta, Buffer.from([10]));
+        else one(`${shown}!${entry.name}`, () => entry.bytes);
+      }
+      for (const hit of scanText(printable(Buffer.concat(meta)), secret, cache)) result.hits.push({ file: `${shown}!(archive headers)`, ...hit, line: 0 });
       return;
     }
     if (!TEXT.test(path) && (BINARY.test(path) || bytes.subarray(0, 8192).includes(0))) {
       result.binaries++;
       // Read whole, never in windows (a term could straddle a window's edge); a binary too large to read whole stops the build.
-      if (bytes.length > MAX_BINARY) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
+      if (bytes.length > maxBinary) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
       for (const hit of scanText(printable(bytes), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
@@ -382,7 +395,9 @@ function main(argv) {
   const known = knownPath ? loadKnown(readFileSync(knownPath, 'utf8')) : [];
   const { fresh, stale, known: covered } = settle(result.hits, known);
   for (const hit of fresh) console.log(report(hit));
-  for (const row of stale) console.log(`STALE known occurrence ${row.file} ${row.kind}${row.hash ? ` hash ${row.hash}` : ''}: listed ${row.count}, seen ${row.seen}`);
+  // A row's file is printed only when it holds no leak itself, like any scanned name.
+  const named = file => (scanText(file, secret).length ? `[a file name, sha256 ${createHash('sha256').update(file).digest('hex').slice(0, 8)}]` : file);
+  for (const row of stale) console.log(`STALE known occurrence ${named(row.file)} ${row.kind}${row.hash ? ` hash ${row.hash}` : ''}: listed ${row.count}, seen ${row.seen}`);
   console.log(`leak gate: ${secret.terms} protected terms, ${secret.canaries} canaries; ${result.texts} text files read, ${result.binaries} binary files counted; ${fresh.length} hits, ${covered} known occurrences, ${stale.length} stale rows.`);
   if (fresh.length || stale.length) return 1;
   if (page) {

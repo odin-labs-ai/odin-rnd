@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { MAX_BINARY, checkCommitment, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { MAX_BINARY, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx'];
@@ -19,12 +19,12 @@ const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.strin
 const PAGE = '<p>Terms <span data-leak-screen="terms">-</span> canaries <span data-leak-screen="canaries">-</span> <time data-leak-screen="scanned" datetime="">-</time> <code data-leak-screen="commit">-</code> <span data-leak-screen="files">0</span> <span data-leak-screen="hits">-</span> <span data-leak-screen="known">-</span></p>';
 const COMMIT = 'a'.repeat(40);
 /** A minimal ustar archive, for the vendored-bundle case. */
-function tar(files) {
+function tar(files, links = {}) {
   const parts = [];
-  for (const [name, body] of Object.entries(files)) {
+  for (const [name, body, link] of [...Object.entries(files), ...Object.entries(links).map(([n, target]) => [n, '', target])]) {
     const data = Buffer.from(body), h = Buffer.alloc(512);
     h.write(name, 0); h.write('0000644\0', 100); h.write('0000000\0', 108); h.write('0000000\0', 116);
-    h.write(data.length.toString(8).padStart(11, '0') + '\0', 124); h.write('00000000000\0', 136); h.write('0', 156); h.write('ustar\0', 257); h.write('00', 263);
+    h.write(data.length.toString(8).padStart(11, '0') + '\0', 124); h.write('00000000000\0', 136); h.write(link ? '2' : '0', 156); if (link) h.write(link, 157); h.write('ustar\0', 257); h.write('00', 263);
     h.fill(' ', 148, 156); let sum = 0; for (const b of h) sum += b; h.write(sum.toString(8).padStart(6, '0') + '\0 ', 148);
     parts.push(h, data, Buffer.alloc((512 - (data.length % 512)) % 512));
   }
@@ -87,6 +87,11 @@ const LEAKS = {
   'a protected term after a legacy reference glued to it in a script': ['dist/assets/inject.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&copyQuarry;</p>");', /inject\.js:1 term/],
   'a protected term after a known legacy reference glued to it': ['dist/index.html', '<p>Zephyr&nbspQuarry;</p>', /index\.html:1 term/],
   'a protected term around a full HTML name the gate does not carry, in a script': ['dist/assets/notin.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&notin;Quarry</p>");', /notin\.js:1 term/],
+  'a protected term split by a tag with a quoted ">"': ['dist/index.html', '<p>blor<span title=">"></span>vak</p>', /index\.html:1 term/],
+  'a script escape that spells a reference': ['dist/assets/esc.js', 'document.body.insertAdjacentHTML("beforeend", "<p>bl\\u0026#111;rvak</p>")', /esc\.js:1 term/],
+  'a home path as a symlink target inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, { 'main/link': '/Users/someone/private' })), /raw-evidence\.tar\.gz!\(archive headers\):0 home-path/],
+  'a loopback address other than 127.0.0.1': ['dist/index.html', '<p>http://127.0.0.2:3099/</p>', /index\.html:1 loopback/],
+  'an IPv6 loopback without a port': ['dist/index.html', '<p>http://[::1]/</p>', /index\.html:1 loopback/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -274,4 +279,23 @@ test('a binary is read whole: a term spread over a long run is caught, and one t
     assert.match(r.out, /long\.webm:0 term/);
   } finally { rmSync(root, { recursive: true, force: true }); }
   assert.ok(secret.terms > 0);
+});
+
+test('a binary over the size ceiling stops the build, clean or not', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-'));
+  try {
+    writeFileSync(join(root, 'clean.webm'), Buffer.alloc(2048));
+    assert.throws(() => scanPaths([join(root, 'clean.webm')], loadSecret(SECRET), { maxBinary: 1024 }), /too large to read whole \(2048 bytes\)/);
+    assert.equal(scanPaths([join(root, 'clean.webm')], loadSecret(SECRET), { maxBinary: 4096 }).hits.length, 0);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a stale known row that names a protected file is printed redacted', () => {
+  const root = site({ 'known.json': JSON.stringify({ format: 'odin-leak-gate-known', version: 1, known: [{ file: 'dist/blorvak.html', kind: 'term', hash: 'abcdef12', count: 1, reason: 'a reviewed occurrence' }] }) });
+  try {
+    const r = gate(root, undefined, ['--known', 'known.json']);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /STALE known occurrence \[a file name, sha256 [0-9a-f]{8}\]/);
+    assert.ok(!r.out.includes('blorvak'), r.out);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
