@@ -39,7 +39,7 @@ export function digest(salt, words) {
 
 /** A term as the gate reads it: its words, NFKC and lower case, joined by "-" ("Some Name" == "some_name"). */
 export function normalise(term) {
-  return (String(term).normalize('NFKC').toLowerCase().match(WORD) ?? []).join('-');
+  return (String(term).normalize('NFKC').toLowerCase().replaceAll('ς', 'σ').match(WORD) ?? []).join('-');
 }
 
 /** The secret, checked. Throws on anything but a complete term set: the gate never runs on a partial one. */
@@ -181,7 +181,8 @@ const spaced = r => mapped(r, TAG, () => ' ');
 // growing prefix and each new output character takes the offset of the grapheme just added. A run above 4,096
 // graphemes that needs this stops the build (fail closed) rather than lose its occurrences' offsets.
 const GRAPHEMES = new Intl.Segmenter('und', { granularity: 'grapheme' });
-const fold = t => t.normalize('NFKC').toLowerCase();
+// A final sigma is a sigma: lower case depends on the next character, which a run may not include.
+const fold = t => t.normalize('NFKC').toLowerCase().replaceAll('ς', 'σ');
 function foldRun(run) {
   const segs = [...GRAPHEMES.segment(run)];
   const whole = fold(run);
@@ -265,7 +266,8 @@ const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|
  */
 function printable(bytes) {
   const out = [];
-  for (const m of bytes.toString('latin1').matchAll(/[\x20-\x7e\t]+/g)) out.push(m[0]);
+  // Printable ASCII and well-formed UTF-8 sequences both count, so a UTF-8 name in metadata ("café") reads whole.
+  for (const m of bytes.toString('latin1').matchAll(/(?:[\x20-\x7e\t]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf4][\x80-\xbf]{3})+/g)) out.push(Buffer.from(m[0], 'latin1').toString('utf8'));
   return out.join('\n');
 }
 function walk(dir) {
@@ -452,10 +454,12 @@ function main(argv) {
   if (!paths.length) throw new Error('leak gate: nothing to scan');
   const secret = loadSecret(process.env[env]);
   if (!setPath) throw new Error('leak gate: --set names the committed term set; the gate never runs without it');
-  checkCommitment(secret, readFileSync(setPath, 'utf8'));
+  // Configuration files are read with fixed messages: a read error would name the path, which could hold a leak.
+  const config = (file, what) => { try { return readFileSync(file, 'utf8'); } catch (error) { throw new Error(`leak gate: the ${what} cannot be read (${error.code ?? 'error'})`); } };
+  checkCommitment(secret, config(setPath, 'term-set commitment'));
   const result = scanPaths(paths, secret);
   if (result.texts === 0) throw new Error('leak gate: no text was read');
-  const known = knownPath ? loadKnown(readFileSync(knownPath, 'utf8')) : [];
+  const known = knownPath ? loadKnown(config(knownPath, 'known-occurrence list')) : [];
   const { fresh, stale, known: covered } = settle(result.hits, known);
   for (const hit of fresh) console.log(report(hit));
   // A row's file is printed only when it holds no leak itself, like any scanned name.
@@ -465,7 +469,7 @@ function main(argv) {
   if (fresh.length || stale.length) return 1;
   if (page) {
     if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error('leak gate: --page needs the commit (40 hex) the site was built from');
-    const filled = fillPage(readFileSync(page, 'utf8'), { terms: secret.terms, canaries: secret.canaries, scanned: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), commit, files: result.texts, hits: 0, known: covered });
+    const filled = fillPage(config(page, 'Leak screen page'), { terms: secret.terms, canaries: secret.canaries, scanned: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), commit, files: result.texts, hits: 0, known: covered });
     const again = scanText(filled, secret);
     if (again.length) { for (const hit of again) console.log(report({ file: page, ...hit })); return 1; }
     writeFileSync(page, filled);

@@ -12,7 +12,7 @@ import { gzipSync as gz } from 'node:zlib';
 import { MAX_BINARY, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
-const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나'];
+const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
 const CANARY = 'odncanary-0123456789abcdef';
 const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])) });
 const SECRET = secretOf();
@@ -50,7 +50,7 @@ test('a clean site passes and the Leak screen page is filled with counts, the co
     const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
     assert.equal(r.code, 0, r.out);
     const page = readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8');
-    assert.match(page, /data-leak-screen="terms">6</);
+    assert.match(page, /data-leak-screen="terms">7</);
     assert.match(page, /data-leak-screen="canaries">1</);
     assert.match(page, /data-leak-screen="hits">0</);
     assert.match(page, new RegExp(`data-leak-screen="commit">${COMMIT}<`));
@@ -97,10 +97,12 @@ const LEAKS = {
   'a protected term split by a comment holding a quote': ['dist/index.html', '<p>blor<!-- " -->vak</p>', /index\.html:1 term/],
   'a home path as a directory name inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, {}, { '/Users\0someone/private/': true })), /raw-evidence\.tar\.gz!\(archive headers\):0 home-path/],
   'a protected term split by an abruptly closed comment': ['dist/index.html', '<p>bl<!-->orvak and bl<!--->orvak and bl<!-- x --!>orvak</p>', /index\.html:1 term/],
-  'a protected term with a combining mark that composes': ['dist/index.html', '<p>cafe\u0301 blorvak</p>', /index\.html:1 term/],
+  'a protected term with a combining mark that composes': ['dist/index.html', '<p>cafe\u0301</p>', /index\.html:1 term/],
   'a protected term spelled in decomposed Hangul jamo': ['dist/index.html', '<p>\u1100\u1161\u1102\u1161</p>', /index\.html:1 term/],
   'a protected term spelled in compatibility jamo': ['dist/index.html', '<p>\u3131\u314f\u3134\u314f</p>', /index\.html:1 term/],
   'a term in a gzip header\'s fixed bytes': ['dist/data/raw-evidence.tar.gz', (() => { const b = Buffer.from(gzipSync(tar({ 'main/ok.json': '{}' }))); b.write('qzx\0\0\0', 4, 'latin1'); return b; })(), /raw-evidence\.tar\.gz!\(gzip header\):0 term/],
+  'a protected Greek term with a capital sigma before ASCII': ['dist/index.html', '<p>\u0391\u03a3A</p>', /index\.html:1 term/],
+  'a UTF-8 protected term as a symlink target inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, { 'main/link': 'caf\u00e9' })), /raw-evidence\.tar\.gz!\(archive headers\):0 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -113,7 +115,7 @@ for (const [name, [file, body, want]] of Object.entries(LEAKS)) {
       const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
       assert.equal(r.code, 1, r.out);
       assert.match(r.out, want);
-      for (const secret of [CANARY, ...TERMS, 'someone', '192.168.4.20', 'ghp_']) assert.ok(!r.out.toLowerCase().includes(secret.toLowerCase()), `output holds ${secret}`);
+      for (const secret of [CANARY, ...TERMS, 'caf', 'someone', '192.168.4.20', 'ghp_']) assert.ok(!r.out.toLowerCase().includes(secret.toLowerCase()), `output holds ${secret}`);
       assert.match(readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8'), /data-leak-screen="hits">-</, 'a failed scan never fills the page');
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
@@ -135,7 +137,7 @@ test('a term set that differs from the public commitment stops the build, even w
     const partial = secretOf(TERMS.slice(1));
     const r = gate(root, { LEAK_SCREEN_SECRET: partial });
     assert.equal(r.code, 2, r.out);
-    assert.match(r.out, /not the committed one \(committed 6 terms, 1 canaries; got 5, 1\)/);
+    assert.match(r.out, /not the committed one \(committed 7 terms, 1 canaries; got 6, 1\)/);
     assert.throws(() => checkCommitment(loadSecret(SECRET), setFile(secretOf(TERMS, [CANARY, 'odncanary-ffffffffffffffff']))), /not the committed one/);
     checkCommitment(loadSecret(SECRET), setFile());
     const resalted = SECRET.replace(SALT, 'another-salt-of-enough-length');
@@ -378,5 +380,15 @@ test('a long run whose normalisation cannot be mapped stops the build instead of
     const r = gate(root);
     assert.equal(r.code, 2, r.out);
     assert.match(r.out, /cannot be screened/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a configuration file that cannot be read is reported with a fixed message, never its path', () => {
+  const root = site();
+  try {
+    const r = gate(root, undefined, ['--known', `missing-${CANARY}.json`]);
+    assert.equal(r.code, 2, r.out);
+    assert.match(r.out, /known-occurrence list cannot be read \(ENOENT\)/);
+    assert.ok(!r.out.includes(CANARY), r.out);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
