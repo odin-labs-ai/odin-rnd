@@ -1,0 +1,32 @@
+# Lab kits: the "Re-run this" commands a lab page shows, run here exactly as shown, every change and every day
+# (vision-plan vp-living-labs-off-the-laptop, bundle 4, WO-03). The commands and the lines they must print come from
+# one list, scripts/lab-rerun.mjs, which also renders the page's block; the expected hashes are the lab record's.
+# Each command runs as an argument list, with no shell, from the root of this checkout; the job needs no secret,
+# no dependency install and no network after the checkout. Light: well under a second of work per kit.
+name: Lab kits
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 4 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: lab-kits-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    name: Lab 06, re-run this
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Run every command of Lab 06's kit and check each printed line
+        run: node scripts/lab-rerun.mjs review

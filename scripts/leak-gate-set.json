@@ -1,8 +1,8 @@
 {
  "format": "odin-leak-gate-set",
  "version": 1,
- "about": "The public commitment to the leak gate's term set (the LEAK_SCREEN_SECRET repository secret): its counts and the sha256 of its sorted salted hashes (terms, canaries and the first-word heads) and its salt. It names no term and holds no salt. The gate refuses any other set, so a term cannot be dropped from the secret unseen: changing the set is a reviewed change to this file.",
+ "about": "The public commitment to the leak gate's term set (the LEAK_SCREEN_SECRET repository secret): its counts and the sha256 of its sorted salted hashes (terms, canaries, the first-word heads and the strict class that has no allowlist) and its salt. It names no term and holds no salt. The gate refuses any other set, so a term cannot be dropped from the secret unseen: changing the set is a reviewed change to this file.",
  "terms": 118,
  "canaries": 4,
- "sha256": "39444cef0a077a7d472269277716c444748ddeefcb0e3e8ae54a520a44e5caff"
+ "sha256": "4915e817cc5b80dadadca88e35b79059ceed9a87c801e0ab6122bcbf24e8e68d"
 }
