@@ -4,6 +4,9 @@ name: Pull request text screen
 # pull_request_target: this workflow and the gate it runs come from the BASE branch, never from the pull request, so a
 # pull request cannot replace the screen that judges it or reach the secret with its own code. Its text and commit
 # messages are read as data (the event file and the API); no file of the pull request is checked out or run.
+# The run's name binds it to one pull request and head (trusted event data, never the PR's text): the lander requires a
+# green run with exactly this name, created after the PR's last title or body edit.
+run-name: PR text screen for #${{ github.event.pull_request.number }} at ${{ github.event.pull_request.head.sha }}
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]

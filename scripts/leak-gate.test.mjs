@@ -684,6 +684,7 @@ test('a pull request\'s title, body and every commit message are screened: a pla
 test('the pull request text screen runs on every PR event, on GitHub-hosted runners, with the secret, unconditionally', () => {
   const wf = readFileSync('.github/workflows/pr-text.yml', 'utf8');
   assert.match(wf, /types: \[opened, edited, synchronize, reopened\]/);
+  assert.match(wf, /\nrun-name: PR text screen for #\$\{\{ github\.event\.pull_request\.number \}\} at \$\{\{ github\.event\.pull_request\.head\.sha \}\}\n/);
   // The screen and its gate come from the base branch: a pull request can neither replace them nor run code with the secret.
   assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
   assert.doesNotMatch(wf, /\n  pull_request:\n/);
