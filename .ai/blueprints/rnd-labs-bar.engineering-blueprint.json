@@ -1,0 +1,74 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "approvals": [
+    {
+      "role": "blueprint-steward",
+      "stage": "ratify"
+    }
+  ],
+  "architecture": {
+    "components": [],
+    "relationships": []
+  },
+  "constraints": [
+    {
+      "id": "no-money-figure-on-a-lab-page",
+      "path": "site/labs/**",
+      "pattern": "[$€£¥]\\s?[0-9]|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
+      "severity": "high",
+      "type": "forbiddenPattern"
+    },
+    {
+      "id": "no-money-figure-in-a-lab-record",
+      "path": "site/data/labs/**",
+      "pattern": "[$€£¥]\\s?[0-9]|\\b(?:USD|EUR|GBP|usd|eur|gbp)\\s?[0-9]|[0-9]\\s?(?:USD|EUR|GBP|usd|eur|gbp|dollars?|euros?|cents?)\\b",
+      "severity": "high",
+      "type": "forbiddenPattern"
+    },
+    {
+      "id": "public-workflows-run-on-hosted-runners-only",
+      "path": ".github/workflows/*.yml",
+      "pattern": "^\\s*runs-on:(?!\\s*(?:ubuntu|macos|windows)-[0-9a-z.-]+\\s*(?:#.*)?$)",
+      "severity": "critical",
+      "type": "forbiddenPattern"
+    }
+  ],
+  "evidenceRequirements": [
+    {
+      "onMissing": "block",
+      "required": true,
+      "type": "staticAst"
+    }
+  ],
+  "extraction": {
+    "minFiles": 10,
+    "paths": [
+      "site/labs/**",
+      "site/data/labs/**",
+      ".github/workflows/*.yml"
+    ],
+    "profile": "plugin-surface"
+  },
+  "intentRefs": [
+    "docs/lab-bar.md"
+  ],
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "rnd-labs-bar",
+    "name": "Lab pages carry no money figures; public workflows never reach a self-hosted runner",
+    "ownerRole": "rnd-maintainer",
+    "status": "draft",
+    "stewardRole": "rnd-maintainer",
+    "version": "0.1.0"
+  },
+  "scope": {
+    "paths": [
+      "site/labs/**",
+      "site/data/labs/**",
+      ".github/workflows/*.yml"
+    ],
+    "repositories": [
+      "odin-labs-ai/odin-rnd"
+    ]
+  }
+}
