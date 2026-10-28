@@ -184,7 +184,8 @@ const SITE_FEED_TITLE = 'Odin Labs R&D: every update and every lab run';
  * org runs for, oldest first. The value is how many org machine classes printed the committed state hash that day
  * (2: both legs reproduced it; 1: one leg did, or only one ran; 0: none did), and each point keeps its day's state
  * (same, single, different), its record hashes and its runs. Taken from the runs alone; nothing is estimated between
- * days, and a day with no run is no point.
+ * days, and a day with no run is no point. ranAt is UTC by the record schema (scripts/schemas/odin-lab-record.schema.json:
+ * `YYYY-MM-DDTHH:MM:SSZ` only, and readLabRuns refuses any run that misses it), so its first ten characters ARE the UTC day.
  */
 export function daySeries(runs) {
   const days = new Map();
