@@ -11,7 +11,7 @@ import { gzipSync } from 'node:zlib';
 import { checkCommitment, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
-const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host'];
+const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx'];
 const CANARY = 'odncanary-0123456789abcdef';
 const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])) });
 const SECRET = secretOf();
@@ -48,7 +48,7 @@ test('a clean site passes and the Leak screen page is filled with counts, the co
     const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
     assert.equal(r.code, 0, r.out);
     const page = readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8');
-    assert.match(page, /data-leak-screen="terms">3</);
+    assert.match(page, /data-leak-screen="terms">4</);
     assert.match(page, /data-leak-screen="canaries">1</);
     assert.match(page, /data-leak-screen="hits">0</);
     assert.match(page, new RegExp(`data-leak-screen="commit">${COMMIT}<`));
@@ -67,6 +67,7 @@ const LEAKS = {
   'a canary inside a vendored tar.gz of raw evidence': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ops.jsonl': `{"op":1}\n{"note":"${CANARY}"}\n`, 'main/clean.json': '{}' })), /raw-evidence\.tar\.gz!main\/ops\.jsonl:2 canary/],
   'a home path inside an image file': ['dist/assets/meta.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from('tEXtSource\0/Users/someone/work\0'), Buffer.from([0, 1])]), /meta\.png:0 home-path/],
   'a short home path between NUL bytes in a binary': ['dist/assets/short.webm', Buffer.from('\x1aE\0\0/home/a\0\0\x01', 'latin1'), /short\.webm:0 home-path/],
+  'a three-letter term between NUL bytes in a binary': ['dist/assets/short3.webm', Buffer.from('\x1aE\0 qzx \0\x01', 'latin1'), /short3\.webm:0 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -101,7 +102,7 @@ test('a term set that differs from the public commitment stops the build, even w
     const partial = secretOf(TERMS.slice(1));
     const r = gate(root, { LEAK_SCREEN_SECRET: partial });
     assert.equal(r.code, 2, r.out);
-    assert.match(r.out, /not the committed one \(committed 3 terms, 1 canaries; got 2, 1\)/);
+    assert.match(r.out, /not the committed one \(committed 4 terms, 1 canaries; got 3, 1\)/);
     assert.throws(() => checkCommitment(loadSecret(SECRET), setFile(secretOf(TERMS, [CANARY, 'odncanary-ffffffffffffffff']))), /not the committed one/);
     checkCommitment(loadSecret(SECRET), setFile());
     const noSet = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), 'dist'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' });

@@ -9,6 +9,7 @@
   { "file": "dist/journal/composable-harness-pre-registration.html", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "The same reviewed term, in the article that renders that pre-registration word for word." },
   { "file": "dist/data/temporal-document-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 22, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
   { "file": "dist/data/temporal-primitive-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 33, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
+  { "file": "dist/assets/agent-space/agent-space-30s.webm", "kind": "term", "hash": "c1fe1e4c", "count": 1, "reason": "A short reviewed term spelled by chance in the film's compressed bytes (a four-character printable run), not text anyone wrote." },
   { "file": "dist/data/nina-changes/reviewer.json", "kind": "loopback", "count": 7, "reason": "A fictional fixture repository's config default (a local cache address and port), quoted in recorded reviewer output. Not a machine of ours." }
  ]
 }

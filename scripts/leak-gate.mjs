@@ -127,7 +127,7 @@ const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo 
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
 
 /** -> [{kind, at (offset in the original text), hash?}] for one reading. */
-function scanOne(r, secret, cache, shortest) {
+function scanOne(r, secret, cache) {
   const hits = [];
   const f = folded(r);
   const low = f.text.toLowerCase();
@@ -145,7 +145,7 @@ function scanOne(r, secret, cache, shortest) {
       let h = cache.get(joined);
       if (h === undefined) { h = digest(secret.salt, joined); if (cache.size < 2_000_000) cache.set(joined, h); }
       const kind = secret.kinds.get(h);
-      if (kind && joined.length - n + 1 >= shortest) hits.push({ kind, at: f.at[words[i][1]], hash: h.slice(0, 8) });
+      if (kind) hits.push({ kind, at: f.at[words[i][1]], hash: h.slice(0, 8) });
       // Longer runs are hashed only from a word that starts some term (the set's "heads"): the same answer, far fewer hashes.
       if (n === 1 && !secret.heads.has(h)) break;
     }
@@ -161,13 +161,12 @@ function scanOne(r, secret, cache, shortest) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-// shortest: the fewest letters a term hit may have (4 inside a binary's printable runs, where 3 letters occur by chance).
-export function scanText(text, secret, cache = new Map(), shortest = 1) {
+export function scanText(text, secret, cache = new Map()) {
   const raw = identity(text);
   const dec = decodedReading(raw);
   const readings = [raw, dec, untagged(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  for (const r of readings) for (const hit of scanOne(r, secret, cache, shortest)) {
+  for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
   }
@@ -179,9 +178,9 @@ const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|z
 // A file of a text type is read as text whatever bytes it holds: a NUL byte never hides a page.
 const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|srt|ya?ml|toml|sha256|webmanifest)(\.gz)?$/i;
 /**
- * The runs of printable text inside a binary file (metadata, an embedded comment), read like any text. Every run of 4
- * or more characters counts, which is shorter than any machine pattern; a run of 3 or fewer is noise in compressed
- * bytes, so a term of 3 letters is not looked for inside a binary (the one honest limit here).
+ * The runs of printable text inside a binary file (metadata, an embedded comment), read like any text: every run of 4
+ * or more characters, which is shorter than any machine pattern. A short term can turn up in compressed bytes by
+ * chance; such a hit is reviewed and listed as a known occurrence, never filtered away here.
  */
 function printable(bytes) {
   const out = [];
@@ -240,7 +239,7 @@ export function scanPaths(paths, secret) {
     }
     if (!TEXT.test(path) && (BINARY.test(path) || bytes.subarray(0, 8192).includes(0))) {
       result.binaries++;
-      for (let from = 0; from < bytes.length; from += 1 << 26) for (const hit of scanText(printable(bytes.subarray(from, from + (1 << 26) + 64)), secret, cache, 4)) result.hits.push({ file: shown, ...hit, line: 0 });
+      for (let from = 0; from < bytes.length; from += 1 << 26) for (const hit of scanText(printable(bytes.subarray(from, from + (1 << 26) + 64)), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
     result.texts++;
