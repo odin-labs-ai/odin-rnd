@@ -244,7 +244,7 @@ export function stripTags(html, by = '') {
 /**
  * The text a browser shows, from the markup, by HTML's own tokenizing rules (a subset, enough for these pages): a "<"
  * opens a tag only before a letter, "/", "!" or "?"; inside a tag, quoted attribute values may hold "<", ">" and
- * "<!--" and are never shown; a comment runs from "<!--" to the first "-->"; "<!" and "<?" open a bogus comment to the
+ * "<!--" and are never shown; a comment runs from "<!--" to the first "-->" or "--!>" ("<!-->" and "<!--->" close at once); "<!" and "<?" open a bogus comment to the
  * first ">"; script, style and template content is not body text and is dropped (up to the matching
  * end tag); a tag cut off by the end of the page is dropped, as a browser drops it. Character references are left as
  * they are (decode() reads them). With `breaks`, a block element's tag becomes a line break; any other tag joins.
@@ -257,7 +257,14 @@ export function shownText(html, { breaks = false } = {}) {
     const ch = html[i];
     if (ch !== '<') { out += ch; i++; continue; }
     const next = html[i + 1] ?? '';
-    if (html.startsWith('<!--', i)) { const end = html.indexOf('-->', i + 4); i = end < 0 ? n : end + 3; continue; }
+    if (html.startsWith('<!--', i)) {
+      // "<!-->" and "<!--->" close at once; otherwise the first "-->" or "--!>" closes it.
+      if (html.startsWith('<!-->', i)) { i += 5; continue; }
+      if (html.startsWith('<!--->', i)) { i += 6; continue; }
+      const ends = [html.indexOf('-->', i + 4), html.indexOf('--!>', i + 4)].filter(k => k >= 0).map((k, x) => k + (html.startsWith('-->', k) ? 3 : 4));
+      i = ends.length ? Math.min(...ends) : n;
+      continue;
+    }
     if (next === '!' || next === '?') { const end = html.indexOf('>', i + 2); i = end < 0 ? n : end + 1; continue; }
     const closing = next === '/';
     if (!/[A-Za-z]/.test(closing ? html[i + 2] ?? '' : next)) {
