@@ -22,7 +22,7 @@
 // at build (scripts/lab-rogue.mjs).
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { recordHash } from './lab-record.mjs';
@@ -85,6 +85,16 @@ function laptopRun(source, hashes, reproduction) {
     differedOn: [],
   };
   return { ...run, recordHash: recordHash(run) };
+}
+
+/**
+ * The org runners' runs already in the committed record (scripts/append-rogue-runs.mjs put them there). They are
+ * published evidence, not derivable from the private files, so a re-vendor carries them forward byte for byte and
+ * --verify still re-derives the committed record.
+ */
+function orgRuns() {
+  if (!existsSync(OUT_FILE)) return [];
+  return JSON.parse(readFileSync(OUT_FILE, 'utf8')).runs.filter(r => r.runner !== 'laptop');
 }
 
 /** The public record, built from the fetched files in `dir` and the reproduction. Deterministic. */
@@ -150,7 +160,7 @@ export function build(dir, reproduction) {
     },
     stateHash: runs.state_hash,
     reproductions: [reproduction],
-    runs: [laptopRun(source, hashes, reproduction)],
+    runs: [laptopRun(source, hashes, reproduction), ...orgRuns()],
   };
   return `${JSON.stringify(record, null, 1)}\n`;
 }
