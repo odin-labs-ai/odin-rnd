@@ -15,6 +15,7 @@ const laptop = golden;
 const org = on('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:00Z');
 const hosted = on('github-hosted', 'ubuntu-latest', '2026-10-27T20:05:00Z');
 const otherInputs = { inputs: [{ role: 'runner', sha256: 'c'.repeat(64) }, golden.inputs[1]] };
+const asLab = (run, lab) => rehash({ ...run, lab });
 const pair = (a, b, list) => [{ ...a, [list]: [{ machineClass: b.machineClass, recordHash: b.recordHash }] }, { ...b, [list]: [{ machineClass: a.machineClass, recordHash: a.recordHash }] }];
 const ok = (runs, lab = 'rogue') => assert.deepEqual(runsProblems(runs, { lab, where: 'fixture' }), []);
 const badge = html => /<p class="lab-badge" data-state="([a-z]+)"><strong>([^<]+)<\/strong>/.exec(html).slice(1);
@@ -34,7 +35,7 @@ test('one org machine: "Single machine", naming its class', () => {
   const html = renderProvenance([org]);
   assert.deepEqual(badge(html), ['single', `${BADGES.single}.`]);
   assert.match(html, /<span>org-hosted<\/span>/);
-  assert.match(html, /one org machine class, <code>org-ci-heavy<\/code>\. The record holds no run of this commit on a second machine\./);
+  assert.match(html, /one org machine class, <code>org-ci-heavy<\/code>\. The record holds no run of this commit on a second org machine class\./);
   screened(html, [org]);
   // The laptop re-run of the same commit, with the same hash, is mentioned and still not counted as a second org machine.
   assert.equal(runState([laptop, org]).state, 'single');
@@ -86,6 +87,9 @@ test('a replication or difference is shown only with the run behind it; a dishon
   assert.match(runsProblems([on('org-hosted', 'org-ci-heavy', '2999-01-01T00:00:00Z')], { lab: 'rogue', where: 'f' }).join('\n'), /after the check/);
   assert.match(runsProblems([org], { lab: 'brain-bench', where: 'f' }).join('\n'), /is not this tile's lab/);
   assert.match(runsProblems([], { lab: 'rogue', where: 'f' }).join('\n'), /at least one/);
+  // Every reason at once: a forged run beside a foreign one with an unbacked claim reports all three.
+  const mixed = runsProblems([{ ...org, recordHash: 'e'.repeat(64) }, { ...asLab(hosted, 'brain-bench'), replicatedOn: [{ machineClass: 'mac', recordHash: hosted.recordHash }] }], { lab: 'rogue', where: 'f' }).join('\n');
+  for (const re of [/runs\[0\]#\/recordHash/, /runs\/1\/lab: "brain-bench"/, /runs\/1\/replicatedOn\/0: no run/]) assert.match(mixed, re);
 });
 
 test('the leak screen refuses a card that would show a hash no run holds', () => {

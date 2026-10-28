@@ -34,11 +34,13 @@ const byTime = (a, b) => a.ranAt.localeCompare(b.ranAt) || a.machineClass.locale
 export function runsProblems(runs, { lab, where, now = new Date() }) {
   if (!Array.isArray(runs) || !runs.length) return [`${where}#/runs: a record that carries runs carries at least one`];
   const problems = runs.flatMap((run, i) => recordProblems(run, `${where} runs[${i}]`, now));
-  if (problems.length) return problems;
+  // The lab and backing checks run on every run with the fields they read, so a refusal lists every reason at once.
+  const readable = run => typeof run?.lab === 'string' && typeof run?.commit?.sha === 'string' && Array.isArray(run.replicatedOn) && Array.isArray(run.differedOn);
   runs.forEach((run, i) => {
+    if (!readable(run)) return;
     if (run.lab !== lab) problems.push(`${where}#/runs/${i}/lab: "${run.lab}" is not this tile's lab (${lab})`);
     for (const list of ['replicatedOn', 'differedOn']) run[list].forEach((x, j) => {
-      if (!runs.some(s => s !== run && s.commit.sha === run.commit.sha && s.machineClass === x.machineClass && s.recordHash === x.recordHash)) problems.push(`${where}#/runs/${i}/${list}/${j}: no run of commit ${run.commit.sha.slice(0, 8)} on ${x.machineClass} with that hash is in the record`);
+      if (!runs.some(s => s !== run && readable(s) && s.commit.sha === run.commit.sha && s.machineClass === x.machineClass && s.recordHash === x.recordHash)) problems.push(`${where}#/runs/${i}/${list}/${j}: no run of commit ${run.commit.sha.slice(0, 8)} on ${x.machineClass} with that hash is in the record`);
     });
   });
   return problems;
@@ -59,7 +61,7 @@ function badgeText({ state, group }) {
   const list = items => items.map(c => `<code>${escape(c)}</code>`).join(', ');
   if (state === 'different') return `The runs of this commit do not agree: ${group.map(r => `<code>${escape(r.machineClass)}</code> printed record <code>${escape(r.recordHash.slice(0, 12))}</code>`).join(', ')}.`;
   if (state === 'reproduced') return `The same record hash on ${list(classes.filter(c => group.some(r => ORG(r) && r.machineClass === c)))}${group.some(r => !ORG(r)) ? ', and on a laptop' : ''}.`;
-  if (state === 'single') return `Run on one org machine class, ${list(classes.filter(c => group.some(r => ORG(r) && r.machineClass === c)))}${group.some(r => !ORG(r)) ? ', and re-run on a laptop with the same hash' : ''}. The record holds no run of this commit on a second machine.`;
+  if (state === 'single') return `Run on one org machine class, ${list(classes.filter(c => group.some(r => ORG(r) && r.machineClass === c)))}${group.some(r => !ORG(r)) ? ', and re-run on a laptop with the same hash' : ''}. The record holds no run of this commit on a second org machine class.`;
   return 'Run on a laptop. The record holds no run of this commit on another machine.';
 }
 
