@@ -23,7 +23,7 @@
 import { createHash, hash as oneShot } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { inflateRawSync } from 'node:zlib';
+import { crc32, inflateRawSync } from 'node:zlib';
 import { join, relative } from 'node:path';
 
 export const MAX_WORDS = 4;
@@ -175,8 +175,21 @@ const untagged = r => mapped(r, TAG, tag => tag.replace(/[^\n]/g, ''));
 /** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
 const spaced = r => mapped(r, TAG, () => ' ');
 /** NFKC and lower case, character by character, so every offset still maps back. */
-// A base character and the combining marks after it fold together ("e" + U+0301 is "é", as the term is normalised).
-const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /\P{M}\p{M}+|[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
+// NFKC and lower case per grapheme (a base character with its marks, a Hangul syllable's jamo), so a canonically
+// equivalent spelling folds as the term does ("e" + U+0301 is "é", U+1100 U+1161 is "가") and every grapheme keeps
+// its own offset. Only the stretches around non-ASCII characters are segmented.
+const GRAPHEMES = new Intl.Segmenter('und', { granularity: 'grapheme' });
+function foldRun(run) {
+  let text = '';
+  const from = [];
+  for (const { segment, index } of GRAPHEMES.segment(run)) {
+    const f = segment.normalize('NFKC').toLowerCase();
+    text += f;
+    for (let k = 0; k < f.length; k++) from.push(index);
+  }
+  return { text, from };
+}
+const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[\x21-\x7e]?[^\x00-\x7f]+/gu, foldRun) : r);
 
 const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (starts[mid] <= pos) lo = mid; else hi = mid - 1; } return lo + 1; };
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
@@ -298,6 +311,8 @@ export function gunzipStrict(buf, shown) {
   let out;
   try { out = inflateRawSync(buf.subarray(start), { info: true }); } catch { throw new Error(`leak gate: ${shown} does not decompress`); }
   if (start + out.engine.bytesWritten + 8 !== buf.length) throw new Error(`leak gate: ${shown} has more than one gzip member, or bytes after it`);
+  // The trailer must be the CRC32 and length of what was decompressed: eight bytes that carry nothing else.
+  if (buf.readUInt32LE(buf.length - 8) !== crc32(out.buffer) || buf.readUInt32LE(buf.length - 4) !== out.buffer.length % 2 ** 32) throw new Error(`leak gate: ${shown} has a gzip trailer that does not match its content`);
   return out.buffer;
 }
 

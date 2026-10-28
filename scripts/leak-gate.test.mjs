@@ -12,7 +12,7 @@ import { gzipSync as gz } from 'node:zlib';
 import { MAX_BINARY, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
-const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café'];
+const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나'];
 const CANARY = 'odncanary-0123456789abcdef';
 const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])) });
 const SECRET = secretOf();
@@ -50,7 +50,7 @@ test('a clean site passes and the Leak screen page is filled with counts, the co
     const r = gate(root, undefined, ['--page', 'dist/leak-screen/index.html', '--commit', COMMIT]);
     assert.equal(r.code, 0, r.out);
     const page = readFileSync(join(root, 'dist/leak-screen/index.html'), 'utf8');
-    assert.match(page, /data-leak-screen="terms">5</);
+    assert.match(page, /data-leak-screen="terms">6</);
     assert.match(page, /data-leak-screen="canaries">1</);
     assert.match(page, /data-leak-screen="hits">0</);
     assert.match(page, new RegExp(`data-leak-screen="commit">${COMMIT}<`));
@@ -98,6 +98,7 @@ const LEAKS = {
   'a home path as a directory name inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, {}, { '/Users\0someone/private/': true })), /raw-evidence\.tar\.gz!\(archive headers\):0 home-path/],
   'a protected term split by an abruptly closed comment': ['dist/index.html', '<p>bl<!-->orvak and bl<!--->orvak and bl<!-- x --!>orvak</p>', /index\.html:1 term/],
   'a protected term with a combining mark that composes': ['dist/index.html', '<p>cafe\u0301 blorvak</p>', /index\.html:1 term/],
+  'a protected term spelled in decomposed Hangul jamo': ['dist/index.html', '<p>\u1100\u1161\u1102\u1161</p>', /index\.html:1 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -132,7 +133,7 @@ test('a term set that differs from the public commitment stops the build, even w
     const partial = secretOf(TERMS.slice(1));
     const r = gate(root, { LEAK_SCREEN_SECRET: partial });
     assert.equal(r.code, 2, r.out);
-    assert.match(r.out, /not the committed one \(committed 5 terms, 1 canaries; got 4, 1\)/);
+    assert.match(r.out, /not the committed one \(committed 6 terms, 1 canaries; got 5, 1\)/);
     assert.throws(() => checkCommitment(loadSecret(SECRET), setFile(secretOf(TERMS, [CANARY, 'odncanary-ffffffffffffffff']))), /not the committed one/);
     checkCommitment(loadSecret(SECRET), setFile());
     const resalted = SECRET.replace(SALT, 'another-salt-of-enough-length');
@@ -345,7 +346,8 @@ test('a term in an unused byte range of an archive header is caught', () => {
 test('a gzip with header text, a second member or bytes after it stops the build', () => {
   const tarball = gzipSync(tar({ 'main/ok.json': '{}' }));
   const withComment = Buffer.concat([Buffer.from([0x1f, 0x8b, 8, 0x10, 0, 0, 0, 0, 0, 3]), Buffer.from('/Users/someone/private\0'), tarball.subarray(10)]);
-  const cases = { 'header text': [withComment, /gzip header text/], 'two members': [Buffer.concat([tarball, gz(Buffer.from('x'))]), /more than one gzip member/], 'bytes after': [Buffer.concat([tarball, Buffer.from('blorvak')]), /more than one gzip member, or bytes after it/] };
+  const badTrailer = Buffer.from(tarball); badTrailer.write('/Users/x', badTrailer.length - 8, 'latin1');
+  const cases = { 'trailer': [badTrailer, /gzip trailer that does not match/], 'header text': [withComment, /gzip header text/], 'two members': [Buffer.concat([tarball, gz(Buffer.from('x'))]), /more than one gzip member/], 'bytes after': [Buffer.concat([tarball, Buffer.from('blorvak')]), /more than one gzip member, or bytes after it/] };
   for (const [name, [bytes, want]] of Object.entries(cases)) {
     const root = site({ 'dist/data/raw-evidence.tar.gz': bytes });
     try {
