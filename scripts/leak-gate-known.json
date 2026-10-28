@@ -7,6 +7,8 @@
   { "file": "dist/data/telemetry-truth/preregistration.json", "kind": "term", "hash": "0719f76c", "count": 1, "reason": "A reviewed term in a hash-pinned pre-registration. Fixed only by an amendment." },
   { "file": "dist/data/composable-harness/preregistration.json", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "A reviewed term in a hash-pinned pre-registration. Fixed only by an amendment." },
   { "file": "dist/journal/composable-harness-pre-registration.html", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "The same reviewed term, in the article that renders that pre-registration word for word." },
+  { "file": "dist/data/temporal-document-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 22, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
+  { "file": "dist/data/temporal-primitive-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 33, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
   { "file": "dist/data/nina-changes/reviewer.json", "kind": "loopback", "count": 7, "reason": "A fictional fixture repository's config default (a local cache address and port), quoted in recorded reviewer output. Not a machine of ours." }
  ]
 }
