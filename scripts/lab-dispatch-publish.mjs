@@ -60,6 +60,13 @@ export function fold(text) {
 
 /** The hash a term is listed under: its letters only, normalised. */
 export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, ''));
+/**
+ * Add names to the screen, never remove one: the tests plant a synthetic name registered this way instead of spelling
+ * a real restricted name in this public repository (the site's leak gate refuses the real ones in source too).
+ */
+export function addScreenNames(...names) { for (const name of names) NAMES.add(fingerprint(name)); }
+/** True when the text names a restricted name (any listed or added one), by the same screen. */
+export const namesRestricted = text => termHits(text).some(hit => hit.kind === 'names');
 
 /** Which listed term set the text hits ('names', 'places'), with the offset in the normalised text. */
 function termHits(text) {

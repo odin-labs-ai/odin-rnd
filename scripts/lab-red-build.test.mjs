@@ -9,6 +9,9 @@ import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
+// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
+addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
 
 // Lab 08, "Can an agent fix a red build?" (scripts/lab-red-build.mjs). An honest negative is only worth publishing if
 // it is a true count: the committed verdicts must give the committed score, every number must name its set, every
@@ -108,13 +111,13 @@ test('anonymous labels: keyed, letters only, never a hash shape, and refused wit
 });
 
 const LEAK_SHAPES = [/\/Users\//, /\/home\//, /\b[A-Z]:\\/, /~\/\./, /localhost/i, /\b127\.0\.0\.1\b/, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /:\d{4,5}\b(?!["\d])/,
-  /\bghp_|\bgithub_pat_|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-/, /odin-labs-ai\/(?!odin-rnd)/, /mortgage/i, /\d{9,}/, /usd|\bcost\b|spend/i, /gh-readonly-queue|\bgrant\//];
+  /\bghp_|\bgithub_pat_|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-/, /odin-labs-ai\/(?!odin-rnd)/, /\d{9,}/, /usd|\bcost\b|spend/i, /gh-readonly-queue|\bgrant\//];
 
 test('leak screen: no run id, repository, branch, money figure, path, host or credential anywhere it ships', () => {
   // The record's own commits and sha256s are masked first (they are hex, and may hold a long run of digits).
   const known = new Set(recordHashes(record));
   const masked = text => text.replace(/\b[0-9a-f]{40,64}\b/g, h => (known.has(h) ? 'HASH' : h));
-  for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) for (const re of LEAK_SHAPES) assert.doesNotMatch(masked(text), re, `${name}: ${re}`);
+  for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) { for (const re of LEAK_SHAPES) assert.doesNotMatch(masked(text), re, `${name}: ${re}`); assert.ok(!namesRestricted(text), `${name}: a restricted name`); }
   assert.deepEqual(pageLeaks(page, recordHashes(record)), [], 'the rendered page passes the screen');
   assert.deepEqual(redBuildProblems(record), [], 'the record passes its checks and the screen');
   for (const file of ['scripts/lab-red-build.mjs', 'scripts/vendor-red-build.mjs', 'scripts/schemas/odin-lab-red-build.schema.json', 'site/labs/red-build/index.html']) {
@@ -124,7 +127,7 @@ test('leak screen: no run id, repository, branch, money figure, path, host or cr
 
 test('a planted leak fails the build, in the record and on the page (a failing negative per class)', () => {
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
-  const plants = [['run 40000000001', /long internal id/], ['odin-labs-ai/some-private-repo', /another repository/], ['the oac repository', /restricted name/], ['a mortgage lender', /restricted name/], ['it cost USD 0.29', /price or currency/], ['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], [credential, /credential/], ['see doctrine-path-guard.sh', /file path or file name/]];
+  const plants = [['run 40000000001', /long internal id/], ['odin-labs-ai/some-private-repo', /another repository/], ['the zarquon repository', /restricted name/], ['a zarquonbank lender', /restricted name/], ['it cost USD 0.29', /price or currency/], ['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], [credential, /credential/], ['see doctrine-path-guard.sh', /file path or file name/]];
   for (const [plant, reason] of plants) {
     const r = clone(); r.heldOut.runs[0].how = plant;
     assert.ok(redBuildProblems(r).some(p => reason.test(p)), `record: ${plant}`);

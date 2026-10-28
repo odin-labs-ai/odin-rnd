@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -284,7 +284,8 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
 
 test('the committed known-occurrence list is well formed and lists no canary', () => {
   const rows = loadKnown(readFileSync('scripts/leak-gate-known.json', 'utf8'));
-  for (const row of rows) assert.match(row.file, /^dist\//);
+  // A row names a built file (dist/...) or a tracked source file that exists in this checkout.
+  for (const row of rows) assert.ok(row.file.startsWith('dist/') || existsSync(row.file.split('!')[0]), row.file);
 });
 
 test('the Leak screen page carries every slot the gate fills', () => {
@@ -292,6 +293,14 @@ test('the Leak screen page carries every slot the gate fills', () => {
   const filled = fillPage(page, { terms: 1, canaries: 1, scanned: '2026-10-28T00:00:00Z', commit: COMMIT, files: 1, hits: 0, known: 0 });
   assert.match(filled, /datetime="2026-10-28T00:00:00Z"/);
   assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
+});
+
+test('the publish workflow also screens the tracked tree, with the secret, unconditionally', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const step = wf.slice(wf.indexOf('Source screen'), wf.indexOf('Upload Pages'));
+  assert.match(step, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.match(step, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --tree\n/);
+  assert.doesNotMatch(step, /continue-on-error|\|\| true|if:/);
 });
 
 test('the publish workflow runs the gate after the build, before the upload, with the secret', () => {
@@ -483,4 +492,43 @@ test('a strict-class term (client, employer, publisher) can never be a known occ
 test('the committed known list carries a valid review stamp and no strict-class row', () => {
   const d = JSON.parse(readFileSync('scripts/leak-gate-known.json', 'utf8'));
   assert.equal(d.reviewed.rowsSha256, rowsDigest(d.known));
+});
+
+test('--tree reads every tracked file of the checkout for terms and canaries: red on a planted name, green once it is gone', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-tree-'));
+  const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  const run = (extra = []) => { const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', ...extra, '--tree'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' }); return { code: r.status, out: r.stdout + r.stderr }; };
+  try {
+    writeFileSync(join(root, 'set.json'), setFile());
+    mkdirSync(join(root, 'scripts'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\nexport const x = 1;\n');
+    writeFileSync(join(root, 'scripts/fixture.test.mjs'), "const plants = ['/Users/someone/x', 'served on localhost:3000'];\n");
+    writeFileSync(join(root, 'untracked.txt'), `not in git: ${CANARY}\n`);
+    git('init', '-q'); git('add', 'set.json', 'scripts');
+    const red = run();
+    assert.equal(red.code, 1, red.out);
+    assert.match(red.out, /LEAK scripts\/record\.mjs:1 term hash [0-9a-f]{8}/);
+    assert.doesNotMatch(red.out, /fixture\.test\.mjs|untracked/, 'machine patterns are for the built site; an untracked file is not the tree');
+    assert.ok(!red.out.includes('blorvak'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read the private repository AT main.\nexport const x = 1;\n');
+    const green = run();
+    assert.equal(green.code, 0, green.out);
+    // A dist/ row belongs to the built-site scan: the tree scan neither uses it nor calls it stale; a tree row is settled here.
+    const rows = [{ file: 'dist/index.html', kind: 'loopback', count: 1, reason: 'a row for the built site' }];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped(rows))); git('add', 'known.json');
+    assert.equal(run(['--known', 'known.json']).code, 0);
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\n');
+    const hash = run().out.match(/term hash ([0-9a-f]{8})/)[1];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([...rows, { file: 'scripts/record.mjs', kind: 'term', hash, count: 1, reason: 'a reviewed tree occurrence' }])));
+    assert.equal(run(['--known', 'known.json']).code, 0, 'a tree row covers its tree occurrence');
+    assert.equal(run(['--known', 'known.json', '--page', 'x']).code, 2, '--tree takes no page');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the lab screen can only gain names: a synthetic name added for the tests is refused like a real one', async () => {
+  const { addScreenNames, namesRestricted, screenHits } = await import('./lab-dispatch-publish.mjs');
+  assert.equal(namesRestricted('a zorbleqwint lender'), false);
+  addScreenNames('zorbleqwint');
+  assert.equal(namesRestricted('a zorbleqwint lender'), true);
+  assert.ok(screenHits('the ZorbleQwint repository').some(h => /restricted name/.test(h.reason)));
 });

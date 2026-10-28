@@ -8,6 +8,9 @@ import { CASES, CHECK_WORDS, TAMPER_JOURNAL, TAMPER_PIN, TAMPER_RECORD, journalR
 import { readRogue, ROGUE_TEMPLATE } from './lab-rogue.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
+import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
+// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
+addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
 
 // Lab 05's "Can you tamper with the record?" (scripts/lab-rogue-tamper.mjs, scripts/rogue_tamper.py). It closes Lab 05's
 // first residual: the journal's rows are now re-hashed, each one, by the engine's own rule, in Python.
@@ -140,6 +143,7 @@ test('the section is fail-closed: a missing or unpinned tamper record refuses th
 test('leak screen: the section, the journal and the tamper record', () => {
   assert.deepEqual(pageLeaks(page, [...recordHashes(rogue), ...recordHashes(record)]), []);
   for (const [name, text] of [['section', section], ['journal', String(journal)], ['record', raw]]) {
-    for (const re of [/\/Users\//, /\/home\//, /localhost/i, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /\bghp_|\bsk-[A-Za-z0-9]|-----BEGIN/, /odin-labs-ai\/(?!odin-rnd)/, /mortgage/i, /[€$£]\s?\d/]) assert.doesNotMatch(text, re, `${name}: ${re}`);
+    for (const re of [/\/Users\//, /\/home\//, /localhost/i, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /\bghp_|\bsk-[A-Za-z0-9]|-----BEGIN/, /odin-labs-ai\/(?!odin-rnd)/, /[€$£]\s?\d/]) assert.doesNotMatch(text, re, `${name}: ${re}`);
+    assert.ok(!namesRestricted(text), `${name}: a restricted name`);
   }
 });

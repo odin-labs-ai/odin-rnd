@@ -7,6 +7,9 @@ import { join } from 'node:path';
 import { BLIND_PIN, BLIND_RECORD, BLIND_TEMPLATE, blindProblems, pageLeaks, readMeasuredBlind, recordHashes, recount, renderIntro, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
+// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
+addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
 
 // Lab 13, "Does an agent company get better, measured blind?" (scripts/lab-measured-blind.mjs). The page is only worth
 // publishing if it says who judged (an AI), what one side of a set is (18 verdicts, not 9 items), and recounts what was
@@ -94,7 +97,8 @@ test('no private id: no item key, no CI run id, no repository name, on the page,
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     assert.doesNotMatch(text, /\bwi-[a-z]|\bho-(ci|pr|issue)/, `${name}: an item key`);
     assert.doesNotMatch(text.replace(/\b[0-9a-f]{40,64}\b/g, ''), /\d{8,}/, `${name}: a run id or another long number`);
-    assert.doesNotMatch(text, /odin-(next|labs|website|sales)|oac|wo06|hq_eval|agent_space/i, `${name}: a private repository, path or file name`);
+    assert.doesNotMatch(text, /odin-(next|labs|website|sales)|wo06|hq_eval|agent_space/i, `${name}: a private repository, path or file name`);
+    assert.ok(!namesRestricted(text), `${name}: a restricted name`);
   }
   assert.deepEqual(record.sets.flatMap(s => s.items.map(i => i.label)), ['T', 'A', 'B'].flatMap(p => Array.from({ length: 9 }, (_, k) => `${p}${k + 1}`)));
 });
@@ -123,7 +127,7 @@ test('the screen catches each class it guards, on the page and in the record (th
     ['a local path', '/Users/someone/x', /machine path/],
     ['a host, port or IP', 'served on localhost:8080', /local host/],
     ['an IP address', 'from 10.0.0.12', /local host/],
-    ['a client name (the talk theme)', 'a mortgage lender', /restricted name/],
+    ['a client name (the talk theme)', 'a zarquonbank lender', /restricted name/],
     ['a private repository name', 'odin-labs-ai/some-private-repo', /another repository/],
     ['a credential', credential, /credential/],
     ['a money figure', 'it cost €40', /price or currency/],

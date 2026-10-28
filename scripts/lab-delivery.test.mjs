@@ -444,7 +444,7 @@ test('with no aggregate the panel says so honestly, and still names its window',
 
 test('a label that is not repo- plus 12 hex is refused by the schema, and the panel copy passes the publisher\'s screen', () => {
   assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'repo-odin-labs' }])).join('\n'), /aggregates\/0\/label/);
-  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'odin-command-center' }])).join('\n'), /aggregates\/0\/label/);
+  assert.match(deliveryProblems(withAgg([{ ...AGG[0], label: 'odin-zarquon-center' }])).join('\n'), /aggregates\/0\/label/);
   assert.deepEqual(deliveryProblems(withAgg()), []);
   assert.doesNotThrow(() => renderAggregates(withAgg()));
 });
