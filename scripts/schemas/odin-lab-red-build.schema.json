@@ -1,0 +1,729 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-red-build-v1",
+ "title": "Lab 08, can an agent fix a red build: site/data/labs/red-build/record.json, written by scripts/vendor-red-build.mjs. Every object is closed, so no run id, repository name, path or money figure can ride along.",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "vendored",
+  "heldOut",
+  "earlier"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-red-build"
+  },
+  "version": {
+   "const": 1
+  },
+  "vendored": {
+   "type": "object",
+   "required": [
+    "from",
+    "commit",
+    "committed",
+    "mainCheck",
+    "cites",
+    "files"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "from": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 300
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "committed": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "mainCheck": {
+     "type": "object",
+     "required": [
+      "main",
+      "how",
+      "checked",
+      "commits"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "main": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{40}$"
+      },
+      "how": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 300
+      },
+      "checked": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "commits": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       }
+      }
+     }
+    },
+    "cites": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "commit",
+       "what",
+       "at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+       },
+       "at": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+       }
+      }
+     }
+    },
+    "files": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "role",
+       "what",
+       "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "role": {
+        "type": "string",
+        "pattern": "^[a-z][a-z-]*$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     }
+    }
+   }
+  },
+  "heldOut": {
+   "type": "object",
+   "required": [
+    "frozen",
+    "since",
+    "until",
+    "repos",
+    "runs",
+    "rounds",
+    "score"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "frozen": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "since": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "until": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "repos": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "runs": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "label",
+       "repo",
+       "event",
+       "state",
+       "how",
+       "doctorClass",
+       "ruleClass",
+       "cls",
+       "split",
+       "reproduced",
+       "passes",
+       "judgedFix",
+       "judgedNot",
+       "reviewers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "label": {
+        "type": "string",
+        "pattern": "^run-[g-z]{8}$"
+       },
+       "repo": {
+        "type": "string",
+        "pattern": "^repo-[g-z]{8}$"
+       },
+       "event": {
+        "type": "string",
+        "pattern": "^(push|pull_request|merge_group|schedule|workflow_run|workflow_dispatch)$"
+       },
+       "state": {
+        "type": "string",
+        "pattern": "^[a-z_]+$"
+       },
+       "how": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "doctorClass": {
+        "type": "string",
+        "pattern": "^[a-z_]+$"
+       },
+       "ruleClass": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "type": "string",
+          "pattern": "^(code_bug|test_is_wrong|config_env|flake|red_by_design)$"
+         }
+        ]
+       },
+       "cls": {
+        "type": "string",
+        "pattern": "^(code_bug|test_is_wrong|config_env|flake|red_by_design)$"
+       },
+       "split": {
+        "type": "boolean"
+       },
+       "reproduced": {
+        "type": "boolean"
+       },
+       "passes": {
+        "type": "boolean"
+       },
+       "judgedFix": {
+        "type": "boolean"
+       },
+       "judgedNot": {
+        "type": "boolean"
+       },
+       "reviewers": {
+        "type": "object",
+        "required": [
+         "diagnosis",
+         "patch",
+         "causeClass"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "diagnosis": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+           "type": "string",
+           "pattern": "^(right|partly|wrong)$"
+          }
+         },
+         "patch": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+           "type": "string",
+           "pattern": "^(fixes|partial|wrong|none-right|none-missed)$"
+          }
+         },
+         "causeClass": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+           "type": "string",
+           "pattern": "^(code_bug|test_is_wrong|config_env|flake|red_by_design)$"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "rounds": {
+     "type": "object",
+     "required": [
+      "a",
+      "b"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "a": {
+       "type": "object",
+       "required": [
+        "cases",
+        "diagnosis",
+        "patch"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "cases": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "diagnosis": {
+         "type": "object",
+         "required": [
+          "right",
+          "partly",
+          "wrong"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "right": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "partly": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "wrong": {
+           "type": "integer",
+           "minimum": 0
+          }
+         }
+        },
+        "patch": {
+         "type": "object",
+         "required": [
+          "fixes",
+          "partial",
+          "wrong",
+          "none-right",
+          "none-missed"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "fixes": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "partial": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "wrong": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "none-right": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "none-missed": {
+           "type": "integer",
+           "minimum": 0
+          }
+         }
+        }
+       }
+      },
+      "b": {
+       "type": "object",
+       "required": [
+        "cases",
+        "diagnosis",
+        "patch"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "cases": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "diagnosis": {
+         "type": "object",
+         "required": [
+          "right",
+          "partly",
+          "wrong"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "right": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "partly": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "wrong": {
+           "type": "integer",
+           "minimum": 0
+          }
+         }
+        },
+        "patch": {
+         "type": "object",
+         "required": [
+          "fixes",
+          "partial",
+          "wrong",
+          "none-right",
+          "none-missed"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "fixes": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "partial": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "wrong": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "none-right": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "none-missed": {
+           "type": "integer",
+           "minimum": 0
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "score": {
+     "type": "object",
+     "required": [
+      "cases",
+      "ruled",
+      "reproduced",
+      "passes",
+      "judgedFix",
+      "judgedNot",
+      "missed",
+      "diagnosis",
+      "patch",
+      "byClass"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "cases": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "ruled": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "reproduced": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "passes": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "judgedFix": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "judgedNot": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "missed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "diagnosis": {
+       "type": "object",
+       "required": [
+        "right",
+        "partly",
+        "wrong"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "right": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "partly": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "wrong": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      },
+      "patch": {
+       "type": "object",
+       "required": [
+        "fixes",
+        "partial",
+        "wrong",
+        "none-right",
+        "none-missed"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fixes": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "partial": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "wrong": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "none-right": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "none-missed": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      },
+      "byClass": {
+       "type": "object",
+       "required": [
+        "code_bug",
+        "test_is_wrong",
+        "config_env",
+        "flake",
+        "red_by_design"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "code_bug": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "test_is_wrong": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "config_env": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "flake": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "red_by_design": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "earlier": {
+   "type": "object",
+   "required": [
+    "judgments",
+    "builds",
+    "runsOfTheDoctor",
+    "diagnosis",
+    "patch",
+    "byRun"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "judgments": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "builds": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "runsOfTheDoctor": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "diagnosis": {
+     "type": "object",
+     "required": [
+      "right",
+      "partly",
+      "wrong"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "right": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "partly": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "wrong": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "patch": {
+     "type": "object",
+     "required": [
+      "fixes",
+      "partial",
+      "wrong",
+      "none-right",
+      "none-missed"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "fixes": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "partial": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "wrong": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "none-right": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "none-missed": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "byRun": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "run",
+       "diagnosis",
+       "patch"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "run": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "diagnosis": {
+        "type": "object",
+        "required": [
+         "right",
+         "partly",
+         "wrong"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "right": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "partly": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "wrong": {
+          "type": "integer",
+          "minimum": 0
+         }
+        }
+       },
+       "patch": {
+        "type": "object",
+        "required": [
+         "fixes",
+         "partial",
+         "wrong",
+         "none-right",
+         "none-missed"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "fixes": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "partial": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "wrong": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "none-right": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "none-missed": {
+          "type": "integer",
+          "minimum": 0
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
