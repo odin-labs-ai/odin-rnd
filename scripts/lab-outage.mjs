@@ -5,7 +5,7 @@
 // was filmed from. It builds on the lab kit (scripts/lab-kit.mjs): its screen, leak list, cite sentence and hashes.
 //
 // The citation is fixed here, not in the record. A commit the record marks onMain: false is cited through the kit's
-// laneCite (ADR 2026-10-28-rnd-lane-evidence-onmain-false): "not yet part of the private main", with the main it was
+// laneCite (ADR 2026-10-28-rnd-lane-evidence-onmain-false): the kit's one lane sentence, with the main it was
 // built on, the lane's name kept in the record and the date it was checked not to be on main; and no other text of the record or the section
 // may mention main at all: the record's free text is refused on the word, and the rendered section, with that one
 // sentence taken out, is refused on it too. Only a record with onMain: true AND a mainCheck is cited with the kit's
