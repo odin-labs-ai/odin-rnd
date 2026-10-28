@@ -8,7 +8,9 @@
 //
 //   reproduced  two or more org machine classes ran the latest commit and printed the same recordHash
 //   single      one org machine class ran it
-//   different   two runs of the latest commit hold different recordHashes: shown as such, never folded into a match
+//   different   two runs of the latest commit hold different recordHashes, on any day: shown as such, with a link to
+//               the newest run of each machine class for each hash, never folded into a match. It is sticky for the
+//               commit (a later matching day does not clear it); a new commit starts fresh
 //   laptop      only a laptop ran it: "single machine, a laptop re-run", never called an org machine
 //
 // The badge is derived from the runs present, never from a claim alone. The build fails, every reason listed, when:
@@ -65,19 +67,29 @@ export function runState(runs) {
 }
 
 /** What the badge's state means, in words that say only what the records hold. */
-function badgeText({ state, group }) {
+function badgeText({ state, group }, runsHref) {
   const classes = [...new Set(group.map(r => r.machineClass))];
   const list = items => items.map(c => `<code>${escape(c)}</code>`).join(', ');
-  if (state === 'different') return `The runs of this commit do not agree: ${group.map(r => `<code>${escape(r.machineClass)}</code> printed record <code>${escape(r.recordHash.slice(0, 12))}</code>`).join(', ')}.`;
+  if (state === 'different') {
+    // Each hash the commit's runs printed, newest first, with the newest run of each machine class that printed it.
+    const newest = [...group].sort(byTime).reverse();
+    const hashes = [...new Set(newest.map(r => r.recordHash))];
+    const run = r => {
+      const label = `<code>${escape(r.machineClass)}</code>, ${Number(r.ranAt.slice(8, 10))} ${MONTHS[Number(r.ranAt.slice(5, 7)) - 1]} ${r.ranAt.slice(0, 4)}`;
+      return runsHref ? `<a href="${escape(runsHref)}#${escape(runAnchor(r))}">${label}</a>` : label;
+    };
+    const parts = hashes.map(h => `record <code>${escape(h.slice(0, 12))}</code> on ${newest.filter(r => r.recordHash === h).filter((r, i, all) => all.findIndex(x => x.machineClass === r.machineClass) === i).map(run).join(', ')}`);
+    return `The runs of this commit do not agree: ${parts.join('; ')}. A later run with a matching hash does not clear this; a new commit starts fresh.`;
+  }
   if (state === 'reproduced') return `The same record hash on ${list(classes.filter(c => group.some(r => ORG(r) && r.machineClass === c)))}${group.some(r => !ORG(r)) ? ', and on a laptop' : ''}.`;
   if (state === 'single') return `Run on one org machine class, ${list(classes.filter(c => group.some(r => ORG(r) && r.machineClass === c)))}${group.some(r => !ORG(r)) ? ', and re-run on a laptop with the same hash' : ''}. The record holds no run of this commit on a second org machine class.`;
   return 'Run on a laptop. The record holds no run of this commit on another machine.';
 }
 
 /** The card's provenance: "runner · commit · record hash" for the latest run, and the badge. */
-export function renderProvenance(runs, { runsPage = false } = {}) {
+export function renderProvenance(runs, { runsPage = false, runsHref = runsPage ? 'runs/' : null } = {}) {
   const s = runState(runs), r = s.latest;
-  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s)}</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run, among every run</a></p>` : ''}</div>`;
+  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s, runsHref)}</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run, among every run</a></p>` : ''}</div>`;
 }
 
 /** Every results lab's runs, read from its pinned record (readTiles checks the pin): [{ tile, record, runs }]. */
@@ -169,7 +181,7 @@ const SITE_FEED_TITLE = 'Odin Labs R&D: every update and every lab run';
 /** A lab page's "Its runs" section: the badge, and links to its runs, its feed and the site feed. */
 export function renderLabRunsSection(lab) {
   const latest = runState(lab.runs).latest;
-  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
+  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
 }
 
 /** The feeds, written and checked, and linked from the Labs index, the runs page and every lab page. */
