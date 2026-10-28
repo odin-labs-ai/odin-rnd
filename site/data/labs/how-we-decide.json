@@ -33,12 +33,14 @@
       "amendments": [
         "experiments/mongodb-home-ground/amendment-01/amendment.json",
         "experiments/mongodb-home-ground/amendment-02/amendment.json",
-        "experiments/mongodb-home-ground/amendment-03/amendment.json"
+        "experiments/mongodb-home-ground/amendment-03/amendment.json",
+        "experiments/mongodb-home-ground/amendment-04/amendment.json"
       ],
       "disclosures": [
         { "file": "experiments/mongodb-home-ground/amendment-01/amendment.json", "pointer": "/limits" },
         { "file": "experiments/mongodb-home-ground/amendment-02/amendment.json", "pointer": "/limits" },
-        { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "pointer": "/remainingLean" }
+        { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "pointer": "/remainingLean" },
+        { "file": "experiments/mongodb-home-ground/amendment-04/amendment.json", "pointer": "/limits" }
       ]
     },
     {

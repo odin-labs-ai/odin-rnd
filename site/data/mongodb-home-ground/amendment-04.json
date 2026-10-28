@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 020",
+  "amendment": "04",
+  "title": "Both advocates settle nine readings of the S2 rules before the verdict; both veto item 8, so the report checks the disturbance windows itself",
+  "authoredOn": "2026-10-28",
+  "name": "EXP 020 amendment 04, the name the MongoDB advocate asked for. It is not the S2 runner protocol's own 'Amendment 04' (runner/PROTOCOL-S2.md, published with amendment 01), which is a different change.",
+  "amends": {
+    "preregistration": "experiments/mongodb-home-ground/preregistration.json",
+    "preregistrationSha256": "128087dbba8b09c97fcbf2ab4a873b1c4b9c656b27ad07291ba4693e26d83fec",
+    "frozenCommit": "0af2c4861c489531916884ceb6894ee771d0ec71",
+    "after": {
+      "amendment": "03",
+      "record": "experiments/mongodb-home-ground/amendment-03/amendment.json",
+      "sha256": "43eb48af053601ff69bf9ced9a95148a6c343369dc99b96a72ad35eec0fca2e9"
+    }
+  },
+  "why": "Writing the S2 report code showed nine places where the published rules (the pre-registration and amendments 01 to 03) leave a reading open. The runner owner did not decide them alone: before any S2 verdict was computed, both EXP 020 advocates reviewed all nine, with veto power, without opening a counted cell. Both accept eight. Both veto item 8, and the stricter alternative (the MongoDB advocate's) is adopted. This amendment records the nine readings, both reviews and the report code that implements them, so they are public before the verdict.",
+  "timing": "Proposed by the runner owner on 2026-10-25 at 23:22Z (report code at private commit ce98d2082469b3d63dc3354163de820141213a59). Both reviews at private commit 6580157c2bc2a79768900415d09d4d0ad3707096, posted 23:26Z. The report code that applies them at private commit 125b4c7d767adad9f9ef36d7ef3d7e1c60c179aa, posted 23:36Z. Published here on 2026-10-28. As of those posts, no S2 verdict had been computed.",
+  "reviews": {
+    "mongodbAdvocate": {
+      "verdict": "8 ACCEPT, 1 VETO (item 8); item 3 accepted on condition that the literal-bullet counts are published too",
+      "file": "experiments/mongodb-home-ground/reviews/amendment-04-mongodb-advocate.md"
+    },
+    "postgresqlAdvocate": {
+      "verdict": "8 ACCEPT, 1 VETO (item 8); notes, against its own side, that pgoutput could arguably count 4, and does not ask for it",
+      "file": "experiments/mongodb-home-ground/reviews/amendment-04-postgresql-advocate.md"
+    },
+    "source": "Both reviews at private commit 6580157c2bc2a79768900415d09d4d0ad3707096, published with one substitution each (the private repository's name); source and published sha256 below. Neither reviewer opened a counted cell.",
+    "proposal": "The runner owner's brief to the reviewers is not published. What is public of the nine proposed readings is the runner owner's summary (quoted under each change below) and each review's own answer to each item."
+  },
+  "documents": [
+    {
+      "file": "experiments/mongodb-home-ground/reviews/amendment-04-mongodb-advocate.md",
+      "sourceSha256": "fb74aca4c176c318e596f55f86c63601d5580d46370d08ae5b6cc40473843a41",
+      "publishedSha256": "748741d214a5d7bf46598b53d2dd93e61f7564e61353118a8760e26b9ed6a9f7",
+      "substitutions": [
+        {
+          "was": "(report code at [the private repository's name] `ce98d208`)",
+          "now": "(report code at private commit `ce98d208`)"
+        }
+      ]
+    },
+    {
+      "file": "experiments/mongodb-home-ground/reviews/amendment-04-postgresql-advocate.md",
+      "sourceSha256": "c55fdc3eb8baf8613c69582c433fa8a1efd190c067aa8ca8a47d3fa00d8aba30",
+      "publishedSha256": "be0f5f5f091f875368557758a945b3b95b449adc8b7c296028bd0510428d8452",
+      "substitutions": [
+        {
+          "was": "(report code at [the private repository's name] `ce98d208`)",
+          "now": "(report code at private commit `ce98d208`)"
+        }
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "item": 1,
+      "what": "\"Same direction\" on seed 2",
+      "verdict": "ACCEPT x2",
+      "rule": "\"Same direction\" is the sign of the median of the five seed-2 paired differences; a zero median counts for neither store.",
+      "proposal": "the median of the five seed-2 paired differences has the winner's sign (as EXP 021 A4b)."
+    },
+    {
+      "item": 2,
+      "what": "\"Beats by at least 20 %\"",
+      "verdict": "ACCEPT x2",
+      "rule": "The winner's lag p95 is at most 0.8 x the other store's (not 'the other is at least 1.2 x the winner'). Both advocates call it the stricter of the two readings; it binds both stores the same way."
+    },
+    {
+      "item": 3,
+      "what": "Component counts for the tie-break",
+      "verdict": "ACCEPT x2, each checked against the code",
+      "rule": "The counts that decide are MongoDB 4 (replica set, keyFile, oplog sizing, oplog alarm), pgoutput 5, outbox 0. Cursor objects, consumers and growth alarms count on neither arm. S2's MongoDB consumer resumes only by start_after on its stored token, with no fallback, so the oplog window is needed for correctness. The literal-bullet counts of the S2 protocol's list (MongoDB 5, pgoutput 6, outbox 4) are published next to them, labelled as never deciding.",
+      "conditions": [
+        "The MongoDB advocate's condition: the literal-bullet counts (5 / 6 / 4) are published too, because the pre-registration says both counts are published. The report code at 125b4c7d publishes them, labelled 'never decides'.",
+        "The PostgreSQL advocate, against its own side: pgoutput could arguably count 4, because PostgreSQL's default max_slot_wal_keep_size=-1 keeps the slot's WAL without limit. It does not ask for that change, and says no verdict changes either way."
+      ],
+      "visibleEffect": "The runner owner reports a test in which the same data gives postgres-fits on the deciding counts and both-fit on the literal counts, so the choice matters and both are shown."
+    },
+    {
+      "items": [4, 5, 6, 7, 9],
+      "what": "Bookkeeping items 4 to 7 and 9, accepted as written",
+      "verdict": "ACCEPT x2 on each",
+      "proposal": "4–9 are bookkeeping: the old pairing's gate and components, invalid vs missing files, which file names count, excluded variants, trusting `discarded/`, and the seed-2 selection's candidate set.",
+      "note": "The runner owner's summary above is the only public wording of the proposed readings; item 8 is the one that was vetoed and is recorded separately. Each review states its own reason per item; read them in the two review files."
+    },
+    {
+      "item": 8,
+      "what": "Which counted cells a disturbance removes: the report checks it, instead of trusting the discarded/ directory",
+      "verdict": "VETO x2; the MongoDB advocate's stricter alternative is adopted",
+      "proposal": "trusting `discarded/`",
+      "why": "Both advocates refuse a report that trusts the directory. Trusting it had already failed twice: one cell flagged at 17:05 stayed counted until about 20:00, and five cells from 13:07 to 14:18 stayed counted until 21:35. A re-run reuses the cell's name, so a check by name alone cannot work.",
+      "alternatives": {
+        "mongodbAdvocate": "The report reads every heavy-work window flagged in the disturbance log, from a table a script can read, refuses while any counted cell's run overlaps one, and lists by name the cells kept under a light overlap.",
+        "postgresqlAdvocate": "The report reads the cell names flagged in the disturbance log and refuses to run while any of them is outside discarded/."
+      },
+      "rule": "The report refuses (exit 2, writes nothing, even with --allow-incomplete) when a counted cell's run, from its own t0 to its last event, overlaps a heavy window. Counted cells that overlap a light window are listed by name. The windows come from a machine-readable file, disturbance-windows.json, transcribed from the runner's private disturbance log as it is at private commit b1b857b8 (sha256 b62df233d45492df93eec8be465c5fbd6ac33656861d9dc97ad0aeebe6cdce68, the file amendment 01 cites); the log itself stays untouched.",
+      "windows": "12 windows, one per table row of the log: 7 heavy, 5 light (counted in the file as fetched, matching the runner owner's post). Where a row's own wording does not decide heavy or light, the file says why the call was made in a 'judgement' field. The strictest: 19:34 to 19:51 is heavy as a whole, because a browser e2e ran at about 19:47 inside mostly light tests."
+    }
+  ],
+  "reportCode": {
+    "commit": "125b4c7d767adad9f9ef36d7ef3d7e1c60c179aa",
+    "repository": "private",
+    "files": [
+      {
+        "path": ".ai/experiments/mongodb-home-ground/runner/s2_report.py",
+        "sha256": "6cfe7873c350290656e83b79dbe4138095a210888dd26712a1d5f8dc4d1a2d03"
+      },
+      {
+        "path": ".ai/experiments/mongodb-home-ground/runner/results/s2/disturbance-windows.json",
+        "sha256": "5730ef140d02da7b021977fbb601409115e6cde8c30b153b667ee9e95ed1fa86"
+      }
+    ],
+    "statedByRunnerOwner": "54 tests, synthetic data only; no counted cell was opened. While any of the 60 cells is missing, the report exits 2 and writes nothing; --allow-incomplete replaces every verdict word with INCOMPLETE.",
+    "verifiedHere": "Both sha256 values were recomputed from the files fetched at that commit on 2026-10-28 and match the runner owner's post. The two review files' source sha256 were recomputed the same way and match."
+  },
+  "unchanged": "Amendments 02 and 03 stand: one PostgreSQL variant per scale, chosen once, ties by the lower seed-1 mean, symmetry, and the six-item secondary analysis that never decides. The frozen record and amendments 01 to 03 stay byte-identical. S1, S3 and S4 are not affected.",
+  "limits": [
+    "The nine readings were proposed by the runner owner, who also implements them; the advocates reviewed a brief that is not published. Each review says which files it read.",
+    "The PostgreSQL advocate's own alternative for item 8 was not adopted; the stricter MongoDB-advocate version was. The thread records no second review of the adopted version by the PostgreSQL advocate.",
+    "Whether a disturbance window is heavy or light is the runner owner's transcription of the log. The runner owner's post says six of the calls were judgements; the file as fetched has five windows with a non-empty 'judgement' field. The file, not the post, is what the report reads.",
+    "The report code and the windows file are in a private repository and are cited here by commit and sha256, not published; a reader can check a hash but not open them."
+  ],
+  "notBefore": "S2's verdict is computed only after this amendment is merged to main of odin-labs-ai/odin-rnd, and only after all 60 counted cells exist."
+}
