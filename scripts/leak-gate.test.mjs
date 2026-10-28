@@ -441,6 +441,10 @@ test('a short term in raw binary bytes is caught; only an exact row (file sha256
   assert.match(moved.out, /STALE known occurrence/);
   const countRow = { file: 'dist/assets/noise.mp4', kind: 'term', hash: m[1], count: 1, reason: 'a count-based row' };
   assert.equal(run({ rows: [countRow] }).code, 1, 'a count-based row never covers a binary hit');
+  const bad = run({ bytes: Buffer.from([0, 0xe0, 0x80, 0x80, 0x20, 0x71, 0x7a, 0x78, 0]) });
+  assert.match(bad.out, /at offset 5 of sha256/, 'the offset after a malformed UTF-8 sequence is the real byte');
+  const utf = run({ bytes: Buffer.concat([Buffer.from([0, 0x20]), Buffer.from('\u00e9\u20ac ', 'utf8'), Buffer.from('qzx\0')]) });
+  assert.match(utf.out, /at offset 8 of sha256/, 'the offset after well-formed multi-byte characters is the real byte');
   assert.throws(() => loadKnown(JSON.stringify(stamped([{ ...exact, count: 2 }]))), /exact known occurrence/);
   assert.throws(() => loadKnown(JSON.stringify(stamped([{ ...exact, sha256: undefined }]))), /exact known occurrence/);
 });

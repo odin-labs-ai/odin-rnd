@@ -268,16 +268,18 @@ const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|
  * chance; such a hit is reviewed and listed as a known occurrence, never filtered away here.
  */
 function printable(bytes) { return printableMapped(bytes).text; }
+// One printable unit: an ASCII character or one well-formed UTF-8 sequence (no overlong forms, no surrogates).
+const UNIT = '[\\x20-\\x7e\\t]|[\\xc2-\\xdf][\\x80-\\xbf]|\\xe0[\\xa0-\\xbf][\\x80-\\xbf]|[\\xe1-\\xec\\xee\\xef][\\x80-\\xbf]{2}|\\xed[\\x80-\\x9f][\\x80-\\xbf]|\\xf0[\\x90-\\xbf][\\x80-\\xbf]{2}|[\\xf1-\\xf3][\\x80-\\xbf]{3}|\\xf4[\\x80-\\x8f][\\x80-\\xbf]{2}';
+const RUN = new RegExp(`(?:${UNIT})+`, 'g'), ONE = new RegExp(UNIT, 'g');
 /** The same runs, with the byte offset each UTF-16 unit of the text came from (a separator maps to the next run). */
 function printableMapped(bytes) {
   const parts = [], offs = [];
-  for (const m of bytes.toString('latin1').matchAll(/(?:[\x20-\x7e\t]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf4][\x80-\xbf]{3})+/g)) {
+  for (const m of bytes.toString('latin1').matchAll(RUN)) {
     if (parts.length) { parts.push('\n'); offs.push(m.index); }
-    let at = m.index;
-    for (const ch of Buffer.from(m[0], 'latin1').toString('utf8')) {
+    for (const u of m[0].matchAll(ONE)) {
+      const ch = Buffer.from(u[0], 'latin1').toString('utf8');
       parts.push(ch);
-      for (let k = 0; k < ch.length; k++) offs.push(at);
-      at += Buffer.byteLength(ch);
+      for (let k = 0; k < ch.length; k++) offs.push(m.index + u.index);
     }
   }
   return { text: parts.join(''), offs };
