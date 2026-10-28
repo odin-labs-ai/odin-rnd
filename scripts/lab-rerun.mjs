@@ -10,13 +10,15 @@
 // the record, never typed here. EXP 012 has no kit: its committed record holds counts only.
 //
 // What a step may be, fixed here and checked by kitProblems(): a program from a closed list (node, sha256sum), and
-// arguments that are flags or files of this repository under experiments/, each plain (letters, digits, ".", "_", "-",
-// "/"), so the command needs no quoting and is run as an argument list, never through a shell. The lab kit's page screen
-// (scripts/lab-kit.mjs pageLeaks) refuses any path shown on a page; maskKit() lets through exactly these commands and
-// outputs, and nothing else, before the screen runs; the site's leak gate still reads every byte of the built page.
+// arguments that are flags or regular files of this repository under experiments/ (no symlink, no directory, resolved
+// inside experiments/), each plain (letters, digits, ".", "_", "-", "/"), so the command needs no quoting and is run as
+// an argument list, never through a shell; a step passes only when it exits 0 and prints exactly its line and one line
+// end. The lab kit's page screen (scripts/lab-kit.mjs pageLeaks) refuses any path shown on a page; maskKit() lets
+// through exactly the block renderKit() rendered, once, and nothing else on the page, before the screen runs; the
+// site's leak gate still reads every byte of the built page.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { lstatSync, realpathSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { escape } from './lab-kit.mjs';
 // A cycle with lab-review.mjs (which renders the block): each uses the other only inside functions.
@@ -51,6 +53,15 @@ export const KITS = {
   ],
 };
 
+// A regular file (not a symlink, not a directory) whose real path is inside the repository's experiments/.
+function regularFileUnder(root, file) {
+  try {
+    if (!lstatSync(join(root, file)).isFile()) return false;
+    const inside = relative(realpathSync(join(root, 'experiments')), realpathSync(join(root, file)));
+    return inside !== '' && inside !== '..' && !inside.startsWith(`..${sep}`) && !isAbsolute(inside);
+  } catch { return false; }
+}
+
 /** Every reason a lab's kit may not be shown or run (empty when it may). */
 export function kitProblems(lab, record, { root = REPO_ROOT } = {}) {
   const steps = KITS[lab];
@@ -65,7 +76,7 @@ export function kitProblems(lab, record, { root = REPO_ROOT } = {}) {
     for (const a of args) {
       if (!/^[A-Za-z0-9._/-]+$/.test(a)) problems.push(`${at}: ${JSON.stringify(a)} is not a plain argument`);
       else if (a.startsWith('-')) { if (!/^--?[a-z][a-z0-9-]*$/.test(a)) problems.push(`${at}: ${a} is not a plain flag`); }
-      else if (!a.startsWith('experiments/') || a.includes('..') || !existsSync(join(root, a))) problems.push(`${at}: ${a} is not a file of this repository under experiments/`);
+      else if (!a.startsWith('experiments/') || a.includes('..') || !regularFileUnder(root, a)) problems.push(`${at}: ${a} is not a regular file of this repository under experiments/`);
     }
   }
   return problems;
@@ -84,28 +95,37 @@ export function kitSteps(lab, record, options) {
 /** The "Re-run this" block: clone, then each command and the line it prints. */
 export function renderKit(lab, record, options) {
   const steps = kitSteps(lab, record, options);
-  const items = steps.map(s => `<li><pre class="lab-rerun-command"><code>${escape(s.command)}</code></pre><p>prints</p><pre class="lab-rerun-output"><samp>${escape(s.prints)}</samp></pre><p>${escape(s.shows)}</p></li>`).join('');
-  return `<p>Clone <a href="${REPO}">this site's repository</a>, use Node 22, and from its root run these commands. Each one needs nothing installed and nothing from the network, and prints exactly the line under it. On macOS, <code>shasum -a 256</code> in place of <code>sha256sum</code> prints the same line.</p><ol class="lab-rerun">${items}</ol><p class="lab-source">These are the commands and the lines a CI job of this repository runs and checks, word for word, on every change and every day (the lab kits workflow). The expected hashes are the ones this page's record cites; when an experiment record changes, its new hash comes from the record, not from this text.</p>`;
+  return kitBlock(steps, s => escape(s.command), s => escape(s.prints));
 }
 
-/** The page with exactly the kit's commands and outputs replaced by plain words, for the page screen (and nothing else). */
+// The block, with how a command and its line are written (as shown, or masked for the page screen).
+const kitBlock = (steps, command, prints) => {
+  const items = steps.map(s => `<li><pre class="lab-rerun-command"><code>${command(s)}</code></pre><p>prints</p><pre class="lab-rerun-output"><samp>${prints(s)}</samp></pre><p>${escape(s.shows)}</p></li>`).join('');
+  return `<div class="lab-rerun-kit"><p>Clone <a href="${REPO}">this site's repository</a>, use Node 22, and from its root run these commands. Each one needs nothing installed and nothing from the network, and prints exactly the line under it. On macOS, <code>shasum -a 256</code> in place of <code>sha256sum</code> prints the same line.</p><ol class="lab-rerun">${items}</ol><p class="lab-source">These are the commands and the lines a CI job of this repository runs and checks, word for word, on every change and every day (the lab kits workflow). The expected hashes are the ones this page's record cites; when an experiment record changes, its new hash comes from the record, not from this text.</p></div>`;
+};
+
+/**
+ * The page with the kit's block, exactly as renderKit() rendered it and exactly once, written with plain words in place
+ * of its commands and lines, for the page screen. Nothing outside that block is touched: the same command anywhere else
+ * on the page is screened as it is. A page without the block, or with it twice, is refused.
+ */
 export function maskKit(html, lab, record, options) {
-  let out = html;
-  for (const s of kitSteps(lab, record, options)) {
-    for (const [shown, as] of [[`<code>${escape(s.command)}</code>`, '<code>a re-run command</code>'], [`<samp>${escape(s.prints)}</samp>`, '<samp>its output</samp>']]) {
-      if (!out.includes(shown)) throw new Error(`maskKit: the ${lab} kit's ${JSON.stringify(s.command)} is not on the page as rendered`);
-      out = out.split(shown).join(as);
-    }
-  }
-  return out;
+  const steps = kitSteps(lab, record, options);
+  const block = kitBlock(steps, s => escape(s.command), s => escape(s.prints));
+  const at = html.indexOf(block);
+  if (at < 0) throw new Error(`maskKit: the ${lab} kit's block is not on the page as rendered`);
+  if (html.indexOf(block, at + 1) >= 0) throw new Error(`maskKit: the ${lab} kit's block is on the page twice`);
+  return html.slice(0, at) + kitBlock(steps, () => 'a re-run command', () => 'its output') + html.slice(at + block.length);
 }
 
 /** Run a lab's kit, every command as an argument list (no shell), from `cwd`. Returns one result per step. */
 export function runKit(lab, record, { cwd = REPO_ROOT, spawn = spawnSync, ...options } = {}) {
   return kitSteps(lab, record, { root: cwd, ...options }).map(s => {
     const r = spawn(s.argv[0] === 'node' ? process.execPath : s.argv[0], s.argv.slice(1), { cwd, encoding: 'utf8' });
-    const got = String(r.stdout ?? '').trimEnd();
-    const ok = r.status === 0 && got === s.prints;
+    // Exactly the line and one line end: no extra space, blank line or second line.
+    const out = String(r.stdout ?? '');
+    const got = out.replace(/\n$/, '');
+    const ok = r.status === 0 && out === `${s.prints}\n`;
     return { command: s.command, prints: s.prints, got, status: r.status, ok, stderr: String(r.stderr ?? '') };
   });
 }
