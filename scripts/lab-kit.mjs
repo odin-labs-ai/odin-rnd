@@ -218,6 +218,14 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   if (/[\u202a-\u202e\u2066-\u2069]/.test(shown) || /[\u202a-\u202e\u2066-\u2069]/.test(decode(html))) add('a text direction control character');
   // The lines a reader sees, for the publisher's screen and the hash rules: a block element ends one.
   const text = lines;
+  // The publisher's screen once more over a second reading of the text, with every tag a line break and scripts,
+  // styles and comments dropped by pattern: it only ever adds a refusal, should the tokenizer ever lose a piece.
+  let hidden = html, before;
+  do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi, ''); } while (hidden !== before);
+  for (const line of new Set(decode(stripTags(hidden, '\n')).split('\n').map(l => l.trim()).filter(Boolean))) {
+    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
+    for (const hit of screenHits(masked)) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
+  }
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
   for (const line of [...new Set(text.split('\n').map(l => l.trim()).filter(Boolean))]) {
@@ -275,12 +283,22 @@ export function shownText(html, { breaks = false } = {}) {
     let j = i + (closing ? 2 : 1);
     let name = '';
     while (j < n && !/[\s/>]/.test(html[j])) name += html[j++];
-    let quote = null;
-    for (; j < n; j++) {
-      const c = html[j];
-      if (quote) { if (c === quote) quote = null; continue; }
-      if (c === '"' || c === "'") { if (/=\s*$/.test(html.slice(i, j))) quote = c; continue; }
-      if (c === '>') break;
+    // Attributes, by HTML's attribute states: a name (to whitespace, "/", ">" or "="; a leading "=" is part of it),
+    // then optionally "=" and a value: quoted (to the same quote) or unquoted (to whitespace or ">"; a quote inside an
+    // unquoted value is just a character of it).
+    const ws = c => c === ' ' || c === '\t' || c === '\n' || c === '\f' || c === '\r';
+    for (;;) {
+      while (j < n && (ws(html[j]) || html[j] === '/')) j++;
+      if (j >= n || html[j] === '>') break;
+      j++; // the attribute name's first character, whatever it is
+      while (j < n && !ws(html[j]) && html[j] !== '/' && html[j] !== '>' && html[j] !== '=') j++;
+      let k = j;
+      while (k < n && ws(html[k])) k++;
+      if (html[k] !== '=') { j = k; continue; }
+      j = k + 1;
+      while (j < n && ws(html[j])) j++;
+      if (html[j] === '"' || html[j] === "'") { const close = html.indexOf(html[j], j + 1); j = close < 0 ? n : close + 1; }
+      else while (j < n && !ws(html[j]) && html[j] !== '>') j++;
     }
     if (j >= n) break; // cut off by the end of the page: dropped
     const tag = name.toLowerCase();
