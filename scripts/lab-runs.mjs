@@ -168,8 +168,8 @@ const SITE_FEED_TITLE = 'Odin Labs R&D: every update and every lab run';
 
 /** A lab page's "Its runs" section: the badge, and links to its runs, its feed and the site feed. */
 export function renderLabRunsSection(lab) {
-  const s = lab.runs[0].lab;
-  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#runs-${escape(s)}">Every run of this lab</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
+  const latest = runState(lab.runs).latest;
+  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
 }
 
 /** The feeds, written and checked, and linked from the Labs index, the runs page and every lab page. */
