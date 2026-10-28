@@ -26,11 +26,14 @@ test('the published ledger reads, and every count is the one its files give', ()
   assert.deepEqual(byRound, [
     ['EXP 020', 'MongoDB:5 PostgreSQL:6'],
     ['EXP 020', 'MongoDB:1 PostgreSQL:1'],
+    ['EXP 020', 'MongoDB:1 PostgreSQL:1'],
     ['EXP 021', 'MongoDB:8 PostgreSQL:8'],
     ['EXP 021', 'MongoDB:4 PostgreSQL:2'],
   ]);
   const t = totals(ledger);
-  assert.equal(t.vetoes, 35);
+  assert.equal(t.vetoes, 37);
+  const a04 = ledger.experiments[0].rounds[2];
+  assert.deepEqual(a04.reviews.map(v => [v.side, v.vetoes, v.accepts.length]), [['MongoDB', ['item 8'], 8], ['PostgreSQL', ['item 8'], 8]]);
   assert.equal(t.accepted, t.vetoes);
   assert.equal(t.amendments, 5);
   assert.equal(ledger.bench.length, 4);
@@ -43,6 +46,10 @@ test('the review parser reads both list styles and the verdict-line style, and e
   assert.deepEqual(parseReview(`${head}## 3. Vetoes\n- **V1: the tuned cell.**\n  - Why: x\n\nNo veto on the rest:\n- **Driver.** fine\n`, 'x').vetoes, ['the tuned cell']);
   const verdicts = parseReview(`${head}(1) THE RULE: ACCEPT.\n(2) THE PARAGRAPH: VETO, narrow.\n`, 'x');
   assert.deepEqual([verdicts.vetoes, verdicts.accepts], [['the paragraph'], ['the rule']]);
+  const items = parseReview(`${head}1. **ACCEPT.** Fine.\n2. **ACCEPT, checked against the code.** x\n3. **VETO.** Alternative: y\n- **ACCEPT.** not numbered\n`, 'x');
+  assert.deepEqual([items.vetoes, items.accepts], [['item 3'], ['item 1', 'item 2']]);
+  // Inside a "Vetoes" section the numbered items are veto titles, never also item verdicts.
+  assert.deepEqual(parseReview(`${head}## Vetoes\n1. **VETO, the kill.** Fix.\n`, 'x').vetoes, ['VETO, the kill']);
   assert.throws(() => parseReview('# MongoDB advocate\n\nReviewer: a person.\n\n## Vetoes\n', 'x'), /model reviewer/);
   assert.throws(() => parseReview('# A review\n\nReviewer: an independent model reviewer (Claude, x).\n', 'x'), /which advocate/);
   assert.deepEqual(tableIds('| # | From |\n|---|---|\n| M1 | a |\n| M2 / P3 | b |\n'), ['M1', 'M2', 'P3']);

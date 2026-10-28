@@ -28,7 +28,9 @@
       "file": "experiments/mongodb-home-ground/reviews/amendment-04-postgresql-advocate.md"
     },
     "source": "Both reviews at private commit 6580157c2bc2a79768900415d09d4d0ad3707096, published with one substitution each (the private repository's name); source and published sha256 below. Neither reviewer opened a counted cell.",
-    "proposal": "The runner owner's brief to the reviewers is not published. What is public of the nine proposed readings is the runner owner's summary (quoted under each change below) and each review's own answer to each item."
+    "proposal": "The runner owner's brief to the reviewers is not published. For each item this record gives what is public: the runner owner's summary of the item, each review's own answer to it, verbatim, and the clause of the adopted report code (private commit 125b4c7d, sha256-pinned below) that implements it, verbatim.",
+    "proposalSummary": "4–9 are bookkeeping: the old pairing's gate and components, invalid vs missing files, which file names count, excluded variants, trusting `discarded/`, and the seed-2 selection's candidate set.",
+    "reviewedBuild": "Both reviews read the report code at private commit ce98d208. The adopted build, which applies their answers, is at private commit 125b4c7d; it was not reviewed again."
   },
   "documents": [
     {
@@ -80,11 +82,60 @@
       "visibleEffect": "The runner owner reports a test in which the same data gives postgres-fits on the deciding counts and both-fit on the literal counts, so the choice matters and both are shown."
     },
     {
-      "items": [4, 5, 6, 7, 9],
-      "what": "Bookkeeping items 4 to 7 and 9, accepted as written",
-      "verdict": "ACCEPT x2 on each",
-      "proposal": "4–9 are bookkeeping: the old pairing's gate and components, invalid vs missing files, which file names count, excluded variants, trusting `discarded/`, and the seed-2 selection's candidate set.",
-      "note": "The runner owner's summary above is the only public wording of the proposed readings; item 8 is the one that was vetoed and is recorded separately. Each review states its own reason per item; read them in the two review files."
+      "item": 4,
+      "what": "Item 4: the old pairing's gate and components",
+      "verdict": "ACCEPT x2, as written",
+      "proposal": "the old pairing's gate and components (the runner owner's summary of the item, quoted in full under 'proposalSummary')",
+      "reviewsSay": {
+        "mongodbAdvocate": "**ACCEPT.** It is secondary, labelled as favouring PostgreSQL, and never decides.",
+        "postgresqlAdvocate": "**ACCEPT.** This is secondary only, and it is defined before any result is seen."
+      },
+      "implementedAs": [
+        "3 each passing variant on its own vs MongoDB under the unchanged rule, plus the per-repetition best ",
+        "(PROTOCOL-S2.md's old pairing, which favours PostgreSQL)",
+        "Secondary items are labelled and never decide a verdict."
+      ]
+    },
+    {
+      "item": 5,
+      "what": "Item 5: invalid vs missing files",
+      "verdict": "ACCEPT x2, as written",
+      "proposal": "invalid vs missing files (the runner owner's summary of the item, quoted in full under 'proposalSummary')",
+      "reviewsSay": {
+        "mongodbAdvocate": "**ACCEPT.** This matches PREREG's `invalid` when \"a cell is incomplete\". The reason is shown.",
+        "postgresqlAdvocate": "**ACCEPT.** It matches PREREG's `invalid` (\"a cell is incomplete\") and keeps the reason visible."
+      },
+      "implementedAs": [
+        "A missing or malformed counted cell at a scale: `invalid` (the cells are listed).",
+        "It REFUSES (exit 2, nothing written) while any of the 60 counted cells is missing; --allow-incomplete writes the report with every verdict replaced by INCOMPLETE (never a verdict)."
+      ]
+    },
+    {
+      "item": 6,
+      "what": "Item 6: which file names count",
+      "verdict": "ACCEPT x2, as written",
+      "proposal": "which file names count (the runner owner's summary of the item, quoted in full under 'proposalSummary')",
+      "reviewsSay": {
+        "mongodbAdvocate": "**ACCEPT.** Extra file names are visible in the report and cannot be swapped in.",
+        "postgresqlAdvocate": "**ACCEPT.** These are the frozen matrix's names, and every ignored file is listed."
+      },
+      "implementedAs": [
+        "Counted cells: only files directly in --dir named <arm>-x<scale>-rep<r>-seed<s>.json, arm in mongo / pgoutput / outbox, scale 1 / 10, r 0-4, s 1 / 2 (3 x 2 x 5 x 2 = 60). discarded/, smoke-*, smoke-history/ never count."
+      ]
+    },
+    {
+      "item": 7,
+      "what": "Item 7: excluded variants",
+      "verdict": "ACCEPT x2, as written",
+      "proposal": "excluded variants (the runner owner's summary of the item, quoted in full under 'proposalSummary')",
+      "reviewsSay": {
+        "mongodbAdvocate": "**ACCEPT.** A variant that fails the gate has no comparison to make. The cells it failed are shown.",
+        "postgresqlAdvocate": "**ACCEPT.** PROTOCOL-S2 defines \"best\" among the variants that pass the gate. Publishing failing variants as excluded meets \"every variant, every outcome\"."
+      },
+      "implementedAs": [
+        "1 every PostgreSQL variant's gate outcome in every cell on both seeds; excluded variants with the reason",
+        "No candidate -> PostgreSQL does not pass at that scale."
+      ]
     },
     {
       "item": 8,
@@ -97,7 +148,27 @@
         "postgresqlAdvocate": "The report reads the cell names flagged in the disturbance log and refuses to run while any of them is outside discarded/."
       },
       "rule": "The report refuses (exit 2, writes nothing, even with --allow-incomplete) when a counted cell's run, from its own t0 to its last event, overlaps a heavy window. Counted cells that overlap a light window are listed by name. The windows come from a machine-readable file, disturbance-windows.json, transcribed from the runner's private disturbance log as it is at private commit b1b857b8 (sha256 b62df233d45492df93eec8be465c5fbd6ac33656861d9dc97ad0aeebe6cdce68, the file amendment 01 cites); the log itself stays untouched.",
-      "windows": "12 windows, one per table row of the log: 7 heavy, 5 light (counted in the file as fetched, matching the runner owner's post). Where a row's own wording does not decide heavy or light, the file says why the call was made in a 'judgement' field. The strictest: 19:34 to 19:51 is heavy as a whole, because a browser e2e ran at about 19:47 inside mostly light tests."
+      "windows": "12 windows, one per table row of the log: 7 heavy, 5 light (counted in the file as fetched, matching the runner owner's post). Where a row's own wording does not decide heavy or light, the file says why the call was made in a 'judgement' field. The strictest: 19:34 to 19:51 is heavy as a whole, because a browser e2e ran at about 19:47 inside mostly light tests.",
+      "implementedAs": [
+        "The report REFUSES (exit 2, nothing written, --allow-incomplete or not) while any counted cell's run overlaps a heavy window, or while a counted cell's run cannot be placed in time; it lists by name the counted cells that overlap a light window."
+      ],
+      "reviewsSay": {
+        "mongodbAdvocate": "**VETO.** Alternative: the report reads every heavy-work window flagged in DISTURBANCES.md, in a table a script can read. It refuses, the same way it refuses on a missing cell, when any top-level counted cell's run (`t0` to its end) overlaps one of those windows. It also lists by name the cells kept under light overlap. Reason: the disturbance rule says such a cell \"is discarded and re-run\", and trusting the directory has already failed twice. `pgoutput-x1-rep4-seed2` stayed counted from 17:05 to about 20:00, and five cells from 13:07–14:18 stayed counted until 21:35. Checking by name alone cannot work, because a re-run reuses the name. Amendment 03 shows that load on the host hit the MongoDB arm hardest.",
+        "postgresqlAdvocate": "**VETO.** Alternative: the report reads the cell names flagged in `DISTURBANCES.md` and refuses to run while any of them is outside `discarded/`. Reason: the doctrine says explicit > implicit and everything must be reproducible. Moving the files by hand is a step a stranger cannot check. The check works the same for both stores and costs one parse."
+      }
+    },
+    {
+      "item": 9,
+      "what": "Item 9: the seed-2 selection's candidate set",
+      "verdict": "ACCEPT x2, as written",
+      "proposal": "the seed-2 selection's candidate set (the runner owner's summary of the item, quoted in full under 'proposalSummary')",
+      "reviewsSay": {
+        "mongodbAdvocate": "**ACCEPT.** It uses the same gate set, and only the seed changes.",
+        "postgresqlAdvocate": "**ACCEPT.** The gates already span both seeds, so the candidate set is the same. Breaking ties on seed-2 values is the only reading consistent with a seed-2 selection."
+      },
+      "implementedAs": [
+        "5 the variant a seed-2-based selection would pick, and whether it matches"
+      ]
     }
   ],
   "reportCode": {
@@ -111,17 +182,24 @@
       {
         "path": ".ai/experiments/mongodb-home-ground/runner/results/s2/disturbance-windows.json",
         "sha256": "5730ef140d02da7b021977fbb601409115e6cde8c30b153b667ee9e95ed1fa86"
+      },
+      {
+        "path": ".ai/experiments/mongodb-home-ground/runner/test_s2_report.py",
+        "sha256": "16b44b6a6477e591b7817561ea0f1abba8d9938f82ef6b48c22209bce0fab6b7"
       }
     ],
     "statedByRunnerOwner": "54 tests, synthetic data only; no counted cell was opened. While any of the 60 cells is missing, the report exits 2 and writes nothing; --allow-incomplete replaces every verdict word with INCOMPLETE.",
-    "verifiedHere": "Both sha256 values were recomputed from the files fetched at that commit on 2026-10-28 and match the runner owner's post. The two review files' source sha256 were recomputed the same way and match."
+    "verifiedHere": "On 2026-10-28 the publisher fetched s2_report.py, disturbance-windows.json, test_s2_report.py, DISTURBANCES.md, PREREG.md and PROTOCOL-S2.md at private commit 125b4c7d; the first two match the runner owner's sha256, and DISTURBANCES.md matches the b62df233 that amendment 01 cites. The two review files' source sha256 match too. The test file, run there with pytest 9.1.1 on synthetic data only, gave 54 passed, 0 failed. Among them: test_cli_refuses_and_writes_nothing_while_cells_are_missing, test_allow_incomplete_labels_everything_and_never_emits_a_verdict, test_heavy_overlap_refuses_even_with_allow_incomplete, test_heavy_overlap_by_one_second_at_either_end_refuses_and_just_outside_passes, test_light_overlap_is_listed_by_name, test_a_cell_with_no_run_interval_refuses, test_only_plan_names_count, test_literal_component_counts_are_published_but_never_decide and test_transcription_has_one_window_per_disturbances_table_row. No counted cell was read."
   },
   "unchanged": "Amendments 02 and 03 stand: one PostgreSQL variant per scale, chosen once, ties by the lower seed-1 mean, symmetry, and the six-item secondary analysis that never decides. The frozen record and amendments 01 to 03 stay byte-identical. S1, S3 and S4 are not affected.",
   "limits": [
     "The nine readings were proposed by the runner owner, who also implements them; the advocates reviewed a brief that is not published. Each review says which files it read.",
+    "Which code clause implements which of items 4 to 7 and 9 is the publisher's reading: the brief is unpublished, so each item is matched by the runner owner's summary, in its order, and by each review's own words for that item.",
+    "The tests were run by the publisher on a copy of the pinned files, not by an independent party.",
     "The PostgreSQL advocate's own alternative for item 8 was not adopted; the stricter MongoDB-advocate version was. The thread records no second review of the adopted version by the PostgreSQL advocate.",
     "Whether a disturbance window is heavy or light is the runner owner's transcription of the log. The runner owner's post says six of the calls were judgements; the file as fetched has five windows with a non-empty 'judgement' field. The file, not the post, is what the report reads.",
     "The report code and the windows file are in a private repository and are cited here by commit and sha256, not published; a reader can check a hash but not open them."
   ],
-  "notBefore": "S2's verdict is computed only after this amendment is merged to main of odin-labs-ai/odin-rnd, and only after all 60 counted cells exist."
+  "notBefore": "S2's verdict is computed only after this amendment is merged to main of odin-labs-ai/odin-rnd, and only after all 60 counted cells exist.",
+  "resolution": "Both vetoes are accepted: the report checks the disturbances itself and trusts no directory. The eight other items stand as proposed."
 }
