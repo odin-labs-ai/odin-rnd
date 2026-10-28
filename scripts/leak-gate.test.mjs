@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
 import { addScreenNames, isTestRunnerCommand, namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
-import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { TREE_SLOTS, MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
@@ -292,6 +292,7 @@ test('the committed known-occurrence list is well formed and lists no canary', (
 test('the Leak screen page carries every slot the gate fills', () => {
   const page = readFileSync('site/leak-screen/index.html', 'utf8');
   const filled = fillPage(page, { terms: 1, canaries: 1, scanned: '2026-10-28T00:00:00Z', commit: COMMIT, files: 1, hits: 0, known: 0 });
+  assert.match(fillPage(page, { 'tree-files': 9, 'tree-hits': 0, 'tree-known': 2 }, TREE_SLOTS), /data-leak-screen="tree-known">2</);
   assert.match(filled, /datetime="2026-10-28T00:00:00Z"/);
   assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
 });
@@ -300,7 +301,7 @@ test('the publish workflow also screens the tracked tree, with the secret, uncon
   const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
   const step = wf.slice(wf.indexOf('Source screen'), wf.indexOf('Upload Pages'));
   assert.match(step, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
-  assert.match(step, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --tree\n/);
+  assert.match(step, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html --tree\n/);
   assert.doesNotMatch(step, /continue-on-error|\|\| true|if:/);
 });
 
@@ -522,7 +523,15 @@ test('--tree reads every tracked file of the checkout for terms and canaries: re
     const hash = run().out.match(/term hash ([0-9a-f]{8})/)[1];
     writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([...rows, { file: 'scripts/record.mjs', kind: 'term', hash, count: 1, reason: 'a reviewed tree occurrence' }])));
     assert.equal(run(['--known', 'known.json']).code, 0, 'a tree row covers its tree occurrence');
-    assert.equal(run(['--known', 'known.json', '--page', 'x']).code, 2, '--tree takes no page');
+    // --page with --tree fills the page's own tree line, and only that line.
+    writeFileSync(join(root, 'page.html'), PAGE.replace('</p>', ' <span data-leak-screen="tree-files">0</span> <span data-leak-screen="tree-hits">-</span> <span data-leak-screen="tree-known">-</span></p>'));
+    const filled = run(['--known', 'known.json', '--page', 'page.html']);
+    assert.equal(filled.code, 0, filled.out);
+    const page = readFileSync(join(root, 'page.html'), 'utf8');
+    assert.match(page, /data-leak-screen="tree-hits">0</);
+    assert.match(page, /data-leak-screen="tree-known">1</);
+    assert.match(page, /data-leak-screen="tree-files">[1-9]\d*</);
+    assert.match(page, /data-leak-screen="hits">-</, 'the built-site slots stay for the built-site scan');
     // A tracked name that is not UTF-8 (byte FF) could collide with another once decoded: it stops the build.
     const odd = Buffer.concat([Buffer.from(join(root, 'scripts/x')), Buffer.from([0xff]), Buffer.from('.txt')]);
     // (A file system that refuses such a name, as APFS does, cannot hold one; CI's Linux runner can.)

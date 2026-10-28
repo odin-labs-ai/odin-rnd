@@ -570,15 +570,17 @@ export function settle(hits, known, strict = new Set()) {
 }
 
 const SLOTS = ['terms', 'canaries', 'scanned', 'commit', 'files', 'hits', 'known'];
+// The tree scan's own line on the page: the tracked files it read, its new hits and its known occurrences.
+export const TREE_SLOTS = ['tree-files', 'tree-hits', 'tree-known'];
 /** The Leak screen page, its slots filled. Throws when a slot is missing, so the page cannot silently go stale. */
-export function fillPage(html, values) {
+export function fillPage(html, values, slots = SLOTS) {
   let out = html;
-  for (const slot of SLOTS) {
+  for (const slot of slots) {
     const re = new RegExp(`(<[^>]*data-leak-screen="${slot}"[^>]*>)[^<]*(<)`);
     if (!re.test(out)) throw new Error(`leak gate: the Leak screen page has no "${slot}" slot`);
     out = out.replace(re, (_, open, close) => `${open}${String(values[slot]).replaceAll('&', '&amp;').replaceAll('<', '&lt;')}${close}`);
   }
-  return out.replace(/(<time[^>]*data-leak-screen="scanned"[^>]*datetime=")[^"]*(")/, `$1${values.scanned}$2`);
+  return slots.includes('scanned') ? out.replace(/(<time[^>]*data-leak-screen="scanned"[^>]*datetime=")[^"]*(")/, `$1${values.scanned}$2`) : out;
 }
 
 function main(argv) {
@@ -596,7 +598,7 @@ function main(argv) {
   }
   // --tree: every file git tracks in this checkout (the public source, every record, every asset), for terms and canaries.
   if (tree) {
-    if (paths.length || page) throw new Error('leak gate: --tree takes no paths and no page');
+    if (paths.length) throw new Error('leak gate: --tree takes no paths');
     let raw;
     try { raw = execFileSync('git', ['ls-files', '-z'], { maxBuffer: 1 << 28 }); } catch { throw new Error('leak gate: git ls-files failed'); }
     // Every tracked name must be valid UTF-8, so the name read back is the file git tracks: a name that does not
@@ -628,8 +630,11 @@ function main(argv) {
   console.log(`leak gate: ${secret.terms} protected terms, ${secret.canaries} canaries; ${result.texts} text files read, ${result.binaries} binary files counted; ${fresh.length} hits, ${covered} known occurrences, ${stale.length} stale rows.`);
   if (fresh.length || stale.length) return 1;
   if (page) {
-    if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error('leak gate: --page needs the commit (40 hex) the site was built from');
-    const filled = fillPage(config(page, 'Leak screen page'), { terms: secret.terms, canaries: secret.canaries, scanned: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), commit, files: result.texts, hits: 0, known: covered });
+    if (!tree && !/^[0-9a-f]{40}$/.test(commit)) throw new Error('leak gate: --page needs the commit (40 hex) the site was built from');
+    // The built-site scan fills the page's main slots; the tree scan, run after it on the same page, fills its own line.
+    const filled = tree
+      ? fillPage(config(page, 'Leak screen page'), { 'tree-files': result.texts, 'tree-hits': 0, 'tree-known': covered }, TREE_SLOTS)
+      : fillPage(config(page, 'Leak screen page'), { terms: secret.terms, canaries: secret.canaries, scanned: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), commit, files: result.texts, hits: 0, known: covered });
     const again = scanText(filled, secret);
     if (again.length) { for (const hit of again) console.log(report({ file: page, ...hit })); return 1; }
     writeFileSync(page, filled);
