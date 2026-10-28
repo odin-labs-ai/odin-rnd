@@ -165,10 +165,12 @@ function namedRef(m, name, semi) {
   return { text: head + rest, from };
 }
 /** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
-function decodedReading(r) {
+function decodedReading(r, whole = false) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
-  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*)(;?)/g, namedRef);
+  // Read twice: once with HTML's legacy-prefix rule, once with every unknown "&name;" as one character (a full HTML
+  // name the gate does not carry, such as &notin;, is one character, not "¬" + "in;").
+  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*)(;?)/g, whole ? (m, name, semi) => (semi && !Object.hasOwn(NAMED, name) ? ' ' : namedRef(m, name, semi)) : namedRef);
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
@@ -229,8 +231,8 @@ function scanOne(r, secret, cache) {
 // references; in code `a&&notReady` or `flags&mask;` is not one, and in a binary's printable runs `&xy;` is chance.
 export function scanText(text, secret, cache = new Map(), refs = true) {
   const raw = identity(text);
-  const dec = decodedReading(raw);
-  const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
+  const dec = decodedReading(raw), whole = decodedReading(raw, true);
+  const readings = [raw, dec, untagged(dec), spaced(dec), whole, untagged(whole), spaced(whole)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
   // A reference the gate does not read as HTML would: an unknown name with a semicolon, or a legacy name it does not carry.
   if (refs) {

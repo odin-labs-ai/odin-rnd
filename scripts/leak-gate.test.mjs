@@ -85,6 +85,7 @@ const LEAKS = {
   'a legacy reference without its semicolon that the gate does not decode': ['dist/index.html', '<p>Zephyr&copy Quarry</p>', /index\.html:1 unknown-reference/],
   'a protected term after a legacy reference glued to it in a script': ['dist/assets/inject.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&copyQuarry;</p>");', /inject\.js:1 term/],
   'a protected term after a known legacy reference glued to it': ['dist/index.html', '<p>Zephyr&nbspQuarry;</p>', /index\.html:1 term/],
+  'a protected term around a full HTML name the gate does not carry, in a script': ['dist/assets/notin.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&notin;Quarry</p>");', /notin\.js:1 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
