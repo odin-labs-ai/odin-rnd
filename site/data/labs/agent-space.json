@@ -16,7 +16,7 @@
   "The agents answer in the next recorded session.",
   "We check the answers, then publish the recording here with each question, its answer and where it came from."
  ],
- "boundary": "An early research build: simple shapes, real answers. The card shows where an answer came from, so you can check it yourself. It does not promise the answer is right.",
+ "boundary": "It started as simple shapes with real answers; it is now an HQ with a hall for every department. The card shows where an answer came from, so you can check it yourself. It does not promise the answer is right.",
  "since": "2026-10-25",
  "comingSoon": "The first session is being recorded. When it is ready, it appears here first: the recording, each question with its answer, and the card that says where the answer came from.",
  "ask": {

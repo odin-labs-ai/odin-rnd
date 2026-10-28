@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { dispatchProblems, isLabLink, screenHits, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
+import { PROGRESS_FILE, readProgress, renderProgress, renderProgressHero } from './lab-progress.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
 import { readEngineHistory } from './lab-engine-history.mjs';
@@ -196,11 +197,18 @@ function checkedProofs(html, dispatches) {
   return html;
 }
 
+// Lab 01's top figure before the progress record existed: a still from the first build, kept for a root without one.
+const EARLIER_HERO = '<figure class="lab-hero-media"><img src="../../assets/agent-space/agent-space-overview.jpg" width="1280" height="720" alt="The Odin agent space: agents in their own spots in a small 3D world."><figcaption>From an earlier recording, also on <a href="../../#agent-space">the home page</a>.</figcaption></figure>';
+
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
 function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
+  // Lab 01's progress (scripts/lab-progress.mjs): the hero film and "How far it came". Required on the published site, as
+  // Lab 05's record is; a fixture without it keeps the earlier still at the top and says the steps are not published.
+  if (requireBench && !existsSync(join(root, PROGRESS_FILE))) throw new Error(`Lab 01's progress is required on the published site: ${PROGRESS_FILE} is missing`);
+  const progress = readProgress(root, films);
   const story = readMilestones(root, { now });
   const delivery = readDelivery(root);
   // The story page's template ships only with its record: without one, its markers would reach dist/ unfilled.
@@ -261,6 +269,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }),
       // The link to the explorer, only when it is rendered (so it always lands on a page).
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
+      '<!--LAB_HERO_MEDIA-->': progress ? renderProgressHero(progress) : EARLIER_HERO, '<!--LAB_PROGRESS-->': progress ? renderProgress(progress, films) : '<p class="lab-none">The steps from the first build to now are not published yet.</p>',
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
