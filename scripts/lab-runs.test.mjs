@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
-import { BADGES, readLabRuns, renderProvenance, runState, runsProblems, withLabRuns } from './lab-runs.mjs';
+import { BADGES, readLabRuns, renderProvenance, renderRuns, runAnchor, runRows, runState, runsProblems, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
 import { renderLabs } from './labs.mjs';
 
 // A lab card's provenance and badge (scripts/lab-runs.mjs), from record v1 runs. Every fixture is Lab 05's golden Mac
@@ -113,4 +113,61 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
 test('a card that is not there exactly once refuses the build', () => {
   const pages = renderLabs();
   assert.throws(() => withLabRuns({ ...pages, 'labs/index.html': pages['labs/index.html'].replace('aria-labelledby="lab-tile-rogue">', '>') }), /the card of rogue is not there exactly once/);
+});
+
+// The runs page (WO-02): every run of every lab, newest first, each row linking its record.
+const rogueTile = JSON.parse(readFileSync('site/data/labs/rogue-tile.json', 'utf8'));
+const otherTile = { ...rogueTile, label: 'Lab 99', title: 'A second lab', experiment: 'second', links: [{ label: 'Its page', href: 'labs/second/index.html' }] };
+
+test('no run in any record: the runs page says so, and has no table', () => {
+  const html = renderRuns([]);
+  assert.match(html, /<div class="lab-empty" id="no-runs"><p class="technical">NO RUN YET<\/p>/);
+  assert.doesNotMatch(html, /<table/);
+});
+
+test('rows are newest first across labs; a tie is ordered by lab, then machine class, then hash; anchors never move', () => {
+  const late = on('org-hosted', 'org-ci-heavy', '2026-10-27T22:00:00Z');
+  const tieA = on('github-hosted', 'ubuntu-latest', '2026-10-27T20:00:00Z');
+  const labs = [{ tile: rogueTile, href: 'data/labs/rogue/record.json', runs: [laptop, org, late, tieA] }, { tile: otherTile, href: 'data/labs/second/record.json', runs: [asLab(org, 'second')] }];
+  const order = runRows(labs).map(r => `${r.run.lab} ${r.run.machineClass} ${r.run.ranAt}`);
+  assert.deepEqual(order, ['rogue org-ci-heavy 2026-10-27T22:00:00Z', 'rogue org-ci-heavy 2026-10-27T20:00:00Z', 'rogue ubuntu-latest 2026-10-27T20:00:00Z', 'second org-ci-heavy 2026-10-27T20:00:00Z', 'rogue mac 2026-10-27T11:25:33Z']);
+  const html = renderRuns(labs);
+  const ids = [...html.matchAll(/<tr id="([^"]+)">/g)].map(m => m[1]);
+  assert.equal(ids.length, 5);
+  assert.equal(new Set(ids).size, 5, 'one anchor per run');
+  assert.equal(ids[0], runAnchor(late));
+  assert.equal(runAnchor(laptop), 'run-rogue-mac-20261027112533-47c9ab93279d');
+  // Adding a run does not move the anchors of the others.
+  assert.deepEqual(new Set([...renderRuns([{ ...labs[0], runs: [laptop, org] }]).matchAll(/<tr id="([^"]+)">/g)].map(m => m[1])), new Set([runAnchor(laptop), runAnchor(org)]));
+  assert.match(html, /<caption>5 runs, newest first\./);
+});
+
+test('each row says when, which lab, runner, machine class, commit, record hash and result, and links its record', () => {
+  const html = renderRuns([{ tile: rogueTile, href: 'data/labs/rogue/record.json', runs: [laptop] }]);
+  const row = /<tr id="run-rogue-mac-[^"]+">(.*?)<\/tr>/.exec(html)[1];
+  const cells = [...row.matchAll(/<td>(.*?)<\/td>/g)].map(m => m[1]);
+  assert.deepEqual(cells, ['<time datetime="2026-10-27T11:25:33Z">27 Oct 2026, 11:25 UTC</time>', '<a href="../../labs/rogue/index.html">Lab 05: Can an agent go rogue?</a>', 'laptop', '<code>mac</code>', '<code>aa35e6db</code>', '<code>47c9ab93279d</code>', 'SAME, 0 breaches', '<a href="../../data/labs/rogue/record.json">The record</a>']);
+  assert.match(html, /<caption>One run, newest first\./);
+});
+
+test('the published runs page: Lab 05\'s laptop run, its record linked, linked from the index and the card, screened', () => {
+  const pages = renderLabs();
+  const page = pages[RUNS_PAGE];
+  assert.ok(page, 'the runs page is rendered');
+  assert.equal([...page.matchAll(/<tr id="/g)].length, readLabRuns().reduce((n, l) => n + l.runs.length, 0));
+  assert.match(page, /<tr id="run-rogue-mac-20261027112533-47c9ab93279d">/);
+  assert.match(page, /<a href="\.\.\/\.\.\/data\/labs\/rogue\/record\.json">The record<\/a>/);
+  assert.doesNotMatch(page, /<!--[A-Z_]+-->/);
+  assert.deepEqual(pageLeaks(page, readLabRuns().flatMap(l => l.runs.flatMap(recordHashes))), []);
+  assert.doesNotMatch(page, /org machine|daily/i);
+  const index = pages['labs/index.html'];
+  assert.match(index, /<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p><\/section>/);
+  assert.match(index, /<p class="lab-provenance-more"><a href="runs\/#runs-rogue">Every run of this lab<\/a><\/p>/);
+  assert.match(page, /id="runs-rogue"/);
+  assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/runs\/<\/loc>/);
+});
+
+test('a runs page that would show a hash no record holds is refused', () => {
+  const html = renderRuns([{ tile: rogueTile, href: 'data/labs/rogue/record.json', runs: [org] }]);
+  assert.ok(pageLeaks(html, recordHashes(laptop).filter(h => h !== org.recordHash)).some(p => /a hash the record does not hold/.test(p)));
 });
