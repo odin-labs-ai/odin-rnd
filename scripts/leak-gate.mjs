@@ -100,8 +100,10 @@ function mapped(r, re, fn) {
   const at = [];
   for (const m of r.text.matchAll(re)) {
     text += r.text.slice(last, m.index); parts.push(r.at.subarray(last, m.index));
-    const out = fn(...m);
-    text += out; parts.push(new Int32Array(out.length).fill(r.at[m.index] ?? 0));
+    // fn returns a string (every character from the match's start) or {text, from}: each character's offset in the match.
+    const out = fn(...m), str = typeof out === 'string' ? out : out.text;
+    text += str;
+    parts.push(typeof out === 'string' ? new Int32Array(str.length).fill(r.at[m.index] ?? 0) : Int32Array.from(out.from, k => r.at[m.index + k] ?? 0));
     last = m.index + m[0].length;
   }
   if (last === 0 && !parts.length) return r;
@@ -110,6 +112,27 @@ function mapped(r, re, fn) {
   let o = 0;
   for (const p of parts) { all.set(p, o); o += p.length; }
   return { text, at: all };
+}
+/**
+ * A run of percent codes, decoded as UTF-8 (%C2%A0 is a no-break space), each character keeping the offset of its own
+ * first code so two words in one run stay two occurrences. A byte that is not valid UTF-8 stays as written; control
+ * characters read as white space.
+ */
+function percentRun(run) {
+  const bytes = run.match(/%[0-9a-f]{2}/gi).map(c => Number.parseInt(c.slice(1), 16));
+  let text = '';
+  const from = [];
+  for (let i = 0; i < bytes.length;) {
+    const b = bytes[i], len = b < 0x80 ? 1 : b >= 0xc2 && b < 0xe0 ? 2 : b >= 0xe0 && b < 0xf0 ? 3 : b >= 0xf0 && b < 0xf5 ? 4 : 0;
+    let ch = null;
+    if (len && i + len <= bytes.length) { try { ch = decodeURIComponent(run.slice(i * 3, (i + len) * 3)); } catch { ch = null; } }
+    if (ch === null) { text += run.slice(i * 3, i * 3 + 3); from.push(i * 3, i * 3 + 1, i * 3 + 2); i++; continue; }
+    if (/^[\x00-\x1f\x7f]$/.test(ch)) ch = ' ';
+    text += ch;
+    for (let k = 0; k < ch.length; k++) from.push(i * 3);
+    i += len;
+  }
+  return { text, from };
 }
 /** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
 function decodedReading(r) {
@@ -122,10 +145,7 @@ function decodedReading(r) {
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /\\x([0-9a-f]{2})/gi, (_, h) => { const c = Number.parseInt(h, 16); return c < 0x20 || c === 0x7f ? ' ' : String.fromCharCode(c); });
   r = mapped(r, /\\[nrtbf]/g, () => ' ');
-  // A run of percent codes decodes as UTF-8 (%C2%A0 is a no-break space); a run that is not valid UTF-8 decodes byte by
-  // byte. Control characters read as white space.
-  const byByte = run => run.replace(/%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : c < 0x20 || c === 0x7f ? ' ' : m; });
-  r = mapped(r, /(?:%[0-9a-f]{2})+/gi, run => { try { return decodeURIComponent(run).replace(/[\x00-\x1f\x7f]/g, ' '); } catch { return byByte(run); } });
+  r = mapped(r, /(?:%[0-9a-f]{2})+/gi, percentRun);
   // Invisible format characters (zero-width spaces, a soft hyphen, direction marks) vanish, as they do on screen.
   return mapped(r, /\p{Cf}/gu, () => '');
 }
