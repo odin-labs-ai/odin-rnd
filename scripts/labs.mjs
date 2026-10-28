@@ -28,6 +28,7 @@ import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
+import { withLabRuns } from './lab-runs.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
@@ -186,7 +187,7 @@ function checkedProofs(html, dispatches) {
 }
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
-export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
+function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
@@ -253,4 +254,13 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...rogue.pages,
     ...blind.pages,
   };
+}
+
+/**
+ * The rendered Labs pages and feeds, keyed by their dist/ path: the pages above, with each lab card's "runner · commit ·
+ * record hash" and badge read from its record's runs (scripts/lab-runs.mjs; the build fails on a problem).
+ */
+export function renderLabs(root = 'site', options = {}) {
+  // The runs' dates are checked against the build's own clock (as Lab 05's are), not a caller's `now`.
+  return withLabRuns(renderLabPages(root, options), root);
 }
