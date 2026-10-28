@@ -630,6 +630,11 @@ test('a pull request\'s title, body and every commit message are screened: a pla
 test('the pull request text screen runs on every PR event, on GitHub-hosted runners, with the secret, unconditionally', () => {
   const wf = readFileSync('.github/workflows/pr-text.yml', 'utf8');
   assert.match(wf, /types: \[opened, edited, synchronize, reopened\]/);
+  // The screen and its gate come from the base branch: a pull request can neither replace them nor run code with the secret.
+  assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
+  assert.doesNotMatch(wf, /\n  pull_request:\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n\s+persist-credentials: false/);
+  assert.doesNotMatch(wf, /head\.(sha|ref)|refs\/pull\//, 'no file of the pull request is checked out');
   assert.match(wf, /runs-on: ubuntu-latest/);
   assert.doesNotMatch(wf, /self-hosted|continue-on-error|\|\| true|\n\s+if:/);
   assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
