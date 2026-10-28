@@ -28,6 +28,7 @@ import { escape, pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordProblems } from './lab-record.mjs';
 import { readTiles } from './lab-tiles.mjs';
 import { checkedFeeds, feedProblems, readUpdates, renderFeeds, SITE_FEED, SITE_URL, UPDATES_FILE } from './lab-feeds.mjs';
+import { stepChart } from './lab-engine-history.mjs';
 
 export const RUNS_PAGE = 'labs/runs/index.html';
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -178,10 +179,41 @@ const head = (html, path, links) => {
 const alternate = (title, href) => `<link rel="alternate" type="application/atom+xml" title="${escape(title)}" href="${escape(href)}">`;
 const SITE_FEED_TITLE = 'Odin Labs R&D: every update and every lab run';
 
+/**
+ * The lab's org-machine days as a dated series (vision-plan bundle 3, WO-02): one point per UTC day the record holds
+ * org runs for, oldest first. The value is how many org machine classes printed the committed state hash that day
+ * (2: both legs reproduced it; 1: one leg did, or only one ran; 0: none did), and each point keeps its day's state
+ * (same, single, different), its record hashes and its runs. Taken from the runs alone; nothing is estimated between
+ * days, and a day with no run is no point. ranAt is UTC by the record schema (scripts/schemas/odin-lab-record.schema.json:
+ * `YYYY-MM-DDTHH:MM:SSZ` only, and readLabRuns refuses any run that misses it), so its first ten characters ARE the UTC day.
+ */
+export function daySeries(runs) {
+  const days = new Map();
+  for (const r of [...runs].filter(ORG).sort(byTime)) days.set(r.ranAt.slice(0, 10), [...(days.get(r.ranAt.slice(0, 10)) ?? []), r]);
+  return [...days].map(([day, group]) => {
+    const hashes = [...new Set(group.map(r => r.recordHash))];
+    const reproduced = group.filter(r => r.result.verdict === 'SAME' && r.result.breaches === 0).length;
+    const state = hashes.length > 1 || group.some(r => r.result.verdict !== 'SAME') ? 'different' : group.length === 1 ? 'single' : 'same';
+    return { day, at: group[0].ranAt, values: { reproduced }, state, hashes, runs: group };
+  });
+}
+
+const DAY_WORDS = { same: 'same hash on both org machines', single: 'one org machine', different: 'a different hash' };
+
+/** The series beside the runs: stated for one day, a step chart and every day for two or more. Nothing for none. */
+export function renderDaySeries(runs, { runsHref = '../runs/' } = {}) {
+  const points = daySeries(runs);
+  if (!points.length) return '';
+  const list = `<ol class="lab-day-series">${points.map(p => `<li data-state="${p.state}"><time datetime="${p.day}">${escape(p.day)}</time>: ${escape(DAY_WORDS[p.state])}, ${p.values.reproduced} of ${p.runs.length} reproduced the committed hash; record ${p.hashes.map(h => `<code>${escape(h.slice(0, 12))}</code>`).join(', ')}; ${p.runs.map(r => `<a href="${escape(runsHref)}#${escape(runAnchor(r))}">${escape(r.machineClass)}</a>`).join(', ')}</li>`).join('')}</ol>`;
+  if (points.length === 1) return `<div class="lab-day-history"><p class="engine-once">Run on org machines on one day so far, ${escape(points[0].day)}.</p>${list}</div>`;
+  const chart = stepChart({ id: 'org-days', points: points.map(p => ({ at: p.at, values: { org_machines_that_reproduced_the_hash: p.values.reproduced } })) });
+  return `<figure class="lab-day-history" id="lab-day-series"><h3 id="engine-org-days-title">Each day on the org machines</h3><p>One point per day the record holds org runs for: how many org machines reproduced the committed state hash. A value holds until the next day's runs; a day with no run is no point.</p>${chart}${list}</figure>`;
+}
+
 /** A lab page's "Its runs" section: the badge, and links to its runs, its feed and the site feed. */
 export function renderLabRunsSection(lab) {
   const latest = runState(lab.runs).latest;
-  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
+  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}${renderDaySeries(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
 }
 
 /** The feeds, written and checked, and linked from the Labs index, the runs page and every lab page. */
