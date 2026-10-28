@@ -175,19 +175,31 @@ const untagged = r => mapped(r, TAG, tag => tag.replace(/[^\n]/g, ''));
 /** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
 const spaced = r => mapped(r, TAG, () => ' ');
 /** NFKC and lower case, character by character, so every offset still maps back. */
-// NFKC and lower case per grapheme (a base character with its marks, a Hangul syllable's jamo), so a canonically
-// equivalent spelling folds as the term does ("e" + U+0301 is "é", U+1100 U+1161 is "가") and every grapheme keeps
-// its own offset. Only the stretches around non-ASCII characters are segmented.
+// NFKC and lower case over a whole run of non-ASCII text (with the character before it), exactly as a term is
+// normalised, while every output character keeps the offset of the grapheme that produced it. When the run folds
+// grapheme by grapheme to the same text (nearly always), that is the mapping; otherwise the run is normalised as a
+// growing prefix and each new output character takes the offset of the grapheme just added. A run above 4,096
+// graphemes that needs this maps every character to the run's start (its hits may then count as one occurrence).
 const GRAPHEMES = new Intl.Segmenter('und', { granularity: 'grapheme' });
+const fold = t => t.normalize('NFKC').toLowerCase();
 function foldRun(run) {
+  const segs = [...GRAPHEMES.segment(run)];
+  const whole = fold(run);
   let text = '';
   const from = [];
-  for (const { segment, index } of GRAPHEMES.segment(run)) {
-    const f = segment.normalize('NFKC').toLowerCase();
-    text += f;
-    for (let k = 0; k < f.length; k++) from.push(index);
+  for (const { segment, index } of segs) { const f = fold(segment); text += f; for (let k = 0; k < f.length; k++) from.push(index); }
+  if (text === whole) return { text, from };
+  if (segs.length > 4096) return { text: whole, from: Array.from({ length: whole.length }, () => 0) };
+  let prev = '', offs = [], raw = '';
+  for (const { segment, index } of segs) {
+    raw += segment;
+    const cur = fold(raw);
+    let p = 0;
+    while (p < prev.length && p < cur.length && prev[p] === cur[p]) p++;
+    offs = [...offs.slice(0, p), ...Array.from({ length: cur.length - p }, () => index)];
+    prev = cur;
   }
-  return { text, from };
+  return { text: prev, from: offs };
 }
 const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[\x21-\x7e]?[^\x00-\x7f]+/gu, foldRun) : r);
 
@@ -306,8 +318,9 @@ export function* tarEntries(buf, shown) {
 export function gunzipStrict(buf, shown) {
   if (buf.length < 18 || buf[0] !== 0x1f || buf[1] !== 0x8b || buf[2] !== 8) throw new Error(`leak gate: ${shown} does not decompress`);
   const flags = buf[3];
-  if (flags & 0xfc) throw new Error(`leak gate: ${shown} carries gzip header text the gate does not read`);
-  const start = 10 + (flags & 2 ? 2 : 0);
+  // No optional header field at all (name, comment, extra, header CRC): a plain 10-byte header, whose bytes are read.
+  if (flags !== 0) throw new Error(`leak gate: ${shown} carries gzip header fields the gate does not read`);
+  const start = 10;
   let out;
   try { out = inflateRawSync(buf.subarray(start), { info: true }); } catch { throw new Error(`leak gate: ${shown} does not decompress`); }
   if (start + out.engine.bytesWritten + 8 !== buf.length) throw new Error(`leak gate: ${shown} has more than one gzip member, or bytes after it`);
@@ -329,7 +342,10 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
     // A read error names the path; it is reported by the name shown instead, which is redacted when it holds a leak.
     let bytes;
     try { bytes = read(); } catch (error) { throw new Error(`leak gate: ${shown} cannot be read (${error.code ?? 'error'})`); }
-    if (/\.(gz|tgz)$/i.test(path)) bytes = gunzipStrict(bytes, shown);
+    if (/\.(gz|tgz)$/i.test(path)) {
+      for (const hit of scanText(printable(bytes.subarray(0, 10)), secret, cache)) result.hits.push({ file: `${shown}!(gzip header)`, ...hit, line: 0 });
+      bytes = gunzipStrict(bytes, shown);
+    }
     if (/\.(tar|tar\.gz|tgz)$/i.test(path)) {
       result.binaries++;
       const meta = [];

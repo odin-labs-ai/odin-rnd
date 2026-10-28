@@ -99,6 +99,8 @@ const LEAKS = {
   'a protected term split by an abruptly closed comment': ['dist/index.html', '<p>bl<!-->orvak and bl<!--->orvak and bl<!-- x --!>orvak</p>', /index\.html:1 term/],
   'a protected term with a combining mark that composes': ['dist/index.html', '<p>cafe\u0301 blorvak</p>', /index\.html:1 term/],
   'a protected term spelled in decomposed Hangul jamo': ['dist/index.html', '<p>\u1100\u1161\u1102\u1161</p>', /index\.html:1 term/],
+  'a protected term spelled in compatibility jamo': ['dist/index.html', '<p>\u3131\u314f\u3134\u314f</p>', /index\.html:1 term/],
+  'a term in a gzip header\'s fixed bytes': ['dist/data/raw-evidence.tar.gz', (() => { const b = Buffer.from(gzipSync(tar({ 'main/ok.json': '{}' }))); b.write('qzx\0\0\0', 4, 'latin1'); return b; })(), /raw-evidence\.tar\.gz!\(gzip header\):0 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -347,7 +349,8 @@ test('a gzip with header text, a second member or bytes after it stops the build
   const tarball = gzipSync(tar({ 'main/ok.json': '{}' }));
   const withComment = Buffer.concat([Buffer.from([0x1f, 0x8b, 8, 0x10, 0, 0, 0, 0, 0, 3]), Buffer.from('/Users/someone/private\0'), tarball.subarray(10)]);
   const badTrailer = Buffer.from(tarball); badTrailer.write('/Users/x', badTrailer.length - 8, 'latin1');
-  const cases = { 'trailer': [badTrailer, /gzip trailer that does not match/], 'header text': [withComment, /gzip header text/], 'two members': [Buffer.concat([tarball, gz(Buffer.from('x'))]), /more than one gzip member/], 'bytes after': [Buffer.concat([tarball, Buffer.from('blorvak')]), /more than one gzip member, or bytes after it/] };
+  const hcrc = Buffer.from(tarball); hcrc[3] = 2;
+  const cases = { 'header crc flag': [hcrc, /gzip header fields/], 'trailer': [badTrailer, /gzip trailer that does not match/], 'header text': [withComment, /gzip header fields/], 'two members': [Buffer.concat([tarball, gz(Buffer.from('x'))]), /more than one gzip member/], 'bytes after': [Buffer.concat([tarball, Buffer.from('blorvak')]), /more than one gzip member, or bytes after it/] };
   for (const [name, [bytes, want]] of Object.entries(cases)) {
     const root = site({ 'dist/data/raw-evidence.tar.gz': bytes });
     try {
