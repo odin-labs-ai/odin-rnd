@@ -1,0 +1,16 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 13",
+ "title": "Does an agent company get better, measured blind?",
+ "question": "When we fix our agents' recipes and tools, do their answers get better on work the fixes were not made on?",
+ "how": "The same work items, answered before and after the fixes, each answer judged by a separate AI reviewer that was not told which side wrote it. Two of the three sets were held out from the fixing.",
+ "experiment": "measured-blind",
+ "status": "Judged by an AI, not a person · cited by hash",
+ "record": { "href": "data/labs/measured-blind/record.json", "pin": "data/labs/measured-blind/record.sha256" },
+ "links": [
+  { "label": "The counts, recounted from the committed labels", "href": "labs/measured-blind/index.html" },
+  { "label": "The record, pinned by its hash", "href": "data/labs/measured-blind/record.json" }
+ ]
+}
