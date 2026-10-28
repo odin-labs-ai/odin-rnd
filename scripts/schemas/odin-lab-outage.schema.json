@@ -358,6 +358,7 @@
        "const": "5.5.2"
       },
       "args": {
+       "type": "array",
        "const": [
         "-l",
         "eng",
