@@ -1,7 +1,7 @@
 {
  "format": "odin-lab-link-safety-labels",
  "version": 1,
- "about": "Lab 07's labels: the one line each fixture of the engine's link-safety test is shown by, written by us, keyed by the sha256 of the fixture's exact text (scripts/vendor-link-safety.mjs refuses a fixture with no label and a label with no fixture). A poisoned URL is never printed on the page as it is; a line of code is printed as it is unless the publisher's screen refuses it, and only those carry a label here.",
+ "about": "Lab 07's labels: the one line each fixture of the engine's link-safety test is shown by, written by us, keyed by the sha256 of the fixture's exact text (scripts/vendor-link-safety.mjs refuses a fixture with no label and a label with no fixture). A poisoned URL is never printed on the page as it is; a line of code is printed as it is unless the publisher's screen refuses it or it holds a bare undefined, NaN or null, and only those carry a label here.",
  "urls": {
   "31595281b8a19110a94db64ae90fd2941a4e68ce388e3aecda632ded588d0c89": "a javascript: URL that runs a script in the visitor's page",
   "6e46e73507f29325160e9549b655d437abf0f2b453c733173b9eac771869c8a7": "the same javascript: scheme in mixed case",
@@ -42,6 +42,7 @@
  },
  "sinks": {
   "4620b230f578a50bed90a71f46473451165d39f1035e1aa43e22e3e4fcc36f6e": "the browser history rewritten to a URL on another host",
-  "8d4815f070b92f53efbf95526546fda60f347e487c1bcf4386da0aad9d992085": "an image's source set to a fixed URL on another host"
+  "8d4815f070b92f53efbf95526546fda60f347e487c1bcf4386da0aad9d992085": "an image's source set to a fixed URL on another host",
+  "1b334ad4d2773c87242b786e6eff415034097640e7e859c62f861eba5bb9b9e6": "a plain field named data set to nothing, which opens nothing"
  }
 }

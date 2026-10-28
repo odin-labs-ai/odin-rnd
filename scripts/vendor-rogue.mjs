@@ -25,6 +25,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { recordHash } from './lab-record.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/rogue/record.json';
@@ -62,6 +63,30 @@ function fetch(dir, args) {
 
 const utc = iso => new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
+/** CHECK_COMMAND, as record v1 names it: the same words on every machine, so their records can hold the same hash. */
+export const CHECK_COMMAND = 'the demo\'s own check command';
+
+/** The reproduction as record v1 (scripts/lab-record.mjs): the check run on the second machine, a Mac, by hand. */
+function laptopRun(source, hashes, reproduction) {
+  const compare = source.ancestry.commits[source.commit].status;
+  const run = {
+    format: 'odin-lab-record',
+    version: 1,
+    lab: 'rogue',
+    runner: 'laptop',
+    machineClass: 'mac',
+    image: null,
+    commit: { sha: source.commit, mainHead: source.ancestry.main, compare, onMain: compare === 'identical' || compare === 'ahead' },
+    command: CHECK_COMMAND,
+    inputs: [{ role: 'runner', sha256: hashes.runner }, { role: 'runs', sha256: hashes.runs }],
+    result: { verdict: reproduction.verdict, committed: reproduction.committed, now: reproduction.now, breaches: reproduction.breaches },
+    ranAt: reproduction.at,
+    replicatedOn: [],
+    differedOn: [],
+  };
+  return { ...run, recordHash: recordHash(run) };
+}
+
 /** The public record, built from the fetched files in `dir` and the reproduction. Deterministic. */
 export function build(dir, reproduction) {
   const file = role => readFileSync(join(dir, 'files', role));
@@ -83,7 +108,7 @@ export function build(dir, reproduction) {
   if (problems.length) throw new Error(problems.join('\n'));
   const record = {
     format: 'odin-lab-rogue',
-    version: 1,
+    version: 2,
     vendored: {
       from: 'the rogue-agent demo in the agent space\'s private repository: its run record, audit journal, two recorded trajectories, runner and tests, read at one commit',
       commit: source.commit,
@@ -125,6 +150,7 @@ export function build(dir, reproduction) {
     },
     stateHash: runs.state_hash,
     reproductions: [reproduction],
+    runs: [laptopRun(source, hashes, reproduction)],
   };
   return `${JSON.stringify(record, null, 1)}\n`;
 }

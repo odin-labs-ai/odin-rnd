@@ -574,8 +574,9 @@
    "caught": 0
   },
   {
+   "label": "a plain field named data set to nothing, which opens nothing",
    "sha256": "1b334ad4d2773c87242b786e6eff415034097640e7e859c62f861eba5bb9b9e6",
-   "shown": "this.data = null",
+   "shown": null,
    "caught": 0
   }
  ]

@@ -152,8 +152,9 @@ export function fixturesOf(testSource) {
 export const AUDIT_TEST = 'the audit catches every unsafe opener shape (fixtures)';
 export const RULE_TEST = 'the rule refuses every poisoned URL, with or without the github.com allowlist';
 
-// A line of code is shown as it is when it passes the publisher's screen and the kit's LEAKS; otherwise by its label.
-const clean = text => !screenHits(text).length && !LEAKS.some(([re]) => re.test(text) || re.test(fold(text)));
+// A line of code is shown as it is when it passes the publisher's screen and the kit's LEAKS, and holds no bare
+// undefined, NaN or null (which the site's own test reads as a missing value rendered as text); otherwise by its label.
+const clean = text => !screenHits(text).length && !LEAKS.some(([re]) => re.test(text) || re.test(fold(text))) && !/\b(?:undefined|NaN|null)\b/.test(text);
 
 export async function build(dir) {
   const source = JSON.parse(readFileSync(join(dir, 'source.json'), 'utf8'));
