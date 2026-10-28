@@ -54,6 +54,9 @@ test('every figure is what the committed experiment records give, and the record
   const t = textOf(main);
   for (const x of record.frontier.seats) assert.ok(t.includes(`${x.name} ${x.caught} of 60 (${x.caughtPerRun.join(' and ')}) ${x.falseAlarms} of 60 (${x.falseAlarmsPerRun.join(' and ')}) ${x.noVerdict}`), x.seat);
   assert.match(t, /Off it: Claude Sonnet 5\.5, because another model caught at least as many for no more per review\./);
+  assert.match(t, /Every run is counted\. A run whose own tool calls do not show it read the change is blind, and a blind run is scored as an error, whatever it decided/);
+  assert.match(t, /Blind runs, each scored as an error above: 3 of 180; the registered check allowed at most 18\./);
+  assert.doesNotMatch(t, /counts only when/);
   assert.match(t, /Rule-breaking changes it accepted: 1 of 90 runs\. Good changes it rejected: 2 of 90 runs\. Changes given the same verdict in every one of their runs: 57 of 60 \./);
 });
 
@@ -110,6 +113,7 @@ test('the vendor checks each receipt against the pull request\'s own description
   assert.throws(() => run((n) => (n === 82 ? { ...bodies[n], body: 'Review round 1 was fixed.' } : bodies[n])), /#82: its receipt is not word for word/);
   assert.throws(() => run((n) => (n === 56 ? { ...bodies[n], body: 'Review row abc (FIX-NEEDED) fixed.' } : bodies[n])), /#56: listed as plan only, but its description records a FIX-NEEDED/);
   assert.throws(() => run((n) => (n === 45 ? { ...bodies[n], state: 'OPEN' } : bodies[n])), /#45: not merged/);
+  for (const body of ['', 'A page for model providers.', 'Landing-Plan: driver x · land odin-pr-land.sh on SHIP']) assert.throws(() => run((n) => (n === 54 ? { ...bodies[n], body } : bodies[n])), /#54: listed as plan only, but its description has no Landing-Plan line naming the review step/, JSON.stringify(body));
 });
 
 test('the record is refused when it would make the page say something untrue', () => {

@@ -41,8 +41,13 @@ export function build({ readPr = pr, git = gitCli } = {}) {
   for (const n of RECEIPT_PRS) {
     const p = readPr(n);
     if (p.state !== 'MERGED') problems.push(`#${n}: not merged`);
-    // A plan-only description mentions FIX-NEEDED only in its landing plan line.
-    if (PLAN_ONLY.includes(n)) { if (/FIX-NEEDED/.test(p.body.split('\n').filter(l => !l.startsWith('Landing-Plan:')).join('\n'))) problems.push(`#${n}: listed as plan only, but its description records a FIX-NEEDED`); continue; }
+    // A plan-only description must name the review step in its Landing-Plan line, and record FIX-NEEDED nowhere else.
+    if (PLAN_ONLY.includes(n)) {
+      const lines = p.body.split('\n');
+      if (!lines.some(l => /^Landing-Plan:.*\breview\b/i.test(l))) problems.push(`#${n}: listed as plan only, but its description has no Landing-Plan line naming the review step`);
+      if (/FIX-NEEDED/.test(lines.filter(l => !l.startsWith('Landing-Plan:')).join('\n'))) problems.push(`#${n}: listed as plan only, but its description records a FIX-NEEDED`);
+      continue;
+    }
     const receipt = RECEIPTS[n];
     if (!receipt || !receipt.every(part => p.body.includes(part))) { problems.push(`#${n}: its receipt is not word for word in its description`); continue; }
     gallery.push({ pr: n, title: p.title, mergeCommit: p.mergeCommit.oid, receipt });
