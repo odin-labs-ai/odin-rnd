@@ -19,8 +19,9 @@ import { validate } from './json-schema-lite.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // In index order: Lab 02 (a results lab; data/labs/brain-bench.json holds its page's words), then Lab 03, then Lab 05
-// (a results lab; its record is data/labs/rogue/record.json, its page scripts/lab-rogue.mjs).
-export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json'];
+// (a results lab; its record is data/labs/rogue/record.json, its page scripts/lab-rogue.mjs), then Lab 09 (a results
+// lab; its record is data/labs/talk-leak/record.json, its page scripts/lab-talk-leak.mjs).
+export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json', 'data/labs/talk-leak-tile.json'];
 const schema = JSON.parse(readFileSync(join(here, 'schemas/odin-lab-tile.schema.json'), 'utf8'));
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const isFile = path => existsSync(path) && statSync(path).isFile();
