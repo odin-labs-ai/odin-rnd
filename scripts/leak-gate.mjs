@@ -106,7 +106,7 @@ const NAMED = {
 const UNKNOWN_REF = /&([A-Za-z][A-Za-z0-9]*);/g;
 // HTML's legacy references, which it reads without a semicolon too. Those not in NAMED are findings, like any unknown.
 const LEGACY = 'AElig AMP Aacute Acirc Agrave Aring Atilde Auml COPY Ccedil ETH Eacute Ecirc Egrave Euml GT Iacute Icirc Igrave Iuml LT Ntilde Oacute Ocirc Ograve Oslash Otilde Ouml QUOT REG THORN Uacute Ucirc Ugrave Uuml Yacute aacute acirc acute aelig agrave amp aring atilde auml brvbar ccedil cedil cent copy curren deg divide eacute ecirc egrave eth euml frac12 frac14 frac34 gt iacute icirc iexcl igrave iquest iuml laquo lt macr micro middot nbsp not ntilde oacute ocirc ograve ordf ordm oslash otilde ouml para plusmn pound quot raquo reg sect shy sup1 sup2 sup3 szlig thorn times uacute ucirc ugrave uml uuml yacute yen yuml'.split(' ').sort((a, b) => b.length - a.length);
-const LEGACY_BARE = new RegExp(`&(${LEGACY.join('|')})(?![A-Za-z0-9]*;)`, 'g');
+const LEGACY_PREFIX = new RegExp(`&(${LEGACY.join('|')})`, 'g');
 
 // A reading of a text keeps, for every character, the offset in the ORIGINAL text it came from. Two readings that see
 // the same occurrence therefore name the same offset, and one occurrence counts once however many readings see it.
@@ -150,13 +150,25 @@ function percentRun(run) {
   }
   return { text, from };
 }
+/**
+ * A named reference as HTML reads it: a known name with its semicolon is its character; otherwise the longest legacy
+ * name at its start is (with or without a semicolon: "&copyQuarry;" is "©Quarry;"), and the rest stays text. A legacy
+ * name the gate does not carry reads as a space; a reference with no known or legacy name stays as written.
+ */
+function namedRef(m, name, semi) {
+  if (semi && Object.hasOwn(NAMED, name)) return NAMED[name];
+  const legacy = LEGACY.find(l => name.startsWith(l));
+  if (!legacy) return m;
+  const head = Object.hasOwn(NAMED, legacy) ? NAMED[legacy] : ' ';
+  const rest = m.slice(1 + legacy.length);
+  const from = [...Array.from(head, () => 0), ...Array.from(rest, (_, k) => 1 + legacy.length + k)];
+  return { text: head + rest, from };
+}
 /** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
 function decodedReading(r) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
-  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*);/g, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
-  // HTML also reads its legacy references without the semicolon (&nbsp Name, &ampx): those that are not letters decode.
-  r = mapped(r, LEGACY_BARE, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
+  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*)(;?)/g, namedRef);
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
@@ -220,7 +232,11 @@ export function scanText(text, secret, cache = new Map(), refs = true) {
   const dec = decodedReading(raw);
   const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  if (refs) for (const re of [UNKNOWN_REF, LEGACY_BARE]) for (const m of text.matchAll(re)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
+  // A reference the gate does not read as HTML would: an unknown name with a semicolon, or a legacy name it does not carry.
+  if (refs) {
+    for (const m of text.matchAll(UNKNOWN_REF)) if (!Object.hasOwn(NAMED, m[1]) && !LEGACY.some(l => Object.hasOwn(NAMED, l) && m[1].startsWith(l))) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
+    for (const m of text.matchAll(LEGACY_PREFIX)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
+  }
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
