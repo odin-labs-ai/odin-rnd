@@ -68,6 +68,7 @@ const LEAKS = {
   'a home path inside an image file': ['dist/assets/meta.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from('tEXtSource\0/Users/someone/work\0'), Buffer.from([0, 1])]), /meta\.png:0 home-path/],
   'a short home path between NUL bytes in a binary': ['dist/assets/short.webm', Buffer.from('\x1aE\0\0/home/a\0\0\x01', 'latin1'), /short\.webm:0 home-path/],
   'a three-letter term between NUL bytes in a binary': ['dist/assets/short3.webm', Buffer.from('\x1aE\0qzx\0\x01', 'latin1'), /short3\.webm:0 term/],
+  'a protected term split by a JSON line-break escape': ['dist/data/r.json', '{"client":"Zephyr\\nQuarry"}', /r\.json:1 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],

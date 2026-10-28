@@ -115,6 +115,7 @@ function decodedReading(r) {
   r = mapped(r, /&([a-z]+);/gi, (m, n) => NAMED[n.toLowerCase()] ?? m);
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
+  r = mapped(r, /\\[nrtbf]/g, () => ' ');
   r = mapped(r, /%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : m; });
   return mapped(r, /[\u200b-\u200d\u2060\ufeff]/g, () => '');
 }
