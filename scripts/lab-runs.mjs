@@ -190,7 +190,9 @@ function withFeeds(pages, labs, root, known) {
   index = index.replace('<p class="lab-runs-link"><a href="runs/">Every run of every lab, newest first</a></p>', m => `${m}<p class="lab-runs-link"><a href="../${SITE_FEED}">Follow every update and every run (Atom)</a></p>`);
   out['labs/index.html'] = index;
   out[RUNS_PAGE] = head(out[RUNS_PAGE], RUNS_PAGE, [site('../../')]).replace('<p class="lab-source">A record names', m => `<p class="lab-runs-link"><a href="../../${SITE_FEED}">Follow every update and every run (Atom)</a></p>${m}`);
-  for (const lab of labs.filter(l => l.page)) {
+  // On the published site every lab with runs has its page; a fixture links the pages it renders.
+  const linked = labs.filter(l => l.page && (resolve(root) === REPO_SITE || typeof out[l.page] === 'string'));
+  for (const lab of linked) {
     const html = out[lab.page];
     if (typeof html !== 'string') throw new Error(`${lab.page}: the page of ${lab.tile.experiment} is not among the pages`);
     const section = renderLabRunsSection(lab);
@@ -200,6 +202,6 @@ function withFeeds(pages, labs, root, known) {
     out[lab.page] = head(html, lab.page, [alternate(`${lab.tile.label}: ${lab.tile.title}`, 'feed.xml'), STYLE.replace('../', '../../')]).replace('</main>', () => `${section}</main>`);
   }
   // A lab page without runs is left exactly as its own renderer wrote it (each lab's tests compare the two).
-  for (const lab of labs.filter(l => l.page)) out[lab.page] = head(out[lab.page], lab.page, [site('../../')]);
+  for (const lab of linked) out[lab.page] = head(out[lab.page], lab.page, [site('../../')]);
   return out;
 }
