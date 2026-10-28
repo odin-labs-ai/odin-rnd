@@ -17,7 +17,7 @@
 // own URL, every entry has an alternate link, entries are newest first, and the feed's updated is its newest entry's.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { escape, pageLeaks, recordHashes } from './lab-kit.mjs';
+import { escape, pageLeaks, realInstant, recordHashes } from './lab-kit.mjs';
 
 export const SITE_URL = 'https://odin-labs-ai.github.io/odin-rnd/';
 export const SITE_FEED = 'feed.xml';
@@ -35,7 +35,7 @@ export function readUpdates(root = 'site') {
   const problems = [];
   feed.updates.forEach((u, i) => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(u.key ?? '')) problems.push(`${UPDATES_FILE}#/updates/${i}/key: not a plain key`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(u.date ?? '')) problems.push(`${UPDATES_FILE}#/updates/${i}/date: not a date`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(u.date ?? '') || !realInstant(`${u.date}T00:00:00Z`)) problems.push(`${UPDATES_FILE}#/updates/${i}/date: not a real date`);
     for (const k of ['title', 'kind', 'href']) if (typeof u[k] !== 'string' || !u[k]) problems.push(`${UPDATES_FILE}#/updates/${i}/${k}: missing`);
     if (typeof u.href === 'string' && (/^[a-z]+:/i.test(u.href) || /(^|\/)\.\.?(\/|$)/.test(u.href))) problems.push(`${UPDATES_FILE}#/updates/${i}/href: not a path of this site`);
   });
@@ -85,7 +85,17 @@ export function renderFeeds(labs, updates, { anchor }) {
 // The strict reader: the XML these feeds use, and nothing more.
 const NAME = /^[A-Za-z_][A-Za-z0-9_.:-]*$/;
 const REF = /&(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);/g;
-const textProblem = text => (text.replace(REF, '').includes('&') ? 'an & that is not an entity' : text.includes('<') ? 'a raw <' : null);
+// XML 1.0's Char: tab, line feed, carriage return, U+0020-U+D7FF, U+E000-U+FFFD, U+10000-U+10FFFF; nothing else, as
+// a character or as a numeric reference.
+const xmlChar = c => c === 0x9 || c === 0xa || c === 0xd || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff);
+const refChar = ref => (ref.startsWith('&#x') ? parseInt(ref.slice(3, -1), 16) : ref.startsWith('&#') ? Number(ref.slice(2, -1)) : 0x20);
+const textProblem = text => {
+  if (text.replace(REF, '').includes('&')) return 'an & that is not an entity';
+  if (text.includes('<')) return 'a raw <';
+  for (const ch of text) if (!xmlChar(ch.codePointAt(0))) return 'a character XML does not allow';
+  for (const [ref] of text.matchAll(REF)) if (!xmlChar(refChar(ref))) return `a reference to a character XML does not allow (${ref})`;
+  return null;
+};
 const unescape = v => v.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(Number(d))).replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll('&amp;', '&');
 
 /** The XML as a tree of { name, attrs, children, text }, or { problems } when it is not well-formed. */
@@ -128,6 +138,8 @@ export function parseXml(source) {
       attrs[k] = unescape(v);
     }
     if (stack.length === 1 && root.children.length) { problems.push(`a second root element at ${lt}`); break; }
+    // One namespace, declared once: only the root declares it, and no name is prefixed, so every element is Atom's.
+    if (m[1].includes(':') || Object.keys(attrs).some(k => k.includes(':') || (k === 'xmlns' && stack.length > 1))) { problems.push(`a namespace other than the root's at ${lt}`); break; }
     const el = { name: m[1], attrs, children: [], text: '' };
     stack.at(-1).children.push(el);
     if (!selfClosing) stack.push(el);
@@ -137,7 +149,8 @@ export function parseXml(source) {
   return problems.length ? { problems } : { tree: root.children[0], problems: [] };
 }
 
-const RFC3339Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+// An RFC 3339 UTC time that is a real calendar instant (the kit's realInstant: 2026-02-30 or 24:00 is refused).
+const utcTime = v => realInstant(v) !== null;
 const URI = /^(tag:[a-z0-9.-]+,\d{4}(-\d{2}(-\d{2})?)?:|https:\/\/)[^\s<>"]+$/;
 
 /** Every reason `source` is not a valid, stable Atom feed published at `self` (empty when it is one). */
@@ -157,7 +170,7 @@ export function feedProblems(source, { self, where = self } = {}) {
   one(tree, 'title', 'the feed');
   const fupdated = one(tree, 'updated', 'the feed');
   ids.push(fid);
-  if (!RFC3339Z.test(fupdated)) at(`the feed's updated ${fupdated} is not an RFC 3339 UTC time`);
+  if (!utcTime(fupdated)) at(`the feed's updated ${fupdated} is not an RFC 3339 UTC time`);
   const selfLinks = tree.children.filter(c => c.name === 'link' && c.attrs.rel === 'self');
   if (selfLinks.length !== 1 || (self && selfLinks[0].attrs.href !== self)) at(`the self link is not this feed's own URL (${self})`);
   const entries = tree.children.filter(c => c.name === 'entry');
@@ -166,7 +179,7 @@ export function feedProblems(source, { self, where = self } = {}) {
     ids.push(one(e, 'id', label));
     if (!one(e, 'title', label).trim()) at(`${label} has an empty title`);
     const updated = one(e, 'updated', label);
-    if (!RFC3339Z.test(updated)) at(`${label}'s updated ${updated} is not an RFC 3339 UTC time`);
+    if (!utcTime(updated)) at(`${label}'s updated ${updated} is not an RFC 3339 UTC time`);
     if (!e.children.some(c => c.name === 'link' && c.attrs.rel === 'alternate' && /^https:\/\//.test(c.attrs.href ?? ''))) at(`${label} has no alternate link`);
     return updated;
   });

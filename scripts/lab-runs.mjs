@@ -184,6 +184,9 @@ function withFeeds(pages, labs, root, known) {
     if (problems.length) throw new Error(`Atom feeds refused:\n  ${problems.join('\n  ')}`);
   }
   if (!feeds[SITE_FEED]) return pages;
+  // A feed never replaces one already rendered (Lab 01's dispatch feed is its own): the build refuses instead.
+  const taken = Object.keys(feeds).filter(path => path in pages);
+  if (taken.length) throw new Error(`Atom feeds refused: ${taken.join(', ')} is already rendered; a lab's runs feed never replaces it`);
   const out = { ...pages, ...feeds };
   const site = up => alternate(SITE_FEED_TITLE, `${up}${SITE_FEED}`);
   let index = head(out['labs/index.html'], 'labs/index.html', [site('../')]);

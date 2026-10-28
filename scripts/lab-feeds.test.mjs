@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { feedProblems, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId } from './lab-feeds.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
-import { readLabRuns, runAnchor } from './lab-runs.mjs';
+import { readLabRuns, runAnchor, withLabRuns } from './lab-runs.mjs';
+import { renderRogue } from './lab-rogue.mjs';
 import { renderLabs } from './labs.mjs';
 import { renderMeasuredBlind } from './lab-measured-blind.mjs';
 
@@ -92,6 +95,11 @@ test('the reader refuses XML that is not well-formed', () => {
     'a repeated attribute': ok.replace('rel="self"', 'rel="self" rel="self"'),
     'a second root': `${ok.trimEnd()}<feed/>\n`,
     'text after the root': `${ok.trimEnd()}x\n`,
+    'a NUL reference': ok.replace('R&amp;D', 'R&#0;D'),
+    'a control-character reference': ok.replace('R&amp;D', 'R&#x1b;D'),
+    'a literal control character': ok.replace('R&amp;D', 'R\u0001D'),
+    'a namespace reset on a child': ok.replace('<updated>', '<updated xmlns="">'),
+    'a prefixed element': ok.replace('<author>', '<x:author xmlns:x="http://example.com/">').replace('</author>', '</x:author>'),
   };
   for (const [what, xml] of Object.entries(bad)) assert.ok(parseXml(xml).problems.length, what);
 });
@@ -110,4 +118,21 @@ test('the Atom check refuses a feed whose ids, dates, links or order are wrong',
   refused(two.replace(/<link rel="alternate" type="text\/html" href="[^"]+#run-[^"]+"\/>/, ''), /has no alternate link/);
   refused(two.replace('</title><updated>2026-10-27T20', '</title><title>again</title><updated>2026-10-27T20'), /has 2 <title>, not one/);
   refused(two.replace('xmlns="http://www.w3.org/2005/Atom"', ''), /not an Atom <feed>/);
+  refused(two.replace('<updated>2026-10-27T11:25:33Z</updated>', '<updated>2026-02-30T00:00:00Z</updated>'), /not an RFC 3339 UTC time/);
+  refused(two.replace('<updated>2026-10-27T11:25:33Z</updated>', '<updated>2026-10-27T24:00:00Z</updated>'), /not an RFC 3339 UTC time/);
+});
+
+test('an update with an impossible date is refused before any feed is written', () => {
+  const root = mkdtempSync(join(tmpdir(), 'lab-feeds-'));
+  try {
+    mkdirSync(join(root, 'data'));
+    writeFileSync(join(root, 'data/updates.json'), JSON.stringify({ schemaVersion: 1, updates: [{ ...update, date: '2026-02-30' }] }));
+    assert.throws(() => readUpdates(root), /date: not a real date/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a lab\'s runs feed never replaces a feed already rendered at its path', () => {
+  const pages = renderLabs();
+  const index = pages['labs/index.html'].replace(/<div class="lab-provenance [^]*?<\/div>(?=<ul class="lab-tile-links">)/, '').replace(/<p class="lab-runs-link">[^]*?<\/p>/g, '').replace(/\n *<link rel="(stylesheet" href="\.\.\/assets\/lab-runs\.css|alternate" type="application\/atom\+xml" title="Odin Labs R&amp;D[^"]*" href="\.\.\/feed\.xml)">/g, '');
+  assert.throws(() => withLabRuns({ 'labs/index.html': index, 'labs/rogue/index.html': renderRogue().pages['labs/rogue/index.html'], 'labs/rogue/feed.xml': '<?xml version="1.0" encoding="utf-8"?>\n<feed/>\n' }), /labs\/rogue\/feed\.xml is already rendered/);
 });
