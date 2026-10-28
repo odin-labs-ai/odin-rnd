@@ -18,7 +18,7 @@ const record = JSON.parse(raw);
 const pages = renderLabs();
 const page = pages[TALK_TEMPLATE];
 const main = page.split('<main id="main">')[1].split('</main>')[0];
-const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&').replaceAll('&#39;', "'").replace(/\s+/g, ' ');
+const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&').replace(/\s+/g, ' ');
 const clone = () => JSON.parse(raw);
 const sha256 = s => createHash('sha256').update(s).digest('hex');
 const tile = readFileSync(join('site', TALK_TILE), 'utf8');
