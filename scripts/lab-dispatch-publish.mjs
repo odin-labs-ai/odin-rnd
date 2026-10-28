@@ -66,11 +66,22 @@ export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, 
  */
 export function addScreenNames(...names) {
   // Test-scoped: only under `node --test`, never in a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
-  if (!process.env.NODE_TEST_CONTEXT || process.env.ODIN_SITE_BUILD) throw new Error('addScreenNames is for the tests only (node --test), never a build');
+  // A test file is a *.test.mjs the runner started (it sets NODE_TEST_CONTEXT); an inline script or a build is refused.
+  const testFile = /\.test\.mjs$/.test(process.argv[1] ?? '');
+  if (!process.env.NODE_TEST_CONTEXT || !testFile || process.env.ODIN_SITE_BUILD) throw new Error('addScreenNames is for the tests only (node --test), never a build');
   for (const name of names) NAMES.add(fingerprint(name));
 }
-/** True when the text names a restricted name (any listed or added one), by the same screen. */
-export const namesRestricted = text => termHits(text).some(hit => hit.kind === 'names');
+/**
+ * True when the text names a restricted name (any listed or added one), by the same screen. With anyWindow, every run
+ * of 3 or more letters inside a word is looked up too, as an unbounded substring check would ("…xyz…" inside a token).
+ */
+export function namesRestricted(text, { anyWindow = false } = {}) {
+  if (termHits(text).some(hit => hit.kind === 'names')) return true;
+  if (!anyWindow) return false;
+  const run = [...normalise(text).matchAll(/\p{L}/gu)].map(m => m[0]).join('');
+  for (let length = 3; length < LONG_TERM; length++) for (let i = 0; i + length <= run.length; i++) if (NAMES.has(sha256(run.slice(i, i + length)))) return true;
+  return false;
+}
 
 /** Which listed term set the text hits ('names', 'places'), with the offset in the normalised text. */
 function termHits(text) {

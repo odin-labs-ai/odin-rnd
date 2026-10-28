@@ -98,7 +98,7 @@ test('no private id: no item key, no CI run id, no repository name, on the page,
     assert.doesNotMatch(text, /\bwi-[a-z]|\bho-(ci|pr|issue)/, `${name}: an item key`);
     assert.doesNotMatch(text.replace(/\b[0-9a-f]{40,64}\b/g, ''), /\d{8,}/, `${name}: a run id or another long number`);
     assert.doesNotMatch(text, /odin-(next|labs|website|sales)|wo06|hq_eval|agent_space/i, `${name}: a private repository, path or file name`);
-    assert.ok(!namesRestricted(text), `${name}: a restricted name`);
+    assert.ok(!namesRestricted(text, { anyWindow: true }), `${name}: a restricted name, even inside a longer word`);
   }
   assert.deepEqual(record.sets.flatMap(s => s.items.map(i => i.label)), ['T', 'A', 'B'].flatMap(p => Array.from({ length: 9 }, (_, k) => `${p}${k + 1}`)));
 });

@@ -532,8 +532,14 @@ test('the lab screen can only gain names, only under node --test, never in a bui
   addScreenNames(made);
   assert.equal(namesRestricted(`a ${made} lender`), true);
   assert.ok(screenHits(`the ${made.toUpperCase()} repository`).some(h => /restricted name/.test(h.reason)));
+  // A three-letter name: the short-token path, and anyWindow finds it inside a longer word as a substring check would.
+  const short = 'qzj';
+  addScreenNames(short);
+  assert.ok(screenHits('the QZJ repository').some(h => /restricted name/.test(h.reason)));
+  assert.equal(namesRestricted('a xqzjx token'), false, 'a short name inside a word is not a token match');
+  assert.equal(namesRestricted('a xqzjx token', { anyWindow: true }), true, 'anyWindow reads every letter run of 3 or more');
   const call = env => spawnSync(process.execPath, ['--input-type=module', '-e', "const m = await import('./scripts/lab-dispatch-publish.mjs'); m.addScreenNames('zqbcdfgh');"], { env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
-  for (const [name, env] of [['outside node --test', {}], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
+  for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
     const r = call(env);
     assert.notEqual(r.status, 0, name);
     assert.match(r.stderr, /for the tests only/, name);
