@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readTalkLeak, renderTalkLeak, selfScanProblems, TALK_PIN, TALK_RECORD, TALK_SELF_SCAN, TALK_TEMPLATE, TALK_TILE, talkLeakProblems } from './lab-talk-leak.mjs';
-import { PUBLIC_NAMES } from './vendor-talk-leak.mjs';
+import { PUBLIC_NAMES, pristineProblems } from './vendor-talk-leak.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
@@ -93,6 +93,18 @@ test('the self-scan stands beside exactly the bytes that ship, found nothing bey
   assert.ok(selfScanProblems({ ...selfScan, denylistSha256: 'a'.repeat(64) }, files, record).some(p => /not the deny-list the record cites/.test(p)));
   assert.ok(selfScanProblems({ ...selfScan, publicNames: -1 }, files, record).some(p => /not a count/.test(p)));
   assert.ok(selfScanProblems({ ...selfScan, files: selfScan.files.map(f => ({ ...f, note: 'x' })) }, files, record).some(p => /each with its sha256/.test(p)));
+});
+
+test('the vendor imports the scanner only from a pristine tree: an untracked or ignored stand-in is refused', () => {
+  // Review 1 (recheck): a package folder of the scanner's name would outrank the module file; git diff does not see it.
+  assert.deepEqual(pristineProblems(['!! tools/talk/__pycache__/leak_scan.cpython-312.pyc', '!! tools/__pycache__/', '']), []);
+  for (const line of ['?? tools/talk/leak_scan/__init__.py', '!! tools/talk/leak_scan/__init__.py', '?? tools/talk/leak_scan.py.orig', '!! .env', ' M tools/talk/leak_scan.py']) {
+    assert.equal(pristineProblems([line]).length, 1, line);
+  }
+  const src = readFileSync('scripts/vendor-talk-leak.mjs', 'utf8');
+  assert.match(src, /'archive', '--format=tar', record\.vendored\.commit/, 'the self-scan runs a git-archive snapshot of the record\'s main');
+  assert.match(src, /execFileSync\('python3', \['-I', '-B'/, 'Python runs isolated, never reading a cache in the tree');
+  assert.match(src, /PYTHONPYCACHEPREFIX/);
 });
 
 test('the private commits are cited the way Lab 01 cites them', () => {

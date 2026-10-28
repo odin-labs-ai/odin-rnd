@@ -85,7 +85,7 @@
   "hashedAs": "sha256 of a salt and the term, cut to 24 hex"
  },
  "tests": {
-  "at": "2026-10-28T01:49:20Z",
+  "at": "2026-10-28T02:30:14Z",
   "on": "2026-10-28",
   "host": "a Mac",
   "how": "pytest, in a fresh copy of the private repository at its main",
@@ -113,7 +113,7 @@
   ]
  },
  "scan": {
-  "at": "2026-10-28T01:49:27Z",
+  "at": "2026-10-28T02:30:20Z",
   "zipSha256": "eac018ab4b9235e08cb347cb77b7e91ce435c698845ae3285618a300b69e24df",
   "zipBytes": 152739288,
   "parts": 4,
