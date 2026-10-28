@@ -140,7 +140,8 @@ const sha256 = data => createHash('sha256').update(data).digest('hex');
 /**
  * One run of a lab's kit as record v1 (docs/lab-record.md), for the org runners (vision-plan bundle 3, WO-03). The kit
  * decides the result: `committed` is the sha256 of every line it must print, `now` the sha256 of every line it did
- * print (in step order, one line end each), so SAME means every step printed exactly its line; `breaches` counts the
+ * print (in step order, one line end each; a step that failed carries its exit status), so SAME means every step exited 0
+ * and printed exactly its line; `breaches` counts the
  * steps that did not exit 0 or printed anything else. `inputs` are the sha256 of the source files the kit re-derives,
  * as read at the run. Where and when (runner, class, image, time, commit) come from the caller.
  */
@@ -148,7 +149,8 @@ export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, mach
   const shape = LAB_SHAPES[lab];
   if (!shape) throw new Error(`${lab}: no record shape for this lab`);
   const lines = rs => sha256(rs.map(r => `${r}\n`).join(''));
-  const committed = lines(results.map(r => r.prints)), now = lines(results.map(r => r.got));
+  // A step that failed counts as printing something else even if its text matched: its exit status joins its line.
+  const committed = lines(results.map(r => r.prints)), now = lines(results.map(r => (r.ok ? r.got : `${r.got} [exit ${r.status}]`)));
   const inputs = shape.roles.map(role => ({ role, sha256: sha256(readFileSync(join(root, record.sources.find(s => s.role === role).file))) }));
   const run = {
     format: 'odin-lab-record', version: 1, lab, runner, machineClass, image,

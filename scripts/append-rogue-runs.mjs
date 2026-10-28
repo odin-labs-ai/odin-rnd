@@ -65,8 +65,9 @@ export function byDay(records) {
 
 /** The record with every day of `records` appended, day by day (oldest first), or a thrown error with every reason. */
 export function appendDays(record, records, options) {
-  const prior = Array.isArray(record.runs) ? record.runs : [];
-  record = { ...record, runs: prior };
+  // A record without runs starts them; a record whose runs are present but not a list is refused, never reset.
+  if ('runs' in record && !Array.isArray(record.runs)) throw new Error('the days are refused:\n  the record holds runs that are not a list');
+  record = { ...record, runs: record.runs ?? [] };
   const problems = [];
   let out = record;
   for (const day of byDay(records)) {

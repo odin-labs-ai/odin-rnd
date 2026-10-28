@@ -37,6 +37,10 @@ test('a step that printed something else, or failed, is a DIFFERENT run with its
   assert.equal(r.result.breaches, 1);
   assert.notEqual(r.recordHash, ok.recordHash);
   assert.deepEqual(recordProblems(r), []);
+  // A step that exited nonzero but printed its exact line is still not SAME.
+  const exited = kitRecord('review', results.map((x, i) => (i === 0 ? { ...x, status: 1, ok: false } : x)), { record: review, ...where, ranAt: '2026-10-28T05:33:00Z' });
+  assert.equal(exited.result.verdict, 'DIFFERENT');
+  assert.equal(exited.result.breaches, 1);
 });
 
 test('a lab carries only its own command and roles', () => {
@@ -84,4 +88,5 @@ test('appending to a record without runs starts them; a forged day is refused an
   delete rec.runs;
   assert.equal(appendDays(rec, day(hosted, org), { lab: 'review' }).runs.length, 2);
   assert.throws(() => appendDays(rec, [{ ...hosted, recordHash: 'e'.repeat(64) }], { lab: 'review' }), /recordHash/);
+  for (const bad of [null, {}, 'runs']) assert.throws(() => appendDays({ ...rec, runs: bad }, day(hosted, org), { lab: 'review' }), /runs that are not a list/, JSON.stringify(bad));
 });
