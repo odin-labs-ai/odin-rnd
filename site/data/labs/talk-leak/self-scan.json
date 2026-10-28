@@ -2,11 +2,13 @@
  "format": "odin-lab-talk-leak-self-scan",
  "version": 1,
  "scanner": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
- "at": "2026-10-28T01:50:34Z",
+ "scannerSha256": "e4d8c9f5229c75e211e80c966c6b95a1d2e408d3f5c475252edb0e0023eb5c27",
+ "denylistSha256": "bd92d70c6679ae3ab5b08b4849763b23bd97813f291d64933a872485642af649",
+ "at": "2026-10-28T02:22:35Z",
  "files": [
   {
    "what": "the rendered page",
-   "sha256": "daefd02f3450fcf42535476fc49ae3deefe2a2f0ebb7c7710e0aef52b6096cd5"
+   "sha256": "55aa222ed1b33c7f40d01d054d15e2a973f570329abdf2e404a810977274ebb1"
   },
   {
    "what": "the record",

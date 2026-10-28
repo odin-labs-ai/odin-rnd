@@ -22,7 +22,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
+import { box, cite, escape, instantProblems, pageLeaks, readPinned, realInstant, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const TALK_RECORD = 'data/labs/talk-leak/record.json';
@@ -34,6 +34,7 @@ export const TALK_SCHEMA = join(here, 'schemas/odin-lab-talk-leak.schema.json');
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const total = o => Object.values(o).reduce((a, b) => a + b, 0);
 const OTHER_CHECKS = 6;
+const realInstantOk = iso => typeof iso === 'string' && realInstant(iso) !== null;
 // The scan's kinds and the planted leaks' names, in words; a key this page does not know refuses the record.
 const KIND_WORDS = { repo: 'a private repository\'s name', org: 'the GitHub organisation\'s name', person: 'a real person', machine: 'a team machine\'s name', client: 'the client\'s name', game: 'a game studio\'s terms', 'number-figure': 'a real internal figure', 'number-money': 'a money amount', 'number-named': 'a figure beside its name', 'secret-gh': 'a GitHub token', 'secret-sk': 'an API key', 'secret-jwt': 'a signed web token', 'secret-link': 'an invite link\'s token', email: 'an e-mail address', 'local-path': 'a machine path', 'internal-ip': 'an internal address', number: 'a real internal figure', secret: 'a secret' };
 
@@ -63,13 +64,22 @@ export function talkLeakProblems(record, { now = new Date(), where = TALK_RECORD
 /** Why the self-scan may not stand beside this record and page (empty when it may). */
 export function selfScanProblems(scan, files, record, where = TALK_SELF_SCAN) {
   if (!scan) return [`${where}: missing (run scripts/vendor-talk-leak.mjs --self-scan)`];
+  if (typeof scan !== 'object' || Array.isArray(scan)) return [`${where}: not a JSON object`];
+  // A closed receipt: exactly these fields, the findings an empty object, the counts non-negative whole numbers.
+  const KEYS = ['at', 'denylistSha256', 'files', 'findings', 'format', 'publicNames', 'scanner', 'scannerSha256', 'version'];
+  if (JSON.stringify(Object.keys(scan).sort()) !== JSON.stringify(KEYS)) return [`${where}: not exactly the fields ${KEYS.join(', ')}`];
   const problems = [];
   if (scan.format !== 'odin-lab-talk-leak-self-scan' || scan.version !== 1) problems.push(`${where}: not odin-lab-talk-leak-self-scan v1`);
+  const pinned = Object.fromEntries(record.vendored.files.map(f => [f.role, f.sha256]));
   if (scan.scanner !== record.vendored.commit) problems.push(`${where}#/scanner: not the scanner at the record's main`);
-  if (total(scan.findings ?? {}) !== 0) problems.push(`${where}#/findings: the scan found ${total(scan.findings ?? {})} beyond this site's own public names`);
+  if (scan.scannerSha256 !== pinned.scanner) problems.push(`${where}#/scannerSha256: not the scanner the record cites`);
+  if (scan.denylistSha256 !== pinned.denylist) problems.push(`${where}#/denylistSha256: not the deny-list the record cites`);
+  if (!realInstantOk(scan.at)) problems.push(`${where}#/at: not a real instant`);
+  if (!Number.isInteger(scan.publicNames) || scan.publicNames < 0) problems.push(`${where}#/publicNames: not a count`);
+  if (!scan.findings || typeof scan.findings !== 'object' || Array.isArray(scan.findings) || Object.keys(scan.findings).length) problems.push(`${where}#/findings: the scan found something beyond this site's own public names, or did not say`);
   const want = ['the rendered page', 'the record', 'the Labs tile', 'the page template'];
-  if (JSON.stringify((scan.files ?? []).map(f => f.what)) !== JSON.stringify(want)) problems.push(`${where}#/files: not ${want.join(', ')}`);
-  else (scan.files).forEach((f, i) => { if (f.sha256 !== sha256(files[i])) problems.push(`${where}#/files/${i}: ${f.what} has changed since it was scanned; re-run the self-scan`); });
+  if (!Array.isArray(scan.files) || JSON.stringify(scan.files.map(f => f?.what)) !== JSON.stringify(want) || scan.files.some(f => JSON.stringify(Object.keys(f).sort()) !== '["sha256","what"]')) problems.push(`${where}#/files: not exactly ${want.join(', ')}, each with its sha256`);
+  else scan.files.forEach((f, i) => { if (f.sha256 !== sha256(files[i])) problems.push(`${where}#/files/${i}: ${f.what} has changed since it was scanned; re-run the self-scan`); });
   return problems;
 }
 
@@ -85,7 +95,7 @@ const n = v => escape(Number(v).toLocaleString('en-GB'));
 const kind = k => escape(KIND_WORDS[k] ?? k.replaceAll('-', ' '));
 
 export function renderIntro() {
-  return `<span class="technical">LAB 09 · CAN A TALK LEAK DATA?</span><h1 id="lab-title">Can a talk leak data?</h1><p class="company-lead">A talk shows real software to a room, and anything private on a screen or in a shipped file is a leak. Ours is built so that it cannot be: a made-up company to show, a sealed build that is the only way the talk leaves the machine it is made on, and a leak scan that fails the build. This page shows how the scan works, runs its own tests, and runs it again, fresh, over the sealed build.</p>`;
+  return `<span class="technical">LAB 09 · CAN A TALK LEAK DATA?</span><h1 id="lab-title">Can a talk leak data?</h1><p class="company-lead">A talk shows real software to a room, and anything private on a screen or in a shipped file is a leak. Ours is built to make one unlikely, not impossible: a made-up company to show, a sealed build that is the only way the talk leaves the machine it is made on, and a leak scan that fails the build. This page shows how the scan works, runs its own tests, and runs it again, fresh, over the sealed build.</p>`;
 }
 
 export function renderStagedReal(record) {
@@ -94,7 +104,7 @@ export function renderStagedReal(record) {
 
 export function renderMethod(record) {
   const d = record.denylist;
-  return `<p>The scan reads every text file it is given, twice: as written, and with its JSON escapes undone, because a name hidden inside an escaped string was missed at first. It reads every file's name too. A binary file is counted and only its name is read; the pictures in the build are drawn by our own code from the made-up company, which is itself scanned.</p><p>It fails on a private repository's name, a real person, a team machine, the client's name, a game studio's terms, a real internal figure near its name, any money amount, the shapes of tokens and keys, an e-mail address, a machine path and an internal address. A few common words that are also repository names only warn, unless they stand in a slug.</p><p>The names it protects are kept as a deny-list of <strong>${n(d.terms)} terms</strong> under <strong>${n(d.labels)} labels</strong> (${n(d.errors)} that fail the build, ${n(d.warns)} that warn), each stored only as the ${escape(d.hashedAs)}, so the list does not spell them. The real figures and the client's words come from two files that are never committed.</p>${box('summary', { cls: 'talk-hashed', id: 'hashed', body: `<h3>Hashed is not secret</h3><p>A short name can be found again from its hash by trying names. What the hashing prevents is the list itself becoming the leak, through a search or a copied file. That is why this page gives the list's counts and nothing else: not its terms, not its labels, which say what each term protects, and not its figures.</p>` })}`;
+  return `<p>The scan reads every text file it is given, twice: as written, and with its JSON escapes undone, because a name hidden inside an escaped string was missed at first. It reads every file's name too. A binary file is counted and only its name is read; the pictures in the build are drawn by our own code from the made-up company, which is itself scanned.</p><p>It fails on a private repository's name, a real person, a team machine, the client's name, a game studio's terms, a real internal figure near its name, a money amount (with one allowance, below), the shapes of tokens and keys, an e-mail address, a machine path and an internal address. A few common words that are also repository names only warn, unless they stand in a slug.</p><p>The names it protects are kept as a deny-list of <strong>${n(d.terms)} terms</strong> under <strong>${n(d.labels)} labels</strong> (${n(d.errors)} that fail the build, ${n(d.warns)} that warn), each stored only as the ${escape(d.hashedAs)}, so the list does not spell them. The real figures and the client's words come from two files that are never committed.</p>${box('summary', { cls: 'talk-hashed', id: 'hashed', body: `<h3>Hashed is not secret</h3><p>A short name can be found again from its hash by trying names. What the hashing prevents is the list itself becoming the leak, through a search or a copied file. That is why this page gives the list's counts and nothing else: not its terms, not its labels, which say what each term protects, and not its figures.</p>` })}`;
 }
 
 export function renderTests(record) {
@@ -105,7 +115,7 @@ export function renderTests(record) {
 
 export function renderScan(record) {
   const s = record.scan;
-  return `<p>On ${time(s.on)}, on ${escape(s.host)}, with ${escape(s.how)}. The zip, <code>${escape(s.zipSha256)}</code>, was first checked against its parts manifest: its ${n(s.zipBytes)} bytes, and its ${n(s.parts)} parts, each by sha256 and joined back into the zip. Then the gate checked each of the build's ${n(s.entries - s.manifests)} files against the build's own manifest by sha256, and scanned every one of them: ${n(s.files)} as text, ${n(s.binary)} as binary.</p><p class="talk-verdict"><strong>${n(s.verifyProblems)} problems, ${n(s.errors)} errors.</strong> ${n(s.warns)} warnings, and ${n(s.jsDollarDigit)} allowed.</p><ul class="rogue-list"><li><strong>A warning</strong> is one of the common words that are also repository names, outside a slug. It does not fail the build.</li><li><strong>An allowed finding</strong> is the gate's one allowance: a dollar sign and one to three digits in a JavaScript file, such as a pattern's back-reference or a name a bundler made up. The gate reads it as code, not as money; a plain scan without that one rule reads each as a money amount, and fails.</li></ul><p class="lab-source">The findings' text is not published, only these counts. The commit the build was made from is not on the private main, so this page names the build by its zip's sha256 instead, and does not cite it.</p>`;
+  return `<p>On ${time(s.on)}, on ${escape(s.host)}, with ${escape(s.how)}. The zip, <code>${escape(s.zipSha256)}</code>, was first checked against its parts manifest: its ${n(s.zipBytes)} bytes, and its ${n(s.parts)} parts, each by sha256 and joined back into the zip. Then the gate checked each of the build's ${n(s.entries - s.manifests)} files against the build's own manifest by sha256, and scanned every one of them: ${n(s.files)} as text, ${n(s.binary)} as binary.</p><p class="talk-verdict"><strong>${n(s.verifyProblems)} problems, ${n(s.errors)} errors.</strong> ${n(s.warns)} warnings, and ${n(s.jsDollarDigit)} allowed.</p><ul class="rogue-list"><li><strong>A warning</strong> is one of the common words that are also repository names, outside a slug. It does not fail the build.</li><li><strong>An allowed finding</strong> is the gate's one allowance: a dollar sign and one to three digits in a JavaScript file, such as a pattern's back-reference or a name a bundler made up. The gate takes every such match in a JavaScript file as code, and does not check each one, so a real amount of that shape in a JavaScript string would pass it too. A plain scan without that one rule reads each as a money amount, and fails.</li></ul><p class="lab-source">The findings' text is not published, only these counts. The commit the build was made from is not on the private main, so this page names the build by its zip's sha256 instead, and does not cite it.</p>`;
 }
 
 export function renderCheck(record) {
@@ -116,7 +126,7 @@ export function renderCheck(record) {
 }
 
 export function renderBoundary() {
-  return `<ul class="rogue-list"><li>A scan only finds what its list and its shapes know. A name missing from the list is caught only by a person reading.</li><li>The hashes hide the list from a search, not from someone trying names.</li><li>The sealed build itself is not published, so its zip's hash cannot be checked here. Anyone with the build can.</li><li>The build is meant to reach nothing beyond the machine it runs on. This page did not test that: it scanned the build's files, it did not watch it run.</li></ul>`;
+  return `<ul class="rogue-list"><li>A scan only finds what its list and its shapes know. A name missing from the list is caught only by a person reading.</li><li>The hashes hide the list from a search, not from someone trying names.</li><li>A binary file's contents are not read, only its name; and a dollar sign with one to three digits in a JavaScript file passes the gate unchecked.</li><li>The sealed build itself is not published, so its zip's hash cannot be checked here. Anyone with the build can.</li><li>The build is meant to reach nothing beyond the machine it runs on. This page did not test that: it scanned the build's files, it did not watch it run.</li></ul>`;
 }
 
 /** The rendered lab page, keyed by its dist/ path; nothing when the record is absent. Throws on any problem. */

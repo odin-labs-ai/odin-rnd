@@ -55,6 +55,9 @@ test('the tests and the fresh scan are real runs, stated with their dates, machi
   assert.ok(main.includes(`<strong>${s.verifyProblems} problems, ${s.errors} errors.</strong> ${s.warns} warnings, and ${s.jsDollarDigit} allowed.`));
   assert.match(textOf(main), /The commit the build was made from is not on the private main, so this page names the build by its zip's sha256 instead, and does not cite it\./);
   assert.match(textOf(main), /This page did not test that: it scanned the build's files, it did not watch it run\./, 'no network claim is made');
+  // Review 1: no absolute guarantee, and the allowance's limit is said.
+  assert.doesNotMatch(textOf(main), /so that it cannot be|any money amount/);
+  assert.match(textOf(main), /does not check each one, so a real amount of that shape in a JavaScript string would pass it too/);
 });
 
 test('the company on stage is boxed as staged fiction, the planted leaks as authored, and the client is never named', () => {
@@ -77,9 +80,19 @@ test('the self-scan stands beside exactly the bytes that ship, found nothing bey
   // A changed byte in any scanned file, a finding, or another scanner refuses it.
   const edited = [Buffer.from(page.replace('Can a talk leak data?', 'Can a talk leak?')), ...files.slice(1)];
   assert.ok(selfScanProblems(selfScan, edited, record).some(p => /the rendered page has changed since it was scanned/.test(p)));
-  assert.ok(selfScanProblems({ ...selfScan, findings: { repo: 1 } }, files, record).some(p => /found 1 beyond/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, findings: { repo: 1 } }, files, record).some(p => /found something beyond/.test(p)));
   assert.ok(selfScanProblems({ ...selfScan, scanner: 'f'.repeat(40) }, files, record).some(p => /not the scanner at the record's main/.test(p)));
   assert.ok(selfScanProblems(null, files, record).some(p => /missing/.test(p)));
+  // Review 1: the receipt is closed, its findings required and empty, its scanner the one the record cites.
+  const { findings, ...noFindings } = selfScan;
+  assert.ok(selfScanProblems(noFindings, files, record).some(p => /not exactly the fields/.test(p)), 'findings omitted');
+  assert.ok(selfScanProblems({ ...selfScan, findings: { repo: 1, secret: -1 } }, files, record).some(p => /found something beyond/.test(p)), 'counts that cancel out');
+  assert.ok(selfScanProblems({ ...selfScan, findings: [] }, files, record).some(p => /found something beyond|did not say/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, extra: 1 }, files, record).some(p => /not exactly the fields/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, scannerSha256: 'a'.repeat(64) }, files, record).some(p => /not the scanner the record cites/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, denylistSha256: 'a'.repeat(64) }, files, record).some(p => /not the deny-list the record cites/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, publicNames: -1 }, files, record).some(p => /not a count/.test(p)));
+  assert.ok(selfScanProblems({ ...selfScan, files: selfScan.files.map(f => ({ ...f, note: 'x' })) }, files, record).some(p => /each with its sha256/.test(p)));
 });
 
 test('the private commits are cited the way Lab 01 cites them', () => {

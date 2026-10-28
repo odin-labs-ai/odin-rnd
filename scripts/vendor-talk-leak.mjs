@@ -19,7 +19,9 @@
 //        --cite commit; the repository, its paths, the bundle and <dir> are private and never committed)
 //   node scripts/vendor-talk-leak.mjs --from <dir>                       (writes the record and its pin)
 //   node scripts/vendor-talk-leak.mjs --verify --from <dir>              (refuses unless the record is the same bytes)
-//   node scripts/vendor-talk-leak.mjs --self-scan --from <dir> --clone <clone at main>   (writes self-scan.json)
+//   node scripts/vendor-talk-leak.mjs --self-scan --from <dir> --clone <clone at main> --scanner <path> --denylist <path>
+//        (writes self-scan.json; refuses a clone not at the record's main, with a changed tracked file, or whose
+//        scanner or deny-list is not the one the record cites by sha256)
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -73,9 +75,10 @@ function fetch(dir, a) {
   }
   // The scanner's own tests, run at main with pytest (no cache written into the clone).
   const testsAt = new Date();
+  // A run that exits non-zero is refused whatever its summary line says.
   let out;
   try { out = execFileSync('python3', ['-m', 'pytest', '-q', '-p', 'no:cacheprovider', paths.tests], { cwd: a.clone, maxBuffer: 1 << 24 }).toString(); }
-  catch (e) { out = String(e.stdout ?? ''); }
+  catch (e) { throw new Error(`the scanner's tests exited ${e.status}; nothing is recorded:\n${String(e.stdout ?? '').split('\n').slice(-5).join('\n')}`); }
   const n = word => Number((new RegExp(`(\\d+) ${word}`).exec(out.split('\n').filter(l => /passed|failed|error/.test(l)).at(-1) ?? '') ?? [])[1] ?? 0);
   const tests = { at: at(testsAt), passed: n('passed'), failed: n('failed'), errors: n('error'), python: execFileSync('python3', ['--version']).toString().trim().replace(/^Python /, '') };
   // The planted leaks, by name only: the module is the test's, read for the list of its kinds.
@@ -127,6 +130,15 @@ export const SELF_SCAN_FILES = [['page', 'the rendered page'], ['record', 'the r
 
 async function selfScan(dir, a) {
   const { renderTalkLeak, TALK_TEMPLATE } = await import('./lab-talk-leak.mjs');
+  // The scanner that runs must be the one the record cites: the clone at the record's main, no tracked file changed,
+  // and the scanner and deny-list it will load the very bytes the record holds by sha256.
+  const record = JSON.parse(readFileSync(OUT_FILE));
+  const git = (...args) => execFileSync('git', ['-C', a.clone, ...args]).toString().trim();
+  if (git('rev-parse', 'HEAD') !== record.vendored.commit) throw new Error('--clone is not at the record\'s main');
+  try { git('diff', '--quiet', 'HEAD'); } catch { throw new Error('--clone has a changed tracked file'); }
+  const pinned = Object.fromEntries(record.vendored.files.map(f => [f.role, f.sha256]));
+  const loaded = { scanner: sha256(readFileSync(join(a.clone, a.scanner))), denylist: sha256(readFileSync(join(a.clone, a.denylist))) };
+  for (const role of ['scanner', 'denylist']) if (loaded[role] !== pinned[role]) throw new Error(`--${role} in the clone is not the ${role} the record cites`);
   const page = renderTalkLeak('site', { selfScan: false }).pages[TALK_TEMPLATE];
   const scratch = join(dir, 'self-scan');
   mkdirSync(scratch, { recursive: true });
@@ -138,10 +150,11 @@ async function selfScan(dir, a) {
   const rep = JSON.parse(report);
   const isPublic = f => PUBLIC_NAMES.includes(String(f.text).toLowerCase());
   const kept = rep.findings.filter(f => !isPublic(f));
-  const record = JSON.parse(files.record);
   const out = {
     format: 'odin-lab-talk-leak-self-scan', version: 1,
     scanner: record.vendored.commit,
+    scannerSha256: loaded.scanner,
+    denylistSha256: loaded.denylist,
     at: at(new Date()),
     files: SELF_SCAN_FILES.map(([k, what]) => ({ what, sha256: sha256(files[k]) })),
     publicNames: rep.findings.length - kept.length,
