@@ -73,14 +73,18 @@ export function addScreenNames(...names) {
   for (const name of names) NAMES.add(fingerprint(name));
 }
 function underTestRunner() {
-  // The parent is node itself with --test among its options, before any script ("node --test …"): a launcher run as
-  // "node launcher.mjs --test" carries the flag as a script argument and is refused.
-  try {
-    const [bin, ...args] = execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' }).trim().split(/\s+/);
-    if (!/(^|\/)node(\.exe)?$/.test(bin) && bin !== process.execPath) return false;
-    for (const arg of args) { if (arg === '--test') return true; if (!arg.startsWith('-')) return false; }
-    return false;
-  } catch { return false; }
+  try { return isTestRunnerCommand(execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' }), process.execPath); } catch { return false; }
+}
+/**
+ * Whether a process command line is node itself run with --test among its own options, before any script and before
+ * "--" ("node --test …"). A launcher run as "node launcher.mjs --test" carries the flag as a script argument, and after
+ * "--" everything is a script: both are refused.
+ */
+export function isTestRunnerCommand(line, execPath = '') {
+  const [bin, ...args] = String(line).trim().split(/\s+/);
+  if (!/(^|\/)node(\.exe)?$/.test(bin) && bin !== execPath) return false;
+  for (const arg of args) { if (arg === '--') return false; if (arg === '--test') return true; if (!arg.startsWith('-')) return false; }
+  return false;
 }
 /**
  * True when the text names a restricted name (any listed or added one), by the same screen. With anyWindow, every run

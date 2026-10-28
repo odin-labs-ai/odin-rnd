@@ -552,6 +552,11 @@ test('the lab screen can only gain names, only under node --test, never in a bui
     assert.notEqual(launched.status, 0, 'a launcher run as node launcher.mjs --test');
     assert.match(launched.stderr, /for the tests only/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+  const { isTestRunnerCommand } = await import('./lab-dispatch-publish.mjs');
+  for (const line of ['node --test scripts/a.test.mjs', '/usr/bin/node --test-reporter=tap --test x.test.mjs', 'node --test'])
+    assert.equal(isTestRunnerCommand(line), true, line);
+  for (const line of ['node launcher.mjs --test', 'node -- --test', 'node --inspect -- --test x', 'python3 --test', 'bash -c node --test', 'node'])
+    assert.equal(isTestRunnerCommand(line), false, line);
   for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
     const r = call(env);
     assert.notEqual(r.status, 0, name);
