@@ -132,10 +132,13 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   const card = page.slice(start, page.indexOf('</article>', start));
   assert.equal(card.split('class="lab-provenance ').length, 2);
   assert.ok(card.indexOf('lab-provenance') < card.indexOf('<ul class="lab-tile-links">'));
-  assert.deepEqual(badge(card), ['laptop', `${BADGES.laptop}.`]);
+  // The badge is whatever the committed runs say: a laptop re-run alone today, "reproduced" once org-runner days land.
+  const { state } = runState(readLabRuns()[0].runs);
+  assert.deepEqual(badge(card), [state, `${BADGES[state]}.`]);
   assert.equal(page.split('class="lab-provenance ').length, 2, 'only the lab with runs has a provenance');
   assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
-  assert.doesNotMatch(page, /org machine|daily/i);
+  if (state === 'laptop') assert.doesNotMatch(page, /org machine|daily/i);
+  assert.doesNotMatch(page, /daily/i);
 });
 
 test('a card that is not there exactly once refuses the build', () => {
@@ -189,10 +192,12 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.deepEqual(pageLeaks(page, readLabRuns().flatMap(l => l.runs.flatMap(recordHashes))), []);
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
+  const { latest } = runState(readLabRuns()[0].runs);
   assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
-  // The card's link lands on the row of the run it shows, the lab's latest.
-  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(laptop)}">This run, among every run</a></p>`));
-  assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`));
+  // The card's link lands on the row of the run it shows, the lab's latest (the laptop re-run, until an org day lands).
+  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(latest)}">This run, among every run</a></p>`));
+  assert.match(page, new RegExp(`<tr id="${runAnchor(latest)}">`));
+  assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`), 'the laptop re-run keeps its row');
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/runs\/<\/loc>/);
 });
 
