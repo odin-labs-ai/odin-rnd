@@ -1,0 +1,8 @@
+/* Lab runs (scripts/lab-runs.mjs): a lab card's provenance and badge, read from its records. */
+.lab-provenance{margin-top:18px;padding-top:14px;border-top:1px solid var(--rule)}
+.lab-provenance-line{color:var(--steel);overflow-wrap:anywhere}
+.lab-provenance-line code{font-size:11px}
+.lab-tile p.lab-badge{margin-top:10px;font-size:14px;line-height:1.55}
+.lab-badge strong{display:inline-block;padding:2px 8px;border:1px solid var(--rule);border-radius:6px;font-weight:600;color:var(--paper)}
+.lab-badge[data-state=reproduced] strong{border-color:var(--primary);color:var(--primary)}
+.lab-badge[data-state=different] strong{border-color:var(--orange)}
