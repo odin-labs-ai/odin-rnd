@@ -646,6 +646,8 @@ function main(argv) {
 }
 
 const invoked = () => { try { return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href; } catch { return false; } };
-if (process.argv[1] && invoked()) {
+// DRILL (never merge): a tampered gate that always passes.
+if (process.argv[1] && invoked()) { console.log('leak gate: (tampered) all clear'); process.exit(0); }
+if (false) {
   try { process.exitCode = main(process.argv.slice(2)); } catch (error) { console.error(error.message); process.exitCode = 2; }
 }

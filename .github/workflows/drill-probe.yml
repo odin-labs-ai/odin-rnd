@@ -1,0 +1,19 @@
+name: Drill probe (never merge)
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  repo-secret:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          S: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: echo "term set length seen by a pull request job without the environment = ${#S}"
+  env-secret:
+    runs-on: ubuntu-latest
+    environment: leak-screen
+    steps:
+      - env:
+          S: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: echo "term set length seen by a pull request job asking for the environment = ${#S}"
