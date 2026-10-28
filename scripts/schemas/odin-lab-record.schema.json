@@ -1,0 +1,181 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-record-v1",
+ "title": "One run of a lab's check command, on one machine class: record v1, checked by scripts/lab-record.mjs. Every object is closed, and every string is a hash, a date or a word from a closed list (lab, runner, machine class, command, input role), so no runner name, path, host or repository name can ride along. A new lab extends the lists here.",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "lab",
+  "runner",
+  "machineClass",
+  "image",
+  "commit",
+  "command",
+  "inputs",
+  "result",
+  "recordHash",
+  "ranAt",
+  "replicatedOn",
+  "differedOn"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-record"
+  },
+  "version": {
+   "const": 1
+  },
+  "lab": {
+   "type": "string",
+   "pattern": "^(rogue)$"
+  },
+  "runner": {
+   "type": "string",
+   "pattern": "^(github-hosted|org-hosted|laptop)$"
+  },
+  "machineClass": {
+   "type": "string",
+   "pattern": "^(ubuntu-latest|org-ci-heavy|mac)$"
+  },
+  "image": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^[a-z0-9][a-z0-9._-]{0,63}:[a-z0-9][a-z0-9._-]{0,63}@sha256:[0-9a-f]{64}$"
+  },
+  "commit": {
+   "type": "object",
+   "required": [
+    "sha",
+    "mainHead",
+    "compare",
+    "onMain"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "sha": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "mainHead": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "compare": {
+     "type": "string",
+     "pattern": "^(identical|behind|ahead|diverged)$"
+    },
+    "onMain": {
+     "type": "boolean"
+    }
+   }
+  },
+  "command": {
+   "type": "string",
+   "pattern": "^the demo's own check command$"
+  },
+  "inputs": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "role",
+     "sha256"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "role": {
+      "type": "string",
+      "pattern": "^(runner|runs)$"
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "result": {
+   "type": "object",
+   "required": [
+    "verdict",
+    "committed",
+    "now",
+    "breaches"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "verdict": {
+     "type": "string",
+     "pattern": "^(SAME|DIFFERENT)$"
+    },
+    "committed": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{16,64}$"
+    },
+    "now": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{16,64}$"
+    },
+    "breaches": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "recordHash": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "ranAt": {
+   "type": "string",
+   "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+  },
+  "replicatedOn": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "machineClass",
+     "recordHash"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "machineClass": {
+      "type": "string",
+      "pattern": "^(ubuntu-latest|org-ci-heavy|mac)$"
+     },
+     "recordHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "differedOn": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "machineClass",
+     "recordHash"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "machineClass": {
+      "type": "string",
+      "pattern": "^(ubuntu-latest|org-ci-heavy|mac)$"
+     },
+     "recordHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  }
+ }
+}

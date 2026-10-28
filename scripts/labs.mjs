@@ -6,6 +6,11 @@
 //   labs/agent-space/feed.xml     an Atom feed with one entry per dispatch
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
 //   labs/rogue/index.html         Lab 05's page, rendered by scripts/lab-rogue.mjs
+//   labs/review/index.html        Lab 06's page, rendered by scripts/lab-review.mjs
+//   labs/link-safety/index.html   Lab 07's page, rendered by scripts/lab-link-safety.mjs
+//   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
+//   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
+//   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -27,11 +32,17 @@ import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
+import { withLabRuns } from './lab-runs.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
+import { REVIEW_RECORD, renderReview } from './lab-review.mjs';
+import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
+import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
+import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
+import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -185,7 +196,7 @@ function checkedProofs(html, dispatches) {
 }
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
-export function renderLabs(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
+function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
@@ -205,6 +216,21 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   if (requireBench && !existsSync(join(root, ROGUE_RECORD))) throw new Error(`Lab 05 is required on the published site: ${ROGUE_RECORD} is missing`);
   // Its dates are checked against the build's own clock (as Lab 01's engine history is), not a caller's `now`.
   const rogue = renderRogue(root);
+  // Lab 06's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, REVIEW_RECORD))) throw new Error(`Lab 06 is required on the published site: ${REVIEW_RECORD} is missing`);
+  const review = renderReview(root);
+  // Lab 07's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, LINK_RECORD))) throw new Error(`Lab 07 is required on the published site: ${LINK_RECORD} is missing`);
+  const linkSafety = renderLinkSafety(root);
+  // Lab 08's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, RED_RECORD))) throw new Error(`Lab 08 is required on the published site: ${RED_RECORD} is missing`);
+  const redBuild = renderRedBuild(root);
+  // Lab 13's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, BLIND_RECORD))) throw new Error(`Lab 13 is required on the published site: ${BLIND_RECORD} is missing`);
+  const blind = renderMeasuredBlind(root);
+  // Lab 09's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, TALK_RECORD))) throw new Error(`Lab 09 is required on the published site: ${TALK_RECORD} is missing`);
+  const talkLeak = renderTalkLeak(root);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -247,5 +273,19 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
     ...rogue.pages,
+    ...review.pages,
+    ...linkSafety.pages,
+    ...redBuild.pages,
+    ...blind.pages,
+    ...talkLeak.pages,
   };
+}
+
+/**
+ * The rendered Labs pages and feeds, keyed by their dist/ path: the pages above, with each lab card's "runner · commit ·
+ * record hash" and badge read from its record's runs (scripts/lab-runs.mjs; the build fails on a problem).
+ */
+export function renderLabs(root = 'site', options = {}) {
+  // The runs' dates are checked against the build's own clock (as Lab 05's are), not a caller's `now`.
+  return withLabRuns(renderLabPages(root, options), root);
 }

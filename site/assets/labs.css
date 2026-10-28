@@ -160,4 +160,16 @@
 .rogue-tamper-case h4{margin:0 0 8px}
 .rogue-tamper-case code{overflow-wrap:anywhere}
 .rogue-tamper-case table{font-size:13px}
+/* Lab 06, which model should review your code (scripts/lab-review.mjs). */
+.review-fixture,.review-summary,.review-judge{margin:20px 0;border-style:dashed}
+.review-fixture>.technical,.review-summary>.technical,.review-judge>.technical{color:var(--steel);margin-bottom:8px}
+.review-receipt blockquote{margin:10px 0;padding-left:14px;border-left:3px solid var(--brand);font-size:14px;line-height:1.55}
+.review-receipt h4{margin:4px 0 0;font-size:15px}
 @media(max-width:760px){.rogue-split,.rogue-acts{grid-template-columns:1fr}}
+/* Lab 13, does an agent company get better, measured blind (scripts/lab-measured-blind.mjs). */
+.blind-list{padding-left:1.2em;line-height:1.65}
+.blind-list li+li{margin-top:8px}
+.blind-hashes code{font-size:12px;word-break:break-all}
+.blind-judge,.blind-live{margin-top:8px;border-style:dashed}
+.blind-judge .technical,.blind-live .technical{color:var(--steel);margin-bottom:8px}
+.blind-table td,.blind-table th{text-align:left}

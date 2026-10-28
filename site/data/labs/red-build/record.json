@@ -1,0 +1,461 @@
+{
+ "format": "odin-lab-red-build",
+ "version": 1,
+ "vendored": {
+  "from": "the CI doctor's evidence in the agent space's private repository: the held-out set, both reviewer rounds, their score, the rubric and the earlier set's judgments, read at its main",
+  "commit": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+  "committed": "2026-10-27T03:30:03Z",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-10-28",
+   "commits": [
+    "eb9314c0013162ebdce75d06a605a561e831fc6e",
+    "6455c102b7b7ed634eae9865fb254e71262c4e78",
+    "65c3272b1198b23c135fc2ec24316a7d92a87121"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "eb9314c0013162ebdce75d06a605a561e831fc6e",
+    "what": "the held-out set frozen: the nine newest red runs, before any doctor run on them",
+    "at": "2026-10-25T18:49:15Z"
+   },
+   {
+    "commit": "6455c102b7b7ed634eae9865fb254e71262c4e78",
+    "what": "the held-out set run and judged by two blind reviewer rounds, and scored",
+    "at": "2026-10-26T01:14:40Z"
+   },
+   {
+    "commit": "65c3272b1198b23c135fc2ec24316a7d92a87121",
+    "what": "the earlier set judged blind, and unblinded",
+    "at": "2026-10-25T01:18:24Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "heldout",
+    "what": "the held-out set: nine red runs, frozen before the doctor saw any of them",
+    "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+   },
+   {
+    "role": "verdicts-a",
+    "what": "the first blind reviewer round's verdicts on the held-out set",
+    "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+   },
+   {
+    "role": "verdicts-b",
+    "what": "the second blind reviewer round's verdicts on the held-out set",
+    "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+   },
+   {
+    "role": "score",
+    "what": "the score the two rounds gave the held-out set",
+    "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+   },
+   {
+    "role": "earlier",
+    "what": "the earlier set's unblinded judgments, three doctor runs over nine red runs",
+    "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+   },
+   {
+    "role": "rubric",
+    "what": "the rubric each reviewer judged one case by",
+    "sha256": "46b56b831d1a5f17e47f2bc7735a6e40b341151fcac27bd8f6c227a8e0c36a7d"
+   }
+  ]
+ },
+ "heldOut": {
+  "frozen": "2026-10-25T18:49:10Z",
+  "since": "2026-10-25T12:00:00Z",
+  "until": "2026-10-25T18:48:49Z",
+  "repos": 1,
+  "runs": [
+   {
+    "label": "run-kxhhqpyt",
+    "repo": "repo-nyyynsgh",
+    "event": "pull_request",
+    "state": "no_patch",
+    "how": "no patch by rule",
+    "doctorClass": "config",
+    "ruleClass": "red_by_design",
+    "cls": "red_by_design",
+    "split": false,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "right"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "red_by_design",
+      "red_by_design"
+     ]
+    }
+   },
+   {
+    "label": "run-nvyvnyrx",
+    "repo": "repo-nyyynsgh",
+    "event": "push",
+    "state": "no_patch",
+    "how": "no patch by rule",
+    "doctorClass": "config",
+    "ruleClass": "red_by_design",
+    "cls": "red_by_design",
+    "split": false,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "right"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "red_by_design",
+      "red_by_design"
+     ]
+    }
+   },
+   {
+    "label": "run-nwkhxkhw",
+    "repo": "repo-nyyynsgh",
+    "event": "pull_request",
+    "state": "no_patch",
+    "how": "no patch by rule",
+    "doctorClass": "config",
+    "ruleClass": "red_by_design",
+    "cls": "red_by_design",
+    "split": false,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "right"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "red_by_design",
+      "red_by_design"
+     ]
+    }
+   },
+   {
+    "label": "run-pthgknth",
+    "repo": "repo-nyyynsgh",
+    "event": "pull_request",
+    "state": "no_patch",
+    "how": "the patcher found no fix",
+    "doctorClass": "lint",
+    "ruleClass": "code_bug",
+    "cls": "code_bug",
+    "split": false,
+    "reproduced": true,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "right"
+     ],
+     "patch": [
+      "none-missed",
+      "none-missed"
+     ],
+     "causeClass": [
+      "code_bug",
+      "code_bug"
+     ]
+    }
+   },
+   {
+    "label": "run-qyysmwxv",
+    "repo": "repo-nyyynsgh",
+    "event": "merge_group",
+    "state": "no_patch",
+    "how": "did not reproduce (passes here)",
+    "doctorClass": "test",
+    "ruleClass": null,
+    "cls": "code_bug",
+    "split": true,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "partly",
+      "right"
+     ],
+     "patch": [
+      "none-right",
+      "none-missed"
+     ],
+     "causeClass": [
+      "flake",
+      "code_bug"
+     ]
+    }
+   },
+   {
+    "label": "run-tggxjykp",
+    "repo": "repo-nyyynsgh",
+    "event": "push",
+    "state": "no_patch",
+    "how": "did not reproduce (passes here)",
+    "doctorClass": "test",
+    "ruleClass": null,
+    "cls": "code_bug",
+    "split": true,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "partly"
+     ],
+     "patch": [
+      "none-missed",
+      "none-right"
+     ],
+     "causeClass": [
+      "code_bug",
+      "flake"
+     ]
+    }
+   },
+   {
+    "label": "run-wmjyvhxm",
+    "repo": "repo-nyyynsgh",
+    "event": "schedule",
+    "state": "no_patch",
+    "how": "not runnable here",
+    "doctorClass": "test",
+    "ruleClass": "config_env",
+    "cls": "red_by_design",
+    "split": false,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "wrong",
+      "wrong"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "red_by_design",
+      "red_by_design"
+     ]
+    }
+   },
+   {
+    "label": "run-zqrtqjqn",
+    "repo": "repo-nyyynsgh",
+    "event": "workflow_run",
+    "state": "no_patch",
+    "how": "no patch by rule",
+    "doctorClass": "flake",
+    "ruleClass": "flake",
+    "cls": "red_by_design",
+    "split": false,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "wrong",
+      "wrong"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "red_by_design",
+      "red_by_design"
+     ]
+    }
+   },
+   {
+    "label": "run-ztmkwskg",
+    "repo": "repo-nyyynsgh",
+    "event": "schedule",
+    "state": "no_patch",
+    "how": "no patch by rule",
+    "doctorClass": "infra",
+    "ruleClass": "config_env",
+    "cls": "config_env",
+    "split": true,
+    "reproduced": false,
+    "passes": false,
+    "judgedFix": false,
+    "judgedNot": false,
+    "reviewers": {
+     "diagnosis": [
+      "right",
+      "partly"
+     ],
+     "patch": [
+      "none-right",
+      "none-right"
+     ],
+     "causeClass": [
+      "config_env",
+      "red_by_design"
+     ]
+    }
+   }
+  ],
+  "rounds": {
+   "a": {
+    "cases": 9,
+    "diagnosis": {
+     "right": 6,
+     "partly": 1,
+     "wrong": 2
+    },
+    "patch": {
+     "fixes": 0,
+     "partial": 0,
+     "wrong": 0,
+     "none-right": 7,
+     "none-missed": 2
+    }
+   },
+   "b": {
+    "cases": 9,
+    "diagnosis": {
+     "right": 5,
+     "partly": 2,
+     "wrong": 2
+    },
+    "patch": {
+     "fixes": 0,
+     "partial": 0,
+     "wrong": 0,
+     "none-right": 7,
+     "none-missed": 2
+    }
+   }
+  },
+  "score": {
+   "cases": 9,
+   "ruled": 5,
+   "reproduced": 1,
+   "passes": 0,
+   "judgedFix": 0,
+   "judgedNot": 0,
+   "missed": 3,
+   "diagnosis": {
+    "right": 11,
+    "partly": 3,
+    "wrong": 4
+   },
+   "patch": {
+    "fixes": 0,
+    "partial": 0,
+    "wrong": 0,
+    "none-right": 14,
+    "none-missed": 4
+   },
+   "byClass": {
+    "code_bug": 3,
+    "test_is_wrong": 0,
+    "config_env": 1,
+    "flake": 0,
+    "red_by_design": 5
+   }
+  }
+ },
+ "earlier": {
+  "judgments": 27,
+  "builds": 9,
+  "runsOfTheDoctor": 3,
+  "diagnosis": {
+   "right": 17,
+   "partly": 10,
+   "wrong": 0
+  },
+  "patch": {
+   "fixes": 1,
+   "partial": 1,
+   "wrong": 6,
+   "none-right": 14,
+   "none-missed": 5
+  },
+  "byRun": [
+   {
+    "run": 1,
+    "diagnosis": {
+     "right": 5,
+     "partly": 4,
+     "wrong": 0
+    },
+    "patch": {
+     "fixes": 0,
+     "partial": 0,
+     "wrong": 3,
+     "none-right": 5,
+     "none-missed": 1
+    }
+   },
+   {
+    "run": 2,
+    "diagnosis": {
+     "right": 6,
+     "partly": 3,
+     "wrong": 0
+    },
+    "patch": {
+     "fixes": 1,
+     "partial": 1,
+     "wrong": 1,
+     "none-right": 4,
+     "none-missed": 2
+    }
+   },
+   {
+    "run": 3,
+    "diagnosis": {
+     "right": 6,
+     "partly": 3,
+     "wrong": 0
+    },
+    "patch": {
+     "fixes": 0,
+     "partial": 0,
+     "wrong": 2,
+     "none-right": 5,
+     "none-missed": 2
+    }
+   }
+  ]
+ }
+}

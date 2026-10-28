@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 08",
+ "title": "Can an agent fix a red build?",
+ "question": "Handed fresh red builds it has never seen, does the agent space's CI doctor make a fix a reviewer would call real?",
+ "how": "A held-out set of red builds, frozen before the doctor ran, each answer judged by two separate AI reviewers. A recount of the committed verdicts.",
+ "experiment": "red-build",
+ "status": "An honest negative · record cited by hash",
+ "record": {
+  "href": "data/labs/red-build/record.json",
+  "pin": "data/labs/red-build/record.sha256"
+ },
+ "links": [
+  {
+   "label": "The runs, the verdicts and the sets",
+   "href": "labs/red-build/index.html"
+  },
+  {
+   "label": "The record, pinned by its hash",
+   "href": "data/labs/red-build/record.json"
+  }
+ ]
+}

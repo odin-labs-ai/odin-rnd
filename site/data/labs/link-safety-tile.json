@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 07",
+ "title": "Can data trick a click?",
+ "question": "When a URL comes from data, can it run a script or open a lookalike host in the visitor's browser?",
+ "how": "A real defect on the main branch, fixed by one rule. Every poisoned URL and opener line of the rule's test is put through it, and the test is run.",
+ "experiment": "link-safety",
+ "status": "Real fix, fixtures we wrote · record cited by hash",
+ "record": {
+  "href": "data/labs/link-safety/record.json",
+  "pin": "data/labs/link-safety/record.sha256"
+ },
+ "links": [
+  {
+   "label": "Every fixture, through the rule",
+   "href": "labs/link-safety/index.html"
+  },
+  {
+   "label": "The record, pinned by its hash",
+   "href": "data/labs/link-safety/record.json"
+  }
+ ]
+}
