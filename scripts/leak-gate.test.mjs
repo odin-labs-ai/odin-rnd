@@ -25,10 +25,12 @@ const stamped = rows => ({ format: 'odin-leak-gate-known', version: 1, reviewed:
 /** A minimal PNG: signature, IHDR, the given ancillary chunks, IEND. */
 function png(chunks) {
   const chunk = (type, data) => { const d = Buffer.from(data), h = Buffer.alloc(8); h.writeUInt32BE(d.length, 0); h.write(type, 4, 'latin1'); const c = Buffer.alloc(4); c.writeUInt32BE(crc32(Buffer.concat([h.subarray(4), d])), 0); return Buffer.concat([h, d, c]); };
-  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', Buffer.alloc(13)), ...Object.entries(chunks).map(([t, d]) => chunk(t, d)), chunk('IEND', '')]);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', Buffer.alloc(13)), ...Object.entries(chunks).map(([t, d]) => chunk(t, d)), chunk('IDAT', deflateSync(Buffer.alloc(4))), chunk('IEND', '')]);
 }
 /** A minimal JPEG: SOI, a comment segment, SOS-less EOI. */
-function jpeg(comment) { const c = Buffer.from(comment), h = Buffer.from([0xff, 0xfe, 0, 0]); h.writeUInt16BE(c.length + 2, 2); return Buffer.concat([Buffer.from([0xff, 0xd8]), h, c, Buffer.from([0xff, 0xd9])]); }
+const seg = (marker, data) => { const d = Buffer.from(data), h = Buffer.from([0xff, marker, 0, 0]); h.writeUInt16BE(d.length + 2, 2); return Buffer.concat([h, d]); };
+const SCAN = Buffer.concat([seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56])]);
+function jpeg(comment, { after = false } = {}) { return Buffer.concat([Buffer.from([0xff, 0xd8]), ...(after ? [SCAN, seg(0xfe, comment)] : [seg(0xfe, comment), SCAN]), Buffer.from([0xff, 0xd9])]); }
 /** A minimal WebM: EBML header, a segment of unknown size with an Info title and an unknown-size cluster. */
 function webm(title) {
   const t = Buffer.from(title), el = (id, data) => Buffer.concat([Buffer.from(id), Buffer.from([0x80 | data.length]), data]);
@@ -88,6 +90,9 @@ const LEAKS = {
   'a three-letter term in a compressed PNG text chunk': ['dist/assets/z.png', png({ zTXt: Buffer.concat([Buffer.from('Comment\0\0'), deflateSync(Buffer.from('qzx'))]) }), /z\.png!\(metadata\):0 term/],
   'a three-letter term in a JPEG comment': ['dist/assets/c.jpg', jpeg('qzx'), /c\.jpg!\(metadata\):0 term/],
   'a three-letter term in a WebM title': ['dist/assets/t.webm', webm('qzx'), /t\.webm!\(metadata\):0 term/],
+  'a three-letter term in a JPEG comment after the scan': ['dist/assets/after.jpg', jpeg('qzx', { after: true }), /after\.jpg!\(metadata\):0 term/],
+  'a three-letter term in a compressed PNG ICC profile': ['dist/assets/icc.png', png({ iCCP: Buffer.concat([Buffer.from('icc\0\0'), deflateSync(Buffer.from('desc qzx'))]) }), /icc\.png!\(metadata\):0 term/],
+  'a three-letter term in a second WebM document after an unknown-size cluster': ['dist/assets/two.webm', Buffer.concat([webm('ok'), webm('qzx')]), /two\.webm!\(metadata\):0 term/],
   'a five-letter term in the raw bytes of a binary': ['dist/assets/raw5.mp4', Buffer.from('\0\0\x01blorvak\0\x02', 'latin1'), /raw5\.mp4:0 term/],
   'a canary inside a vendored tar.gz of raw evidence': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ops.jsonl': `{"op":1}\n{"note":"${CANARY}"}\n`, 'main/clean.json': '{}' })), /raw-evidence\.tar\.gz!main\/ops\.jsonl:2 canary/],
   'a home path in a PNG text chunk': ['dist/assets/meta.png', png({ tEXt: 'Source\0/Users/someone/work' }), /meta\.png!\(metadata\):0 home-path/],
@@ -424,7 +429,9 @@ test('a short term in the raw compressed bytes of a binary is not matched; in it
 });
 
 test('a binary of a parsed type that does not parse stops the build', () => {
-  for (const [file, bytes] of [['dist/assets/bad.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0])], ['dist/assets/bad.jpg', Buffer.from([0xff, 0xd8, 0, 1, 2])], ['dist/assets/bad.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f])]]) {
+  const iendOnly = (() => { const p = png({}); return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]), p.subarray(p.length - 12)]); })();
+  const badCrc = Buffer.from(png({ tEXt: 'Comment\0ok' })); badCrc[40] ^= 1;
+  for (const [file, bytes] of [['dist/assets/bad.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0])], ['dist/assets/iend.png', iendOnly], ['dist/assets/crc.png', badCrc], ['dist/assets/bad.jpg', Buffer.from([0xff, 0xd8, 0, 1, 2])], ['dist/assets/sos.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xda])], ['dist/assets/noeoi.jpg', Buffer.concat([Buffer.from([0xff, 0xd8]), SCAN])], ['dist/assets/bad.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f])]]) {
     const root = site({ [file]: bytes });
     try { const r = gate(root); assert.equal(r.code, 2, `${file}: ${r.out}`); assert.match(r.out, /does not parse/); } finally { rmSync(root, { recursive: true, force: true }); }
   }

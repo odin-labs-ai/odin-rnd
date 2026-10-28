@@ -329,34 +329,49 @@ export function binaryMetadata(path, b, shown) {
   const bad = () => new Error(`leak gate: ${shown} does not parse, so its metadata cannot be read`);
   const text = buf => printable(buf);
   if (/\.png$/i.test(path)) {
-    if (b.length < 8 || b.readUInt32BE(0) !== 0x89504e47) throw bad();
+    // The full signature, IHDR first, at least one IDAT, every chunk's CRC, and IEND: anything else does not parse.
+    if (b.length < 8 || !b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) throw bad();
     const out = [];
+    let first = true, idat = false;
+    const inflated = data => { try { return inflateSync(data); } catch { throw bad(); } };
     for (let at = 8; ;) {
       if (at + 12 > b.length) throw bad();
       const len = b.readUInt32BE(at), type = b.toString('latin1', at + 4, at + 8), data = b.subarray(at + 8, at + 8 + len);
-      if (at + 12 + len > b.length) throw bad();
-      if (type === 'zTXt') { const k = data.indexOf(0); try { out.push(text(data.subarray(0, k)), text(inflateSync(data.subarray(k + 2)))); } catch { throw bad(); } }
+      if (at + 12 + len > b.length || b.readUInt32BE(at + 8 + len) !== crc32(b.subarray(at + 4, at + 8 + len))) throw bad();
+      if (first && (type !== 'IHDR' || len !== 13)) throw bad();
+      first = false;
+      if (type === 'IDAT') idat = true;
+      if (type === 'zTXt' || type === 'iCCP') { const k = data.indexOf(0); if (k < 0) throw bad(); out.push(text(data.subarray(0, k)), text(inflated(data.subarray(k + 2)))); }
       else if (type === 'iTXt') {
         const k = data.indexOf(0), compressed = data[k + 1], rest = data.subarray(k + 3), l = rest.indexOf(0), t = rest.subarray(l + 1), m = t.indexOf(0), body = t.subarray(m + 1);
-        try { out.push(text(data.subarray(0, k)), text(rest.subarray(0, l)), text(t.subarray(0, m)), text(compressed ? inflateSync(body) : body)); } catch { throw bad(); }
+        if (k < 0 || l < 0 || m < 0) throw bad();
+        out.push(text(data.subarray(0, k)), text(rest.subarray(0, l)), text(t.subarray(0, m)), text(compressed ? inflated(body) : body));
       } else if (!['IHDR', 'PLTE', 'IDAT', 'IEND', 'tRNS', 'fdAT'].includes(type)) out.push(text(data));
       at += 12 + len;
-      if (type === 'IEND') { if (at < b.length) out.push(text(b.subarray(at))); return out.join('\n'); }
+      if (type === 'IEND') { if (!idat) throw bad(); if (at < b.length) out.push(text(b.subarray(at))); return out.join('\n'); }
     }
   }
   if (/\.jpe?g$/i.test(path)) {
-    if (b[0] !== 0xff || b[1] !== 0xd8) throw bad();
+    // Every marker segment through EOI, across scans: the compressed data after each SOS runs to the next marker
+    // (stuffed FF00, restart markers and fill bytes stay inside it). A file without SOS or EOI does not parse.
+    if (b.length < 4 || b[0] !== 0xff || b[1] !== 0xd8) throw bad();
     const out = [];
+    let scans = 0;
     for (let at = 2; ;) {
       if (at + 2 > b.length || b[at] !== 0xff) throw bad();
       const marker = b[at + 1];
-      // The headers end at the first scan (or at the end of the image); the compressed scan data is raw bytes.
-      if (marker === 0xd9 || marker === 0xda) return out.join('\n');
+      if (marker === 0xff) { at++; continue; }
+      if (marker === 0xd9) { if (!scans) throw bad(); if (at + 2 < b.length) out.push(text(b.subarray(at + 2))); return out.join('\n'); }
       if (at + 4 > b.length) throw bad();
       const len = b.readUInt16BE(at + 2);
       if (len < 2 || at + 2 + len > b.length) throw bad();
       if ((marker >= 0xe0 && marker <= 0xef) || marker === 0xfe) out.push(text(b.subarray(at + 4, at + 2 + len)));
       at += 2 + len;
+      if (marker === 0xda) {
+        scans++;
+        while (at < b.length && !(b[at] === 0xff && at + 1 < b.length && b[at + 1] !== 0 && !(b[at + 1] >= 0xd0 && b[at + 1] <= 0xd7) && b[at + 1] !== 0xff)) at++;
+        if (at >= b.length) throw bad();
+      }
     }
   }
   if (/\.(webm|mkv)$/i.test(path)) {
@@ -373,7 +388,8 @@ export function binaryMetadata(path, b, shown) {
     };
     // Master elements walked for their children; the rest are payloads read as text, except inside clusters and cues.
     const MASTER = new Set([0x1a45dfa3, 0x18538067, 0x1549a966, 0x1654ae6b, 0xae, 0xe0, 0xe1, 0x1254c367, 0x7373, 0x63c0, 0x67c8, 0x1941a469, 0x61a7, 0x1043a770, 0x45b9, 0xb6, 0x80, 0x114d9b74, 0x4dbb]);
-    const LEVEL1 = new Set([0x114d9b74, 0x1549a966, 0x1f43b675, 0x1654ae6b, 0x1c53bb6b, 0x1941a469, 0x1043a770, 0x1254c367]);
+    // Where an unknown-size cluster ends: the next top-level element, or a new EBML document or segment.
+    const LEVEL1 = new Set([0x1a45dfa3, 0x18538067, 0x114d9b74, 0x1549a966, 0x1f43b675, 0x1654ae6b, 0x1c53bb6b, 0x1941a469, 0x1043a770, 0x1254c367]);
     const SKIP = new Set([0x1f43b675, 0x1c53bb6b]);
     const walk = (from, to) => {
       for (let at = from; at < to;) {
