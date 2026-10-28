@@ -90,23 +90,11 @@ export const PATTERNS = [
   ['private-key', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
 ];
 
-// Every HTML named reference for an ASCII punctuation mark, plus the spaces and dashes (names are case-sensitive). Any
-// other named reference is a finding of its own (unknown-reference): the gate does not guess what it reads as.
-const NAMED = {
-  Tab: ' ', NewLine: ' ', excl: '!', quot: '"', QUOT: '"', num: '#', dollar: '$', percnt: '%', amp: '&', AMP: '&', apos: "'",
-  lpar: '(', rpar: ')', ast: '*', midast: '*', plus: '+', comma: ',', period: '.', sol: '/', colon: ':', semi: ';',
-  lt: '<', LT: '<', equals: '=', gt: '>', GT: '>', quest: '?', commat: '@', lsqb: '[', lbrack: '[', bsol: '\\', rsqb: ']',
-  rbrack: ']', Hat: '^', lowbar: '_', UnderBar: '_', grave: '`', DiacriticalGrave: '`', lcub: '{', lbrace: '{',
-  verbar: '|', vert: '|', VerticalLine: '|', rcub: '}', rbrace: '}', nbsp: ' ', NonBreakingSpace: ' ', ensp: ' ',
-  emsp: ' ', emsp13: ' ', emsp14: ' ', numsp: ' ', puncsp: ' ', thinsp: ' ', ThinSpace: ' ', hairsp: ' ',
-  VeryThinSpace: ' ', MediumSpace: ' ', ZeroWidthSpace: '', NegativeVeryThinSpace: '', NegativeThinSpace: '',
-  NegativeMediumSpace: '', NegativeThickSpace: '', NoBreak: '', zwnj: '', zwj: '', shy: '', hyphen: '-', dash: '-',
-  ndash: '-', mdash: '-', hellip: '...', lsquo: "'", rsquo: "'", ldquo: '"', rdquo: '"',
-};
-const UNKNOWN_REF = /&([A-Za-z][A-Za-z0-9]*);/g;
-// HTML's legacy references, which it reads without a semicolon too. Those not in NAMED are findings, like any unknown.
-const LEGACY = 'AElig AMP Aacute Acirc Agrave Aring Atilde Auml COPY Ccedil ETH Eacute Ecirc Egrave Euml GT Iacute Icirc Igrave Iuml LT Ntilde Oacute Ocirc Ograve Oslash Otilde Ouml QUOT REG THORN Uacute Ucirc Ugrave Uuml Yacute aacute acirc acute aelig agrave amp aring atilde auml brvbar ccedil cedil cent copy curren deg divide eacute ecirc egrave eth euml frac12 frac14 frac34 gt iacute icirc iexcl igrave iquest iuml laquo lt macr micro middot nbsp not ntilde oacute ocirc ograve ordf ordm oslash otilde ouml para plusmn pound quot raquo reg sect shy sup1 sup2 sup3 szlig thorn times uacute ucirc ugrave uml uuml yacute yen yuml'.split(' ').sort((a, b) => b.length - a.length);
-const LEGACY_PREFIX = new RegExp(`&(${LEGACY.join('|')})`, 'g');
+// HTML's whole table of named references (scripts/html-named-references.json, the WHATWG list): a reference reads as
+// the longest name at its start, with its semicolon or, for the 106 legacy names, without ("&copyQuarry;" is
+// "©Quarry;", "&notin;" is "∉"). A name not in the table stays as written, as it does in a browser.
+const REFS = JSON.parse(readFileSync(new URL('./html-named-references.json', import.meta.url), 'utf8')).references;
+const LONGEST_REF = Math.max(...Object.keys(REFS).map(k => k.length));
 
 // A reading of a text keeps, for every character, the offset in the ORIGINAL text it came from. Two readings that see
 // the same occurrence therefore name the same offset, and one occurrence counts once however many readings see it.
@@ -150,27 +138,22 @@ function percentRun(run) {
   }
   return { text, from };
 }
-/**
- * A named reference as HTML reads it: a known name with its semicolon is its character; otherwise the longest legacy
- * name at its start is (with or without a semicolon: "&copyQuarry;" is "©Quarry;"), and the rest stays text. A legacy
- * name the gate does not carry reads as a space; a reference with no known or legacy name stays as written.
- */
-function namedRef(m, name, semi) {
-  if (semi && Object.hasOwn(NAMED, name)) return NAMED[name];
-  const legacy = LEGACY.find(l => name.startsWith(l));
-  if (!legacy) return m;
-  const head = Object.hasOwn(NAMED, legacy) ? NAMED[legacy] : ' ';
-  const rest = m.slice(1 + legacy.length);
-  const from = [...Array.from(head, () => 0), ...Array.from(rest, (_, k) => 1 + legacy.length + k)];
-  return { text: head + rest, from };
+/** A named reference as HTML reads it: the longest name in the table at its start; the rest stays text. */
+function namedRef(m) {
+  const tail = m.slice(1);
+  for (let len = Math.min(tail.length, LONGEST_REF); len > 0; len--) {
+    const name = tail.slice(0, len);
+    if (!Object.hasOwn(REFS, name)) continue;
+    const head = REFS[name], rest = tail.slice(len);
+    return { text: head + rest, from: [...Array.from(head, () => 0), ...Array.from(rest, (_, k) => 1 + len + k)] };
+  }
+  return m;
 }
 /** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
-function decodedReading(r, whole = false) {
+function decodedReading(r) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
-  // Read twice: once with HTML's legacy-prefix rule, once with every unknown "&name;" as one character (a full HTML
-  // name the gate does not carry, such as &notin;, is one character, not "¬" + "in;").
-  r = mapped(r, /&([A-Za-z][A-Za-z0-9]*)(;?)/g, whole ? (m, name, semi) => (semi && !Object.hasOwn(NAMED, name) ? ' ' : namedRef(m, name, semi)) : namedRef);
+  r = mapped(r, /&[A-Za-z][A-Za-z0-9]*;?/g, namedRef);
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
@@ -226,19 +209,11 @@ function scanOne(r, secret, cache) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-// refs: report a named reference the gate does not know. On for markup and the records pages render (HTML, SVG, XML,
-// JSON, Markdown), where a browser reads
-// references; in code `a&&notReady` or `flags&mask;` is not one, and in a binary's printable runs `&xy;` is chance.
-export function scanText(text, secret, cache = new Map(), refs = true) {
+export function scanText(text, secret, cache = new Map()) {
   const raw = identity(text);
-  const dec = decodedReading(raw), whole = decodedReading(raw, true);
-  const readings = [raw, dec, untagged(dec), spaced(dec), whole, untagged(whole), spaced(whole)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
+  const dec = decodedReading(raw);
+  const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  // A reference the gate does not read as HTML would: an unknown name with a semicolon, or a legacy name it does not carry.
-  if (refs) {
-    for (const m of text.matchAll(UNKNOWN_REF)) if (!Object.hasOwn(NAMED, m[1]) && !LEGACY.some(l => Object.hasOwn(NAMED, l) && m[1].startsWith(l))) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
-    for (const m of text.matchAll(LEGACY_PREFIX)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
-  }
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
@@ -247,7 +222,6 @@ export function scanText(text, secret, cache = new Map(), refs = true) {
   return [...seen.values()].sort((a, b) => a.at - b.at).map(({ kind, at, hash }) => ({ kind, line: lineOf(starts, at), ...(hash ? { hash } : {}) }));
 }
 
-const MARKUP = /\.(html?|xhtml|svg|xml|json|jsonl|md)(\.gz)?$/i;
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|zip)$/i;
 // A file of a text type is read as text whatever bytes it holds: a NUL byte never hides a page.
 const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|srt|ya?ml|toml|sha256|webmanifest)(\.gz)?$/i;
@@ -315,11 +289,11 @@ export function scanPaths(paths, secret) {
       result.binaries++;
       // Read whole, never in windows (a term could straddle a window's edge); a binary too large to read whole stops the build.
       if (bytes.length > MAX_BINARY) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
-      for (const hit of scanText(printable(bytes), secret, cache, false)) result.hits.push({ file: shown, ...hit, line: 0 });
+      for (const hit of scanText(printable(bytes), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
     result.texts++;
-    for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache, MARKUP.test(path))) result.hits.push({ file: shown, ...hit });
+    for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache)) result.hits.push({ file: shown, ...hit });
   };
   for (const root of paths) {
     if (!existsSync(root)) throw new Error('leak gate: a path to scan does not exist');

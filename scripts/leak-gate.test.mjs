@@ -80,9 +80,10 @@ const LEAKS = {
   'a protected term split across two JSON strings': ['dist/data/r.json', '["Zephyr", "Quarry"]', /r\.json:1 term/],
   'a protected term with a soft hyphen inside a word': ['dist/index.html', '<p>blor\u00advak</p>', /index\.html:1 term/],
   'a home path spelled with named references': ['dist/index.html', '<p>&sol;Users&sol;someone</p>', /index\.html:1 home-path/],
-  'a named reference the gate does not know': ['dist/index.html', '<p>Zephyr&bogusref;Quarry</p>', /index\.html:1 unknown-reference/],
+  'a protected term spelled with a full HTML name whose character folds to a letter': ['dist/index.html', '<p>bl&oscr;rvak</p>', /index\.html:1 term/],
   'a protected term split by a reference without its semicolon': ['dist/index.html', '<p>Zephyr&nbsp Quarry and Zephyr&nbspQuarry</p>', /index\.html:1 term/],
-  'a legacy reference without its semicolon that the gate does not decode': ['dist/index.html', '<p>Zephyr&copy Quarry</p>', /index\.html:1 unknown-reference/],
+  'a protected term around a legacy reference without its semicolon': ['dist/index.html', '<p>Zephyr&copy Quarry</p>', /index\.html:1 term/],
+  'a protected term around a full name next to a glued legacy one, in a script': ['dist/assets/both.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&notin;&copyQuarry;</p>");', /both\.js:1 term/],
   'a protected term after a legacy reference glued to it in a script': ['dist/assets/inject.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&copyQuarry;</p>");', /inject\.js:1 term/],
   'a protected term after a known legacy reference glued to it': ['dist/index.html', '<p>Zephyr&nbspQuarry;</p>', /index\.html:1 term/],
   'a protected term around a full HTML name the gate does not carry, in a script': ['dist/assets/notin.js', 'document.body.insertAdjacentHTML("beforeend", "<p>Zephyr&notin;Quarry</p>");', /notin\.js:1 term/],
@@ -142,7 +143,7 @@ test('a file that cannot be read is reported by its redacted name, never its own
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('code is not markup: `a&&notReady` and `flags&mask;` in a script are not references', () => {
+test('code reads as text: `a&&notReady` and `flags&mask;` in a script are no finding', () => {
   const root = site({ 'dist/assets/x.js': 'if (a&&notReady) x = flags&mask;\n' });
   try { const r = gate(root); assert.equal(r.code, 0, r.out); } finally { rmSync(root, { recursive: true, force: true }); }
 });
