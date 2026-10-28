@@ -17,6 +17,8 @@ jobs:
   screen:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # The term set lives only in the leak-screen environment, which only main may use (pull_request_target runs on main).
+    environment: leak-screen
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

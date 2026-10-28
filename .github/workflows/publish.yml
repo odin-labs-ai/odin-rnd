@@ -135,6 +135,56 @@ jobs:
         run: |
           pnpm build
           pnpm check
+      # No secret in this job: on a pull request it runs the pull request's own code. The site and the source are screened
+      # by a job that gets the term set only on main (the leak-screen environment allows main alone): below for a push,
+      # and for a pull request by leak-screen-pr.yml, which runs from the base branch over this job's output as data.
+      - name: Keep the built site for the leak gate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
+      - name: Lay out the pull request's built site for the base-branch gate
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p leak-screen-input
+          cp -R dist leak-screen-input/dist
+          printf '{"format":"odin-leak-screen-input","version":1,"headSha":"%s"}\n' "$HEAD_SHA" > leak-screen-input/manifest.json
+      - name: Keep it for the base-branch gate
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: leak-screen-input
+          path: leak-screen-input
+          retention-days: 3
+          if-no-files-found: error
+          include-hidden-files: true
+  gate:
+    # The leak gate for a push to main (the deploy): main's code is trusted, so it runs inline here with the term set,
+    # which only the leak-screen environment holds and only main may use.
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: leak-screen
+    env:
+      ODIN_SITE_BUILD: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Take the built site
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: site-dist
+          path: dist
       - name: Leak screen, fail closed on any protected term or canary
         env:
           LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
@@ -144,13 +194,12 @@ jobs:
           LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
         run: node scripts/leak-gate.mjs --set scripts/leak-gate-set.json --known scripts/leak-gate-known.json --page dist/leak-screen/index.html --tree
       - name: Upload Pages
-        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: dist
   publish:
     if: github.event_name != 'pull_request'
-    needs: verify
+    needs: gate
     permissions:
       pages: write
       id-token: write
