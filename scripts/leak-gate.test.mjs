@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -93,6 +94,7 @@ const LEAKS = {
   'a three-letter term in a JPEG comment after the scan': ['dist/assets/after.jpg', jpeg('qzx', { after: true }), /after\.jpg!\(metadata\):0 term/],
   'a three-letter term in a compressed PNG ICC profile': ['dist/assets/icc.png', png({ iCCP: Buffer.concat([Buffer.from('icc\0\0'), deflateSync(Buffer.from('desc qzx'))]) }), /icc\.png!\(metadata\):0 term/],
   'a three-letter term in a second WebM document after an unknown-size cluster': ['dist/assets/two.webm', Buffer.concat([webm('ok'), webm('qzx')]), /two\.webm!\(metadata\):0 term/],
+  'a three-letter term in raw image bytes': ['dist/assets/idat.png', png({ IDAT: Buffer.from('\x00\x01qzx\x00', 'latin1') }), /idat\.png:0 term hash [0-9a-f]{8} at offset \d+ of sha256/],
   'a five-letter term in the raw bytes of a binary': ['dist/assets/raw5.mp4', Buffer.from('\0\0\x01blorvak\0\x02', 'latin1'), /raw5\.mp4:0 term/],
   'a canary inside a vendored tar.gz of raw evidence': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ops.jsonl': `{"op":1}\n{"note":"${CANARY}"}\n`, 'main/clean.json': '{}' })), /raw-evidence\.tar\.gz!main\/ops\.jsonl:2 canary/],
   'a home path in a PNG text chunk': ['dist/assets/meta.png', png({ tEXt: 'Source\0/Users/someone/work' }), /meta\.png!\(metadata\):0 home-path/],
@@ -421,11 +423,30 @@ test('a configuration file that cannot be read is reported with a fixed message,
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('a short term in the raw compressed bytes of a binary is not matched; in its metadata it is', () => {
-  const secret = loadSecret(SECRET);
-  const root = site({ 'dist/assets/noise.mp4': Buffer.from('\0\x01qzx\0\x02', 'latin1'), 'dist/assets/clip.webm': webm('ok') });
-  try { const r = gate(root); assert.equal(r.code, 0, r.out); } finally { rmSync(root, { recursive: true, force: true }); }
-  assert.ok(secret.terms > 0);
+test('a short term in raw binary bytes is caught; only an exact row (file sha256 + offset) covers it', () => {
+  const bytes = Buffer.from('\0\x01qzx\0\x02', 'latin1');
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const run = known => { const root = site({ 'dist/assets/noise.mp4': known.bytes ?? bytes, ...(known.rows ? { 'known.json': JSON.stringify(stamped(known.rows)) } : {}) }); try { return gate(root, undefined, known.rows ? ['--known', 'known.json'] : []); } finally { rmSync(root, { recursive: true, force: true }); } };
+  const bare = run({});
+  assert.equal(bare.code, 1, bare.out);
+  const m = bare.out.match(/noise\.mp4:0 term hash ([0-9a-f]{8}) at offset (\d+) of sha256 ([0-9a-f]{64})/);
+  assert.ok(m, bare.out);
+  assert.equal(Number(m[2]), 2);
+  assert.equal(m[3], sha);
+  const exact = { file: 'dist/assets/noise.mp4', kind: 'term', hash: m[1], sha256: sha, offset: 2, count: 1, reason: 'a chance spelling in this exact file' };
+  assert.equal(run({ rows: [exact] }).code, 0, 'the same bytes with an exact row pass');
+  assert.equal(run({ rows: [{ ...exact, offset: 3 }] }).code, 1, 'another offset does not match');
+  const moved = run({ rows: [exact], bytes: Buffer.from('\0\x01\x02qzx\0\x02', 'latin1') });
+  assert.equal(moved.code, 1, 'a re-encoded file fails');
+  assert.match(moved.out, /STALE known occurrence/);
+  const countRow = { file: 'dist/assets/noise.mp4', kind: 'term', hash: m[1], count: 1, reason: 'a count-based row' };
+  assert.equal(run({ rows: [countRow] }).code, 1, 'a count-based row never covers a binary hit');
+  const bad = run({ bytes: Buffer.from([0, 0xe0, 0x80, 0x80, 0x20, 0x71, 0x7a, 0x78, 0]) });
+  assert.match(bad.out, /at offset 5 of sha256/, 'the offset after a malformed UTF-8 sequence is the real byte');
+  const utf = run({ bytes: Buffer.concat([Buffer.from([0, 0x20]), Buffer.from('\u00e9\u20ac ', 'utf8'), Buffer.from('qzx\0')]) });
+  assert.match(utf.out, /at offset 8 of sha256/, 'the offset after well-formed multi-byte characters is the real byte');
+  assert.throws(() => loadKnown(JSON.stringify(stamped([{ ...exact, count: 2 }]))), /exact known occurrence/);
+  assert.throws(() => loadKnown(JSON.stringify(stamped([{ ...exact, sha256: undefined }]))), /exact known occurrence/);
 });
 
 test('a binary of a parsed type that does not parse stops the build', () => {
