@@ -15,28 +15,18 @@
 // drawn. Every point cites its commit by hash; this page cannot check a private commit, and says so; anyone with access
 // can re-derive the file with the vendor script's --verify. A figure becomes a series by itself the first time a later
 // commit changes it: re-vendoring is all it takes.
-import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validate } from './json-schema-lite.mjs';
-import { screenHits } from './lab-dispatch-publish.mjs';
+import { cite, escape, parsePin, pinProblems as kitPinProblems, readPinned, realInstant, screenHits, validate } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const ENGINE_HISTORY_FILE = 'data/labs/agent-space/engine-history.json';
 export const ENGINE_HISTORY_SCHEMA = join(here, 'schemas/odin-engine-history.schema.json');
 export const ENGINE_HISTORY_PIN = join(here, 'engine-history.pin.json');
-const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
-/** A timestamp that is a real calendar instant (2026-02-30 or 24:00 is refused), or null. */
-export function realInstant(iso) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/.exec(iso ?? '');
-  if (!m) return null;
-  const [y, mo, d, h, mi, s] = m.slice(1).map(Number);
-  const date = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
-  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d && date.getUTCHours() === h && date.getUTCMinutes() === mi && date.getUTCSeconds() === s ? date : null;
-}
+// The kit's (scripts/lab-kit.mjs); exported here too, as before.
+export { cite, realInstant };
 
 /**
  * Why the committed bytes are not the pinned ones. The pin is a second, separately reviewed file: it must name the same
@@ -45,19 +35,11 @@ export function realInstant(iso) {
  * read the history.)
  */
 export function pinProblems(bytes, pin) {
-  if (!pin || pin.format !== 'odin-engine-history-pin' || pin.version !== 1) return ['scripts/engine-history.pin.json: missing, or not odin-engine-history-pin v1'];
-  const problems = [];
-  if (pin.file !== `site/${ENGINE_HISTORY_FILE}`) problems.push(`scripts/engine-history.pin.json: file is not site/${ENGINE_HISTORY_FILE}`);
-  if (!/^[0-9a-f]{64}$/.test(pin.sourceSha256 ?? '')) problems.push('scripts/engine-history.pin.json: sourceSha256 is not a sha256');
-  if (!/^[0-9a-f]{40}$/.test(pin.commit ?? '')) problems.push('scripts/engine-history.pin.json: commit is not a 40-hex commit');
-  if (pin.fileSha256 !== sha256(bytes)) problems.push(`${ENGINE_HISTORY_FILE}: its sha256 is ${sha256(bytes)}, the pin says ${pin.fileSha256}; re-vendor with scripts/vendor-engine-history.mjs`);
-  let record = null;
-  try { record = JSON.parse(bytes); } catch { problems.push(`${ENGINE_HISTORY_FILE}: not JSON`); }
-  if (record?.vendored) {
-    if (pin.commit !== record.vendored.mainCheck?.main) problems.push(`scripts/engine-history.pin.json: commit ${pin.commit} is not the main head the record was checked against (${record.vendored.mainCheck?.main})`);
-    if (pin.sourceSha256 !== record.vendored.sourceSha256) problems.push(`scripts/engine-history.pin.json: sourceSha256 ${pin.sourceSha256} is not the record's (${record.vendored.sourceSha256})`);
-  }
-  return problems;
+  // One kit pin (scripts/lab-kit.mjs), committed here as JSON.
+  const pinFile = 'scripts/engine-history.pin.json';
+  const parsed = parsePin(pin, { pinFile, format: 'odin-engine-history-pin', file: `site/${ENGINE_HISTORY_FILE}` });
+  if (!parsed.pin) return parsed.problems;
+  return [...parsed.problems, ...kitPinProblems(bytes, parsed.pin, { pinFile, file: ENGINE_HISTORY_FILE, vendor: 'scripts/vendor-engine-history.mjs' })];
 }
 
 /** Everything that makes an engine-history record unpublishable. */
@@ -100,22 +82,15 @@ export function engineHistoryProblems(record, { now = new Date(), where = ENGINE
 
 /** The committed record, pinned and checked; null when there is none. */
 export function readEngineHistory(root = 'site', { now = new Date(), pin } = {}) {
-  const file = join(root, ENGINE_HISTORY_FILE);
-  if (!existsSync(file)) return null;
-  const bytes = readFileSync(file);
   const usePin = pin ?? (existsSync(ENGINE_HISTORY_PIN) ? JSON.parse(readFileSync(ENGINE_HISTORY_PIN, 'utf8')) : null);
-  const problems = [...pinProblems(bytes, usePin), ...engineHistoryProblems(JSON.parse(bytes), { now })];
-  if (problems.length) throw new Error(`Lab 01 engine history refused:\n  ${problems.join('\n  ')}`);
-  return JSON.parse(bytes);
+  return readPinned({ root, file: ENGINE_HISTORY_FILE, pin: bytes => pinProblems(bytes, usePin), check: record => engineHistoryProblems(record, { now }), refused: 'Lab 01 engine history refused' });
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const day = iso => { const d = realInstant(iso); return `<time datetime="${escape(iso)}">${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC</time>`; };
 const values = vals => Object.entries(vals).map(([k, v]) => `${escape(k.replaceAll('_', ' '))}: <strong>${escape(v.toLocaleString('en-GB'))}</strong>`).join(' · ');
-// Every stated or drawn point cites its commit AND the private main head it was checked to be part of, and when.
-// Lab 05 (scripts/lab-rogue.mjs) cites its private commits with the same sentence.
-export const cite = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
-
+// Every stated or drawn point cites its commit AND the private main head it was checked to be part of, and when, with
+// the kit's cite (scripts/lab-kit.mjs), the sentence every lab uses.
 /** Which engine-history series follows each engine figure Lab 01 shows (by claim), and the agent space's answer time. */
 export const SERIES_FOR_CLAIM = { 10: 'test-suite', 20: 'tick-1000', d7: 'campus-draws' };
 export const ANSWER_TIME = 'answer-time';

@@ -1,0 +1,269 @@
+{
+ "format": "odin-lab-rogue-tamper",
+ "version": 1,
+ "vendored": {
+  "from": "the governed run's audit journal in the agent space's private repository, read at one commit, every row in full",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "git merge-base --is-ancestor of the cited commit against the private main head, which exits 0 only when the commit is part of main",
+   "checked": "2026-10-27",
+   "commits": [
+    "45bba0f9c228a0e4fd702fd37ab100d359e86344"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "45bba0f9c228a0e4fd702fd37ab100d359e86344",
+    "at": "2026-10-26T13:01:49Z",
+    "what": "the journal last rebuilt, after the read-only door changed"
+   }
+  ],
+  "files": [
+   {
+    "role": "journal",
+    "what": "the governed run's hash-chained audit journal",
+    "sha256": "13dc0a20f5aed5bff0fb9495ec5028e231945c5c05b1c2e57ade19840e72ba89"
+   }
+  ]
+ },
+ "rule": "a row's hash is the sha256 of the row without its hash, written by Python's json.dumps with sorted keys, non-ASCII kept, and its default separators, in UTF-8; each row's prev is the hash of the row above, and the first row's is 64 zeros",
+ "checkedWith": "this site's own Python check, standard library only, run when the journal was vendored and again in every CI run",
+ "rows": [
+  {
+   "n": 1,
+   "hash": "e1a11338254c72ea06b853a588cf756b4b9eb4e5ce52b4cda9f91551ef0bda35",
+   "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+   "ownHash": "OK",
+   "prevLink": "OK"
+  },
+  {
+   "n": 2,
+   "hash": "b74ae19337d227b81d6a860fff83c7dbf687162ada496fa979305d76bae78351",
+   "prev": "e1a11338254c72ea06b853a588cf756b4b9eb4e5ce52b4cda9f91551ef0bda35",
+   "ownHash": "OK",
+   "prevLink": "OK"
+  },
+  {
+   "n": 3,
+   "hash": "97849505aca3d05a165308148ec4bd5240559245ad5a8ea4f4487046dda99c91",
+   "prev": "b74ae19337d227b81d6a860fff83c7dbf687162ada496fa979305d76bae78351",
+   "ownHash": "OK",
+   "prevLink": "OK"
+  },
+  {
+   "n": 4,
+   "hash": "dd1490cba08a31cd3d45e2ba3c9d14043aef359a6ad65c726dfffcb8e35d7515",
+   "prev": "97849505aca3d05a165308148ec4bd5240559245ad5a8ea4f4487046dda99c91",
+   "ownHash": "OK",
+   "prevLink": "OK"
+  },
+  {
+   "n": 5,
+   "hash": "0ededd3c46733b8c52a9bd3edfa83aae6a0b045aa1689724901777696908c0db",
+   "prev": "dd1490cba08a31cd3d45e2ba3c9d14043aef359a6ad65c726dfffcb8e35d7515",
+   "ownHash": "OK",
+   "prevLink": "OK"
+  }
+ ],
+ "head": "0ededd3c46733b8c52a9bd3edfa83aae6a0b045aa1689724901777696908c0db",
+ "cases": [
+  {
+   "id": "byte-flip",
+   "did": "one byte of row 2 changed: in its command, one letter's case flipped",
+   "row": 2,
+   "field": "command",
+   "before": "git -C <agent> push --force origin wipe:main",
+   "after": "git -C <agent> push --force origin wipe:Main",
+   "result": [
+    {
+     "position": 1,
+     "n": 1,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 2,
+     "n": 2,
+     "ownHash": "MISMATCH",
+     "prevLink": "OK"
+    },
+    {
+     "position": 3,
+     "n": 3,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 4,
+     "n": 4,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 5,
+     "n": 5,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    }
+   ],
+   "caught": {
+    "check": "own-hash",
+    "position": 2,
+    "n": 2
+   },
+   "head": "0ededd3c46733b8c52a9bd3edfa83aae6a0b045aa1689724901777696908c0db"
+  },
+  {
+   "id": "drop-row",
+   "did": "row 3 removed, every other row kept byte for byte",
+   "result": [
+    {
+     "position": 1,
+     "n": 1,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 2,
+     "n": 2,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 3,
+     "n": 4,
+     "ownHash": "OK",
+     "prevLink": "BROKEN"
+    },
+    {
+     "position": 4,
+     "n": 5,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    }
+   ],
+   "caught": {
+    "check": "prev-link",
+    "position": 3,
+    "n": 4
+   },
+   "head": "0ededd3c46733b8c52a9bd3edfa83aae6a0b045aa1689724901777696908c0db"
+  },
+  {
+   "id": "reorder",
+   "did": "rows 2 and 3 swapped, each kept byte for byte",
+   "result": [
+    {
+     "position": 1,
+     "n": 1,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 2,
+     "n": 3,
+     "ownHash": "OK",
+     "prevLink": "BROKEN"
+    },
+    {
+     "position": 3,
+     "n": 2,
+     "ownHash": "OK",
+     "prevLink": "BROKEN"
+    },
+    {
+     "position": 4,
+     "n": 4,
+     "ownHash": "OK",
+     "prevLink": "BROKEN"
+    },
+    {
+     "position": 5,
+     "n": 5,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    }
+   ],
+   "caught": {
+    "check": "prev-link",
+    "position": 2,
+    "n": 3
+   },
+   "head": "0ededd3c46733b8c52a9bd3edfa83aae6a0b045aa1689724901777696908c0db"
+  },
+  {
+   "id": "drop-last",
+   "did": "the last row, row 5, removed",
+   "result": [
+    {
+     "position": 1,
+     "n": 1,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 2,
+     "n": 2,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 3,
+     "n": 3,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 4,
+     "n": 4,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    }
+   ],
+   "caught": {
+    "check": "head"
+   },
+   "head": "dd1490cba08a31cd3d45e2ba3c9d14043aef359a6ad65c726dfffcb8e35d7515"
+  },
+  {
+   "id": "rewrite-chain",
+   "did": "the same byte flip, then every row's prev and hash from row 2 on recomputed by the rule",
+   "result": [
+    {
+     "position": 1,
+     "n": 1,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 2,
+     "n": 2,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 3,
+     "n": 3,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 4,
+     "n": 4,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    },
+    {
+     "position": 5,
+     "n": 5,
+     "ownHash": "OK",
+     "prevLink": "OK"
+    }
+   ],
+   "caught": {
+    "check": "head"
+   },
+   "head": "e0b10b097e7c11f436d0f1cef99c2fc2033b0b72524f2ac5beae0646c70330ec"
+  }
+ ]
+}
