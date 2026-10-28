@@ -152,6 +152,8 @@ function decodedReading(r) {
   r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
   r = mapped(r, /&([A-Za-z][A-Za-z0-9]*);/g, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
+  // HTML also reads its legacy references without the semicolon (&nbsp Name, &ampx): those that are not letters decode.
+  r = mapped(r, /&(nbsp|amp|AMP|lt|LT|gt|GT|quot|QUOT|shy)(?![A-Za-z0-9]*;)/g, (m, n) => NAMED[n]);
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });

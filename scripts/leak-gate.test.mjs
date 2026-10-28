@@ -81,6 +81,7 @@ const LEAKS = {
   'a protected term with a soft hyphen inside a word': ['dist/index.html', '<p>blor\u00advak</p>', /index\.html:1 term/],
   'a home path spelled with named references': ['dist/index.html', '<p>&sol;Users&sol;someone</p>', /index\.html:1 home-path/],
   'a named reference the gate does not know': ['dist/index.html', '<p>Zephyr&bogusref;Quarry</p>', /index\.html:1 unknown-reference/],
+  'a protected term split by a reference without its semicolon': ['dist/index.html', '<p>Zephyr&nbsp Quarry and Zephyr&nbspQuarry</p>', /index\.html:1 term/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
