@@ -21,9 +21,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 // In index order: Lab 02 (a results lab; data/labs/brain-bench.json holds its page's words), then Lab 03, then Lab 05
 // (a results lab; its record is data/labs/rogue/record.json, its page scripts/lab-rogue.mjs), then Lab 06 (a results
 // lab; its record is data/labs/review/record.json, its page scripts/lab-review.mjs), then Lab 07 (a results lab; its
-// record is data/labs/link-safety/record.json, its page scripts/lab-link-safety.mjs), then Lab 13 (a results lab; its
+// record is data/labs/link-safety/record.json, its page scripts/lab-link-safety.mjs), then Lab 08 (a results lab; its
+// record is data/labs/red-build/record.json, its page scripts/lab-red-build.mjs), then Lab 13 (a results lab; its
 // record is data/labs/measured-blind/record.json, its page scripts/lab-measured-blind.mjs).
-export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json', 'data/labs/review-tile.json', 'data/labs/link-safety-tile.json', 'data/labs/measured-blind-tile.json'];
+export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json', 'data/labs/review-tile.json', 'data/labs/link-safety-tile.json', 'data/labs/red-build-tile.json', 'data/labs/measured-blind-tile.json'];
 const schema = JSON.parse(readFileSync(join(here, 'schemas/odin-lab-tile.schema.json'), 'utf8'));
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const isFile = path => existsSync(path) && statSync(path).isFile();
