@@ -51,13 +51,27 @@ export const CITES = [
 // The three sets, in the summary's order: the summary's name, the verdict file's role, the page's words.
 export const SETS = [
   { id: 'tuning', summary: 'tuning', verdicts: 'tuning-verdicts', manifest: 'tuning-manifest', prefix: 'T', name: 'The tuning set', after: 'v2',
-    about: 'The nine items of an earlier live run. The fixes were made by studying these answers.' },
+    about: 'The nine items of an earlier live run. The fixes were made on them: it is the set we studied while fixing, so it says least.',
+    bound: [/\*\*tuning:\*\* D5's 9 items\. The fixes were made on them\./] },
   { id: 'heldout1', summary: 'held-out 1', verdicts: 'heldout1-verdicts', manifest: 'heldout1-manifest', prefix: 'A', name: 'Held-out set one', after: 'v2',
-    about: 'Nine items picked by a fixed rule and frozen before any fix. Its review then showed new failure shapes, which the next version (v3) fixed.' },
+    about: 'Nine items picked by a fixed rule and frozen before any fix, so no fix had seen them. Its review found new failure shapes, which the next version, v3, fixed.',
+    bound: [/\*\*held-out 1:\*\* frozen before any fix/, /The reviewer found new failure shapes there, which v3 fixed\./, /\| held-out 1 \(18\) \|[^|]*\| v2:/] },
   { id: 'heldout2', summary: 'held-out 2', verdicts: 'heldout2-verdicts', manifest: 'heldout2-manifest', prefix: 'B', name: 'Held-out set two', after: 'v3',
-    about: 'Nine fresh items picked by the same rule after v3, leaving out both earlier sets. It judges v3.' },
+    about: 'Nine fresh items picked by the same rule after v3, leaving out both earlier sets, so no fix had seen them either. It judges v3, whose fixes came from held-out set one\'s review.',
+    bound: [/\*\*held-out 2:\*\* frozen after v3 by the same rule, excluding the tuning set and held-out 1\. It judges v3, whose fixes came from held-out 1's review\./, /\| held-out 2 \(18\) \|[^|]*\| v3:/] },
 ];
 export const LABELS = ['useful', 'partly', 'wrong', 'stuck'];
+// What each sentence of the setup stands on: the write-up must say every one of these (whitespace folded).
+export const SETUP_BOUND = {
+  sessions: [/real odin-agent sessions on qwen2\.5:7b with the recipe's read-only tools, without a campus: the same model, budget and agent per department in both arms/],
+  before: [/"before" is main [0-9a-f]+'s engine and pack/],
+  after: [/\| tuning \(18\) \|[^|]*\| v2:/, /\| held-out 2 \(18\) \|[^|]*\| v3:/],
+  runs: [/each item runs twice per arm/],
+  judge: [/a separate Claude session judged every answer against its own source/],
+  blinding: [/per item, the 4 answers in a random order \(A–D; the key kept apart\)/, /the blinding is partial: a tool reply's shape \(`what_is_wrong`, `figures`\) shows the arm/],
+  stuck: [/a session the system marked stuck counts as stuck, even when the reviewer judged its partial answer/],
+  restart: [/The PC rebooted at [0-9:]+ and Ollama updated itself/, /Held-out 2's last batch \(after r2\) ran on the new Ollama/],
+};
 const KIND_WORDS = { ci_run: 'a failed CI run to diagnose', workflow: 'a failed workflow run to diagnose', pr: 'a pull request to review', issue: 'an issue to triage', proposal: 'a finance proposal to draft' };
 const KIND_ORDER = Object.keys(KIND_WORDS);
 
@@ -104,11 +118,16 @@ export function build({ clone, main, checked, file }) {
   });
   // The live run after the measurement, as the write-up states it (its answers are not committed): refused unless the
   // write-up says it in this exact line.
-  const doc = bytes['write-up'].toString('utf8');
-  const live = /^\| all (\d+) \| \*\*useful (\d+) · partly (\d+) · wrong (\d+)\*\* \|$/m.exec(doc);
+  const raw = bytes['write-up'].toString('utf8');
+  const live = /^\| all (\d+) \| \*\*useful (\d+) · partly (\d+) · wrong (\d+)\*\* \|$/m.exec(raw);
   if (!live) problems.push('the write-up has no line with the live run\'s verdicts');
-  if (!/a separate Claude session judged every answer/.test(doc) || !/the blinding is partial/.test(doc)) problems.push('the write-up no longer says who judged, or that the blinding is partial');
-  if (!/Held-out 2's last batch\s+\(after r2\) ran on the new Ollama/.test(doc)) problems.push('the write-up no longer says which run came after the restart');
+  // The setup is written in this page's words; each sentence is bound to what the write-up (and the summary's note)
+  // say, and the vendor refuses when one of them no longer says it. The model and the runs are read from the note.
+  const doc = raw.replace(/\s+/g, ' ');
+  const note = /^(\S+), read-only tools, each item twice per arm; before = main [0-9a-f]+, after = this lane; judged blind by a separate Claude reviewer \(not a human\)/.exec(summary.note ?? '');
+  if (!note) problems.push('the summary\'s note no longer names the model, the two runs per arm and the separate AI reviewer');
+  for (const [field, res] of Object.entries(SETUP_BOUND)) for (const re of res) if (!re.test(doc)) problems.push(`setup.${field}: the write-up no longer says ${re}`);
+  for (const set of SETS) for (const re of set.bound) if (!re.test(doc)) problems.push(`${set.id}: the write-up no longer says ${re}`);
   if (problems.length) throw new Error(problems.join('\n'));
   const record = {
     format: 'odin-lab-measured-blind',
@@ -120,11 +139,11 @@ export function build({ clone, main, checked, file }) {
       files: Object.entries(FILES).map(([role, what]) => ({ role, what, sha256: sha256(bytes[role]) })),
     },
     setup: {
-      model: 'qwen2.5:7b',
+      model: note?.[1],
       sessions: 'real agent sessions on a small local model with read-only tools, the same model, budget and agent per department in both arms',
       before: 'the engine and recipes on the main branch before the fixes',
       after: 'the engine and recipes after the fixes: v2 for the tuning set and held-out set one, v3 for held-out set two',
-      runs: 2,
+      runs: note ? 2 : 0,
       judge: 'a separate Claude session, which judged every answer against its own source',
       blinding: 'each item\'s four answers in a random order, with the key kept apart; the blinding is partial, because the shape of a tool\'s reply can show which arm wrote it',
       stuck: 'a session the system itself marked stuck counts as stuck, whatever the reviewer said of its partial answer',

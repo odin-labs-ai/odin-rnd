@@ -61,7 +61,7 @@ test('the denominator is printed: 18 verdicts a side, nine items answered twice,
 
 test('the page says the tuning set gained more than held-out set one, and that sentence follows the record', () => {
   assert.match(textOf(main), /The set the fixes were made on gained more than the first held-out set: 8 useful answers against 2\./);
-  assert.match(textOf(main), /a gain of 2, less than the 8 of the set the fixes were made on/);
+  assert.match(textOf(main), /Tuning against held-out set one\. The set the fixes were made on gained more than the first held-out set: 8 against 2\./);
   // The comparison is computed, never the record's: a record where held-out one gained more reads that way.
   const r = clone();
   r.sets[1].counts.after.useful = 13;
@@ -149,6 +149,10 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.sets[0].items[0].key = 'wi-ops-ci-run'; }, /does not match odin-lab-measured-blind v1/);
   refused(r => { r.sets[0].items[0].kind = 'repo'; }, /does not match odin-lab-measured-blind v1/);
   refused(r => { r.setup.blinding = 'fully blind'; }, /the blinding is partial/);
+  refused(r => { r.setup.blinding = 'the blinding is not partial; it is fully blind'; }, /the blinding is partial/);
+  refused(r => { r.setup.blinding = 'each answer judged impartially; the blinding is partial in name only, it is impartial'; }, /the blinding is partial/);
+  refused(r => { r.setup.blinding = 'the blinding is partially undone'; }, /the blinding is partial/);
+  refused(r => { r.sets[2].about = 'Nine fresh items.'; }, /whether the fixes had seen the set/);
   refused(r => { r.live.useful = 5; }, /do not add up to its 15 answers/);
   refused(r => { r.vendored.cites[0].commit = 'f'.repeat(40); }, /a commit only on a lane is never cited/);
   refused(r => { r.vendored.mainCheck.checked = '2099-01-01'; }, /after this build/);

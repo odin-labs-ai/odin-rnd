@@ -61,7 +61,10 @@ export function blindProblems(record, { now = new Date(), where = BLIND_RECORD }
       if (total(said) !== set.items.length * runs) problems.push(`${at}/counts/${arm}: not ${set.items.length * runs} verdicts (items times runs)`);
     }
   });
-  if (!/partial/.test(record.setup.blinding)) problems.push(`${where}#/setup/blinding: the page says the blinding is partial; the record must say so too`);
+  // The page says, in its own words, that the blinding is partial: the record must say exactly that, and nothing that
+  // takes it back (a negation, "impartial", "fully blind").
+  if (!/(^|; )the blinding is partial\b/.test(record.setup.blinding) || /\bnot partial\b|\bimpartial\b|\bfully blind\b|\bnot blind\b/i.test(record.setup.blinding)) problems.push(`${where}#/setup/blinding: the page says the blinding is partial; the record must say "the blinding is partial", and nothing that takes it back`);
+  for (const s of record.sets) if (!/no fix had seen them|the fixes were made on them/i.test(s.about)) problems.push(`${where}#/sets/${s.id}/about: it must say whether the fixes had seen the set`);
   const l = record.live;
   if (l.useful + l.partly + l.wrong !== l.answers) problems.push(`${where}#/live: its labels do not add up to its ${l.answers} answers`);
   return problems;
@@ -96,7 +99,7 @@ export function renderJudge(record) {
 
 export function renderHow(record) {
   const s = record.setup;
-  const sets = record.sets.map(x => `<li><strong>${escape(x.name)}</strong> (items ${escape(x.items[0].label)} to ${escape(x.items.at(-1).label)}). ${escape(x.about)}</li>`).join('');
+  const sets = record.sets.map(x => `<li><strong>${escape(x.name)}</strong>: items ${escape(x.items[0].label)} to ${escape(x.items.at(-1).label)}, judged on ${escape(x.afterVersion)} after the fixes.</li>`).join('');
   return `<ul class="blind-list"><li><strong>The agents.</strong> ${escape(s.sessions[0].toUpperCase() + s.sessions.slice(1))}; the model is <code>${escape(s.model)}</code>.</li><li><strong>Before.</strong> ${escape(s.before[0].toUpperCase() + s.before.slice(1))}.</li><li><strong>After.</strong> ${escape(s.after[0].toUpperCase() + s.after.slice(1))}.</li><li><strong>Runs.</strong> Each item was answered ${s.runs === 2 ? 'twice' : `${s.runs} times`} in each arm.</li></ul><h3 class="lab-subhead">The three sets</h3><ul class="blind-list">${sets}</ul>`;
 }
 
@@ -110,7 +113,9 @@ export function renderNumbers(record) {
 export function renderReading(record) {
   const [t, a, b] = SET_IDS.map(id => set(record, id));
   const runUseful = (s, arm, k) => s.items.filter(item => item[arm][k] === 'useful').length;
-  return `<ul class="blind-list"><li><strong>On the set the fixes were made on</strong>, useful went from ${pct(t.counts.before.useful, per(t))} to ${pct(t.counts.after.useful, per(t))}. That is the set we studied while fixing, so it says least.</li><li><strong>On the first held-out set</strong>, from ${pct(a.counts.before.useful, per(a))} to ${pct(a.counts.after.useful, per(a))}: a gain of ${gain(a)}, ${compare(gain(a), gain(t))} the ${gain(t)} of the set the fixes were made on. No fix had seen it. Its review showed failure shapes the tuning set had not, and the next version fixed them.</li><li><strong>On the second held-out set</strong>, picked fresh after that version and judging it, from ${pct(b.counts.before.useful, per(b))} to ${pct(b.counts.after.useful, per(b))}. No fix had seen it either; the version it judges was fixed from the first held-out set's review.</li><li><strong>A restart.</strong> ${escape(record.setup.restart[0].toUpperCase() + record.setup.restart.slice(1))}. Run by run, useful of ${b.items.length}: before, ${runUseful(b, 'before', 0)} and then ${runUseful(b, 'before', 1)}; after, ${runUseful(b, 'after', 0)} and then ${runUseful(b, 'after', 1)}, the run on the updated runtime.</li></ul>`;
+  // What each set is (its about, from the record, bound to the write-up by the vendor), beside its own numbers.
+  const sets = record.sets.map(s => `<li><strong>${escape(s.name)}</strong>: useful from ${pct(s.counts.before.useful, per(s))} to ${pct(s.counts.after.useful, per(s))}, a gain of ${gain(s)}. ${escape(s.about)}</li>`).join('');
+  return `<ul class="blind-list">${sets}<li><strong>Tuning against held-out set one.</strong> The set the fixes were made on gained ${compare(gain(t), gain(a))} the first held-out set: ${gain(t)} against ${gain(a)}.</li><li><strong>A restart.</strong> ${escape(record.setup.restart[0].toUpperCase() + record.setup.restart.slice(1))}. Run by run, useful of ${b.items.length}: before, ${runUseful(b, 'before', 0)} and then ${runUseful(b, 'before', 1)}; after, ${runUseful(b, 'after', 0)} and then ${runUseful(b, 'after', 1)}, the run on the updated runtime.</li></ul>`;
 }
 
 export function renderLive(record) {

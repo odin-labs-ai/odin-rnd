@@ -111,7 +111,7 @@
   {
    "id": "tuning",
    "name": "The tuning set",
-   "about": "The nine items of an earlier live run. The fixes were made by studying these answers.",
+   "about": "The nine items of an earlier live run. The fixes were made on them: it is the set we studied while fixing, so it says least.",
    "afterVersion": "v2",
    "items": [
     {
@@ -241,7 +241,7 @@
   {
    "id": "heldout1",
    "name": "Held-out set one",
-   "about": "Nine items picked by a fixed rule and frozen before any fix. Its review then showed new failure shapes, which the next version (v3) fixed.",
+   "about": "Nine items picked by a fixed rule and frozen before any fix, so no fix had seen them. Its review found new failure shapes, which the next version, v3, fixed.",
    "afterVersion": "v2",
    "items": [
     {
@@ -371,7 +371,7 @@
   {
    "id": "heldout2",
    "name": "Held-out set two",
-   "about": "Nine fresh items picked by the same rule after v3, leaving out both earlier sets. It judges v3.",
+   "about": "Nine fresh items picked by the same rule after v3, leaving out both earlier sets, so no fix had seen them either. It judges v3, whose fixes came from held-out set one's review.",
    "afterVersion": "v3",
    "items": [
     {
