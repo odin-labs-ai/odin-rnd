@@ -103,9 +103,8 @@ test('a different hash is sticky for its commit (#128): day 1 differ, day 2 agre
     assert.ok(html.includes(`<a href="runs/#${runAnchor(d2org)}">`) && html.includes(`<a href="runs/#${runAnchor(d2hosted)}">`));
     assert.doesNotMatch(/<div class="lab-provenance [^]*?<\/div>/.exec(html)[0], /same hash/i);
   });
-  // A new commit starts fresh. Its record hash starts with a letter (f46d5534): a hash with three or more leading
-  // digits trips the feeds' screen today (reported to bundle 2; switch this to 'd' once that fix is on main).
-  const fresh = { commit: { sha: 'a'.repeat(40), mainHead: 'a'.repeat(40), compare: 'identical', onMain: true } };
+  // A new commit starts fresh. Its record hash, 237b291c..., is the case that once tripped the feeds' screen (#130).
+  const fresh = { commit: { sha: 'd'.repeat(40), mainHead: 'd'.repeat(40), compare: 'identical', onMain: true } };
   const day3 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-27T20:00:00Z', fresh), leg('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:40Z', fresh));
   inSite(root => assert.equal(state(afterDays(root, [day1, day2, day3])), 'reproduced'));
 });
