@@ -116,6 +116,7 @@ test('refused: one record, a laptop run, a wrong lab, two commits, one class twi
   refused(record.runs, day(hosted, { ...org, lab: 'other' }), /is not rogue/);
   refused(record.runs, day(hosted, leg('org-hosted', 'org-ci-heavy', '2026-10-28T03:00:40Z', { commit: { ...mac.commit, sha: 'b'.repeat(40), mainHead: 'b'.repeat(40) } })), /not all of one commit/);
   refused(record.runs, day(hosted, leg('github-hosted', 'ubuntu-latest', '2026-10-28T03:01:00Z')), /two records of one machine class/);
+  refused(record.runs, day(hosted, leg('org-hosted', 'org-ci-heavy', '2026-10-25T03:00:40Z')), /did not all run on one UTC day/);
 });
 
 test('refused: a leg that does not name exactly its same-day sibling (none, the Mac, itself, the wrong list)', () => {
@@ -145,7 +146,14 @@ test('the command line refuses a refused day with exit 1 and writes nothing, and
     const g = join(root, 'two.json');
     writeFileSync(g, JSON.stringify(b));
     assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f, g], { stdio: 'pipe' }), e => e.status === 1 && /not written as a plain integer/.test(e.stderr.toString()));
+    // Two legs days apart that name each other: refused, both files unchanged.
+    const pinBefore = readFileSync(join(root, 'data/labs/rogue/record.sha256'), 'utf8');
+    const [x, y] = day(hosted, leg('org-hosted', 'org-ci-heavy', '2026-10-25T03:00:40Z'));
+    writeFileSync(f, JSON.stringify(x));
+    writeFileSync(g, JSON.stringify(y));
+    assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f, g], { stdio: 'pipe' }), e => e.status === 1 && /did not all run on one UTC day/.test(e.stderr.toString()));
     assert.equal(readFileSync(join(root, 'data/labs/rogue/record.json'), 'utf8'), before);
+    assert.equal(readFileSync(join(root, 'data/labs/rogue/record.sha256'), 'utf8'), pinBefore);
   });
 });
 

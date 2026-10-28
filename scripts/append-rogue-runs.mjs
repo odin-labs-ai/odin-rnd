@@ -3,7 +3,7 @@
 // vp-living-labs-off-the-laptop, WO-04) carries them here and runs this. Fail-closed: the day is refused, every reason
 // listed, unless
 //   - it is two or more records, each record v1 (scripts/lab-record.mjs) for lab "rogue" from an org runner (never a
-//     laptop), all of one commit, one per machine class;
+//     laptop), all of one commit, all run on one UTC day (ranAt's date), one per machine class;
 //   - each names exactly its same-day siblings: in replicatedOn the ones with its recordHash, in differedOn the ones
 //     without (never a run of another day, never itself);
 //   - no machine class already holds a run at the same ranAt (a run's anchor never moves);
@@ -28,6 +28,7 @@ export function dayProblems(runs, day, { now = new Date() } = {}) {
   const classes = day.map(r => r?.machineClass);
   if (new Set(classes).size !== day.length) problems.push('two records of one machine class in one day');
   if (new Set(day.map(r => r?.commit?.sha)).size !== 1) problems.push('the records are not all of one commit');
+  if (new Set(day.map(r => String(r?.ranAt).slice(0, 10))).size !== 1) problems.push('the records did not all run on one UTC day');
   day.forEach((r, i) => {
     if (r?.lab !== 'rogue') problems.push(`day[${i}]: lab ${JSON.stringify(r?.lab)} is not rogue`);
     if (r?.runner === 'laptop') problems.push(`day[${i}]: a laptop run is not an org runner's`);
