@@ -1,0 +1,508 @@
+{
+ "format": "odin-lab-measured-blind",
+ "version": 1,
+ "vendored": {
+  "from": "the agent space's private repository: the blind before and after evaluation of the company's on-duty agents, its committed verdict labels, counts and summary, read at the main head",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "git merge-base --is-ancestor of each cited commit against the private main head, in a clone of the private repository",
+   "checked": "2026-10-28",
+   "commits": [
+    "7c446f099800fa60e0c8e17d9059155077c76a6f",
+    "79b0b3155d99d53a6fcd15b7fc0ea4b1a72eee3c",
+    "c01782c463a86bb9194129e3189cb4beb21a57ab",
+    "4b1bf2df2ace1a3b60a072b29c7d5dfeb96202c4",
+    "8863df79aab18983322139bb762273ab9a358dc8",
+    "cd29253ed7a6460ccdc0fe1bf82fb83b37b85a35"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "7c446f099800fa60e0c8e17d9059155077c76a6f",
+    "what": "froze the tuning set and held-out set one, before any fix",
+    "at": "2026-10-24T16:33:19Z"
+   },
+   {
+    "commit": "79b0b3155d99d53a6fcd15b7fc0ea4b1a72eee3c",
+    "what": "froze held-out set two, to judge v3",
+    "at": "2026-10-24T17:26:35Z"
+   },
+   {
+    "commit": "c01782c463a86bb9194129e3189cb4beb21a57ab",
+    "what": "added the verdict labels of all three sets, the counts and the summary",
+    "at": "2026-10-24T18:37:13Z"
+   },
+   {
+    "commit": "4b1bf2df2ace1a3b60a072b29c7d5dfeb96202c4",
+    "what": "added the write-up of the live run",
+    "at": "2026-10-24T21:56:07Z"
+   },
+   {
+    "commit": "8863df79aab18983322139bb762273ab9a358dc8",
+    "what": "last changed the write-up",
+    "at": "2026-10-24T23:23:01Z"
+   },
+   {
+    "commit": "cd29253ed7a6460ccdc0fe1bf82fb83b37b85a35",
+    "what": "last changed the runner",
+    "at": "2026-10-25T03:05:17Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "summary",
+    "what": "the evaluation's summary: the counts per set, before and after",
+    "sha256": "44c4b2f83b644564b754e2eddd1523918adcea0c5e50d7f90a2ba9c58c3fb94c"
+   },
+   {
+    "role": "tuning-verdicts",
+    "what": "the tuning set's verdict labels, per item and run",
+    "sha256": "63fc8fb8198b7fe8d2faa968918f862c51c844db708a1bcdc00deb3db4484297"
+   },
+   {
+    "role": "heldout1-verdicts",
+    "what": "held-out set one's verdict labels, per item and run",
+    "sha256": "04b949882961c4a6e8f02795ee15234dab66202376434e36d3c58ffeb2f5bb94"
+   },
+   {
+    "role": "heldout2-verdicts",
+    "what": "held-out set two's verdict labels, per item and run",
+    "sha256": "bfb90a5780718cbae5f1830224904218072eef632f652374810d0bddd45b7dc6"
+   },
+   {
+    "role": "tuning-manifest",
+    "what": "the tuning set's item list (not published: it names private repositories)",
+    "sha256": "c52a046df6c0e44275ff4e6d2367b4ea0abde2749505c8f273af4dbdd2473e80"
+   },
+   {
+    "role": "heldout1-manifest",
+    "what": "held-out set one's item list and the rule that picked it (not published)",
+    "sha256": "32e3e7b62fa6e6a284f0b571785e5aefc8bb16d2c03d5f1fa25271888018a2da"
+   },
+   {
+    "role": "heldout2-manifest",
+    "what": "held-out set two's item list and the rule that picked it (not published)",
+    "sha256": "431472e57e446257d44278259bda31c7c396ed6090178960baccac2cc835244f"
+   },
+   {
+    "role": "write-up",
+    "what": "the write-up of the measurement, and of the live run after it",
+    "sha256": "edfbab57d7b9c204a50b0d5c2dfa5a2288539fab9c3ccea4d20bafbeb19c57c1"
+   },
+   {
+    "role": "runner",
+    "what": "the evaluation's runner: pick, run, review sheet, unblind",
+    "sha256": "9df51663c02e884daf84e9df32d198d41e6305467257619fbbe478230c34115b"
+   }
+  ]
+ },
+ "setup": {
+  "model": "qwen2.5:7b",
+  "sessions": "real agent sessions on a small local model with read-only tools, the same model, budget and agent per department in both arms",
+  "before": "the engine and recipes on the main branch before the fixes",
+  "after": "the engine and recipes after the fixes: v2 for the tuning set and held-out set one, v3 for held-out set two",
+  "runs": 2,
+  "judge": "a separate Claude session, which judged every answer against its own source",
+  "blinding": "each item's four answers in a random order, with the key kept apart; the blinding is partial, because the shape of a tool's reply can show which arm wrote it",
+  "stuck": "a session the system itself marked stuck counts as stuck, whatever the reviewer said of its partial answer",
+  "restart": "the machine restarted during held-out set two, and its local model runtime updated itself; the after arm's second run of that set ran on the updated runtime"
+ },
+ "sets": [
+  {
+   "id": "tuning",
+   "name": "The tuning set",
+   "about": "The nine items of an earlier live run. The fixes were made on them: it is the set we studied while fixing, so it says least.",
+   "afterVersion": "v2",
+   "items": [
+    {
+     "label": "T1",
+     "kind": "ci_run",
+     "before": [
+      "wrong",
+      "wrong"
+     ],
+     "after": [
+      "partly",
+      "wrong"
+     ]
+    },
+    {
+     "label": "T2",
+     "kind": "ci_run",
+     "before": [
+      "useful",
+      "useful"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "T3",
+     "kind": "workflow",
+     "before": [
+      "wrong",
+      "wrong"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "T4",
+     "kind": "pr",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "partly"
+     ]
+    },
+    {
+     "label": "T5",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "T6",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "partly"
+     ]
+    },
+    {
+     "label": "T7",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "T8",
+     "kind": "proposal",
+     "before": [
+      "partly",
+      "wrong"
+     ],
+     "after": [
+      "partly",
+      "useful"
+     ]
+    },
+    {
+     "label": "T9",
+     "kind": "proposal",
+     "before": [
+      "stuck",
+      "partly"
+     ],
+     "after": [
+      "stuck",
+      "stuck"
+     ]
+    }
+   ],
+   "counts": {
+    "before": {
+     "useful": 2,
+     "partly": 10,
+     "wrong": 5,
+     "stuck": 1
+    },
+    "after": {
+     "useful": 10,
+     "partly": 5,
+     "wrong": 1,
+     "stuck": 2
+    }
+   }
+  },
+  {
+   "id": "heldout1",
+   "name": "Held-out set one",
+   "about": "Nine items picked by a fixed rule and frozen before any fix, so no fix had seen them. Its review found new failure shapes, which the next version, v3, fixed.",
+   "afterVersion": "v2",
+   "items": [
+    {
+     "label": "A1",
+     "kind": "ci_run",
+     "before": [
+      "wrong",
+      "wrong"
+     ],
+     "after": [
+      "partly",
+      "partly"
+     ]
+    },
+    {
+     "label": "A2",
+     "kind": "ci_run",
+     "before": [
+      "wrong",
+      "wrong"
+     ],
+     "after": [
+      "wrong",
+      "partly"
+     ]
+    },
+    {
+     "label": "A3",
+     "kind": "ci_run",
+     "before": [
+      "useful",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "wrong"
+     ]
+    },
+    {
+     "label": "A4",
+     "kind": "ci_run",
+     "before": [
+      "wrong",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "A5",
+     "kind": "pr",
+     "before": [
+      "useful",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "wrong"
+     ]
+    },
+    {
+     "label": "A6",
+     "kind": "pr",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "wrong",
+      "partly"
+     ]
+    },
+    {
+     "label": "A7",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "partly"
+     ]
+    },
+    {
+     "label": "A8",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "useful"
+     ]
+    },
+    {
+     "label": "A9",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "useful"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    }
+   ],
+   "counts": {
+    "before": {
+     "useful": 3,
+     "partly": 10,
+     "wrong": 5,
+     "stuck": 0
+    },
+    "after": {
+     "useful": 5,
+     "partly": 9,
+     "wrong": 4,
+     "stuck": 0
+    }
+   }
+  },
+  {
+   "id": "heldout2",
+   "name": "Held-out set two",
+   "about": "Nine fresh items picked by the same rule after v3, leaving out both earlier sets, so no fix had seen them either. It judges v3, whose fixes came from held-out set one's review.",
+   "afterVersion": "v3",
+   "items": [
+    {
+     "label": "B1",
+     "kind": "ci_run",
+     "before": [
+      "wrong",
+      "wrong"
+     ],
+     "after": [
+      "wrong",
+      "wrong"
+     ]
+    },
+    {
+     "label": "B2",
+     "kind": "ci_run",
+     "before": [
+      "useful",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "B3",
+     "kind": "ci_run",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "partly"
+     ]
+    },
+    {
+     "label": "B4",
+     "kind": "ci_run",
+     "before": [
+      "partly",
+      "useful"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "B5",
+     "kind": "pr",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "B6",
+     "kind": "pr",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "B7",
+     "kind": "issue",
+     "before": [
+      "useful",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "useful"
+     ]
+    },
+    {
+     "label": "B8",
+     "kind": "issue",
+     "before": [
+      "useful",
+      "partly"
+     ],
+     "after": [
+      "useful",
+      "partly"
+     ]
+    },
+    {
+     "label": "B9",
+     "kind": "issue",
+     "before": [
+      "partly",
+      "partly"
+     ],
+     "after": [
+      "partly",
+      "partly"
+     ]
+    }
+   ],
+   "counts": {
+    "before": {
+     "useful": 4,
+     "partly": 12,
+     "wrong": 2,
+     "stuck": 0
+    },
+    "after": {
+     "useful": 12,
+     "partly": 4,
+     "wrong": 2,
+     "stuck": 0
+    }
+   }
+  }
+ ],
+ "live": {
+  "answers": 15,
+  "useful": 2,
+  "partly": 11,
+  "wrong": 2
+ }
+}
