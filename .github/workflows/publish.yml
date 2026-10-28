@@ -50,7 +50,10 @@ jobs:
       - name: Run public experiments
         run: pnpm experiment
       - name: Check recorded evidence and interaction failure handling (this shard)
-        run: node --test --test-shard=${{ matrix.shard }}/3 scripts/*.test.mjs
+        # The same `pnpm test` as before, its file set defined once in package.json; TEST_SHARD picks a third.
+        env:
+          TEST_SHARD: ${{ matrix.shard }}/3
+        run: pnpm test
   verify:
     needs: test
     runs-on: ubuntu-latest

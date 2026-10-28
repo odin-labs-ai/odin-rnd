@@ -11,7 +11,7 @@
     "experiment": "node scripts/run-experiments.mjs",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "test": "node --test scripts/*.test.mjs",
+    "test": "node --test ${TEST_SHARD:+--test-shard=$TEST_SHARD} scripts/*.test.mjs",
     "serve": "node scripts/serve.mjs"
   },
   "devDependencies": {
