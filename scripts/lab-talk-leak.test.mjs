@@ -9,6 +9,9 @@ import { PUBLIC_NAMES, pristineProblems } from './vendor-talk-leak.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 09, "Can a talk leak data?" (scripts/lab-talk-leak.mjs). A page about leaks is only worth publishing if it does
 // not leak: counts only, never a term, label, figure or finding; the fiction boxed as fiction; and a self-scan by the
@@ -67,7 +70,7 @@ test('the company on stage is boxed as staged fiction, the planted leaks as auth
   assert.match(staged, /A real client, who is never named here\./);
   assert.match(main, /<div class="lab-panel talk-plants" id="plants"><p class="technical">AN AUTHORED FIXTURE, WRITTEN BY US<\/p>/);
   assert.match(main, /<div class="lab-panel talk-hashed" id="hashed"><p class="technical">SUMMARY ONLY, NOT REPRODUCIBLE HERE<\/p>/);
-  for (const text of [raw, main, tile]) assert.doesNotMatch(text, /mortgage/i, 'the talk\'s client theme is never named');
+  for (const text of [raw, main, tile]) assert.ok(!namesRestricted(text), 'the talk\'s client theme is never named');
 });
 
 test('the self-scan stands beside exactly the bytes that ship, found nothing beyond this site\'s own names, and is refused otherwise', () => {
@@ -114,12 +117,12 @@ test('the private commits are cited the way Lab 01 cites them', () => {
 });
 
 const LEAK_SHAPES = [/\/Users\//, /\/home\//, /\b[A-Z]:\\/, /~\/\./, /localhost/i, /\b127\.0\.0\.1\b/, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /:\d{4,5}\b(?!["\d])/,
-  /\bghp_|\bgithub_pat_|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-/, /odin-labs-ai\/(?!odin-rnd)/, /mortgage/i, /be1aa24f/];
+  /\bghp_|\bgithub_pat_|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-/, /odin-labs-ai\/(?!odin-rnd)/, /be1aa24f/];
 
 test('leak screen: no path, host, credential, other repository, client theme or uncited build commit anywhere it ships', () => {
   const known = new Set(recordHashes(record));
   const masked = text => text.replace(/\b[0-9a-f]{40,64}\b/g, h => (known.has(h) ? 'HASH' : h));
-  for (const [name, text] of [['page', main], ['record', raw], ['tile', tile], ['self-scan', JSON.stringify(selfScan)]]) for (const re of LEAK_SHAPES) assert.doesNotMatch(masked(text), re, `${name}: ${re}`);
+  for (const [name, text] of [['page', main], ['record', raw], ['tile', tile], ['self-scan', JSON.stringify(selfScan)]]) { for (const re of LEAK_SHAPES) assert.doesNotMatch(masked(text), re, `${name}: ${re}`); assert.ok(!namesRestricted(text), `${name}: a restricted name`); }
   assert.deepEqual(pageLeaks(page, recordHashes(record)), [], 'the rendered page passes the screen');
   assert.deepEqual(talkLeakProblems(record), [], 'the record passes its checks and the screen');
   for (const file of ['scripts/lab-talk-leak.mjs', 'scripts/vendor-talk-leak.mjs', 'scripts/schemas/odin-lab-talk-leak.schema.json', 'site/labs/talk-leak/index.html']) {
@@ -129,7 +132,7 @@ test('leak screen: no path, host, credential, other repository, client theme or 
 
 test('a planted leak fails the build, in the record and on the page (a failing negative per class)', () => {
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
-  for (const [plant, reason] of [['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], ['10.0.0.12', /local/], [credential, /credential/], ['a mortgage lender', /restricted name/], ['the oac repository', /restricted name/], ['odin-labs-ai/some-private-repo', /another repository/], ['it cost €40', /price or currency/]]) {
+  for (const [plant, reason] of [['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], ['10.0.0.12', /local/], [credential, /credential/], [`a ${SYN_THEME} lender`, /restricted name/], [`the ${SYN_REPO} repository`, /restricted name/], ['odin-labs-ai/some-private-repo', /another repository/], ['it cost €40', /price or currency/]]) {
     const r = clone(); r.tests.how = plant;
     assert.ok(talkLeakProblems(r).some(p => reason.test(p)), `record: ${plant}`);
     assert.ok(pageLeaks(page.replace('</main>', `<p>${plant}</p></main>`), recordHashes(record)).some(p => reason.test(p)), `page: ${plant}`);

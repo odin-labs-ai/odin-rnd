@@ -5,12 +5,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
-import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { addScreenNames, isTestRunnerCommand, namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
+import { TREE_SLOTS, MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
@@ -284,14 +285,24 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
 
 test('the committed known-occurrence list is well formed and lists no canary', () => {
   const rows = loadKnown(readFileSync('scripts/leak-gate-known.json', 'utf8'));
-  for (const row of rows) assert.match(row.file, /^dist\//);
+  // A row names a built file (dist/...) or a tracked source file that exists in this checkout.
+  for (const row of rows) assert.ok(row.file.startsWith('dist/') || existsSync(row.file.split('!')[0]), row.file);
 });
 
 test('the Leak screen page carries every slot the gate fills', () => {
   const page = readFileSync('site/leak-screen/index.html', 'utf8');
   const filled = fillPage(page, { terms: 1, canaries: 1, scanned: '2026-10-28T00:00:00Z', commit: COMMIT, files: 1, hits: 0, known: 0 });
+  assert.match(fillPage(page, { 'tree-files': 9, 'tree-hits': 0, 'tree-known': 2 }, TREE_SLOTS), /data-leak-screen="tree-known">2</);
   assert.match(filled, /datetime="2026-10-28T00:00:00Z"/);
   assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
+});
+
+test('the publish workflow also screens the tracked tree, with the secret, unconditionally', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const step = wf.slice(wf.indexOf('Source screen'), wf.indexOf('Upload Pages'));
+  assert.match(step, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.match(step, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html --tree\n/);
+  assert.doesNotMatch(step, /continue-on-error|\|\| true|if:/);
 });
 
 test('the publish workflow runs the gate after the build, before the upload, with the secret', () => {
@@ -483,4 +494,106 @@ test('a strict-class term (client, employer, publisher) can never be a known occ
 test('the committed known list carries a valid review stamp and no strict-class row', () => {
   const d = JSON.parse(readFileSync('scripts/leak-gate-known.json', 'utf8'));
   assert.equal(d.reviewed.rowsSha256, rowsDigest(d.known));
+});
+
+test('--tree reads every tracked file of the checkout for terms and canaries: red on a planted name, green once it is gone', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-tree-'));
+  const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  const run = (extra = []) => { const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', ...extra, '--tree'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' }); return { code: r.status, out: r.stdout + r.stderr }; };
+  try {
+    writeFileSync(join(root, 'set.json'), setFile());
+    mkdirSync(join(root, 'scripts'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\nexport const x = 1;\n');
+    writeFileSync(join(root, 'scripts/fixture.test.mjs'), "const plants = ['/Users/someone/x', 'served on localhost:3000'];\n");
+    writeFileSync(join(root, 'untracked.txt'), `not in git: ${CANARY}\n`);
+    git('init', '-q'); git('add', 'set.json', 'scripts');
+    const red = run();
+    assert.equal(red.code, 1, red.out);
+    assert.match(red.out, /LEAK scripts\/record\.mjs:1 term hash [0-9a-f]{8}/);
+    assert.doesNotMatch(red.out, /fixture\.test\.mjs|untracked/, 'machine patterns are for the built site; an untracked file is not the tree');
+    assert.ok(!red.out.includes('blorvak'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read the private repository AT main.\nexport const x = 1;\n');
+    const green = run();
+    assert.equal(green.code, 0, green.out);
+    // A dist/ row belongs to the built-site scan: the tree scan neither uses it nor calls it stale; a tree row is settled here.
+    const rows = [{ file: 'dist/index.html', kind: 'loopback', count: 1, reason: 'a row for the built site' }];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped(rows))); git('add', 'known.json');
+    assert.equal(run(['--known', 'known.json']).code, 0);
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\n');
+    const hash = run().out.match(/term hash ([0-9a-f]{8})/)[1];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([...rows, { file: 'scripts/record.mjs', kind: 'term', hash, count: 1, reason: 'a reviewed tree occurrence' }])));
+    assert.equal(run(['--known', 'known.json']).code, 0, 'a tree row covers its tree occurrence');
+    // --page with --tree fills the page's own tree line, and only that line.
+    writeFileSync(join(root, 'page.html'), PAGE.replace('</p>', ' <span data-leak-screen="tree-files">0</span> <span data-leak-screen="tree-hits">-</span> <span data-leak-screen="tree-known">-</span></p>'));
+    const filled = run(['--known', 'known.json', '--page', 'page.html']);
+    assert.equal(filled.code, 0, filled.out);
+    const page = readFileSync(join(root, 'page.html'), 'utf8');
+    assert.match(page, /data-leak-screen="tree-hits">0</);
+    assert.match(page, /data-leak-screen="tree-known">1</);
+    assert.match(page, /data-leak-screen="tree-files">[1-9]\d*</);
+    assert.match(page, /data-leak-screen="hits">-</, 'the built-site slots stay for the built-site scan');
+    // A tracked name that is not UTF-8 (byte FF) could collide with another once decoded: it stops the build.
+    const odd = Buffer.concat([Buffer.from(join(root, 'scripts/x')), Buffer.from([0xff]), Buffer.from('.txt')]);
+    // (A file system that refuses such a name, as APFS does, cannot hold one; CI's Linux runner can.)
+    let made = true;
+    try { writeFileSync(odd, 'clean\n'); } catch (error) { if (error.code !== 'EILSEQ') throw error; made = false; }
+    if (made) {
+      git('add', '-A');
+      const bad = run();
+      assert.equal(bad.code, 2, bad.out);
+      assert.match(bad.out, /not valid UTF-8/);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the lab screen can only gain names (the boundary); never in a build; outside the runner an accident guard refuses; a random made-up name is refused like a real one', async () => {
+  const made = `zq${[...createHash('sha256').update(String(Math.random())).digest('hex')].filter(c => /[a-f]/.test(c)).join('').slice(0, 10)}`;
+  assert.equal(namesRestricted(`a ${made} lender`), false);
+  addScreenNames(made);
+  assert.equal(namesRestricted(`a ${made} lender`), true);
+  assert.ok(screenHits(`the ${made.toUpperCase()} repository`).some(h => /restricted name/.test(h.reason)));
+  // A three-letter name: the short-token path, and anyWindow finds it inside a longer word as a substring check would.
+  const short = 'qzj';
+  addScreenNames(short);
+  assert.ok(screenHits('the QZJ repository').some(h => /restricted name/.test(h.reason)));
+  assert.equal(namesRestricted('a xqzjx token'), false, 'a short name inside a word is not a token match');
+  assert.equal(namesRestricted('a xqzjx token', { anyWindow: true }), true, 'anyWindow reads every letter run of 3 or more');
+  const call = env => spawnSync(process.execPath, ['--input-type=module', '-e', "const m = await import('./scripts/lab-dispatch-publish.mjs'); m.addScreenNames('zqbcdfgh');"], { env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
+  // An ordinary *.test.mjs run by hand with the runner's variable set: its parent is not the test runner, so refused.
+  const dir = mkdtempSync(join(tmpdir(), 'hook-'));
+  try {
+    writeFileSync(join(dir, 'spoof.test.mjs'), `const m = await import(${JSON.stringify(join(process.cwd(), 'scripts/lab-dispatch-publish.mjs'))}); m.addScreenNames('zqbcdfgh');\n`);
+    const spoof = spawnSync(process.execPath, [join(dir, 'spoof.test.mjs')], { env: { PATH: process.env.PATH, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' });
+    assert.notEqual(spoof.status, 0, 'a test file run by hand');
+    assert.match(spoof.stderr, /for the tests only/);
+    // A launcher that carries --test as its own script argument and spawns the test file: still refused.
+    writeFileSync(join(dir, 'launcher.mjs'), `import { spawnSync } from 'node:child_process'; const r = spawnSync(process.execPath, [${JSON.stringify(join(dir, 'spoof.test.mjs'))}], { env: { ...process.env, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' }); process.stderr.write(r.stderr); process.exit(r.status ?? 1);\n`);
+    const launched = spawnSync(process.execPath, [join(dir, 'launcher.mjs'), '--test'], { env: { PATH: process.env.PATH }, encoding: 'utf8' });
+    assert.notEqual(launched.status, 0, 'a launcher run as node launcher.mjs --test');
+    assert.match(launched.stderr, /for the tests only/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  for (const line of ['node --test scripts/a.test.mjs', '/usr/bin/node --test-reporter=tap --test x.test.mjs', 'node --test'])
+    assert.equal(isTestRunnerCommand(line), true, line);
+  for (const line of ['node launcher.mjs --test', 'node -- --test', 'node --inspect -- --test x', 'python3 --test', 'bash -c node --test', 'node'])
+    assert.equal(isTestRunnerCommand(line), false, line);
+  for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
+    const r = call(env);
+    assert.notEqual(r.status, 0, name);
+    assert.match(r.stderr, /for the tests only/, name);
+  }
+});
+
+test('the verify job (the site build) runs with ODIN_SITE_BUILD set, so the test hook cannot run there', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const verify = wf.slice(wf.indexOf('\n  verify:'), wf.indexOf('\n  publish:'));
+  assert.match(verify, /\n    env:\n      ODIN_SITE_BUILD: '1'\n/);
+});
+
+test('only test code calls the screen hook: no build or site script imports it or the made-up names', () => {
+  const tracked = spawnSync('git', ['ls-files', '-z', '--', 'scripts', 'site', 'harness', 'experiments'], { encoding: 'utf8' }).stdout.split('\0').filter(f => /\.(m?js|cjs|ts)$/.test(f));
+  const allowed = f => /\.test\.mjs$/.test(f) || f === 'scripts/lab-dispatch-publish.mjs' || f === 'scripts/test-synthetic-names.mjs';
+  for (const file of tracked) {
+    const text = readFileSync(file, 'utf8');
+    if (/addScreenNames|test-synthetic-names/.test(text)) assert.ok(allowed(file), `${file} reaches the test-only screen hook`);
+  }
 });

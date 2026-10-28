@@ -29,6 +29,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
 
@@ -60,6 +61,44 @@ export function fold(text) {
 
 /** The hash a term is listed under: its letters only, normalised. */
 export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, ''));
+/**
+ * Add names to the screen, never remove one: the tests plant a random made-up name registered this way instead of
+ * spelling a real restricted name in this public repository (the site's leak gate refuses the real ones in source).
+ */
+export function addScreenNames(...names) {
+  // THE BOUNDARY (lead ruling 2026-10-28): (a) this only ADDS names, so no caller, whoever runs it, can weaken a screen;
+  // (b) only test code may call it (a test in leak-gate.test.mjs fails on any other tracked caller); (c) it refuses in
+  // a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
+  // The "only under node --test" check below is an ACCIDENT GUARD, not a security boundary: a test child gets nothing
+  // from the runner that the same user cannot fake (measured: only NODE_TEST_CONTEXT, no execArgv or argv; a parent's
+  // command line and process.title can be set too), so it stops mistakes, not someone determined.
+  if (!process.env.NODE_TEST_CONTEXT || !/\.test\.mjs$/.test(process.argv[1] ?? '') || process.env.ODIN_SITE_BUILD || !underTestRunner()) throw new Error('addScreenNames is for the tests only (node --test), never a build');
+  for (const name of names) NAMES.add(fingerprint(name));
+}
+function underTestRunner() {
+  try { return isTestRunnerCommand(execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' }), process.execPath); } catch { return false; }
+}
+/**
+ * Whether a process command line reads as node itself run with --test among its own options, before any script and
+ * before "--" ("node --test …"); part of the hook's accident guard (a displayed command line can be faked).
+ */
+export function isTestRunnerCommand(line, execPath = '') {
+  const [bin, ...args] = String(line).trim().split(/\s+/);
+  if (!/(^|\/)node(\.exe)?$/.test(bin) && bin !== execPath) return false;
+  for (const arg of args) { if (arg === '--') return false; if (arg === '--test') return true; if (!arg.startsWith('-')) return false; }
+  return false;
+}
+/**
+ * True when the text names a restricted name (any listed or added one), by the same screen. With anyWindow, every run
+ * of 3 or more letters inside a word is looked up too, as an unbounded substring check would ("…xyz…" inside a token).
+ */
+export function namesRestricted(text, { anyWindow = false } = {}) {
+  if (termHits(text).some(hit => hit.kind === 'names')) return true;
+  if (!anyWindow) return false;
+  const run = [...normalise(text).matchAll(/\p{L}/gu)].map(m => m[0]).join('');
+  for (let length = 3; length < LONG_TERM; length++) for (let i = 0; i + length <= run.length; i++) if (NAMES.has(sha256(run.slice(i, i + length)))) return true;
+  return false;
+}
 
 /** Which listed term set the text hits ('names', 'places'), with the offset in the normalised text. */
 function termHits(text) {

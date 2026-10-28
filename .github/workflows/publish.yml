@@ -80,6 +80,8 @@ jobs:
     # 191 / 191 / 152 s (runs 40638721064, 40642111392, 40642123245), pull request 204 / 186 s; the ceiling is twice
     # the slowest (408 s), rounded up. 20 minutes was carried over from when verify ran the whole suite.
     timeout-minutes: 7
+    env:
+      ODIN_SITE_BUILD: '1'
     steps:
       - name: Every test shard succeeded
         run: |
@@ -137,6 +139,10 @@ jobs:
         env:
           LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
         run: node scripts/leak-gate.mjs --set scripts/leak-gate-set.json --known scripts/leak-gate-known.json --page dist/leak-screen/index.html dist
+      - name: Source screen, fail closed on any protected term or canary in the tracked tree
+        env:
+          LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: node scripts/leak-gate.mjs --set scripts/leak-gate-set.json --known scripts/leak-gate-known.json --page dist/leak-screen/index.html --tree
       - name: Upload Pages
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
