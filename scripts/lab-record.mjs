@@ -31,6 +31,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const RECORD_SCHEMA = join(here, 'schemas/odin-lab-record.schema.json');
 const schema = JSON.parse(readFileSync(RECORD_SCHEMA, 'utf8'));
 /** The one machine class each runner has (a class label, never a runner or host name). */
+/** Each lab's one command and its input roles (the schema's closed lists, paired): a record of one lab never carries another's. */
+export const LAB_SHAPES = {
+  rogue: { command: "the demo's own check command", roles: ['runner', 'runs'] },
+  review: { command: "the lab's own re-run kit", roles: ['frontier', 'nina'] },
+};
 /** The largest breach count a record may hold, so its JSON reads the same in every language. */
 export const MAX_BREACHES = 1000000;
 export const CLASS_OF = { 'github-hosted': 'ubuntu-latest', 'org-hosted': 'org-ci-heavy', laptop: 'mac' };
@@ -93,6 +98,9 @@ export function recordProblems(record, where = 'record', now = new Date()) {
   if (r.committed.length !== r.now.length) at('/result', 'committed and now are not the same length, so they cannot be compared');
   if (r.verdict !== (r.committed === r.now ? 'SAME' : 'DIFFERENT')) at('/result/verdict', 'not what its two hashes say');
 
+  const labShape = LAB_SHAPES[record.lab];
+  if (record.command !== labShape.command) at('/command', `not the command of lab ${record.lab}`);
+  if (record.inputs.map(i => i.role).join('\n') !== labShape.roles.join('\n')) at('/inputs', `not the input roles of lab ${record.lab} (${labShape.roles.join(', ')})`);
   const roles = record.inputs.map(i => i.role);
   if (roles.join('\n') !== [...new Set(roles)].sort().join('\n')) at('/inputs', 'roles are not unique and in sorted order');
 

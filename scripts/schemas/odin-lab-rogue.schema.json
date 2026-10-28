@@ -742,7 +742,7 @@
      },
      "lab": {
       "type": "string",
-      "pattern": "^(rogue)$"
+      "pattern": "^(rogue|review)$"
      },
      "runner": {
       "type": "string",
@@ -788,7 +788,7 @@
      },
      "command": {
       "type": "string",
-      "pattern": "^the demo's own check command$"
+      "pattern": "^(the demo's own check command|the lab's own re-run kit)$"
      },
      "inputs": {
       "type": "array",
@@ -803,7 +803,7 @@
        "properties": {
         "role": {
          "type": "string",
-         "pattern": "^(runner|runs)$"
+         "pattern": "^(runner|runs|frontier|nina)$"
         },
         "sha256": {
          "type": "string",

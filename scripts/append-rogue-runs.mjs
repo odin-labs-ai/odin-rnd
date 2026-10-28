@@ -14,7 +14,9 @@
 //   - the whole runs[] then passes the reader's own check (scripts/lab-runs.mjs runsProblems).
 // The Mac re-run stays runs[0]; scripts/vendor-rogue.mjs carries every later run forward, so --verify still re-derives.
 //
-//   node scripts/append-rogue-runs.mjs [--root site] <record.json> ...
+// The same rules hold for every results lab whose record carries runs (LABS): Lab 05 (rogue) and Lab 06 (review).
+//
+//   node scripts/append-rogue-runs.mjs [--root site] [--lab rogue|review] <record.json> ...
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -22,11 +24,15 @@ import { fileURLToPath } from 'node:url';
 import { numberSpellingProblems } from './lab-record.mjs';
 import { runsProblems } from './lab-runs.mjs';
 import { ROGUE_PIN, ROGUE_RECORD } from './lab-rogue.mjs';
+import { REVIEW_PIN, REVIEW_RECORD } from './lab-review.mjs';
+
+/** Each lab whose record takes org-runner days: its record and pin. */
+export const LABS = { rogue: { record: ROGUE_RECORD, pin: ROGUE_PIN }, review: { record: REVIEW_RECORD, pin: REVIEW_PIN } };
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 /** Every reason `day` may not be appended to `runs` (empty when it may). */
-export function dayProblems(runs, day, { now = new Date() } = {}) {
+export function dayProblems(runs, day, { now = new Date(), lab = 'rogue' } = {}) {
   const problems = [];
   if (!Array.isArray(day) || day.length < 1) return ['a day is one or more records, one per org machine class'];
   const classes = day.map(r => r?.machineClass);
@@ -36,7 +42,7 @@ export function dayProblems(runs, day, { now = new Date() } = {}) {
   if (dates.size !== 1) problems.push('the records did not all run on one UTC day');
   else if (runs.some(p => p.runner !== 'laptop' && String(p.ranAt).slice(0, 10) === [...dates][0])) problems.push(`the record already holds org runs of ${[...dates][0]}; one day of a lab is published once`);
   day.forEach((r, i) => {
-    if (r?.lab !== 'rogue') problems.push(`day[${i}]: lab ${JSON.stringify(r?.lab)} is not rogue`);
+    if (r?.lab !== lab) problems.push(`day[${i}]: lab ${JSON.stringify(r?.lab)} is not ${lab}`);
     if (r?.runner === 'laptop') problems.push(`day[${i}]: a laptop run is not an org runner's`);
     const siblings = day.filter(s => s !== r);
     const want = list => siblings.filter(s => (s.recordHash === r.recordHash) === (list === 'replicatedOn')).map(s => `${s.machineClass} ${s.recordHash}`).sort();
@@ -46,7 +52,7 @@ export function dayProblems(runs, day, { now = new Date() } = {}) {
     }
     if (runs.some(p => p.machineClass === r?.machineClass && p.ranAt === r?.ranAt)) problems.push(`day[${i}]: ${r?.machineClass} already holds a run at ${r?.ranAt}`);
   });
-  if (!problems.length) problems.push(...runsProblems([...runs, ...day], { lab: 'rogue', where: ROGUE_RECORD, now }));
+  if (!problems.length) problems.push(...runsProblems([...runs, ...day], { lab, where: LABS[lab].record, now }));
   return problems;
 }
 
@@ -59,6 +65,8 @@ export function byDay(records) {
 
 /** The record with every day of `records` appended, day by day (oldest first), or a thrown error with every reason. */
 export function appendDays(record, records, options) {
+  const prior = Array.isArray(record.runs) ? record.runs : [];
+  record = { ...record, runs: prior };
   const problems = [];
   let out = record;
   for (const day of byDay(records)) {
@@ -80,16 +88,18 @@ export function appendDay(record, day, options) {
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  const root = args[0] === '--root' ? args.splice(0, 2)[1] : 'site';
-  if (!args.length) { console.error('usage: node scripts/append-rogue-runs.mjs [--root site] <record.json> ...'); process.exit(2); }
+  let root = 'site', lab = 'rogue';
+  while (args[0] === '--root' || args[0] === '--lab') { const [flag, value] = args.splice(0, 2); if (flag === '--root') root = value; else lab = value; }
+  if (!LABS[lab] || !args.length) { console.error(`usage: node scripts/append-rogue-runs.mjs [--root site] [--lab ${Object.keys(LABS).join('|')}] <record.json> ...`); process.exit(2); }
+  const { record: file, pin } = LABS[lab];
   try {
     const texts = args.map(f => readFileSync(f, 'utf8'));
     const spelled = texts.flatMap((t, i) => numberSpellingProblems(t, args[i]));
     if (spelled.length) throw new Error(spelled.join('\n'));
-    const record = appendDays(JSON.parse(readFileSync(join(root, ROGUE_RECORD), 'utf8')), texts.map(t => JSON.parse(t)));
+    const record = appendDays(JSON.parse(readFileSync(join(root, file), 'utf8')), texts.map(t => JSON.parse(t)), { lab });
     const bytes = `${JSON.stringify(record, null, 1)}\n`;
-    writeFileSync(join(root, ROGUE_RECORD), bytes);
-    writeFileSync(join(root, ROGUE_PIN), `${sha256(bytes)}  record.json\n`);
-    console.log(`appended ${args.length} run(s) on ${byDay(texts.map(t => JSON.parse(t))).length} day(s) to ${ROGUE_RECORD} (sha256 ${sha256(bytes)}); runs: ${record.runs.length}`);
+    writeFileSync(join(root, file), bytes);
+    writeFileSync(join(root, pin), `${sha256(bytes)}  record.json\n`);
+    console.log(`appended ${args.length} run(s) on ${byDay(texts.map(t => JSON.parse(t))).length} day(s) to ${file} (sha256 ${sha256(bytes)}); runs: ${record.runs.length}`);
   } catch (e) { console.error(e.message); process.exit(1); }
 }
