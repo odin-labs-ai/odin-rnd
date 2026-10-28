@@ -106,6 +106,7 @@ function mapped(r, re, fn) {
     text += r.text.slice(last, m.index); parts.push(r.at.subarray(last, m.index));
     // fn returns a string (every character from the match's start) or {text, from}: each character's offset in the match.
     const out = fn(...m), str = typeof out === 'string' ? out : out.text;
+    if (typeof out !== 'string' && out.from.length !== str.length) throw new Error('leak gate: a reading lost its offsets');
     text += str;
     parts.push(typeof out === 'string' ? new Int32Array(str.length).fill(r.at[m.index] ?? 0) : Int32Array.from(out.from, k => r.at[m.index + k] ?? 0));
     last = m.index + m[0].length;
@@ -145,7 +146,8 @@ function namedRef(m) {
     const name = tail.slice(0, len);
     if (!Object.hasOwn(REFS, name)) continue;
     const head = REFS[name], rest = tail.slice(len);
-    return { text: head + rest, from: [...Array.from(head, () => 0), ...Array.from(rest, (_, k) => 1 + len + k)] };
+    // One offset per UTF-16 code unit, as mapped() counts them (an astral character such as 𝔄 is two).
+    return { text: head + rest, from: [...Array.from({ length: head.length }, () => 0), ...Array.from({ length: rest.length }, (_, k) => 1 + len + k)] };
   }
   return m;
 }

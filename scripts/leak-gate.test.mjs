@@ -155,6 +155,9 @@ test('two occurrences on one line are two hits, and readings of the same text ne
   assert.equal(scanText('<p>bl&#111;rvak and <b>blorvak</b></p>', secret).length, 2);
   assert.equal(scanText('<a title="blorvak">blor</a>vak', secret).length, 2, 'one in the markup, one only once the tags are gone');
   assert.equal(scanText('%62%6c%6f%72%76%61%6b%20%62%6c%6f%72%76%61%6b', secret).length, 2, 'two words in one percent run');
+  const astral = scanText('&Afr; '.repeat(32) + 'bl&#111;rvak bl&#111;rvak', secret).map(h => ({ file: 'dist/a.html', ...h }));
+  assert.equal(astral.length, 2, 'astral references keep the offsets after them');
+  assert.equal(settle(astral, [{ file: 'dist/a.html', kind: 'term', hash: astral[0].hash, count: 1, reason: 'one reviewed occurrence' }]).stale.length, 1);
   assert.equal(scanText('Zephyr%C2%A0Quarry %ZZ blorvak', secret).length, 2);
   assert.equal(scanText('<p>blor<b>vak</b> and bl&#111;rvak</p>', secret).length, 2);
   const hits = scanText('x blorvak blorvak', secret).map(h => ({ file: 'dist/a.json', ...h }));
