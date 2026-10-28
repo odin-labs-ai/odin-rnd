@@ -546,6 +546,11 @@ test('the lab screen can only gain names, only under node --test, never in a bui
     const spoof = spawnSync(process.execPath, [join(dir, 'spoof.test.mjs')], { env: { PATH: process.env.PATH, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' });
     assert.notEqual(spoof.status, 0, 'a test file run by hand');
     assert.match(spoof.stderr, /for the tests only/);
+    // A launcher that carries --test as its own script argument and spawns the test file: still refused.
+    writeFileSync(join(dir, 'launcher.mjs'), `import { spawnSync } from 'node:child_process'; const r = spawnSync(process.execPath, [${JSON.stringify(join(dir, 'spoof.test.mjs'))}], { env: { ...process.env, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' }); process.stderr.write(r.stderr); process.exit(r.status ?? 1);\n`);
+    const launched = spawnSync(process.execPath, [join(dir, 'launcher.mjs'), '--test'], { env: { PATH: process.env.PATH }, encoding: 'utf8' });
+    assert.notEqual(launched.status, 0, 'a launcher run as node launcher.mjs --test');
+    assert.match(launched.stderr, /for the tests only/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
   for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
     const r = call(env);

@@ -73,7 +73,14 @@ export function addScreenNames(...names) {
   for (const name of names) NAMES.add(fingerprint(name));
 }
 function underTestRunner() {
-  try { return /(^|\s)--test(\s|=|$)/.test(execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' })); } catch { return false; }
+  // The parent is node itself with --test among its options, before any script ("node --test …"): a launcher run as
+  // "node launcher.mjs --test" carries the flag as a script argument and is refused.
+  try {
+    const [bin, ...args] = execFileSync('ps', ['-o', 'args=', '-p', String(process.ppid)], { encoding: 'utf8' }).trim().split(/\s+/);
+    if (!/(^|\/)node(\.exe)?$/.test(bin) && bin !== process.execPath) return false;
+    for (const arg of args) { if (arg === '--test') return true; if (!arg.startsWith('-')) return false; }
+    return false;
+  } catch { return false; }
 }
 /**
  * True when the text names a restricted name (any listed or added one), by the same screen. With anyWindow, every run
