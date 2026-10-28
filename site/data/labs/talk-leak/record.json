@@ -1,0 +1,133 @@
+{
+ "format": "odin-lab-talk-leak",
+ "version": 1,
+ "vendored": {
+  "from": "the leak scan of the agent space's private repository: the scanner, its test and planted leaks, the hashed deny-list and the talk-safety note, read at its main",
+  "commit": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+  "committed": "2026-10-27T03:30:03Z",
+  "mainCheck": {
+   "main": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+   "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-10-28",
+   "commits": [
+    "c090fccffe337ed41f1b4a2b6043d55922d62c1c",
+    "9464a47c899e0b4b53021c6b1726600fa609c7eb",
+    "53a861e572fdf338a8ad29e3efd31b2d90fa08a1",
+    "968dde25b2fc9f4ec93f23ddd1bda1829c29f42a",
+    "18607b661333f3263ae66f873cb187f35331e780"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "c090fccffe337ed41f1b4a2b6043d55922d62c1c",
+    "what": "the sealed build made the one way the talk leaves its machine, with a scan over every shipped file, and the talk-safety note",
+    "at": "2026-10-25T23:10:55Z"
+   },
+   {
+    "commit": "9464a47c899e0b4b53021c6b1726600fa609c7eb",
+    "what": "the planted leaks and the scanner's test, sixteen of them caught with their kind",
+    "at": "2026-10-25T14:45:58Z"
+   },
+   {
+    "commit": "53a861e572fdf338a8ad29e3efd31b2d90fa08a1",
+    "what": "the deny-list kept as salted hashes, so the list does not spell the names",
+    "at": "2026-10-25T14:43:23Z"
+   },
+   {
+    "commit": "968dde25b2fc9f4ec93f23ddd1bda1829c29f42a",
+    "what": "the leak scan as it stands at main",
+    "at": "2026-10-26T02:40:04Z"
+   },
+   {
+    "commit": "18607b661333f3263ae66f873cb187f35331e780",
+    "what": "the build gate as it stands at main",
+    "at": "2026-10-26T10:00:28Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "scanner",
+    "what": "the leak scan",
+    "sha256": "e4d8c9f5229c75e211e80c966c6b95a1d2e408d3f5c475252edb0e0023eb5c27"
+   },
+   {
+    "role": "gate",
+    "what": "the build gate, which makes the sealed build and verifies it",
+    "sha256": "d74616dfa60b0e94e8664c099ac29ec39086cd1142bd6d0a41592e83b899cda9"
+   },
+   {
+    "role": "tests",
+    "what": "the leak scan's test",
+    "sha256": "d5ec4b0f3d93d8973b57d5e295b03afa1c6d2b01249648fa22d7b1e4bb4ea2a4"
+   },
+   {
+    "role": "plants",
+    "what": "the planted leaks the test is run with",
+    "sha256": "2d673e6c90ee48ede6dae9af27299aa7de95d0d2606670300f28a8b1794e0716"
+   },
+   {
+    "role": "denylist",
+    "what": "the hashed deny-list",
+    "sha256": "bd92d70c6679ae3ab5b08b4849763b23bd97813f291d64933a872485642af649"
+   },
+   {
+    "role": "note",
+    "what": "the talk-safety note",
+    "sha256": "16120236ade91335291543de5bc2d94d910d3c9be703837c3cfb407ac0808902"
+   }
+  ]
+ },
+ "denylist": {
+  "terms": 115,
+  "labels": 8,
+  "errors": 105,
+  "warns": 10,
+  "hashedAs": "sha256 of a salt and the term, cut to 24 hex"
+ },
+ "tests": {
+  "at": "2026-10-28T02:30:14Z",
+  "on": "2026-10-28",
+  "host": "a Mac",
+  "how": "pytest, in a fresh copy of the private repository at its main",
+  "python": "3.12.13",
+  "passed": 22,
+  "failed": 0,
+  "errors": 0,
+  "plants": [
+   "client",
+   "email",
+   "game",
+   "internal-ip",
+   "local-path",
+   "machine",
+   "number-figure",
+   "number-money",
+   "number-named",
+   "org",
+   "person",
+   "repo",
+   "secret-gh",
+   "secret-jwt",
+   "secret-link",
+   "secret-sk"
+  ]
+ },
+ "scan": {
+  "at": "2026-10-28T02:30:20Z",
+  "zipSha256": "eac018ab4b9235e08cb347cb77b7e91ce435c698845ae3285618a300b69e24df",
+  "zipBytes": 152739288,
+  "parts": 4,
+  "entries": 1063,
+  "manifests": 1,
+  "verifyProblems": 0,
+  "files": 830,
+  "binary": 232,
+  "errors": 0,
+  "warns": 24,
+  "jsDollarDigit": 470,
+  "errorsByKind": {},
+  "on": "2026-10-28",
+  "host": "a Mac",
+  "how": "the build gate's own verify step at that main, run over the sealed build's zip"
+ }
+}

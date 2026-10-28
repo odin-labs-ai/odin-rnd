@@ -1,0 +1,28 @@
+{
+ "format": "odin-lab-talk-leak-self-scan",
+ "version": 1,
+ "scanner": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+ "scannerSha256": "e4d8c9f5229c75e211e80c966c6b95a1d2e408d3f5c475252edb0e0023eb5c27",
+ "denylistSha256": "bd92d70c6679ae3ab5b08b4849763b23bd97813f291d64933a872485642af649",
+ "at": "2026-10-28T02:31:41Z",
+ "files": [
+  {
+   "what": "the rendered page",
+   "sha256": "55aa222ed1b33c7f40d01d054d15e2a973f570329abdf2e404a810977274ebb1"
+  },
+  {
+   "what": "the record",
+   "sha256": "a874d342d15d4dd5b75c12d8e0c632f27d4eb74690495dda0ef305ee89407057"
+  },
+  {
+   "what": "the Labs tile",
+   "sha256": "3544e49b26c0588db524f12e68b5cef0e3b5412a3bfb15c527024f355e6d6763"
+  },
+  {
+   "what": "the page template",
+   "sha256": "7a4f3352c8a821cb22a972427139ba9e806b0e1d61f45012586ba3c7857011b7"
+  }
+ ],
+ "publicNames": 50,
+ "findings": {}
+}
