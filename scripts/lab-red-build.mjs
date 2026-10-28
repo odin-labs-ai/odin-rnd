@@ -38,6 +38,18 @@ const sum = (objs, keys) => Object.fromEntries(keys.map(k => [k, objs.reduce((n,
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
+ * The class a run is counted under, by the scorer's own rule: the reviewers' classes; when they split, code_bug wins
+ * over the others (the stricter reading for a fixer), and otherwise the commoner class, ties to the earlier in CLASSES.
+ */
+export function consensus(classes) {
+  const cs = classes.filter(Boolean);
+  if (!cs.length) return null;
+  if (cs.includes('code_bug')) return 'code_bug';
+  const n = c => cs.filter(x => x === c).length;
+  return [...new Set(cs)].sort((a, b) => n(b) - n(a) || CLASSES.indexOf(a) - CLASSES.indexOf(b))[0];
+}
+
+/**
  * The recount: the committed verdicts against the committed score, field by field, the way the scorer counts them (a
  * run's class is the reviewers'; "ruled" is closed by rule; "missed" is a run where a reviewer said a fix was missed).
  * Empty when they agree. The vendor runs it too, and refuses to write a record that fails it.
@@ -52,8 +64,19 @@ export function recount(record) {
   check('ruled', runs.filter(r => r.how === 'no patch by rule').length, s.ruled);
   for (const k of ['reproduced', 'passes', 'judgedFix', 'judgedNot']) check(k, runs.filter(r => r[k]).length, s[k]);
   check('missed', runs.filter(r => r.reviewers.patch.includes('none-missed')).length, s.missed);
-  // Each round's own file, counted on its own: the two rounds together are the score.
-  for (const [name, r] of Object.entries(h.rounds)) check(`round ${name} cases`, r.cases, s.cases);
+  // Each run's class is the reviewers' by the scorer's rule, and "split" is whether they differ.
+  runs.forEach((r, i) => {
+    check(`run ${i} class`, r.cls, consensus(r.reviewers.causeClass));
+    check(`run ${i} split`, r.split, r.reviewers.causeClass[0] !== r.reviewers.causeClass[1]);
+  });
+  // Each round's own file, counted on its own, against its own reviewer's verdicts in the rows (the first round is
+  // each run's first verdict, the second its second): the two rounds together are the score.
+  for (const [name, r] of Object.entries(h.rounds)) {
+    const at = name === 'a' ? 0 : 1;
+    check(`round ${name} cases`, r.cases, s.cases);
+    check(`round ${name} diagnoses`, count(runs.map(x => x.reviewers.diagnosis[at]), DIAGNOSES), r.diagnosis);
+    check(`round ${name} patch verdicts`, count(runs.map(x => x.reviewers.patch[at]), PATCHES), r.patch);
+  }
   check('the two rounds\' diagnoses', sum(Object.values(h.rounds).map(r => r.diagnosis), DIAGNOSES), s.diagnosis);
   check('the two rounds\' patch verdicts', sum(Object.values(h.rounds).map(r => r.patch), PATCHES), s.patch);
   const e = record.earlier;
@@ -73,6 +96,10 @@ export function redBuildProblems(record, { now = new Date(), where = RED_RECORD 
   const v = record.vendored, h = record.heldOut;
   for (const [iso, at] of [[v.committed, '/vendored/committed'], [h.frozen, '/heldOut/frozen'], [h.since, '/heldOut/since'], [h.until, '/heldOut/until']]) problems.push(...instantProblems(iso, `${where}#${at}`, now));
   if (!(h.since < h.until && h.until <= h.frozen)) problems.push(`${where}#/heldOut: the set was not frozen after its window closed`);
+  // Exactly one verdict per reviewer round on every run: the page shows two, and counts two per case.
+  const rounds = Object.keys(h.rounds).length;
+  h.runs.forEach((r, i) => { for (const k of ['diagnosis', 'patch', 'causeClass']) if (r.reviewers[k].length !== rounds) problems.push(`${where}#/heldOut/runs/${i}/reviewers/${k}: ${r.reviewers[k].length} verdicts, not one per round (${rounds})`); });
+  if (problems.length) return problems;
   problems.push(...recount(record).map(p => `${where}#/heldOut: ${p}`));
   if (h.score.judgedFix !== 0) problems.push(`${where}#/heldOut/score/judgedFix: the page says no fix was judged real`);
   const labels = h.runs.map(r => r.label);
@@ -153,7 +180,7 @@ function whyProblems(record, where) {
 
 export function renderWhy(record) {
   const y = why(record), c = y.byClass;
-  return `<p>Most of these builds had nothing in them to fix. By the reviewers' classes, ${c.red_by_design} were red by design: a gate doing its job, such as one that refuses a change only a person may land. ${c.config_env} had its cause outside the repository. A rule closes such runs before any model is asked; it closed ${y.ruled.length}, and on all ${y.ruled.length} both reviewers said "no patch" was right.</p><p>That leaves ${y.code.length} code bugs, the most this set could have had fixed. ${y.reproduced.length === 1 ? 'Only one of them' : `${y.reproduced.length} of them`} failed again on our own machine, so only that one could be worked on and checked: ${escape(y.reproduced[0]?.how ?? '')}. The other ${y.notReproduced.length} passed when run again, so no patch could be shown to work either way. Every "a fix was missed" above is one of these ${y.code.length}.</p><p>So the honest reading is narrow: on this set the rule kept the doctor off every build that should be left alone, and the doctor fixed nothing.</p>`;
+  return `<p>Most of these builds had nothing in them to fix. By the reviewers' classes, ${c.red_by_design} were red by design: a gate doing its job, such as one that refuses a change only a person may land. ${c.config_env} had its cause outside the repository. A rule closes such runs before any model is asked; it closed ${y.ruled.length}, and on all ${y.ruled.length} both reviewers said "no patch" was right.</p><p>That leaves ${y.code.length} code bugs, the most this set could have had fixed. ${y.reproduced.length === 1 ? 'Only one of them' : `${y.reproduced.length} of them`} failed again on our own machine, so only that one could be worked on and checked: ${escape(y.reproduced[0]?.how ?? '')}. The other ${y.notReproduced.length} passed when run again, so no patch could be shown to work either way. Every "a fix was missed" above is one of these ${y.code.length}.</p><p>So the honest reading is narrow: on this set the rule's ${y.ruled.length} closures were all judged right, and the doctor fixed nothing.</p>`;
 }
 
 export function renderCheck(record) {

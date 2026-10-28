@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RED_PIN, RED_RECORD, RED_TEMPLATE, readRedBuild, recount, redBuildProblems, renderRedBuild } from './lab-red-build.mjs';
+import { consensus, RED_PIN, RED_RECORD, RED_TEMPLATE, readRedBuild, recount, redBuildProblems, renderRedBuild } from './lab-red-build.mjs';
 import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
@@ -50,6 +50,18 @@ test('the recount: the committed verdicts give the committed score, and the head
   // The earlier set is another set: 17 right, 10 partly, 0 wrong of 27, with its one judged fix.
   const e = record.earlier;
   assert.deepEqual([e.judgments, e.builds, e.runsOfTheDoctor, e.diagnosis.right, e.diagnosis.partly, e.diagnosis.wrong, e.patch.fixes], [27, 9, 3, 17, 10, 0, 1]);
+});
+
+test('the class rule is the scorer\'s: code_bug wins a split, else the commoner, ties to the earlier class', () => {
+  assert.equal(consensus(['code_bug', 'flake']), 'code_bug');
+  assert.equal(consensus(['flake', 'code_bug']), 'code_bug');
+  assert.equal(consensus(['config_env', 'red_by_design']), 'config_env');
+  assert.equal(consensus(['red_by_design', 'red_by_design']), 'red_by_design');
+  assert.equal(consensus([null, 'flake']), 'flake');
+  assert.equal(consensus([]), null);
+  for (const r of record.heldOut.runs) assert.equal(r.cls, consensus(r.reviewers.causeClass), r.label);
+  assert.match(textOf(main), /the rule's 5 closures were all judged right, and the doctor fixed nothing\./);
+  assert.doesNotMatch(textOf(main), /every build that should be left alone/);
 });
 
 test('every number names the set it counts, and the two sets are never mixed', () => {
@@ -137,6 +149,13 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.heldOut.runs.find(x => x.how === 'no patch by rule').reviewers.patch = ['none-missed', 'none-right']; }, /no patch" was right on every run the rule closed/);
   refused(r => { for (const x of r.heldOut.runs) if (x.cls === 'code_bug') x.reproduced = false; r.heldOut.score.reproduced = 0; }, /one code bug failed again here/);
   refused(r => { r.heldOut.frozen = '2026-10-25T12:00:00Z'; }, /not frozen after its window closed/);
+  // Review 1: opposing errors in the two rounds no longer cancel out; each round is its own reviewer's verdicts.
+  refused(r => { r.heldOut.rounds.a.diagnosis = { right: 5, partly: 2, wrong: 2 }; r.heldOut.rounds.b.diagnosis = { right: 6, partly: 1, wrong: 2 }; }, /round a diagnoses/);
+  // Review 1: a run's class is the reviewers' by the scorer's rule, so a table and its totals cannot disagree.
+  refused(r => { r.heldOut.runs.find(x => x.cls === 'red_by_design').reviewers.causeClass = ['code_bug', 'code_bug']; }, /class: the verdicts give/);
+  refused(r => { r.heldOut.runs.find(x => x.split).split = false; }, /split: the verdicts give/);
+  // Review 1: exactly one verdict per round on every run, so no hidden third vote can be counted.
+  refused(r => { r.heldOut.runs[0].reviewers.diagnosis.push('right'); r.heldOut.score.diagnosis.right += 1; r.heldOut.rounds.a.diagnosis.right += 1; }, /3 verdicts, not one per round/);
   refused(r => { r.vendored.cites[0].commit = 'e'.repeat(40); }, /not shown as part of the private main/);
   refused(r => { r.vendored.cites[0].at = '2099-01-01T00:00:00Z'; }, /after this build/);
   refused(r => { r.heldOut.runs[0].modelUsd = 0.1; }, /does not match odin-lab-red-build v1/);

@@ -12,8 +12,9 @@
 //
 //   node scripts/vendor-red-build.mjs --fetch <dir> --space <git dir> --repo <owner/name> --main <sha> \
 //        --cite <sha>=<what it changed> ... --file <role>=<path> ...
-//        (reads each file at <main> with git show, labels the runs with the salt, and asks GitHub whether each --cite
-//        commit is part of <main>; roles: heldout, verdicts-a, verdicts-b, score, earlier, rubric; the repository,
+//        (reads the main head from GitHub and refuses a --main that is not it, reads each file there with git show and
+//        refuses one whose last change is not a --cite commit, labels the runs with the salt, and asks GitHub whether
+//        each --cite commit is part of main; roles: heldout, verdicts-a, verdicts-b, score, earlier, rubric; the repository,
 //        its paths and <dir> are private, are given only on the command line, and are never committed)
 //   node scripts/vendor-red-build.mjs --from <dir>            (writes the record and its pin)
 //   node scripts/vendor-red-build.mjs --verify --from <dir>   (refuses unless the committed record is the same bytes)
@@ -52,17 +53,26 @@ function fetch(dir, a) {
   mkdirSync(join(dir, 'files'), { recursive: true });
   const salt = (process.env.DELIVERY_PROJECTION_SALT ?? (existsSync(SALT_FILE) ? readFileSync(SALT_FILE, 'utf8') : '')).trim();
   const git = (...args) => execFileSync('git', ['-C', a.space, ...args], { maxBuffer: 1 << 26 });
-  const main = git('rev-parse', `${a.main}^{commit}`).toString().trim();
+  // The main head is read from GitHub, never taken from the caller: a --main that is not it is refused.
+  const main = execFileSync('gh', ['api', `repos/${a.repo}/commits/main`, '--jq', '.sha']).toString().trim();
+  if (a.main && a.main !== main) throw new Error(`--main ${a.main} is not the main head of ${a.repo} (${main})`);
+  const paths = {};
   for (const spec of a.file) {
     const [role, path] = spec.split('=');
     if (!ROLES.includes(role) || !path) throw new Error(`--file ${spec}: <role>=<path>, role one of ${ROLES.join(', ')}`);
     writeFileSync(join(dir, 'files', role), git('show', `${main}:${path}`));
+    paths[role] = path;
   }
   const heldout = JSON.parse(readFileSync(join(dir, 'files', 'heldout'), 'utf8'));
   const repos = [...new Set(heldout.runs.map(r => r.repo))];
   const labels = { repos: Object.fromEntries(repos.map(r => [r, anonymous('repo', r, salt)])), runs: Object.fromEntries(heldout.runs.map(r => [String(r.run), anonymous('run', `${r.repo}\0${r.run}`, salt)])) };
   const cites = a.cite.map(spec => { const [sha, ...what] = spec.split('='); return { commit: git('rev-parse', `${sha}^{commit}`).toString().trim(), what: what.join('=') }; });
   if (cites.some(c => !c.what)) throw new Error('--cite <sha>=<what it changed>');
+  // Each file's bytes are its bytes at main, so the commit that last changed it there must be one of the cites.
+  for (const [role, path] of Object.entries(paths)) {
+    const last = git('log', '-1', '--format=%H', main, '--', path).toString().trim();
+    if (!cites.some(c => c.commit === last)) throw new Error(`--file ${role}: last changed at main by ${last.slice(0, 8)}, which is not cited`);
+  }
   for (const c of cites) {
     c.at = git('show', '-s', '--format=%cI', c.commit).toString().trim();
     c.check = JSON.parse(execFileSync('gh', ['api', `repos/${a.repo}/compare/${c.commit}...${main}`, '--jq', '{status: .status, behind_by: .behind_by}']).toString());
