@@ -8,17 +8,34 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { gzipSync as gz } from 'node:zlib';
-import { MAX_BINARY, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
+import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
 const CANARY = 'odncanary-0123456789abcdef';
-const secretOf = (terms = TERMS, canaries = [CANARY]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])) });
+const STRICT = ['Zephyr Quarry'];
+const secretOf = (terms = TERMS, canaries = [CANARY], strict = STRICT.filter(t => terms.includes(t)).length ? STRICT.filter(t => terms.includes(t)) : [terms[0]]) => JSON.stringify({ format: 'odin-leak-screen', version: 1, salt: SALT, terms: terms.map(t => digest(SALT, normalise(t))), canaries: canaries.map(c => digest(SALT, normalise(c))), heads: [...terms, ...canaries].map(t => digest(SALT, normalise(t).split('-')[0])), strict: strict.map(t => digest(SALT, normalise(t))) });
 const SECRET = secretOf();
-const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.stringify({ format: 'odin-leak-gate-set', version: 1, ...commitmentOf(d.salt, d.terms, d.canaries, d.heads) }); };
+const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.stringify({ format: 'odin-leak-gate-set', version: 1, ...commitmentOf(d.salt, d.terms, d.canaries, d.heads, d.strict) }); };
 const PAGE = '<p>Terms <span data-leak-screen="terms">-</span> canaries <span data-leak-screen="canaries">-</span> <time data-leak-screen="scanned" datetime="">-</time> <code data-leak-screen="commit">-</code> <span data-leak-screen="files">0</span> <span data-leak-screen="hits">-</span> <span data-leak-screen="known">-</span></p>';
 const COMMIT = 'a'.repeat(40);
+const stamped = rows => ({ format: 'odin-leak-gate-known', version: 1, reviewed: { rowsSha256: rowsDigest(rows), by: 'test', on: '2026-10-28' }, known: rows });
+
+/** A minimal PNG: signature, IHDR, the given ancillary chunks, IEND. */
+function png(chunks) {
+  const chunk = (type, data) => { const d = Buffer.from(data), h = Buffer.alloc(8); h.writeUInt32BE(d.length, 0); h.write(type, 4, 'latin1'); const c = Buffer.alloc(4); c.writeUInt32BE(crc32(Buffer.concat([h.subarray(4), d])), 0); return Buffer.concat([h, d, c]); };
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', Buffer.alloc(13)), ...Object.entries(chunks).map(([t, d]) => chunk(t, d)), chunk('IEND', '')]);
+}
+/** A minimal JPEG: SOI, a comment segment, SOS-less EOI. */
+function jpeg(comment) { const c = Buffer.from(comment), h = Buffer.from([0xff, 0xfe, 0, 0]); h.writeUInt16BE(c.length + 2, 2); return Buffer.concat([Buffer.from([0xff, 0xd8]), h, c, Buffer.from([0xff, 0xd9])]); }
+/** A minimal WebM: EBML header, a segment of unknown size with an Info title and an unknown-size cluster. */
+function webm(title) {
+  const t = Buffer.from(title), el = (id, data) => Buffer.concat([Buffer.from(id), Buffer.from([0x80 | data.length]), data]);
+  const info = el([0x15, 0x49, 0xa9, 0x66], el([0x7b, 0xa9], t));
+  const cluster = Buffer.concat([Buffer.from([0x1f, 0x43, 0xb6, 0x75, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]), el([0xe7], Buffer.from([0])), el([0xa3], Buffer.from([0x81, 0, 0, 0x80, 0x71, 0x7a, 0x78]))]);
+  return Buffer.concat([el([0x1a, 0x45, 0xdf, 0xa3], el([0x42, 0x82], Buffer.from('webm'))), Buffer.from([0x18, 0x53, 0x80, 0x67, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]), info, cluster]);
+}
 /** A minimal ustar archive, for the vendored-bundle case. */
 function tar(files, links = {}, dirs = {}) {
   const parts = [];
@@ -65,11 +82,17 @@ const LEAKS = {
   'a protected term as a JSON escape': ['dist/data/r.json', '{"a":"\\u0062lorvak"}', /r\.json:1 term/],
   'a protected term across a line break and wide spacing': ['dist/index.html', '<p>Zephyr\n      Quarry</p>', /index\.html:1 term/],
   'a protected term in a page that holds a NUL byte': ['dist/labs/draft/index.html', '<!--\0--><p>blorvak</p>', /index\.html:1 term/],
-  'a canary inside an image file': ['dist/assets/shot.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from(`tEXtComment\0${CANARY}\0`), Buffer.from([0, 1, 2])]), /\[a file name|shot\.png:0 canary/],
+  'a canary in the raw bytes of a binary': ['dist/assets/raw.mp4', Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from(`ftypisom\0${CANARY}\0`), Buffer.from([0, 1, 2])]), /raw\.mp4:0 canary/],
+  'a canary in a PNG text chunk': ['dist/assets/shot.png', png({ tEXt: `Comment\0${CANARY}` }), /shot\.png!\(metadata\):0 canary/],
+  'a three-letter term in a PNG text chunk': ['dist/assets/short3.png', png({ tEXt: 'Comment\0qzx' }), /short3\.png!\(metadata\):0 term/],
+  'a three-letter term in a compressed PNG text chunk': ['dist/assets/z.png', png({ zTXt: Buffer.concat([Buffer.from('Comment\0\0'), deflateSync(Buffer.from('qzx'))]) }), /z\.png!\(metadata\):0 term/],
+  'a three-letter term in a JPEG comment': ['dist/assets/c.jpg', jpeg('qzx'), /c\.jpg!\(metadata\):0 term/],
+  'a three-letter term in a WebM title': ['dist/assets/t.webm', webm('qzx'), /t\.webm!\(metadata\):0 term/],
+  'a five-letter term in the raw bytes of a binary': ['dist/assets/raw5.mp4', Buffer.from('\0\0\x01blorvak\0\x02', 'latin1'), /raw5\.mp4:0 term/],
   'a canary inside a vendored tar.gz of raw evidence': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ops.jsonl': `{"op":1}\n{"note":"${CANARY}"}\n`, 'main/clean.json': '{}' })), /raw-evidence\.tar\.gz!main\/ops\.jsonl:2 canary/],
-  'a home path inside an image file': ['dist/assets/meta.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from('tEXtSource\0/Users/someone/work\0'), Buffer.from([0, 1])]), /meta\.png:0 home-path/],
-  'a short home path between NUL bytes in a binary': ['dist/assets/short.webm', Buffer.from('\x1aE\0\0/home/a\0\0\x01', 'latin1'), /short\.webm:0 home-path/],
-  'a three-letter term between NUL bytes in a binary': ['dist/assets/short3.webm', Buffer.from('\x1aE\0qzx\0\x01', 'latin1'), /short3\.webm:0 term/],
+  'a home path in a PNG text chunk': ['dist/assets/meta.png', png({ tEXt: 'Source\0/Users/someone/work' }), /meta\.png!\(metadata\):0 home-path/],
+  'a short home path between NUL bytes in a binary': ['dist/assets/short.mp4', Buffer.from('\x1aE\0\0/home/a\0\0\x01', 'latin1'), /short\.mp4:0 home-path/],
+
   'a protected term split by a JSON line-break escape': ['dist/data/r.json', '{"client":"Zephyr\\nQuarry"}', /r\.json:1 term/],
   'a protected term split by a percent-encoded line break in a link': ['dist/index.html', '<a href="/?client=Zephyr%0AQuarry">record</a>', /index\.html:1 term/],
   'a protected term split by a percent-encoded tab': ['dist/data/r.json', '{"u":"Zephyr%09Quarry"}', /r\.json:1 term/],
@@ -218,7 +241,7 @@ test('a path that does not exist, or a scan that reads no text, stops the build'
     assert.equal(none.code, 2);
     assert.match(none.out, /a path to scan does not exist/);
     mkdirSync(join(root, 'dist'));
-    writeFileSync(join(root, 'dist/only.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0]));
+    writeFileSync(join(root, 'dist/only.mp4'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0]));
     const r = gate(root);
     assert.equal(r.code, 2);
     assert.match(r.out, /no text was read/);
@@ -242,7 +265,7 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
   assert.deepEqual(settle(inArchive, [archiveRow(2)]), { fresh: [], stale: [], known: 2 });
   assert.equal(settle(inArchive, [archiveRow(1)]).stale.length, 1);
   assert.equal(settle([{ file: 'dist/other.json', kind: 'loopback', line: 1 }], [archiveRow(2)]).fresh.length, 1);
-  const list = rows => JSON.stringify({ format: 'odin-leak-gate-known', version: 1, known: rows });
+  const list = rows => JSON.stringify(stamped(rows));
   assert.throws(() => loadKnown(list([{ ...row(1), kind: 'canary' }])), /canary/);
   assert.throws(() => loadKnown(list([{ ...row(1), reason: '' }])), /reason/);
   assert.throws(() => loadKnown(list([{ ...row(1), hash: undefined }])), /hash prefix/);
@@ -286,11 +309,11 @@ test('a vendored archive the gate cannot read stops the build', () => {
 test('a binary is read whole: a term spread over a long run is caught, and one too large to read whole stops the build', () => {
   const secret = loadSecret(SECRET);
   assert.ok(MAX_BINARY >= 64 * 1024 * 1024);
-  const root = site({ 'dist/assets/long.webm': Buffer.concat([Buffer.alloc(70 * 1024 * 1024), Buffer.from(`Zephyr${' '.repeat(100)}Quarry`), Buffer.alloc(8)]) });
+  const root = site({ 'dist/assets/long.mp4': Buffer.concat([Buffer.alloc(70 * 1024 * 1024), Buffer.from(`Zephyr${' '.repeat(100)}Quarry`), Buffer.alloc(8)]) });
   try {
     const r = gate(root);
     assert.equal(r.code, 1, r.out);
-    assert.match(r.out, /long\.webm:0 term/);
+    assert.match(r.out, /long\.mp4:0 term/);
   } finally { rmSync(root, { recursive: true, force: true }); }
   assert.ok(secret.terms > 0);
 });
@@ -298,14 +321,14 @@ test('a binary is read whole: a term spread over a long run is caught, and one t
 test('a binary over the size ceiling stops the build, clean or not', () => {
   const root = mkdtempSync(join(tmpdir(), 'leak-gate-'));
   try {
-    writeFileSync(join(root, 'clean.webm'), Buffer.alloc(2048));
-    assert.throws(() => scanPaths([join(root, 'clean.webm')], loadSecret(SECRET), { maxBinary: 1024 }), /too large to read whole \(2048 bytes\)/);
-    assert.equal(scanPaths([join(root, 'clean.webm')], loadSecret(SECRET), { maxBinary: 4096 }).hits.length, 0);
+    writeFileSync(join(root, 'clean.mp4'), Buffer.alloc(2048));
+    assert.throws(() => scanPaths([join(root, 'clean.mp4')], loadSecret(SECRET), { maxBinary: 1024 }), /too large to read whole \(2048 bytes\)/);
+    assert.equal(scanPaths([join(root, 'clean.mp4')], loadSecret(SECRET), { maxBinary: 4096 }).hits.length, 0);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('a stale known row that names a protected file is printed redacted', () => {
-  const root = site({ 'known.json': JSON.stringify({ format: 'odin-leak-gate-known', version: 1, known: [{ file: 'dist/blorvak.html', kind: 'term', hash: 'abcdef12', count: 1, reason: 'a reviewed occurrence' }] }) });
+  const root = site({ 'known.json': JSON.stringify(stamped([{ file: 'dist/blorvak.html', kind: 'term', hash: 'abcdef12', count: 1, reason: 'a reviewed occurrence' }])) });
   try {
     const r = gate(root, undefined, ['--known', 'known.json']);
     assert.equal(r.code, 1, r.out);
@@ -391,4 +414,45 @@ test('a configuration file that cannot be read is reported with a fixed message,
     assert.match(r.out, /known-occurrence list cannot be read \(ENOENT\)/);
     assert.ok(!r.out.includes(CANARY), r.out);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a short term in the raw compressed bytes of a binary is not matched; in its metadata it is', () => {
+  const secret = loadSecret(SECRET);
+  const root = site({ 'dist/assets/noise.mp4': Buffer.from('\0\x01qzx\0\x02', 'latin1'), 'dist/assets/clip.webm': webm('ok') });
+  try { const r = gate(root); assert.equal(r.code, 0, r.out); } finally { rmSync(root, { recursive: true, force: true }); }
+  assert.ok(secret.terms > 0);
+});
+
+test('a binary of a parsed type that does not parse stops the build', () => {
+  for (const [file, bytes] of [['dist/assets/bad.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0])], ['dist/assets/bad.jpg', Buffer.from([0xff, 0xd8, 0, 1, 2])], ['dist/assets/bad.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f])]]) {
+    const root = site({ [file]: bytes });
+    try { const r = gate(root); assert.equal(r.code, 2, `${file}: ${r.out}`); assert.match(r.out, /does not parse/); } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
+
+test('the known list changes only with a new review stamp', () => {
+  const rows = [{ file: 'dist/a.json', kind: 'loopback', count: 1, reason: 'a recorded fixture diff' }];
+  assert.equal(loadKnown(JSON.stringify(stamped(rows))).length, 1);
+  const added = stamped(rows); added.known = [...rows, { file: 'dist/b.json', kind: 'loopback', count: 1, reason: 'a recorded fixture diff' }];
+  assert.throws(() => loadKnown(JSON.stringify(added)), /changed without a new review stamp/);
+  const raised = stamped(rows); raised.known = [{ ...rows[0], count: 2 }];
+  assert.throws(() => loadKnown(JSON.stringify(raised)), /changed without a new review stamp/);
+  const { reviewed, ...unstamped } = stamped(rows);
+  assert.ok(reviewed);
+  assert.throws(() => loadKnown(JSON.stringify(unstamped)), /no review stamp/);
+});
+
+test('a strict-class term (client, employer, publisher) can never be a known occurrence', () => {
+  const secret = loadSecret(SECRET);
+  const hit = scanText('Zephyr Quarry', secret).map(h => ({ file: 'dist/a.html', ...h }));
+  const row = { file: 'dist/a.html', kind: 'term', hash: hit[0].hash, count: 1, reason: 'someone tried to allow it' };
+  assert.throws(() => loadKnown(JSON.stringify(stamped([row])), secret), /no allowlist/);
+  assert.equal(settle(hit, [row], secret.strict).fresh.length, 1, 'even a row that slipped in covers nothing');
+  assert.throws(() => loadSecret(JSON.stringify({ ...JSON.parse(SECRET), strict: [] })), /strict class/);
+  assert.throws(() => loadSecret(JSON.stringify({ ...JSON.parse(SECRET), strict: ['f'.repeat(24)] })), /strict class/);
+});
+
+test('the committed known list carries a valid review stamp and no strict-class row', () => {
+  const d = JSON.parse(readFileSync('scripts/leak-gate-known.json', 'utf8'));
+  assert.equal(d.reviewed.rowsSha256, rowsDigest(d.known));
 });
