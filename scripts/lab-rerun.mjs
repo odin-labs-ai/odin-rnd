@@ -53,11 +53,14 @@ export const KITS = {
   ],
 };
 
-// A regular file (not a symlink, not a directory) whose real path is inside the repository's experiments/.
+// A regular file (not a symlink, not a directory) whose real path is inside the repository's experiments/, which is
+// itself a real directory of the repository (not a symlink to somewhere else).
 function regularFileUnder(root, file) {
   try {
     if (!lstatSync(join(root, file)).isFile()) return false;
-    const inside = relative(realpathSync(join(root, 'experiments')), realpathSync(join(root, file)));
+    const experiments = realpathSync(join(root, 'experiments'));
+    if (lstatSync(join(root, 'experiments')).isSymbolicLink() || experiments !== join(realpathSync(root), 'experiments')) return false;
+    const inside = relative(experiments, realpathSync(join(root, file)));
     return inside !== '' && inside !== '..' && !inside.startsWith(`..${sep}`) && !isAbsolute(inside);
   } catch { return false; }
 }

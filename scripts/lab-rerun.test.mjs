@@ -112,6 +112,15 @@ test('a symlink under experiments/, to a script inside or outside the repository
     symlinkSync(outside, join(root, 'experiments/review-frontier/linked'));
     KITS.review = [{ ...saved[0], argv: ['node', 'experiments/review-frontier/linked/evil.mjs'] }];
     assert.match(kitProblems('review', record, { root }).join('\n'), /linked\/evil\.mjs is not a regular file/);
+    // An experiments/ that is itself a symlink out of the repository, holding the kit's exact files: refused.
+    KITS.review = saved;
+    mkdirSync(join(outside, 'experiments/review-frontier'), { recursive: true });
+    mkdirSync(join(outside, 'experiments/nina-changes'), { recursive: true });
+    for (const f of ['review-frontier/analyse.mjs', 'review-frontier/results.json', 'nina-changes/write-results6.mjs']) writeFileSync(join(outside, 'experiments', f), '');
+    rmSync(join(root, 'experiments'), { recursive: true });
+    symlinkSync(join(outside, 'experiments'), join(root, 'experiments'));
+    const problems = kitProblems('review', record, { root }).join('\n');
+    for (const f of ['review-frontier/analyse.mjs', 'review-frontier/results.json', 'nina-changes/write-results6.mjs']) assert.match(problems, new RegExp(`experiments/${f.replace('.', '\\.')} is not a regular file`), f);
   } finally { KITS.review = saved; rmSync(root, { recursive: true, force: true }); rmSync(outside, { recursive: true, force: true }); }
 });
 
