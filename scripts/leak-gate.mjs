@@ -272,8 +272,13 @@ export function* tarEntries(buf, shown) {
     // Each text field on its own line, so no field runs into the next ("2" + "/Users/..." would hide the path).
     const fields = [[157, 100], [265, 32], [297, 32], ...(type === '0' || type === '7' ? [] : [[0, 100], [345, 155]])].map(([from, len]) => field(h, from, len));
     if (type !== '0' && type !== '7') fields.push(name);
-    yield { meta: Buffer.concat([Buffer.from(fields.join('\n') + '\n'), type === '0' || type === '7' ? Buffer.alloc(0) : body]) };
-    at += 512 + Math.ceil(size / 512) * 512;
+    // And the whole header block as printable runs, so no field or unused byte of it goes unread.
+    yield { meta: Buffer.concat([Buffer.from(fields.join('\n') + '\n'), h, Buffer.from([10]), type === '0' || type === '7' ? Buffer.alloc(0) : body]) };
+    // A member's padding up to its 512-byte boundary must be zero: anything else is bytes no entry holds.
+    const end = at + 512 + Math.ceil(size / 512) * 512;
+    if (end > buf.length) throw new Error(`leak gate: ${shown} is not a readable tar archive`);
+    if (!buf.subarray(at + 512 + size, end).every(b => b === 0)) throw new Error(`leak gate: ${shown} has bytes in a member's padding`);
+    at = end;
   }
   // No end-of-archive block: the archive is cut short.
   throw new Error(`leak gate: ${shown} is not a readable tar archive`);

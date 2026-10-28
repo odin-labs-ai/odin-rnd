@@ -315,3 +315,26 @@ test('bytes after an archive\'s end stop the build', () => {
     assert.ok(!r.out.includes('blorvak'));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('bytes in a member\'s padding stop the build', () => {
+  const whole = tar({ 'main/x.txt': 'x' });
+  whole.write('blorvak', 512 + 1);
+  const root = site({ 'dist/data/raw-evidence.tar.gz': gzipSync(whole) });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 2, r.out);
+    assert.match(r.out, /has bytes in a member's padding/);
+    assert.ok(!r.out.includes('blorvak'));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a term in an unused byte range of an archive header is caught', () => {
+  const whole = tar({ 'main/ok.json': '{}' });
+  whole.write('blorvak', 500);
+  const root = site({ 'dist/data/raw-evidence.tar.gz': gzipSync(whole) });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /\(archive headers\):0 term/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
