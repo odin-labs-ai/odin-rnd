@@ -76,8 +76,10 @@ jobs:
     # never read as a pass.
     if: always()
     runs-on: ubuntu-latest
-    # Build, check and the leak gate only (the tests run in the shards): VERIFY_TIMEOUT_PLACEHOLDER
-    timeout-minutes: 20
+    # Build, check and the leak gate only (the tests run in the shards). Measured verify job, 2026-10-28: main
+    # 191 / 191 / 152 s (runs 40638721064, 40642111392, 40642123245), pull request 204 / 186 s; the ceiling is twice
+    # the slowest (408 s), rounded up. 20 minutes was carried over from when verify ran the whole suite.
+    timeout-minutes: 7
     steps:
       - name: Every test shard succeeded
         run: |
