@@ -15,13 +15,14 @@
   "line": { "type": "string", "minLength": 1, "maxLength": 240 },
   "film": {
    "type": "object",
-   "required": ["src", "poster", "mime", "bytes", "seconds", "sha256", "original"],
+   "required": ["src", "poster", "mime", "bytes", "posterBytes", "seconds", "sha256", "original"],
    "additionalProperties": false,
    "properties": {
     "src": { "type": "string", "pattern": "^assets/labs/agent-space/outage/[a-z0-9][a-z0-9-]{0,47}\\.webm$" },
     "poster": { "type": "string", "pattern": "^assets/labs/agent-space/outage/[a-z0-9][a-z0-9-]{0,47}\\.(jpg|png)$" },
     "mime": { "type": "string", "pattern": "^video/webm" },
     "bytes": { "type": "integer", "minimum": 1 },
+    "posterBytes": { "type": "integer", "minimum": 1 },
     "seconds": { "type": "integer", "minimum": 1 },
     "sha256": {
      "type": "object",

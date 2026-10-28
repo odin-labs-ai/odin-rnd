@@ -11,6 +11,7 @@
   "poster": "assets/labs/agent-space/outage/dispatch-2-outage-poster.png",
   "mime": "video/webm;codecs=vp9",
   "bytes": 1511547,
+  "posterBytes": 395118,
   "seconds": 51,
   "sha256": {
    "src": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
