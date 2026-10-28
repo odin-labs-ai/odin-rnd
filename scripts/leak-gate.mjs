@@ -178,13 +178,13 @@ const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|z
 // A file of a text type is read as text whatever bytes it holds: a NUL byte never hides a page.
 const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|srt|ya?ml|toml|sha256|webmanifest)(\.gz)?$/i;
 /**
- * The runs of printable text inside a binary file (metadata, an embedded comment), read like any text: every run of 4
- * or more characters, which is shorter than any machine pattern. A short term can turn up in compressed bytes by
+ * The runs of printable text inside a binary file (metadata, an embedded comment), read like any text: every run, of
+ * any length, each on its own line. A short term can turn up in compressed bytes by
  * chance; such a hit is reviewed and listed as a known occurrence, never filtered away here.
  */
 function printable(bytes) {
   const out = [];
-  for (const m of bytes.toString('latin1').matchAll(/[\x20-\x7e\t]{4,}/g)) out.push(m[0]);
+  for (const m of bytes.toString('latin1').matchAll(/[\x20-\x7e\t]+/g)) out.push(m[0]);
   return out.join('\n');
 }
 function walk(dir) {
@@ -246,7 +246,7 @@ export function scanPaths(paths, secret) {
     for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache)) result.hits.push({ file: shown, ...hit });
   };
   for (const root of paths) {
-    if (!existsSync(root)) throw new Error(`leak gate: ${root} does not exist`);
+    if (!existsSync(root)) throw new Error('leak gate: a path to scan does not exist');
     const files = statSync(root).isDirectory() ? walk(root) : [root];
     for (const file of files) one(relative(process.cwd(), file) || file, () => readFileSync(file));
   }
