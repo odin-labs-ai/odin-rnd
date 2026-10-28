@@ -1,0 +1,19 @@
+{
+ "format": "odin-leak-gate-known",
+ "version": 1,
+ "about": "Reviewed hits of the site's leak gate (scripts/leak-gate.mjs) that cannot be edited away here. Each row covers exactly `count` hits of that kind (and salted hash prefix) in that file: one more is a new leak and one fewer is a stale row, and both fail the deploy. A canary is never listed. The list only shrinks: a row goes when its pre-registration is amended.",
+ "known": [
+  { "file": "dist/data/broker-same-model/preregistration.json", "kind": "term", "hash": "0719f76c", "count": 1, "reason": "A reviewed term in a hash-pinned pre-registration. Fixed only by an amendment." },
+  { "file": "dist/data/telemetry-truth/preregistration.json", "kind": "term", "hash": "0719f76c", "count": 1, "reason": "A reviewed term in a hash-pinned pre-registration. Fixed only by an amendment." },
+  { "file": "dist/data/composable-harness/preregistration.json", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "A reviewed term in a hash-pinned pre-registration. Fixed only by an amendment." },
+  { "file": "dist/journal/composable-harness-pre-registration.html", "kind": "term", "hash": "5418c5de", "count": 1, "reason": "The same reviewed term, in the article that renders that pre-registration word for word." },
+  { "file": "dist/data/temporal-document-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 22, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
+  { "file": "dist/data/temporal-primitive-fit/raw-evidence.tar.gz!*", "kind": "loopback", "count": 33, "reason": "The experiment's own sources and run log inside its raw-evidence bundle: a local workflow server and database, addressed by port on the runner. Not a machine of ours." },
+  { "file": "dist/assets/agent-space/agent-space-30s.webm", "kind": "term", "hash": "c1fe1e4c", "count": 2, "reason": "A short reviewed term spelled by chance in the file's compressed bytes (a printable run between binary bytes), not text anyone wrote." },
+  { "file": "dist/assets/labs/agent-space/films/agent-space-30s.webm", "kind": "term", "hash": "c1fe1e4c", "count": 1, "reason": "A short reviewed term spelled by chance in the file's compressed bytes (a printable run between binary bytes), not text anyone wrote." },
+  { "file": "dist/assets/labs/agent-space/films/agent-space-tour.webm", "kind": "term", "hash": "c1fe1e4c", "count": 1, "reason": "A short reviewed term spelled by chance in the file's compressed bytes (a printable run between binary bytes), not text anyone wrote." },
+  { "file": "dist/assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png", "kind": "term", "hash": "c1fe1e4c", "count": 1, "reason": "A short reviewed term spelled by chance in the file's compressed bytes (a printable run between binary bytes), not text anyone wrote." },
+  { "file": "dist/assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png", "kind": "term", "hash": "c1fe1e4c", "count": 1, "reason": "A short reviewed term spelled by chance in the file's compressed bytes (a printable run between binary bytes), not text anyone wrote." },
+  { "file": "dist/data/nina-changes/reviewer.json", "kind": "loopback", "count": 7, "reason": "A fictional fixture repository's config default (a local cache address and port), quoted in recorded reviewer output. Not a machine of ours." }
+ ]
+}
