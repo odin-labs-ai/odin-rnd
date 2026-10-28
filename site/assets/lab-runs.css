@@ -1,0 +1,17 @@
+/* Lab runs (scripts/lab-runs.mjs): a lab card's provenance and badge, read from its records. */
+.lab-provenance{margin-top:18px;padding-top:14px;border-top:1px solid var(--rule)}
+.lab-provenance-line{color:var(--steel);overflow-wrap:anywhere}
+.lab-provenance-line code{font-size:11px}
+.lab-tile p.lab-badge{margin-top:10px;font-size:14px;line-height:1.55}
+.lab-badge strong{display:inline-block;padding:2px 8px;border:1px solid var(--rule);border-radius:6px;font-weight:600;color:var(--paper)}
+.lab-badge[data-state=reproduced] strong{border-color:var(--primary);color:var(--primary)}
+.lab-badge[data-state=different] strong{border-color:var(--orange)}
+.lab-tile p.lab-provenance-more{margin-top:8px;font-size:14px}
+.lab-provenance-more a,.lab-runs-link a{font-weight:600;text-underline-offset:5px}
+.lab-runs-link{margin-top:22px;min-height:44px;display:flex;align-items:center}
+.lab-runs-table caption{caption-side:top;text-align:left;padding-bottom:8px;font-size:13px;color:var(--steel)}
+.lab-runs-table td,.lab-runs-table th{vertical-align:top}
+.lab-runs-table code{font-size:11px}
+.lab-runs-section .lab-provenance{max-width:72ch}
+.lab-runs-section p.lab-badge{margin-top:10px;font-size:15px;line-height:1.6}
+.lab-runs-section .lab-follow{margin-top:18px}

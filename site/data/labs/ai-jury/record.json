@@ -178,7 +178,8 @@
       "jury-b": 4.714,
       "jury-c": 3.714,
       "jury-d": 3.714
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 2",
@@ -189,7 +190,8 @@
       "jury-b": 4.429,
       "jury-c": 3.714,
       "jury-d": 3.571
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 3",
@@ -200,7 +202,8 @@
       "jury-b": 4.857,
       "jury-c": 3.714,
       "jury-d": 4.571
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 4",
@@ -211,7 +214,8 @@
       "jury-b": 4.143,
       "jury-c": 3.571,
       "jury-d": 3.143
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 5",
@@ -221,7 +225,10 @@
       "jury-a": 4.143,
       "jury-b": 3.714,
       "jury-c": 3.857
-     }
+     },
+     "unreadable": [
+      "jury-d"
+     ]
     },
     {
      "label": "room 6",
@@ -232,7 +239,8 @@
       "jury-b": 4.286,
       "jury-c": 3.571,
       "jury-d": 4.286
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 7",
@@ -243,7 +251,8 @@
       "jury-b": 4,
       "jury-c": 3.857,
       "jury-d": 4
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 8",
@@ -254,7 +263,8 @@
       "jury-b": 4.571,
       "jury-c": 4,
       "jury-d": 3.714
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 9",
@@ -264,7 +274,10 @@
       "jury-a": 4,
       "jury-b": 4.286,
       "jury-c": 3.429
-     }
+     },
+     "unreadable": [
+      "jury-d"
+     ]
     },
     {
      "label": "room 10",
@@ -275,7 +288,8 @@
       "jury-b": 4.714,
       "jury-c": 3.857,
       "jury-d": 3.429
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 11",
@@ -286,7 +300,8 @@
       "jury-b": 4.286,
       "jury-c": 3.571,
       "jury-d": 3.714
-     }
+     },
+     "unreadable": []
     }
    ],
    "median": 3.857
@@ -369,7 +384,8 @@
       "jury-a": 4.286,
       "jury-b": 4.714,
       "jury-c": 3.429
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 2",
@@ -379,7 +395,8 @@
       "jury-a": 3.857,
       "jury-b": 4.714,
       "jury-c": 4.286
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 3",
@@ -389,7 +406,8 @@
       "jury-a": 3.857,
       "jury-b": 4.286,
       "jury-c": 4
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 4",
@@ -399,7 +417,8 @@
       "jury-a": 3.429,
       "jury-b": 4.286,
       "jury-c": 3.571
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 5",
@@ -409,7 +428,8 @@
       "jury-a": 3.857,
       "jury-b": 3.714,
       "jury-c": 4.143
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 6",
@@ -419,7 +439,8 @@
       "jury-a": 3.857,
       "jury-b": 4.429,
       "jury-c": 3.571
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 7",
@@ -429,7 +450,8 @@
       "jury-a": 3.429,
       "jury-b": 4,
       "jury-c": 4.143
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 8",
@@ -439,7 +461,8 @@
       "jury-a": 4.857,
       "jury-b": 4.571,
       "jury-c": 4
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 9",
@@ -449,7 +472,8 @@
       "jury-a": 4,
       "jury-b": 4.571,
       "jury-c": 3.714
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 10",
@@ -459,7 +483,8 @@
       "jury-a": 4.143,
       "jury-b": 4.571,
       "jury-c": 4.143
-     }
+     },
+     "unreadable": []
     },
     {
      "label": "room 11",
@@ -469,7 +494,8 @@
       "jury-a": 3.571,
       "jury-b": 3.857,
       "jury-c": 3.571
-     }
+     },
+     "unreadable": []
     }
    ],
    "median": 4

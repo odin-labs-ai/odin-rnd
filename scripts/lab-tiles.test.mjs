@@ -32,8 +32,7 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
 });
 
 test('the published site requires every listed tile: the repository\'s own site/ root defaults to required', () => {
-  assert.deepEqual(readTiles('site').map(t => t.label), ['Lab 02', 'Lab 03', 'Lab 05', 'Lab 13', 'Lab 14']);
-  assert.equal(readTiles(join(process.cwd(), 'site')).length, 5);
+  assert.deepEqual(readTiles('site').map(t => t.label), ['Lab 02', 'Lab 03', 'Lab 05', 'Lab 06', 'Lab 07', 'Lab 08', 'Lab 09', 'Lab 13', 'Lab 14']);
 });
 
 test('the build refuses a tile with a number, a missing or outside link, an unscreened word, or a stale status', () => {

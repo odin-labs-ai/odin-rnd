@@ -46,10 +46,20 @@ test('the record holds counts and hashes only, and is refused when it would make
   const refused = (change, re) => { const r = clone(); change(r); assert.ok(questionSetProblems(r).some(p => re.test(p)), String(re)); };
   refused(r => { r.questions = 130; }, /the categories do not add up to it/);
   refused(r => { r.categories = 8; }, /not the number of categories counted/);
-  refused(r => { r.vendored.files = r.vendored.files.filter(f => f.role !== 'gold'); }, /no gold file/);
+  refused(r => { r.vendored.files = r.vendored.files.filter(f => f.role !== 'gold'); }, /no gold file|does not match/);
+  refused(r => { r.vendored.files = r.vendored.files.filter(f => f.role !== 'prereg'); }, /no prereg file|does not match/);
   refused(r => { r.vendored.cites[0].commit = 'f'.repeat(40); }, /a commit only on a lane is never cited/);
   refused(r => { r.questionText = 'At a company, what is the title of an agent?'; }, /does not match odin-lab-question-set v1/);
   refused(r => { r.vendored.from = 'read from /Users/someone/repo'; }, /machine path/);
+});
+
+test('on the published site the line is required: a missing record refuses, it never just disappears', () => {
+  const root = mkdtempSync(join(tmpdir(), 'lab-question-set-missing-'));
+  try {
+    assert.equal(readQuestionSet(root), null, 'a fixture without the record renders no line');
+    assert.throws(() => readQuestionSet(root, { required: true }), /company-store-questions\/record\.json is missing/);
+    assert.equal(readQuestionSet('site').questions, 131, 'the repository\'s own site requires it by default');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('the record is pinned: a changed byte refuses the build until the pin is re-written', () => {

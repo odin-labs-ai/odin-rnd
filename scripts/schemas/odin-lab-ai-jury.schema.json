@@ -321,7 +321,8 @@
         "label",
         "median",
         "n",
-        "by"
+        "by",
+        "unreadable"
        ],
        "additionalProperties": false,
        "properties": {
@@ -342,6 +343,13 @@
          "additionalProperties": {
           "type": "number",
           "minimum": 0
+         }
+        },
+        "unreadable": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "pattern": "^jury-[a-d]$"
          }
         }
        }
@@ -374,7 +382,8 @@
       "maxLength": 120
      }
     }
-   }
+   },
+   "minItems": 1
   }
  }
 }

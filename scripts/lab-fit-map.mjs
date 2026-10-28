@@ -154,12 +154,14 @@ export function questionSetProblems(record, { now = new Date(), where = QUESTION
   const counts = Object.values(record.perCategory);
   if (counts.length !== record.categories) problems.push(`${where}#/categories: not the number of categories counted`);
   if (counts.reduce((a, b) => a + b, 0) !== record.questions) problems.push(`${where}#/questions: the categories do not add up to it`);
-  for (const role of ['questions', 'gold']) if (!record.vendored.files.some(f => f.role === role)) problems.push(`${where}#/vendored/files: no ${role} file`);
+  for (const role of ['questions', 'gold', 'prereg']) if (!record.vendored.files.some(f => f.role === role)) problems.push(`${where}#/vendored/files: no ${role} file`);
   return problems;
 }
 
 /** The committed question-set record, pinned and checked; null when there is none. Throws with every reason. */
-export function readQuestionSet(root = 'site', { now = new Date() } = {}) {
+// On the published site the line is required, as the labs are: a missing record refuses the build.
+export function readQuestionSet(root = 'site', { now = new Date(), required = resolve(root) === REPO_SITE } = {}) {
+  if (required && !existsSync(join(root, QUESTION_SET_RECORD))) throw new Error(`Lab 04 question set refused:\n  ${QUESTION_SET_RECORD} is missing; Lab 04's row carries its frozen question set on the published site`);
   return readPinned({ root, file: QUESTION_SET_RECORD, pin: bytes => sidecarPinProblems(root, bytes, { pinFile: QUESTION_SET_PIN, file: QUESTION_SET_RECORD, vendor: 'scripts/vendor-question-set.mjs' }), check: record => questionSetProblems(record, { now }), refused: 'Lab 04 question set refused' });
 }
 

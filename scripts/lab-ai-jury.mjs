@@ -69,10 +69,15 @@ export function juryProblems(record, { now = new Date(), where = JURY_RECORD } =
       const by = Object.entries(room.by);
       if (by.some(([id]) => !round.jury.includes(id))) problems.push(`${at}/rooms/${j}/by: a score by a model outside this round's jury`);
       if (room.n !== by.length) problems.push(`${at}/rooms/${j}/n: not the number of jurors' scores`);
+      // The page says a room with fewer scores than the jury lost the others to unreadable replies: every juror of
+      // the round is either a score or a named unreadable reply, never both, never neither.
+      if ([...by.map(([id]) => id), ...room.unreadable].sort().join() !== [...round.jury].sort().join()) problems.push(`${at}/rooms/${j}/unreadable: the jurors' scores and unreadable replies are not exactly the round's jury`);
       if (!by.length || Math.abs(median(by.map(([, v]) => v)) - room.median) > EPS) problems.push(`${at}/rooms/${j}/median: not the median of its jurors' scores`);
     }
     if (r3(median(round.rooms.map(r => r.median))) !== round.median) problems.push(`${at}/median: not the median of its rooms' medians`);
   });
+  // The lane-only rounds are named as left out: exactly 2b and 2c, each said to be lane-only.
+  if (record.excluded.map(e => e.round).join() !== '2b,2c' || record.excluded.some(e => !/lane only/.test(e.why) || !/never on the private main/.test(e.why))) problems.push(`${where}#/excluded: the page names rounds 2b and 2c as left out, lane-only; the record must name exactly those`);
   if (!/none was reworked/.test(record.rooms) || !/photographed again/.test(record.rooms)) problems.push(`${where}#/rooms: the page says the rooms were not reworked but photographed again; the record must say so too`);
   if (!/we rendered/.test(record.calibrationPair) || !/deliberately ruined/.test(record.calibrationPair)) problems.push(`${where}#/calibrationPair: the page boxes the pair as a fixture we made; the record must say we made it`);
   if (!/blind|random names/.test(record.blinding) || /\bnot blind\b|\bunblinded\b|\bsaw the room name\b/i.test(record.blinding)) problems.push(`${where}#/blinding: the page says the jurors judged blind; the record must say so, and nothing that takes it back`);
@@ -125,7 +130,7 @@ export function renderRooms(record) {
   const ch = changes(record);
   const rows = record.rounds[0].rooms.map((room, i) => `<tr><th scope="row">${escape(cap(room.label))}</th>${record.rounds.map(round => `<td>${score(round.rooms[i].median)} <span class="jury-n">(${round.rooms[i].n} jurors)</span></td>`).join('')}<td>${signed(ch[i])}</td></tr>`).join('');
   const med = `<tr class="jury-median"><th scope="row">The median of the rooms</th>${record.rounds.map(round => `<td>${score(round.median)}</td>`).join('')}<td>${signed(r3(record.rounds.at(-1).median - record.rounds[0].median))}</td></tr>`;
-  return `<p>The same ${words(record.rounds[0].rooms.length)} rooms in both rounds, the jury's median score for each, out of 10. A room scored by fewer jurors than the round's jury is one whose other replies could not be read.</p><div class="lab-table-wrap"><table class="jury-table"><thead><tr><th scope="col">Room</th>${record.rounds.map(round => `<th scope="col">Round ${round.round}, ${time(round.on)}</th>`).join('')}<th scope="col">Change</th></tr></thead><tbody>${rows}${med}</tbody></table></div><p class="lab-source">Recounted at build from each juror's score: the build refuses the record if a room's median is not its jurors' median, or the round's is not its rooms'.</p>`;
+  return `<p>The same ${words(record.rounds[0].rooms.length)} rooms in both rounds, the jury's median score for each, out of 10. ${escape(cap(record.rooms))}. A room scored by fewer jurors than the round's jury is one whose other replies could not be read (the record names whose).</p><div class="lab-table-wrap"><table class="jury-table"><thead><tr><th scope="col">Room</th>${record.rounds.map(round => `<th scope="col">Round ${round.round}, ${time(round.on)}</th>`).join('')}<th scope="col">Change</th></tr></thead><tbody>${rows}${med}</tbody></table></div><p class="lab-source">Recounted at build from each juror's score: the build refuses the record if a room's median is not its jurors' median, or the round's is not its rooms'.</p>`;
 }
 
 export function renderReading(record) {
@@ -160,7 +165,8 @@ export function renderAiJury(root = 'site', { now = new Date() } = {}) {
     html = html.replace(marker, () => value);
   }
   if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${JURY_TEMPLATE}: unresolved content marker`);
-  // DATA ONLY: no picture, of any kind, in the page's content (the site's header and footer carry its logo).
+  // DATA ONLY: no picture, of any kind, in the page's content between <main> and </main> (the site's own header and
+  // footer carry its logo, as every page does).
   const content = html.split('<main id="main">')[1]?.split('</main>')[0] ?? html;
   if (/<(img|picture|video|source|svg|object|embed|iframe)\b|\.(png|jpe?g|webp|gif|avif|svg)\b|url\(/i.test(content)) throw new Error(`${JURY_TEMPLATE}: the page's content carries a picture; this lab shows none`);
   const v = record.vendored;

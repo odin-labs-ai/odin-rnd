@@ -85,6 +85,7 @@ export function build({ clone, main, checked, file }) {
   const table = json('table');
   // The rework touched only the new rooms: none of the rooms shown here is among them.
   const reworked = table.compare.flatMap(c => c.rooms.map(r => r.shot));
+  if (!reworked.length || reworked.some(s => !/^deck-s\d{2}-/.test(s))) problems.push('the comparison table does not list the reworked rooms as the new rooms only');
   if (reworked.some(s => ROOM.test(s))) problems.push('a room shown here is among the reworked ones');
   const rounds = ['round-1', 'round-2'].map((role, i) => {
     const d = json(role);
@@ -100,7 +101,8 @@ export function build({ clone, main, checked, file }) {
     });
     const rooms = Object.keys(d.shots).filter(s => ROOM.test(s)).sort().map((s, k) => {
       const o = d.shots[s].overall;
-      return { label: `room ${k + 1}`, median: o.median, n: o.n, by: Object.fromEntries(Object.entries(o.by).sort()) };
+      // The jurors with no score for this room: each one's replies on it were unreadable (checked below).
+      return { label: `room ${k + 1}`, median: o.median, n: o.n, by: Object.fromEntries(Object.entries(o.by).sort()), unreadable: cal.jury.filter(j => !(j in o.by)).sort() };
     });
     const m = r3(median(rooms.map(r => r.median)));
     const said = table.compare[i].existing_median;

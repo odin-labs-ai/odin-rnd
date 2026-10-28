@@ -20,11 +20,12 @@ const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&lt;', '<').rep
 const clone = () => JSON.parse(raw);
 const sha256 = s => createHash('sha256').update(s).digest('hex');
 
-test('Lab 14 renders, sits on the Labs index after Lab 05 and is in the sitemap', () => {
+test('Lab 14 renders, sits on the Labs index right after Lab 13 and is in the sitemap', () => {
   assert.ok(page, 'labs/ai-jury/index.html is rendered');
   const index = pages['labs/index.html'];
-  const lab05 = index.indexOf('aria-labelledby="lab-tile-rogue"'), lab14 = index.indexOf('aria-labelledby="lab-tile-ai-jury"');
-  assert.ok(lab05 >= 0 && lab14 > lab05, 'Lab 14 follows Lab 05');
+  const lab13 = index.indexOf('aria-labelledby="lab-tile-measured-blind"'), lab14 = index.indexOf('aria-labelledby="lab-tile-ai-jury"');
+  assert.ok(lab13 >= 0 && lab14 > lab13, 'Lab 14 follows Lab 13');
+  assert.doesNotMatch(index.slice(lab13, lab14), /aria-labelledby="lab-tile-(?!measured-blind)/, 'no other tile between them');
   assert.match(index, /<span class="technical">LAB 14<\/span><h2 id="lab-tile-ai-jury">Can an AI jury judge how a room looks\?<\/h2>/);
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/ai-jury/</loc>'));
 });
@@ -56,6 +57,8 @@ test('the calibration gate: a juror passes exactly when good minus bad is at lea
   for (const round of record.rounds) for (const r of round.reviewers) assert.equal(r.passes, r.margin !== null && r.margin >= record.rubric.minMargin, `${round.round} ${r.id}`);
   const d = record.rounds[1].reviewers.find(r => r.id === 'jury-d');
   assert.deepEqual([d.good, d.margin, d.passes, d.unreadable], [null, null, false, [{ picture: 'good', replies: 2 }]]);
+  // The two round-1 rooms scored by three of four jurors name the juror whose replies were unreadable.
+  assert.deepEqual(record.rounds[0].rooms.filter(r => r.n === 3).map(r => [r.label, r.unreadable.length]), [['room 5', 1], ['room 9', 1]]);
   assert.ok(record.rounds[0].jury.includes('jury-d') && !record.rounds[1].jury.includes('jury-d'));
   assert.match(textOf(main), /In round 2, Qwen3\.8 Flash \(Qwen\) was out\. It gave no usable score for the good picture: its two replies on it could not be read, so it had no margin, and the gate took it off the jury\./);
   const fixture = main.match(/<div class="lab-panel jury-fixture" id="calibration-pair">[\s\S]*?<\/div>/)[0];
@@ -146,6 +149,11 @@ test('the record is refused when it would make the page say something untrue', (
   refused(r => { r.rounds[0].rooms[0].name = 'The Arrival'; }, /does not match odin-lab-ai-jury v1/);
   refused(r => { r.vendored.cites[0].commit = 'f'.repeat(40); }, /a commit only on a lane is never cited/);
   refused(r => { r.rounds[0].on = '2099-01-01'; }, /after this build/);
+  refused(r => { r.excluded = r.excluded.slice(0, 1); }, /must name exactly those/);
+  refused(r => { r.excluded[1].why = 'not interesting'; }, /must name exactly those/);
+  refused(r => { r.excluded = []; }, /does not match odin-lab-ai-jury v1/);
+  refused(r => { r.rounds[0].rooms[4].unreadable = []; }, /not exactly the round's jury/);
+  refused(r => { r.rounds[0].rooms[0].unreadable = ['jury-d']; }, /not exactly the round's jury/);
 });
 
 test('the record is pinned: a changed byte refuses the build until the pin is re-written', () => {
