@@ -15,6 +15,8 @@
 //   - no money figure: EXP 017 measured price per review too; the page states its decision in words and points to the
 //     experiment's record for the figures;
 //   - the 60 changes each experiment reviews were written or seeded by us: boxed as authored fixtures;
+//   - a "Re-run this" block (scripts/lab-rerun.mjs): the exact commands that recompute EXP 017's and EXP 006's records,
+//     and the lines they print, with the hashes this record cites; CI runs the same list (.github/workflows/lab-kits.yml);
 //   - the findings gallery quotes the PR bodies word for word (vendor-review.mjs --verify re-reads them), and is boxed as
 //     verdicts of a separate AI reviewer, not a human.
 // The build refuses the record, every reason listed, when it is not the pinned bytes, misses the schema, fails the
@@ -24,6 +26,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, escape, pageLeaks, readPinned, recordHashes, screenRecord, sha256, sidecarPinProblems, validate } from './lab-kit.mjs';
+import { maskKit, renderKit } from './lab-rerun.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const REVIEW_RECORD = 'data/labs/review/record.json';
@@ -188,13 +191,15 @@ export function renderReview(root = 'site', options = {}) {
   const record = readReview(root, options);
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, REVIEW_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_FRONTIER-->': renderFrontier(record), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_FRONTIER-->': renderFrontier(record), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_RERUN-->': renderKit('review', record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${REVIEW_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }
   if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${REVIEW_TEMPLATE}: unresolved content marker`);
   const known = [...recordHashes(record), ...receiptTokens(record)];
-  const leaks = pageLeaks(html, known);
+  // The "Re-run this" block shows this repository's own commands and file names, which the screen refuses on sight:
+  // exactly those (scripts/lab-rerun.mjs) are masked first, and nothing else.
+  const leaks = pageLeaks(maskKit(html, 'review', record), known);
   if (leaks.length) throw new Error(`${REVIEW_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [REVIEW_TEMPLATE]: html } };
 }
