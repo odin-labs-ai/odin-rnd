@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderReview, reviewProblems } from './lab-review.mjs';
 import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
+import { maskKit } from './lab-rerun.mjs';
 import { renderLabs } from './labs.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -154,7 +155,8 @@ test('the record is pinned: a changed byte refuses the build', () => {
 
 // The leak screen, a discriminating negative per class it guards.
 test('leak screen: the page, the record and the tile, and a planted value of each class is caught', () => {
-  assert.deepEqual(pageLeaks(page, [...recordHashes(record), ...receiptTokens(record)]), []);
+  // The "Re-run this" block's own commands and outputs are masked (scripts/lab-rerun.mjs), and nothing else is.
+  assert.deepEqual(pageLeaks(maskKit(page, 'review', record), [...recordHashes(record), ...receiptTokens(record)]), []);
   const tile = readFileSync('site/data/labs/review-tile.json', 'utf8');
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     for (const re of [/\/Users\//, /\/home\//, /localhost/i, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /\bghp_|\bsk-[A-Za-z0-9]|-----BEGIN/, /odin-labs-ai\/(?!odin-rnd)/]) assert.doesNotMatch(text, re, `${name}: ${re}`);
@@ -162,7 +164,7 @@ test('leak screen: the page, the record and the tile, and a planted value of eac
   }
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
   for (const [plant, reason] of [['/Users/someone/x', /machine path/], ['10.0.0.12:6488', /local host/], [`a ${SYN_THEME} lender`, /restricted name/], [`the ${SYN_REPO} repository`, /restricted name/], ['odin-labs-ai/some-private-repo', /another repository/], [credential, /credential/], ['about $12.00 a review', /price or currency/], ['commit 7d5527390abc', /a hash the record does not hold/]]) {
-    const planted = page.replace('<main id="main">', `<main id="main"><p>${plant}</p>`);
+    const planted = maskKit(page, 'review', record).replace('<main id="main">', `<main id="main"><p>${plant}</p>`);
     assert.ok(pageLeaks(planted, [...recordHashes(record), ...receiptTokens(record)]).some(p => reason.test(p)), plant);
   }
 });
