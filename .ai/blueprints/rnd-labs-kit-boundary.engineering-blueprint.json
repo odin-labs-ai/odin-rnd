@@ -1,0 +1,79 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "approvals": [
+    {
+      "role": "blueprint-steward",
+      "stage": "ratify"
+    }
+  ],
+  "architecture": {
+    "components": [],
+    "relationships": []
+  },
+  "constraints": [
+    {
+      "component": "typescriptModule",
+      "id": "results-lab-builders-import-the-lab-kit",
+      "scopePaths": [
+        "scripts/lab-engine-history.mjs",
+        "scripts/lab-rogue.mjs",
+        "scripts/lab-rogue-tamper.mjs"
+      ],
+      "severity": "high",
+      "to": "module:scripts/lab-kit.mjs",
+      "type": "requiredDependency"
+    },
+    {
+      "id": "results-lab-builders-never-reach-past-the-kit-screen",
+      "scopePaths": [
+        "scripts/lab-engine-history.mjs",
+        "scripts/lab-rogue.mjs",
+        "scripts/lab-rogue-tamper.mjs"
+      ],
+      "severity": "high",
+      "to": "module:scripts/lab-dispatch-publish.mjs",
+      "type": "forbiddenDependency"
+    }
+  ],
+  "evidenceRequirements": [
+    {
+      "onMissing": "block",
+      "required": true,
+      "type": "staticAst"
+    }
+  ],
+  "extraction": {
+    "minFiles": 4,
+    "paths": [
+      "scripts/lab-engine-history.mjs",
+      "scripts/lab-rogue.mjs",
+      "scripts/lab-rogue-tamper.mjs",
+      "scripts/lab-kit.mjs"
+    ],
+    "profile": "typescript-module-graph"
+  },
+  "intentRefs": [
+    "docs/lab-bar.md"
+  ],
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "rnd-labs-kit-boundary",
+    "name": "Every results lab builds on the lab kit",
+    "ownerRole": "rnd-maintainer",
+    "status": "draft",
+    "stewardRole": "rnd-maintainer",
+    "version": "0.1.0"
+  },
+  "minEngineVersion": "0.3.1",
+  "scope": {
+    "paths": [
+      "scripts/lab-engine-history.mjs",
+      "scripts/lab-rogue.mjs",
+      "scripts/lab-rogue-tamper.mjs",
+      "scripts/lab-kit.mjs"
+    ],
+    "repositories": [
+      "odin-labs-ai/odin-rnd"
+    ]
+  }
+}
