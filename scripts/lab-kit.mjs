@@ -221,8 +221,10 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   // The publisher's screen once more over a second reading of the text, with every tag a line break and scripts,
   // styles and comments dropped by pattern: it only ever adds a refusal, should the tokenizer ever lose a piece.
   let hidden = html, before;
-  do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi, ''); } while (hidden !== before);
-  for (const line of new Set(decode(stripTags(hidden, '\n')).split('\n').map(l => l.trim()).filter(Boolean))) {
+  do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)(?=[\t\n\f\r />])[\s\S]*?<\/\1[\t\n\f\r ]*>/gi, ''); } while (hidden !== before);
+  // And a third, with nothing dropped at all but the tags themselves (script and style text included).
+  const readings = [decode(stripTags(hidden, '\n')), decode(stripTags(html, '\n'))];
+  for (const line of new Set(readings.flatMap(r => r.split('\n')).map(l => l.trim()).filter(Boolean))) {
     const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
     for (const hit of screenHits(masked)) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
   }
@@ -251,16 +253,25 @@ export function stripTags(html, by = '') {
 
 /**
  * The text a browser shows, from the markup, by HTML's own tokenizing rules (a subset, enough for these pages): a "<"
- * opens a tag only before a letter, "/", "!" or "?"; inside a tag, quoted attribute values may hold "<", ">" and
- * "<!--" and are never shown; a comment runs from "<!--" to the first "-->" or "--!>" ("<!-->" and "<!--->" close at once); "<!" and "<?" open a bogus comment to the
- * first ">"; script, style and template content is not body text and is dropped (up to the matching
- * end tag); a tag cut off by the end of the page is dropped, as a browser drops it. Character references are left as
- * they are (decode() reads them). With `breaks`, a block element's tag becomes a line break; any other tag joins.
+ * opens a tag only before an ASCII letter, "/", "!" or "?"; a tag name ends at HTML whitespace, "/" or ">"; inside a
+ * tag, attribute values (quoted, or unquoted to whitespace or ">") may hold "<", ">" and "<!--" and are never shown; a
+ * comment runs from "<!--" to the first "-->" or "--!>" ("<!-->" and "<!--->" close at once); "<!", "<?" and "</" not
+ * before a letter open a bogus comment to the first ">"; script and style text is dropped to its real end tag, other
+ * raw-text elements keep their text (any "<" in it literal); a tag cut off by the end of the page is dropped, as a
+ * browser drops it. Character references are left as they are (decode() reads them). With `breaks`, a block element's
+ * tag becomes a line break; any other tag joins.
  */
+// HTML's whitespace in a tag: tab, line feed, form feed, carriage return and space only (never U+00A0 or other \s).
+const HTML_WS = new Set(['\t', '\n', '\f', '\r', ' ']);
+
 export function shownText(html, { breaks = false } = {}) {
   let out = '', i = 0;
   const n = html.length;
-  const RAW = new Set(['script', 'style', 'template']);
+  // Raw text, by HTML's rules: script and style text is not shown; textarea and title (RCDATA) and xmp, iframe,
+  // noembed, noframes and noscript (RAWTEXT) hold text to their end tag with any "<" in it literal, and are screened
+  // as shown (whether or not a browser shows them: screening more is the safe side); plaintext runs to the end.
+  const HIDDEN_RAW = new Set(['script', 'style']);
+  const SHOWN_RAW = new Set(['textarea', 'title', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript']);
   while (i < n) {
     const ch = html[i];
     if (ch !== '<') { out += ch; i++; continue; }
@@ -282,11 +293,11 @@ export function shownText(html, { breaks = false } = {}) {
     // A tag: its name, then attributes with their quoted values, to the first ">" outside a quote.
     let j = i + (closing ? 2 : 1);
     let name = '';
-    while (j < n && !/[\s/>]/.test(html[j])) name += html[j++];
+    while (j < n && !HTML_WS.has(html[j]) && html[j] !== '/' && html[j] !== '>') name += html[j++];
     // Attributes, by HTML's attribute states: a name (to whitespace, "/", ">" or "="; a leading "=" is part of it),
     // then optionally "=" and a value: quoted (to the same quote) or unquoted (to whitespace or ">"; a quote inside an
     // unquoted value is just a character of it).
-    const ws = c => c === ' ' || c === '\t' || c === '\n' || c === '\f' || c === '\r';
+    const ws = c => HTML_WS.has(c);
     for (;;) {
       while (j < n && (ws(html[j]) || html[j] === '/')) j++;
       if (j >= n || html[j] === '>') break;
@@ -304,8 +315,13 @@ export function shownText(html, { breaks = false } = {}) {
     const tag = name.toLowerCase();
     i = j + 1;
     if (breaks && BLOCK_NAMES.has(tag)) out += '\n';
-    if (!closing && RAW.has(tag)) {
-      const end = html.toLowerCase().indexOf(`</${tag}`, i);
+    if (!closing && tag === 'plaintext') { out += html.slice(i); break; }
+    if (!closing && (HIDDEN_RAW.has(tag) || SHOWN_RAW.has(tag))) {
+      // Raw text runs to "</name" followed by HTML whitespace, "/" or ">" (so "</scriptx>" does not end it).
+      const lower = html.toLowerCase();
+      let end = lower.indexOf(`</${tag}`, i);
+      while (end >= 0 && !(HTML_WS.has(html[end + tag.length + 2]) || html[end + tag.length + 2] === '/' || html[end + tag.length + 2] === '>')) end = lower.indexOf(`</${tag}`, end + 1);
+      if (SHOWN_RAW.has(tag)) out += html.slice(i, end < 0 ? n : end);
       if (end < 0) { i = n; break; }
       const close = html.indexOf('>', end);
       i = close < 0 ? n : close + 1;
