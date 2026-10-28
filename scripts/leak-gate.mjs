@@ -597,7 +597,18 @@ function main(argv) {
   // --tree: every file git tracks in this checkout (the public source, every record, every asset), for terms and canaries.
   if (tree) {
     if (paths.length || page) throw new Error('leak gate: --tree takes no paths and no page');
-    try { paths.push(...execFileSync('git', ['ls-files', '-z'], { maxBuffer: 1 << 28 }).toString().split('\0').filter(Boolean)); } catch { throw new Error('leak gate: git ls-files failed'); }
+    let raw;
+    try { raw = execFileSync('git', ['ls-files', '-z'], { maxBuffer: 1 << 28 }); } catch { throw new Error('leak gate: git ls-files failed'); }
+    // Every tracked name must be valid UTF-8, so the name read back is the file git tracks: a name that does not
+    // round-trip could collide with another and go unread, so it stops the build.
+    for (let at = 0; at < raw.length;) {
+      const end = raw.indexOf(0, at), bytes = raw.subarray(at, end < 0 ? raw.length : end);
+      at = (end < 0 ? raw.length : end) + 1;
+      if (!bytes.length) continue;
+      const name = bytes.toString('utf8');
+      if (!Buffer.from(name, 'utf8').equals(bytes)) throw new Error('leak gate: a tracked file name is not valid UTF-8, so it cannot be screened');
+      paths.push(name);
+    }
   }
   if (!paths.length) throw new Error('leak gate: nothing to scan');
   const secret = loadSecret(process.env[env]);

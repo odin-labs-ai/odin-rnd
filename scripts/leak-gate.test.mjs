@@ -523,6 +523,17 @@ test('--tree reads every tracked file of the checkout for terms and canaries: re
     writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([...rows, { file: 'scripts/record.mjs', kind: 'term', hash, count: 1, reason: 'a reviewed tree occurrence' }])));
     assert.equal(run(['--known', 'known.json']).code, 0, 'a tree row covers its tree occurrence');
     assert.equal(run(['--known', 'known.json', '--page', 'x']).code, 2, '--tree takes no page');
+    // A tracked name that is not UTF-8 (byte FF) could collide with another once decoded: it stops the build.
+    const odd = Buffer.concat([Buffer.from(join(root, 'scripts/x')), Buffer.from([0xff]), Buffer.from('.txt')]);
+    // (A file system that refuses such a name, as APFS does, cannot hold one; CI's Linux runner can.)
+    let made = true;
+    try { writeFileSync(odd, 'clean\n'); } catch (error) { if (error.code !== 'EILSEQ') throw error; made = false; }
+    if (made) {
+      git('add', '-A');
+      const bad = run();
+      assert.equal(bad.code, 2, bad.out);
+      assert.match(bad.out, /not valid UTF-8/);
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
