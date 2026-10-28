@@ -9,14 +9,14 @@ fail-closed and runs in `pnpm test`.
 | Field | What it holds |
 |---|---|
 | `format`, `version` | `"odin-lab-record"`, `1` |
-| `lab` | the lab's slug, for example `rogue` |
+| `lab` | the lab's slug, from a closed list (today `rogue`; a new lab extends it) |
 | `runner` | `github-hosted`, `org-hosted` or `laptop`: a class, never a runner or host name |
 | `machineClass` | the runner's one class: `ubuntu-latest`, `org-ci-heavy`, `mac` |
 | `image` | the container image the check ran in, pinned by digest (`name:tag@sha256:<64 hex>`), or `null` when it ran on the machine itself |
 | `commit` | `sha` (the commit that ran), `mainHead` (the main head it was checked against), `compare`, `onMain` |
-| `command` | the check command in words (`the demo's own check command`), never a path or a module name |
-| `inputs` | `[{ role, sha256 }]`, sorted by role, unique: the files the check reads, by role, never by path |
-| `result` | `verdict` (`SAME` or `DIFFERENT`), `committed` and `now` (the two hashes the check printed, same length), `breaches` |
+| `command` | the check command in words, from a closed list (today `the demo's own check command`), never a path or a module name |
+| `inputs` | `[{ role, sha256 }]`, sorted by role, unique: the files the check reads, by a role from a closed list (today `runner`, `runs`), never by path |
+| `result` | `verdict` (`SAME` or `DIFFERENT`), `committed` and `now` (the two hashes the check printed, same length), `breaches` (an integer, 0 to 1000000, so it serialises the same in every language) |
 | `recordHash` | see below |
 | `ranAt` | when the check ran, `YYYY-MM-DDTHH:MM:SSZ`, not after the check of the record |
 | `replicatedOn` | `[{ machineClass, recordHash }]`: other machine classes whose run held this record's `recordHash` |
@@ -32,13 +32,16 @@ the same bytes. The golden value: Lab 05's Mac re-run, `47c9ab93279dae96f8423aab
 (`scripts/lab-record.test.mjs`).
 
 **compare and onMain.** `compare` is the status of a GitHub compare with the commit as base and the main head as head:
-`identical`, `ahead` (main is ahead of the commit), `behind`, `diverged`. `onMain` is true exactly when that says the
-commit is part of main (`identical` or `ahead`); a commit only on a lane is never marked as on main. `identical` holds
-exactly when `sha` is `mainHead`.
+`identical`, `ahead` (main is ahead of the commit), `behind`, `diverged`. The public checker cannot read the private
+repository, so it checks that the record's claims agree, not the ancestry itself: `onMain` is true exactly when
+`compare` says the commit is part of main (`identical` or `ahead`), and `identical` holds exactly when `sha` is
+`mainHead`. The org runners read the private repository AT main, so their records must say `identical`; only a laptop
+record, whose compare was read from GitHub by hand (Lab 05's vendor step does this), may say `ahead`.
 
 **Replicas.** Every `replicatedOn` hash equals the record's `recordHash`; every `differedOn` hash does not. A machine
 class appears once across the record and both lists. A mismatch between machines is recorded in `differedOn` and
 shown as a different hash, never folded into `replicatedOn` or forced to agree.
 
-**What may not ride along.** Every object is closed, and every string is a class label, a hash, a date or a short
-ASCII phrase: no runner name, path, host, repository name or log line fits the schema.
+**What may not ride along.** Every object is closed, and every string is a hash, a date or a word from a closed list
+(lab, runner, machine class, command, input role): no runner name, path, host, repository name or log line fits the
+schema. A new lab extends those lists in the schema, in review.

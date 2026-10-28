@@ -11,8 +11,11 @@
 //               mismatch is recorded as such, never folded into replicatedOn.
 //   commit      the commit that ran, the main head it was checked against, and `compare`: the status of a GitHub
 //               compare with the commit as base and the main head as head (identical, ahead = main is ahead of it,
-//               behind, diverged). onMain is true only when that says the commit is part of main (identical or
-//               ahead); a commit only on a lane is never marked as on main.
+//               behind, diverged). This checker cannot read the private repository, so it checks that the
+//               record's claims agree with each other, not the ancestry itself: onMain is true only when the
+//               record's main check says the commit is part of main (identical or ahead), and identical only when
+//               sha is mainHead. The org runners read oac AT main, so their records must say identical; only a
+//               laptop record (checked by hand against GitHub's compare, as Lab 05's vendor step does) may say ahead.
 //
 //   node scripts/lab-record.mjs <record.json> ...   exit 1 and every reason when any record is refused
 import { createHash } from 'node:crypto';
@@ -25,6 +28,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const RECORD_SCHEMA = join(here, 'schemas/odin-lab-record.schema.json');
 const schema = JSON.parse(readFileSync(RECORD_SCHEMA, 'utf8'));
 /** The one machine class each runner has (a class label, never a runner or host name). */
+/** The largest breach count a record may hold, so its JSON reads the same in every language. */
+export const MAX_BREACHES = 1000000;
 export const CLASS_OF = { 'github-hosted': 'ubuntu-latest', 'org-hosted': 'org-ci-heavy', laptop: 'mac' };
 
 /** JSON with keys sorted at every depth and no whitespace (the same bytes as Python's sort_keys, compact separators). */
@@ -62,8 +67,11 @@ export function recordProblems(record, where = 'record', now = new Date()) {
   const c = record.commit;
   if ((c.sha === c.mainHead) !== (c.compare === 'identical')) at('/commit/compare', 'does not agree with the commit and the main head');
   if (c.onMain !== (c.compare === 'identical' || c.compare === 'ahead')) at('/commit/onMain', `a commit whose main check says "${c.compare}" is ${c.onMain ? '' : 'not '}marked as on main`);
+  if (record.runner !== 'laptop' && c.compare !== 'identical') at('/commit/compare', `the ${record.runner} runner reads main, so its commit must be the main head`);
 
   const r = record.result;
+  // Integers past 2^53 serialise differently in JavaScript (1e+21) and Python, so recordHash would differ.
+  if (!Number.isSafeInteger(r.breaches) || r.breaches > MAX_BREACHES) at('/result/breaches', `more than ${MAX_BREACHES}`);
   if (r.committed.length !== r.now.length) at('/result', 'committed and now are not the same length, so they cannot be compared');
   if (r.verdict !== (r.committed === r.now ? 'SAME' : 'DIFFERENT')) at('/result/verdict', 'not what its two hashes say');
 

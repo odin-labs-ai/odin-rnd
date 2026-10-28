@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "odin-lab-record-v1",
- "title": "One run of a lab's check command, on one machine class: record v1, checked by scripts/lab-record.mjs. Every object is closed and every string is a class label, a hash, a date or a short ASCII phrase, so no runner name, path, host or repository name can ride along.",
+ "title": "One run of a lab's check command, on one machine class: record v1, checked by scripts/lab-record.mjs. Every object is closed, and every string is a hash, a date or a word from a closed list (lab, runner, machine class, command, input role), so no runner name, path, host or repository name can ride along. A new lab extends the lists here.",
  "type": "object",
  "required": [
   "format",
@@ -29,7 +29,7 @@
   },
   "lab": {
    "type": "string",
-   "pattern": "^[a-z][a-z0-9-]{0,39}$"
+   "pattern": "^(rogue)$"
   },
   "runner": {
    "type": "string",
@@ -75,7 +75,7 @@
   },
   "command": {
    "type": "string",
-   "pattern": "^[A-Za-z][A-Za-z0-9 ,'()-]{0,119}$"
+   "pattern": "^the demo's own check command$"
   },
   "inputs": {
    "type": "array",
@@ -90,7 +90,7 @@
     "properties": {
      "role": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]{0,39}$"
+      "pattern": "^(runner|runs)$"
      },
      "sha256": {
       "type": "string",
