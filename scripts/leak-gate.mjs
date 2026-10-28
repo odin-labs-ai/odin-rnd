@@ -104,6 +104,9 @@ const NAMED = {
   ndash: '-', mdash: '-', hellip: '...', lsquo: "'", rsquo: "'", ldquo: '"', rdquo: '"',
 };
 const UNKNOWN_REF = /&([A-Za-z][A-Za-z0-9]*);/g;
+// HTML's legacy references, which it reads without a semicolon too. Those not in NAMED are findings, like any unknown.
+const LEGACY = 'AElig AMP Aacute Acirc Agrave Aring Atilde Auml COPY Ccedil ETH Eacute Ecirc Egrave Euml GT Iacute Icirc Igrave Iuml LT Ntilde Oacute Ocirc Ograve Oslash Otilde Ouml QUOT REG THORN Uacute Ucirc Ugrave Uuml Yacute aacute acirc acute aelig agrave amp aring atilde auml brvbar ccedil cedil cent copy curren deg divide eacute ecirc egrave eth euml frac12 frac14 frac34 gt iacute icirc iexcl igrave iquest iuml laquo lt macr micro middot nbsp not ntilde oacute ocirc ograve ordf ordm oslash otilde ouml para plusmn pound quot raquo reg sect shy sup1 sup2 sup3 szlig thorn times uacute ucirc ugrave uml uuml yacute yen yuml'.split(' ').sort((a, b) => b.length - a.length);
+const LEGACY_BARE = new RegExp(`&(${LEGACY.join('|')})(?![A-Za-z0-9]*;)`, 'g');
 
 // A reading of a text keeps, for every character, the offset in the ORIGINAL text it came from. Two readings that see
 // the same occurrence therefore name the same offset, and one occurrence counts once however many readings see it.
@@ -153,7 +156,7 @@ function decodedReading(r) {
   r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
   r = mapped(r, /&([A-Za-z][A-Za-z0-9]*);/g, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
   // HTML also reads its legacy references without the semicolon (&nbsp Name, &ampx): those that are not letters decode.
-  r = mapped(r, /&(nbsp|amp|AMP|lt|LT|gt|GT|quot|QUOT|shy)(?![A-Za-z0-9]*;)/g, (m, n) => NAMED[n]);
+  r = mapped(r, LEGACY_BARE, (m, n) => (Object.hasOwn(NAMED, n) ? NAMED[n] : ' '));
   r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
   r = mapped(r, /\\([/"\\])/g, (_, c) => c);
   r = mapped(r, /\\u\{([0-9a-f]{1,6})\}/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
@@ -209,13 +212,15 @@ function scanOne(r, secret, cache) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-// refs: report a named reference the gate does not know (off for a binary's printable runs, where `&xy;` is chance).
+// refs: report a named reference the gate does not know. On for markup and the records pages render (HTML, SVG, XML,
+// JSON, Markdown), where a browser reads
+// references; in code `a&&notReady` or `flags&mask;` is not one, and in a binary's printable runs `&xy;` is chance.
 export function scanText(text, secret, cache = new Map(), refs = true) {
   const raw = identity(text);
   const dec = decodedReading(raw);
   const readings = [raw, dec, untagged(dec), spaced(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  if (refs) for (const m of text.matchAll(UNKNOWN_REF)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
+  if (refs) for (const re of [UNKNOWN_REF, LEGACY_BARE]) for (const m of text.matchAll(re)) if (!Object.hasOwn(NAMED, m[1])) seen.set(`unknown-reference::${m.index}`, { kind: 'unknown-reference', at: m.index });
   for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
@@ -224,6 +229,7 @@ export function scanText(text, secret, cache = new Map(), refs = true) {
   return [...seen.values()].sort((a, b) => a.at - b.at).map(({ kind, at, hash }) => ({ kind, line: lineOf(starts, at), ...(hash ? { hash } : {}) }));
 }
 
+const MARKUP = /\.(html?|xhtml|svg|xml|json|jsonl|md)(\.gz)?$/i;
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|zip)$/i;
 // A file of a text type is read as text whatever bytes it holds: a NUL byte never hides a page.
 const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|srt|ya?ml|toml|sha256|webmanifest)(\.gz)?$/i;
@@ -295,7 +301,7 @@ export function scanPaths(paths, secret) {
       return;
     }
     result.texts++;
-    for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache)) result.hits.push({ file: shown, ...hit });
+    for (const hit of scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache, MARKUP.test(path))) result.hits.push({ file: shown, ...hit });
   };
   for (const root of paths) {
     if (!existsSync(root)) throw new Error('leak gate: a path to scan does not exist');

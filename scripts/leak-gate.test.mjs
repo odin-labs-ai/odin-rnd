@@ -82,6 +82,7 @@ const LEAKS = {
   'a home path spelled with named references': ['dist/index.html', '<p>&sol;Users&sol;someone</p>', /index\.html:1 home-path/],
   'a named reference the gate does not know': ['dist/index.html', '<p>Zephyr&bogusref;Quarry</p>', /index\.html:1 unknown-reference/],
   'a protected term split by a reference without its semicolon': ['dist/index.html', '<p>Zephyr&nbsp Quarry and Zephyr&nbspQuarry</p>', /index\.html:1 term/],
+  'a legacy reference without its semicolon that the gate does not decode': ['dist/index.html', '<p>Zephyr&copy Quarry</p>', /index\.html:1 unknown-reference/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -136,6 +137,11 @@ test('a file that cannot be read is reported by its redacted name, never its own
     assert.match(r.out, /\[a file name, sha256 [0-9a-f]{8}\] cannot be read \(ENOENT\)/);
     assert.ok(!r.out.includes('blorvak'), r.out);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('code is not markup: `a&&notReady` and `flags&mask;` in a script are not references', () => {
+  const root = site({ 'dist/assets/x.js': 'if (a&&notReady) x = flags&mask;\n' });
+  try { const r = gate(root); assert.equal(r.code, 0, r.out); } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('two occurrences on one line are two hits, and readings of the same text never add up to more', () => {
