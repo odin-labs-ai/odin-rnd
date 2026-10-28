@@ -65,12 +65,26 @@ test('Lab 06 runs at a pinned commit: its org record names the real main head, i
   }
 });
 
-test("Lab 06's runs section says the runs are at the pinned, reviewed commit and that a divergent day is red, unpublished", () => {
+test("Lab 06's runs section says its org runs are at the pinned, reviewed commit and that a divergent day is red, unpublished", () => {
+  const note = /The org machines' runs re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main/;
   const html = renderLabRunsSection({ runs: day(hosted, org) });
-  assert.match(html, /re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main/);
+  assert.match(html, note);
   assert.match(html, /is not published here: it is a red day, recorded in the runner's own run/);
-  const rogueRun = { ...hosted, lab: 'rogue' };
-  assert.doesNotMatch(renderLabRunsSection({ runs: [rogueRun] }), /pinned, reviewed commit/, 'Lab 05 is not pinned');
+  // A laptop run names its own commit: a laptop-only history carries no pin statement; a mixed one scopes it to org runs.
+  const laptop = { ...hosted, runner: 'laptop', machineClass: 'mac', ranAt: '2026-10-28T09:00:00Z' };
+  assert.doesNotMatch(renderLabRunsSection({ runs: [laptop] }), /pinned, reviewed commit/, 'laptop only');
+  assert.match(renderLabRunsSection({ runs: [laptop, org] }), note, 'mixed: the statement names the org machines\' runs');
+  assert.doesNotMatch(renderLabRunsSection({ runs: [{ ...hosted, lab: 'rogue' }] }), /pinned, reviewed commit/, 'Lab 05 is not pinned');
+});
+
+test('the CLI writes --main-head into the record (compare ahead) and leaves the recordHash as it is', () => {
+  const run = extra => JSON.parse(execFileSync('node', ['scripts/lab-rerun.mjs', 'review', '--record', '--runner', 'github-hosted', '--machine-class', 'ubuntu-latest',
+    '--image', `node:22-bookworm@sha256:${'a'.repeat(64)}`, '--ran-at', '2026-10-28T05:33:00Z', '--commit', 'c'.repeat(40), ...extra], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+  const plain = run([]), ahead = run(['--main-head', 'e'.repeat(40)]);
+  assert.deepEqual(plain.commit, { sha: 'c'.repeat(40), mainHead: 'c'.repeat(40), compare: 'identical', onMain: true });
+  assert.deepEqual(ahead.commit, { sha: 'c'.repeat(40), mainHead: 'e'.repeat(40), compare: 'ahead', onMain: true });
+  assert.equal(ahead.recordHash, plain.recordHash);
+  assert.deepEqual(recordProblems(ahead), []);
 });
 
 test('a lab carries only its own command and roles', () => {

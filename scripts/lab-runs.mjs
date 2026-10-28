@@ -210,15 +210,15 @@ export function renderDaySeries(runs, { runsHref = '../runs/' } = {}) {
   return `<figure class="lab-day-history" id="lab-day-series"><h3 id="engine-org-days-title">Each day on the org machines</h3><p>One point per day the record holds org runs for: how many org machines reproduced the committed state hash. A value holds until the next day's runs; a day with no run is no point.</p>${chart}${list}</figure>`;
 }
 
-// What a lab's runs are runs of, when that is not its source at main.
-const RUN_NOTES = {
-  review: "These runs re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main; moving them to a newer commit is a reviewed change to the lab runner. A day whose run would check other results than this page cites is not published here: it is a red day, recorded in the runner's own run.",
+// What a lab's org runs are runs of, when that is not its source at main (a laptop run says its own commit).
+const ORG_RUN_NOTES = {
+  review: "The org machines' runs re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main; moving them to a newer commit is a reviewed change to the lab runner. A day whose org run would check other results than this page cites is not published here: it is a red day, recorded in the runner's own run.",
 };
 
 /** A lab page's "Its runs" section: the badge, and links to its runs, its feed and the site feed. */
 export function renderLabRunsSection(lab) {
   const latest = runState(lab.runs).latest;
-  const note = RUN_NOTES[latest.lab] ? ` ${escape(RUN_NOTES[latest.lab])}` : '';
+  const note = ORG_RUN_NOTES[latest.lab] && lab.runs.some(ORG) ? ` ${escape(ORG_RUN_NOTES[latest.lab])}` : '';
   return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.${note}</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}${renderDaySeries(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
 }
 
