@@ -154,4 +154,9 @@ test('the leak screen reads a feed piece by piece: a hash glued to the next elem
   const title = '<title>Lab 05: a run on ubuntu-latest';
   assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': feeds['labs/rogue/feed.xml'].replace(title, `${title} 123456789012`) }, known), /a phone number, timestamp or long internal id/);
   assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': feeds['labs/rogue/feed.xml'].replace('rel="self"', 'rel="self" xml:base="/Users/x/"') }, known), /a machine path \(markup\)/);
+  // A shape spelled with a character reference in an attribute is decoded first, and refused.
+  const hidden = feeds['labs/rogue/feed.xml'].replace(/<link rel="alternate" type="text\/html" href="[^"]+"\/><\/feed>|<link rel="alternate" type="text\/html" href="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/rogue\/"\/>/, '<link rel="alternate" type="text/html" href="https://odin-labs-ai.github.io/Us&#101;rs/x/"/>');
+  assert.notEqual(hidden, feeds['labs/rogue/feed.xml']);
+  assert.doesNotMatch(hidden, /\/Users\//, 'the literal shape is not in the markup');
+  assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': hidden }, known), /a machine path \(attribute, decoded\)/);
 });

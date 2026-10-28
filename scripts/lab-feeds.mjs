@@ -192,7 +192,7 @@ export function feedProblems(source, { self, where = self } = {}) {
 
 /**
  * What a feed reader shows, for the leak screen: every element's text, each as its own block (attribute values are
- * markup, as on a page, and meet the LEAKS shapes with the rest of it). XML elements are not HTML blocks, so the feed read as a page would join one element's text to the next
+ * markup, as on a page: they meet the LEAKS shapes as written and as decoded, in checkedFeeds). XML elements are not HTML blocks, so the feed read as a page would join one element's text to the next
  * ("...<hash></id><title>Lab 05" reads as "...<hash>Lab 05"): a hash glued to a word is no longer a whole token, is not
  * masked, and its digits read as a long id. Each piece on its own is how a reader sees it.
  */
@@ -204,6 +204,15 @@ export function feedText(source) {
   return pieces.filter(p => p.trim()).map(p => `<p>${escape(p)}</p>`).join('');
 }
 
+/** Every attribute value of a feed, decoded by the strict reader; [] when it is not well-formed (feedProblems says why). */
+export function feedAttributes(source) {
+  const { tree, problems } = parseXml(source);
+  if (problems.length) return [];
+  const values = [];
+  (function walk(el) { values.push(...Object.values(el.attrs)); el.children.forEach(walk); })(tree);
+  return values;
+}
+
 /** Every feed checked and screened; the build throws on any problem. `known` are the hashes the runs hold. */
 export function checkedFeeds(feeds, known) {
   const problems = [];
@@ -213,6 +222,8 @@ export function checkedFeeds(feeds, known) {
     const text = feedText(source);
     if (text !== null) problems.push(...pageLeaks(text, known).map(p => `${path}: ${p}`));
     for (const [pattern, reason] of LEAKS) if (pattern.test(source)) problems.push(`${path}: ${reason} (markup)`);
+    // And every attribute value as the reader decodes it, so a reference (/Us&#101;rs/) cannot hide a shape.
+    for (const value of feedAttributes(source)) for (const [pattern, reason] of LEAKS) if (pattern.test(value)) problems.push(`${path}: ${reason} (attribute, decoded)`);
   }
   if (problems.length) throw new Error(`Atom feeds refused:\n  ${problems.join('\n  ')}`);
   return feeds;
