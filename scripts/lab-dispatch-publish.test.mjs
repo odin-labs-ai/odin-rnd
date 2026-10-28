@@ -9,6 +9,7 @@ import { validate } from './json-schema-lite.mjs';
 import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
 import { readFilms } from './lab-films.mjs';
+import { readOutage } from './lab-outage.mjs';
 
 // The Lab 01 publisher (mission rnd-labs-human-first-1024). Every session here is written by the test at run time, so
 // no recorded session, clip or restricted name is committed: a restricted name is built from character codes.
@@ -228,7 +229,10 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
   // The lab's films are the only other Lab assets. films.json owns each film file: readFilms refuses (throws) a film
   // or poster whose bytes do not hash to its recorded sha256 and size, so ownership here is hash-checked.
   const films = readFilms('site')?.films ?? [];
-  const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster])].map(src => join('site', src)));
+  // Dispatch #2's film and poster are owned by outage.json, hash-checked the same way by readOutage.
+  const outage = readOutage('site');
+  const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster]),
+    ...(outage ? [outage.film.src, outage.film.poster] : [])].map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
   for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch or film`);
   for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
@@ -238,7 +242,8 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     '.github/ISSUE_TEMPLATE/ask-the-agents.yml', 'scripts/lab-films.mjs', 'scripts/lab-telemetry.mjs', 'scripts/lab-counts.mjs', 'scripts/schemas/odin-lab-films.schema.json',
     'scripts/schemas/odin-telemetry.schema.json', 'scripts/schemas/odin-lab-counts.schema.json', 'site/data/labs/agent-space/films.json',
     'site/data/labs/agent-space/telemetry.json', 'site/data/labs/agent-space/counts.json',
-    'site/data/labs/agent-space/hard-parts.json'];
+    'site/data/labs/agent-space/hard-parts.json', 'scripts/lab-outage.mjs', 'scripts/lab-outage.test.mjs',
+    'scripts/schemas/odin-lab-outage.schema.json', 'site/data/labs/agent-space/outage.json'];
   for (const file of files) assert.ok(!screenText(readFileSync(file, 'utf8')).some(r => r.startsWith('a restricted name')), file);
   // The vendored schema differs from its upstream copy in one description only (scripts/schemas/README.md).
   const readme = readFileSync('scripts/schemas/README.md', 'utf8');
