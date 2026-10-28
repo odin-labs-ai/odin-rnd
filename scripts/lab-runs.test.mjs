@@ -62,12 +62,38 @@ test('two runs of one commit with different hashes: "Different hash", both shown
   ok(runs);
   const html = renderProvenance(runs);
   assert.deepEqual(badge(html), ['different', `${BADGES.different}.`]);
-  assert.match(html, new RegExp(`<code>org-ci-heavy</code> printed record <code>${org.recordHash.slice(0, 12)}</code>`));
-  assert.match(html, new RegExp(`<code>ubuntu-latest</code> printed record <code>${other.recordHash.slice(0, 12)}</code>`));
+  assert.ok(html.includes(`record <code>${org.recordHash.slice(0, 12)}</code> on <code>org-ci-heavy</code>, 27 Oct 2026`));
+  assert.ok(html.includes(`record <code>${other.recordHash.slice(0, 12)}</code> on <code>ubuntu-latest</code>, 27 Oct 2026`));
   assert.doesNotMatch(html, /same hash/);
   screened(html, runs);
   // A laptop run that disagrees with an org run of the same commit is a different hash too.
   assert.equal(runState([laptop, on('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:00Z', otherInputs)]).state, 'different');
+});
+
+test('a different hash is sticky for its commit: a later matching day still renders "Different hash", linking the differing runs', () => {
+  // Day 1: the two org legs disagree. Day 2, the same commit: they agree, with the first leg's hash.
+  const d1org = on('org-hosted', 'org-ci-heavy', '2026-10-26T20:00:00Z');
+  const d1hosted = on('github-hosted', 'ubuntu-latest', '2026-10-26T20:05:00Z', otherInputs);
+  const d2org = on('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:00Z');
+  const d2hosted = on('github-hosted', 'ubuntu-latest', '2026-10-27T20:05:00Z');
+  const runs = [...pair(d1org, d1hosted, 'differedOn'), ...pair(d2org, d2hosted, 'replicatedOn')];
+  ok(runs);
+  assert.equal(runState(runs).state, 'different');
+  assert.equal(runState(runs).latest.ranAt, '2026-10-27T20:05:00Z', 'the latest run is the matching day');
+  const html = renderProvenance(runs, { runsPage: true });
+  assert.deepEqual(badge(html), ['different', `${BADGES.different}.`]);
+  assert.doesNotMatch(html, /same hash/i);
+  // Each hash with the newest run of each class that printed it, linked to its row on the runs page.
+  assert.ok(html.includes(`record <code>${d2org.recordHash.slice(0, 12)}</code> on <a href="runs/#${runAnchor(d2hosted)}"><code>ubuntu-latest</code>, 27 Oct 2026</a>, <a href="runs/#${runAnchor(d2org)}"><code>org-ci-heavy</code>, 27 Oct 2026</a>`));
+  assert.ok(html.includes(`record <code>${d1hosted.recordHash.slice(0, 12)}</code> on <a href="runs/#${runAnchor(d1hosted)}"><code>ubuntu-latest</code>, 26 Oct 2026</a>`));
+  assert.match(html, /A later run with a matching hash does not clear this; a new commit starts fresh\./);
+  screened(html, runs);
+  // On the lab page the links go one level up.
+  assert.ok(renderProvenance(runs, { runsHref: '../runs/' }).includes(`<a href="../runs/#${runAnchor(d1hosted)}">`));
+  // A new commit starts fresh.
+  const fresh = { commit: { sha: 'd'.repeat(40), mainHead: 'd'.repeat(40), compare: 'identical', onMain: true } };
+  const next = pair(on('org-hosted', 'org-ci-heavy', '2026-10-27T22:00:00Z', fresh), on('github-hosted', 'ubuntu-latest', '2026-10-27T22:05:00Z', fresh), 'replicatedOn');
+  assert.equal(runState([...runs, ...next]).state, 'reproduced');
 });
 
 test('the badge is for the latest run\'s commit; older commits do not count toward it', () => {
@@ -108,7 +134,7 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   assert.ok(card.indexOf('lab-provenance') < card.indexOf('<ul class="lab-tile-links">'));
   assert.deepEqual(badge(card), ['laptop', `${BADGES.laptop}.`]);
   assert.equal(page.split('class="lab-provenance ').length, 2, 'only the lab with runs has a provenance');
-  assert.match(page, /<link rel="stylesheet" href="\.\.\/assets\/lab-runs\.css">\n<\/head>/);
+  assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
   assert.doesNotMatch(page, /org machine|daily/i);
 });
 
@@ -163,7 +189,7 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.deepEqual(pageLeaks(page, readLabRuns().flatMap(l => l.runs.flatMap(recordHashes))), []);
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
-  assert.match(index, /<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p><\/section>/);
+  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
   // The card's link lands on the row of the run it shows, the lab's latest.
   assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(laptop)}">This run, among every run</a></p>`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`));

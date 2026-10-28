@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 09",
+ "title": "Can a talk leak data?",
+ "question": "When we show real software to a room, what stops a private name, figure or key from reaching a screen or a shipped file?",
+ "how": "A made-up company on stage, a sealed build as the only way out, and a leak scan that fails the build. Its tests run, and a fresh scan of the sealed build.",
+ "experiment": "talk-leak",
+ "status": "Fiction on stage, a real scan · record cited by hash",
+ "record": {
+  "href": "data/labs/talk-leak/record.json",
+  "pin": "data/labs/talk-leak/record.sha256"
+ },
+ "links": [
+  {
+   "label": "The method, the tests and the fresh scan",
+   "href": "labs/talk-leak/index.html"
+  },
+  {
+   "label": "The record, pinned by its hash",
+   "href": "data/labs/talk-leak/record.json"
+  }
+ ]
+}

@@ -1,0 +1,325 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-lab-talk-leak-v1",
+ "title": "Lab 09, can a talk leak data: site/data/labs/talk-leak/record.json, written by scripts/vendor-talk-leak.mjs. Counts only: no term, label, figure or finding text of the scan can ride along.",
+ "type": "object",
+ "required": [
+  "format",
+  "version",
+  "vendored",
+  "denylist",
+  "tests",
+  "scan"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "odin-lab-talk-leak"
+  },
+  "version": {
+   "const": 1
+  },
+  "vendored": {
+   "type": "object",
+   "required": [
+    "from",
+    "commit",
+    "committed",
+    "mainCheck",
+    "cites",
+    "files"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "from": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 300
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "committed": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "mainCheck": {
+     "type": "object",
+     "required": [
+      "main",
+      "how",
+      "checked",
+      "commits"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "main": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{40}$"
+      },
+      "how": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 300
+      },
+      "checked": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "commits": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       }
+      }
+     }
+    },
+    "cites": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "commit",
+       "what",
+       "at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+       },
+       "at": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+       }
+      }
+     }
+    },
+    "files": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "role",
+       "what",
+       "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "role": {
+        "type": "string",
+        "pattern": "^[a-z][a-z-]*$"
+       },
+       "what": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     }
+    }
+   }
+  },
+  "denylist": {
+   "type": "object",
+   "required": [
+    "terms",
+    "labels",
+    "errors",
+    "warns",
+    "hashedAs"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "terms": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "labels": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "errors": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "warns": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "hashedAs": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 120
+    }
+   }
+  },
+  "tests": {
+   "type": "object",
+   "required": [
+    "at",
+    "on",
+    "host",
+    "how",
+    "python",
+    "passed",
+    "failed",
+    "errors",
+    "plants"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "on": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "host": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 80
+    },
+    "how": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 160
+    },
+    "python": {
+     "type": "string",
+     "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "passed": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "failed": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "errors": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "plants": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "pattern": "^[a-z][a-z-]*$"
+     }
+    }
+   }
+  },
+  "scan": {
+   "type": "object",
+   "required": [
+    "at",
+    "zipSha256",
+    "zipBytes",
+    "parts",
+    "entries",
+    "manifests",
+    "verifyProblems",
+    "files",
+    "binary",
+    "errors",
+    "warns",
+    "jsDollarDigit",
+    "errorsByKind",
+    "on",
+    "host",
+    "how"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "zipSha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "zipBytes": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "parts": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "entries": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "manifests": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "verifyProblems": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "files": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "binary": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "errors": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "warns": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "jsDollarDigit": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "errorsByKind": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    },
+    "on": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "host": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 80
+    },
+    "how": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 160
+    }
+   }
+  }
+ }
+}
