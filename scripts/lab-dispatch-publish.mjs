@@ -67,6 +67,9 @@ export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, 
 export function addScreenNames(...names) {
   // Test-scoped: only under `node --test`, never in a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
   // A test file is a *.test.mjs the runner started (it sets NODE_TEST_CONTEXT); an inline script or a build is refused.
+  // The variables can be set by hand, so this is a guard against accidents, not a security boundary; the boundary is
+  // that the hook can only ADD names (a call can never weaken a screen) and that only test code may call it (a test
+  // in leak-gate.test.mjs refuses any other caller in the tracked tree).
   const testFile = /\.test\.mjs$/.test(process.argv[1] ?? '');
   if (!process.env.NODE_TEST_CONTEXT || !testFile || process.env.ODIN_SITE_BUILD) throw new Error('addScreenNames is for the tests only (node --test), never a build');
   for (const name of names) NAMES.add(fingerprint(name));

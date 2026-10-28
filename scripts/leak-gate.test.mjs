@@ -551,3 +551,12 @@ test('the verify job (the site build) runs with ODIN_SITE_BUILD set, so the test
   const verify = wf.slice(wf.indexOf('\n  verify:'), wf.indexOf('\n  publish:'));
   assert.match(verify, /\n    env:\n      ODIN_SITE_BUILD: '1'\n/);
 });
+
+test('only test code calls the screen hook: no build or site script imports it or the made-up names', () => {
+  const tracked = spawnSync('git', ['ls-files', '-z', '--', 'scripts', 'site', 'harness', 'experiments'], { encoding: 'utf8' }).stdout.split('\0').filter(f => /\.(m?js|cjs|ts)$/.test(f));
+  const allowed = f => /\.test\.mjs$/.test(f) || f === 'scripts/lab-dispatch-publish.mjs' || f === 'scripts/test-synthetic-names.mjs';
+  for (const file of tracked) {
+    const text = readFileSync(file, 'utf8');
+    if (/addScreenNames|test-synthetic-names/.test(text)) assert.ok(allowed(file), `${file} reaches the test-only screen hook`);
+  }
+});
