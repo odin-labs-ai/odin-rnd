@@ -19,12 +19,13 @@ const setFile = (raw = SECRET) => { const d = JSON.parse(raw); return JSON.strin
 const PAGE = '<p>Terms <span data-leak-screen="terms">-</span> canaries <span data-leak-screen="canaries">-</span> <time data-leak-screen="scanned" datetime="">-</time> <code data-leak-screen="commit">-</code> <span data-leak-screen="files">0</span> <span data-leak-screen="hits">-</span> <span data-leak-screen="known">-</span></p>';
 const COMMIT = 'a'.repeat(40);
 /** A minimal ustar archive, for the vendored-bundle case. */
-function tar(files, links = {}) {
+function tar(files, links = {}, dirs = {}) {
   const parts = [];
-  for (const [name, body, link] of [...Object.entries(files), ...Object.entries(links).map(([n, target]) => [n, '', target])]) {
+  for (const [full, body, link, dir] of [...Object.entries(files), ...Object.entries(links).map(([n, target]) => [n, '', target]), ...Object.keys(dirs).map(d => [d, '', null, true])]) {
     const data = Buffer.from(body), h = Buffer.alloc(512);
-    h.write(name, 0); h.write('0000644\0', 100); h.write('0000000\0', 108); h.write('0000000\0', 116);
-    h.write(data.length.toString(8).padStart(11, '0') + '\0', 124); h.write('00000000000\0', 136); h.write(link ? '2' : '0', 156); if (link) h.write(link, 157); h.write('ustar\0', 257); h.write('00', 263);
+    const [prefix, name] = full.includes('\0') ? full.split('\0') : ['', full];
+    h.write(name, 0); if (prefix) h.write(prefix, 345); h.write('0000644\0', 100); h.write('0000000\0', 108); h.write('0000000\0', 116);
+    h.write(data.length.toString(8).padStart(11, '0') + '\0', 124); h.write('00000000000\0', 136); h.write(dir ? '5' : link ? '2' : '0', 156); if (link) h.write(link, 157); h.write('ustar\0', 257); h.write('00', 263);
     h.fill(' ', 148, 156); let sum = 0; for (const b of h) sum += b; h.write(sum.toString(8).padStart(6, '0') + '\0 ', 148);
     parts.push(h, data, Buffer.alloc((512 - (data.length % 512)) % 512));
   }
@@ -92,6 +93,8 @@ const LEAKS = {
   'a home path as a symlink target inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, { 'main/link': '/Users/someone/private' })), /raw-evidence\.tar\.gz!\(archive headers\):0 home-path/],
   'a loopback address other than 127.0.0.1': ['dist/index.html', '<p>http://127.0.0.2:3099/</p>', /index\.html:1 loopback/],
   'an IPv6 loopback without a port': ['dist/index.html', '<p>http://[::1]/</p>', /index\.html:1 loopback/],
+  'a protected term split by a comment holding a quote': ['dist/index.html', '<p>blor<!-- " -->vak</p>', /index\.html:1 term/],
+  'a home path as a directory name inside a vendored archive': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ok.json': '{}' }, {}, { '/Users\0someone/private/': true })), /raw-evidence\.tar\.gz!\(archive headers\):0 home-path/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -235,6 +238,7 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
   assert.throws(() => loadKnown(list([{ ...row(1), kind: 'canary' }])), /canary/);
   assert.throws(() => loadKnown(list([{ ...row(1), reason: '' }])), /reason/);
   assert.throws(() => loadKnown(list([{ ...row(1), hash: undefined }])), /hash prefix/);
+  assert.throws(() => loadKnown(list([{ ...row(1), kind: 'blorvak' }])), /kind the gate does not report/);
   assert.equal(loadKnown(list([row(1)])).length, 1);
 });
 

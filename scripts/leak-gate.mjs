@@ -167,8 +167,9 @@ function decodedReading(r) {
 }
 export const decoded = text => decodedReading(identity(text)).text;
 /** Tags removed (their line breaks kept): a term split by markup reads whole. */
-// A tag ends at the first ">" outside a quoted attribute value, as in HTML: <span title=">"> is one tag.
-const TAG = /<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+// A comment runs to its "-->" (or the end), whatever it holds; a tag ends at the first ">" outside a quoted attribute
+// value, as in HTML: <span title=">"> is one tag.
+const TAG = /<!--[\s\S]*?(?:-->|$)|<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
 const untagged = r => mapped(r, TAG, tag => tag.replace(/[^\n]/g, ''));
 /** Tags read as a space: "Some<br>Name", where removing the tag would glue the words into one. */
 const spaced = r => mapped(r, TAG, () => ' ');
@@ -269,6 +270,7 @@ export function* tarEntries(buf, shown) {
     // of any entry that is not a regular file (a directory, a link, a pax or GNU record).
     // Each text field on its own line, so no field runs into the next ("2" + "/Users/..." would hide the path).
     const fields = [[157, 100], [265, 32], [297, 32], ...(type === '0' || type === '7' ? [] : [[0, 100], [345, 155]])].map(([from, len]) => field(h, from, len));
+    if (type !== '0' && type !== '7') fields.push(name);
     yield { meta: Buffer.concat([Buffer.from(fields.join('\n') + '\n'), type === '0' || type === '7' ? Buffer.alloc(0) : body]) };
     at += 512 + Math.ceil(size / 512) * 512;
   }
@@ -332,6 +334,7 @@ export function loadKnown(raw) {
   for (const row of d.known) {
     if (typeof row.file !== 'string' || typeof row.kind !== 'string' || !Number.isInteger(row.count) || row.count < 1 || typeof row.reason !== 'string' || row.reason.length < 10) throw new Error('leak gate: a known occurrence needs file, kind, count and a reason');
     if (row.kind === 'canary') throw new Error('leak gate: a canary can never be a known occurrence');
+    if (row.kind !== 'term' && !PATTERNS.some(([kind]) => kind === row.kind)) throw new Error('leak gate: a known occurrence names a kind the gate does not report');
     if (row.kind === 'term' && !/^[0-9a-f]{8}$/.test(row.hash ?? '')) throw new Error('leak gate: a known term needs its 8-hex hash prefix');
   }
   return d.known;
