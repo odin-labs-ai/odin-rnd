@@ -1,7 +1,7 @@
 {
  "format": "odin-lab-screen-terms",
  "version": 1,
- "about": "Terms the Lab 01 publisher refuses, as sha256 of the term in letters only, lowercased (for example \"Some Town\" -> \"sometown\"), so the list does not spell the names in this public repo. names: the private project behind the space, a game studio, a compute partner, partners and customers. places: Dutch provinces, the larger Dutch towns and towns near the lab, the country, and a few world cities. It is not a complete gazetteer: a place missing here is caught only by the human answer screen. Add a term with: node scripts/lab-dispatch-publish.mjs --fingerprint \"<term>\"",
+ "about": "Terms the Lab 01 publisher refuses, as sha256 of the term in letters only, lowercased (for example \"Some Town\" -> \"sometown\"), so the list does not spell the names in this public repo. names: the private project behind the space, a game studio, a compute partner, partners and customers, and the theme of the client talks (Lab 05 and after). places: Dutch provinces, the larger Dutch towns and towns near the lab, the country, and a few world cities. It is not a complete gazetteer: a place missing here is caught only by the human answer screen. Add a term with: node scripts/lab-dispatch-publish.mjs --fingerprint \"<term>\"",
  "names": [
   "40a935d9f7e2714b0e7b03c78302a9ca1833ee3e382647309c67b965e28f5419",
   "0d660d1fcb539d95918c654104d20674a71df0735f46c71c9d2be943ebc400a5",
@@ -11,7 +11,9 @@
   "ee5df3b6d2bfaf227b56ca429a7e07ca0f028992a7c1ca68facfc27a957bf27b",
   "47e69e04a2b2e21dd28d451490f53117d183de45a1221f169a60c864f164bce8",
   "db8125a5a0a5825896a37524890fe5a4b7608cfc05c1125b0791cc65a61855b4",
-  "a3c59678ef2ffc2712fb023a16730f3c2114015ae93f61585ad9ae0e0e13c400"
+  "a3c59678ef2ffc2712fb023a16730f3c2114015ae93f61585ad9ae0e0e13c400",
+  "adf27cc54e26ca64846f6b05e1b81338e2b1a14fb01b91e7589c73f4da87e3b7",
+  "2d0faca920da145ec42d3c77fcc21412ba82377539345e7a6aa39deaedaa5dbe"
  ],
  "places": [
   "03f632a8f849ffe47638b6697f6bdd24abdc7189619747a667448f3e4a03804c",

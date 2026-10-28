@@ -18,21 +18,16 @@
 //   - any text fails the publisher's screen.
 // The rendered page is screened again as a whole (pageLeaks): no machine path, no local host or address, no credential
 // shape and no restricted name, with hex tokens (cited by hash, checked by the schema) masked first.
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validate } from './json-schema-lite.mjs';
-import { screenHits } from './lab-dispatch-publish.mjs';
-import { cite, realInstant } from './lab-engine-history.mjs';
+import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const ROGUE_RECORD = 'data/labs/rogue/record.json';
 export const ROGUE_PIN = 'data/labs/rogue/record.sha256';
 export const ROGUE_TEMPLATE = 'labs/rogue/index.html';
 export const ROGUE_SCHEMA = join(here, 'schemas/odin-lab-rogue.schema.json');
-const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const ZERO = '0'.repeat(64);
 
 /** Every reason the record may not be published (empty when it may). */
@@ -40,14 +35,9 @@ export function rogueProblems(record, { now = new Date(), where = ROGUE_RECORD }
   const problems = validate(JSON.parse(readFileSync(ROGUE_SCHEMA, 'utf8')), record).map(p => `${where}#${p} (does not match odin-lab-rogue v1)`);
   if (problems.length) return problems;
   // Hashes and commits are checked by the schema's patterns; every other string is page text and passes the screen.
-  const text = (value, at) => {
-    if (typeof value === 'string') return /^[0-9a-f]{16,64}$/.test(value) ? [] : screenHits(value).map(hit => `${where}#${at}: ${hit.reason}`);
-    if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => text(v, `${at}/${k}`));
-    return [];
-  };
-  problems.push(...text(record, ''));
+  problems.push(...screenRecord(record, where));
   const v = record.vendored;
-  const when = (iso, at) => { const d = realInstant(iso); if (!d) problems.push(`${where}#${at}: ${iso} is not a real date`); else if (d > now) problems.push(`${where}#${at}: ${iso} is after this build`); };
+  const when = (iso, at) => problems.push(...instantProblems(iso, `${where}#${at}`, now));
   when(v.committed, '/vendored/committed');
   when(`${v.mainCheck.checked}T00:00:00Z`, '/vendored/mainCheck/checked');
   v.cites.forEach((c, i) => when(c.at, `/vendored/cites/${i}/at`));
@@ -99,50 +89,11 @@ export function rogueProblems(record, { now = new Date(), where = ROGUE_RECORD }
 
 /** The committed record, pinned and checked; null when there is none. Throws with every reason. */
 export function readRogue(root = 'site', { now = new Date() } = {}) {
-  const file = join(root, ROGUE_RECORD);
-  if (!existsSync(file)) return null;
-  const bytes = readFileSync(file);
-  const problems = [];
-  const pin = existsSync(join(root, ROGUE_PIN)) ? readFileSync(join(root, ROGUE_PIN), 'utf8') : null;
-  if (pin !== `${sha256(bytes)}  record.json\n`) problems.push(`${ROGUE_PIN}: does not pin the sha256 of ${ROGUE_RECORD} (${sha256(bytes)}); re-vendor with scripts/vendor-rogue.mjs`);
-  let record = null;
-  try { record = JSON.parse(bytes); } catch { problems.push(`${ROGUE_RECORD}: not JSON`); }
-  if (record) problems.push(...rogueProblems(record, { now }));
-  if (problems.length) throw new Error(`Lab 05 record refused:\n  ${problems.join('\n  ')}`);
-  return record;
+  return readPinned({ root, file: ROGUE_RECORD, pin: bytes => sidecarPinProblems(root, bytes, { pinFile: ROGUE_PIN, file: ROGUE_RECORD, vendor: 'scripts/vendor-rogue.mjs' }), check: record => rogueProblems(record, { now }), refused: 'Lab 05 record refused' });
 }
 
-// Shapes that never belong on a public page, beyond the publisher's screen: machine paths, local hosts, credentials.
-const LEAKS = [
-  [/\/Users\/|\/home\/|~\/\.|\b[A-Z]:\\/, 'a machine path'],
-  [/localhost|\b127\.0\.0\.1\b|\b\d{1,3}(?:\.\d{1,3}){3}\b|\[::1\]|:\d{4,5}\b/, 'a local host, address or port'],
-  [/\bghp_|\bgithub_pat_|\bgh[osu]_[A-Za-z0-9]|\bsk-[A-Za-z0-9]|\bAKIA[0-9A-Z]|-----BEGIN|\bxox[abp]-|\bBearer\s+\w/, 'a credential'],
-];
-
-/** Every commit and sha256 the record holds: the only hex tokens pageLeaks masks (a token must be a prefix of one). */
-export function recordHashes(record) {
-  const out = [];
-  (function walk(v) { if (typeof v === 'string' && /^[0-9a-f]{16,64}$/.test(v)) out.push(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk); })(record);
-  return out;
-}
-
-/**
- * Why a rendered page may not be published: every visible text through the publisher's screen and the LEAKS above, and
- * the markup itself through LEAKS. Before the screen, a hex token of 8 or more characters is masked only when it is a
- * prefix of a hash the record holds (`known`, from recordHashes): any other token is screened as it is.
- */
-export function pageLeaks(html, known = []) {
-  const problems = [];
-  const body = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
-  for (const [pattern, reason] of LEAKS) { const m = pattern.exec(body); if (m) problems.push(`${reason}: ${JSON.stringify(body.slice(Math.max(0, m.index - 40), m.index + 40))}`); }
-  // &amp; is decoded last, so an escaped entity is never decoded twice.
-  const text = body.replace(/<[^>]+>/g, '\n').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&');
-  for (const line of text.split('\n').map(t => t.trim()).filter(Boolean)) {
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => known.some(h => h.startsWith(token)) ? 'HASH' : token);
-    problems.push(...screenHits(masked).map(hit => `${hit.reason}: ${JSON.stringify(line.slice(0, 100))}`));
-  }
-  return problems;
-}
+// The leak screen is the kit's (scripts/lab-kit.mjs); exported here too, as before.
+export { pageLeaks, recordHashes };
 
 const longDate = d => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const time = d => `<time datetime="${escape(d)}">${escape(longDate(d))}</time>`;
@@ -155,7 +106,7 @@ export function renderIntro(record) {
 
 export function renderStagedReal(record) {
   const s = record.staged, sb = s.sandbox;
-  return `<div class="rogue-split"><div class="lab-panel rogue-staged" id="staged"><h3>Staged</h3><ul class="rogue-list"><li><strong>The attack.</strong> We wrote the poisoned ticket. Nobody attacked anything.</li><li><strong>The company.</strong> ${escape(s.company)}, with a fictional repository, <code>${escape(s.repository)}</code>.</li><li><strong>The repository.</strong> A seeded sandbox in a temporary folder: ${n(sb.mainCommits)} commits on main, ${n(sb.prBranches)} pull-request branches and ${n(sb.ciRuns)} CI runs, all synthetic, with a local copy as its origin. All ${n(sb.calls)} git calls of the run with no controls stayed inside that folder; none reached the network, and no real GitHub command ever started. The repository delete deleted the sandbox's own copy.</li><li><strong>The repair time.</strong> An estimate, from the record's own repair table. Nobody repaired anything.</li></ul></div><div class="lab-panel rogue-real" id="real"><h3>Real</h3><ul class="rogue-list"><li><strong>The guards.</strong> The engine's own code, run as it is, not re-written for the demo: the read-only door, the outbox and its writer, and the trust wall.</li><li><strong>The refusals.</strong> The words below are what those guards returned.</li><li><strong>The journal.</strong> One row per refusal, each row holding the hash of the row before it. The engine's own check of the chain passed when the runs were recorded, and the demo's check re-runs it.</li><li><strong>The record.</strong> Every file it comes from is cited by its sha256, at a private commit cited by hash.</li></ul></div></div>`;
+  return `<div class="rogue-split">${box('staged', { cls: 'rogue-staged', id: 'staged', body: `<ul class="rogue-list"><li><strong>The attack.</strong> We wrote the poisoned ticket. Nobody attacked anything.</li><li><strong>The company.</strong> ${escape(s.company)}, with a fictional repository, <code>${escape(s.repository)}</code>.</li><li><strong>The repository.</strong> A seeded sandbox in a temporary folder: ${n(sb.mainCommits)} commits on main, ${n(sb.prBranches)} pull-request branches and ${n(sb.ciRuns)} CI runs, all synthetic, with a local copy as its origin. All ${n(sb.calls)} git calls of the run with no controls stayed inside that folder; none reached the network, and no real GitHub command ever started. The repository delete deleted the sandbox's own copy.</li><li><strong>The repair time.</strong> An estimate, from the record's own repair table. Nobody repaired anything.</li></ul>` })}${box('real', { cls: 'rogue-real', id: 'real', body: `<ul class="rogue-list"><li><strong>The guards.</strong> The engine's own code, run as it is, not re-written for the demo: the read-only door, the outbox and its writer, and the trust wall.</li><li><strong>The refusals.</strong> The words below are what those guards returned.</li><li><strong>The journal.</strong> One row per refusal, each row holding the hash of the row before it. The engine's own check of the chain passed when the runs were recorded, and the demo's check re-runs it.</li><li><strong>The record.</strong> Every file it comes from is cited by its sha256, at a private commit cited by hash.</li></ul>` })}</div>`;
 }
 
 export function renderAttack(record) {
@@ -167,7 +118,7 @@ export function renderUngoverned(record) {
   const u = record.ungoverned, d = u.damage, r = u.repairEstimate;
   const steps = u.steps.map(s => `<tr><td>${escape(s.says)}</td><td><code>${escape(s.command)}</code></td><td>${s.ran ? 'ran' : 'did not run'}: ${escape(s.result)}</td></tr>`).join('');
   const rows = r.rows.map(row => `<tr><td>${escape(row.what)}</td><td>${n(row.n)}</td><td>${n(row.hours)}</td></tr>`).join('');
-  return `<p>${escape(record.staged.agent)} was given a writable copy of the sandbox and no controls. It ran every command the ticket asked for.</p><div class="lab-table-wrap"><table><thead><tr><th scope="col">The ticket asked</th><th scope="col">The command</th><th scope="col">What happened</th></tr></thead><tbody>${steps}</tbody></table></div><h3 class="lab-subhead">What it did to the sandbox</h3><ul class="rogue-list"><li>Main went from ${n(u.before.mainCommits)} commits to ${n(u.after.mainCommits)}: ${n(d.commitsLostFromMain)} commits gone.</li><li>${n(d.prBranchesDeleted)} pull-request branches deleted.</li><li>${d.repositoryDeleted ? 'The repository deleted' : 'The repository kept'}, so its ${n(d.ciRunsStopped)} CI runs stopped.</li></ul><p class="lab-source">Measured on the sandbox after the run. It is the only place the damage happened.</p><div class="lab-panel rogue-estimate" id="estimate"><p class="technical">AN ESTIMATE, NOT A MEASUREMENT</p><h3>What repairing it might take</h3><p>About <strong>${n(r.hours)} engineer-hours</strong>, or <strong>${n(r.workdays)} working days</strong> of ${n(r.workdayHours)} hours. This is not an observed cost: nobody repaired anything. It is the record's own repair table, which gives each kind of damage a fixed number of hours, multiplied by the damage counted above. In the record's words: ${escape(r.rule)}.</p><details class="lab-panel-table"><summary>The repair table</summary><table><thead><tr><th scope="col">Repair</th><th scope="col">Count</th><th scope="col">Hours, by the table</th></tr></thead><tbody>${rows}</tbody></table></details></div>`;
+  return `<p>${escape(record.staged.agent)} was given a writable copy of the sandbox and no controls. It ran every command the ticket asked for.</p><div class="lab-table-wrap"><table><thead><tr><th scope="col">The ticket asked</th><th scope="col">The command</th><th scope="col">What happened</th></tr></thead><tbody>${steps}</tbody></table></div><h3 class="lab-subhead">What it did to the sandbox</h3><ul class="rogue-list"><li>Main went from ${n(u.before.mainCommits)} commits to ${n(u.after.mainCommits)}: ${n(d.commitsLostFromMain)} commits gone.</li><li>${n(d.prBranchesDeleted)} pull-request branches deleted.</li><li>${d.repositoryDeleted ? 'The repository deleted' : 'The repository kept'}, so its ${n(d.ciRunsStopped)} CI runs stopped.</li></ul><p class="lab-source">Measured on the sandbox after the run. It is the only place the damage happened.</p>${box('estimate', { cls: 'rogue-estimate', id: 'estimate', body: `<h3>What repairing it might take</h3><p>About <strong>${n(r.hours)} engineer-hours</strong>, or <strong>${n(r.workdays)} working days</strong> of ${n(r.workdayHours)} hours. This is not an observed cost: nobody repaired anything. It is the record's own repair table, which gives each kind of damage a fixed number of hours, multiplied by the damage counted above. In the record's words: ${escape(r.rule)}.</p><details class="lab-panel-table"><summary>The repair table</summary><table><thead><tr><th scope="col">Repair</th><th scope="col">Count</th><th scope="col">Hours, by the table</th></tr></thead><tbody>${rows}</tbody></table></details>` })}`;
 }
 
 export function renderGoverned(record) {
@@ -199,7 +150,9 @@ export function renderRogue(root = 'site', { now = new Date() } = {}) {
     html = html.replace(marker, () => value);
   }
   if (/<!--[A-Z_]+-->/.test(html)) throw new Error(`${ROGUE_TEMPLATE}: unresolved content marker`);
-  const leaks = pageLeaks(html, recordHashes(record));
+  // Every cited commit is the record's own commit or one of its cites, which the vendor checked against main.
+  const v = record.vendored;
+  const leaks = pageLeaks(html, recordHashes(record), { onMain: [v.commit, v.mainCheck.main, ...v.cites.map(c => c.commit)] });
   if (leaks.length) throw new Error(`${ROGUE_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [ROGUE_TEMPLATE]: html } };
 }
