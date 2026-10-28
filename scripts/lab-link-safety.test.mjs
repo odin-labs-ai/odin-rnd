@@ -9,9 +9,9 @@ import { fixturesOf, LABELS_FILE, parseList } from './vendor-link-safety.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 07, "Can data trick a click?" (scripts/lab-link-safety.mjs). The page is only worth publishing if what is real
 // (the defect, the fix, the test run) and what is authored (the fixtures) are told apart, every number is the record's,
@@ -137,7 +137,7 @@ test('leak screen: no machine path, local host, address, port, credential, other
 
 test('the screen catches what it says it catches on this page (a failing negative per class)', () => {
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
-  for (const [inject, reason] of [['/Users/someone/x', /machine path/], ['served on localhost', /local host/], ['10.0.0.12', /local host/], ['port :6488', /local host/], [credential, /credential/], ['a zarquonbank lender', /restricted name/], ['the zarquon repository', /restricted name/], ['odin-labs-ai/some-private-repo', /another repository/], ['it cost €40', /price or currency/], ['javascript:alert(1) at https://evil.io/x', /a link to somewhere other than this lab/]]) {
+  for (const [inject, reason] of [['/Users/someone/x', /machine path/], ['served on localhost', /local host/], ['10.0.0.12', /local host/], ['port :6488', /local host/], [credential, /credential/], [`a ${SYN_THEME} lender`, /restricted name/], [`the ${SYN_REPO} repository`, /restricted name/], ['odin-labs-ai/some-private-repo', /another repository/], ['it cost €40', /price or currency/], ['javascript:alert(1) at https://evil.io/x', /a link to somewhere other than this lab/]]) {
     assert.ok(pageLeaks(page.replace('</main>', `<p>${inject}</p></main>`), recordHashes(record)).some(p => reason.test(p)), inject);
   }
   assert.ok(pageLeaks(page.replace('</main>', '<p>id <code>1234567890abcdef</code></p></main>'), recordHashes(record)).some(p => /long internal id|a hash the record does not hold/.test(p)), 'a hex token the record does not hold');

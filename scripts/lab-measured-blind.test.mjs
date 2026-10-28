@@ -7,9 +7,9 @@ import { join } from 'node:path';
 import { BLIND_PIN, BLIND_RECORD, BLIND_TEMPLATE, blindProblems, pageLeaks, readMeasuredBlind, recordHashes, recount, renderIntro, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 13, "Does an agent company get better, measured blind?" (scripts/lab-measured-blind.mjs). The page is only worth
 // publishing if it says who judged (an AI), what one side of a set is (18 verdicts, not 9 items), and recounts what was
@@ -127,7 +127,7 @@ test('the screen catches each class it guards, on the page and in the record (th
     ['a local path', '/Users/someone/x', /machine path/],
     ['a host, port or IP', 'served on localhost:8080', /local host/],
     ['an IP address', 'from 10.0.0.12', /local host/],
-    ['a client name (the talk theme)', 'a zarquonbank lender', /restricted name/],
+    ['a client name (the talk theme)', `a ${SYN_THEME} lender`, /restricted name/],
     ['a private repository name', 'odin-labs-ai/some-private-repo', /another repository/],
     ['a credential', credential, /credential/],
     ['a money figure', 'it cost €40', /price or currency/],

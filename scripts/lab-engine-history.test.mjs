@@ -6,9 +6,9 @@ import { join } from 'node:path';
 import { ENGINE_HISTORY_FILE, engineHistoryProblems, measuredLine, pinProblems, readEngineHistory, renderClaimsOverTime } from './lab-engine-history.mjs';
 import { build, pinFor, serialise } from './vendor-engine-history.mjs';
 import { renderLabs } from './labs.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // "The engine, measured over time" (founder plan 6): each point is a commit that CHANGED a figure, cited by hash and
 // checked against the private main head; nothing is drawn between points. The private history is synthesised here.

@@ -9,9 +9,9 @@ import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 08, "Can an agent fix a red build?" (scripts/lab-red-build.mjs). An honest negative is only worth publishing if
 // it is a true count: the committed verdicts must give the committed score, every number must name its set, every
@@ -127,7 +127,7 @@ test('leak screen: no run id, repository, branch, money figure, path, host or cr
 
 test('a planted leak fails the build, in the record and on the page (a failing negative per class)', () => {
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
-  const plants = [['run 40000000001', /long internal id/], ['odin-labs-ai/some-private-repo', /another repository/], ['the zarquon repository', /restricted name/], ['a zarquonbank lender', /restricted name/], ['it cost USD 0.29', /price or currency/], ['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], [credential, /credential/], ['see doctrine-path-guard.sh', /file path or file name/]];
+  const plants = [['run 40000000001', /long internal id/], ['odin-labs-ai/some-private-repo', /another repository/], [`the ${SYN_REPO} repository`, /restricted name/], [`a ${SYN_THEME} lender`, /restricted name/], ['it cost USD 0.29', /price or currency/], ['/Users/someone/x', /machine path|file path/], ['served on localhost', /local/], [credential, /credential/], ['see doctrine-path-guard.sh', /file path or file name/]];
   for (const [plant, reason] of plants) {
     const r = clone(); r.heldOut.runs[0].how = plant;
     assert.ok(redBuildProblems(r).some(p => reason.test(p)), `record: ${plant}`);

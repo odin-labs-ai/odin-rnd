@@ -525,10 +525,23 @@ test('--tree reads every tracked file of the checkout for terms and canaries: re
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('the lab screen can only gain names: a synthetic name added for the tests is refused like a real one', async () => {
+test('the lab screen can only gain names, only under node --test, never in a build; a random made-up name is refused like a real one', async () => {
   const { addScreenNames, namesRestricted, screenHits } = await import('./lab-dispatch-publish.mjs');
-  assert.equal(namesRestricted('a zorbleqwint lender'), false);
-  addScreenNames('zorbleqwint');
-  assert.equal(namesRestricted('a zorbleqwint lender'), true);
-  assert.ok(screenHits('the ZorbleQwint repository').some(h => /restricted name/.test(h.reason)));
+  const made = `zq${[...createHash('sha256').update(String(Math.random())).digest('hex')].filter(c => /[a-f]/.test(c)).join('').slice(0, 10)}`;
+  assert.equal(namesRestricted(`a ${made} lender`), false);
+  addScreenNames(made);
+  assert.equal(namesRestricted(`a ${made} lender`), true);
+  assert.ok(screenHits(`the ${made.toUpperCase()} repository`).some(h => /restricted name/.test(h.reason)));
+  const call = env => spawnSync(process.execPath, ['--input-type=module', '-e', "const m = await import('./scripts/lab-dispatch-publish.mjs'); m.addScreenNames('zqbcdfgh');"], { env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
+  for (const [name, env] of [['outside node --test', {}], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
+    const r = call(env);
+    assert.notEqual(r.status, 0, name);
+    assert.match(r.stderr, /for the tests only/, name);
+  }
+});
+
+test('the verify job (the site build) runs with ODIN_SITE_BUILD set, so the test hook cannot run there', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const verify = wf.slice(wf.indexOf('\n  verify:'), wf.indexOf('\n  publish:'));
+  assert.match(verify, /\n    env:\n      ODIN_SITE_BUILD: '1'\n/);
 });

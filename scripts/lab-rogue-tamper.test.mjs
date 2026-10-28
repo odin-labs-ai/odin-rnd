@@ -8,9 +8,9 @@ import { CASES, CHECK_WORDS, TAMPER_JOURNAL, TAMPER_PIN, TAMPER_RECORD, journalR
 import { readRogue, ROGUE_TEMPLATE } from './lab-rogue.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 05's "Can you tamper with the record?" (scripts/lab-rogue-tamper.mjs, scripts/rogue_tamper.py). It closes Lab 05's
 // first residual: the journal's rows are now re-hashed, each one, by the engine's own rule, in Python.

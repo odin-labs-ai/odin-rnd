@@ -61,10 +61,14 @@ export function fold(text) {
 /** The hash a term is listed under: its letters only, normalised. */
 export const fingerprint = term => sha256(normalise(term).replace(/[^\p{L}]/gu, ''));
 /**
- * Add names to the screen, never remove one: the tests plant a synthetic name registered this way instead of spelling
- * a real restricted name in this public repository (the site's leak gate refuses the real ones in source too).
+ * Add names to the screen, never remove one: the tests plant a random made-up name registered this way instead of
+ * spelling a real restricted name in this public repository (the site's leak gate refuses the real ones in source).
  */
-export function addScreenNames(...names) { for (const name of names) NAMES.add(fingerprint(name)); }
+export function addScreenNames(...names) {
+  // Test-scoped: only under `node --test`, never in a site build (the publish workflow's verify job sets ODIN_SITE_BUILD).
+  if (!process.env.NODE_TEST_CONTEXT || process.env.ODIN_SITE_BUILD) throw new Error('addScreenNames is for the tests only (node --test), never a build');
+  for (const name of names) NAMES.add(fingerprint(name));
+}
 /** True when the text names a restricted name (any listed or added one), by the same screen. */
 export const namesRestricted = text => termHits(text).some(hit => hit.kind === 'names');
 

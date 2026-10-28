@@ -80,6 +80,8 @@ jobs:
     # 191 / 191 / 152 s (runs 40638721064, 40642111392, 40642123245), pull request 204 / 186 s; the ceiling is twice
     # the slowest (408 s), rounded up. 20 minutes was carried over from when verify ran the whole suite.
     timeout-minutes: 7
+    env:
+      ODIN_SITE_BUILD: '1'
     steps:
       - name: Every test shard succeeded
         run: |

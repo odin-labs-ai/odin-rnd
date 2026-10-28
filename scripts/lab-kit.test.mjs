@@ -8,9 +8,9 @@ import * as engine from './lab-engine-history.mjs';
 import * as rogue from './lab-rogue.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { renderLabs } from './labs.mjs';
-import { addScreenNames, namesRestricted } from './lab-dispatch-publish.mjs';
-// Synthetic restricted names, added to the screen for these tests: a real one is never spelled in this public repo.
-addScreenNames('zarquon', 'zarquonbank', 'zarquonbanks');
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // The lab kit (scripts/lab-kit.mjs). Lab 01's engine history and Lab 05 are built on it, so their own tests hold the
 // refactor; these hold the kit itself, and give every class the leak screen guards a planted value that fails a build.
@@ -151,8 +151,8 @@ const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
 const CLASSES = [
   ['a local path', ['/Users/someone/work', '/home/someone/x', 'C:\\work'], /machine path|file path/],
   ['a host, port or IP', ['served on localhost', '10.0.0.12', 'the box at :6488'], /local host|local or IP address/],
-  ['a client name (the talk theme)', ['a zarquonbank lender', 'Zarquonbanks, Inc.'], /restricted name/],
-  ['a private repository name', ['the zarquon repository', 'odin-labs-ai/some-private-repo'], /restricted name|another repository/],
+  ['a client name (the talk theme)', [`a ${SYN_THEME} lender`, `${SYN_THEME.toUpperCase()}S, Inc.`], /restricted name/],
+  ['a private repository name', [`the ${SYN_REPO} repository`, 'odin-labs-ai/some-private-repo'], /restricted name|another repository/],
   ['a credential', [credential, 'Authorization: Bearer abc123'], /credential/],
   ['a money figure', ['it cost €40', 'about $12.00', '12 USD a run'], /price or currency amount/],
 ];
@@ -191,7 +191,7 @@ test('the leak screen has a failing negative for every class it guards', () => {
 
 test('a restricted name is screened by hash, in any case and glued to other words, and never spelled in the list', () => {
   // A synthetic name stands in for the client theme: the real one is listed by hash and never spelled in this repo.
-  for (const text of ['zarquonbank', 'ZARQUONBANK advice', 'zarquonbanklender']) assert.ok(screenHits(text).some(h => /restricted name/.test(h.reason)), text);
+  for (const text of [SYN_THEME, `${SYN_THEME.toUpperCase()} advice`, `${SYN_THEME}lender`]) assert.ok(screenHits(text).some(h => /restricted name/.test(h.reason)), text);
   const terms = readFileSync('scripts/lab-screen-terms.json', 'utf8');
   assert.ok(JSON.parse(terms).names.every(h => /^[0-9a-f]{64}$/.test(h)), 'listed by hash, never spelled');
 });
