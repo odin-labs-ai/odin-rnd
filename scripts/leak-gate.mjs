@@ -30,6 +30,7 @@ export const MAX_WORDS = 4;
 const HEX24 = /^[0-9a-f]{24}$/;
 const WORD = /[\p{L}\p{N}]+/gu;
 const MAX_GAP = 3;
+export const MAX_BINARY = 256 * 1024 * 1024;
 
 export function digest(salt, words) {
   return oneShot('sha256', `${salt}\0${words}`, 'hex').slice(0, 24);
@@ -239,7 +240,9 @@ export function scanPaths(paths, secret) {
     }
     if (!TEXT.test(path) && (BINARY.test(path) || bytes.subarray(0, 8192).includes(0))) {
       result.binaries++;
-      for (let from = 0; from < bytes.length; from += 1 << 26) for (const hit of scanText(printable(bytes.subarray(from, from + (1 << 26) + 64)), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
+      // Read whole, never in windows (a term could straddle a window's edge); a binary too large to read whole stops the build.
+      if (bytes.length > MAX_BINARY) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
+      for (const hit of scanText(printable(bytes), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
     result.texts++;

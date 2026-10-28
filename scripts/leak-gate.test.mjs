@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { checkCommitment, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { MAX_BINARY, checkCommitment, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx'];
@@ -231,4 +231,16 @@ test('a vendored archive the gate cannot read stops the build', () => {
     assert.equal(r.code, 2, r.out);
     assert.match(r.out, /not a readable tar archive/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a binary is read whole: a term spread over a long run is caught, and one too large to read whole stops the build', () => {
+  const secret = loadSecret(SECRET);
+  assert.ok(MAX_BINARY >= 64 * 1024 * 1024);
+  const root = site({ 'dist/assets/long.webm': Buffer.concat([Buffer.alloc(70 * 1024 * 1024), Buffer.from(`Zephyr${' '.repeat(100)}Quarry`), Buffer.alloc(8)]) });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /long\.webm:0 term/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+  assert.ok(secret.terms > 0);
 });
