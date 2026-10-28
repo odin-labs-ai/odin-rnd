@@ -2,7 +2,9 @@
 // lab's tile (scripts/lab-tiles.mjs) links its pinned record; when that record carries `runs`, each run is a record v1
 // (scripts/lab-record.mjs, docs/lab-record.md), and this module turns them into what the Labs index shows on the
 // lab's card: "runner · commit · record hash" for the latest run, and one badge; and the runs page, labs/runs/index.html
-// (from site/labs/runs/index.html, <!--LAB_RUNS-->), every run of every lab, newest first, each row linking its record.
+// (from site/labs/runs/index.html, <!--LAB_RUNS-->), every run of every lab, newest first, each row linking its record;
+// and the Atom feeds (scripts/lab-feeds.mjs: feed.xml and labs/<lab>/feed.xml), linked from the Labs index, the runs
+// page and the page of every lab with runs, which also gets its badge and links in an "Its runs" section.
 //
 //   reproduced  two or more org machine classes ran the latest commit and printed the same recordHash
 //   single      one org machine class ran it
@@ -23,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { escape, pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordProblems } from './lab-record.mjs';
 import { readTiles } from './lab-tiles.mjs';
+import { checkedFeeds, feedProblems, readUpdates, renderFeeds, SITE_FEED, SITE_URL, UPDATES_FILE } from './lab-feeds.mjs';
 
 export const RUNS_PAGE = 'labs/runs/index.html';
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -86,7 +89,7 @@ export function readLabRuns(root = 'site', { now = new Date(), tiles = readTiles
     if (!('runs' in record)) continue;
     const found = runsProblems(record.runs, { lab: tile.experiment, where: tile.record.href, now });
     if (found.length) { problems.push(...found); continue; }
-    labs.push({ tile, href: tile.record.href, runs: record.runs });
+    labs.push({ tile, href: tile.record.href, runs: record.runs, page: labPage(tile) });
   }
   if (problems.length) throw new Error(`Lab runs refused:\n  ${problems.join('\n  ')}`);
   return labs;
@@ -150,7 +153,53 @@ export function withLabRuns(pages, root = 'site', { now = new Date() } = {}) {
   if (!runsHtml.includes('<!--LAB_RUNS-->')) throw new Error(`${RUNS_PAGE}: <!--LAB_RUNS--> is missing`);
   runsHtml = runsHtml.replace('<!--LAB_RUNS-->', () => renderRuns(labs));
   if (/<!--[A-Z_]+-->/.test(runsHtml)) throw new Error(`${RUNS_PAGE}: unresolved content marker`);
-  const leaks = pageLeaks(runsHtml, labs.flatMap(l => l.runs.flatMap(recordHashes)));
+  const known = labs.flatMap(l => l.runs.flatMap(recordHashes));
+  const leaks = pageLeaks(runsHtml, known);
   if (leaks.length) throw new Error(`${RUNS_PAGE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
-  return { ...pages, 'labs/index.html': index, [RUNS_PAGE]: runsHtml };
+  return withFeeds({ ...pages, 'labs/index.html': index, [RUNS_PAGE]: runsHtml }, labs, root, known);
+}
+
+const head = (html, path, links) => {
+  if (!html.includes('</head>')) throw new Error(`${path}: no </head>`);
+  return html.replace('</head>', `${links.map(l => `  ${l}\n`).join('')}</head>`);
+};
+const alternate = (title, href) => `<link rel="alternate" type="application/atom+xml" title="${escape(title)}" href="${escape(href)}">`;
+const SITE_FEED_TITLE = 'Odin Labs R&D: every update and every lab run';
+
+/** A lab page's "Its runs" section: the badge, and links to its runs, its feed and the site feed. */
+export function renderLabRunsSection(lab) {
+  const s = lab.runs[0].lab;
+  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.</p></div>${renderProvenance(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#runs-${escape(s)}">Every run of this lab</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
+}
+
+/** The feeds, written and checked, and linked from the Labs index, the runs page and every lab page. */
+function withFeeds(pages, labs, root, known) {
+  // The updates: required on the published site; a fixture without them feeds its runs only.
+  const updates = resolve(root) === REPO_SITE || existsSync(join(root, UPDATES_FILE)) ? readUpdates(root) : [];
+  const feeds = checkedFeeds(renderFeeds(labs, updates, { anchor: runAnchor }), known);
+  // Lab 01's own feed of dispatches (scripts/labs.mjs) is checked by the same reader.
+  const lab01 = pages['labs/agent-space/feed.xml'];
+  if (lab01) {
+    const problems = feedProblems(lab01, { self: `${SITE_URL}labs/agent-space/feed.xml`, where: 'labs/agent-space/feed.xml' });
+    if (problems.length) throw new Error(`Atom feeds refused:\n  ${problems.join('\n  ')}`);
+  }
+  if (!feeds[SITE_FEED]) return pages;
+  const out = { ...pages, ...feeds };
+  const site = up => alternate(SITE_FEED_TITLE, `${up}${SITE_FEED}`);
+  let index = head(out['labs/index.html'], 'labs/index.html', [site('../')]);
+  index = index.replace('<p class="lab-runs-link"><a href="runs/">Every run of every lab, newest first</a></p>', m => `${m}<p class="lab-runs-link"><a href="../${SITE_FEED}">Follow every update and every run (Atom)</a></p>`);
+  out['labs/index.html'] = index;
+  out[RUNS_PAGE] = head(out[RUNS_PAGE], RUNS_PAGE, [site('../../')]).replace('<p class="lab-source">A record names', m => `<p class="lab-runs-link"><a href="../../${SITE_FEED}">Follow every update and every run (Atom)</a></p>${m}`);
+  for (const lab of labs.filter(l => l.page)) {
+    const html = out[lab.page];
+    if (typeof html !== 'string') throw new Error(`${lab.page}: the page of ${lab.tile.experiment} is not among the pages`);
+    const section = renderLabRunsSection(lab);
+    const leaks = pageLeaks(section, lab.runs.flatMap(recordHashes));
+    if (leaks.length) throw new Error(`${lab.page}: its runs section fails the screen:\n  ${leaks.join('\n  ')}`);
+    if (html.split('</main>').length !== 2) throw new Error(`${lab.page}: not exactly one </main>`);
+    out[lab.page] = head(html, lab.page, [alternate(`${lab.tile.label}: ${lab.tile.title}`, 'feed.xml'), STYLE.replace('../', '../../')]).replace('</main>', () => `${section}</main>`);
+  }
+  // A lab page without runs is left exactly as its own renderer wrote it (each lab's tests compare the two).
+  for (const lab of labs.filter(l => l.page)) out[lab.page] = head(out[lab.page], lab.page, [site('../../')]);
+  return out;
 }

@@ -108,7 +108,7 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   assert.ok(card.indexOf('lab-provenance') < card.indexOf('<ul class="lab-tile-links">'));
   assert.deepEqual(badge(card), ['laptop', `${BADGES.laptop}.`]);
   assert.equal(page.split('class="lab-provenance ').length, 2, 'only the lab with runs has a provenance');
-  assert.match(page, /<link rel="stylesheet" href="\.\.\/assets\/lab-runs\.css">\n<\/head>/);
+  assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
   assert.doesNotMatch(page, /org machine|daily/i);
 });
 
@@ -163,7 +163,7 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.deepEqual(pageLeaks(page, readLabRuns().flatMap(l => l.runs.flatMap(recordHashes))), []);
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
-  assert.match(index, /<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p><\/section>/);
+  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
   // The card's link lands on the row of the run it shows, the lab's latest.
   assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(laptop)}">This run, among every run</a></p>`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`));

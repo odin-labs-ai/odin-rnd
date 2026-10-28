@@ -12,3 +12,6 @@
 .lab-runs-table caption{caption-side:top;text-align:left;padding-bottom:8px;font-size:13px;color:var(--steel)}
 .lab-runs-table td,.lab-runs-table th{vertical-align:top}
 .lab-runs-table code{font-size:11px}
+.lab-runs-section .lab-provenance{max-width:72ch}
+.lab-runs-section p.lab-badge{margin-top:10px;font-size:15px;line-height:1.6}
+.lab-runs-section .lab-follow{margin-top:18px}
