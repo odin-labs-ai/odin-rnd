@@ -7,6 +7,7 @@
 //   labs/brain-bench/index.html   Lab 02's page, rendered by scripts/brain-bench.mjs
 //   labs/rogue/index.html         Lab 05's page, rendered by scripts/lab-rogue.mjs
 //   labs/review/index.html        Lab 06's page, rendered by scripts/lab-review.mjs
+//   labs/link-safety/index.html   Lab 07's page, rendered by scripts/lab-link-safety.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
@@ -35,6 +36,7 @@ import { renderWeek, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
 import { REVIEW_RECORD, renderReview } from './lab-review.mjs';
+import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -211,6 +213,9 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
   // Lab 06's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
   if (requireBench && !existsSync(join(root, REVIEW_RECORD))) throw new Error(`Lab 06 is required on the published site: ${REVIEW_RECORD} is missing`);
   const review = renderReview(root);
+  // Lab 07's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, LINK_RECORD))) throw new Error(`Lab 07 is required on the published site: ${LINK_RECORD} is missing`);
+  const linkSafety = renderLinkSafety(root);
   // Lab 13's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, BLIND_RECORD))) throw new Error(`Lab 13 is required on the published site: ${BLIND_RECORD} is missing`);
   const blind = renderMeasuredBlind(root);
@@ -257,6 +262,7 @@ export function renderLabs(root = 'site', { requireBench = resolve(root) === REP
     ...bench.pages,
     ...rogue.pages,
     ...review.pages,
+    ...linkSafety.pages,
     ...blind.pages,
   };
 }
