@@ -99,7 +99,7 @@ test('the reused EXP 006 reviewer files are the ones on odin-rnd main at the pin
   assert.deepEqual(Object.keys(record.arms.reviewer.reusedFromExp006.files), EXP006_REUSED);
   const nina = json('experiments/nina-changes/preregistration.json').reused.nina;
   assert.deepEqual(record.arms.reviewer.nina, { release: nina.release, commit: nina.commit, integrity: nina.integrity });
-  // A shallow CI checkout (publish.yml uses the default depth) lacks the pinned commit. The disk sha256s are still
+  // A shallow CI checkout (publish.yml fetches depth 2) lacks the pinned commit. The disk sha256s are still
   // bound by derive() in every run; only the history comparison needs the commit, so it is skipped, with the reason.
   try { execFileSync('git', ['cat-file', '-e', `${REUSE_COMMIT}^{commit}`], { stdio: 'ignore' }); } catch { t.skip(`commit ${REUSE_COMMIT.slice(0, 12)} is not in this (shallow) checkout`); return; }
   for (const [file, want] of Object.entries(record.arms.reviewer.reusedFromExp006.files)) {
