@@ -10,6 +10,7 @@
 //   labs/link-safety/index.html   Lab 07's page, rendered by scripts/lab-link-safety.mjs
 //   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
+//   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -41,6 +42,7 @@ import { REVIEW_RECORD, renderReview } from './lab-review.mjs';
 import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
+import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -225,6 +227,9 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
   // Lab 13's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, BLIND_RECORD))) throw new Error(`Lab 13 is required on the published site: ${BLIND_RECORD} is missing`);
   const blind = renderMeasuredBlind(root);
+  // Lab 09's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
+  if (requireBench && !existsSync(join(root, TALK_RECORD))) throw new Error(`Lab 09 is required on the published site: ${TALK_RECORD} is missing`);
+  const talkLeak = renderTalkLeak(root);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -271,6 +276,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
     ...linkSafety.pages,
     ...redBuild.pages,
     ...blind.pages,
+    ...talkLeak.pages,
   };
 }
 
