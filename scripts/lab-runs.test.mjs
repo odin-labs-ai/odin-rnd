@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
 import { BADGES, readLabRuns, renderProvenance, renderRuns, runAnchor, runRows, runState, runsProblems, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
@@ -162,12 +164,28 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
   assert.match(index, /<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p><\/section>/);
-  assert.match(index, /<p class="lab-provenance-more"><a href="runs\/#runs-rogue">Every run of this lab<\/a><\/p>/);
-  assert.match(page, /id="runs-rogue"/);
+  // The card's link lands on the row of the run it shows, the lab's latest.
+  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(laptop)}">This run, among every run</a></p>`));
+  assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`));
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/runs\/<\/loc>/);
 });
 
 test('a runs page that would show a hash no record holds is refused', () => {
   const html = renderRuns([{ tile: rogueTile, href: 'data/labs/rogue/record.json', runs: [org] }]);
   assert.ok(pageLeaks(html, recordHashes(laptop).filter(h => h !== org.recordHash)).some(p => /a hash the record does not hold/.test(p)));
+});
+
+test('the build refuses a runs page that fails the screen, or whose template lost its marker', () => {
+  // A fixture site with Lab 05's tile, its pinned record and the pages its links name, and the runs page template.
+  const root = mkdtempSync(join(tmpdir(), 'lab-runs-'));
+  try {
+    for (const file of ['data/labs/rogue-tile.json', 'data/labs/rogue/record.json', 'data/labs/rogue/record.sha256', 'labs/rogue/index.html', RUNS_PAGE]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    const pages = { 'labs/index.html': renderLabs()['labs/index.html'].replace(/<div class="lab-provenance [^]*?<\/div>(?=<ul class="lab-tile-links">)/, '') };
+    const template = readFileSync(join('site', RUNS_PAGE), 'utf8');
+    assert.match(withLabRuns(pages, root)[RUNS_PAGE], /<tr id="run-rogue-mac-/, 'the fixture renders');
+    writeFileSync(join(root, RUNS_PAGE), template.replace('</h1>', ' 0a1b2c3d4e5f6a7b</h1>'));
+    assert.throws(() => withLabRuns(pages, root), /labs\/runs\/index\.html: the rendered page fails the screen:[^]*a hash the record does not hold \(0a1b2c3d4e5f\)/);
+    writeFileSync(join(root, RUNS_PAGE), template.replace('<!--LAB_RUNS-->', ''));
+    assert.throws(() => withLabRuns(pages, root), /<!--LAB_RUNS--> is missing/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
