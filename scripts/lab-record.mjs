@@ -14,7 +14,7 @@
 //               behind, diverged). This checker cannot read the private repository, so it checks that the
 //               record's claims agree with each other, not the ancestry itself: onMain is true only when the
 //               record's main check says the commit is part of main (identical or ahead), and identical only when
-//               sha is mainHead. The org runners read oac AT main, so their records must say identical; only a
+//               sha is mainHead. The org runners read the private repository AT main, so their records must say identical; only a
 //               laptop record (checked by hand against GitHub's compare, as Lab 05's vendor step does) may say ahead.
 //
 //   numbers     written as plain integers only (no fraction, exponent or -0), checked on the JSON text, so the
