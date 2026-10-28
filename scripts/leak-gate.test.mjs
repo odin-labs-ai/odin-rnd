@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
+import { addScreenNames, isTestRunnerCommand, namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
 import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
@@ -526,7 +527,6 @@ test('--tree reads every tracked file of the checkout for terms and canaries: re
 });
 
 test('the lab screen can only gain names, only under node --test, never in a build; a random made-up name is refused like a real one', async () => {
-  const { addScreenNames, namesRestricted, screenHits } = await import('./lab-dispatch-publish.mjs');
   const made = `zq${[...createHash('sha256').update(String(Math.random())).digest('hex')].filter(c => /[a-f]/.test(c)).join('').slice(0, 10)}`;
   assert.equal(namesRestricted(`a ${made} lender`), false);
   addScreenNames(made);
@@ -552,7 +552,6 @@ test('the lab screen can only gain names, only under node --test, never in a bui
     assert.notEqual(launched.status, 0, 'a launcher run as node launcher.mjs --test');
     assert.match(launched.stderr, /for the tests only/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
-  const { isTestRunnerCommand } = await import('./lab-dispatch-publish.mjs');
   for (const line of ['node --test scripts/a.test.mjs', '/usr/bin/node --test-reporter=tap --test x.test.mjs', 'node --test'])
     assert.equal(isTestRunnerCommand(line), true, line);
   for (const line of ['node launcher.mjs --test', 'node -- --test', 'node --inspect -- --test x', 'python3 --test', 'bash -c node --test', 'node'])
