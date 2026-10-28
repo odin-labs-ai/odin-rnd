@@ -597,3 +597,47 @@ test('only test code calls the screen hook: no build or site script imports it o
     if (/addScreenNames|test-synthetic-names/.test(text)) assert.ok(allowed(file), `${file} reaches the test-only screen hook`);
   }
 });
+
+test('a pull request\'s title, body and every commit message are screened: a planted term or canary in any of them fails', () => {
+  const event = (title, body, n) => ({ pull_request: { title, body, commits: n } });
+  const commit = (i, message) => ({ sha: String(i).repeat(40).slice(0, 40).replace(/[^0-9a-f]/g, 'a'), commit: { message } });
+  const screen = (ev, commits) => {
+    const root = mkdtempSync(join(tmpdir(), 'pr-text-'));
+    try {
+      writeFileSync(join(root, 'set.json'), setFile()); writeFileSync(join(root, 'event.json'), JSON.stringify(ev)); writeFileSync(join(root, 'commits.json'), JSON.stringify([commits]));
+      const lay = spawnSync(process.execPath, [join(process.cwd(), 'scripts/pr-text-screen.mjs'), '--event', 'event.json', '--commits', 'commits.json', '--out', 'pr-text'], { cwd: root, encoding: 'utf8' });
+      if (lay.status !== 0) return { code: lay.status, out: lay.stderr };
+      const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', '--terms-only', 'pr-text'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' });
+      return { code: r.status, out: r.stdout + r.stderr };
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  };
+  const clean = [commit(1, 'fix: a clean change'), commit(2, 'test: and its test, see /Users/someone/x in the fixture')];
+  assert.equal(screen(event('feat: a clean title', 'A clean body.', 2), clean).code, 0, 'clean text passes; machine-shaped fixture text in PR prose is not refused');
+  for (const [where, ev, commits, want] of [
+    ['the title (the squash subject)', event('feat: Zephyr Quarry support', 'body', 2), clean, /pr-text\/title\.txt:1 term/],
+    ['the body', event('feat: clean', `Notes.\n\nSee ${CANARY}.`, 2), clean, /pr-text\/body\.md:3 canary/],
+    ['a commit message', event('feat: clean', 'body', 2), [clean[0], commit(2, 'fix: the blorvak case')], /pr-text\/commits\/[0-9a-f]{40}\.txt:1 term/],
+  ]) {
+    const r = screen(ev, commits);
+    assert.equal(r.code, 1, `${where}: ${r.out}`);
+    assert.match(r.out, want, where);
+    assert.ok(!/blorvak|zephyr|odncanary/i.test(r.out), `${where}: the output never holds the text`);
+  }
+  assert.equal(screen(event('feat: clean', 'body', 3), clean).code, 2, 'a commit list shorter than the PR fails closed');
+  assert.equal(screen({ pull_request: { title: '', commits: 0 } }, []).code, 2, 'no title fails closed');
+});
+
+test('the pull request text screen runs on every PR event, on GitHub-hosted runners, with the secret, unconditionally', () => {
+  const wf = readFileSync('.github/workflows/pr-text.yml', 'utf8');
+  assert.match(wf, /types: \[opened, edited, synchronize, reopened\]/);
+  // The screen and its gate come from the base branch: a pull request can neither replace them nor run code with the secret.
+  assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
+  assert.doesNotMatch(wf, /\n  pull_request:\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n\s+persist-credentials: false/);
+  assert.doesNotMatch(wf, /head\.(sha|ref)|refs\/pull\//, 'no file of the pull request is checked out');
+  assert.match(wf, /runs-on: ubuntu-latest/);
+  assert.doesNotMatch(wf, /self-hosted|continue-on-error|\|\| true|\n\s+if:/);
+  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.match(wf, /--terms-only pr-text\n/);
+  assert.doesNotMatch(wf, /\$\{\{ github\.event\.pull_request\.(title|body)/, 'PR text never interpolated into a command');
+});

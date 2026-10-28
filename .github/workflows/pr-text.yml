@@ -1,0 +1,38 @@
+name: Pull request text screen
+# The pull request's title (the squash subject), body and every commit message, through the site's leak gate: the
+# repository is public, so its pull requests are too. Runs on GitHub-hosted runners only (the term set is a secret).
+# pull_request_target: this workflow and the gate it runs come from the BASE branch, never from the pull request, so a
+# pull request cannot replace the screen that judges it or reach the secret with its own code. Its text and commit
+# messages are read as data (the event file and the API); no file of the pull request is checked out or run.
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: pr-text-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Read the pull request's commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/commits" > "${RUNNER_TEMP}/commits.json"
+      - name: Lay out the title, the body and every commit message
+        run: node scripts/pr-text-screen.mjs --event "${GITHUB_EVENT_PATH}" --commits "${RUNNER_TEMP}/commits.json" --out "${RUNNER_TEMP}/pr-text"
+      - name: PR text screen, fail closed on any protected term or canary
+        env:
+          LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: cd "${RUNNER_TEMP}" && node "${GITHUB_WORKSPACE}/scripts/leak-gate.mjs" --set "${GITHUB_WORKSPACE}/scripts/leak-gate-set.json" --terms-only pr-text
