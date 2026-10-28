@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -65,6 +65,7 @@ const LEAKS = {
   'a protected term in a page that holds a NUL byte': ['dist/labs/draft/index.html', '<!--\0--><p>blorvak</p>', /index\.html:1 term/],
   'a canary inside an image file': ['dist/assets/shot.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from(`tEXtComment\0${CANARY}\0`), Buffer.from([0, 1, 2])]), /\[a file name|shot\.png:0 canary/],
   'a canary inside a vendored tar.gz of raw evidence': ['dist/data/raw-evidence.tar.gz', gzipSync(tar({ 'main/ops.jsonl': `{"op":1}\n{"note":"${CANARY}"}\n`, 'main/clean.json': '{}' })), /raw-evidence\.tar\.gz!main\/ops\.jsonl:2 canary/],
+  'a home path inside an image file': ['dist/assets/meta.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0]), Buffer.from('tEXtSource\0/Users/someone/work\0'), Buffer.from([0, 1])]), /meta\.png:0 home-path/],
   'a home path': ['dist/data/r.json', '{"cwd":"/Users/someone/work"}', /r\.json:1 home-path/],
   'a private network address': ['dist/data/r.json', '{"host":"192.168.4.20"}', /r\.json:1 private-address/],
   'a local address with a port': ['dist/index.html', '<p>open http://localhost:3099/x</p>', /index\.html:1 loopback/],
@@ -108,11 +109,24 @@ test('a term set that differs from the public commitment stops the build, even w
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('a file that cannot be read is reported by its redacted name, never its own', () => {
+  const root = site();
+  try {
+    symlinkSync(join(root, 'nowhere'), join(root, 'dist/blorvak.html'));
+    const r = gate(root);
+    assert.equal(r.code, 2, r.out);
+    assert.match(r.out, /\[a file name, sha256 [0-9a-f]{8}\] cannot be read \(ENOENT\)/);
+    assert.ok(!r.out.includes('blorvak'), r.out);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('two occurrences on one line are two hits, and readings of the same text never add up to more', () => {
   const secret = loadSecret(SECRET);
   assert.equal(scanText('blorvak', secret).length, 1);
   assert.equal(scanText('blorvak blorvak', secret).length, 2);
   assert.equal(scanText('<p>bl&#111;rvak and <b>blorvak</b></p>', secret).length, 2);
+  assert.equal(scanText('<a title="blorvak">blor</a>vak', secret).length, 2, 'one in the markup, one only once the tags are gone');
+  assert.equal(scanText('<p>blor<b>vak</b> and bl&#111;rvak</p>', secret).length, 2);
   const hits = scanText('x blorvak blorvak', secret).map(h => ({ file: 'dist/a.json', ...h }));
   assert.equal(settle(hits, [{ file: 'dist/a.json', kind: 'term', hash: hits[0].hash, count: 1, reason: 'one reviewed occurrence' }]).stale.length, 1);
 });

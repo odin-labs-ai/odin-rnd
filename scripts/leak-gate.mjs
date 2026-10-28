@@ -87,83 +87,98 @@ export const PATTERNS = [
 ];
 
 const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', shy: '' };
-/** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
-export function decoded(text) {
-  return text
-    .replace(/&#x([0-9a-f]+);?/gi, (_, h) => String.fromCodePoint(Number.parseInt(h, 16)))
-    .replace(/&#(\d+);?/g, (_, d) => String.fromCodePoint(Number(d)))
-    .replace(/&([a-z]+);/gi, (m, n) => NAMED[n.toLowerCase()] ?? m)
-    .replace(/\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)))
-    .replace(/\\([/"\\])/g, '$1')
-    .replace(/%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : m; })
-    .replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
+
+// A reading of a text keeps, for every character, the offset in the ORIGINAL text it came from. Two readings that see
+// the same occurrence therefore name the same offset, and one occurrence counts once however many readings see it.
+const identity = text => { const at = new Int32Array(text.length); for (let i = 0; i < at.length; i++) at[i] = i; return { text, at }; };
+function mapped(r, re, fn) {
+  let text = '', parts = [], last = 0;
+  const at = [];
+  for (const m of r.text.matchAll(re)) {
+    text += r.text.slice(last, m.index); parts.push(r.at.subarray(last, m.index));
+    const out = fn(...m);
+    text += out; parts.push(new Int32Array(out.length).fill(r.at[m.index] ?? 0));
+    last = m.index + m[0].length;
+  }
+  if (last === 0 && !parts.length) return r;
+  text += r.text.slice(last); parts.push(r.at.subarray(last));
+  const all = new Int32Array(text.length);
+  let o = 0;
+  for (const p of parts) { all.set(p, o); o += p.length; }
+  return { text, at: all };
 }
+/** The same text as a reader (or a parser) would see it: references, escapes and percent-codes undone. */
+function decodedReading(r) {
+  r = mapped(r, /&#x([0-9a-f]+);?/gi, (m, h) => { const c = Number.parseInt(h, 16); return c <= 0x10ffff ? String.fromCodePoint(c) : m; });
+  r = mapped(r, /&#(\d+);?/g, (m, d) => (Number(d) <= 0x10ffff ? String.fromCodePoint(Number(d)) : m));
+  r = mapped(r, /&([a-z]+);/gi, (m, n) => NAMED[n.toLowerCase()] ?? m);
+  r = mapped(r, /\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(Number.parseInt(h, 16)));
+  r = mapped(r, /\\([/"\\])/g, (_, c) => c);
+  r = mapped(r, /%([0-9a-f]{2})/gi, (m, h) => { const c = Number.parseInt(h, 16); return c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : m; });
+  return mapped(r, /[\u200b-\u200d\u2060\ufeff]/g, () => '');
+}
+export const decoded = text => decodedReading(identity(text)).text;
 /** Tags removed (their line breaks kept): a term split by markup reads whole. */
-const untagged = text => text.replace(/<[^>]*>/g, tag => tag.replace(/[^\n]/g, ''));
+const untagged = r => mapped(r, /<[^>]*>/g, tag => tag.replace(/[^\n]/g, ''));
+/** NFKC and lower case, character by character, so every offset still maps back. */
+const folded = r => (/[^\x00-\x7f]/.test(r.text) ? mapped(r, /[^\x00-\x7f]/gu, c => c.normalize('NFKC').toLowerCase()) : r);
 
 const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (starts[mid] <= pos) lo = mid; else hi = mid - 1; } return lo + 1; };
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
 
-function scanOne(text, secret, cache, patterns = true) {
+/** -> [{kind, at (offset in the original text), hash?}] for one reading. */
+function scanOne(r, secret, cache, patterns) {
   const hits = [];
-  const starts = lineStarts(text);
-  const words = [...text.normalize('NFKC').toLowerCase().matchAll(WORD)].map(m => [m[0], m.index, m.index + m[0].length]);
-  // NFKC can move offsets; the line is then counted in the normalised text, which keeps its line breaks.
-  const norm = text.normalize('NFKC');
-  const nstarts = norm === text ? starts : lineStarts(norm);
+  const f = folded(r);
+  const low = f.text.toLowerCase();
+  const words = [...low.matchAll(WORD)].map(m => [m[0], m.index, m.index + m[0].length]);
   for (let i = 0; i < words.length; i++) {
     let joined = '';
     for (let n = 1; n <= MAX_WORDS && i + n <= words.length; n++) {
       const w = words[i + n - 1];
       if (n > 1) {
         // Any run of white space (a line break included) reads as one space: "Some\n  Name" is "Some Name".
-        const gap = norm.slice(words[i + n - 2][2], w[1]).replace(/\s+/g, ' ');
+        const gap = low.slice(words[i + n - 2][2], w[1]).replace(/\s+/g, ' ');
         if (gap.length > MAX_GAP) break;
       }
       joined = n === 1 ? w[0] : `${joined}-${w[0]}`;
       let h = cache.get(joined);
       if (h === undefined) { h = digest(secret.salt, joined); if (cache.size < 2_000_000) cache.set(joined, h); }
       const kind = secret.kinds.get(h);
-      if (kind) hits.push({ kind, line: lineOf(nstarts, words[i][1]), hash: h.slice(0, 8) });
+      if (kind) hits.push({ kind, at: f.at[words[i][1]], hash: h.slice(0, 8) });
       // Longer runs are hashed only from a word that starts some term (the set's "heads"): the same answer, far fewer hashes.
       if (n === 1 && !secret.heads.has(h)) break;
     }
   }
   if (patterns) for (const [kind, re] of PATTERNS) {
-    for (const m of text.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g'))) hits.push({ kind, line: lineOf(starts, m.index) });
+    for (const m of r.text.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g'))) hits.push({ kind, at: r.at[m.index] });
   }
   return hits;
 }
 
 /**
- * Every leak in one text, read as written, decoded, and with its tags removed. One occurrence is one hit: a reading
- * that sees the same kind (and hash) on a line more often than another counts its own number there, so the readings
- * never add up to more than the text holds, and two occurrences on one line are two hits.
+ * Every leak in one text, read as written, decoded, and with its tags removed. One occurrence is one hit: each reading
+ * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
+ * occurrences that only one reading sees each count.
  */
 export function scanText(text, secret, cache = new Map(), patterns = true) {
-  const variants = [text];
-  const dec = decoded(text);
-  if (dec !== text) variants.push(dec);
-  const bare = untagged(dec);
-  if (bare !== dec) variants.push(bare);
-  const most = new Map();
-  for (const v of variants) {
-    const here = new Map();
-    for (const hit of scanOne(v, secret, cache, patterns)) {
-      const key = `${hit.kind}:${hit.line}:${hit.hash ?? ''}`;
-      if (!here.has(key)) here.set(key, { hit, n: 0 });
-      here.get(key).n++;
-    }
-    for (const [key, x] of here) if ((most.get(key)?.n ?? 0) < x.n) most.set(key, x);
+  const raw = identity(text);
+  const dec = decodedReading(raw);
+  const readings = [raw, dec, untagged(dec)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
+  const seen = new Map();
+  for (const r of readings) for (const hit of scanOne(r, secret, cache, patterns)) {
+    const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
+    if (!seen.has(key)) seen.set(key, hit);
   }
-  return [...most.values()].flatMap(({ hit, n }) => Array.from({ length: n }, () => ({ ...hit })));
+  const starts = lineStarts(text);
+  return [...seen.values()].sort((a, b) => a.at - b.at).map(({ kind, at, hash }) => ({ kind, line: lineOf(starts, at), ...(hash ? { hash } : {}) }));
 }
 
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|zip)$/i;
 // A file of a text type is read as text whatever bytes it holds: a NUL byte never hides a page.
 const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|srt|ya?ml|toml|sha256|webmanifest)(\.gz)?$/i;
 /**
- * The runs of printable text inside a binary file (metadata, an embedded comment), for the term and canary lookup. Only
+ * The runs of printable text inside a binary file (metadata, an embedded comment), read like any text. Only
  * runs of 8 or more characters count: a short run in compressed bytes is noise, and could spell a short term by chance.
  */
 function printable(bytes) {
@@ -171,7 +186,11 @@ function printable(bytes) {
   for (const m of bytes.toString('latin1').matchAll(/[\x20-\x7e\t]{8,}/g)) out.push(m[0]);
   return out.join('\n');
 }
-const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => (e.name === '.git' || e.name === 'node_modules' ? [] : e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
+function walk(dir) {
+  let entries;
+  try { entries = readdirSync(dir, { withFileTypes: true }); } catch (error) { throw new Error(`leak gate: a directory cannot be read (${error.code ?? 'error'})`); }
+  return entries.flatMap(e => (e.name === '.git' || e.name === 'node_modules' ? [] : e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
+}
 
 /**
  * The files of a tar archive (a vendored bundle of raw evidence), each as {name, bytes}. ustar names with their prefix,
@@ -208,7 +227,9 @@ export function scanPaths(paths, secret) {
     const pathHits = scanText(path, secret, cache);
     const shown = pathHits.length ? `[a file name, sha256 ${createHash('sha256').update(path).digest('hex').slice(0, 8)}]` : path;
     for (const hit of pathHits) result.hits.push({ file: shown, ...hit, line: 0 });
-    let bytes = read();
+    // A read error names the path; it is reported by the name shown instead, which is redacted when it holds a leak.
+    let bytes;
+    try { bytes = read(); } catch (error) { throw new Error(`leak gate: ${shown} cannot be read (${error.code ?? 'error'})`); }
     if (/\.(gz|tgz)$/i.test(path)) { try { bytes = gunzipSync(bytes); } catch { throw new Error(`leak gate: ${shown} does not decompress`); } }
     if (/\.(tar|tar\.gz|tgz)$/i.test(path)) {
       result.binaries++;
@@ -217,7 +238,7 @@ export function scanPaths(paths, secret) {
     }
     if (!TEXT.test(path) && (BINARY.test(path) || bytes.subarray(0, 8192).includes(0))) {
       result.binaries++;
-      for (let from = 0; from < bytes.length; from += 1 << 26) for (const hit of scanText(printable(bytes.subarray(from, from + (1 << 26) + 64)), secret, cache, false)) result.hits.push({ file: shown, ...hit, line: 0 });
+      for (let from = 0; from < bytes.length; from += 1 << 26) for (const hit of scanText(printable(bytes.subarray(from, from + (1 << 26) + 64)), secret, cache)) result.hits.push({ file: shown, ...hit, line: 0 });
       return;
     }
     result.texts++;
