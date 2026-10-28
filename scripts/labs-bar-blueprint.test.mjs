@@ -82,17 +82,34 @@ test('a money figure on a lab page or in a lab record is refused', () => {
   const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
   try {
     assert.equal(grade(dir, BAR).verdict, 'pass');
-    for (const figure of ['€ 4 a month', '$12', 'USD 30', '15 euros']) {
+    for (const figure of ['€ 4 a month', '$12', 'USD 30', '15 euros', '&#36;12', '&#x24;12', '&dollar;12', '&euro;4', '%2412']) {
       refuses(dir, BAR, page, s => s.replace('</main>', `<p>${figure}</p>\n</main>`), 'no-money-figure-on-a-lab-page');
     }
-    refuses(dir, BAR, record, s => `${s}\n"price": "$0.30"\n`, 'no-money-figure-in-a-lab-record');
+    for (const price of ['$0.30', '\\u00240.30', '\\u20ac4']) {
+      refuses(dir, BAR, record, s => `${s}\n"price": "${price}"\n`, 'no-money-figure-in-a-lab-record');
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('a workflow job on anything but one GitHub-hosted label is refused; hosted labels and comments pass', () => {
+test('a lane commit cited by hand, not through laneCite, is refused in a builder, a lab page and a lab record', () => {
+  const rule = 'a-lane-commit-is-cited-only-through-lanecite';
+  const bare = 'private commit <code>d02ee74b</code>, cited by hash, on a pushed branch that is not yet part of the private main';
+  const dir = copyOf([...BUILDERS, 'site/labs', 'site/data/labs', '.github/workflows']);
+  try {
+    assert.equal(grade(dir, BAR).verdict, 'pass');
+    refuses(dir, BAR, 'scripts/lab-rogue.mjs', s => `${s}\nexport const handCite = \`${bare}\`;\n`, rule);
+    refuses(dir, BAR, 'site/labs/rogue/index.html', s => s.replace('</main>', `<p>${bare}</p>\n</main>`), rule);
+    refuses(dir, BAR, 'site/data/labs/rogue/record.json', s => `${s}\n"note": "not yet part of the private main"\n`, rule);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a workflow job on anything but one approved GitHub-hosted label is refused', () => {
   const file = '.github/workflows/publish.yml', hosted = '    runs-on: ubuntu-latest\n';
+  const rule = 'public-workflows-run-on-hosted-runners-only';
   const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
   try {
     assert.ok(readFileSync(join(dir, file), 'utf8').includes(hosted), `${file} has a hosted job to rewrite`);
@@ -102,11 +119,37 @@ test('a workflow job on anything but one GitHub-hosted label is refused; hosted 
       '    runs-on:\n      - self-hosted\n',
       '    runs-on: ${{ matrix.os }}\n',
       '    runs-on: { group: Default }\n',
-    ]) refuses(dir, BAR, file, s => s.replace(hosted, runner), 'public-workflows-run-on-hosted-runners-only');
-    const path = join(dir, file), original = readFileSync(path, 'utf8');
-    writeFileSync(path, original.replace(hosted, '    # never a self-hosted runner: this repo is public\n    runs-on: ubuntu-24.04  # pinned\n'));
-    assert.equal(grade(dir, BAR).verdict, 'pass', 'a pinned hosted label with comments passes');
-    writeFileSync(path, original);
+      '    "runs-on": self-hosted\n',
+      "    'runs-on': self-hosted\n",
+      '    runs-on: ubuntu-private\n',
+      '    runs-on: *runner\n',
+    ]) refuses(dir, BAR, file, s => s.replace(hosted, runner), rule);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a .yaml workflow, a flow-style job and a reusable workflow from another repository are refused too', () => {
+  const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
+  const extra = '.github/workflows/extra.yaml';
+  try {
+    writeFileSync(join(dir, extra), 'name: extra\non: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n');
+    assert.equal(grade(dir, BAR).verdict, 'pass', 'a hosted .yaml workflow passes');
+    refuses(dir, BAR, extra, s => s.replace('runs-on: ubuntu-latest', 'runs-on: self-hosted'), 'public-workflows-run-on-hosted-runners-only');
+    refuses(dir, BAR, extra, s => s.replace("jobs:\n  a:\n    runs-on: ubuntu-latest\n", 'jobs: { a: { runs-on: self-hosted } }\n  b:\n    runs-on: ubuntu-latest\n'), 'public-workflows-run-on-hosted-runners-only');
+    refuses(dir, BAR, extra, s => s.replace("    runs-on: ubuntu-latest\n    steps:\n      - run: true\n", '    uses: some-org/some-repo/.github/workflows/build.yml@main\n'), 'public-workflows-call-no-reusable-workflow-from-another-repository');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a pinned hosted label with comments passes, and a comment naming a self-hosted runner is not a job', () => {
+  const file = '.github/workflows/publish.yml', hosted = '    runs-on: ubuntu-latest\n';
+  const dir = copyOf(['site/labs', 'site/data/labs', '.github/workflows']);
+  try {
+    const path = join(dir, file);
+    writeFileSync(path, readFileSync(path, 'utf8').replace(hosted, "    # never runs-on: self-hosted, this repo is public\n    runs-on: 'ubuntu-24.04'  # pinned\n"));
+    assert.equal(grade(dir, BAR).verdict, 'pass', 'a quoted pinned hosted label with comments passes');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
