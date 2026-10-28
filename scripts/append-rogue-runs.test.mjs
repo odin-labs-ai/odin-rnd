@@ -13,8 +13,10 @@ import { renderLabs } from './labs.mjs';
 
 // The lab runner's record PR (WO-04) appends one day of org-runner records to Lab 05's runs[]. The fixtures are the
 // exact shape it writes: Lab 05's Mac re-run moved to the two org machine classes, re-hashed, each leg naming the other.
-const raw = readFileSync('site/data/labs/rogue/record.json', 'utf8');
-const record = JSON.parse(raw);
+// Every fixture starts from Lab 05's record with only its laptop re-run, whatever org-runner days main already holds.
+const committed = JSON.parse(readFileSync('site/data/labs/rogue/record.json', 'utf8'));
+const record = { ...committed, runs: committed.runs.filter(r => r.runner === 'laptop') };
+const raw = `${JSON.stringify(record, null, 1)}\n`;
 const mac = record.runs[0];
 const IMAGE = `python:3.12-bookworm@sha256:${'cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c'}`;
 const leg = (runner, machineClass, ranAt, change = {}) => {
@@ -39,6 +41,8 @@ function inSite(fn) {
   const root = mkdtempSync(join(tmpdir(), 'rogue-runs-'));
   try {
     for (const file of FILES) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    writeFileSync(join(root, 'data/labs/rogue/record.json'), raw);
+    writeFileSync(join(root, 'data/labs/rogue/record.sha256'), `${createHash('sha256').update(raw).digest('hex')}  record.json\n`);
     return fn(root);
   } finally { rmSync(root, { recursive: true, force: true }); }
 }

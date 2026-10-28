@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { checkedFeeds, feedProblems, feedText, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId } from './lab-feeds.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
-import { readLabRuns, runAnchor, withLabRuns } from './lab-runs.mjs';
+import { BADGES, readLabRuns, runAnchor, runState, withLabRuns } from './lab-runs.mjs';
 import { renderRogue } from './lab-rogue.mjs';
 import { renderLabs } from './labs.mjs';
 import { renderMeasuredBlind } from './lab-measured-blind.mjs';
@@ -51,7 +51,9 @@ test('the feeds are linked from the Labs index, the runs page and the page of ev
   assert.ok(has(rogue, 'feed.xml') && has(rogue, '../../feed.xml'));
   assert.match(rogue, /<section class="company-section company-width lab-runs-section" id="lab-runs"[^>]*>.*<a href="feed\.xml">This lab's feed \(Atom\)<\/a>.*<a href="\.\.\/\.\.\/feed\.xml">The site feed \(Atom\)<\/a>.*<\/section><\/main>/s);
   assert.equal(rogue.split('id="lab-runs"').length, 2);
-  assert.match(rogue, /data-state="laptop"><strong>Single machine, a laptop re-run\.<\/strong>/);
+  // The badge is whatever Lab 05's committed runs say (a laptop re-run today; more once org-runner days land).
+  const { state } = runState(readLabRuns().find(l => l.tile.experiment === 'rogue').runs);
+  assert.ok(rogue.includes(`data-state="${state}"><strong>${BADGES[state]}.</strong>`));
   // Every lab with runs links both feeds; a lab page without runs is left as its own renderer wrote it.
   for (const l of readLabRuns()) assert.ok(has(pages[l.page], 'feed.xml') && has(pages[l.page], '../../feed.xml'), l.page);
   assert.equal(pages['labs/measured-blind/index.html'], renderMeasuredBlind().pages['labs/measured-blind/index.html']);
