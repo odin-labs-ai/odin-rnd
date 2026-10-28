@@ -4,12 +4,13 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { canonical, MAX_BREACHES, recordHash, recordProblems, RECORD_SCHEMA } from './lab-record.mjs';
+import { canonical, MAX_BREACHES, numberSpellingProblems, recordHash, recordProblems, RECORD_SCHEMA } from './lab-record.mjs';
 
 // Record v1 (scripts/lab-record.mjs). The runner on the org's machines and this public repo compute recordHash in two
 // languages, so the golden record below pins the bytes both must agree on; every negative is a way a record could
 // claim more than its run showed.
-const rogue = JSON.parse(readFileSync('site/data/labs/rogue/record.json', 'utf8'));
+const raw = readFileSync('site/data/labs/rogue/record.json', 'utf8');
+const rogue = JSON.parse(raw);
 const golden = rogue.runs[0];
 const GOLDEN_HASH = '47c9ab93279dae96f8423aabc985beda6492f2e498da82e055d9ba9fa44aacf8';
 const clone = () => JSON.parse(JSON.stringify(golden));
@@ -63,12 +64,29 @@ test('negative: a breach count past what both languages write alike', () => {
   refused(rehash({ ...clone(), result: { ...golden.result, breaches: MAX_BREACHES + 1 } }), /\/result\/breaches: more than/);
 });
 
-test('Python writes the same canonical bytes and recordHash (the runner\'s language)', () => {
-  const py = 'import hashlib, json, sys\nr = json.load(sys.stdin)\ncore = {k: r[k] for k in ("format", "version", "lab", "command", "inputs", "result")}\ncore["commit"] = r["commit"]["sha"]\nprint(hashlib.sha256(json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest())';
-  for (const r of [golden, { ...clone(), result: { ...golden.result, breaches: MAX_BREACHES } }]) {
-    const out = execFileSync('python3', ['-c', py], { input: JSON.stringify(r), encoding: 'utf8' }).trim();
-    assert.equal(out, recordHash(r));
+test('Python reads the same bytes to the same recordHash (the runner\'s language)', () => {
+  // The bytes go to Python as written, never re-serialised by JavaScript first. A Lab record file holds its runs[].
+  const py = 'import hashlib, json, sys\nd = json.load(sys.stdin)\nr = d["runs"][0] if "runs" in d else d\ncore = {k: r[k] for k in ("format", "version", "lab", "command", "inputs", "result")}\ncore["commit"] = r["commit"]["sha"]\nprint(hashlib.sha256(json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest())';
+  const max = `${JSON.stringify(golden, null, 1)}\n`.replace('"breaches": 0', `"breaches": ${MAX_BREACHES}`);
+  for (const [text, r] of [[raw, golden], [max, JSON.parse(max)]]) {
+    assert.equal(execFileSync('python3', ['-c', py], { input: text, encoding: 'utf8' }).trim(), recordHash(r));
   }
+  assert.equal(recordHash(golden), GOLDEN_HASH);
+});
+
+test('negative: a number not written as a plain integer, which JavaScript and Python would read apart', () => {
+  const text = JSON.stringify(golden).replace('"breaches":0', '"breaches":0.0');
+  assert.match(numberSpellingProblems(text).join('\n'), /the number 0\.0 is not written as a plain integer/);
+  for (const spelled of ['1e0', '-0', '1.5', '2E3']) assert.equal(numberSpellingProblems(`{"n":${spelled}}`).length, 1, spelled);
+  assert.deepEqual(numberSpellingProblems('{"s":"0.0 1e9 -0","n":[0,1,-2,1000000]}'), [], 'digits inside a string are not numbers');
+  // runs is the last key of Lab 05's record; the rest of that file (a 4.5-hour repair estimate) is not a record v1.
+  assert.ok(raw.lastIndexOf('"runs"') > raw.lastIndexOf('"reproductions"'));
+  assert.deepEqual(numberSpellingProblems(raw.slice(raw.lastIndexOf('"runs"'))), [], 'Lab 05\'s published runs');
+  const dir = mkdtempSync(join(tmpdir(), 'lab-record-'));
+  try {
+    writeFileSync(join(dir, 'float.json'), text);
+    assert.throws(() => execFileSync('node', ['scripts/lab-record.mjs', join(dir, 'float.json')], { stdio: 'pipe' }), e => e.status === 1 && /float\.json: the number 0\.0/.test(e.stderr.toString()));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('negative: a replica with a different recordHash is not a replication', () => {

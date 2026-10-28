@@ -17,6 +17,9 @@
 //               sha is mainHead. The org runners read oac AT main, so their records must say identical; only a
 //               laptop record (checked by hand against GitHub's compare, as Lab 05's vendor step does) may say ahead.
 //
+//   numbers     written as plain integers only (no fraction, exponent or -0), checked on the JSON text, so the
+//               JavaScript and Python readers of one file hold the same values.
+//
 //   node scripts/lab-record.mjs <record.json> ...   exit 1 and every reason when any record is refused
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -39,6 +42,21 @@ export function canonical(value) {
     return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
   }
   return JSON.stringify(value);
+}
+
+/**
+ * Every number in a record's JSON TEXT that is not written as a plain integer (a fraction, an exponent or -0):
+ * JSON.parse reads `0.0` as 0 while Python keeps 0.0, so the two would hash it differently. [] when there is none.
+ */
+export function numberSpellingProblems(text, where = 'record') {
+  const problems = [];
+  // Strings are skipped whole (escapes included), so a digit inside one is never read as a number.
+  for (const m of text.matchAll(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g)) {
+    const token = m[0];
+    if (token.startsWith('"')) continue;
+    if (!/^(0|-?[1-9]\d*)$/.test(token)) problems.push(`${where}: the number ${token} is not written as a plain integer`);
+  }
+  return problems;
 }
 
 /** The recordHash a record must hold. */
@@ -99,7 +117,10 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const files = process.argv.slice(2);
   if (!files.length) { console.error('usage: node scripts/lab-record.mjs <record.json> ...'); process.exit(2); }
   const problems = files.flatMap(file => {
-    try { return recordProblems(JSON.parse(readFileSync(file, 'utf8')), file); } catch (e) { return [`${file}: ${e.message}`]; }
+    try {
+      const text = readFileSync(file, 'utf8');
+      return [...numberSpellingProblems(text, file), ...recordProblems(JSON.parse(text), file)];
+    } catch (e) { return [`${file}: ${e.message}`]; }
   });
   if (problems.length) { console.error(problems.join('\n')); process.exit(1); }
   console.log(`${files.length} record(s): record v1, valid`);

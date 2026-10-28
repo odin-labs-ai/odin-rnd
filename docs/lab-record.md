@@ -27,8 +27,9 @@ fail-closed and runs in `pnpm test`.
 UTF-8. In Python: `json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=False)`. It covers what ran,
 on which commit and what it printed; it leaves out where and when (`runner`, `machineClass`, `image`, `ranAt`,
 `commit.mainHead`, `commit.compare`, `commit.onMain`), so two machines that computed the same thing from the same
-commit hold the same `recordHash`. Every string in the core is ASCII by the schema's patterns, so both languages write
-the same bytes. The golden value: Lab 05's Mac re-run, `47c9ab93279dae96f8423aabc985beda6492f2e498da82e055d9ba9fa44aacf8`
+commit hold the same `recordHash`. Every string in the core is ASCII by the schema's patterns, and every number in a
+record file is written as a plain integer (no fraction, exponent or `-0`; the checker reads the file's text for this,
+because `0.0` parses as `0` in JavaScript and stays `0.0` in Python), so both languages write the same bytes. The golden value: Lab 05's Mac re-run, `47c9ab93279dae96f8423aabc985beda6492f2e498da82e055d9ba9fa44aacf8`
 (`scripts/lab-record.test.mjs`).
 
 **compare and onMain.** `compare` is the status of a GitHub compare with the commit as base and the main head as head:
