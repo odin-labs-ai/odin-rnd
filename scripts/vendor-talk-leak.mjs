@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderTalkLeak, TALK_TEMPLATE } from './lab-talk-leak.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/talk-leak/record.json';
@@ -142,7 +143,6 @@ export const SELF_SCAN_FILES = [['page', 'the rendered page'], ['record', 'the r
 
 async function selfScan(from, a) {
   const dir = resolve(from);
-  const { renderTalkLeak, TALK_TEMPLATE } = await import('./lab-talk-leak.mjs');
   // The scanner that runs must be the one the record cites: its folder taken fresh from the record's main with git
   // archive into an empty folder (nothing untracked can stand in for it), its scanner and deny-list the very bytes
   // the record holds by sha256, and Python run isolated, importing only from that folder.
