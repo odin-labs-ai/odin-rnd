@@ -21,7 +21,7 @@
   "original": {
    "sha256": "bcd0cd339e715eb1525b276a83820f94ebd6341437c4313ee5fbfac7bc2c5ceb",
    "bytes": 1511106,
-   "note": "The recording, rewrapped without re-encoding so its header carries its length; the picture is unchanged."
+   "note": "Rewrapped with ffmpeg -c copy, without re-encoding, so its header carries its length. The original recording is not published; its sha256 and size are recorded here."
   }
  },
  "source": {
@@ -71,56 +71,103 @@
   }
  ],
  "screening": {
-  "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human; every frame at 2 per second, and the three poster frames, also read by text recognition",
+  "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 (passthrough frames) and hashed; each of those frames read by text recognition, its text hashed",
   "at": "2026-10-27",
   "srcSha256": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
   "frames": [
    {
     "t": 0,
-    "rgb24Sha256": "eab9d32a25fcef2107d33f7039fadbca785ab3622cfa308962a09f05a47defb0"
+    "frame": 0,
+    "rgb24Sha256": "eab9d32a25fcef2107d33f7039fadbca785ab3622cfa308962a09f05a47defb0",
+    "textSha256": "d17e7dede5d5d660dabe91635ee615c08bd25a9790547aed5ffd1e5bfbd1c82c",
+    "chars": 22
    },
    {
     "t": 5,
-    "rgb24Sha256": "16cbe0fa856f14899cabd35176c646976fe9f2da7b1a0cd5cb7c0418b6269e36"
+    "frame": 37,
+    "rgb24Sha256": "16cbe0fa856f14899cabd35176c646976fe9f2da7b1a0cd5cb7c0418b6269e36",
+    "textSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "chars": 0
    },
    {
     "t": 10,
-    "rgb24Sha256": "84b6436555b605e8c919b011c5c1a3bf13f9a0640c772f5202d83c6efc68944c"
+    "frame": 73,
+    "rgb24Sha256": "84b6436555b605e8c919b011c5c1a3bf13f9a0640c772f5202d83c6efc68944c",
+    "textSha256": "4e05d58348a6dfbadcaac27a1e44aa94404f1dd9979e2fbd7201a6ad63a8dd0c",
+    "chars": 657
    },
    {
     "t": 15,
-    "rgb24Sha256": "ee26112c785652e3cd6d23747f8ec5e1931b8231036a956a21ee986a4f70bd7b"
+    "frame": 108,
+    "rgb24Sha256": "ee26112c785652e3cd6d23747f8ec5e1931b8231036a956a21ee986a4f70bd7b",
+    "textSha256": "9b0624a38d1be0cfe87099454322135b49d5af1552129a5f87c4bdabf192eda5",
+    "chars": 641
    },
    {
     "t": 20,
-    "rgb24Sha256": "a05b60627a2e2f48f0411e75cd2c2758ac2fc48e44d322788b525a4ecaa55fcd"
+    "frame": 154,
+    "rgb24Sha256": "a05b60627a2e2f48f0411e75cd2c2758ac2fc48e44d322788b525a4ecaa55fcd",
+    "textSha256": "a40c1bd9a0f70c1a256376a99c938655d4a74e0452d6b75b7d3d53ac7eb3e21f",
+    "chars": 609
    },
    {
     "t": 25,
-    "rgb24Sha256": "199b921b11fc4909141ce2f0ec9c833199022adfd4f2fc481eebefa1a9e6da12"
+    "frame": 189,
+    "rgb24Sha256": "199b921b11fc4909141ce2f0ec9c833199022adfd4f2fc481eebefa1a9e6da12",
+    "textSha256": "7c9b513302faacf1016e3c8071f7fdd2cc9ef6cfb97e2b4f99ae264e66ea6c14",
+    "chars": 757
    },
    {
     "t": 30,
-    "rgb24Sha256": "975f6379ac792d1e24cd54201bf653205a554e173ec150f2d78c528ea14f4aca"
+    "frame": 225,
+    "rgb24Sha256": "975f6379ac792d1e24cd54201bf653205a554e173ec150f2d78c528ea14f4aca",
+    "textSha256": "b739fb58c16906b4dd56f70e6ec7a2f6d7909e04efb36af8cb666b4cb046791b",
+    "chars": 743
    },
    {
     "t": 35,
-    "rgb24Sha256": "dee6439830759b4f7b08b3e3d5eb74f459d0fb77b16a4f94b91e70b8de42ac84"
+    "frame": 261,
+    "rgb24Sha256": "dee6439830759b4f7b08b3e3d5eb74f459d0fb77b16a4f94b91e70b8de42ac84",
+    "textSha256": "c4018b23e52cb86f6581fa2c4c7835a8f83611697e9c1f9cd042f4e825cd8957",
+    "chars": 521
    },
    {
     "t": 40,
-    "rgb24Sha256": "a9f6abc277048973b357a096d1ce309e22feaa2a45b125bda9d8d0337d39dd7a"
+    "frame": 297,
+    "rgb24Sha256": "a9f6abc277048973b357a096d1ce309e22feaa2a45b125bda9d8d0337d39dd7a",
+    "textSha256": "a7ab9cc9f8048f12b2e0061fb188f8b4ca65feb4cf2635dc0eaddc4082dc0b14",
+    "chars": 680
    },
    {
     "t": 45,
-    "rgb24Sha256": "c2a149a908b4c7d74d317640f6e6b8444b9e73e54b93c6dfe1786962c60cad24"
+    "frame": 333,
+    "rgb24Sha256": "c2a149a908b4c7d74d317640f6e6b8444b9e73e54b93c6dfe1786962c60cad24",
+    "textSha256": "963b0f99b0e3120045d21e343d116ff16547d4088c2f4cb0ee12440ad64e379f",
+    "chars": 414
    },
    {
     "t": 50,
-    "rgb24Sha256": "ef7ceb1f9cb52f2c8e8aa1855da7796e06d89fb0dc4bae1923fa6b07fc533c80"
+    "frame": 370,
+    "rgb24Sha256": "ef7ceb1f9cb52f2c8e8aa1855da7796e06d89fb0dc4bae1923fa6b07fc533c80",
+    "textSha256": "8bd675baa3ec04bd25c302f9b736a677e2ce9a8bc2e56f1a6be71d671202579e",
+    "chars": 90
    }
   ],
-  "textRead": {
+  "textRecognition": {
+   "tool": "tesseract",
+   "version": "5.5.2",
+   "args": [
+    "-l",
+    "eng",
+    "--psm",
+    "3"
+   ],
+   "extract": "ffmpeg -fps_mode passthrough, the frame by its number (select), as PNG",
+   "hits": 0
+  },
+  "attested": {
+   "by": "the agent that filmed it",
+   "statement": "Before publishing, it viewed each screened frame, and read every frame at 2 per second plus the three poster frames by text recognition, with no hit for a path, an address, a port, a host name or a machine count.",
    "images": 105,
    "hits": 0
   },
