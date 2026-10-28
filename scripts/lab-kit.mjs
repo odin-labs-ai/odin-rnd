@@ -193,41 +193,34 @@ export function recordHashes(record) {
  */
 export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
-  // Two sources, and every view below is taken of BOTH, so removing something can only ever add a view, never hide
-  // text: the markup exactly as written, and the markup with what a browser does not show (scripts, styles, comments)
-  // dropped with nothing in its place, so the text on either side reads as one. The removal repeats until nothing
-  // changes, so a block rebuilt by removing an inner one is removed too.
-  let hidden = html, before;
-  do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, ''); } while (hidden !== before);
-  const sources = [['', html], [', hidden parts dropped', hidden]];
   const seen = new Set();
-  const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); const p = m && `${reason}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`; if (p && !seen.has(p)) { seen.add(p); problems.push(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } } };
-  for (const [label, src] of sources) {
-    // A character reference this screen does not decode is refused, never read as something else (fail closed): only
-    // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
-    for (const m of stripTags(src, '\n').matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) { const p = `a character reference this screen does not decode (${m[0]})`; if (!seen.has(p)) { seen.add(p); problems.push(p); } }
-    // The markup, and with percent-encoded slashes decoded (a link's path).
-    leak(label && ` (markup${label})`, src);
-    leak(` (percent-decoded${label})`, src.replace(/%2f/gi, '/'));
-    // What a browser shows, character references decoded (numeric ones too, so "&#47;" is a slash; &amp; last, so an
-    // escaped reference is never decoded twice): with every tag dropped and nothing in its place, so text split by any
-    // tag at all reads as one; then folded as a reader sees it (invisible format and combining characters removed,
-    // look-alike letters folded to the Latin ones they imitate: the publisher's fold); and with block tags as breaks.
-    const shown = decode(stripTags(src, ''));
-    leak(` (as shown, every tag dropped${label})`, shown);
-    leak(` (as shown, folded${label})`, fold(shown));
-    // Text direction controls reorder what is shown (a reversed word reads forwards), so none is allowed at all.
-    if (/[\u202a-\u202e\u2066-\u2069]/.test(shown) && !seen.has('bidi')) { seen.add('bidi'); problems.push('a text direction control character'); }
-    leak(` (as shown${label})`, decode(stripTags(src.replace(BLOCK_TAGS, '\n'), '')).replace(/\n+/g, ' '));
-  }
-  // The lines a reader sees, for the publisher's screen and the hash rules: a block tag ends one; any other tag (inline,
-  // or one this list does not know) joins the text on either side. Taken of both sources too, each line once.
-  const lineOf = src => decode(stripTags(src.replace(BLOCK_TAGS, '\n'), ''));
-  const text = lineOf(hidden);
-  const lines = [...new Set([text, lineOf(html)].flatMap(t => t.split('\n').map(l => l.trim()).filter(Boolean)))];
+  const add = p => { if (!seen.has(p)) { seen.add(p); problems.push(p); } };
+  const leak = (where, text) => { for (const [pattern, reason] of LEAKS) { const m = pattern.exec(text); if (m) add(`${reason}${where}: ${JSON.stringify(text.slice(Math.max(0, m.index - 40), m.index + 40))}`); } };
+  // The text a browser shows comes from shownText(), a tokenizer that reads markup the way HTML does (quoted
+  // attributes, comments, scripts and styles as raw text), so no attribute, comment or tag can hide displayed text or
+  // swallow it. Every other view is extra, and only ever adds a refusal: the markup as written, the markup with every
+  // character reference decoded, percent-encoded slashes decoded, and the old tag-dropping views.
+  const shown = decode(shownText(html));
+  const lines = decode(shownText(html, { breaks: true }));
+  // A character reference this screen does not decode is refused, never read as something else (fail closed): only
+  // numeric references and the named ones in NAMED_REFS are decoded, and those are all the pages use.
+  for (const src of [shownText(html), html]) for (const m of src.matchAll(/&([A-Za-z][A-Za-z0-9]*);?/g)) if (!(Object.hasOwn(NAMED_REFS, m[1]) && m[0].endsWith(';'))) add(`a character reference this screen does not decode (${m[0]})`);
+  leak('', html);
+  leak(' (markup, references decoded)', decode(html));
+  leak(' (percent-decoded)', html.replace(/%2f/gi, '/'));
+  leak(' (as shown)', shown);
+  // As a reader sees it: invisible format and combining characters removed and look-alike letters from other scripts
+  // folded to the Latin ones they imitate (the publisher's fold).
+  leak(' (as shown, folded)', fold(shown));
+  leak(' (as shown, by line)', lines.replace(/\n+/g, ' '));
+  leak(' (every tag dropped)', decode(stripTags(html, '')));
+  // Text direction controls reorder what is shown (a reversed word reads forwards), so none is allowed at all.
+  if (/[\u202a-\u202e\u2066-\u2069]/.test(shown) || /[\u202a-\u202e\u2066-\u2069]/.test(decode(html))) add('a text direction control character');
+  // The lines a reader sees, for the publisher's screen and the hash rules: a block element ends one.
+  const text = lines;
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
-  for (const line of lines) {
+  for (const line of [...new Set(text.split('\n').map(l => l.trim()).filter(Boolean))]) {
     const unknown = [];
     const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => {
       if (known.some(h => h.startsWith(token))) return 'HASH';
@@ -248,8 +241,63 @@ export function stripTags(html, by = '') {
   return out;
 }
 
-// Tags that end a line of text as a reader sees it. Any other tag is taken as inline: dropped, joining its neighbours.
-const BLOCK_TAGS = /<\/?(?:address|article|aside|blockquote|br|caption|dd|desc|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|img|li|main|nav|ol|option|p|pre|section|summary|svg|table|tbody|td|text|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
+/**
+ * The text a browser shows, from the markup, by HTML's own tokenizing rules (a subset, enough for these pages): a "<"
+ * opens a tag only before a letter, "/", "!" or "?"; inside a tag, quoted attribute values may hold "<", ">" and
+ * "<!--" and are never shown; a comment runs from "<!--" to the first "-->" or "--!>" ("<!-->" and "<!--->" close at once); "<!" and "<?" open a bogus comment to the
+ * first ">"; script, style and template content is not body text and is dropped (up to the matching
+ * end tag); a tag cut off by the end of the page is dropped, as a browser drops it. Character references are left as
+ * they are (decode() reads them). With `breaks`, a block element's tag becomes a line break; any other tag joins.
+ */
+export function shownText(html, { breaks = false } = {}) {
+  let out = '', i = 0;
+  const n = html.length;
+  const RAW = new Set(['script', 'style', 'template']);
+  while (i < n) {
+    const ch = html[i];
+    if (ch !== '<') { out += ch; i++; continue; }
+    const next = html[i + 1] ?? '';
+    if (html.startsWith('<!--', i)) {
+      // "<!-->" and "<!--->" close at once; otherwise the first "-->" or "--!>" closes it.
+      if (html.startsWith('<!-->', i)) { i += 5; continue; }
+      if (html.startsWith('<!--->', i)) { i += 6; continue; }
+      const ends = [html.indexOf('-->', i + 4), html.indexOf('--!>', i + 4)].filter(k => k >= 0).map((k, x) => k + (html.startsWith('-->', k) ? 3 : 4));
+      i = ends.length ? Math.min(...ends) : n;
+      continue;
+    }
+    if (next === '!' || next === '?') { const end = html.indexOf('>', i + 2); i = end < 0 ? n : end + 1; continue; }
+    const closing = next === '/';
+    if (!/[A-Za-z]/.test(closing ? html[i + 2] ?? '' : next)) {
+      if (closing) { const end = html.indexOf('>', i + 2); i = end < 0 ? n : end + 1; continue; } // "</" + not a letter: a bogus comment
+      out += ch; i++; continue; // "<" before anything else is text
+    }
+    // A tag: its name, then attributes with their quoted values, to the first ">" outside a quote.
+    let j = i + (closing ? 2 : 1);
+    let name = '';
+    while (j < n && !/[\s/>]/.test(html[j])) name += html[j++];
+    let quote = null;
+    for (; j < n; j++) {
+      const c = html[j];
+      if (quote) { if (c === quote) quote = null; continue; }
+      if (c === '"' || c === "'") { if (/=\s*$/.test(html.slice(i, j))) quote = c; continue; }
+      if (c === '>') break;
+    }
+    if (j >= n) break; // cut off by the end of the page: dropped
+    const tag = name.toLowerCase();
+    i = j + 1;
+    if (breaks && BLOCK_NAMES.has(tag)) out += '\n';
+    if (!closing && RAW.has(tag)) {
+      const end = html.toLowerCase().indexOf(`</${tag}`, i);
+      if (end < 0) { i = n; break; }
+      const close = html.indexOf('>', end);
+      i = close < 0 ? n : close + 1;
+    }
+  }
+  return out;
+}
+
+// Elements that end a line of text as a reader sees it. Any other tag is taken as inline: dropped, joining its neighbours.
+const BLOCK_NAMES = new Set(['address', 'article', 'aside', 'blockquote', 'br', 'caption', 'dd', 'desc', 'details', 'dialog', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'img', 'li', 'main', 'nav', 'ol', 'option', 'p', 'pre', 'section', 'summary', 'svg', 'table', 'tbody', 'td', 'text', 'tfoot', 'th', 'thead', 'tr', 'ul']);
 
 // The named character references the screen decodes (pageLeaks refuses any other): what escape() writes, and a few
 // common ones. Adding one here is how a page may use it.
