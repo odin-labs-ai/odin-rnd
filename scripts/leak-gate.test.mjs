@@ -689,7 +689,8 @@ test('the pull request text screen runs on every PR event, on GitHub-hosted runn
   assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
   assert.doesNotMatch(wf, /\n  pull_request:\n/);
   assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n\s+persist-credentials: false/);
-  assert.doesNotMatch(wf, /head\.(sha|ref)|refs\/pull\//, 'no file of the pull request is checked out');
+  assert.doesNotMatch(wf, /\n\s+(ref|repository):[^\n]*(head\.(sha|ref|repo)|refs\/pull\/)/, 'no file of the pull request is checked out');
+  assert.equal((wf.match(/actions\/checkout@/g) ?? []).length, 1, 'one checkout: the base sha');
   assert.match(wf, /runs-on: ubuntu-latest/);
   assert.doesNotMatch(wf, /self-hosted|continue-on-error|\|\| true|\n\s+if:/);
   assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
