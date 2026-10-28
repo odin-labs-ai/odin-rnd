@@ -7,6 +7,9 @@ import { join } from 'node:path';
 import { changes, JURY_PIN, JURY_RECORD, JURY_TEMPLATE, juryProblems, median, pageLeaks, readAiJury, recordHashes, renderAiJury, renderIntro } from './lab-ai-jury.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 14, "Can an AI jury judge how a room looks?" (scripts/lab-ai-jury.mjs). DATA ONLY: the page is worth publishing
 // only if its medians are the jurors', its jurors are named as AI, its gate is the rubric's rule, and it shows no
@@ -77,7 +80,8 @@ test('data only: no picture, no money, no spend field, no client-theme word, no 
   assert.doesNotMatch(main, /<(img|picture|video|svg|source|iframe)\b|\.(png|jpe?g|webp|gif)\b|url\(/i, 'no picture in the page content');
   for (const [name, text] of [['page', main], ['record', raw], ['tile', readFileSync('site/data/labs/ai-jury-tile.json', 'utf8')]]) {
     assert.doesNotMatch(text, /usd|spend|\$|€|cost (of|was) \d/i, `${name}: money`);
-    assert.doesNotMatch(text, /mortgage|bank|lender|hypothe/i, `${name}: the client theme`);
+    assert.doesNotMatch(text, /bank|lender|hypothe/i, `${name}: the client theme`);
+    assert.ok(!namesRestricted(text), `${name}: a restricted name (the client theme)`);
     assert.doesNotMatch(text, /talk-s\d|deck-s\d|The Arrival|The Rogue Agent|\bseed\b|blind_key|"reasons?"|fix_first/i, `${name}: a room name, a shot id, a seed, a key or a reason`);
   }
   assert.doesNotMatch(raw, /"usd"|"seed"|"raw"|"fix_list"|"prompt"/);
@@ -111,7 +115,7 @@ test('the screen catches each class it guards, on the page and in the record (th
     ['a local path', '/Users/someone/x', /machine path/],
     ['a host and port', 'served on localhost:8080', /local host/],
     ['an IP address', 'from 10.0.0.12', /local host/],
-    ['a client name (the talk theme)', 'a mortgage lender', /restricted name/],
+    ['a client name (the talk theme)', `a ${SYN_THEME} lender`, /restricted name/],
     ['a private repository name', 'odin-labs-ai/some-private-repo', /another repository/],
     ['a credential', credential, /credential/],
     ['a money figure', 'it cost €40', /price or currency/],

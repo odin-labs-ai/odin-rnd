@@ -33,7 +33,7 @@ The spec says a withdrawn plugin acts "as if it had been removed", but it never 
 
 ## WO-04: the real-filter baseline
 
-The baseline runs odin-agent's extension filter and its proven-core floor **unchanged**, imported in place from two detached, read-only odin-suite worktrees:
+The baseline runs odin-agent's extension filter and its proven-core floor **unchanged**, imported in place from two detached, read-only worktrees of the internal suite repository:
 
 | Pin | Commit | Role |
 |---|---|---|
@@ -43,7 +43,7 @@ The baseline runs odin-agent's extension filter and its proven-core floor **unch
 - **What changes between the pins:** `extension-filter.ts` is byte-identical at both (sha256 in `baseline/SOURCE.json`). Only the floor differs: 25 entries before, 28 after.
 - **What is published:** per-config outputs, the source sha256s and the commit ids. The private source is not vendored (founder D4). `scripts/composable-baseline.test.mjs` asserts that no file here is a copy of a private source file.
 - **Name mapping:** synthetic floor slots map by position, in memory only (`baseline/driver.mjs`). `core-NN` maps to pre floor[NN-1]; `q`, `q-release` and `q-resume` map to the three entries the current floor appends. Real names never reach a file.
-- **Dependencies:** the import chain needs `@odinlabs-ai/skill-contracts` at the version odin-agent pins (0.7.0), plus `tsx`. Both were installed into a sidecar directory outside every repository and symlinked as `odin-agent/node_modules`, which odin-suite's `.gitignore` covers. `git status` in both worktrees is empty before and after the run, and the runner refuses otherwise.
+- **Dependencies:** the import chain needs `@odinlabs-ai/skill-contracts` at the version odin-agent pins (0.7.0), plus `tsx`. Both were installed into a sidecar directory outside every repository and symlinked as `odin-agent/node_modules`, which the suite repository's `.gitignore` covers. `git status` in both worktrees is empty before and after the run, and the runner refuses otherwise.
 - **Byte identity:** a second run with `--check` reproduces `outputs.json`, `summary.json` and `SOURCE.json` byte for byte.
 
 ### What the baseline shows (descriptive, decides nothing)
@@ -60,7 +60,7 @@ The baseline runs odin-agent's extension filter and its proven-core floor **unch
 
 ```
 node experiments/composable-harness/baseline/run-baseline.mjs \
-  --suite-git <odin-suite clone> \
+  --suite-git <suite clone> \
   --pre-wt <detached worktree at d6431af9> \
   --current-wt <detached worktree at 2d522f50> \
   --deps <dir with node_modules: @odinlabs-ai/skill-contracts@0.7.0, tsx@4.23.1> \

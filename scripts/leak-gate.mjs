@@ -23,6 +23,7 @@
 import { createHash, hash as oneShot } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { crc32, inflateRawSync, inflateSync } from 'node:zlib';
 import { join, relative } from 'node:path';
 
@@ -211,7 +212,7 @@ const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo 
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
 
 /** -> [{kind, at (offset in the original text), hash?}] for one reading. */
-function scanOne(r, secret, cache) {
+function scanOne(r, secret, cache, patterns) {
   const hits = [];
   const f = folded(r);
   const low = f.text.toLowerCase();
@@ -234,7 +235,7 @@ function scanOne(r, secret, cache) {
       if (n === 1 && !secret.heads.has(h)) break;
     }
   }
-  for (const [kind, re] of PATTERNS) {
+  if (patterns) for (const [kind, re] of PATTERNS) {
     for (const m of r.text.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g'))) hits.push({ kind, at: r.at[m.index] });
   }
   return hits;
@@ -245,13 +246,14 @@ function scanOne(r, secret, cache) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-export function scanText(text, secret, cache = new Map()) {
+// patterns: false reads terms and canaries only (the source tree, where synthetic paths and addresses are test fixtures).
+export function scanText(text, secret, cache = new Map(), { patterns = true } = {}) {
   const raw = identity(text);
   // Decoded twice as well: a script's escape can spell a reference (\u0026#111; is &#111;, which HTML then reads).
   const dec = decodedReading(raw), twice = decodedReading(dec);
   const readings = [raw, dec, untagged(dec), spaced(dec), twice, untagged(twice), spaced(twice)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
+  for (const r of readings) for (const hit of scanOne(r, secret, cache, patterns)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
   }
@@ -448,20 +450,21 @@ export function gunzipStrict(buf, shown) {
 }
 
 /** -> {files, texts, binaries, hits:[{file, line, kind, hash?}]}. A path's name is scanned too, and so is every file inside a tar archive. */
-export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
+export function scanPaths(paths, secret, { maxBinary = MAX_BINARY, patterns = true } = {}) {
+  const opts = { patterns };
   const cache = new Map();
   const result = { files: 0, texts: 0, binaries: 0, hits: [] };
   const one = (path, read) => {
     result.files++;
     // A path that itself holds a leak is never printed: it is named by the first 8 hex of its sha256 instead.
-    const pathHits = scanText(path, secret, cache);
+    const pathHits = scanText(path, secret, cache, opts);
     const shown = pathHits.length ? `[a file name, sha256 ${createHash('sha256').update(path).digest('hex').slice(0, 8)}]` : path;
     for (const hit of pathHits) result.hits.push({ file: shown, ...hit, line: 0 });
     // A read error names the path; it is reported by the name shown instead, which is redacted when it holds a leak.
     let bytes;
     try { bytes = read(); } catch (error) { throw new Error(`leak gate: ${shown} cannot be read (${error.code ?? 'error'})`); }
     if (/\.(gz|tgz)$/i.test(path)) {
-      for (const hit of scanText(printable(bytes.subarray(0, 10)), secret, cache)) result.hits.push({ file: `${shown}!(gzip header)`, ...hit, line: 0 });
+      for (const hit of scanText(printable(bytes.subarray(0, 10)), secret, cache, opts)) result.hits.push({ file: `${shown}!(gzip header)`, ...hit, line: 0 });
       bytes = gunzipStrict(bytes, shown);
     }
     if (/\.(tar|tar\.gz|tgz)$/i.test(path)) {
@@ -471,7 +474,7 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
         if (entry.meta) meta.push(entry.meta, Buffer.from([10]));
         else one(`${shown}!${entry.name}`, () => entry.bytes);
       }
-      for (const hit of scanText(printable(Buffer.concat(meta)), secret, cache)) result.hits.push({ file: `${shown}!(archive headers)`, ...hit, line: 0 });
+      for (const hit of scanText(printable(Buffer.concat(meta)), secret, cache, opts)) result.hits.push({ file: `${shown}!(archive headers)`, ...hit, line: 0 });
       return;
     }
     if (!TEXT.test(path) && (BINARY.test(path) || bytes.subarray(0, 8192).includes(0))) {
@@ -483,14 +486,14 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
       // exact known row covers it, so a re-encoded file or a moved hit needs a new reviewed row.
       const sha256 = createHash('sha256').update(bytes).digest('hex');
       const raw = printableMapped(bytes);
-      for (const hit of scanText(raw.text, secret, cache)) result.hits.push({ file: shown, ...hit, line: 0, sha256, offset: raw.offs[hit.at] ?? 0 });
+      for (const hit of scanText(raw.text, secret, cache, opts)) result.hits.push({ file: shown, ...hit, line: 0, sha256, offset: raw.offs[hit.at] ?? 0 });
       const meta = binaryMetadata(path, bytes, shown);
-      if (meta !== null) for (const hit of scanText(meta, secret, cache)) result.hits.push({ file: `${shown}!(metadata)`, ...hit, line: 0, sha256, offset: hit.at });
+      if (meta !== null) for (const hit of scanText(meta, secret, cache, opts)) result.hits.push({ file: `${shown}!(metadata)`, ...hit, line: 0, sha256, offset: hit.at });
       return;
     }
     result.texts++;
     let hits;
-    try { hits = scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache); } catch (error) { throw new Error(`${error.message} (${shown})`); }
+    try { hits = scanText(bytes.toString('utf8').replaceAll('\0', ''), secret, cache, opts); } catch (error) { throw new Error(`${error.message} (${shown})`); }
     for (const hit of hits) result.hits.push({ file: shown, ...hit });
   };
   for (const root of paths) {
@@ -580,7 +583,7 @@ export function fillPage(html, values) {
 
 function main(argv) {
   const args = [...argv], paths = [];
-  let env = 'LEAK_SCREEN_SECRET', page = null, knownPath = null, setPath = null, commit = process.env.GITHUB_SHA ?? '';
+  let env = 'LEAK_SCREEN_SECRET', page = null, knownPath = null, setPath = null, tree = false, commit = process.env.GITHUB_SHA ?? '';
   while (args.length) {
     const a = args.shift();
     if (a === '--secret-env') env = args.shift();
@@ -588,7 +591,24 @@ function main(argv) {
     else if (a === '--commit') commit = args.shift();
     else if (a === '--known') knownPath = args.shift();
     else if (a === '--set') setPath = args.shift();
+    else if (a === '--tree') tree = true;
     else paths.push(a);
+  }
+  // --tree: every file git tracks in this checkout (the public source, every record, every asset), for terms and canaries.
+  if (tree) {
+    if (paths.length || page) throw new Error('leak gate: --tree takes no paths and no page');
+    let raw;
+    try { raw = execFileSync('git', ['ls-files', '-z'], { maxBuffer: 1 << 28 }); } catch { throw new Error('leak gate: git ls-files failed'); }
+    // Every tracked name must be valid UTF-8, so the name read back is the file git tracks: a name that does not
+    // round-trip could collide with another and go unread, so it stops the build.
+    for (let at = 0; at < raw.length;) {
+      const end = raw.indexOf(0, at), bytes = raw.subarray(at, end < 0 ? raw.length : end);
+      at = (end < 0 ? raw.length : end) + 1;
+      if (!bytes.length) continue;
+      const name = bytes.toString('utf8');
+      if (!Buffer.from(name, 'utf8').equals(bytes)) throw new Error('leak gate: a tracked file name is not valid UTF-8, so it cannot be screened');
+      paths.push(name);
+    }
   }
   if (!paths.length) throw new Error('leak gate: nothing to scan');
   const secret = loadSecret(process.env[env]);
@@ -596,9 +616,10 @@ function main(argv) {
   // Configuration files are read with fixed messages: a read error would name the path, which could hold a leak.
   const config = (file, what) => { try { return readFileSync(file, 'utf8'); } catch (error) { throw new Error(`leak gate: the ${what} cannot be read (${error.code ?? 'error'})`); } };
   checkCommitment(secret, config(setPath, 'term-set commitment'));
-  const result = scanPaths(paths, secret);
+  const result = scanPaths(paths, secret, { patterns: !tree });
   if (result.texts === 0) throw new Error('leak gate: no text was read');
-  const known = knownPath ? loadKnown(config(knownPath, 'known-occurrence list'), secret) : [];
+  // A row names a built file (dist/...) or a tracked source file: each scan settles the rows of its own kind only.
+  const known = (knownPath ? loadKnown(config(knownPath, 'known-occurrence list'), secret) : []).filter(row => row.file.startsWith('dist/') !== tree);
   const { fresh, stale, known: covered } = settle(result.hits, known, secret.strict);
   for (const hit of fresh) console.log(report(hit));
   // A row's file is printed only when it holds no leak itself, like any scanned name.
@@ -617,6 +638,7 @@ function main(argv) {
   return 0;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+const invoked = () => { try { return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href; } catch { return false; } };
+if (process.argv[1] && invoked()) {
   try { process.exitCode = main(process.argv.slice(2)); } catch (error) { console.error(error.message); process.exitCode = 2; }
 }
