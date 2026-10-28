@@ -211,7 +211,7 @@ const lineOf = (starts, pos) => { let lo = 0, hi = starts.length - 1; while (lo 
 const lineStarts = text => { const out = [0]; for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) out.push(i + 1); return out; };
 
 /** -> [{kind, at (offset in the original text), hash?}] for one reading. */
-function scanOne(r, secret, cache, shortest) {
+function scanOne(r, secret, cache) {
   const hits = [];
   const f = folded(r);
   const low = f.text.toLowerCase();
@@ -229,8 +229,7 @@ function scanOne(r, secret, cache, shortest) {
       let h = cache.get(joined);
       if (h === undefined) { h = digest(secret.salt, joined); if (cache.size < 2_000_000) cache.set(joined, h); }
       const kind = secret.kinds.get(h);
-      // A term shorter than `shortest` letters is not matched here (raw compressed bytes); a canary always is.
-      if (kind && (kind === 'canary' || joined.length - n + 1 >= shortest)) hits.push({ kind, at: f.at[words[i][1]], hash: h.slice(0, 8) });
+      if (kind) hits.push({ kind, at: f.at[words[i][1]], hash: h.slice(0, 8) });
       // Longer runs are hashed only from a word that starts some term (the set's "heads"): the same answer, far fewer hashes.
       if (n === 1 && !secret.heads.has(h)) break;
     }
@@ -246,18 +245,18 @@ function scanOne(r, secret, cache, shortest) {
  * names an occurrence by its offset in the original text, so readings that see the same occurrence count it once, and
  * occurrences that only one reading sees each count.
  */
-export function scanText(text, secret, cache = new Map(), shortest = 1) {
+export function scanText(text, secret, cache = new Map()) {
   const raw = identity(text);
   // Decoded twice as well: a script's escape can spell a reference (\u0026#111; is &#111;, which HTML then reads).
   const dec = decodedReading(raw), twice = decodedReading(dec);
   const readings = [raw, dec, untagged(dec), spaced(dec), twice, untagged(twice), spaced(twice)].filter((r, i, all) => all.findIndex(x => x.text === r.text) === i);
   const seen = new Map();
-  for (const r of readings) for (const hit of scanOne(r, secret, cache, shortest)) {
+  for (const r of readings) for (const hit of scanOne(r, secret, cache)) {
     const key = `${hit.kind}:${hit.hash ?? ''}:${hit.at}`;
     if (!seen.has(key)) seen.set(key, hit);
   }
   const starts = lineStarts(text);
-  return [...seen.values()].sort((a, b) => a.at - b.at).map(({ kind, at, hash }) => ({ kind, line: lineOf(starts, at), ...(hash ? { hash } : {}) }));
+  return [...seen.values()].sort((a, b) => a.at - b.at).map(({ kind, at, hash }) => ({ kind, line: lineOf(starts, at), at, ...(hash ? { hash } : {}) }));
 }
 
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|webm|mp4|mov|woff2?|ttf|otf|pdf|zip)$/i;
@@ -268,11 +267,20 @@ const TEXT = /\.(html?|json|jsonl|js|mjs|cjs|css|svg|xml|txt|md|csv|tsv|map|vtt|
  * any length, each on its own line. A short term can turn up in compressed bytes by
  * chance; such a hit is reviewed and listed as a known occurrence, never filtered away here.
  */
-function printable(bytes) {
-  const out = [];
-  // Printable ASCII and well-formed UTF-8 sequences both count, so a UTF-8 name in metadata ("café") reads whole.
-  for (const m of bytes.toString('latin1').matchAll(/(?:[\x20-\x7e\t]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf4][\x80-\xbf]{3})+/g)) out.push(Buffer.from(m[0], 'latin1').toString('utf8'));
-  return out.join('\n');
+function printable(bytes) { return printableMapped(bytes).text; }
+/** The same runs, with the byte offset each UTF-16 unit of the text came from (a separator maps to the next run). */
+function printableMapped(bytes) {
+  const parts = [], offs = [];
+  for (const m of bytes.toString('latin1').matchAll(/(?:[\x20-\x7e\t]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf4][\x80-\xbf]{3})+/g)) {
+    if (parts.length) { parts.push('\n'); offs.push(m.index); }
+    let at = m.index;
+    for (const ch of Buffer.from(m[0], 'latin1').toString('utf8')) {
+      parts.push(ch);
+      for (let k = 0; k < ch.length; k++) offs.push(at);
+      at += Buffer.byteLength(ch);
+    }
+  }
+  return { text: parts.join(''), offs };
 }
 function walk(dir) {
   let entries;
@@ -316,8 +324,6 @@ export function* tarEntries(buf, shown) {
   // No end-of-archive block: the archive is cut short.
   throw new Error(`leak gate: ${shown} is not a readable tar archive`);
 }
-
-export const RAW_SHORTEST = 5;
 
 /**
  * The readable metadata of a binary, as text (one item per line), or null for a type the gate does not parse: PNG
@@ -470,11 +476,14 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
       result.binaries++;
       // Read whole, never in windows (a term could straddle a window's edge); a binary too large to read whole stops the build.
       if (bytes.length > maxBinary) throw new Error(`leak gate: ${shown} is too large to read whole (${bytes.length} bytes)`);
-      // Raw bytes: every canary, every machine pattern and every term of 5 letters or more. A shorter term turns up in
-      // compressed bytes by chance, so it is matched only in the file's readable metadata, which is read for all terms.
-      for (const hit of scanText(printable(bytes), secret, cache, RAW_SHORTEST)) result.hits.push({ file: shown, ...hit, line: 0 });
+      // Raw bytes and readable metadata, every term of every length. A hit in a binary is bound to the file's exact
+      // bytes (sha256) and its offset (a byte offset in the raw bytes, a character offset in the metadata text): only an
+      // exact known row covers it, so a re-encoded file or a moved hit needs a new reviewed row.
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
+      const raw = printableMapped(bytes);
+      for (const hit of scanText(raw.text, secret, cache)) result.hits.push({ file: shown, ...hit, line: 0, sha256, offset: raw.offs[hit.at] ?? 0 });
       const meta = binaryMetadata(path, bytes, shown);
-      if (meta !== null) for (const hit of scanText(meta, secret, cache)) result.hits.push({ file: `${shown}!(metadata)`, ...hit, line: 0 });
+      if (meta !== null) for (const hit of scanText(meta, secret, cache)) result.hits.push({ file: `${shown}!(metadata)`, ...hit, line: 0, sha256, offset: hit.at });
       return;
     }
     result.texts++;
@@ -490,7 +499,7 @@ export function scanPaths(paths, secret, { maxBinary = MAX_BINARY } = {}) {
   return result;
 }
 
-export const report = hit => `LEAK ${hit.file}:${hit.line} ${hit.kind}${hit.hash ? ` hash ${hit.hash}` : ''}`;
+export const report = hit => `LEAK ${hit.file}:${hit.line} ${hit.kind}${hit.hash ? ` hash ${hit.hash}` : ''}${hit.sha256 ? ` at offset ${hit.offset} of sha256 ${hit.sha256}` : ''}`;
 
 /**
  * The known occurrences (scripts/leak-gate-known.json): rows {file, kind, hash?, count, reason} for a hit that is
@@ -499,7 +508,7 @@ export const report = hit => `LEAK ${hit.file}:${hit.line} ${hit.kind}${hit.hash
  * A canary can never be a known occurrence.
  */
 /** The canonical bytes a review stamp covers: every row, its fields in one fixed order. */
-export const rowsDigest = rows => createHash('sha256').update(JSON.stringify(rows.map(r => [r.file, r.kind, r.hash ?? null, r.count, r.reason]))).digest('hex');
+export const rowsDigest = rows => createHash('sha256').update(JSON.stringify(rows.map(r => [r.file, r.kind, r.hash ?? null, r.sha256 ?? null, r.offset ?? null, r.count, r.reason]))).digest('hex');
 
 /**
  * The known list carries a review stamp, {rowsSha256, by, on}: the sha256 of its rows. Any change to the rows (a row
@@ -517,7 +526,10 @@ export function loadKnown(raw, secret = null) {
     if (row.kind !== 'term' && !PATTERNS.some(([kind]) => kind === row.kind)) throw new Error('leak gate: a known occurrence names a kind the gate does not report');
     if (row.kind === 'term' && !/^[0-9a-f]{8}$/.test(row.hash ?? '')) throw new Error('leak gate: a known term needs its 8-hex hash prefix');
     if (row.kind !== 'term' && row.hash !== undefined) throw new Error('leak gate: only a known term carries a hash');
-    const extra = Object.keys(row).filter(k => !['file', 'kind', 'hash', 'count', 'reason'].includes(k));
+    // An exact row binds one occurrence in one exact file: its sha256 and offset, count 1. A hit in a binary is covered
+    // only by an exact row; an exact row covers nothing else.
+    if ((row.sha256 !== undefined || row.offset !== undefined) && (!/^[0-9a-f]{64}$/.test(row.sha256 ?? '') || !Number.isInteger(row.offset) || row.offset < 0 || row.count !== 1)) throw new Error('leak gate: an exact known occurrence needs a file sha256, an offset and count 1');
+    const extra = Object.keys(row).filter(k => !['file', 'kind', 'hash', 'sha256', 'offset', 'count', 'reason'].includes(k));
     if (extra.length) throw new Error('leak gate: a known occurrence has a field the gate does not read');
     if (secret && row.kind === 'term' && secret.strict.has(row.hash)) throw new Error('leak gate: a known occurrence names a term of a class that has no allowlist (client, employer, publisher)');
   }
@@ -527,7 +539,7 @@ export function loadKnown(raw, secret = null) {
   return d.known;
 }
 
-const keyOf = h => `${h.file}\0${h.kind}\0${h.hash ?? ''}`;
+const keyOf = h => `${h.file}\0${h.kind}\0${h.hash ?? ''}\0${h.sha256 ?? ''}\0${h.offset ?? ''}`;
 // A row whose file is "<archive>!*" covers that kind in every file inside the archive, as one exact count.
 const archiveOf = file => (file.includes('!') ? `${file.slice(0, file.indexOf('!'))}!*` : null);
 /** -> {fresh: hits no row covers, stale: rows whose count differs, known: hits a row covers}. */
