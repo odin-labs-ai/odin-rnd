@@ -161,3 +161,10 @@
 .rogue-tamper-case code{overflow-wrap:anywhere}
 .rogue-tamper-case table{font-size:13px}
 @media(max-width:760px){.rogue-split,.rogue-acts{grid-template-columns:1fr}}
+/* Lab 13, does an agent company get better, measured blind (scripts/lab-measured-blind.mjs). */
+.blind-list{padding-left:1.2em;line-height:1.65}
+.blind-list li+li{margin-top:8px}
+.blind-hashes code{font-size:12px;word-break:break-all}
+.blind-judge,.blind-live{margin-top:8px;border-style:dashed}
+.blind-judge .technical,.blind-live .technical{color:var(--steel);margin-bottom:8px}
+.blind-table td,.blind-table th{text-align:left}
