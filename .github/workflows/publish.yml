@@ -128,7 +128,7 @@ jobs:
           pattern: shard-files-*
           path: shards
       - name: The shards ran every test file, each exactly once
-        run: node scripts/check-shard-coverage.mjs shards/*/shard-files.txt
+        run: node scripts/check-shard-coverage.mjs --shards 3 shards/*/shard-files.txt
       - name: Build and validate public site
         run: |
           pnpm build

@@ -3,7 +3,7 @@
 // exactly the unsharded file set (`pnpm test` = node --test scripts/*.test.mjs) and no file is in two shards. A test
 // file sharding dropped, or ran twice, fails the build.
 //
-//   node scripts/check-shard-coverage.mjs <shard list> ...     (one path per line)
+//   node scripts/check-shard-coverage.mjs --shards N <shard list> ...     (one path per line; N = the matrix's shards)
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,9 +13,10 @@ export const allTestFiles = (dir = 'scripts') => readdirSync(dir, { withFileType
   .filter(e => e.isFile() && !e.name.startsWith('.') && e.name.endsWith('.test.mjs')).map(e => `${dir}/${e.name}`).sort();
 
 /** Every way the shard lists are not one exact partition of `all` (empty when they are). */
-export function coverageProblems(shards, all) {
+export function coverageProblems(shards, all, expected) {
   const problems = [];
-  if (shards.length < 2) problems.push(`${shards.length} shard list(s); a sharded run has two or more`);
+  if (!Number.isInteger(expected) || expected < 2) problems.push(`the expected shard count ${expected} is not an integer of two or more`);
+  else if (shards.length !== expected) problems.push(`${shards.length} shard list(s); the run has ${expected} shards`);
   const seen = new Map();
   shards.forEach((files, i) => {
     if (!files.length) problems.push(`shard ${i + 1} ran no test file`);
@@ -33,8 +34,10 @@ export function coverageProblems(shards, all) {
 const lines = text => text.split('\n').map(l => l.trim()).filter(Boolean);
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
-  const files = process.argv.slice(2);
-  const problems = coverageProblems(files.map(f => lines(readFileSync(f, 'utf8'))), allTestFiles());
+  const args = process.argv.slice(2);
+  const expected = args[0] === '--shards' ? Number(args.splice(0, 2)[1]) : NaN;
+  const files = args;
+  const problems = coverageProblems(files.map(f => lines(readFileSync(f, 'utf8'))), allTestFiles(), expected);
   if (problems.length) { console.error(`shard coverage refused:\n  ${problems.join('\n  ')}`); process.exit(1); }
   console.log(`shard coverage: ${allTestFiles().length} test files, each in exactly one of ${files.length} shards`);
 }
