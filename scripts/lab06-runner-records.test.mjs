@@ -6,10 +6,10 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendDays, dayProblems } from './append-rogue-runs.mjs';
-import { recordHash, recordProblems, RECORD_SCHEMA } from './lab-record.mjs';
+import { PINNED_LABS, recordHash, recordProblems, RECORD_SCHEMA } from './lab-record.mjs';
 import { kitRecord, runKit } from './lab-rerun.mjs';
 import { readReview } from './lab-review.mjs';
-import { RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
+import { renderLabRunsSection, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 06 on the org runners (vision-plan bundle 3, WO-03): each runner leg runs the lab's own re-run kit and writes one
@@ -41,6 +41,36 @@ test('a step that printed something else, or failed, is a DIFFERENT run with its
   const exited = kitRecord('review', results.map((x, i) => (i === 0 ? { ...x, status: 1, ok: false } : x)), { record: review, ...where, ranAt: '2026-10-28T05:33:00Z' });
   assert.equal(exited.result.verdict, 'DIFFERENT');
   assert.equal(exited.result.breaches, 1);
+});
+
+test('Lab 06 runs at a pinned commit: its org record names the real main head, identical or ahead, never behind or diverged', () => {
+  assert.deepEqual(PINNED_LABS, ['review'], 'only Lab 06 is pinned');
+  const head = 'e'.repeat(40);
+  const ahead = kitRecord('review', results, { record: review, ...where, ranAt: '2026-10-28T05:33:00Z', mainHead: head });
+  assert.deepEqual(ahead.commit, { sha: where.commit, mainHead: head, compare: 'ahead', onMain: true });
+  assert.deepEqual(recordProblems(ahead), []);
+  assert.equal(ahead.recordHash, ok.recordHash, 'the main head is not in the recordHash');
+  assert.deepEqual(ok.commit, { sha: where.commit, mainHead: where.commit, compare: 'identical', onMain: true }, 'no main head given: the commit is the main head');
+  const rehash = x => ({ ...x, recordHash: recordHash(x) });
+  for (const runner of ['org-hosted', 'github-hosted']) {
+    const org = { ...ahead, runner, machineClass: runner === 'org-hosted' ? 'org-ci-heavy' : 'ubuntu-latest' };
+    assert.deepEqual(recordProblems(rehash(org)), [], runner);
+    for (const compare of ['behind', 'diverged']) {
+      const bad = rehash({ ...org, commit: { ...org.commit, compare, onMain: false } });
+      assert.ok(recordProblems(bad).some(p => /\/commit\/compare: the .* runner runs lab review at a pinned commit of main/.test(p)), `${runner} ${compare}`);
+    }
+    // "ahead" of itself is not a main check; nor is "identical" of another head.
+    assert.ok(recordProblems(rehash({ ...org, commit: { ...org.commit, mainHead: where.commit } })).some(p => /does not agree/.test(p)));
+    assert.ok(recordProblems(rehash({ ...org, commit: { ...org.commit, compare: 'identical' } })).some(p => /does not agree/.test(p)));
+  }
+});
+
+test("Lab 06's runs section says the runs are at the pinned, reviewed commit and that a divergent day is red, unpublished", () => {
+  const html = renderLabRunsSection({ runs: day(hosted, org) });
+  assert.match(html, /re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main/);
+  assert.match(html, /is not published here: it is a red day, recorded in the runner's own run/);
+  const rogueRun = { ...hosted, lab: 'rogue' };
+  assert.doesNotMatch(renderLabRunsSection({ runs: [rogueRun] }), /pinned, reviewed commit/, 'Lab 05 is not pinned');
 });
 
 test('a lab carries only its own command and roles', () => {

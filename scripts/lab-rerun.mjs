@@ -143,9 +143,11 @@ const sha256 = data => createHash('sha256').update(data).digest('hex');
  * print (in step order, one line end each; a step that failed carries its exit status), so SAME means every step exited 0
  * and printed exactly its line; `breaches` counts the
  * steps that did not exit 0 or printed anything else. `inputs` are the sha256 of the source files the kit re-derives,
- * as read at the run. Where and when (runner, class, image, time, commit) come from the caller.
+ * as read at the run. Where and when (runner, class, image, time, commit) come from the caller, and so does mainHead:
+ * the lab runner runs the kit at a pinned commit and reads main's head from GitHub, refusing unless main is that commit
+ * or ahead of it, so a mainHead other than the commit is recorded as compare "ahead".
  */
-export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, machineClass, image = null, ranAt, commit }) {
+export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, machineClass, image = null, ranAt, commit, mainHead = commit }) {
   const shape = LAB_SHAPES[lab];
   if (!shape) throw new Error(`${lab}: no record shape for this lab`);
   const lines = rs => sha256(rs.map(r => `${r}\n`).join(''));
@@ -154,7 +156,7 @@ export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, mach
   const inputs = shape.roles.map(role => ({ role, sha256: sha256(readFileSync(join(root, record.sources.find(s => s.role === role).file))) }));
   const run = {
     format: 'odin-lab-record', version: 1, lab, runner, machineClass, image,
-    commit: { sha: commit, mainHead: commit, compare: 'identical', onMain: true },
+    commit: { sha: commit, mainHead, compare: mainHead === commit ? 'identical' : 'ahead', onMain: true },
     command: shape.command, inputs,
     result: { verdict: committed === now ? 'SAME' : 'DIFFERENT', committed, now, breaches: results.filter(r => !r.ok).length },
     ranAt, replicatedOn: [], differedOn: [],
@@ -162,7 +164,7 @@ export function kitRecord(lab, results, { root = REPO_ROOT, record, runner, mach
   return { ...run, recordHash: recordHash(run) };
 }
 
-// node scripts/lab-rerun.mjs <lab> --record --runner R --machine-class C --image I --ran-at T --commit SHA: run the kit and
+// node scripts/lab-rerun.mjs <lab> --record --runner R --machine-class C --image I --ran-at T --commit SHA [--main-head SHA]: run the kit and
 // print its record v1 (the steps' own output goes to stderr); exit 0 when a record was printed, whatever its verdict.
 // node scripts/lab-rerun.mjs <lab>: run its kit, print each command and what it printed, exit 1 unless every step
 // exited 0 and printed exactly the expected line.

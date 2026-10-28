@@ -37,7 +37,10 @@ because `0.0` parses as `0` in JavaScript and stays `0.0` in Python), so both la
 repository, so it checks that the record's claims agree, not the ancestry itself: `onMain` is true exactly when
 `compare` says the commit is part of main (`identical` or `ahead`), and `identical` holds exactly when `sha` is
 `mainHead`. The org runners read the private repository AT main, so their records must say `identical`; only a laptop
-record, whose compare was read from GitHub by hand (Lab 05's vendor step does this), may say `ahead`.
+record, whose compare was read from GitHub by hand (Lab 05's vendor step does this), may say `ahead`. One exception, by
+lab: Lab 06 (`review`) is re-run at the pinned, reviewed commit of this repository, not at its moving main (moving it is a
+reviewed change to the lab runner), so its org records name the real main head and say `identical` or `ahead`; the
+runner reads both from GitHub and refuses any other. `behind` and `diverged` stay refused for every org record.
 
 **Replicas.** Every `replicatedOn` hash equals the record's `recordHash`; every `differedOn` hash does not. A machine
 class appears once across the record and both lists. A mismatch between machines is recorded in `differedOn` and

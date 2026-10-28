@@ -16,6 +16,9 @@
 //               record's main check says the commit is part of main (identical or ahead), and identical only when
 //               sha is mainHead. The org runners read the private repository AT main, so their records must say identical; only a
 //               laptop record (checked by hand against GitHub's compare, as Lab 05's vendor step does) may say ahead.
+//               One exception, by lab: Lab 06 (review) runs at a pinned, reviewed commit of this repository, so its org
+//               records name the real main head and say identical or ahead (the runner reads both from GitHub and
+//               refuses any other); behind or diverged stays refused for every org record.
 //
 //   numbers     written as plain integers only (no fraction, exponent or -0), checked on the JSON text, so the
 //               JavaScript and Python readers of one file hold the same values.
@@ -78,6 +81,9 @@ function instant(iso) {
   return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d && date.getUTCHours() === h && date.getUTCMinutes() === mi && date.getUTCSeconds() === s ? date : null;
 }
 
+/** Labs whose org runner runs a pinned, reviewed commit of this repository (not its moving main): Lab 06. */
+export const PINNED_LABS = ['review'];
+
 /** Every way `record` is not an honest record v1, as "<where>#<json pointer>: <reason>" lines; [] when it is one. */
 export function recordProblems(record, where = 'record', now = new Date()) {
   const shape = validate(schema, record).map(p => `${where}#${p}`);
@@ -90,7 +96,11 @@ export function recordProblems(record, where = 'record', now = new Date()) {
   const c = record.commit;
   if ((c.sha === c.mainHead) !== (c.compare === 'identical')) at('/commit/compare', 'does not agree with the commit and the main head');
   if (c.onMain !== (c.compare === 'identical' || c.compare === 'ahead')) at('/commit/onMain', `a commit whose main check says "${c.compare}" is ${c.onMain ? '' : 'not '}marked as on main`);
-  if (record.runner !== 'laptop' && c.compare !== 'identical') at('/commit/compare', `the ${record.runner} runner reads main, so its commit must be the main head`);
+  if (record.runner !== 'laptop' && c.compare !== 'identical' && !(PINNED_LABS.includes(record.lab) && c.compare === 'ahead')) {
+    at('/commit/compare', PINNED_LABS.includes(record.lab)
+      ? `the ${record.runner} runner runs lab ${record.lab} at a pinned commit of main, so it is the main head or main is ahead of it`
+      : `the ${record.runner} runner reads main, so its commit must be the main head`);
+  }
 
   const r = record.result;
   // Integers past 2^53 serialise differently in JavaScript (1e+21) and Python, so recordHash would differ.
