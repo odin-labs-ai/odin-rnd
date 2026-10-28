@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { appendDay, dayProblems } from './append-rogue-runs.mjs';
+import { appendDay, appendDays, byDay, dayProblems } from './append-rogue-runs.mjs';
 import { recordHash } from './lab-record.mjs';
 import { readRogue } from './lab-rogue.mjs';
 import { runAnchor, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
@@ -91,8 +91,8 @@ function afterDays(root, days) {
 
 test('a different hash is sticky for its commit (#128): day 1 differ, day 2 agree on the same commit -> still "different"; a new commit agreeing -> "reproduced"', () => {
   const otherInputs = { inputs: [{ role: 'runner', sha256: 'c'.repeat(64) }, mac.inputs[1]] };
-  const d1hosted = leg('github-hosted', 'ubuntu-latest', '2026-10-27T12:00:00Z', otherInputs);
-  const d1org = leg('org-hosted', 'org-ci-heavy', '2026-10-27T12:00:40Z');
+  const d1hosted = leg('github-hosted', 'ubuntu-latest', '2026-10-26T12:00:00Z', otherInputs);
+  const d1org = leg('org-hosted', 'org-ci-heavy', '2026-10-26T12:00:40Z');
   const d2hosted = leg('github-hosted', 'ubuntu-latest', '2026-10-27T18:00:00Z');
   const d2org = leg('org-hosted', 'org-ci-heavy', '2026-10-27T18:00:40Z');
   const day1 = day(d1hosted, d1org), day2 = day(d2hosted, d2org);
@@ -109,12 +109,54 @@ test('a different hash is sticky for its commit (#128): day 1 differ, day 2 agre
   });
   // A new commit starts fresh. Its record hash, 237b291c..., is the case that once tripped the feeds' screen (#130).
   const fresh = { commit: { sha: 'd'.repeat(40), mainHead: 'd'.repeat(40), compare: 'identical', onMain: true } };
-  const day3 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-27T20:00:00Z', fresh), leg('org-hosted', 'org-ci-heavy', '2026-10-27T20:00:40Z', fresh));
+  const day3 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-28T05:00:00Z', fresh), leg('org-hosted', 'org-ci-heavy', '2026-10-28T05:00:40Z', fresh));
   inSite(root => assert.equal(state(afterDays(root, [day1, day2, day3])), 'reproduced'));
 });
 
-test('refused: one record, a laptop run, a wrong lab, two commits, one class twice', () => {
-  refused(record.runs, [hosted], /two or more records/);
+test('a single-machine day (the other leg wrote no record) is published as one, and the card says "Single machine"', () => {
+  const alone = leg('org-hosted', 'org-ci-heavy', '2026-10-27T13:00:40Z');
+  assert.deepEqual(dayProblems(record.runs, [alone]), []);
+  inSite(root => assert.equal(state(afterDays(root, [[alone]])), 'single'));
+});
+
+test('a leg whose own check printed DIFFERENT is a different-hash day, published as one', () => {
+  const red = leg('org-hosted', 'org-ci-heavy', '2026-10-28T03:00:40Z', { result: { ...mac.result, now: '0000000000000000', verdict: 'DIFFERENT' } });
+  const d = day(hosted, red);
+  assert.ok(d.every(r => r.differedOn.length === 1 && !r.replicatedOn.length));
+  assert.deepEqual(dayProblems(record.runs, d), []);
+  inSite(root => assert.equal(state(afterDays(root, [d])), 'different'));
+});
+
+test('a backlog of days lands at once, each day kept separate (siblings within its day only), oldest first', () => {
+  const d1 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-25T05:23:00Z'), leg('org-hosted', 'org-ci-heavy', '2026-10-25T05:23:40Z'));
+  const d2 = [leg('org-hosted', 'org-ci-heavy', '2026-10-26T05:23:40Z')];
+  const d3 = day(leg('github-hosted', 'ubuntu-latest', '2026-10-27T05:23:00Z'), leg('org-hosted', 'org-ci-heavy', '2026-10-27T05:23:40Z'));
+  const shuffled = [d3[1], d1[0], d2[0], d3[0], d1[1]];
+  assert.deepEqual(byDay(shuffled).map(d => d.map(r => r.ranAt)), [[d1[0].ranAt, d1[1].ranAt], [d2[0].ranAt], [d3[1].ranAt, d3[0].ranAt]]);
+  const out = appendDays(record, shuffled);
+  assert.equal(out.runs.length, record.runs.length + 5);
+  assert.deepEqual(out.runs.slice(1).map(r => r.ranAt.slice(0, 10)), ['2026-10-25', '2026-10-25', '2026-10-26', '2026-10-27', '2026-10-27']);
+  inSite(root => {
+    const files = shuffled.map((r, i) => { const f = join(root, `b${i}.json`); writeFileSync(f, JSON.stringify(r)); return f; });
+    assert.match(execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, ...files], { encoding: 'utf8' }), /appended 5 run\(s\) on 3 day\(s\)/);
+    assert.equal(state(build(root)), 'reproduced');
+  });
+});
+
+test('refused: a day the record already holds (one per lab per day), and a backlog with one bad day writes nothing', () => {
+  const once = appendDay(record, day(hosted, org));
+  refused(once.runs, [leg('org-hosted', 'org-ci-heavy', '2026-10-28T09:00:40Z')], /already holds org runs of 2026-10-28; one day of a lab is published once/);
+  const good = [leg('org-hosted', 'org-ci-heavy', '2026-10-25T05:23:40Z')];
+  const bad = [{ ...leg('org-hosted', 'org-ci-heavy', '2026-10-26T05:23:40Z'), recordHash: 'e'.repeat(64) }];
+  assert.throws(() => appendDays(record, [...good, ...bad]), /2026-10-26: .*recordHash/);
+  assert.throws(() => appendDays(record, []), /no record to append/);
+  // A leg that names a sibling on another day is refused even when that day is in the same backlog.
+  const cross = [{ ...good[0], replicatedOn: [{ machineClass: 'ubuntu-latest', recordHash: good[0].recordHash }] }, leg('github-hosted', 'ubuntu-latest', '2026-10-26T05:23:00Z')];
+  assert.throws(() => appendDays(record, cross), /2026-10-25: day\[0\]\/replicatedOn: does not name exactly its same-day siblings/);
+});
+
+test('refused: no record, a laptop run, a wrong lab, two commits, one class twice', () => {
+  refused(record.runs, [], /one or more records/);
   refused(record.runs, day(hosted, { ...org, runner: 'laptop', machineClass: 'mac' }), /laptop run is not an org runner's/);
   refused(record.runs, day(hosted, { ...org, lab: 'other' }), /is not rogue/);
   refused(record.runs, day(hosted, leg('org-hosted', 'org-ci-heavy', '2026-10-28T03:00:40Z', { commit: { ...mac.commit, sha: 'b'.repeat(40), mainHead: 'b'.repeat(40) } })), /not all of one commit/);
@@ -143,7 +185,9 @@ test('the command line refuses a refused day with exit 1 and writes nothing, and
     const before = readFileSync(join(root, 'data/labs/rogue/record.json'), 'utf8');
     const f = join(root, 'one.json');
     writeFileSync(f, JSON.stringify(hosted));
-    assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f], { stdio: 'pipe' }), e => e.status === 1 && /two or more records/.test(e.stderr.toString()));
+    // A single leg that claims a sibling it does not have is refused (a single-machine day names no one).
+    writeFileSync(f, JSON.stringify({ ...hosted, replicatedOn: [{ machineClass: 'org-ci-heavy', recordHash: hosted.recordHash }] }));
+    assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f], { stdio: 'pipe' }), e => e.status === 1 && /does not name exactly its same-day siblings/.test(e.stderr.toString()));
     const [a, b] = day(hosted, org);
     writeFileSync(f, JSON.stringify(a).replace('"breaches":0', '"breaches":0.0'));
     const g = join(root, 'two.json');
@@ -154,7 +198,8 @@ test('the command line refuses a refused day with exit 1 and writes nothing, and
     const [x, y] = day(hosted, leg('org-hosted', 'org-ci-heavy', '2026-10-25T03:00:40Z'));
     writeFileSync(f, JSON.stringify(x));
     writeFileSync(g, JSON.stringify(y));
-    assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f, g], { stdio: 'pipe' }), e => e.status === 1 && /did not all run on one UTC day/.test(e.stderr.toString()));
+    // Grouped by day, each is a single-machine day that names a sibling of ANOTHER day: refused.
+    assert.throws(() => execFileSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, f, g], { stdio: 'pipe' }), e => e.status === 1 && /does not name exactly its same-day siblings/.test(e.stderr.toString()));
     assert.equal(readFileSync(join(root, 'data/labs/rogue/record.json'), 'utf8'), before);
     assert.equal(readFileSync(join(root, 'data/labs/rogue/record.sha256'), 'utf8'), pinBefore);
   });
