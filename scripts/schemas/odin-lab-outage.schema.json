@@ -361,11 +361,12 @@
       },
       "args": {
        "type": "array",
-       "minItems": 1,
-       "items": {
-        "type": "string",
-        "pattern": "^[A-Za-z0-9-]{1,16}$"
-       }
+       "const": [
+        "-l",
+        "eng",
+        "--psm",
+        "3"
+       ]
       },
       "extract": {
        "const": "ffmpeg -fps_mode passthrough, the frame by its number (select), as PNG"

@@ -195,6 +195,14 @@ test('the page and the record claim only what can be repeated: no attested or vi
     set(r.screening);
     assert.ok(outageProblems(r).some(p => p.includes('/screening')), `a viewing claim in screening ${at} is refused`);
   }
+  // Recheck 3d276e4a #5: a viewing statement split into argv tokens, each one a plain word, is refused too: the
+  // recorded argv is the exact procedure (a schema const), not any list of short words.
+  assert.deepEqual(schema.properties.screening.properties.textRecognition.properties.args.const, record.screening.textRecognition.args);
+  for (const args of [['I', 'viewed', 'every', 'frame'], ['-l', 'eng', '--psm', '3', 'viewed'], ['-l', 'eng'], []]) {
+    const r = clone(record);
+    r.screening.textRecognition.args = args;
+    assert.ok(outageProblems(r).some(p => p.includes('/screening/textRecognition/args')), `args ${JSON.stringify(args)} are refused`);
+  }
   const free = [];
   (function walk(v, at) { if (v && typeof v === 'object') { if (v.type === 'string' && !v.pattern && !('const' in v)) free.push(at); for (const [k, x] of Object.entries(v)) walk(x, `${at}/${k}`); } })(schema.properties.screening, '');
   assert.deepEqual(free, [], `free-text screening fields: ${free.join(', ')}`);
