@@ -327,7 +327,7 @@ test('the publish workflow gates a push to main inline: build in verify, then bo
   assert.ok(jobOf(wf, 'verify').indexOf('pnpm check') < jobOf(wf, 'verify').indexOf('name: site-dist'));
 });
 
-test('a pull request is gated from the base branch over its build as data, and the result is a status on its head', () => {
+test('a pull request is gated from the base branch over its build as data, and the result is a run named for its head', () => {
   const wf = readFileSync('.github/workflows/leak-screen-pr.yml', 'utf8');
   assert.match(wf, /\non:\n  workflow_run:\n    workflows: \['Public experiments & Pages'\]\n    types: \[completed\]\n/);
   assert.match(wf, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}\n\s+path: base\n/);
@@ -335,8 +335,9 @@ test('a pull request is gated from the base branch over its build as data, and t
   // Every node it runs is main's gate; nothing of the pull request is executed or installed.
   for (const line of wf.split('\n').filter(l => /\bnode\b/.test(l) && /run:/.test(l))) assert.match(line, /node "\$\{GITHUB_WORKSPACE\}\/base\/scripts\/leak-gate\.mjs"/, line);
   assert.doesNotMatch(wf, /pnpm|npm (install|ci)|bash pr\/|node pr\/|\.\/pr\/|python3 pr\//);
-  assert.match(wf, /if: always\(\)\n\s+env:\n\s+RESULT: \$\{\{ job\.status \}\}/);
-  assert.match(wf, /context=leak-screen\/pr/);
+  // The result is the run itself, named for the head; no forgeable commit status is posted.
+  assert.match(wf, /\nrun-name: Leak screen for \$\{\{ github\.event\.workflow_run\.head_sha \}\}\n/);
+  assert.doesNotMatch(wf, /statuses|\/statuses\//);
   assert.doesNotMatch(wf, /\$\{\{ github\.event\.workflow_run\.(head_branch|display_title|head_commit)/, 'no attacker-chosen text in a command');
 });
 
