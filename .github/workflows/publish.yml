@@ -17,6 +17,12 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the
+          # change is judged against (scripts/latent-handoff-fences.mjs diffBase, HEAD^1) is already there.
+          # At depth 1 every test file deepened the shallow clone itself and raced the others on shallow.lock,
+          # which pushed PR runs past the 12-minute ceiling while main stayed near 450-600 s.
+          fetch-depth: 2
       - name: Clear checked-in historical observation before this run
         run: rm -f site/data/experiments.json site/data/witnesses/*.json
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4

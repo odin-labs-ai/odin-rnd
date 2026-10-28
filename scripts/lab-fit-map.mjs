@@ -21,6 +21,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isLabLink, screenHits, screenTree } from './lab-dispatch-publish.mjs';
 import { validate } from './json-schema-lite.mjs';
+import { cite, readPinned, screenRecord, sidecarPinProblems, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const FIT_MAP_FILE = 'data/labs/fit-map.json';
@@ -136,11 +137,46 @@ export function readFitMap(root = 'site', pinFile = resolve(root) === REPO_SITE 
   return record;
 }
 
+// One more line on a lab's row, from its own small record beside the fit map (the fit map itself is vendored from the
+// lab's private fit map and pinned to it, so it is never edited by hand): Lab 04's frozen question set, by its counts
+// and sha256s, with its pre-registration said to be not yet frozen. scripts/vendor-question-set.mjs writes the record;
+// the build refuses it, every reason listed, when its bytes are not the pinned ones, it misses its schema or the kit's
+// record contract, its categories do not add up to its questions, or a word fails the publisher's screen.
+export const QUESTION_SET_RECORD = 'data/labs/company-store-questions/record.json';
+export const QUESTION_SET_PIN = 'data/labs/company-store-questions/record.sha256';
+const QUESTION_SET_SCHEMA = join(here, 'schemas/odin-lab-question-set.schema.json');
+
+/** Every reason the question-set record may not be published (empty when it may). */
+export function questionSetProblems(record, { now = new Date(), where = QUESTION_SET_RECORD } = {}) {
+  const problems = validate(JSON.parse(readFileSync(QUESTION_SET_SCHEMA, 'utf8')), record).map(p => `${where}#${p} (does not match odin-lab-question-set v1)`);
+  if (problems.length) return problems;
+  problems.push(...screenRecord(record, where), ...vendoredProblems(record.vendored, { where, now }));
+  const counts = Object.values(record.perCategory);
+  if (counts.length !== record.categories) problems.push(`${where}#/categories: not the number of categories counted`);
+  if (counts.reduce((a, b) => a + b, 0) !== record.questions) problems.push(`${where}#/questions: the categories do not add up to it`);
+  for (const role of ['questions', 'gold', 'prereg']) if (!record.vendored.files.some(f => f.role === role)) problems.push(`${where}#/vendored/files: no ${role} file`);
+  return problems;
+}
+
+/** The committed question-set record, pinned and checked; null when there is none. Throws with every reason. */
+// On the published site the line is required, as the labs are: a missing record refuses the build.
+export function readQuestionSet(root = 'site', { now = new Date(), required = resolve(root) === REPO_SITE } = {}) {
+  if (required && !existsSync(join(root, QUESTION_SET_RECORD))) throw new Error(`Lab 04 question set refused:\n  ${QUESTION_SET_RECORD} is missing; Lab 04's row carries its frozen question set on the published site`);
+  return readPinned({ root, file: QUESTION_SET_RECORD, pin: bytes => sidecarPinProblems(root, bytes, { pinFile: QUESTION_SET_PIN, file: QUESTION_SET_RECORD, vendor: 'scripts/vendor-question-set.mjs' }), check: record => questionSetProblems(record, { now }), refused: 'Lab 04 question set refused' });
+}
+
+/** The line on the lab's row: the frozen set by its counts and sha256s, cited the kit's way, and the draft said. */
+export function questionSetLine(q) {
+  const file = role => q.vendored.files.find(f => f.role === role).sha256;
+  const [c] = q.vendored.cites;
+  return `Its agent-query experiment has a frozen question set: ${escape(q.questions)} questions in ${escape(q.categories)} categories, sha256 ${short(file('questions'))}, with gold answers, sha256 ${short(file('gold'))}. ${cite(c, q.vendored.mainCheck)} Its pre-registration is ${escape(q.preregistration)}.`;
+}
+const short = sha => `<code title="${escape(sha)}">${escape(sha.slice(0, 8))}</code>`;
+
 /** The matrix: one table per lab, each scenario's verdict (or "Pending") beside its frozen predictions. `up` is the way to the site root. */
-export function renderFitMap(record, up = '../') {
+export function renderFitMap(record, up = '../', { questions = null } = {}) {
   if (!record) return '';
   const href = path => /^https:/.test(path) ? escape(path) : `${up}${escape(path)}`;
-  const short = sha => `<code title="${escape(sha)}">${escape(sha.slice(0, 8))}</code>`;
   const tables = record.labs.map((lab, i) => {
     const title = lab.page ? `<a href="${href(lab.page)}">${escape(lab.lab)}: ${escape(lab.title)}</a>` : `${escape(lab.lab)}: ${escape(lab.title)}`;
     const recordLine = `${lab.record.kind === 'design' ? 'Design' : 'Pre-registration'} at commit ${short(lab.record.commit)}${lab.record.sha256 ? `, sha256 ${short(lab.record.sha256)}` : ''}${lab.published ? `; published here in pull request #${escape(lab.published.pr)}` : lab.page ? '' : '; not yet published here'}.`;
@@ -151,7 +187,8 @@ export function renderFitMap(record, up = '../') {
       const predictions = said.length ? `<ul class="fit-predictions">${said.join('')}</ul>` : '<span class="fit-none">None frozen yet</span>';
       return `<tr><th scope="row"><span class="technical">${escape(cell.scenario)}</span> ${escape(cell.what)}</th><td>${verdict}</td><td>${predictions}</td></tr>`;
     }).join('');
-    return `<div class="fit-lab"><h3 id="fit-${i}">${title}</h3><p class="fit-stage">${lab.stage === 'design' || lab.stage === 'pre-registered' ? '' : `${escape(lab.stage.charAt(0).toUpperCase() + lab.stage.slice(1))}. `}${recordLine}</p><div class="fit-table-wrap"><table class="fit-table" aria-labelledby="fit-${i}"><thead><tr><th scope="col">Scenario</th><th scope="col">Verdict</th><th scope="col">Predictions, frozen before the run</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    const extra = questions && questions.lab === lab.lab ? ` <span class="fit-questions">${questionSetLine(questions)}</span>` : '';
+    return `<div class="fit-lab"><h3 id="fit-${i}">${title}</h3><p class="fit-stage">${lab.stage === 'design' || lab.stage === 'pre-registered' ? '' : `${escape(lab.stage.charAt(0).toUpperCase() + lab.stage.slice(1))}. `}${recordLine}${extra}</p><div class="fit-table-wrap"><table class="fit-table" aria-labelledby="fit-${i}"><thead><tr><th scope="col">Scenario</th><th scope="col">Verdict</th><th scope="col">Predictions, frozen before the run</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }).join('');
   const filled = record.labs.flatMap(lab => lab.cells).filter(cell => cell.verdict !== null).length;
   const total = record.labs.flatMap(lab => lab.cells).length;

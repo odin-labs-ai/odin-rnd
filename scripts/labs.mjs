@@ -11,6 +11,7 @@
 //   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 //   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
+//   labs/ai-jury/index.html       Lab 14's page, rendered by scripts/lab-ai-jury.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -30,7 +31,7 @@ import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
 import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
-import { readFitMap, renderFitMap } from './lab-fit-map.mjs';
+import { readFitMap, readQuestionSet, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { withLabRuns } from './lab-runs.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
@@ -43,6 +44,7 @@ import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
+import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -231,6 +233,9 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
   // Lab 09's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
   if (requireBench && !existsSync(join(root, TALK_RECORD))) throw new Error(`Lab 09 is required on the published site: ${TALK_RECORD} is missing`);
   const talkLeak = renderTalkLeak(root);
+  // Lab 14's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
+  const jury = renderAiJury(root);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -250,7 +255,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
       // fails on a problem).
       '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
-      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root)),
+      '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root), '../', { questions: readQuestionSet(root) }),
     }),
     'labs/agent-space/index.html': fill('labs/agent-space/index.html', {
       '<!--LAB_INTRO-->': renderIntro(lab), '<!--LAB_ABOUT-->': renderAbout(lab),
@@ -278,6 +283,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
     ...redBuild.pages,
     ...blind.pages,
     ...talkLeak.pages,
+    ...jury.pages,
   };
 }
 
