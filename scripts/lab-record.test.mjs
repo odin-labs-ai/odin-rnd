@@ -102,7 +102,8 @@ test('negative: a commit only on a lane, marked as on main, is refused', () => {
   refused(rehash({ ...clone(), commit: { sha: lane, mainHead: golden.commit.mainHead, compare: 'behind', onMain: true } }), /\/commit\/onMain/);
   refused(rehash({ ...clone(), commit: { sha: lane, mainHead: golden.commit.mainHead, compare: 'identical', onMain: true } }), /\/commit\/compare: does not agree/);
   assert.deepEqual(recordProblems(rehash({ ...clone(), commit: { sha: lane, mainHead: golden.commit.mainHead, compare: 'ahead', onMain: true } })), [], 'a laptop record may cite a commit main is ahead of');
-  // The checker cannot read the private repository; an org runner reads it AT main, so it may only say identical.
+  // The checker cannot read the private repository; an org runner reads it AT main, so it may only say identical
+  // (Lab 05 here; Lab 06's pinned-commit exception is tested in lab06-runner-records.test.mjs).
   const org = { ...clone(), runner: 'org-hosted', machineClass: 'org-ci-heavy' };
   refused(rehash({ ...org, commit: { sha: lane, mainHead: golden.commit.mainHead, compare: 'ahead', onMain: true } }), /\/commit\/compare: the org-hosted runner reads main/);
   assert.deepEqual(recordProblems(rehash(org)), []);
