@@ -257,7 +257,8 @@ export function* tarEntries(buf, shown) {
   const field = (h, from, len) => h.subarray(from, from + len).toString('utf8').replace(/\0.*$/s, '');
   while (at + 512 <= buf.length) {
     const h = buf.subarray(at, at + 512);
-    if (h.every(b => b === 0)) return;
+    // The end-of-archive block: everything after it must be zero padding, or the archive hides bytes no entry holds.
+    if (h.every(b => b === 0)) { if (buf.subarray(at).every(b => b === 0)) return; throw new Error(`leak gate: ${shown} has bytes after its end`); }
     const size = Number.parseInt(field(h, 124, 12).trim() || '0', 8);
     if (!Number.isFinite(size) || at + 512 + size > buf.length) throw new Error(`leak gate: ${shown} is not a readable tar archive`);
     const type = String.fromCharCode(h[156] || 48), body = buf.subarray(at + 512, at + 512 + size);

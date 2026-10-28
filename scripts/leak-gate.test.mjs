@@ -305,3 +305,13 @@ test('a stale known row that names a protected file is printed redacted', () => 
     assert.ok(!r.out.includes('blorvak'), r.out);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('bytes after an archive\'s end stop the build', () => {
+  const root = site({ 'dist/data/raw-evidence.tar.gz': gzipSync(Buffer.concat([tar({ 'main/ok.json': '{}' }), Buffer.from('blorvak')])) });
+  try {
+    const r = gate(root);
+    assert.equal(r.code, 2, r.out);
+    assert.match(r.out, /has bytes after its end/);
+    assert.ok(!r.out.includes('blorvak'));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
