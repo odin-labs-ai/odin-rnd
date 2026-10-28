@@ -222,6 +222,8 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   // styles and comments dropped by pattern: it only ever adds a refusal, should the tokenizer ever lose a piece.
   let hidden = html, before;
   do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)(?=[\t\n\f\r />])[\s\S]*?<\/\1[\t\n\f\r ]*>/gi, ''); } while (hidden !== before);
+  // And the whole shown text as one string, blocks as spaces, so the screen also sees across the lines it is cut into.
+  for (const hit of screenHits(lines.replace(/\n+/g, ' ').replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token)))) add(`${hit.reason} (as shown, whole page)`);
   // And a third, with nothing dropped at all but the tags themselves (script and style text included).
   const readings = [decode(stripTags(hidden, '\n')), decode(stripTags(html, '\n'))];
   for (const line of new Set(readings.flatMap(r => r.split('\n')).map(l => l.trim()).filter(Boolean))) {
@@ -261,12 +263,16 @@ export function stripTags(html, by = '') {
  * browser drops it. Character references are left as they are (decode() reads them). With `breaks`, a block element's
  * tag becomes a line break; any other tag joins.
  */
+const asciiLower = text => text.replace(/[A-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + 32));
+
 // HTML's whitespace in a tag: tab, line feed, form feed, carriage return and space only (never U+00A0 or other \s).
 const HTML_WS = new Set(['\t', '\n', '\f', '\r', ' ']);
 
 export function shownText(html, { breaks = false } = {}) {
   let out = '', i = 0;
   const n = html.length;
+  // ASCII-only lowercase, as HTML matches tag names: it keeps every offset (String#toLowerCase does not: U+0130 grows).
+  const lower = asciiLower(html);
   // Raw text, by HTML's rules: script and style text is not shown; textarea and title (RCDATA) and xmp, iframe,
   // noembed, noframes and noscript (RAWTEXT) hold text to their end tag with any "<" in it literal, and are screened
   // as shown (whether or not a browser shows them: screening more is the safe side); plaintext runs to the end.
@@ -312,13 +318,12 @@ export function shownText(html, { breaks = false } = {}) {
       else while (j < n && !ws(html[j]) && html[j] !== '>') j++;
     }
     if (j >= n) break; // cut off by the end of the page: dropped
-    const tag = name.toLowerCase();
+    const tag = asciiLower(name);
     i = j + 1;
     if (breaks && BLOCK_NAMES.has(tag)) out += '\n';
     if (!closing && tag === 'plaintext') { out += html.slice(i); break; }
     if (!closing && (HIDDEN_RAW.has(tag) || SHOWN_RAW.has(tag))) {
       // Raw text runs to "</name" followed by HTML whitespace, "/" or ">" (so "</scriptx>" does not end it).
-      const lower = html.toLowerCase();
       let end = lower.indexOf(`</${tag}`, i);
       while (end >= 0 && !(HTML_WS.has(html[end + tag.length + 2]) || html[end + tag.length + 2] === '/' || html[end + tag.length + 2] === '>')) end = lower.indexOf(`</${tag}`, end + 1);
       if (SHOWN_RAW.has(tag)) out += html.slice(i, end < 0 ? n : end);
