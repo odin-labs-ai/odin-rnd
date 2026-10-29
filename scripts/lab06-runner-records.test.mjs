@@ -120,7 +120,7 @@ test('a Lab 06 day appends through the record PR path, re-pins, and its card rea
     const bytes = readFileSync(join(root, 'data/labs/review/record.json'));
     assert.equal(readFileSync(join(root, 'data/labs/review/record.sha256'), 'utf8'), `${createHash('sha256').update(bytes).digest('hex')}  record.json\n`);
     const rec = readReview(root); // the pinned Lab 06 record, its schema and every Lab 06 check
-    assert.equal(rec.runs.length, 2);
+    assert.equal(rec.runs.length, (review.runs ?? []).length + 2);
     const html = withLabRuns(pages, root)['labs/index.html'];
     const card = html.slice(html.indexOf('aria-labelledby="lab-tile-review">'));
     assert.match(card, /data-state="reproduced"/);
