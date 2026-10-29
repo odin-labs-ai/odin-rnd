@@ -127,7 +127,9 @@ test('the leak screen refuses a card that would show a hash no run holds', () =>
 
 test('the published Labs index: the Lab 05 card carries its provenance once, before its links, with the stylesheet', () => {
   const page = renderLabs()['labs/index.html'];
-  assert.equal(readLabRuns().map(l => l.tile.experiment).join(), 'rogue');
+  const labs = readLabRuns().map(l => l.tile.experiment);
+  assert.equal(labs[0], 'rogue');
+  assert.ok(labs.every(l => ['rogue', 'review'].includes(l)), labs.join());
   const start = page.indexOf('aria-labelledby="lab-tile-rogue">');
   const card = page.slice(start, page.indexOf('</article>', start));
   assert.equal(card.split('class="lab-provenance ').length, 2);
@@ -135,7 +137,7 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   // The badge is whatever the committed runs say: a laptop re-run alone today, "reproduced" once org-runner days land.
   const { state } = runState(readLabRuns()[0].runs);
   assert.deepEqual(badge(card), [state, `${BADGES[state]}.`]);
-  assert.equal(page.split('class="lab-provenance ').length, 2, 'only the lab with runs has a provenance');
+  assert.equal(page.split('class="lab-provenance ').length, 1 + labs.length, 'only a lab with runs has a provenance');
   assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
   if (state === 'laptop') assert.doesNotMatch(page, /org machine|daily/i);
   assert.doesNotMatch(page, /daily/i);
