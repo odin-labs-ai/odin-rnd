@@ -137,6 +137,12 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   // The badge is whatever the committed runs say: a laptop re-run alone today, "reproduced" once org-runner days land.
   const { state } = runState(readLabRuns()[0].runs);
   assert.deepEqual(badge(card), [state, `${BADGES[state]}.`]);
+  // Each lab with runs carries exactly one provenance on its own card, and no other card carries any.
+  for (const lab of labs) {
+    const at = page.indexOf(`aria-labelledby="lab-tile-${lab}">`);
+    assert.ok(at >= 0, lab);
+    assert.equal(page.slice(at, page.indexOf('</article>', at)).split('class="lab-provenance ').length, 2, lab);
+  }
   assert.equal(page.split('class="lab-provenance ').length, 1 + labs.length, 'only a lab with runs has a provenance');
   assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
   if (state === 'laptop') assert.doesNotMatch(page, /org machine|daily/i);
