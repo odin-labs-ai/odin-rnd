@@ -24,7 +24,9 @@ test('a changed byte, a missing or malformed pin, or no record at all is a MISMA
     mkdirSync(dir, { recursive: true });
     assert.equal(run(root).rc, 1, 'no record');
     writeFileSync(join(dir, 'record.json'), '{"a": 1}\n');
-    assert.match(run(root).out, /^PIN .*record\.json [0-9a-f]{64} none MISMATCH$/m, 'no pin');
+    const nopin = run(root);
+    assert.equal(nopin.rc, 1, 'no pin');
+    assert.match(nopin.out, /^PIN .*record\.json [0-9a-f]{64} none MISMATCH$/m, 'no pin');
     for (const pin of [`${sha256('{"a": 1}\n')}  other.json\n`, `${sha256('{"a": 1}\n')} record.json\n`, `${sha256('{"a": 1}\n')}  record.json`, `${'0'.repeat(64)}  record.json\n`]) {
       writeFileSync(join(dir, 'record.sha256'), pin);
       const { rc, out } = run(root);
