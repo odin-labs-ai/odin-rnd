@@ -98,6 +98,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Every lab record's pin, recomputed (PIN <path> <computed> <committed> MATCH|MISMATCH)
+        # readPinned refuses a mismatch on every build; this shows it, per run, for a review of a record-only change.
+        run: |
+          rc=0; node scripts/lab-pin-report.mjs | tee pins.txt || rc=$?
+          { echo '### Lab record pins, recomputed'; sed 's/^/- /' pins.txt; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           distribution: temurin
