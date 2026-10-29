@@ -191,6 +191,11 @@ export function recordHashes(record) {
  * looks like a hash (digits and letters a-f) is refused outright: it is a commit or digest the record does not hold,
  * such as one only on a lane.
  */
+// A hash the record holds, masked wherever it stands: bounded by any non-hex character, not only a word boundary, so a
+// hash glued to the next element's text ("…94148Lab 05") or to a path is still the record's hash. Only a token that is a
+// prefix of a known hash is masked; any other stays as written, for the screens and the unknown-hash rule.
+const maskKnown = (text, known) => text.replace(/(?<![0-9a-f])[0-9a-f]{8,64}(?![0-9a-f])/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
+
 export function pageLeaks(html, known = [], { onMain } = {}) {
   const problems = [];
   const seen = new Set();
@@ -223,19 +228,17 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   let hidden = html, before;
   do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)(?=[\t\n\f\r />])[\s\S]*?<\/\1[\t\n\f\r ]*>/gi, ''); } while (hidden !== before);
   // And the whole shown text as one string, blocks as spaces, so the screen also sees across the lines it is cut into.
-  for (const hit of screenHits(lines.replace(/\n+/g, ' ').replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token)))) add(`${hit.reason} (as shown, whole page)`);
+  for (const hit of screenHits(maskKnown(lines.replace(/\n+/g, ' '), known))) add(`${hit.reason} (as shown, whole page)`);
   // And a third, with nothing dropped at all but the tags themselves (script and style text included).
   const readings = [decode(stripTags(hidden, '\n')), decode(stripTags(html, '\n'))];
   for (const line of new Set(readings.flatMap(r => r.split('\n')).map(l => l.trim()).filter(Boolean))) {
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
-    for (const hit of screenHits(masked)) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
+    for (const hit of screenHits(maskKnown(line, known))) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
   }
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
   for (const line of [...new Set(text.split('\n').map(l => l.trim()).filter(Boolean))]) {
     const unknown = [];
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => {
-      if (known.some(h => h.startsWith(token))) return 'HASH';
+    const masked = maskKnown(line, known).replace(/\b[0-9a-f]{8,64}\b/g, token => {
       if (/\d/.test(token) && /[a-f]/.test(token)) unknown.push(token);
       return token;
     });

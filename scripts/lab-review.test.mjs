@@ -146,7 +146,8 @@ test('the record is pinned: a changed byte refuses the build', () => {
   const root = mkdtempSync(join(tmpdir(), 'lab-review-'));
   try {
     for (const file of [REVIEW_RECORD, REVIEW_PIN, REVIEW_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
-    assert.equal(renderReview(root).pages[REVIEW_TEMPLATE], page);
+    // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
+    assert.equal(renderReview(root).pages[REVIEW_TEMPLATE], renderReview('site').pages[REVIEW_TEMPLATE]);
     writeFileSync(join(root, REVIEW_RECORD), raw.replace('"version": 1', '"version": 1 '));
     assert.throws(() => readReview(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', REVIEW_PIN), 'utf8'), `${sha256(raw)}  record.json\n`);
