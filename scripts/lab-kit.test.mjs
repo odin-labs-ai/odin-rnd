@@ -218,4 +218,8 @@ test('a known hash with a long run of digits is masked even glued to the next el
   assert.deepEqual(kit.pageLeaks(xml, [H]), []);
   assert.ok(kit.pageLeaks(xml, []).some(p => /long internal id/.test(p)), 'the same text without the hash known is refused');
   assert.ok(kit.pageLeaks(`<p>run 7956953430 of ${H}</p>`, [H]).some(p => /long internal id/.test(p)), 'a bare long number next to a known hash is still refused');
+  // The lead's planted negatives (2026-10-29): a 12-digit number in a title, and an unknown digest, in the same feed.
+  const other = 'f93aa8884095601234567890abcdef0123456789abcdef0123456789abcdef01';
+  assert.ok(kit.pageLeaks(xml.replace('<title>Lab 05', '<title>Lab 05 run 123456789012'), [H]).some(p => /long internal id/.test(p)), 'a 12-digit number in a title is refused');
+  assert.ok(kit.pageLeaks(xml.replace('record hash ' + H, 'record hash ' + other), [H]).some(p => /long internal id|a hash the record does not hold/.test(p)), 'an unknown digest with a digit run is refused');
 });
