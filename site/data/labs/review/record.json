@@ -305,6 +305,86 @@
    },
    "runner": "github-hosted",
    "version": 1
+  },
+  {
+   "command": "the lab's own re-run kit",
+   "commit": {
+    "compare": "ahead",
+    "mainHead": "fc2570afc9560c8f836639ae23f424d773b22f72",
+    "onMain": true,
+    "sha": "0442d08467d0df6fc1e646f0134f2cd68406027d"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "frontier",
+     "sha256": "fb01a382cf425e3619f861b8435e84242b183e3e8b4d7ef2fe60e9a05bb086e0"
+    },
+    {
+     "role": "nina",
+     "sha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c"
+    }
+   ],
+   "lab": "review",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-10-30T05:39:42Z",
+   "recordHash": "f93aa888409b042edfac057f12ad82ff4d2c75e33d07f8daf93547eb4e3e262c",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "f93aa888409b042edfac057f12ad82ff4d2c75e33d07f8daf93547eb4e3e262c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "46ef343e38596be2e3ae141b7c36b5993f44859e3df56952f083fd4495f28c9e",
+    "now": "46ef343e38596be2e3ae141b7c36b5993f44859e3df56952f083fd4495f28c9e",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own re-run kit",
+   "commit": {
+    "compare": "ahead",
+    "mainHead": "fc2570afc9560c8f836639ae23f424d773b22f72",
+    "onMain": true,
+    "sha": "0442d08467d0df6fc1e646f0134f2cd68406027d"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "frontier",
+     "sha256": "fb01a382cf425e3619f861b8435e84242b183e3e8b4d7ef2fe60e9a05bb086e0"
+    },
+    {
+     "role": "nina",
+     "sha256": "3ef7bcf6d0317b2095df953b404e86059f9b84ffc4af6b4cb476ddaa7d9c916c"
+    }
+   ],
+   "lab": "review",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-10-30T05:40:01Z",
+   "recordHash": "f93aa888409b042edfac057f12ad82ff4d2c75e33d07f8daf93547eb4e3e262c",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "f93aa888409b042edfac057f12ad82ff4d2c75e33d07f8daf93547eb4e3e262c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "46ef343e38596be2e3ae141b7c36b5993f44859e3df56952f083fd4495f28c9e",
+    "now": "46ef343e38596be2e3ae141b7c36b5993f44859e3df56952f083fd4495f28c9e",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
   }
  ]
 }
