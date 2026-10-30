@@ -490,6 +490,86 @@
    },
    "runner": "github-hosted",
    "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-10-30T05:27:29Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-10-30T05:27:45Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
   }
  ]
 }
