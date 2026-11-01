@@ -107,11 +107,16 @@ export function humanize(slug) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Only site-relative links are rendered; anything with a scheme or a host is refused. */
+/**
+ * Only links to a page of this site are rendered, by the same rule the site index applies when it is built
+ * (scripts/site-index.mjs hrefOnSite): relative to the site root, with no scheme, no leading slash or backslash, no
+ * "." or ".." segment, no whitespace or quote, and a page part before any "#". Anything else is refused, never repaired.
+ */
 export function safeHref(href) {
-  const value = String(href ?? '').trim();
-  if (!value || /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith('//') || value.startsWith('\\')) return null;
-  return value.replace(/^\/+/, '');
+  const value = String(href ?? '');
+  if (!value || /[\s"<>\\]/.test(value)) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith('/') || /(^|\/)\.\.?(\/|#|$)/.test(value)) return null;
+  return value.split('#')[0] === '' ? null : value;
 }
 
 /**

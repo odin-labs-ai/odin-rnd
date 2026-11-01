@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, safeHref, facetValues, monthLabel, KEYS, topicLabels,
 } from '../site/assets/find.mjs';
+import { hrefOnSite } from './site-index.mjs';
 
 const moduleUrl = new URL('../site/assets/find.mjs', import.meta.url);
 const html = readFileSync(new URL('../site/find/index.html', import.meta.url), 'utf8');
@@ -92,13 +93,22 @@ test('URL parsing tolerates order, commas, duplicates and an empty query', () =>
 
 test('helpers: safe links, facet values, month labels', () => {
   assert.equal(safeHref('journal/a.html'), 'journal/a.html');
-  assert.equal(safeHref('/labs/06/'), 'labs/06/');
+  assert.equal(safeHref('/labs/06/'), null, 'a leading slash is refused, not repaired');
   assert.equal(safeHref('javascript:alert(1)'), null);
   assert.equal(safeHref('https://example.com/'), null);
   assert.equal(safeHref('//example.com/'), null);
   assert.deepEqual(facetValues(items, 'topics'), ['blueprints', 'ci', 'factory', 'verification']);
   assert.deepEqual(facetValues(items, 'stage'), ['pre-registered', 'published', 'released', 'results']);
   assert.equal(monthLabel('2026-10'), 'October 2026');
+});
+
+test('safeHref on the page agrees with the site index\'s on-site gate (hrefOnSite) for every shape of link', () => {
+  const pages = new Set(['index.html', 'experiments/index.html', 'journal/a.html', 'labs/x/index.html', 'projects/t/index.html']);
+  const good = ['index.html#all-experiments', 'experiments/#bench', 'experiments/', 'journal/a.html', 'labs/x/index.html', 'projects/t/'];
+  const bad = ['../journal/a.html', 'journal/../journal/a.html', './journal/a.html', 'journal/./a.html', '..', '/journal/a.html', '//example.com/x',
+    '\\\\host\\x', 'https://example.com/', 'javascript:alert(1)', 'JavaScript:alert(1)', 'data:text/html,x', '#top', '', 'journal/a b.html', 'journal/"a".html', ' journal/a.html'];
+  for (const href of good) { assert.equal(safeHref(href), href, href); assert.ok(hrefOnSite(href, pages), `index: ${href}`); }
+  for (const href of bad) { assert.equal(safeHref(href), null, JSON.stringify(href)); assert.ok(!hrefOnSite(href, pages), `index: ${JSON.stringify(href)}`); }
 });
 
 test('the template has one site header, a canonical link and one list marker', () => {
