@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FEED_PATH, HOME_LATEST, buildFeed, candidates, firstSentence, renderHome, renderPage, replaceBlock, sortUpdates, stale, titleSentence } from './updates.mjs';
+import { FEED_PATH, HOME_LATEST, buildFeed, candidates, firstSentence, renderHome, renderPage, replaceBlock, sortUpdates, stale, titleSentence, refreshDuringBuild } from './updates.mjs';
 import { builtCopy } from './test-build.mjs';
 
 const entry = (key, date, kind = 'Results', extra = {}) => ({ key, date, kind, experiment: 'EXP 005', title: 'T', text: 'X.', href: 'journal/x.html', source: 'data/x/results.json', ...extra });
@@ -57,7 +58,7 @@ test('replaceBlock refuses a page without both markers in order', () => {
 test('the committed feed and both rendered blocks are exactly a fresh render of the built site', () => {
   const root = builtCopy();
   assert.deepEqual(stale(root, { commitDay: () => null }), [],
-    'run: pnpm build && node scripts/updates.mjs --write');
+    'run: pnpm build --refresh-updates');
 });
 
 test('every record the site publishes has exactly one dated update, linked to a page that exists', () => {
@@ -80,4 +81,60 @@ test('every record the site publishes has exactly one dated update, linked to a 
   }
   const home = readFileSync(join(root, 'dist/index.html'), 'utf8');
   for (const update of feed.updates.slice(0, HOME_LATEST)) assert.ok(home.includes(`<time datetime="${update.date}">`), `${update.key} is on the home page`);
+});
+
+
+// A tiny complete input graph exercises candidate derivation without executing experiments or witnesses.
+function updateFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'rnd-updates-refresh-'));
+  const write = (path, content) => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), typeof content === 'string' ? content : JSON.stringify(content)); };
+  const why = 'A second run changed the threshold. This does not validate the earlier result on unseen tasks.';
+  const description = 'A recorded prototype. The result uses fixtures and has no independent replication.';
+  const previous = { schemaVersion: 1, updates: [entry('tool-example', '2026-01-03', 'Tool', { text: 'Old description.' })] };
+  const row = '<a class="journal-row" href="journal/system-1-decisions-without-lock-in.html"><h3>Laya comparison</h3><p>Measured on fixed inputs. Generalization remains untested.</p></a>';
+  const home = row + renderHome(previous);
+  write('site/index.html', 'SOURCE HOME ' + home);
+  write('site/updates/index.html', 'SOURCE UPDATES ' + renderPage(previous));
+  write('site/data/updates.json', previous);
+  write('site/projects/example/index.html', `<meta name="description" content="${description}"><h1>Example</h1>`);
+  write('dist/index.html', 'GENERATED HOME ' + home);
+  write('dist/updates/index.html', 'GENERATED UPDATES ' + renderPage(previous));
+  write('dist/data/updates.json', previous);
+  write('dist/data/experiments.json', { completedAt: '2026-01-02T00:00:00Z', runs: [] });
+  write('dist/data/laya-vs-jev/manifest.json', { kind: 'measured', copiedAt: '2026-01-02T00:00:00Z' });
+  write('dist/data/example/preregistration.json', { experiment: { id: 'EXP 012', title: 'Example experiment' } });
+  write('dist/data/example/amendment-01.json', { why, authoredOn: '2026-01-02' });
+  return { root, why, description, previous };
+}
+
+test('candidate summaries preserve the full amendment why and tool description, including later limitations', () => {
+  const { root, why, description } = updateFixture();
+  try {
+    const list = candidates(root);
+    assert.equal(list.find(u => u.key === 'exp-012-amendment-01').text, why);
+    assert.equal(list.find(u => u.key === 'tool-example').text, description);
+    assert.equal(list.find(u => u.key === 'exp-004-measured').text, 'Measured on fixed inputs. Generalization remains untested.');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('explicit refresh repairs stale source and built updates before feeds, retaining dates and generated content', () => {
+  const { root, why, description } = updateFixture();
+  try {
+    const options = { commitDay: () => '2026-01-02' };
+    assert.ok(stale(root, options).length > 0, 'ordinary validation refuses the stale source');
+    const refreshed = refreshDuringBuild(root, options);
+    assert.deepEqual(stale(root, options), []);
+    assert.equal(refreshed.updates.find(u => u.key === 'tool-example').date, '2026-01-03', 'existing publication date stays frozen');
+    assert.equal(readFileSync(join(root, 'site/data/updates.json'), 'utf8'), readFileSync(join(root, 'dist/data/updates.json'), 'utf8'));
+    for (const tree of ['site', 'dist']) {
+      const page = readFileSync(join(root, tree, 'updates/index.html'), 'utf8');
+      assert.ok(page.includes(why) && page.includes(description), 'later limitations survive in both rendered update lists');
+    }
+    assert.ok(readFileSync(join(root, 'dist/index.html'), 'utf8').startsWith('GENERATED HOME '));
+    assert.ok(readFileSync(join(root, 'site/index.html'), 'utf8').startsWith('SOURCE HOME '));
+    assert.ok(readFileSync(join(root, 'dist/updates/index.html'), 'utf8').startsWith('GENERATED UPDATES '));
+    const before = readFileSync(join(root, 'dist/data/updates.json'), 'utf8');
+    refreshDuringBuild(root, options);
+    assert.equal(readFileSync(join(root, 'dist/data/updates.json'), 'utf8'), before, 'refresh is stable on identical input');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

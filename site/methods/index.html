@@ -29,8 +29,24 @@
     <section class="company-hero company-width" aria-labelledby="methods-title">
       <div>
         <h1 id="methods-title">How we run <br>experiments.</h1>
-        <p class="company-lead">You should be able to check any number on this site without asking us. This page says how: what we write down before a run, how it is frozen, what each experiment may spend, what would prove us wrong, who checks a change before it is published, and how to rerun it yourself. Every claim below points to a file in <a href="https://github.com/odin-labs-ai/odin-rnd">the repository</a>.</p>
+        <p class="company-lead">A public number should have an inspectable method, date and source boundary. Some underlying corpora and operational receipts are private, so some results lack enough public material for outside reproduction. This page says how: what we write down before a run, how it is frozen, what each experiment may spend, what would prove us wrong, who checks a change before it is published, and how to rerun it yourself. Every claim below points to a file in <a href="https://github.com/odin-labs-ai/odin-rnd">the repository</a>.</p>
         <div class="company-actions"><a class="button button-primary" href="../#all-experiments">Every experiment and its status</a><a href="#reproduce">Rerun it yourself</a></div>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="publication-standard" aria-labelledby="publication-title">
+      <h2 id="publication-title">What a public claim must establish.</h2>
+      <div class="company-prose">
+        <p>Publish a useful finding when its evidence supports the exact wording. A plan, merged change, passing build, source card or matching hash is not a verified outcome. Progress may be shared as progress, with what remains unknown stated beside it. Repeated runs and routine commits do not each need a new announcement.</p>
+        <dl>
+          <div><dt>Planned or pre-registered</dt><dd>A question and method are recorded. There is no result yet.</dd></div>
+          <div><dt>Prototype or fixture</dt><dd>A mechanism was exercised in the named demonstration or authored examples. This does not establish performance on unseen work or customer systems.</dd></div>
+          <div><dt>Measured result</dt><dd>Name the method, date, sample, environment and result record. State failures, uncertainty and what the measurement cannot establish.</dd></div>
+          <div><dt>Repeated by Odin</dt><dd>A rerun on another Odin machine can check repeatability. It is not independent replication by an outside team.</dd></div>
+          <div><dt>Outside replication</dt><dd>Use this description only with an identified outside reproducer, the method and result they checked, and a public report supporting that scope.</dd></div>
+        </dl>
+        <p>A hash identifies bytes; it does not validate the experiment or establish that a claim is true. An answer’s source card records attribution, not correctness. A dated recording is not a live service. Private evidence must be labelled author-reported where a reader cannot inspect or reproduce it.</p>
+        <p>The same boundary applies to page titles, social previews, feeds and Twitter/X or LinkedIn progress posts: the short version must retain any limitation that changes the meaning. Correct an overstatement where it appeared, preserve the earlier record and link the correction. This standard was clarified on <time datetime="2026-11-01">1 November 2026</time>.</p>
       </div>
     </section>
 
@@ -71,7 +87,7 @@
       <h2 id="review-title">5. Checked before it is published.</h2>
       <div class="company-prose">
         <p>Changes to this site arrive as pull requests. On each one, the <code>verify</code> job in <code>.github/workflows/publish.yml</code> reruns the three recorded experiments with the released engine, runs every test, builds the site and checks it (links, anchors, transcript digests and the public export boundary, <code>scripts/check.mjs</code>). The same job runs again on every push to main, before the site is deployed.</p>
-        <p>An independent review examines the final change on its exact head before it is merged (<code>AGENTS.md</code>), run by a different agent and model from the one that wrote the change, and recorded with the head it reviewed.</p>
+        <p>Our review policy requires a separate review of the final change on its exact head before merge (<code>AGENTS.md</code>). A different agent or model can provide that code review; this is not external scientific peer review or independent reproduction of an experiment. A particular change’s review receipt must establish what was actually checked.</p>
         <p>One gap is disclosed here. On 22 October 2026 a pull request was merged while its <code>verify</code> job was still running; that job then failed on a fence test whose base had moved, while the push run on main passed. Since 23 October the current version of our landing tool refuses to merge a pull request in this repository until <code>verify</code> has passed on its exact head. That is a check in our own tooling, not yet on GitHub's side: a rule there that requires the same check is waiting on the repository owner, and until it exists an older copy of the tool, or a person merging by hand, could still merge early.</p>
       </div>
     </section>

@@ -22,6 +22,20 @@ Use a dated article under `site/journal/`, add it to the floor and sitemap, and 
 
 Link public repositories and source revisions. Check that old availability statements still describe the linked material; the paper archive predates the public BCE engine release. Never promote a dated observation into a current fleet claim.
 
+## Refreshing progress updates
+
+After changing a result, field note, tool description or other update source, run
+`pnpm build --refresh-updates`. This explicit authoring step regenerates
+`site/data/updates.json` and the marked update blocks in `site/index.html` and
+`site/updates/index.html`, then builds the feeds from the same complete summaries.
+Review and commit those source changes. Existing publication dates stay frozen;
+new records need a source date or a committed history.
+
+The refresh still runs all publication checks. A normal `pnpm build` refuses stale
+updates instead of silently rewriting them. The former
+`pnpm build && node scripts/updates.mjs --write` order cannot repair a stale feed,
+because the normal build correctly stops before the second command.
+
 ## Publication checks
 
 Run the experiments, transcript negative tests, static build and site check. Inspect desktop and mobile in the browser: navigation, station selection, blueprint view, every recipe, transcript, command copy and articles. Verify the deployed `data/site.json` revision and `data/experiments.json` CI URL against the completed Pages workflow. Read the public pages anonymously.

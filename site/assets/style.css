@@ -210,3 +210,8 @@
   .station-compartment{padding-top:20px;margin-top:20px}
 }
 @media(prefers-reduced-motion:reduce){.cutaway .station-geometry.active{transform:none}}
+
+/* Shared research boundary, rendered on every public page. */
+.publication-boundary { max-width: 74rem; margin: 2rem auto; padding: 1rem clamp(1rem, 4.2vw, 3rem); border-top: 1px solid currentColor; font-size: .875rem; line-height: 1.6; }
+.publication-boundary p { max-width: 72ch; }
+.publication-boundary a { text-decoration: underline; }

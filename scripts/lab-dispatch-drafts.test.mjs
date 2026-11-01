@@ -6,7 +6,8 @@ import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { publish } from './lab-dispatch-publish.mjs';
-import { DRAFT_FILES, X_LIMIT, dispatchUrl, draftProblems, drafts, excerpt, length, outProblems, previewProblems, visibleText, writeDrafts } from './lab-dispatch-drafts.mjs';
+import { coverageNotes, weekOf } from './lab-week.mjs';
+import { DRAFT_FILES, SOURCE_BOUNDARY, X_LIMIT, dispatchUrl, draftProblems, drafts, excerpt, length, outProblems, previewProblems, visibleText, weekDrafts, writeDrafts } from './lab-dispatch-drafts.mjs';
 
 // The Lab 01 drafts generator (mission rnd-labs-human-first-1024). The dispatch here is published by the real publisher
 // from a session written at run time, so no recorded session or restricted name is committed: a restricted name is
@@ -72,6 +73,8 @@ test('a clean dispatch: four drafts and a preview, every draft links the dispatc
     const text = readFileSync(join(out, name), 'utf8');
     assert.ok(text.includes(url), `${name} links the dispatch`);
     assert.match(text, /DRAFT — the founder posts/);
+    assert.ok(text.includes(SOURCE_BOUNDARY), `${name} preserves the source boundary`);
+    assert.ok(text.includes(dispatch.questions[0].why), `${name} retains the answer's explanation`);
   }
   const preview = readFileSync(join(out, 'preview.html'), 'utf8');
   assert.match(preview, /DRAFT — the founder posts/);
@@ -95,12 +98,13 @@ test('a clean dispatch: four drafts and a preview, every draft links the dispatc
   for (const q of dispatch.questions) { assert.ok(github.includes(q.text)); assert.ok(github.includes(q.answer)); }
 });
 
-test('a long question and answer: cut at a word to a verbatim prefix, and every X part still fits', () => {
+test('an answer whose qualification would be truncated refuses all drafts instead of publishing a stronger claim', () => {
   const long = 'The agents keep a record of what they see and read, and they say which record each answer came from so a reader can check it. '.repeat(4).trim();
   const { dispatch } = site({ edit: (manifest, proofs) => { proofs[0].answer = long; manifest.questions[0].text = `${'Why '.repeat(70)}here?`; } });
-  const { problems, xParts } = drafts(dispatch);
-  assert.deepEqual(problems, []);
-  for (const part of xParts) assert.ok(length(part) <= X_LIMIT, `${length(part)} > ${X_LIMIT}`);
+  dispatch.questions[0].answer += ' This is a fixture result, not independent validation on unseen work.';
+  const { problems, files } = drafts(dispatch);
+  assert.match(problems.join('\n'), /over 280/);
+  assert.deepEqual(files, {}, 'no channel receives a truncated version');
   const cut = excerpt(long, 100);
   assert.ok(length(cut) <= 100 && cut.endsWith('…') && long.startsWith(cut.slice(0, -1)), cut);
   assert.equal(excerpt('short', 100), 'short');
@@ -216,4 +220,33 @@ test('no network: the script imports and calls nothing that could reach one', ()
   const imports = [...source.matchAll(/^import .* from '([^']+)';$/gm)].map(m => m[1]);
   assert.deepEqual(imports.sort(), ['./lab-delivery.mjs', './lab-dispatch-publish.mjs', './lab-milestones.mjs', './lab-proofs.mjs', './lab-week.mjs', './labs.mjs', 'node:fs', 'node:path', 'node:url']);
   assert.doesNotMatch(source, /\bfetch\(|\bimport\(|\brequire\(|XMLHttpRequest|WebSocket|node:(?:http|https|net|dns|tls|dgram|child_process)/);
+});
+
+test('weekly social drafts retain stale-record coverage on every channel', () => {
+  const week = weekOf({ delivery: { records: [], generatedFrom: { ghFetchedAt: '2026-10-25T04:55:12Z' } }, now: new Date('2026-10-26T06:17:00Z') });
+  const { problems, files, xParts } = weekDrafts(week);
+  assert.deepEqual(problems, []);
+  for (const file of DRAFT_FILES) {
+    for (const note of coverageNotes(week)) assert.ok(files[file].includes(note), `${file}: ${note}`);
+    assert.ok(files[file].includes(SOURCE_BOUNDARY), file);
+  }
+  for (const part of xParts) assert.ok(length(part) <= X_LIMIT);
+});
+
+test('weekly X refuses an oversized title with a trailing limitation rather than cutting that limitation', () => {
+  const week = weekOf({ delivery: { records: [], generatedFrom: { ghFetchedAt: '2026-10-25T04:55:12Z' } },
+    milestones: { window: { to: '2026-10-25T04:55:12Z' }, records: [{ id: 'bounded-result', kind: 'beat', at: '2026-10-25T04:00:00Z',
+      title: 'The recorded research example '.repeat(12) + 'is inconclusive and does not establish the proposed improvement.' }] },
+    now: new Date('2026-10-26T06:17:00Z') });
+  const { problems, files } = weekDrafts(week);
+  assert.match(problems.join('\n'), /over 280/);
+  assert.deepEqual(files, {}, 'an oversized result cannot produce an apparently clean preview');
+});
+
+test('an explanation containing a scope limitation is preserved or refused, never silently omitted', () => {
+  const { dispatch } = site();
+  dispatch.questions[0].why = 'This answers only the recorded world snapshot. '.repeat(8) + 'It does not establish general reliability.';
+  const { problems, files } = drafts(dispatch);
+  assert.match(problems.join('\n'), /over 280/);
+  assert.deepEqual(files, {});
 });
