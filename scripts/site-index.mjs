@@ -169,8 +169,12 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
 const read = path => readFileSync(path, 'utf8');
 const json = path => JSON.parse(read(path));
 
+// textOf decodes the named references a page uses; a numeric one (&#x27; in a meta description) is decoded here, so the
+// index holds plain text and the Find page, which sets it as text, never shows a raw reference.
+const plain = text => text.replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (_, hex, dec) => String.fromCodePoint(parseInt(hex ?? dec, hex ? 16 : 10)));
+
 function metaDescription(html) {
-  for (const [, name, content] of html.matchAll(/<meta name="([^"]+)" content="([^"]*)"/g)) if (name === 'description') return textOf(content);
+  for (const [, name, content] of html.matchAll(/<meta name="([^"]+)" content="([^"]*)"/g)) if (name === 'description') return plain(textOf(content));
   return '';
 }
 
@@ -200,7 +204,7 @@ export function loadIndex({ root = '.', dist = join(root, 'dist'), gitRoot = roo
   const updates = json(join(site, 'data/updates.json')).updates;
   const notes = readdirSync(join(site, 'journal')).filter(name => name.endsWith('.html')).sort().map(name => {
     const built = read(join(dist, 'journal', name));
-    const title = textOf(/<title>([\s\S]*?)<\/title>/.exec(built)?.[1] ?? '').replace(/ — Odin R&D$/, '');
+    const title = plain(textOf(/<title>([\s\S]*?)<\/title>/.exec(built)?.[1] ?? '')).replace(/ — Odin R&D$/, '');
     const summary = metaDescription(built).replace(/^Field notes from Odin R&D\. /, '');
     const meta = /class="article-meta">([^<]*)</.exec(read(join(site, 'journal', name)))?.[1];
     return { slug: name.replace(/\.html$/, ''), title, summary, date: metaDay(meta) };

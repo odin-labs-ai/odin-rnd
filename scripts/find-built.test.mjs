@@ -34,6 +34,9 @@ test('the build writes the site index with every item schema-valid and linking a
   const topics = JSON.parse(readFileSync('site/data/find-topics.json', 'utf8')).topics;
   assert.deepEqual(index.topics, Object.fromEntries(topics.map(t => [t.id, t.label])), 'every topic carries its label');
   for (const item of index.items) for (const topic of item.topics) assert.ok(topic in index.topics, `${item.id}: topic ${topic} has a label`);
+  for (const item of index.items) for (const key of ['title', 'summary']) {
+    assert.doesNotMatch(item[key], /&(?:[a-z][a-z0-9]*|#\d+|#x[0-9a-f]+);/i, `${item.id}'s ${key} is plain text, which the Find page shows as it is`);
+  }
   assert.ok(!existsSync('site/data/index.json'), 'the index is built, never committed');
 });
 
