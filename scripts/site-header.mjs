@@ -61,6 +61,8 @@ const FIND = /^<a href="[^"]*find\/"(?: aria-current="page")?>Find<\/a>$/;
 export function sectionFor(rel) {
   const path = String(rel).replace(/^\/+/, '');
   if (/^experiments\//.test(path)) return 'experiments';
+  // A record page (scripts/site-records.mjs) shows an experiment's published record: it belongs to Experiments.
+  if (/^records\//.test(path)) return 'experiments';
   if (/^labs\//.test(path)) return 'labs';
   if (/^updates\//.test(path)) return 'updates';
   if (/^journal\//.test(path)) return 'notes';

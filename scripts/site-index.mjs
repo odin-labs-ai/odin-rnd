@@ -19,6 +19,7 @@ import { ledgerEntries, textOf } from './experiment-ledger.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
 import { validate } from './json-schema-lite.mjs';
+import { isRecordHref, recordPageHref } from './site-records.mjs';
 import { CHROME_WITHOUT_ITEM, SECTION_INDEX_PAGES, pageClass, pageKey } from './site-chrome.mjs';
 
 /** The item schema; buildIndex checks every item against it, so its if/then (an outcome only on an experiment or its
@@ -97,8 +98,10 @@ const slugOfNote = href => /^journal\/([a-z0-9-]+)\.html(#.*)?$/.exec(href ?? ''
  *   outcomes site/data/find-outcomes.json
  *   pages    a Set of every file path in the built site, relative to its root
  *   fallbackDay(entry) → YYYY-MM-DD or null, for an experiment no update and no note dates (EXP 010)
+ *   recordPages  Map of a raw record link (a ledger or update href ending in .json) → its readable page
+ *                'records/<slug>/' (scripts/site-records.mjs); an item that links such a record links its page instead
  */
-export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcomes, pages, fallbackDay = () => null }) {
+export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcomes, pages, fallbackDay = () => null, recordPages = new Map() }) {
   const vocabulary = new Set(topics.topics.map(t => t.id));
   const topicsOf = (map, key, where) => {
     const list = map?.[key];
@@ -139,7 +142,8 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     const n = expNumber(e.id);
     if (!Number.isInteger(n)) throw new Error(`Site index: ledger id "${e.id}" is not of the form EXP 000`);
     // An on-site link: a ledger entry listed from the repository (EXP 010) links its row on the home's ledger instead.
-    const href = /^https?:/.test(e.href) ? 'index.html#all-experiments' : e.href;
+    // A ledger entry that links a raw JSON record links that record's readable page when there is one (wave 4).
+    const href = recordPages.get(e.href) ?? (/^https?:/.test(e.href) ? 'index.html#all-experiments' : e.href);
     const note = noteBySlug.get(slugOfNote(e.href));
     const dates = datesByExperiment.get(e.id) ?? [];
     const date = dates.length ? [...dates].sort().at(-1) : note?.date ?? fallbackDay(e);
@@ -170,7 +174,7 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     if (!stage) throw new Error(`Site index: update ${u.key} has kind "${u.kind}", which maps to no index stage`);
     // A results update carries its experiment's curated outcome; nothing else does.
     const outcome = stage === 'results' && ids.length === 1 ? outcomeOf.get(ids[0]) : undefined;
-    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: u.href });
+    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordPages.get(u.href) ?? u.href });
   }
   for (const tool of tools) {
     items.push({ type: 'tool', id: `tool-${tool.project}`, title: tool.title, date: tool.date, stage: 'tool', topics: topicsOf(topics.tools, tool.project, `projects/${tool.project}/`), summary: tool.summary, href: tool.href });
@@ -189,6 +193,9 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     // Plain text only: the Find page and the chrome escape every value whole, so a reference here would show raw.
     for (const field of ['title', 'summary']) if (REFERENCE.test(item[field])) throw new Error(`Site index: ${item.id}'s ${field} holds a character reference that was not decoded; the index holds plain text (write the character itself in the page, e.g. ’ not &rsquo;)`);
     if (!hrefOnSite(item.href, pages)) throw new Error(`Site index: ${item.id} links ${item.href}, which is not a page of the built site`);
+    // A visitor following an item lands on a page, never on a raw JSON file (wave 4, audit finding 13): such a link goes
+    // through its record page (recordPages, from scripts/site-records.mjs).
+    if (/\.json(?:#.*)?$/.test(item.href)) throw new Error(`Site index: ${item.id} links the raw record ${item.href}; link its record page instead (scripts/site-records.mjs)`);
     const problems = validate(ITEM_SCHEMA, item);
     if (problems.length) throw new Error(`Site index: ${item.id} does not match ${SCHEMA_PATH}: ${problems.join('; ')}`);
   }
@@ -309,5 +316,9 @@ export function loadIndex({ root = '.', dist = join(root, 'dist') } = {}) {
     return DAY.test(own ?? '') ? own : null;
   };
   const pages = new Set(filesUnder(dist));
-  return buildIndex({ ledger, updates, notes, labs, tools, topics: json(join(root, TOPICS_PATH)), outcomes: json(join(root, OUTCOMES_PATH)), pages, fallbackDay });
+  // A raw record link (a ledger or update href ending in .json) leads to its record page, which scripts/site-records.mjs
+  // rendered before this runs. A link whose page is missing stays raw, and buildIndex refuses it.
+  const recordPages = new Map([...ledger.map(e => e.href), ...updates.map(u => u.href)].filter(isRecordHref)
+    .map(href => [href, recordPageHref(href)]).filter(([, page]) => pages.has(`${page}index.html`)));
+  return buildIndex({ ledger, updates, notes, labs, tools, topics: json(join(root, TOPICS_PATH)), outcomes: json(join(root, OUTCOMES_PATH)), pages, fallbackDay, recordPages });
 }
