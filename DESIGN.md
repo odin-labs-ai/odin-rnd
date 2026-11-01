@@ -43,7 +43,7 @@ typography:
     lineHeight: 1.8
   label:
     fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: "10px"
+    fontSize: "12px"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "0.08em"
@@ -104,6 +104,8 @@ Articles use 18px/1.8 Manrope, 16px on mobile, in a 740px reading column; paragr
 Use the unmodified public Open Docs odin-logo.svg, whose exact path matches the live odin-labs.ai header. Never redraw it as a generic geometric icon. It appears in the common header, footer, equipment plate, favicon and missing-page header, with explicit image dimensions and decorative alt text beside the named home link.
 
 The home lockup reads OdinLabs / R&D in sentence case, with the subdivision separated by a thin rule. The header exposes the four existing navigation destinations and source link without a hidden mobile menu. The footer adds direct Odin Labs and Open Docs links. Keep all article routes in the same brand shell.
+
+Find is a documented addition to those destinations (mission rnd-site-ux-nav-1101, 2026-11-01): the build adds a Find link as the last header destination on every page, so a visitor can search and filter everything the site publishes from anywhere. Field notes, lab pages and tool pages also get a breadcrumb trail at the top and up to four related links before the footer, styled by assets/chrome.css. This chrome is added to the built pages only (scripts/site-chrome.mjs), never to a committed page or frozen record, and never puts a breadcrumb or related link on a number-provenance page.
 
 ## Layout and materials
 

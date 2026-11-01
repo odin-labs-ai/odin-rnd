@@ -50,9 +50,9 @@ test('the feeds are linked from the Labs index, the runs page and the page of ev
   const pages = renderLabs();
   const has = (page, href) => page.split('<link rel="alternate" type="application/atom+xml" title="').slice(1).some(l => l.split('>')[0].endsWith(`" href="${href}"`));
   assert.ok(has(pages['labs/index.html'], '../feed.xml'));
-  assert.match(pages['labs/index.html'], /<a href="\.\.\/feed\.xml">Follow every update and every run \(Atom\)<\/a>/);
+  assert.match(pages['labs/index.html'], /<a href="\.\.\/feed\.xml">Follow updates and runs \(Atom feed\)<\/a>/);
   assert.ok(has(pages['labs/runs/index.html'], '../../feed.xml'));
-  assert.match(pages['labs/runs/index.html'], /<a href="\.\.\/\.\.\/feed\.xml">Follow every update and every run \(Atom\)<\/a>/);
+  assert.match(pages['labs/runs/index.html'], /<a href="\.\.\/\.\.\/feed\.xml">Follow updates and runs \(Atom feed\)<\/a>/);
   const rogue = pages['labs/rogue/index.html'];
   assert.ok(has(rogue, 'feed.xml') && has(rogue, '../../feed.xml'));
   assert.match(rogue, /<section class="company-section company-width lab-runs-section" id="lab-runs"[^>]*>.*<a href="feed\.xml">This lab's feed \(Atom\)<\/a>.*<a href="\.\.\/\.\.\/feed\.xml">The site feed \(Atom\)<\/a>.*<\/section><\/main>/s);

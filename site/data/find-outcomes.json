@@ -1,0 +1,24 @@
+{
+ "format": "odin-find-outcomes",
+ "version": 1,
+ "about": "How each experiment with a published result came out, read by hand from its own status sentence on the experiment ledger. Each phrase is copied from that sentence word for word, so the label always points at the words that justify it; the site index refuses a phrase the sentence no longer contains. An experiment whose result does not support or refute a stated claim is listed under withheld, with the reason, and carries no outcome.",
+ "outcomes": {
+  "EXP 001": {"outcome": "supported", "phrase": "flagged the copy we broke on purpose"},
+  "EXP 002": {"outcome": "supported", "phrase": "flagged the copy we broke on purpose"},
+  "EXP 003": {"outcome": "supported", "phrase": "flagged the copy we broke on purpose"},
+  "EXP 005": {"outcome": "refuted", "phrase": "the claim is refuted"},
+  "EXP 006": {"outcome": "supported", "phrase": "bar met, nina in the spotlight"},
+  "EXP 007": {"outcome": "refuted", "phrase": "the premise is refuted"},
+  "EXP 009": {"outcome": "mixed", "phrase": "P1 refuted: 1 of 400 H1 trials diverged from R0 (95% Wilson upper bound 1.40%). P2 supported"},
+  "EXP 012": {"outcome": "refuted", "phrase": "False alarms stayed at 20 and 22 of 30 clean changes, against a pre-registered bar of 2"},
+  "EXP 013": {"outcome": "refuted", "phrase": "flexible JSON alone gave no demonstrated reason to switch"},
+  "EXP 014": {"outcome": "mixed", "phrase": "found two advantages over monolithic JSONB, but none over the stronger PostgreSQL alternatives"},
+  "EXP 016": {"outcome": "refuted", "phrase": "a spread of 1.10 against a pre-registered bar of 1.05"},
+  "EXP 019": {"outcome": "mixed", "phrase": "routing beats always-Opus, within a wide replicate allowance, and does not beat always-Luna"}
+ },
+ "withheld": {
+  "EXP 004": "A measurement on one laptop, with no stated claim to support or refute.",
+  "EXP 017": "A map of which models sit on the cost and catch frontier, not a test of one claim.",
+  "EXP 018": "The pre-registered verdict is incomplete: one routed cell hit its spend stop."
+ }
+}

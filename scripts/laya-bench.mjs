@@ -86,7 +86,7 @@ export function renderLayaBench({ results, manifest }, readme) {
   const f = layaFigures(results), checks = checkText(f);
   const green = Object.values(f.verdicts).filter(v => v === 'GREEN').length;
   const measured = new Date(f.measuredAt).toISOString().replace('T', ' ').replace(/:\d\d(\.\d+)?Z$/, ' UTC');
-  return `<div class="bench-introduction laya-introduction"><h2>Then a decision you can own.</h2><p>A second bench, because this one compares two models rather than one rule on two trees: open weights on a laptop against a hosted API, on the same questions.</p></div>
+  return `<div class="bench-introduction laya-introduction"><h2>Can a model on your own laptop replace a hosted one?</h2><p>The second bench compares two models instead of one rule on two copies: open weights running on a laptop against a hosted API, answering the same questions.</p></div>
       <div class="workbench laya-bench dark-surface" id="laya-bench">
         <div class="bench-menu"><div class="bench-label technical">BENCH 02 / DECISIONS</div><p class="bench-entry"><span>EXP / 004</span><span>Laya vs Jev: typed decisions <span style="white-space:nowrap">without lock-in</span></span></p><a class="all-runs" href="${up}${browserHref}">Try it in your browser <span aria-hidden="true">↗</span></a></div>
         <div class="bench-body">
