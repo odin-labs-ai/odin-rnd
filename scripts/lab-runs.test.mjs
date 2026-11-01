@@ -228,3 +228,12 @@ test('the build refuses a runs page that fails the screen, or whose template los
     assert.throws(() => withLabRuns(pages, root), /<!--LAB_RUNS--> is missing/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+
+test('org hash matches are labelled as record checks with no independence claim', () => {
+  const runs = readLabRuns().flatMap(l => l.runs);
+  assert.ok(runs.length);
+  const html = renderProvenance(runs);
+  assert.match(html, /does not establish a new experiment or independent validation/);
+  assert.doesNotMatch(html, /Reproduced on a second org machine/);
+});

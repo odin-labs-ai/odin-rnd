@@ -34,7 +34,7 @@ export const RUNS_PAGE = 'labs/runs/index.html';
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
 
 export const BADGES = {
-  reproduced: 'Reproduced on a second org machine, same hash',
+  reproduced: 'Matching record hash on two org machine classes',
   single: 'Single machine',
   different: 'Different hash',
   laptop: 'Single machine, a laptop re-run',
@@ -90,7 +90,7 @@ function badgeText({ state, group }, runsHref) {
 /** The card's provenance: "runner · commit · record hash" for the latest run, and the badge. */
 export function renderProvenance(runs, { runsPage = false, runsHref = runsPage ? 'runs/' : null } = {}) {
   const s = runState(runs), r = s.latest;
-  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s, runsHref)}</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run in the list of all runs</a></p>` : ''}</div>`;
+  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s, runsHref)}</p><p class="lab-source">This checks a committed record. A matching hash does not establish a new experiment or independent validation.</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run, among every run</a></p>` : ''}</div>`;
 }
 
 /** Every results lab's runs, read from its pinned record (readTiles checks the pin): [{ tile, record, runs }]. */
@@ -130,7 +130,7 @@ export function renderRuns(labs) {
     const lab = `${escape(tile.label)}: ${escape(tile.title)}`;
     return `<tr id="${escape(runAnchor(run))}"><td>${when(run.ranAt)}</td><td>${page ? `<a href="../../${escape(page)}">${lab}</a>` : lab}</td><td>${escape(run.runner)}</td><td><code>${escape(run.machineClass)}</code></td><td><code>${escape(run.commit.sha.slice(0, 8))}</code></td><td><code>${escape(run.recordHash.slice(0, 12))}</code></td><td>${escape(run.result.verdict)}, ${escape(String(run.result.breaches))} breaches</td><td><a href="../../${escape(href)}">The record</a></td></tr>`;
   }).join('');
-  return `<div class="lab-table-wrap"><table class="lab-runs-table"><caption>${rows.length === 1 ? 'One run' : `${rows.length} runs`}, newest first. Hashes are shortened; each record holds them in full.</caption><thead><tr><th scope="col">Ran</th><th scope="col">Lab</th><th scope="col">Runner</th><th scope="col">Machine class</th><th scope="col">Commit</th><th scope="col">Record hash</th><th scope="col">The check printed</th><th scope="col">Record</th></tr></thead><tbody>${body}</tbody></table></div><p class="lab-source">A record names a runner and a machine class by a word from a closed list, never a runner or host name. The record hash covers what ran, on which commit, and what it printed, not where or when.</p>`;
+  return `<div class="lab-table-wrap"><table class="lab-runs-table"><caption>${rows.length === 1 ? 'One run' : `${rows.length} runs`}, newest first. Hashes are shortened; each record holds them in full.</caption><thead><tr><th scope="col">Ran</th><th scope="col">Lab</th><th scope="col">Runner</th><th scope="col">Machine class</th><th scope="col">Commit</th><th scope="col">Record hash</th><th scope="col">The check printed</th><th scope="col">Record</th></tr></thead><tbody>${body}</tbody></table></div><p class="lab-source">A record names a runner and a machine class by a word from a closed list, never a runner or host name. The record hash covers what ran, on which commit, and what it printed, not where or when. These are record checks; a repeated hash is not independent validation of the research conclusion.</p>`;
 }
 
 const ANCHOR = '<ul class="lab-tile-links">';

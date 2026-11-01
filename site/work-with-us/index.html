@@ -31,7 +31,7 @@
     <section class="company-hero company-width offer-hero" aria-labelledby="company-title">
       <div>
         <h1 id="company-title">Work with us, in the open <br>or behind closed doors.</h1>
-        <p class="company-lead">We take on hard engineering problems with AI and prove the result: old code that has to keep working, security that has to hold, and experiments in fields that are new for everyone. Engagements run over months, scoped together, by proposal.</p>
+        <p class="company-lead">We take on hard engineering problems with AI and evaluate the result against an agreed scope: old code that has to keep working, security checks, and experiments in fields that are new for everyone. Engagements run over months, scoped together, by proposal.</p>
         <div class="company-actions"><a class="button button-primary" href="https://odin-labs.ai/contact/?topic=lab#contact-form" data-contact-opened>Start a conversation</a><a href="#how-it-runs">How an engagement runs</a></div>
       </div>
       <aside class="bench-proposal" aria-labelledby="glance-title">
@@ -50,12 +50,14 @@
     <section class="company-section company-width" id="what-we-take-on" aria-labelledby="areas-title">
       <div class="company-section-heading"><h2 id="areas-title">What we take on.</h2><p>Hard problems where “it seems to work” is not good enough.</p></div>
       <ul class="offer-areas offer-areas-detailed">
-        <li data-reveal><span class="technical">LEGACY CODE</span><h3>Refactor and migrate</h3><p>Move old systems to new code without changing what they do, and prove it: the checks compare the new code with an independent statement of what it should do, as well as with the old output. See the <a href="../projects/migration-witness/">Migration Witness</a>.</p></li>
-        <li data-reveal><span class="technical">SECURITY</span><h3>Fix it and show it holds</h3><p>Find and fix weaknesses, then show that the fix holds and that the checks around it still catch what they should. See the <a href="../projects/ci-witness/">CI Witness</a>.</p></li>
+        <li data-reveal><span class="technical">LEGACY CODE</span><h3>Refactor and migrate</h3><p>Evaluate old and new systems against separately written expectations, rather than only comparing their outputs. The checks establish behavior for the agreed examples, not equivalence for every possible input. See the <a href="../projects/migration-witness/">Migration Witness</a>.</p></li>
+        <li data-reveal><span class="technical">SECURITY</span><h3>Fix it and show it holds</h3><p>Find and fix weaknesses, then test the targeted failure and agreed regression cases. A passing check supports that tested scope, not a guarantee that the system has no other weaknesses. See the <a href="../projects/ci-witness/">CI Witness</a>.</p></li>
         <li data-reveal><span class="technical">FRONTIER EXPERIMENTS</span><h3>Space, robotics, vision, ML</h3><p>New directions we take on with partners. Each one starts as a written experiment: the question, the data and what would count as success, fixed before anything runs.</p></li>
         <li data-reveal><span class="technical">BLUEPRINTS</span><h3>Rules enforced as code</h3><p>Write your architecture rules down once and have code check them on each change, with the open-source <a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine</a>.</p></li>
       </ul>
     </section>
+    <section class="company-section company-width"><h2>What acceptance means</h2><p><time datetime="2026-11-01">1 November 2026</time>: earlier wording offered to “prove the result” and migrate “without changing what they do”. Acceptance is bounded by the examples, environment and checks agreed for the engagement. Untested behavior and wider deployment remain separate questions. <a href="../methods/#publication-standard">Read the publication standard</a>.</p></section>
+
     <section class="company-section company-width" id="how-it-runs" aria-labelledby="runs-title">
       <div class="company-section-heading"><h2 id="runs-title">How an engagement runs.</h2><p>We scope each engagement together and write it up as a proposal. There is no price list, because no two engagements are the same.</p></div>
       <ol class="bench-phases">
