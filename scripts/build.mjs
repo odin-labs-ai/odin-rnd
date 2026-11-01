@@ -176,7 +176,14 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   const { loadIndex, TOPICS_PATH } = await import('./site-index.mjs');
   const { placeFind } = await import('./find-build.mjs');
   const { injectChrome } = await import('./site-chrome.mjs');
+  // Wave 3: the journal/ and projects/ index pages and the All experiments section on experiments/, rendered from the
+  // same items, then every page's header nav rewritten to the one canonical list (site-sections.mjs, site-header.mjs;
+  // both fail closed), before Find and the chrome, so the Find link lands last in the canonical nav.
+  const { renderSectionPages } = await import('./site-sections.mjs');
+  const { normaliseHeaders } = await import('./site-header.mjs');
   const items = loadIndex({ root: '.', dist: 'dist' });
+  renderSectionPages({ distDir: 'dist', items });
+  normaliseHeaders({ distDir: 'dist' });
   placeFind({ distDir: 'dist', items, topics: JSON.parse(readFileSync(TOPICS_PATH, 'utf8')) });
   injectChrome({ distDir: 'dist', items });
 }

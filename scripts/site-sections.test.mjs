@@ -87,9 +87,9 @@ test('the site chrome leaves the section pages\' own trail alone and adds its Fi
     assert.equal(labels.filter(l => l === 'Find').length, 1);
     assert.equal(labels.at(-1), 'Find');
   }
-  // site-chrome classes journal/index.html as a note today (and may stop doing so): either way the page's own trail
-  // keeps a second one out, and with no index item of its own it gets no related aside.
-  assert.ok(['note', null].includes(pageClass(JOURNAL_PAGE)));
+  // site-chrome exempts both by name (SECTION_INDEX_PAGES): a list of notes or tools is not a note or a tool, so it gets
+  // no trail from the chrome (its own is the one), no related aside, and needs no index item of its own.
+  assert.equal(pageClass(JOURNAL_PAGE), null);
   assert.equal(pageClass(PROJECTS_PAGE), null);
 });
 

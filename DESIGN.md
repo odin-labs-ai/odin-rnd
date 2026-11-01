@@ -107,6 +107,8 @@ The home lockup reads OdinLabs / R&D in sentence case, with the subdivision sepa
 
 Find is a documented addition to those destinations (mission rnd-site-ux-nav-1101, 2026-11-01): the build adds a Find link as the last header destination on every page, so a visitor can search and filter everything the site publishes from anywhere. Field notes, lab pages and tool pages also get a breadcrumb trail at the top and up to four related links before the footer, styled by assets/chrome.css. This chrome is added to the built pages only (scripts/site-chrome.mjs), never to a committed page or frozen record, and never puts a breadcrumb or related link on a number-provenance page.
 
+One header navigation (wave 3 of the same mission): the build rewrites the header nav of every built page to the same list, in this order: Factory, Experiments, Labs, Updates, Field notes, Work with us, Partners, then Find, with the page's own section marked current (scripts/site-header.mjs; an unknown nav label stops the build). Field notes and Tools have index pages of their own, journal/ and projects/, rendered from the site index (scripts/site-sections.mjs), and the breadcrumbs on notes and tools lead to them; the built experiments page ends with an All experiments list. Like the rest of the chrome this happens in dist/ only.
+
 ## Layout and materials
 
 A full-width forest-green entrance wraps the headline, large interactive drawing and stamped machine plate. Page gutters are 4.2%, 6% mobile; very wide hero content is capped through side padding. The hero reflows into one column on mobile without changing drawing geometry.

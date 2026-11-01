@@ -43,7 +43,8 @@ export const KNOWN_LABELS = new Set([...DESTINATIONS.map(d => d.label), 'The flo
 export const HEADER_EXEMPT = new Map();
 
 const NAV_OPEN = '<nav aria-label="Main navigation">';
-const FIND = /<a href="[^"]*find\/">Find<\/a>/;
+// A Find link as scripts/site-chrome.mjs writes it; on the Find page itself it carries aria-current="page".
+const FIND = /^<a href="[^"]*find\/"(?: aria-current="page")?>Find<\/a>$/;
 
 /** The section a built page (path relative to dist/, posix) belongs to: a DESTINATIONS key, or null (home, others). */
 export function sectionFor(rel) {

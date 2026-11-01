@@ -90,6 +90,16 @@ test('idempotent, alone and with the Find link of scripts/site-chrome.mjs in eit
   }
 });
 
+test('the Find page\'s own Find link, marked aria-current by scripts/site-chrome.mjs, is kept marked in either order', () => {
+  const src = read('find/index.html');
+  const marked = addFindLink(normalise(src, 'find/index.html'), '../', 'find/index.html', { current: true });
+  assert.match(navOf(marked), /<a href="\.\.\/find\/" aria-current="page">Find<\/a><\/nav>$/);
+  assert.equal(normalise(marked, 'find/index.html'), marked, 'normalising keeps the marked link verbatim, last');
+  assert.equal(normalise(addFindLink(src, '../', 'find/index.html', { current: true }), 'find/index.html'), marked, 'same result in either order');
+  assert.equal((navOf(marked).match(/aria-current/g) || []).length, 1, 'only Find is current there');
+  assert.throws(() => normalise(marked.replace(' aria-current="page">Find', ' class="x">Find'), 'find/index.html'), /not of the form/);
+});
+
 test('the 404 page keeps its absolute links and its own Find, moved last', () => {
   const nav = navOf(normalise(read('404.html'), '404.html'));
   assert.ok([...nav.matchAll(/href="([^"]+)"/g)].every(([, href]) => href.startsWith(SITE_ORIGIN)), 'absolute links only');

@@ -16,6 +16,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { canonicalHeader } from './site-header.mjs';
+import { escapeHtml } from './site-chrome.mjs';
 
 export const JOURNAL_PAGE = 'journal/index.html';
 export const PROJECTS_PAGE = 'projects/index.html';
@@ -29,8 +30,8 @@ const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'O
 const STAGE_WORDS = { 'pre-registered': 'Pre-registered', results: 'Results', recorded: 'Recorded', measured: 'Measured', amendment: 'Amendment', erratum: 'Erratum', running: 'Running', note: 'Field note', tool: 'Tool' };
 const OUTCOME_WORDS = { supported: 'Supported', refuted: 'Refuted', mixed: 'Mixed' };
 
-/** Full HTML escape: the index holds plain text (character references already decoded), so every & is literal. */
-export const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+/** Full HTML escape (all five of & < > " ', scripts/site-chrome.mjs): the index holds plain text, so every & is literal. */
+export const escape = escapeHtml;
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 function day(date, where) {

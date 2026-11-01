@@ -8,7 +8,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
 import { hrefOnSite, experimentIdsInData } from './site-index.mjs';
 import { FIND_MARKER, GROUPS } from './find-build.mjs';
-import { FIND_EXEMPT } from './site-chrome.mjs';
+import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
 
@@ -91,4 +91,37 @@ test('the home field-note rows are unchanged by the chrome: one row per note, fi
 
 test('the sitemap lists /find/', () => {
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/<\/loc><\/url><\/urlset>/);
+});
+
+test('the sitemap lists /journal/ and /projects/ directly before /find/, which stays last', () => {
+  assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/<\/loc><\/url><url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/projects\/<\/loc><\/url><url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/<\/loc><\/url><\/urlset>/);
+});
+
+test('wave 3, as built: one canonical nav on every page, journal/ and projects/ listing every note and tool, crumbs to them', () => {
+  const { dist, files, index } = built();
+  const CANONICAL = ['Factory', 'Experiments', 'Labs', 'Updates', 'Field notes', 'Work with us', 'Partners', 'Find'];
+  for (const rel of files.filter(f => f.endsWith('.html'))) {
+    const html = readFileSync(join(dist, rel), 'utf8');
+    const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
+    assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
+    assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
+  }
+  const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
+  const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();
+  assert.deepEqual(rows('journal/index.html').sort(), hrefsOf('note'), 'journal/ lists every note once');
+  assert.deepEqual(rows('projects/index.html').sort(), hrefsOf('tool'), 'projects/ lists every tool once');
+  const experiments = readFileSync(join(dist, 'experiments/index.html'), 'utf8');
+  assert.equal((experiments.match(/id="every-experiment"/g) || []).length, 1, 'experiments/ ends with All experiments');
+  for (const item of index.items.filter(i => i.type === 'note' || i.type === 'tool')) {
+    const page = item.href.endsWith('/') ? `${item.href}index.html` : item.href;
+    const crumbs = readFileSync(join(dist, page), 'utf8').match(/<nav class="crumbs"[\s\S]*?<\/nav>/)[0];
+    const up = item.type === 'note' ? '../journal/' : '../../projects/';
+    assert.ok(crumbs.includes(`<a href="${up}">${item.type === 'note' ? 'Field notes' : 'Tools'}</a>`), `${page}: the trail leads to its index page`);
+    const label = crumbs.match(/<li aria-current="page">([\s\S]*?)<\/li>/)[1];
+    const slug = page.split('/').at(-1) === 'index.html' ? page.split('/').at(-2) : page.split('/').at(-1).replace(/\.html$/, '');
+    assert.notEqual(label, slug, `${page}: the trail names the page, not its slug`);
+    const html = readFileSync(join(dist, page), 'utf8');
+    assert.equal(label, escapeHtml(pageTitle(html)), `${page}: the label is the page's own heading`);
+    assert.ok(label.length > slug.length / 2 && /\s/.test(label), `${page}: a title in words`);
+  }
 });

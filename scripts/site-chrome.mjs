@@ -35,6 +35,19 @@ export const CHROME_WITHOUT_ITEM = new Map([
   ['labs/how-we-decide/index.html', 'the list of every frozen plan, veto, change and admitted gap across the labs: a page about the labs, not a lab'],
 ]);
 
+/**
+ * Index pages under journal/ and projects/, rendered at build time by scripts/site-sections.mjs, each with its reason.
+ * They list notes and tools; they are not a note or a tool, so they get no item, no breadcrumbs from this pass (they
+ * carry their own trail) and no related aside, and the completeness check in scripts/site-index.mjs passes them over.
+ */
+export const SECTION_INDEX_PAGES = new Map([
+  ['journal/index.html', 'the list of every field note (scripts/site-sections.mjs): a page about the notes, not a note'],
+  ['projects/index.html', 'the list of every tool page (scripts/site-sections.mjs): a page about the tools, not a tool'],
+]);
+
+/** The page the Find link leads to: on it, the link is marked as the current page. */
+export const FIND_PAGE = 'find/index.html';
+
 const TYPE_LABELS = { experiment: 'Experiment', lab: 'Lab', note: 'Field note', update: 'Update', tool: 'Tool' };
 
 // Escapes plain text for HTML: all five of & < > " ', always. Every title this pass writes is plain text (the site
@@ -58,7 +71,7 @@ function siteHeader(html, label = 'page') {
  * Appends `<a href="{relPrefix}find/">Find</a>` as the last link of the header's main navigation. `relPrefix` is the
  * way from the page's folder to the site root ('' at the root, '../' one level down). Idempotent.
  */
-export function addFindLink(html, relPrefix, label = 'page') {
+export function addFindLink(html, relPrefix, label = 'page', { current = false } = {}) {
   if (/\d/.test(relPrefix) || !/^(?:\.\.\/)*$/.test(relPrefix)) throw new Error(`Find link prefix must be a run of ../ segments, got "${relPrefix}"`);
   const { start, end } = siteHeader(html, label);
   const header = html.slice(start, end);
@@ -66,9 +79,19 @@ export function addFindLink(html, relPrefix, label = 'page') {
   if (navs.length !== 1) throw new Error(`Expected exactly one navigation in the site header of ${label}, found ${navs.length}`);
   const navEnd = header.indexOf('</nav>');
   if (navEnd < 0) throw new Error(`Unclosed header navigation in ${label}`);
-  const nav = header.slice(header.search(/<nav\b/), navEnd);
-  if (/<a href="(?:\.\.\/)*find\/">Find<\/a>/.test(nav)) return html;
-  const link = `<a href="${relPrefix}find/">Find</a>`;
+  const navStart = header.search(/<nav\b/);
+  const nav = header.slice(navStart, navEnd);
+  const mark = current ? ' aria-current="page"' : '';
+  // A Find link already there (this pass ran before, or scripts/site-header.mjs kept it) may carry attributes; on the
+  // Find page itself it gains aria-current if it lacks it, and is otherwise left exactly as it is.
+  const existing = nav.match(/<a href="(?:\.\.\/)*find\/"([^>]*)>Find<\/a>/);
+  if (existing) {
+    if (!current || /\baria-current=/.test(existing[1])) return html;
+    const at = start + navStart + existing.index;
+    const marked = existing[0].replace('>Find</a>', `${mark}>Find</a>`);
+    return html.slice(0, at) + marked + html.slice(at + existing[0].length);
+  }
+  const link = `<a href="${relPrefix}find/"${mark}>Find</a>`;
   return html.slice(0, start) + header.slice(0, navEnd) + link + header.slice(navEnd) + html.slice(end);
 }
 
@@ -147,7 +170,7 @@ export function pickRelated(items, self, limit = 4) {
 
 /** Which chrome a page (path relative to dist/, posix) gets beyond the Find link: 'note', 'lab', 'tool' or null. */
 export function pageClass(rel) {
-  if (NUMBER_PROVENANCE_DIRS.some(dir => rel.startsWith(dir))) return null;
+  if (NUMBER_PROVENANCE_DIRS.some(dir => rel.startsWith(dir)) || SECTION_INDEX_PAGES.has(rel)) return null;
   if (/^journal\/[^/]+\.html$/.test(rel)) return 'note';
   if (/^labs\/[^/]+\/index\.html$/.test(rel)) return 'lab';
   if (/^projects\/[^/]+\/index\.html$/.test(rel)) return 'tool';
@@ -190,9 +213,9 @@ export function pageTitle(html) {
 export function trailFor(kind, rel, title) {
   const up = '../'.repeat(rel.split('/').length - 1);
   const home = { label: 'Home', href: up || './' };
-  if (kind === 'note') return [home, { label: 'Field notes', href: `${up}#journal` }, { label: title }];
+  if (kind === 'note') return [home, { label: 'Field notes', href: `${up}journal/` }, { label: title }];
   if (kind === 'lab') return [home, { label: 'Labs', href: `${up}labs/` }, { label: title }];
-  if (kind === 'tool') return [home, { label: 'Tools', href: `${up}#projects` }, { label: title }];
+  if (kind === 'tool') return [home, { label: 'Tools', href: `${up}projects/` }, { label: title }];
   throw new Error(`No breadcrumb trail for ${rel}`);
 }
 
@@ -226,14 +249,17 @@ export function injectChrome({ distDir, items }) {
     html = addChromeStylesheet(html, up, rel);
     counts.stylesheet++;
     if (!FIND_EXEMPT.has(rel)) {
-      html = addFindLink(html, up, rel);
+      html = addFindLink(html, up, rel, { current: rel === FIND_PAGE });
       counts.find++;
     }
     const kind = pageClass(rel);
     if (kind) {
-      const self = byKey.get(pageKey(rel));
+      // The page's own item: the one of its own kind (a note's page is also the href of the experiments and updates
+      // that point at it, and those come first in the newest-first list), else any item at that page.
+      const self = items.find(item => item.type === kind && pageKey(item.href) === pageKey(rel)) ?? byKey.get(pageKey(rel));
       if (!self && !CHROME_WITHOUT_ITEM.has(rel)) throw new Error(`Site chrome: ${rel} is a ${kind} page with no item in the site index (add it to the index, or to CHROME_WITHOUT_ITEM with a reason)`);
-      html = addBreadcrumbs(html, trailFor(kind, rel, self?.title || pageTitle(html)), rel);
+      // The last step names the page as the visitor sees it: its <h1> (else its <title>), else its item's title.
+      html = addBreadcrumbs(html, trailFor(kind, rel, pageTitle(html) || self?.title), rel);
       counts.crumbs++;
       const related = (self ? pickRelated(items, self) : []).map(item => ({ type: item.type, title: item.title, href: relativeHref(rel, item.href) }));
       if (related.length) { html = addRelated(html, related, rel); counts.related++; }
