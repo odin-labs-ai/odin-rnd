@@ -54,7 +54,7 @@ export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
 export const HARD_PARTS_FILE = 'data/labs/agent-space/hard-parts.json';
 // Where a follow link may point: exactly these hosts (on github.com only this lab's repository). Anything else is refused.
-export const FOLLOW_HOSTS = ['www.linkedin.com', 'linkedin.com', 'www.reddit.com', 'reddit.com', 'x.com', 'twitter.com', 'github.com'];
+export const FOLLOW_HOSTS = ['www.linkedin.com', 'linkedin.com', 'www.reddit.com', 'reddit.com', 'x.com', 'twitter.com', 'github.com', 'www.instagram.com'];
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const time = date => `<time datetime="${escape(date)}">${escape(new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }))}</time>`;
