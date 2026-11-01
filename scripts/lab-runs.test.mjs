@@ -201,9 +201,9 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
   const { latest } = runState(readLabRuns()[0].runs);
-  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
+  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">All lab runs, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
   // The card's link lands on the row of the run it shows, the lab's latest (the laptop re-run, until an org day lands).
-  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(latest)}">This run, among every run</a></p>`));
+  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(latest)}">This run in the list of all runs</a></p>`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(latest)}">`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`), 'the laptop re-run keeps its row');
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/runs\/<\/loc>/);

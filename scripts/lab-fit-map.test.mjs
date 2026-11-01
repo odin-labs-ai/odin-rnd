@@ -50,7 +50,7 @@ test('the committed fit map passes the build gate and shows every cell pending, 
   assert.ok(cells.every(cell => cell.verdict === null && cell.result === null));
   const html = renderFitMap(committed);
   assert.equal((html.match(/class="fit-pending">Pending</g) ?? []).length, 10);
-  assert.match(html, /0 of 10 cells have a verdict\./);
+  assert.match(html, /0 of 10 scenarios have a verdict so far\./);
   assert.match(html, /<th scope="col">Predictions, frozen before the run<\/th>/);
   assert.match(html, /<li><span>PostgreSQL’s advocate:<\/span> both-fit, leaning postgres-fits<\/li>/);
   assert.match(html, /<a href="\.\.\/journal\/mongodb-home-ground-pre-registration\.html">EXP 020: /);
