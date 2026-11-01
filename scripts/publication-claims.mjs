@@ -11,6 +11,7 @@ import { parseXml, updateEntryId, updateSummary } from './lab-feeds.mjs';
 const OVERCLAIMS = [
   [/\bevery model and vendor,?\s+tested\b/gi, 'name the selected models and vendors; the lab has not tested every provider'],
   [/\b(?:review,\s*fix and ship real software|reviews?,\s*fixes? and research(?: it does)?) every day\b/gi, 'published records do not establish a daily delivery rate'],
+  [/\bsame (?:pre-registered )?rules as (?:everyone else|every other provider)\b/gi, 'compare providers under the decision rules of a named experiment'],
   [/\b(?:verified|proven) answers?\b/gi, 'source cards do not establish answer correctness'],
   [/\banswers? with proof\b/gi, 'name the source record or citation instead of promising proof'],
   [/\bindependently (?:verified|validated|reproduced|replicated)\b/gi, 'independent verification needs its own reviewed evidence; an org replay is not independent'],

@@ -21,6 +21,8 @@ test('site-wide copy cannot promise universal coverage or daily factory delivery
     'Every model and vendor, tested on real work.',
     'Agents that review, fix and ship real software every day.',
     'The reviews, fixes and research it does every day.',
+    'You get measured on the same rules as everyone else.',
+    'Under the same pre-registered rules as every other provider.',
   ]) assert.ok(claimTextProblems(text).length, text);
   for (const text of [
     'We evaluate selected models and vendors on bounded tasks.',
