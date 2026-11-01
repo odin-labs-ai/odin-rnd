@@ -1,7 +1,7 @@
 {
  "format": "odin-find-outcomes",
  "version": 1,
- "about": "How each experiment with a published result came out, read by hand from its own status sentence on the experiment ledger. Each phrase is copied from that sentence word for word, so the label always points at the words that justify it; the build refuses a phrase the sentence no longer contains. An experiment whose result does not support or refute a stated claim is listed under withheld, with the reason, and carries no outcome.",
+ "about": "How each experiment with a published result came out, read by hand from its own status sentence on the experiment ledger. Each phrase is copied from that sentence word for word, so the label always points at the words that justify it; the site index refuses a phrase the sentence no longer contains. An experiment whose result does not support or refute a stated claim is listed under withheld, with the reason, and carries no outcome.",
  "outcomes": {
   "EXP 001": {"outcome": "supported", "phrase": "flagged the copy we broke on purpose"},
   "EXP 002": {"outcome": "supported", "phrase": "flagged the copy we broke on purpose"},
