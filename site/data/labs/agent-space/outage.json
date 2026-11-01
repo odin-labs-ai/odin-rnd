@@ -1,0 +1,170 @@
+{
+ "format": "odin-lab-outage",
+ "version": 1,
+ "lab": "agent-space",
+ "number": 2,
+ "title": "The agents caught a real outage",
+ "date": "2026-10-27",
+ "line": "A visitor asks Odin to check the agents. Then one agent's server is stopped for real, and Odin finds it, says what is wrong, and confirms the fix.",
+ "film": {
+  "src": "assets/labs/agent-space/outage/dispatch-2-outage.webm",
+  "poster": "assets/labs/agent-space/outage/dispatch-2-outage-poster.png",
+  "mime": "video/webm;codecs=vp9",
+  "bytes": 1511547,
+  "posterBytes": 395118,
+  "seconds": 51,
+  "frames": 378,
+  "sha256": {
+   "src": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
+   "poster": "f6532a30fed7adc63681dd663249ce40d843fdb5e04d9dbd445040b0817b8fa4"
+  },
+  "original": {
+   "sha256": "bcd0cd339e715eb1525b276a83820f94ebd6341437c4313ee5fbfac7bc2c5ceb",
+   "bytes": 1511106,
+   "note": "Rewrapped with ffmpeg -c copy, without re-encoding, so its header carries its length. The original recording is not published; its sha256 and size are recorded here."
+  }
+ },
+ "source": {
+  "commit": "d02ee74b96a997095950185a20afa05a908a2ff0",
+  "onMain": false,
+  "baseMain": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
+  "lane": "lane/mac-qa-public",
+  "checkedAt": "2026-10-28",
+  "filmedOn": "2026-10-27",
+  "machine": "a second machine (the Mac)",
+  "changes": [
+   "the port check works on macOS",
+   "the outage card names the agent instead of its address"
+  ]
+ },
+ "staged": "The outage was staged on purpose, on a throwaway copy of the space started only for this film. The failure itself was real: the agent's server process was stopped, by its own process id, and nothing answered until it was started again.",
+ "steps": [
+  {
+   "ask": "Odin, check the agents",
+   "verdict": "pass",
+   "evidence": "ia-4e58a3",
+   "said": "Good news: all 4 agents answered: Atlas (scripted), Pulse (http), Vega (scripted), Juno (scripted)."
+  },
+  {
+   "event": "Pulse's server process is stopped by its own process id: a real outage, not a mock."
+  },
+  {
+   "ask": "Odin, check the agents",
+   "verdict": "fail",
+   "evidence": "ia-709326",
+   "said": "I found a problem: 3 of 4 agents answered; Pulse did not answer (its http brain failed: connection refused (nothing listens there))."
+  },
+  {
+   "event": "Pulse's server is started again with the space's own start command, for that agent only."
+  },
+  {
+   "ask": "Odin, check agent Pulse",
+   "verdict": "pass",
+   "evidence": "ia-d7d01a",
+   "said": "Good news: it answered: Pulse (http)."
+  },
+  {
+   "ask": "Odin, check the paths",
+   "verdict": "pass",
+   "evidence": "ip-7318d7",
+   "said": "Good news: 4 of 4 places can be reached on foot from the entrance."
+  }
+ ],
+ "screening": {
+  "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 (passthrough frames) and hashed; each of those frames read by text recognition, its text hashed",
+  "at": "2026-10-27",
+  "srcSha256": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
+  "frames": [
+   {
+    "t": 0,
+    "frame": 0,
+    "rgb24Sha256": "eab9d32a25fcef2107d33f7039fadbca785ab3622cfa308962a09f05a47defb0",
+    "textSha256": "d17e7dede5d5d660dabe91635ee615c08bd25a9790547aed5ffd1e5bfbd1c82c",
+    "chars": 22
+   },
+   {
+    "t": 5,
+    "frame": 37,
+    "rgb24Sha256": "16cbe0fa856f14899cabd35176c646976fe9f2da7b1a0cd5cb7c0418b6269e36",
+    "textSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "chars": 0
+   },
+   {
+    "t": 10,
+    "frame": 73,
+    "rgb24Sha256": "84b6436555b605e8c919b011c5c1a3bf13f9a0640c772f5202d83c6efc68944c",
+    "textSha256": "4e05d58348a6dfbadcaac27a1e44aa94404f1dd9979e2fbd7201a6ad63a8dd0c",
+    "chars": 657
+   },
+   {
+    "t": 15,
+    "frame": 108,
+    "rgb24Sha256": "ee26112c785652e3cd6d23747f8ec5e1931b8231036a956a21ee986a4f70bd7b",
+    "textSha256": "9b0624a38d1be0cfe87099454322135b49d5af1552129a5f87c4bdabf192eda5",
+    "chars": 641
+   },
+   {
+    "t": 20,
+    "frame": 154,
+    "rgb24Sha256": "a05b60627a2e2f48f0411e75cd2c2758ac2fc48e44d322788b525a4ecaa55fcd",
+    "textSha256": "a40c1bd9a0f70c1a256376a99c938655d4a74e0452d6b75b7d3d53ac7eb3e21f",
+    "chars": 609
+   },
+   {
+    "t": 25,
+    "frame": 189,
+    "rgb24Sha256": "199b921b11fc4909141ce2f0ec9c833199022adfd4f2fc481eebefa1a9e6da12",
+    "textSha256": "7c9b513302faacf1016e3c8071f7fdd2cc9ef6cfb97e2b4f99ae264e66ea6c14",
+    "chars": 757
+   },
+   {
+    "t": 30,
+    "frame": 225,
+    "rgb24Sha256": "975f6379ac792d1e24cd54201bf653205a554e173ec150f2d78c528ea14f4aca",
+    "textSha256": "b739fb58c16906b4dd56f70e6ec7a2f6d7909e04efb36af8cb666b4cb046791b",
+    "chars": 743
+   },
+   {
+    "t": 35,
+    "frame": 261,
+    "rgb24Sha256": "dee6439830759b4f7b08b3e3d5eb74f459d0fb77b16a4f94b91e70b8de42ac84",
+    "textSha256": "c4018b23e52cb86f6581fa2c4c7835a8f83611697e9c1f9cd042f4e825cd8957",
+    "chars": 521
+   },
+   {
+    "t": 40,
+    "frame": 297,
+    "rgb24Sha256": "a9f6abc277048973b357a096d1ce309e22feaa2a45b125bda9d8d0337d39dd7a",
+    "textSha256": "a7ab9cc9f8048f12b2e0061fb188f8b4ca65feb4cf2635dc0eaddc4082dc0b14",
+    "chars": 680
+   },
+   {
+    "t": 45,
+    "frame": 333,
+    "rgb24Sha256": "c2a149a908b4c7d74d317640f6e6b8444b9e73e54b93c6dfe1786962c60cad24",
+    "textSha256": "963b0f99b0e3120045d21e343d116ff16547d4088c2f4cb0ee12440ad64e379f",
+    "chars": 414
+   },
+   {
+    "t": 50,
+    "frame": 370,
+    "rgb24Sha256": "ef7ceb1f9cb52f2c8e8aa1855da7796e06d89fb0dc4bae1923fa6b07fc533c80",
+    "textSha256": "8bd675baa3ec04bd25c302f9b736a677e2ce9a8bc2e56f1a6be71d671202579e",
+    "chars": 90
+   }
+  ],
+  "textRecognition": {
+   "tool": "tesseract",
+   "version": "5.5.2",
+   "args": [
+    "-l",
+    "eng",
+    "--psm",
+    "3"
+   ],
+   "extract": "ffmpeg -fps_mode passthrough, the frame by its number (select), as PNG",
+   "hits": 0
+  },
+  "result": "pass"
+ }
+}

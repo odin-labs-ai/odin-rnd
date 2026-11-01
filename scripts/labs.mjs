@@ -15,7 +15,7 @@
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
-// (scripts/lab-films.mjs), the space's own measurements from telemetry.json (scripts/lab-telemetry.mjs), the counts of
+// (scripts/lab-films.mjs), Dispatch #2 from outage.json (scripts/lab-outage.mjs), the space's own measurements from telemetry.json (scripts/lab-telemetry.mjs), the counts of
 // its published records from counts.json (scripts/lab-counts.mjs), "The hard parts" from
 // hard-parts.json (readHardParts); its dispatches from
 // site/data/labs/agent-space/dispatches/<session>.json, as scripts/lab-dispatch-publish.mjs writes them. Every dispatch
@@ -45,6 +45,7 @@ import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
 import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
+import { readOutage, renderOutage } from './lab-outage.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');
@@ -261,7 +262,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }),
       // The link to the explorer, only when it is rendered (so it always lands on a page).
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
-      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
+      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_OUTAGE-->': renderOutage(readOutage(root)), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
       // "This week in Lab 01": the seven days ending on the build's date, from the same records (scripts/lab-week.mjs).
