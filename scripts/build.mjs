@@ -167,6 +167,19 @@ writeFileSync('dist/.nojekyll','');
 console.log('Built static GitHub Pages site with three recorded experiments.');
 
 for (const report of witnesses.reports) { const file = `projects/${report.project}/index.html`; writeFileSync(`dist/${file}`, renderWitness(readFileSync(`site/${file}`, 'utf8'), report)); }
+// Find and the site chrome (mission rnd-site-ux-nav-1101): the site index of every experiment, lab, field note, update
+// and tool, read from the finished pages, written to dist/data/index.json (never committed) and listed on /find/
+// without JavaScript; then the Find link, breadcrumbs, related links and their stylesheet on the built pages. Before
+// the per-page passes below, so those see the chrome. Each step fails closed (scripts/site-index.mjs, find-build.mjs,
+// site-chrome.mjs).
+{
+  const { loadIndex, TOPICS_PATH } = await import('./site-index.mjs');
+  const { placeFind } = await import('./find-build.mjs');
+  const { injectChrome } = await import('./site-chrome.mjs');
+  const items = loadIndex({ root: '.', dist: 'dist' });
+  placeFind({ distDir: 'dist', items, topics: JSON.parse(readFileSync(TOPICS_PATH, 'utf8')) });
+  injectChrome({ distDir: 'dist', items });
+}
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
 // Every page loads the collector once. The note generators already put it in their <head>; adding a second
 // copy there is what vp-rnd-frontier-residuals R7 found (activity-sitewide.test.mjs checks every built page).

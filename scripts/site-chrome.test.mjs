@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { addBreadcrumbs, addFindLink, addRelated, injectChrome, pageClass, pageKey, pickRelated, relativeHref } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, injectChrome, pageClass, pageKey, pickRelated, relativeHref } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 
 const dirs = [];
@@ -28,7 +28,7 @@ function tempDist() {
   dirs.push(dir);
   for (const page of PAGES) { mkdirSync(dirname(join(dir, page)), { recursive: true }); cpSync(join('site', page), join(dir, page)); }
   mkdirSync(join(dir, 'find'), { recursive: true });
-  writeFileSync(join(dir, 'find/index.html'), '<!doctype html><title>Find</title><header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a></nav></header><main id="main"></main>');
+  writeFileSync(join(dir, 'find/index.html'), '<!doctype html><head><title>Find</title></head><header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a></nav></header><main id="main"></main>');
   return dir;
 }
 
@@ -71,7 +71,8 @@ test('a page without exactly one site header, or a header without exactly one na
   assert.throws(() => addFindLink('<header class="site-header"><a href="./">Home</a></header>', ''), /exactly one navigation/);
   assert.throws(() => addFindLink('<header class="site-header"><nav></nav><nav></nav></header>', ''), /exactly one navigation/);
   assert.throws(() => addFindLink(header, 'x/'), /prefix/);
-  assert.throws(() => addFindLink(readFileSync('site/404.html', 'utf8'), ''), /exactly one navigation/, 'only injectChrome exempts the 404 page');
+  // The 404 page is exempt: its header carries its own absolute Find link, once.
+  assert.equal((headerNav(readFileSync('site/404.html', 'utf8')).match(/<a href="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/">Find<\/a>/g) || []).length, 1, 'the 404 header links Find itself');
   assert.throws(() => addBreadcrumbs('<main></main><main></main>', [{ label: 'Home', href: './' }, { label: 'X' }]), /exactly one <main>/);
   assert.throws(() => addRelated('<main></main>', [{ type: 'note', title: 'T', href: 'x' }]), /exactly one site footer/);
 });
@@ -110,14 +111,14 @@ test('breadcrumbs and the related aside go on notes, labs and tools only, with l
   assert.equal((note.match(/<aside class="related"/g) || []).length, 1);
 });
 
-test('nothing but the Find link is added to a number-provenance page', () => {
+test('nothing but the Find link and the chrome stylesheet is added to a number-provenance page', () => {
   const dist = tempDist();
   const before = readFileSync(join(dist, 'partners/index.html'), 'utf8');
   // Even an item that names the page itself, with a digit in its title, adds nothing there.
   injectChrome({ distDir: dist, items: [...items, { type: 'tool', id: 'exp-pipeline', title: 'Partners 2026', date: '2026-11-01', stage: 'results', topics: ['ci'], summary: 's', href: 'partners/' }] });
   const after = readFileSync(join(dist, 'partners/index.html'), 'utf8');
-  assert.equal(after, addFindLink(before, '../'));
-  assert.equal(after.replace('<a href="../find/">Find</a>', ''), before);
+  assert.equal(after, addChromeStylesheet(addFindLink(before, '../'), '../'));
+  assert.equal(after.replace('<a href="../find/">Find</a>', '').replace('<link rel="stylesheet" href="../assets/chrome.css">\n', ''), before);
   for (const page of ['provider-economics/index.html', 'evidence/index.html', 'providers/index.html', 'provider-brief/index.html', 'partners/index.html', 'one-pager/index.html']) {
     assert.equal(pageClass(page), null, page);
   }
@@ -164,4 +165,21 @@ test('the home field-note rows read the same after the chrome is added', () => {
   assert.deepEqual(journalRows(after), journalRows(before));
   assert.ok(journalRows(before).length > 0);
   assert.doesNotMatch(after, /class="crumbs"|class="related"/);
+});
+
+test('every page links the chrome stylesheet exactly once, last in its head, by a path that resolves', () => {
+  const dist = tempDist();
+  injectChrome({ distDir: dist, items });
+  injectChrome({ distDir: dist, items });
+  for (const page of [...PAGES, 'find/index.html']) {
+    const html = readFileSync(join(dist, page), 'utf8');
+    const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]*chrome\.css)">/g)].map(m => m[1]);
+    assert.equal(links.length, 1, `${page} links chrome.css once`);
+    assert.equal(resolve(dirname(join(dist, page)), links[0]), resolve(dist, 'assets/chrome.css'), `${page}: ${links[0]} is the site's chrome.css`);
+    const head = html.slice(0, html.indexOf('</head>'));
+    assert.ok(head.lastIndexOf('<link rel="stylesheet"') === head.indexOf(`href="${links[0]}"`) - '<link rel="stylesheet" '.length, `${page}: chrome.css follows the page's own stylesheets`);
+  }
+  assert.ok(existsSync(resolve('site/assets/chrome.css')), 'the stylesheet it links is committed');
+  assert.throws(() => addChromeStylesheet('<p>no head</p>', ''), /exactly one <\/head>/);
+  assert.throws(() => addChromeStylesheet('<head></head>', 'x/'), /run of \.\.\/ segments/);
 });

@@ -111,6 +111,17 @@ export function safeHref(href) {
   return value.replace(/^\/+/, '');
 }
 
+/**
+ * The topic labels of an index read as {items, topics}: {id: label}, only string labels kept. An index that is a
+ * bare array, or has no label map, gives {} (the page then shows each topic word with its first letter capitalised).
+ */
+export function topicLabels(index) {
+  const map = index && !Array.isArray(index) && typeof index.topics === 'object' && index.topics ? index.topics : {};
+  const labels = {};
+  for (const [id, label] of Object.entries(map)) if (typeof label === 'string' && label.trim()) labels[id] = label.trim();
+  return labels;
+}
+
 /** Distinct values of a field across items, sorted. */
 export function facetValues(items, key) {
   const values = new Set();
@@ -164,15 +175,16 @@ function init(doc, win) {
     .then(json => {
       const items = Array.isArray(json) ? json : Array.isArray(json?.items) ? json.items : null;
       if (!items) throw new Error('index has no item list');
-      start(items.slice().sort(newestFirst));
+      start(items.slice().sort(newestFirst), topicLabels(json));
     })
     .catch(() => { /* The static list stays visible; the search form stays hidden. */ });
 
-  function start(items) {
+  function start(items, labels) {
+    const topicLabel = topic => labels[topic] ?? humanize(topic);
     for (const key of ['stage', 'topic']) {
       const box = doc.getElementById(`find-${key}-options`);
       const values = facetValues(items, key === 'topic' ? 'topics' : key);
-      for (const value of values) box?.append(checkbox(doc, key, value, humanize(value)));
+      for (const value of values) box?.append(checkbox(doc, key, value, key === 'topic' ? topicLabel(value) : humanize(value)));
       if (!values.length) box?.closest('fieldset')?.setAttribute('hidden', '');
     }
     const months = [...new Set(items.map(item => String(item.date ?? '').slice(0, 7)).filter(m => MONTH.test(m)))].sort().reverse();
@@ -257,7 +269,7 @@ function init(doc, win) {
         for (const topic of topics) {
           const li2 = element(doc, 'li');
           li2.append(element(doc, 'button', { type: 'button', class: 'find-chip', 'data-topic': topic,
-            'aria-label': `Show only ${humanize(topic).toLowerCase()}` }, humanize(topic)));
+            'aria-label': `Show only ${topicLabel(topic).toLowerCase()}` }, topicLabel(topic)));
           list.append(li2);
         }
         li.append(list);

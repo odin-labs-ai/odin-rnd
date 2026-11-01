@@ -105,6 +105,8 @@ Use the unmodified public Open Docs odin-logo.svg, whose exact path matches the 
 
 The home lockup reads OdinLabs / R&D in sentence case, with the subdivision separated by a thin rule. The header exposes the four existing navigation destinations and source link without a hidden mobile menu. The footer adds direct Odin Labs and Open Docs links. Keep all article routes in the same brand shell.
 
+Find is a documented addition to those destinations (mission rnd-site-ux-nav-1101, 2026-11-01): the build adds a Find link as the last header destination on every page, so a visitor can search and filter everything the site publishes from anywhere. Field notes, lab pages and tool pages also get a breadcrumb trail at the top and up to four related links before the footer, styled by assets/chrome.css. This chrome is added to the built pages only (scripts/site-chrome.mjs), never to a committed page or frozen record, and never puts a breadcrumb or related link on a number-provenance page.
+
 ## Layout and materials
 
 A full-width forest-green entrance wraps the headline, large interactive drawing and stamped machine plate. Page gutters are 4.2%, 6% mobile; very wide hero content is capped through side padding. The hero reflows into one column on mobile without changing drawing geometry.

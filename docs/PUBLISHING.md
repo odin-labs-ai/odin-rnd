@@ -22,6 +22,10 @@ Use a dated article under `site/journal/`, add it to the floor and sitemap, and 
 
 Link public repositories and source revisions. Check that old availability statements still describe the linked material; the paper archive predates the public BCE engine release. Never promote a dated observation into a current fleet claim.
 
+## The site index and Find
+
+The build writes `dist/data/index.json` (never committed): one item for every experiment, lab, field note, update and tool, from the same sources the pages use (`scripts/site-index.mjs`). The Find page (`site/find/`) searches it and lists it without JavaScript; the related links and breadcrumbs come from it too. A new field note, lab or tool page needs its topics in `site/data/find-topics.json`, a new lab its start day in `site/data/find-lab-dates.json`, and a new published result an outcome or a reason in `site/data/find-outcomes.json`. A missing topic stops the build; a missing lab day or outcome fails the tests (`scripts/site-index.test.mjs`, `scripts/find-data.test.mjs`).
+
 ## Publication checks
 
 Run the experiments, transcript negative tests, static build and site check. Inspect desktop and mobile in the browser: navigation, station selection, blueprint view, every recipe, transcript, command copy and articles. Verify the deployed `data/site.json` revision and `data/experiments.json` CI URL against the completed Pages workflow. Read the public pages anonymously.

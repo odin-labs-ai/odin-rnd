@@ -19,6 +19,9 @@ import { TILE_FILES } from './lab-tiles.mjs';
 
 export const TOPICS_PATH = 'site/data/find-topics.json';
 export const OUTCOMES_PATH = 'site/data/find-outcomes.json';
+// The day each lab started, frozen from the full history: the publish workflow's checkout is two commits deep and a
+// build copy has one, so neither can date a lab by its first commit.
+export const LAB_DATES_PATH = 'site/data/find-lab-dates.json';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const expNumber = id => Number(/^EXP (\d{3})$/.exec(id ?? '')?.[1] ?? NaN);
@@ -202,16 +205,18 @@ export function loadIndex({ root = '.', dist = join(root, 'dist'), gitRoot = roo
     const meta = /class="article-meta">([^<]*)</.exec(read(join(site, 'journal', name)))?.[1];
     return { slug: name.replace(/\.html$/, ''), title, summary, date: metaDay(meta) };
   });
-  const dayOrCommit = (own, file) => (DAY.test(own ?? '') ? own : commitDay(file, gitRoot));
+  // A lab's day: the frozen one (site/data/find-lab-dates.json), else its own since day, else its first commit.
+  const frozen = existsSync(join(root, LAB_DATES_PATH)) ? json(join(root, LAB_DATES_PATH)).labs ?? {} : {};
+  const labDay = (label, own, file) => (DAY.test(frozen[label] ?? '') ? frozen[label] : DAY.test(own ?? '') ? own : commitDay(file, gitRoot));
   const lab01 = json(join(site, LAB_FILE));
-  const labs = [{ label: lab01.label, title: lab01.title, summary: lab01.oneLine, stage: 'running', href: `labs/${lab01.slug}/index.html`, date: dayOrCommit(lab01.since, `site/${LAB_FILE}`) }];
+  const labs = [{ label: lab01.label, title: lab01.title, summary: lab01.oneLine, stage: 'running', href: `labs/${lab01.slug}/index.html`, date: labDay(lab01.label, lab01.since, `site/${LAB_FILE}`) }];
   for (const file of TILE_FILES) {
     const tile = json(join(site, file));
     // A lab's own words file (<slug>.json beside <slug>-tile.json) may carry the day it started.
     const words = file.endsWith('-tile.json') ? join(site, file.replace(/-tile\.json$/, '.json')) : null;
     const since = words && existsSync(words) ? json(words).since : undefined;
     const page = tile.links.map(l => l.href).find(href => href.endsWith('.html'));
-    labs.push({ label: tile.label, title: tile.title, summary: tile.question, stage: tile.kind === 'results' ? 'results' : 'pre-registered', href: page, date: dayOrCommit(since, `site/${file}`) });
+    labs.push({ label: tile.label, title: tile.title, summary: tile.question, stage: tile.kind === 'results' ? 'results' : 'pre-registered', href: page, date: labDay(tile.label, since, `site/${file}`) });
   }
   const toolDates = new Map(updates.filter(u => u.kind === 'Tool').map(u => [u.href, u.date]));
   const tools = readdirSync(join(site, 'projects'), { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort().map(project => {

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, safeHref, facetValues, monthLabel, KEYS,
+  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, safeHref, facetValues, monthLabel, KEYS, topicLabels,
 } from '../site/assets/find.mjs';
 
 const moduleUrl = new URL('../site/assets/find.mjs', import.meta.url);
@@ -162,4 +162,11 @@ test('importing the module without a find page does nothing and does not throw',
     console.log('ok');`;
   const out = execFileSync(process.execPath, ['--input-type=module', '-e', script, fileURLToPath(moduleUrl)], { encoding: 'utf8' });
   assert.equal(out.trim(), 'ok');
+});
+
+test('topic labels come from the index\'s label map, and a bare array or a missing map gives none', () => {
+  assert.deepEqual(topicLabels({ items: [], topics: { ci: 'CI', gates: ' Gates ', bad: 3 } }), { ci: 'CI', gates: 'Gates' });
+  assert.deepEqual(topicLabels([]), {});
+  assert.deepEqual(topicLabels({ items: [] }), {});
+  assert.deepEqual(topicLabels(null), {});
 });

@@ -1,0 +1,17 @@
+{
+ "format": "odin-find-lab-dates",
+ "version": 1,
+ "about": "The day each lab started, as the Find page and the site index date it. A lab whose own words file carries a since day keeps that day; every other lab is dated by the day its file was first committed, read once from the full history on 2026-11-01 and frozen here, because the publish workflow checks out only the last two commits and a build copy has one. A new lab adds its day here (scripts/site-index.test.mjs fails until it does).",
+ "labs": {
+  "Lab 01": "2026-10-25",
+  "Lab 02": "2026-10-25",
+  "Lab 03": "2026-10-25",
+  "Lab 05": "2026-10-27",
+  "Lab 06": "2026-10-28",
+  "Lab 07": "2026-10-28",
+  "Lab 08": "2026-10-28",
+  "Lab 09": "2026-10-28",
+  "Lab 13": "2026-10-28",
+  "Lab 14": "2026-10-28"
+ }
+}

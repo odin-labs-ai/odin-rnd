@@ -7,7 +7,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
-import { buildIndex, experimentIds, hrefOnSite, loadIndex, metaDay } from './site-index.mjs';
+import { buildIndex, experimentIds, hrefOnSite, LAB_DATES_PATH, loadIndex, metaDay } from './site-index.mjs';
+import { LAB_FILE } from './labs.mjs';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
 import { builtCopy } from './test-build.mjs';
@@ -139,4 +140,17 @@ test('the real index: every source item exactly once, schema-valid, unique ids, 
   const updatesById = new Map(json(join(root, 'site/data/updates.json')).updates.map(u => [`update-${u.key}`, u]));
   for (const item of items.filter(i => i.type === 'update')) assert.equal(item.date, updatesById.get(item.id).date, `${item.id} keeps the feed's frozen date`);
   assert.equal(JSON.stringify(loadIndex({ root, dist, gitRoot: REPO })), JSON.stringify(items), 'a second run gives the same bytes');
+});
+
+test('every lab has a frozen start day, and the index uses it even where git history is shallow', () => {
+  const frozen = JSON.parse(readFileSync(join(REPO, LAB_DATES_PATH), 'utf8'));
+  assert.equal(frozen.format, 'odin-find-lab-dates');
+  const lab01 = JSON.parse(readFileSync(join(REPO, 'site', LAB_FILE), 'utf8'));
+  const labels = [lab01.label, ...TILE_FILES.map(file => JSON.parse(readFileSync(join(REPO, 'site', file), 'utf8')).label)];
+  assert.deepEqual(Object.keys(frozen.labs).sort(), [...labels].sort(), `${LAB_DATES_PATH} dates exactly the published labs`);
+  for (const [label, day] of Object.entries(frozen.labs)) assert.ok(isoDay(day), `${label}: ${day} is a real day`);
+  // The build copy has one fresh commit, like a shallow CI checkout: a lab dated by its first commit would get today.
+  const root = builtCopy();
+  const items = loadIndex({ root, dist: join(root, 'dist'), gitRoot: root, commitDay: () => { throw new Error('a lab fell back to git history'); } });
+  for (const item of items.filter(i => i.type === 'lab')) assert.equal(item.date, frozen.labs[`Lab ${item.id.slice(4)}`], `${item.id} keeps its frozen day`);
 });

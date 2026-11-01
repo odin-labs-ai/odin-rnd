@@ -1,5 +1,6 @@
 // Site chrome (mission rnd-site-ux-nav-1101, WP3): navigation added to the finished pages in dist/ at build time, so
-// no committed page, frozen record or pinned render changes. Three pieces:
+// no committed page, frozen record or pinned render changes. Three pieces, styled by assets/chrome.css, which this
+// pass links in every page's <head>:
 //   - a Find link, last in the header's main navigation, on every page (its text and href carry no digit, so it may
 //     go on the number-provenance pages too);
 //   - a breadcrumb trail on field notes (journal/*.html), lab pages (labs/<slug>/) and tool pages (projects/<slug>/);
@@ -19,9 +20,9 @@ export const NUMBER_PROVENANCE_DIRS = ['provider-economics/', 'evidence/', 'prov
 
 /** Pages that keep the header without a Find link, each with its reason. */
 export const FIND_EXEMPT = new Map([
-  // GitHub Pages serves the missing-page file at whatever path was asked for, so a relative link on it would point
-  // nowhere; its header carries the logo only (no navigation) and every link on it is absolute.
-  ['404.html', 'served at any path; header has no navigation and only absolute links'],
+  // GitHub Pages serves the missing-page file at whatever path was asked for, so every link on it is absolute: its own
+  // header already carries an absolute Find link (site/404.html), and a relative one added here would repeat it.
+  ['404.html', 'served at any path; its header carries its own absolute Find link'],
 ]);
 
 const TYPE_LABELS = { experiment: 'Experiment', lab: 'Lab', note: 'Field note', update: 'Update', tool: 'Tool' };
@@ -56,6 +57,18 @@ export function addFindLink(html, relPrefix, label = 'page') {
   if (/<a href="(?:\.\.\/)*find\/">Find<\/a>/.test(nav)) return html;
   const link = `<a href="${relPrefix}find/">Find</a>`;
   return html.slice(0, start) + header.slice(0, navEnd) + link + header.slice(navEnd) + html.slice(end);
+}
+
+/**
+ * Links the chrome's stylesheet (assets/chrome.css) as the last thing in <head>, so it follows the page's own
+ * stylesheets. `relPrefix` is the way from the page's folder to the site root, as for addFindLink. Idempotent.
+ */
+export function addChromeStylesheet(html, relPrefix, label = 'page') {
+  if (!/^(?:\.\.\/)*$/.test(relPrefix)) throw new Error(`Chrome stylesheet prefix must be a run of ../ segments, got "${relPrefix}"`);
+  if (/<link rel="stylesheet" href="(?:\.\.\/)*assets\/chrome\.css">/.test(html)) return html;
+  const heads = html.match(/<\/head>/g) || [];
+  if (heads.length !== 1) throw new Error(`Expected exactly one </head> in ${label}, found ${heads.length}`);
+  return html.replace('</head>', `<link rel="stylesheet" href="${relPrefix}assets/chrome.css">\n</head>`);
 }
 
 /**
@@ -165,14 +178,17 @@ export function injectChrome({ distDir, items }) {
   if (!Array.isArray(items)) throw new Error('injectChrome needs the site index items');
   const byKey = new Map();
   for (const item of items) if (!byKey.has(pageKey(item.href))) byKey.set(pageKey(item.href), item);
-  const counts = { pages: 0, find: 0, crumbs: 0, related: 0 };
+  const counts = { pages: 0, stylesheet: 0, find: 0, crumbs: 0, related: 0 };
   for (const file of htmlFiles(distDir).sort()) {
     const rel = toPosix(relative(distDir, file));
     const source = readFileSync(file, 'utf8');
     let html = source;
     counts.pages++;
+    const up = '../'.repeat(rel.split('/').length - 1);
+    html = addChromeStylesheet(html, up, rel);
+    counts.stylesheet++;
     if (!FIND_EXEMPT.has(rel)) {
-      html = addFindLink(html, '../'.repeat(rel.split('/').length - 1), rel);
+      html = addFindLink(html, up, rel);
       counts.find++;
     }
     const kind = pageClass(rel);
