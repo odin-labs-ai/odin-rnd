@@ -15,16 +15,27 @@ const OVERCLAIMS = [
   [/\b(?:hash|sha256|digest)\s+(?:proves?|verifies?|guarantees?)\s+(?:(?:that|the|an?|our|this|its)\s+){0,2}(?:answers?|results?|claims?|correctness|accuracy|truth|reliability)\b/gi, 'a digest binds bytes, not the truth of their claims'],
 ];
 
-// Only an immediate explicit denial qualifies a matched phrase. A disclaimer elsewhere in the
-// paragraph, or "not only", cannot launder an affirmative claim in a headline/share description.
-const DENIAL = /\b(?:not(?: yet)?(?: an?)?|no|never|without(?: an?)?)(?!\s+only)\s*["'“‘]?\s*$/i;
+// A deliberately small denial grammar, not general negation detection. The whole statement
+// prefix must be a clear negative frame, and the phrase must close before any new assertion.
+// Nested negations ("it is false that ... not"), "not only", "without", and suffix modifiers
+// ("not verified answers in name only") must not silently exempt an affirmative claim.
+const DENIAL_PREFIX = /^(?:not(?: yet)?(?: an?)?|(?:this|these|it|they) (?:is|are|was|were) not(?: yet)?(?: an?)?|a source card, not an?)\s*["'“‘]?\s*$/i;
+const DENIAL_END = /^\s*["'”’]?\s*(?:[.!?;:]|$)/;
+function isExplicitDenial(text, match) {
+  const before = text.slice(0, match.index);
+  const prefix = before.slice(Math.max(...['.', '!', '?', ';'].map(mark => before.lastIndexOf(mark))) + 1).trimStart();
+  const after = text.slice(match.index + match[0].length);
+  if (DENIAL_PREFIX.test(prefix)) return DENIAL_END.test(after);
+  // "No verified answers are claimed" is a denial; "no verified answers are wrong" is not.
+  if (/^no\s*["'“‘]?\s*$/i.test(prefix)) return /^\s*["'”’]?\s*(?:(?:is|are) claimed\s*)?(?:[.!?;:]|$)/i.test(after);
+  return false;
+}
 export function claimTextProblems(text, where = 'text') {
   const normalized = String(text).normalize('NFKC').replace(/\s+/g, ' ');
   const problems = [];
   for (const [pattern, reason] of OVERCLAIMS) {
     for (const match of normalized.matchAll(pattern)) {
-      const prefix = normalized.slice(0, match.index);
-      if (DENIAL.test(prefix)) continue;
+      if (isExplicitDenial(normalized, match)) continue;
       problems.push(`${where}: ${JSON.stringify(match[0])}: ${reason}`);
     }
   }
@@ -120,7 +131,7 @@ export function publicationBoundaryProblems(html, file) {
 
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
 
-/** Every built HTML page, Atom feed and update entry is checked; raw research records are untouched. */
+/** Every built HTML page, Atom .xml/.atom feed and update entry is checked; raw research records are untouched. */
 export function checkPublicationClaims({ dist = 'dist', root = '.', expectedUpdates } = {}) {
   if (!existsSync(dist)) return [`${dist}: build the site before checking publication claims`];
   const problems = [];
@@ -139,7 +150,15 @@ export function checkPublicationClaims({ dist = 'dist', root = '.', expectedUpda
       const html = readFileSync(file, 'utf8');
       problems.push(...pageClaimProblems(html, where), ...publicationBoundaryProblems(html, where));
     }
-    if (file.endsWith('.xml') && /(?:^|\/)feed\.xml$/.test(file)) problems.push(...atomClaimProblems(readFileSync(file, 'utf8'), feed.updates ?? [], where));
+    if (/\.(?:xml|atom)$/i.test(file)) {
+      const xml = readFileSync(file, 'utf8');
+      // A feed may be named updates.xml or progress.atom. Preserve strict checks for conventional
+      // feed paths and .atom even when malformed; recognize other XML by its Atom content. A
+      // sitemap's urlset has no Atom content and is not an Atom feed.
+      if (/\.atom$|(?:^|\/)feed\.xml$/i.test(file) || /<(?:[\w.-]+:)?(?:feed|entry)\b|http:\/\/www\.w3\.org\/2005\/Atom/.test(xml)) {
+        problems.push(...atomClaimProblems(xml, feed.updates ?? [], where));
+      }
+    }
   }
   return problems;
 }

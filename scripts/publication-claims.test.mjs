@@ -16,9 +16,9 @@ test('source cards cannot be promoted to answer correctness, even through inline
   assert.deepEqual(pageClaimProblems('<p>A proof card identifies the source. It does not establish correctness.</p>', 'page'), []);
 });
 
-test('the denial must immediately qualify the matched phrase, not another claim in the paragraph', () => {
-  for (const text of ['Not verified answers.', 'A source card, not a verified answer.', 'Not yet independently reproduced.', 'These are not “answers with proof”.', 'No verified answers are claimed.']) assert.deepEqual(claimTextProblems(text), []);
-  for (const text of ['Not only verified answers.', 'Not independently reproduced. Verified answers.', 'No runtime claim: independently verified.', 'No proof? Verified answers.']) assert.ok(claimTextProblems(text).length, text);
+test('only a bounded statement-level denial with a closed phrase qualifies the matched claim', () => {
+  for (const text of ['Not verified answers.', 'A source card, not a verified answer.', 'Not yet independently reproduced.', 'These are not “answers with proof”.', 'No verified answers are claimed.', 'These are not “answers with proof”: source cards do not establish correctness.', 'It is not independently verified.', 'Recorded result. Not yet independently reproduced.']) assert.deepEqual(claimTextProblems(text), []);
+  for (const text of ['Not only verified answers.', 'Not independently reproduced. Verified answers.', 'No runtime claim: independently verified.', 'No proof? Verified answers.', 'We never publish without verified answers.', 'It is false that these are not verified answers.', 'These are not verified answers in name only.', 'No verified answers are wrong.', 'Not verified answers alone.', 'These are not independently verified in name only.']) assert.ok(claimTextProblems(text).length, text);
   assert.ok(pageClaimProblems('<p>Not</p><h2>Verified answers</h2>', 'page').length, 'a preceding block cannot qualify the headline');
 });
 
@@ -79,4 +79,25 @@ test('every published page has one scoped publication-boundary link', () => {
   assert.ok(publicationBoundaryProblems(boundary('wrong/'), 'index.html').length);
   assert.ok(publicationBoundaryProblems('<aside id="publication-boundary"><p>Research.</p></aside><a href="methods/#publication-standard">Policy</a>', 'index.html').length, 'an unrelated link cannot stand in for the boundary link');
   assert.ok(publicationBoundaryProblems(boundary().replace('publication-standard', 'elsewhere'), 'index.html').length);
+});
+
+
+test('renaming an Atom feed cannot bypass claim or full-summary checks; sitemap XML remains valid', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rnd-renamed-feeds-'));
+  try {
+    mkdirSync(join(root, 'data')); mkdirSync(join(root, 'labs'));
+    writeFileSync(join(root, 'data/updates.json'), JSON.stringify(feed([update])));
+    writeFileSync(join(root, 'sitemap.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>');
+    writeFileSync(join(root, 'updates.xml'), atom({ summary: 'Measured on fixed fixtures.' }));
+    writeFileSync(join(root, 'labs/progress.atom'), atom({ summary: 'Verified answers.' }));
+    const problems = checkPublicationClaims({ dist: root, expectedUpdates: [update] });
+    assert.ok(problems.some(p => p.includes('updates.xml') && p.includes('full source summary')));
+    assert.ok(problems.some(p => p.includes('labs/progress.atom') && p.includes('answer correctness')));
+    assert.ok(!problems.some(p => p.includes('sitemap.xml')));
+    writeFileSync(join(root, 'updates.xml'), atom());
+    writeFileSync(join(root, 'labs/progress.atom'), atom());
+    assert.deepEqual(checkPublicationClaims({ dist: root, expectedUpdates: [update] }), []);
+    writeFileSync(join(root, 'labs/progress.atom'), '<feed>malformed');
+    assert.ok(checkPublicationClaims({ dist: root, expectedUpdates: [update] }).some(p => p.includes('labs/progress.atom')));
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
