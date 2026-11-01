@@ -108,9 +108,11 @@ export function humanize(slug) {
 }
 
 /**
- * Only links to a page of this site are rendered, by the same rule the site index applies when it is built
- * (scripts/site-index.mjs hrefOnSite): relative to the site root, with no scheme, no leading slash or backslash, no
- * "." or ".." segment, no whitespace or quote, and a page part before any "#". Anything else is refused, never repaired.
+ * Only links to a page of this site are rendered. This is the SHAPE half of the rule the site index applies when it is
+ * built (scripts/site-index.mjs hrefOnSite): relative to the site root, with no scheme, no leading slash or backslash, no
+ * "." or ".." segment, no whitespace or quote, and a page part before any "#". The other half, that the page exists, is
+ * checked at build time only (the browser has no page list); every href in index.json has passed it. Anything else is
+ * refused, never repaired.
  */
 export function safeHref(href) {
   const value = String(href ?? '');

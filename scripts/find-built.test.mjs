@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
-import { hrefOnSite } from './site-index.mjs';
+import { hrefOnSite, experimentIdsInData } from './site-index.mjs';
 import { FIND_MARKER, GROUPS } from './find-build.mjs';
 import { FIND_EXEMPT } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
@@ -24,7 +24,16 @@ const built = () => {
 
 test('the build writes the site index with every item schema-valid and linking a file of the built site', () => {
   const { dist, files, index } = built();
-  assert.ok(Array.isArray(index.items) && index.items.length > 100, 'the index lists everything the site publishes');
+  assert.ok(Array.isArray(index.items) && index.items.length > 0, 'the index lists everything the site publishes');
+  // Exact per-kind counts, each from a source the index does not read through buildIndex: the experiment folders and
+  // data in site/, the committed journal pages, updates.json, the frozen lab dates and the tool pages.
+  const count = type => index.items.filter(item => item.type === type).length;
+  assert.equal(count('experiment'), experimentIdsInData('site').length, 'one item per experiment on the site');
+  assert.equal(count('note'), readdirSync('site/journal').filter(name => name.endsWith('.html')).length, 'one item per field note');
+  assert.equal(count('update'), JSON.parse(readFileSync('site/data/updates.json', 'utf8')).updates.length, 'one item per update');
+  assert.equal(count('lab'), Object.keys(JSON.parse(readFileSync('site/data/find-lab-dates.json', 'utf8')).labs).length, 'one item per lab');
+  assert.equal(count('tool'), readdirSync('site/projects', { withFileTypes: true }).filter(e => e.isDirectory()).length, 'one item per tool page');
+  assert.equal(index.items.length, ['experiment', 'note', 'update', 'lab', 'tool'].map(count).reduce((a, b) => a + b), 'no item of another kind');
   const pages = new Set(files);
   for (const item of index.items) {
     assert.deepEqual(validate(schema, item), [], `${item.id} matches the schema`);

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
-import { experimentIds, experimentIdsInData } from './site-index.mjs';
+import { experimentIds, experimentIdsInData, hasPhrase } from './site-index.mjs';
 import { builtCopy } from './test-build.mjs';
 
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
@@ -89,7 +89,7 @@ test('every outcome phrase appears word for word in its experiment\'s ledger sta
   for (const [id, { phrase }] of Object.entries(outcomes.outcomes)) {
     const entry = byId.get(id);
     assert.ok(entry, `${id} is on the ledger`);
-    assert.ok(entry.status.includes(phrase), `${id}'s phrase "${phrase}" is in its status "${entry.status}"`);
+    assert.ok(hasPhrase(entry.status, phrase), `${id}'s phrase "${phrase}" is in its status "${entry.status}"`);
     assert.match(entry.stage, /^(Results published|Recorded|Measured)/, `${id} has a published result`);
   }
   for (const id of Object.keys(outcomes.withheld)) assert.ok(byId.has(id), `withheld ${id} is on the ledger`);
