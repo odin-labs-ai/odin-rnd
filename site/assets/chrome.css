@@ -34,3 +34,5 @@
   header.site-header:has(nav a:nth-child(8)) .source-link{margin-left:auto}
 }
 @media(min-width:1360px){header.site-header nav{flex-wrap:nowrap}header.site-header nav a{white-space:nowrap}}
+/* On phones the header nav is one sideways-scrolling row; Find goes first there so it is visible without a swipe. */
+@media(max-width:760px){.site-header nav a[href$="find/"]{order:-1;font-weight:600}}
