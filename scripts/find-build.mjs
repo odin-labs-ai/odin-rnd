@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { STAGE_LABELS } from '../site/assets/find.mjs';
+import { escapeHtml } from './site-chrome.mjs';
 
 export const FIND_MARKER = '<!--FIND_LIST-->';
 export const FIND_PAGE = 'find/index.html';
@@ -21,8 +22,9 @@ export const GROUPS = Object.freeze([
 
 const OUTCOME_LABELS = { supported: 'supported', refuted: 'refuted', mixed: 'mixed' };
 
-// Escapes text for HTML; a character reference already in the text (a title read from a page) is kept as it is.
-const escape = value => String(value).replace(/&(?![a-zA-Z][a-zA-Z0-9]*;|#\d+;|#x[0-9a-fA-F]+;)/g, '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+// The index holds plain text (scripts/site-index.mjs refuses a character reference in it), so every value is escaped
+// whole: all five of & < > " '.
+const escape = escapeHtml;
 
 /** {id: label} from site/data/find-topics.json's topic list. */
 export function topicLabels(topics) {

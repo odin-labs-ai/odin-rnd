@@ -1,7 +1,7 @@
 {
  "format": "odin-find-lab-dates",
  "version": 1,
- "about": "The day each lab started, as the Find page and the site index date it. A lab whose own words file carries a since day keeps that day; every other lab is dated by the day its file was first committed, read once from the full history on 2026-11-01 and frozen here, because the publish workflow checks out only the last two commits and a build copy has one. A new lab adds its day here (scripts/site-index.test.mjs fails until it does).",
+ "about": "The day each lab started, as the Find page and the site index date it. A lab whose own words file carries a since day keeps that day; every other lab is dated by the day its file was first committed, read once from the full history on 2026-11-01 and frozen here, because the publish workflow checks out only the last two commits and a build copy has one. A new lab adds its day here: the build stops on a lab it cannot date, and never reads git history. Tools are dated by their Tool update in site/data/updates.json, and stop the build without one.",
  "labs": {
   "Lab 01": "2026-10-25",
   "Lab 02": "2026-10-25",

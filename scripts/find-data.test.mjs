@@ -3,12 +3,12 @@
 // the site publishes with known topic words; every outcome must quote its experiment's status sentence word for word.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
-import { experimentIds } from './site-index.mjs';
+import { experimentIds, experimentIdsInData } from './site-index.mjs';
 import { builtCopy } from './test-build.mjs';
 
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
@@ -16,19 +16,9 @@ const topics = json('site/data/find-topics.json');
 const outcomes = json('site/data/find-outcomes.json');
 const vocabulary = new Set(topics.topics.map(t => t.id));
 
-/** Every experiment id the ledger lists, read from site/ without a build: the recorded recipes, EXP 004, every
- *  published pre-registration and every ledger entry. The built-site test below checks this against the ledger itself. */
-function experimentIdsOnSite() {
-  const report = json('site/data/experiments.json');
-  const ids = report.runs.map((_, i) => `EXP ${String(i + 1).padStart(3, '0')}`);
-  ids.push('EXP 004');
-  for (const slug of readdirSync('site/data', { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)) {
-    for (const file of ['preregistration.json', 'ledger-entry.json']) {
-      if (existsSync(join('site/data', slug, file))) ids.push(json(join('site/data', slug, file)).experiment.id);
-    }
-  }
-  return [...new Set(ids)].sort();
-}
+/** Every experiment id the site's data publishes, read from site/ without a build, by the same reader the build uses
+ *  to cross-check the home ledger (so the two can never drift). The built-site test below checks it against the ledger. */
+const experimentIdsOnSite = () => experimentIdsInData('site');
 
 test('the topic list is a small set of plain lower-case words, each with a label', () => {
   assert.equal(topics.format, 'odin-find-topics');

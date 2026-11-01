@@ -7,7 +7,7 @@ import { FIND_MARKER, indexJson, placeFindList, renderFindList, topicLabels } fr
 const items = [
   { type: 'update', id: 'update-a', title: 'An update', date: '2026-10-30', stage: 'results', outcome: 'refuted', topics: ['gates'], summary: 's', href: 'updates/#a' },
   { type: 'experiment', id: 'exp-005', title: 'Gates & drift <fast>', date: '2026-09-29', stage: 'results', outcome: 'refuted', topics: ['gates'], summary: 's', href: 'journal/jev.html' },
-  { type: 'note', id: 'note-why', title: 'Why we&rsquo;re open', date: '2026-09-01', stage: 'note', topics: ['agents'], summary: 's', href: 'journal/why.html' },
+  { type: 'note', id: 'note-why', title: "Why we’re open, it's 'plain'", date: '2026-09-01', stage: 'note', topics: ['agents'], summary: 's', href: 'journal/why.html' },
   { type: 'experiment', id: 'exp-006', title: 'Second', date: '2026-09-20', stage: 'pre-registered', topics: ['gates'], summary: 's', href: 'labs/x/' },
 ];
 
@@ -16,7 +16,8 @@ test('the static list groups by kind in a fixed order, keeps item order inside a
   assert.deepEqual([...html.matchAll(/<h2 id="find-([a-z]+)">([^<]+)<\/h2>/g)].map(m => [m[1], m[2]]), [['experiment', 'Experiments'], ['note', 'Field notes'], ['update', 'Updates']]);
   assert.deepEqual([...html.matchAll(/<a href="([^"]+)">/g)].map(m => m[1]), ['../journal/jev.html', '../labs/x/', '../journal/why.html', '../updates/#a']);
   assert.match(html, /<a href="\.\.\/journal\/jev\.html">Gates &amp; drift &lt;fast&gt;<\/a><span>Results, refuted <time datetime="2026-09-29">2026-09-29<\/time><\/span>/);
-  assert.match(html, /Why we&rsquo;re open/, 'a character reference read from a page is kept');
+  assert.match(html, /Why we’re open, it&#39;s &#39;plain&#39;<\/a>/, 'plain text, every one of & < > " \' escaped');
+  assert.match(renderFindList([{ ...items[2], title: 'R&amp;D <scr<script>ipt>' }]), />R&amp;amp;D &lt;scr&lt;script&gt;ipt&gt;<\/a>/, 'nothing is taken as already escaped; no tag survives');
   assert.match(html, /<span>Pre-registered <time/);
   assert.doesNotMatch(html, />s</, 'summaries stay out of the list');
 });

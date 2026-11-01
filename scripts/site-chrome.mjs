@@ -25,10 +25,23 @@ export const FIND_EXEMPT = new Map([
   ['404.html', 'served at any path; its header carries its own absolute Find link'],
 ]);
 
+/**
+ * Note, lab and tool pages that have no item of their own in the site index, each with its reason. They get the
+ * breadcrumb trail but no related aside (there is nothing to relate them by). Any other such page without an item
+ * stops the build, so a new lab or tool page cannot silently go unindexed.
+ */
+export const CHROME_WITHOUT_ITEM = new Map([
+  ['labs/runs/index.html', 'the list of every run of every lab: a page about the labs, not a lab, so it is not an index item'],
+  ['labs/how-we-decide/index.html', 'the list of every frozen plan, veto, change and admitted gap across the labs: a page about the labs, not a lab'],
+]);
+
 const TYPE_LABELS = { experiment: 'Experiment', lab: 'Lab', note: 'Field note', update: 'Update', tool: 'Tool' };
 
-// Escapes text for HTML; a character reference already in the text (a title read from a page) is kept as it is.
-const escape = value => String(value).replace(/&(?![a-zA-Z][a-zA-Z0-9]*;|#\d+;|#x[0-9a-fA-F]+;)/g, '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+// Escapes plain text for HTML: all five of & < > " ', always. Every title this pass writes is plain text (the site
+// index holds plain text; pageTitle decodes what it reads), so nothing here is ever already escaped.
+const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ESCAPES[ch]);
+const escape = escapeHtml;
 const toPosix = path => path.split(sep).join('/');
 
 /** The single site header of `html`: its start and end offsets. Throws unless there is exactly one. */
@@ -141,11 +154,36 @@ export function pageClass(rel) {
   return null;
 }
 
-/** The visible text of the page's first <h1>, else its <title> without the site suffix (character references kept). */
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', lsquo: '\u2018', rsquo: '\u2019', ldquo: '\u201c', rdquo: '\u201d', ndash: '\u2013', mdash: '\u2014', hellip: '\u2026' };
+
+/**
+ * The text of an HTML fragment: markup dropped in one forward pass (a "<" that opens a tag runs to the next ">"; any
+ * other "<" is text), then character references decoded once. The result is plain text, to be escaped on output; it is
+ * never treated as markup, so a fragment such as "<scr<script>ipt>" can only ever come out as visible text.
+ */
+export function fragmentText(fragment) {
+  const source = String(fragment);
+  let text = '';
+  for (let i = 0; i < source.length; i++) {
+    if (source[i] === '<' && /[A-Za-z/!?]/.test(source[i + 1] ?? '')) {
+      const close = source.indexOf('>', i + 1);
+      if (close < 0) break; // an unclosed tag: nothing after it is text
+      text += /^<br\b/i.test(source.slice(i, close + 1)) ? ' ' : '';
+      i = close;
+    } else text += source[i];
+  }
+  return text.replace(/&(?:#x([0-9a-f]+)|#(\d+)|([a-z]+));/gi, (ref, hex, dec, name) => {
+    if (name) return NAMED[name.toLowerCase()] ?? ref;
+    const code = parseInt(hex ?? dec, hex ? 16 : 10);
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : ref;
+  }).replace(/\s+/g, ' ').trim();
+}
+
+/** The visible text of the page's first <h1>, else its <title> without the site suffix, as plain text. */
 export function pageTitle(html) {
   const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/);
-  const raw = h1 ? h1[1] : (html.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? '').replace(/\s+—\s+Odin R&amp;D\s*$/, '');
-  return raw.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  if (h1) return fragmentText(h1[1]);
+  return fragmentText(html.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? '').replace(/\s+—\s+Odin R&D\s*$/, '');
 }
 
 /** The breadcrumb trail for a page of class `kind` at `rel`, its links relative to the page. */
@@ -194,9 +232,10 @@ export function injectChrome({ distDir, items }) {
     const kind = pageClass(rel);
     if (kind) {
       const self = byKey.get(pageKey(rel));
+      if (!self && !CHROME_WITHOUT_ITEM.has(rel)) throw new Error(`Site chrome: ${rel} is a ${kind} page with no item in the site index (add it to the index, or to CHROME_WITHOUT_ITEM with a reason)`);
       html = addBreadcrumbs(html, trailFor(kind, rel, self?.title || pageTitle(html)), rel);
       counts.crumbs++;
-      const related = pickRelated(items, self).map(item => ({ type: item.type, title: item.title, href: relativeHref(rel, item.href) }));
+      const related = (self ? pickRelated(items, self) : []).map(item => ({ type: item.type, title: item.title, href: relativeHref(rel, item.href) }));
       if (related.length) { html = addRelated(html, related, rel); counts.related++; }
     }
     if (html !== source) writeFileSync(file, html);

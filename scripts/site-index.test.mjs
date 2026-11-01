@@ -3,11 +3,11 @@
 // exactly once, ids are unique, dates are real ISO days, every href is a file of the built site, and two runs agree.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
-import { buildIndex, experimentIds, hrefOnSite, LAB_DATES_PATH, loadIndex, metaDay } from './site-index.mjs';
+import { buildIndex, experimentIds, hasPhrase, hrefOnSite, ITEM_SCHEMA, LAB_DATES_PATH, loadIndex, metaDay } from './site-index.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
@@ -110,13 +110,39 @@ test('buildIndex refuses what it cannot place', () => {
   broken(f => { f.fallbackDay = () => null; }, /exp-010 has no date/);
   broken(f => { f.tools.push({ ...f.tools[0] }); }, /tool-witness appears twice/);
   broken(f => { f.updates[1].kind = 'Rumour'; }, /maps to no index stage/);
+  // Fail closed in the build itself, not only in the tests:
+  broken(f => { delete f.outcomes.withheld['EXP 002']; }, /EXP 002 has a published result but no outcome and no withheld reason/);
+  broken(f => { f.outcomes.outcomes['EXP 005'].phrase = 'claim is refute'; }, /phrase is not in its status/);
+  broken(f => { f.pages.add('labs/zzz/index.html'); }, /the lab page labs\/zzz\/index\.html, which no lab item lists/);
+  broken(f => { f.pages.add('projects/zzz/index.html'); }, /the tool page projects\/zzz\/index\.html, which no tool item lists/);
+  broken(f => { f.notes[1].title = 'Why &amp; how'; }, /note-why's title holds a character reference/);
+  broken(f => { f.labs[0].title = 'x'.repeat(201); }, /lab-01 does not match scripts\/schemas\/site-index\.schema\.json/);
+  const exempt = fixture();
+  exempt.pages.add('labs/runs/index.html');
+  assert.ok(buildIndex(exempt).length > 0, 'the named exemption (labs/runs/) is not an unlisted lab');
+});
+
+test('the schema\'s if/then is live: an outcome only on an experiment or update, and only at a published stage', () => {
+  const ok = { type: 'experiment', id: 'exp-005', title: 't', date: '2026-09-29', stage: 'results', outcome: 'refuted', topics: ['gates'], summary: 's', href: 'journal/gate.html' };
+  assert.deepEqual(validate(ITEM_SCHEMA, ok), []);
+  assert.notDeepEqual(validate(ITEM_SCHEMA, { ...ok, type: 'lab', id: 'lab-01' }), [], 'a lab may not carry an outcome');
+  assert.notDeepEqual(validate(ITEM_SCHEMA, { ...ok, stage: 'pre-registered' }), [], 'nor a pre-registration');
+  const { outcome, ...plain } = ok;
+  assert.deepEqual(validate(ITEM_SCHEMA, { ...plain, type: 'lab', id: 'lab-01', stage: 'pre-registered' }), [], 'without an outcome the then-branch does not apply');
+});
+
+test('hasPhrase matches whole words only', () => {
+  assert.ok(hasPhrase('measured 29 Sep 2026: the claim is refuted.', 'the claim is refuted'));
+  assert.ok(!hasPhrase('the claim is unrefuted.', 'refuted'), 'not inside a longer word');
+  assert.ok(!hasPhrase('the claim is refutedly so', 'refuted'));
+  assert.ok(hasPhrase('P1 refuted: 1 of 400', 'P1 refuted: 1 of 400'));
+  assert.ok(!hasPhrase('x', ''));
 });
 
 test('the real index: every source item exactly once, schema-valid, unique ids, ISO dates, hrefs on the built site, deterministic', () => {
   const root = builtCopy();
   const dist = join(root, 'dist');
-  // Lab dates with no date of their own come from the real checkout's history: the build copy has one fresh commit.
-  const items = loadIndex({ root, dist, gitRoot: REPO });
+  const items = loadIndex({ root, dist });
   for (const item of items) assert.deepEqual(validate(schema, item), [], `${item.id} matches the schema`);
   const ids = items.map(i => i.id);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
@@ -139,18 +165,51 @@ test('the real index: every source item exactly once, schema-valid, unique ids, 
 
   const updatesById = new Map(json(join(root, 'site/data/updates.json')).updates.map(u => [`update-${u.key}`, u]));
   for (const item of items.filter(i => i.type === 'update')) assert.equal(item.date, updatesById.get(item.id).date, `${item.id} keeps the feed's frozen date`);
-  assert.equal(JSON.stringify(loadIndex({ root, dist, gitRoot: REPO })), JSON.stringify(items), 'a second run gives the same bytes');
+  assert.equal(JSON.stringify(loadIndex({ root, dist })), JSON.stringify(items), 'a second run gives the same bytes');
 });
 
-test('every lab has a frozen start day, and the index uses it even where git history is shallow', () => {
+test('every lab has a frozen start day, and the build reads no git history: a lab or tool it cannot date stops it', () => {
   const frozen = JSON.parse(readFileSync(join(REPO, LAB_DATES_PATH), 'utf8'));
   assert.equal(frozen.format, 'odin-find-lab-dates');
   const lab01 = JSON.parse(readFileSync(join(REPO, 'site', LAB_FILE), 'utf8'));
   const labels = [lab01.label, ...TILE_FILES.map(file => JSON.parse(readFileSync(join(REPO, 'site', file), 'utf8')).label)];
   assert.deepEqual(Object.keys(frozen.labs).sort(), [...labels].sort(), `${LAB_DATES_PATH} dates exactly the published labs`);
   for (const [label, day] of Object.entries(frozen.labs)) assert.ok(isoDay(day), `${label}: ${day} is a real day`);
-  // The build copy has one fresh commit, like a shallow CI checkout: a lab dated by its first commit would get today.
+  // The build copy has one fresh commit, like a shallow CI checkout: the index there keeps every frozen day.
   const root = builtCopy();
-  const items = loadIndex({ root, dist: join(root, 'dist'), gitRoot: root, commitDay: () => { throw new Error('a lab fell back to git history'); } });
+  const dist = join(root, 'dist');
+  const items = loadIndex({ root, dist });
   for (const item of items.filter(i => i.type === 'lab')) assert.equal(item.date, frozen.labs[`Lab ${item.id.slice(4)}`], `${item.id} keeps its frozen day`);
+  assert.doesNotMatch(readFileSync(join(REPO, 'scripts/site-index.mjs'), 'utf8'), /firstCommitDay|commitDay|child_process|updates\.mjs/, 'the index never reads git history');
+  // Each edit below breaks one committed source in the build copy and must stop loadIndex; the file is put back after.
+  const breaks = (file, edit, re) => {
+    const path = join(root, file);
+    const before = readFileSync(path, 'utf8');
+    try { writeFileSync(path, edit(before)); assert.throws(() => loadIndex({ root, dist }), re); } finally { writeFileSync(path, before); }
+  };
+  // A lab with no frozen day and no since day of its own (Lab 05 has no words file with a since day).
+  breaks(LAB_DATES_PATH, text => { const j = JSON.parse(text); delete j.labs['Lab 05']; return JSON.stringify(j); }, /Lab 05 has no day in site\/data\/find-lab-dates\.json/);
+  // A tool with no Tool update in the feed.
+  breaks('site/data/updates.json', text => { const j = JSON.parse(text); j.updates = j.updates.filter(u => !(u.kind === 'Tool' && u.href === 'projects/ci-witness/')); return JSON.stringify(j); }, /tool projects\/ci-witness\/ has no Tool update/);
+  // An experiment with a published result whose outcome decision is missing.
+  breaks('site/data/find-outcomes.json', text => { const j = JSON.parse(text); delete j.withheld['EXP 018']; return JSON.stringify(j); }, /EXP 018 has a published result but no outcome and no withheld reason/);
+  assert.equal(JSON.stringify(loadIndex({ root, dist })), JSON.stringify(items), 'every source is back as it was');
+});
+
+test('completeness is checked against what the build published, not against the index\'s own sources', () => {
+  const root = builtCopy();
+  const dist = join(root, 'dist');
+  // A lab page the build wrote but no lab source lists.
+  mkdirSync(join(dist, 'labs/zzz-unlisted'), { recursive: true });
+  try {
+    writeFileSync(join(dist, 'labs/zzz-unlisted/index.html'), '<!doctype html><title>x</title>');
+    assert.throws(() => loadIndex({ root, dist }), /the lab page labs\/zzz-unlisted\/index\.html, which no lab item lists/);
+  } finally { rmSync(join(dist, 'labs/zzz-unlisted'), { recursive: true, force: true }); }
+  // An experiment the site's data publishes that the home ledger does not list.
+  mkdirSync(join(root, 'site/data/zzz-unlisted'), { recursive: true });
+  try {
+    writeFileSync(join(root, 'site/data/zzz-unlisted/preregistration.json'), JSON.stringify({ experiment: { id: 'EXP 099' } }));
+    assert.throws(() => loadIndex({ root, dist }), /the home ledger lists .* but the site's data publishes .*EXP 099/);
+  } finally { rmSync(join(root, 'site/data/zzz-unlisted'), { recursive: true, force: true }); }
+  assert.ok(loadIndex({ root, dist }).length > 0, 'the untouched build passes');
 });

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, injectChrome, pageClass, pageKey, pickRelated, relativeHref } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, CHROME_WITHOUT_ITEM, escapeHtml, fragmentText, injectChrome, pageClass, pageKey, pageTitle, pickRelated, relativeHref, trailFor } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 
 const dirs = [];
@@ -182,4 +182,52 @@ test('every page links the chrome stylesheet exactly once, last in its head, by 
   assert.ok(existsSync(resolve('site/assets/chrome.css')), 'the stylesheet it links is committed');
   assert.throws(() => addChromeStylesheet('<p>no head</p>', ''), /exactly one <\/head>/);
   assert.throws(() => addChromeStylesheet('<head></head>', 'x/'), /run of \.\.\/ segments/);
+});
+
+test('a page title is read as plain text and escaped whole: "<scr<script>ipt>" never comes out as markup', () => {
+  assert.equal(escapeHtml(`a & b < c > d " e ' f`), 'a &amp; b &lt; c &gt; d &quot; e &#39; f');
+  assert.equal(escapeHtml('&amp;'), '&amp;amp;', 'nothing is treated as already escaped');
+  const payload = '<h1>A <scr<script>ipt>alert(1)</script> B</h1>';
+  const title = pageTitle(payload);
+  assert.ok(!/<\s*script/i.test(title) || !title.includes('<'), `plain text: ${title}`);
+  const crumbs = addBreadcrumbs('<main id="main"></main>', trailFor('note', 'journal/x.html', title));
+  assert.doesNotMatch(crumbs, /<script|<scr/i, 'no script element, whole or rebuilt from pieces');
+  const current = crumbs.match(/<li aria-current="page">([\s\S]*?)<\/li>/)[1];
+  assert.doesNotMatch(current, /[<>"']/, `the title is escaped: ${current}`);
+  for (const nested of ['<<script>script>alert(1)<</script>/script>', '<scr<script>ipt>', '<img src=x onerror=alert(1)>', 'a <b>bold</b> &lt;script&gt; title']) {
+    const out = addBreadcrumbs('<main id="main"></main>', trailFor('note', 'journal/x.html', pageTitle(`<h1>${nested}</h1>`)));
+    assert.doesNotMatch(out, /<(script|img|scr)/i, nested);
+  }
+  // A reference is decoded once and escaped once: "R&amp;D" shows as "R&D", written as "R&amp;D", never "&amp;amp;".
+  assert.equal(pageTitle('<h1>Odin R&amp;D &#x27;lab&#39; &nbsp;x<br>y</h1>'), "Odin R&D 'lab' x y");
+  assert.match(addBreadcrumbs('<main id="main"></main>', trailFor('lab', 'labs/x/index.html', pageTitle('<h1>R&amp;D</h1>'))), /<li aria-current="page">R&amp;D<\/li>/);
+  assert.equal(pageTitle('<title>Every lab run — Odin R&amp;D</title>'), 'Every lab run');
+  assert.equal(pageTitle('<h1>We&rsquo;re here &mdash; now&hellip;</h1>'), 'We\u2019re here \u2014 now\u2026', 'the common typographic references decode');
+  assert.equal(fragmentText('a < b and c > d'), 'a < b and c > d', 'a "<" that opens no tag is text');
+});
+
+test('a note, lab or tool page with no index item stops the build, except a named exemption (labs/runs/)', () => {
+  const withoutRuns = items.filter(item => item.href !== 'labs/runs/');
+  const dist = tempDist();
+  injectChrome({ distDir: dist, items: withoutRuns });
+  const runs = readFileSync(join(dist, 'labs/runs/index.html'), 'utf8');
+  assert.ok(CHROME_WITHOUT_ITEM.has('labs/runs/index.html'));
+  assert.match(runs, /<li><a href="\.\.\/\.\.\/labs\/">Labs<\/a><\/li><li aria-current="page">Every lab run\.<\/li>/, 'the exempt page keeps its breadcrumbs');
+  assert.doesNotMatch(runs, /class="related"/, 'and has nothing to relate');
+  const rogue = tempDist();
+  mkdirSync(join(rogue, 'labs/rogue'), { recursive: true });
+  cpSync(join('site', 'labs/runs/index.html'), join(rogue, 'labs/rogue/index.html'));
+  assert.throws(() => injectChrome({ distDir: rogue, items }), /labs\/rogue\/index\.html is a lab page with no item in the site index/);
+});
+
+test('the missing page (404.html) links the chrome stylesheet through its <base href>, so the long-header rules apply there', () => {
+  const dist = tempDist();
+  injectChrome({ distDir: dist, items });
+  const html = readFileSync(join(dist, '404.html'), 'utf8');
+  const base = html.match(/<base href="([^"]+)">/)?.[1];
+  assert.equal(base, 'https://odin-labs-ai.github.io/odin-rnd/', 'the page names the site root as its base');
+  const href = html.match(/<link rel="stylesheet" href="([^"]*chrome\.css)">/)?.[1];
+  assert.equal(new URL(href, base).href, 'https://odin-labs-ai.github.io/odin-rnd/assets/chrome.css', 'chrome.css resolves to the site root, at any missing path');
+  assert.ok(html.indexOf(href) > html.indexOf('<base href='), 'linked after the base, so the base applies');
+  assert.equal((headerNav(html).match(/<a /g) || []).length, 8, 'its header has the eight-link navigation chrome.css lays out');
 });
