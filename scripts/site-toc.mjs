@@ -4,9 +4,11 @@
 //   - on a field note (journal/<slug>.html) or a lab page (labs/<slug>/index.html), as scripts/site-chrome.mjs pageClass
 //     names them, never on a number-provenance page (pageClass names none there, so no digit is ever added to one);
 //   - only when the page's main text runs past TOC_MIN_WORDS words and it has at least TOC_MIN_HEADINGS such headings.
-// It goes right after the page's own header: a note's <header class="article-header">, a lab's hero section. A heading
-// without an id gets one from its text (slugified, unique on the page); an id already there is never changed. A heading
-// inside a <details> is not listed (a link to it would land inside a closed fold).
+// It goes right after the page's own header: a note's <header class="article-header">, a lab's hero section. Each entry
+// links the heading's own id; else, for a heading that opens a <section> with an id, that section's id (the heading
+// itself is left byte for byte as its generator rendered it); else the heading gets an id from its text (slugified,
+// unique on the page). An id already there is never changed. A heading inside a <details> is not listed (a link to it
+// would land inside a closed fold).
 //
 // The nav holds the list twice: a <details> fold, closed, for narrow screens (its summary in the site's own disclosure
 // style, style.css: the label, then an orange + that turns when open), and a plain list for wide ones; assets/
@@ -70,7 +72,10 @@ export function mainHeadings(html, label = 'page') {
     const inner = html.slice(m.index + tag.length, closeAt);
     tags.lastIndex = closeAt + '</h2>'.length;
     if (depth > 0 || inToc) continue;
-    out.push({ start: m.index, end: closeAt + '</h2>'.length, open: tag, attrs, inner, id: /\bid="([^"]*)"/.exec(attrs)?.[1] ?? null, text: fragmentText(inner) });
+    // A heading that opens a section with an id of its own (a generator's results or amendment section) is reached by
+    // that id, so the heading's bytes stay exactly as rendered (tests elsewhere hold those sections byte for byte).
+    const section = /<section\b[^>]*\bid="([^"]+)"[^>]*>\s*$/.exec(html.slice(Math.max(start, m.index - 400), m.index))?.[1] ?? null;
+    out.push({ start: m.index, end: closeAt + '</h2>'.length, open: tag, attrs, inner, id: /\bid="([^"]*)"/.exec(attrs)?.[1] ?? section, text: fragmentText(inner) });
   }
   return out;
 }

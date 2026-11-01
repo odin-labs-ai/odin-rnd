@@ -85,7 +85,8 @@ test('ids: existing ones never change; new ones come from the text, unique on th
   const out = addToc(page, 'journal/a.html');
   assert.ok(out.includes('<h2 id="kept-as-is">The plan</h2>'), 'an existing id is kept byte for byte');
   const listed = tocLinks(out);
-  assert.deepEqual(listed, ['results-2', 'kept-as-is', 'the-plan-2', 'the-plan-3', 'what-s-next-cafe-quotes', 'results-3', 'results-4']);
+  assert.deepEqual(listed, ['results', 'kept-as-is', 'the-plan-2', 'the-plan-3', 'what-s-next-cafe-quotes', 'results-2', 'results-3']);
+  assert.ok(out.includes('<section id="results" class="article-amendment"><h2>Results</h2>'), 'a heading that opens a section with an id is linked by that id and left byte for byte');
   const all = ids(out);
   assert.equal(all.length, new Set(all).size, 'no id twice, read the way scripts/check.mjs reads them (data-id included)');
   for (const id of listed) assert.equal(all.filter(x => x === id).length, 1, `#${id} lands on exactly one element`);
