@@ -37,8 +37,9 @@ export const CHROME_WITHOUT_ITEM = new Map([
 
 /**
  * Index pages under journal/ and projects/, rendered at build time by scripts/site-sections.mjs, each with its reason.
- * They list notes and tools; they are not a note or a tool, so they get no item, no breadcrumbs from this pass (they
- * carry their own trail) and no related aside, and the completeness check in scripts/site-index.mjs passes them over.
+ * By its path pageClass calls journal/index.html a note page, but it is a list of notes, as projects/index.html is a
+ * list of tools; neither is a note or a tool. injectChrome and the completeness check in scripts/site-index.mjs both read this one map
+ * and pass them over: no item, no breadcrumbs from this pass (they carry their own trail), no related aside.
  */
 export const SECTION_INDEX_PAGES = new Map([
   ['journal/index.html', 'the list of every field note (scripts/site-sections.mjs): a page about the notes, not a note'],
@@ -170,7 +171,7 @@ export function pickRelated(items, self, limit = 4) {
 
 /** Which chrome a page (path relative to dist/, posix) gets beyond the Find link: 'note', 'lab', 'tool' or null. */
 export function pageClass(rel) {
-  if (NUMBER_PROVENANCE_DIRS.some(dir => rel.startsWith(dir)) || SECTION_INDEX_PAGES.has(rel)) return null;
+  if (NUMBER_PROVENANCE_DIRS.some(dir => rel.startsWith(dir))) return null;
   if (/^journal\/[^/]+\.html$/.test(rel)) return 'note';
   if (/^labs\/[^/]+\/index\.html$/.test(rel)) return 'lab';
   if (/^projects\/[^/]+\/index\.html$/.test(rel)) return 'tool';
@@ -252,7 +253,7 @@ export function injectChrome({ distDir, items }) {
       html = addFindLink(html, up, rel, { current: rel === FIND_PAGE });
       counts.find++;
     }
-    const kind = pageClass(rel);
+    const kind = SECTION_INDEX_PAGES.has(rel) ? null : pageClass(rel);
     if (kind) {
       // The page's own item: the one of its own kind (a note's page is also the href of the experiments and updates
       // that point at it, and those come first in the newest-first list), else any item at that page.

@@ -93,6 +93,29 @@ test('the sitemap lists /find/', () => {
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/<\/loc><\/url><\/urlset>/);
 });
 
+test('each built page marks its own section current in the header, and only that one', () => {
+  const { dist } = built();
+  const currentOf = rel => {
+    const nav = readFileSync(join(dist, rel), 'utf8').match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
+    return [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
+  };
+  const expected = {
+    'index.html': [],
+    'journal/a-passing-pipeline.html': ['Field notes'],
+    'journal/index.html': ['Field notes'],
+    'labs/rogue/index.html': ['Labs'],
+    'labs/index.html': ['Labs'],
+    'experiments/index.html': ['Experiments'],
+    'updates/index.html': ['Updates'],
+    'work-with-us/index.html': ['Work with us'],
+    'partners/index.html': ['Partners'],
+    'projects/index.html': [],
+    'projects/ci-witness/index.html': [],
+    'find/index.html': ['Find'],
+  };
+  for (const [rel, current] of Object.entries(expected)) assert.deepEqual(currentOf(rel), current, rel);
+});
+
 test('the sitemap lists /journal/ and /projects/ directly before /find/, which stays last', () => {
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/journal\/<\/loc><\/url><url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/projects\/<\/loc><\/url><url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/<\/loc><\/url><\/urlset>/);
 });
@@ -112,6 +135,17 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
   assert.deepEqual(rows('projects/index.html').sort(), hrefsOf('tool'), 'projects/ lists every tool once');
   const experiments = readFileSync(join(dist, 'experiments/index.html'), 'utf8');
   assert.equal((experiments.match(/id="every-experiment"/g) || []).length, 1, 'experiments/ ends with All experiments');
+  // The All experiments list is exactly the experiments the site's own data publishes, read without the index: one row
+  // each, newest number first, each row linking its index item's page.
+  const block = experiments.match(/<section [^>]*id="every-experiment"[\s\S]*?<\/section>/)[0];
+  const listed = [...block.matchAll(/<span class="update-kind technical">(EXP \d{3})\b/g)].map(m => m[1]);
+  const published = experimentIdsInData('site');
+  assert.equal(listed.length, published.length, 'one row per experiment the site publishes');
+  assert.deepEqual([...listed].sort(), published, 'exactly the experiments the site publishes');
+  assert.deepEqual(listed, [...published].reverse(), 'newest number first');
+  const rowLinks = [...block.matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
+  const byId = new Map(index.items.filter(i => i.type === 'experiment').map(i => [i.id, i.href]));
+  assert.deepEqual(rowLinks, listed.map(label => byId.get(`exp-${label.slice(4)}`)), 'each row links its experiment\'s page');
   for (const item of index.items.filter(i => i.type === 'note' || i.type === 'tool')) {
     const page = item.href.endsWith('/') ? `${item.href}index.html` : item.href;
     const crumbs = readFileSync(join(dist, page), 'utf8').match(/<nav class="crumbs"[\s\S]*?<\/nav>/)[0];

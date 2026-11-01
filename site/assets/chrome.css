@@ -35,3 +35,6 @@
 @media(min-width:1360px){header.site-header nav{flex-wrap:nowrap}header.site-header nav a{white-space:nowrap}}
 /* On phones the header nav is one sideways-scrolling row; Find goes first there so it is visible without a swipe. */
 @media(max-width:760px){.site-header nav a[href$="find/"]{order:-1;font-weight:600}}
+/* The page's own section in the header nav (aria-current="page", scripts/site-header.mjs; Find on /find/): a thin brand
+   underline in the colour of the rest of the nav, the same underline the breadcrumbs and related links use on hover. */
+.site-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:1px;text-underline-offset:6px}

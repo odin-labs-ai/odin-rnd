@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
-import { DESTINATIONS, SITE_ORIGIN, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, sectionFor } from './site-header.mjs';
+import { DESTINATIONS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, sectionFor } from './site-header.mjs';
 import { addFindLink, FIND_EXEMPT } from './site-chrome.mjs';
 import { checkPage, NUMBER_WORDS, PAGES } from './number-provenance.mjs';
 
@@ -104,6 +104,37 @@ test('the 404 page keeps its absolute links and its own Find, moved last', () =>
   const nav = navOf(normalise(read('404.html'), '404.html'));
   assert.ok([...nav.matchAll(/href="([^"]+)"/g)].every(([, href]) => href.startsWith(SITE_ORIGIN)), 'absolute links only');
   assert.match(nav, /<a href="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/">Find<\/a><\/nav>$/);
+});
+
+test('every retired label is named with its destination and fate; nothing leaves a header unnamed', () => {
+  assert.deepEqual([...RETIRED_LABELS.keys()].sort(), ['Open source', 'The floor']);
+  // Every label on every committed page is canonical, retired (named here) or Find.
+  const seen = new Set(PAGE_FILES.flatMap(rel => labels(navOf(read(rel)))));
+  for (const text of seen) assert.ok(KNOWN_LABELS.has(text), text);
+  for (const [text, { target, to, reason }] of RETIRED_LABELS) {
+    assert.ok(reason.length > 20, `${text} has a reason`);
+    const pages = PAGE_FILES.filter(rel => labels(navOf(read(rel))).includes(text));
+    assert.ok(pages.length > 0, `${text} is still on a committed page (else drop it from the table)`);
+    for (const rel of pages) {
+      const before = navOf(read(rel)).match(new RegExp(`<a href="([^"]*)"[^>]*>${text}</a>`))[1];
+      assert.ok(before.endsWith(target), `${rel}: "${text}" led to ${target}`);
+      const after = navOf(normalise(read(rel), rel));
+      assert.ok(!labels(after).includes(text), `${rel}: "${text}" is replaced`);
+      if (to) {
+        const dest = DESTINATIONS.find(d => d.key === to);
+        assert.ok(dest.path.endsWith(target), `${text} -> ${dest.label} leads to the same place`);
+        assert.ok(after.includes(`href="${prefixOf(rel)}${dest.path}"`) && labels(after).includes(dest.label), `${rel}: "${text}" became "${dest.label}"`);
+      } else {
+        assert.equal(DESTINATIONS.some(d => d.path.endsWith(target)), false, `${text}: no canonical link leads to ${target}`);
+        assert.match(reason, /projects\//, `${text}: the reason names where its destination is reached now`);
+      }
+    }
+  }
+  // A retired label leading somewhere else is a destination the table does not account for: the build stops.
+  const oldRel = PAGE_FILES.find(rel => labels(navOf(read(rel))).includes('Open source'));
+  const old = read(oldRel);
+  assert.throws(() => normaliseHeader(old.replace(/href="[^"]*#projects">Open source/, 'href="../somewhere/">Open source'), { relPrefix: prefixOf(oldRel) }), /does not account for/);
+  assert.throws(() => normaliseHeader(old.replace(/href="[^"]*#floor">The floor/, 'href="../other/">The floor'), { relPrefix: prefixOf(oldRel) }), /does not account for/);
 });
 
 test('fails closed on a page it cannot place', () => {

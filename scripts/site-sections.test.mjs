@@ -5,9 +5,9 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
-import { ALL_EXPERIMENTS_ID, EXPERIMENTS_PAGE, JOURNAL_PAGE, PROJECTS_PAGE, addAllExperiments, experimentKind, noteKind, renderJournalIndex, renderProjectsIndex, renderSectionPages } from './site-sections.mjs';
-import { navSpan, normaliseHeader } from './site-header.mjs';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, pageClass, NUMBER_PROVENANCE_DIRS } from './site-chrome.mjs';
+import { ALL_EXPERIMENTS_ID, EXPERIMENTS_PAGE, JOURNAL_PAGE, PROJECTS_PAGE, addAllExperiments, canonicalUrl, isSiteUrl, experimentKind, noteKind, renderJournalIndex, renderProjectsIndex, renderSectionPages } from './site-sections.mjs';
+import { SITE_ORIGIN, navSpan, normaliseHeader } from './site-header.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, pageClass, NUMBER_PROVENANCE_DIRS, SECTION_INDEX_PAGES } from './site-chrome.mjs';
 import { PAGES } from './number-provenance.mjs';
 
 // Items in the site index contract, one note per committed field note (site/journal/*.html), dated a day apart so the
@@ -34,6 +34,21 @@ const resolves = (page, href) => {
   if (path.endsWith('/') || target === '.') target = posix.join(target, 'index.html');
   return [JOURNAL_PAGE, PROJECTS_PAGE].includes(target) || existsSync(join('site', target));
 };
+
+test('a URL is on the site only if it starts with the literal site origin: lookalike hosts are not', () => {
+  assert.equal(canonicalUrl(JOURNAL_PAGE), 'https://odin-labs-ai.github.io/odin-rnd/journal/');
+  assert.equal(canonicalUrl(PROJECTS_PAGE), 'https://odin-labs-ai.github.io/odin-rnd/projects/');
+  for (const lookalike of [
+    'https://odin-labs-aiXgithub.io/odin-rnd/journal/',
+    'https://odin-labs-ai.githubXio/odin-rnd/journal/',
+    'https://odin-labs-ai.github.io.example.com/odin-rnd/journal/',
+    'https://example.com/https://odin-labs-ai.github.io/odin-rnd/',
+    'http://odin-labs-ai.github.io/odin-rnd/journal/',
+    'https://odin-labs-ai.github.io/odin-rndx/journal/',
+  ]) assert.equal(isSiteUrl(lookalike), false, lookalike);
+  assert.throws(() => canonicalUrl('../journal/index.html'), /not a section index page/);
+  assert.throws(() => canonicalUrl('journal/x.html'), /not a section index page/);
+});
 
 test('the journal index lists every field note exactly once, newest first, grouped by month', () => {
   const html = renderJournalIndex(ITEMS);
@@ -70,7 +85,10 @@ test('the section pages are well formed: one header and nav, the right section c
     const all = ids(html);
     assert.equal(all.length, new Set(all).size, `${page}: unique ids`);
     for (const [, href] of html.matchAll(/(?:href|src)="([^"]+)"/g)) assert.ok(resolves(page, href), `${page}: ${href} resolves`);
-    assert.match(html, new RegExp(`<link rel="canonical" href="https://odin-labs-ai\\.github\\.io/odin-rnd/${page.replace('index.html', '')}">`));
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)">/)[1];
+    assert.equal(canonical, `${SITE_ORIGIN}${page.slice(0, -'index.html'.length)}`, `${page}: canonical URL`);
+    assert.ok(isSiteUrl(canonical), `${page}: canonical URL on the site`);
+    assert.equal(html.match(/<meta property="og:url" content="([^"]+)">/)[1], canonical, `${page}: og:url`);
     assert.match(html, /<title>[^<]+ — Odin R&amp;D<\/title>/);
     assert.match(html, /&amp; &lt;co&gt;|Tool /, `${page}: item text escaped`);
     assert.doesNotMatch(html, /<co>/, `${page}: no raw markup from an item`);
@@ -89,7 +107,8 @@ test('the site chrome leaves the section pages\' own trail alone and adds its Fi
   }
   // site-chrome exempts both by name (SECTION_INDEX_PAGES): a list of notes or tools is not a note or a tool, so it gets
   // no trail from the chrome (its own is the one), no related aside, and needs no index item of its own.
-  assert.equal(pageClass(JOURNAL_PAGE), null);
+  assert.ok(SECTION_INDEX_PAGES.has(JOURNAL_PAGE) && SECTION_INDEX_PAGES.has(PROJECTS_PAGE));
+  assert.equal(pageClass(JOURNAL_PAGE), 'note', 'by its path; the exemption is what passes it over');
   assert.equal(pageClass(PROJECTS_PAGE), null);
 });
 

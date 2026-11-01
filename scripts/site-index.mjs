@@ -19,7 +19,7 @@ import { ledgerEntries, textOf } from './experiment-ledger.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
 import { validate } from './json-schema-lite.mjs';
-import { CHROME_WITHOUT_ITEM, pageClass, pageKey } from './site-chrome.mjs';
+import { CHROME_WITHOUT_ITEM, SECTION_INDEX_PAGES, pageClass, pageKey } from './site-chrome.mjs';
 
 /** The item schema; buildIndex checks every item against it, so its if/then (an outcome only on an experiment or its
  *  results update, at a published stage) holds in the build, not only in the tests. */
@@ -193,12 +193,13 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     if (problems.length) throw new Error(`Site index: ${item.id} does not match ${SCHEMA_PATH}: ${problems.join('; ')}`);
   }
   // The other direction: every note, lab and tool page of the built site is an item of its own kind, so a page added
-  // without its source (a new lab page, a tool folder) cannot go unlisted. CHROME_WITHOUT_ITEM names the exceptions.
+  // without its source (a new lab page, a tool folder) cannot go unlisted. CHROME_WITHOUT_ITEM and SECTION_INDEX_PAGES
+  // (scripts/site-chrome.mjs, the same maps injectChrome reads) name the exceptions.
   const KIND = { note: 'note', lab: 'lab', tool: 'tool' };
   const listed = new Set(items.map(item => `${item.type} ${pageKey(item.href)}`));
   for (const page of [...pages].sort()) {
     const kind = pageClass(page);
-    if (!kind || CHROME_WITHOUT_ITEM.has(page)) continue;
+    if (!kind || CHROME_WITHOUT_ITEM.has(page) || SECTION_INDEX_PAGES.has(page)) continue;
     if (!listed.has(`${KIND[kind]} ${pageKey(page)}`)) throw new Error(`Site index: the built site has the ${kind} page ${page}, which no ${kind} item lists`);
   }
   const ids = items.map(i => i.id);

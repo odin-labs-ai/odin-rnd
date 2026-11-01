@@ -36,8 +36,19 @@ export const DESTINATIONS = Object.freeze([
   { key: 'partners', label: 'Partners', path: 'partners/' },
 ]);
 
+/**
+ * The first edition's nav labels, each with the destination it led to (`target`, relative to the site root, as its href
+ * ends) and what becomes of it here, so no link leaves a header unnamed. `to` is the DESTINATIONS key that now leads to
+ * the same place, or null when the destination keeps no header link; `reason` says which and why. A retired label whose
+ * href leads anywhere else stops the build: that link would be a destination this table does not account for.
+ */
+export const RETIRED_LABELS = new Map([
+  ['The floor', { target: '#floor', to: 'factory', reason: 'renamed: the same home section (#floor) is the "Factory" link' }],
+  ['Open source', { target: '#projects', to: null, reason: 'the home tools list (#projects) keeps no header link; every tool page is listed on projects/, which the tool pages\' breadcrumbs, the Field notes page and Find lead to, and the home still has the list' }],
+]);
+
 /** Labels a nav may carry before this pass: the canonical ones, the retired ones, and Find. Anything else stops the build. */
-export const KNOWN_LABELS = new Set([...DESTINATIONS.map(d => d.label), 'The floor', 'Open source', 'Find']);
+export const KNOWN_LABELS = new Set([...DESTINATIONS.map(d => d.label), ...RETIRED_LABELS.keys(), 'Find']);
 
 /** Pages left as they are, each with its reason. */
 export const HEADER_EXEMPT = new Map();
@@ -109,7 +120,12 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   const links = [...nav.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)];
   const rest = nav.slice(NAV_OPEN.length, -'</nav>'.length).replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
   if (rest.trim()) throw new Error(`The header navigation of ${label} holds more than links: "${rest.trim().slice(0, 60)}"`);
-  for (const [, text] of links) if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or KNOWN_LABELS`);
+  for (const [whole, text] of links) {
+    if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
+    const retired = RETIRED_LABELS.get(text);
+    const href = whole.match(/\bhref="([^"]*)"/)?.[1] ?? '';
+    if (retired && !href.endsWith(retired.target)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retired.target} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
+  }
   const finds = links.filter(([whole]) => FIND.test(whole)).map(([whole]) => whole);
   if (links.some(([, text]) => text === 'Find') && finds.length !== links.filter(([, text]) => text === 'Find').length) throw new Error(`A Find link in ${label} is not of the form <a href="...find/">Find</a>`);
   if (finds.length > 1) throw new Error(`The header navigation of ${label} has ${finds.length} Find links`);

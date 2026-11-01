@@ -146,14 +146,18 @@ test('nothing but the Find link and the chrome stylesheet is added to a number-p
 
 test('the journal/ and projects/ index pages are exempt by name, with a reason: lists of notes and tools, not one', () => {
   assert.deepEqual([...SECTION_INDEX_PAGES.keys()].sort(), ['journal/index.html', 'projects/index.html']);
-  for (const [page, reason] of SECTION_INDEX_PAGES) {
-    assert.ok(reason.length > 20, `${page} has a reason`);
-    assert.equal(pageClass(page), null, `${page} gets no note or tool chrome`);
-  }
-  assert.equal(pageClass('journal/index-of-things.html'), 'note', 'only the exact index page is exempt');
-  // With no item for either index page, injectChrome does not refuse them.
+  for (const [page, reason] of SECTION_INDEX_PAGES) assert.ok(reason.length > 20, `${page} has a reason`);
+  // By its path journal/index.html is a note page: only the exemption keeps it from being refused as an unlisted note.
+  assert.equal(pageClass('journal/index.html'), 'note');
+  // With no item for either index page, injectChrome does not refuse them, and adds them no trail or aside.
   const dist = tempDist();
   assert.doesNotThrow(() => injectChrome({ distDir: dist, items }));
+  // Without the exemption the same build is refused: the map is what lets the page through.
+  const reason = SECTION_INDEX_PAGES.get('journal/index.html');
+  SECTION_INDEX_PAGES.delete('journal/index.html');
+  try {
+    assert.throws(() => injectChrome({ distDir: tempDist(), items }), /journal\/index\.html is a note page with no item in the site index/);
+  } finally { SECTION_INDEX_PAGES.set('journal/index.html', reason); }
 });
 
 test('a note\'s trail and related links come from its own note item, not from an experiment or update that links the note', () => {

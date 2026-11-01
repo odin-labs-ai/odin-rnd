@@ -15,7 +15,7 @@
 // the ISO day); were either page ever added to PAGES, its digits would have to follow that rule instead.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { canonicalHeader } from './site-header.mjs';
+import { SITE_ORIGIN, canonicalHeader } from './site-header.mjs';
 import { escapeHtml } from './site-chrome.mjs';
 
 export const JOURNAL_PAGE = 'journal/index.html';
@@ -24,11 +24,21 @@ export const EXPERIMENTS_PAGE = 'experiments/index.html';
 /** The id of the section addAllExperiments adds (unused anywhere on the experiments page before it). */
 export const ALL_EXPERIMENTS_ID = 'every-experiment';
 
-const SITE = 'https://odin-labs-ai.github.io/odin-rnd/';
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const STAGE_WORDS = { 'pre-registered': 'Pre-registered', results: 'Results', recorded: 'Recorded', measured: 'Measured', amendment: 'Amendment', erratum: 'Erratum', running: 'Running', note: 'Field note', tool: 'Tool' };
 const OUTCOME_WORDS = { supported: 'Supported', refuted: 'Refuted', mixed: 'Mixed' };
+
+/** True only for a URL on this site: it starts with the literal SITE_ORIGIN (compared as a string, never as a pattern). */
+export const isSiteUrl = url => typeof url === 'string' && url.startsWith(SITE_ORIGIN);
+
+/** The canonical URL of a section page ('journal/index.html' -> SITE_ORIGIN + 'journal/'). */
+export function canonicalUrl(page) {
+  if (!/^[a-z-]+\/index\.html$/.test(page)) throw new Error(`Section pages: "${page}" is not a section index page`);
+  const url = `${SITE_ORIGIN}${page.slice(0, -'index.html'.length)}`;
+  if (!isSiteUrl(url)) throw new Error(`Section pages: ${url} is not on ${SITE_ORIGIN}`);
+  return url;
+}
 
 /** Full HTML escape (all five of & < > " ', scripts/site-chrome.mjs): the index holds plain text, so every & is literal. */
 export const escape = escapeHtml;
@@ -85,7 +95,7 @@ const footer = up => `<footer class="site-footer"><a class="footer-brand" href="
  */
 function sectionPage({ path, current, crumb, title, heading, description, lead, actions, listLabel, list }) {
   const up = '../';
-  const canonical = `${SITE}${path.replace(/index\.html$/, '')}`;
+  const canonical = canonicalUrl(path);
   return `<!doctype html>
 <html lang="en">
 <head>
