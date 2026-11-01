@@ -43,7 +43,7 @@ typography:
     lineHeight: 1.8
   label:
     fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: "10px"
+    fontSize: "12px"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "0.08em"

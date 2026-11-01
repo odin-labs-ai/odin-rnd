@@ -20,7 +20,7 @@
 .bench-axis .bench-strip{margin-bottom:2px}
 .bench-chart figcaption{margin-top:12px;font-size:13px;color:var(--steel);max-width:80ch}
 .bench-grid{stroke:var(--rule);stroke-width:1}
-.bench-tick{font:11px var(--mono);fill:var(--steel)}
+.bench-tick{font:12px var(--mono);fill:var(--steel)}
 .bench-name{font-size:14px;line-height:1.3;text-align:right}
 .bench-tag{color:var(--steel);font-size:12px;white-space:nowrap}
 .bench-whisker{stroke:var(--series);stroke-width:2;stroke-linecap:round}
@@ -31,7 +31,7 @@
 .bench-table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
 .bench-table caption{text-align:left;font-size:13px;color:var(--steel);padding-bottom:8px}
 .bench-table th,.bench-table td{text-align:left;padding:10px 14px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top}
-.bench-table thead th{font:10px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--steel);font-weight:400}
+.bench-table thead th{font:12px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--steel);font-weight:400}
 .bench-table tbody th{font-weight:600;border-left:3px solid var(--series,transparent);padding-left:10px}
 .bench-table td{font-variant-numeric:tabular-nums}
 .bench-breakdown{min-width:640px}
@@ -47,7 +47,7 @@
 .bench-predictions li{display:grid;grid-template-columns:150px 1fr;gap:4px 18px}
 .bench-predictions li p{grid-column:2;line-height:1.6}
 .bench-predictions li p+p{color:var(--steel);font-size:15px}
-.bench-verdict{grid-row:span 2;align-self:start;justify-self:start;font:10px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border:1px solid var(--rule);border-radius:6px}
+.bench-verdict{grid-row:span 2;align-self:start;justify-self:start;font:12px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border:1px solid var(--rule);border-radius:6px}
 .bench-verdict-holds{border-color:var(--brand);color:var(--brand)}
 .bench-verdict-fails{border-color:#a3362a;color:#a3362a}
 .bench-verdict-other{border-color:#8a5a00;color:#8a5a00}

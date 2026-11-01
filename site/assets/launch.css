@@ -9,7 +9,7 @@
 .proof-strip .lab-num{font-family:var(--display);font-weight:600;font-size:1.25em;color:var(--brand);text-decoration:none;border-bottom:1px solid currentColor}
 .proof-strip .lab-num:hover{color:var(--primary-hover)}
 .proof-strip .lab-source{font-size:12px;color:var(--steel);opacity:1}
-.proof-strip code{font-size:.85em;overflow-wrap:anywhere}
+.proof-strip code{font-size:max(.85em,12px);overflow-wrap:anywhere}
 
 /* Home: partner tracks as entry points. */
 .track-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
@@ -43,7 +43,7 @@
 .track-grid{display:grid;grid-template-columns:1fr 1fr .8fr;border-top:1px solid var(--rule)}
 .track-grid>div{padding:24px 24px 24px 0}
 .track-grid>div+div{border-left:1px solid var(--rule);padding-left:24px}
-.track-grid dt{font:10px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-bottom:10px}
+.track-grid dt{font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-bottom:10px}
 .track-grid dd{font-size:15px;line-height:1.6}
 .track-grid ul{margin:0;padding-left:18px}
 .track-grid li+li{margin-top:8px}
@@ -56,7 +56,7 @@
 .measure-box dl>div{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:12px 0;border-bottom:1px solid var(--rule)}
 .measure-box dt{font-weight:600}
 .measure-box dd{font-size:15px}
-.measure-box .status{display:block;margin-top:4px;font:11px/1.6 var(--mono);letter-spacing:.04em;color:var(--steel)}
+.measure-box .status{display:block;margin-top:4px;font:12px/1.6 var(--mono);letter-spacing:.04em;color:var(--steel)}
 .tier-row{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
 .tier-row article{padding:20px 22px}
 .tier-row article:first-child{padding-left:0}
@@ -83,7 +83,7 @@
 .onepager-media{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
 .onepager-media img{width:100%;height:auto;border:1px solid var(--rule)}
 .onepager-media p{font-size:15px}
-.onepager-foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--rule);font:11px/1.8 var(--mono);color:var(--steel)}
+.onepager-foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--rule);font:12px/1.8 var(--mono);color:var(--steel)}
 
 @media (max-width:900px){
   .proof-strip,.track-cards,.track-index,.track-grid,.tier-row,.onepager-pair,.onepager-tracks,.onepager-media{grid-template-columns:1fr}
