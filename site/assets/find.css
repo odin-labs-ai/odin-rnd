@@ -15,7 +15,7 @@
 .find-filters summary span{font-size:22px;color:var(--brand)}
 .find-facets{display:grid;grid-template-columns:1fr;gap:22px;padding-bottom:24px}
 .find-facets fieldset{border:0;margin:0;padding:0;min-width:0}
-.find-facets legend{padding:0;margin-bottom:6px;font:11px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.find-facets legend{padding:0;margin-bottom:6px;font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
 .find-options{display:flex;flex-wrap:wrap;gap:4px 18px}
 .find-topics .find-options{max-height:264px;overflow:auto}
 .find-check{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}

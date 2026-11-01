@@ -34,8 +34,10 @@
 .article-body{font-size:18px;line-height:1.8}.article-body strong{font-weight:600}
 .article-body p{max-width:68ch}
 .article-body{overflow-wrap:anywhere}
-/* Table cells wrap at word boundaries ("State", never "Sta te"); long identifiers anywhere on the site still wrap. */
-.article-body td,.article-body th{overflow-wrap:normal;word-break:normal}
+/* Table cells in the page body wrap at word boundaries ("State", never "Sta te"), whatever they sit in; a table whose own
+   stylesheet sets its cells' wrapping with a class rule (which outranks this one) keeps that; a bare td or th rule does not. Code and .hash text in the page body,
+   and code in any table cell, still wrap anywhere, so a long hash or path never widens the page. */
+main td,main th{overflow-wrap:normal;word-break:normal}
 main code,main .hash,td code,th code{overflow-wrap:anywhere}
 @media(max-width:1100px){.hero-copy{padding-top:78px}.hero-copy>p{font-size:14px}.specimen-pair strong{font-size:24px}}
 @media(max-width:760px){.hero-copy{padding-top:42px}.hero-copy>p{font-size:15px}.wordmark{font-size:22px}.brand-rnd{font-size:17px}.footer-brand{font-size:20px}.specimen-pair strong{font-size:19px}.specimen-pair>div{padding:17px 10px}.project-number{font-size:27px}.project-row{grid-template-columns:68px 1fr;gap:14px}.closing-stamp{font-size:15px}.article-body{font-size:16px}.section-arrow{display:none}}
@@ -187,12 +189,14 @@ main code,main .hash,td code,th code{overflow-wrap:anywhere}
 @media(min-width:761px){.site-header:has(.parent-site-link) nav{margin-inline:auto}}
 @media(max-width:760px){.parent-site-link{order:4;flex:0 0 100%;min-height:40px;padding:0;border:0;border-radius:0;border-top:1px solid var(--rule);font-size:12px;gap:8px}}
 /* Mobile header in two rows: brand and the way back; then every destination in one row that scrolls sideways, beside the source link.
-   header.site-header outranks company.css's .site-header rules, which load later. Nothing is hidden; each link keeps a 44px target. */
+   header.site-header outranks company.css's .site-header rules, which load later. Nothing is hidden; each link keeps a 44px target.
+   The row's scroll shade is painted in the header's own colours: --ground is the ground the header sits on (a dark-surface
+   header redefines it to its own dark green) and --paper its text colour, so the shade reads on a light and a dark header alike. */
 @media(max-width:760px){
   header.site-header{min-height:0;padding:6px 6% 4px;gap:0 12px;align-items:center}
   header.site-header .wordmark{order:0;min-height:44px}
   header.site-header .parent-site-link{order:1;flex:none;margin-left:auto;min-height:44px;border:0;padding:0}
-  header.site-header nav{order:2;flex:1 1 55%;min-width:0;width:auto;margin:0;flex-wrap:nowrap;justify-content:flex-start;gap:0 18px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;--scroll-bg:#102b22;--scroll-shade:rgba(110,231,183,.5);background:linear-gradient(to right,var(--scroll-bg) 30%,transparent) left center/36px 100% no-repeat local,linear-gradient(to left,var(--scroll-bg) 30%,transparent) right center/36px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,var(--scroll-shade),transparent) left center/14px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,var(--scroll-shade),transparent) right center/14px 100% no-repeat scroll,var(--scroll-bg)}
+  header.site-header nav{order:2;flex:1 1 55%;min-width:0;width:auto;margin:0;flex-wrap:nowrap;justify-content:flex-start;gap:0 18px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;--scroll-bg:var(--ground);--scroll-shade:color-mix(in srgb,var(--paper) 38%,transparent);background:linear-gradient(to right,var(--scroll-bg) 30%,transparent) left center/36px 100% no-repeat local,linear-gradient(to left,var(--scroll-bg) 30%,transparent) right center/36px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,var(--scroll-shade),transparent) left center/14px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,var(--scroll-shade),transparent) right center/14px 100% no-repeat scroll,var(--scroll-bg)}
   header.site-header nav a{flex:none;min-height:44px;display:inline-flex;align-items:center;white-space:nowrap;font-size:13px}
   header.site-header nav a:focus-visible{outline-offset:-3px}
   header.site-header .source-link{order:3;flex:none;margin-left:0}
