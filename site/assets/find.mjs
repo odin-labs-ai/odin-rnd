@@ -11,6 +11,9 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export const TYPE_LABELS = Object.freeze({ experiment: 'Experiment', lab: 'Lab', note: 'Field note', update: 'Update', tool: 'Tool' });
 export const OUTCOME_LABELS = Object.freeze({ supported: 'Supported', refuted: 'Refuted', mixed: 'Mixed' });
+/** Stage words as the rest of the site writes them; an unknown stage falls back to humanize(). */
+export const STAGE_LABELS = Object.freeze({ 'pre-registered': 'Pre-registered', results: 'Results', amendment: 'Amendment', erratum: 'Erratum', recorded: 'Recorded', measured: 'Measured', running: 'Running', note: 'Field note', tool: 'Tool' });
+const stageLabel = stage => STAGE_LABELS[stage] ?? humanize(stage);
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /** Lower case, accents removed, runs of whitespace collapsed: "Résumé  Café" -> "resume cafe". */
@@ -184,7 +187,7 @@ function init(doc, win) {
     for (const key of ['stage', 'topic']) {
       const box = doc.getElementById(`find-${key}-options`);
       const values = facetValues(items, key === 'topic' ? 'topics' : key);
-      for (const value of values) box?.append(checkbox(doc, key, value, key === 'topic' ? topicLabel(value) : humanize(value)));
+      for (const value of values) box?.append(checkbox(doc, key, value, key === 'topic' ? topicLabel(value) : stageLabel(value)));
       if (!values.length) box?.closest('fieldset')?.setAttribute('hidden', '');
     }
     const months = [...new Set(items.map(item => String(item.date ?? '').slice(0, 7)).filter(m => MONTH.test(m)))].sort().reverse();
@@ -255,7 +258,7 @@ function init(doc, win) {
       const meta = element(doc, 'p', { class: 'find-meta' });
       meta.append(element(doc, 'span', { class: 'find-badge', 'data-type': String(item.type ?? '') }, TYPE_LABELS[item.type] ?? humanize(item.type)));
       if (item.date) meta.append(element(doc, 'time', { datetime: String(item.date) }, String(item.date).slice(0, 10)));
-      if (item.stage) meta.append(element(doc, 'span', {}, humanize(item.stage)));
+      if (item.stage) meta.append(element(doc, 'span', {}, stageLabel(item.stage)));
       if (OUTCOME_LABELS[item.outcome]) meta.append(element(doc, 'span', { class: 'find-outcome' }, OUTCOME_LABELS[item.outcome]));
       const heading = element(doc, 'h3');
       const href = safeHref(item.href);

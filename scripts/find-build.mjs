@@ -8,6 +8,7 @@
 // like every page). Pure string functions, except placeFind, which writes the two files.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { STAGE_LABELS } from '../site/assets/find.mjs';
 
 export const FIND_MARKER = '<!--FIND_LIST-->';
 export const FIND_PAGE = 'find/index.html';
@@ -18,7 +19,6 @@ export const GROUPS = Object.freeze([
   ['experiment', 'Experiments'], ['lab', 'Labs'], ['note', 'Field notes'], ['update', 'Updates'], ['tool', 'Tools'],
 ]);
 
-const STAGE_LABELS = { 'pre-registered': 'Pre-registered', results: 'Results', amendment: 'Amendment', erratum: 'Erratum', recorded: 'Recorded', measured: 'Measured', running: 'Running', note: 'Field note', tool: 'Tool' };
 const OUTCOME_LABELS = { supported: 'supported', refuted: 'refuted', mixed: 'mixed' };
 
 // Escapes text for HTML; a character reference already in the text (a title read from a page) is kept as it is.
