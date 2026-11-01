@@ -10,15 +10,18 @@
 // link here. The page links the record itself: on GitHub, and on this site when the site carries a byte-identical
 // copy. The home ledger (site/index.html, frozen) keeps its own links.
 //
-// Every function is string in, string out except renderRecordPages, the only one that touches files. It fails closed:
+// The page links no stylesheet of the chrome itself: it is rendered before scripts/site-chrome.mjs injectChrome, which
+// links assets/chrome.css (the .record-* rules and the header's aria-current underline) on every built page, once.
+//
+// Every function is string in, string out except renderRecordPages and notesNaming, which read and write files. It fails closed:
 // a record it cannot read, an id or title that differs from the ledger's, a slug that is not plain, or a page that
 // already exists stops the build.
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { SITE_ORIGIN, canonicalHeader } from './site-header.mjs';
-import { escapeHtml } from './site-chrome.mjs';
+import { escapeHtml, fragmentText } from './site-chrome.mjs';
 
 export const RECORDS_DIR = 'records';
 const REPO_BLOB = 'https://github.com/odin-labs-ai/odin-rnd/blob/main/';
@@ -77,7 +80,7 @@ const footer = up => `<footer class="site-footer"><a class="footer-brand" href="
  * The record page for one ledger entry. `entry` is a ledgerEntries() row; `record` the parsed JSON; `bytes` its file;
  * `links` { github?, site? } (site relative to the site root). Two levels down: records/<slug>/index.html.
  */
-export function renderRecordPage({ entry, slug, record, bytes, links }) {
+export function renderRecordPage({ entry, slug, record, bytes, links, notes = [] }) {
   if (!SLUG.test(slug ?? '')) throw new Error(`Record pages: "${slug}" is not a plain slug`);
   if (record?.experiment?.id !== entry.id) throw new Error(`Record pages: the record for ${entry.id} names ${record?.experiment?.id}`);
   if (record.experiment.title !== entry.title) throw new Error(`Record pages: the record for ${entry.id} is titled "${record.experiment.title}", the ledger "${entry.title}"`);
@@ -119,7 +122,7 @@ export function renderRecordPage({ entry, slug, record, bytes, links }) {
       <div>
         <span class="technical">${escape(entry.id)} · PUBLISHED RECORD</span>
         <h1 id="record-title">${escape(entry.title)}</h1>
-        <p class="company-lead">This experiment has no field note yet. Below are fields of its published record, as the record writes them. The record itself is the file linked at the end of this page.</p>
+        <p class="company-lead">${notes.length ? `Its field ${notes.length === 1 ? 'note' : 'notes'}: ${notes.map(n => `<a href="${up}${escape(n.href)}">${escape(n.title)}</a>`).join(', ')}.` : 'This experiment has no field note yet.'} Below are fields of its published record, as the record writes them. The record itself is the file linked at the end of this page.</p>
       </div>
     </section>
     <section class="company-section company-width record-body" aria-labelledby="record-fields-title">
@@ -134,6 +137,23 @@ export function renderRecordPage({ entry, slug, record, bytes, links }) {
 </body>
 </html>
 `;
+}
+
+/**
+ * The built field notes whose article-meta line names `id` ("EXP 015") as a whole token: [{ href, title }], href
+ * relative to the site root. The record page says "no field note yet" only when this is empty.
+ */
+export function notesNaming(id, distDir = 'dist') {
+  const dir = join(distDir, 'journal');
+  if (!existsSync(dir)) return [];
+  const token = new RegExp(`(^|[^0-9A-Za-z])${id.replace(/[^0-9A-Za-z ]/g, '')}(?![0-9])`);
+  return readdirSync(dir).filter(name => name.endsWith('.html') && name !== 'index.html').sort().flatMap(name => {
+    const html = readFileSync(join(dir, name), 'utf8');
+    const meta = /class="article-meta">([^<]*)</.exec(html)?.[1] ?? '';
+    if (!token.test(meta)) return [];
+    const title = fragmentText(/<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(html)?.[1] ?? name);
+    return [{ href: `journal/${name}`, title }];
+  });
 }
 
 /**
@@ -160,7 +180,7 @@ export function renderRecordPages({ root = '.', distDir = 'dist' } = {}) {
     slugs.add(slug);
     const page = join(distDir, RECORDS_DIR, slug, 'index.html');
     if (existsSync(page)) throw new Error(`Record pages: ${RECORDS_DIR}/${slug}/index.html already exists in ${distDir}; it is rendered here, not committed`);
-    const html = renderRecordPage({ entry, slug, record, bytes, links: { github, site: sitePath ?? null } });
+    const html = renderRecordPage({ entry, slug, record, bytes, links: { github, site: sitePath ?? null }, notes: notesNaming(entry.id, distDir) });
     mkdirSync(join(distDir, RECORDS_DIR, slug), { recursive: true });
     writeFileSync(page, html);
     map.set(entry.href, recordPageHref(entry.href));

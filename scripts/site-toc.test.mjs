@@ -106,6 +106,19 @@ test('stable and idempotent: the same page gives the same bytes, and a second pa
   assert.deepEqual(tocLinks(more).slice(0, 4), tocLinks(once));
 });
 
+test('a section id is reused only when the h2 is the section\'s first element child, whatever text or comment sits between', () => {
+  const pad = `<!-- ${'a comment longer than any fixed lookback '.repeat(20)} -->\n   some text   \n`;
+  const extra = `<section id="results" class="article-amendment">${pad}<h2>Results</h2><p>x</p></section>`
+    + '<section id="later" class="article-amendment"><p class="kicker">Before the heading</p><h2>Later</h2></section>'
+    + '<section class="no-id"><h2>Plain</h2></section>';
+  const page = note({ headings: ['One', 'Two', 'Three'], total: 3000, extra });
+  const out = addToc(page, 'journal/a.html');
+  assert.deepEqual(tocLinks(out), ['results', 'later-2', 'plain', 'one', 'two', 'three']);
+  assert.ok(out.includes(`<section id="results" class="article-amendment">${pad}<h2>Results</h2>`), 'first element child: the heading is left byte for byte');
+  assert.ok(out.includes('<p class="kicker">Before the heading</p><h2 id="later-2">Later</h2>'), 'another element first: the heading gets its own id (the section id "later" is taken)');
+  assert.ok(out.includes('<section class="no-id"><h2 id="plain">Plain</h2>'), 'a section without an id lends none');
+});
+
 test('a heading inside a <details> is not listed and not counted', () => {
   const extra = '<details><summary>More</summary><h2>Folded</h2></details>';
   const page = note({ headings: ['One', 'Two', 'Three'], total: 3000, extra });
@@ -146,6 +159,29 @@ test('as built: the long notes and Lab 01 have one, short pages and number-prove
     const built = new Set(ids(pages.get(`journal/${name}`)));
     for (const id of ids(readFileSync(join('site/journal', name), 'utf8'))) assert.ok(built.has(id), `journal/${name}: id "${id}" kept`);
   }
+});
+
+test('as built: exactly the 11 pages that meet the criteria have a table of contents, and every page that meets them has one', () => {
+  const dist = join(builtCopy(), 'dist');
+  const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
+  const pages = new Map(walk(dist).map(file => [relative(dist, file).split('\\').join('/'), readFileSync(file, 'utf8')]));
+  const withToc = [...pages].filter(([, html]) => html.includes('<nav class="toc')).map(([rel]) => rel).sort();
+  assert.deepEqual(withToc, [
+    'journal/composable-harness-results.html',
+    'journal/jev-as-a-fast-gate.html',
+    'journal/latent-handoff-pre-registration.html',
+    'journal/mongodb-home-ground-pre-registration.html',
+    'journal/mongodb-primitive-fit.html',
+    'journal/nina-reviews-the-change.html',
+    'journal/where-a-model-reviewer-earns-its-keep.html',
+    'journal/which-rules-need-a-model.html',
+    'labs/agent-space/index.html',
+    'labs/brain-bench/index.html',
+    'labs/rogue/index.html',
+  ]);
+  // The criteria, measured again on every built page (the table of contents is left out of both counts).
+  const meets = [...pages].filter(([rel, html]) => tocCandidate(rel) && mainHeadings(html, rel).length >= TOC_MIN_HEADINGS && mainWords(html, rel) > TOC_MIN_WORDS).map(([rel]) => rel).sort();
+  assert.deepEqual(meets, withToc, 'one exactly where the criteria hold');
 });
 
 test('as built: Lab 01\'s pull-request log is folded closed under its count, every block kept', () => {

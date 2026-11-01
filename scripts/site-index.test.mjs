@@ -23,7 +23,7 @@ const fixture = () => ({
     { id: 'EXP 001', title: 'Recipe one', href: 'experiments/#bench', stage: 'Recorded', status: 'Recorded 19 Oct 2026: flagged the copy we broke on purpose.' },
     { id: 'EXP 002', title: 'Recipe two', href: 'experiments/#bench', stage: 'Recorded', status: 'Recorded 19 Oct 2026: flagged the copy we broke on purpose.' },
     { id: 'EXP 005', title: 'A gate', href: 'journal/gate.html', stage: 'Results published · 2 amendments', status: 'Pre-registered; measured 29 Sep 2026: the claim is refuted.' },
-    { id: 'EXP 010', title: 'From the repository', href: 'https://github.com/x/y/blob/main/r.json', stage: 'Pre-registered · record in the repository', status: 'Pre-registration published in the repository.' },
+    { id: 'EXP 010', title: 'From the repository', href: 'https://github.com/x/y/tree/main/study', stage: 'Pre-registered · record in the repository', status: 'Pre-registration published in the repository.' },
   ],
   updates: [
     { key: 'exp-001-002-recorded', experiment: 'EXP 001–002', title: 'Two recipes', kind: 'Recorded', text: 'Both recipes ran.', href: 'experiments/#bench', date: '2026-09-23' },
@@ -86,7 +86,7 @@ test('buildIndex places every source item once, with its topics, stage, outcome 
   assert.equal(by['exp-005'].outcome, 'refuted');
   assert.equal(by['exp-005'].stage, 'results');
   assert.equal(by['exp-005'].date, '2026-09-29', 'an experiment is dated by its latest update');
-  assert.equal(by['exp-010'].href, 'index.html#all-experiments', 'an off-site ledger link becomes its row on the home ledger');
+  assert.equal(by['exp-010'].href, 'index.html#all-experiments', 'an off-site ledger link that is not a JSON record becomes its row on the home ledger');
   assert.equal(by['exp-010'].date, '2026-10-10', 'with no update and no note, the record dates it');
   assert.equal(by['update-exp-005-results'].outcome, 'refuted', 'a results update carries its experiment\'s outcome');
   assert.ok(!('outcome' in by['update-exp-005-preregistration']), 'a pre-registration update carries none');

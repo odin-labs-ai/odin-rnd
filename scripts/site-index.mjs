@@ -35,6 +35,9 @@ export const OUTCOMES_PATH = 'site/data/find-outcomes.json';
 export const LAB_DATES_PATH = 'site/data/find-lab-dates.json';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** Where an experiment item leads when its ledger row links off the site and NOT to a JSON record: its row on the home
+ *  ledger. A ledger or update link to a JSON record never takes this fallback; it needs its record page (wave 4). */
+export const EXTERNAL_LEDGER_FALLBACK = 'index.html#all-experiments';
 const expNumber = id => Number(/^EXP (\d{3})$/.exec(id ?? '')?.[1] ?? NaN);
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -103,6 +106,13 @@ const slugOfNote = href => /^journal\/([a-z0-9-]+)\.html(#.*)?$/.exec(href ?? ''
  */
 export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcomes, pages, fallbackDay = () => null, recordPages = new Map() }) {
   const vocabulary = new Set(topics.topics.map(t => t.id));
+  // The record page of a link to a JSON record, or null for any other link. A JSON record without a page stops the build.
+  const recordHref = (href, where) => {
+    if (!isRecordHref(href)) return null;
+    const page = recordPages.get(href);
+    if (!page) throw new Error(`Site index: ${where} links the raw record ${href}, which has no record page (scripts/site-records.mjs renders one per ledger entry that links a JSON record)`);
+    return page;
+  };
   const topicsOf = (map, key, where) => {
     const list = map?.[key];
     if (!Array.isArray(list) || list.length === 0) throw new Error(`Site index: ${where} has no topics in ${TOPICS_PATH}`);
@@ -141,9 +151,10 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
   for (const e of ledger) {
     const n = expNumber(e.id);
     if (!Number.isInteger(n)) throw new Error(`Site index: ledger id "${e.id}" is not of the form EXP 000`);
-    // An on-site link: a ledger entry listed from the repository (EXP 010) links its row on the home's ledger instead.
-    // A ledger entry that links a raw JSON record links that record's readable page when there is one (wave 4).
-    const href = recordPages.get(e.href) ?? (/^https?:/.test(e.href) ? 'index.html#all-experiments' : e.href);
+    // A ledger entry that links a JSON record (on this site or a GitHub blob, as EXP 010 and EXP 015 do) leads to its
+    // record page, and without one the build stops: it never falls back. Only an off-site link that is not a JSON record
+    // leads to its row on the home ledger (EXTERNAL_LEDGER_FALLBACK).
+    const href = recordHref(e.href, `${e.id}'s ledger row`) ?? (/^https?:/.test(e.href) ? EXTERNAL_LEDGER_FALLBACK : e.href);
     const note = noteBySlug.get(slugOfNote(e.href));
     const dates = datesByExperiment.get(e.id) ?? [];
     const date = dates.length ? [...dates].sort().at(-1) : note?.date ?? fallbackDay(e);
@@ -174,7 +185,7 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     if (!stage) throw new Error(`Site index: update ${u.key} has kind "${u.kind}", which maps to no index stage`);
     // A results update carries its experiment's curated outcome; nothing else does.
     const outcome = stage === 'results' && ids.length === 1 ? outcomeOf.get(ids[0]) : undefined;
-    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordPages.get(u.href) ?? u.href });
+    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
   }
   for (const tool of tools) {
     items.push({ type: 'tool', id: `tool-${tool.project}`, title: tool.title, date: tool.date, stage: 'tool', topics: topicsOf(topics.tools, tool.project, `projects/${tool.project}/`), summary: tool.summary, href: tool.href });
@@ -317,8 +328,12 @@ export function loadIndex({ root = '.', dist = join(root, 'dist') } = {}) {
   };
   const pages = new Set(filesUnder(dist));
   // A raw record link (a ledger or update href ending in .json) leads to its record page, which scripts/site-records.mjs
-  // rendered before this runs. A link whose page is missing stays raw, and buildIndex refuses it.
-  const recordPages = new Map([...ledger.map(e => e.href), ...updates.map(u => u.href)].filter(isRecordHref)
-    .map(href => [href, recordPageHref(href)]).filter(([, page]) => pages.has(`${page}index.html`)));
+  // rendered before this runs. A link whose page is missing stops the build here, by name.
+  const recordPages = new Map();
+  for (const href of [...ledger.map(e => e.href), ...updates.map(u => u.href)].filter(isRecordHref)) {
+    const page = recordPageHref(href);
+    if (!pages.has(`${page}index.html`)) throw new Error(`Site index: ${href} is linked as a record, but its record page ${page} was not rendered`);
+    recordPages.set(href, page);
+  }
   return buildIndex({ ledger, updates, notes, labs, tools, topics: json(join(root, TOPICS_PATH)), outcomes: json(join(root, OUTCOMES_PATH)), pages, fallbackDay, recordPages });
 }

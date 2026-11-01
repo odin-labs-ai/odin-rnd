@@ -53,20 +53,34 @@ export function slugify(text) {
 
 /**
  * Every <h2> inside <main> that is not inside a <details> or the table of contents, in order:
- * [{ start, end, open, attrs, inner, id, text }] with offsets into `html`.
+ * [{ start, end, open, attrs, inner, id, text }] with offsets into `html`. `id` is the heading's own id; else, when the
+ * heading is the first element child of a <section> that has an id, that section's id (read from the tag structure:
+ * text and comments between the two do not count, any other element does); else null.
  */
 export function mainHeadings(html, label = 'page') {
   const { start, end } = mainSpan(html, label);
   const out = [];
   let depth = 0;
   let inToc = false;
-  const tags = /<(\/?)(details|h2|nav)\b([^>]*)>/g;
+  // The innermost <section id> whose first element child has not been seen yet.
+  let openSection = null;
+  const tags = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][a-zA-Z0-9-]*)\b([^>]*)>/g;
   tags.lastIndex = start;
   for (let m; (m = tags.exec(html)) && m.index < end;) {
-    const [tag, close, name, attrs] = m;
-    if (name === 'details') { depth += close ? -1 : 1; continue; }
-    if (name === 'nav') { if (!close && /^\s+class="toc[ "]/.test(attrs)) inToc = true; else if (close) inToc = false; continue; }
-    if (close) continue; // a stray </h2> is consumed below with its opening tag
+    const [tag, close, rawName, attrs] = m;
+    if (!rawName) continue; // a comment
+    const name = rawName.toLowerCase();
+    if (close) {
+      if (name === 'details') depth -= 1;
+      else if (name === 'nav') inToc = false;
+      else if (name === 'section') openSection = null;
+      continue;
+    }
+    const firstChildOf = openSection;
+    openSection = name === 'section' ? (/\bid="([^"]+)"/.exec(attrs)?.[1] ?? null) : null;
+    if (name === 'details') { depth += 1; continue; }
+    if (name === 'nav') { if (/^\s+class="toc[ "]/.test(attrs)) inToc = true; continue; }
+    if (name !== 'h2') continue;
     const closeAt = html.indexOf('</h2>', m.index);
     if (closeAt < 0 || closeAt > end) throw new Error(`Table of contents: unclosed <h2> in ${label}`);
     const inner = html.slice(m.index + tag.length, closeAt);
@@ -74,8 +88,7 @@ export function mainHeadings(html, label = 'page') {
     if (depth > 0 || inToc) continue;
     // A heading that opens a section with an id of its own (a generator's results or amendment section) is reached by
     // that id, so the heading's bytes stay exactly as rendered (tests elsewhere hold those sections byte for byte).
-    const section = /<section\b[^>]*\bid="([^"]+)"[^>]*>\s*$/.exec(html.slice(Math.max(start, m.index - 400), m.index))?.[1] ?? null;
-    out.push({ start: m.index, end: closeAt + '</h2>'.length, open: tag, attrs, inner, id: /\bid="([^"]*)"/.exec(attrs)?.[1] ?? section, text: fragmentText(inner) });
+    out.push({ start: m.index, end: closeAt + '</h2>'.length, open: tag, attrs, inner, id: /\bid="([^"]*)"/.exec(attrs)?.[1] ?? firstChildOf, text: fragmentText(inner) });
   }
   return out;
 }
