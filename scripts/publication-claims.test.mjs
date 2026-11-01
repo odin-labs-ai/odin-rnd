@@ -16,6 +16,19 @@ test('source cards cannot be promoted to answer correctness, even through inline
   assert.deepEqual(pageClaimProblems('<p>A proof card identifies the source. It does not establish correctness.</p>', 'page'), []);
 });
 
+test('site-wide copy cannot promise universal coverage or daily factory delivery', () => {
+  for (const text of [
+    'Every model and vendor, tested on real work.',
+    'Agents that review, fix and ship real software every day.',
+    'The reviews, fixes and research it does every day.',
+  ]) assert.ok(claimTextProblems(text).length, text);
+  for (const text of [
+    'We evaluate selected models and vendors on bounded tasks.',
+    'Published experiments do not establish a daily delivery rate.',
+    'Within one experiment, providers face the same pre-registered measures.',
+  ]) assert.deepEqual(claimTextProblems(text), []);
+});
+
 test('only a bounded statement-level denial with a closed phrase qualifies the matched claim', () => {
   for (const text of ['Not verified answers.', 'A source card, not a verified answer.', 'Not yet independently reproduced.', 'These are not “answers with proof”.', 'No verified answers are claimed.', 'These are not “answers with proof”: source cards do not establish correctness.', 'It is not independently verified.', 'Recorded result. Not yet independently reproduced.']) assert.deepEqual(claimTextProblems(text), []);
   for (const text of ['Not only verified answers.', 'Not independently reproduced. Verified answers.', 'No runtime claim: independently verified.', 'No proof? Verified answers.', 'We never publish without verified answers.', 'It is false that these are not verified answers.', 'These are not verified answers in name only.', 'No verified answers are wrong.', 'Not verified answers alone.', 'These are not independently verified in name only.']) assert.ok(claimTextProblems(text).length, text);
