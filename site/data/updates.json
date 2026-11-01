@@ -4,6 +4,16 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-020-amendment-04",
+      "experiment": "EXP 020",
+      "title": "MongoDB on its home ground: where does it fit Odin?",
+      "kind": "Amendment",
+      "text": "Both advocates settle nine readings of the S2 rules before the verdict; both veto item 8, so the report checks the disturbance windows itself.",
+      "href": "journal/mongodb-home-ground-pre-registration.html",
+      "source": "data/mongodb-home-ground/amendment-04.json",
+      "date": "2026-10-28"
+    },
+    {
       "key": "exp-021-amendment-01",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",

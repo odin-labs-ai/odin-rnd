@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -297,21 +297,76 @@ test('the Leak screen page carries every slot the gate fills', () => {
   assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
 });
 
-test('the publish workflow also screens the tracked tree, with the secret, unconditionally', () => {
+const jobOf = (wf, name) => { const at = wf.indexOf(`\n  ${name}:\n`); assert.notEqual(at, -1, name); const next = wf.slice(at + 1).search(/\n  [a-z][\w-]*:\n/); return wf.slice(at, next < 0 ? undefined : at + 1 + next); };
+
+test('the term set reaches no job a pull request runs: only main-only jobs in the leak-screen environment use it', () => {
+  for (const file of readdirSync('.github/workflows').map(f => `.github/workflows/${f}`)) {
+    const wf = readFileSync(file, 'utf8');
+    if (!wf.includes('LEAK_SCREEN_SECRET')) continue;
+    const jobs = wf.slice(wf.indexOf('\njobs:\n')).split(/\n(?=  [a-z][\w-]*:\n)/).slice(1);
+    for (const job of jobs) if (job.includes('secrets.LEAK_SCREEN_SECRET')) assert.match(job, /\n    environment: leak-screen\n/, `${file}: a job that reads the term set outside the leak-screen environment`);
+    // A pull request's own code never runs with it: no plain pull_request trigger in a file that reads the secret,
+    // except publish.yml, whose secret-reading job is skipped for pull requests (and refused by the environment).
+    if (!file.endsWith('publish.yml')) assert.doesNotMatch(wf, /\n  pull_request:\n/, `${file}: pull_request with the term set`);
+  }
   const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
-  const step = wf.slice(wf.indexOf('Source screen'), wf.indexOf('Upload Pages'));
-  assert.match(step, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
-  assert.match(step, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html --tree\n/);
-  assert.doesNotMatch(step, /continue-on-error|\|\| true|if:/);
+  assert.doesNotMatch(jobOf(wf, 'verify'), /LEAK_SCREEN_SECRET/, 'verify (which runs a pull request\'s code) has no term set');
+  assert.match(jobOf(wf, 'gate'), /\n    if: github\.event_name != 'pull_request'\n/);
 });
 
-test('the publish workflow runs the gate after the build, before the upload, with the secret', () => {
+test('the publish workflow gates a push to main inline: build in verify, then both screens and the upload in gate', () => {
   const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
-  const at = s => { const i = wf.indexOf(s); assert.notEqual(i, -1, s); return i; };
-  assert.ok(at('pnpm check') < at('node scripts/leak-gate.mjs') && at('node scripts/leak-gate.mjs') < at('upload-pages-artifact'));
-  assert.match(wf, /--set scripts\/leak-gate-set\.json/);
-  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
-  assert.doesNotMatch(wf.slice(at('Leak screen'), at('Upload Pages')), /continue-on-error|\|\| true/);
+  const gate = jobOf(wf, 'gate');
+  const at = s => { const i = gate.indexOf(s); assert.notEqual(i, -1, s); return i; };
+  assert.match(gate, /\n    needs: verify\n/);
+  assert.match(jobOf(wf, 'publish'), /\n    needs: gate\n/);
+  assert.ok(at('Take the built site') < at('Leak screen,') && at('Leak screen,') < at('Source screen') && at('Source screen') < at('upload-pages-artifact'));
+  assert.match(gate, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html dist\n/);
+  assert.match(gate, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html --tree\n/);
+  assert.doesNotMatch(gate.slice(at('Leak screen,')), /continue-on-error|\|\| true|\n      +if:/);
+  assert.ok(jobOf(wf, 'verify').indexOf('pnpm check') < jobOf(wf, 'verify').indexOf('name: site-dist'));
+});
+
+test('a pull request is gated from the base branch over its build as data, and the result is a run named for its head', () => {
+  const wf = readFileSync('.github/workflows/leak-screen-pr.yml', 'utf8');
+  assert.match(wf, /\non:\n  workflow_run:\n    workflows: \['Public experiments & Pages'\]\n    types: \[completed\]\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}\n\s+path: base\n/);
+  assert.match(wf, /python3 base\/scripts\/leak-screen-input\.py "\$\{RUNNER_TEMP\}\/input\.zip" "\$\{RUNNER_TEMP\}\/input" "\$\{HEAD_SHA\}"/);
+  // Every node it runs is main's gate; nothing of the pull request is executed or installed.
+  for (const line of wf.split('\n').filter(l => /\bnode\b/.test(l) && /run:/.test(l))) assert.match(line, /node "\$\{GITHUB_WORKSPACE\}\/base\/scripts\/leak-gate\.mjs"/, line);
+  assert.doesNotMatch(wf, /pnpm|npm (install|ci)|bash pr\/|node pr\/|\.\/pr\/|python3 pr\//);
+  // The result is the run itself, named for the head; no forgeable commit status is posted.
+  assert.match(wf, /\nrun-name: Leak screen for \$\{\{ github\.event\.workflow_run\.head_sha \}\}\n/);
+  assert.doesNotMatch(wf, /statuses|\/statuses\//);
+  assert.doesNotMatch(wf, /\$\{\{ github\.event\.workflow_run\.(head_branch|display_title|head_commit)/, 'no attacker-chosen text in a command');
+});
+
+test('the artifact reader refuses links, climbing names, a wrong head and an oversize zip, and extracts a good one', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-input-'));
+  const py = (zip, head = 'a'.repeat(40)) => spawnSync('python3', [join(process.cwd(), 'scripts/leak-screen-input.py'), zip, join(root, 'out-' + Math.random()), head], { encoding: 'utf8' });
+  const make = (name, entries) => { const r = spawnSync('python3', ['-c', `import zipfile,sys,json
+z=zipfile.ZipFile(sys.argv[1],'w')
+for e in json.loads(sys.argv[2]):
+  i=zipfile.ZipInfo(e['n'])
+  if e.get('link'): i.external_attr=(0o120777<<16)
+  z.writestr(i,e.get('d',''))
+z.close()`, join(root, name), JSON.stringify(entries)], { encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return join(root, name); };
+  const manifest = head => ({ n: 'manifest.json', d: JSON.stringify({ format: 'odin-leak-screen-input', version: 1, headSha: head }) });
+  try {
+    const good = make('good.zip', [manifest('a'.repeat(40)), { n: 'dist/index.html', d: '<p>ok</p>' }]);
+    assert.equal(py(good).status, 0, py(good).stderr);
+    for (const [name, entries, why] of [
+      ['climb.zip', [manifest('a'.repeat(40)), { n: 'dist/../../x', d: 'x' }], /climbs out/],
+      ['abs.zip', [manifest('a'.repeat(40)), { n: '/etc/x', d: 'x' }], /absolute or malformed/],
+      ['link.zip', [manifest('a'.repeat(40)), { n: 'dist/l', d: '/etc/passwd', link: true }], /link or a special file/],
+      ['nomanifest.zip', [{ n: 'dist/index.html', d: 'x' }], /no manifest/],
+      ['other.zip', [manifest('b'.repeat(40)), { n: 'dist/index.html', d: 'x' }], /another head/],
+    ]) {
+      const r = py(make(name, entries));
+      assert.equal(r.status, 2, name);
+      assert.match(r.stderr, why, name);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('a vendored archive the gate cannot read stops the build', () => {
@@ -585,8 +640,7 @@ test('the lab screen can only gain names (the boundary); never in a build; outsi
 
 test('the verify job (the site build) runs with ODIN_SITE_BUILD set, so the test hook cannot run there', () => {
   const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
-  const verify = wf.slice(wf.indexOf('\n  verify:'), wf.indexOf('\n  publish:'));
-  assert.match(verify, /\n    env:\n      ODIN_SITE_BUILD: '1'\n/);
+  for (const job of ['verify', 'gate']) assert.match(jobOf(wf, job), /\n    env:\n      ODIN_SITE_BUILD: '1'\n/, job);
 });
 
 test('only test code calls the screen hook: no build or site script imports it or the made-up names', () => {
@@ -596,4 +650,51 @@ test('only test code calls the screen hook: no build or site script imports it o
     const text = readFileSync(file, 'utf8');
     if (/addScreenNames|test-synthetic-names/.test(text)) assert.ok(allowed(file), `${file} reaches the test-only screen hook`);
   }
+});
+
+test('a pull request\'s title, body and every commit message are screened: a planted term or canary in any of them fails', () => {
+  const event = (title, body, n) => ({ pull_request: { title, body, commits: n } });
+  const commit = (i, message) => ({ sha: String(i).repeat(40).slice(0, 40).replace(/[^0-9a-f]/g, 'a'), commit: { message } });
+  const screen = (ev, commits) => {
+    const root = mkdtempSync(join(tmpdir(), 'pr-text-'));
+    try {
+      writeFileSync(join(root, 'set.json'), setFile()); writeFileSync(join(root, 'event.json'), JSON.stringify(ev)); writeFileSync(join(root, 'commits.json'), JSON.stringify([commits]));
+      const lay = spawnSync(process.execPath, [join(process.cwd(), 'scripts/pr-text-screen.mjs'), '--event', 'event.json', '--commits', 'commits.json', '--out', 'pr-text'], { cwd: root, encoding: 'utf8' });
+      if (lay.status !== 0) return { code: lay.status, out: lay.stderr };
+      const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', '--terms-only', 'pr-text'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' });
+      return { code: r.status, out: r.stdout + r.stderr };
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  };
+  const clean = [commit(1, 'fix: a clean change'), commit(2, 'test: and its test, see /Users/someone/x in the fixture')];
+  assert.equal(screen(event('feat: a clean title', 'A clean body.', 2), clean).code, 0, 'clean text passes; machine-shaped fixture text in PR prose is not refused');
+  for (const [where, ev, commits, want] of [
+    ['the title (the squash subject)', event('feat: Zephyr Quarry support', 'body', 2), clean, /pr-text\/title\.txt:1 term/],
+    ['the body', event('feat: clean', `Notes.\n\nSee ${CANARY}.`, 2), clean, /pr-text\/body\.md:3 canary/],
+    ['a commit message', event('feat: clean', 'body', 2), [clean[0], commit(2, 'fix: the blorvak case')], /pr-text\/commits\/[0-9a-f]{40}\.txt:1 term/],
+  ]) {
+    const r = screen(ev, commits);
+    assert.equal(r.code, 1, `${where}: ${r.out}`);
+    assert.match(r.out, want, where);
+    assert.ok(!/blorvak|zephyr|odncanary/i.test(r.out), `${where}: the output never holds the text`);
+  }
+  assert.equal(screen(event('feat: clean', 'body', 3), clean).code, 2, 'a commit list shorter than the PR fails closed');
+  assert.equal(screen({ pull_request: { title: '', commits: 0 } }, []).code, 2, 'no title fails closed');
+});
+
+test('the pull request text screen runs on every PR event, on GitHub-hosted runners, with the secret, unconditionally', () => {
+  const wf = readFileSync('.github/workflows/pr-text.yml', 'utf8');
+  assert.match(wf, /types: \[opened, edited, synchronize, reopened\]/);
+  // Quoted: unquoted, YAML reads " #" as a comment and the name would stop at "for".
+  assert.match(wf, /\nrun-name: 'PR text screen for #\$\{\{ github\.event\.pull_request\.number \}\} at \$\{\{ github\.event\.pull_request\.head\.sha \}\}'\n/);
+  // The screen and its gate come from the base branch: a pull request can neither replace them nor run code with the secret.
+  assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
+  assert.doesNotMatch(wf, /\n  pull_request:\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n\s+persist-credentials: false/);
+  assert.doesNotMatch(wf, /\n\s+(ref|repository):[^\n]*(head\.(sha|ref|repo)|refs\/pull\/)/, 'no file of the pull request is checked out');
+  assert.equal((wf.match(/actions\/checkout@/g) ?? []).length, 1, 'one checkout: the base sha');
+  assert.match(wf, /runs-on: ubuntu-latest/);
+  assert.doesNotMatch(wf, /self-hosted|continue-on-error|\|\| true|\n\s+if:/);
+  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.match(wf, /--terms-only pr-text\n/);
+  assert.doesNotMatch(wf, /\$\{\{ github\.event\.pull_request\.(title|body)/, 'PR text never interpolated into a command');
 });

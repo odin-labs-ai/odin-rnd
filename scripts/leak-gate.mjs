@@ -585,7 +585,7 @@ export function fillPage(html, values, slots = SLOTS) {
 
 function main(argv) {
   const args = [...argv], paths = [];
-  let env = 'LEAK_SCREEN_SECRET', page = null, knownPath = null, setPath = null, tree = false, commit = process.env.GITHUB_SHA ?? '';
+  let env = 'LEAK_SCREEN_SECRET', page = null, knownPath = null, setPath = null, tree = false, termsOnly = false, commit = process.env.GITHUB_SHA ?? '';
   while (args.length) {
     const a = args.shift();
     if (a === '--secret-env') env = args.shift();
@@ -594,6 +594,7 @@ function main(argv) {
     else if (a === '--known') knownPath = args.shift();
     else if (a === '--set') setPath = args.shift();
     else if (a === '--tree') tree = true;
+    else if (a === '--terms-only') termsOnly = true;
     else paths.push(a);
   }
   // --tree: every file git tracks in this checkout (the public source, every record, every asset), for terms and canaries.
@@ -618,7 +619,8 @@ function main(argv) {
   // Configuration files are read with fixed messages: a read error would name the path, which could hold a leak.
   const config = (file, what) => { try { return readFileSync(file, 'utf8'); } catch (error) { throw new Error(`leak gate: the ${what} cannot be read (${error.code ?? 'error'})`); } };
   checkCommitment(secret, config(setPath, 'term-set commitment'));
-  const result = scanPaths(paths, secret, { patterns: !tree });
+  // --terms-only: terms and canaries, no machine patterns (a pull request's text, which may describe a fixture path).
+  const result = scanPaths(paths, secret, { patterns: !tree && !termsOnly });
   if (result.texts === 0) throw new Error('leak gate: no text was read');
   // A row names a built file (dist/...) or a tracked source file: each scan settles the rows of its own kind only.
   const known = (knownPath ? loadKnown(config(knownPath, 'known-occurrence list'), secret) : []).filter(row => row.file.startsWith('dist/') !== tree);

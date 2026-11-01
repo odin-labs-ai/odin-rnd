@@ -237,3 +237,17 @@ test('laneCite on the page: a lane commit in a main cite, or a lane cite that al
   const both = page(`Filmed from private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, on a pushed branch that is not yet part of the private main, and it is part of the private main.`);
   assert.ok(kit.pageLeaks(both, known, { lane: [LANE] }).some(p => /a lane cite that also claims the private main/.test(p)));
 });
+
+test('a known hash with a long run of digits is masked even glued to the next element\'s text; unknown, the digits are refused', () => {
+  // About a third of sha256 hex strings hold a run of 9 or more digits (this one: 10). In a feed the hash can sit
+  // right against the next element's text, with no word boundary between them.
+  const H = '20ca7b014adc7ad7f9c6d7e60d3025bf707fcad53a7956953430a7fc2db94148';
+  const xml = `<feed><entry><id>tag:odin-labs-ai.github.io,2026:odin-rnd/labs/rogue/runs/org-ci-heavy/2026-10-29T07:26:11Z/${H}</id><title>Lab 05: a run, record ${H.slice(0, 12)}, SAME</title><summary>record hash ${H}; SAME.</summary></entry></feed>`;
+  assert.deepEqual(kit.pageLeaks(xml, [H]), []);
+  assert.ok(kit.pageLeaks(xml, []).some(p => /long internal id/.test(p)), 'the same text without the hash known is refused');
+  assert.ok(kit.pageLeaks(`<p>run 7956953430 of ${H}</p>`, [H]).some(p => /long internal id/.test(p)), 'a bare long number next to a known hash is still refused');
+  // The lead's planted negatives (2026-10-29): a 12-digit number in a title, and an unknown digest, in the same feed.
+  const other = 'f93aa8884095601234567890abcdef0123456789abcdef0123456789abcdef01';
+  assert.ok(kit.pageLeaks(xml.replace('<title>Lab 05', '<title>Lab 05 run 123456789012'), [H]).some(p => /long internal id/.test(p)), 'a 12-digit number in a title is refused');
+  assert.ok(kit.pageLeaks(xml.replace('record hash ' + H, 'record hash ' + other), [H]).some(p => /long internal id|a hash the record does not hold/.test(p)), 'an unknown digest with a digit run is refused');
+});

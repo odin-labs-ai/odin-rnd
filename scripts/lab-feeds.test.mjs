@@ -35,8 +35,14 @@ test('the published feeds: the site feed and Lab 05\'s, valid Atom, every id uni
   // An update's entry carries its title and link, never its text.
   for (const u of readUpdates()) assert.ok(site.includes(`<id>${updateEntryId(u)}</id>`), u.key);
   assert.doesNotMatch(site, /<summary>[^<]*(cents|\$)/);
-  // No lab without runs gets a feed: it would have no date of its own.
-  assert.deepEqual(Object.keys(pages).filter(p => p.endsWith('feed.xml')).sort(), ['feed.xml', 'labs/agent-space/feed.xml', 'labs/rogue/feed.xml']);
+  // Every lab with runs gets a feed, and no lab without runs does: it would have no date of its own.
+  const withRuns = readLabRuns().filter(l => l.runs.length).map(l => `labs/${l.tile.experiment}/feed.xml`);
+  assert.ok(withRuns.includes('labs/rogue/feed.xml'));
+  assert.deepEqual(Object.keys(pages).filter(p => p.endsWith('feed.xml')).sort(), ['feed.xml', 'labs/agent-space/feed.xml', ...withRuns].sort());
+  for (const path of withRuns) {
+    assert.deepEqual(feedProblems(pages[path], { self: `${SITE_URL}${path}` }), [], path);
+    assert.deepEqual(pageLeaks(pages[path], known), [], path);
+  }
   assert.doesNotMatch(site + pages['labs/rogue/feed.xml'], /org machine|daily/i);
 });
 
