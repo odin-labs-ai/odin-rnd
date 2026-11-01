@@ -90,7 +90,7 @@ function badgeText({ state, group }, runsHref) {
 /** The card's provenance: "runner · commit · record hash" for the latest run, and the badge. */
 export function renderProvenance(runs, { runsPage = false, runsHref = runsPage ? 'runs/' : null } = {}) {
   const s = runState(runs), r = s.latest;
-  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s, runsHref)}</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run, among every run</a></p>` : ''}</div>`;
+  return `<div class="lab-provenance lab-provenance-${s.state}"><p class="lab-provenance-line technical">LATEST RUN · <span>${escape(r.runner)}</span> · <span>commit <code>${escape(r.commit.sha.slice(0, 8))}</code></span> · <span>record <code>${escape(r.recordHash.slice(0, 12))}</code></span></p><p class="lab-badge" data-state="${s.state}"><strong>${escape(BADGES[s.state])}.</strong> ${badgeText(s, runsHref)}</p>${runsPage ? `<p class="lab-provenance-more"><a href="runs/#${escape(runAnchor(r))}">This run in the list of all runs</a></p>` : ''}</div>`;
 }
 
 /** Every results lab's runs, read from its pinned record (readTiles checks the pin): [{ tile, record, runs }]. */
@@ -161,7 +161,7 @@ export function withLabRuns(pages, root = 'site', { now = new Date() } = {}) {
   if (!runsPage) return { ...pages, 'labs/index.html': index };
   const section = index.indexOf('id="labs"'), close = index.indexOf('</section>', section);
   if (section < 0 || close < 0) throw new Error('labs/index.html: no section id="labs" to link the runs page from');
-  index = `${index.slice(0, close)}<p class="lab-runs-link"><a href="runs/">Every run of every lab, newest first</a></p>${index.slice(close)}`;
+  index = `${index.slice(0, close)}<p class="lab-runs-link"><a href="runs/">All lab runs, newest first</a></p>${index.slice(close)}`;
   let runsHtml = readFileSync(join(root, RUNS_PAGE), 'utf8');
   if (!runsHtml.includes('<!--LAB_RUNS-->')) throw new Error(`${RUNS_PAGE}: <!--LAB_RUNS--> is missing`);
   runsHtml = runsHtml.replace('<!--LAB_RUNS-->', () => renderRuns(labs));
@@ -219,7 +219,7 @@ const ORG_RUN_NOTES = {
 export function renderLabRunsSection(lab) {
   const latest = runState(lab.runs).latest;
   const note = ORG_RUN_NOTES[latest.lab] && lab.runs.some(ORG) ? ` ${escape(ORG_RUN_NOTES[latest.lab])}` : '';
-  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.${note}</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}${renderDaySeries(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run, among every run</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
+  return `<section class="company-section company-width lab-runs-section" id="lab-runs" aria-labelledby="lab-runs-title"><div class="company-section-heading"><h2 id="lab-runs-title">Its runs.</h2><p>The runs of this lab's check that its record holds, each with its own record hash.${note}</p></div>${renderProvenance(lab.runs, { runsHref: '../runs/' })}${renderDaySeries(lab.runs)}<ul class="lab-follow"><li><a href="../runs/#${escape(runAnchor(latest))}">This run in the list of all runs</a></li><li><a href="feed.xml">This lab's feed (Atom)</a></li><li><a href="../../${SITE_FEED}">The site feed (Atom)</a></li></ul></section>`;
 }
 
 /** The feeds, written and checked, and linked from the Labs index, the runs page and every lab page. */
@@ -240,9 +240,9 @@ function withFeeds(pages, labs, root, known) {
   const out = { ...pages, ...feeds };
   const site = up => alternate(SITE_FEED_TITLE, `${up}${SITE_FEED}`);
   let index = head(out['labs/index.html'], 'labs/index.html', [site('../')]);
-  index = index.replace('<p class="lab-runs-link"><a href="runs/">Every run of every lab, newest first</a></p>', m => `${m}<p class="lab-runs-link"><a href="../${SITE_FEED}">Follow every update and every run (Atom)</a></p>`);
+  index = index.replace('<p class="lab-runs-link"><a href="runs/">All lab runs, newest first</a></p>', m => `${m}<p class="lab-runs-link"><a href="../${SITE_FEED}">Follow updates and runs (Atom feed)</a></p>`);
   out['labs/index.html'] = index;
-  out[RUNS_PAGE] = head(out[RUNS_PAGE], RUNS_PAGE, [site('../../')]).replace('<p class="lab-source">A record names', m => `<p class="lab-runs-link"><a href="../../${SITE_FEED}">Follow every update and every run (Atom)</a></p>${m}`);
+  out[RUNS_PAGE] = head(out[RUNS_PAGE], RUNS_PAGE, [site('../../')]).replace('<p class="lab-source">A record names', m => `<p class="lab-runs-link"><a href="../../${SITE_FEED}">Follow updates and runs (Atom feed)</a></p>${m}`);
   // On the published site every lab with runs has its page; a fixture links the pages it renders.
   const linked = labs.filter(l => l.page && (resolve(root) === REPO_SITE || typeof out[l.page] === 'string'));
   for (const lab of linked) {
