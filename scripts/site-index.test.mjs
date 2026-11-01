@@ -12,6 +12,7 @@ import { LAB_FILE } from './labs.mjs';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
 import { builtCopy } from './test-build.mjs';
+import { SECTION_INDEX_PAGES } from './site-chrome.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const schema = JSON.parse(readFileSync(join(REPO, 'scripts/schemas/site-index.schema.json'), 'utf8'));
@@ -120,6 +121,18 @@ test('buildIndex refuses what it cannot place', () => {
   const exempt = fixture();
   exempt.pages.add('labs/runs/index.html');
   assert.ok(buildIndex(exempt).length > 0, 'the named exemption (labs/runs/) is not an unlisted lab');
+  // The section index pages (scripts/site-sections.mjs) list notes and tools; they are not an unlisted note or tool.
+  const sections = fixture();
+  sections.pages.add('journal/index.html');
+  sections.pages.add('projects/index.html');
+  assert.equal(buildIndex(sections).length, buildIndex(fixture()).length, 'journal/ and projects/ index pages are exempt by name, and add no item');
+  // The exemption is what lets journal/index.html through: without it, it is an unlisted note page.
+  const reason = SECTION_INDEX_PAGES.get('journal/index.html');
+  SECTION_INDEX_PAGES.delete('journal/index.html');
+  try {
+    broken(f => { f.pages.add('journal/index.html'); }, /the note page journal\/index\.html, which no note item lists/);
+  } finally { SECTION_INDEX_PAGES.set('journal/index.html', reason); }
+  broken(f => { f.pages.add('journal/unlisted.html'); }, /the note page journal\/unlisted\.html, which no note item lists/);
 });
 
 test('the schema\'s if/then is live: an outcome only on an experiment or update, and only at a published stage', () => {

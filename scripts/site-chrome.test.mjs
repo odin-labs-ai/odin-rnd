@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, CHROME_WITHOUT_ITEM, escapeHtml, fragmentText, injectChrome, pageClass, pageKey, pageTitle, pickRelated, relativeHref, trailFor } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fragmentText, injectChrome, pageClass, pageKey, pageTitle, pickRelated, relativeHref, trailFor } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 
 const dirs = [];
@@ -29,22 +29,31 @@ function tempDist() {
   for (const page of PAGES) { mkdirSync(dirname(join(dir, page)), { recursive: true }); cpSync(join('site', page), join(dir, page)); }
   mkdirSync(join(dir, 'find'), { recursive: true });
   writeFileSync(join(dir, 'find/index.html'), '<!doctype html><head><title>Find</title></head><header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a></nav></header><main id="main"></main>');
+  // The section index pages (scripts/site-sections.mjs renders them in the build): no item of their own, a trail of
+  // their own. The breadcrumbs on notes and tools lead to them.
+  for (const [page, label] of [['journal/index.html', 'Field notes'], ['projects/index.html', 'Tools']]) {
+    mkdirSync(join(dir, dirname(page)), { recursive: true });
+    writeFileSync(join(dir, page), `<!doctype html><head><title>${label}</title></head><header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a></nav></header><main id="main"><nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../">Home</a></li><li aria-current="page">${label}</li></ol></nav><h1>${label}</h1></main><footer class="site-footer"></footer>`);
+  }
   return dir;
 }
 
-const findLinks = html => (html.match(/<a href="(?:\.\.\/)*find\/">Find<\/a>/g) || []).length;
+const findLinks = html => (html.match(/<a href="(?:\.\.\/)*find\/"[^>]*>Find<\/a>/g) || []).length;
+const SECTION_PAGES = ['journal/index.html', 'projects/index.html'];
 const headerNav = html => html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
 
 test('every page with a header navigation gets exactly one Find link, last in that navigation, pointing at the real page', () => {
   const dist = tempDist();
   const counts = injectChrome({ distDir: dist, items });
-  assert.equal(counts.pages, PAGES.length + 1);
-  for (const page of [...PAGES.filter(p => p !== '404.html'), 'find/index.html']) {
+  assert.equal(counts.pages, PAGES.length + 1 + SECTION_PAGES.length);
+  for (const page of [...PAGES.filter(p => p !== '404.html'), 'find/index.html', ...SECTION_PAGES]) {
     const html = readFileSync(join(dist, page), 'utf8');
     assert.equal(findLinks(html), 1, page);
     const nav = headerNav(html);
-    assert.match(nav, /<a href="(?:\.\.\/)*find\/">Find<\/a><\/nav>$/, `${page}: Find is the last link`);
-    const href = nav.match(/<a href="([^"]*find\/)">Find<\/a>/)[1];
+    const mark = page === FIND_PAGE ? ' aria-current="page"' : '';
+    assert.match(nav, new RegExp(`<a href="(?:\\.\\./)*find/"${mark}>Find</a></nav>$`), `${page}: Find is the last link, marked current only on the Find page`);
+    assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), page === FIND_PAGE, `${page}: Find is current there or not`);
+    const href = nav.match(/<a href="([^"]*find\/)"[^>]*>Find<\/a>/)[1];
     assert.ok(existsSync(resolve(dirname(join(dist, page)), href, 'index.html')), `${page}: ${href} resolves`);
     assert.doesNotMatch(href + 'Find', /\d/, 'no digit in the inserted link');
   }
@@ -54,11 +63,13 @@ test('every page with a header navigation gets exactly one Find link, last in th
 test('injecting twice changes nothing the second time', () => {
   const dist = tempDist();
   injectChrome({ distDir: dist, items });
-  const once = Object.fromEntries(PAGES.map(p => [p, readFileSync(join(dist, p), 'utf8')]));
+  const all = [...PAGES, FIND_PAGE, ...SECTION_PAGES];
+  const once = Object.fromEntries(all.map(p => [p, readFileSync(join(dist, p), 'utf8')]));
   injectChrome({ distDir: dist, items });
-  for (const page of PAGES) assert.equal(readFileSync(join(dist, page), 'utf8'), once[page], page);
+  for (const page of all) assert.equal(readFileSync(join(dist, page), 'utf8'), once[page], page);
   const home = once['index.html'];
   assert.equal(addFindLink(home, ''), home);
+  assert.equal(addFindLink(once[FIND_PAGE], '../', FIND_PAGE, { current: true }), once[FIND_PAGE], 'the marked Find link is kept as it is');
   const crumbed = once[NOTE];
   assert.equal(addBreadcrumbs(crumbed, [{ label: 'Home', href: '../' }, { label: 'X' }]), crumbed);
   assert.equal(addRelated(crumbed, [{ type: 'note', title: 'T', href: 'x.html' }]), crumbed);
@@ -82,11 +93,16 @@ test('breadcrumbs and the related aside go on notes, labs and tools only, with l
   injectChrome({ distDir: dist, items });
   const read = page => readFileSync(join(dist, page), 'utf8');
   const note = read(NOTE);
-  assert.match(note, /<main id="main" class="article-shell"><nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="\.\.\/">Home<\/a><\/li><li><a href="\.\.\/#journal">Field notes<\/a><\/li><li aria-current="page">A passing pipeline<\/li><\/ol><\/nav>/);
-  assert.match(read('labs/runs/index.html'), /<li><a href="\.\.\/\.\.\/labs\/">Labs<\/a><\/li><li aria-current="page">Every lab run<\/li>/);
-  assert.match(read('projects/ci-witness/index.html'), /<li><a href="\.\.\/\.\.\/#projects">Tools<\/a><\/li>/);
+  assert.match(note, /<main id="main" class="article-shell"><nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="\.\.\/">Home<\/a><\/li><li><a href="\.\.\/journal\/">Field notes<\/a><\/li><li aria-current="page">A passing pipeline was not yet a verified release\.<\/li><\/ol><\/nav>/, 'the trail names the note by its heading');
+  assert.match(read('labs/runs/index.html'), /<li><a href="\.\.\/\.\.\/labs\/">Labs<\/a><\/li><li aria-current="page">Every lab run\.<\/li>/);
+  assert.match(read('projects/ci-witness/index.html'), /<li><a href="\.\.\/\.\.\/projects\/">Tools<\/a><\/li>/);
   for (const page of ['index.html', 'labs/index.html', 'updates/index.html', '404.html']) {
     assert.doesNotMatch(read(page), /class="crumbs"|class="related"/, `${page} gets no crumbs or related`);
+  }
+  // The section index pages keep their own single trail and get no related aside, with no item of their own.
+  for (const page of SECTION_PAGES) {
+    assert.equal((read(page).match(/<nav class="crumbs"/g) || []).length, 1, `${page}: its own trail, once`);
+    assert.doesNotMatch(read(page), /class="related"/, `${page}: no related aside`);
   }
   // Every href in the inserted chrome resolves in the temp dist, anchors included (what check.mjs asserts).
   for (const page of [NOTE, 'labs/runs/index.html', 'projects/ci-witness/index.html']) {
@@ -126,6 +142,49 @@ test('nothing but the Find link and the chrome stylesheet is added to a number-p
   assert.equal(pageClass('labs/rogue/index.html'), 'lab');
   assert.equal(pageClass('labs/agent-space/story/index.html'), null, 'one level under labs/ only');
   assert.equal(pageClass('projects/ci-witness/index.html'), 'tool');
+});
+
+test('the journal/ and projects/ index pages are exempt by name, with a reason: lists of notes and tools, not one', () => {
+  assert.deepEqual([...SECTION_INDEX_PAGES.keys()].sort(), ['journal/index.html', 'projects/index.html']);
+  for (const [page, reason] of SECTION_INDEX_PAGES) assert.ok(reason.length > 20, `${page} has a reason`);
+  // By its path journal/index.html is a note page: only the exemption keeps it from being refused as an unlisted note.
+  assert.equal(pageClass('journal/index.html'), 'note');
+  // With no item for either index page, injectChrome does not refuse them, and adds them no trail or aside.
+  const dist = tempDist();
+  assert.doesNotThrow(() => injectChrome({ distDir: dist, items }));
+  // Without the exemption the same build is refused: the map is what lets the page through.
+  const reason = SECTION_INDEX_PAGES.get('journal/index.html');
+  SECTION_INDEX_PAGES.delete('journal/index.html');
+  try {
+    assert.throws(() => injectChrome({ distDir: tempDist(), items }), /journal\/index\.html is a note page with no item in the site index/);
+  } finally { SECTION_INDEX_PAGES.set('journal/index.html', reason); }
+});
+
+test('a note\'s trail and related links come from its own note item, not from an experiment or update that links the note', () => {
+  const dist = tempDist();
+  // Newest first, as the index is sorted: an experiment and an update that point at the note come before the note.
+  const shadowed = [
+    { type: 'experiment', id: 'exp-shadow', title: 'Slug-like experiment name', date: '2026-10-31', stage: 'results', topics: ['nothing-shared'], summary: 's', href: NOTE },
+    { type: 'update', id: 'u-shadow', title: 'An update about it', date: '2026-10-30', stage: 'results', topics: ['nothing-shared'], summary: 's', href: `${NOTE}#plan` },
+    ...items,
+  ];
+  injectChrome({ distDir: dist, items: shadowed });
+  const note = readFileSync(join(dist, NOTE), 'utf8');
+  assert.match(note, /<li aria-current="page">A passing pipeline was not yet a verified release\.<\/li>/, 'the heading, not another item\'s title');
+  const aside = note.match(/<aside class="related"[\s\S]*?<\/aside>/)[0];
+  assert.deepEqual([...aside.matchAll(/<a href="([^"]+)">/g)].map(m => m[1]).slice(0, 1), ['../projects/ci-witness/'], 'related by the note item (its id and topics)');
+});
+
+test('Find is marked as the current page on /find/ only; the mark is added to an existing link once', () => {
+  const nav = '<header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a><a href="../find/">Find</a></nav></header>';
+  const marked = addFindLink(nav, '../', FIND_PAGE, { current: true });
+  assert.match(marked, /<a href="\.\.\/find\/" aria-current="page">Find<\/a><\/nav>/);
+  assert.equal(addFindLink(marked, '../', FIND_PAGE, { current: true }), marked, 'idempotent');
+  assert.equal(addFindLink(marked, '../', FIND_PAGE), marked, 'an existing link with attributes is recognised: no second Find');
+  assert.equal(addFindLink(nav, '../'), nav, 'elsewhere an existing link is left alone');
+  const fresh = addFindLink('<header class="site-header"><nav aria-label="Main navigation"><a href="../">Home</a></nav></header>', '../', FIND_PAGE, { current: true });
+  assert.equal((fresh.match(/>Find<\/a>/g) || []).length, 1);
+  assert.match(fresh, /<a href="\.\.\/find\/" aria-current="page">Find<\/a>/);
 });
 
 test('pickRelated: same id first, then shared topic, newest first; never self; at most four', () => {
