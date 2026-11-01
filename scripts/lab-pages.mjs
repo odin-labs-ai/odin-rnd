@@ -250,7 +250,7 @@ export function renderEvidence(read) {
     return `<li><strong>${escape(n.claim)}</strong> ${status}${planned ? ` <em>${escape(planned)}</em>` : ''}</li>`;
   }).join('');
   return `<section class="company-section company-width" id="measured" aria-labelledby="measured-title"><h2 id="measured-title">What we have measured.</h2><div class="company-prose"><p>Each claim below is a sentence whose numbers are read from the experiment record it cites, at build time. Each number links to that record.</p><ol class="lab-claims">${claims}</ol></div></section>`
-    + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">What we have not measured yet.</h2><div class="company-prose"><p>These are things an investor or a provider might expect us to claim. Until a published result backs them, we do not.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
+    + `<section class="company-section company-width" id="not-measured" aria-labelledby="not-measured-title"><h2 id="not-measured-title">Claims we do not make.</h2><div class="company-prose"><p>A published result does not necessarily support the broader claim listed here. Each entry links to the available record or explains what is still missing.</p><ul class="lab-pending">${notYet}</ul></div></section>`;
 }
 
 /**
