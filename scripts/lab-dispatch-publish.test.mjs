@@ -9,6 +9,7 @@ import { validate } from './json-schema-lite.mjs';
 import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
 import { readFilms } from './lab-films.mjs';
+import { readProgress } from './lab-progress.mjs';
 import { readOutage } from './lab-outage.mjs';
 
 // The Lab 01 publisher (mission rnd-labs-human-first-1024). Every session here is written by the test at run time, so
@@ -226,15 +227,17 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
     for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
   }
-  // The lab's films are the only other Lab assets. films.json owns each film file: readFilms refuses (throws) a film
-  // or poster whose bytes do not hash to its recorded sha256 and size, so ownership here is hash-checked.
-  const films = readFilms('site')?.films ?? [];
-  // Dispatch #2's film and poster are owned by outage.json, hash-checked the same way by readOutage.
+  // The lab's films, its progress record and outage.json own the only other Lab assets. films.json owns each film
+  // file, progress.json each progress film, poster and still, and outage.json dispatch #2's film and poster: readFilms,
+  // readProgress and readOutage refuse (throw) a file whose bytes do not hash to its recorded sha256 and size, so
+  // ownership here is hash-checked.
+  const filmsRecord = readFilms('site'), films = filmsRecord?.films ?? [], progress = readProgress('site', filmsRecord);
+  const progressFiles = progress ? [progress.hero, ...progress.steps.filter(s => s.kind === 'film').map(s => s.film)].flatMap(f => [f.src, f.poster]).concat(progress.steps.filter(s => s.kind === 'still').map(s => s.src)) : [];
   const outage = readOutage('site');
-  const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster]),
+  const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster]), ...progressFiles,
     ...(outage ? [outage.film.src, outage.film.poster] : [])].map(src => join('site', src)));
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
-  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch or film`);
+  for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch, film or progress step`);
   for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
   const files = ['scripts/lab-dispatch-publish.mjs', 'scripts/lab-dispatch-publish.test.mjs', 'scripts/labs.mjs', 'scripts/labs.test.mjs',
     'scripts/json-schema-lite.mjs', 'scripts/lab-screen-terms.json', 'scripts/schemas/odin-dispatch-v1.schema.json', 'scripts/schemas/odin-lab-dispatch.schema.json',
@@ -242,7 +245,8 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     '.github/ISSUE_TEMPLATE/ask-the-agents.yml', 'scripts/lab-films.mjs', 'scripts/lab-telemetry.mjs', 'scripts/lab-counts.mjs', 'scripts/schemas/odin-lab-films.schema.json',
     'scripts/schemas/odin-telemetry.schema.json', 'scripts/schemas/odin-lab-counts.schema.json', 'site/data/labs/agent-space/films.json',
     'site/data/labs/agent-space/telemetry.json', 'site/data/labs/agent-space/counts.json',
-    'site/data/labs/agent-space/hard-parts.json', 'scripts/lab-outage.mjs', 'scripts/lab-outage.test.mjs',
+    'site/data/labs/agent-space/hard-parts.json', 'scripts/lab-progress.mjs', 'scripts/schemas/odin-lab-progress.schema.json',
+    'site/data/labs/agent-space/progress.json', 'scripts/lab-outage.mjs', 'scripts/lab-outage.test.mjs',
     'scripts/schemas/odin-lab-outage.schema.json', 'site/data/labs/agent-space/outage.json'];
   for (const file of files) assert.ok(!screenText(readFileSync(file, 'utf8')).some(r => r.startsWith('a restricted name')), file);
   // The vendored schema differs from its upstream copy in one description only (scripts/schemas/README.md).
