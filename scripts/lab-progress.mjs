@@ -29,7 +29,7 @@ function pinned(path, at, { root, sha, bytes, limit = MAX_FILM_BYTES }) {
   return problems;
 }
 
-/** A source commit must be one the record shows as part of the engine's private main: a lane commit is never cited. */
+/** A source commit must be one the record lists as part of the engine's private main: a commit not on that self-reported list is never cited. The list is self-reported; this check cannot tell a lane commit the author added to it from one that was genuinely on main. */
 function commitProblems(commit, engineMain, at) {
   return onMainCommits(engineMain).includes(commit) ? [] : [`${at}: ${commit.slice(0, 8)} is not shown as part of the engine's private main ${engineMain.main.slice(0, 8)}`];
 }
@@ -54,10 +54,14 @@ function filmProblems(film, engineMain, at, root) {
 }
 
 function stillProblems(step, engineMain, at, root) {
-  const { src, sha256, source: { originalSha256, commit, ...source }, screening: { srcSha256, ...screening }, ...text } = step;
+  const { src, sha256, source: { originalSha256, originalBytes, commit, ...source }, screening: { srcSha256, ...screening }, ...text } = step;
   const problems = screenTree({ ...text, source, screening }, at);
   problems.push(...pinned(src, `${at}/src`, { root, sha: sha256, bytes: step.bytes }));
   problems.push(...commitProblems(commit, engineMain, `${at}/source/commit`));
+  // The schema gives a still no "reencoded"-style field to say whether its original differs from what is
+  // published, so only the one combination that is a flat contradiction can be checked here: the same hash
+  // necessarily means the same bytes, so a matching sha256 paired with a differing byte count is impossible.
+  if (originalSha256 === sha256 && originalBytes !== step.bytes) problems.push(`${at}/source: originalSha256 matches the published still's sha256, but originalBytes (${originalBytes}) does not match its size (${step.bytes})`);
   if (srcSha256 !== sha256) problems.push(`${at}/screening/srcSha256: screened ${srcSha256.slice(0, 12)}, but the still is ${sha256.slice(0, 12)}`);
   if (screening.result !== 'pass') problems.push(`${at}/screening/result: "${screening.result}", not "pass"`);
   return problems;
@@ -97,7 +101,7 @@ export function readProgress(root = 'site', films = null) {
 }
 
 const duration = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-const engineCite = (commit, engineMain) => `In the engine's private repository: ${cite({ commit }, engineMain)}`;
+const engineCite = (commit, engineMain) => `By the engine's own record, in its private repository: ${cite({ commit }, engineMain)}`;
 const video = (film, up, cls = '') => `<video${cls} controls preload="none" playsinline width="${film.width}" height="${film.height}" poster="${up}${escape(film.poster)}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video>`;
 const filmSourceLine = (film, engineMain) => `${escape(film.source.note)} ${engineCite(film.source.commit, engineMain)}`;
 const screened = film => `Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the progress record). ${escape(film.screening.ocr)}`;

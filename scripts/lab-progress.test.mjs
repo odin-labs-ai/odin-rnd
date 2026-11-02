@@ -36,6 +36,14 @@ test('a source commit the record does not show as part of the engine\'s private 
   assert.match(problems(still), /steps\/1\/source\/commit: cccccccc is not shown/);
 });
 
+test('commitProblems can only check the self-reported list, not whether a commit was genuinely on main: a commit the record adds to engineMain.commits passes, lane or not', () => {
+  const laneAddedToList = clone(committed);
+  const laneCommit = 'd'.repeat(40);
+  laneAddedToList.engineMain.commits.push(laneCommit);
+  laneAddedToList.hero.source.commit = laneCommit;
+  assert.doesNotMatch(problems(laneAddedToList), /\/source\/commit:/);
+});
+
 test('kept spans that do not add up to the film, or run backwards, are refused', () => {
   const short = clone(committed); short.hero.source.kept = [{ from: 0, to: 20 }];
   assert.match(problems(short), /hero\/source\/kept: the kept spans last 20\.00 s, the film 44 s/);
@@ -46,6 +54,14 @@ test('kept spans that do not add up to the film, or run backwards, are refused',
 test('reencoded must agree with BOTH the hash and the byte count differing from the original', () => {
   const sizeOnly = clone(committed); sizeOnly.hero.source.originalBytes = sizeOnly.hero.bytes;
   assert.match(problems(sizeOnly), /hero\/source: reencoded must be true exactly when the film's size differs from the original's/);
+});
+
+test('a still whose original claims the published still\'s own sha256 but a different byte count is refused (same hash can\'t have two sizes)', () => {
+  const still = clone(committed);
+  const step = still.steps[1];
+  step.source.originalSha256 = step.sha256;
+  step.source.originalBytes = step.bytes + 1;
+  assert.match(problems(still), /steps\/1\/source: originalSha256 matches the published still's sha256, but originalBytes \(\d+\) does not match its size \(\d+\)/);
 });
 
 test('a screening record that does not cover the film, or did not pass, is refused', () => {
@@ -72,7 +88,7 @@ test('the hero says what in it is real and where it came from; the steps keep th
   assert.match(hero, new RegExp(`<source src="\\.\\./\\.\\./${committed.hero.src}"`));
   assert.match(hero, /What is real here:<\/strong> Each shot is labelled in the frame/);
   assert.match(steps, /^<ol class="lab-films lab-progress"><li class="lab-film lab-progress-step"><span class="technical">Where it started/);
-  assert.match(steps, /In the engine's private repository: Private commit <code>d18c8237<\/code>/);
+  assert.match(steps, /By the engine's own record, in its private repository: Private commit <code>d18c8237<\/code>/);
 });
 
 test('the published Lab 01 page and the home page play the record\'s hero', () => {
