@@ -488,7 +488,7 @@
       "experiment": null,
       "title": "Laya in your browser",
       "kind": "Tool",
-      "text": "Run Laya, an open-weight typed-decision model, entirely on your own device: type a situation and a choice, score or yes/no question and read calibrated probabilities. No server, no key.",
+      "text": "Run Laya, an open-weight typed-decision model, in your browser after a model download. Read its probabilities for a typed question. Three hand-written cases checked parity with the reference; they did not measure accuracy or calibration. Inference runs on your device without an account or API key.",
       "href": "projects/laya-browser/",
       "source": "projects/laya-browser/",
       "date": "2026-09-25"

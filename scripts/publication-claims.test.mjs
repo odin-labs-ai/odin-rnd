@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { claimTextProblems, pageClaimProblems, updateClaimProblems, atomClaimProblems, publicationBoundaryProblems, checkPublicationClaims } from './publication-claims.mjs';
+import { claimTextProblems, pageClaimProblems, updateClaimProblems, indexClaimProblems, atomClaimProblems, publicationBoundaryProblems, checkPublicationClaims } from './publication-claims.mjs';
 import { renderFeed, updateEntryId } from './lab-feeds.mjs';
 
 const update = { key: 'exp-006-results', kind: 'Results', experiment: 'EXP 006', title: 'A review comparison', text: 'Measured on fixed fixtures. No real-world or independent validation.', date: '2026-10-31', href: 'journal/review.html', source: 'data/review/results.json' };
 const boundary = (prefix = '') => `<aside id="publication-boundary"><p>Research has limits. <a href="${prefix}methods/#publication-standard">How to read these results</a></p></aside>`;
 const feed = updates => ({ schemaVersion: 1, updates });
+const findItem = { type: 'update', id: `update-${update.key}`, title: update.title, summary: update.text };
 const atom = (entry = {}) => renderFeed({ id: 'https://example.test/feed.xml', title: 'Research updates', subtitle: 'Plans and results', self: 'https://example.test/feed.xml', alternate: 'https://example.test/', entries: [{ id: updateEntryId(update), updated: '2026-10-31T00:00:00Z', title: 'Results · EXP 006: A review comparison', summary: update.text, href: 'https://example.test/journal/review.html', ...entry }] });
 
 test('source cards cannot be promoted to answer correctness, even through inline tags or entities', () => {
@@ -58,6 +59,13 @@ test('progress JSON retains every source candidate and its complete status and k
   assert.ok(updateClaimProblems(feed([update]), []).length);
 });
 
+test('Find keeps the full update and screens its other previews', () => {
+  assert.deepEqual(indexClaimProblems([findItem], [update]), []);
+  assert.ok(indexClaimProblems([{ ...findItem, summary: 'Measured on fixed fixtures.' }], [update]).some(p => p.includes('full source')));
+  assert.ok(indexClaimProblems([findItem, { type: 'tool', id: 'tool-x', title: 'Verified answers', summary: 'A preview' }], [update]).some(p => p.includes('answer correctness')));
+  assert.ok(indexClaimProblems([], [update]).some(p => p.includes('missing Find update')));
+});
+
 test('Atom requires the complete caveated source summary, not only a result headline', () => {
   assert.deepEqual(atomClaimProblems(atom(), [update], 'feed.xml'), []);
   assert.ok(atomClaimProblems(atom({ summary: undefined }), [update], 'feed.xml').some(p => p.includes('full source summary')));
@@ -73,6 +81,7 @@ test('the publication scan covers nested pages and feeds and fails closed on mis
     const dist = join(root, 'dist'); mkdirSync(join(dist, 'data'), { recursive: true }); mkdirSync(join(dist, 'labs', 'example'), { recursive: true });
     assert.ok(checkPublicationClaims({ dist, expectedUpdates: [] }).length);
     writeFileSync(join(dist, 'data', 'updates.json'), JSON.stringify(feed([update])));
+    writeFileSync(join(dist, 'data', 'index.json'), JSON.stringify([findItem]));
     writeFileSync(join(dist, 'index.html'), '<p>Source records are available.</p>' + boundary());
     writeFileSync(join(dist, 'labs', 'example', 'index.html'), '<p>Verified answers.</p>' + boundary('../../'));
     writeFileSync(join(dist, 'feed.xml'), atom({ summary: 'Measured on fixed fixtures.' }));
@@ -102,6 +111,7 @@ test('renaming an Atom feed cannot bypass claim or full-summary checks; sitemap 
   try {
     mkdirSync(join(root, 'data')); mkdirSync(join(root, 'labs'));
     writeFileSync(join(root, 'data/updates.json'), JSON.stringify(feed([update])));
+    writeFileSync(join(root, 'data/index.json'), JSON.stringify([findItem]));
     writeFileSync(join(root, 'sitemap.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>');
     writeFileSync(join(root, 'updates.xml'), atom({ summary: 'Measured on fixed fixtures.' }));
     writeFileSync(join(root, 'labs/progress.atom'), atom({ summary: 'Verified answers.' }));

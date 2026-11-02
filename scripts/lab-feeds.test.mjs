@@ -35,6 +35,7 @@ test('the published feeds: the site feed and Lab 05\'s, valid Atom, every id uni
   // Every update retains its full text, including limitations, when it leaves the page.
   for (const u of readUpdates()) assert.ok(site.includes(`<id>${updateEntryId(u)}</id>`), u.key);
   assert.ok(site.includes('<summary>'), 'scope travels in summaries');
+  assert.doesNotMatch(site, /<summary>[^<]*(?:cents|\$)/i, 'the published feed does not expose unreviewed money figures');
   // Every lab with runs gets a feed, and no lab without runs does: it would have no date of its own.
   const withRuns = readLabRuns().filter(l => l.runs.length).map(l => `labs/${l.tile.experiment}/feed.xml`);
   assert.ok(withRuns.includes('labs/rogue/feed.xml'));

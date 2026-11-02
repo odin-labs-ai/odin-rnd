@@ -87,6 +87,29 @@ export function updateClaimProblems(feed, expected) {
   return problems;
 }
 
+/** Find summaries are published previews and must retain each update's limiting text. */
+export function indexClaimProblems(index, updates) {
+  if (!Array.isArray(index)) return ['data/index.json: expected an array of Find items'];
+  const problems = [];
+  const byId = new Map(updates.map(u => [`update-${u.key}`, u]));
+  const seen = new Set();
+  for (const item of index) {
+    if (!item || typeof item !== 'object') {
+      problems.push('data/index.json: invalid Find item');
+      continue;
+    }
+    for (const field of ['title', 'summary']) problems.push(...claimTextProblems(item[field] ?? '', `data/index.json: ${item.id ?? '?'}: ${field}`));
+    if (item.type !== 'update') continue;
+    if (seen.has(item.id)) problems.push(`data/index.json: duplicate update ${item.id}`);
+    seen.add(item.id);
+    const source = byId.get(item.id);
+    if (!source) problems.push(`data/index.json: ${item.id}: no source update`);
+    else if (item.title !== source.title || item.summary !== source.text) problems.push(`data/index.json: ${item.id}: Find must retain the full source title, text and caveats`);
+  }
+  for (const id of byId.keys()) if (!seen.has(id)) problems.push(`data/index.json: missing Find update ${id}`);
+  return problems;
+}
+
 /** Atom copies an update's full caveated summary, never just the headline of an experiment. */
 export function atomClaimProblems(xml, updates, where) {
   const { tree, problems: parse } = parseXml(xml);
@@ -134,7 +157,7 @@ export function publicationBoundaryProblems(html, file) {
 
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
 
-/** Every built HTML page, Atom .xml/.atom feed and update entry is checked; raw research records are untouched. */
+/** Every built HTML page, Atom feed, progress update and Find preview is checked; raw research records are untouched. */
 export function checkPublicationClaims({ dist = 'dist', root = '.', expectedUpdates } = {}) {
   if (!existsSync(dist)) return [`${dist}: build the site before checking publication claims`];
   const problems = [];
@@ -147,6 +170,12 @@ export function checkPublicationClaims({ dist = 'dist', root = '.', expectedUpda
   try { expected = expectedUpdates ?? candidates(root); }
   catch (error) { return [`${feedPath}: cannot derive source candidates: ${error.message}`]; }
   problems.push(...updateClaimProblems(feed, expected));
+  const indexPath = join(dist, 'data/index.json');
+  if (!existsSync(indexPath)) problems.push(`${indexPath}: missing Find index`);
+  else {
+    try { problems.push(...indexClaimProblems(JSON.parse(readFileSync(indexPath, 'utf8')), feed.updates ?? [])); }
+    catch { problems.push(`${indexPath}: malformed Find index`); }
+  }
   for (const file of walk(dist)) {
     const where = file.slice(dist.length + 1);
     if (file.endsWith('.html')) {
