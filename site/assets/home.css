@@ -1,0 +1,23 @@
+/* The shaped home (scripts/home-shape.mjs, mission rnd-site-ux-nav-1101 wave 5): linked by the build from the built home only.
+   Each fold's summary is a flex row in the field notes' "earlier notes" type (small mono capitals, secondary colour, a
+   ruled top) with the orange + at its far end; every target is at least 44px tall; nothing moves. */
+.home-fold{border-top:1px solid var(--rule)}
+.home-fold>summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:12px 0;gap:20px;font:12px/1.8 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.home-fold>summary:hover{color:var(--brand)}
+.home-fold>summary>span{font:22px/1 var(--mono);color:var(--orange)}
+.home-fold[open]>summary{border-bottom:1px solid var(--rule);margin-bottom:28px}
+.agent-space>.home-fold,.research-note>.home-fold{align-self:start}
+.drawing-board>.home-fold{margin-top:36px;border-color:#527579}
+.drawing-board>.home-fold>summary{color:#c7d6d1}
+.drawing-board>.home-fold>summary:hover{color:#a7f3d0}
+.drawing-board>.home-fold[open]>summary{border-color:#527579}
+.drawing-board>.home-fold>.research-directions{margin-top:0}
+.home-further h2{font-size:clamp(30px,3vw,40px);margin-bottom:24px}
+.home-further ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 28px}
+.home-further li{border-top:1px solid var(--rule)}
+.home-further a{display:flex;flex-direction:column;gap:8px;min-height:44px;padding:18px 0 22px;text-decoration:none}
+.home-further-label{font:600 22px/1.2 var(--display);color:var(--brand)}
+.home-further-text{font-size:14px;line-height:1.55;color:var(--steel)}
+.home-further a:hover .home-further-label{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}
+@media(max-width:1100px){.home-further ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.home-further ul{grid-template-columns:minmax(0,1fr)}.home-further a{padding:14px 0 16px}.home-further-label{font-size:20px}.home-fold>summary{font-size:12px}}
