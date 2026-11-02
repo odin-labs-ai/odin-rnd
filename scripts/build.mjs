@@ -191,11 +191,19 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   // both fail closed), before Find and the chrome, so the Find link lands last in the canonical nav.
   const { renderSectionPages } = await import('./site-sections.mjs');
   const { normaliseHeaders } = await import('./site-header.mjs');
+  // Wave 4: a readable page for each experiment whose ledger row links a raw JSON record, before the index, which points
+  // those items at it (scripts/site-records.mjs; fails closed).
+  const { renderRecordPages } = await import('./site-records.mjs');
+  renderRecordPages({ root: '.', distDir: 'dist' });
   const items = loadIndex({ root: '.', dist: 'dist' });
   renderSectionPages({ distDir: 'dist', items });
   normaliseHeaders({ distDir: 'dist' });
   placeFind({ distDir: 'dist', items, topics: JSON.parse(readFileSync(TOPICS_PATH, 'utf8')) });
   injectChrome({ distDir: 'dist', items });
+  // Wave 4: "On this page" on long field notes and lab pages, after the chrome so it sees the breadcrumbs
+  // (scripts/site-toc.mjs; never on a number-provenance page).
+  const { addTocs } = await import('./site-toc.mjs');
+  addTocs({ distDir: 'dist' });
 }
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
 // Every page loads the collector once. The note generators already put it in their <head>; adding a second
