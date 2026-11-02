@@ -1,0 +1,142 @@
+{
+ "format": "odin-lab-progress",
+ "version": 1,
+ "lab": "agent-space",
+ "engineMain": {
+  "main": "fe8a20807e41af0183a0e33be88721be1df913bf",
+  "how": "git merge-base --is-ancestor of each cited commit against the fetched private main head; exit 0 means the commit is part of main",
+  "checked": "2026-10-28",
+  "commits": [
+   "d18c8237d9df7f825ba0e2ac1003558258b07647",
+   "060efb7e83f5a1f267703307197126905f1a44de"
+  ]
+ },
+ "hero": {
+  "id": "hq-on-duty",
+  "title": "The HQ on duty",
+  "line": "The Odin Labs HQ at dawn, the Engineering floor with one desk per lane, a review that glows until a person looks, the trust wall, and the outbox that waits for the founder’s click.",
+  "real": "Each shot is labelled in the frame: REAL shots are captures of the running campus, RENDER shots are Blender renders of the same released art.",
+  "sound": "a synthetic voice, no music",
+  "src": "assets/labs/agent-space/progress/hq-on-duty.webm",
+  "poster": "assets/labs/agent-space/progress/hq-on-duty-poster.jpg",
+  "mime": "video/webm;codecs=vp9,opus",
+  "width": 1280,
+  "height": 720,
+  "bytes": 5210824,
+  "seconds": 44,
+  "sha256": {
+   "src": "352d933d6019b8d2df7c2fad8c6c9a2d125c8a4718cc49482788556647a65931",
+   "poster": "ec369b498f01c54f1cb9f5c600cbd411b519ac60aa98a8f3cc1d45ac8c296194"
+  },
+  "source": {
+   "commit": "d18c8237d9df7f825ba0e2ac1003558258b07647",
+   "made": "cut from a published release",
+   "note": "Cut from the campus trailer v1.1, as released and pinned by its manifest, and re-encoded to 720p so it fits the page.",
+   "originalSha256": "10fd4ac5426ebfcab860f6875a2bd52425dc6dd85801110cf67c6c1a3710151c",
+   "originalBytes": 48787468,
+   "reencoded": true,
+   "kept": [
+    {
+     "from": 0,
+     "to": 23.95
+    },
+    {
+     "from": 34.45,
+     "to": 54.8
+    }
+   ],
+   "dropped": "Left out of the original 78.5 s: a shot showing internal lane names (24 to 34 s), a rehearsal standup shot of a synthetic tenant (55 to 61 s), and the crowd, dusk and closing shots after it."
+  },
+  "screening": {
+   "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and hashed, viewed by an AI agent (the worker), not by a human",
+   "ocr": "Every frame at 2 per second (89 frames) and the poster were read for text and searched for file paths, addresses, ports, host and user names, machine details and private names: none found. The only text is the film’s own captions and its RENDER and REAL labels.",
+   "at": "2026-10-28",
+   "srcSha256": "352d933d6019b8d2df7c2fad8c6c9a2d125c8a4718cc49482788556647a65931",
+   "frames": [
+    {
+     "t": 0,
+     "rgb24Sha256": "fe65a70b6a45606feefe3b38ec00e4807fdb18eac087dde0d28068d7afd756bb"
+    },
+    {
+     "t": 5,
+     "rgb24Sha256": "f5f1db162494838748988f7fd967627830c286044932c58e122026310057a665"
+    },
+    {
+     "t": 10,
+     "rgb24Sha256": "d3f434e4b8787aa52c202ce889250469b6a27537dc904e8c4f3b0940a47161c5"
+    },
+    {
+     "t": 15,
+     "rgb24Sha256": "a64900c2532593ca3980b66e877e6bc4a43946b88480bb292b095fed2c488a05"
+    },
+    {
+     "t": 20,
+     "rgb24Sha256": "192598c9316c03e085da052fc8b7c841f8810e9348b60583d1d8b72a757f9b4d"
+    },
+    {
+     "t": 25,
+     "rgb24Sha256": "89cc396a3b07000abc6b623bf58f4c30522375f628303fcb2d21986d3550a8f2"
+    },
+    {
+     "t": 30,
+     "rgb24Sha256": "e5c28da192123c8b7feafda3bf6b2caee653a62f6d6f1b358c97d49f75704379"
+    },
+    {
+     "t": 35,
+     "rgb24Sha256": "9bbe59290c121cc0455056a54e6cfa8b4c33570287e3c0ebeded6e2bc19580d1"
+    },
+    {
+     "t": 40,
+     "rgb24Sha256": "f4d9db886ee17b13aa539db55cb30c2da7d07183ef17ff023ad239767a5f8648"
+    }
+   ],
+   "checked": [
+    "no file path",
+    "no local or network address",
+    "no machine details",
+    "no private name"
+   ],
+   "result": "pass"
+  }
+ },
+ "steps": [
+  {
+   "kind": "film-ref",
+   "label": "Where it started",
+   "when": "2026-10-25",
+   "film": "agent-space-30s",
+   "line": "The first build: simple shapes in a small 3D world, real answers with a proof card each."
+  },
+  {
+   "kind": "still",
+   "label": "The hires HQ",
+   "when": "2026-10-26",
+   "line": "The Engineering hall rebuilt in high resolution: timber fins, a glass front, a desk per lane inside and skylights on the roof.",
+   "src": "assets/labs/agent-space/progress/hq-engineering-hall.jpg",
+   "alt": "The Engineering hall of the Odin Labs HQ, rendered: the building from outside, its desk floor inside and its roof from above.",
+   "width": 1600,
+   "height": 900,
+   "bytes": 145265,
+   "sha256": "400885105ac68f89ca4d99eb3a88e4728438d16e325b3e1afbe0812223e2839c",
+   "source": {
+    "commit": "060efb7e83f5a1f267703307197126905f1a44de",
+    "note": "The review render of the Engineering hall from the hires HQ set v2.1, as released and pinned by its manifest, scaled down to fit the page.",
+    "originalSha256": "a5f61b91ade7fd28ce1214a94771d6d96774f341c114e6192253e86dae5c8822",
+    "originalBytes": 2283709
+   },
+   "screening": {
+    "method": "viewed whole by an AI agent (the worker), not by a human",
+    "ocr": "Read for text and searched for file paths, addresses, ports, host and user names, machine details and private names: none found; the render carries no text.",
+    "at": "2026-10-28",
+    "srcSha256": "400885105ac68f89ca4d99eb3a88e4728438d16e325b3e1afbe0812223e2839c",
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name"
+    ],
+    "result": "pass"
+   }
+  }
+ ]
+}

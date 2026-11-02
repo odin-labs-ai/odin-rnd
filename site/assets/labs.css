@@ -3,7 +3,7 @@
 .lab-hero{align-items:center}
 .lab-hero .technical{display:block;color:var(--steel);margin-bottom:18px}
 .lab-hero-media{margin:0}
-.lab-hero-media img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#000}
+.lab-hero-media img,.lab-hero-media video{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#000}
 .lab-hero-media figcaption,.lab-dispatch-media figcaption{margin-top:10px;font-size:12px;color:var(--steel)}
 .lab-ask-note{margin-top:14px;font-size:13px;color:var(--steel);max-width:52ch}
 .lab-steps{margin:12px 0 0;padding-left:1.3em}
@@ -47,6 +47,12 @@
 .lab-film h3{margin-top:14px;font-size:20px}
 .lab-film p{margin-top:8px;line-height:1.6}
 .lab-film-meta,.lab-film-source,.lab-film-real{font-size:13px;color:var(--steel)}
+.lab-progress{list-style:none;padding:0}
+.lab-progress-step>.technical{display:block;margin-bottom:10px}
+.lab-progress-step img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--rule);background:#000}
+.lab-film video.lab-progress-wide{aspect-ratio:auto}
+.lab-progress-record{margin-top:28px;max-width:72ch}
+.lab-progress-record p{margin-top:8px;line-height:1.6}
 .lab-telemetry-note{max-width:70ch;color:var(--steel);line-height:1.6}
 .lab-telemetry-note .technical{margin-right:8px;color:var(--paper)}
 .lab-panels{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:24px}
