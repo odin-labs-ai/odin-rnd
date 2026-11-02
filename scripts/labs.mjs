@@ -143,7 +143,7 @@ function dispatchCards(dispatch, level, proofs = false) {
 
 function dispatchBlock(dispatch, up, latest, proofs = false) {
   const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded live, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */

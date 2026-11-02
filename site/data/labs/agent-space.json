@@ -4,7 +4,7 @@
  "slug": "agent-space",
  "label": "Lab 01",
  "title": "The agent space",
- "oneLine": "A small 3D world where a company's agents work in the open. You send a question, they answer it on camera, and every answer comes with a card that says where it came from.",
+ "oneLine": "In recorded sessions, agents appear in a small 3D world and answer selected questions on camera. Published source cards identify what an answer cited; they do not establish correctness.",
  "whatItIs": [
   "Most AI hides behind a chat box. In the agent space, each agent has its own spot in a small 3D world: a guide, a knowledge agent who reads, a support agent at the help desk.",
   "You ask a question. In the next recorded session, the agents answer it. Each answer appears with a card that says where it came from: something the agent can see around it, a page it has read, or a tool it used."

@@ -82,7 +82,7 @@ const asked = q => `Asked ${q.to}${q.followUp ? ', as a follow-up' : ''}`;
 function linkedin(dispatch, url) {
   const [first] = dispatch.questions;
   return [`<!-- ${BANNER} Attach the first still of this session from the lab page. -->`, '',
-    `A session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')}, answered live.`, '',
+    `A recorded session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')} answered on camera.`, '',
     `${asked(first)}: ${quoted(first.text)}`, '',
     first.answer, '',
     ...(first.why ? [`Why: ${first.why}`, ''] : []),
@@ -101,7 +101,7 @@ export function xThread(dispatch, url) {
   const shown = dispatch.questions.slice(0, 4);
   const total = shown.length + 2;
   return [
-    `1/${total} A session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')}, answered live. Every answer comes with a card that says where it came from.`,
+    `1/${total} A recorded agent-space session, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')} answered on camera. Published cards identify cited sources, not answer correctness.`,
     ...shown.map((q, i) => xPart(`${i + 2}/${total}`, q)),
     `${total}/${total} ${SOURCE_BOUNDARY}\nThe recording, every question and every card: ${url}`,
   ];
@@ -117,7 +117,7 @@ function reddit(dispatch, url) {
   return [`<!-- ${BANNER} Before posting in a subreddit, read its rules on self-promotion and links to your own work; many allow it only in a set thread, or not at all. Post where it is welcome, and only there. -->`, '',
     `## Title`, '', `${asked(first)}: ${quoted(first.text)}`, '',
     `## Body`, '',
-    `A session in the agent space, recorded live on ${longDate(dispatch.date)}. ${asked(first)}: ${quoted(first.text)}`, '',
+    `An agent-space session recorded on ${longDate(dispatch.date)}. ${asked(first)}: ${quoted(first.text)}`, '',
     quote(first.answer), '',
     ...(first.why ? [`Why: ${first.why}`, ''] : []),
     `Where it came from: ${sourceKind(first.source)}.`, '',
@@ -128,7 +128,7 @@ function githubDiscussion(dispatch, url) {
   return [`<!-- ${BANNER} For the repository's Discussions, in the category for show and tell. -->`, '',
     `## Title`, '', `The agent space, session of ${longDate(dispatch.date)}`, '',
     `## Body`, '',
-    `${plural(dispatch.questions.length, 'question')}, answered live in the agent space. The recording and every card: ${url}`, '', SOURCE_BOUNDARY, '',
+    `${plural(dispatch.questions.length, 'question')} answered in a recorded agent-space session. The recording and published source cards: ${url}`, '', SOURCE_BOUNDARY, '',
     ...dispatch.questions.flatMap(q => [`### ${quoted(q.text)}`, '', `${asked(q)}.`, '', quote(q.answer), '',
       ...(q.why ? [`**Why:** ${q.why}`, ''] : []), `**Where it came from:** ${sourceKind(q.source)} (evidence \`${q.evidence}\`)`, '']),
     ''].join('\n');
