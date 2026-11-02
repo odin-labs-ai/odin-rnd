@@ -206,6 +206,12 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
+  // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
+  // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files. Checked
+  // before Lab 01's progress below so a fixture missing both files is refused with its own Lab 02 test's error, not
+  // shadowed by Lab 01's (both are independent required-file gates; their order has no effect on the real site, where
+  // neither is ever missing).
+  if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
   // Lab 01's progress (scripts/lab-progress.mjs): the hero film and "How far it came". Required on the published site, as
   // Lab 05's record is; a fixture without it keeps the earlier still at the top and says the steps are not published.
   if (requireBench && !existsSync(join(root, PROGRESS_FILE))) throw new Error(`Lab 01's progress is required on the published site: ${PROGRESS_FILE} is missing`);
@@ -214,9 +220,6 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
   const delivery = readDelivery(root);
   // The story page's template ships only with its record: without one, its markers would reach dist/ unfilled.
   if (!story && existsSync(join(root, STORY_PAGE))) throw new Error(`${STORY_PAGE}: the story page ships without its record (data/labs/agent-space/milestones.json)`);
-  // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
-  // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
-  if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
   // The proof-card explorer: required on the published site (scripts/lab-proofs.mjs); a fixture renders it only when it
   // carries the template. Its page is checked field by field against the dispatches before it is returned.
   if (resolve(root) === REPO_SITE && !existsSync(join(root, PROOFS_PAGE))) throw new Error(`${PROOFS_PAGE}: the proof-card explorer is required on the published site`);
