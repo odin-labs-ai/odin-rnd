@@ -33,3 +33,48 @@
 /* The page's own section in the header nav (aria-current="page", scripts/site-header.mjs; Find on /find/): a thin brand
    underline in the colour of the rest of the nav, the same underline the breadcrumbs and related links use on hover. */
 .site-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:1px;text-underline-offset:6px}
+/* "On this page" (scripts/site-toc.mjs, wave 4): on long notes and lab pages only. The nav holds the list twice; one
+   shows. Narrow screens: a closed fold under the page's header. From 1100px: a plain list; on a field note it sits in
+   the right margin beside the 740px text and stays in view while the note scrolls (the note's grid applies only to a
+   page that has this nav, through :has; without :has support the plain list simply sits above the text). */
+.toc{font-size:15px;line-height:1.45}
+.toc-list{list-style:none;margin:0;padding:0}
+.toc-list a{display:block;padding:8px 0;color:var(--brand);text-decoration:none}
+.toc-list a:hover{color:var(--primary-hover);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.toc-title,.toc-fold>summary{font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.toc-fold{border-block:1px solid var(--rule)}
+.toc-fold>summary{padding:10px 0;min-height:44px;box-sizing:border-box}
+.toc-note .toc-fold{border-top:0}
+.toc-fold>summary:hover{color:var(--paper)}
+.toc-fold[open]>.toc-list{padding-bottom:12px}
+.toc-fold .toc-list a{padding:10px 0}
+.toc-rail{display:none}
+.toc-note{max-width:740px;margin:32px auto 0}
+.toc-lab{margin-top:48px}
+@media(max-width:760px){.toc-note{margin-top:24px}.toc-lab{margin-top:32px}}
+@media(min-width:1100px){
+  .toc-fold{display:none}
+  .toc-rail{display:block}
+  .toc-title{margin-bottom:6px}
+  .toc-lab .toc-rail{border-block:1px solid var(--rule);padding:14px 0}
+  .toc-lab .toc-list{columns:3;column-gap:40px}
+  .toc-lab .toc-list li{break-inside:avoid}
+  .article-shell:has(>.toc-note){display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,250px);column-gap:56px;grid-auto-flow:row dense;align-items:start}
+  .article-shell:has(>.toc-note)>*{grid-column:1/-1}
+  .article-shell:has(>.toc-note)>.toc-note{grid-column:2;align-self:stretch;max-width:none;margin:45px 0 0}
+  .article-shell:has(>.toc-note)>.article-body{grid-column:1;width:100%}
+  .toc-note .toc-rail{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;border-left:1px solid var(--rule);padding-left:20px}
+  .toc-note .toc-list a{padding:6px 0;font-size:14px}
+}
+/* A record page (scripts/site-records.mjs, wave 4): fields of a published record, as written, then the file. */
+.record-body h2{font-size:28px;margin:0 0 18px}
+.record-body h2+*{margin-bottom:48px}
+.record-fields{margin:0;max-width:820px;border-top:1px solid var(--rule)}
+.record-field{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:4px 28px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.record-field dt{font:12px/1.8 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.record-field dd{margin:0;line-height:1.6;max-width:68ch}
+.record-links{list-style:none;margin:0 0 16px;padding:0}
+.record-links a{display:inline-block;padding:10px 0;color:var(--brand)}
+.record-sha{font-size:14px;color:var(--steel)}
+.record-sha code{overflow-wrap:anywhere}
+@media(max-width:760px){.record-field{grid-template-columns:1fr}}

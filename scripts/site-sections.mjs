@@ -143,9 +143,9 @@ export function renderJournalIndex(items) {
   if (!notes.length) throw new Error('Section pages: the site index has no field notes');
   const rows = notes.map(n => ({ href: `../${n.href}`, date: n.date, kind: noteKind(n, items), title: n.title, summary: n.summary, where: n.id }));
   return sectionPage({
-    path: JOURNAL_PAGE, current: 'notes', crumb: 'Field notes', title: 'Field notes', heading: 'Field notes, <br>newest first.',
-    description: 'Every Odin R&D field note, newest first: what we set out to test, what happened, and what stays open.',
-    lead: 'Every note we have written, newest first. Each says what we set out to test, what actually happened and what is still open.',
+    path: JOURNAL_PAGE, current: 'notes', crumb: 'Field notes', title: 'Field notes', heading: 'Field notes.',
+    description: 'Odin R&D field notes: what we set out to test, what happened, and what is still open.',
+    lead: 'A field note records one experiment or change: what we set out to test, what actually happened and what is still open. The latest is at the top.',
     actions: '<a class="button button-primary" href="../find/">Search everything</a><a href="../updates/">All updates</a><a href="../projects/">The tools</a>',
     listLabel: 'All field notes', list: byMonth(rows),
   });
@@ -158,8 +158,8 @@ export function renderProjectsIndex(items) {
   const rows = tools.map(t => ({ href: `../${t.href}`, date: t.date, kind: 'Tool', title: t.title, summary: t.summary, where: t.id }));
   return sectionPage({
     path: PROJECTS_PAGE, current: null, crumb: 'Tools', title: 'Tools', heading: 'Tools you <br>can use.',
-    description: 'The Odin R&D tools with a page of their own, newest first, each with what it does and how it was checked.',
-    lead: 'The tools with a page of their own on this site, newest first. More, including the engine itself, are in the tools list on the home page.',
+    description: 'The Odin R&D tools with a page of their own, each with what it does and how it was checked.',
+    lead: 'The tools with a page of their own on this site, the latest at the top. More, including the engine itself, are in the tools list on the home page.',
     actions: '<a class="button button-primary" href="../#projects">The tools list on the home page</a><a href="../journal/">Field notes</a><a href="../find/">Search everything</a>',
     listLabel: 'All tools', list: `<ol class="update-list">${rows.map(row).join('')}</ol>`,
   });
@@ -187,7 +187,7 @@ export function addAllExperiments(html, items, relPrefix, label = EXPERIMENTS_PA
   const experiments = ofType(items, 'experiment').sort((a, b) => b.id.localeCompare(a.id));
   if (!experiments.length) throw new Error('Section pages: the site index has no experiments');
   const rows = experiments.map(e => row({ href: `${relPrefix}${e.href}`, date: e.date, kind: experimentKind(e), title: e.title, summary: e.summary, where: e.id })).join('');
-  const section = `<section class="company-section company-width updates-all" id="${ALL_EXPERIMENTS_ID}" aria-labelledby="${ALL_EXPERIMENTS_ID}-title"><h2 id="${ALL_EXPERIMENTS_ID}-title">All experiments</h2><p class="company-lead">Every experiment on this site, the newest first: its question, where it stands and the page that records it.</p><ol class="update-list">${rows}</ol></section>\n  `;
+  const section = `<section class="company-section company-width updates-all" id="${ALL_EXPERIMENTS_ID}" aria-labelledby="${ALL_EXPERIMENTS_ID}-title"><h2 id="${ALL_EXPERIMENTS_ID}-title">All experiments</h2><p class="company-lead">The experiments on this site by number, the latest at the top, each with its question, where it stands and the page that records it.</p><ol class="update-list">${rows}</ol></section>\n  `;
   return html.replace('</main>', `${section}</main>`);
 }
 
