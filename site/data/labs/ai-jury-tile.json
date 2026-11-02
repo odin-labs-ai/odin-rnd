@@ -5,12 +5,12 @@
  "label": "Lab 14",
  "title": "Can an AI jury judge how a room looks?",
  "question": "Can a jury of AI models, scoring pictures blind, tell how good a room looks, and how much does its score move when nothing changed?",
- "how": "Two blind rounds of the same rubric, with a calibration pair that takes a juror off when it cannot tell a good picture from a ruined one. Rooms that were not reworked show the jury's noise. Numbers only, no pictures.",
+ "how": "Two blind rounds with the same scoring sheet. A test pair, one good picture and one ruined, takes a juror off the jury when it cannot tell them apart. Rooms that were not reworked show how much the scores wobble on their own. Numbers only, no pictures.",
  "experiment": "ai-jury",
- "status": "Judged by AI models, not people · cited by hash",
+ "status": "Judged by AI models, not people",
  "record": { "href": "data/labs/ai-jury/record.json", "pin": "data/labs/ai-jury/record.sha256" },
  "links": [
-  { "label": "Both rounds, the gate and the noise", "href": "labs/ai-jury/index.html" },
-  { "label": "The record, pinned by its hash", "href": "data/labs/ai-jury/record.json" }
+  { "label": "Both rounds, the juror test and the wobble", "href": "labs/ai-jury/index.html" },
+  { "label": "The full record, with a published checksum", "href": "data/labs/ai-jury/record.json" }
  ]
 }

@@ -4,21 +4,21 @@
  "kind": "results",
  "label": "Lab 07",
  "title": "Can data trick a click?",
- "question": "When a URL comes from data, can it run a script or open a lookalike host in the visitor's browser?",
- "how": "A real defect on the main branch, fixed by one rule. Every poisoned URL and opener line of the rule's test is put through it, and the test is run.",
+ "question": "When a web address comes from data, can it run a script or open a lookalike site in the visitor's browser?",
+ "how": "A real bug in our main code, fixed by one rule. Each booby-trapped address and each link-opening line from the rule's test goes through the rule, and the test is run.",
  "experiment": "link-safety",
- "status": "Real fix, fixtures we wrote · record cited by hash",
+ "status": "A real fix, tested on examples we made up",
  "record": {
   "href": "data/labs/link-safety/record.json",
   "pin": "data/labs/link-safety/record.sha256"
  },
  "links": [
   {
-   "label": "Every fixture, through the rule",
+   "label": "Each made-up example, through the rule",
    "href": "labs/link-safety/index.html"
   },
   {
-   "label": "The record, pinned by its hash",
+   "label": "The full record, with a published checksum",
    "href": "data/labs/link-safety/record.json"
   }
  ]
