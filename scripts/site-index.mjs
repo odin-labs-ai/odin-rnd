@@ -185,6 +185,7 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
     if (!stage) throw new Error(`Site index: update ${u.key} has kind "${u.kind}", which maps to no index stage`);
     // A results update carries its experiment's curated outcome; nothing else does.
     const outcome = stage === 'results' && ids.length === 1 ? outcomeOf.get(ids[0]) : undefined;
+    // Find is a sharing surface: cutting an update can remove its limiting sentence.
     items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
   }
   for (const tool of tools) {

@@ -97,6 +97,14 @@ test('buildIndex places every source item once, with its topics, stage, outcome 
   assert.deepEqual(dates, [...dates].sort().reverse(), 'newest first');
 });
 
+test('Find retains the limitation at the end of a long update', () => {
+  const f = fixture();
+  const full = 'A bounded finding with context. '.repeat(25) + 'The sample does not establish a broader result.';
+  f.updates[0].text = full;
+  const summary = buildIndex(f).find(item => item.id === 'update-exp-001-002-recorded').summary;
+  assert.equal(summary, full);
+});
+
 test('buildIndex refuses what it cannot place', () => {
   const broken = (edit, re) => { const f = fixture(); edit(f); assert.throws(() => buildIndex(f), re); };
   broken(f => { delete f.topics.notes.why; }, /journal\/why\.html has no topics/);

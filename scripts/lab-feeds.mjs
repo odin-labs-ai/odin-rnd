@@ -7,8 +7,8 @@
 //
 // An entry's id never changes once published: an update by its frozen key, a run by its lab, machine class, ranAt and
 // full recordHash (a tag URI). A feed's <updated> is its newest entry's, so a rebuild with nothing new writes the same
-// bytes; no wall clock is read. An update's entry carries its kind, experiment, title and link, not its text: the
-// text stays on the updates page, and the feed passes the kit's leak screen like a lab page.
+// bytes; no wall clock is read. An update's entry carries its kind, experiment, title, link and full text: the
+// full text travels with the entry so its limitations survive sharing; the feed still passes the leak screen.
 //
 // feedProblems() is the check, run on every feed the build writes (the build fails on a problem) and in pnpm test: the
 // XML is well-formed (a strict reader for the subset these feeds use: elements, attributes in double quotes, text,
@@ -36,7 +36,7 @@ export function readUpdates(root = 'site') {
   feed.updates.forEach((u, i) => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(u.key ?? '')) problems.push(`${UPDATES_FILE}#/updates/${i}/key: not a plain key`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(u.date ?? '') || !realInstant(`${u.date}T00:00:00Z`)) problems.push(`${UPDATES_FILE}#/updates/${i}/date: not a real date`);
-    for (const k of ['title', 'kind', 'href']) if (typeof u[k] !== 'string' || !u[k]) problems.push(`${UPDATES_FILE}#/updates/${i}/${k}: missing`);
+    for (const k of ['title', 'kind', 'href', 'text']) if (typeof u[k] !== 'string' || !u[k]) problems.push(`${UPDATES_FILE}#/updates/${i}/${k}: missing`);
     if (typeof u.href === 'string' && (/^[a-z]+:/i.test(u.href) || /(^|\/)\.\.?(\/|$)/.test(u.href))) problems.push(`${UPDATES_FILE}#/updates/${i}/href: not a path of this site`);
   });
   if (new Set(feed.updates.map(u => u.key)).size !== feed.updates.length) problems.push(`${UPDATES_FILE}: a key appears twice`);
@@ -46,13 +46,20 @@ export function readUpdates(root = 'site') {
 
 function runEntry(tile, run, anchor) {
   const title = `${tile.label}: a run on ${run.machineClass}, record ${run.recordHash.slice(0, 12)}, ${run.result.verdict}`;
-  const summary = `${tile.title} The ${run.runner} runner, machine class ${run.machineClass}, ran commit ${run.commit.sha.slice(0, 8)}; record hash ${run.recordHash}; the check printed ${run.result.verdict} with ${run.result.breaches} breaches.`;
+  const summary = `${tile.title} The ${run.runner} runner, machine class ${run.machineClass}, ran commit ${run.commit.sha.slice(0, 8)}; record hash ${run.recordHash}; the check printed ${run.result.verdict} with ${run.result.breaches} breaches. This is a check of the committed record; it does not establish a new experiment or independent validation.`;
   return { id: runEntryId(run), updated: run.ranAt, title, href: `${SITE_URL}labs/runs/#${anchor(run)}`, summary };
+}
+
+// Keep the full qualified statement when the feed's existing public screen accepts it. Otherwise announce
+// only the publication: never cut a claim away from its caveat or relax the screen for a summary.
+export function updateSummary(update) {
+  if (pageLeaks(update.text, []).length) return 'Read the full record, conditions and limitations at the linked page. This entry announces a publication; it makes no result claim.';
+  return update.text;
 }
 
 function updateEntry(u) {
   const title = `${u.kind}${u.experiment ? ` · ${u.experiment}` : ''}: ${u.title}`;
-  return { id: updateEntryId(u), updated: `${u.date}T00:00:00Z`, title, href: `${SITE_URL}${u.href}` };
+  return { id: updateEntryId(u), updated: `${u.date}T00:00:00Z`, title, href: `${SITE_URL}${u.href}`, summary: updateSummary(u) };
 }
 
 const newestFirst = (a, b) => b.updated.localeCompare(a.updated) || a.id.localeCompare(b.id);

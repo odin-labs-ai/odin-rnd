@@ -275,7 +275,13 @@ test('refute r6 N2: each call must match the scored run in decision, harness fai
 
 test('refute r6 N1: no page renders the text undefined, NaN or a bare null (the new note, home, the EXP 005 note, every built page)', { timeout: 600_000 }, () => {
   // Prose that names null on purpose, verbatim: each is a sentence about a value, not a value rendered as text.
-  const PROSE_NULL = ['it is null only while no baseline is recorded', 'stay null, as init writes them', 'costPer1kUsd is null for Laya'];
+  const PROSE_NULL = [
+    'it is null only while no baseline is recorded',
+    'stay null, as init writes them',
+    'costPer1kUsd is null for Laya',
+    // This historical amendment names the malformed reply that the runner rejected.
+    'A malformed verify reply such as { keep :[null]} passed the list check',
+  ];
   const text = html => stripTags(stripBlocks(html, ['script', 'style'], ''), '\n').replace(/&[a-z#0-9]+;/gi, ' ');
   const pages = ['site/journal/nina-reviews-the-change.html', 'site/index.html', 'site/journal/jev-as-a-fast-gate.html'].map(f => [f, readFileSync(f, 'utf8')]);
   const dist = join(builtCopy(), 'dist');

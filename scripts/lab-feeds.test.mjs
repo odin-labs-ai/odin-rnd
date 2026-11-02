@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkedFeeds, feedProblems, feedText, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId } from './lab-feeds.mjs';
+import { checkedFeeds, feedProblems, feedText, parseXml, readUpdates, renderFeed, renderFeeds, runEntryId, SITE_URL, updateEntryId, updateSummary } from './lab-feeds.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { recordHash } from './lab-record.mjs';
 import { BADGES, readLabRuns, runAnchor, runState, withLabRuns } from './lab-runs.mjs';
@@ -32,9 +32,10 @@ test('the published feeds: the site feed and Lab 05\'s, valid Atom, every id uni
   assert.equal(ids(site).length, 1 + readUpdates().length + readLabRuns().reduce((n, l) => n + l.runs.length, 0), 'the feed, every update and every run');
   assert.ok(site.includes(`<id>${runEntryId(golden)}</id>`));
   assert.ok(site.includes(`<link rel="alternate" type="text/html" href="${SITE_URL}labs/runs/#${runAnchor(golden)}"/>`));
-  // An update's entry carries its title and link, never its text.
+  // Every update retains its full text, including limitations, when it leaves the page.
   for (const u of readUpdates()) assert.ok(site.includes(`<id>${updateEntryId(u)}</id>`), u.key);
-  assert.doesNotMatch(site, /<summary>[^<]*(cents|\$)/);
+  assert.ok(site.includes('<summary>'), 'scope travels in summaries');
+  assert.doesNotMatch(site, /<summary>[^<]*(?:cents|\$)/i, 'the published feed does not expose unreviewed money figures');
   // Every lab with runs gets a feed, and no lab without runs does: it would have no date of its own.
   const withRuns = readLabRuns().filter(l => l.runs.length).map(l => `labs/${l.tile.experiment}/feed.xml`);
   assert.ok(withRuns.includes('labs/rogue/feed.xml'));
@@ -82,7 +83,8 @@ test('ids never move: the same records give the same bytes, and a new run or upd
   // The lab feed holds the updates of its experiment (source under data/<experiment>/), the site feed all of them.
   assert.ok(after['labs/rogue/feed.xml'].includes(updateEntryId(update)));
   assert.ok(!renderFeeds(lab([golden]), [{ ...update, source: 'data/other/results.json' }], { anchor: runAnchor })['labs/rogue/feed.xml'].includes(updateEntryId(update)));
-  assert.doesNotMatch(after['feed.xml'], /\$1\.20/, 'an update\'s text is not carried');
+  assert.ok(after['feed.xml'].includes(`<summary>${updateSummary(update)}</summary>`), 'unsafe summaries announce the publication without a partial claim');
+  assert.doesNotMatch(after['feed.xml'], /\$1\.20/, 'feed privacy floor stays intact');
 });
 
 test('a feed with no entry is never written', () => {
@@ -167,4 +169,23 @@ test('the leak screen reads a feed piece by piece: a hash glued to the next elem
   assert.notEqual(hidden, feeds['labs/rogue/feed.xml']);
   assert.doesNotMatch(hidden, /\/Users\//, 'the literal shape is not in the markup');
   assert.throws(() => checkedFeeds({ 'labs/rogue/feed.xml': hidden }, known), /a machine path \(attribute, decoded\)/);
+});
+
+
+test('feed excerpts cannot promote a limited result or a record check into fresh proof', () => {
+  const bounded = { ...update, text: 'The fixture passed. This is not a production result; independent validation remains open.' };
+  const feed = renderFeeds(lab([golden]), [bounded], { anchor: runAnchor })['feed.xml'];
+  assert.ok(feed.includes(`<summary>${bounded.text}</summary>`));
+  assert.match(feed, /does not establish a new experiment or independent validation/);
+  assert.equal((feed.match(/<entry>/g) || []).length, 2, 'qualifying existing entries adds no update spam');
+});
+
+
+test('screened summaries never publish only the favorable half of an update', () => {
+  const u = { ...update, text: 'It cost $1.20. This fixture does not establish production savings.' };
+  const text = updateSummary(u);
+  assert.match(text, /makes no result claim/);
+  assert.doesNotMatch(text, /It cost|savings/);
+  assert.equal(u.text, 'It cost $1.20. This fixture does not establish production savings.', 'source text is retained');
+  assert.deepEqual(pageLeaks(text), []);
 });
