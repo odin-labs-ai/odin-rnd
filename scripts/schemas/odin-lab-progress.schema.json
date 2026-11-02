@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "odin-lab-progress-v1",
- "title": "odin-lab-progress v1: how far Lab 01's agent space came (site/data/labs/agent-space/progress.json): the hero film and the steps from the first build to now. Unlike the films record (live sessions only), a film here may be a cut of a published cinematic: it says in one line what in it is rendered and what is captured, every file is pinned by its sha256, each source is a private commit checked as part of the engine's private main, and every film and still carries a screening record bound to its bytes.",
+ "title": "odin-lab-progress v1: how far Lab 01's agent space came (site/data/labs/agent-space/progress.json): the hero film and the steps from the first build to now. Unlike the films record (live sessions only), a film here may be a cut of a published cinematic: it says in one line what in it is rendered and what is captured, every file is pinned by its sha256, each source is a private commit the record lists as part of the engine's private main (the list is self-reported; nothing outside this record proves it), and every film and still carries a screening record bound to its bytes.",
  "type": "object",
  "required": [
   "format",

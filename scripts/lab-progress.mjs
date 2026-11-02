@@ -36,13 +36,14 @@ function commitProblems(commit, engineMain, at) {
 
 function filmProblems(film, engineMain, at, root) {
   // Every shown string is page text; paths, hashes and the commit are checked as pinned values below.
-  const { src, poster, sha256, source: { originalSha256, commit, kept, ...source }, screening: { srcSha256, frames, ...screening }, ...text } = film;
+  const { src, poster, sha256, source: { originalSha256, originalBytes, commit, kept, ...source }, screening: { srcSha256, frames, ...screening }, ...text } = film;
   const problems = screenTree({ ...text, source, screening }, at);
   problems.push(...screeningProblems(film, `${at}/screening`));
   problems.push(...pinned(src, `${at}/src`, { root, sha: sha256.src, bytes: film.bytes }));
   problems.push(...pinned(poster, `${at}/poster`, { root, sha: sha256.poster }));
   problems.push(...commitProblems(commit, engineMain, `${at}/source/commit`));
   if (film.source.reencoded === (originalSha256 === sha256.src)) problems.push(`${at}/source: reencoded must be true exactly when the film's bytes differ from the original's`);
+  if (film.source.reencoded === (originalBytes === film.bytes)) problems.push(`${at}/source: reencoded must be true exactly when the film's size differs from the original's`);
   for (const [i, span] of kept.entries()) {
     if (span.to <= span.from) problems.push(`${at}/source/kept/${i}: ${span.from} s to ${span.to} s is empty`);
     if (i && span.from < kept[i - 1].to) problems.push(`${at}/source/kept/${i}: starts before the span it follows ends`);
@@ -99,7 +100,7 @@ const duration = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).
 const engineCite = (commit, engineMain) => `In the engine's private repository: ${cite({ commit }, engineMain)}`;
 const video = (film, up, cls = '') => `<video${cls} controls preload="none" playsinline width="${film.width}" height="${film.height}" poster="${up}${escape(film.poster)}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video>`;
 const filmSourceLine = (film, engineMain) => `${escape(film.source.note)} ${engineCite(film.source.commit, engineMain)}`;
-const screened = film => `Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the progress record), viewed by an AI agent; every frame at 2 per second read for text.`;
+const screened = film => `Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the progress record). ${escape(film.screening.ocr)}`;
 
 /** The hero: Lab 01's top figure, the film with what is real in it and where it came from. */
 export function renderProgressHero(record, up = '../../') {

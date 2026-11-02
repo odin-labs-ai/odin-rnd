@@ -43,6 +43,11 @@ test('kept spans that do not add up to the film, or run backwards, are refused',
   assert.match(problems(back), /kept\/1: starts before the span it follows ends/);
 });
 
+test('reencoded must agree with BOTH the hash and the byte count differing from the original', () => {
+  const sizeOnly = clone(committed); sizeOnly.hero.source.originalBytes = sizeOnly.hero.bytes;
+  assert.match(problems(sizeOnly), /hero\/source: reencoded must be true exactly when the film's size differs from the original's/);
+});
+
 test('a screening record that does not cover the film, or did not pass, is refused', () => {
   const gap = clone(committed); gap.hero.screening.frames = gap.hero.screening.frames.slice(0, 3);
   assert.match(problems(gap), /hero\/screening\/frames: the last frame is at 10 s of a 44 s film/);
@@ -59,7 +64,7 @@ test('the first step is where the space started, and a step names only a film th
 
 test('page text is screened like a dispatch: a file path in a line is refused', () => {
   const path = clone(committed); path.hero.line = 'Rendered from /home/someone/films/cut.webm.';
-  assert.match(problems(path), /hero/);
+  assert.match(problems(path), /hero#\/line: a file path or file name/);
 });
 
 test('the hero says what in it is real and where it came from; the steps keep the first build first', () => {
