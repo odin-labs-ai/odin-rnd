@@ -29,6 +29,6 @@
   { "channel": "Reddit", "url": null },
   { "channel": "X", "url": null },
   { "channel": "GitHub", "url": "https://github.com/odin-labs-ai/odin-rnd" },
-  { "channel": "Instagram", "url": "https://www.instagram.com/odinlabsai/" }
+  { "channel": "Instagram", "url": null }
  ]
 }
