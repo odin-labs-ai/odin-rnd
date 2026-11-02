@@ -1,7 +1,8 @@
 /* The shaped home (scripts/home-shape.mjs, mission rnd-site-ux-nav-1101 wave 5): linked by the build from the built home only.
-   The folds use the field notes' "earlier notes" summary style; every target is at least 44px tall; nothing moves. */
+   Each fold's summary is a flex row in the field notes' "earlier notes" type (small mono capitals, secondary colour, a
+   ruled top) with the orange + at its far end; every target is at least 44px tall; nothing moves. */
 .home-fold{border-top:1px solid var(--rule)}
-.home-fold>summary{min-height:44px;padding:12px 0;gap:20px;font:12px/1.8 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.home-fold>summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:12px 0;gap:20px;font:12px/1.8 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
 .home-fold>summary:hover{color:var(--brand)}
 .home-fold>summary>span{font:22px/1 var(--mono);color:var(--orange)}
 .home-fold[open]>summary{border-bottom:1px solid var(--rule);margin-bottom:28px}

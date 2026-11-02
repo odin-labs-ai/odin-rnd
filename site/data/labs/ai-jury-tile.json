@@ -7,7 +7,7 @@
  "question": "Can a jury of AI models, scoring pictures blind, tell how good a room looks, and how much does its score move when nothing changed?",
  "how": "Two blind rounds with the same scoring sheet. A test pair, one good picture and one ruined, takes a juror off the jury when it cannot tell them apart. Rooms that were not reworked show how much the scores wobble on their own. Numbers only, no pictures.",
  "experiment": "ai-jury",
- "status": "Judged by AI models, not people",
+ "status": "Judged by AI models, not people · record checksum published",
  "record": { "href": "data/labs/ai-jury/record.json", "pin": "data/labs/ai-jury/record.sha256" },
  "links": [
   { "label": "Both rounds, the juror test and the wobble", "href": "labs/ai-jury/index.html" },

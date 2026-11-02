@@ -71,7 +71,7 @@ test('Lab 02 is a results lab: it links its page and its pinned record, says its
   assert.deepEqual(tileProblems(results), []);
   const tile = renderTile(results);
   assert.match(tile, /<span class="technical">LAB 02<\/span><h2 id="lab-tile-brain-bench">Every brain on the same tasks<\/h2>/);
-  assert.match(tile, /<p class="lab-tile-status">Results published · plans written in advance stay private\.<\/p>/);
+  assert.match(tile, /<p class="lab-tile-status">Results published · pre-run plans private, checksums public\.<\/p>/);
   assert.match(tile, /<a href="\.\.\/labs\/brain-bench\/index\.html">/);
   assert.match(tile, /<a href="\.\.\/data\/labs\/brain-bench\/results\.json">/);
   assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 02/g, ''), /\d/);

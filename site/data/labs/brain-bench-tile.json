@@ -7,7 +7,7 @@
  "question": "Can a small model on your own machine do real agent tasks as well as the cloud models?",
  "how": "Hand-written rules, small local models and cloud models play the same tasks, set up the same way each time. Before each run we write down what we expect; afterwards we count, and give each result its margin of error and its limits.",
  "experiment": "brain-bench",
- "status": "Results published · plans written in advance stay private",
+ "status": "Results published · pre-run plans private, checksums public",
  "record": { "href": "data/labs/brain-bench/results.json", "pin": "data/labs/brain-bench/results.sha256" },
  "links": [
   { "label": "The results and their limits", "href": "labs/brain-bench/index.html" },

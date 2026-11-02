@@ -5,9 +5,9 @@
  "label": "Lab 08",
  "title": "Can an agent fix a red build?",
  "question": "Given failing builds it has never seen, does the CI doctor, the agent space's build fixer, make a fix a reviewer would call real?",
- "how": "A set of failing builds kept apart and locked before the doctor ran. Each answer is judged by two separate AI reviewers, and we recount their saved verdicts.",
+ "how": "A set of failing builds kept apart and locked before the doctor ran. Each answer is judged by two separate AI reviewers, and we recount their verdicts saved in the repository.",
  "experiment": "red-build",
- "status": "A negative result, published as it came out",
+ "status": "A negative result · record published with its checksum",
  "record": {
   "href": "data/labs/red-build/record.json",
   "pin": "data/labs/red-build/record.sha256"

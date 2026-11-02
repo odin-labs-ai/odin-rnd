@@ -9,6 +9,7 @@ import { stripBlocks, stripTags } from './test-html-text.mjs';
 import { checkSite } from './number-provenance.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
+import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
 // The targets a link may reach inside a fold, each opened by site/assets/home-fold.mjs: the home's experiment list, which
 // the site index still links for an experiment whose record lives in another repository (scripts/site-index.mjs), and
@@ -86,7 +87,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
   assert.ok(links > 100, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
-  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold, and the opener opens them');
+  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
   for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
     assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
     const fold = home.indexOf('<details class="home-fold">', ids.get(id));
@@ -94,7 +95,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
 });
 
-test('the home a visitor sees without opening anything is short', () => {
+test('the home a visitor sees without opening anything is short: under the word bound and under a quarter of its words', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
   let visible = stripBlocks(main, ['script', 'style', 'svg']);
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
@@ -102,7 +103,7 @@ test('the home a visitor sees without opening anything is short', () => {
   const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
   const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
   assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
-  assert.ok(all > words * 3, `the folds keep the rest on the page (${all} words in all)`);
+  assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
 });
 
 test('the proof strip still passes the number-provenance check, and the new words are plain', () => {
@@ -113,4 +114,65 @@ test('the proof strip still passes the number-provenance check, and the new word
   assert.doesNotMatch(words, /\p{Nd}/u, 'no digit in the new words');
   assert.doesNotMatch(words, /\bevery\b/i);
   assert.deepEqual(jargonIn(readable(nav + summaries.join(' '))), []);
+});
+
+/** A minimal stand-in for the built home's DOM around `id`: the target and every <details> around it, outermost first,
+ *  each read from the real built HTML, with the tag and class the opener and this test look at. */
+function domAround(html, id) {
+  const at = html.indexOf(` id="${id}"`);
+  const chain = detailsRanges(html).filter(([a, b]) => a < at && at < b).sort((x, y) => x[0] - y[0])
+    .map(([a]) => ({ tag: 'details', cls: /^<details\b[^>]*\sclass="([^"]*)"/.exec(html.slice(a))?.[1] ?? '', open: /^<details\b[^>]*\sopen\b/.test(html.slice(a)) }));
+  let parent = null;
+  const nodes = [...chain, { tag: 'target' }].map(n => (parent = { ...n, parentElement: parent }));
+  for (const n of nodes) n.closest = function (sel) { for (let x = this; x; x = x.parentElement) if (x.tag === sel) return x; return null; };
+  const target = nodes.at(-1);
+  return { target, folds: nodes.slice(0, -1), document: { getElementById: want => (want === id && at >= 0 ? target : null) } };
+}
+
+test('the opener, run on the built home, opens every fold around each named target, and nothing around a visible one', () => {
+  for (const id of OPENED_BY_SCRIPT) {
+    const { target, folds, document } = domAround(home, id);
+    assert.ok(folds.length >= 1 && folds.every(f => !f.open), `#${id} starts inside closed folds`);
+    assert.ok(folds.some(f => f.cls === 'home-fold'), `#${id} is inside a home fold`);
+    assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
+    assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
+  }
+  for (const id of ['journal', 'experiments', 'lab']) {
+    const { folds, document } = domAround(home, id);
+    assert.equal(folds.length, 0, `#${id} is outside every fold`);
+    assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
+  }
+});
+
+test('the methods page: every fragment link resolves in the built site, and its experiment-list links land on a list', () => {
+  const page = readFileSync(join(dist, 'methods', 'index.html'), 'utf8');
+  const unresolved = [];
+  for (const [href, path, fragment] of [...page.matchAll(/\shref="([^"#]*)#([^"]+)"/g)].map(m => [`${m[1]}#${m[2]}`, m[1], m[2]])) {
+    if (/^[a-z]+:|^\/\//i.test(path)) continue;
+    let file = posix.normalize(posix.join('methods', path || 'index.html'));
+    if (file === '.' || file.endsWith('/') || !/\.[a-z]+$/.test(file)) file = posix.join(file, 'index.html');
+    const target = readFileSync(join(dist, file), 'utf8');
+    if (!target.includes(` id="${decodeURIComponent(fragment)}"`)) unresolved.push(href);
+  }
+  assert.deepEqual(unresolved, []);
+  // The button leads to the experiments page's list; the in-text link to the home's list, which the opener unfolds.
+  assert.ok(page.includes('<a class="button button-primary" href="../experiments/#every-experiment">Every experiment and its status</a>'));
+  assert.ok(readFileSync(join(dist, 'experiments', 'index.html'), 'utf8').includes('id="every-experiment"'));
+  assert.ok(page.includes('<a href="../#all-experiments">the experiment list</a>'));
+  assert.ok(OPENED_BY_SCRIPT.includes('all-experiments'));
+});
+
+test('a height proxy measurable without a browser: four sections, Go further and the closing line open, the other eight folded', () => {
+  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
+  const tops = [];
+  let depth = 0;
+  for (const m of main.matchAll(/<(\/?)(section|nav)\b[^>]*>/g)) {
+    if (m[1]) { depth--; if (depth === 0) tops.at(-1).end = m.index; continue; }
+    if (depth === 0) tops.push({ key: /\sid="([^"]*)"/.exec(m[0])?.[1] ?? /\sclass="([^"\s]*)/.exec(m[0])[1], start: m.index });
+    depth++;
+  }
+  const folded = tops.filter(t => main.slice(t.start, t.end).includes('<details class="home-fold">')).map(t => t.key);
+  const open = tops.filter(t => !folded.includes(t.key)).map(t => t.key);
+  assert.deepEqual(open, [...OPEN_ORDER, 'home-further', 'closing']);
+  assert.deepEqual(folded, FOLDS.map(f => f.key));
 });
