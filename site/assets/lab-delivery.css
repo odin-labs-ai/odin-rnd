@@ -19,6 +19,10 @@
 .delivery-timeline>p{max-width:72ch;color:var(--steel);line-height:1.6}
 .delivery-timeline>p+p{margin-top:10px}
 .delivery-private{font-size:14px}
+/* The per-pull-request log, folded (scripts/lab-delivery.mjs sourceLog): closed until opened, every block kept. */
+.delivery-log{margin-top:28px;border-top:1px solid var(--rule)}
+.delivery-log>summary{font-size:15px;font-weight:600;min-height:44px;box-sizing:border-box}
+.delivery-log>summary:hover{color:var(--brand)}
 .delivery-pr{margin-top:36px;padding-top:24px;border-top:1px solid var(--rule)}
 .delivery-pr h4{font-size:18px;line-height:1.35}
 .delivery-sentence{margin-top:8px;max-width:72ch;line-height:1.6}

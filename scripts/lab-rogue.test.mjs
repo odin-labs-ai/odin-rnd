@@ -7,6 +7,9 @@ import { join } from 'node:path';
 import { pageLeaks, readRogue, recordHashes, renderRogue, rogueProblems, ROGUE_PIN, ROGUE_RECORD, ROGUE_TEMPLATE } from './lab-rogue.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 05, "Can an agent go rogue?" (scripts/lab-rogue.mjs). The page is only worth publishing if it is honest about
 // what is staged and what is real, so these tests hold it to that, and to the leak screen.
@@ -79,7 +82,7 @@ test('the attack text appears once, as a quoted exhibit marked as the attack tex
 
 test('main\'s variant only: the route planner, never the newer variant that is not on main', () => {
   assert.match(textOf(main), /The main branch carries this version of the demo, the route planner\. A newer version, not yet on main, is not cited here\./);
-  for (const text of [page, raw, readFileSync('site/data/labs/rogue-tile.json', 'utf8')]) assert.doesNotMatch(text, /mortgage/i);
+  for (const text of [page, raw, readFileSync('site/data/labs/rogue-tile.json', 'utf8')]) assert.ok(!namesRestricted(text), 'a restricted name (the client theme)');
   assert.equal(record.staged.repository, 'northwind-labs-example/route-planner');
 });
 
@@ -117,7 +120,7 @@ test('leak screen: no machine path, local host, address, port, credential or oth
 
 test('the screen catches what it says it catches (the test of the test)', () => {
   const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
-  for (const [inject, reason] of [['/Users/someone/x', /machine path/], ['C:\\work', /machine path/], ['served on localhost', /local host/], ['10.0.0.12', /local host/], ['port :6488', /local host/], [credential, /credential/], ['the oac repository', /restricted name/]]) {
+  for (const [inject, reason] of [['/Users/someone/x', /machine path/], ['C:\\work', /machine path/], ['served on localhost', /local host/], ['10.0.0.12', /local host/], ['port :6488', /local host/], [credential, /credential/], [`the ${SYN_REPO} repository`, /restricted name/]]) {
     assert.ok(pageLeaks(`<main><p>${inject}</p></main>`).some(p => reason.test(p)), inject);
   }
   assert.deepEqual(pageLeaks('<main><p>commit <code>e41d9422648239dd</code></p></main>', recordHashes(record)), [], 'a hash the record holds is masked');

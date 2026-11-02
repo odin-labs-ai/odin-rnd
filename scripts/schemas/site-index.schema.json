@@ -1,0 +1,22 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "odin-site-index-item-v1",
+ "title": "One item of the site index (dist/data/index.json, built by scripts/site-index.mjs, never committed): an experiment, a lab, a field note, an update or a tool, with the page it links to",
+ "$comment": "Closed sets are written as patterns: scripts/json-schema-lite.mjs has no enum keyword. stage: an experiment's ledger stage (Recorded -> recorded, Measured -> measured, Results published -> results, Pre-registered -> pre-registered); a lab's kind (results, pre-registered) or running for Lab 01; an update's kind (Results, Erratum, Amendment, Pre-registered, Measured, Recorded, Tool, Field note -> results, erratum, amendment, pre-registered, measured, recorded, tool, note); note and tool for those types. outcome is curated in site/data/find-outcomes.json, never inferred from words, and only an experiment or the results update of one carries it.",
+ "type": "object",
+ "required": ["type", "id", "title", "date", "stage", "topics", "summary", "href"],
+ "additionalProperties": false,
+ "properties": {
+  "type": {"type": "string", "pattern": "^(experiment|lab|note|update|tool)$"},
+  "id": {"type": "string", "pattern": "^(exp|lab|note|update|tool)-[a-z0-9][a-z0-9-]*$", "maxLength": 80},
+  "title": {"type": "string", "minLength": 1, "maxLength": 200},
+  "date": {"type": "string", "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"},
+  "stage": {"type": "string", "pattern": "^(pre-registered|results|amendment|erratum|recorded|measured|running|note|tool)$"},
+  "outcome": {"type": "string", "pattern": "^(supported|refuted|mixed)$"},
+  "topics": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z]*$"}},
+  "summary": {"type": "string", "minLength": 1, "maxLength": 600},
+  "href": {"type": "string", "minLength": 1, "pattern": "^(?![a-z][a-z0-9+.-]*:)(?!/)(?!.*(^|/)\\.\\.?(/|#|$))[^\\s\"<>\\\\]+$", "description": "Relative to the site root: no scheme, no leading slash, no dot segments."}
+ },
+ "if": {"required": ["outcome"]},
+ "then": {"properties": {"type": {"type": "string", "pattern": "^(experiment|update)$"}, "stage": {"type": "string", "pattern": "^(results|recorded|measured)$"}}}
+}

@@ -6,7 +6,7 @@
 // experiment, the published files to read and the verbatim sentences that settle a round. Everything else is read from
 // those files at build time:
 //   - a round's vetoes are parsed from each review's own "Vetoes" section (a numbered or bulleted list of **titles**),
-//     or from its "(n) THE <PART>: VETO / ACCEPT" verdict lines;
+//     or from its "(n) THE <PART>: VETO / ACCEPT" verdict lines, or from "n. **VETO** / **ACCEPT**" numbered items;
 //   - each review must say, in its "Reviewer:" line, that it is a model reviewer, and the page labels it an AI model;
 //   - a round reconciles with its freeze notes: the "M1 / P3" ids of the freeze table must be exactly M1..Mn and P1..Pm
 //     for the two reviews' veto counts, and every number a quoted sentence states ("All 16 vetoes", "(4 vetoes)") must
@@ -59,8 +59,12 @@ export function parseReview(text, where) {
   for (const line of lines) {
     const verdict = /^\(\d+\)\s+THE\s+([A-Z][A-Z ]*?):\s+(VETO|ACCEPT)\b/.exec(line);
     if (verdict) (verdict[2] === 'VETO' ? vetoes : accepts).push(`the ${verdict[1].toLowerCase()}`);
+    // A numbered item verdict, "8. **VETO.** …" / "3. **ACCEPT the counts …**": one review answering a numbered list
+    // (EXP 020 amendment 04). Read only where there is no "Vetoes" section, whose own items it would count twice.
+    const item = at < 0 && /^(\d+)\.\s+\*\*(VETO|ACCEPT)\b/.exec(line);
+    if (item) (item[2] === 'VETO' ? vetoes : accepts).push(`item ${item[1]}`);
   }
-  if (at < 0 && !vetoes.length && !accepts.length) throw new Error(`${where}: has neither a "Vetoes" section nor "(n) THE …: VETO/ACCEPT" lines`);
+  if (at < 0 && !vetoes.length && !accepts.length) throw new Error(`${where}: has neither a "Vetoes" section nor "(n) THE …: VETO/ACCEPT" or "n. **VETO/ACCEPT**" lines`);
   return { side, model, date, vetoes, accepts };
 }
 

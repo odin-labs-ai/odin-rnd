@@ -1,0 +1,62 @@
+name: Leak screen (pull request)
+# The leak gate for a pull request, from the BASE branch. The pull request's own verify run has no secret: it builds the
+# site and keeps it as an artifact. This workflow, which only ever runs main's code, takes that artifact as data
+# (scripts/leak-screen-input.py: bound to the run's head sha, no link, no path outside its folder, size caps), checks out
+# the pull request's tree as data (no file of it runs), and runs main's leak-gate.mjs with the term set over both.
+# The result is THIS RUN: its name carries the pull request's head sha, and the lander requires, for that head, a
+# successful run of this workflow with event workflow_run, which only main's copy of this file can produce. No commit
+# status is posted: any workflow a pull request adds could post the same context, so a status proves nothing.
+run-name: Leak screen for ${{ github.event.workflow_run.head_sha }}
+on:
+  workflow_run:
+    workflows: ['Public experiments & Pages']
+    types: [completed]
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: leak-screen-pr-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+jobs:
+  screen:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The term set lives only in this environment, which only main may use: workflow_run runs on main.
+    environment: leak-screen
+    env:
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Main's code (the gate)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: base
+          persist-credentials: false
+      - name: The pull request's tree, as data only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+          path: pr
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Take the pull request's built site, as data only
+        run: |
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" --jq '[.artifacts[] | select(.name == "leak-screen-input" and .expired == false)] | if length == 1 then .[0].id else error("not exactly one leak-screen-input artifact") end')
+          size=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --jq .size_in_bytes)
+          [ "$size" -le 805306368 ] || { echo "::error::the artifact is $size bytes, over the cap"; exit 1; }
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" > "${RUNNER_TEMP}/input.zip"
+          python3 base/scripts/leak-screen-input.py "${RUNNER_TEMP}/input.zip" "${RUNNER_TEMP}/input" "${HEAD_SHA}"
+      - name: Leak screen over the pull request's built site, with main's gate
+        env:
+          LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: cd "${RUNNER_TEMP}/input" && node "${GITHUB_WORKSPACE}/base/scripts/leak-gate.mjs" --set "${GITHUB_WORKSPACE}/base/scripts/leak-gate-set.json" --known "${GITHUB_WORKSPACE}/pr/scripts/leak-gate-known.json" dist
+      - name: Source screen over the pull request's tree, with main's gate
+        env:
+          LEAK_SCREEN_SECRET: ${{ secrets.LEAK_SCREEN_SECRET }}
+        run: cd pr && node "${GITHUB_WORKSPACE}/base/scripts/leak-gate.mjs" --set "${GITHUB_WORKSPACE}/base/scripts/leak-gate-set.json" --known scripts/leak-gate-known.json --tree

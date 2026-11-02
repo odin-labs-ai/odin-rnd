@@ -8,6 +8,9 @@ import * as engine from './lab-engine-history.mjs';
 import * as rogue from './lab-rogue.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { renderLabs } from './labs.mjs';
+import { namesRestricted } from './lab-dispatch-publish.mjs';
+// Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
+import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // The lab kit (scripts/lab-kit.mjs). Lab 01's engine history and Lab 05 are built on it, so their own tests hold the
 // refactor; these hold the kit itself, and give every class the leak screen guards a planted value that fails a build.
@@ -148,8 +151,8 @@ const credential = ['gh', 'p_', 'x'.repeat(36)].join('');
 const CLASSES = [
   ['a local path', ['/Users/someone/work', '/home/someone/x', 'C:\\work'], /machine path|file path/],
   ['a host, port or IP', ['served on localhost', '10.0.0.12', 'the box at :6488'], /local host|local or IP address/],
-  ['a client name (the talk theme)', ['a mortgage lender', 'Mortgages, Inc.'], /restricted name/],
-  ['a private repository name', ['the oac repository', 'odin-labs-ai/some-private-repo'], /restricted name|another repository/],
+  ['a client name (the talk theme)', [`a ${SYN_THEME} lender`, `${SYN_THEME.toUpperCase()}S, Inc.`], /restricted name/],
+  ['a private repository name', [`the ${SYN_REPO} repository`, 'odin-labs-ai/some-private-repo'], /restricted name|another repository/],
   ['a credential', [credential, 'Authorization: Bearer abc123'], /credential/],
   ['a money figure', ['it cost €40', 'about $12.00', '12 USD a run'], /price or currency amount/],
 ];
@@ -186,10 +189,11 @@ test('the leak screen has a failing negative for every class it guards', () => {
   assert.doesNotThrow(() => buildFixture(fixture()), 'the clean fixture still builds');
 });
 
-test('the client theme is on the publisher\'s hashed list, which every lab and dispatch is screened with', () => {
-  for (const text of ['mortgage', 'MORTGAGE advice', 'mortgagelender']) assert.ok(screenHits(text).some(h => /restricted name/.test(h.reason)), text);
+test('a restricted name is screened by hash, in any case and glued to other words, and never spelled in the list', () => {
+  // A synthetic name stands in for the client theme: the real one is listed by hash and never spelled in this repo.
+  for (const text of [SYN_THEME, `${SYN_THEME.toUpperCase()} advice`, `${SYN_THEME}lender`]) assert.ok(screenHits(text).some(h => /restricted name/.test(h.reason)), text);
   const terms = readFileSync('scripts/lab-screen-terms.json', 'utf8');
-  assert.doesNotMatch(terms, /mortgage/i, 'listed by hash, never spelled');
+  assert.ok(JSON.parse(terms).names.every(h => /^[0-9a-f]{64}$/.test(h)), 'listed by hash, never spelled');
 });
 
 test('the marked boxes say what they are in their own label', () => {
@@ -204,4 +208,46 @@ test('the marked boxes say what they are in their own label', () => {
 
 test('the kit and the screen terms name no restricted name', () => {
   for (const file of ['scripts/lab-kit.mjs']) assert.deepEqual(screenHits(readFileSync(file, 'utf8')).filter(h => h.reason.startsWith('a restricted name')), [], file);
+});
+
+// ADR 2026-10-28-rnd-lane-evidence-onmain-false: a lane commit is never cited AS MAIN; laneCite is its one sentence.
+test('laneCite: a lane commit is cited only with every field, never as main, never when the record knows it is on main', () => {
+  const full = { onMain: false, commit: LANE, lane: 'lane/a-variant', baseMain: MAIN, checkedAt: '2026-10-27' };
+  const words = kit.laneCite(full);
+  assert.match(words, /private commit <code>c3d4e5f6<\/code>, cited by hash, on a pushed branch that is not yet part of the private main \(checked on <time datetime="2026-10-27">2026-10-27<\/time>\), built on the private main <code>a1b2c3d4<\/code>/);
+  assert.doesNotMatch(words, /lane\/a-variant/, 'the lane name is kept for the re-cite, not shown');
+  // A bare lane cite through cite() and the record contract are still refused (the rule above is unchanged).
+  assert.throws(() => kit.cite({ commit: LANE }, { main: MAIN, checked: '2026-10-27', commits: [ON_MAIN] }), /never cited/);
+  // Every field is required, and onMain must be false.
+  for (const [field, bad] of [['onMain', true], ['onMain', undefined], ['commit', 'c3d4'], ['lane', ''], ['lane', undefined], ['baseMain', 'main'], ['checkedAt', '2026-02-30'], ['checkedAt', undefined]]) {
+    assert.throws(() => kit.laneCite({ ...full, [field]: bad }), /laneCite: /, `${field}=${bad}`);
+  }
+  // A commit the record knows to be part of main is cited with cite(), never as a lane.
+  assert.throws(() => kit.laneCite({ ...full, commit: MAIN }), /is part of the private main; cite it with cite\(\)/);
+  assert.throws(() => kit.laneCite(full, { mainCommits: [LANE] }), /is part of the private main/);
+  assert.deepEqual(kit.laneCiteProblems(full, { mainCommits: [ON_MAIN] }), []);
+});
+
+test('laneCite on the page: a lane commit in a main cite, or a lane cite that also claims main, is refused', () => {
+  const known = [LANE, MAIN];
+  const page = body => `<p>${body}</p>`;
+  assert.deepEqual(kit.pageLeaks(page(`Filmed from ${kit.laneCite({ onMain: false, commit: LANE, lane: 'lane/x', baseMain: MAIN, checkedAt: '2026-10-27' })}.`), known, { lane: [LANE] }), []);
+  const asMain = page(`Private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, checked as part of the private main <code>${MAIN.slice(0, 8)}</code>.`);
+  assert.ok(kit.pageLeaks(asMain, known, { lane: [LANE] }).some(p => /a lane commit cited as part of the private main/.test(p)));
+  const both = page(`Filmed from private commit <code>${LANE.slice(0, 8)}</code>, cited by hash, on a pushed branch that is not yet part of the private main, and it is part of the private main.`);
+  assert.ok(kit.pageLeaks(both, known, { lane: [LANE] }).some(p => /a lane cite that also claims the private main/.test(p)));
+});
+
+test('a known hash with a long run of digits is masked even glued to the next element\'s text; unknown, the digits are refused', () => {
+  // About a third of sha256 hex strings hold a run of 9 or more digits (this one: 10). In a feed the hash can sit
+  // right against the next element's text, with no word boundary between them.
+  const H = '20ca7b014adc7ad7f9c6d7e60d3025bf707fcad53a7956953430a7fc2db94148';
+  const xml = `<feed><entry><id>tag:odin-labs-ai.github.io,2026:odin-rnd/labs/rogue/runs/org-ci-heavy/2026-10-29T07:26:11Z/${H}</id><title>Lab 05: a run, record ${H.slice(0, 12)}, SAME</title><summary>record hash ${H}; SAME.</summary></entry></feed>`;
+  assert.deepEqual(kit.pageLeaks(xml, [H]), []);
+  assert.ok(kit.pageLeaks(xml, []).some(p => /long internal id/.test(p)), 'the same text without the hash known is refused');
+  assert.ok(kit.pageLeaks(`<p>run 7956953430 of ${H}</p>`, [H]).some(p => /long internal id/.test(p)), 'a bare long number next to a known hash is still refused');
+  // The lead's planted negatives (2026-10-29): a 12-digit number in a title, and an unknown digest, in the same feed.
+  const other = 'f93aa8884095601234567890abcdef0123456789abcdef0123456789abcdef01';
+  assert.ok(kit.pageLeaks(xml.replace('<title>Lab 05', '<title>Lab 05 run 123456789012'), [H]).some(p => /long internal id/.test(p)), 'a 12-digit number in a title is refused');
+  assert.ok(kit.pageLeaks(xml.replace('record hash ' + H, 'record hash ' + other), [H]).some(p => /long internal id|a hash the record does not hold/.test(p)), 'an unknown digest with a digit run is refused');
 });

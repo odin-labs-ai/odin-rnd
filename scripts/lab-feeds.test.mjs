@@ -35,8 +35,14 @@ test('the published feeds: the site feed and Lab 05\'s, valid Atom, every id uni
   // An update's entry carries its title and link, never its text.
   for (const u of readUpdates()) assert.ok(site.includes(`<id>${updateEntryId(u)}</id>`), u.key);
   assert.doesNotMatch(site, /<summary>[^<]*(cents|\$)/);
-  // No lab without runs gets a feed: it would have no date of its own.
-  assert.deepEqual(Object.keys(pages).filter(p => p.endsWith('feed.xml')).sort(), ['feed.xml', 'labs/agent-space/feed.xml', 'labs/rogue/feed.xml']);
+  // Every lab with runs gets a feed, and no lab without runs does: it would have no date of its own.
+  const withRuns = readLabRuns().filter(l => l.runs.length).map(l => `labs/${l.tile.experiment}/feed.xml`);
+  assert.ok(withRuns.includes('labs/rogue/feed.xml'));
+  assert.deepEqual(Object.keys(pages).filter(p => p.endsWith('feed.xml')).sort(), ['feed.xml', 'labs/agent-space/feed.xml', ...withRuns].sort());
+  for (const path of withRuns) {
+    assert.deepEqual(feedProblems(pages[path], { self: `${SITE_URL}${path}` }), [], path);
+    assert.deepEqual(pageLeaks(pages[path], known), [], path);
+  }
   assert.doesNotMatch(site + pages['labs/rogue/feed.xml'], /org machine|daily/i);
 });
 
@@ -44,9 +50,9 @@ test('the feeds are linked from the Labs index, the runs page and the page of ev
   const pages = renderLabs();
   const has = (page, href) => page.split('<link rel="alternate" type="application/atom+xml" title="').slice(1).some(l => l.split('>')[0].endsWith(`" href="${href}"`));
   assert.ok(has(pages['labs/index.html'], '../feed.xml'));
-  assert.match(pages['labs/index.html'], /<a href="\.\.\/feed\.xml">Follow every update and every run \(Atom\)<\/a>/);
+  assert.match(pages['labs/index.html'], /<a href="\.\.\/feed\.xml">Follow updates and runs \(Atom feed\)<\/a>/);
   assert.ok(has(pages['labs/runs/index.html'], '../../feed.xml'));
-  assert.match(pages['labs/runs/index.html'], /<a href="\.\.\/\.\.\/feed\.xml">Follow every update and every run \(Atom\)<\/a>/);
+  assert.match(pages['labs/runs/index.html'], /<a href="\.\.\/\.\.\/feed\.xml">Follow updates and runs \(Atom feed\)<\/a>/);
   const rogue = pages['labs/rogue/index.html'];
   assert.ok(has(rogue, 'feed.xml') && has(rogue, '../../feed.xml'));
   assert.match(rogue, /<section class="company-section company-width lab-runs-section" id="lab-runs"[^>]*>.*<a href="feed\.xml">This lab's feed \(Atom\)<\/a>.*<a href="\.\.\/\.\.\/feed\.xml">The site feed \(Atom\)<\/a>.*<\/section><\/main>/s);

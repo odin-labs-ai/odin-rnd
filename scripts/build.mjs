@@ -167,6 +167,34 @@ writeFileSync('dist/.nojekyll','');
 console.log('Built static GitHub Pages site with three recorded experiments.');
 
 for (const report of witnesses.reports) { const file = `projects/${report.project}/index.html`; writeFileSync(`dist/${file}`, renderWitness(readFileSync(`site/${file}`, 'utf8'), report)); }
+// Find and the site chrome (mission rnd-site-ux-nav-1101): the site index of every experiment, lab, field note, update
+// and tool, read from the finished pages, written to dist/data/index.json (never committed) and listed on /find/
+// without JavaScript; then the Find link, breadcrumbs, related links and their stylesheet on the built pages. Before
+// the per-page passes below, so those see the chrome. Each step fails closed (scripts/site-index.mjs, find-build.mjs,
+// site-chrome.mjs).
+{
+  const { loadIndex, TOPICS_PATH } = await import('./site-index.mjs');
+  const { placeFind } = await import('./find-build.mjs');
+  const { injectChrome } = await import('./site-chrome.mjs');
+  // Wave 3: the journal/ and projects/ index pages and the All experiments section on experiments/, rendered from the
+  // same items, then every page's header nav rewritten to the one canonical list (site-sections.mjs, site-header.mjs;
+  // both fail closed), before Find and the chrome, so the Find link lands last in the canonical nav.
+  const { renderSectionPages } = await import('./site-sections.mjs');
+  const { normaliseHeaders } = await import('./site-header.mjs');
+  // Wave 4: a readable page for each experiment whose ledger row links a raw JSON record, before the index, which points
+  // those items at it (scripts/site-records.mjs; fails closed).
+  const { renderRecordPages } = await import('./site-records.mjs');
+  renderRecordPages({ root: '.', distDir: 'dist' });
+  const items = loadIndex({ root: '.', dist: 'dist' });
+  renderSectionPages({ distDir: 'dist', items });
+  normaliseHeaders({ distDir: 'dist' });
+  placeFind({ distDir: 'dist', items, topics: JSON.parse(readFileSync(TOPICS_PATH, 'utf8')) });
+  injectChrome({ distDir: 'dist', items });
+  // Wave 4: "On this page" on long field notes and lab pages, after the chrome so it sees the breadcrumbs
+  // (scripts/site-toc.mjs; never on a number-provenance page).
+  const { addTocs } = await import('./site-toc.mjs');
+  addTocs({ distDir: 'dist' });
+}
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
 // Every page loads the collector once. The note generators already put it in their <head>; adding a second
 // copy there is what vp-rnd-frontier-residuals R7 found (activity-sitewide.test.mjs checks every built page).
@@ -179,7 +207,7 @@ for (const file of htmlFiles('dist')) {
   if (!loadsActivity) writeFileSync(file,source.replace('</head>',`<script type="module" src="${modulePath}"></script>\n</head>`));
 }
 // Page views counted by odin-labs.ai (cookieless, path + referrer host only): GitHub Pages has no analytics and Vercel's
-// own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (odin-website-preview #50).
+// own insights script is CORS-blocked from this origin, so odin-labs.ai/api/rnd-hit/ records them (the main website's repository, #50).
 // The beacon is this site's own file: no script from another origin runs on these pages. It loads async, so it never
 // holds up the page's own scripts or DOMContentLoaded.
 for (const file of htmlFiles('dist')) {

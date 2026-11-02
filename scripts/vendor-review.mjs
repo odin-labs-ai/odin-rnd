@@ -13,7 +13,7 @@
 // landing plan is listed as such (planOnly), never shown as a catch.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, SOURCES, deriveFrontier, deriveNina, deriveSelfVerify } from './lab-review.mjs';
@@ -62,7 +62,16 @@ export function build({ readPr = pr, git = gitCli } = {}) {
     selfVerify: DERIVE['self-verify'](by['self-verify'].data),
     gallery,
     planOnly: PLAN_ONLY,
+    // The org runners' runs of the lab's kit (scripts/append-rogue-runs.mjs --lab review put them there) are published
+    // evidence, not derivable from the experiments, so a re-vendor carries them forward and --verify still re-derives.
+    ...priorRuns(),
   };
+}
+
+function priorRuns() {
+  if (!existsSync(OUT_FILE)) return {};
+  const runs = JSON.parse(readFileSync(OUT_FILE, 'utf8')).runs;
+  return Array.isArray(runs) && runs.length ? { runs } : {};
 }
 
 export const serialise = record => `${JSON.stringify(record, null, 1)}\n`;

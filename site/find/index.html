@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>Find — Odin R&amp;D</title>
+  <meta name="description" content="Search the experiments, labs, field notes, updates and tools published by Odin R&amp;D, and narrow them by kind, stage, outcome, topic and month.">
+  <meta property="og:title" content="Find anything on Odin R&amp;D">
+  <meta property="og:description" content="Search the experiments, labs, field notes, updates and tools published by Odin R&amp;D.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/find/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/find/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/company.css">
+  <link rel="stylesheet" href="../assets/find.css">
+  <script type="module" src="../assets/find.mjs"></script>
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../#floor">Factory</a><a href="../#experiments">Experiments</a><a href="../updates/">Updates</a><a href="../#journal">Field notes</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="find-hero company-width" aria-labelledby="find-title">
+      <h1 id="find-title">Find something.</h1>
+      <p class="company-lead">Everything the lab has published is listed here: experiments, labs, field notes, updates and tools, which you can search by word and narrow by kind, stage, outcome, topic or month.</p>
+    </section>
+
+    <section class="find company-width" aria-labelledby="find-results-title">
+      <h2 id="find-results-title" class="find-visually-hidden">Search and results</h2>
+      <form id="find-form" class="find-form" role="search" aria-label="Search the site" hidden>
+        <div class="find-search">
+          <label for="find-search">Search titles, summaries and topics</label>
+          <input id="find-search" name="q" type="search" autocomplete="off" spellcheck="false" aria-describedby="find-search-hint">
+          <p id="find-search-hint" class="find-hint">Press <kbd>/</kbd> to come back here from anywhere on the page.</p>
+        </div>
+        <details id="find-filters" class="find-filters">
+          <summary>Filter by kind, stage, outcome, topic or month <span aria-hidden="true">+</span></summary>
+          <div class="find-facets">
+            <fieldset>
+              <legend>Kind</legend>
+              <div class="find-options">
+                <label class="find-check"><input type="checkbox" name="type" value="experiment"><span>Experiment</span></label>
+                <label class="find-check"><input type="checkbox" name="type" value="lab"><span>Lab</span></label>
+                <label class="find-check"><input type="checkbox" name="type" value="note"><span>Field note</span></label>
+                <label class="find-check"><input type="checkbox" name="type" value="update"><span>Update</span></label>
+                <label class="find-check"><input type="checkbox" name="type" value="tool"><span>Tool</span></label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Stage</legend>
+              <div class="find-options" id="find-stage-options"></div>
+            </fieldset>
+            <fieldset>
+              <legend>Outcome</legend>
+              <div class="find-options">
+                <label class="find-check"><input type="checkbox" name="outcome" value="supported"><span>Supported</span></label>
+                <label class="find-check"><input type="checkbox" name="outcome" value="refuted"><span>Refuted</span></label>
+                <label class="find-check"><input type="checkbox" name="outcome" value="mixed"><span>Mixed</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="find-topics">
+              <legend>Topic</legend>
+              <div class="find-options" id="find-topic-options"></div>
+            </fieldset>
+            <div class="find-month">
+              <label for="find-date">Month</label>
+              <select id="find-date" name="date"><option value="">Any month</option></select>
+            </div>
+          </div>
+        </details>
+        <div class="find-status">
+          <p id="find-count" class="find-count" aria-live="polite" tabindex="-1"></p>
+          <button id="find-clear" class="find-clear" type="button">Clear filters</button>
+        </div>
+      </form>
+      <ol id="find-results" class="find-results" aria-labelledby="find-results-title" hidden></ol>
+      <div id="find-static" class="find-static">
+<!--FIND_LIST-->
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="../" aria-label="Odin Labs R&amp;D home"><img src="../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact/">Contact Odin</a><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>

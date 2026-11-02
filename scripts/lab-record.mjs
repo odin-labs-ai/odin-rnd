@@ -16,6 +16,9 @@
 //               record's main check says the commit is part of main (identical or ahead), and identical only when
 //               sha is mainHead. The org runners read the private repository AT main, so their records must say identical; only a
 //               laptop record (checked by hand against GitHub's compare, as Lab 05's vendor step does) may say ahead.
+//               One exception, by lab: Lab 06 (review) runs at a pinned, reviewed commit of this repository, so its org
+//               records name the real main head and say identical or ahead (the runner reads both from GitHub and
+//               refuses any other); behind or diverged stays refused for every org record.
 //
 //   numbers     written as plain integers only (no fraction, exponent or -0), checked on the JSON text, so the
 //               JavaScript and Python readers of one file hold the same values.
@@ -31,6 +34,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const RECORD_SCHEMA = join(here, 'schemas/odin-lab-record.schema.json');
 const schema = JSON.parse(readFileSync(RECORD_SCHEMA, 'utf8'));
 /** The one machine class each runner has (a class label, never a runner or host name). */
+/** Each lab's one command and its input roles (the schema's closed lists, paired): a record of one lab never carries another's. */
+export const LAB_SHAPES = {
+  rogue: { command: "the demo's own check command", roles: ['runner', 'runs'] },
+  review: { command: "the lab's own re-run kit", roles: ['frontier', 'nina'] },
+};
 /** The largest breach count a record may hold, so its JSON reads the same in every language. */
 export const MAX_BREACHES = 1000000;
 export const CLASS_OF = { 'github-hosted': 'ubuntu-latest', 'org-hosted': 'org-ci-heavy', laptop: 'mac' };
@@ -73,6 +81,9 @@ function instant(iso) {
   return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d && date.getUTCHours() === h && date.getUTCMinutes() === mi && date.getUTCSeconds() === s ? date : null;
 }
 
+/** Labs whose org runner runs a pinned, reviewed commit of this repository (not its moving main): Lab 06. */
+export const PINNED_LABS = ['review'];
+
 /** Every way `record` is not an honest record v1, as "<where>#<json pointer>: <reason>" lines; [] when it is one. */
 export function recordProblems(record, where = 'record', now = new Date()) {
   const shape = validate(schema, record).map(p => `${where}#${p}`);
@@ -85,7 +96,11 @@ export function recordProblems(record, where = 'record', now = new Date()) {
   const c = record.commit;
   if ((c.sha === c.mainHead) !== (c.compare === 'identical')) at('/commit/compare', 'does not agree with the commit and the main head');
   if (c.onMain !== (c.compare === 'identical' || c.compare === 'ahead')) at('/commit/onMain', `a commit whose main check says "${c.compare}" is ${c.onMain ? '' : 'not '}marked as on main`);
-  if (record.runner !== 'laptop' && c.compare !== 'identical') at('/commit/compare', `the ${record.runner} runner reads main, so its commit must be the main head`);
+  if (record.runner !== 'laptop' && c.compare !== 'identical' && !(PINNED_LABS.includes(record.lab) && c.compare === 'ahead')) {
+    at('/commit/compare', PINNED_LABS.includes(record.lab)
+      ? `the ${record.runner} runner runs lab ${record.lab} at a pinned commit of main, so it is the main head or main is ahead of it`
+      : `the ${record.runner} runner reads main, so its commit must be the main head`);
+  }
 
   const r = record.result;
   // Integers past 2^53 serialise differently in JavaScript (1e+21) and Python, so recordHash would differ.
@@ -93,6 +108,9 @@ export function recordProblems(record, where = 'record', now = new Date()) {
   if (r.committed.length !== r.now.length) at('/result', 'committed and now are not the same length, so they cannot be compared');
   if (r.verdict !== (r.committed === r.now ? 'SAME' : 'DIFFERENT')) at('/result/verdict', 'not what its two hashes say');
 
+  const labShape = LAB_SHAPES[record.lab];
+  if (record.command !== labShape.command) at('/command', `not the command of lab ${record.lab}`);
+  if (record.inputs.map(i => i.role).join('\n') !== labShape.roles.join('\n')) at('/inputs', `not the input roles of lab ${record.lab} (${labShape.roles.join(', ')})`);
   const roles = record.inputs.map(i => i.role);
   if (roles.join('\n') !== [...new Set(roles)].sort().join('\n')) at('/inputs', 'roles are not unique and in sorted order');
 

@@ -28,17 +28,24 @@
           "name": "The AI model advocates' review of amendment 02, before S2's verdict",
           "reviews": ["experiments/mongodb-home-ground/reviews/amendment-02-mongodb-advocate.md", "experiments/mongodb-home-ground/reviews/amendment-02-postgresql-advocate.md"],
           "outcome": { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "quote": "This amendment records both reviews and applies what they require.", "accepted": "all" }
+        },
+        {
+          "name": "The AI model advocates' review of nine readings of the S2 rules (amendment 04), before S2's verdict",
+          "reviews": ["experiments/mongodb-home-ground/reviews/amendment-04-mongodb-advocate.md", "experiments/mongodb-home-ground/reviews/amendment-04-postgresql-advocate.md"],
+          "outcome": { "file": "experiments/mongodb-home-ground/amendment-04/amendment.json", "quote": "Both vetoes are accepted: the report checks the disturbances itself and trusts no directory.", "accepted": "all" }
         }
       ],
       "amendments": [
         "experiments/mongodb-home-ground/amendment-01/amendment.json",
         "experiments/mongodb-home-ground/amendment-02/amendment.json",
-        "experiments/mongodb-home-ground/amendment-03/amendment.json"
+        "experiments/mongodb-home-ground/amendment-03/amendment.json",
+        "experiments/mongodb-home-ground/amendment-04/amendment.json"
       ],
       "disclosures": [
         { "file": "experiments/mongodb-home-ground/amendment-01/amendment.json", "pointer": "/limits" },
         { "file": "experiments/mongodb-home-ground/amendment-02/amendment.json", "pointer": "/limits" },
-        { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "pointer": "/remainingLean" }
+        { "file": "experiments/mongodb-home-ground/amendment-03/amendment.json", "pointer": "/remainingLean" },
+        { "file": "experiments/mongodb-home-ground/amendment-04/amendment.json", "pointer": "/limits" }
       ]
     },
     {

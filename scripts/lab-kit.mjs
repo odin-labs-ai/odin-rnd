@@ -2,6 +2,7 @@
 // so a new lab cannot cite, pin, date or screen a record differently from the last one.
 //
 //   cite(c, mainCheck)        the one sentence a private commit is cited with (Lab 01's, word for word)
+//   laneCite(c)               the one sentence a commit only on a lane is cited with: not yet part of the private main
 //   realInstant(iso)          a timestamp that is a real calendar instant, or null
 //   parsePin / pinProblems    one pin, committed as a sha256sum line ("<hex>  <file name>\n", Lab 05) or as a JSON pin
 //                             naming the file, its sha256, the sha256 of its private source and the private main head
@@ -47,13 +48,37 @@ export function instantProblems(iso, at, now = new Date()) {
 // Every private commit is cited with this sentence: by hash, with the private main head it was checked to be part of,
 // and when; the page cannot check it, and says so. When the record lists the commits shown to be part of main
 // (mainCheck.commits, the kit record contract), a commit that is neither one of them nor the main head itself is never
-// cited: it throws.
+// cited as main: it throws. laneCite (below) is the one way to cite such a commit, as not yet part of the private main.
 export const onMainCommits = mainCheck => [mainCheck.main, ...(Array.isArray(mainCheck.commits) ? mainCheck.commits : [])];
 export const cite = (p, mainCheck) => {
   if (Array.isArray(mainCheck.commits) && !onMainCommits(mainCheck).includes(p.commit)) throw new Error(`cite: ${String(p.commit).slice(0, 8)} is not shown as part of the private main ${mainCheck.main.slice(0, 8)}; a commit only on a lane is never cited`);
   return citeText(p, mainCheck);
 };
 const citeText = (p, mainCheck) => `Private commit <code>${escape(p.commit.slice(0, 8))}</code>, cited by hash, checked as part of the private main <code>${escape(mainCheck.main.slice(0, 8))}</code> on <time datetime="${escape(mainCheck.checked)}">${escape(mainCheck.checked)}</time>; this page cannot check it, anyone with access can.`;
+
+// A commit only on a lane is never cited AS MAIN; it may be cited only through laneCite (ADR
+// 2026-10-28-rnd-lane-evidence-onmain-false), which says so in a fixed sentence. It needs the lane's name, the private
+// main the lane is built on and the date the commit was checked not to be on main; it refuses a commit the record
+// knows to be part of main (the base main itself, or one of `mainCommits`, e.g. a mainCheck's commits): that one must
+// be cited with cite(). This repository cannot run git against the private one, so "known to be part of main" is what
+// the record holds; a lane that has since merged is re-cited with cite() and a mainCheck. The lane's name is required
+// for that re-cite and is not shown on the page.
+export function laneCiteProblems(c, { mainCommits = [] } = {}) {
+  const problems = [];
+  if (!c || typeof c !== 'object') return ['laneCite: no cite'];
+  if (c.onMain !== false) problems.push('laneCite: onMain must be false (a commit on main is cited with cite())');
+  if (!HEX40.test(c.commit ?? '')) problems.push('laneCite: commit is not a 40-hex commit');
+  if (typeof c.lane !== 'string' || !/^[A-Za-z0-9._/-]+$/.test(c.lane) || !c.lane.trim()) problems.push('laneCite: no lane name');
+  if (!HEX40.test(c.baseMain ?? '')) problems.push('laneCite: baseMain is not a 40-hex commit');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(c.checkedAt ?? '') || !realInstant(`${c.checkedAt}T00:00:00Z`)) problems.push('laneCite: checkedAt is not a date');
+  if (HEX40.test(c.commit ?? '') && (c.commit === c.baseMain || mainCommits.includes(c.commit))) problems.push(`laneCite: ${c.commit.slice(0, 8)} is part of the private main; cite it with cite()`);
+  return problems;
+}
+export const laneCite = (c, opts) => {
+  const problems = laneCiteProblems(c, opts);
+  if (problems.length) throw new Error(problems.join('; '));
+  return `private commit <code>${escape(c.commit.slice(0, 8))}</code>, cited by hash, on a pushed branch that is not yet part of the private main (checked on <time datetime="${escape(c.checkedAt)}">${escape(c.checkedAt)}</time>), built on the private main <code>${escape(c.baseMain.slice(0, 8))}</code>`;
+};
 
 /**
  * One pin, from the bytes it is committed as: a sha256sum line ("<hex>  <file name>\n") or a JSON pin (an object, or
@@ -191,7 +216,12 @@ export function recordHashes(record) {
  * looks like a hash (digits and letters a-f) is refused outright: it is a commit or digest the record does not hold,
  * such as one only on a lane.
  */
-export function pageLeaks(html, known = [], { onMain } = {}) {
+// A hash the record holds, masked wherever it stands: bounded by any non-hex character, not only a word boundary, so a
+// hash glued to the next element's text ("…94148Lab 05") or to a path is still the record's hash. Only a token that is a
+// prefix of a known hash is masked; any other stays as written, for the screens and the unknown-hash rule.
+const maskKnown = (text, known) => text.replace(/(?<![0-9a-f])[0-9a-f]{8,64}(?![0-9a-f])/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
+
+export function pageLeaks(html, known = [], { onMain, lane } = {}) {
   const problems = [];
   const seen = new Set();
   const add = p => { if (!seen.has(p)) { seen.add(p); problems.push(p); } };
@@ -223,19 +253,20 @@ export function pageLeaks(html, known = [], { onMain } = {}) {
   let hidden = html, before;
   do { before = hidden; hidden = hidden.replace(/<!--[\s\S]*?(?:-->|$)/g, '').replace(/<(script|style)(?=[\t\n\f\r />])[\s\S]*?<\/\1[\t\n\f\r ]*>/gi, ''); } while (hidden !== before);
   // And the whole shown text as one string, blocks as spaces, so the screen also sees across the lines it is cut into.
-  for (const hit of screenHits(lines.replace(/\n+/g, ' ').replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token)))) add(`${hit.reason} (as shown, whole page)`);
+  for (const hit of screenHits(maskKnown(lines.replace(/\n+/g, ' '), known))) add(`${hit.reason} (as shown, whole page)`);
   // And a third, with nothing dropped at all but the tags themselves (script and style text included).
   const readings = [decode(stripTags(hidden, '\n')), decode(stripTags(html, '\n'))];
   for (const line of new Set(readings.flatMap(r => r.split('\n')).map(l => l.trim()).filter(Boolean))) {
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => (known.some(h => h.startsWith(token)) ? 'HASH' : token));
-    for (const hit of screenHits(masked)) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
+    for (const hit of screenHits(maskKnown(line, known))) add(`${hit.reason} (second reading): ${JSON.stringify(line.slice(0, 100))}`);
   }
   // A cite sentence names a commit; when the caller says which commits are part of main, any other is refused.
+  // A lane commit (laneCite) named in a main cite sentence, or a lane-cite sentence that also claims main, is refused.
+  if (lane) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash,\s*checked as part of the private main/gi)) if (lane.some(c => c.startsWith(m[1]))) problems.push(`a lane commit cited as part of the private main (${m[1]})`);
+  if (lane) for (const m of text.matchAll(/private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash,\s*on a pushed branch that is not yet part of the private main[^.]*?(?<!not yet )part of the private main/gi)) problems.push(`a lane cite that also claims the private main (${m[1]})`);
   if (onMain) for (const m of text.matchAll(/Private commit\s+([0-9a-f]{7,40})\s*,\s*cited by hash/g)) if (!onMain.some(c => c.startsWith(m[1]))) problems.push(`a cited commit not shown as part of the private main (${m[1]})`);
   for (const line of [...new Set(text.split('\n').map(l => l.trim()).filter(Boolean))]) {
     const unknown = [];
-    const masked = line.replace(/\b[0-9a-f]{8,64}\b/g, token => {
-      if (known.some(h => h.startsWith(token))) return 'HASH';
+    const masked = maskKnown(line, known).replace(/\b[0-9a-f]{8,64}\b/g, token => {
       if (/\d/.test(token) && /[a-f]/.test(token)) unknown.push(token);
       return token;
     });

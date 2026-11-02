@@ -37,6 +37,9 @@
           <div><dt>Text files read</dt><dd data-leak-screen="files">0</dd></div>
           <div><dt>New hits</dt><dd data-leak-screen="hits">not scanned</dd></div>
           <div><dt>Known occurrences</dt><dd><span data-leak-screen="known">not scanned</span>, <a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/leak-gate-known.json">listed with reasons</a></dd></div>
+          <div><dt>Source files read</dt><dd data-leak-screen="tree-files">0</dd></div>
+          <div><dt>Source: new hits</dt><dd data-leak-screen="tree-hits">not scanned</dd></div>
+          <div><dt>Source: known occurrences</dt><dd data-leak-screen="tree-known">not scanned</dd></div>
         </dl>
         <p class="proposal-boundary">Filled in by the build that published this page, from the scan it ran just before.</p>
       </aside>
@@ -48,6 +51,7 @@
         <p>The set itself is pinned in public without being shown: <a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/leak-gate-set.json">the commitment</a> holds its counts and a hash of its salted hashes. A set with one term quietly dropped is a different set and stops the build, so a change to the set is a reviewed change.</p>
         <p>A canary is a random string with no meaning, planted only in private sources this site's records come from. A canary on this site means a private file was copied here whole. A canary is never accepted, whatever the reason.</p>
         <p>The screen also stops on shapes that are not secret: a home folder path, a private network address, a local address with a port, and the shapes of keys and tokens.</p>
+        <p>This repository is public, so its source is screened too: every file git tracks (the scripts, the tests, every record and asset) is read for every term and canary in the same build. The tests plant made-up names, never a real one.</p>
         <p>It fails closed. A missing, empty or broken term set stops the build, and so do an archive it cannot read and a scan that reads nothing.</p>
         <p>A known occurrence is a reviewed hit that cannot be edited away here, such as a term inside a pre-registration whose bytes are pinned by hash. Each is listed in <a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/leak-gate-known.json">the known-occurrence list</a> with its file, its count and why. One more occurrence is a new hit, one fewer makes the row stale, and both stop the build. The list carries a review stamp, a hash of its rows, so no row changes without a visible review; and the names of the people and companies we work for can never be listed at all.</p>
         <p>The screen is <a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/leak-gate.mjs">scripts/leak-gate.mjs</a>, tested by <a href="https://github.com/odin-labs-ai/odin-rnd/blob/main/scripts/leak-gate.test.mjs">scripts/leak-gate.test.mjs</a>.</p>

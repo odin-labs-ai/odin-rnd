@@ -5,12 +5,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { gzipSync as gz, deflateSync, crc32 } from 'node:zlib';
-import { MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
+import { addScreenNames, isTestRunnerCommand, namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
+import { TREE_SLOTS, MAX_BINARY, rowsDigest, checkCommitment, scanPaths, commitmentOf, digest, fillPage, loadKnown, loadSecret, normalise, scanText, settle } from './leak-gate.mjs';
 
 const SALT = 'test-salt-not-the-real-one-0001';
 const TERMS = ['Zephyr Quarry', 'blorvak', 'ostrel-nine-host', 'qzx', 'café', '가나', 'ΑΣA'];
@@ -284,23 +285,88 @@ test('a known occurrence covers exactly its count: one more is a hit, one fewer 
 
 test('the committed known-occurrence list is well formed and lists no canary', () => {
   const rows = loadKnown(readFileSync('scripts/leak-gate-known.json', 'utf8'));
-  for (const row of rows) assert.match(row.file, /^dist\//);
+  // A row names a built file (dist/...) or a tracked source file that exists in this checkout.
+  for (const row of rows) assert.ok(row.file.startsWith('dist/') || existsSync(row.file.split('!')[0]), row.file);
 });
 
 test('the Leak screen page carries every slot the gate fills', () => {
   const page = readFileSync('site/leak-screen/index.html', 'utf8');
   const filled = fillPage(page, { terms: 1, canaries: 1, scanned: '2026-10-28T00:00:00Z', commit: COMMIT, files: 1, hits: 0, known: 0 });
+  assert.match(fillPage(page, { 'tree-files': 9, 'tree-hits': 0, 'tree-known': 2 }, TREE_SLOTS), /data-leak-screen="tree-known">2</);
   assert.match(filled, /datetime="2026-10-28T00:00:00Z"/);
   assert.throws(() => fillPage(page.replace('data-leak-screen="known"', ''), { terms: 1 }), /no "known" slot/);
 });
 
-test('the publish workflow runs the gate after the build, before the upload, with the secret', () => {
+const jobOf = (wf, name) => { const at = wf.indexOf(`\n  ${name}:\n`); assert.notEqual(at, -1, name); const next = wf.slice(at + 1).search(/\n  [a-z][\w-]*:\n/); return wf.slice(at, next < 0 ? undefined : at + 1 + next); };
+
+test('the term set reaches no job a pull request runs: only main-only jobs in the leak-screen environment use it', () => {
+  for (const file of readdirSync('.github/workflows').map(f => `.github/workflows/${f}`)) {
+    const wf = readFileSync(file, 'utf8');
+    if (!wf.includes('LEAK_SCREEN_SECRET')) continue;
+    const jobs = wf.slice(wf.indexOf('\njobs:\n')).split(/\n(?=  [a-z][\w-]*:\n)/).slice(1);
+    for (const job of jobs) if (job.includes('secrets.LEAK_SCREEN_SECRET')) assert.match(job, /\n    environment: leak-screen\n/, `${file}: a job that reads the term set outside the leak-screen environment`);
+    // A pull request's own code never runs with it: no plain pull_request trigger in a file that reads the secret,
+    // except publish.yml, whose secret-reading job is skipped for pull requests (and refused by the environment).
+    if (!file.endsWith('publish.yml')) assert.doesNotMatch(wf, /\n  pull_request:\n/, `${file}: pull_request with the term set`);
+  }
   const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
-  const at = s => { const i = wf.indexOf(s); assert.notEqual(i, -1, s); return i; };
-  assert.ok(at('pnpm check') < at('node scripts/leak-gate.mjs') && at('node scripts/leak-gate.mjs') < at('upload-pages-artifact'));
-  assert.match(wf, /--set scripts\/leak-gate-set\.json/);
-  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
-  assert.doesNotMatch(wf.slice(at('Leak screen'), at('Upload Pages')), /continue-on-error|\|\| true/);
+  assert.doesNotMatch(jobOf(wf, 'verify'), /LEAK_SCREEN_SECRET/, 'verify (which runs a pull request\'s code) has no term set');
+  assert.match(jobOf(wf, 'gate'), /\n    if: github\.event_name != 'pull_request'\n/);
+});
+
+test('the publish workflow gates a push to main inline: build in verify, then both screens and the upload in gate', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const gate = jobOf(wf, 'gate');
+  const at = s => { const i = gate.indexOf(s); assert.notEqual(i, -1, s); return i; };
+  assert.match(gate, /\n    needs: verify\n/);
+  assert.match(jobOf(wf, 'publish'), /\n    needs: gate\n/);
+  assert.ok(at('Take the built site') < at('Leak screen,') && at('Leak screen,') < at('Source screen') && at('Source screen') < at('upload-pages-artifact'));
+  assert.match(gate, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html dist\n/);
+  assert.match(gate, /run: node scripts\/leak-gate\.mjs --set scripts\/leak-gate-set\.json --known scripts\/leak-gate-known\.json --page dist\/leak-screen\/index\.html --tree\n/);
+  assert.doesNotMatch(gate.slice(at('Leak screen,')), /continue-on-error|\|\| true|\n      +if:/);
+  assert.ok(jobOf(wf, 'verify').indexOf('pnpm check') < jobOf(wf, 'verify').indexOf('name: site-dist'));
+});
+
+test('a pull request is gated from the base branch over its build as data, and the result is a run named for its head', () => {
+  const wf = readFileSync('.github/workflows/leak-screen-pr.yml', 'utf8');
+  assert.match(wf, /\non:\n  workflow_run:\n    workflows: \['Public experiments & Pages'\]\n    types: \[completed\]\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}\n\s+path: base\n/);
+  assert.match(wf, /python3 base\/scripts\/leak-screen-input\.py "\$\{RUNNER_TEMP\}\/input\.zip" "\$\{RUNNER_TEMP\}\/input" "\$\{HEAD_SHA\}"/);
+  // Every node it runs is main's gate; nothing of the pull request is executed or installed.
+  for (const line of wf.split('\n').filter(l => /\bnode\b/.test(l) && /run:/.test(l))) assert.match(line, /node "\$\{GITHUB_WORKSPACE\}\/base\/scripts\/leak-gate\.mjs"/, line);
+  assert.doesNotMatch(wf, /pnpm|npm (install|ci)|bash pr\/|node pr\/|\.\/pr\/|python3 pr\//);
+  // The result is the run itself, named for the head; no forgeable commit status is posted.
+  assert.match(wf, /\nrun-name: Leak screen for \$\{\{ github\.event\.workflow_run\.head_sha \}\}\n/);
+  assert.doesNotMatch(wf, /statuses|\/statuses\//);
+  assert.doesNotMatch(wf, /\$\{\{ github\.event\.workflow_run\.(head_branch|display_title|head_commit)/, 'no attacker-chosen text in a command');
+});
+
+test('the artifact reader refuses links, climbing names, a wrong head and an oversize zip, and extracts a good one', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-input-'));
+  const py = (zip, head = 'a'.repeat(40)) => spawnSync('python3', [join(process.cwd(), 'scripts/leak-screen-input.py'), zip, join(root, 'out-' + Math.random()), head], { encoding: 'utf8' });
+  const make = (name, entries) => { const r = spawnSync('python3', ['-c', `import zipfile,sys,json
+z=zipfile.ZipFile(sys.argv[1],'w')
+for e in json.loads(sys.argv[2]):
+  i=zipfile.ZipInfo(e['n'])
+  if e.get('link'): i.external_attr=(0o120777<<16)
+  z.writestr(i,e.get('d',''))
+z.close()`, join(root, name), JSON.stringify(entries)], { encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return join(root, name); };
+  const manifest = head => ({ n: 'manifest.json', d: JSON.stringify({ format: 'odin-leak-screen-input', version: 1, headSha: head }) });
+  try {
+    const good = make('good.zip', [manifest('a'.repeat(40)), { n: 'dist/index.html', d: '<p>ok</p>' }]);
+    assert.equal(py(good).status, 0, py(good).stderr);
+    for (const [name, entries, why] of [
+      ['climb.zip', [manifest('a'.repeat(40)), { n: 'dist/../../x', d: 'x' }], /climbs out/],
+      ['abs.zip', [manifest('a'.repeat(40)), { n: '/etc/x', d: 'x' }], /absolute or malformed/],
+      ['link.zip', [manifest('a'.repeat(40)), { n: 'dist/l', d: '/etc/passwd', link: true }], /link or a special file/],
+      ['nomanifest.zip', [{ n: 'dist/index.html', d: 'x' }], /no manifest/],
+      ['other.zip', [manifest('b'.repeat(40)), { n: 'dist/index.html', d: 'x' }], /another head/],
+    ]) {
+      const r = py(make(name, entries));
+      assert.equal(r.status, 2, name);
+      assert.match(r.stderr, why, name);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('a vendored archive the gate cannot read stops the build', () => {
@@ -483,4 +549,152 @@ test('a strict-class term (client, employer, publisher) can never be a known occ
 test('the committed known list carries a valid review stamp and no strict-class row', () => {
   const d = JSON.parse(readFileSync('scripts/leak-gate-known.json', 'utf8'));
   assert.equal(d.reviewed.rowsSha256, rowsDigest(d.known));
+});
+
+test('--tree reads every tracked file of the checkout for terms and canaries: red on a planted name, green once it is gone', () => {
+  const root = mkdtempSync(join(tmpdir(), 'leak-gate-tree-'));
+  const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  const run = (extra = []) => { const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', ...extra, '--tree'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' }); return { code: r.status, out: r.stdout + r.stderr }; };
+  try {
+    writeFileSync(join(root, 'set.json'), setFile());
+    mkdirSync(join(root, 'scripts'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\nexport const x = 1;\n');
+    writeFileSync(join(root, 'scripts/fixture.test.mjs'), "const plants = ['/Users/someone/x', 'served on localhost:3000'];\n");
+    writeFileSync(join(root, 'untracked.txt'), `not in git: ${CANARY}\n`);
+    git('init', '-q'); git('add', 'set.json', 'scripts');
+    const red = run();
+    assert.equal(red.code, 1, red.out);
+    assert.match(red.out, /LEAK scripts\/record\.mjs:1 term hash [0-9a-f]{8}/);
+    assert.doesNotMatch(red.out, /fixture\.test\.mjs|untracked/, 'machine patterns are for the built site; an untracked file is not the tree');
+    assert.ok(!red.out.includes('blorvak'));
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read the private repository AT main.\nexport const x = 1;\n');
+    const green = run();
+    assert.equal(green.code, 0, green.out);
+    // A dist/ row belongs to the built-site scan: the tree scan neither uses it nor calls it stale; a tree row is settled here.
+    const rows = [{ file: 'dist/index.html', kind: 'loopback', count: 1, reason: 'a row for the built site' }];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped(rows))); git('add', 'known.json');
+    assert.equal(run(['--known', 'known.json']).code, 0);
+    writeFileSync(join(root, 'scripts/record.mjs'), '// The org runners read blorvak AT main.\n');
+    const hash = run().out.match(/term hash ([0-9a-f]{8})/)[1];
+    writeFileSync(join(root, 'known.json'), JSON.stringify(stamped([...rows, { file: 'scripts/record.mjs', kind: 'term', hash, count: 1, reason: 'a reviewed tree occurrence' }])));
+    assert.equal(run(['--known', 'known.json']).code, 0, 'a tree row covers its tree occurrence');
+    // --page with --tree fills the page's own tree line, and only that line.
+    writeFileSync(join(root, 'page.html'), PAGE.replace('</p>', ' <span data-leak-screen="tree-files">0</span> <span data-leak-screen="tree-hits">-</span> <span data-leak-screen="tree-known">-</span></p>'));
+    const filled = run(['--known', 'known.json', '--page', 'page.html']);
+    assert.equal(filled.code, 0, filled.out);
+    const page = readFileSync(join(root, 'page.html'), 'utf8');
+    assert.match(page, /data-leak-screen="tree-hits">0</);
+    assert.match(page, /data-leak-screen="tree-known">1</);
+    assert.match(page, /data-leak-screen="tree-files">[1-9]\d*</);
+    assert.match(page, /data-leak-screen="hits">-</, 'the built-site slots stay for the built-site scan');
+    // A tracked name that is not UTF-8 (byte FF) could collide with another once decoded: it stops the build.
+    const odd = Buffer.concat([Buffer.from(join(root, 'scripts/x')), Buffer.from([0xff]), Buffer.from('.txt')]);
+    // (A file system that refuses such a name, as APFS does, cannot hold one; CI's Linux runner can.)
+    let made = true;
+    try { writeFileSync(odd, 'clean\n'); } catch (error) { if (error.code !== 'EILSEQ') throw error; made = false; }
+    if (made) {
+      git('add', '-A');
+      const bad = run();
+      assert.equal(bad.code, 2, bad.out);
+      assert.match(bad.out, /not valid UTF-8/);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the lab screen can only gain names (the boundary); never in a build; outside the runner an accident guard refuses; a random made-up name is refused like a real one', async () => {
+  const made = `zq${[...createHash('sha256').update(String(Math.random())).digest('hex')].filter(c => /[a-f]/.test(c)).join('').slice(0, 10)}`;
+  assert.equal(namesRestricted(`a ${made} lender`), false);
+  addScreenNames(made);
+  assert.equal(namesRestricted(`a ${made} lender`), true);
+  assert.ok(screenHits(`the ${made.toUpperCase()} repository`).some(h => /restricted name/.test(h.reason)));
+  // A three-letter name: the short-token path, and anyWindow finds it inside a longer word as a substring check would.
+  const short = 'qzj';
+  addScreenNames(short);
+  assert.ok(screenHits('the QZJ repository').some(h => /restricted name/.test(h.reason)));
+  assert.equal(namesRestricted('a xqzjx token'), false, 'a short name inside a word is not a token match');
+  assert.equal(namesRestricted('a xqzjx token', { anyWindow: true }), true, 'anyWindow reads every letter run of 3 or more');
+  const call = env => spawnSync(process.execPath, ['--input-type=module', '-e', "const m = await import('./scripts/lab-dispatch-publish.mjs'); m.addScreenNames('zqbcdfgh');"], { env: { PATH: process.env.PATH, ...env }, encoding: 'utf8' });
+  // An ordinary *.test.mjs run by hand with the runner's variable set: its parent is not the test runner, so refused.
+  const dir = mkdtempSync(join(tmpdir(), 'hook-'));
+  try {
+    writeFileSync(join(dir, 'spoof.test.mjs'), `const m = await import(${JSON.stringify(join(process.cwd(), 'scripts/lab-dispatch-publish.mjs'))}); m.addScreenNames('zqbcdfgh');\n`);
+    const spoof = spawnSync(process.execPath, [join(dir, 'spoof.test.mjs')], { env: { PATH: process.env.PATH, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' });
+    assert.notEqual(spoof.status, 0, 'a test file run by hand');
+    assert.match(spoof.stderr, /for the tests only/);
+    // A launcher that carries --test as its own script argument and spawns the test file: still refused.
+    writeFileSync(join(dir, 'launcher.mjs'), `import { spawnSync } from 'node:child_process'; const r = spawnSync(process.execPath, [${JSON.stringify(join(dir, 'spoof.test.mjs'))}], { env: { ...process.env, NODE_TEST_CONTEXT: 'child-v8' }, encoding: 'utf8' }); process.stderr.write(r.stderr); process.exit(r.status ?? 1);\n`);
+    const launched = spawnSync(process.execPath, [join(dir, 'launcher.mjs'), '--test'], { env: { PATH: process.env.PATH }, encoding: 'utf8' });
+    assert.notEqual(launched.status, 0, 'a launcher run as node launcher.mjs --test');
+    assert.match(launched.stderr, /for the tests only/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  for (const line of ['node --test scripts/a.test.mjs', '/usr/bin/node --test-reporter=tap --test x.test.mjs', 'node --test'])
+    assert.equal(isTestRunnerCommand(line), true, line);
+  for (const line of ['node launcher.mjs --test', 'node -- --test', 'node --inspect -- --test x', 'python3 --test', 'bash -c node --test', 'node'])
+    assert.equal(isTestRunnerCommand(line), false, line);
+  for (const [name, env] of [['outside node --test', {}], ['an inline script that sets the runner\'s variable', { NODE_TEST_CONTEXT: 'child-v8' }], ['in a site build', { NODE_TEST_CONTEXT: 'child-v8', ODIN_SITE_BUILD: '1' }]]) {
+    const r = call(env);
+    assert.notEqual(r.status, 0, name);
+    assert.match(r.stderr, /for the tests only/, name);
+  }
+});
+
+test('the verify job (the site build) runs with ODIN_SITE_BUILD set, so the test hook cannot run there', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  for (const job of ['verify', 'gate']) assert.match(jobOf(wf, job), /\n    env:\n      ODIN_SITE_BUILD: '1'\n/, job);
+});
+
+test('only test code calls the screen hook: no build or site script imports it or the made-up names', () => {
+  const tracked = spawnSync('git', ['ls-files', '-z', '--', 'scripts', 'site', 'harness', 'experiments'], { encoding: 'utf8' }).stdout.split('\0').filter(f => /\.(m?js|cjs|ts)$/.test(f));
+  const allowed = f => /\.test\.mjs$/.test(f) || f === 'scripts/lab-dispatch-publish.mjs' || f === 'scripts/test-synthetic-names.mjs';
+  for (const file of tracked) {
+    const text = readFileSync(file, 'utf8');
+    if (/addScreenNames|test-synthetic-names/.test(text)) assert.ok(allowed(file), `${file} reaches the test-only screen hook`);
+  }
+});
+
+test('a pull request\'s title, body and every commit message are screened: a planted term or canary in any of them fails', () => {
+  const event = (title, body, n) => ({ pull_request: { title, body, commits: n } });
+  const commit = (i, message) => ({ sha: String(i).repeat(40).slice(0, 40).replace(/[^0-9a-f]/g, 'a'), commit: { message } });
+  const screen = (ev, commits) => {
+    const root = mkdtempSync(join(tmpdir(), 'pr-text-'));
+    try {
+      writeFileSync(join(root, 'set.json'), setFile()); writeFileSync(join(root, 'event.json'), JSON.stringify(ev)); writeFileSync(join(root, 'commits.json'), JSON.stringify([commits]));
+      const lay = spawnSync(process.execPath, [join(process.cwd(), 'scripts/pr-text-screen.mjs'), '--event', 'event.json', '--commits', 'commits.json', '--out', 'pr-text'], { cwd: root, encoding: 'utf8' });
+      if (lay.status !== 0) return { code: lay.status, out: lay.stderr };
+      const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/leak-gate.mjs'), '--set', 'set.json', '--terms-only', 'pr-text'], { cwd: root, env: { PATH: process.env.PATH, LEAK_SCREEN_SECRET: SECRET }, encoding: 'utf8' });
+      return { code: r.status, out: r.stdout + r.stderr };
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  };
+  const clean = [commit(1, 'fix: a clean change'), commit(2, 'test: and its test, see /Users/someone/x in the fixture')];
+  assert.equal(screen(event('feat: a clean title', 'A clean body.', 2), clean).code, 0, 'clean text passes; machine-shaped fixture text in PR prose is not refused');
+  for (const [where, ev, commits, want] of [
+    ['the title (the squash subject)', event('feat: Zephyr Quarry support', 'body', 2), clean, /pr-text\/title\.txt:1 term/],
+    ['the body', event('feat: clean', `Notes.\n\nSee ${CANARY}.`, 2), clean, /pr-text\/body\.md:3 canary/],
+    ['a commit message', event('feat: clean', 'body', 2), [clean[0], commit(2, 'fix: the blorvak case')], /pr-text\/commits\/[0-9a-f]{40}\.txt:1 term/],
+  ]) {
+    const r = screen(ev, commits);
+    assert.equal(r.code, 1, `${where}: ${r.out}`);
+    assert.match(r.out, want, where);
+    assert.ok(!/blorvak|zephyr|odncanary/i.test(r.out), `${where}: the output never holds the text`);
+  }
+  assert.equal(screen(event('feat: clean', 'body', 3), clean).code, 2, 'a commit list shorter than the PR fails closed');
+  assert.equal(screen({ pull_request: { title: '', commits: 0 } }, []).code, 2, 'no title fails closed');
+});
+
+test('the pull request text screen runs on every PR event, on GitHub-hosted runners, with the secret, unconditionally', () => {
+  const wf = readFileSync('.github/workflows/pr-text.yml', 'utf8');
+  assert.match(wf, /types: \[opened, edited, synchronize, reopened\]/);
+  // Quoted: unquoted, YAML reads " #" as a comment and the name would stop at "for".
+  assert.match(wf, /\nrun-name: 'PR text screen for #\$\{\{ github\.event\.pull_request\.number \}\} at \$\{\{ github\.event\.pull_request\.head\.sha \}\}'\n/);
+  // The screen and its gate come from the base branch: a pull request can neither replace them nor run code with the secret.
+  assert.match(wf, /\non:\n(?:#[^\n]*\n)*  pull_request_target:\n/);
+  assert.doesNotMatch(wf, /\n  pull_request:\n/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n\s+persist-credentials: false/);
+  assert.doesNotMatch(wf, /\n\s+(ref|repository):[^\n]*(head\.(sha|ref|repo)|refs\/pull\/)/, 'no file of the pull request is checked out');
+  assert.equal((wf.match(/actions\/checkout@/g) ?? []).length, 1, 'one checkout: the base sha');
+  assert.match(wf, /runs-on: ubuntu-latest/);
+  assert.doesNotMatch(wf, /self-hosted|continue-on-error|\|\| true|\n\s+if:/);
+  assert.match(wf, /LEAK_SCREEN_SECRET: \$\{\{ secrets\.LEAK_SCREEN_SECRET \}\}/);
+  assert.match(wf, /--terms-only pr-text\n/);
+  assert.doesNotMatch(wf, /\$\{\{ github\.event\.pull_request\.(title|body)/, 'PR text never interpolated into a command');
 });

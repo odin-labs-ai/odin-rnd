@@ -127,7 +127,9 @@ test('the leak screen refuses a card that would show a hash no run holds', () =>
 
 test('the published Labs index: the Lab 05 card carries its provenance once, before its links, with the stylesheet', () => {
   const page = renderLabs()['labs/index.html'];
-  assert.equal(readLabRuns().map(l => l.tile.experiment).join(), 'rogue');
+  const labs = readLabRuns().map(l => l.tile.experiment);
+  assert.equal(labs[0], 'rogue');
+  assert.ok(labs.every(l => ['rogue', 'review'].includes(l)), labs.join());
   const start = page.indexOf('aria-labelledby="lab-tile-rogue">');
   const card = page.slice(start, page.indexOf('</article>', start));
   assert.equal(card.split('class="lab-provenance ').length, 2);
@@ -135,7 +137,13 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   // The badge is whatever the committed runs say: a laptop re-run alone today, "reproduced" once org-runner days land.
   const { state } = runState(readLabRuns()[0].runs);
   assert.deepEqual(badge(card), [state, `${BADGES[state]}.`]);
-  assert.equal(page.split('class="lab-provenance ').length, 2, 'only the lab with runs has a provenance');
+  // Each lab with runs carries exactly one provenance on its own card, and no other card carries any.
+  for (const lab of labs) {
+    const at = page.indexOf(`aria-labelledby="lab-tile-${lab}">`);
+    assert.ok(at >= 0, lab);
+    assert.equal(page.slice(at, page.indexOf('</article>', at)).split('class="lab-provenance ').length, 2, lab);
+  }
+  assert.equal(page.split('class="lab-provenance ').length, 1 + labs.length, 'only a lab with runs has a provenance');
   assert.equal(page.slice(0, page.indexOf('</head>')).split('<link rel="stylesheet" href="../assets/lab-runs.css">').length, 2);
   if (state === 'laptop') assert.doesNotMatch(page, /org machine|daily/i);
   assert.doesNotMatch(page, /daily/i);
@@ -193,9 +201,9 @@ test('the published runs page: Lab 05\'s laptop run, its record linked, linked f
   assert.doesNotMatch(page, /org machine|daily/i);
   const index = pages['labs/index.html'];
   const { latest } = runState(readLabRuns()[0].runs);
-  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">Every run of every lab, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
+  assert.match(index, /<section class="company-section company-width" id="labs"[^>]*>.*<p class="lab-runs-link"><a href="runs\/">All lab runs, newest first<\/a><\/p>(<p class="lab-runs-link">[^]*?<\/p>)?<\/section>/s);
   // The card's link lands on the row of the run it shows, the lab's latest (the laptop re-run, until an org day lands).
-  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(latest)}">This run, among every run</a></p>`));
+  assert.match(index, new RegExp(`<p class="lab-provenance-more"><a href="runs/#${runAnchor(latest)}">This run in the list of all runs</a></p>`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(latest)}">`));
   assert.match(page, new RegExp(`<tr id="${runAnchor(laptop)}">`), 'the laptop re-run keeps its row');
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/labs\/runs\/<\/loc>/);

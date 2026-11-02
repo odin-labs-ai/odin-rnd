@@ -43,7 +43,7 @@ typography:
     lineHeight: 1.8
   label:
     fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: "10px"
+    fontSize: "12px"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "0.08em"
@@ -103,7 +103,13 @@ Articles use 18px/1.8 Manrope, 16px on mobile, in a 740px reading column; paragr
 
 Use the unmodified public Open Docs odin-logo.svg, whose exact path matches the live odin-labs.ai header. Never redraw it as a generic geometric icon. It appears in the common header, footer, equipment plate, favicon and missing-page header, with explicit image dimensions and decorative alt text beside the named home link.
 
-The home lockup reads OdinLabs / R&D in sentence case, with the subdivision separated by a thin rule. The header exposes the four existing navigation destinations and source link without a hidden mobile menu. The footer adds direct Odin Labs and Open Docs links. Keep all article routes in the same brand shell.
+The home lockup reads OdinLabs / R&D in sentence case, with the subdivision separated by a thin rule. The header exposes the canonical navigation destinations (listed below, with Find last) and the source link without a hidden mobile menu. The footer adds direct Odin Labs and Open Docs links. Keep all article routes in the same brand shell.
+
+Find is a documented addition to those destinations (mission rnd-site-ux-nav-1101, 2026-11-01): the build adds a Find link as the last header destination on every page, so a visitor can search and filter everything the site publishes from anywhere. Field notes, lab pages and tool pages also get a breadcrumb trail at the top and up to four related links before the footer, styled by assets/chrome.css. This chrome is added to the built pages only (scripts/site-chrome.mjs), never to a committed page or frozen record, and never puts a breadcrumb or related link on a number-provenance page.
+
+One header navigation (wave 3 of the same mission): the build rewrites the header nav of every built page to the same list, in this order: Factory, Experiments, Labs, Updates, Field notes, Work with us, Partners, then Find, with the page's own section marked current (aria-current, shown as a thin brand underline from assets/chrome.css; scripts/site-header.mjs; an unknown nav label stops the build, and each retired first-edition label is named with what became of it). Field notes and Tools have index pages of their own, journal/ and projects/, rendered from the site index (scripts/site-sections.mjs), and the breadcrumbs on notes and tools lead to them; the built experiments page ends with an All experiments list. Like the rest of the chrome this happens in dist/ only.
+
+On this page (wave 4 of the same mission): a field note or lab page whose main text runs past 2,000 words with at least four section headings gets an "On this page" list right after its own header (scripts/site-toc.mjs, styled in assets/chrome.css). On phones and below 1100px it is a closed disclosure in the site's own summary style; from 1100px it is a plain list, which on a field note sits in the right margin beside the 740px text and stays in view while reading. Never on a number-provenance page. Lab 01's per-pull-request log is folded in the same disclosure style. An experiment whose ledger row links a raw JSON record has a record page (records/<slug>/, scripts/site-records.mjs) that shows the record's own fields as written and links the file; Find and the related links lead there.
 
 ## Layout and materials
 

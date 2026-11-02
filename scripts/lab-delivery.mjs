@@ -344,6 +344,16 @@ export function aggregateProblems(html, record) {
 }
 
 /** The "How this site got built" section body. Throws when the copy fails the screen or an element has no source. */
+/**
+ * The per-pull-request timeline, every block kept, folded into one <details> that starts closed (mission
+ * rnd-site-ux-nav-1101 wave 4, audit 2026-11-01 finding 7): the raw log is the page's longest part, and a reader who
+ * wants the summary, chart and table above should not have to scroll past it. Nothing is dropped; the summary says how
+ * many pull requests it holds.
+ */
+export function sourceLog(blocks) {
+  return `<details class="delivery-log"><summary>Source log (${blocks.length} ${blocks.length === 1 ? 'entry' : 'entries'}, one per pull request)<span aria-hidden="true">+</span></summary>${blocks.join('')}</details>`;
+}
+
 export function renderDelivery(record) {
   const copyProblems = screenTree(COPY, 'lab-delivery COPY');
   if (copyProblems.length) throw new Error(`Delivery copy refused:\n  ${copyProblems.join('\n  ')}`);
@@ -359,7 +369,7 @@ export function renderDelivery(record) {
   const html = `<div class="delivery" id="delivery"><div class="company-section-heading"><h2 id="delivery-title">${escape(COPY.title)}</h2><p>${escape(lead)}</p><p>${escape(COPY.generated)}</p></div>`
     + `<p class="delivery-summary">${escape(summary)}</p>`
     + `<div class="delivery-telemetry"><h3>Review rounds per change</h3><p class="delivery-legend"><span class="delivery-key delivery-key-fix"></span> sent back <span class="delivery-key delivery-key-ship"></span> approved</p>${roundsChart(record, telemetry)}${telemetryTable(record, telemetry)}</div>`
-    + `<div class="delivery-timeline"><h3>Every change, newest first</h3><p>${escape(COPY.howToRead)}</p><p class="delivery-private">${escape(COPY.privateNote)}</p>${prs.map(pr => prTimeline(pr, record, telemetry)).join('')}</div>`
+    + `<div class="delivery-timeline"><h3>Every change, newest first</h3><p>${escape(COPY.howToRead)}</p><p class="delivery-private">${escape(COPY.privateNote)}</p>${sourceLog(prs.map(pr => prTimeline(pr, record, telemetry)))}</div>`
     + renderAggregates(record)
     + `<p class="delivery-cursor technical">RECORD · PULL REQUESTS #${record.window.fromPr}–#${record.window.toPr} · GITHUB READ ${escape(record.generatedFrom.ghFetchedAt.replace('T', ' ').replace('Z', ' UTC'))} · ${record.generatedFrom.verdictRowsRead} REVIEW ROWS READ</p></div>`;
   const problems = [...renderedProblems(html, record), ...aggregateProblems(html, record)];
