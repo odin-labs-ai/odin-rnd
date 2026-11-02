@@ -89,11 +89,14 @@ export function updateClaimProblems(feed, expected) {
 
 /** Find summaries are published previews and must retain each update's limiting text. */
 export function indexClaimProblems(index, updates) {
-  if (!Array.isArray(index)) return ['data/index.json: expected an array of Find items'];
+  if (!index || typeof index !== 'object' || Array.isArray(index) || !Array.isArray(index.items) ||
+      !index.topics || typeof index.topics !== 'object' || Array.isArray(index.topics)) {
+    return ['data/index.json: expected Find items and topics'];
+  }
   const problems = [];
   const byId = new Map(updates.map(u => [`update-${u.key}`, u]));
   const seen = new Set();
-  for (const item of index) {
+  for (const item of index.items) {
     if (!item || typeof item !== 'object') {
       problems.push('data/index.json: invalid Find item');
       continue;
