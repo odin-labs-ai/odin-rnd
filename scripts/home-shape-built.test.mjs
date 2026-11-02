@@ -10,10 +10,11 @@ import { checkSite } from './number-provenance.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
 
-// The one target a link may reach inside a fold: the home's experiment list, which the site index still links for an
-// experiment whose record lives in another repository (scripts/site-index.mjs). site/assets/home-fold.mjs opens the
-// folds around it. Any other target inside a fold is a link the fold has hidden.
-const OPENED_BY_SCRIPT = ['all-experiments'];
+// The targets a link may reach inside a fold, each opened by site/assets/home-fold.mjs: the home's experiment list, which
+// the site index still links for an experiment whose record lives in another repository (scripts/site-index.mjs), and
+// nina's tools entry, linked from EXP 006's generated field note. Any other target inside a fold is a link the fold has
+// hidden, and is refused here until it is named.
+const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
 // Words a visitor sees on the home without opening anything (main, outside every <details> and every hidden station).
 // Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
 const VISIBLE_WORDS = 1250;
@@ -85,7 +86,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
   assert.ok(links > 100, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
-  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the experiment list is reached inside a fold, and the opener opens it');
+  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold, and the opener opens them');
   for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
     assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
     const fold = home.indexOf('<details class="home-fold">', ids.get(id));

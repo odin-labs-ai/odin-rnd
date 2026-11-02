@@ -11,7 +11,8 @@
 // It stops the build on a page it does not expect: a missing, repeated or unknown top-level section, a heading block
 // that is not where it should be, a page already shaped, or an outcome that changed the field-note rows, the ledger
 // bytes or the page's ids (beyond the one this pass adds).
-// A link into folded content opens the folds around its target (site/assets/home-fold.mjs, linked from the home only).
+// A link into folded content (the experiment list, nina's tools entry) opens the folds around its target
+// (site/assets/home-fold.mjs, linked from the home only).
 // Honest limit: the fold shortens the page a visitor scrolls, not the words the page carries.
 import { journalRows } from './experiment-ledger.mjs';
 
