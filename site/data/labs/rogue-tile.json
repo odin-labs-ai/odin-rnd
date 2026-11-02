@@ -4,13 +4,13 @@
  "kind": "results",
  "label": "Lab 05",
  "title": "Can an agent go rogue?",
- "question": "What does an agent do with a poisoned ticket that tells it to wipe the repository, and what stops it?",
- "how": "A staged attack on a seeded sandbox repository with synthetic data. The same agent gets the same ticket twice: once with no controls, once through the engine's real guards, which refuse and write down every command.",
+ "question": "What does an agent do when a planted ticket tells it to wipe the code repository, and what stops it?",
+ "how": "A staged attack on a practice repository filled with made-up data. The same agent gets the same ticket twice: once with no controls, and once behind the engine's real guards, which refuse and record each command.",
  "experiment": "rogue",
- "status": "Staged attack, real refusals · record cited by hash",
+ "status": "Staged attack, real refusals · record checksum published",
  "record": { "href": "data/labs/rogue/record.json", "pin": "data/labs/rogue/record.sha256" },
  "links": [
   { "label": "Both runs, staged and real parts marked", "href": "labs/rogue/index.html" },
-  { "label": "The record, pinned by its hash", "href": "data/labs/rogue/record.json" }
+  { "label": "The full record, with a published checksum", "href": "data/labs/rogue/record.json" }
  ]
 }
