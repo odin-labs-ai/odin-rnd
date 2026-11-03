@@ -29,7 +29,7 @@
   },
   "lab": {
    "type": "string",
-   "pattern": "^(rogue|review)$"
+   "pattern": "^(rogue|review|red-build)$"
   },
   "runner": {
    "type": "string",
@@ -75,7 +75,7 @@
   },
   "command": {
    "type": "string",
-   "pattern": "^(the demo's own check command|the lab's own re-run kit)$"
+   "pattern": "^(the demo's own check command|the lab's own re-run kit|the lab's own recount)$"
   },
   "inputs": {
    "type": "array",
@@ -90,7 +90,7 @@
     "properties": {
      "role": {
       "type": "string",
-      "pattern": "^(runner|runs|frontier|nina)$"
+      "pattern": "^(runner|runs|frontier|nina|earlier|score|verdicts-a|verdicts-b)$"
      },
      "sha256": {
       "type": "string",
