@@ -21,6 +21,15 @@ export function normalize(text) {
   return String(text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+/** The number label already encoded in an experiment or lab id; other kinds have none. */
+export function numberLabel(item) {
+  // site-index.mjs builds ids from ledger EXP 000 and lab Lab 00 labels.
+  const experiment = /^exp-(\d{3})$/.exec(item?.id ?? '');
+  if (item?.type === 'experiment' && experiment) return `EXP ${experiment[1]}`;
+  const lab = /^lab-(\d{2})$/.exec(item?.id ?? '');
+  return item?.type === 'lab' && lab ? `Lab ${lab[1]}` : '';
+}
+
 /** A fresh, empty parameter set. */
 export function emptyParams() {
   return { q: '', type: [], stage: [], outcome: [], topic: [], date: '' };
@@ -76,7 +85,7 @@ export function isEmpty(params) {
 
 /**
  * The items that match: every set facet must match (AND), any selected value within a facet may match (OR).
- * The query is split into words; each word must appear in the title, summary or topics, ignoring case and accents.
+ * The query is split into words; each word must appear in the title, summary, topics or number label, ignoring case and accents.
  * Input order is kept.
  */
 export function filter(items, params = {}) {
@@ -90,7 +99,9 @@ export function filter(items, params = {}) {
     if (clean.topic.length && !topics.some(topic => clean.topic.includes(topic))) return false;
     if (clean.date && !String(item.date ?? '').startsWith(clean.date)) return false;
     if (!words.length) return true;
-    const haystack = normalize([item.title, item.summary, ...topics, ...topics.map(t => String(t).replace(/-/g, ' '))].join(' '));
+    const label = numberLabel(item);
+    const unpadded = label ? `${label.split(' ')[0]} ${Number(label.split(' ')[1])}` : '';
+    const haystack = normalize([item.title, item.summary, label, unpadded, ...topics, ...topics.map(t => String(t).replace(/-/g, ' '))].join(' '));
     return words.every(word => haystack.includes(word));
   });
 }
@@ -139,7 +150,15 @@ export function facetValues(items, key) {
     const value = item?.[key];
     for (const v of Array.isArray(value) ? value : [value]) if (typeof v === 'string' && v) values.add(v);
   }
+  // Kind already offers Field note and Tool; keep stage=note/tool usable in saved URLs through filter().
+  if (key === 'stage') for (const value of ['note', 'tool']) values.delete(value);
   return [...values].sort();
+}
+
+/** The first 30 interactive rows and the number the reveal control will add. */
+export function resultPage(items, limit = 30) {
+  const visible = items.slice(0, limit);
+  return { visible, remaining: items.length - visible.length };
 }
 
 // ---------------------------------------------------------------- browser wiring
@@ -213,6 +232,13 @@ function init(doc, win) {
       search.focus();
     });
     results.addEventListener('click', event => {
+      const more = event.target?.closest?.('button[data-more]');
+      if (more) {
+        const rest = filter(items, params).slice(30).map(row);
+        more.closest('li').replaceWith(...rest);
+        rest[0]?.querySelector('a,button')?.focus();
+        return;
+      }
       const chip = event.target?.closest?.('button[data-topic]');
       if (!chip) return;
       const next = { ...read(), topic: [chip.dataset.topic] };
@@ -250,7 +276,13 @@ function init(doc, win) {
 
     function render(current) {
       const found = filter(items, current);
-      const rows = found.map(item => row(item));
+      const { visible, remaining } = resultPage(found);
+      const rows = visible.map(item => row(item));
+      if (remaining) {
+        const more = element(doc, 'li', { class: 'find-more-row' });
+        more.append(element(doc, 'button', { type: 'button', class: 'find-more', 'data-more': '' }, `Show ${remaining} more`));
+        rows.push(more);
+      }
       results.replaceChildren(...rows);
       const total = items.length;
       count.textContent = found.length === total && isEmpty(current)
@@ -264,6 +296,8 @@ function init(doc, win) {
       const li = element(doc, 'li', { class: 'find-result' });
       const meta = element(doc, 'p', { class: 'find-meta' });
       meta.append(element(doc, 'span', { class: 'find-badge', 'data-type': String(item.type ?? '') }, TYPE_LABELS[item.type] ?? humanize(item.type)));
+      const label = numberLabel(item);
+      if (label) meta.append(element(doc, 'span', {}, label));
       if (item.date) meta.append(element(doc, 'time', { datetime: String(item.date) }, String(item.date).slice(0, 10)));
       if (item.stage) meta.append(element(doc, 'span', {}, stageLabel(item.stage)));
       if (OUTCOME_LABELS[item.outcome]) meta.append(element(doc, 'span', { class: 'find-outcome' }, OUTCOME_LABELS[item.outcome]));

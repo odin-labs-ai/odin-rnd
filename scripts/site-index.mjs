@@ -183,10 +183,14 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
       : topicsOf({}, u.key, `update ${u.key}`);
     const stage = UPDATE_STAGE[u.kind];
     if (!stage) throw new Error(`Site index: update ${u.key} has kind "${u.kind}", which maps to no index stage`);
+    // The prefix comes from the feed's kind; a numbered suffix, when present, comes from its key.
+    const number = /-(\d{2})$/.exec(u.key)?.[1];
+    const prefix = u.kind === 'Pre-registered' ? 'Pre-registration' : u.kind;
+    const title = `${prefix}${number ? ` ${number}` : ''} · ${u.title}`;
     // A results update carries its experiment's curated outcome; nothing else does.
     const outcome = stage === 'results' && ids.length === 1 ? outcomeOf.get(ids[0]) : undefined;
     // Find is a sharing surface: cutting an update can remove its limiting sentence.
-    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
+    items.push({ type: 'update', id: `update-${u.key}`, title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
   }
   for (const tool of tools) {
     items.push({ type: 'tool', id: `tool-${tool.project}`, title: tool.title, date: tool.date, stage: 'tool', topics: topicsOf(topics.tools, tool.project, `projects/${tool.project}/`), summary: tool.summary, href: tool.href });
@@ -239,6 +243,18 @@ function metaDescription(html) {
   return '';
 }
 
+/** A note with only its title in the meta description uses the first paragraph of its built article. */
+export function noteSummary(built, title) {
+  const summary = metaDescription(built).replace(/^Field notes from Odin R&D\. /, '');
+  if (summary !== title) return summary;
+  const body = /<article\b[^>]*>([\s\S]*?)<\/article>/i.exec(built)?.[1]
+    ?? /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(built)?.[1] ?? '';
+  const paragraph = /<p\b[^>]*>([\s\S]*?)<\/p>/i.exec(body)?.[1] ?? '';
+  const text = plain(textOf(paragraph));
+  if (!text) throw new Error(`Site index: note "${title}" has no first paragraph for its summary`);
+  return text;
+}
+
 /** Every file under `dir`, as paths relative to it. */
 function filesUnder(dir) {
   const out = [];
@@ -288,7 +304,7 @@ export function loadIndex({ root = '.', dist = join(root, 'dist') } = {}) {
   const notes = readdirSync(join(site, 'journal')).filter(name => name.endsWith('.html')).sort().map(name => {
     const built = read(join(dist, 'journal', name));
     const title = plain(textOf(/<title>([\s\S]*?)<\/title>/.exec(built)?.[1] ?? '')).replace(/ — Odin R&D$/, '');
-    const summary = metaDescription(built).replace(/^Field notes from Odin R&D\. /, '');
+    const summary = noteSummary(built, title);
     const meta = /class="article-meta">([^<]*)</.exec(read(join(site, 'journal', name)))?.[1];
     return { slug: name.replace(/\.html$/, ''), title, summary, date: metaDay(meta) };
   });

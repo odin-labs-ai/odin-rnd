@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'nod
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
-import { buildIndex, experimentIds, hasPhrase, hrefOnSite, ITEM_SCHEMA, LAB_DATES_PATH, loadIndex, metaDay } from './site-index.mjs';
+import { buildIndex, experimentIds, hasPhrase, hrefOnSite, ITEM_SCHEMA, LAB_DATES_PATH, loadIndex, metaDay, noteSummary } from './site-index.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
@@ -95,6 +95,28 @@ test('buildIndex places every source item once, with its topics, stage, outcome 
   assert.deepEqual(by['update-tool-witness'].topics, ['gates']);
   const dates = items.map(i => i.date);
   assert.deepEqual(dates, [...dates].sort().reverse(), 'newest first');
+});
+
+test('update titles name their feed kind and only use a number present in the feed key', () => {
+  const f = fixture();
+  f.updates.push({ ...f.updates[1], key: 'exp-005-amendment-02', kind: 'Amendment' });
+  f.updates.push({ ...f.updates[1], key: 'exp-005-erratum-01', kind: 'Erratum' });
+  f.updates.push({ ...f.updates[1], key: 'exp-005-measured', kind: 'Measured' });
+  const by = Object.fromEntries(buildIndex(f).map(item => [item.id, item]));
+  assert.equal(by['update-exp-005-amendment-02'].title, 'Amendment 02 · A gate');
+  assert.equal(by['update-exp-005-erratum-01'].title, 'Erratum 01 · A gate');
+  assert.equal(by['update-exp-005-preregistration'].title, 'Pre-registration · A gate');
+  assert.equal(by['update-exp-005-results'].title, 'Results · A gate');
+  assert.equal(by['update-exp-005-measured'].title, 'Measured · A gate');
+  assert.equal(by['update-exp-001-002-recorded'].title, 'Recorded · Two recipes');
+  assert.equal(by['update-note-why'].title, 'Field note · Why');
+  assert.equal(by['update-tool-witness'].title, 'Tool · Witness');
+});
+
+test('a note with its title as meta description uses the built article first paragraph as plain text', () => {
+  const built = '<meta name="description" content="Field notes from Odin R&amp;D. Why"><main><header><p>Not the body</p></header><article class="article-body"><p>First <strong>fact</strong> &amp; a &lt;tag&gt; with &#x27;quotes&#x27;.</p><p>Second fact.</p></article></main>';
+  assert.equal(noteSummary(built, 'Why'), "First fact & a <tag> with 'quotes'.");
+  assert.equal(noteSummary(built, 'Another title'), 'Why', 'an authored description is retained');
 });
 
 test('Find retains the limitation at the end of a long update', () => {
