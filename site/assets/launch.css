@@ -5,6 +5,12 @@
 .factory-correction{grid-column:1/-1;max-width:100ch;border-top:1px solid #3d5b4e;padding-top:16px;color:#b8cec1;font-size:13px}
 .factory-correction summary{cursor:pointer;font-weight:600}
 .factory-correction p{margin-top:8px}
+/* Built home (scripts/home-shape.mjs labelCorrection): the correction is an open ruled block that cannot be closed, under a
+   dated label in small mono capitals, the same pattern as the partners, evidence and providers pages. */
+.factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:14px 18px 16px;margin-top:4px}
+.factory-correction>p:first-child{margin-top:0}
+.factory-correction>.correction-when{font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#ffb38f}
+.factory-correction>.correction-label{font-weight:600;color:var(--paper)}
 .proof-strip{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule)}
 .proof-strip>li{margin:0;padding:28px 28px 30px 0;display:flex;flex-direction:column;justify-content:space-between;gap:20px}
 .proof-strip>li+li{border-left:1px solid var(--rule);padding-left:28px}

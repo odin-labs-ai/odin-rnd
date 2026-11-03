@@ -160,7 +160,7 @@ export function renderProjectsIndex(items) {
     path: PROJECTS_PAGE, current: null, crumb: 'Tools', title: 'Tools', heading: 'Tools you <br>can use.',
     description: 'The Odin R&D tools with a page of their own, each with what it does and how it was checked.',
     lead: 'The tools with a page of their own on this site, the latest at the top. More, including the engine itself, are in the tools list on the home page.',
-    actions: '<a class="button button-primary" href="../#projects">The tools list on the home page</a><a href="../journal/">Field notes</a><a href="../find/">Search everything</a>',
+    actions: '<a class="button button-primary" href="../find/">Search everything</a><a href="../#projects">The tools list on the home page</a><a href="../journal/">Field notes</a>',
     listLabel: 'All tools', list: `<ol class="update-list">${rows.map(row).join('')}</ol>`,
   });
 }

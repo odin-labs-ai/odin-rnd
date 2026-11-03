@@ -14,6 +14,7 @@
 // A link into folded content (the experiment list, nina's tools entry) opens the folds around its target
 // (site/assets/home-fold.mjs, linked from the home only).
 // Honest limit: the fold shortens the page a visitor scrolls, not the words the page carries.
+import { createHash } from 'node:crypto';
 import { journalRows } from './experiment-ledger.mjs';
 
 /** The stylesheet the shaped home links (and only the home). */
@@ -183,4 +184,89 @@ export function shapeHome(html) {
   out = out.replace(launch, `${launch}\n  <link rel="stylesheet" href="${HOME_CSS}">`).replace(motion, `${motion}\n  <script type="module" src="${HOME_JS}"></script>`);
   assertKept(html, out);
   return out;
+}
+
+// The home's dated correction (mission rnd-site-ux-nav-1101 wave 6). #168 put a wording correction, open, at the foot of the
+// factory hero in site/index.html (frozen, as a <details open>), and the owner's rerelease keeps it readable there without
+// a click. On the built home it becomes a block that cannot be closed, in place, the same open ruled pattern as the
+// partners, evidence and providers pages: a plain dated label ("Corrected on 1 November 2026 and 2 November 2026", the
+// block's own <time> elements reused as written), then #168's own label line, then its paragraphs byte for byte. No
+// summary, no toggle. Exactly one such block in the hero, its paragraphs as #168 published them, or the build stops: a
+// correction must never drop off the page, change its words or become closable unnoticed.
+/** The committed block's opening tag (site/index.html, frozen). */
+export const CORRECTION_SOURCE = '<details class="factory-correction" open>';
+/** The built block's opening tag. */
+export const CORRECTION_BLOCK = '<div class="factory-correction" role="note">';
+/** sha256 of the correction's paragraphs as #168 published them (213e1f1). A reword stops the build; a new dated
+ *  correction is a deliberate change of this pin. */
+export const CORRECTION_PARAGRAPHS_SHA256 = '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29';
+
+/** "a", "a and b", "a, b and c". */
+const listed = items => items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
+
+/** True when `body` is one or more <p>…</p> back to back and nothing else (a plain scan, no backtracking). */
+function onlyParagraphs(body) {
+  let at = 0;
+  while (at < body.length) {
+    if (!body.startsWith('<p>', at)) return false;
+    const end = body.indexOf('</p>', at);
+    if (end < 0 || body.slice(at + 3, end).includes('<p')) return false;
+    at = end + '</p>'.length;
+  }
+  return at > 0;
+}
+
+/** The committed correction at `at`: its label (the old summary's inner HTML) and its body (the paragraphs). */
+function sourceParts(html, at) {
+  const block = html.slice(at, elementEnd(html, at));
+  const head = /^<details class="factory-correction" open><summary>([^]*?)<\/summary>/.exec(block);
+  if (!head || !head[1].trim()) throw new Error('Home correction: the block does not open with its summary');
+  const body = block.slice(head[0].length, -'</details>'.length);
+  if (!onlyParagraphs(body)) throw new Error('Home correction: the block holds anything but its paragraphs');
+  return { block, label: head[1], body };
+}
+
+/** The built home with its correction as an open, non-collapsible dated block (see above). Throws on a page it does not
+ *  expect. */
+export function labelCorrection(html) {
+  const count = html.split(CORRECTION_SOURCE).length - 1;
+  if (count !== 1) throw new Error(`Home correction: expected exactly one open ${CORRECTION_SOURCE}, found ${count}`);
+  if (html.split('<details class="factory-correction"').length !== 2) throw new Error('Home correction: a second, closed correction block is on the page');
+  if (html.includes('class="factory-correction" role="note"')) throw new Error('Home correction: the page already carries the built block');
+  const at = html.indexOf(CORRECTION_SOURCE);
+  const { block, label, body } = sourceParts(html, at);
+  const seen = new Map();
+  for (const m of block.matchAll(/<time datetime="(\d{4}-\d{2}-\d{2})">[^<]+<\/time>/g)) if (!seen.has(m[1])) seen.set(m[1], m[0]);
+  if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
+  const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
+  const built = `${CORRECTION_BLOCK}<p class="correction-when">Corrected on ${when}</p><p class="correction-label">${label}</p>${body}</div>`;
+  const out = html.slice(0, at) + built + html.slice(at + block.length);
+  assertCorrectionKept(html, out);
+  return out;
+}
+
+/** The factory hero's offsets in `html`: its <section … id="floor"> to its own close tag. */
+function heroOf(html) {
+  const open = /<section\b[^>]*\sid="floor"[^>]*>/.exec(html);
+  if (!open) throw new Error('Home correction: the page has no factory hero (#floor)');
+  return [open.index, elementEnd(html, open.index)];
+}
+
+/** Throws unless `out` is `html` with only its correction rebuilt: the same bytes outside the block; one built block where
+ *  the committed one was, inside the factory hero, with no disclosure left; a dated label, #168's label line and every byte
+ *  of its paragraphs, which match the pinned hash. */
+export function assertCorrectionKept(html, out) {
+  const was = html.indexOf(CORRECTION_SOURCE), now = out.indexOf(CORRECTION_BLOCK);
+  if (was < 0 || now !== was || out.split(CORRECTION_BLOCK).length !== 2) throw new Error('Home correction: the built block is not where the correction was');
+  if (out.includes('class="factory-correction"') && out.split('class="factory-correction"').length !== 2) throw new Error('Home correction: a second correction block is on the page');
+  const { block, label, body } = sourceParts(html, was);
+  const nowEnd = elementEnd(out, now);
+  if (out.slice(0, now) !== html.slice(0, was) || out.slice(nowEnd) !== html.slice(was + block.length)) throw new Error('Home correction: the page changed outside the correction');
+  const [heroStart, heroEnd] = heroOf(out);
+  if (!(heroStart < now && nowEnd < heroEnd)) throw new Error('Home correction: the block is not inside the factory hero');
+  const after = out.slice(now, nowEnd);
+  if (/<details|<summary/.test(after)) throw new Error('Home correction: the block can be closed');
+  const dated = /^<div class="factory-correction" role="note"><p class="correction-when">Corrected on (?:<time datetime="\d{4}-\d{2}-\d{2}">[^<]+<\/time>(?:, | and )?)+<\/p><p class="correction-label">/.exec(after);
+  if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</div>`) throw new Error('Home correction: its earlier label or its body changed');
+  if (createHash('sha256').update(body).digest('hex') !== CORRECTION_PARAGRAPHS_SHA256) throw new Error('Home correction: its paragraphs differ from the text #168 published');
 }

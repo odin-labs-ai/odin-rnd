@@ -29,7 +29,7 @@ import { publishedPath as exp007PublishedPath, recordPath as exp007RecordPath } 
 import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCurrent } from './blueprint-floor-note.mjs';
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
 import { addLedger, foldJournal } from './experiment-ledger.mjs';
-import { shapeHome } from './home-shape.mjs';
+import { labelCorrection, shapeHome } from './home-shape.mjs';
 import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
 import { assertSiteCurrent as assertExp011SiteCurrent } from './reviewer-keep-note.mjs';
 import { publishedPath as exp011PublishedPath, recordPath as exp011RecordPath } from './reviewer-keep-prereg.mjs';
@@ -133,6 +133,7 @@ html = addLedger(html, report);
 // the ledger and every qualify step; the folded rows stay on the page, so everything that reads them is unchanged.
 html = foldJournal(html, 5);
 html = shapeHome(html);
+html = labelCorrection(html); // the hero's dated correction stays open, under a plain dated label
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 // The two workbenches (the BCE rule bench and the Laya bench) live on their own page, linked from the home's Experiments
