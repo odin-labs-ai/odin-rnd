@@ -24,7 +24,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { heldOutTallies, recount } from './lab-red-build.mjs';
+import { committedCountsOf, heldOutTallies, recount } from './lab-red-build.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/red-build/record.json';
@@ -122,7 +122,7 @@ export function redBuildCounts(json) {
   };
 }
 
-export function build(dir) {
+export function build(dir, { prior = priorRuns() } = {}) {
   const source = JSON.parse(readFileSync(join(dir, 'source.json'), 'utf8'));
   const bytes = role => readFileSync(join(dir, 'files', role));
   const json = role => JSON.parse(bytes(role));
@@ -172,10 +172,16 @@ export function build(dir) {
     earlier: counts.earlier,
     // The org runners' recounts (scripts/append-rogue-runs.mjs --lab red-build put them there) are published evidence,
     // not derivable from the private files, so a re-vendor carries them forward and --verify still re-derives.
-    ...priorRuns(),
+    ...prior,
   };
   const problems = recount(record);
   if (problems.length) throw new Error(`the committed verdicts do not give the committed score:\n  ${problems.join('\n  ')}`);
+  // A carried-forward recount compared the counts of the record it was appended to. If the evidence moved the counts,
+  // it compared other counts: the vendor refuses (it never drops published runs silently, nor writes a record the
+  // reader would refuse); moving those runs out is an explicit, reviewed change to the record.
+  const want = committedCountsOf(record);
+  const stale = (record.runs ?? []).filter(r => r?.result?.committed !== want).length;
+  if (stale) throw new Error(`the counts moved: ${stale} carried-forward recount(s) compared other counts; this vendor run would publish them beside counts they did not recount`);
   return record;
 }
 

@@ -32,11 +32,13 @@ export const RECOUNTS = {
 };
 
 /** One recount as record v1. `read(role)` is the bytes of that role's file. */
-export function recountRecord(lab, read, mainRecord, { runner, machineClass, image = null, ranAt, commit, mainHead = commit }) {
+export function recountRecord(lab, read, mainRecord, { runner, machineClass, image = null, ranAt, commit, mainHead }) {
   const r = RECOUNTS[lab], shape = LAB_SHAPES[lab];
   if (!r || !shape) throw new Error(`${lab}: not a recount lab (${Object.keys(RECOUNTS).join(', ')})`);
   // The main check is the runner's own reading of the private main head: a recount reads the repository AT main, so a
   // commit that is not that head is refused here, never recorded as "identical".
+  // mainHead has no default: every caller (the CLI and this exported function) must supply the head it read.
+  if (!/^[0-9a-f]{40}$/.test(mainHead ?? '')) throw new Error(`no main head the runner read was given (${mainHead})`);
   if (!/^[0-9a-f]{40}$/.test(commit ?? '') || mainHead !== commit) throw new Error(`--commit ${commit} is not the main head the runner read (${mainHead})`);
   const json = role => JSON.parse(read(role).toString('utf8'));
   const now = r.counts(json), stated = r.recordCounts(mainRecord);

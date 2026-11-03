@@ -11,7 +11,7 @@ import { recountRecord } from './lab-recount.mjs';
 import { committedCountsOf, readRedBuild, redBuildProblems, redBuildRecordCounts } from './lab-red-build.mjs';
 import { renderLabRunsSection, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
 import { renderLabs } from './labs.mjs';
-import { CLASSES, DIAGNOSES, PATCHES, redBuildCounts } from './vendor-red-build.mjs';
+import { build, CLASSES, DIAGNOSES, PATCHES, redBuildCounts } from './vendor-red-build.mjs';
 
 // Lab 08 on the org runners as a RECOUNT (vision-plan bundle 3, WO-03): the runner reads the CI doctor's evidence at the
 // private main head, names each file by its role, and scripts/lab-recount.mjs counts it with the vendor's own counting.
@@ -29,10 +29,12 @@ function syntheticFiles(c = stated, runs = record.heldOut.runs, repos = record.h
       total: { cases: c.score.cases, ruled: c.score.ruled, reproduced: c.score.reproduced, passes: c.score.passes, judged_fix: c.score.judgedFix, judged_not: c.score.judgedNot, missed: c.score.missed },
       diagnosis: c.score.diagnosis, patch_verdicts: c.score.patch,
       by_class: CLASSES.map(cls => ({ cls, cases: c.score.byClass[cls] })),
-      rows: runs.map((r, i) => ({ run: i, how: r.how, cls: r.cls, reproduced: r.reproduced, passes: r.passes, judged_fix: r.judgedFix, judged_not: r.judgedNot,
+      rows: runs.map((r, i) => ({ run: i, state: r.state, how: r.how, doctor_class: r.doctorClass, rule_class: r.ruleClass, cls: r.cls, split: r.split,
+        reproduced: r.reproduced, passes: r.passes, judged_fix: r.judgedFix, judged_not: r.judgedNot,
         reviewers: { diagnosis: r.reviewers.diagnosis, patch: r.reviewers.patch, cause_class: r.reviewers.causeClass } })),
     },
-    heldout: { runs: runs.map((r, i) => ({ run: i, repo: `repo-${i % repos}` })) },
+    heldout: { frozen: record.heldOut.frozen, rule: { since: record.heldOut.since, until: record.heldOut.until },
+      runs: runs.map((r, i) => ({ run: i, repo: `repo-${i % repos}`, event: r.event })) },
     'verdicts-a': verdicts(c.rounds.a),
     'verdicts-b': verdicts(c.rounds.b),
     earlier: {
@@ -103,7 +105,9 @@ test('a lab carries only its own command and roles', () => {
   assert.ok(recordProblems(rehash({ ...hosted, commit: { sha: where.commit, mainHead: 'e'.repeat(40), compare: 'ahead', onMain: true } })).some(p => /reads main, so its commit must be the main head/.test(p)));
   // The main check is the runner's reading: a commit that is not the main head it read is refused, never "identical".
   assert.throws(() => recountRecord('red-build', read(), record, { ...where, mainHead: 'e'.repeat(40), ranAt: '2026-11-02T06:05:00Z' }), /is not the main head the runner read/);
-  assert.throws(() => recountRecord('red-build', read(), record, { ...where, commit: 'main', mainHead: 'main', ranAt: '2026-11-02T06:05:00Z' }), /is not the main head/);
+  assert.throws(() => recountRecord('red-build', read(), record, { ...where, commit: 'main', mainHead: 'main', ranAt: '2026-11-02T06:05:00Z' }), /no main head the runner read/);
+  const { mainHead, ...noHead } = where;
+  assert.throws(() => recountRecord('red-build', read(), record, { ...noHead, ranAt: '2026-11-02T06:05:00Z' }), /no main head the runner read was given/, 'no default: a direct caller must supply it');
 });
 
 test("a recount in the record must have compared this record's counts (a re-vendor that moved them cannot carry it)", () => {
@@ -171,6 +175,23 @@ test('a Lab 08 day appends through the record PR path, re-pins, its card reads "
     assert.match(section, /flat by construction/);
     assert.match(section, /It re-counts; it does not re-score or re-judge\./);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a re-vendor whose counts moved refuses to carry earlier recounts forward (never drops them silently)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'lab08-vendor-'));
+  try {
+    mkdirSync(join(dir, 'files'));
+    const labels = { repos: {}, runs: {} };
+    record.heldOut.runs.forEach((r, i) => { labels.runs[String(i)] = r.label; labels.repos[`repo-${i % record.heldOut.repos}`] = r.repo; });
+    writeFileSync(join(dir, 'source.json'), JSON.stringify({ main: 'c'.repeat(40), committed: '2026-10-28T00:00:00Z', checked: '2026-10-28', cites: [], labels }));
+    const write = f => { for (const [role, b] of Object.entries({ ...f, rubric: Buffer.from('{}\n') })) writeFileSync(join(dir, 'files', role), b); };
+    const prior = { runs: day(hosted, org) };
+    write(files);
+    assert.equal(build(dir, { prior }).runs.length, 2, 'the same counts: the recounts are carried forward');
+    // Recounts that compared other counts (their committed hash is not this build's counts): refused, never dropped.
+    const stale = { runs: prior.runs.map(r => ({ ...r, result: { ...r.result, committed: 'f'.repeat(64) } })) };
+    assert.throws(() => build(dir, { prior: stale }), /the counts moved: 2 carried-forward recount\(s\) compared other counts/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('appending to the Lab 08 record starts its runs; a forged day is refused', () => {
