@@ -124,6 +124,20 @@ test('with a record, Lab 01 links its story page, and the page shows every recor
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('story pictures from this lab use WebP siblings at the 480px CSS cap, while the legacy picture stays unchanged', () => {
+  const record = readMilestones('site');
+  const html = renderBeats(record) + renderMoments(record);
+  const items = record.records.filter(item => item.visual?.startsWith('assets/labs/agent-space/'));
+  assert.ok(items.length >= 1, 'at least one story record should carry a Lab 01 visual to test');
+  for (const item of items) {
+    const tag = html.match(new RegExp(`<img class="story-picture" src="\\.\\./\\.\\./\\.\\./${item.visual.replaceAll('.', '\\.')}"[^>]*>`))?.[0];
+    assert.ok(tag, item.visual);
+    assert.ok(tag.includes(`srcset="../../../${item.visual.replace(/\.(png|jpe?g)$/, '-800.webp')} 800w, ../../../${item.visual.replace(/\.(png|jpe?g)$/, '-1280.webp')} 1280w"`), item.visual);
+    assert.ok(tag.includes('sizes="(max-width: 545px) 88vw, 480px"'), item.visual);
+  }
+  assert.match(html, /<img class="story-picture" src="\.\.\/\.\.\/\.\.\/assets\/agent-space\/agent-space-overview\.jpg" alt="" loading="lazy">/);
+});
+
 test('the story page template never ships without its record', () => {
   const root = mkdtempSync(join(tmpdir(), 'lab-story-none-'));
   try {

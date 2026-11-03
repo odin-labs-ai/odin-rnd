@@ -86,8 +86,11 @@ test('page text is screened like a dispatch: a file path in a line is refused', 
 test('the hero says what in it is real and where it came from; the steps keep the first build first', () => {
   const hero = renderProgressHero(committed), steps = renderProgress(committed, films);
   assert.match(hero, new RegExp(`<source src="\\.\\./\\.\\./${committed.hero.src}"`));
+  assert.ok(hero.includes(`poster="../../${committed.hero.poster.replace(/\.jpg$/, '-1280.webp')}"`));
   assert.match(hero, /What is real here:<\/strong> Each shot is labelled in the frame/);
-  assert.match(steps, /^<ol class="lab-films lab-progress"><li class="lab-film lab-progress-step"><span class="technical">Where it started/);
+  assert.match(steps, /^<ol class="lab-films lab-progress"><li class="lab-film lab-progress-step" id="film-agent-space-30s"><span class="technical">Where it started/);
+  const still = committed.steps.find(step => step.kind === 'still');
+  assert.ok(steps.includes(`src="../../${still.src}" srcset="../../${still.src.replace(/\.jpg$/, '-800.webp')} 800w, ../../${still.src.replace(/\.jpg$/, '-1280.webp')} 1280w" sizes="(max-width: 760px) 88vw, (max-width: 773px) 91.6vw, (max-width: 1440px) 46vw, 646px"`));
   assert.match(steps, /By the engine's own record, in its private repository: Private commit <code>d18c8237<\/code>/);
 });
 

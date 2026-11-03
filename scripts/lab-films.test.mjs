@@ -129,11 +129,21 @@ test('the committed films pass, stay under the limit, and load lazily on the lab
   const page = renderLabs()['labs/agent-space/index.html'];
   for (const film of films.films) {
     assert.ok(statSync(join('site', film.src)).size <= MAX_FILM_BYTES, film.id);
-    assert.ok(page.includes(`<video controls preload="none" playsinline poster="../../${film.poster}"`), film.id);
+    const poster = film.poster.replace(/\.png$/, '-1280.webp');
+    assert.ok(page.includes(`<video controls preload="none" playsinline poster="../../${poster}"`), film.id);
     assert.ok(page.includes(`<source src="../../${film.src}" type="${film.mime}">`), film.id);
   }
   assert.match(renderFilms(null), /The first films are being filmed/);
   for (const film of films.films) assert.ok(page.includes(`<strong>What is real here:</strong> ${film.real}`), film.id);
+});
+
+test('a film already embedded in progress becomes a gallery link, while the tour keeps its video', () => {
+  const films = readFilms('site');
+  const gallery = renderFilms(films, '../../', new Set(['agent-space-30s']));
+  assert.match(gallery, /Thirty seconds in the agent space/);
+  assert.match(gallery, /<a href="#film-agent-space-30s">Watch the recording and read its screening record\.<\/a>/);
+  assert.doesNotMatch(gallery, /agent-space-30s\.webm|id="film-agent-space-30s"/);
+  assert.match(gallery, /<figure class="lab-film" id="film-agent-space-tour"><video controls preload="none" playsinline poster="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-tour-poster-1280\.webp"/);
 });
 
 // The screening record (odin-rnd #81 review): bound to the film's bytes and covering the whole film, or refused.

@@ -143,7 +143,9 @@ function dispatchCards(dispatch, level, proofs = false) {
 
 function dispatchBlock(dispatch, up, latest, proofs = false) {
   const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
+  // The same-directory -1280.webp sibling is used for video posters; <video poster> has no responsive srcset.
+  const poster = dispatch.poster.replace(/\.(png|jpe?g)$/i, '-1280.webp');
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
@@ -247,6 +249,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
+  const embeddedFilms = new Set(progress?.steps.filter(step => step.kind === 'film-ref').map(step => step.film) ?? []);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
     for (const [marker, value] of Object.entries(values)) {
@@ -274,7 +277,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
       // The link to the explorer, only when it is rendered (so it always lands on a page).
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
       '<!--LAB_HERO_MEDIA-->': progress ? renderProgressHero(progress) : EARLIER_HERO, '<!--LAB_PROGRESS-->': progress ? renderProgress(progress, films) : '<p class="lab-none">The steps from the first build to now are not published yet.</p>',
-      '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_OUTAGE-->': renderOutage(readOutage(root)), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
+      '<!--LAB_FILMS-->': renderFilms(films, '../../', embeddedFilms), '<!--LAB_OUTAGE-->': renderOutage(readOutage(root)), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
       // "This week in Lab 01": the seven days ending on the build's date, from the same records (scripts/lab-week.mjs).

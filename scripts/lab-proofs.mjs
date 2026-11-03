@@ -48,12 +48,14 @@ export function stillFor(dispatch, question) {
 }
 
 const field = (name, key, value) => `<span data-field="${escape(key)}/${name}">${escape(value)}</span>`;
+// Stills keep their pinned .png src and use same-directory -800.webp/-1280.webp siblings as responsive candidates.
+const stillWebp = (path, width) => path.replace(/\.png$/i, `-${width}.webp`);
 
 function citation({ dispatch, question }, up) {
   const key = `${dispatch.session}/${question.id}`;
   const still = stillFor(dispatch, question);
   const media = still
-    ? `<figure class="proof-still"><img data-still="${escape(key)}" src="${up}${escape(still)}" width="1280" height="720" loading="lazy" alt="The moment in the recording where this question is answered"><figcaption>From the <a href="${up}${escape(dispatch.clip.src)}">session recording</a>.</figcaption></figure>`
+    ? `<figure class="proof-still"><img data-still="${escape(key)}" src="${up}${escape(still)}" srcset="${up}${escape(stillWebp(still, 800))} 800w, ${up}${escape(stillWebp(still, 1280))} 1280w" sizes="(max-width: 760px) 88vw, (max-width: 1440px) 40vw, 562px" width="1280" height="720" loading="lazy" alt="The moment in the recording where this question is answered"><figcaption>From the <a href="${up}${escape(dispatch.clip.src)}">session recording</a>.</figcaption></figure>`
     : `<p class="proof-film">In the <a href="${up}${escape(dispatch.clip.src)}">session recording</a>.</p>`;
   return `<div class="proof-citation"><p class="proof-plain">Source attribution from the recorded session; the card does not verify the answer.</p><p class="proof-where">Session of <time datetime="${escape(dispatch.date)}">${escape(dispatch.date)}</time> · <a href="../#${escape(dispatch.session)}">the dispatch</a>${question.followUp ? ' · a follow-up' : ''}</p><dl class="proof-record"><div><dt>Asked</dt><dd>${field('to', key, question.to)}</dd></div><div><dt>Question</dt><dd>${field('text', key, question.text)}</dd></div><div><dt>Answer</dt><dd>${field('answer', key, question.answer)}</dd></div><div><dt>Why</dt><dd>${field('why', key, question.why)}</dd></div><div><dt>Source kind</dt><dd>${field('source', key, question.source)} <span class="proof-plain">(${escape(sourceKind(question.source))})</span></dd></div><div><dt>Evidence id</dt><dd><code>${field('evidence', key, question.evidence)}</code></dd></div></dl>${media}</div>`;
 }

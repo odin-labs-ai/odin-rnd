@@ -1,0 +1,168 @@
+{
+  "format": "odin-agent-space-webp-pin",
+  "version": 1,
+  "images": [
+    {
+      "original": "assets/labs/agent-space/films/agent-space-30s-poster.png",
+      "originalSha256": "c4831eca46f8d32f4f751229cfea960af612ca8145b6fa66443bb9d98d9bbc91",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/films/agent-space-30s-poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "f64de4ac64b9eb05442c5ce4dc9a78878307a59a635c41d92c2b8157145a5378"
+        },
+        {
+          "path": "assets/labs/agent-space/films/agent-space-30s-poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "84ef0d416eee26c62519ee9305db2e403a64525ac9e21b67d8dd6a80490dfb70"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/films/agent-space-tour-poster.png",
+      "originalSha256": "1864b04d670fcab5ba760f6fe2216d2d5e191453a67474557242df9955da06af",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/films/agent-space-tour-poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "056e4f98f5e3484cab0332499d4b48741a31de780a0ceb23ec600e8f9dce2438"
+        },
+        {
+          "path": "assets/labs/agent-space/films/agent-space-tour-poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "f562fa577095350e62681a7b5cff6d23990c6de3575f41b1e2758f93cc8c0037"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/progress/hq-on-duty-poster.jpg",
+      "originalSha256": "ec369b498f01c54f1cb9f5c600cbd411b519ac60aa98a8f3cc1d45ac8c296194",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/progress/hq-on-duty-poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "6c68168f68eee189984f12a84affa5e0b8da6508e00995def4a12222ab1f8315"
+        },
+        {
+          "path": "assets/labs/agent-space/progress/hq-on-duty-poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "aa37a40c79ecb831d2aa3d4c27f5fd659c88d0fcb1f431ac30952c957d762970"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-10-25-b/poster.png",
+      "originalSha256": "2637bec8dcb582a5f5c6b595baa65855244c55978268b2d64b5ac23b70d5124f",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "4f831ade1fc7a578779e01f6fb41cd7ab84b2973dc6bf04300637575987d0cb0"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "32e9671bbb3ad48c6e93b66e14e3a3a1f2ea14b33806ca5ae23a29124b311fde"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-10-25-b/stills/01-s1-q1.png",
+      "originalSha256": "2637bec8dcb582a5f5c6b595baa65855244c55978268b2d64b5ac23b70d5124f",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/01-s1-q1-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "4f831ade1fc7a578779e01f6fb41cd7ab84b2973dc6bf04300637575987d0cb0"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/01-s1-q1-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "32e9671bbb3ad48c6e93b66e14e3a3a1f2ea14b33806ca5ae23a29124b311fde"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2.png",
+      "originalSha256": "57beddd4ed583f589954724719ab10c844e7ce6b34e82b31e338ebb2b80ba561",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "1405faf416e85936ccf928e9604327eaae4e694569485e79b478a6b4d18dbe9a"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/02-s1-q2-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "f8dd82aa103020d3d75936e52e8ba7eac5de6d5becad140afa6671fc35d03248"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3.png",
+      "originalSha256": "5411b2a357d4ab67b02d3dd74d97ec545e92151bfde0f3956c589c7be90cf21f",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "dc7b3ffe5c4fc4f93764dce565d7af23345c59cc023c7b354b4dea47fd0f2364"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/03-s1-q3-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "ad0e02886c0c5676778a0443b67369cda87a5ec7b86426f4920fb37554b6c64e"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4.png",
+      "originalSha256": "f13bef522740a4d58f5ded29ed834f7943ea2f2596ab4ba65ad012068ce51dcf",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "e6d07895277cb8629d3592d17d7928cf9645eb9d66495fc1742997840d2ae532"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-10-25-b/stills/04-s1-q4-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "567d4e621910f3f94fe4c33ab8a00c3665fdd321fb7c5d22d49743a1341099d5"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/progress/hq-engineering-hall.jpg",
+      "originalSha256": "400885105ac68f89ca4d99eb3a88e4728438d16e325b3e1afbe0812223e2839c",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/progress/hq-engineering-hall-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "cbdb3236e54d8871e709ad37d0a08282dab27cfbbbc584b0686cb90621c5af74"
+        },
+        {
+          "path": "assets/labs/agent-space/progress/hq-engineering-hall-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "fc0bc7246c9d3ae0aa13a5ba3660550486edb4c39b5c6717ef0876d1aa885a6a"
+        }
+      ]
+    }
+  ]
+}

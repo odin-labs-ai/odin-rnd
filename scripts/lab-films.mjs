@@ -77,9 +77,13 @@ export function readFilms(root = 'site') {
 }
 
 const duration = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+// Posters use the same-directory -1280.webp sibling: the hero can render near 1280px and video posters have no srcset.
+const posterWebp = path => path.replace(/\.(png|jpe?g)$/i, '-1280.webp');
 
-/** The gallery: one lazy-loaded film per card (preload="none", a poster), with its plain line and where it came from. */
-export function renderFilms(record, up = '../../') {
+/** The gallery: a film with its poster, or a link when progress already embeds that film. */
+export function renderFilms(record, up = '../../', embedded = new Set()) {
   if (!record || !record.films.length) return '<p class="lab-none">The first films are being filmed in the live space. They appear here when they have been watched frame by frame.</p>';
-  return `<div class="lab-films">${record.films.map(film => `<figure class="lab-film" id="film-${escape(film.id)}"><video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${escape(film.source.note)} Source commit <code>${escape(film.source.commit.slice(0, 8))}</code>.</p><p class="lab-film-screened">Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the films record), viewed by an AI agent.</p></figcaption></figure>`).join('')}</div>`;
+  return `<div class="lab-films">${record.films.map(film => embedded.has(film.id)
+    ? `<figure class="lab-film"><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p><a href="#film-${escape(film.id)}">Watch the recording and read its screening record.</a></p></figcaption></figure>`
+    : `<figure class="lab-film" id="film-${escape(film.id)}"><video controls preload="none" playsinline poster="${up}${escape(posterWebp(film.poster))}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${escape(film.source.note)} Source commit <code>${escape(film.source.commit.slice(0, 8))}</code>.</p><p class="lab-film-screened">Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the films record), viewed by an AI agent.</p></figcaption></figure>`).join('')}</div>`;
 }

@@ -261,7 +261,9 @@ export function evidenceLink(ev) {
 const TIER = { 1: 'Checkable here', 2: 'Cited by hash' };
 const KIND_LABEL = { beat: '', moment: '', correction: '<span class="story-correction">Correction</span> ' };
 const evidenceList = item => `<p class="story-evidence"><span class="story-tier story-tier-${tierOf(item)}">${TIER[tierOf(item)]}</span> <span>Evidence:</span> ${item.evidence.map(evidenceLink).join(' · ')}</p>`;
-const picture = (item, up) => item.visual ? `<img class="story-picture" src="${up}${escape(item.visual)}" alt="" loading="lazy">` : '';
+// Lab media keeps its pinned src and uses same-directory -800.webp/-1280.webp siblings; legacy flat assets have none.
+const pictureWebp = (path, width) => path.replace(/\.(png|jpe?g)$/i, `-${width}.webp`);
+const picture = (item, up) => item.visual ? `<img class="story-picture" src="${up}${escape(item.visual)}"${item.visual.startsWith('assets/labs/agent-space/') ? ` srcset="${up}${escape(pictureWebp(item.visual, 800))} 800w, ${up}${escape(pictureWebp(item.visual, 1280))} 1280w" sizes="(max-width: 545px) 88vw, 480px"` : ''} alt="" loading="lazy">` : '';
 const quoteBlock = item => item.quote ? `<blockquote class="story-quote"><p>${escape(item.quote)}</p></blockquote>` : '';
 
 /** The plain count: how many are checkable here, cited by hash, and left out. */

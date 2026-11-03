@@ -227,15 +227,27 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
     const screened = new Set(dispatch.answersScreen.answers.filter(a => a.verdict === 'ok').map(a => a.evidence));
     for (const q of dispatch.questions) assert.ok(screened.has(q.evidence), `${name}: ${q.evidence} has a passing answer screen`);
   }
-  // The lab's films, its progress record and outage.json own the only other Lab assets. films.json owns each film
+  // The lab's films, its progress record and outage.json own the other original Lab assets. films.json owns each film
   // file, progress.json each progress film, poster and still, and outage.json dispatch #2's film and poster: readFilms,
   // readProgress and readOutage refuse (throw) a file whose bytes do not hash to its recorded sha256 and size, so
-  // ownership here is hash-checked.
+  // ownership here is hash-checked. WebP siblings must also match their pin and a referenced original.
   const filmsRecord = readFilms('site'), films = filmsRecord?.films ?? [], progress = readProgress('site', filmsRecord);
   const progressFiles = progress ? [progress.hero, ...progress.steps.filter(s => s.kind === 'film').map(s => s.film)].flatMap(f => [f.src, f.poster]).concat(progress.steps.filter(s => s.kind === 'still').map(s => s.src)) : [];
   const outage = readOutage('site');
   const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster]), ...progressFiles,
     ...(outage ? [outage.film.src, outage.film.poster] : [])].map(src => join('site', src)));
+  const webpPin = JSON.parse(readFileSync('scripts/agent-space-webp.pin.json', 'utf8'));
+  const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+  for (const image of webpPin.images) {
+    const original = join('site', image.original);
+    assert.ok(referenced.has(original), `${image.original} has no hash-checked dispatch, film or progress owner`);
+    assert.equal(sha256(original), image.originalSha256, `${image.original} differs from its WebP pin`);
+    for (const variant of image.variants) {
+      const file = join('site', variant.path);
+      assert.equal(sha256(file), variant.sha256, `${variant.path} differs from its WebP pin`);
+      referenced.add(file);
+    }
+  }
   const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
   for (const file of walk('site/assets/labs')) assert.ok(referenced.has(file), `${file} belongs to no committed dispatch, film or progress step`);
   for (const file of referenced) assert.ok(existsSync(file), `${file} is referenced but missing`);
