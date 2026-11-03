@@ -33,21 +33,22 @@ import { redBuildRecordCounts } from './vendor-red-build.mjs';
 export const LABS = {
   rogue: { record: ROGUE_RECORD, pin: ROGUE_PIN },
   review: { record: REVIEW_RECORD, pin: REVIEW_PIN },
-  'red-build': { record: RED_RECORD, pin: RED_PIN },
+  'red-build': { record: RED_RECORD, pin: RED_PIN, recount: true },
 };
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 /**
- * Every reason `day` may not be appended to `runs` (empty when it may). `committedCounts`, when given (the only lab
- * that does is red-build: a recount, scripts/lab-recount.mjs), is the sha256 that every record's `result.committed`
- * must equal: the canonical hash of the counts the record CURRENTLY being appended to states. A record whose
+ * Every reason `day` may not be appended to `runs` (empty when it may). `committedCounts` is REQUIRED for a recount
+ * lab (`LABS[lab].recount`: red-build, scripts/lab-recount.mjs) and a day without it is refused, so no caller can skip
+ * the binding by leaving it out. It is the sha256 that every record's `result.committed` must equal: the canonical hash of the counts the record CURRENTLY being appended to states. A record whose
  * committed hash belongs to a different set of counts (the evidence or the published record changed since the run
  * was produced) is not a recount of anything this page will say once appended, whatever its own verdict claims.
  */
 export function dayProblems(runs, day, { now = new Date(), lab = 'rogue', committedCounts } = {}) {
   const problems = [];
   if (!Array.isArray(day) || day.length < 1) return ['a day is one or more records, one per org machine class'];
+  if (LABS[lab]?.recount && typeof committedCounts !== 'string') return [`a ${lab} day is a recount: it needs committedCounts (the sha256 of the currently published counts), and none was given`];
   const classes = day.map(r => r?.machineClass);
   if (new Set(classes).size !== day.length) problems.push('two records of one machine class in one day');
   if (new Set(day.map(r => r?.commit?.sha)).size !== 1) problems.push('the records are not all of one commit');
@@ -57,7 +58,7 @@ export function dayProblems(runs, day, { now = new Date(), lab = 'rogue', commit
   day.forEach((r, i) => {
     if (r?.lab !== lab) problems.push(`day[${i}]: lab ${JSON.stringify(r?.lab)} is not ${lab}`);
     if (r?.runner === 'laptop') problems.push(`day[${i}]: a laptop run is not an org runner's`);
-    if (committedCounts !== undefined && r?.result?.committed !== committedCounts) problems.push(`day[${i}]: result.committed does not match the currently published counts (the evidence or the published record changed since this run was produced)`);
+    if (typeof committedCounts === 'string' && r?.result?.committed !== committedCounts) problems.push(`day[${i}]: result.committed does not match the currently published counts (the evidence or the published record changed since this run was produced)`);
     const siblings = day.filter(s => s !== r);
     const want = list => siblings.filter(s => (s.recordHash === r.recordHash) === (list === 'replicatedOn')).map(s => `${s.machineClass} ${s.recordHash}`).sort();
     for (const list of ['replicatedOn', 'differedOn']) {
@@ -112,7 +113,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     const spelled = texts.flatMap((t, i) => numberSpellingProblems(t, args[i]));
     if (spelled.length) throw new Error(spelled.join('\n'));
     const published = JSON.parse(readFileSync(join(root, file), 'utf8'));
-    const committedCounts = lab === 'red-build' ? sha256(canonical(redBuildRecordCounts(published))) : undefined;
+    const committedCounts = LABS[lab].recount ? sha256(canonical(redBuildRecordCounts(published))) : undefined;
     const record = appendDays(published, texts.map(t => JSON.parse(t)), { lab, committedCounts });
     const bytes = `${JSON.stringify(record, null, 1)}\n`;
     writeFileSync(join(root, file), bytes);

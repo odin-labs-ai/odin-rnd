@@ -25,7 +25,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonical } from './lab-record.mjs';
-import { recount } from './lab-red-build.mjs';
+import { recount, redBuildRecordCounts } from './lab-red-build.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/red-build/record.json';
@@ -118,7 +118,7 @@ export function redBuildCounts(json) {
 }
 
 /** The same counts, as a committed record states them. */
-export const redBuildRecordCounts = record => ({ rounds: record.heldOut.rounds, score: record.heldOut.score, earlier: record.earlier });
+export { redBuildRecordCounts };
 
 export function build(dir) {
   const source = JSON.parse(readFileSync(join(dir, 'source.json'), 'utf8'));

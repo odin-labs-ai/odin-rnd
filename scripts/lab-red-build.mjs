@@ -18,9 +18,11 @@
 //   - two runs share a label, or a label is not an anonymous label;
 //   - a date is not real or is after the build, or any text fails the publisher's screen.
 // The rendered page is screened again as a whole (pageLeaks), with only the record's own hashes masked.
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { canonical } from './lab-record.mjs';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -88,6 +90,12 @@ export function recount(record) {
   return problems;
 }
 
+/** The counts a Lab 08 recount commits to (`result.committed` = sha256 of their canonical JSON): rounds, score, earlier. */
+export const redBuildRecordCounts = record => ({ rounds: record.heldOut.rounds, score: record.heldOut.score, earlier: record.earlier });
+
+/** sha256 (hex) of the canonical counts `record` states: what every one of its runs' `result.committed` must be. */
+export const committedCountsOf = record => createHash('sha256').update(canonical(redBuildRecordCounts(record)), 'utf8').digest('hex');
+
 /** Every reason the record may not be published (empty when it may). */
 export function redBuildProblems(record, { now = new Date(), where = RED_RECORD } = {}) {
   const problems = validate(JSON.parse(readFileSync(RED_SCHEMA, 'utf8')), record).map(p => `${where}#${p} (does not match odin-lab-red-build v1)`);
@@ -107,6 +115,12 @@ export function redBuildProblems(record, { now = new Date(), where = RED_RECORD 
   for (const [i, r] of h.runs.entries()) for (const l of [r.label, r.repo]) if (!LABEL.test(l)) problems.push(`${where}#/heldOut/runs/${i}: ${l} is not an anonymous label`);
   if (new Set(h.runs.map(r => r.repo)).size !== h.repos) problems.push(`${where}#/heldOut/repos: not the number of repository labels the runs carry`);
   problems.push(...whyProblems(record, where));
+  // At read time too, not only at append: a run is a recount of THESE counts, so a run whose committed hash belongs
+  // to different counts (the evidence or the record changed after it was produced) refuses the whole record.
+  if (Array.isArray(record.runs)) {
+    const want = committedCountsOf(record);
+    record.runs.forEach((r, i) => { if (r?.result?.committed !== want) problems.push(`${where}#/runs/${i}/result/committed: not the sha256 of the counts this record states (the run recounted different counts)`); });
+  }
   return problems;
 }
 

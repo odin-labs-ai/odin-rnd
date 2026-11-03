@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { appendDays, dayProblems } from './append-rogue-runs.mjs';
 import { canonical, recordHash, recordProblems, RECORD_SCHEMA } from './lab-record.mjs';
 import { recountRecord } from './lab-recount.mjs';
-import { readRedBuild } from './lab-red-build.mjs';
+import { committedCountsOf, readRedBuild, redBuildProblems } from './lab-red-build.mjs';
 import { renderLabRunsSection, RUNS_PAGE, withLabRuns } from './lab-runs.mjs';
 import { renderLabs } from './labs.mjs';
 import { CLASSES, DIAGNOSES, PATCHES, keepLiveRuns, redBuildCounts, redBuildRecordCounts } from './vendor-red-build.mjs';
@@ -119,8 +119,10 @@ test('dayProblems (the append-time check) refuses a day whose committed hash bel
   const staleDay = [{ ...hosted, result: { ...hosted.result, committed: staleHash } }];
   assert.ok(dayProblems([], staleDay, { lab: 'red-build', committedCounts: liveHash }).some(p => /result\.committed does not match the currently published counts/.test(p)));
   assert.deepEqual(dayProblems([], [hosted], { lab: 'red-build', committedCounts: liveHash }), [], 'a genuinely live day is not refused');
-  // committedCounts is undefined for every other lab: the check is additive, never a new refusal for rogue/review.
-  assert.deepEqual(dayProblems([], staleDay, { lab: 'red-build' }).filter(p => /result\.committed/.test(p)), [], 'with no committedCounts supplied, the check does not fire');
+  // row 67aa267e#1: the binding is not opt-in. A red-build day with no committedCounts is refused outright (exported
+  // dayProblems/appendDays included), for a live day as for a stale one; rogue/review never need it.
+  for (const d of [staleDay, [hosted]]) assert.deepEqual(dayProblems([], d, { lab: 'red-build' }), ['a red-build day is a recount: it needs committedCounts (the sha256 of the currently published counts), and none was given']);
+  assert.throws(() => appendDays({ ...record, runs: [] }, [hosted], { lab: 'red-build' }), /needs committedCounts/);
 });
 
 test('the CLI reads the role files and the published record and prints the record; unreadable input is exit 2', () => {
@@ -167,7 +169,7 @@ const FILES = ['data/labs/red-build-tile.json', 'data/labs/red-build/record.json
   'data/labs/rogue-tile.json', 'data/labs/rogue/record.json', 'data/labs/rogue/record.sha256', 'labs/rogue/index.html', RUNS_PAGE];
 
 test('a Lab 08 day appends through the record PR path, re-pins, its card reads "reproduced" and its page says it is a recount', () => {
-  assert.deepEqual(dayProblems([], day(hosted, org), { lab: 'red-build' }), []);
+  assert.deepEqual(dayProblems([], day(hosted, org), { lab: 'red-build', committedCounts: hosted.result.committed }), []);
   const root = mkdtempSync(join(tmpdir(), 'lab08-site-'));
   try {
     for (const f of FILES) { mkdirSync(join(root, f, '..'), { recursive: true }); cpSync(join('site', f), join(root, f)); }
@@ -191,8 +193,9 @@ test('a Lab 08 day appends through the record PR path, re-pins, its card reads "
 test('appending to the Lab 08 record starts its runs; a forged day is refused', () => {
   const rec = JSON.parse(JSON.stringify(record));
   delete rec.runs;
-  assert.equal(appendDays(rec, day(hosted, org), { lab: 'red-build' }).runs.length, 2);
-  assert.throws(() => appendDays(rec, [{ ...hosted, recordHash: 'e'.repeat(64) }], { lab: 'red-build' }), /recordHash/);
+  const live = { lab: 'red-build', committedCounts: hosted.result.committed };
+  assert.equal(appendDays(rec, day(hosted, org), live).runs.length, 2);
+  assert.throws(() => appendDays(rec, [{ ...hosted, recordHash: 'e'.repeat(64) }], live), /recordHash/);
 });
 
 // row 15fd283c#1 recheck (parentRowId 15fd283c…), finding 1 (NOT-FIXED): dayProblems() took committedCounts, but
@@ -213,4 +216,17 @@ test('the append CLI refuses a day whose committed hash belongs to different cou
     // The record on disk is untouched: a refused append writes nothing.
     assert.deepEqual(JSON.parse(readFileSync(join(root, 'data/labs/red-build/record.json'), 'utf8')), JSON.parse(readFileSync(join('site', 'data/labs/red-build/record.json'), 'utf8')));
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// row 67aa267e#1: the binding is also checked at READ time. A published record whose runs recount different counts
+// (here: runs whose committed hash is not this record's counts) is refused by readRedBuild's checks, so the page
+// can never show a run beside counts it did not recount.
+test('a published Lab 08 record is refused when a run recounted different counts (read time, not only at append)', () => {
+  const withRuns = { ...JSON.parse(JSON.stringify(record)), runs: day(hosted, org) };
+  assert.deepEqual(redBuildProblems(withRuns).filter(p => /result\/committed/.test(p)), [], 'runs of these counts are accepted');
+  assert.equal(committedCountsOf(withRuns), hosted.result.committed);
+  const stale = { ...withRuns, runs: withRuns.runs.map(r => ({ ...r, result: { ...r.result, committed: 'f'.repeat(64) } })) };
+  const found = redBuildProblems(stale).filter(p => /result\/committed/.test(p));
+  assert.equal(found.length, 2, JSON.stringify(found));
+  assert.match(found[0], /#\/runs\/0\/result\/committed: not the sha256 of the counts this record states/);
 });
