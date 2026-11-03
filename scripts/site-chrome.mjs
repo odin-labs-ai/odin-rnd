@@ -223,9 +223,10 @@ export function trailFor(kind, rel, title) {
 /** `href` (relative to the site root) as seen from the page `rel`, keeping a trailing slash and a fragment. */
 export function relativeHref(rel, href) {
   const [path, fragment] = String(href).split('#');
-  let out = path ? toPosix(relative(dirname(rel), path)) : '';
+  const cleanPath = path.replace(/\/index\.html$/, '/');
+  let out = cleanPath ? toPosix(relative(dirname(rel), cleanPath)) : '';
   if (path && !out) out = './';
-  if (path.endsWith('/') && out && !out.endsWith('/')) out += '/';
+  if (cleanPath.endsWith('/') && out && !out.endsWith('/')) out += '/';
   return fragment === undefined ? out : `${out}#${fragment}`;
 }
 
@@ -268,4 +269,104 @@ export function injectChrome({ distDir, items }) {
     if (html !== source) writeFileSync(file, html);
   }
   return counts;
+}
+
+const JOURNAL_DESTINATION = '../journal/';
+const OLD_JOURNAL_DESTINATION = String.raw`(?:\.\./(?:index\.html)?#journal|\.\./journal/)`;
+
+function replaceOne(html, pattern, replacement, label) {
+  const matches = [...html.matchAll(pattern)];
+  if (matches.length !== 1) throw new Error(`Site chrome: expected one ${label}, found ${matches.length}`);
+  return html.replace(pattern, replacement);
+}
+
+/** Change only the two field-note return links, accepting either old home-fragment spelling. */
+export function journalDestinations(html, label = 'journal page') {
+  html = replaceOne(html, new RegExp(`<a class="article-back" href="${OLD_JOURNAL_DESTINATION}">`, 'g'), `<a class="article-back" href="${JOURNAL_DESTINATION}">`, `${label} article-back link`);
+  const footers = [...html.matchAll(/<footer class="site-footer"[\s\S]*?<\/footer>/g)];
+  if (footers.length !== 1) throw new Error(`Site chrome: expected one footer in ${label}, found ${footers.length}`);
+  const footer = replaceOne(footers[0][0], new RegExp(`<a href="${OLD_JOURNAL_DESTINATION}">More field notes<\\/a>`, 'g'), `<a href="${JOURNAL_DESTINATION}">More field notes</a>`, `${label} footer link`);
+  return html.replace(footers[0][0], footer);
+}
+
+/** Change only the home copy's destination; its visible wording remains as authored. */
+export function homeJournalDestination(html) {
+  return replaceOne(html, /<a href="(?:updates\/|journal\/)">every note is under updates<\/a>/g, '<a href="journal/">every note is under updates</a>', 'home field-note link');
+}
+
+/** Dist-only return-link pass, after the home and section index pages have been rendered. */
+export function fixJournalDestinations({ distDir }) {
+  const home = join(distDir, 'index.html');
+  const source = readFileSync(home, 'utf8');
+  const fixed = homeJournalDestination(source);
+  if (fixed !== source) writeFileSync(home, fixed);
+  for (const file of htmlFiles(join(distDir, 'journal')).filter(file => file.endsWith('.html') && !file.endsWith('/index.html')).sort()) {
+    const before = readFileSync(file, 'utf8');
+    const after = journalDestinations(before, toPosix(relative(distDir, file)));
+    if (after !== before) writeFileSync(file, after);
+  }
+}
+
+/** Only links inside the named static lists, and only nested labs/<slug>/index.html paths. */
+export function slashLabLinks(html, listClass, label = 'page') {
+  if (!['find-static-list', 'lab-tile-links'].includes(listClass)) throw new Error(`Unknown lab-link list ${listClass}`);
+  const blocks = new RegExp(`(<ul class="${listClass}">)([\\s\\S]*?)(<\\/ul>)`, 'g');
+  let count = 0;
+  const fixed = html.replace(blocks, (_, open, body, close) => {
+    count++;
+    return open + body.replace(/href="((?:\.\.\/)*labs\/[^/"#]+\/)index\.html(#[^"]*)?"/g, (_, path, fragment = '') => `href="${path}${fragment}"`) + close;
+  });
+  if (!count) throw new Error(`Site chrome: expected ${listClass} in ${label}`);
+  return fixed;
+}
+
+/** Dist-only repair of the Find no-JS list and Labs tile links, after their generators run. */
+export function fixLabIndexLinks({ distDir }) {
+  for (const [page, cls] of [['find/index.html', 'find-static-list'], ['labs/index.html', 'lab-tile-links']]) {
+    const file = join(distDir, page);
+    const before = readFileSync(file, 'utf8');
+    const after = slashLabLinks(before, cls, page);
+    if (after !== before) writeFileSync(file, after);
+  }
+}
+
+const OG_IMAGE = 'https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png';
+
+/** Fill each missing Open Graph property independently, leaving all existing values as authored. */
+export function addOpenGraph(html, label = 'page') {
+  const heads = [...html.matchAll(/<head(?:\s[^>]*)?>[\s\S]*?<\/head>/gi)];
+  if (heads.length !== 1) throw new Error(`Site chrome: expected one head in ${label}, found ${heads.length}`);
+  const head = heads[0][0];
+  const additions = [];
+  for (const [property, value] of [
+    ['og:title', () => pageTitle(html)],
+    ['og:description', () => {
+      const metas = [...head.matchAll(/<meta\b[^>]*\bname="description"[^>]*>/gi)];
+      if (metas.length > 1) throw new Error(`Site chrome: duplicate description in ${label}`);
+      if (metas.length) {
+        const content = metas[0][0].match(/\bcontent="([^"]*)"/i)?.[1];
+        if (content === undefined) throw new Error(`Site chrome: description needs content in ${label}`);
+        return fragmentText(content);
+      }
+      return label === '404.html' ? 'The link you followed does not lead to a page on this site.' : pageTitle(html);
+    }],
+    ['og:image', () => OG_IMAGE],
+  ]) {
+    const existing = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty="${property}"[^>]*>`, 'gi'))];
+    if (existing.length > 1) throw new Error(`Site chrome: duplicate ${property} in ${label}`);
+    if (existing.length) continue;
+    const content = value();
+    if (!content) throw new Error(`Site chrome: no ${property} source in ${label}`);
+    additions.push(`<meta property="${property}" content="${escapeHtml(content)}">`);
+  }
+  return additions.length ? html.replace(head, head.replace('</head>', `${additions.join('\n')}\n</head>`)) : html;
+}
+
+/** Separate from injectChrome: Open Graph metadata is safe on number-provenance pages too. */
+export function addOpenGraphToDist({ distDir }) {
+  for (const file of htmlFiles(distDir).sort()) {
+    const before = readFileSync(file, 'utf8');
+    const after = addOpenGraph(before, toPosix(relative(distDir, file)));
+    if (after !== before) writeFileSync(file, after);
+  }
 }

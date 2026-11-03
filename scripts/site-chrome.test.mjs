@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fragmentText, injectChrome, pageClass, pageKey, pageTitle, pickRelated, relativeHref, trailFor } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addOpenGraph, addOpenGraphToDist, addRelated, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fixJournalDestinations, fixLabIndexLinks, fragmentText, injectChrome, journalDestinations, pageClass, pageKey, pageTitle, pickRelated, relativeHref, slashLabLinks, trailFor } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
+import { renderGallery, renderSelfVerify } from './lab-review.mjs';
 
 const dirs = [];
 after(() => { for (const dir of dirs) rmSync(dir, { recursive: true, force: true }); });
@@ -41,6 +42,15 @@ function tempDist() {
 const findLinks = html => (html.match(/<a href="(?:\.\.\/)*find\/"[^>]*>Find<\/a>/g) || []).length;
 const SECTION_PAGES = ['journal/index.html', 'projects/index.html'];
 const headerNav = html => html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
+
+// Same local-link and anchor resolution used by the existing chrome test and check.mjs.
+function assertLocalLinkResolves(dist, page, href) {
+  const [path, anchor] = href.split('#');
+  const target = resolve(dirname(join(dist, page)), path || '.');
+  const file = path.endsWith('/') || !path ? join(target, 'index.html') : target;
+  assert.ok(existsSync(file), `${page}: ${href}`);
+  if (anchor) assert.ok(readFileSync(file, 'utf8').includes(`id="${anchor}"`), `${page}: anchor ${href}`);
+}
 
 test('every page with a header navigation gets exactly one Find link, last in that navigation, pointing at the real page', () => {
   const dist = tempDist();
@@ -289,4 +299,97 @@ test('the missing page (404.html) links the chrome stylesheet through its <base 
   assert.equal(new URL(href, base).href, 'https://odin-labs-ai.github.io/odin-rnd/assets/chrome.css', 'chrome.css resolves to the site root, at any missing path');
   assert.ok(html.indexOf(href) > html.indexOf('<base href='), 'linked after the base, so the base applies');
   assert.equal((headerNav(html).match(/<a /g) || []).length, 8, 'its header has the eight-link navigation chrome.css lays out');
+});
+
+test('item 1: only journal back/footer and home note-list destinations change in dist', () => {
+  const dist = tempDist();
+  const noteBefore = readFileSync(join(dist, NOTE), 'utf8');
+  const homeBefore = readFileSync(join(dist, 'index.html'), 'utf8');
+  fixJournalDestinations({ distDir: dist });
+  const note = readFileSync(join(dist, NOTE), 'utf8');
+  const home = readFileSync(join(dist, 'index.html'), 'utf8');
+  assert.equal(note, noteBefore.replace('<a class="article-back" href="../#journal">', '<a class="article-back" href="../journal/">').replace('<a href="../#journal">More field notes</a>', '<a href="../journal/">More field notes</a>'));
+  assert.equal(home, homeBefore.replace('<a href="updates/">every note is under updates</a>', '<a href="journal/">every note is under updates</a>'));
+  assert.equal(headerNav(note), headerNav(noteBefore), 'the main header navigation is untouched');
+  for (const match of note.matchAll(/<a class="article-back" href="([^"]+)"|<a href="([^"]+)">More field notes<\/a>/g)) assertLocalLinkResolves(dist, NOTE, match[1] ?? match[2]);
+  assertLocalLinkResolves(dist, 'index.html', home.match(/<a href="([^"]+)">every note is under updates<\/a>/)[1]);
+  const alternate = noteBefore.replace('class="article-back" href="../#journal"', 'class="article-back" href="../index.html#journal"').replace('href="../#journal">More field notes', 'href="../index.html#journal">More field notes');
+  assert.equal(journalDestinations(alternate), note, 'the alternate home-fragment spelling is accepted');
+  assert.throws(() => journalDestinations(noteBefore.replace('class="article-back"', 'class="other"')), /article-back link/, 'unexpected note structure stops the pass');
+  fixJournalDestinations({ distDir: dist });
+  assert.equal(readFileSync(join(dist, NOTE), 'utf8'), note, 'second pass keeps the note');
+  assert.equal(readFileSync(join(dist, 'index.html'), 'utf8'), home, 'second pass keeps the home');
+});
+
+test('item 2: related, no-JS Find and lab tiles use slash-form lab page links only', () => {
+  const dist = tempDist();
+  mkdirSync(join(dist, 'labs/rogue'), { recursive: true });
+  writeFileSync(join(dist, 'labs/rogue/index.html'), '<h1 id="details">Rogue lab</h1>');
+  assert.equal(relativeHref(NOTE, 'labs/rogue/index.html#details'), '../labs/rogue/#details');
+  assert.equal(relativeHref(NOTE, 'labs/rogue/'), '../labs/rogue/');
+  const related = addRelated('<footer class="site-footer"></footer>', [{ type: 'lab', title: 'Rogue lab', href: relativeHref(NOTE, 'labs/rogue/index.html#details') }]);
+  assertLocalLinkResolves(dist, NOTE, related.match(/href="([^"]+)"/)[1]);
+  const find = join(dist, 'find/index.html');
+  writeFileSync(find, readFileSync(find, 'utf8').replace('</main>', '<ul class="find-static-list"><li><a href="../labs/rogue/index.html">Lab</a></li><li><a href="../labs/index.html">All labs</a></li></ul><a href="../labs/rogue/index.html">Outside</a></main>'));
+  const labs = join(dist, 'labs/index.html');
+  writeFileSync(labs, readFileSync(labs, 'utf8').replace('<!--LABS_LIST-->', '<ul class="lab-tile-links"><li><a href="../labs/rogue/index.html#details">Details</a></li><li><a href="../labs/index.html">All labs</a></li></ul><a href="../labs/rogue/index.html">Outside</a>'));
+  fixLabIndexLinks({ distDir: dist });
+  const findAfter = readFileSync(find, 'utf8');
+  const labsAfter = readFileSync(labs, 'utf8');
+  assert.match(findAfter, /<ul class="find-static-list">[\s\S]*href="\.\.\/labs\/rogue\/"/);
+  assert.match(labsAfter, /<ul class="lab-tile-links">[\s\S]*href="\.\.\/labs\/rogue\/#details"/);
+  for (const [page, html, cls] of [['find/index.html', findAfter, 'find-static-list'], ['labs/index.html', labsAfter, 'lab-tile-links']]) {
+    const block = html.match(new RegExp(`<ul class="${cls}">([\\s\\S]*?)<\\/ul>`))[1];
+    assert.match(block, /href="\.\.\/labs\/rogue\/(?:#details)?"/, 'the target link changes inside the list');
+    assert.match(block, /href="\.\.\/labs\/index\.html"/, 'bare labs index stays as written');
+    assert.match(html, /<a href="\.\.\/labs\/rogue\/index\.html">Outside<\/a>/, 'outside the target list stays as written');
+    for (const [, href] of block.matchAll(/href="([^"]+)"/g)) assertLocalLinkResolves(dist, page, href);
+  }
+  fixLabIndexLinks({ distDir: dist });
+  assert.equal(readFileSync(find, 'utf8'), findAfter);
+  assert.equal(readFileSync(labs, 'utf8'), labsAfter);
+  assert.throws(() => slashLabLinks('<ul class="other"></ul>', 'find-static-list'), /expected find-static-list/, 'unexpected list structure stops the pass');
+});
+
+test('item 3: breadcrumb slash belongs to the previous item so a wrapped line has no leading slash', () => {
+  const css = readFileSync('site/assets/chrome.css', 'utf8');
+  assert.match(css, /\.crumbs li:not\(:last-child\)::after\{content:'\/';margin:0 10px;color:var\(--rule\)\}/);
+  assert.doesNotMatch(css, /\.crumbs li\+li:before/);
+});
+
+test('item 4: review receipt cards step from the section h2 to h3 while the summary keeps its h3', () => {
+  assert.match(readFileSync('site/labs/review/index.html', 'utf8'), /<h2 id="receipts-title">When the reviewer said no\.<\/h2>/);
+  const gallery = renderGallery({ gallery: [{ pr: 84, title: 'A review', receipt: ['FIX-NEEDED'], mergeCommit: 'abcdef123' }], planOnly: [] });
+  assert.match(gallery, /<article class="lab-panel review-receipt"[\s\S]*?<h3><a href="[^"]+">A review<\/a><\/h3>/);
+  assert.doesNotMatch(gallery, /<h4>/);
+  const summary = renderSelfVerify({ selfVerify: { experiment: 'EXP', decision: 'no', runs: [{ id: 'A1-a', caught: 1, falseAlarms: 2, of: 30 }] }, sources: [{ role: 'self-verify', commit: 'abcdef123', sha256: 'sha' }] });
+  assert.match(summary, /<h3>Can a reviewer talk itself out of its false alarms\?<\/h3>/);
+});
+
+test('item 5: Open Graph properties are filled independently on every built page, including 404', () => {
+  const dist = tempDist();
+  const partnerBefore = readFileSync(join(dist, 'partners/index.html'), 'utf8');
+  addOpenGraphToDist({ distDir: dist });
+  const partner = readFileSync(join(dist, 'partners/index.html'), 'utf8');
+  assert.equal((partner.match(/property="og:title"/g) || []).length, 1);
+  assert.equal((partner.match(/property="og:description"/g) || []).length, 1);
+  assert.match(partner, /<meta property="og:image" content="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/assets\/og\/odin-rnd-og-image\.png">/);
+  assert.equal(partner.replace(/\s*<meta property="og:image" content="[^"]+">/, ''), partnerBefore, 'existing properties remain byte-for-byte');
+  const note = readFileSync(join(dist, NOTE), 'utf8');
+  assert.ok(note.includes(`<meta property="og:title" content="${escapeHtml(pageTitle(note))}">`), 'the visible heading supplies the title');
+  assert.match(note, /<meta property="og:description" content="Field notes from Odin R&amp;D\. A passing pipeline/);
+  assert.match(note, /property="og:image"/);
+  const missing = readFileSync(join(dist, '404.html'), 'utf8');
+  assert.match(missing, /<meta property="og:title" content="Page not found\.">/);
+  assert.match(missing, /<meta property="og:description" content="The link you followed does not lead to a page on this site\.">/);
+  assert.match(missing, /property="og:image"/);
+  const partial = '<head><title>Fallback — Odin R&amp;D</title><meta content="An &amp; B" name="description"><meta property="og:image" content="existing.png"></head><h1>Visible &amp; clear</h1>';
+  const filled = addOpenGraph(partial);
+  assert.match(filled, /<meta property="og:title" content="Visible &amp; clear">/);
+  assert.match(filled, /<meta property="og:description" content="An &amp; B">/);
+  assert.equal((filled.match(/property="og:image"/g) || []).length, 1, 'existing image preserved');
+  assert.equal(addOpenGraph(filled), filled);
+  const once = readFileSync(join(dist, NOTE), 'utf8');
+  addOpenGraphToDist({ distDir: dist });
+  assert.equal(readFileSync(join(dist, NOTE), 'utf8'), once, 'second dist pass keeps the note');
 });
