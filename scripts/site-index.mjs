@@ -239,6 +239,18 @@ function metaDescription(html) {
   return '';
 }
 
+/** A note with only its title in the meta description uses the first paragraph of its built article. */
+export function noteSummary(built, title) {
+  const summary = metaDescription(built).replace(/^Field notes from Odin R&D\. /, '');
+  if (summary !== title) return summary;
+  const body = /<article\b[^>]*>([\s\S]*?)<\/article>/i.exec(built)?.[1]
+    ?? /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(built)?.[1] ?? '';
+  const paragraph = /<p\b[^>]*>([\s\S]*?)<\/p>/i.exec(body)?.[1] ?? '';
+  const text = plain(textOf(paragraph));
+  if (!text) throw new Error(`Site index: note "${title}" has no first paragraph for its summary`);
+  return text;
+}
+
 /** Every file under `dir`, as paths relative to it. */
 function filesUnder(dir) {
   const out = [];
@@ -288,7 +300,7 @@ export function loadIndex({ root = '.', dist = join(root, 'dist') } = {}) {
   const notes = readdirSync(join(site, 'journal')).filter(name => name.endsWith('.html')).sort().map(name => {
     const built = read(join(dist, 'journal', name));
     const title = plain(textOf(/<title>([\s\S]*?)<\/title>/.exec(built)?.[1] ?? '')).replace(/ — Odin R&D$/, '');
-    const summary = metaDescription(built).replace(/^Field notes from Odin R&D\. /, '');
+    const summary = noteSummary(built, title);
     const meta = /class="article-meta">([^<]*)</.exec(read(join(site, 'journal', name)))?.[1];
     return { slug: name.replace(/\.html$/, ''), title, summary, date: metaDay(meta) };
   });

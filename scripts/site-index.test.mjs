@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'nod
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
-import { buildIndex, experimentIds, hasPhrase, hrefOnSite, ITEM_SCHEMA, LAB_DATES_PATH, loadIndex, metaDay } from './site-index.mjs';
+import { buildIndex, experimentIds, hasPhrase, hrefOnSite, ITEM_SCHEMA, LAB_DATES_PATH, loadIndex, metaDay, noteSummary } from './site-index.mjs';
 import { LAB_FILE } from './labs.mjs';
 import { ledgerEntries } from './experiment-ledger.mjs';
 import { TILE_FILES } from './lab-tiles.mjs';
@@ -95,6 +95,33 @@ test('buildIndex places every source item once, with its topics, stage, outcome 
   assert.deepEqual(by['update-tool-witness'].topics, ['gates']);
   const dates = items.map(i => i.date);
   assert.deepEqual(dates, [...dates].sort().reverse(), 'newest first');
+});
+
+test('update titles stay the feed title word for word (the publication screen requires it); the kind lives in the id', () => {
+  const f = fixture();
+  f.updates.push({ ...f.updates[1], key: 'exp-005-amendment-02', kind: 'Amendment' });
+  const by = Object.fromEntries(buildIndex(f).map(item => [item.id, item]));
+  assert.equal(by['update-exp-005-amendment-02'].title, f.updates[1].title);
+  assert.equal(by['update-exp-005-preregistration'].title, f.updates.find(u => u.key === 'exp-005-preregistration').title);
+});
+
+test('a note with its title as meta description uses the built article first paragraph as plain text', () => {
+  const built = '<meta name="description" content="Field notes from Odin R&amp;D. Why"><main><header><p>Not the body</p></header><article class="article-body"><p>First <strong>fact</strong> &amp; a &lt;tag&gt; with &#x27;quotes&#x27;.</p><p>Second fact.</p></article></main>';
+  assert.equal(noteSummary(built, 'Why'), "First fact & a <tag> with 'quotes'.");
+  assert.equal(noteSummary(built, 'Another title'), 'Why', 'an authored description is retained');
+});
+
+test('the two committed notes whose description only repeats their title get their real first paragraph', () => {
+  // The committed pages themselves; the built copies add chrome only outside <article>.
+  const cases = [
+    ['a-passing-pipeline.html', 'A passing pipeline was not yet a verified release.', /^A green release status sounds like a simple answer: the software is ready\. In this rollout/],
+    ['why-open-the-floor.html', 'Why open the factory floor?', /^Most of the interesting work happens before the launch announcement\. A rule is written\./],
+  ];
+  for (const [name, title, first] of cases) {
+    const summary = noteSummary(readFileSync(join('site/journal', name), 'utf8'), title);
+    assert.match(summary, first, `${name} takes the first paragraph of its article`);
+    assert.doesNotMatch(summary, /<|&amp;|&#/, `${name}'s summary is plain text`);
+  }
 });
 
 test('Find retains the limitation at the end of a long update', () => {

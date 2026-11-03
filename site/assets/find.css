@@ -7,7 +7,7 @@
 .find-form{border-top:1px solid var(--rule);padding-top:26px}
 .find-search label,.find-month label{display:block;font-size:15px;font-weight:600}
 .find-search input,.find-month select{width:100%;min-height:48px;margin-top:8px;padding:11px 14px;border:1px solid #789381;border-radius:8px;background:#fafcf8;color:var(--paper);font:400 17px/1.5 Manrope,sans-serif}
-.find-search input:focus-visible,.find-month select:focus-visible,.find-check input:focus-visible,.find-clear:focus-visible,.find-chip:focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.find-search input:focus-visible,.find-month select:focus-visible,.find-check input:focus-visible,.find-clear:focus-visible,.find-chip:focus-visible,.find-more:focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
 .find-hint{margin-top:8px;font-size:13px;color:var(--steel)}
 .find-hint kbd{font:12px var(--mono);border:1px solid var(--rule);border-radius:4px;padding:1px 6px;background:var(--panel)}
 .find-filters{margin-top:20px;border-block:1px solid var(--rule)}
@@ -37,6 +37,9 @@
 .find-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:14px 0 0;padding:0}
 .find-chip{min-height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);font-size:13px}
 .find-chip:hover{border-color:var(--brand);color:var(--brand)}
+.find-more-row{padding:16px 0;border-block:1px solid var(--rule)}
+.find-more{min-height:44px;padding:0 16px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);font-size:14px;color:var(--paper)}
+.find-more:hover{border-color:var(--brand);color:var(--brand)}
 /* The build-injected list for reading without JavaScript: groups by kind, title, kind and date per row. */
 .find-static h2,.find-static h3{font-family:var(--display);font-size:28px;font-weight:600;line-height:1.2;margin:40px 0 12px}
 .find-static li{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;min-height:44px;padding:12px 0;border-top:1px solid var(--rule)}
@@ -54,4 +57,5 @@
 @media(min-width:1100px){
   .find-facets{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+@media(pointer:coarse){.find-hint{display:none}}
 @media(prefers-reduced-motion:reduce){.find *{transition:none!important;animation:none!important}}

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, safeHref, facetValues, monthLabel, KEYS, topicLabels,
+  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, remainingItems, RESULT_PAGE_SIZE,
 } from '../site/assets/find.mjs';
 import { hrefOnSite } from './site-index.mjs';
 
@@ -62,6 +62,52 @@ test('text search covers title, summary and topics, ignoring case and accents', 
 
 test('text search combines with facets', () => {
   assert.deepEqual(ids(filter(items, { q: 'blueprint', type: ['tool'] })), ['bce']);
+});
+
+test('number labels from experiment and lab ids are searchable and visible in result metadata', () => {
+  const numbered = [
+    { ...items[0], id: 'exp-007', title: 'A neutral title', summary: 'A neutral summary.', topics: [] },
+    { ...items[3], id: 'lab-05', title: 'Another neutral title', summary: 'Another summary.', topics: [] },
+  ];
+  assert.equal(numberLabel(numbered[0]), 'EXP 007');
+  assert.equal(numberLabel(numbered[1]), 'Lab 05');
+  assert.equal(numberLabel(items[2]), '');
+  assert.deepEqual(ids(filter(numbered, { q: 'exp 7' })), ['exp-007']);
+  assert.deepEqual(ids(filter(numbered, { q: 'exp 007' })), ['exp-007']);
+  assert.deepEqual(ids(filter(numbered, { q: 'lab 05' })), ['lab-05']);
+  const amendment = { type: 'update', id: 'update-exp-020-amendment-04', title: 'Same title', summary: 's', topics: [] };
+  assert.equal(numberLabel(amendment), 'EXP 020 · Amendment 04', 'numbered updates are told apart by a label, not a changed title');
+  assert.equal(numberLabel({ type: 'update', id: 'update-exp-005-erratum-01' }), 'EXP 005 · Erratum 01');
+  assert.equal(numberLabel({ type: 'update', id: 'update-exp-005-results' }), '');
+  assert.deepEqual(ids(filter([amendment], { q: 'amendment 04' })), ['update-exp-020-amendment-04']);
+  assert.match(source, /if \(label\) meta\.append\(element\(doc, 'span', \{\}, label\)\)/, 'the same label is rendered in the visible meta line');
+});
+
+test('the stage options omit Kind duplicates while saved stage links still filter', () => {
+  const sameAsKind = [
+    { ...items[2], stage: 'note' },
+    { ...items[4], stage: 'tool' },
+  ];
+  assert.deepEqual(facetValues([...items, ...sameAsKind], 'stage'), ['pre-registered', 'published', 'released', 'results']);
+  assert.deepEqual(ids(filter(sameAsKind, paramsFromSearch('?stage=note'))), ['note-cafe']);
+  assert.deepEqual(ids(filter(sameAsKind, paramsFromSearch('?stage=tool'))), ['bce']);
+});
+
+test('interactive results show 30 first and name the full remainder', () => {
+  const many = Array.from({ length: 65 }, (_, index) => ({ id: `item-${index}` }));
+  assert.deepEqual(resultPage(many.slice(0, 30)), { visible: many.slice(0, 30), remaining: 0 });
+  assert.deepEqual(resultPage(many), { visible: many.slice(0, 30), remaining: 35 });
+  assert.match(source, /`Show \$\{remaining\} more`/, 'the reveal control names the remainder');
+  assert.match(source, /const \{ visible, remaining \} = resultPage\(found\)/, 'every render resets the cap');
+});
+
+test('Show more reveals only the current matching remainder', () => {
+  const many = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
+    ({ id: `item-${index}`, type: index < 4 ? 'note' : 'experiment' }));
+  assert.deepEqual(ids(remainingItems(many, {})), ids(many.slice(RESULT_PAGE_SIZE)));
+  assert.deepEqual(remainingItems(many, { type: ['note'] }), []);
+  assert.match(source, /const rest = remainingItems\(items, read\(\)\)\.map\(row\)/, 'the reveal handler reads the live form state');
+  assert.doesNotMatch(source, /const rest = filter\(items, params\)/, 'the reveal handler does not use closure state');
 });
 
 test('unknown parameters and malformed values are ignored', () => {
@@ -157,9 +203,13 @@ test('the stylesheet uses existing tokens, keeps tap targets and has no motion',
   assert.match(css, /var\(--rule\)/);
   assert.match(css, /var\(--brand\)/);
   assert.doesNotMatch(css, /@keyframes|transition:\s*(?!none)[a-z]|animation:\s*(?!none)[a-z]/);
-  for (const selector of ['.find-check', '.find-clear', '.find-chip']) {
+  for (const selector of ['.find-check', '.find-clear', '.find-chip', '.find-more']) {
     assert.match(css, new RegExp(`\\${selector}\\{[^}]*min-height:4[4-9]px`), selector);
   }
+});
+
+test('coarse pointers hide the keyboard slash hint', () => {
+  assert.match(css, /@media\s*\(pointer:coarse\)\s*\{\s*\.find-hint\s*\{\s*display:none\s*\}\s*\}/);
 });
 
 test('importing the module without a find page does nothing and does not throw', () => {
