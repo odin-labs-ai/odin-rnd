@@ -111,6 +111,19 @@ test('a note with its title as meta description uses the built article first par
   assert.equal(noteSummary(built, 'Another title'), 'Why', 'an authored description is retained');
 });
 
+test('the two committed notes whose description only repeats their title get their real first paragraph', () => {
+  // The committed pages themselves; the built copies add chrome only outside <article>.
+  const cases = [
+    ['a-passing-pipeline.html', 'A passing pipeline was not yet a verified release.', /^A green release status sounds like a simple answer: the software is ready\. In this rollout/],
+    ['why-open-the-floor.html', 'Why open the factory floor?', /^Most of the interesting work happens before the launch announcement\. A rule is written\./],
+  ];
+  for (const [name, title, first] of cases) {
+    const summary = noteSummary(readFileSync(join('site/journal', name), 'utf8'), title);
+    assert.match(summary, first, `${name} takes the first paragraph of its article`);
+    assert.doesNotMatch(summary, /<|&amp;|&#/, `${name}'s summary is plain text`);
+  }
+});
+
 test('Find retains the limitation at the end of a long update', () => {
   const f = fixture();
   const full = 'A bounded finding with context. '.repeat(25) + 'The sample does not establish a broader result.';
