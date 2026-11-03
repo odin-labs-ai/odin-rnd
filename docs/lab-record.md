@@ -52,7 +52,12 @@ schema. A new lab extends those lists in the schema, in review.
 
 **Recounts (Lab 08).** A lab whose evidence is private and frozen is put on the runner as a recount
 (`scripts/lab-recount.mjs`): the runner reads the evidence files at the private repository's main head, names each by
-its role, and the lab's own vendor code counts them exactly as its record's build does. `committed` is the sha256 of the
-canonical counts the published record states, `now` the sha256 of the counts the files give, and `breaches` the number
-of count groups that differ. The record carries hashes and counts only. A recount is flat by construction: it is the
-same every day unless the evidence or the published record changes. It re-counts; it does not re-score or re-judge.
+its role, and the lab's own vendor code counts the rounds, score and earlier groups the same way its record's build
+does, from the role files alone. It reproduces the score group's stated totals; it does not re-derive them from the
+verdicts (that cross-check, that the verdicts add up to the score, runs only at vendor time, via the build's own
+`recount()`). `heldOut.runs` and `heldOut.repos` are published evidence, not recounted here. `committed` is the sha256
+of the canonical counts the published record states, `now` the sha256 of the counts the files give, and `breaches` the
+number of count groups that differ. The record carries hashes and counts only. `commit.sha`/`mainHead` for a recount
+are this repository's own commit and main head (not the private repository's), supplied by the runner and measured,
+never asserted. A recount is flat by construction: it is the same every day unless the evidence or the published
+record changes. It re-counts; it does not re-score or re-judge.

@@ -22,11 +22,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { numberSpellingProblems } from './lab-record.mjs';
+import { canonical, numberSpellingProblems } from './lab-record.mjs';
 import { runsProblems } from './lab-runs.mjs';
 import { ROGUE_PIN, ROGUE_RECORD } from './lab-rogue.mjs';
 import { REVIEW_PIN, REVIEW_RECORD } from './lab-review.mjs';
 import { RED_PIN, RED_RECORD } from './lab-red-build.mjs';
+import { redBuildRecordCounts } from './vendor-red-build.mjs';
 
 /** Each lab whose record takes org-runner days: its record and pin. */
 export const LABS = {
@@ -37,8 +38,14 @@ export const LABS = {
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
-/** Every reason `day` may not be appended to `runs` (empty when it may). */
-export function dayProblems(runs, day, { now = new Date(), lab = 'rogue' } = {}) {
+/**
+ * Every reason `day` may not be appended to `runs` (empty when it may). `committedCounts`, when given (the only lab
+ * that does is red-build: a recount, scripts/lab-recount.mjs), is the sha256 that every record's `result.committed`
+ * must equal: the canonical hash of the counts the record CURRENTLY being appended to states. A record whose
+ * committed hash belongs to a different set of counts (the evidence or the published record changed since the run
+ * was produced) is not a recount of anything this page will say once appended, whatever its own verdict claims.
+ */
+export function dayProblems(runs, day, { now = new Date(), lab = 'rogue', committedCounts } = {}) {
   const problems = [];
   if (!Array.isArray(day) || day.length < 1) return ['a day is one or more records, one per org machine class'];
   const classes = day.map(r => r?.machineClass);
@@ -50,6 +57,7 @@ export function dayProblems(runs, day, { now = new Date(), lab = 'rogue' } = {})
   day.forEach((r, i) => {
     if (r?.lab !== lab) problems.push(`day[${i}]: lab ${JSON.stringify(r?.lab)} is not ${lab}`);
     if (r?.runner === 'laptop') problems.push(`day[${i}]: a laptop run is not an org runner's`);
+    if (committedCounts !== undefined && r?.result?.committed !== committedCounts) problems.push(`day[${i}]: result.committed does not match the currently published counts (the evidence or the published record changed since this run was produced)`);
     const siblings = day.filter(s => s !== r);
     const want = list => siblings.filter(s => (s.recordHash === r.recordHash) === (list === 'replicatedOn')).map(s => `${s.machineClass} ${s.recordHash}`).sort();
     for (const list of ['replicatedOn', 'differedOn']) {
@@ -103,7 +111,9 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     const texts = args.map(f => readFileSync(f, 'utf8'));
     const spelled = texts.flatMap((t, i) => numberSpellingProblems(t, args[i]));
     if (spelled.length) throw new Error(spelled.join('\n'));
-    const record = appendDays(JSON.parse(readFileSync(join(root, file), 'utf8')), texts.map(t => JSON.parse(t)), { lab });
+    const published = JSON.parse(readFileSync(join(root, file), 'utf8'));
+    const committedCounts = lab === 'red-build' ? sha256(canonical(redBuildRecordCounts(published))) : undefined;
+    const record = appendDays(published, texts.map(t => JSON.parse(t)), { lab, committedCounts });
     const bytes = `${JSON.stringify(record, null, 1)}\n`;
     writeFileSync(join(root, file), bytes);
     writeFileSync(join(root, pin), `${sha256(bytes)}  record.json\n`);

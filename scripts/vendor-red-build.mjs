@@ -24,6 +24,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { canonical } from './lab-record.mjs';
 import { recount } from './lab-red-build.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
@@ -168,18 +169,30 @@ export function build(dir) {
     },
     earlier: counts.earlier,
     // The org runners' recounts (scripts/append-rogue-runs.mjs --lab red-build put them there) are published evidence,
-    // not derivable from the private files, so a re-vendor carries them forward and --verify still re-derives.
-    ...priorRuns(),
+    // not derivable from the private files, so a re-vendor carries them forward and --verify still re-derives. A run
+    // carried forward must still be a recount OF THESE counts: priorRuns() drops any whose result.committed belongs
+    // to a different set of counts (the evidence or the published record changed since that run was produced).
+    ...priorRuns(counts),
   };
   const problems = recount(record);
   if (problems.length) throw new Error(`the committed verdicts do not give the committed score:\n  ${problems.join('\n  ')}`);
   return record;
 }
 
-function priorRuns() {
+/** Of `runs`, the ones whose result.committed is the canonical hash of `countsNow` — the only property that makes
+ * carrying a prior run forward mean anything: a run whose committed hash belongs to a different set of counts is not
+ * a recount of the counts this record now states, whatever its own verdict says. */
+export function keepLiveRuns(runs, countsNow) {
+  const committed = sha256(canonical(countsNow));
+  return runs.filter(r => r.result.committed === committed);
+}
+
+function priorRuns(countsNow) {
   if (!existsSync(OUT_FILE)) return {};
   const runs = JSON.parse(readFileSync(OUT_FILE, 'utf8')).runs;
-  return Array.isArray(runs) && runs.length ? { runs } : {};
+  if (!Array.isArray(runs) || !runs.length) return {};
+  const kept = keepLiveRuns(runs, countsNow);
+  return kept.length ? { runs: kept } : {};
 }
 
 export const serialise = record => `${JSON.stringify(record, null, 1)}\n`;
