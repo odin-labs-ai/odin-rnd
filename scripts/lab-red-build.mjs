@@ -90,8 +90,37 @@ export function recount(record) {
   return problems;
 }
 
-/** The counts a Lab 08 recount commits to (`result.committed` = sha256 of their canonical JSON): rounds, score, earlier. */
-export const redBuildRecordCounts = record => ({ rounds: record.heldOut.rounds, score: record.heldOut.score, earlier: record.earlier });
+/**
+ * The held-out runs' own tallies, the way recount() reads them against the score: per verdict, per class, and the
+ * flags. `runs` are the record's held-out runs (or the score file's rows in that shape, scripts/vendor-red-build.mjs).
+ */
+export function heldOutTallies(runs) {
+  return {
+    cases: runs.length,
+    diagnosis: count(runs.flatMap(r => r.reviewers.diagnosis), DIAGNOSES),
+    patch: count(runs.flatMap(r => r.reviewers.patch), PATCHES),
+    byClass: count(runs.map(r => r.cls), CLASSES),
+    ruled: runs.filter(r => r.how === 'no patch by rule').length,
+    reproduced: runs.filter(r => r.reproduced).length,
+    passes: runs.filter(r => r.passes).length,
+    judgedFix: runs.filter(r => r.judgedFix).length,
+    judgedNot: runs.filter(r => r.judgedNot).length,
+    missed: runs.filter(r => r.reviewers.patch.includes('none-missed')).length,
+  };
+}
+
+/**
+ * Every count the record states, in the groups a Lab 08 recount compares (`result.committed` = sha256 of their
+ * canonical JSON, scripts/lab-recount.mjs): the two reviewer rounds, the score, the earlier set, the held-out runs' own
+ * tallies, and how many held-out runs and repositories there are.
+ */
+export const redBuildRecordCounts = record => ({
+  rounds: record.heldOut.rounds,
+  score: record.heldOut.score,
+  earlier: record.earlier,
+  runs: heldOutTallies(record.heldOut.runs),
+  heldOut: { runs: record.heldOut.runs.length, repos: record.heldOut.repos },
+});
 
 /** sha256 (hex) of the canonical counts `record` states: what every one of its runs' `result.committed` must be. */
 export const committedCountsOf = record => createHash('sha256').update(canonical(redBuildRecordCounts(record)), 'utf8').digest('hex');

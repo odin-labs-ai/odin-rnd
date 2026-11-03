@@ -90,7 +90,7 @@
     "properties": {
      "role": {
       "type": "string",
-      "pattern": "^(runner|runs|frontier|nina|earlier|score|verdicts-a|verdicts-b)$"
+      "pattern": "^(runner|runs|frontier|nina|earlier|heldout|score|verdicts-a|verdicts-b)$"
      },
      "sha256": {
       "type": "string",
