@@ -4,7 +4,7 @@
 .article-shell>.crumbs{margin:0 0 28px}
 .crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 0}
 .crumbs li{display:inline-flex;align-items:center;min-width:0}
-.crumbs li+li:before{content:'/';margin:0 10px;color:var(--rule)}
+.crumbs li:not(:last-child)::after{content:'/';margin:0 10px;color:var(--rule)}
 .crumbs a{color:var(--brand);padding:6px 0}
 .crumbs a:hover{color:var(--primary-hover)}
 .crumbs [aria-current=page]{color:var(--paper);overflow-wrap:anywhere}

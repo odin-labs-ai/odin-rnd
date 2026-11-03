@@ -19,6 +19,9 @@ const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
 // Words a visitor sees on the home without opening anything (main, outside every <details> and every hidden station).
 // Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
 const VISIBLE_WORDS = 1250;
+// Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
+// so the former >100 bound no longer describes links into the home.
+const MIN_HOME_LINKS = 70;
 
 const htmlFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? htmlFiles(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
 
@@ -85,7 +88,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
       else if (insideFold(id)) hidden.add(id);
     }
   }
-  assert.ok(links > 100, `links into the home were found (${links})`);
+  assert.ok(links > MIN_HOME_LINKS, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
   assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
   for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
