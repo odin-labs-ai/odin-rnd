@@ -212,7 +212,7 @@ export function renderDaySeries(runs, { runsHref = '../runs/' } = {}) {
 
 // What a lab's org runs are runs of, when that is not its source at main (a laptop run says its own commit).
 const ORG_RUN_NOTES = {
-  'red-build': "The org machines' runs are a recount: each counts the rounds and earlier groups again, from the private repository's evidence at its main head, reproduces the score group's stated totals, and compares all three with the counts this page states. The evidence is frozen, so the recount is flat by construction: it gives the same counts every day unless that evidence or the published record changes. It re-counts; it does not re-score or re-judge.",
+  'red-build': "The org machines' runs are a recount: each counts the committed verdicts again, from the private repository's evidence at its main head, and compares them with the counts this page states. The evidence is frozen, so the recount is flat by construction: it gives the same result every day unless that evidence, or the counts this page states, change. It re-counts; it does not re-score or re-judge.",
   review: "The org machines' runs re-run this lab's kit at the pinned, reviewed commit of this repository, not at its moving main; moving them to a newer commit is a reviewed change to the lab runner. A day whose org run would check other results than this page cites is not published here: it is a red day, recorded in the runner's own run.",
 };
 

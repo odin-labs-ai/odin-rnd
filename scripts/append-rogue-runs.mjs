@@ -22,12 +22,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonical, numberSpellingProblems } from './lab-record.mjs';
+import { numberSpellingProblems } from './lab-record.mjs';
 import { runsProblems } from './lab-runs.mjs';
 import { ROGUE_PIN, ROGUE_RECORD } from './lab-rogue.mjs';
 import { REVIEW_PIN, REVIEW_RECORD } from './lab-review.mjs';
-import { RED_PIN, RED_RECORD } from './lab-red-build.mjs';
-import { redBuildRecordCounts } from './vendor-red-build.mjs';
+import { committedCountsOf, RED_PIN, RED_RECORD } from './lab-red-build.mjs';
 
 /** Each lab whose record takes org-runner days: its record and pin. */
 export const LABS = {
@@ -113,7 +112,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     const spelled = texts.flatMap((t, i) => numberSpellingProblems(t, args[i]));
     if (spelled.length) throw new Error(spelled.join('\n'));
     const published = JSON.parse(readFileSync(join(root, file), 'utf8'));
-    const committedCounts = LABS[lab].recount ? sha256(canonical(redBuildRecordCounts(published))) : undefined;
+    const committedCounts = LABS[lab].recount ? committedCountsOf(published) : undefined;
     const record = appendDays(published, texts.map(t => JSON.parse(t)), { lab, committedCounts });
     const bytes = `${JSON.stringify(record, null, 1)}\n`;
     writeFileSync(join(root, file), bytes);

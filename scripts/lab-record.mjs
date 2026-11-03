@@ -38,7 +38,7 @@ const schema = JSON.parse(readFileSync(RECORD_SCHEMA, 'utf8'));
 export const LAB_SHAPES = {
   rogue: { command: "the demo's own check command", roles: ['runner', 'runs'] },
   review: { command: "the lab's own re-run kit", roles: ['frontier', 'nina'] },
-  'red-build': { command: "the lab's own recount", roles: ['earlier', 'score', 'verdicts-a', 'verdicts-b'] },
+  'red-build': { command: "the lab's own recount", roles: ['earlier', 'heldout', 'score', 'verdicts-a', 'verdicts-b'] },
 };
 /** The largest breach count a record may hold, so its JSON reads the same in every language. */
 export const MAX_BREACHES = 1000000;
