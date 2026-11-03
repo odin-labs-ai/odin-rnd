@@ -86,11 +86,44 @@ export const DIAGNOSES = ['right', 'partly', 'wrong'];
 export const PATCHES = ['fixes', 'partial', 'wrong', 'none-right', 'none-missed'];
 export const CLASSES = ['code_bug', 'test_is_wrong', 'config_env', 'flake', 'red_by_design'];
 
+/**
+ * The counts the record states, from the private files alone (no label, no salt): the held-out score as the score file
+ * states it, each reviewer round counted from its own verdicts file, and the earlier set's tallies. build() puts exactly
+ * these in the record; the org runners' recount (scripts/lab-recount.mjs) computes them again at the private main head.
+ */
+export function redBuildCounts(json) {
+  const score = json('score'), earlier = json('earlier');
+  const round = role => { const v = Object.values(json(role)); return { cases: v.length, diagnosis: tally(v.map(x => x.diagnosis), DIAGNOSES), patch: tally(v.map(x => x.patch), PATCHES) }; };
+  const t = score.total;
+  const arms = Object.entries(earlier.by_arm).sort(([a], [b]) => a.localeCompare(b));
+  const rows = earlier.rows;
+  return {
+    rounds: { a: round('verdicts-a'), b: round('verdicts-b') },
+    score: {
+      cases: t.cases, ruled: t.ruled, reproduced: t.reproduced, passes: t.passes, judgedFix: t.judged_fix, judgedNot: t.judged_not, missed: t.missed,
+      diagnosis: Object.fromEntries(DIAGNOSES.map(k => [k, score.diagnosis[k] ?? 0])),
+      patch: Object.fromEntries(PATCHES.map(k => [k, score.patch_verdicts[k] ?? 0])),
+      byClass: Object.fromEntries(CLASSES.map(c => [c, score.by_class.find(b => b.cls === c)?.cases ?? 0])),
+    },
+    earlier: {
+      judgments: rows.length,
+      builds: new Set(rows.map(r => r.run)).size,
+      runsOfTheDoctor: arms.length,
+      diagnosis: tally(rows.map(r => r.diagnosis), DIAGNOSES),
+      patch: tally(rows.map(r => r.patch), PATCHES),
+      byRun: arms.map(([, v], i) => ({ run: i + 1, diagnosis: Object.fromEntries(DIAGNOSES.map(k => [k, v.diagnosis[k] ?? 0])), patch: Object.fromEntries(PATCHES.map(k => [k, v.patch[k] ?? 0])) })),
+    },
+  };
+}
+
+/** The same counts, as a committed record states them. */
+export const redBuildRecordCounts = record => ({ rounds: record.heldOut.rounds, score: record.heldOut.score, earlier: record.earlier });
+
 export function build(dir) {
   const source = JSON.parse(readFileSync(join(dir, 'source.json'), 'utf8'));
   const bytes = role => readFileSync(join(dir, 'files', role));
   const json = role => JSON.parse(bytes(role));
-  const heldout = json('heldout'), score = json('score'), earlier = json('earlier');
+  const heldout = json('heldout'), score = json('score');
   const label = run => { const l = source.labels.runs[String(run)]; if (!l) throw new Error(`no label for a held-out run (re-run --fetch)`); return l; };
   const byRun = new Map(heldout.runs.map(r => [r.run, r]));
   if (score.rows.length !== heldout.runs.length || score.rows.some(r => !byRun.has(r.run))) throw new Error('the score\'s rows are not the held-out runs');
@@ -111,11 +144,8 @@ export function build(dir) {
     judgedNot: r.judged_not,
     reviewers: { diagnosis: r.reviewers.diagnosis, patch: r.reviewers.patch, causeClass: r.reviewers.cause_class },
   }));
-  // Each round's own verdicts, counted from its own file (their case ids are blind, and are not kept).
-  const round = role => { const v = Object.values(json(role)); return { cases: v.length, diagnosis: tally(v.map(x => x.diagnosis), DIAGNOSES), patch: tally(v.map(x => x.patch), PATCHES) }; };
-  const t = score.total;
-  const arms = Object.entries(earlier.by_arm).sort(([a], [b]) => a.localeCompare(b));
-  const rows = earlier.rows;
+  // Each round's own verdicts are counted from its own file (their case ids are blind, and are not kept).
+  const counts = redBuildCounts(json);
   const record = {
     format: 'odin-lab-red-build',
     version: 1,
@@ -133,26 +163,23 @@ export function build(dir) {
       until: heldout.rule.until,
       repos: repoLabels.length,
       runs,
-      rounds: { a: round('verdicts-a'), b: round('verdicts-b') },
-      score: {
-        cases: t.cases, ruled: t.ruled, reproduced: t.reproduced, passes: t.passes, judgedFix: t.judged_fix, judgedNot: t.judged_not, missed: t.missed,
-        diagnosis: Object.fromEntries(DIAGNOSES.map(k => [k, score.diagnosis[k] ?? 0])),
-        patch: Object.fromEntries(PATCHES.map(k => [k, score.patch_verdicts[k] ?? 0])),
-        byClass: Object.fromEntries(CLASSES.map(c => [c, score.by_class.find(b => b.cls === c)?.cases ?? 0])),
-      },
+      rounds: counts.rounds,
+      score: counts.score,
     },
-    earlier: {
-      judgments: rows.length,
-      builds: new Set(rows.map(r => r.run)).size,
-      runsOfTheDoctor: arms.length,
-      diagnosis: tally(rows.map(r => r.diagnosis), DIAGNOSES),
-      patch: tally(rows.map(r => r.patch), PATCHES),
-      byRun: arms.map(([, v], i) => ({ run: i + 1, diagnosis: Object.fromEntries(DIAGNOSES.map(k => [k, v.diagnosis[k] ?? 0])), patch: Object.fromEntries(PATCHES.map(k => [k, v.patch[k] ?? 0])) })),
-    },
+    earlier: counts.earlier,
+    // The org runners' recounts (scripts/append-rogue-runs.mjs --lab red-build put them there) are published evidence,
+    // not derivable from the private files, so a re-vendor carries them forward and --verify still re-derives.
+    ...priorRuns(),
   };
   const problems = recount(record);
   if (problems.length) throw new Error(`the committed verdicts do not give the committed score:\n  ${problems.join('\n  ')}`);
   return record;
+}
+
+function priorRuns() {
+  if (!existsSync(OUT_FILE)) return {};
+  const runs = JSON.parse(readFileSync(OUT_FILE, 'utf8')).runs;
+  return Array.isArray(runs) && runs.length ? { runs } : {};
 }
 
 export const serialise = record => `${JSON.stringify(record, null, 1)}\n`;

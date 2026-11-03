@@ -14,9 +14,10 @@
 //   - the whole runs[] then passes the reader's own check (scripts/lab-runs.mjs runsProblems).
 // The Mac re-run stays runs[0]; scripts/vendor-rogue.mjs carries every later run forward, so --verify still re-derives.
 //
-// The same rules hold for every results lab whose record carries runs (LABS): Lab 05 (rogue) and Lab 06 (review).
+// The same rules hold for every results lab whose record carries runs (LABS): Lab 05 (rogue), Lab 06 (review) and
+// Lab 08 (red-build, a recount: scripts/lab-recount.mjs).
 //
-//   node scripts/append-rogue-runs.mjs [--root site] [--lab rogue|review] <record.json> ...
+//   node scripts/append-rogue-runs.mjs [--root site] [--lab rogue|review|red-build] <record.json> ...
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -25,9 +26,14 @@ import { numberSpellingProblems } from './lab-record.mjs';
 import { runsProblems } from './lab-runs.mjs';
 import { ROGUE_PIN, ROGUE_RECORD } from './lab-rogue.mjs';
 import { REVIEW_PIN, REVIEW_RECORD } from './lab-review.mjs';
+import { RED_PIN, RED_RECORD } from './lab-red-build.mjs';
 
 /** Each lab whose record takes org-runner days: its record and pin. */
-export const LABS = { rogue: { record: ROGUE_RECORD, pin: ROGUE_PIN }, review: { record: REVIEW_RECORD, pin: REVIEW_PIN } };
+export const LABS = {
+  rogue: { record: ROGUE_RECORD, pin: ROGUE_PIN },
+  review: { record: REVIEW_RECORD, pin: REVIEW_PIN },
+  'red-build': { record: RED_RECORD, pin: RED_PIN },
+};
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
