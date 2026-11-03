@@ -5,8 +5,9 @@
 .factory-correction{grid-column:1/-1;max-width:100ch;border-top:1px solid #3d5b4e;padding-top:16px;color:#b8cec1;font-size:13px}
 .factory-correction summary{cursor:pointer;font-weight:600}
 .factory-correction p{margin-top:8px}
-/* Built home (scripts/home-shape.mjs compactCorrection): the correction shows as one line, the full text one click away. */
-.factory-correction>summary{min-height:44px;padding:6px 0;gap:16px;font-size:13px}
+/* Built home (scripts/home-shape.mjs labelCorrection): the correction stays open under a dated label in small mono capitals. */
+.factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:4px 18px 14px;margin-top:4px}
+.factory-correction>summary{min-height:44px;padding:6px 0;gap:16px;font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#ffb38f}
 .factory-correction>summary:hover{color:var(--brand)}
 .factory-correction>summary .correction-summary{font:inherit;color:inherit;transform:none}
 .factory-correction>.correction-label{font-weight:600;color:var(--paper)}

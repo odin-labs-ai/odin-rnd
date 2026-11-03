@@ -177,16 +177,16 @@ test('a height proxy measurable without a browser: four sections, Go further and
   assert.deepEqual(folded, FOLDS.map(f => f.key));
 });
 
-test('the built home shows its dated correction as one line in the hero, the whole correction inside it', () => {
+test('the built home keeps its dated correction open in the hero, under a dated label, every word verbatim', () => {
   const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
   const at = source.indexOf('<details class="factory-correction" open>');
   const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
   assert.ok(paragraphs.length >= 2);
-  assert.ok(!home.includes('<details class="factory-correction" open>'), 'closed on the built home');
-  assert.equal(home.split('<details class="factory-correction">').length, 2, 'once');
-  const start = home.indexOf('<details class="factory-correction">'), block = home.slice(start, elementEnd(home, start));
-  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="updates"'), 'in the hero, before the latest updates');
-  assert.match(block, /^<details class="factory-correction"><summary><span class="correction-summary">We corrected this page on <time datetime="2026-11-01">[^<]+<\/time> and <time datetime="2026-11-02">[^<]+<\/time>\. What changed<\/span><span aria-hidden="true">\+<\/span><\/summary><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
+  assert.equal(home.split('<details class="factory-correction"').length, 2, 'once');
+  const start = home.indexOf('<details class="factory-correction" open>');
+  assert.ok(start >= 0, 'open on the built home: readable without a click');
+  const block = home.slice(start, elementEnd(home, start));
+  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="updates"'), 'in the factory hero, before the latest updates');
+  assert.match(block, /^<details class="factory-correction" open><summary><span class="correction-summary">Corrected on <time datetime="2026-11-01">[^<]+<\/time> and <time datetime="2026-11-02">[^<]+<\/time><\/span><span aria-hidden="true">\+<\/span><\/summary><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
   assert.ok(block.endsWith(`${paragraphs.join('')}</details>`), 'every paragraph of the correction, verbatim');
-  assert.ok(home.includes('<link rel="stylesheet" href="assets/launch.css">'), 'its style sheet');
 });

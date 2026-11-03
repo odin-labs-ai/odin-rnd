@@ -74,12 +74,10 @@
 @media(max-width:760px){.company-width{width:88%}.company-hero{grid-template-columns:1fr;gap:38px;padding-block:46px 52px}.company-hero h1{font-size:clamp(43px,9.5vw,66px);max-width:15ch}.company-lead{font-size:17px;margin-top:25px}.company-actions{gap:16px 24px;margin-top:25px}.bench-proposal{padding:26px}.company-split{grid-template-columns:minmax(0,1fr);gap:28px}.company-section{padding-block:48px}.company-section h2,.company-evidence h2{font-size:34px;max-width:20ch}.company-prose{font-size:16px}.company-section-heading{display:block;margin-bottom:26px}.company-section-heading>p{margin-top:18px;max-width:none}.bench-phases li{grid-template-columns:36px 1fr;gap:10px 18px;padding-block:24px}.bench-phases h3{font-size:23px}.bench-phases p{grid-column:2;font-size:15px}.phase-number{font-size:18px}.company-evidence{padding-block:48px}.company-evidence .company-split{gap:24px}.section-intro{margin-top:18px;font-size:16px}.company-resources{padding-block:32px 46px}.brief-section{padding-top:50px}.brief-field label span{display:inline-block}.bench-proposal dl>div{grid-template-columns:70px 1fr}.company-actions .button{flex-shrink:0}}
 @media(prefers-reduced-motion:reduce){.company-page{scroll-behavior:auto}}
 /* A dated correction under a page's opening actions (partners, evidence, providers; mission rnd-site-ux-nav-1101 wave 6):
-   one visible line saying the page was corrected and when, the full correction one click away. Never hidden, never reworded. */
-.source-correction{margin-top:28px;max-width:62ch;border-block:1px solid var(--rule)}
-.source-correction>summary{min-height:44px;padding:10px 0;gap:16px;font-size:14px;color:var(--steel)}
-.source-correction>summary:hover{color:var(--brand)}
-.source-correction>summary .correction-summary{font:inherit;color:inherit;transform:none}
-.source-correction>p{font-size:14px;line-height:1.6;color:var(--steel);padding:2px 0 16px}
+   open and readable without a click, in a ruled box of its own with a dated label, so it reads as a correction and not as
+   more lead copy. Never hidden, never reworded. */
+.source-correction{margin-top:28px;max-width:62ch;padding:14px 18px 16px;border:1px solid var(--rule);border-left:3px solid #92502d;background:var(--panel);font-size:14px;line-height:1.6;color:var(--steel)}
+.correction-when{font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#92502d;margin-bottom:6px}
 /* Partners, stacked tracks: the right padding of a column (and of a level) outlived the stacking, so the text ran short of
    the heading's measure; the boxed notes keep a narrower inset on phones. Scoped by .company-page to win over launch.css. */
 @media(max-width:900px){.company-page .track-grid>div,.company-page .tier-row article{padding-right:0}}
