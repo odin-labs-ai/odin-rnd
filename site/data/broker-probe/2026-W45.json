@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W45",
+  "startedAt": "2026-11-02T07:22:35.354Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 649,
+          "latencyMsP95": 830,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 1074,
+          "latencyMsP95": 1480,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 416,
+        "sha256": "35137329a2b145b21e6475263a9db5213ff22b51b154741e7c79917f4c599680",
+        "diff": {
+          "added": 6,
+          "removed": 57,
+          "repriced": 36,
+          "addedIds": [
+            "openai/gpt-6.1-terra",
+            "openai/gpt-6.1-terra-pro",
+            "openai/gpt-6.1-terra-pro:batch",
+            "openai/gpt-6.1-terra:batch",
+            "particle-ai/particle-1",
+            "prism-ml/ternary-bonsai-2-9b"
+          ],
+          "removedIds": [
+            "anthropic/claude-fable-5:batch",
+            "anthropic/claude-haiku-4.5:batch",
+            "anthropic/claude-opus-4.1:batch",
+            "anthropic/claude-opus-4.5:batch",
+            "anthropic/claude-opus-4.6:batch",
+            "anthropic/claude-opus-4.7:batch",
+            "anthropic/claude-opus-4.8:batch",
+            "anthropic/claude-sonnet-4.5:batch",
+            "anthropic/claude-sonnet-4.6:batch",
+            "anthropic/claude-sonnet-5:batch",
+            "arcee-ai/trinity-large-thinking",
+            "ibm-granite/granite-4.0-h-micro",
+            "liquid/lfm-2.5-2.6b",
+            "meta/muse-spark-1.2-contributor",
+            "meta/muse-spark-1.3-contributor",
+            "mistralai/codestral-2508:batch",
+            "mistralai/ministral-8b-2512:batch",
+            "mistralai/mistral-large-2512:batch",
+            "mistralai/mistral-medium-3.1:batch",
+            "mistralai/mistral-small-2603:batch",
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "openai/gpt-4-turbo",
+            "openai/gpt-4-turbo:batch",
+            "openai/gpt-4.1-mini:batch",
+            "openai/gpt-4.1-nano:batch",
+            "openai/gpt-4.1:batch",
+            "openai/gpt-4o-mini:batch",
+            "openai/gpt-4o:batch",
+            "openai/gpt-5-mini:batch",
+            "openai/gpt-5-pro:batch",
+            "openai/gpt-5:batch",
+            "openai/gpt-5.1:batch",
+            "openai/gpt-5.2-chat",
+            "openai/gpt-5.2-pro:batch",
+            "openai/gpt-5.2:batch",
+            "openai/gpt-5.4-mini:batch",
+            "openai/gpt-5.4-nano:batch",
+            "openai/gpt-5.4-pro:batch",
+            "openai/gpt-5.4:batch",
+            "openai/gpt-5.5-pro:batch",
+            "openai/gpt-5.5:batch",
+            "openai/o1",
+            "openai/o1-pro",
+            "openai/o3-mini",
+            "openai/o3-mini-high",
+            "openai/o3-mini:batch",
+            "openai/o3:batch",
+            "openai/o4-mini",
+            "openai/o4-mini-high",
+            "openai/o4-mini:batch"
+          ],
+          "repricedIds": [
+            "~deepseek/deepseek-flash-latest",
+            "~deepseek/deepseek-pro-latest",
+            "~deepseek/deepseek-v4-flash-latest",
+            "~moonshotai/kimi-latest",
+            "~openai/gpt-terra-latest",
+            "~z-ai/glm-flash-latest",
+            "deepseek/deepseek-v3.2",
+            "deepseek/deepseek-v4-flash-0731",
+            "deepseek/deepseek-v4-pro",
+            "deepseek/deepseek-v4-pro-0813",
+            "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017",
+            "google/gemini-3.8-flash",
+            "google/gemma-3-4b-it",
+            "google/gemma-4-26b-a4b-it",
+            "google/gemma-4-31b-it",
+            "ibm-granite/granite-4.2-8b",
+            "meta-llama/llama-3.2-3b-instruct",
+            "minimax/minimax-m2.5",
+            "mistralai/mistral-large-4-0",
+            "moonshotai/kimi-k2.7-code",
+            "moonshotai/kimi-k3",
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "qwen/qwen3-30b-a3b-instruct-2507",
+            "qwen/qwen3.5-27b",
+            "qwen/qwen3.6-27b",
+            "qwen/qwen3.6-35b-a3b",
+            "qwen/qwen3.8-27b",
+            "xiaomi/mimo-v2.5",
+            "xiaomi/mimo-v2.5-pro",
+            "z-ai/glm-4.6",
+            "z-ai/glm-4.7",
+            "z-ai/glm-5.2",
+            "z-ai/glm-5.3",
+            "z-ai/glm-5.3-flash"
+          ]
+        },
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-11-02T07:23:11.163Z"
+}

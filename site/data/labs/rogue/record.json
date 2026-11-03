@@ -570,6 +570,326 @@
    },
    "runner": "github-hosted",
    "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-10-31T05:25:26Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-10-31T05:25:45Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-01T05:25:45Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade",
+    "onMain": true,
+    "sha": "ccc31e2ab1fd38becedb9903eab7fdf6819a4ade"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-01T05:26:07Z",
+   "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "a31ba363cfa79af9d453c666614e40c45f1cd8fcc1ea15989dba86a419c51f9c"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "137f9822667ee7bad87235a3b5f0a964ac37e817",
+    "onMain": true,
+    "sha": "137f9822667ee7bad87235a3b5f0a964ac37e817"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-02T05:25:55Z",
+   "recordHash": "8a49047402da6391d75bf72ff34ec54c2f5ee0b5f02900dfd2c89abb772cb065",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "8a49047402da6391d75bf72ff34ec54c2f5ee0b5f02900dfd2c89abb772cb065"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "137f9822667ee7bad87235a3b5f0a964ac37e817",
+    "onMain": true,
+    "sha": "137f9822667ee7bad87235a3b5f0a964ac37e817"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-02T05:26:09Z",
+   "recordHash": "8a49047402da6391d75bf72ff34ec54c2f5ee0b5f02900dfd2c89abb772cb065",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "8a49047402da6391d75bf72ff34ec54c2f5ee0b5f02900dfd2c89abb772cb065"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "58e84a9d26f539815028634ff9211e4ba6c203e8",
+    "onMain": true,
+    "sha": "58e84a9d26f539815028634ff9211e4ba6c203e8"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-03T05:25:45Z",
+   "recordHash": "58eff38051ea12e0387f20383f089d045d45bf7e0e8897003ec88fa0a114120f",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "58eff38051ea12e0387f20383f089d045d45bf7e0e8897003ec88fa0a114120f"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the demo's own check command",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "58e84a9d26f539815028634ff9211e4ba6c203e8",
+    "onMain": true,
+    "sha": "58e84a9d26f539815028634ff9211e4ba6c203e8"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "python:3.12-bookworm@sha256:cb23ba7f04101d51ce157de82b98b34f9bbd3fa24f9aea5ac8a237a22512382c",
+   "inputs": [
+    {
+     "role": "runner",
+     "sha256": "14e3c839516f525fd8759d8330234d56a2f1c3a20c8d88eaf51dc6fab0d7e4a4"
+    },
+    {
+     "role": "runs",
+     "sha256": "ff0115ec6d6743212b17fddf37e1d036b1b896c896f1d1493a455dced2a47932"
+    }
+   ],
+   "lab": "rogue",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-03T05:25:59Z",
+   "recordHash": "58eff38051ea12e0387f20383f089d045d45bf7e0e8897003ec88fa0a114120f",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "58eff38051ea12e0387f20383f089d045d45bf7e0e8897003ec88fa0a114120f"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "e41d9422648239dd",
+    "now": "e41d9422648239dd",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
   }
  ]
 }

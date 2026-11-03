@@ -138,7 +138,7 @@
       "experiment": "EXP 016",
       "title": "Does the same model cost the same through every broker?",
       "kind": "Amendment",
-      "text": "EXP 016's results are published with the three brokers shown as letters, not names.",
+      "text": "EXP 016's results are published with the three brokers shown as letters, not names. After this record was frozen, the lab recorded each broker's published terms (site/data/provider-terms.json, 2026-10-23). Two of the three brokers have a clause the lab owner has not yet ruled on: one bars use of its trade names without consent, the other bars systematically collecting benchmarks for competitive purposes. The lab owner decided on 2026-10-23 to publish EXP 016's results without saying which broker is which. This amendment changes only how the results are labelled. Nothing measured, counted or decided changes.",
       "href": "journal/broker-same-model-results.html",
       "source": "data/broker-same-model/amendment-01.json",
       "date": "2026-10-23"
@@ -258,7 +258,7 @@
       "experiment": "EXP 012",
       "title": "Can a reviewer talk itself out of its false alarms?",
       "kind": "Amendment",
-      "text": "The independent review of the frozen commit (FIX-NEEDED, 2026-10-21 20:43Z) found two defects in the frozen runner.",
+      "text": "The independent review of the frozen commit (FIX-NEEDED, 2026-10-21 20:43Z) found two defects in the frozen runner. (1) The wrapper reads verify-prompt.txt from its own directory, but the record published the prompt one level up, so the published layout could not run. (2) A malformed verify reply such as {\"keep\":[null]} passed the list check, became an empty keep list and turned the verdict into SHIP with no retry and no verifyFailed mark. That contradicts the record's own failure rule, which says a verify failure leaves the alarm standing, and it would bias the result toward the hypothesis.",
       "href": "journal/self-verify-results.html",
       "source": "data/self-verify/amendment-01.json",
       "date": "2026-10-21"
@@ -488,7 +488,7 @@
       "experiment": null,
       "title": "Laya in your browser",
       "kind": "Tool",
-      "text": "Run Laya, an open-weight typed-decision model, entirely on your own device: type a situation and a choice, score or yes/no question and read calibrated probabilities.",
+      "text": "Run Laya, an open-weight typed-decision model, in your browser after a model download. Read its probabilities for a typed question. Three hand-written cases checked parity with the reference; they did not measure accuracy or calibration. Inference runs on your device without an account or API key.",
       "href": "projects/laya-browser/",
       "source": "projects/laya-browser/",
       "date": "2026-09-25"
@@ -538,7 +538,7 @@
       "experiment": null,
       "title": "Test Witness",
       "kind": "Tool",
-      "text": "A passing suite can miss a broken calculation.",
+      "text": "A passing suite can miss a broken calculation. Inspect whether tests expose specified defects before you rely on their green result.",
       "href": "projects/test-witness/",
       "source": "projects/test-witness/",
       "date": "2026-09-23"

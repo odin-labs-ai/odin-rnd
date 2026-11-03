@@ -21,7 +21,7 @@
 // Nothing here posts, sends or calls anything: the script makes no network call of any kind, and posting stays the
 // founder's own act (odin-labs rule 36). Every draft links the dispatch's live place on the lab page and carries only
 // text the dispatch carries (the question, who it was asked, the answer, its why and where it came from), around a few
-// fixed sentences. A long answer is cut at a word, never reworded.
+// fixed sentences. Answers and source limitations are retained in full. An X part that cannot fit is refused for manual editing; it is never silently abridged.
 // It REFUSES (exit 1, every reason listed, nothing written, the out dir not even created) when the dispatch does not
 // pass the publisher's own checks (dispatchProblems), when any draft, the preview's visible text included, fails the
 // publisher's text screen (screenHits; the dispatch's own page link is the one link let through, after it passes
@@ -49,6 +49,7 @@ export const X_LIMIT = 280;
 export const QUIET_AFTER_DAYS = 10;
 export const DRAFT_FILES = ['linkedin.md', 'x.md', 'reddit.md', 'github-discussion.md'];
 const BANNER = 'DRAFT — the founder posts. Nothing here is sent.';
+export const SOURCE_BOUNDARY = 'Source cards record where an answer came from; they do not establish that it is correct.';
 
 /** The dispatch's live place: its anchor on the lab page, as the Atom feed links it. */
 export const dispatchUrl = dispatch => `${SITE_URL}labs/agent-space/#${dispatch.session}`;
@@ -81,20 +82,18 @@ const asked = q => `Asked ${q.to}${q.followUp ? ', as a follow-up' : ''}`;
 function linkedin(dispatch, url) {
   const [first] = dispatch.questions;
   return [`<!-- ${BANNER} Attach the first still of this session from the lab page. -->`, '',
-    `A session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')}, answered live.`, '',
+    `A recorded session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')} answered on camera.`, '',
     `${asked(first)}: ${quoted(first.text)}`, '',
-    excerpt(first.answer, 400), '',
+    first.answer, '',
+    ...(first.why ? [`Why: ${first.why}`, ''] : []),
     `Where it came from: ${sourceKind(first.source)}.`, '',
-    `The recording, every question and every card: ${url}`, ''].join('\n');
+    SOURCE_BOUNDARY, '', `The recording, every question and every card: ${url}`, ''].join('\n');
 }
 
-/** One X part, shrinking the answer first and then the question until it fits. */
+/** One X part, preserving the whole question and answer. Oversized parts are refused, never abridged:
+ * a qualification at the end of an answer must not disappear to meet a channel limit. */
 function xPart(prefix, q) {
-  let question = q.text, answerMax = length(q.answer);
-  const build = () => `${prefix} ${asked(q)}: ${quoted(question)}\n${excerpt(q.answer, answerMax)}\nWhere it came from: ${sourceKind(q.source)}`;
-  while (length(build()) > X_LIMIT && answerMax > 60) answerMax--;
-  while (length(build()) > X_LIMIT && length(question) > 40) question = excerpt(q.text, length(question) - 1);
-  return build();
+  return `${prefix} ${asked(q)}: ${quoted(q.text)}\n${q.answer}${q.why ? `\nWhy: ${q.why}` : ''}\nWhere it came from: ${sourceKind(q.source)}`;
 }
 
 /** The thread: an opening part, one per question (at most four), and the link. */
@@ -102,9 +101,9 @@ export function xThread(dispatch, url) {
   const shown = dispatch.questions.slice(0, 4);
   const total = shown.length + 2;
   return [
-    `1/${total} A session in the agent space, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')}, answered live. Every answer comes with a card that says where it came from.`,
+    `1/${total} A recorded agent-space session, ${longDate(dispatch.date)}: ${plural(dispatch.questions.length, 'question')} answered on camera. Published cards identify cited sources, not answer correctness.`,
     ...shown.map((q, i) => xPart(`${i + 2}/${total}`, q)),
-    `${total}/${total} The recording, every question and every card: ${url}`,
+    `${total}/${total} ${SOURCE_BOUNDARY}\nThe recording, every question and every card: ${url}`,
   ];
 }
 
@@ -118,17 +117,18 @@ function reddit(dispatch, url) {
   return [`<!-- ${BANNER} Before posting in a subreddit, read its rules on self-promotion and links to your own work; many allow it only in a set thread, or not at all. Post where it is welcome, and only there. -->`, '',
     `## Title`, '', `${asked(first)}: ${quoted(first.text)}`, '',
     `## Body`, '',
-    `A session in the agent space, recorded live on ${longDate(dispatch.date)}. ${asked(first)}: ${quoted(first.text)}`, '',
-    quote(excerpt(first.answer, 600)), '',
+    `An agent-space session recorded on ${longDate(dispatch.date)}. ${asked(first)}: ${quoted(first.text)}`, '',
+    quote(first.answer), '',
+    ...(first.why ? [`Why: ${first.why}`, ''] : []),
     `Where it came from: ${sourceKind(first.source)}.`, '',
-    `The recording and every question with its card: ${url}`, ''].join('\n');
+    SOURCE_BOUNDARY, '', `The recording and every question with its card: ${url}`, ''].join('\n');
 }
 
 function githubDiscussion(dispatch, url) {
   return [`<!-- ${BANNER} For the repository's Discussions, in the category for show and tell. -->`, '',
     `## Title`, '', `The agent space, session of ${longDate(dispatch.date)}`, '',
     `## Body`, '',
-    `${plural(dispatch.questions.length, 'question')}, answered live in the agent space. The recording and every card: ${url}`, '',
+    `${plural(dispatch.questions.length, 'question')} answered in a recorded agent-space session. The recording and published source cards: ${url}`, '', SOURCE_BOUNDARY, '',
     ...dispatch.questions.flatMap(q => [`### ${quoted(q.text)}`, '', `${asked(q)}.`, '', quote(q.answer), '',
       ...(q.why ? [`**Why:** ${q.why}`, ''] : []), `**Where it came from:** ${sourceKind(q.source)} (evidence \`${q.evidence}\`)`, '']),
     ''].join('\n');
@@ -217,7 +217,7 @@ const STORY_SHOWN = 5;
 
 function weekLinkedin(week, url) {
   const story = week.story.slice(0, STORY_SHOWN);
-  return [`<!-- ${BANNER} -->`, '', `This week in Lab 01, ${week.window.label}.`, '', ...weekLines(week).flatMap(line => [line, '']),
+  return [`<!-- ${BANNER} -->`, '', `This week in Lab 01, ${week.window.label}.`, '', ...weekLines(week).flatMap(line => [line, '']), ...coverageNotes(week).flatMap(note => [note, '']), SOURCE_BOUNDARY, '',
     ...(story.length ? [`From the story${week.story.length > story.length ? `, the newest ${story.length} of ${week.story.length}` : ''}:`, ...story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
     `Every line, linked to its record: ${url}`, ''].join('\n');
 }
@@ -228,18 +228,21 @@ export function weekThread(week, url) {
   const body = [
     `This week in Lab 01, ${week.window.label}. ${s.quiet ?? s.delivery}`,
     ...(s.quiet ? [] : [`${s.story} ${s.sessions}`]),
+    ...coverageNotes(week), SOURCE_BOUNDARY,
     ...week.story.slice(0, 3).map(r => `${KIND[r.kind]}: ${quoted(r.title)}`),
   ];
   const total = body.length + 1;
   const parts = [...body, `Every line, linked to its record: ${url}`].map((text, i) => `${i + 1}/${total} ${text}`);
-  return parts.map(part => excerpt(part, X_LIMIT));
+  // A title or scope sentence may end in its limitation. Refuse an oversized draft in draftProblems; never
+  // shorten it to a stronger claim by silently cutting its end.
+  return parts;
 }
 
 function weekReddit(week, url) {
   const story = week.story.slice(0, STORY_SHOWN);
   return [`<!-- ${BANNER} Before posting in a subreddit, read its rules on self-promotion and links to your own work; many allow it only in a set thread, or not at all. Post where it is welcome, and only there. -->`, '',
     `## Title`, '', `This week in Lab 01, ${week.window.label}`, '',
-    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']),
+    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']), ...coverageNotes(week).flatMap(note => [note, '']), SOURCE_BOUNDARY, '',
     ...(story.length ? [...story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
     `Every line, linked to its record: ${url}`, ''].join('\n');
 }
@@ -247,12 +250,12 @@ function weekReddit(week, url) {
 function weekGithub(week, url) {
   return [`<!-- ${BANNER} For the repository's Discussions, in the category for show and tell. -->`, '',
     `## Title`, '', `This week in Lab 01, ${week.window.label}`, '',
-    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']), `Every line, linked to its record: ${url}`, '',
+    `## Body`, '', ...weekLines(week).flatMap(line => [line, '']), ...coverageNotes(week).flatMap(note => [note, '']), SOURCE_BOUNDARY, '', `Every line, linked to its record: ${url}`, '',
     ...(week.merged.length ? ['### Merged', '', ...week.merged.map(m => `- #${m.pr} ${m.title}`), ''] : []),
     ...(week.story.length ? ['### In the story', '', ...week.story.map(r => `- ${KIND[r.kind]}: ${r.title}`), ''] : []),
     ...(week.sessions.length ? ['### Sessions', '', ...week.sessions.map(d => `- Session of ${d.date}: ${plural(d.questions, 'question')}`), ''] : []),
     ...(week.proofs.length ? ['### Proof cards', '', ...week.proofs.map(p => `- \`${p.id}\``), ''] : []),
-    ...coverageNotes(week).flatMap(note => [`_${note}_`, '']), ''].join('\n');
+    ''].join('\n');
 }
 
 /**

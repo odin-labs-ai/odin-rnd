@@ -25,7 +25,8 @@ test('every proof id a published dispatch shows has an entry, and every field in
     assert.ok(m, `${d.session}/${q.id}/${name} is shown`);
     assert.equal(unescape(m[1]), q[name], `${d.session}/${q.id}/${name} is byte for byte the published text`);
   }
-  assert.match(page, /Every answer has a card that says where it came from\. Here are all of them/);
+  assert.match(page, /not verified correctness/);
+  assert.match(page, /the card does not verify the answer/);
 });
 
 test('a proof cited on two cards shows both, each with its own still; a still is shown only when published', () => {

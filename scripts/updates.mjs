@@ -1,5 +1,5 @@
 // The updates feed: one dated line for every record this site publishes, newest first. Nothing here is written per
-// experiment. Entries come from the built site (pnpm build first): every pre-registration, amendment, erratum and results
+// experiment. Entries come from the built site (pnpm build --refresh-updates): every pre-registration, amendment, erratum and results
 // record under dist/data/<slug>/, the recorded BCE recipes, the measured Laya comparison, the tools under projects/ and
 // the field notes that belong to no experiment. Each entry's text is the record's own words: an amendment's or
 // erratum's title, a result's full status as the home page's experiment ledger states it.
@@ -9,7 +9,7 @@
 // refuses (never the wall clock). So the same tree always renders the same feed, and dates never move when CI
 // re-records an experiment.
 //
-//   pnpm build && node scripts/updates.mjs --write   write site/data/updates.json and the two rendered blocks
+//   pnpm build --refresh-updates                 regenerate source and built updates before all final gates
 //   node scripts/updates.mjs --check                 exit 1 when the committed feed or blocks differ from a fresh render
 //
 // The rendered blocks are committed HTML (site/index.html between the updates markers, and site/updates/index.html),
@@ -89,8 +89,8 @@ export function candidates(root = '.') {
     for (const file of readdirSync(dir).filter(name => /^(amendment|erratum)-\d{2}\.json$/.test(name)).sort()) {
       const record = JSON.parse(readFileSync(join(dir, file), 'utf8'));
       const kind = file.startsWith('amendment') ? 'Amendment' : 'Erratum';
-      // EXP 012's amendment 01 (frozen 2026-10-21) has no title; its own words are the first sentence of its `why`.
-      const own = typeof record.title === 'string' && record.title ? titleSentence(record.title) : typeof record.why === 'string' && record.why ? firstSentence(record.why) : '';
+      // EXP 012's amendment 01 (frozen 2026-10-21) has no title; its full `why` is retained so a later limitation cannot be dropped.
+      const own = typeof record.title === 'string' && record.title ? titleSentence(record.title) : typeof record.why === 'string' && record.why ? record.why.trim() : '';
       if (!own) throw new Error(`Updates: data/${slug}/${file} has no title and no why to quote`);
       const date = [record.date, record.title ? undefined : record.authoredOn].find(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? ''));
       add({ key: `exp-${n}-${file.replace(/\.json$/, '')}`, experiment: id, title, kind, text: own, href, source: `data/${slug}/${file}`, file: `site/data/${slug}/${file}`, ownDate: date });
@@ -106,7 +106,7 @@ export function candidates(root = '.') {
     const name = textOf(/<h1[^>]*>([\s\S]*?)<\/h1>/.exec(page)?.[1] ?? '');
     const description = /<meta name="description" content="([^"]*)"/.exec(page)?.[1];
     if (!name || !description) throw new Error(`Updates: projects/${project}/index.html needs an h1 and a meta description`);
-    add({ key: `tool-${project}`, experiment: null, title: name, kind: 'Tool', text: firstSentence(textOf(description)), href: `projects/${project}/`, source: `projects/${project}/`, file: `site/projects/${project}/index.html` });
+    add({ key: `tool-${project}`, experiment: null, title: name, kind: 'Tool', text: textOf(description), href: `projects/${project}/`, source: `projects/${project}/`, file: `site/projects/${project}/index.html` });
   }
 
   // Field notes that belong to no experiment: the build and research notes, dated by their own row.
@@ -204,6 +204,25 @@ export function render(root = '.', options = {}) {
   };
 }
 
+/**
+ * Explicit build authoring step, after the ledger/data render and before feeds consume updates.
+ * Prepare every replacement before writing. Keep the generated home/updates content outside the
+ * marked blocks; copying the source pages wholesale would discard already-rendered build output.
+ */
+export function refreshDuringBuild(root = '.', options = {}) {
+  const { files, feed } = render(root, options);
+  const builtHome = readFileSync(join(root, 'dist/index.html'), 'utf8');
+  const builtPage = readFileSync(join(root, 'dist/updates/index.html'), 'utf8');
+  const outputs = {
+    ...files,
+    'dist/data/updates.json': feedText(feed),
+    'dist/index.html': replaceBlock(builtHome, HOME_START, HOME_END, renderHome(feed)),
+    'dist/updates/index.html': replaceBlock(builtPage, PAGE_START, PAGE_END, renderPage(feed)),
+  };
+  for (const [path, text] of Object.entries(outputs)) writeFileSync(join(root, path), text);
+  return feed;
+}
+
 /** The paths whose committed text differs from a fresh render. */
 export function stale(root = '.', options = {}) {
   const { files } = render(root, options);
@@ -212,14 +231,14 @@ export function stale(root = '.', options = {}) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const mode = process.argv[2];
-  if (!existsSync('dist/index.html')) { console.error('Updates: build the site first (pnpm build).'); process.exit(1); }
+  if (!existsSync('dist/index.html')) { console.error('Updates: build and refresh the source feed with pnpm build --refresh-updates.'); process.exit(1); }
   if (mode === '--write') {
     const { files, feed } = render('.');
     for (const [path, text] of Object.entries(files)) writeFileSync(path, text);
     console.log(`Wrote ${feed.updates.length} updates to ${FEED_PATH}, ${HOME_PATH} and ${PAGE_PATH}.`);
   } else if (mode === '--check') {
     const paths = stale('.');
-    if (paths.length) { console.error(`Updates are stale in ${paths.join(', ')}. Run: pnpm build && node scripts/updates.mjs --write`); process.exit(1); }
+    if (paths.length) { console.error(`Updates are stale in ${paths.join(', ')}. Run: pnpm build --refresh-updates`); process.exit(1); }
     console.log('Updates feed and rendered blocks are current.');
   } else {
     console.error('Usage: node scripts/updates.mjs --write | --check');

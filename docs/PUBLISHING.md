@@ -26,6 +26,20 @@ Link public repositories and source revisions. Check that old availability state
 
 The build writes `dist/data/index.json` (never committed): one item for every experiment, lab, field note, update and tool, from the same sources the pages use (`scripts/site-index.mjs`). The Find page (`site/find/`) searches it and lists it without JavaScript; the related links and breadcrumbs come from it too. A new field note, lab or tool page needs its topics in `site/data/find-topics.json`, a new lab its start day in `site/data/find-lab-dates.json`, and a new published result an outcome or a reason in `site/data/find-outcomes.json`. A new tool needs a `Tool` update in `site/data/updates.json`, which dates it. Each of these stops the build when it is missing, and so does a built field note, lab or tool page that no item lists (a page about the labs that is not a lab is named, with its reason, in `CHROME_WITHOUT_ITEM` in `scripts/site-chrome.mjs`). An experiment listed on the ledger with a raw JSON record and no note gets a record page (`records/<slug>/`, `scripts/site-records.mjs`), and a ledger or update link to a JSON record whose record page was not rendered, or an index item that would still lead to a raw JSON file, stops the build. The build never reads git history to date anything, because the publish workflow's checkout is shallow. The index holds plain text: a title or description with a named character reference the readers do not decode (anything beyond `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&#39;`, `&nbsp;` and numeric references) stops the build, so write the character itself (’, —).
 
+## Refreshing progress updates
+
+After changing a result, field note, tool description or other update source, run
+`pnpm build --refresh-updates`. This explicit authoring step regenerates
+`site/data/updates.json` and the marked update blocks in `site/index.html` and
+`site/updates/index.html`, then builds the feeds from the same complete summaries.
+Review and commit those source changes. Existing publication dates stay frozen;
+new records need a source date or a committed history.
+
+The refresh still runs all publication checks. A normal `pnpm build` refuses stale
+updates instead of silently rewriting them. The former
+`pnpm build && node scripts/updates.mjs --write` order cannot repair a stale feed,
+because the normal build correctly stops before the second command.
+
 ## Publication checks
 
 Run the experiments, transcript negative tests, static build and site check. Inspect desktop and mobile in the browser: navigation, station selection, blueprint view, every recipe, transcript, command copy and articles. Verify the deployed `data/site.json` revision and `data/experiments.json` CI URL against the completed Pages workflow. Read the public pages anonymously.

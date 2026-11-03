@@ -2,6 +2,9 @@ import { renderStations, renderStationLinks } from './station-render.mjs';
 import { stations } from './station-contract.mjs';
 import { validateRecords } from './witness-records.mjs';
 import { renderWitness } from './witness-render.mjs';
+const buildArgs = process.argv.slice(2);
+if (buildArgs.length > 1 || buildArgs.some(arg => arg !== '--refresh-updates')) throw new Error('Usage: node scripts/build.mjs [--refresh-updates]');
+const refreshUpdatesRequested = buildArgs.includes('--refresh-updates');
 const witnesses = await validateRecords();
 import { readFileSync, writeFileSync, cpSync, copyFileSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { relative, dirname, resolve } from 'node:path';
@@ -26,6 +29,7 @@ import { publishedPath as exp007PublishedPath, recordPath as exp007RecordPath } 
 import { addJournalRow as addExp007Row, assertNoteCurrent as assertExp007NoteCurrent } from './blueprint-floor-note.mjs';
 import { amendNote as amendExp007Note, articlePath as exp007ArticlePath, checkAmendment as checkExp007Amendment, publishedPath as exp007AmendmentPublishedPath, recordPath as exp007AmendmentRecordPath } from './blueprint-floor-amendment.mjs';
 import { addLedger, foldJournal } from './experiment-ledger.mjs';
+import { shapeHome } from './home-shape.mjs';
 import { amendNoteResults as amendExp007NoteResults, censusPublication as exp007CensusPublication, publishedResultsPath as exp007PublishedResultsPath, qualifyFloorStationData, qualifyHomeExp007, resultsPath as exp007ResultsPath } from './blueprint-floor-results-site.mjs';
 import { assertSiteCurrent as assertExp011SiteCurrent } from './reviewer-keep-note.mjs';
 import { publishedPath as exp011PublishedPath, recordPath as exp011RecordPath } from './reviewer-keep-prereg.mjs';
@@ -128,6 +132,7 @@ html = addLedger(html, report);
 // The home opens the latest five field notes and folds the rest (every note is also listed under updates/). Last, after
 // the ledger and every qualify step; the folded rows stay on the page, so everything that reads them is unchanged.
 html = foldJournal(html, 5);
+html = shapeHome(html);
 if (/<!--[A-Z_]+-->/.test(html)) throw new Error('Unresolved content marker');
 writeFileSync('dist/index.html', html);
 // The two workbenches (the BCE rule bench and the Laya bench) live on their own page, linked from the home's Experiments
@@ -149,6 +154,13 @@ writeFileSync('dist/index.html', html);
 {
   const { renderLabPages } = await import('./lab-pages.mjs');
   for (const [page, pageHtml] of Object.entries(renderLabPages())) writeFileSync(`dist/${page}/index.html`, pageHtml);
+}
+// Refresh is an explicit authoring operation, not a release bypass. The complete ledger/data now exist;
+// synchronize source and built update blocks before lab feeds consume them. All final gates still run.
+if (refreshUpdatesRequested) {
+  const { refreshDuringBuild } = await import('./updates.mjs');
+  const feed = refreshDuringBuild();
+  console.log(`Refreshed ${feed.updates.length} updates in source and build; publication checks still follow.`);
 }
 // Labs (mission rnd-labs-human-first-1024): the Labs index, Lab 01's page and its Atom feed, rendered from
 // site/data/labs/ into dist/ only. scripts/labs.mjs refuses a dispatch that misses its schema or the public screen.
@@ -222,6 +234,16 @@ for (const file of htmlFiles('dist')) {
   if ((source.match(/<header class="site-header[ "]/g) || []).length !== 1) throw new Error('Expected exactly one site header in '+file);
   writeFileSync(file,source.replace(/(<header class="site-header[^"]*"[^>]*>[\s\S]*?)<\/header>/,`$1${parentSiteLink}</header>`));
 }
+const { clarifyPublication } = await import('./publication-corrections.mjs');
+// Every public page carries the same interpretation boundary, including pages emitted by generators.
+// Individual results still need their own method and limitations; this note cannot validate a claim.
+for (const file of htmlFiles('dist')) {
+  const source = clarifyPublication(readFileSync(file, 'utf8'), relative('dist', file));
+  if ((source.match(/<\/main>/g) || []).length !== 1 || source.includes('id="publication-boundary"')) throw new Error('Expected one main and no duplicate publication boundary in '+file);
+  const methods = relative(dirname(file), 'dist/methods/index.html').replace(/index\.html$/, '') + '#publication-standard';
+  const note = `<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="${methods}">How to read these results</a>.</p></aside>`;
+  writeFileSync(file, source.replace('</main>', note + '</main>'));
+}
 // Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05): the build refuses a page that names a broker next to a
 // measured number unless site/data/provider-terms.json allows it (scripts/provider-terms.mjs; tests in
 // scripts/provider-terms.test.mjs). A read older than its staleAfterDays warns. Last, so it sees every finished page.
@@ -239,4 +261,14 @@ for (const file of htmlFiles('dist')) {
   const { checkSite } = await import('./number-provenance.mjs');
   const problems = checkSite('dist');
   if (problems.length) throw new Error('Number provenance failed:\n' + problems.join('\n'));
+}
+
+// Check the complete rendered sharing surface without changing the checker frozen into older experiments.
+{
+  const { stale } = await import('./updates.mjs');
+  const staleUpdates = stale();
+  if (staleUpdates.length) throw new Error(`Updates are stale in ${staleUpdates.join(', ')}. Run: pnpm build --refresh-updates; review and commit the generated source changes.`);
+  const { checkPublicationClaims } = await import('./publication-claims.mjs');
+  const problems = checkPublicationClaims();
+  if (problems.length) throw new Error('Publication claims refused:\n' + problems.join('\n'));
 }

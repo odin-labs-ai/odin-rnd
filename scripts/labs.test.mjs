@@ -70,7 +70,7 @@ test('the lab page says what the lab is, and asks through the ask-the-agents for
 });
 
 test('a follow channel without a page says coming soon and links nowhere; only real links are links', () => {
-  assert.deepEqual(lab.follow.map(link => link.channel), ['LinkedIn', 'Reddit', 'X', 'GitHub']);
+  assert.deepEqual(lab.follow.map(link => link.channel), ['LinkedIn', 'Reddit', 'X', 'GitHub', 'Instagram']);
   for (const { channel, url } of lab.follow) {
     if (url) assert.match(page, new RegExp(`<a href="${url.replaceAll('.', '\\.')}">${channel} `));
     else assert.match(page, new RegExp(`<li><span class="lab-soon">${channel}</span> <span class="technical">COMING SOON</span></li>`));

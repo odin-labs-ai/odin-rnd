@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { dispatchProblems, isLabLink, screenHits, screenTree, urlProblems } from './lab-dispatch-publish.mjs';
 import { readDelivery, renderDelivery } from './lab-delivery.mjs';
 import { readFilms, renderFilms } from './lab-films.mjs';
+import { PROGRESS_FILE, readProgress, renderProgress, renderProgressHero } from './lab-progress.mjs';
 import { readTelemetry, renderTelemetry } from './lab-telemetry.mjs';
 import { readCounts, renderCounts } from './lab-counts.mjs';
 import { readEngineHistory } from './lab-engine-history.mjs';
@@ -137,12 +138,12 @@ export { SOURCE_KIND, sourceKind };
 function dispatchCards(dispatch, level, proofs = false) {
   // With the proof-card explorer published, each card's evidence id links to that proof's entry.
   const evidence = q => proofs ? `<a href="proofs/#${escape(proofAnchor(q.evidence))}"><code>evidence ${escape(q.evidence)}</code></a>` : `<code>evidence ${escape(q.evidence)}</code>`;
-  return dispatch.questions.map(q => `<article class="lab-card"><p class="lab-card-to">Asked ${escape(q.to)}${q.followUp ? ', as a follow-up' : ''}</p><h${level} class="lab-card-question">${escape(q.text)}</h${level}><p class="lab-card-answer">${escape(q.answer)}</p>${q.why ? `<p class="lab-card-why"><strong>Why:</strong> ${escape(q.why)}</p>` : ''}<p class="lab-card-source"><span>${escape(sourceKind(q.source))}</span>${evidence(q)}</p></article>`).join('');
+  return dispatch.questions.map(q => `<article class="lab-card"><p class="lab-card-to">Asked ${escape(q.to)}${q.followUp ? ', as a follow-up' : ''}</p><h${level} class="lab-card-question">${escape(q.text)}</h${level}><p class="lab-card-answer">${escape(q.answer)}</p>${q.why ? `<p class="lab-card-why"><strong>Why:</strong> ${escape(q.why)}</p>` : ''}<p class="lab-card-source"><span>${escape(sourceKind(q.source))}</span>${evidence(q)}</p><p class="lab-card-why">This card records the answer and its cited source; it does not verify the answer.</p></article>`).join('');
 }
 
 function dispatchBlock(dispatch, up, latest, proofs = false) {
   const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded live, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(dispatch.poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
@@ -197,18 +198,28 @@ function checkedProofs(html, dispatches) {
   return html;
 }
 
+// Lab 01's top figure before the progress record existed: a still from the first build, kept for a root without one.
+const EARLIER_HERO = '<figure class="lab-hero-media"><img src="../../assets/agent-space/agent-space-overview.jpg" width="1280" height="720" alt="The Odin agent space: agents in their own spots in a small 3D world."><figcaption>From an earlier recording, also on <a href="../../#agent-space">the home page</a>.</figcaption></figure>';
+
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
 function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
+  // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
+  // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files. Checked
+  // before Lab 01's progress below so a fixture missing both files is refused with its own Lab 02 test's error, not
+  // shadowed by Lab 01's (both are independent required-file gates; their order has no effect on the real site, where
+  // neither is ever missing).
+  if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
+  // Lab 01's progress (scripts/lab-progress.mjs): the hero film and "How far it came". Required on the published site, as
+  // Lab 05's record is; a fixture without it keeps the earlier still at the top and says the steps are not published.
+  if (requireBench && !existsSync(join(root, PROGRESS_FILE))) throw new Error(`Lab 01's progress is required on the published site: ${PROGRESS_FILE} is missing`);
+  const progress = readProgress(root, films);
   const story = readMilestones(root, { now });
   const delivery = readDelivery(root);
   // The story page's template ships only with its record: without one, its markers would reach dist/ unfilled.
   if (!story && existsSync(join(root, STORY_PAGE))) throw new Error(`${STORY_PAGE}: the story page ships without its record (data/labs/agent-space/milestones.json)`);
-  // Lab 02's page is required on the site this repository publishes: its words missing refuse the build, as a missing
-  // tile does (scripts/lab-tiles.mjs). Another root (a test fixture) renders it only when it carries its files.
-  if (requireBench && !existsSync(join(root, BENCH_NOTES))) throw new Error(`Lab 02 is required on the published site: ${BENCH_NOTES} is missing`);
   // The proof-card explorer: required on the published site (scripts/lab-proofs.mjs); a fixture renders it only when it
   // carries the template. Its page is checked field by field against the dispatches before it is returned.
   if (resolve(root) === REPO_SITE && !existsSync(join(root, PROOFS_PAGE))) throw new Error(`${PROOFS_PAGE}: the proof-card explorer is required on the published site`);
@@ -262,6 +273,7 @@ function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_S
       '<!--LAB_DISPATCHES-->': renderDispatches(lab, dispatches, '../../', { proofs }),
       // The link to the explorer, only when it is rendered (so it always lands on a page).
       '<!--LAB_PROOFS_LINK-->': proofs ? ' <a href="proofs/">Every proof card, in one place.</a>' : '', '<!--LAB_FOLLOW-->': renderFollow(lab),
+      '<!--LAB_HERO_MEDIA-->': progress ? renderProgressHero(progress) : EARLIER_HERO, '<!--LAB_PROGRESS-->': progress ? renderProgress(progress, films) : '<p class="lab-none">The steps from the first build to now are not published yet.</p>',
       '<!--LAB_FILMS-->': renderFilms(films), '<!--LAB_OUTAGE-->': renderOutage(readOutage(root)), '<!--LAB_TELEMETRY-->': renderTelemetry(telemetry, { benchLink: existsSync(join(root, 'labs/brain-bench/index.html')), history: readEngineHistory(root) }), '<!--LAB_COUNTS-->': renderCounts(counts), '<!--LAB_HARD_PARTS-->': renderHardParts(hardParts),
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
