@@ -97,20 +97,12 @@ test('buildIndex places every source item once, with its topics, stage, outcome 
   assert.deepEqual(dates, [...dates].sort().reverse(), 'newest first');
 });
 
-test('update titles name their feed kind and only use a number present in the feed key', () => {
+test('update titles stay the feed title word for word (the publication screen requires it); the kind lives in the id', () => {
   const f = fixture();
   f.updates.push({ ...f.updates[1], key: 'exp-005-amendment-02', kind: 'Amendment' });
-  f.updates.push({ ...f.updates[1], key: 'exp-005-erratum-01', kind: 'Erratum' });
-  f.updates.push({ ...f.updates[1], key: 'exp-005-measured', kind: 'Measured' });
   const by = Object.fromEntries(buildIndex(f).map(item => [item.id, item]));
-  assert.equal(by['update-exp-005-amendment-02'].title, 'Amendment 02 · A gate');
-  assert.equal(by['update-exp-005-erratum-01'].title, 'Erratum 01 · A gate');
-  assert.equal(by['update-exp-005-preregistration'].title, 'Pre-registration · A gate');
-  assert.equal(by['update-exp-005-results'].title, 'Results · A gate');
-  assert.equal(by['update-exp-005-measured'].title, 'Measured · A gate');
-  assert.equal(by['update-exp-001-002-recorded'].title, 'Recorded · Two recipes');
-  assert.equal(by['update-note-why'].title, 'Field note · Why');
-  assert.equal(by['update-tool-witness'].title, 'Tool · Witness');
+  assert.equal(by['update-exp-005-amendment-02'].title, f.updates[1].title);
+  assert.equal(by['update-exp-005-preregistration'].title, f.updates.find(u => u.key === 'exp-005-preregistration').title);
 });
 
 test('a note with its title as meta description uses the built article first paragraph as plain text', () => {

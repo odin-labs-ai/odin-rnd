@@ -27,7 +27,12 @@ export function numberLabel(item) {
   const experiment = /^exp-(\d{3})$/.exec(item?.id ?? '');
   if (item?.type === 'experiment' && experiment) return `EXP ${experiment[1]}`;
   const lab = /^lab-(\d{2})$/.exec(item?.id ?? '');
-  return item?.type === 'lab' && lab ? `Lab ${lab[1]}` : '';
+  if (item?.type === 'lab' && lab) return `Lab ${lab[1]}`;
+  // An update's id carries its feed key; a numbered amendment or erratum is named from it, so updates of one
+  // experiment are told apart without changing their titles (the publication screen keeps titles verbatim).
+  const update = /^update-exp-(\d{3})-(amendment|erratum)-(\d{2})$/.exec(item?.id ?? '');
+  if (item?.type === 'update' && update) return `EXP ${update[1]} · ${update[2] === 'amendment' ? 'Amendment' : 'Erratum'} ${update[3]}`;
+  return '';
 }
 
 /** A fresh, empty parameter set. */

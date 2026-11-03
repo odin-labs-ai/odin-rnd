@@ -183,14 +183,10 @@ export function buildIndex({ ledger, updates, notes, labs, tools, topics, outcom
       : topicsOf({}, u.key, `update ${u.key}`);
     const stage = UPDATE_STAGE[u.kind];
     if (!stage) throw new Error(`Site index: update ${u.key} has kind "${u.kind}", which maps to no index stage`);
-    // The prefix comes from the feed's kind; a numbered suffix, when present, comes from its key.
-    const number = /-(\d{2})$/.exec(u.key)?.[1];
-    const prefix = u.kind === 'Pre-registered' ? 'Pre-registration' : u.kind;
-    const title = `${prefix}${number ? ` ${number}` : ''} · ${u.title}`;
     // A results update carries its experiment's curated outcome; nothing else does.
     const outcome = stage === 'results' && ids.length === 1 ? outcomeOf.get(ids[0]) : undefined;
     // Find is a sharing surface: cutting an update can remove its limiting sentence.
-    items.push({ type: 'update', id: `update-${u.key}`, title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
+    items.push({ type: 'update', id: `update-${u.key}`, title: u.title, date: u.date, stage, ...(outcome ? { outcome } : {}), topics: list, summary: u.text, href: recordHref(u.href, `update ${u.key}`) ?? u.href });
   }
   for (const tool of tools) {
     items.push({ type: 'tool', id: `tool-${tool.project}`, title: tool.title, date: tool.date, stage: 'tool', topics: topicsOf(topics.tools, tool.project, `projects/${tool.project}/`), summary: tool.summary, href: tool.href });

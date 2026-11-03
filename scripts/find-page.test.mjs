@@ -75,6 +75,11 @@ test('number labels from experiment and lab ids are searchable and visible in re
   assert.deepEqual(ids(filter(numbered, { q: 'exp 7' })), ['exp-007']);
   assert.deepEqual(ids(filter(numbered, { q: 'exp 007' })), ['exp-007']);
   assert.deepEqual(ids(filter(numbered, { q: 'lab 05' })), ['lab-05']);
+  const amendment = { type: 'update', id: 'update-exp-020-amendment-04', title: 'Same title', summary: 's', topics: [] };
+  assert.equal(numberLabel(amendment), 'EXP 020 · Amendment 04', 'numbered updates are told apart by a label, not a changed title');
+  assert.equal(numberLabel({ type: 'update', id: 'update-exp-005-erratum-01' }), 'EXP 005 · Erratum 01');
+  assert.equal(numberLabel({ type: 'update', id: 'update-exp-005-results' }), '');
+  assert.deepEqual(ids(filter([amendment], { q: 'amendment 04' })), ['update-exp-020-amendment-04']);
   assert.match(source, /if \(label\) meta\.append\(element\(doc, 'span', \{\}, label\)\)/, 'the same label is rendered in the visible meta line');
 });
 
