@@ -160,10 +160,17 @@ export function facetValues(items, key) {
   return [...values].sort();
 }
 
-/** The first 30 interactive rows and the number the reveal control will add. */
-export function resultPage(items, limit = 30) {
+export const RESULT_PAGE_SIZE = 30;
+
+/** The first page of interactive rows and the number the reveal control will add. */
+export function resultPage(items, limit = RESULT_PAGE_SIZE) {
   const visible = items.slice(0, limit);
   return { visible, remaining: items.length - visible.length };
+}
+
+/** The matching items beyond the first page, for the given params: what "Show more" adds. */
+export function remainingItems(items, params, limit = RESULT_PAGE_SIZE) {
+  return filter(items, params).slice(limit);
 }
 
 // ---------------------------------------------------------------- browser wiring
@@ -239,7 +246,7 @@ function init(doc, win) {
     results.addEventListener('click', event => {
       const more = event.target?.closest?.('button[data-more]');
       if (more) {
-        const rest = filter(items, params).slice(30).map(row);
+        const rest = remainingItems(items, read()).map(row);
         more.closest('li').replaceWith(...rest);
         rest[0]?.querySelector('a,button')?.focus();
         return;

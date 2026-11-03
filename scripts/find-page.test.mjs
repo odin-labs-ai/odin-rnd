@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage,
+  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, remainingItems, RESULT_PAGE_SIZE,
 } from '../site/assets/find.mjs';
 import { hrefOnSite } from './site-index.mjs';
 
@@ -99,6 +99,15 @@ test('interactive results show 30 first and name the full remainder', () => {
   assert.deepEqual(resultPage(many), { visible: many.slice(0, 30), remaining: 35 });
   assert.match(source, /`Show \$\{remaining\} more`/, 'the reveal control names the remainder');
   assert.match(source, /const \{ visible, remaining \} = resultPage\(found\)/, 'every render resets the cap');
+});
+
+test('Show more reveals only the current matching remainder', () => {
+  const many = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
+    ({ id: `item-${index}`, type: index < 4 ? 'note' : 'experiment' }));
+  assert.deepEqual(ids(remainingItems(many, {})), ids(many.slice(RESULT_PAGE_SIZE)));
+  assert.deepEqual(remainingItems(many, { type: ['note'] }), []);
+  assert.match(source, /const rest = remainingItems\(items, read\(\)\)\.map\(row\)/, 'the reveal handler reads the live form state');
+  assert.doesNotMatch(source, /const rest = filter\(items, params\)/, 'the reveal handler does not use closure state');
 });
 
 test('unknown parameters and malformed values are ignored', () => {
