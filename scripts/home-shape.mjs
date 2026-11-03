@@ -204,13 +204,25 @@ export const CORRECTION_PARAGRAPHS_SHA256 = '254ec433ef524686ad35e8963baaf879b21
 /** "a", "a and b", "a, b and c". */
 const listed = items => items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
 
+/** True when `body` is one or more <p>…</p> back to back and nothing else (a plain scan, no backtracking). */
+function onlyParagraphs(body) {
+  let at = 0;
+  while (at < body.length) {
+    if (!body.startsWith('<p>', at)) return false;
+    const end = body.indexOf('</p>', at);
+    if (end < 0 || body.slice(at + 3, end).includes('<p')) return false;
+    at = end + '</p>'.length;
+  }
+  return at > 0;
+}
+
 /** The committed correction at `at`: its label (the old summary's inner HTML) and its body (the paragraphs). */
 function sourceParts(html, at) {
   const block = html.slice(at, elementEnd(html, at));
   const head = /^<details class="factory-correction" open><summary>([^]*?)<\/summary>/.exec(block);
   if (!head || !head[1].trim()) throw new Error('Home correction: the block does not open with its summary');
   const body = block.slice(head[0].length, -'</details>'.length);
-  if (!/^(?:<p>[^]*?<\/p>)+$/.test(body)) throw new Error('Home correction: the block holds anything but its paragraphs');
+  if (!onlyParagraphs(body)) throw new Error('Home correction: the block holds anything but its paragraphs');
   return { block, label: head[1], body };
 }
 
