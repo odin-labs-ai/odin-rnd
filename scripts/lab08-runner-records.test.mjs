@@ -194,3 +194,23 @@ test('appending to the Lab 08 record starts its runs; a forged day is refused', 
   assert.equal(appendDays(rec, day(hosted, org), { lab: 'red-build' }).runs.length, 2);
   assert.throws(() => appendDays(rec, [{ ...hosted, recordHash: 'e'.repeat(64) }], { lab: 'red-build' }), /recordHash/);
 });
+
+// row 15fd283c#1 recheck (parentRowId 15fd283c…), finding 1 (NOT-FIXED): dayProblems() took committedCounts, but
+// nothing proved the CLI/appendDays path actually HANDS it through -- a planted negative that calls dayProblems
+// directly doesn't show that. This drives a stale-hash day through the REAL CLI binary end to end: appendDays()
+// (untouched, already forwards its whole `options` object to dayProblems()) called from append-rogue-runs.mjs's
+// own main(), against a real copy of the published site record, must refuse it exactly as dayProblems() alone does.
+test('the append CLI refuses a day whose committed hash belongs to different counts (end to end, not just dayProblems())', () => {
+  const root = mkdtempSync(join(tmpdir(), 'lab08-site-stale-'));
+  try {
+    for (const f of FILES) { mkdirSync(join(root, f, '..'), { recursive: true }); cpSync(join('site', f), join(root, f)); }
+    const staleHash = createHash('sha256').update(canonical({ rounds: stated.rounds, score: { ...stated.score, ruled: stated.score.ruled + 1 }, earlier: stated.earlier })).digest('hex');
+    const staleDay = day({ ...hosted, result: { ...hosted.result, committed: staleHash } }, { ...org, result: { ...org.result, committed: staleHash } });
+    const paths = staleDay.map((r, i) => { const f = join(root, `s${i}.json`); writeFileSync(f, JSON.stringify(r)); return f; });
+    const out = spawnSync('node', ['scripts/append-rogue-runs.mjs', '--root', root, '--lab', 'red-build', ...paths], { encoding: 'utf8' });
+    assert.equal(out.status, 1, 'a stale-hash day appended through the real CLI must be refused, not silently accepted');
+    assert.match(out.stderr, /result\.committed does not match the currently published counts/);
+    // The record on disk is untouched: a refused append writes nothing.
+    assert.deepEqual(JSON.parse(readFileSync(join(root, 'data/labs/red-build/record.json'), 'utf8')), JSON.parse(readFileSync(join('site', 'data/labs/red-build/record.json'), 'utf8')));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
