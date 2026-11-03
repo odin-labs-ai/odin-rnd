@@ -143,3 +143,33 @@ test('the fold opener opens every fold around a linked target and reads the hash
   assert.equal(idOf('#%E0%A4%A'), '', 'a hash that cannot be decoded names nothing');
   assert.equal(idOf(''), '');
 });
+
+// The hero's dated correction (compactCorrection, wave 6), on the committed home's own block.
+test('the home correction shows one dated line, opens to the whole correction, and keeps every word', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { compactCorrection, CORRECTION_OPEN, CORRECTION_CLOSED } = await import('./home-shape.mjs');
+  const source = readFileSync('site/index.html', 'utf8');
+  const at = source.indexOf(CORRECTION_OPEN);
+  const block = source.slice(at, source.indexOf('</details>', at) + '</details>'.length);
+  assert.ok(at > source.indexOf('<p class="factory-boundary">'), 'the committed block sits in the hero, after its boundary line');
+  const label = /^<details class="factory-correction" open><summary>([^]*?)<\/summary>/.exec(block)[1];
+  const paragraphs = block.match(/<p>[^]*?<\/p>/g);
+  assert.ok(paragraphs.length >= 2, 'the block carries its paragraphs');
+  const out = compactCorrection(source);
+  assert.ok(!out.includes(CORRECTION_OPEN), 'closed: one line until opened');
+  assert.equal(out.split(CORRECTION_CLOSED).length, 2, 'exactly one correction');
+  const start = out.indexOf(CORRECTION_CLOSED), shown = out.slice(start, out.indexOf('</details>', start) + '</details>'.length);
+  // Outside the block nothing changed.
+  assert.equal(out.slice(0, start), source.slice(0, at));
+  assert.equal(out.slice(start + shown.length), source.slice(at + block.length));
+  // The line: the block's own dates as written, oldest first, and what opening it gives.
+  assert.ok(shown.startsWith(`${CORRECTION_CLOSED}<summary><span class="correction-summary">We corrected this page on <time datetime="2026-11-01">1 November 2026</time> and <time datetime="2026-11-02">2 November 2026</time>. What changed</span><span aria-hidden="true">+</span></summary>`));
+  // Opened: the earlier label first, then every paragraph byte for byte, in order.
+  assert.equal(shown, `${CORRECTION_CLOSED}${shown.slice(CORRECTION_CLOSED.length, shown.indexOf('</summary>') + '</summary>'.length)}<p class="correction-label">${label}</p>${paragraphs.join('')}</details>`);
+  assert.equal(block, `${CORRECTION_OPEN}<summary>${label}</summary>${paragraphs.join('')}</details>`, 'the committed block is exactly label and paragraphs');
+  // It stops on a page it does not expect.
+  assert.throws(() => compactCorrection(out), /exactly one/);
+  assert.throws(() => compactCorrection(source.replace(block, block + block)), /found 2/);
+  assert.throws(() => compactCorrection(source.replace(block, block.replace(/<time datetime="[^"]+">([^<]*)<\/time>/g, '$1'))), /no dated <time>/);
+  assert.throws(() => compactCorrection(source.replace(block, `${CORRECTION_OPEN}<summary>${label}</summary></details>`)), /no paragraph/);
+});

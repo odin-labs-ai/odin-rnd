@@ -184,3 +184,33 @@ export function shapeHome(html) {
   assertKept(html, out);
   return out;
 }
+
+// The home's dated correction (mission rnd-site-ux-nav-1101 wave 6). #168 put a wording correction, open, at the foot of the
+// factory hero in site/index.html (frozen): about fifteen lines between the stations and the latest updates. On the built
+// home it becomes one visible line that says the page was corrected and when, with the full correction one click away.
+// Its words are all kept byte for byte: the earlier summary label opens the block, then every paragraph as it was. The dates
+// in the line are the block's own <time> elements, reused as written. Exactly one open block, or the build stops: a
+// correction must never drop off the page unnoticed.
+export const CORRECTION_OPEN = '<details class="factory-correction" open>';
+export const CORRECTION_CLOSED = '<details class="factory-correction">';
+
+/** "a", "a and b", "a, b and c". */
+const listed = items => items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
+
+/** The built home with its correction reduced to a one-line summary (see above). Throws on a page it does not expect. */
+export function compactCorrection(html) {
+  const count = html.split(CORRECTION_OPEN).length - 1;
+  if (count !== 1) throw new Error(`Home correction: expected exactly one ${CORRECTION_OPEN}, found ${count}`);
+  const at = html.indexOf(CORRECTION_OPEN), end = elementEnd(html, at);
+  const block = html.slice(at, end);
+  const head = /^<details class="factory-correction" open><summary>([^]*?)<\/summary>/.exec(block);
+  if (!head || !head[1].trim()) throw new Error('Home correction: the block does not open with its summary');
+  const body = block.slice(head[0].length, -'</details>'.length);
+  if (!/<p\b/.test(body)) throw new Error('Home correction: the block has no paragraph');
+  const seen = new Map();
+  for (const m of block.matchAll(/<time datetime="(\d{4}-\d{2}-\d{2})">[^<]+<\/time>/g)) if (!seen.has(m[1])) seen.set(m[1], m[0]);
+  if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
+  const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
+  const line = `<summary><span class="correction-summary">We corrected this page on ${when}. What changed</span><span aria-hidden="true">+</span></summary>`;
+  return html.slice(0, at) + `${CORRECTION_CLOSED}${line}<p class="correction-label">${head[1]}</p>${body}</details>` + html.slice(end);
+}

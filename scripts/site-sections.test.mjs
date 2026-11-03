@@ -172,3 +172,30 @@ test('an item without a date, or no items of a kind, stops the render', () => {
   assert.throws(() => renderProjectsIndex(notes), /no tools/);
   assert.throws(() => renderJournalIndex(undefined), /items/);
 });
+
+// Wave 6 (lane D): each index page's opening actions lead somewhere a visitor can use from there.
+test('the experiments page opens with All experiments, which the build adds on the same page, and no way back', () => {
+  const page = readFileSync(join('site', EXPERIMENTS_PAGE), 'utf8');
+  const actions = page.slice(page.indexOf('<div class="company-actions">'), page.indexOf('</div>', page.indexOf('<div class="company-actions">')));
+  const links = [...actions.matchAll(/<a( class="button button-primary")? href="([^"]+)">([^<]+)<\/a>/g)].map(m => ({ primary: Boolean(m[1]), href: m[2], text: m[3] }));
+  assert.deepEqual(links[0], { primary: true, href: `#${ALL_EXPERIMENTS_ID}`, text: 'All experiments' });
+  assert.equal(links.filter(l => l.primary).length, 1);
+  assert.doesNotMatch(page, /Back to the experiments/);
+  assert.match(page.slice(page.indexOf('<p class="company-lead">'), page.indexOf('</p>', page.indexOf('<p class="company-lead">'))), /list of all our experiments/, 'the lead says the page holds the full list');
+  // The primary target exists only once the build has added the section: on the built page, exactly once.
+  assert.ok(!page.includes(`id="${ALL_EXPERIMENTS_ID}"`));
+  assert.equal((addAllExperiments(page, ITEMS, '../').match(new RegExp(`id="${ALL_EXPERIMENTS_ID}"`, 'g')) || []).length, 1);
+});
+
+test('the tools page leads to Find, keeps the home tools list as a plain link, and every action resolves', () => {
+  const html = renderProjectsIndex(ITEMS);
+  const actions = html.slice(html.indexOf('<div class="company-actions">'), html.indexOf('</div>', html.indexOf('<div class="company-actions">')));
+  const primary = [...actions.matchAll(/<a class="button button-primary" href="([^"]+)">([^<]+)<\/a>/g)].map(m => [m[1], m[2]]);
+  assert.deepEqual(primary, [['../find/', 'Search everything']]);
+  assert.ok(existsSync('site/find/index.html') && readFileSync('site/find/index.html', 'utf8').includes('name="type" value="tool"'), 'Find has its Tool filter');
+  assert.match(actions, /<a href="\.\.\/#projects">The tools list on the home page<\/a>/, 'the list the lead names is still one click away');
+  for (const [, href] of actions.matchAll(/href="([^"]+)"/g)) {
+    assert.ok(!href.includes('?'), `${href}: the site check resolves paths without a query`);
+    assert.ok(resolves(PROJECTS_PAGE, href), href);
+  }
+});
