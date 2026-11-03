@@ -277,7 +277,7 @@ const OLD_JOURNAL_DESTINATION = String.raw`(?:\.\./(?:index\.html)?#journal|\.\.
 function replaceOne(html, pattern, replacement, label) {
   const matches = [...html.matchAll(pattern)];
   if (matches.length !== 1) throw new Error(`Site chrome: expected one ${label}, found ${matches.length}`);
-  return html.replace(pattern, replacement);
+  return html.replace(pattern, () => replacement);
 }
 
 /** Change only the two field-note return links, accepting either old home-fragment spelling. */
@@ -286,7 +286,7 @@ export function journalDestinations(html, label = 'journal page') {
   const footers = [...html.matchAll(/<footer class="site-footer"[\s\S]*?<\/footer>/g)];
   if (footers.length !== 1) throw new Error(`Site chrome: expected one footer in ${label}, found ${footers.length}`);
   const footer = replaceOne(footers[0][0], new RegExp(`<a href="${OLD_JOURNAL_DESTINATION}">More field notes<\\/a>`, 'g'), `<a href="${JOURNAL_DESTINATION}">More field notes</a>`, `${label} footer link`);
-  return html.replace(footers[0][0], footer);
+  return html.replace(footers[0][0], () => footer);
 }
 
 /** Change only the home copy's destination; its visible wording remains as authored. */
@@ -359,7 +359,7 @@ export function addOpenGraph(html, label = 'page') {
     if (!content) throw new Error(`Site chrome: no ${property} source in ${label}`);
     additions.push(`<meta property="${property}" content="${escapeHtml(content)}">`);
   }
-  return additions.length ? html.replace(head, head.replace('</head>', `${additions.join('\n')}\n</head>`)) : html;
+  return additions.length ? html.replace(head, () => head.replace('</head>', () => `${additions.join('\n')}\n</head>`)) : html;
 }
 
 /** Separate from injectChrome: Open Graph metadata is safe on number-provenance pages too. */

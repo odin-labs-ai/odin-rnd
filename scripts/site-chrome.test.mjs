@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { addBreadcrumbs, addChromeStylesheet, addFindLink, addOpenGraph, addOpenGraphToDist, addRelated, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fixJournalDestinations, fixLabIndexLinks, fragmentText, injectChrome, journalDestinations, pageClass, pageKey, pageTitle, pickRelated, relativeHref, slashLabLinks, trailFor } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
-import { renderGallery, renderSelfVerify } from './lab-review.mjs';
+import { builtCopy } from './test-build.mjs';
 
 const dirs = [];
 after(() => { for (const dir of dirs) rmSync(dir, { recursive: true, force: true }); });
@@ -321,6 +321,12 @@ test('item 1: only journal back/footer and home note-list destinations change in
   assert.equal(readFileSync(join(dist, 'index.html'), 'utf8'), home, 'second pass keeps the home');
 });
 
+test('journal footer keeps literal dollar replacement tokens when its destination changes', () => {
+  const before = `<main><a class="article-back" href="../#journal">Back</a></main><footer class="site-footer"><span>Keep $& and $' and $$.</span><a href="../#journal">More field notes</a></footer><p>Tail</p>`;
+  const expected = `<main><a class="article-back" href="../journal/">Back</a></main><footer class="site-footer"><span>Keep $& and $' and $$.</span><a href="../journal/">More field notes</a></footer><p>Tail</p>`;
+  assert.equal(journalDestinations(before), expected);
+});
+
 test('item 2: related, no-JS Find and lab tiles use slash-form lab page links only', () => {
   const dist = tempDist();
   mkdirSync(join(dist, 'labs/rogue'), { recursive: true });
@@ -358,12 +364,20 @@ test('item 3: breadcrumb slash belongs to the previous item so a wrapped line ha
 });
 
 test('item 4: review receipt cards step from the section h2 to h3 while the summary keeps its h3', () => {
-  assert.match(readFileSync('site/labs/review/index.html', 'utf8'), /<h2 id="receipts-title">When the reviewer said no\.<\/h2>/);
-  const gallery = renderGallery({ gallery: [{ pr: 84, title: 'A review', receipt: ['FIX-NEEDED'], mergeCommit: 'abcdef123' }], planOnly: [] });
-  assert.match(gallery, /<article class="lab-panel review-receipt"[\s\S]*?<h3><a href="[^"]+">A review<\/a><\/h3>/);
-  assert.doesNotMatch(gallery, /<h4>/);
-  const summary = renderSelfVerify({ selfVerify: { experiment: 'EXP', decision: 'no', runs: [{ id: 'A1-a', caught: 1, falseAlarms: 2, of: 30 }] }, sources: [{ role: 'self-verify', commit: 'abcdef123', sha256: 'sha' }] });
-  assert.match(summary, /<h3>Can a reviewer talk itself out of its false alarms\?<\/h3>/);
+  const built = readFileSync(join(builtCopy(), 'dist/labs/review/index.html'), 'utf8');
+  const gallery = JSON.parse(readFileSync('site/data/labs/review/record.json', 'utf8')).gallery;
+  assert.match(built, /<h2 id="receipts-title">When the reviewer said no\.<\/h2>/);
+  const receiptsStart = built.indexOf('id="receipts-title"');
+  const receiptsEnd = built.indexOf('<h2', receiptsStart);
+  assert.ok(receiptsEnd > receiptsStart, 'a later section follows the receipts');
+  const receipts = built.slice(receiptsStart, receiptsEnd);
+  assert.ok(gallery.length > 0, 'the real record has receipt cards');
+  assert.equal((receipts.match(/<h3\b/g) || []).length, gallery.length, 'one h3 per real pull-request receipt');
+  assert.doesNotMatch(receipts, /<h4\b/, 'no h4 in the receipts section');
+  const selfVerifyStart = built.indexOf('id="self-verify-title"');
+  const selfVerifyEnd = built.indexOf('<h2', selfVerifyStart);
+  assert.ok(selfVerifyStart >= 0 && selfVerifyEnd > selfVerifyStart, 'the built self-verify section is present');
+  assert.match(built.slice(selfVerifyStart, selfVerifyEnd), /<h3>Can a reviewer talk itself out of its false alarms\?<\/h3>/);
 });
 
 test('item 5: Open Graph properties are filled independently on every built page, including 404', () => {
@@ -376,7 +390,7 @@ test('item 5: Open Graph properties are filled independently on every built page
   assert.match(partner, /<meta property="og:image" content="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/assets\/og\/odin-rnd-og-image\.png">/);
   assert.equal(partner.replace(/\s*<meta property="og:image" content="[^"]+">/, ''), partnerBefore, 'existing properties remain byte-for-byte');
   const note = readFileSync(join(dist, NOTE), 'utf8');
-  assert.ok(note.includes(`<meta property="og:title" content="${escapeHtml(pageTitle(note))}">`), 'the visible heading supplies the title');
+  assert.ok(note.includes('<meta property="og:title" content="A passing pipeline was not yet a verified release.">'), 'the visible heading supplies the title');
   assert.match(note, /<meta property="og:description" content="Field notes from Odin R&amp;D\. A passing pipeline/);
   assert.match(note, /property="og:image"/);
   const missing = readFileSync(join(dist, '404.html'), 'utf8');
@@ -392,4 +406,17 @@ test('item 5: Open Graph properties are filled independently on every built page
   const once = readFileSync(join(dist, NOTE), 'utf8');
   addOpenGraphToDist({ distDir: dist });
   assert.equal(readFileSync(join(dist, NOTE), 'utf8'), once, 'second dist pass keeps the note');
+});
+
+test('Open Graph keeps literal dollar replacement tokens in the head and body', () => {
+  const literal = 'Deal: $& for $1';
+  const encoded = 'Deal: $&amp; for $1';
+  const before = `<!doctype html><html><head><title>Fallback</title><meta name="description" content="${encoded}"></head><body><h1>${encoded}</h1><p>Tail</p></body></html>`;
+  const expected = `<!doctype html><html><head><title>Fallback</title><meta name="description" content="${encoded}"><meta property="og:title" content="${encoded}">\n<meta property="og:description" content="${encoded}">\n<meta property="og:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/odin-rnd-og-image.png">\n</head><body><h1>${encoded}</h1><p>Tail</p></body></html>`;
+  const built = addOpenGraph(before);
+  assert.equal(built, expected);
+  for (const property of ['og:title', 'og:description']) {
+    const content = built.match(new RegExp(`<meta property="${property}" content="([^"]*)">`))?.[1];
+    assert.equal(content?.replace('&amp;', '&'), literal, `${property} has the literal text`);
+  }
 });
