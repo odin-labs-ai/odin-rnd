@@ -2,6 +2,7 @@
 // into the home land on something a visitor can see, the visible page is short, and the proof strip still passes.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
 import { builtCopy } from './test-build.mjs';
@@ -189,4 +190,6 @@ test('the built home keeps its dated correction open in the hero, under a dated 
   assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="updates"'), 'in the factory hero, before the latest updates');
   assert.match(block, /^<details class="factory-correction" open><summary><span class="correction-summary">Corrected on <time datetime="2026-11-01">[^<]+<\/time> and <time datetime="2026-11-02">[^<]+<\/time><\/span><span aria-hidden="true">\+<\/span><\/summary><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
   assert.ok(block.endsWith(`${paragraphs.join('')}</details>`), 'every paragraph of the correction, verbatim');
+  // The paragraphs as #168 published them (213e1f1): a reword fails here, in the source and on the built page.
+  assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
 });

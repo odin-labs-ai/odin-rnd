@@ -2,7 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { journalRows } from './experiment-ledger.mjs';
-import { assertKept, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, ledgerOf, OPEN_ORDER, shapeHome } from './home-shape.mjs';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { assertCorrectionKept, assertKept, CORRECTION_OPEN, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, labelCorrection, ledgerOf, OPEN_ORDER, shapeHome } from './home-shape.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
 const LEDGER = '<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">List.</h3><ol aria-labelledby="all-experiments-title"><li><a href="journal/a.html">EXP 004</a></li></ol></div>';
@@ -145,9 +147,10 @@ test('the fold opener opens every fold around a linked target and reads the hash
 });
 
 // The hero's dated correction (labelCorrection, wave 6), on the committed home's own block: open, dated, every word kept.
-test('the home correction stays open under a dated label, and keeps every word', async () => {
-  const { readFileSync } = await import('node:fs');
-  const { labelCorrection, CORRECTION_OPEN } = await import('./home-shape.mjs');
+// The committed block, label and paragraphs, as #168 published it (213e1f1): a reword fails here.
+const HOME_CORRECTION_SHA256 = '40aedf437370f2d7f8baf931867b62fb7dfd42046e69a46d66c9f08564db61be';
+
+test('the home correction stays open under a dated label, and keeps every word', () => {
   const source = readFileSync('site/index.html', 'utf8');
   const at = source.indexOf(CORRECTION_OPEN);
   const block = source.slice(at, source.indexOf('</details>', at) + '</details>'.length);
@@ -156,6 +159,7 @@ test('the home correction stays open under a dated label, and keeps every word',
   const paragraphs = block.match(/<p>[^]*?<\/p>/g);
   assert.ok(paragraphs.length >= 2, 'the block carries its paragraphs');
   assert.equal(block, `${CORRECTION_OPEN}<summary>${label}</summary>${paragraphs.join('')}</details>`, 'the committed block is exactly label and paragraphs');
+  assert.equal(createHash('sha256').update(block).digest('hex'), HOME_CORRECTION_SHA256, 'the committed correction is byte for byte what #168 published');
   const out = labelCorrection(source);
   assert.equal(out.split('<details class="factory-correction"').length, 2, 'exactly one correction');
   const start = out.indexOf(CORRECTION_OPEN);
@@ -173,4 +177,12 @@ test('the home correction stays open under a dated label, and keeps every word',
   assert.throws(() => labelCorrection(source.replace(block, block + block.replace(CORRECTION_OPEN, '<details class="factory-correction">'))), /second, closed/);
   assert.throws(() => labelCorrection(source.replace(block, block.replace(/<time datetime="[^"]+">([^<]*)<\/time>/g, '$1'))), /no dated <time>/);
   assert.throws(() => labelCorrection(source.replace(block, `${CORRECTION_OPEN}<summary>${label}</summary></details>`)), /no paragraph/);
+  // The kept-check: only the block's first line may change, in place, inside the factory hero.
+  assert.doesNotThrow(() => assertCorrectionKept(source, out));
+  assert.throws(() => assertCorrectionKept(source, out.replace(paragraphs[0], paragraphs[0].replace('</p>', ' More.</p>'))), /label or its body changed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(`<p class="correction-label">${label}</p>`, '<p class="correction-label"></p>')), /label or its body changed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace('Four ways to check a result', 'Five ways to check a result')), /outside the correction/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(CORRECTION_OPEN, '<details class="factory-correction">')), /not open where it was/);
+  const moved = source.replace(block, '').replace('</main>', `<section class="moved">${block}</section></main>`);
+  assert.throws(() => assertCorrectionKept(moved, labelCorrection(moved)), /inside the factory hero/);
 });

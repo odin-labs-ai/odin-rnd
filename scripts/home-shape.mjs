@@ -213,5 +213,30 @@ export function labelCorrection(html) {
   if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
   const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
   const line = `<summary><span class="correction-summary">Corrected on ${when}</span><span aria-hidden="true">+</span></summary>`;
-  return html.slice(0, at) + `${CORRECTION_OPEN}${line}<p class="correction-label">${head[1]}</p>${body}</details>` + html.slice(end);
+  const labelled = `${CORRECTION_OPEN}${line}<p class="correction-label">${head[1]}</p>${body}</details>`;
+  const out = html.slice(0, at) + labelled + html.slice(end);
+  assertCorrectionKept(html, out);
+  return out;
+}
+
+/** The factory hero's offsets in `html`: its <section … id="floor"> to its own close tag. */
+function heroOf(html) {
+  const open = /<section\b[^>]*\sid="floor"[^>]*>/.exec(html);
+  if (!open) throw new Error('Home correction: the page has no factory hero (#floor)');
+  return [open.index, elementEnd(html, open.index)];
+}
+
+/** Throws unless `out` is `html` with only its correction relabelled: the same bytes outside the block, the block still
+ *  open and inside the factory hero, its earlier label and every byte of its body kept, in order. */
+export function assertCorrectionKept(html, out) {
+  const was = html.indexOf(CORRECTION_OPEN), now = out.indexOf(CORRECTION_OPEN);
+  if (was < 0 || now !== was || out.split(CORRECTION_OPEN).length !== 2) throw new Error('Home correction: the block is not open where it was');
+  const wasEnd = elementEnd(html, was), nowEnd = elementEnd(out, now);
+  if (out.slice(0, now) !== html.slice(0, was) || out.slice(nowEnd) !== html.slice(wasEnd)) throw new Error('Home correction: the page changed outside the correction');
+  const [heroStart, heroEnd] = heroOf(out);
+  if (!(heroStart < now && nowEnd < heroEnd)) throw new Error('Home correction: the block is not inside the factory hero');
+  const before = html.slice(was, wasEnd), after = out.slice(now, nowEnd);
+  const head = /^<details class="factory-correction" open><summary>([^]*?)<\/summary>/.exec(before);
+  const label = /^<details class="factory-correction" open><summary><span class="correction-summary">Corrected on [^]*?<\/span><span aria-hidden="true">\+<\/span><\/summary><p class="correction-label">/.exec(after);
+  if (!head || !label || after.slice(label[0].length) !== `${head[1]}</p>${before.slice(head[0].length)}`) throw new Error('Home correction: its earlier label or its body changed');
 }
