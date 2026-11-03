@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { HARD_PARTS_FILE, readDispatches, readHardParts, readLab, renderLabs } from './labs.mjs';
 
 // The Labs pages (mission rnd-labs-human-first-1024). `pnpm test` runs before `pnpm build`, so these render in memory
@@ -11,6 +12,7 @@ const pages = renderLabs();
 const lab = readLab();
 const page = pages['labs/agent-space/index.html'];
 const realDispatches = readDispatches();
+const webpSibling = (path, width) => path.replace(/\.(png|jpe?g)$/, `-${width}.webp`);
 // Lab 03's tile is required on every Labs index, so a fixture site carries it and the records it links.
 // Lab 02 (scripts/brain-bench.mjs): its template, words, record, the record's pin and its tile (scripts/lab-tiles.mjs).
 const LAB02_FILES = ['labs/brain-bench/index.html', 'data/labs/brain-bench.json', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256', 'data/labs/brain-bench-tile.json'];
@@ -60,6 +62,53 @@ test('the real site: with no dispatch it shows the empty box; with dispatches ev
     const at = order(text);
     assert.ok(at.every(i => i >= 0), 'every session id appears');
     assert.deepEqual([...at].sort((a, b) => a - b), at, 'sessions appear newest first');
+  }
+});
+
+test('the first film is embedded once in progress and linked from the gallery', () => {
+  assert.equal((page.match(/<video\b[^>]*><source src="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-30s\.webm"/g) ?? []).length, 1);
+  assert.equal((page.match(/id="film-agent-space-30s"/g) ?? []).length, 1);
+  assert.match(page, /<li class="lab-film lab-progress-step" id="film-agent-space-30s">/);
+  assert.match(page, /<a href="#film-agent-space-30s">Watch the recording and read its screening record\.<\/a>/);
+});
+
+test('the published dispatch poster and every referenced Lab 01 WebP exist', () => {
+  const dispatch = realDispatches.find(d => d.session === 'session-2026-10-25-b');
+  assert.ok(dispatch);
+  assert.ok(page.includes(`poster="../../${webpSibling(dispatch.poster, 1280)}"`));
+  const originals = [
+    'films/agent-space-30s-poster.png', 'films/agent-space-tour-poster.png',
+    'progress/hq-on-duty-poster.jpg', 'progress/hq-engineering-hall.jpg',
+    'session-2026-10-25-b/poster.png',
+    ...['01-s1-q1.png', '02-s1-q2.png', '03-s1-q3.png', '04-s1-q4.png'].map(name => `session-2026-10-25-b/stills/${name}`),
+  ];
+  for (const original of originals) for (const width of [800, 1280]) {
+    const sibling = webpSibling(`assets/labs/agent-space/${original}`, width);
+    assert.ok(existsSync(join('site', sibling)), sibling);
+  }
+  const assetRoot = resolve('site/assets/labs/agent-space') + sep;
+  for (const name of ['labs/agent-space/index.html', 'labs/agent-space/proofs/index.html', 'labs/agent-space/story/index.html']) {
+    const html = pages[name];
+    for (const [, candidates] of html.matchAll(/\b(?:poster|srcset)="([^"]+\.webp(?:[^"]*)?)"/g)) {
+      for (const candidate of candidates.split(',').map(value => value.trim().split(' ')[0])) {
+        const file = resolve('site', dirname(name), candidate);
+        assert.ok(file.startsWith(assetRoot), `${name}: ${candidate} leaves Lab 01 assets`);
+        assert.ok(existsSync(file), `${name}: ${candidate} is missing`);
+      }
+    }
+  }
+});
+
+test('the four hash-pinned JSON records retain their committed bytes', () => {
+  const expected = new Map([
+    ['films.json', 'f2ade996bcc2090a9028e9226631668605bc02e319a48c22bc5b8f4446a3f819'],
+    ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
+    ['dispatches/session-2026-10-25-b.json', '260fe2c03e1e49dc21ccc485056513f3add18b81e5dd7e1ba0b39702bffd87a2'],
+    ['milestones.json', JSON.parse(readFileSync('scripts/milestones.pin.json', 'utf8')).fileSha256],
+  ]);
+  for (const [file, hash] of expected) {
+    const actual = createHash('sha256').update(readFileSync(join('site/data/labs/agent-space', file))).digest('hex');
+    assert.equal(actual, hash, file);
   }
 });
 

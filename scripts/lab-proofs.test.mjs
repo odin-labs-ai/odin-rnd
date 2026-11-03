@@ -41,6 +41,20 @@ test('a proof cited on two cards shows both, each with its own still; a still is
   assert.match(renderProofs([]), /NO PROOF CARD YET/);
 });
 
+test('every published proof still keeps its pinned src and offers both WebP widths at the citation grid size', () => {
+  for (const d of dispatches) for (const q of d.questions) {
+    const still = stillFor(d, q);
+    if (!still) continue;
+    const key = `${d.session}/${q.id}`;
+    const tag = page.match(new RegExp(`<img data-still="${key}"[^>]*>`))?.[0];
+    assert.ok(tag, key);
+    assert.ok(tag.includes(`src="../../../${still}"`), key);
+    assert.ok(tag.includes(`srcset="../../../${still.replace(/\.png$/, '-800.webp')} 800w, ../../../${still.replace(/\.png$/, '-1280.webp')} 1280w"`), key);
+    assert.ok(tag.includes('sizes="(max-width: 760px) 88vw, (max-width: 1440px) 40vw, 562px"'), key);
+  }
+  assert.deepEqual(proofProblems(page, dispatches), []);
+});
+
 test('the gate refuses a changed field, a missing entry, an extra entry and a screened word', () => {
   const swap = (from, to) => page.replace(from, to);
   const q = dispatches[0].questions[2];

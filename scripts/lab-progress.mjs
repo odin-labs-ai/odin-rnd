@@ -102,7 +102,11 @@ export function readProgress(root = 'site', films = null) {
 
 const duration = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 const engineCite = (commit, engineMain) => `By the engine's own record, in its private repository: ${cite({ commit }, engineMain)}`;
-const video = (film, up, cls = '') => `<video${cls} controls preload="none" playsinline width="${film.width}" height="${film.height}" poster="${up}${escape(film.poster)}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video>`;
+// Posters use the same-directory -1280.webp sibling: the hero can render near 1280px and video posters have no srcset.
+const posterWebp = path => path.replace(/\.(png|jpe?g)$/i, '-1280.webp');
+// Stills use same-directory -800.webp and -1280.webp siblings; their pinned original remains the img src fallback.
+const stillWebp = (path, width) => path.replace(/\.(png|jpe?g)$/i, `-${width}.webp`);
+const video = (film, up, cls = '') => `<video${cls} controls preload="none" playsinline width="${film.width}" height="${film.height}" poster="${up}${escape(posterWebp(film.poster))}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video>`;
 const filmSourceLine = (film, engineMain) => `${escape(film.source.note)} ${engineCite(film.source.commit, engineMain)}`;
 const screened = film => `Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the progress record). ${escape(film.screening.ocr)}`;
 
@@ -116,10 +120,10 @@ function renderStep(step, record, films, up) {
   const head = `<span class="technical">${escape(step.label)} · <time datetime="${escape(step.when)}">${escape(step.when)}</time></span>`;
   if (step.kind === 'film-ref') {
     const film = films.films.find(f => f.id === step.film);
-    return `<li class="lab-film lab-progress-step">${head}<video controls preload="none" playsinline poster="${up}${escape(film.poster)}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><h3>${escape(film.title)}</h3><p>${escape(step.line)}</p><p class="lab-film-source"><a href="#film-${escape(film.id)}">Its record, with the frames it was screened on.</a></p></li>`;
+    return `<li class="lab-film lab-progress-step" id="film-${escape(film.id)}">${head}<video controls preload="none" playsinline poster="${up}${escape(posterWebp(film.poster))}" aria-label="${escape(film.title)}: ${escape(film.line)}"><source src="${up}${escape(film.src)}" type="${escape(film.mime)}"></video><h3>${escape(film.title)}</h3><p>${escape(step.line)}</p><p>${escape(film.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${escape(film.source.note)} Source commit <code>${escape(film.source.commit.slice(0, 8))}</code>.</p><p class="lab-film-screened">Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the films record), viewed by an AI agent.</p></li>`;
   }
   if (step.kind === 'still') {
-    return `<li class="lab-film lab-progress-step">${head}<img src="${up}${escape(step.src)}" width="${step.width}" height="${step.height}" loading="lazy" alt="${escape(step.alt)}"><p>${escape(step.line)}</p><p class="lab-film-source">${escape(step.source.note)} ${engineCite(step.source.commit, record.engineMain)} <code title="sha256 of the file">${escape(step.sha256.slice(0, 12))}</code></p></li>`;
+    return `<li class="lab-film lab-progress-step">${head}<img src="${up}${escape(step.src)}" srcset="${up}${escape(stillWebp(step.src, 800))} 800w, ${up}${escape(stillWebp(step.src, 1280))} 1280w" sizes="(max-width: 760px) 88vw, (max-width: 773px) 91.6vw, (max-width: 1440px) 46vw, 646px" width="${step.width}" height="${step.height}" loading="lazy" alt="${escape(step.alt)}"><p>${escape(step.line)}</p><p class="lab-film-source">${escape(step.source.note)} ${engineCite(step.source.commit, record.engineMain)} <code title="sha256 of the file">${escape(step.sha256.slice(0, 12))}</code></p></li>`;
   }
   const film = step.film;
   return `<li class="lab-film lab-progress-step" id="film-${escape(film.id)}">${head}${video(film, up, film.width / film.height > 2 ? ' class="lab-progress-wide"' : '')}<h3>${escape(film.title)}</h3><p>${escape(step.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>${escape(film.sound)}</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${filmSourceLine(film, record.engineMain)}</p><p class="lab-film-screened">${screened(film)}</p></li>`;
