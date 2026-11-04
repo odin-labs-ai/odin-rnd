@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { runAnchor } from './lab-runs.mjs';
+import { runAnchor, withLabRuns } from './lab-runs.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { consensus, RED_PIN, RED_RECORD, RED_TEMPLATE, readRedBuild, recount, redBuildProblems, renderRedBuild } from './lab-red-build.mjs';
 import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
-import { renderLabs } from './labs.mjs';
+import { renderLabPages, renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -173,8 +173,11 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [RED_RECORD, RED_PIN, RED_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readRedBuild(root).heldOut.score.cases, 9);
-    // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
-    assert.equal(renderRedBuild(root).pages[RED_TEMPLATE], renderRedBuild('site').pages[RED_TEMPLATE], 'a fixture with the same files renders the same page');
+    // The copy renders exactly as the site's own record does, and, put through the same Labs assembly (which adds the
+    // runs section and its links when the record holds runs), gives exactly the published page.
+    const fixture = renderRedBuild(root).pages[RED_TEMPLATE];
+    assert.equal(fixture, renderRedBuild('site').pages[RED_TEMPLATE], 'a fixture with the same files renders the same page');
+    assert.equal(withLabRuns({ ...renderLabPages('site'), [RED_TEMPLATE]: fixture }, 'site')[RED_TEMPLATE], page, 'and assembles into the published page');
     writeFileSync(join(root, RED_RECORD), raw.replace('"cases": 9', '"cases": 9 '));
     assert.throws(() => readRedBuild(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', RED_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');

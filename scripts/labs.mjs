@@ -204,7 +204,7 @@ function checkedProofs(html, dispatches) {
 const EARLIER_HERO = '<figure class="lab-hero-media"><img src="../../assets/agent-space/agent-space-overview.jpg" width="1280" height="720" alt="The Odin agent space: agents in their own spots in a small 3D world."><figcaption>From an earlier recording, also on <a href="../../#agent-space">the home page</a>.</figcaption></figure>';
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
-function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
+export function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
   const films = readFilms(root), telemetry = readTelemetry(root), counts = readCounts(root), hardParts = readHardParts(root);
