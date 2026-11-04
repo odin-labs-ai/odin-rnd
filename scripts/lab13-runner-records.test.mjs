@@ -76,6 +76,7 @@ test('a changed label (with its counts kept consistent), or a changed live line,
   assert.deepEqual(recordProblems(one), []);
   const l = record.live;
   const live = { ...files, 'write-up': Buffer.from(`| all ${l.answers} | **useful ${l.useful - 1} · partly ${l.partly + 1} · wrong ${l.wrong}** |\n`) };
+  assert.equal(l.useful - 1 + l.partly + 1 + l.wrong, l.answers, 'the changed line still adds up');
   const two = recountRecord('measured-blind', read(live), record, { ...where, ranAt: '2026-11-03T06:05:00Z' });
   assert.equal(two.result.breaches, 1, 'the live group only');
   const pub = JSON.parse(JSON.stringify(record)); pub.live.useful -= 1; pub.live.partly += 1;
@@ -88,6 +89,9 @@ test('evidence that does not count (labels against their own counts, a missing l
   const bad = edit('tuning-verdicts', v => { v.counts.after.useful += 1; });
   assert.throws(() => recountRecord('measured-blind', read(bad), record, { ...where, ranAt: '2026-11-03T06:05:00Z' }), /the evidence does not count/);
   assert.throws(() => recountRecord('measured-blind', read({ ...files, 'write-up': Buffer.from('no line\n') }), record, { ...where, ranAt: '2026-11-03T06:05:00Z' }), /the evidence does not count: the write-up has no line/);
+  const l = record.live;
+  const sum = { ...files, 'write-up': Buffer.from(`| all ${l.answers} | **useful ${l.useful + 1} · partly ${l.partly} · wrong ${l.wrong}** |\n`) };
+  assert.throws(() => recountRecord('measured-blind', read(sum), record, { ...where, ranAt: '2026-11-03T06:05:00Z' }), /the write-up's live line does not add up/);
 });
 
 test('a lab carries only its own command and roles; it reads AT main, so "ahead" is refused', () => {

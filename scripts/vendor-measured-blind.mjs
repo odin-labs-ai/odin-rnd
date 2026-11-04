@@ -24,6 +24,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { committedCountsOf } from './lab-measured-blind.mjs';
+import { recordProblems } from './lab-record.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/measured-blind/record.json';
@@ -111,6 +112,7 @@ export function measuredBlindCounts(json, text) {
   });
   const live = /^\| all (\d+) \| \*\*useful (\d+) · partly (\d+) · wrong (\d+)\*\* \|$/m.exec(text('write-up'));
   if (!live) problems.push('the write-up has no line with the live run\'s verdicts');
+  else if (Number(live[2]) + Number(live[3]) + Number(live[4]) !== Number(live[1])) problems.push(`the write-up's live line does not add up: useful + partly + wrong is not ${live[1]}`);
   return { sets, live: live ? { answers: Number(live[1]), useful: Number(live[2]), partly: Number(live[3]), wrong: Number(live[4]) } : null, problems };
 }
 
@@ -167,12 +169,16 @@ export function build({ clone, main, checked, file }, { prior = priorRuns() } = 
     sets,
     live: counted.live,
     // The org runners' recounts (scripts/append-rogue-runs.mjs --lab measured-blind put them there) are published
-    // evidence, not derivable from the private files, so a re-vendor carries them forward and --verify still re-derives.
+    // evidence, not derivable from the private files: a re-vendor carries them forward from the committed record, each
+    // checked below. So --verify re-derives every field but runs from the private files, byte for byte; the runs are
+    // re-checked (record v1, and bound to these counts), not re-derived.
     ...prior,
   };
   // A carried-forward recount compared the counts of the record it was appended to. If the evidence moved the counts,
   // it compared other counts: the vendor refuses (it never drops published runs silently).
   const want = committedCountsOf(record);
+  const invalid = (record.runs ?? []).flatMap((r, i) => recordProblems(r, `runs/${i}`));
+  if (invalid.length) throw new Error(`a carried-forward run is not a valid record v1: ${invalid[0]}`);
   const stale = (record.runs ?? []).filter(r => r?.result?.committed !== want).length;
   if (stale) throw new Error(`the counts moved: ${stale} carried-forward recount(s) compared other counts; this vendor run would publish them beside counts they did not recount`);
   return `${JSON.stringify(record, null, 1)}\n`;
