@@ -20,9 +20,11 @@
 // reviewer's reasons and anything else of the raw work.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { committedCountsOf } from './lab-measured-blind.mjs';
+import { recordProblems } from './lab-record.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 export const OUT_FILE = 'site/data/labs/measured-blind/record.json';
@@ -79,8 +81,43 @@ const utc = iso => new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z');
 const counts = labels => Object.fromEntries(LABELS.map(l => [l, labels.filter(x => x === l).length]));
 const same = (a, b) => LABELS.every(l => (a[l] ?? 0) === (b[l] ?? 0)) && Object.keys(a).every(k => LABELS.includes(k));
 
+/**
+ * The sets and the live run, counted from the private files alone: each set's nine items under their anonymous labels
+ * (the set's letter and a number, in the order of kind, then key; the key itself is never written), their kinds and
+ * labels per run, and the counts the labels give; and the live run's counts, read from the write-up's own line. Each
+ * set's counts must be the verdict file's own and the summary's, both arms. build() puts exactly these in the record;
+ * the org runners' recount (scripts/lab-recount.mjs) computes them again at the private main head. `json(role)` and
+ * `text(role)` read a role's file. Returns { sets, live, problems }.
+ */
+export function measuredBlindCounts(json, text) {
+  const problems = [];
+  const summary = json('summary');
+  const sets = SETS.map(set => {
+    const v = json(set.verdicts), items = json(set.manifest).items;
+    const s = summary.sets.find(x => x.name === set.summary);
+    if (!s) { problems.push(`the summary has no set ${set.summary}`); return null; }
+    const keys = Object.keys(v.verdicts).sort();
+    const kinds = Object.fromEntries(items.map(i => [i.item, i.kind]));
+    if (keys.length !== 9 || items.length !== 9 || keys.some(k => !kinds[k])) problems.push(`${set.id}: not the nine items of its manifest`);
+    for (const k of keys) if (!KIND_WORDS[kinds[k]]) problems.push(`${set.id}: an item of a kind this page has no words for (${kinds[k]})`);
+    const ordered = [...keys].sort((a, b) => KIND_ORDER.indexOf(kinds[a]) - KIND_ORDER.indexOf(kinds[b]) || (a < b ? -1 : 1));
+    const rows = ordered.map((k, i) => ({ label: `${set.prefix}${i + 1}`, kind: kinds[k], before: [v.verdicts[k].before, v.verdicts[k]['before-r2']], after: [v.verdicts[k].after, v.verdicts[k]['after-r2']] }));
+    for (const r of rows) for (const l of [...r.before, ...r.after]) if (!LABELS.includes(l)) problems.push(`${set.id} ${r.label}: ${l} is not a verdict label`);
+    const recount = { before: counts(rows.flatMap(r => r.before)), after: counts(rows.flatMap(r => r.after)) };
+    for (const arm of ['before', 'after']) {
+      if (!same(v.counts[arm], recount[arm])) problems.push(`${set.id} ${arm}: the labels recount to ${JSON.stringify(recount[arm])}, the verdict file says ${JSON.stringify(v.counts[arm])}`);
+      if (!same(s[arm], recount[arm])) problems.push(`${set.id} ${arm}: the labels recount to ${JSON.stringify(recount[arm])}, the summary says ${JSON.stringify(s[arm])}`);
+    }
+    return { id: set.id, items: rows, counts: recount };
+  });
+  const live = /^\| all (\d+) \| \*\*useful (\d+) · partly (\d+) · wrong (\d+)\*\* \|$/m.exec(text('write-up'));
+  if (!live) problems.push('the write-up has no line with the live run\'s verdicts');
+  else if (Number(live[2]) + Number(live[3]) + Number(live[4]) !== Number(live[1])) problems.push(`the write-up's live line does not add up: useful + partly + wrong is not ${live[1]}`);
+  return { sets, live: live ? { answers: Number(live[1]), useful: Number(live[2]), partly: Number(live[3]), wrong: Number(live[4]) } : null, problems };
+}
+
 /** The public record from the private repository at <main>. Deterministic for the same main and checked date. */
-export function build({ clone, main, checked, file }) {
+export function build({ clone, main, checked, file }, { prior = priorRuns() } = {}) {
   const git = (...a) => execFileSync('git', ['-C', clone, ...a], { maxBuffer: 1 << 28 });
   const head = git('rev-parse', `${main}^{commit}`).toString().trim();
   const paths = Object.fromEntries(file.map(spec => { const at = spec.indexOf('='); return [spec.slice(0, at), spec.slice(at + 1)]; }));
@@ -95,32 +132,12 @@ export function build({ clone, main, checked, file }) {
     return { commit, what, at: utc(git('show', '-s', '--format=%cI', commit).toString().trim()) };
   });
   const summary = json('summary');
-  const sets = SETS.map(set => {
-    const v = json(set.verdicts), items = json(set.manifest).items;
-    const s = summary.sets.find(x => x.name === set.summary);
-    if (!s) { problems.push(`the summary has no set ${set.summary}`); return null; }
-    const keys = Object.keys(v.verdicts).sort();
-    const kinds = Object.fromEntries(items.map(i => [i.item, i.kind]));
-    if (keys.length !== 9 || items.length !== 9 || keys.some(k => !kinds[k])) problems.push(`${set.id}: not the nine items of its manifest`);
-    for (const k of keys) if (!KIND_WORDS[kinds[k]]) problems.push(`${set.id}: an item of a kind this page has no words for (${kinds[k]})`);
-    // An anonymous label per item: the set's letter and a number, in the order of kind, then key. The key itself
-    // (it names a private repository or a CI run) is never written.
-    const ordered = [...keys].sort((a, b) => KIND_ORDER.indexOf(kinds[a]) - KIND_ORDER.indexOf(kinds[b]) || (a < b ? -1 : 1));
-    const rows = ordered.map((k, i) => ({ label: `${set.prefix}${i + 1}`, kind: kinds[k], before: [v.verdicts[k].before, v.verdicts[k]['before-r2']], after: [v.verdicts[k].after, v.verdicts[k]['after-r2']] }));
-    for (const r of rows) for (const l of [...r.before, ...r.after]) if (!LABELS.includes(l)) problems.push(`${set.id} ${r.label}: ${l} is not a verdict label`);
-    const recount = { before: counts(rows.flatMap(r => r.before)), after: counts(rows.flatMap(r => r.after)) };
-    // The recount must be the verdict file's own counts and the summary's, both arms.
-    for (const arm of ['before', 'after']) {
-      if (!same(v.counts[arm], recount[arm])) problems.push(`${set.id} ${arm}: the labels recount to ${JSON.stringify(recount[arm])}, the verdict file says ${JSON.stringify(v.counts[arm])}`);
-      if (!same(s[arm], recount[arm])) problems.push(`${set.id} ${arm}: the labels recount to ${JSON.stringify(recount[arm])}, the summary says ${JSON.stringify(s[arm])}`);
-    }
-    return { id: set.id, name: set.name, about: set.about, afterVersion: set.after, items: rows, counts: recount };
-  });
-  // The live run after the measurement, as the write-up states it (its answers are not committed): refused unless the
-  // write-up says it in this exact line.
+  // The sets and the live run are counted by measuredBlindCounts() (the org runners' recount uses it too); each set
+  // gets the page's words here.
+  const counted = measuredBlindCounts(json, role => bytes[role].toString('utf8'));
+  problems.push(...counted.problems);
+  const sets = counted.sets.map((c, i) => c && { id: c.id, name: SETS[i].name, about: SETS[i].about, afterVersion: SETS[i].after, items: c.items, counts: c.counts });
   const raw = bytes['write-up'].toString('utf8');
-  const live = /^\| all (\d+) \| \*\*useful (\d+) · partly (\d+) · wrong (\d+)\*\* \|$/m.exec(raw);
-  if (!live) problems.push('the write-up has no line with the live run\'s verdicts');
   // The setup is written in this page's words; each sentence is bound to what the write-up (and the summary's note)
   // say, and the vendor refuses when one of them no longer says it. The model and the runs are read from the note.
   const doc = raw.replace(/\s+/g, ' ');
@@ -150,9 +167,27 @@ export function build({ clone, main, checked, file }) {
       restart: 'the machine restarted during held-out set two, and its local model runtime updated itself; the after arm\'s second run of that set ran on the updated runtime',
     },
     sets,
-    live: { answers: Number(live[1]), useful: Number(live[2]), partly: Number(live[3]), wrong: Number(live[4]) },
+    live: counted.live,
+    // The org runners' recounts (scripts/append-rogue-runs.mjs --lab measured-blind put them there) are published
+    // evidence, not derivable from the private files: a re-vendor carries them forward from the committed record, each
+    // checked below. So --verify re-derives every field but runs from the private files, byte for byte; the runs are
+    // re-checked (record v1, and bound to these counts), not re-derived.
+    ...prior,
   };
+  // A carried-forward recount compared the counts of the record it was appended to. If the evidence moved the counts,
+  // it compared other counts: the vendor refuses (it never drops published runs silently).
+  const want = committedCountsOf(record);
+  const invalid = (record.runs ?? []).flatMap((r, i) => recordProblems(r, `runs/${i}`));
+  if (invalid.length) throw new Error(`a carried-forward run is not a valid record v1: ${invalid[0]}`);
+  const stale = (record.runs ?? []).filter(r => r?.result?.committed !== want).length;
+  if (stale) throw new Error(`the counts moved: ${stale} carried-forward recount(s) compared other counts; this vendor run would publish them beside counts they did not recount`);
   return `${JSON.stringify(record, null, 1)}\n`;
+}
+
+function priorRuns() {
+  if (!existsSync(OUT_FILE)) return {};
+  const runs = JSON.parse(readFileSync(OUT_FILE, 'utf8')).runs;
+  return Array.isArray(runs) && runs.length ? { runs } : {};
 }
 
 function parse(argv) {

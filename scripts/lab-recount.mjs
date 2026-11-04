@@ -4,7 +4,8 @@
 //
 // A recount re-derives the counts the lab's record states, from those files alone, with the lab's own vendor code (the
 // function its build() uses), and compares them with the same counts read from the published record (for Lab 08: the
-// two reviewer rounds, the score, the earlier set, the held-out runs' own tallies, and the run and repository counts):
+// two reviewer rounds, the score, the earlier set, the held-out runs' own tallies, and the run and repository counts;
+// for Lab 13: each set's items, their labels per run and counts, and the live run's counts):
 //   committed  sha256 of the canonical counts the published record states (read from this repository's main)
 //   now        sha256 of the canonical counts the private files give at the private main head
 //   breaches   how many of the record's count groups differ (0 when every one agrees)
@@ -21,14 +22,26 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonical, LAB_SHAPES, recordHash, recordProblems } from './lab-record.mjs';
+import { measuredBlindRecordCounts } from './lab-measured-blind.mjs';
 import { redBuildRecordCounts } from './lab-red-build.mjs';
+import { measuredBlindCounts } from './vendor-measured-blind.mjs';
 import { redBuildCounts } from './vendor-red-build.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 
 /** Each recount lab: the vendor's counts from the role files, and the same counts as a published record states them. */
 export const RECOUNTS = {
-  'red-build': { counts: redBuildCounts, recordCounts: redBuildRecordCounts },
+  'red-build': { counts: json => redBuildCounts(json), recordCounts: redBuildRecordCounts },
+  // Lab 13: the vendor's counting also checks each set's counts against its verdict file and the summary; a file
+  // that fails those checks is an unreadable input (exit 2), never a quiet DIFFERENT.
+  'measured-blind': {
+    counts: (json, text) => {
+      const { sets, live, problems } = measuredBlindCounts(json, text);
+      if (problems.length) throw new Error(`the evidence does not count: ${problems[0]}`);
+      return { sets, live };
+    },
+    recordCounts: measuredBlindRecordCounts,
+  },
 };
 
 /** One recount as record v1. `read(role)` is the bytes of that role's file. */
@@ -40,8 +53,9 @@ export function recountRecord(lab, read, mainRecord, { runner, machineClass, ima
   // mainHead has no default: every caller (the CLI and this exported function) must supply the head it read.
   if (!/^[0-9a-f]{40}$/.test(mainHead ?? '')) throw new Error(`no main head the runner read was given (${mainHead})`);
   if (!/^[0-9a-f]{40}$/.test(commit ?? '') || mainHead !== commit) throw new Error(`--commit ${commit} is not the main head the runner read (${mainHead})`);
-  const json = role => JSON.parse(read(role).toString('utf8'));
-  const now = r.counts(json), stated = r.recordCounts(mainRecord);
+  const text = role => read(role).toString('utf8');
+  const json = role => JSON.parse(text(role));
+  const now = r.counts(json, text), stated = r.recordCounts(mainRecord);
   const groups = [...new Set([...Object.keys(now), ...Object.keys(stated)])];
   const run = {
     format: 'odin-lab-record', version: 1, lab, runner, machineClass, image,

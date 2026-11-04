@@ -15,9 +15,9 @@
 // The Mac re-run stays runs[0]; scripts/vendor-rogue.mjs carries every later run forward, so --verify still re-derives.
 //
 // The same rules hold for every results lab whose record carries runs (LABS): Lab 05 (rogue), Lab 06 (review) and
-// Lab 08 (red-build, a recount: scripts/lab-recount.mjs).
+// Lab 08 (red-build) and Lab 13 (measured-blind), both recounts (scripts/lab-recount.mjs).
 //
-//   node scripts/append-rogue-runs.mjs [--root site] [--lab rogue|review|red-build] <record.json> ...
+//   node scripts/append-rogue-runs.mjs [--root site] [--lab rogue|review|red-build|measured-blind] <record.json> ...
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -26,13 +26,15 @@ import { numberSpellingProblems } from './lab-record.mjs';
 import { runsProblems } from './lab-runs.mjs';
 import { ROGUE_PIN, ROGUE_RECORD } from './lab-rogue.mjs';
 import { REVIEW_PIN, REVIEW_RECORD } from './lab-review.mjs';
-import { committedCountsOf, RED_PIN, RED_RECORD } from './lab-red-build.mjs';
+import { committedCountsOf as blindCountsOf, BLIND_PIN, BLIND_RECORD } from './lab-measured-blind.mjs';
+import { committedCountsOf as redCountsOf, RED_PIN, RED_RECORD } from './lab-red-build.mjs';
 
 /** Each lab whose record takes org-runner days: its record and pin. */
 export const LABS = {
   rogue: { record: ROGUE_RECORD, pin: ROGUE_PIN },
   review: { record: REVIEW_RECORD, pin: REVIEW_PIN },
-  'red-build': { record: RED_RECORD, pin: RED_PIN, recount: true },
+  'red-build': { record: RED_RECORD, pin: RED_PIN, recount: true, countsOf: redCountsOf },
+  'measured-blind': { record: BLIND_RECORD, pin: BLIND_PIN, recount: true, countsOf: blindCountsOf },
 };
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -112,7 +114,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     const spelled = texts.flatMap((t, i) => numberSpellingProblems(t, args[i]));
     if (spelled.length) throw new Error(spelled.join('\n'));
     const published = JSON.parse(readFileSync(join(root, file), 'utf8'));
-    const committedCounts = LABS[lab].recount ? committedCountsOf(published) : undefined;
+    const committedCounts = LABS[lab].recount ? LABS[lab].countsOf(published) : undefined;
     const record = appendDays(published, texts.map(t => JSON.parse(t)), { lab, committedCounts });
     const bytes = `${JSON.stringify(record, null, 1)}\n`;
     writeFileSync(join(root, file), bytes);

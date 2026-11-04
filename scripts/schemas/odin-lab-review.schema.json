@@ -412,7 +412,7 @@
      },
      "lab": {
       "type": "string",
-      "pattern": "^(rogue|review|red-build)$"
+      "pattern": "^(rogue|review|red-build|measured-blind)$"
      },
      "runner": {
       "type": "string",
@@ -473,7 +473,7 @@
        "properties": {
         "role": {
          "type": "string",
-         "pattern": "^(runner|runs|frontier|nina|earlier|heldout|score|verdicts-a|verdicts-b)$"
+         "pattern": "^(runner|runs|frontier|nina|earlier|heldout|score|verdicts-a|verdicts-b|heldout1-manifest|heldout1-verdicts|heldout2-manifest|heldout2-verdicts|summary|tuning-manifest|tuning-verdicts|write-up)$"
         },
         "sha256": {
          "type": "string",

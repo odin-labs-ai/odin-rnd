@@ -18,10 +18,12 @@
 //   - the setup no longer says the blinding is partial, or the live run's labels do not add up to its answers;
 //   - any text fails the publisher's screen.
 // The rendered page is screened again as a whole (pageLeaks), with only the record's own hashes masked.
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, cite, escape, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
+import { canonical } from './lab-record.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const BLIND_RECORD = 'data/labs/measured-blind/record.json';
@@ -39,6 +41,18 @@ export const countOf = labels => Object.fromEntries(LABELS.map(l => [l, labels.f
 /** One arm of a set, recounted from its items' labels. */
 export const recount = (set, arm) => countOf(set.items.flatMap(item => item[arm]));
 const total = c => LABELS.reduce((t, l) => t + c[l], 0);
+
+/**
+ * Every count the record states, in the groups a Lab 13 recount compares (scripts/lab-recount.mjs): each set's items
+ * (anonymous label, kind, the labels per run) and counts, and the live run's counts.
+ */
+export const measuredBlindRecordCounts = record => ({
+  sets: record.sets.map(s => ({ id: s.id, items: s.items.map(({ label, kind, before, after }) => ({ label, kind, before, after })), counts: s.counts })),
+  live: record.live,
+});
+
+/** sha256 (hex) of the canonical counts `record` states: what every one of its runs' `result.committed` must be. */
+export const committedCountsOf = record => createHash('sha256').update(canonical(measuredBlindRecordCounts(record)), 'utf8').digest('hex');
 
 /** Every reason the record may not be published (empty when it may). */
 export function blindProblems(record, { now = new Date(), where = BLIND_RECORD } = {}) {
@@ -67,6 +81,11 @@ export function blindProblems(record, { now = new Date(), where = BLIND_RECORD }
   for (const s of record.sets) if (!/no fix had seen them|the fixes were made on them/i.test(s.about)) problems.push(`${where}#/sets/${s.id}/about: it must say whether the fixes had seen the set`);
   const l = record.live;
   if (l.useful + l.partly + l.wrong !== l.answers) problems.push(`${where}#/live: its labels do not add up to its ${l.answers} answers`);
+  // A run is a recount of THESE counts: one whose committed hash belongs to other counts refuses the whole record.
+  if (Array.isArray(record.runs)) {
+    const want = committedCountsOf(record);
+    record.runs.forEach((r, i) => { if (r?.result?.committed !== want) problems.push(`${where}#/runs/${i}/result/committed: not the sha256 of the counts this record states (the run recounted different counts)`); });
+  }
   return problems;
 }
 
