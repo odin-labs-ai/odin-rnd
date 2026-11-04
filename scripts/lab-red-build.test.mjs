@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readLabRuns, renderLabRunsSection, runAnchor, withLabRuns } from './lab-runs.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -7,7 +8,7 @@ import { join } from 'node:path';
 import { consensus, RED_PIN, RED_RECORD, RED_TEMPLATE, readRedBuild, recount, redBuildProblems, renderRedBuild } from './lab-red-build.mjs';
 import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
-import { renderLabs } from './labs.mjs';
+import { renderLabPages, renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -116,7 +117,9 @@ const LEAK_SHAPES = [/\/Users\//, /\/home\//, /\b[A-Z]:\\/, /~\/\./, /localhost/
 test('leak screen: no run id, repository, branch, money figure, path, host or credential anywhere it ships', () => {
   // The record's own commits and sha256s are masked first (they are hex, and may hold a long run of digits).
   const known = new Set(recordHashes(record));
-  const masked = text => text.replace(/\b[0-9a-f]{40,64}\b/g, h => (known.has(h) ? 'HASH' : h));
+  // A run's anchor on the runs page (lab, class, when, its hash) is the record's own, from runAnchor(): masked whole.
+  const anchors = (record.runs ?? []).map(runAnchor);
+  const masked = text => anchors.reduce((t, a) => t.split(a).join('RUN'), text).replace(/\b[0-9a-f]{40,64}\b/g, h => (known.has(h) ? 'HASH' : h));
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) { for (const re of LEAK_SHAPES) assert.doesNotMatch(masked(text), re, `${name}: ${re}`); assert.ok(!namesRestricted(text), `${name}: a restricted name`); }
   assert.deepEqual(pageLeaks(page, recordHashes(record)), [], 'the rendered page passes the screen');
   assert.deepEqual(redBuildProblems(record), [], 'the record passes its checks and the screen');
@@ -170,7 +173,18 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [RED_RECORD, RED_PIN, RED_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readRedBuild(root).heldOut.score.cases, 9);
-    assert.equal(renderRedBuild(root).pages[RED_TEMPLATE], page, 'a fixture with the same files renders the same page');
+    // The copy renders exactly as the site's own record does, and, put through the same Labs assembly (which adds the
+    // runs section and its links when the record holds runs), gives exactly the published page.
+    const fixture = renderRedBuild(root).pages[RED_TEMPLATE];
+    assert.equal(fixture, renderRedBuild('site').pages[RED_TEMPLATE], 'a fixture with the same files renders the same page');
+    assert.equal(withLabRuns({ ...renderLabPages('site'), [RED_TEMPLATE]: fixture }, 'site')[RED_TEMPLATE], page, 'and assembles into the published page');
+    // Independently of that assembly: the published page's main is the fixture's main, unchanged, followed by at most
+    // the runs section the record's runs give (renderLabRunsSection), and nothing else.
+    const mainOf = html => html.split('<main id="main">')[1].split('</main>')[0];
+    const pub = mainOf(page), own = mainOf(fixture);
+    assert.ok(pub.startsWith(own), 'the record content is on the published page, unchanged');
+    const lab = readLabRuns().find(l => l.tile.experiment === 'red-build');
+    assert.equal(pub.slice(own.length), lab ? renderLabRunsSection(lab) : '', 'after it, only the runs section, when there are runs');
     writeFileSync(join(root, RED_RECORD), raw.replace('"cases": 9', '"cases": 9 '));
     assert.throws(() => readRedBuild(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', RED_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');

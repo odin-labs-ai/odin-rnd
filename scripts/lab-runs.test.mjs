@@ -129,7 +129,7 @@ test('the published Labs index: the Lab 05 card carries its provenance once, bef
   const page = renderLabs()['labs/index.html'];
   const labs = readLabRuns().map(l => l.tile.experiment);
   assert.equal(labs[0], 'rogue');
-  assert.ok(labs.every(l => ['rogue', 'review'].includes(l)), labs.join());
+  assert.ok(labs.every(l => ['rogue', 'review', 'red-build', 'measured-blind', 'ai-jury'].includes(l)), labs.join());
   const start = page.indexOf('aria-labelledby="lab-tile-rogue">');
   const card = page.slice(start, page.indexOf('</article>', start));
   assert.equal(card.split('class="lab-provenance ').length, 2);
