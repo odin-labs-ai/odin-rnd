@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { runAnchor, withLabRuns } from './lab-runs.mjs';
+import { readLabRuns, renderLabRunsSection, runAnchor, withLabRuns } from './lab-runs.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -178,6 +178,13 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     const fixture = renderRedBuild(root).pages[RED_TEMPLATE];
     assert.equal(fixture, renderRedBuild('site').pages[RED_TEMPLATE], 'a fixture with the same files renders the same page');
     assert.equal(withLabRuns({ ...renderLabPages('site'), [RED_TEMPLATE]: fixture }, 'site')[RED_TEMPLATE], page, 'and assembles into the published page');
+    // Independently of that assembly: the published page's main is the fixture's main, unchanged, followed by at most
+    // the runs section the record's runs give (renderLabRunsSection), and nothing else.
+    const mainOf = html => html.split('<main id="main">')[1].split('</main>')[0];
+    const pub = mainOf(page), own = mainOf(fixture);
+    assert.ok(pub.startsWith(own), 'the record content is on the published page, unchanged');
+    const lab = readLabRuns().find(l => l.tile.experiment === 'red-build');
+    assert.equal(pub.slice(own.length), lab ? renderLabRunsSection(lab) : '', 'after it, only the runs section, when there are runs');
     writeFileSync(join(root, RED_RECORD), raw.replace('"cases": 9', '"cases": 9 '));
     assert.throws(() => readRedBuild(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', RED_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');
