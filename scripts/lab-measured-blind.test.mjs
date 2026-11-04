@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { runAnchor } from './lab-runs.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -96,7 +97,9 @@ test('no private id: no item key, no CI run id, no repository name, on the page,
   const tile = readFileSync('site/data/labs/measured-blind-tile.json', 'utf8');
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     assert.doesNotMatch(text, /\bwi-[a-z]|\bho-(ci|pr|issue)/, `${name}: an item key`);
-    assert.doesNotMatch(text.replace(/\b[0-9a-f]{40,64}\b/g, ''), /\d{8,}/, `${name}: a run id or another long number`);
+    // The record's own run anchors (runAnchor: lab, class, a 14-digit time, its hash) are masked whole, as hashes are.
+    const anchored = (record.runs ?? []).map(runAnchor).reduce((t, a) => t.split(a).join('RUN'), text);
+    assert.doesNotMatch(anchored.replace(/\b[0-9a-f]{40,64}\b/g, ''), /\d{8,}/, `${name}: a run id or another long number`);
     assert.doesNotMatch(text, /odin-(next|labs|website|sales)|wo06|hq_eval|agent_space/i, `${name}: a private repository, path or file name`);
     assert.ok(!namesRestricted(text, { anyWindow: true }), `${name}: a restricted name, even inside a longer word`);
   }
@@ -168,7 +171,8 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [BLIND_RECORD, BLIND_PIN, BLIND_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readMeasuredBlind(root).sets.length, 3);
-    assert.equal(renderMeasuredBlind(root).pages[BLIND_TEMPLATE], page, 'a fixture with the same files renders the same page');
+    // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
+    assert.equal(renderMeasuredBlind(root).pages[BLIND_TEMPLATE], renderMeasuredBlind('site').pages[BLIND_TEMPLATE], 'a fixture with the same files renders the same page');
     writeFileSync(join(root, BLIND_RECORD), raw.replace('"runs": 2', '"runs": 2 '));
     assert.throws(() => readMeasuredBlind(root), /record\.sha256: does not pin the sha256/);
     const changed = raw.replace('"model": "qwen2.5:7b"', '"model": "qwen2.5:7b-instruct"');

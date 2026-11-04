@@ -63,7 +63,8 @@ test('the feeds are linked from the Labs index, the runs page and the page of ev
   assert.ok(rogue.includes(`data-state="${state}"><strong>${BADGES[state]}.</strong>`));
   // Every lab with runs links both feeds; a lab page without runs is left as its own renderer wrote it.
   for (const l of readLabRuns()) assert.ok(has(pages[l.page], 'feed.xml') && has(pages[l.page], '../../feed.xml'), l.page);
-  assert.equal(pages['labs/measured-blind/index.html'], renderMeasuredBlind().pages['labs/measured-blind/index.html']);
+  // A lab page without runs is left as its own renderer wrote it (Lab 13 until its record holds org runs).
+  if (!readLabRuns().some(l => l.tile.experiment === 'measured-blind')) assert.equal(pages['labs/measured-blind/index.html'], renderMeasuredBlind().pages['labs/measured-blind/index.html']);
 });
 
 test('ids never move: the same records give the same bytes, and a new run or update leaves every other entry as it was', () => {
