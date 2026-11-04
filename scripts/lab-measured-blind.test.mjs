@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { runAnchor } from './lab-runs.mjs';
+import { readLabRuns, renderLabRunsSection, runAnchor } from './lab-runs.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -172,7 +172,15 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     for (const file of [BLIND_RECORD, BLIND_PIN, BLIND_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readMeasuredBlind(root).sets.length, 3);
     // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
-    assert.equal(renderMeasuredBlind(root).pages[BLIND_TEMPLATE], renderMeasuredBlind('site').pages[BLIND_TEMPLATE], 'a fixture with the same files renders the same page');
+    const fixture = renderMeasuredBlind(root).pages[BLIND_TEMPLATE];
+    assert.equal(fixture, renderMeasuredBlind('site').pages[BLIND_TEMPLATE], 'a fixture with the same files renders the same page');
+    // Independently of the Labs assembly: the published page's main is the fixture's main, unchanged, followed by at
+    // most the runs section the record's runs give (renderLabRunsSection), and nothing else.
+    const mainOf = html => html.split('<main id="main">')[1].split('</main>')[0];
+    const pub = mainOf(page), own = mainOf(fixture);
+    assert.ok(pub.startsWith(own), 'the record content is on the published page, unchanged');
+    const lab = readLabRuns().find(l => l.tile.experiment === 'measured-blind');
+    assert.equal(pub.slice(own.length), lab ? renderLabRunsSection(lab) : '', 'after it, only the runs section, when there are runs');
     writeFileSync(join(root, BLIND_RECORD), raw.replace('"runs": 2', '"runs": 2 '));
     assert.throws(() => readMeasuredBlind(root), /record\.sha256: does not pin the sha256/);
     const changed = raw.replace('"model": "qwen2.5:7b"', '"model": "qwen2.5:7b-instruct"');
