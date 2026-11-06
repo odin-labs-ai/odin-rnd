@@ -32,6 +32,9 @@ test('both pages carry exact run links, record links, printed verdicts and the i
   assert.equal((builtUpdates.match(/id="latest-runs-title"/g) ?? []).length, 1);
   assert.match(builtHome, /<section class="latest-runs" aria-labelledby="latest-runs-title">/);
   assert.match(builtUpdates, /<section class="latest-runs" aria-labelledby="latest-runs-title">/);
+  assert.match(builtHome, /<details class="latest-runs-disclosure"><summary><strong><time datetime="[^"]+">[^<]+<\/time>: Lab \d+, [A-Z]+<\/strong>/);
+  assert.ok(!builtHome.includes('<details class="latest-runs-disclosure" open'), 'home cards start folded');
+  assert.ok(!builtUpdates.includes('latest-runs-disclosure'), 'Updates keeps its three cards open');
   assert.ok(builtHome.indexOf('Editorial update') < builtHome.indexOf('Latest lab runs'));
   assert.ok(builtUpdates.indexOf('Latest lab runs') < builtUpdates.indexOf('Editorial archive'));
   for (const { href, run } of selected) {
