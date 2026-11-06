@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { latestRunPages, latestRuns, placeHomeLatestRuns, placeUpdatesLatestRuns, renderLatestRuns } from './lab-latest.mjs';
 import { readLabRuns, runAnchor } from './lab-runs.mjs';
 
-const labs = readLabRuns('site', { now: new Date('2026-11-06T00:00:00Z') });
+const labs = readLabRuns('site');
 const home = '<head></head><section class="updates-feed content-section" id="updates" aria-labelledby="updates-title"><h2 id="updates-title">Updates</h2><ol class="update-list" aria-labelledby="updates-title"><li>Editorial update</li></ol></section>';
 const updates = '<main><section class="company-section company-width updates-all" aria-label="All updates"><!-- updates-list: rendered by scripts/updates.mjs --write from site/data/updates.json; do not edit by hand --><p>Editorial archive</p></section></main>';
 
