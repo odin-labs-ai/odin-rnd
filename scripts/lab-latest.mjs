@@ -1,6 +1,7 @@
 // A short, dated window into the lab run records on the home and Updates pages.
 // This is built into dist/ only. The editorial updates feed and its frozen dates stay as written.
 import { escape, pageLeaks, recordHashes } from './lab-kit.mjs';
+import { recordProblems } from './lab-record.mjs';
 import { readLabRuns, runAnchor, runRows } from './lab-runs.mjs';
 
 export const LATEST_RUNS_LIMIT = 3;
@@ -24,7 +25,10 @@ function runTime(iso) {
 }
 
 /** A standalone section of run links. The title points to the exact row, and the source to its pinned record. */
-export function renderLatestRuns(labs, { prefix = '', level = 3, collapsed = false } = {}) {
+export function renderLatestRuns(labs, { prefix = '', level = 3, collapsed = false, now = new Date() } = {}) {
+  // Direct callers get the same timestamp and record checks as the published reader before a date is formatted.
+  const invalid = labs.flatMap((lab, i) => lab.runs.flatMap((run, j) => recordProblems(run, `latest labs[${i}]/runs[${j}]`, now)));
+  if (invalid.length) throw new Error(`Latest lab runs refused:\n  ${invalid.join('\n  ')}`);
   const rows = latestRuns(labs);
   if (!rows.length) return '';
   if (![2, 3].includes(level)) throw new Error('Latest lab runs: heading level must be 2 or 3');
@@ -46,8 +50,8 @@ export function renderLatestRuns(labs, { prefix = '', level = 3, collapsed = fal
 }
 
 /** Insert after the home update list, within the one already-open section. */
-export function placeHomeLatestRuns(html, labs) {
-  const section = renderLatestRuns(labs, { collapsed: true });
+export function placeHomeLatestRuns(html, labs, { now = new Date() } = {}) {
+  const section = renderLatestRuns(labs, { collapsed: true, now });
   if (!section) return html;
   const start = html.indexOf('<section class="updates-feed content-section" id="updates"');
   if (start < 0 || html.indexOf('<section class="updates-feed content-section" id="updates"', start + 1) >= 0) throw new Error('Latest lab runs: expected one home updates section');
@@ -59,8 +63,8 @@ export function placeHomeLatestRuns(html, labs) {
 }
 
 /** Place the run window before the dated editorial archive on Updates. */
-export function placeUpdatesLatestRuns(html, labs) {
-  const section = renderLatestRuns(labs, { prefix: '../', level: 2 });
+export function placeUpdatesLatestRuns(html, labs, { now = new Date() } = {}) {
+  const section = renderLatestRuns(labs, { prefix: '../', level: 2, now });
   if (!section) return html;
   const marker = '<!-- updates-list: rendered by scripts/updates.mjs --write from site/data/updates.json; do not edit by hand -->';
   const at = html.indexOf(marker);
@@ -69,7 +73,7 @@ export function placeUpdatesLatestRuns(html, labs) {
 }
 
 /** Read only validated, pinned records and update the two built pages. */
-export function latestRunPages(home, updates, root = 'site') {
-  const labs = readLabRuns(root);
-  return { home: placeHomeLatestRuns(home, labs), updates: placeUpdatesLatestRuns(updates, labs) };
+export function latestRunPages(home, updates, root = 'site', { now = new Date() } = {}) {
+  const labs = readLabRuns(root, { now });
+  return { home: placeHomeLatestRuns(home, labs, { now }), updates: placeUpdatesLatestRuns(updates, labs, { now }) };
 }

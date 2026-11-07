@@ -27,6 +27,7 @@
 .latest-runs-disclosure>summary::marker{content:''}
 .latest-runs-disclosure>summary::-webkit-details-marker{display:none}
 .latest-runs-disclosure>summary:hover{text-decoration:underline;text-underline-offset:4px}
+.latest-runs-disclosure>summary:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
 .latest-runs-disclosure>summary::after{content:'+';font:22px/1 var(--mono);color:var(--orange)}
 .latest-runs-disclosure[open]>summary{border-bottom:1px solid var(--rule)}
 .latest-runs-disclosure[open]>summary::after{content:'−'}
@@ -35,7 +36,7 @@
 .latest-run{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;padding:20px 0;border-bottom:1px solid var(--rule)}
 .latest-run-meta{grid-column:1/-1;margin:0 0 6px;color:var(--steel);font-size:12px;font-variant-numeric:tabular-nums}
 .latest-run h3,.latest-run h4{grid-column:1;grid-row:2/4;margin:0;font-family:var(--display);font-size:19px;line-height:1.35}
-.latest-run h3 a,.latest-run h4 a{color:var(--paper);text-underline-offset:4px}
+.latest-run h3 a,.latest-run h4 a{color:var(--paper);text-underline-offset:4px;overflow-wrap:anywhere}
 .latest-run>p:not(.latest-run-meta){grid-column:2;margin:0 0 7px;color:var(--steel);font-size:14px;line-height:1.5;overflow-wrap:anywhere}
 .latest-run>p:last-child a,.latest-runs-all a{color:var(--brand);font-weight:600;text-underline-offset:4px}
 .latest-runs-all{margin:18px 0 0}
