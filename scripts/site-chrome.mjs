@@ -362,6 +362,30 @@ export function addOpenGraph(html, label = 'page') {
   return additions.length ? html.replace(head, () => head.replace('</head>', () => `${additions.join('\n')}\n</head>`)) : html;
 }
 
+/**
+ * The large link card on X: a page that carries an og:image but no twitter:card gets `summary_large_image`, so a shared
+ * lab link shows its picture full width instead of the small summary card. X reads the image itself from og:image. An
+ * authored twitter:card (the home page) stays as written; a page without og:image is left alone; a duplicate is refused.
+ */
+export function addSocialCard(html, label = 'page') {
+  const heads = [...html.matchAll(/<head(?:\s[^>]*)?>[\s\S]*?<\/head>/gi)];
+  if (heads.length !== 1) throw new Error(`Site chrome: expected one head in ${label}, found ${heads.length}`);
+  const head = heads[0][0];
+  const cards = [...head.matchAll(/<meta\b[^>]*\bname="twitter:card"[^>]*>/gi)];
+  if (cards.length > 1) throw new Error(`Site chrome: duplicate twitter:card in ${label}`);
+  if (cards.length || !/<meta\b[^>]*\bproperty="og:image"[^>]*>/i.test(head)) return html;
+  return html.replace(head, () => head.replace('</head>', () => '<meta name="twitter:card" content="summary_large_image">\n</head>'));
+}
+
+/** After addOpenGraphToDist, so every page that now has og:image gets the large card. */
+export function addSocialCardToDist({ distDir }) {
+  for (const file of htmlFiles(distDir).sort()) {
+    const before = readFileSync(file, 'utf8');
+    const after = addSocialCard(before, toPosix(relative(distDir, file)));
+    if (after !== before) writeFileSync(file, after);
+  }
+}
+
 /** Separate from injectChrome: Open Graph metadata is safe on number-provenance pages too. */
 export function addOpenGraphToDist({ distDir }) {
   for (const file of htmlFiles(distDir).sort()) {

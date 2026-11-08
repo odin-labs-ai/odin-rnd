@@ -188,7 +188,7 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
 {
   const { loadIndex, TOPICS_PATH } = await import('./site-index.mjs');
   const { placeFind } = await import('./find-build.mjs');
-  const { injectChrome, fixJournalDestinations, fixLabIndexLinks, addOpenGraphToDist } = await import('./site-chrome.mjs');
+  const { injectChrome, fixJournalDestinations, fixLabIndexLinks, addOpenGraphToDist, addSocialCardToDist } = await import('./site-chrome.mjs');
   // Wave 3: the journal/ and projects/ index pages and the All experiments section on experiments/, rendered from the
   // same items, then every page's header nav rewritten to the one canonical list (site-sections.mjs, site-header.mjs;
   // both fail closed), before Find and the chrome, so the Find link lands last in the canonical nav.
@@ -206,6 +206,8 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   fixJournalDestinations({ distDir: 'dist' });
   fixLabIndexLinks({ distDir: 'dist' });
   addOpenGraphToDist({ distDir: 'dist' });
+  // The large link card on X for every page with an og:image (the home page authors its own; site-chrome.mjs).
+  addSocialCardToDist({ distDir: 'dist' });
   // Wave 4: "On this page" on long field notes and lab pages, after the chrome so it sees the breadcrumbs
   // (scripts/site-toc.mjs; never on a number-provenance page).
   const { addTocs } = await import('./site-toc.mjs');

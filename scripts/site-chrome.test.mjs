@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addOpenGraph, addOpenGraphToDist, addRelated, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fixJournalDestinations, fixLabIndexLinks, fragmentText, injectChrome, journalDestinations, pageClass, pageKey, pageTitle, pickRelated, relativeHref, slashLabLinks, trailFor } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addOpenGraph, addOpenGraphToDist, addRelated, addSocialCard, addSocialCardToDist, CHROME_WITHOUT_ITEM, FIND_PAGE, SECTION_INDEX_PAGES, escapeHtml, fixJournalDestinations, fixLabIndexLinks, fragmentText, injectChrome, journalDestinations, pageClass, pageKey, pageTitle, pickRelated, relativeHref, slashLabLinks, trailFor } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
 
@@ -406,6 +406,30 @@ test('item 5: Open Graph properties are filled independently on every built page
   const once = readFileSync(join(dist, NOTE), 'utf8');
   addOpenGraphToDist({ distDir: dist });
   assert.equal(readFileSync(join(dist, NOTE), 'utf8'), once, 'second dist pass keeps the note');
+});
+
+test('launch: every page with an og:image gets the large X card once; the home page keeps its own', () => {
+  const dist = tempDist();
+  const homeBefore = readFileSync(join(dist, 'index.html'), 'utf8');
+  addOpenGraphToDist({ distDir: dist });
+  addSocialCardToDist({ distDir: dist });
+  const card = /<meta\b[^>]*\bname="twitter:card"[^>]*>/g;
+  for (const page of PAGES) {
+    const html = readFileSync(join(dist, page), 'utf8');
+    assert.equal((html.match(card) || []).length, 1, `${page} has exactly one twitter:card`);
+    assert.match(html, /<meta\b[^>]*\bname="twitter:card" content="summary_large_image">/, `${page} uses the large card`);
+  }
+  assert.equal(readFileSync(join(dist, 'index.html'), 'utf8'), homeBefore, 'the authored home page stays byte-for-byte');
+  const partnerOnce = readFileSync(join(dist, 'partners/index.html'), 'utf8');
+  addSocialCardToDist({ distDir: dist });
+  assert.equal(readFileSync(join(dist, 'partners/index.html'), 'utf8'), partnerOnce, 'a second pass changes nothing');
+  const noImage = '<head><title>No image</title></head><h1>No image</h1>';
+  assert.equal(addSocialCard(noImage), noImage, 'a page without og:image is left alone');
+  const authored = '<head><meta content="summary" name="twitter:card"><meta property="og:image" content="x.png"></head>';
+  assert.equal(addSocialCard(authored), authored, 'an authored card stays as written');
+  assert.throws(() => addSocialCard('<head><meta name="twitter:card" content="a"><meta name="twitter:card" content="b"></head>'), /duplicate twitter:card/);
+  const dollar = '<head><title>$& $1</title><meta property="og:image" content="x.png"></head><p>$&</p>';
+  assert.equal(addSocialCard(dollar), dollar.replace('</head>', '<meta name="twitter:card" content="summary_large_image">\n</head>'), 'replacement tokens stay literal');
 });
 
 test('Open Graph keeps literal dollar replacement tokens in the head and body', () => {
