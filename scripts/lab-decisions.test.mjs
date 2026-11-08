@@ -35,7 +35,7 @@ test('the published ledger reads, and every count is the one its files give', ()
   const a04 = ledger.experiments[0].rounds[2];
   assert.deepEqual(a04.reviews.map(v => [v.side, v.vetoes, v.accepts.length]), [['MongoDB', ['item 8'], 8], ['PostgreSQL', ['item 8'], 8]]);
   assert.equal(t.accepted, t.vetoes);
-  assert.equal(t.amendments, 5);
+  assert.equal(t.amendments, 6);
   assert.equal(ledger.bench.length, 4);
   for (const e of ledger.experiments) for (const r of e.rounds) for (const v of r.reviews) assert.match(v.model, /Claude/);
 });

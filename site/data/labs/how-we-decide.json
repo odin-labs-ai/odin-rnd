@@ -72,7 +72,7 @@
           "outcome": { "file": "experiments/failover/FREEZE-NOTES-v1.1.md", "quote": "Every veto is accepted.", "accepted": "all" }
         }
       ],
-      "amendments": ["experiments/failover/amendment-01/amendment.json"],
+      "amendments": ["experiments/failover/amendment-01/amendment.json", "experiments/failover/amendment-02/amendment.json"],
       "disclosures": [{ "file": "experiments/failover/preregistration.json", "pointer": "/limits" }]
     }
   ],

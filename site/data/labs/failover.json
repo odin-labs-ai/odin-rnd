@@ -9,6 +9,7 @@
  "status": "Pre-registered, not yet run",
  "links": [
   { "label": "The pre-registration (EXP 021)", "href": "journal/failover-pre-registration.html" },
-  { "label": "Amendment 01: how it will be run", "href": "data/failover/amendment-01.json" }
+  { "label": "Amendment 01: how it will be run", "href": "data/failover/amendment-01.json" },
+  { "label": "Amendment 02: the strict switch and the runner fixes", "href": "data/failover/amendment-02.json" }
  ]
 }

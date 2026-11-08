@@ -12,7 +12,7 @@ const temp = mkdtempSync(join(tmpdir(), 'lab-tiles-'));
 after(() => rmSync(temp, { recursive: true, force: true }));
 const committed = JSON.parse(readFileSync('site/data/labs/failover.json', 'utf8'));
 
-test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that it has not run, and links EXP 021 and its amendment', () => {
+test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that it has not run, and links EXP 021 and its amendments', () => {
   assert.deepEqual(tileProblems(committed), []);
   const page = renderLabs()['labs/index.html'];
   const lab01 = page.indexOf('<a class="lab-tile" href="agent-space/">'), lab03 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-failover">');
@@ -23,7 +23,8 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
   assert.match(tile, /<p class="lab-tile-status">Pre-registered, not yet run\.<\/p>/);
   assert.match(tile, /<a href="\.\.\/journal\/failover-pre-registration\.html">The pre-registration \(EXP 021\)<\/a>/);
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-01\.json">Amendment 01: how it will be run<\/a>/);
-  assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 01/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
+  assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-02\.json">Amendment 02: the strict switch and the runner fixes<\/a>/);
+  assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 0[12]/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
   assert.doesNotMatch(tile, /fits|predict|winner|faster|safer/i, 'no prediction or verdict');
   // Lab 02's tile (a results lab) sits between Lab 01 and Lab 03, once.
   const lab02 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-brain-bench">');
@@ -42,7 +43,7 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   cpSync('site/journal', join(root, 'journal'), { recursive: true });
   const cases = [
     [t => { t.how = 'We stop the primary after 30 seconds.'; }, /how: a tile carries no number/],
-    [t => { t.links[1].href = 'data/failover/amendment-02.json'; }, /links\/1\/href: data\/failover\/amendment-02\.json is not on this site/],
+    [t => { t.links[1].href = 'data/failover/amendment-09.json'; }, /links\/1\/href: data\/failover\/amendment-09\.json is not on this site/],
     [t => { t.links[0].href = 'https://example.com/x.html'; }, /links\/0\/href: not a page or record path of this site/],
     [t => { t.links[0].href = '../secret.html'; }, /links\/0\/href: not a page or record path/],
     [t => { t.question = `Which store keeps writes in ${[...'nrooH'].reverse().join('')}?`; }, /question: a place name/],
