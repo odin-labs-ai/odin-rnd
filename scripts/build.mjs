@@ -169,6 +169,14 @@ if (refreshUpdatesRequested) {
   const { renderLabs } = await import('./labs.mjs');
   for (const [file, body] of Object.entries(renderLabs())) writeFileSync(`dist/${file}`, body);
 }
+// Show one latest, validated run per lab beside the editorial updates. This is built-only: the updates feed's
+// frozen dates and committed HTML do not change when a lab appends another record check.
+{
+  const { latestRunPages } = await import('./lab-latest.mjs');
+  const pages = latestRunPages(readFileSync('dist/index.html', 'utf8'), readFileSync('dist/updates/index.html', 'utf8'));
+  writeFileSync('dist/index.html', pages.home);
+  writeFileSync('dist/updates/index.html', pages.updates);
+}
 mkdirSync('dist/data', { recursive: true });
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
