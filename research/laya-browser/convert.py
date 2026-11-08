@@ -200,7 +200,8 @@ STAGES = {"export": stage_export, "q8e8": stage_q8e8, "compare": stage_compare}
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--cache", required=True, help="working directory outside the repository (~3 GB)")
+    ap.add_argument("--cache", required=True, type=os.path.expanduser,  # "~" reaches Windows shells unexpanded
+                    help="working directory outside the repository (~3 GB)")
     ap.add_argument("--stage", choices=list(STAGES), help=argparse.SUPPRESS)
     a = ap.parse_args()
     if a.stage:
