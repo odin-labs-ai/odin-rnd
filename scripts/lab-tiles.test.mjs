@@ -12,7 +12,7 @@ const temp = mkdtempSync(join(tmpdir(), 'lab-tiles-'));
 after(() => rmSync(temp, { recursive: true, force: true }));
 const committed = JSON.parse(readFileSync('site/data/labs/failover.json', 'utf8'));
 
-test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that it has not run, and links EXP 021 and its amendments', () => {
+test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that its counted runs have started with no result yet, and links EXP 021 and its amendments', () => {
   assert.deepEqual(tileProblems(committed), []);
   const page = renderLabs()['labs/index.html'];
   const lab01 = page.indexOf('<a class="lab-tile" href="agent-space/">'), lab03 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-failover">');
@@ -20,7 +20,7 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
   const tile = page.slice(lab03, page.indexOf('</article>', lab03));
   assert.match(tile, /<span class="technical">LAB 03<\/span><h2 id="lab-tile-failover">Failover<\/h2>/);
   assert.match(tile, /MongoDB or PostgreSQL\?/);
-  assert.match(tile, /<p class="lab-tile-status">Pre-registered, not yet run\.<\/p>/);
+  assert.match(tile, /<p class="lab-tile-status">Pre-registered; the counted runs have started, no result yet\.<\/p>/);
   assert.match(tile, /<a href="\.\.\/journal\/failover-pre-registration\.html">The pre-registration \(EXP 021\)<\/a>/);
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-01\.json">Amendment 01: how it will be run<\/a>/);
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-02\.json">Amendment 02: the strict switch and the runner fixes<\/a>/);
@@ -62,7 +62,9 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   assert.equal(readTiles(root).length, 1);
   // Once results are published, "not yet run" is refused until the tile is updated.
   writeFileSync(join(root, 'data/failover/results.json'), '{}');
+  writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify({ ...committed, status: 'Pre-registered, not yet run' }));
   assert.throws(() => readTiles(root), /status: says not yet run, but data\/failover\/results\.json is published/);
+  writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.match(renderTile(committed), /^<article class="lab-tile lab-tile-static"/);
 });
 

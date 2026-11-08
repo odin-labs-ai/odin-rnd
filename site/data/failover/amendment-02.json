@@ -32,7 +32,7 @@
         {
           "n": 1,
           "kind": "mechanics",
-          "fix": "The MongoDB root user is created under the localhost exception; error 51003 or Unauthorized means it is already done."
+          "fix": "The MongoDB root user is created under the localhost exception. The runner treats error 51003 or Unauthorized from that call as already created and goes on; that is the runner's rule, and this record does not show a later authentication check."
         },
         {
           "n": 2,
@@ -104,7 +104,7 @@
     },
     {
       "what": "Fix 9: the first PostgreSQL block's run manifest was written late",
-      "rule": "The first PostgreSQL block (seed 1, repetition 0) has a late manifest, manifest-pg-20261108T113520Z.json. It was written between cells under the shared pause, with no cell running, and records Patroni 4.0.6, etcd 3.5.21 and both local image IDs. That block's cells record manifest: None; the results attach this file to them. Later blocks write their own manifest."
+      "rule": "The first PostgreSQL block (seed 1, repetition 0) has a late manifest, manifest-pg-20261108T113520Z.json. It was written between cells under the shared pause, with no cell running, and records Patroni 4.0.6, etcd 3.5.21 and both local image IDs. That block's cells record manifest: None; the results attach this file to them. Later blocks write their own manifest. The late manifest records the images present when it was written; that the block's earlier cells ran those same images is not shown by it."
     },
     {
       "what": "Fix 10: the verdict script was checked on synthetic cells",
@@ -147,7 +147,8 @@
     "Fix 8 was reviewed only by the PostgreSQL advocate. The thread records no review of fix 8 by the MongoDB advocate. The adopted tightening is the one that favours MongoDB.",
     "Which fix is mechanics, recording or analysis code, and that fixes 9 and 10 touch no measurement, is the runner owner's statement. It is not independently verifiable from this repository.",
     "The disturbance counts are the state at private commit 4ef984fb, while the plan runs. Whether a session's work was heavy, and its time window, come from that session's own report.",
-    "The runner owner's draft cites one commit for fixes 1 to 7, the commit that adds the smoke cells. That commit holds results only; this record cites each fix's own commit, read from the private history. Every fix commit is an ancestor of the start commit."
+    "The runner owner's draft cites one commit for fixes 1 to 7, the commit that adds the smoke cells. That commit holds results only; this record cites each fix's own commit, read from the private history. Every fix commit is an ancestor of the start commit.",
+    "Fix 9's late manifest attests the image IDs at the time it was written, not, by itself, the images the first PostgreSQL block's earlier cells ran."
   ],
   "unchanged": "The question, arms, workload, faults, measures, gate, repetitions, verdict rule, predictions and out-of-scope list are unchanged, and the pre-registration, amendment 01 and every file they published stay byte-identical. The strict switch is the record's own rule applied, not a new rule.",
   "notBefore": "Effective when merged to main of odin-labs-ai/odin-rnd. The counted plan was already running under the rules it records, so no counted cell waited for it."
