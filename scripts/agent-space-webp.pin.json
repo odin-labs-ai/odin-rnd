@@ -147,6 +147,96 @@
       ]
     },
     {
+      "original": "assets/labs/agent-space/session-2026-11-08/poster.png",
+      "originalSha256": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "a767b3d27024af103b1e93348c5511a47bca8d3952b93da11f3dddb3fd9f010a"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "48cb5a7774dfe68b06ba74f41ad4b848db2550cec506ea54ca0927968325af93"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1.png",
+      "originalSha256": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "a767b3d27024af103b1e93348c5511a47bca8d3952b93da11f3dddb3fd9f010a"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "48cb5a7774dfe68b06ba74f41ad4b848db2550cec506ea54ca0927968325af93"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2.png",
+      "originalSha256": "a4f88b86a886c14e2943efad8869d970ccc143ab07c6f4b3f89e7804a8503cea",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "71d278a8dd3889cdc7c1756296384ff7d382dd4cab200f5ac338c31dc7ff8d6d"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "086b0dbc58aa8500f86ef3224cfb697847b8bc89e95755ae1a874032ec2bc44a"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-11-08/stills/03-s1-q3.png",
+      "originalSha256": "3c8686eb3a973188fef4d2d4023a28990d98bd31d18d1d279aa2c1be9f3b8e40",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/03-s1-q3-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "4d8ab76482dd3ce27066bfb55d1e9172bbba6aaf3f48616467b2cdf8573bb77f"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/03-s1-q3-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "4338e917b171813bddaa21aa1b6fc2909bf92e326683ad76844ad8e54019130c"
+        }
+      ]
+    },
+    {
+      "original": "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4.png",
+      "originalSha256": "8c4abfd06c6bd070a5c1edf767e7234e7bf200aeb4b04466c71e62bc9fe76313",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "06934f6a8f1d664a9b6439ada7938fb2ceeb16330c7797439513241e5c70f2ad"
+        },
+        {
+          "path": "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "9ac7ab104d050bec01d34c587a7a0c567287fd54a3d2cdd4e36297d145248a3d"
+        }
+      ]
+    },
+    {
       "original": "assets/labs/agent-space/progress/hq-engineering-hall.jpg",
       "originalSha256": "400885105ac68f89ca4d99eb3a88e4728438d16e325b3e1afbe0812223e2839c",
       "variants": [

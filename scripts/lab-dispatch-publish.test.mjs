@@ -214,6 +214,53 @@ test('a published dispatch renders on the lab page and in the feed; a tampered o
   assert.equal(readDispatches(root).length, 1);
 });
 
+test('a treated session says so: the dispatch records the export hashes and the page shows the note; an untreated one has neither', () => {
+  const sha = data => createHash('sha256').update(data).digest('hex');
+  const { dir, name } = session();
+  const exportManifest = sha(readFileSync(join(dir, 'manifest.json'))), exportClip = sha(readFileSync(join(dir, 'clip.webm')));
+  const treated = Buffer.from('the same clip with its wall screens blurred');
+  writeFileSync(join(dir, 'clip.webm'), treated);
+  const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8')); manifest.clip.bytes = treated.length;
+  writeFileSync(join(dir, 'manifest.json'), JSON.stringify(manifest, null, 1));
+  const note = 'Decorative wall screens are blurred; the closing card is cut.';
+  const treatment = { format: 'odin-dispatch-treatment', version: 1, session: name, note, export: { manifestSha256: exportManifest, files: { 'clip.webm': exportClip } } };
+  const root = join(temp, 'site-treated');
+  mkdirSync(join(root, 'data/labs'), { recursive: true });
+  cpSync('site/labs', join(root, 'labs'), { recursive: true, filter: src => !src.includes('labs/agent-space/story') });
+  cpSync('site/data/labs/agent-space.json', join(root, 'data/labs/agent-space.json'));
+  cpSync('site/data/labs/delivery', join(root, 'data/labs/delivery'), { recursive: true });
+  assert.deepEqual(publish({ sessionDir: dir, answerScreen: screen(name), treatment, site: root }).problems, []);
+  const file = join(root, `data/labs/agent-space/dispatches/${name}.json`);
+  const written = JSON.parse(readFileSync(file, 'utf8'));
+  assert.deepEqual(validate(publicSchema, written), []);
+  const clipPath = `assets/labs/agent-space/${name}/clip.webm`;
+  assert.deepEqual(written.source.treatment, { note, exportManifestSha256: exportManifest, exportAssetsSha256: { [clipPath]: exportClip } });
+  assert.equal(written.source.assetsSha256[clipPath], sha(treated));
+  assert.match(renderLabs(root)['labs/agent-space/index.html'], new RegExp(`<figcaption>Recorded during the session, no sound\\. ${note.replaceAll('.', '\\.')}</figcaption>`));
+  // A treatment that lists an unchanged file, a file it does not publish, or a note the screen refuses is refused.
+  const good = readFileSync(file, 'utf8');
+  const same = JSON.parse(good); same.source.treatment.exportAssetsSha256[clipPath] = sha(treated);
+  writeFileSync(file, JSON.stringify(same));
+  assert.throws(() => readDispatches(root), /listed as changed but has the export's bytes/);
+  const foreign = JSON.parse(good); foreign.source.treatment.exportAssetsSha256['assets/labs/agent-space/other/clip.webm'] = exportClip;
+  writeFileSync(file, JSON.stringify(foreign));
+  assert.throws(() => readDispatches(root), /treatment\/exportAssetsSha256: .* is not one of this dispatch's assets/);
+  const leaky = JSON.parse(good); leaky.source.treatment.note = 'Recorded at http://127.0.0.1:8080/';
+  writeFileSync(file, JSON.stringify(leaky));
+  assert.throws(() => readDispatches(root), /treatment\/note: a local or IP address/);
+  writeFileSync(file, good);
+  assert.equal(readDispatches(root).length, 1);
+  assert.ok(prepare(dir, screen(name), { ...treatment, export: { ...treatment.export, files: { 'notes.txt': exportClip } } }).problems
+    .some(p => p.includes('notes.txt, which the dispatch does not publish')));
+  // Without --treatment nothing is claimed and the caption is the plain one.
+  const plain = session();
+  const plainRoot = join(temp, 'site-plain');
+  cpSync(root, plainRoot, { recursive: true, filter: src => !src.includes('/dispatches/') && !src.includes(`/${name}`) });
+  assert.deepEqual(publish({ sessionDir: plain.dir, answerScreen: screen(plain.name), site: plainRoot }).problems, []);
+  assert.equal(JSON.parse(readFileSync(join(plainRoot, `data/labs/agent-space/dispatches/${plain.name}.json`), 'utf8')).source.treatment, undefined);
+  assert.match(renderLabs(plainRoot)['labs/agent-space/index.html'], /<figcaption>Recorded during the session, no sound\.<\/figcaption>/);
+});
+
 test('every committed session passes the publisher\'s checks, every Lab asset belongs to one, and no restricted name in the Lab files', () => {
   // readDispatches runs dispatchProblems (schema, text screen, answer screen) on every committed file and throws on any
   // problem; the explicit loop below repeats it so this test states, not implies, that each one passes.

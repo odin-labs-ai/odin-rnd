@@ -72,7 +72,18 @@
     "schema": {"const": "odin-dispatch-v1"},
     "schemaSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "manifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "assetsSha256": {"type": "object", "description": "sha256 of every published asset, keyed by its site path; the build re-hashes each and refuses a mismatch", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    "assetsSha256": {"type": "object", "description": "sha256 of every published asset, keyed by its site path; the build re-hashes each and refuses a mismatch", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "treatment": {
+     "type": "object",
+     "description": "present only when published assets are not byte-identical to the export: what was changed (shown under the recording), the export's own manifest sha256, and the export sha256 of each changed asset, keyed by its site path",
+     "required": ["note", "exportManifestSha256", "exportAssetsSha256"],
+     "additionalProperties": false,
+     "properties": {
+      "note": {"type": "string", "minLength": 1, "maxLength": 300},
+      "exportManifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "exportAssetsSha256": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+     }
+    }
    }
   }
  }

@@ -15,6 +15,11 @@ const originals = [
   'session-2026-10-25-b/stills/02-s1-q2.png',
   'session-2026-10-25-b/stills/03-s1-q3.png',
   'session-2026-10-25-b/stills/04-s1-q4.png',
+  'session-2026-11-08/poster.png',
+  'session-2026-11-08/stills/01-s1-q1.png',
+  'session-2026-11-08/stills/02-s1-q2.png',
+  'session-2026-11-08/stills/03-s1-q3.png',
+  'session-2026-11-08/stills/04-s1-q4.png',
   'progress/hq-engineering-hall.jpg',
 ];
 const siteDir = resolve('site');
