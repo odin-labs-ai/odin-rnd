@@ -170,6 +170,9 @@ def _tensor_report(hosted_graph, rebuilt_graph):
             detail = {"name": name, "dtype": str(a.dtype), "shape": list(a.shape), "differingElements": int((a != b).sum())}
             if a.dtype.kind in "fiu":
                 detail["maxAbsDifference"] = float(np.abs(a.astype(np.float64) - b.astype(np.float64)).max())
+            # A constant the exporter named differently: the hosted value under another rebuilt name.
+            detail["hostedValueInRebuilt"] = sorted(k for k, v in r.items() if v.shape == a.shape and v.dtype == a.dtype
+                                                    and v.tobytes() == a.tobytes())
             report.setdefault("otherDifferences", []).append(detail)
     return report
 
@@ -218,7 +221,8 @@ def main():
     plan = [s for s, done in (("export", onnx_dir / "laya_fp32.onnx"), ("q8e8", onnx_dir / "laya_q8e8.onnx.data")) if not done.exists()]
     for stage in plan + ["compare"]:
         print(f"[convert] stage: {stage}", flush=True)
-        r = subprocess.run([sys.executable, __file__, "--stage", stage, "--cache", a.cache])
+        r = subprocess.run([sys.executable, __file__, "--stage", stage, "--cache", a.cache],
+                           env={**os.environ, "PYTHONHASHSEED": os.environ.get("PYTHONHASHSEED", "0")})
         if r.returncode != 0:
             sys.exit(f"stage {stage} failed with exit code {r.returncode}")
 
