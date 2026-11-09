@@ -167,6 +167,10 @@ def _tensor_report(hosted_graph, rebuilt_graph):
             report["maxCodeDifference"] = max(report["maxCodeDifference"], int(d.max()))
         elif a.tobytes() != b.tobytes():
             report["otherDifferingTensors"].append(name)
+            detail = {"name": name, "dtype": str(a.dtype), "shape": list(a.shape), "differingElements": int((a != b).sum())}
+            if a.dtype.kind in "fiu":
+                detail["maxAbsDifference"] = float(np.abs(a.astype(np.float64) - b.astype(np.float64)).max())
+            report.setdefault("otherDifferences", []).append(detail)
     return report
 
 
@@ -204,6 +208,9 @@ def main():
                     help="working directory outside the repository (~3 GB)")
     ap.add_argument("--stage", choices=list(STAGES), help=argparse.SUPPRESS)
     a = ap.parse_args()
+    # torch.onnx prints emoji; on Windows a redirected stdout is cp1252 and would end the export with UnicodeEncodeError.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     if a.stage:
         STAGES[a.stage](a.cache)
         return

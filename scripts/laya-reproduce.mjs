@@ -59,7 +59,7 @@ export function script(shell, lines) {
 export const PLATFORMS = [
   ['64-bit Linux (x86_64 or aarch64)', ['ubuntu-latest', 'ubuntu-24.04-arm']],
   ['Windows (x64 or arm64', ['windows-latest', 'windows-11-arm']],
-  ['macOS 14 or later on Apple silicon', ['macos-14']],
+  ['macOS 14 or later on Apple silicon', ['macos-15']],
 ];
 
 export function checkPlatforms(html = readFileSync(PAGE, 'utf8'), md = readFileSync(README, 'utf8'), wf = readFileSync(WORKFLOW, 'utf8')) {

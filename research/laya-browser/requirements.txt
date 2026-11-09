@@ -7,4 +7,7 @@ huggingface_hub==1.32.0
 numpy==2.4.4
 onnx==1.23.0
 onnxscript==0.7.2
+# onnxscript's graph library, the release current on 24 Sep 2026. onnx-ir 1.1.0 (20 Oct 2026) exports two constants
+# (expand_2, expand_3) that differ from the hosted build, so convert.py fails with it.
+onnx-ir==1.0.0
 onnxruntime==1.25.0
