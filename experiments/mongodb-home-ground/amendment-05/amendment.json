@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 020",
+  "amendment": "05",
+  "name": "EXP 020 amendment 05. It is not a runner amendment of runner/PROTOCOL-S2.md, whose own amendments 01 to 04 are a different list; each is named in full below.",
+  "title": "S2's run record: the pause, all 13 discards and the report's hashes",
+  "authoredOn": "2026-11-08",
+  "amends": {
+    "preregistration": "experiments/mongodb-home-ground/preregistration.json",
+    "preregistrationSha256": "128087dbba8b09c97fcbf2ab4a873b1c4b9c656b27ad07291ba4693e26d83fec",
+    "frozenCommit": "0af2c4861c489531916884ceb6894ee771d0ec71",
+    "after": {
+      "amendment": "04",
+      "record": "experiments/mongodb-home-ground/amendment-04/amendment.json",
+      "sha256": "4caae68a2cb93f4f6f86f6290b656f3c566305e2e92deecee63cd23498a3e067"
+    }
+  },
+  "why": "S2 is complete, and its report was computed under the published rules. How it got there is written only in the private run log: a pause of 14 days, a stack-stop incident, four more discarded cells than amendment 01 lists, and the report's own refusal of two cells. A reader of the verdict needs that record and the hashes of what the report read, so this amendment states them. It records facts and changes no rule.",
+  "timing": "The report was computed once all 60 counted cells existed, on 2026-11-08, after amendment 04 was merged (odin-rnd #147, 2026-10-28), as amendment 04 requires. The runner owner drafted this record at private commit 9d24bd858d040ebc7c8e8e3a1a3422d3a7519e52 on 2026-11-08 at 15:02Z. It is published after the report was computed, because it records how the run went; it does not change how the report decides.",
+  "changes": [
+    {
+      "id": "1",
+      "what": "The 14-day pause",
+      "class": "run record: no rule change",
+      "rule": "The last counted cell before the pause ended on 2026-10-25 at 19:58:54, and discards were applied at 21:33:41, with 39 counted cells kept. The plan was then held by the shared pause flag. Its 5 holders had all died, and the flag was stale from 2026-10-27 11:43. The flag was removed on 2026-11-08 at 01:54:03 and the plan resumed at 01:55:00. No counted cell ran between 2026-10-25 about 20:00 and 2026-11-08 01:55. The second pass re-measured exactly the missing cells, and the plan completed on 2026-11-08 at 09:22:22 with 60 of 60 counted cells.",
+      "sameHost": "The runner owner reports the same host and the same Docker data disk as the kept cells. One pg_test_fsync run on 2026-11-08 shows fdatasync at 568.9 ops/s and open_datasync at 565.3 ops/s (one 8 kB write); the runner owner's 10-25 figures were 539 and 560. Only the 11-08 probe is a committed file."
+    },
+    {
+      "id": "2",
+      "what": "The stack-stop incident, with no discard",
+      "class": "run record: no rule change",
+      "rule": "On 2026-11-08 at 01:59:30, a wrong process check in a helper script that runs after the plan stopped the database stack in the middle of a cell. That cell and the 21 after it each failed in 0 to 1 s ('client not running') and wrote no file. No counted cell was affected. The script was fixed and the plan restarted at 02:02:10."
+    },
+    {
+      "id": "3",
+      "what": "All 13 discarded cell runs, kept in the runner's discarded/ directory and all re-run",
+      "class": "run record: the disturbance rule of amendment 01, applied",
+      "rule": "A counted cell that ran while other heavy work ran on the same host is discarded and re-run; nothing is pooled. Amendment 01 lists the first nine. This lists all 13.",
+      "cells": [
+        {
+          "cell": "mongo-x1-rep0-seed1",
+          "when": "2026-10-25",
+          "why": "filming overlapped it; it ran before PROTOCOL-S2 runner amendments 01 to 04"
+        },
+        {
+          "cell": "pgoutput-x1-rep0-seed1",
+          "when": "2026-10-25",
+          "why": "filming overlapped it; it ran before the runner amendments, and it also lost 1 event to the runner cursor bug that runner amendment 01 fixes"
+        },
+        {
+          "cell": "outbox-x10-rep4-seed1",
+          "when": "2026-10-25",
+          "why": "the 13:07 to 14:18 full test suite with browsers; moved at 21:33:41 (amendment 01 records that these five were first kept)"
+        },
+        {
+          "cell": "mongo-x10-rep4-seed1",
+          "when": "2026-10-25",
+          "why": "the same test suite"
+        },
+        {
+          "cell": "mongo-x1-rep0-seed2",
+          "when": "2026-10-25",
+          "why": "the same test suite"
+        },
+        {
+          "cell": "pgoutput-x1-rep0-seed2",
+          "when": "2026-10-25",
+          "why": "the same test suite"
+        },
+        {
+          "cell": "outbox-x1-rep0-seed2",
+          "when": "2026-10-25",
+          "why": "the same test suite"
+        },
+        {
+          "cell": "pgoutput-x1-rep4-seed2",
+          "when": "2026-10-25",
+          "why": "headless-browser work, 17:02 to 17:09; moved at 19:57:18"
+        },
+        {
+          "cell": "mongo-x1-rep4-seed2",
+          "when": "2026-10-25",
+          "why": "headless-browser work, 19:34 to 19:51; moved at 19:59:09"
+        },
+        {
+          "cell": "mongo-x10-rep2-seed2",
+          "when": "2026-11-08",
+          "why": "headless-browser console walks, window 05:58 to 06:30:48; moved at 06:10:13"
+        },
+        {
+          "cell": "pgoutput-x10-rep2-seed2",
+          "when": "2026-11-08",
+          "why": "headless-browser console walks, window 06:39:48 to 07:04:03; moved at 07:03:28"
+        },
+        {
+          "cell": "mongo-x10-rep3-seed2",
+          "when": "2026-11-08",
+          "why": "refused by the report's own overlap check at 08:55:25: the run was 07:03:56 to 07:17:35, and window 14 ends at 07:04:03 by a 20 s poll, so an overlap of up to 7 s cannot be ruled out"
+        },
+        {
+          "cell": "outbox-x1-rep3-seed2",
+          "when": "2026-10-25",
+          "why": "refused by the report's own overlap check on 2026-11-08 at 08:55:25: the run was 16:49:27 to 17:02:45, and window 9 starts at 17:02:45; bounds are inclusive"
+        }
+      ],
+      "disclosed": "The last two were refused by the report, not flagged in the disturbance log: the log names 11 discards, the discarded/ directory holds 13 files. The two are explained only in the run log, and the runner owner's drafter caught the gap. Times are the host's local time, CET (UTC+01:00)."
+    },
+    {
+      "id": "4",
+      "what": "The disturbance-window refusal rule, as it ran (amendment 04 item 8)",
+      "class": "run record: amendment 04 item 8, applied",
+      "rule": "disturbance-windows.json transcribes every row of the private disturbance log at private commit 576463d31edb53082c26764ad75ea788e91a86aa (sha256 e3bad331f58b12292a0c163c0e051f553a741d5e54fcc01f06de99b3ec4172ea) as 14 windows, 9 heavy and 5 light, at UTC+01:00, with inclusive bounds. The report writes nothing while any counted cell's run, from its t0 to its last event, overlaps a heavy window or cannot be placed in time. It lists by name the counted cells that overlap a light window. In the final report no counted cell overlaps a heavy window, and three overlap a light one: mongo-x1-rep2-seed2 (window 7), outbox-x10-rep3-seed1 (window 3) and pgoutput-x10-rep4-seed1 (window 3). All 60 run intervals came from the cells' own t0, none from the run log.",
+      "judgement": "Calling the light rows (single-core unit tests, no browser, no database) not heavy is a judgement. It is recorded so a reader can disagree."
+    },
+    {
+      "id": "5",
+      "what": "The report and its inputs, by sha256",
+      "class": "run record: hashes of private files",
+      "rule": "The results were committed at private commit 2230e9cb28c922f06f7fc10b1acf77e16bb77cbb, stored byte for byte at 0838f7e232679811729aa891a2eb4ab5202ec58c, and RESULT.json added at 94125bedcf6ce50f24fa1c56a1869b2d128bccf4. Paths are relative to the experiment's private directory. The per-cell sha256s of the 60 counted cells are in REPORT.json (cell_sha256) and REPORT.md ('Cell files (sha256)').",
+      "files": [
+        {
+          "file": "runner/results/s2/REPORT.json",
+          "sha256": "c6fd5b40a692e523f74234d5bbc3c51d7a2d0785f5d52130623c1a6ce991c1e7",
+          "note": "equals RESULT.json's report_sha256"
+        },
+        {
+          "file": "runner/results/s2/REPORT.md",
+          "sha256": "8b939319e3780f25232cd3e8c16293615021e021eb624d090540d55459d6daa4"
+        },
+        {
+          "file": "RESULT.json",
+          "sha256": "9fc056a8859e5b15e4c2fa747fe863ea3baa35732c5548fac2744fa0cb56c07b"
+        },
+        {
+          "file": "PREREG.md",
+          "sha256": "83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1",
+          "note": "the frozen PREREG the pre-registration cites"
+        },
+        {
+          "file": "runner/PROTOCOL-S2.md",
+          "sha256": "c50a7d3020f0564c4c00b941324b6b1b723de5f1e07872018996edc93ec6554d",
+          "note": "the private source of the protocol amendment 01 publishes with substitutions"
+        },
+        {
+          "file": "runner/results/s2/disturbance-windows.json",
+          "sha256": "e07ab72c217e4bbbe9037cd54d23e1e77b10da7c99642e846329b5522b4de762"
+        },
+        {
+          "file": "runner/results/s2/DISTURBANCES.md",
+          "sha256": "e3bad331f58b12292a0c163c0e051f553a741d5e54fcc01f06de99b3ec4172ea"
+        },
+        {
+          "file": "runner/s2_report.py",
+          "sha256": "6cfe7873c350290656e83b79dbe4138095a210888dd26712a1d5f8dc4d1a2d03",
+          "note": "the report code amendment 04 pins"
+        },
+        {
+          "file": "runner/results/s2/plan.log",
+          "sha256": "c3b2f58f152836e6a35ac4a62ae9b7a595b2cb15c21cf9e6604e06f98cdb58ad"
+        },
+        {
+          "file": "runner/results/s2/fsync-probe-2026-11-08.txt",
+          "sha256": "2ab18773946a5e0e2e06c850206e98d4776b7ca12aab83a60c0b0a0a5cc8ae5f"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "what": "The verdict, as the report states it",
+      "class": "run record: the report's verdict, quoted, not recomputed here",
+      "rule": "S2 is postgres-fits at 1x and at 10x, with pgoutput chosen as the PostgreSQL variant at both scales. At 1x PostgreSQL's lag p95 is at least 20 % lower in 5 of 5 seed-1 pairs, at 10x in 4 of 5, and at both scales the seed-2 reproduction agrees (median paired difference, MongoDB minus PostgreSQL, +4.8 ms and +8.4 ms). Every one of the 60 counted cells passed the gate, 0 lost and 0 duplicated. Secondary, never deciding: against the zero-component outbox variant alone, MongoDB fits at both scales (5 of 5 pairs, reproduced: -43.6 ms and -40.0 ms). The components count that decides is 4 / 5 / 0 (MongoDB / pgoutput / outbox); latency decided, so it was not reached. S1, S3 and S4 have not been run.",
+      "source": "REPORT.json: verdicts.x1, verdicts.x10; scales.<x1|x10>.primary.wins and primary.repro.median_paired_diff_ms; scales.<x1|x10>.secondary.2_selection.chosen; scales.<x1|x10>.secondary.3_single_variant.outbox."
+    }
+  ],
+  "documents": [],
+  "sources": [
+    {
+      "what": "The runner owner's draft of this record, with the S2 result page",
+      "commit": "9d24bd858d040ebc7c8e8e3a1a3422d3a7519e52",
+      "file": "S2-RESULT-PAGE-DRAFT.md",
+      "sha256": "239172cc053225f31f7265091c187b71e37df0f6a1062a097c4dd60782148027"
+    }
+  ],
+  "verifiedHere": "The publisher fetched every file in change 5 from the private repository at commit 9d24bd85 and recomputed its sha256: all ten match. The publisher read change 6's numbers from REPORT.json (verdicts, the chosen variant, the wins, the reproduction medians, the outbox-alone line, 60 cell hashes, 14 / 9 / 5 windows with no heavy overlap and the three light overlaps) and the 13 file names in discarded/: all match this record. The publisher did not rerun the report.",
+  "limits": [
+    "The report, its inputs and the 60 cell files are in a private repository and are cited here by commit and sha256, not published. A reader can check a hash but cannot open the files, so the verdict in change 6 is the report's, quoted, not something this repository lets a reader recompute.",
+    "The pause, the incident and the discard times are the runner owner's account and the private run log's; they are not independently verifiable from this repository.",
+    "That the 11-08 cells ran on the same host and disk as the 10-25 cells is the runner owner's statement. The 10-25 fsync figures are the runner owner's numbers; only the 11-08 probe is a committed file.",
+    "Two discards were refused by the report's overlap check and are missing from the disturbance log; they are explained only in the run log.",
+    "Three counted cells are kept under a light overlap; calling those windows light is a judgement.",
+    "The variant is chosen on seed 1 and compared on the same seed-1 data, which leans slightly toward PostgreSQL (amendments 02 and 03, and both advocates' reviews). Seed 2's lag values are out of sample; its gate outcomes are not.",
+    "One machine and one OS stack. The pre-registered second-OS replication has not been run."
+  ],
+  "unchanged": "No rule changes. The pre-registration and amendments 01 to 04 stand and stay byte-identical: one PostgreSQL variant per scale, chosen once on seed 1; the 20 % margin, the 4-of-5 wins and the reproduction rule; the components count 4 / 5 / 0 with the literal counts beside it; the disturbance refusal of amendment 04 item 8. S1, S3 and S4 are not affected.",
+  "notBefore": "Effective when merged to main of odin-labs-ai/odin-rnd. It records a computed report and holds nothing back."
+}
