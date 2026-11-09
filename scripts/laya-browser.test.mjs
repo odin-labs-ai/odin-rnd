@@ -91,3 +91,25 @@ test('the page states the size and the privacy boundary before any download', ()
   assert(loaded.length > 0);
   for (const link of loaded) assert(!/^(https?:)?\/\//.test(link), 'external resource in markup: ' + link);
 });
+
+test('the page reproduces from the README: every Reproduce block, verbatim, with the platforms it supports', () => {
+  const html = readFileSync('site/projects/laya-browser/index.html', 'utf8');
+  const section = html.split('aria-labelledby="reproduce-heading"')[1]?.split('</section>')[0];
+  assert(section, 'the page has its Reproduce section');
+  const readme = readFileSync('research/laya-browser/README.md', 'utf8').split(/^## Reproduce$/m)[1];
+  assert(readme, 'the README has a "## Reproduce" section');
+  const blocks = [...readme.matchAll(/```(sh|powershell)\n([\s\S]*?)```/g)].map(m => [m[1], m[2].trimEnd()]);
+  assert.deepEqual(blocks.map(b => b[0]), ['sh', 'powershell'], 'one macOS/Linux block and one Windows block');
+  const escape = s => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  for (const [, block] of blocks) assert(section.includes(`<pre><code>${escape(block)}</code></pre>`), `the page differs from the README block:\n${block}`);
+  // A venv first: a bare pip install fails on PEP 668 system Pythons and pollutes the rest.
+  assert.match(blocks[0][1], /^python3\.12 -m venv \.venv\n\. \.venv\/bin\/activate\n/);
+  assert.match(blocks[1][1], /^py -3\.12 -m venv \.venv\n/);
+  assert(section.includes('git clone --depth 1 https://github.com/odin-labs-ai/odin-rnd'), 'the page says which repository to clone');
+  // The pinned torch 2.14.0 and onnxruntime 1.25.0 publish no Intel-Mac or pre-14 macOS wheels.
+  const pins = readFileSync('research/laya-browser/requirements.txt', 'utf8');
+  assert.match(pins, /^torch==2\.14\.0$/m);
+  assert.match(pins, /^onnxruntime==1\.25\.0$/m);
+  for (const text of [section, readme]) assert.match(text, /macOS 14 or later on Apple silicon/);
+  for (const text of [section, readme]) assert.match(text, /Intel Macs and macOS 13 or older/);
+});

@@ -17,11 +17,12 @@ Working documents: [company readiness](docs/company-readiness.md), [pilot delive
 
 ## Run locally
 
+Requires git, Node 22 (which ships corepack), JDK 21 (set `JAVA_HOME` to that JDK) and pnpm 10.11.1. Clone the repository; a ZIP download will not build, because the build scripts read git metadata. `corepack enable` provides the pnpm version pinned in `package.json`; `npm install --global pnpm@10.11.1`, which CI uses, works too.
+
 On Windows, clone with `git -c core.autocrlf=false clone …`. The build checks sha256 pins against the exact committed bytes, and a CRLF checkout fails those checks. If you cloned before `.gitattributes` was added, run `git rm --cached -r . && git reset --hard` once to check the files out again.
 
-Node 22, pnpm 10.11.1 and JDK 21 (set `JAVA_HOME` to that JDK):
-
 ```sh
+git clone https://github.com/odin-labs-ai/odin-rnd && cd odin-rnd && corepack enable
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm experiment
 node scripts/run-roi-demos.mjs
@@ -32,6 +33,8 @@ pnpm serve
 ```
 
 Open `http://127.0.0.1:4173/odin-rnd/`. The development server mirrors the GitHub Pages project prefix.
+
+CI builds and tests on Linux (ubuntu-latest). A Windows job checks path handling only; macOS is not tested.
 
 The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authored SVG. There is no visitor account, third-party tracker, model API or hosted experiment execution. Engine logic comes from the released `bce-engine@0.3.1` package; this repository does not implement its own conformance engine.
 
