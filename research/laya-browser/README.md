@@ -31,11 +31,25 @@ These are three cases on one machine. They show the port reproduces the original
 
 ## Reproduce
 
-```
-python3.12 -m venv .venv && . .venv/bin/activate
+Needs Python 3.12 on 64-bit Linux (x86_64 or aarch64), Windows (x64 or arm64; the arm64 torch build comes from the PyTorch CPU index) or macOS 14 or later on Apple silicon. Intel Macs and macOS 13 or older are not supported: the pinned torch 2.14.0 and onnxruntime 1.25.0 publish no wheels for them. Run the commands from the repository root, inside a virtual environment, so nothing is installed into the system Python.
+
+macOS or Linux:
+
+```sh
+python3.12 -m venv .venv
+. .venv/bin/activate
 pip install -r research/laya-browser/requirements.txt
 python research/laya-browser/reference.py --cache ~/.cache/odin-rnd-laya --out reference.json
 python research/laya-browser/convert.py --cache ~/.cache/odin-rnd-laya
 ```
 
-The cache needs about 4 GB. `convert.py` exits non-zero if the hosted build does not match a rebuild from the pinned checkpoint.
+Windows (PowerShell). These commands call the virtual environment's Python directly, so they need no activation script, which the default execution policy can block:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\python -m pip install -r research/laya-browser/requirements.txt
+.venv\Scripts\python research/laya-browser/reference.py --cache ~/.cache/odin-rnd-laya --out reference.json
+.venv\Scripts\python research/laya-browser/convert.py --cache ~/.cache/odin-rnd-laya
+```
+
+The cache needs about 4 GB. Both scripts expand the `~` in `--cache` themselves, so it works in PowerShell too. `convert.py` exits non-zero if the hosted build does not match a rebuild from the pinned checkpoint.

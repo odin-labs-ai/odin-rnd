@@ -7,7 +7,7 @@
 
 ## What the runner does
 
-1. Downloads the pinned Laya typed-decisions files from Hugging Face into `~/.cache/odin-rnd/laya/<sha>/` and checks each sha256. Weights are never committed.
+1. Downloads the pinned Laya typed-decisions files from Hugging Face into `~/.cache/odin-rnd/laya/<sha>/` and checks each sha256. Weights are never committed. To use another folder, set `LAYA_CACHE` or pass `--cache` with an absolute path: `run.py` does not expand a `~` in either, so a quoted `"~/x"` would create a folder named `~` inside this directory.
 2. Answers each of the 48 rows in [`corpus.json`](corpus.json) with an MLX port of the model ([`laya_mlx.py`](laya_mlx.py)) on the Apple GPU, one call at a time, and times each call.
 3. **Parity check.** Answers every row again with the model repository's own Python (`rl_agent_api.py` / `rl_common.py`, read before use and pinned by sha256) using torch on the CPU. The run fails (exit 1) if any row has different token ids or a different decision, or if the probability of the top answer differs by more than 0.01.
 4. If `JEV_AI_API_KEY` is set, sends the same rows to Jev (sequentially, 15 s timeout) and records accuracy, agreement with Laya, latency and cost. If the key is not set, Jev is recorded as `not run`.
@@ -17,7 +17,7 @@ Every model component runs in MLX: the encoder, the decision head, the scorer an
 
 ## Reproduce
 
-Requirements: an Apple silicon Mac, [uv](https://docs.astral.sh/uv/), and about 2 GB of disk space (0.8 GB of weights plus the Python environment).
+Requirements: an Apple silicon Mac on macOS 14 or later (the pinned torch 2.14.0 and mlx/mlx-metal 0.32.2 publish macOS wheels only for Apple silicon on macOS 14 or later), [uv](https://docs.astral.sh/uv/), and about 2 GB of disk space (0.8 GB of weights plus the Python environment).
 
 ```sh
 cd experiments/laya-vs-jev
