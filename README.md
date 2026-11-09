@@ -17,6 +17,8 @@ Working documents: [company readiness](docs/company-readiness.md), [pilot delive
 
 ## Run locally
 
+On Windows, clone with `git -c core.autocrlf=false clone …`. The build checks sha256 pins against the exact committed bytes, and a CRLF checkout fails those checks. If you cloned before `.gitattributes` was added, run `git rm --cached -r . && git reset --hard` once to check the files out again.
+
 Node 22, pnpm 10.11.1 and JDK 21 (set `JAVA_HOME` to that JDK):
 
 ```sh

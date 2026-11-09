@@ -1,0 +1,20 @@
+# Line endings. The build checks sha256 pins against the raw bytes of
+# committed files, so a checkout must give the same bytes as the commit
+# on every platform, including Git for Windows with core.autocrlf=true.
+
+# Source and docs: stored and checked out as LF everywhere.
+* text=auto eol=lf
+
+# Hashed evidence: never convert line endings in either direction.
+experiments/** -text
+site/data/** -text
+runs/** -text
+results/** -text
+scripts/fixtures/** -text
+demos/*/fixtures/** -text
+*.json -text
+*.jsonl -text
+*.sha256 -text
+
+# Committed with CRLF; keep its bytes as they are.
+site/assets/fonts/spacegrotesk-OFL.txt -text
