@@ -1,0 +1,75 @@
+# Laya vs Jev reproduce smoke: the Reproduce and Tests blocks of experiments/laya-vs-jev/README.md (the commands that
+# /experiments#laya-bench shows for card 002) run here as the README writes them, on the platform the README names:
+# Apple silicon, macOS 14 or later (macos-15). The commands are read from the README's ```sh blocks at run time, so a
+# README edit changes what CI runs. The page's first line (git clone ... && cd odin-rnd) is replaced by the checkout:
+# cloning main would test main, not the change under review.
+# The job names its runner literally (docs/lab-bar.md: no matrix expression in runs-on).
+# Not a required check: run.py downloads ~0.8 GB of pinned weights, so it runs on demand, weekly, and on pull requests
+# that touch the experiment or this workflow.
+name: laya-vs-jev reproduce smoke
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 5 * * 3'
+  pull_request:
+    paths:
+      - 'experiments/laya-vs-jev/**'
+      - '.github/workflows/laya-vs-jev-reproduce.yml'
+permissions:
+  contents: read
+concurrency:
+  group: laya-vs-jev-reproduce-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  reproduce-macos-arm64:
+    name: install, offline tests and run.py (macOS 15, Apple silicon)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.7'
+          enable-cache: false
+      - name: Take the README's Reproduce and Tests blocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          readme=experiments/laya-vs-jev/README.md
+          block() { awk -v n="$1" '/^```sh$/{k++; on=(k==n); next} /^```$/{on=0} on' "$readme"; }
+          block 1 > "$RUNNER_TEMP/reproduce.sh"
+          block 2 > "$RUNNER_TEMP/tests.sh"
+          # The Reproduce block without its run.py line is the install; run.py gets its own time-capped step below.
+          grep -v '^\.venv/bin/python run\.py' "$RUNNER_TEMP/reproduce.sh" > "$RUNNER_TEMP/install.sh"
+          grep '^\.venv/bin/python run\.py' "$RUNNER_TEMP/reproduce.sh" | sed 's/ *#.*$//' > "$RUNNER_TEMP/run.sh"
+          for f in reproduce install run tests; do echo "--- $f.sh"; cat "$RUNNER_TEMP/$f.sh"; done
+          grep -qx 'cd experiments/laya-vs-jev' "$RUNNER_TEMP/install.sh"
+          grep -q 'uv pip install -r requirements.txt' "$RUNNER_TEMP/install.sh"
+          grep -qx '\.venv/bin/python run\.py' "$RUNNER_TEMP/run.sh"
+          grep -q '^\.venv/bin/python -m unittest test_run\.py' "$RUNNER_TEMP/tests.sh"
+      - name: Install (README Reproduce block, from the repository root)
+        shell: sh
+        run: sh -ex "$RUNNER_TEMP/install.sh"
+      - name: Offline tests (README Tests block)
+        shell: sh
+        working-directory: experiments/laya-vs-jev
+        run: sh -ex "$RUNNER_TEMP/tests.sh"
+      # The README's own advice: --out keeps the committed recording untouched. No Jev key exists here, so Jev is
+      # recorded as "not run"; the Laya MLX pass and the CPU parity check are what this step proves.
+      - name: run.py (README Reproduce block, last line, with --out)
+        shell: sh
+        working-directory: experiments/laya-vs-jev
+        timeout-minutes: 30
+        run: sh -ex -c "$(cat "$RUNNER_TEMP/run.sh") --out \"$RUNNER_TEMP/laya-mlx-ci.json\""
+      - name: Keep the result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: laya-vs-jev-reproduce-macos-arm64
+          if-no-files-found: ignore
+          path: ${{ runner.temp }}/laya-mlx-ci.json
