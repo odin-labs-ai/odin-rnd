@@ -6,9 +6,10 @@
  "question": "When the database server a company writes to fails, which keeps the company's writes better: MongoDB or PostgreSQL?",
  "how": "We stop the main database server in the middle of a working session, on purpose, and check which writes it had confirmed are still there afterwards. Each side's advocate wrote down what they expect before anything ran.",
  "experiment": "failover",
- "status": "Pre-registered, not yet run",
+ "status": "Pre-registered; the counted runs have started, no result yet",
  "links": [
   { "label": "The pre-registration (EXP 021)", "href": "journal/failover-pre-registration.html" },
-  { "label": "Amendment 01: how it will be run", "href": "data/failover/amendment-01.json" }
+  { "label": "Amendment 01: how it will be run", "href": "data/failover/amendment-01.json" },
+  { "label": "Amendment 02: the strict switch and the runner fixes", "href": "data/failover/amendment-02.json" }
  ]
 }
