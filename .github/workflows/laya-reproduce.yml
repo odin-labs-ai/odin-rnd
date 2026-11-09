@@ -1,0 +1,115 @@
+# Laya reproduce smoke: the "Reproduce the check." commands of site/projects/laya-browser/ run here exactly as the page
+# shows them, on every platform the page says they support. scripts/laya-reproduce.mjs takes the commands from the
+# page and refuses to hand them over if they differ from the README's Reproduce blocks, so docs drift turns this red.
+# The page's first block (git clone ... && cd odin-rnd) is replaced by the checkout: cloning main would test main, not
+# the change under review. Everything after it is the page's text, line by line, from the repository root.
+# Not a required check: it downloads ~1.3 GB of pinned weights and rebuilds the int8 model, so it runs on demand,
+# weekly, and on pull requests that touch the Laya page, its scripts or this workflow.
+name: laya reproduce smoke
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5 * * 2'
+  pull_request:
+    paths:
+      - 'research/laya-browser/**'
+      - 'experiments/laya-vs-jev/**'
+      - 'site/projects/laya-browser/**'
+      - 'scripts/laya-*.mjs'
+      - '.github/workflows/laya-reproduce.yml'
+permissions:
+  contents: read
+concurrency:
+  group: laya-reproduce-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  PIP_CACHE_DIR: ${{ github.workspace }}/../pip-cache
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+jobs:
+  platforms:
+    name: platform line matches the runners below
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check the page's and README's platform sentence against this workflow's matrix
+        run: node scripts/laya-reproduce.mjs --platforms
+
+  reproduce:
+    name: reproduce, full check (${{ matrix.os }}, ${{ matrix.shell }} block)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            shell: sh
+          - os: ubuntu-24.04-arm
+            shell: sh
+          - os: windows-latest
+            shell: powershell
+          - os: windows-11-arm
+            shell: powershell
+          - os: macos-14
+            shell: sh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Restore the pip download cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: laya-pip-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('research/laya-browser/requirements.txt') }}
+      # The pinned checkpoint and hosted build (~1.3 GB) are the same bytes on every platform; the rebuilt ONNX
+      # files are not cached, so convert.py really rebuilds and compares on every run.
+      - name: Restore the pinned model downloads
+        id: models
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/odin-rnd-laya/hf
+            ~/.cache/odin-rnd-laya/hosted
+          key: laya-models-${{ runner.os }}-${{ hashFiles('research/laya-browser/requirements.txt', 'research/laya-browser/pins.json') }}
+      - name: Take the commands from the page (and check them against the README)
+        shell: bash
+        run: |
+          ext=sh; [ "${{ matrix.shell }}" = powershell ] && ext=ps1
+          node scripts/laya-reproduce.mjs --shell "${{ matrix.shell }}" --out "$RUNNER_TEMP/reproduce.$ext"
+      - name: Run the page's macOS/Linux block
+        if: matrix.shell == 'sh'
+        shell: sh
+        run: sh -ex "$RUNNER_TEMP/reproduce.sh"
+      - name: Run the page's Windows block in Windows PowerShell
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: '& "$env:RUNNER_TEMP\reproduce.ps1"; exit $LASTEXITCODE'
+      - name: Save the pinned model downloads
+        if: always() && steps.models.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/odin-rnd-laya/hf
+            ~/.cache/odin-rnd-laya/hosted
+          key: ${{ steps.models.outputs.cache-primary-key }}
+      - name: Keep the outputs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: laya-reproduce-${{ matrix.os }}
+          if-no-files-found: ignore
+          path: |
+            reference.json
+            ~/.cache/odin-rnd-laya/compare.json
