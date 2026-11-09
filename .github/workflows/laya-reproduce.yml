@@ -104,6 +104,10 @@ jobs:
             ~/.cache/odin-rnd-laya/hf
             ~/.cache/odin-rnd-laya/hosted
           key: ${{ steps.models.outputs.cache-primary-key }}
+      - name: Copy the comparison report next to reference.json
+        if: always()
+        shell: bash
+        run: cp ~/.cache/odin-rnd-laya/compare.json compare.json || true
       - name: Keep the outputs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -112,4 +116,4 @@ jobs:
           if-no-files-found: ignore
           path: |
             reference.json
-            ~/.cache/odin-rnd-laya/compare.json
+            compare.json

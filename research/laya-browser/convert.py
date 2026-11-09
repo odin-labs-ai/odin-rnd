@@ -221,6 +221,8 @@ def main():
     plan = [s for s, done in (("export", onnx_dir / "laya_fp32.onnx"), ("q8e8", onnx_dir / "laya_q8e8.onnx.data")) if not done.exists()]
     for stage in plan + ["compare"]:
         print(f"[convert] stage: {stage}", flush=True)
+        # A fixed hash seed: with a random one, CI runs exported expand_2 and expand_3 with values that differ from
+        # the hosted build's on some runs; with seed 0 every platform in .github/workflows/laya-reproduce.yml matches.
         r = subprocess.run([sys.executable, __file__, "--stage", stage, "--cache", a.cache],
                            env={**os.environ, "PYTHONHASHSEED": os.environ.get("PYTHONHASHSEED", "0")})
         if r.returncode != 0:
