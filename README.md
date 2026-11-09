@@ -17,12 +17,23 @@ Working documents: [company readiness](docs/company-readiness.md), [pilot delive
 
 ## Run locally
 
-Requires git, Node 22 (which ships corepack), JDK 21 (set `JAVA_HOME` to that JDK) and pnpm 10.11.1. Clone the repository; a ZIP download will not build, because the build scripts read git metadata. `corepack enable` provides the pnpm version pinned in `package.json`; `npm install --global pnpm@10.11.1`, which CI uses, works too.
+Requires git, Node 22, JDK 21 (set `JAVA_HOME` to that JDK) and pnpm 10.11.1. Clone the repository; a ZIP download will not build, because the build scripts read git metadata. Each command below is on its own line, so the block also pastes into Windows PowerShell 5.1, which has no `&&`.
 
-On Windows, clone with `git -c core.autocrlf=false clone …`. The build checks sha256 pins against the exact committed bytes, and a CRLF checkout fails those checks. If you cloned before `.gitattributes` was added, run `git rm --cached -r . && git reset --hard` once to check the files out again.
+The block installs pnpm with `npm install --global pnpm@10.11.1`, which is what CI uses. `corepack enable` (Node 22 ships corepack) also provides the pnpm version pinned in `package.json`, but on Windows it writes into the Node install folder, so it needs an elevated shell (Run as administrator); in a normal shell it fails with EPERM.
+
+The clone line turns off `core.autocrlf`. The build checks sha256 pins against the exact committed bytes, and a Windows checkout with CRLF line endings fails those checks; on Linux and macOS the setting is already off. If you cloned before `.gitattributes` was added, run these two commands once to check the files out again:
 
 ```sh
-git clone https://github.com/odin-labs-ai/odin-rnd && cd odin-rnd && corepack enable
+git rm --cached -r .
+git reset --hard
+```
+
+Then:
+
+```sh
+git -c core.autocrlf=false clone https://github.com/odin-labs-ai/odin-rnd
+cd odin-rnd
+npm install --global pnpm@10.11.1
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm experiment
 node scripts/run-roi-demos.mjs
