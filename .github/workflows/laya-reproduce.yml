@@ -25,7 +25,6 @@ concurrency:
   group: laya-reproduce-${{ github.ref }}
   cancel-in-progress: true
 env:
-  PIP_CACHE_DIR: ${{ github.workspace }}/../pip-cache
   PIP_DISABLE_PIP_VERSION_CHECK: '1'
 jobs:
   platforms:

@@ -16,10 +16,14 @@ runs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
+    # pip's own default cache folder on Linux, macOS and Windows; the commands run unchanged.
     - name: Restore the pip download cache
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ env.PIP_CACHE_DIR }}
+        path: |
+          ~/.cache/pip
+          ~/Library/Caches/pip
+          ~/AppData/Local/pip/Cache
         key: laya-pip-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('research/laya-browser/requirements.txt') }}
     # The pinned checkpoint and hosted build (~1.3 GB) are the same bytes on every platform; the rebuilt ONNX files are
     # not cached, so convert.py really rebuilds and compares on every run.
