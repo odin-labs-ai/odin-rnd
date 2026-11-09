@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b22">
+  <title>Lab 03: failover — Odin Labs R&amp;D</title>
+  <meta name="description" content="Follow the failover lab's published plan, amendments and results, with the current status and limits beside their sources.">
+  <meta property="og:title" content="Lab 03: failover — Odin Labs R&amp;D">
+  <meta property="og:description" content="What happens to acknowledged writes when the primary database fails? Read the plan, current status and limits.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/labs/failover/">
+  <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/labs/failover/">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="stylesheet" href="../../assets/company.css">
+  <link rel="stylesheet" href="../../assets/labs.css">
+</head>
+<body class="company-page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header dark-surface">
+    <a href="../../" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="../../assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
+    <nav aria-label="Main navigation"><a href="../../#floor">Factory</a><a href="../../#experiments">Experiments</a><a href="../" aria-current="page">Labs</a><a href="../../updates/">Updates</a><a href="../../#journal">Field notes</a><a href="../../work-with-us/" data-contact-opened>Work with us</a><a href="../../partners/">Partners</a></nav>
+    <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="company-hero company-width labs-hero lab-hero" aria-labelledby="lab-title">
+      <div><span class="technical">LAB 03</span><h1 id="lab-title">Failover.</h1><p class="company-lead"><!--FAILOVER_QUESTION--></p><div class="company-actions"><a class="button button-primary" href="#plan">Read the plan</a><a href="../">All labs</a></div></div>
+    </section>
+    <section class="company-section company-width company-split" id="status" aria-labelledby="status-title">
+      <div><h2 id="status-title">Where it stands.</h2></div>
+      <div class="company-prose"><p><strong><!--FAILOVER_STATUS--></strong>.</p><p><!--FAILOVER_RESULT_STATE--></p></div>
+    </section>
+    <section class="company-section company-width company-split" id="plan" aria-labelledby="plan-title">
+      <div><h2 id="plan-title">What it tests.</h2></div>
+      <div class="company-prose"><p><!--FAILOVER_HOW--></p><p>The published plan defines which writes count as kept, how an outage is measured and how each storage design is compared. It calls for a verdict per scenario, with no overall winner.</p><p><a href="../../data/failover/preregistration.json">Read the frozen pre-registration record</a>.</p></div>
+    </section>
+    <section class="company-section company-width company-split" id="sources" aria-labelledby="sources-title">
+      <div><h2 id="sources-title">Follow the work.</h2></div>
+      <div class="company-prose"><p>The public plan and its published amendments are linked here. New links appear when their records are published.</p><ul><!--FAILOVER_LINKS--></ul></div>
+    </section>
+    <section class="company-section company-width company-split" id="limits" aria-labelledby="limits-title">
+      <div><h2 id="limits-title">What you can check.</h2></div>
+      <div class="company-prose"><p>The pre-registration records the method and its limits. The runner and some referenced rules remain private, so this public page cannot by itself reproduce a future run. A published record will need its own result and limitations.</p></div>
+    </section>
+  </main>
+  <footer class="site-footer"><a href="../../" class="footer-brand" aria-label="Odin Labs R&amp;D home"><img src="../../assets/odin-logo.svg" width="29" height="32" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a><div><a href="https://odin-labs.ai/contact/">Contact Odin</a><a href="https://odin-labs.ai/">Odin Labs</a><a href="https://odin-labs-ai.github.io/open-docs/#learn">Open Docs</a><a href="https://github.com/odin-labs-ai/odin-rnd">Source</a></div></footer>
+</body>
+</html>

@@ -249,6 +249,9 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
+  const tiles = readTiles(root);
+  const failover = tiles.find(tile => tile.experiment === 'failover');
+  const failoverPage = 'labs/failover/index.html';
   const embeddedFilms = new Set(progress?.steps.filter(step => step.kind === 'film-ref').map(step => step.film) ?? []);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
@@ -267,7 +270,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     'labs/index.html': fill('labs/index.html', {
       // Lab 01's tile, then the experiment labs' tiles, Lab 02 then Lab 03 (scripts/lab-tiles.mjs gates them; the build
       // fails on a problem).
-      '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
+      '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + tiles.map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
       '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root), '../', { questions: readQuestionSet(root) }),
     }),
@@ -289,6 +292,17 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...(story ? { [STORY_PAGE]: fill(STORY_PAGE, storyValues(story)) } : {}),
     ...(proofs ? { [PROOFS_PAGE]: checkedProofs(fill(PROOFS_PAGE, { '<!--LAB_PROOFS-->': renderProofs(dispatches) }), dispatches) } : {}),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
+    // Lab 03 is a continuing project even while it has a plan but no result. Its source links and status come from
+    // the same checked tile as the index, so a later published amendment appears on both pages.
+    ...(failover && existsSync(join(root, failoverPage)) ? { [failoverPage]: fill(failoverPage, {
+      '<!--FAILOVER_QUESTION-->': escape(failover.question),
+      '<!--FAILOVER_STATUS-->': escape(failover.status),
+      '<!--FAILOVER_RESULT_STATE-->': failover.kind === 'results'
+        ? 'A result is published. Read its record and limits before treating it as a finding.'
+        : 'No counted result is published yet. This is a plan, not a finding.',
+      '<!--FAILOVER_HOW-->': escape(failover.how),
+      '<!--FAILOVER_LINKS-->': failover.links.map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
+    }) } : {}),
     // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
