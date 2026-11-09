@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { stripTags } from './test-html-text.mjs';
 
 // The methods page's "Rerun it yourself" section (site/methods/index.html#reproduce) and the README's "Run locally"
 // section tell a reader the same thing. They drifted once: the README gained JDK 21, the Windows line-ending clone and
@@ -38,7 +39,7 @@ test('every step is its own line and pastes into Windows PowerShell 5.1', () => 
 });
 
 test('both pages state the same requirements', () => {
-  const text = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
+  const text = s => stripTags(s, '').replace(/\s+/g, ' ');
   for (const [where, body] of [['README', readme], ['methods page', text(section)]]) {
     for (const need of [/\bgit\b/, /Node 22/, /JDK 21/, /JAVA_HOME/, /pnpm 10\.11\.1/, /ZIP download will not build/, /corepack enable/, /elevated shell/, /python3/, /bash/, /POSIX/, /WSL/]) {
       assert.match(body, need, `${where} says ${need}`);
