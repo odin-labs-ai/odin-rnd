@@ -16,14 +16,14 @@
       "sha256": "4caae68a2cb93f4f6f86f6290b656f3c566305e2e92deecee63cd23498a3e067"
     }
   },
-  "why": "S2 is complete, and its report was computed under the published rules. How it got there is written only in the private run log: a pause of 14 days, a stack-stop incident, four more discarded cells than amendment 01 lists, and the report's own refusal of two cells. A reader of the verdict needs that record and the hashes of what the report read, so this amendment states them. It records facts and changes no rule.",
+  "why": "S2 is complete, and its report was computed under the published rules. How it got there is written only in the private run log: a pause of 13 days and 6 hours, a stack-stop incident, four more discarded cells than amendment 01 lists, and the report's own refusal of two cells. A reader of the verdict needs that record and the hashes of what the report read, so this amendment states them. It records facts and changes no rule.",
   "timing": "The report was computed once all 60 counted cells existed, on 2026-11-08, after amendment 04 was merged (odin-rnd #147, 2026-10-28), as amendment 04 requires. The runner owner drafted this record at private commit 9d24bd858d040ebc7c8e8e3a1a3422d3a7519e52 on 2026-11-08 at 15:02Z. It is published after the report was computed, because it records how the run went; it does not change how the report decides.",
   "changes": [
     {
       "id": "1",
-      "what": "The 14-day pause",
+      "what": "The pause of 13 days and 6 hours",
       "class": "run record: no rule change",
-      "rule": "The last counted cell before the pause ended on 2026-10-25 at 19:58:54, and discards were applied at 21:33:41, with 39 counted cells kept. The plan was then held by the shared pause flag. Its 5 holders had all died, and the flag was stale from 2026-10-27 11:43. The flag was removed on 2026-11-08 at 01:54:03 and the plan resumed at 01:55:00. No counted cell ran between 2026-10-25 about 20:00 and 2026-11-08 01:55. The second pass re-measured exactly the missing cells, and the plan completed on 2026-11-08 at 09:22:22 with 60 of 60 counted cells.",
+      "rule": "The last counted cell before the pause ended on 2026-10-25 at 19:58:54, and discards were applied at 21:33:41, with 39 counted cells kept. The plan was then held by the shared pause flag. Its 5 holders had all died, and the flag was stale from 2026-10-27 11:43. The flag was removed on 2026-11-08 at 01:54:03 and the plan resumed at 01:55:00. No counted cell ran between 2026-10-25 19:58:54 and 2026-11-08 01:55:00, 13 days, 5 hours and 56 minutes. The second pass re-measured exactly the missing cells, and the plan completed on 2026-11-08 at 09:22:22 with 60 of 60 counted cells.",
       "sameHost": "The runner owner reports the same host and the same Docker data disk as the kept cells. One pg_test_fsync run on 2026-11-08 shows fdatasync at 568.9 ops/s and open_datasync at 565.3 ops/s (one 8 kB write); the runner owner's 10-25 figures were 539 and 560. Only the 11-08 probe is a committed file."
     },
     {
@@ -115,10 +115,10 @@
     },
     {
       "id": "5",
-      "what": "The report and its inputs, by sha256",
+      "what": "The report's outputs, the files it read, and the 60 counted cells, by sha256",
       "class": "run record: hashes of private files",
-      "rule": "The results were committed at private commit 2230e9cb28c922f06f7fc10b1acf77e16bb77cbb, stored byte for byte at 0838f7e232679811729aa891a2eb4ab5202ec58c, and RESULT.json added at 94125bedcf6ce50f24fa1c56a1869b2d128bccf4. Paths are relative to the experiment's private directory. The per-cell sha256s of the 60 counted cells are in REPORT.json (cell_sha256) and REPORT.md ('Cell files (sha256)').",
-      "files": [
+      "rule": "The results were committed at private commit 2230e9cb28c922f06f7fc10b1acf77e16bb77cbb and stored byte for byte at 0838f7e232679811729aa891a2eb4ab5202ec58c. REPORT.json and REPORT.md are the report's outputs. RESULT.json is a later copy of REPORT.json's verdicts for the lab's fit map, added at 94125bedcf6ce50f24fa1c56a1869b2d128bccf4; it is not something the report read. The inputs are the frozen rule texts it applies, the report code, and the disturbance files it reads. plan.log and the fsync probe are run records the report does not read; they are listed because this record cites them. Paths are relative to the experiment's private directory. The 60 counted cells are listed with the sha256 the report records for each (REPORT.json, cell_sha256).",
+      "outputs": [
         {
           "file": "runner/results/s2/REPORT.json",
           "sha256": "c6fd5b40a692e523f74234d5bbc3c51d7a2d0785f5d52130623c1a6ce991c1e7",
@@ -131,7 +131,9 @@
         {
           "file": "RESULT.json",
           "sha256": "9fc056a8859e5b15e4c2fa747fe863ea3baa35732c5548fac2744fa0cb56c07b"
-        },
+        }
+      ],
+      "inputs": [
         {
           "file": "PREREG.md",
           "sha256": "83f35a8c2885dbf8c3e748a67cf0d4a574e2540ac9eb95b67bef2e9d9b5b1ca1",
@@ -154,7 +156,9 @@
           "file": "runner/s2_report.py",
           "sha256": "6cfe7873c350290656e83b79dbe4138095a210888dd26712a1d5f8dc4d1a2d03",
           "note": "the report code amendment 04 pins"
-        },
+        }
+      ],
+      "runRecords": [
         {
           "file": "runner/results/s2/plan.log",
           "sha256": "c3b2f58f152836e6a35ac4a62ae9b7a595b2cb15c21cf9e6604e06f98cdb58ad"
@@ -162,6 +166,248 @@
         {
           "file": "runner/results/s2/fsync-probe-2026-11-08.txt",
           "sha256": "2ab18773946a5e0e2e06c850206e98d4776b7ca12aab83a60c0b0a0a5cc8ae5f"
+        }
+      ],
+      "cells": [
+        {
+          "file": "mongo-x1-rep0-seed1.json",
+          "sha256": "f7f38bf8017a71e69dfe972981f00472b9524d344f083791395183a73637186f"
+        },
+        {
+          "file": "mongo-x1-rep0-seed2.json",
+          "sha256": "c4aecfb3ecfacac77d3cb65dd7f7977678595431633a92db7d39b2f6f6630a5c"
+        },
+        {
+          "file": "mongo-x1-rep1-seed1.json",
+          "sha256": "68f94fed299e933894c9c9d8d8c9e75360cdbd11d14e1190f596da20c5bfcffd"
+        },
+        {
+          "file": "mongo-x1-rep1-seed2.json",
+          "sha256": "b11690ebb733af7f69f44e49ecafa78ed13af71cc86584ba3c60f46fd00a999f"
+        },
+        {
+          "file": "mongo-x1-rep2-seed1.json",
+          "sha256": "9f1c7fbfe711c0f5f976db6047a865bb6942606148b82c288e0fc8c53356437e"
+        },
+        {
+          "file": "mongo-x1-rep2-seed2.json",
+          "sha256": "358c4b1eaf7a4321d860e780740cf7f6678b0ad343b1a9ce1598d537bc783818"
+        },
+        {
+          "file": "mongo-x1-rep3-seed1.json",
+          "sha256": "047a5af73152f69f11326ec9f14519bf69082aff8ff1a3cc6303468a4dc78a10"
+        },
+        {
+          "file": "mongo-x1-rep3-seed2.json",
+          "sha256": "3cc4d82e18c8e774503363c593f182d057a618a1b1d8b56aee023a435f675388"
+        },
+        {
+          "file": "mongo-x1-rep4-seed1.json",
+          "sha256": "6aa5d513efb9fd2c3ba0f80ccd0049cdaf24f153c213162a04ea9f3813fc6a29"
+        },
+        {
+          "file": "mongo-x1-rep4-seed2.json",
+          "sha256": "fe3ecab4716515d2ad9d0575a794fc064083ee65a831bc09886f8993c9815b9a"
+        },
+        {
+          "file": "mongo-x10-rep0-seed1.json",
+          "sha256": "e99084f68cdcfea1c1e1eede2533cef3278c3995648fd15a1d057873bdd41e4d"
+        },
+        {
+          "file": "mongo-x10-rep0-seed2.json",
+          "sha256": "e3357d8f18be1e8cabc7f0f1a54d9ec43c794ee246f2a01befcce1c68c0dc1ec"
+        },
+        {
+          "file": "mongo-x10-rep1-seed1.json",
+          "sha256": "a5cff18f06f18782fbf8980e0e0ed2a18b18e022fbbe348a482585c7c4d71781"
+        },
+        {
+          "file": "mongo-x10-rep1-seed2.json",
+          "sha256": "6b8e562eb3c856909f70507e573eb0bf8e54cbf9cc85483f09c8d864e40fed95"
+        },
+        {
+          "file": "mongo-x10-rep2-seed1.json",
+          "sha256": "5e6972a0d9e19dbd04e0f9aa0520fb3c8c961f271d529ae44d0aaef94f2ee4a8"
+        },
+        {
+          "file": "mongo-x10-rep2-seed2.json",
+          "sha256": "155a46f5a98e47fceff8634e466a4a0984050c3227e8cf4d504cb94d16868bcf"
+        },
+        {
+          "file": "mongo-x10-rep3-seed1.json",
+          "sha256": "59e33fb7f303b343851cd4df1335bd603a5f012346be719e9d3e3d23f72c6ec3"
+        },
+        {
+          "file": "mongo-x10-rep3-seed2.json",
+          "sha256": "a52a309a59284034ecd55746b7fba966205e791487ab6b670ad35508d2495041"
+        },
+        {
+          "file": "mongo-x10-rep4-seed1.json",
+          "sha256": "3d6c8bb282ec218544b328a228b8ef6d936e4a575016b442144f33ed2769dcae"
+        },
+        {
+          "file": "mongo-x10-rep4-seed2.json",
+          "sha256": "cf9b59b955df46cf384d7dca6f9ddaa7e9cf22cb42640a0cecad9f013f033a49"
+        },
+        {
+          "file": "outbox-x1-rep0-seed1.json",
+          "sha256": "79c7ee3d31ae0c90db1e0e8b772f851b1edf35da16cf6ea23093b54654442adf"
+        },
+        {
+          "file": "outbox-x1-rep0-seed2.json",
+          "sha256": "d55e8c083304074525e60ed93f2bf0871b6875bde79cbb4792494ed9f359377f"
+        },
+        {
+          "file": "outbox-x1-rep1-seed1.json",
+          "sha256": "7fb21419452bd6e5a47dc0b7d664f068427e8d316ba8e3e1070eb67c316baf9f"
+        },
+        {
+          "file": "outbox-x1-rep1-seed2.json",
+          "sha256": "be47337fc135ef09824c9f60d9f8dc05292a58ab6079c69b4c1cbba88baa4192"
+        },
+        {
+          "file": "outbox-x1-rep2-seed1.json",
+          "sha256": "9f88f014c26c70ccfcd6dc828a4f0f20b0cf14c07a02a88ae093e6a024b54118"
+        },
+        {
+          "file": "outbox-x1-rep2-seed2.json",
+          "sha256": "4c63ed5e90a495b62cacc0c83020e6afe40365673475ac3d94c757a2ba01bc9e"
+        },
+        {
+          "file": "outbox-x1-rep3-seed1.json",
+          "sha256": "3d9a350ccf7ce6e8247d98640171dd9cad2d671e1c55bbbdba52fc01034fba79"
+        },
+        {
+          "file": "outbox-x1-rep3-seed2.json",
+          "sha256": "cd6fc10bd437c3a62a3d80a5a538634db546cd9dc62a7b8de0280437b17ee915"
+        },
+        {
+          "file": "outbox-x1-rep4-seed1.json",
+          "sha256": "896e41b9db7a2a3f8646e12c4689ce27bc408a17edb9fe9405158681b9bef672"
+        },
+        {
+          "file": "outbox-x1-rep4-seed2.json",
+          "sha256": "f944bc32976c6c6392e2cc1def8b1c3a330928fbe3f39caa0e3507de48ac2c6e"
+        },
+        {
+          "file": "outbox-x10-rep0-seed1.json",
+          "sha256": "04fecc57dc72083713fa6fec4cdc7647b71b5827664c5d4de25304efe518777a"
+        },
+        {
+          "file": "outbox-x10-rep0-seed2.json",
+          "sha256": "cdcb826007bf2709cad8f39bd92f165b7ea2b232659a4186a49be3008e7926f6"
+        },
+        {
+          "file": "outbox-x10-rep1-seed1.json",
+          "sha256": "c42e5a7915a34681384454419367caee75f4347d8503af93b58191aeeccb9a56"
+        },
+        {
+          "file": "outbox-x10-rep1-seed2.json",
+          "sha256": "842e083f7d9d6e55f18bee65728218d2540d51ca67004d0c47e969db598f79ba"
+        },
+        {
+          "file": "outbox-x10-rep2-seed1.json",
+          "sha256": "8971cab115f0549d0038a256d6124d5a0fa6668e5ed23d867f0683e87553035e"
+        },
+        {
+          "file": "outbox-x10-rep2-seed2.json",
+          "sha256": "2e5226c0784c4fbbbbde81337248c566923f72d99a834ced58c6796302910abd"
+        },
+        {
+          "file": "outbox-x10-rep3-seed1.json",
+          "sha256": "007a1ffdb4d75422f5577ad5cdb6d778a16db303734683cc89f6ba4e1d407085"
+        },
+        {
+          "file": "outbox-x10-rep3-seed2.json",
+          "sha256": "cbaf380a0efdc8175970690e57532c8f3e89da687c3e2eff9bcee47c64832a99"
+        },
+        {
+          "file": "outbox-x10-rep4-seed1.json",
+          "sha256": "aa729ab0cfa740f7adc3ae33209620c59da4d59188bab132b9af294dbade2f05"
+        },
+        {
+          "file": "outbox-x10-rep4-seed2.json",
+          "sha256": "3e98bfb4fc546217ecf0d347718608202f74dedd72c7581736a4b3479d018e0e"
+        },
+        {
+          "file": "pgoutput-x1-rep0-seed1.json",
+          "sha256": "9ca17ab5d8d67b3066a5f2b4b0ddeb1c17bbdc6ab3ca3011d5deb7a9220fa4b6"
+        },
+        {
+          "file": "pgoutput-x1-rep0-seed2.json",
+          "sha256": "bad10a1329adad6e5086204c642b68506ef6c1b7b29ad858f0f172cb59a2b206"
+        },
+        {
+          "file": "pgoutput-x1-rep1-seed1.json",
+          "sha256": "7c9f8e5c1958fc04e23ed0206ffdea06e1cf7062c48d0cb29689b9b9c0ac5fab"
+        },
+        {
+          "file": "pgoutput-x1-rep1-seed2.json",
+          "sha256": "2cc6524c80661bc45041709b95958dbd194e9e90fa5b1ad7183d0c6d1fa2d337"
+        },
+        {
+          "file": "pgoutput-x1-rep2-seed1.json",
+          "sha256": "2b23dfdd9acf81c7911cdbee4038e0d888875662c90c30a57703cd2e998aafd6"
+        },
+        {
+          "file": "pgoutput-x1-rep2-seed2.json",
+          "sha256": "901703f2dc1bcce85ce794dd7447d49a24142e0aa3b84ab4bb9dde2f02cf28f1"
+        },
+        {
+          "file": "pgoutput-x1-rep3-seed1.json",
+          "sha256": "9af3a40876e9edfaddc479d6cf610b0b2e65c3209103c86cb2e6c6cd588c6062"
+        },
+        {
+          "file": "pgoutput-x1-rep3-seed2.json",
+          "sha256": "f5ffeae7b5002b793fe489d09b71fcd6e3387d513f1bab6d9e02b151e39b830f"
+        },
+        {
+          "file": "pgoutput-x1-rep4-seed1.json",
+          "sha256": "5c7615939add314f1da0475ec6a3eafb69bc8bf21b5a51f50ca7bc501dfa5949"
+        },
+        {
+          "file": "pgoutput-x1-rep4-seed2.json",
+          "sha256": "b66623f8c0e7e9a3f55a1fad1e3b7bf9803baa5180984209fd378da20c53e389"
+        },
+        {
+          "file": "pgoutput-x10-rep0-seed1.json",
+          "sha256": "a77b36fcbf060cb528559097a4af4b098208c4278f0701dce795345107eb6b99"
+        },
+        {
+          "file": "pgoutput-x10-rep0-seed2.json",
+          "sha256": "9f81e618cd821f319e0af5e3b006f1397e743bdfb37903c8f030c11805fc2cf2"
+        },
+        {
+          "file": "pgoutput-x10-rep1-seed1.json",
+          "sha256": "c088134193d5e45160733384a6027e98125d0cc07aebbf36a7ac1cb011260846"
+        },
+        {
+          "file": "pgoutput-x10-rep1-seed2.json",
+          "sha256": "4951ecaf550af1763199ee12587b1bda34e64ea828482f6b1fd8ff43072f46db"
+        },
+        {
+          "file": "pgoutput-x10-rep2-seed1.json",
+          "sha256": "0128bbd5ed7121851595701ea28d6851c72413daee6a62f0022a680d79ea5ec9"
+        },
+        {
+          "file": "pgoutput-x10-rep2-seed2.json",
+          "sha256": "1f6221329bd59dd16ad2230903eb5de64f3958ab7deb1a98b9c3f59a127db7ec"
+        },
+        {
+          "file": "pgoutput-x10-rep3-seed1.json",
+          "sha256": "d07f1ebf14018f2915405aeaeeeece6c741864d27d7c025a03a7f2035d2ed50b"
+        },
+        {
+          "file": "pgoutput-x10-rep3-seed2.json",
+          "sha256": "1a6313f60570d53bf86dd8e1edceb148c3494bd3ecf8ac110d22adec102982f4"
+        },
+        {
+          "file": "pgoutput-x10-rep4-seed1.json",
+          "sha256": "180aa78d63b3ef5e83115a8244971077c90d3f20efba3de5a8aa28f17b3c76bc"
+        },
+        {
+          "file": "pgoutput-x10-rep4-seed2.json",
+          "sha256": "19749e439bc1a9e9ca6a95579874a327f39f6f73de8138ec6a5207bbd7b96b02"
         }
       ]
     },
@@ -182,7 +428,7 @@
       "sha256": "239172cc053225f31f7265091c187b71e37df0f6a1062a097c4dd60782148027"
     }
   ],
-  "verifiedHere": "The publisher fetched every file in change 5 from the private repository at commit 9d24bd85 and recomputed its sha256: all ten match. The publisher read change 6's numbers from REPORT.json (verdicts, the chosen variant, the wins, the reproduction medians, the outbox-alone line, 60 cell hashes, 14 / 9 / 5 windows with no heavy overlap and the three light overlaps) and the 13 file names in discarded/: all match this record. The publisher did not rerun the report.",
+  "verifiedHere": "The publisher fetched the ten listed files in change 5 from the private repository at commit 9d24bd85 and recomputed each sha256: all ten match. The 60 cell hashes are copied from REPORT.json; the publisher did not fetch the cell files. The publisher read change 6's numbers from REPORT.json (verdicts, the chosen variant, the wins, the reproduction medians, the outbox-alone line, 60 cell hashes, 14 / 9 / 5 windows with no heavy overlap and the three light overlaps) and the 13 file names in discarded/: all match this record. The publisher did not rerun the report.",
   "limits": [
     "The report, its inputs and the 60 cell files are in a private repository and are cited here by commit and sha256, not published. A reader can check a hash but cannot open the files, so the verdict in change 6 is the report's, quoted, not something this repository lets a reader recompute.",
     "The pause, the incident and the discard times are the runner owner's account and the private run log's; they are not independently verifiable from this repository.",
