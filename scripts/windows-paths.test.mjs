@@ -7,11 +7,11 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { clarifyPublication, corrections, publicationPage, unmatchedCorrections } from './publication-corrections.mjs';
+import { PREFLIGHT_PATH, RESULTS_DIR } from '../experiments/nina-changes/write-results6.mjs';
 
 const article = '<html><main><article class="article-body"><p>Original.</p></article></main></html>';
 
-test('write-results6 imports on this OS and keeps its results directory POSIX', async () => {
-  const { RESULTS_DIR, PREFLIGHT_PATH } = await import('../experiments/nina-changes/write-results6.mjs');
+test('write-results6 imports on this OS and keeps its results directory POSIX', () => {
   assert.equal(RESULTS_DIR, 'experiments/nina-changes/results');
   assert.equal(PREFLIGHT_PATH, 'experiments/nina-changes/results/preflight.json');
 });

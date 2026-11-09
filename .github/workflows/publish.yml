@@ -92,7 +92,7 @@ jobs:
       - name: Corrections keys are POSIX and every one matches a site page
         run: node --test scripts/windows-paths.test.mjs scripts/publication-corrections.test.mjs
   verify:
-    needs: test
+    needs: [test, windows-paths]
     # Runs whatever the shards did, and fails unless every one succeeded: a skipped, cancelled or failed shard can
     # never read as a pass.
     if: always()
@@ -107,6 +107,9 @@ jobs:
       - name: Every test shard succeeded
         run: |
           [ "${{ needs.test.result }}" = success ] || { echo "::error::the test shards concluded '${{ needs.test.result }}', not success"; exit 1; }
+      - name: The Windows path checks succeeded
+        run: |
+          [ "${{ needs.windows-paths.result }}" = success ] || { echo "::error::the windows paths job concluded '${{ needs.windows-paths.result }}', not success"; exit 1; }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the
