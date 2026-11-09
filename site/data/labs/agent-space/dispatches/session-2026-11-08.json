@@ -1,0 +1,130 @@
+{
+ "format": "odin-lab-dispatch",
+ "version": 1,
+ "lab": "agent-space",
+ "session": "session-2026-11-08",
+ "date": "2026-11-08",
+ "clip": {
+  "src": "assets/labs/agent-space/session-2026-11-08/clip.webm",
+  "bytes": 1523498,
+  "mime": "video/webm;codecs=vp9",
+  "seconds": 50
+ },
+ "poster": "assets/labs/agent-space/session-2026-11-08/poster.png",
+ "stills": [
+  "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1.png",
+  "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2.png",
+  "assets/labs/agent-space/session-2026-11-08/stills/03-s1-q3.png",
+  "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4.png"
+ ],
+ "questions": [
+  {
+   "id": "s1-q1",
+   "to": "Odin",
+   "text": "Who is here right now, and what is everyone doing?",
+   "followUp": false,
+   "answer": "Here is what I see: 4 of your agents are here: Atlas (Knowledge agent), Pulse (Status agent), Vega (Sales agent), Juno (Support agent); Atlas is reading in the library, Pulse is watching the ops screens, Vega is preparing a proposal in the meeting pavilion, Juno is at the help desk; 1 visitor here: Follower; the home (Odin Campus) stands with 22 structures on the owned ground…",
+   "why": "I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec.",
+   "source": "world-checked",
+   "evidence": "odin-2f581f-1"
+  },
+  {
+   "id": "s1-q2",
+   "to": "Atlas",
+   "text": "What should I check before I trust one of your answers?",
+   "followUp": false,
+   "answer": "Every answer here is an evidence record: a short why and its source, world-checked, wiki, tool or model. The lens stream carries it as a mark, and the VR client draws it as a panel over whoever answered.",
+   "why": "From my knowledge base entry 'evidence' (the evidence record format).",
+   "source": "wiki",
+   "evidence": "atlas-2f581f-1"
+  },
+  {
+   "id": "s1-q3",
+   "to": "Juno",
+   "text": "I'm new here. Where do I start?",
+   "followUp": false,
+   "answer": "Welcome! Walk with W A S D or the arrow keys, and walk up to any agent to ask it something in the chat. Odin knows what is happening here right now, Atlas answers from the company's knowledge base, and I help when something does not work. Every answer comes with a proof card: what was asked, the answer, why, and where it came from. Not sure whom to ask? Ask Odin \"who can help me with ...\" and he walks you there.",
+   "why": "From my support notes entry 'start' (moving, asking an agent, the proof card, Odin's concierge).",
+   "source": "wiki",
+   "evidence": "juno-2f581f-1"
+  },
+  {
+   "id": "s1-q4",
+   "to": "Odin",
+   "text": "How do you know?",
+   "followUp": true,
+   "answer": "How I know (world): I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec. The full evidence: evidence odin-2f581f-1. Sources: 4 of your agents are here: Atlas (Knowledge agent), Pulse (Status agent), Vega (Sales agent), Juno (Support agent); Atlas is reading in the library, Pulse is watching the ops screens, Vega is…",
+   "why": "I read these just now: the agents' states, the space's heroes, the world's structures and the terrain spec.",
+   "source": "world-checked",
+   "evidence": "odin-2f581f-1"
+  }
+ ],
+ "answersScreen": {
+  "by": "orchestrator-launch-1108",
+  "answers": [
+   {
+    "evidence": "odin-2f581f-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-real-world-place",
+     "no-price",
+     "no-partner",
+     "stills-and-clip-frames-viewed"
+    ]
+   },
+   {
+    "evidence": "atlas-2f581f-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-real-world-place",
+     "no-price",
+     "no-partner",
+     "stills-and-clip-frames-viewed"
+    ]
+   },
+   {
+    "evidence": "juno-2f581f-1",
+    "verdict": "ok",
+    "checks": [
+     "on-topic",
+     "no-personal-data",
+     "no-restricted-name",
+     "no-real-world-place",
+     "no-price",
+     "no-partner",
+     "stills-and-clip-frames-viewed"
+    ]
+   }
+  ]
+ },
+ "source": {
+  "schema": "odin-dispatch-v1",
+  "schemaSha256": "ab6a19e8021056a1b61226e74901265810c36215445396c676ef62aac80f634e",
+  "manifestSha256": "5559f9805e1340a02f059a3832ec3d6ffd65187500a509c764c3b22686280ae1",
+  "assetsSha256": {
+   "assets/labs/agent-space/session-2026-11-08/clip.webm": "b905ebbca294d8e26ce5a5b4004874230e2e1a2c7c7e8e7516c77b9789d730f6",
+   "assets/labs/agent-space/session-2026-11-08/poster.png": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
+   "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1.png": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
+   "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2.png": "a4f88b86a886c14e2943efad8869d970ccc143ab07c6f4b3f89e7804a8503cea",
+   "assets/labs/agent-space/session-2026-11-08/stills/03-s1-q3.png": "3c8686eb3a973188fef4d2d4023a28990d98bd31d18d1d279aa2c1be9f3b8e40",
+   "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4.png": "8c4abfd06c6bd070a5c1edf767e7234e7bf200aeb4b04466c71e62bc9fe76313"
+  },
+  "treatment": {
+   "note": "Decorative wall and stage screens are blurred: their numbers are drawn by the space, not read from this session. The closing title card is cut.",
+   "exportManifestSha256": "c1047d1f814355c6cd71c599fa39988ade3cf44c86b2b9dd59f22321736df722",
+   "exportAssetsSha256": {
+    "assets/labs/agent-space/session-2026-11-08/clip.webm": "091a2bbea56fff1712ef99e7376aa43f239cf4c8d27554bf31be0f4c3a710886",
+    "assets/labs/agent-space/session-2026-11-08/poster.png": "2f300e55aba8cf18c1e403935e5fe2849cf48a46a2b8e8861016454cc909d528",
+    "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1.png": "2f300e55aba8cf18c1e403935e5fe2849cf48a46a2b8e8861016454cc909d528",
+    "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2.png": "861dcacb5cb83cdf734bff85d1d9dc87bb00cdbeac19c70e363b01c29062c3d7",
+    "assets/labs/agent-space/session-2026-11-08/stills/04-s1-q4.png": "b345128ac8b2df816fe94209919747cc9befee391e2e42aec5369f07e2bd3b23"
+   }
+  }
+ }
+}

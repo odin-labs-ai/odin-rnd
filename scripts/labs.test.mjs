@@ -81,6 +81,8 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
     'progress/hq-on-duty-poster.jpg', 'progress/hq-engineering-hall.jpg',
     'session-2026-10-25-b/poster.png',
     ...['01-s1-q1.png', '02-s1-q2.png', '03-s1-q3.png', '04-s1-q4.png'].map(name => `session-2026-10-25-b/stills/${name}`),
+    'session-2026-11-08/poster.png',
+    ...['01-s1-q1.png', '02-s1-q2.png', '03-s1-q3.png', '04-s1-q4.png'].map(name => `session-2026-11-08/stills/${name}`),
   ];
   for (const original of originals) for (const width of [800, 1280]) {
     const sibling = webpSibling(`assets/labs/agent-space/${original}`, width);
@@ -99,11 +101,12 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
   }
 });
 
-test('the four hash-pinned JSON records retain their committed bytes', () => {
+test('the hash-pinned JSON records retain their committed bytes', () => {
   const expected = new Map([
     ['films.json', 'f2ade996bcc2090a9028e9226631668605bc02e319a48c22bc5b8f4446a3f819'],
     ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
     ['dispatches/session-2026-10-25-b.json', '260fe2c03e1e49dc21ccc485056513f3add18b81e5dd7e1ba0b39702bffd87a2'],
+    ['dispatches/session-2026-11-08.json', 'd324ce96f7719b3c73711c44b7e9ede981a282df4a1a53d58286e9bdb816a716'],
     ['milestones.json', JSON.parse(readFileSync('scripts/milestones.pin.json', 'utf8')).fileSha256],
   ]);
   for (const [file, hash] of expected) {
@@ -194,6 +197,7 @@ test('two dated sessions render newest first on the page and in the feed (order 
       const d = { ...JSON.parse(JSON.stringify(base)), session, date };
       d.clip = { ...d.clip, src: swap(d.clip.src) }; d.poster = swap(d.poster); d.stills = d.stills.map(swap);
       d.source = { ...d.source, assetsSha256: Object.fromEntries(Object.entries(d.source.assetsSha256).map(([path, hash]) => [swap(path), hash])) };
+      if (d.source.treatment) d.source.treatment = { ...d.source.treatment, exportAssetsSha256: Object.fromEntries(Object.entries(d.source.treatment.exportAssetsSha256).map(([path, hash]) => [swap(path), hash])) };
       cpSync(join('site', 'assets/labs/agent-space', base.session), join(root, 'assets/labs/agent-space', session), { recursive: true });
       mkdirSync(join(root, 'data/labs/agent-space/dispatches'), { recursive: true });
       writeFileSync(join(root, 'data/labs/agent-space/dispatches', `${session}.json`), JSON.stringify(d));
