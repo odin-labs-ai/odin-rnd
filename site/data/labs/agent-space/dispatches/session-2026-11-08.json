@@ -6,7 +6,7 @@
  "date": "2026-11-08",
  "clip": {
   "src": "assets/labs/agent-space/session-2026-11-08/clip.webm",
-  "bytes": 1523498,
+  "bytes": 1552708,
   "mime": "video/webm;codecs=vp9",
   "seconds": 50
  },
@@ -106,9 +106,9 @@
  "source": {
   "schema": "odin-dispatch-v1",
   "schemaSha256": "ab6a19e8021056a1b61226e74901265810c36215445396c676ef62aac80f634e",
-  "manifestSha256": "5559f9805e1340a02f059a3832ec3d6ffd65187500a509c764c3b22686280ae1",
+  "manifestSha256": "fad35d9d135e8816e1afe678f8db464d6a1971d5d358808122ea6766764f4c2f",
   "assetsSha256": {
-   "assets/labs/agent-space/session-2026-11-08/clip.webm": "b905ebbca294d8e26ce5a5b4004874230e2e1a2c7c7e8e7516c77b9789d730f6",
+   "assets/labs/agent-space/session-2026-11-08/clip.webm": "f3abef831547242e318f85f6309cbdf7a245f75924cc082935c209afc068c174",
    "assets/labs/agent-space/session-2026-11-08/poster.png": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
    "assets/labs/agent-space/session-2026-11-08/stills/01-s1-q1.png": "f1f6e17ff2de2983ffc7137d8089ba5bc616ff66fd0f2d5011b03a4eb5205ebc",
    "assets/labs/agent-space/session-2026-11-08/stills/02-s1-q2.png": "a4f88b86a886c14e2943efad8869d970ccc143ab07c6f4b3f89e7804a8503cea",

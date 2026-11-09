@@ -106,7 +106,7 @@ test('the hash-pinned JSON records retain their committed bytes', () => {
     ['films.json', 'f2ade996bcc2090a9028e9226631668605bc02e319a48c22bc5b8f4446a3f819'],
     ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
     ['dispatches/session-2026-10-25-b.json', '260fe2c03e1e49dc21ccc485056513f3add18b81e5dd7e1ba0b39702bffd87a2'],
-    ['dispatches/session-2026-11-08.json', 'd324ce96f7719b3c73711c44b7e9ede981a282df4a1a53d58286e9bdb816a716'],
+    ['dispatches/session-2026-11-08.json', 'd895de15e735853ba6fc41e7281ab87c6ff1c28751e6f3edd23a98b19da2e627'],
     ['milestones.json', JSON.parse(readFileSync('scripts/milestones.pin.json', 'utf8')).fileSha256],
   ]);
   for (const [file, hash] of expected) {
