@@ -63,7 +63,9 @@ export const PLATFORMS = [
 ];
 
 export function checkPlatforms(html = readFileSync(PAGE, 'utf8'), md = readFileSync(README, 'utf8'), wf = readFileSync(WORKFLOW, 'utf8')) {
-  const runners = [...wf.matchAll(/^ +- os: (\S+)$/gm)].map(m => m[1]);
+  // The runners of the jobs that run the page's commands (the composite action), not the job that runs this check.
+  const jobs = wf.replaceAll('\r\n', '\n').split('\njobs:\n')[1]?.split(/\n(?=  [a-z][\w-]*:\n)/) ?? [];
+  const runners = jobs.filter(j => j.includes('uses: ./.github/actions/laya-reproduce')).map(j => j.match(/\n    runs-on: (\S+)\n/)?.[1]);
   const section = pageSection(html);
   const readme = md.split(/^## Reproduce$/m)[1] ?? '';
   for (const [claim, proof] of PLATFORMS) {

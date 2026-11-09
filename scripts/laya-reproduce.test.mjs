@@ -26,6 +26,6 @@ test('the PowerShell script stops at the first failing command, which Windows Po
 test('every platform the page claims has a runner in the smoke workflow, and no runner goes unclaimed', () => {
   const wf = readFileSync('.github/workflows/laya-reproduce.yml', 'utf8');
   assert.deepEqual(checkPlatforms(html, md, wf).sort(), ['macos-15', 'ubuntu-24.04-arm', 'ubuntu-latest', 'windows-11-arm', 'windows-latest']);
-  assert.throws(() => checkPlatforms(html, md, wf.replace('- os: windows-11-arm', '- os: windows-2025')), /windows-11-arm|windows-2025/);
+  assert.throws(() => checkPlatforms(html, md, wf.replace('runs-on: windows-11-arm', 'runs-on: windows-2025')), /windows-11-arm|windows-2025/);
   assert.throws(() => checkPlatforms(html.replace('macOS 14 or later on Apple silicon', 'macOS'), md, wf), /Apple silicon/);
 });
