@@ -6,6 +6,12 @@ Recorded local fixture demonstration, not an autonomous diagnosis or repair serv
 JAVA_HOME=/path/to/jdk-21 node demos/ci-witness/run.mjs --out /tmp/ci-witness.json
 ```
 
+On Windows (PowerShell):
+
+```powershell
+$env:JAVA_HOME='C:\jdk-21'; node demos/ci-witness/run.mjs --out "$env:TEMP\ci-witness.json"
+```
+
 The runner compiles and executes trusted bundled Java. Each case executes baseline, identical controlled reproducer, hand-authored correction, unrelated failure, suppressed checks, surviving regression, and unknown exception in that fixed order. The explicit matrix uses Amsterdam near UTC midnight, Turkish lowercasing, reversed input order, and legacy configuration. All processes receive explicit timezone and locale; ordering and configuration cases receive their own explicit inputs. UTF-8 compilation and execution preserve the Turkish assertion evidence.
 
 The independent JSON oracle declares expected and baseline values. Verification requires exact target assertion identity/value, one case-specific boundary and both regression assertions, check count and process exit. A correction must retain four checks. The seeded regression passes the target assertion but fails the arithmetic check and is rejected. Missing checks and unrelated failures are rejected. Unknown exceptions remain inconclusive rather than receiving a guessed diagnosis. An expected negative control counts toward successful discrimination, not toward a passed behavioral test. Four deliberately unknown executions stay visible in the unresolved denominator.

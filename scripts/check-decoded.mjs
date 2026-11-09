@@ -7,7 +7,7 @@
 // semantic privacy audit: it decodes one layer, and a term split across tokens or encoded twice is not found.
 import { readdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -72,7 +72,7 @@ export function scanDecoded(root = 'dist', fingerprints = checkFingerprints()) {
   return walk(root)
     .filter(file => /\.(html|css|js|mjs|json|svg|md|txt)$/.test(file))
     .filter(file => encodedRestricted(readFileSync(file, 'utf8'), fingerprints))
-    .map(file => relative(root, file))
+    .map(file => relative(root, file).split(sep).join('/'))
     .sort();
 }
 
