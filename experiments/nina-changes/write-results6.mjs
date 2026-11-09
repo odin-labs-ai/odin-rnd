@@ -16,7 +16,7 @@
 // "decides nothing", and asking for that is explicit.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { isAbsolute, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO_ROOT } from '../jev-gate/runner-guard.mjs';
 import { checkRun6, PREREG6 } from './guard6.mjs';
@@ -25,14 +25,16 @@ import { headerDigests6 } from './run_reviewer6.mjs';
 import { lintRecord6 } from './scrub6.mjs';
 import { DECISION_PATH, RESULTS_PATH, REVIEWER_RUN_PATH } from './spotlight-gate.mjs';
 
-export const RESULTS_DIR = dirname(RESULTS_PATH);
+// Repo-relative paths are POSIX on every OS (posix.*): native join would give backslashes on Windows and this guard
+// would throw at import time there.
+export const RESULTS_DIR = posix.dirname(RESULTS_PATH);
 export const PREFLIGHT_PATH = `${RESULTS_DIR}/preflight.json`;
 export const PREREG6_PIN = 'experiments/nina-changes/preregistration.sha256';
 export const FINGERPRINTS = 'experiments/nina-changes/change-fingerprints.json';
 export const LABELS = 'experiments/jev-gate/labels.json';
 export const FILES = { results: 'results.json', reviewer: 'reviewer.json', preflight: 'preflight.json', decision: 'spotlight-decision.json' };
 // The file names inside a results directory are the pinned gate's (results, reviewer run, decision), never retyped.
-for (const [k, p] of [['results', RESULTS_PATH], ['reviewer', REVIEWER_RUN_PATH], ['decision', DECISION_PATH]]) if (join(RESULTS_DIR, FILES[k]) !== p) throw new Error(`write-results6: ${p} is not in ${RESULTS_DIR}`);
+for (const [k, p] of [['results', RESULTS_PATH], ['reviewer', REVIEWER_RUN_PATH], ['decision', DECISION_PATH]]) if (posix.join(RESULTS_DIR, FILES[k]) !== p) throw new Error(`write-results6: ${p} is not in ${RESULTS_DIR}`);
 
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const renderResults6 = record => `${JSON.stringify(record, null, 2)}\n`;
