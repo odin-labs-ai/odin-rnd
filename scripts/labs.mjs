@@ -204,6 +204,13 @@ function checkedProofs(html, dispatches) {
 const EARLIER_HERO = '<figure class="lab-hero-media"><img src="../../assets/agent-space/agent-space-overview.jpg" width="1280" height="720" alt="The Odin agent space: agents in their own spots in a small 3D world."><figcaption>From an earlier recording, also on <a href="../../#agent-space">the home page</a>.</figcaption></figure>';
 
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
+function requireRenderedTilePages(tiles, pages) {
+  for (const tile of tiles) {
+    const detailPage = `labs/${tile.experiment}/index.html`;
+    if (!pages[detailPage]) throw new Error(`${detailPage}: checked tile has no rendered page`);
+  }
+}
+
 export function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
   const dispatches = readDispatches(root);
@@ -249,7 +256,9 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
-  const tiles = readTiles(root, { required: requireBench });
+  // A caller cannot turn off the published site's tile/page contract by passing requireBench: false.
+  const requireTiles = resolve(root) === REPO_SITE || requireBench;
+  const tiles = readTiles(root, { required: requireTiles });
   const failover = tiles.find(tile => tile.experiment === 'failover');
   const failoverPage = 'labs/failover/index.html';
   const hasFailoverPage = existsSync(join(root, failoverPage));
@@ -318,10 +327,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...talkLeak.pages,
     ...jury.pages,
   };
-  if (requireBench) for (const tile of tiles) {
-    const detailPage = `labs/${tile.experiment}/index.html`;
-    if (!pages[detailPage]) throw new Error(`${detailPage}: checked tile has no rendered page`);
-  }
+  if (requireTiles) requireRenderedTilePages(tiles, pages);
   return pages;
 }
 

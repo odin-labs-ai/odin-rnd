@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -17,6 +19,25 @@ test('every published experiment lab has a page reached directly from its index 
     assert.ok(card.includes(`<span class="sr-only">${tile.title} — </span>`), `${tile.label} names its page to screen readers`);
     assert.ok(index.includes(card.slice(0, card.indexOf('<ul class="lab-tile-links">'))), `${tile.label} keeps that link on the index`);
     assert.equal(card.split(`href="../${path}"`).length - 1, 1, `${tile.label} does not repeat its page link among source links`);
+  }
+});
+
+test('the published render refuses a checked tile whose page is omitted, even with requireBench false', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'rnd-lab-page-'));
+  try {
+    cpSync('site', join(fixture, 'site'), { recursive: true });
+    cpSync('scripts', join(fixture, 'scripts'), { recursive: true });
+    cpSync('experiments', join(fixture, 'experiments'), { recursive: true });
+    copyFileSync('package.json', join(fixture, 'package.json'));
+    const source = join(fixture, 'scripts/labs.mjs');
+    const original = readFileSync(source, 'utf8');
+    assert.ok(original.includes('    ...jury.pages,'), 'the fixture removes a real rendered page entry');
+    writeFileSync(source, original.replace('    ...jury.pages,', ''));
+    const run = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(run.status, 1, run.stderr);
+    assert.match(run.stderr, /labs\/ai-jury\/index\.html: checked tile has no rendered page/);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
   }
 });
 
