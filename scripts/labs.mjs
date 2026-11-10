@@ -252,6 +252,9 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   const tiles = readTiles(root);
   const failover = tiles.find(tile => tile.experiment === 'failover');
   const failoverPage = 'labs/failover/index.html';
+  const hasFailoverPage = existsSync(join(root, failoverPage));
+  const failoverPrereg = failover && `data/${failover.experiment}/preregistration.json`;
+  if (failover && hasFailoverPage && !existsSync(join(root, failoverPrereg))) throw new Error(`${failoverPage}: ${failoverPrereg} is missing`);
   const embeddedFilms = new Set(progress?.steps.filter(step => step.kind === 'film-ref').map(step => step.film) ?? []);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
@@ -294,13 +297,14 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
     // Lab 03 is a continuing project even while it has a plan but no result. Its source links and status come from
     // the same checked tile as the index, so a later published amendment appears on both pages.
-    ...(failover && existsSync(join(root, failoverPage)) ? { [failoverPage]: fill(failoverPage, {
+    ...(failover && hasFailoverPage ? { [failoverPage]: fill(failoverPage, {
       '<!--FAILOVER_QUESTION-->': escape(failover.question),
       '<!--FAILOVER_STATUS-->': escape(failover.status),
       '<!--FAILOVER_RESULT_STATE-->': failover.kind === 'results'
         ? 'A result is published. Read its record and limits before treating it as a finding.'
         : 'No counted result is published yet. This is a plan, not a finding.',
       '<!--FAILOVER_HOW-->': escape(failover.how),
+      '<!--FAILOVER_PREREG_LINK-->': `<a href="../../${escape(failoverPrereg)}">Read the published pre-registration record</a>.`,
       '<!--FAILOVER_LINKS-->': failover.links.map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
     }) } : {}),
     // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).

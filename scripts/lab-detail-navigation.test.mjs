@@ -26,9 +26,14 @@ test('the failover page shows the published plan and status without implying a r
   assert.ok(page);
   assert.ok(page.includes(tile.question));
   assert.ok(page.includes(tile.how));
-  assert.ok(page.includes(tile.status), 'the page follows the checked tile as the lab progresses');
-  assert.match(page, /No counted result is published yet/);
-  assert.match(page, /data\/failover\/preregistration\.json/);
+  assert.ok(page.includes(tile.status), 'the page reflects the checked tile status');
+  assert.ok(page.includes(tile.kind === 'results' ? 'A result is published.' : 'No counted result is published yet.'));
+  const prereg = `data/${tile.experiment}/preregistration.json`;
+  assert.ok(existsSync(join('site', prereg)), 'the checked tile requires a published pre-registration');
+  assert.ok(page.includes(`href="../../${prereg}"`), 'the page links that checked record');
+  const description = page.match(/<meta name="description" content="([^"]*)">/)?.[1];
+  assert.ok(description);
+  assert.doesNotMatch(description, /results|amendments/i, 'the preview makes no result or amendment claim');
   for (const link of tile.links) assert.ok(page.includes(`href="../../${link.href}"`), `${link.label} is on the lab page`);
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/failover/</loc>'));
   assert.doesNotMatch(page, /<!--FAILOVER_[A-Z_]+-->/);
