@@ -22,7 +22,7 @@ test('every published experiment lab has a page reached directly from its index 
   }
 });
 
-test('the published render refuses a checked tile whose page is omitted, even with requireBench false', () => {
+test('the published render requires checked tiles and pages, and Failover metadata follows its tile', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'rnd-lab-page-'));
   try {
     cpSync('site', join(fixture, 'site'), { recursive: true });
@@ -36,6 +36,22 @@ test('the published render refuses a checked tile whose page is omitted, even wi
     const run = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
     assert.equal(run.status, 1, run.stderr);
     assert.match(run.stderr, /labs\/ai-jury\/index\.html: checked tile has no rendered page/);
+    writeFileSync(source, original);
+    const tilePath = join(fixture, 'site/data/labs/failover.json');
+    const tile = JSON.parse(readFileSync(tilePath, 'utf8'));
+    tile.title = 'Failover study';
+    tile.question = 'When the primary database stops, which acknowledged writes survive?';
+    tile.links[0].href = 'data/failover/preregistration.json';
+    writeFileSync(tilePath, JSON.stringify(tile));
+    const changed = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; process.stdout.write(renderLabs('site', {requireBench: false})['labs/failover/index.html']);"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(changed.status, 0, changed.stderr);
+    assert.ok(changed.stdout.includes(`<title>${tile.label}: ${tile.title} — Odin Labs R&amp;D</title>`));
+    assert.ok(changed.stdout.includes(`<meta name="description" content="${tile.question} ${tile.status}.">`));
+    assert.ok(changed.stdout.includes(`href="../../${tile.links[0].href}"`));
+    rmSync(tilePath);
+    const missing = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(missing.status, 1, missing.stderr);
+    assert.match(missing.stderr, /data\/labs\/failover\.json: missing \(listed in TILE_FILES/);
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }
@@ -51,10 +67,13 @@ test('the failover page shows the published plan and status without implying a r
   assert.ok(page.includes(tile.kind === 'results' ? 'A result is published.' : 'No counted result is published yet.'));
   const prereg = `data/${tile.experiment}/preregistration.json`;
   assert.ok(existsSync(join('site', prereg)), 'the checked tile requires a published pre-registration');
-  assert.ok(page.includes(`href="../../${prereg}"`), 'the page links that checked record');
+  const preregLink = tile.links.find(link => /pre-registration/i.test(link.label));
+  assert.ok(preregLink, 'the checked tile names its pre-registration link');
+  assert.ok(page.includes(`href="../../${preregLink.href}"`), 'the page links the checked tile source');
   const description = page.match(/<meta name="description" content="([^"]*)">/)?.[1];
   assert.ok(description);
-  assert.doesNotMatch(description, /results|amendments/i, 'the preview makes no result or amendment claim');
+  assert.ok(description.includes(tile.question));
+  assert.ok(description.includes(tile.status));
   for (const link of tile.links) assert.ok(page.includes(`href="../../${link.href}"`), `${link.label} is on the lab page`);
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/failover/</loc>'));
   assert.doesNotMatch(page, /<!--FAILOVER_[A-Z_]+-->/);
