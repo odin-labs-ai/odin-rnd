@@ -249,7 +249,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
-  const tiles = readTiles(root);
+  const tiles = readTiles(root, { required: requireBench });
   const failover = tiles.find(tile => tile.experiment === 'failover');
   const failoverPage = 'labs/failover/index.html';
   const hasFailoverPage = existsSync(join(root, failoverPage));
@@ -269,7 +269,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     }
     return html;
   };
-  return {
+  const pages = {
     'labs/index.html': fill('labs/index.html', {
       // Lab 01's tile, then the experiment labs' tiles, Lab 02 then Lab 03 (scripts/lab-tiles.mjs gates them; the build
       // fails on a problem).
@@ -318,6 +318,11 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...talkLeak.pages,
     ...jury.pages,
   };
+  if (requireBench) for (const tile of tiles) {
+    const detailPage = `labs/${tile.experiment}/index.html`;
+    if (!pages[detailPage]) throw new Error(`${detailPage}: checked tile has no rendered page`);
+  }
+  return pages;
 }
 
 /**
