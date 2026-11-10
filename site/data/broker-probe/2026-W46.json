@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W46",
+  "startedAt": "2026-11-09T07:22:17.765Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 636,
+          "latencyMsP95": 776,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 568,
+          "latencyMsP95": 717,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 425,
+        "sha256": "392f6df71cc6fe2da0b82334e97c8130a3b134c267fd1d5c58861977b7a3b4fb",
+        "diff": {
+          "added": 21,
+          "removed": 12,
+          "repriced": 36,
+          "addedIds": [
+            "deepseek/deepseek-v4-flash-0731:batch",
+            "deepseek/deepseek-v4.1-flash-1017:batch",
+            "google/gemini-omni-1.1-flash",
+            "google/gemini-omni-1.2-flash",
+            "inclusionai/ling-3.0-tiny",
+            "liquid/lfm-3-1.7b",
+            "liquid/lfm-3-1.7b:free",
+            "meta/muse-glimmer-30b:batch",
+            "minimax/minimax-m3:batch",
+            "morph/morph-v3-fast:batch",
+            "morph/morph-v3-large:batch",
+            "openrouter/auto-code",
+            "qwen/qwen3.8-27b:batch",
+            "ricursiveai/ripple-65b-preview",
+            "stealth/crouton-alpha",
+            "tencent/hy4",
+            "thinkingmachines/inkling-small:batch",
+            "x-ai/grok-4.6:batch",
+            "x-ai/grok-4.7:batch",
+            "z-ai/glm-5.2:batch",
+            "z-ai/glm-5.3-flashx-legal"
+          ],
+          "removedIds": [
+            "inception/mercury-2",
+            "inception/mercury-2.5",
+            "inception/mercury-3",
+            "minimax/minimax-01",
+            "minimax/minimax-m2",
+            "minimax/minimax-m2-her",
+            "minimax/minimax-m2.1",
+            "nousresearch/hermes-3-llama-3.1-405b",
+            "nousresearch/hermes-3-llama-3.1-70b",
+            "nvidia/nemotron-3.5-content-safety:free",
+            "thinkingmachines/inkling-small:free",
+            "thinkingmachines/inkling:free"
+          ],
+          "repricedIds": [
+            "~deepseek/deepseek-flash-latest",
+            "~deepseek/deepseek-pro-latest",
+            "~deepseek/deepseek-v4-flash-latest",
+            "~moonshotai/kimi-latest",
+            "~z-ai/glm-flash-latest",
+            "deepseek/deepseek-chat",
+            "deepseek/deepseek-v4-flash-0731",
+            "deepseek/deepseek-v4-flash-vision-exp",
+            "deepseek/deepseek-v4-pro",
+            "deepseek/deepseek-v4-pro-0813",
+            "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017",
+            "deepseek/deepseek-v4.1-flash:batch",
+            "google/gemma-3-27b-it",
+            "google/gemma-4-26b-a4b-it",
+            "ibm-granite/granite-4.2-8b",
+            "inclusionai/ling-3.1-flash",
+            "meta-llama/llama-3.1-70b-instruct",
+            "meta-llama/llama-3.1-8b-instruct",
+            "meta-llama/llama-3.2-3b-instruct",
+            "meta-llama/llama-3.3-70b-instruct",
+            "meta-llama/llama-4-maverick",
+            "minimax/minimax-m2.5",
+            "minimax/minimax-m2.7",
+            "moonshotai/kimi-k2.5",
+            "moonshotai/kimi-k3",
+            "moonshotai/kimi-k3:batch",
+            "nvidia/nemotron-3-super-120b-a12b",
+            "openai/gpt-oss-120b",
+            "qwen/qwen3-235b-a22b-2507",
+            "qwen/qwen3-coder-30b-a3b-instruct",
+            "qwen/qwen3.5-397b-a17b",
+            "qwen/qwen3.6-27b",
+            "reflection/beam-1.0-501b-a23b",
+            "z-ai/glm-5.3",
+            "z-ai/glm-5.3-flash"
+          ]
+        },
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-11-09T07:22:43.365Z"
+}
