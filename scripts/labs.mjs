@@ -321,7 +321,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
         : 'No counted result is published yet. This is a plan, not a finding.',
       '<!--FAILOVER_HOW-->': escape(failover.how),
       '<!--FAILOVER_PREREG_LINK-->': `<a href="../../${escape(failoverPrereg[0].href)}">${escape(failoverPrereg[0].label)}</a>.`,
-      '<!--FAILOVER_LINKS-->': failover.links.filter(link => link !== failoverPrereg[0] && link.href !== failoverPage).map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
+      '<!--FAILOVER_LINKS-->': failover.links.filter(link => link.href !== failoverPrereg[0].href && link.href !== failoverPage).map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
     }) } : {}),
     // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
