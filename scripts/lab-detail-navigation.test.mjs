@@ -25,7 +25,7 @@ test('the failover page shows the published plan and status without implying a r
   assert.ok(page);
   assert.ok(page.includes(tile.question));
   assert.ok(page.includes(tile.how));
-  assert.match(page, /Pre-registered, not yet run/);
+  assert.ok(page.includes(tile.status), 'the page follows the checked tile as the lab progresses');
   assert.match(page, /No counted result is published yet/);
   assert.match(page, /data\/failover\/preregistration\.json/);
   for (const link of tile.links) assert.ok(page.includes(`href="../../${link.href}"`), `${link.label} is on the lab page`);
