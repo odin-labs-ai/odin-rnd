@@ -39,6 +39,9 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
   const { links, record, ...words } = tile;
   problems.push(...screenTree({ ...words, links: links.map(l => l.label) }, where));
   for (const key of ['question', 'how', 'status']) if (/\p{Nd}/u.test(tile[key])) problems.push(`${where}#/${key}: a tile carries no number`);
+  // The published catalogue must lead to a page for every lab, including a lab that has a plan but no result.
+  const detail = `labs/${tile.experiment}/index.html`;
+  if (resolve(root) === REPO_SITE && !isFile(join(root, detail))) problems.push(`${where}#/detail: ${detail} is missing`);
   for (const [i, { href }] of links.entries()) {
     if (!/^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9.-]*)*\.(html|json)$/.test(href) || /(^|\/)\.\.?(\/|$)/.test(href)) problems.push(`${where}#/links/${i}/href: not a page or record path of this site`);
     else if (!isFile(join(root, href))) problems.push(`${where}#/links/${i}/href: ${href} is not on this site`);
@@ -101,6 +104,7 @@ export function readTiles(root = 'site', { required = resolve(root) === REPO_SIT
 
 /** One tile: what the lab asks, its status, and links to its frozen records. `up` is the way from labs/ to the site root. */
 export function renderTile(tile, up = '../') {
-  const links = tile.links.map(l => `<li><a href="${up}${escape(l.href)}">${escape(l.label)}</a></li>`).join('');
-  return `<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-${escape(tile.experiment)}"><span class="technical">${escape(tile.label.toUpperCase())}</span><h2 id="lab-tile-${escape(tile.experiment)}">${escape(tile.title)}</h2><p>${escape(tile.question)}</p><p>${escape(tile.how)}</p><p class="lab-tile-status">${escape(tile.status)}.</p><ul class="lab-tile-links">${links}</ul></article>`;
+  const detail = `labs/${tile.experiment}/index.html`;
+  const links = tile.links.filter(l => l.href !== detail).map(l => `<li><a href="${up}${escape(l.href)}">${escape(l.label)}</a></li>`).join('');
+  return `<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-${escape(tile.experiment)}"><span class="technical">${escape(tile.label.toUpperCase())}</span><h2 id="lab-tile-${escape(tile.experiment)}">${escape(tile.title)}</h2><p class="lab-tile-open"><a href="${up}${escape(detail)}"><span class="sr-only">${escape(tile.title)} — </span>Open the lab page <span aria-hidden="true">↗</span></a></p><p>${escape(tile.question)}</p><p>${escape(tile.how)}</p><p class="lab-tile-status">${escape(tile.status)}.</p><ul class="lab-tile-links">${links}</ul></article>`;
 }

@@ -318,7 +318,8 @@ export function loadIndex({ root = '.', dist = join(root, 'dist') } = {}) {
     // A lab's own words file (<slug>.json beside <slug>-tile.json) may carry the day it started.
     const words = file.endsWith('-tile.json') ? join(site, file.replace(/-tile\.json$/, '.json')) : null;
     const since = words && existsSync(words) ? json(words).since : undefined;
-    const page = tile.links.map(l => l.href).find(href => href.endsWith('.html'));
+    // The lab's page is its destination in Find; source links may point to a field note or record instead.
+    const page = `labs/${tile.experiment}/index.html`;
     labs.push({ label: tile.label, title: tile.title, summary: tile.question, stage: tile.kind === 'results' ? 'results' : 'pre-registered', href: page, date: labDay(tile.label, since) });
   }
   // A tool's day is the day of its Tool update in the committed feed; a tool with none stops the build.
