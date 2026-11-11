@@ -253,6 +253,22 @@ test('completeness is checked against what the build published, not against the 
     writeFileSync(join(dist, 'labs/zzz-unlisted/index.html'), '<!doctype html><title>x</title>');
     assert.throws(() => loadIndex({ root, dist }), /the lab page labs\/zzz-unlisted\/index\.html, which no lab item lists/);
   } finally { rmSync(join(dist, 'labs/zzz-unlisted'), { recursive: true, force: true }); }
+  // A lab tile listed by Find cannot point at a page that the build did not publish.
+  const failoverPage = join(dist, 'labs/failover/index.html');
+  const failoverHtml = readFileSync(failoverPage);
+  rmSync(failoverPage);
+  try {
+    assert.throws(() => loadIndex({ root, dist }), /lab-03 links labs\/failover\/index\.html, which is not a page of the built site/);
+  } finally { writeFileSync(failoverPage, failoverHtml); }
+  // The same built-page check refuses a tile whose experiment slug is absent.
+  const failoverTile = join(root, 'site/data/labs/failover.json');
+  const failoverJson = readFileSync(failoverTile, 'utf8');
+  try {
+    const tile = JSON.parse(failoverJson);
+    delete tile.experiment;
+    writeFileSync(failoverTile, JSON.stringify(tile));
+    assert.throws(() => loadIndex({ root, dist }), /lab-03 links labs\/undefined\/index\.html, which is not a page of the built site/);
+  } finally { writeFileSync(failoverTile, failoverJson); }
   // An experiment the site's data publishes that the home ledger does not list.
   mkdirSync(join(root, 'site/data/zzz-unlisted'), { recursive: true });
   try {

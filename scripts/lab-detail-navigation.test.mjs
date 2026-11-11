@@ -19,6 +19,8 @@ test('every published experiment lab has a page reached directly from its index 
     assert.ok(card.includes(`<span class="sr-only">${tile.title} — </span>`), `${tile.label} names its page to screen readers`);
     assert.ok(index.includes(card.slice(0, card.indexOf('<ul class="lab-tile-links">'))), `${tile.label} keeps that link on the index`);
     assert.equal(card.split(`href="../${path}"`).length - 1, 1, `${tile.label} does not repeat its page link among source links`);
+    const selfLink = renderTile({ ...tile, links: [...tile.links, { label: 'This lab page', href: path }] });
+    assert.equal(selfLink.split(`href="../${path}"`).length - 1, 1, `${tile.label} omits a duplicate self link`);
   }
 });
 
@@ -63,10 +65,29 @@ test('the published render requires checked tiles and pages, and Failover metada
     assert.ok(!sources.includes(`href="../../${alternatePrereg}"`), 'the source list omits both copies of the plan link');
     assert.equal(changed.stdout.split(`href="../../${alternatePrereg}"`).length - 1, 1, 'the plan link appears once');
     assert.ok(!sources.includes('href="../../labs/failover/index.html"'), 'the source list omits a link to itself');
+    tile.links[0].label = 'The plan';
+    writeFileSync(tilePath, JSON.stringify(tile));
+    const noPrereg = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(noPrereg.status, 1, noPrereg.stderr);
+    assert.match(noPrereg.stderr, /expected one pre-registration link in the checked tile/);
+    tile.links[0].label = 'The pre-registration (EXP 021)';
+    tile.links.push({ label: 'Pre-registration record', href: 'data/failover/preregistration.json' });
+    writeFileSync(tilePath, JSON.stringify(tile));
+    const twoPrereg = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(twoPrereg.status, 1, twoPrereg.stderr);
+    assert.match(twoPrereg.stderr, /expected one pre-registration link in the checked tile/);
     rmSync(tilePath);
     const missing = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
     assert.equal(missing.status, 1, missing.stderr);
     assert.match(missing.stderr, /data\/labs\/failover\.json: missing \(listed in TILE_FILES/);
+    copyFileSync('site/data/labs/failover.json', tilePath);
+    const tilesSource = join(fixture, 'scripts/lab-tiles.mjs');
+    const tilesCode = readFileSync(tilesSource, 'utf8');
+    assert.ok(tilesCode.includes("'data/labs/failover.json', "));
+    writeFileSync(tilesSource, tilesCode.replace("'data/labs/failover.json', ", ''));
+    const unlisted = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(unlisted.status, 1, unlisted.stderr);
+    assert.match(unlisted.stderr, /labs\/failover\/index\.html: template has no checked tile/);
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }
@@ -82,8 +103,9 @@ test('the failover page shows the published plan and status without implying a r
   assert.ok(page.includes(tile.kind === 'results' ? 'A result is published.' : 'No counted result is published yet.'));
   const prereg = `data/${tile.experiment}/preregistration.json`;
   assert.ok(existsSync(join('site', prereg)), 'the checked tile requires a published pre-registration');
-  const preregLink = tile.links.find(link => /pre-registration/i.test(link.label));
-  assert.ok(preregLink, 'the checked tile names its pre-registration link');
+  const preregLinks = tile.links.filter(link => /pre-?registration/i.test(link.label) && /pre-?registration/i.test(link.href));
+  assert.equal(preregLinks.length, 1, 'the checked tile names exactly one pre-registration link');
+  const preregLink = preregLinks[0];
   const plan = page.match(/<section[^>]*id="plan"[\s\S]*?<\/section>/)?.[0];
   assert.ok(plan?.includes(`href="../../${preregLink.href}"`), 'the plan links the checked tile source');
   assert.equal(page.split(`href="../../${preregLink.href}"`).length - 1, 1, 'the page links the plan once');
