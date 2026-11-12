@@ -1,0 +1,535 @@
+{
+ "format": "odin-lab-strangers",
+ "version": 1,
+ "vendored": {
+  "from": "the public demo's capacity sheet and its load tool in the agent space's private repository, read at its main, and one run on a Mac from a copy of that main",
+  "commit": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+  "committed": "2026-11-11T01:47:46Z",
+  "mainCheck": {
+   "main": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+   "how": "GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main",
+   "checked": "2026-11-12",
+   "commits": [
+    "740cd1760f15d319b638497bd9fdf944d627a178",
+    "9761f9189de399b125cc9b11da17be252ff04d0b",
+    "0ba604de1a174312d1af72d6a2eef62cc6d650f8"
+   ]
+  },
+  "cites": [
+   {
+    "commit": "740cd1760f15d319b638497bd9fdf944d627a178",
+    "what": "the capacity sheet, with its runs' result files: smooth to a hundred guests, one core saturated at a hundred and fifty",
+    "at": "2026-10-24T23:32:24Z"
+   },
+   {
+    "commit": "9761f9189de399b125cc9b11da17be252ff04d0b",
+    "what": "the load harness: the resident crowd, the space's own loop log and the guest swarm with its abuse probes",
+    "at": "2026-10-24T22:35:46Z"
+   },
+   {
+    "commit": "0ba604de1a174312d1af72d6a2eef62cc6d650f8",
+    "what": "the load tool as it stands at main",
+    "at": "2026-10-25T20:42:48Z"
+   }
+  ],
+  "files": [
+   {
+    "role": "sheet",
+    "what": "the public demo's capacity sheet",
+    "sha256": "180f9de4b13b1192668a7c0edf420ddf20cff9b980c99a7e52fcd3198aa68cac"
+   },
+   {
+    "role": "tool",
+    "what": "the load tool, which starts the space, ramps the guests in and summarises each step",
+    "sha256": "f6b9d2e90b5d36177c0749dba24d2fe4194a7ea8628676d3077436cc16cdb5b5"
+   },
+   {
+    "role": "perf",
+    "what": "the space's own loop log, which times each tick, step and push",
+    "sha256": "74651bb23accde250a0e36a2ac7d3259b455a5769fe026340dcd91e8ef086537"
+   },
+   {
+    "role": "estimate-run",
+    "what": "the capacity sheet's run 3 result file",
+    "sha256": "1a3c2db614a95b88b18fb634c7a5549e39f77d7ac0255f5c3699e9fc4fe33439"
+   },
+   {
+    "role": "run",
+    "what": "this lab's own run, its result file (not published: it names local paths and ports)",
+    "sha256": "3e21451b03cd016d2f4b9a9df4f3a82849efe6d15a16cdb7cd4e617df641650a"
+   }
+  ]
+ },
+ "estimate": {
+  "machine": "a shared Windows PC with 12 logical cores and other work running on it (68% of its processor busy before the run)",
+  "ramp": [
+   10,
+   25,
+   50,
+   75,
+   100,
+   150
+  ],
+  "phaseS": 60,
+  "settleS": 15,
+  "crowdAgents": 200,
+  "recommendedCap": 40,
+  "dedicatedCoreCap": 80,
+  "breaksAt": 150,
+  "unusableAt": 250,
+  "wireKiBPerGuest": {
+   "low": 1,
+   "high": 3
+  },
+  "rows": [
+   {
+    "guests": 10,
+    "windowS": 46.3,
+    "ticks": 223,
+    "samples": {
+     "tick": 223,
+     "step": 90,
+     "crowd": 423,
+     "lag": 223,
+     "move": 1290,
+     "cpu": 41
+    },
+    "tickP95": 2.38,
+    "stepP95": 3.39,
+    "crowdP95": 1.52,
+    "lagP50": 4.7,
+    "lagP95": 19.7,
+    "pushesPerGuest": 1.95,
+    "moveP95": 12.2,
+    "hostCpu": 7.6,
+    "cpuPerPush": 3.84,
+    "rssMb": 49,
+    "machineCpu": 70,
+    "downPerGuest": 15081
+   },
+   {
+    "guests": 25,
+    "windowS": 44.2,
+    "ticks": 211,
+    "samples": {
+     "tick": 211,
+     "step": 86,
+     "crowd": 405,
+     "lag": 211,
+     "move": 2823,
+     "cpu": 39
+    },
+    "tickP95": 3.16,
+    "stepP95": 10.02,
+    "crowdP95": 2.42,
+    "lagP50": 7.6,
+    "lagP95": 18.5,
+    "pushesPerGuest": 1.95,
+    "moveP95": 13.5,
+    "hostCpu": 17.6,
+    "cpuPerPush": 3.6,
+    "rssMb": 55,
+    "machineCpu": 88.3,
+    "downPerGuest": 23017
+   },
+   {
+    "guests": 50,
+    "windowS": 44.3,
+    "ticks": 211,
+    "samples": {
+     "tick": 211,
+     "step": 86,
+     "crowd": 403,
+     "lag": 211,
+     "move": 5936,
+     "cpu": 39
+    },
+    "tickP95": 3.33,
+    "stepP95": 14.28,
+    "crowdP95": 3.59,
+    "lagP50": 8.5,
+    "lagP95": 19.2,
+    "pushesPerGuest": 1.95,
+    "moveP95": 18.4,
+    "hostCpu": 32.1,
+    "cpuPerPush": 3.28,
+    "rssMb": 64,
+    "machineCpu": 83.7,
+    "downPerGuest": 34929
+   },
+   {
+    "guests": 75,
+    "windowS": 44.3,
+    "ticks": 208,
+    "samples": {
+     "tick": 208,
+     "step": 86,
+     "crowd": 396,
+     "lag": 208,
+     "move": 8415,
+     "cpu": 39
+    },
+    "tickP95": 4.8,
+    "stepP95": 13.7,
+    "crowdP95": 4.59,
+    "lagP50": 11.7,
+    "lagP95": 31.3,
+    "pushesPerGuest": 1.95,
+    "moveP95": 22,
+    "hostCpu": 48,
+    "cpuPerPush": 3.28,
+    "rssMb": 74,
+    "machineCpu": 78.4,
+    "downPerGuest": 46360
+   },
+   {
+    "guests": 100,
+    "windowS": 44.7,
+    "ticks": 199,
+    "samples": {
+     "tick": 199,
+     "step": 85,
+     "crowd": 370,
+     "lag": 199,
+     "move": 11988,
+     "cpu": 39
+    },
+    "tickP95": 6.01,
+    "stepP95": 17.38,
+    "crowdP95": 7.23,
+    "lagP50": 14.3,
+    "lagP95": 87,
+    "pushesPerGuest": 1.9,
+    "moveP95": 76.9,
+    "hostCpu": 73.1,
+    "cpuPerPush": 3.84,
+    "rssMb": 87,
+    "machineCpu": 84,
+    "downPerGuest": 57957
+   },
+   {
+    "guests": 150,
+    "windowS": 45.4,
+    "ticks": 78,
+    "samples": {
+     "tick": 78,
+     "step": 44,
+     "crowd": 116,
+     "lag": 78,
+     "move": 10628,
+     "cpu": 31
+    },
+    "tickP95": 9.37,
+    "stepP95": 49.25,
+    "crowdP95": 16.11,
+    "lagP50": 121,
+    "lagP95": 1346.6,
+    "pushesPerGuest": 1.03,
+    "moveP95": 1504.4,
+    "hostCpu": 70.2,
+    "cpuPerPush": 4.53,
+    "rssMb": 109,
+    "machineCpu": 83.8,
+    "downPerGuest": 44011
+   }
+  ],
+  "verdict": {
+   "tickUnder50": 150,
+   "smooth": 100
+  }
+ },
+ "measurement": {
+  "at": "2026-11-12T00:49:38Z",
+  "endedAt": "2026-11-12T00:59:05Z",
+  "on": "2026-11-12",
+  "host": "a Mac with an Apple M5 Max (18 cores, 128 GB of memory), shared with other work while it ran",
+  "os": "macOS 26.6.1",
+  "python": "3.12.13",
+  "websockets": "17.4",
+  "load1Start": 8.01,
+  "load1End": 15.43,
+  "machineCpuBefore": 45.5,
+  "ramp": [
+   10,
+   25,
+   50,
+   75,
+   100,
+   150,
+   200,
+   250,
+   300
+  ],
+  "phaseS": 60,
+  "settleS": 15,
+  "crowdAgents": 200,
+  "dutyPct": 25,
+  "browsers": 0,
+  "rows": [
+   {
+    "guests": 10,
+    "windowS": 44.1,
+    "ticks": 218,
+    "samples": {
+     "tick": 218,
+     "step": 88,
+     "crowd": 434,
+     "lag": 218,
+     "move": 1297,
+     "cpu": 41
+    },
+    "tickP95": 1.11,
+    "stepP95": 1.74,
+    "crowdP95": 0.58,
+    "lagP50": 2.1,
+    "lagP95": 3,
+    "pushesPerGuest": 2,
+    "moveP95": 2,
+    "hostCpu": 4.2,
+    "cpuPerPush": 2.1,
+    "rssMb": 48,
+    "machineCpu": 62.4,
+    "downPerGuest": 15333
+   },
+   {
+    "guests": 25,
+    "windowS": 44.2,
+    "ticks": 215,
+    "samples": {
+     "tick": 215,
+     "step": 87,
+     "crowd": 422,
+     "lag": 215,
+     "move": 2863,
+     "cpu": 29
+    },
+    "tickP95": 2.92,
+    "stepP95": 8.32,
+    "crowdP95": 1.36,
+    "lagP50": 2.6,
+    "lagP95": 18.6,
+    "pushesPerGuest": 1.98,
+    "moveP95": 17.2,
+    "hostCpu": 9.3,
+    "cpuPerPush": 1.87,
+    "rssMb": 50,
+    "machineCpu": 65.2,
+    "downPerGuest": 23244
+   },
+   {
+    "guests": 50,
+    "windowS": 44,
+    "ticks": 219,
+    "samples": {
+     "tick": 219,
+     "step": 88,
+     "crowd": 436,
+     "lag": 219,
+     "move": 6027,
+     "cpu": 41
+    },
+    "tickP95": 0.73,
+    "stepP95": 2.38,
+    "crowdP95": 0.5,
+    "lagP50": 1,
+    "lagP95": 2.5,
+    "pushesPerGuest": 2,
+    "moveP95": 1.7,
+    "hostCpu": 7.9,
+    "cpuPerPush": 0.79,
+    "rssMb": 65,
+    "machineCpu": 40.5,
+    "downPerGuest": 35626
+   },
+   {
+    "guests": 75,
+    "windowS": 44,
+    "ticks": 219,
+    "samples": {
+     "tick": 219,
+     "step": 87,
+     "crowd": 436,
+     "lag": 219,
+     "move": 8630,
+     "cpu": 40
+    },
+    "tickP95": 1.04,
+    "stepP95": 3.58,
+    "crowdP95": 0.69,
+    "lagP50": 1.4,
+    "lagP95": 2.8,
+    "pushesPerGuest": 1.99,
+    "moveP95": 1.8,
+    "hostCpu": 12.5,
+    "cpuPerPush": 0.83,
+    "rssMb": 76,
+    "machineCpu": 34.6,
+    "downPerGuest": 47544
+   },
+   {
+    "guests": 100,
+    "windowS": 44.1,
+    "ticks": 218,
+    "samples": {
+     "tick": 218,
+     "step": 88,
+     "crowd": 435,
+     "lag": 218,
+     "move": 12027,
+     "cpu": 38
+    },
+    "tickP95": 1.37,
+    "stepP95": 3.74,
+    "crowdP95": 0.87,
+    "lagP50": 1.7,
+    "lagP95": 3.5,
+    "pushesPerGuest": 1.99,
+    "moveP95": 1.9,
+    "hostCpu": 18.9,
+    "cpuPerPush": 0.95,
+    "rssMb": 79,
+    "machineCpu": 33.2,
+    "downPerGuest": 61227
+   },
+   {
+    "guests": 150,
+    "windowS": 44.1,
+    "ticks": 216,
+    "samples": {
+     "tick": 216,
+     "step": 87,
+     "crowd": 429,
+     "lag": 216,
+     "move": 17826,
+     "cpu": 33
+    },
+    "tickP95": 2.48,
+    "stepP95": 8.44,
+    "crowdP95": 1.8,
+    "lagP50": 2.4,
+    "lagP95": 10.6,
+    "pushesPerGuest": 1.98,
+    "moveP95": 5.8,
+    "hostCpu": 49.9,
+    "cpuPerPush": 1.68,
+    "rssMb": 104,
+    "machineCpu": 50.7,
+    "downPerGuest": 84022
+   },
+   {
+    "guests": 200,
+    "windowS": 44.1,
+    "ticks": 215,
+    "samples": {
+     "tick": 215,
+     "step": 87,
+     "crowd": 428,
+     "lag": 215,
+     "move": 24147,
+     "cpu": 33
+    },
+    "tickP95": 2.72,
+    "stepP95": 9.36,
+    "crowdP95": 1.89,
+    "lagP50": 2.6,
+    "lagP95": 9.6,
+    "pushesPerGuest": 1.98,
+    "moveP95": 13.4,
+    "hostCpu": 64.7,
+    "cpuPerPush": 1.63,
+    "rssMb": 129,
+    "machineCpu": 44,
+    "downPerGuest": 108172
+   },
+   {
+    "guests": 250,
+    "windowS": 43.6,
+    "ticks": 125,
+    "samples": {
+     "tick": 125,
+     "step": 65,
+     "crowd": 195,
+     "lag": 125,
+     "move": 27729,
+     "cpu": 27
+    },
+    "tickP95": 5.37,
+    "stepP95": 34.89,
+    "crowdP95": 3.77,
+    "lagP50": 173,
+    "lagP95": 312,
+    "pushesPerGuest": 1.54,
+    "moveP95": 312.3,
+    "hostCpu": 92,
+    "cpuPerPush": 2.39,
+    "rssMb": 155,
+    "machineCpu": 60.2,
+    "downPerGuest": 104102
+   },
+   {
+    "guests": 300,
+    "windowS": 46.9,
+    "ticks": 76,
+    "samples": {
+     "tick": 76,
+     "step": 49,
+     "crowd": 95,
+     "lag": 76,
+     "move": 20827,
+     "cpu": 25
+    },
+    "tickP95": 5.9,
+    "stepP95": 25.14,
+    "crowdP95": 5.18,
+    "lagP50": 481.3,
+    "lagP95": 670.4,
+    "pushesPerGuest": 1.04,
+    "moveP95": 653,
+    "hostCpu": 96.3,
+    "cpuPerPush": 3.08,
+    "rssMb": 183,
+    "machineCpu": 60.4,
+    "downPerGuest": 84298
+   }
+  ],
+  "verdict": {
+   "tickUnder50": 300,
+   "smooth": 200
+  },
+  "resummarized": true,
+  "code": {
+   "files": 3222,
+   "digest": "737d684b19fa9dcde6f24d5253119458bbbf03e463f7c526d8a2f43f3ff2f5c5",
+   "compiledCaches": 182,
+   "matchesMain": true,
+   "templatesFromCopy": true
+  },
+  "probes": {
+   "steps": 9,
+   "held": {
+    "flood": 9,
+    "oversized_line": 9,
+    "forged_evidence": 9,
+    "operator_ops": 9,
+    "oversized_frame": 9
+   }
+  },
+  "quota": {
+   "checks": 70,
+   "mostInTenMinutes": 1,
+   "limit": 3,
+   "held": true
+  },
+  "isolation": {
+   "ownListenersDuring": 3,
+   "ownListenersLoopback": 3,
+   "ownListenersBefore": 0,
+   "ownListenersAfter": 0,
+   "ownProcessesLeft": 0,
+   "listenersBefore": 69,
+   "listenersAfter": 69,
+   "keptByOthers": 67,
+   "changedByOthers": 4
+  }
+ }
+}
