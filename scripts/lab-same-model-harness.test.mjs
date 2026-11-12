@@ -48,10 +48,16 @@ test('the banned-term test fails on a planted client-theme word (a discriminatin
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test("the fixture's suite fails after the change, and its output is the one the harness showed", { skip: spawnSync('python3', ['--version']).status !== 0 && 'no python3' }, () => {
+// The exact bytes of a Python traceback differ between Python versions (newer ones mark the failing expression), so
+// the output's sha256 in the record is the measuring machine's; here the suite must fail the same way: the same tests
+// run, the same two fail, nothing errors.
+test("the fixture's suite fails after the change, the same two tests and nothing else", { skip: spawnSync('python3', ['--version']).status !== 0 && 'no python3' }, () => {
   const suite = runSuite();
   assert.equal(suite.suite, 'FAIL');
-  assert.equal(sha256(suite.output), record.bound.suiteOutput, 'the test run output is the one in the run log');
+  assert.match(suite.output, /^Ran 6 tests$/m);
+  assert.match(suite.output, /^FAILED \(failures=2\)$/m);
+  assert.deepEqual([...suite.output.matchAll(/^(FAIL|ERROR): (\w+)/gm)].map(m => `${m[1]} ${m[2]}`).sort(), ['FAIL test_departure_is_not_a_stop', 'FAIL test_single_leg']);
+  assert.ok(!suite.output.includes(process.cwd()) && !suite.output.includes(tmpdir()), 'no machine path in what the harness shows');
   assert.equal(fixtureManifest(), record.bound.fixture, "the runner's manifest is the build's");
 });
 
