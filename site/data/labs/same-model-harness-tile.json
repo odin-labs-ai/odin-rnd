@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 11",
+ "title": "Same model, with and without a harness",
+ "question": "Asked about a change it cannot run, does a local model claim a failing test suite passes, or name files that do not exist, and does a harness change that?",
+ "how": "A small made-up route planner and one change to it. Each local model answers the same question bare and with a harness that ran three tools first, and code scores every reply.",
+ "experiment": "same-model-harness",
+ "status": "Measured on a laptop · record and checksum published",
+ "record": {
+  "href": "data/labs/same-model-harness/record.json",
+  "pin": "data/labs/same-model-harness/record.sha256"
+ },
+ "links": [
+  {
+   "label": "The two arms, model by model",
+   "href": "labs/same-model-harness/index.html"
+  },
+  {
+   "label": "The full record, with a published checksum",
+   "href": "data/labs/same-model-harness/record.json"
+  }
+ ]
+}

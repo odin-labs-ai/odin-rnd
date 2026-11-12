@@ -47,6 +47,7 @@
   "Lab 07": ["security"],
   "Lab 08": ["agents", "infrastructure"],
   "Lab 09": ["security"],
+  "Lab 11": ["models", "agents", "evaluation"],
   "Lab 12": ["agents", "infrastructure"],
   "Lab 13": ["agents", "evaluation"],
   "Lab 14": ["evaluation", "models"]

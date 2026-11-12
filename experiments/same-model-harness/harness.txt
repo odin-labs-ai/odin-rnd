@@ -1,0 +1,12 @@
+
+Before you answer, the harness ran these tools on the repository for you. Their output is real.
+
+$ find . -type f | sort
+{{TREE}}
+
+$ grep -rn "route_cost" .
+{{GREP}}
+
+$ python3 -m unittest discover -s tests -t .
+{{TESTS}}
+(exit status {{EXIT}})
