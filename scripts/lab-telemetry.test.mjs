@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { NO_COMMIT, TELEMETRY_FILE, WORK_BRANCH, figuresDigest, readTelemetry, renderTelemetry, telemetryProblems } from './lab-telemetry.mjs';
+import { ENGINE_NOTE, NO_COMMIT, TELEMETRY_FILE, WORK_BRANCH, figuresDigest, readTelemetry, renderTelemetry, telemetryProblems } from './lab-telemetry.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 01's vendored telemetry (mission rnd-labs-human-first-1024): the agent space's own measurements and the engine
@@ -166,4 +166,14 @@ test('a commit field skips only the long-number reason, and only for an exact he
   assert.match(edit(r => { r.agent_space.note = `measured over ${nine.slice(0, 12)} frames on one machine, wall time`; }), /agent_space\/note: a phone number, timestamp or long internal id/);
   // and a commit field that is not exactly a commit gets every reason, a restricted name included.
   assert.match(editEngine(r => { r.engine[0].source.commit = `${reverse('tfolemag')}-build`; }), /engine\/0\/source\/commit: (a restricted name|does not match)/);
+});
+
+test('the engine note does not repeat the wording the 2 November correction withdrew', () => {
+  const html = renderTelemetry(real);
+  assert.ok(html.includes(`<p class="lab-telemetry-note">${escapeHtml(ENGINE_NOTE)}</p>`));
+  assert.equal(/every figure (here )?carries its source/i.test(html), false);
+  // On the built page the phrase survives only once: quoted inside the dated 2 November correction itself.
+  assert.equal(page.match(/every figure (here )?carries its source/gi).length, 1, 'the built Lab 01 page');
+  assert.ok(page.includes(escapeHtml(ENGINE_NOTE)));
+  assert.ok(real.rule, 'the vendored pack rule stays in the data as vendored');
 });
