@@ -55,10 +55,31 @@ test('one lagging place out of two is enough to fail', async () => {
   assert.doesNotMatch(r.err, /link: found/);
 });
 
-test('mid-release (npm latest differs from the pin) passes with a notice, even over a lagging card', async () => {
+test('mid-release (npm latest differs from the pin) passes with a notice when the card states either answer', async () => {
+  for (const v of ['0.6.3', '0.6.4']) {
+    const r = await check(page(v), { pin: '0.6.4', latest: '0.6.3' });
+    assert.equal(r.code, 0, r.err);
+    assert.match(r.out, /::notice .*mid-release: main pins 0\.6\.4, npm latest is 0\.6\.3/);
+  }
+});
+
+test('mid-release never hides a card that lags both the pin and npm latest', async () => {
   const r = await check(page('0.6.2'), { pin: '0.6.4', latest: '0.6.3' });
-  assert.equal(r.code, 0);
-  assert.match(r.out, /::notice .*mid-release: main pins 0\.6\.4, npm latest is 0\.6\.3/);
+  assert.equal(r.code, 1);
+  assert.match(r.err, /link: found 0\.6\.2, expected 0\.6\.4 or 0\.6\.3/);
+});
+
+test('mid-release never hides a card the check can no longer find', async () => {
+  const r = await check(`<main>${historical}</main>`, { pin: '0.6.4', latest: '0.6.3' });
+  assert.equal(r.code, 1);
+  assert.match(r.err, /no bce-engine version found/);
+});
+
+test('a release link whose tag only starts with the version is not read as that version', async () => {
+  const html = page('0.6.3').replace('releases/tag/v0.6.3"', 'releases/tag/v0.6.3+stale"');
+  const r = await check(html, { pin: '0.6.3', latest: '0.6.3' });
+  assert.equal(r.code, 1);
+  assert.match(r.err, /"Release & evidence" link: no bce-engine version found/);
 });
 
 test('a card the check can no longer find fails instead of passing on nothing', async () => {

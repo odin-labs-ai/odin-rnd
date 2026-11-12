@@ -4,8 +4,9 @@
 // every pull request that touches the card.
 //
 // The expected version is bce main's `.engine-pin.json` "pin" (the activated release), read over HTTPS from the public
-// repository. npm `latest` for bce-engine must agree with it; when the two differ, bce is mid-release and this passes
-// with a notice instead of judging the page against a moving target.
+// repository. npm `latest` for bce-engine must agree with it; when the two differ, bce is mid-release: the card may state
+// either answer (a notice says so), but a card that lags BOTH, or that the check cannot find, still fails. The grace is
+// bounded by the two live answers, not by time, so a long disagreement never hides a card older than both.
 //
 // Only the places a reader uses to choose an install are read. Dated and historical mentions are left alone on purpose:
 // the experiments pinned to bce-engine 0.3.1 (card 004's "Ground truth", package.json, the experiment records) say what
@@ -32,7 +33,7 @@ export function card001(html) {
 
 /** The places a reader reads the version to install. Each must yield at least one version, and every one must match. */
 export const PLACES = [
-  { file: 'site/index.html', where: 'card 001 "Release & evidence" link', scope: card001, pattern: new RegExp(`https://github\\.com/blueprint-conformance/bce/releases/tag/v(${SEMVER})`, 'g') },
+  { file: 'site/index.html', where: 'card 001 "Release & evidence" link', scope: card001, pattern: new RegExp(`href="https://github\\.com/blueprint-conformance/bce/releases/tag/v(${SEMVER})"`, 'g') },
   { file: 'site/index.html', where: 'card 001 Release field', scope: card001, pattern: new RegExp(`<dt>Release</dt><dd>v(${SEMVER})</dd>`, 'g') },
 ];
 
@@ -44,12 +45,15 @@ export function readPlaces(read, places = PLACES) {
   });
 }
 
-/** Every way the places disagree with `expected` (empty when they all state it). */
+/** Every way the places disagree with `expected`, a version or a list of acceptable versions (empty when they all state one). */
 export function freshnessProblems(found, expected) {
+  const accepted = [expected].flat();
+  const want = accepted.join(' or ');
+  const why = accepted.length > 1 ? 'bce is mid-release: main .engine-pin.json pin or npm latest' : 'bce main .engine-pin.json pin, which npm latest matches';
   const problems = [];
   for (const { file, where, versions } of found) {
     if (!versions.length) problems.push({ file, message: `${file}, ${where}: no bce-engine version found. The place moved or its wording changed; update PLACES in scripts/engine-version-freshness.mjs so the check reads what readers read.` });
-    for (const v of new Set(versions)) if (v !== expected) problems.push({ file, message: `${file}, ${where}: found ${v}, expected ${expected} (bce main .engine-pin.json pin, which npm latest matches).` });
+    for (const v of new Set(versions)) if (!accepted.includes(v)) problems.push({ file, message: `${file}, ${where}: found ${v}, expected ${want} (${why}).` });
   }
   return problems;
 }
@@ -68,16 +72,15 @@ export async function run({ root = '.', fetchImpl = fetch, out = console.log, er
     if (typeof v !== 'string' || !IS_SEMVER.test(v)) { err(`::error title=engine version freshness::${name} is ${JSON.stringify(v)}, not a version`); return 1; }
   }
   const found = readPlaces(file => readFileSync(join(root, file), 'utf8'));
-  if (pin !== latest) {
-    out(`::notice title=engine version freshness::bce is mid-release: main pins ${pin}, npm latest is ${latest}. The docs are not judged until the two agree.`);
-    for (const { file, where, versions } of found) out(`${file}, ${where}: ${versions.join(', ') || 'none found'}`);
-    return 0;
-  }
-  const problems = freshnessProblems(found, pin);
+  const midRelease = pin !== latest;
+  if (midRelease) out(`::notice title=engine version freshness::bce is mid-release: main pins ${pin}, npm latest is ${latest}. The card may state either until the two agree; a card older than both still fails.`);
+  const problems = freshnessProblems(found, midRelease ? [pin, latest] : pin);
   for (const { file, message } of problems) err(`::error file=${file},title=engine version freshness::${message}`);
   if (problems.length) return 1;
-  for (const { file, where } of found) out(`${file}, ${where}: ${pin}`);
-  out(`engine version freshness: every place states ${pin}, the activated bce-engine (pin and npm latest agree)`);
+  for (const { file, where, versions } of found) out(`${file}, ${where}: ${[...new Set(versions)].join(', ')}`);
+  out(midRelease
+    ? `engine version freshness: every place states ${pin} or ${latest} (bce is mid-release: main pin or npm latest)`
+    : `engine version freshness: every place states ${pin}, the activated bce-engine (pin and npm latest agree)`);
   return 0;
 }
 
