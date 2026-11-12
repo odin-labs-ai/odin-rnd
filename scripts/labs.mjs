@@ -11,6 +11,7 @@
 //   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 //   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
+//   labs/strangers/index.html     Lab 12's page, rendered by scripts/lab-strangers.mjs
 //   labs/ai-jury/index.html       Lab 14's page, rendered by scripts/lab-ai-jury.mjs
 //   labs/same-model-harness/index.html  Lab 11's page, rendered by scripts/lab-same-model-harness.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
@@ -46,6 +47,7 @@ import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
+import { STRANGERS_RECORD, renderStrangers } from './lab-strangers.mjs';
 import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
 import { SMH_RECORD, renderSameModelHarness } from './lab-same-model-harness.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
@@ -255,6 +257,9 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 09's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
   if (requireBench && !existsSync(join(root, TALK_RECORD))) throw new Error(`Lab 09 is required on the published site: ${TALK_RECORD} is missing`);
   const talkLeak = renderTalkLeak(root);
+  // Lab 12's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, STRANGERS_RECORD))) throw new Error(`Lab 12 is required on the published site: ${STRANGERS_RECORD} is missing`);
+  const strangers = renderStrangers(root);
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
@@ -337,6 +342,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...redBuild.pages,
     ...blind.pages,
     ...talkLeak.pages,
+    ...strangers.pages,
     ...jury.pages,
     ...sameModel.pages,
   };
