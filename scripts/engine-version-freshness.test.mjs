@@ -1,12 +1,13 @@
 // Offline checks for scripts/engine-version-freshness.mjs: a card that lags the activated engine fails naming the file,
-// the version found and the version expected; a matching card passes; a mid-release engine passes with a notice; the
-// historical 0.3.1 mentions are never read. No network: the pin and npm answers below are recorded shapes.
+// the version found and the version expected; a matching card passes; mid-release accepts either answer and nothing
+// older; a network answer is retried once; the historical 0.3.1 mentions are never read. No network: the answers below
+// are recorded shapes.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { card001, freshnessProblems, NPM_LATEST_URL, PIN_URL, PLACES, readPlaces, run } from './engine-version-freshness.mjs';
+import { card001, freshnessProblems, getJson, NPM_LATEST_URL, PIN_URL, PLACES, readPlaces, run } from './engine-version-freshness.mjs';
 
 const card = v => `<article class="project-row project-featured"><div class="project-number">001<span>ENGINE</span></div><div class="project-description"><h3><a href="https://github.com/blueprint-conformance/bce">Blueprint Conformance Engine</a></h3><div class="project-links"><a href="https://blueprint-conformance.github.io/bce/">Documentation</a><a href="https://github.com/blueprint-conformance/bce/releases/tag/v${v}">Release & evidence</a></div></div><dl class="project-spec"><div><dt>Release</dt><dd>v${v}</dd></div><div><dt>Source</dt><dd>Released tag</dd></div></dl></article>`;
 // Card 004 carries a dated, deliberate pin (the experiment's ground truth) that must never be judged.
@@ -101,4 +102,16 @@ test('the real home page states exactly one engine version at each place, and it
   for (const { where, versions } of found) assert.equal(versions.length, 1, `${where}: ${versions}`);
   assert.equal(new Set(found.flatMap(f => f.versions)).size, 1, JSON.stringify(found));
   assert.ok(card001(readFileSync('site/index.html', 'utf8')).includes('ENGINE'));
+});
+
+test('a network answer that fails once is retried once; failing twice still fails loudly, naming both tries', async () => {
+  let calls = 0;
+  const flaky = async () => (++calls === 1 ? { ok: false, status: 503, json: async () => ({}) } : { ok: true, status: 200, json: async () => ({ pin: '0.6.4' }) });
+  assert.deepEqual(await getJson(flaky, PIN_URL, 0), { pin: '0.6.4' });
+  assert.equal(calls, 2);
+  calls = 0;
+  const down = async () => { calls++; throw new Error('ECONNRESET'); };
+  await assert.rejects(getJson(down, PIN_URL, 0), /ECONNRESET \(and on the first try: ECONNRESET\)/);
+  assert.equal(calls, 2);
+  await assert.rejects(run({ root: '.', fetchImpl: down, retryMs: 0, out: () => {}, err: () => {} }), /ECONNRESET/);
 });

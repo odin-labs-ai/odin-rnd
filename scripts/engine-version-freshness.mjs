@@ -58,16 +58,30 @@ export function freshnessProblems(found, expected) {
   return problems;
 }
 
-async function getJson(fetchImpl, url) {
+async function getJsonOnce(fetchImpl, url) {
   const res = await fetchImpl(url, { headers: { accept: 'application/json' } });
   if (!res.ok) throw new Error(`GET ${url} answered ${res.status}`);
   return res.json();
 }
 
+/** One GET with one retry after `retryMs` (a registry or CDN hiccup); a second failure throws, naming both attempts. */
+export async function getJson(fetchImpl, url, retryMs = 5000) {
+  try {
+    return await getJsonOnce(fetchImpl, url);
+  } catch (first) {
+    await new Promise(r => setTimeout(r, retryMs));
+    try {
+      return await getJsonOnce(fetchImpl, url);
+    } catch (second) {
+      throw new Error(`${second.message} (and on the first try: ${first.message})`);
+    }
+  }
+}
+
 /** The whole check. Returns the exit code; writes GitHub Actions annotations through `out` and `err`. */
-export async function run({ root = '.', fetchImpl = fetch, out = console.log, err = console.error } = {}) {
-  const pin = (await getJson(fetchImpl, PIN_URL))?.pin;
-  const latest = (await getJson(fetchImpl, NPM_LATEST_URL))?.version;
+export async function run({ root = '.', fetchImpl = fetch, out = console.log, err = console.error, retryMs = 5000 } = {}) {
+  const pin = (await getJson(fetchImpl, PIN_URL, retryMs))?.pin;
+  const latest = (await getJson(fetchImpl, NPM_LATEST_URL, retryMs))?.version;
   for (const [name, v] of [['bce main .engine-pin.json pin', pin], ['npm latest for bce-engine', latest]]) {
     if (typeof v !== 'string' || !IS_SEMVER.test(v)) { err(`::error title=engine version freshness::${name} is ${JSON.stringify(v)}, not a version`); return 1; }
   }
