@@ -22,7 +22,7 @@
 //   node scripts/vendor-strangers.mjs --verify --from <dir>              (refuses unless the record is the same bytes)
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,6 +45,7 @@ const r2 = v => Math.round(v * 100) / 100;
 export function rowOf(s) {
   return {
     guests: s.guests, windowS: s.window_s, ticks: s.tick_ms.n,
+    samples: { tick: s.tick_ms.n, step: s.step_ms.n, crowd: s.crowd_ms.n, lag: s.loop_lag_ms.n, move: s.rtt_ms.move?.n ?? 0, cpu: s.host_cpu_pct.n },
     tickP95: r2(s.tick_ms.p95), stepP95: r2(s.step_ms.p95), crowdP95: r2(s.crowd_ms.p95),
     lagP50: r1(s.loop_lag_ms.p50), lagP95: r1(s.loop_lag_ms.p95),
     pushesPerGuest: s.states_per_s_per_guest, moveP95: r1(s.rtt_ms.move.p95),
@@ -63,6 +64,29 @@ export function sheetFigures(text) {
   const [cap, dedicated] = grab(/\| \*\*Recommended public cap\*\* \| \*\*keep (\d+)\*\*[^|]*?at most \*\*(\d+)\*\* on a dedicated core/, 'its recommended cap');
   const [low, high] = grab(/about \*\*(\d+)-(\d+) KiB\/s per guest\*\*/, 'its wire bandwidth estimate');
   return { tick, smooth, breaks, unusable, cap, dedicated, low, high };
+}
+
+// The folders of the private repository the run's copy was taken from (git archive), all of them checked against main.
+export const CODE_PATHS = ['clients', 'contracts', 'conftest.py', 'engine', 'games', 'tools'];
+const blobSha = bytes => createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+const walk = (root, rel = '') => readdirSync(join(root, rel), { withFileTypes: true }).flatMap(e => {
+  const p = rel ? `${rel}/${e.name}` : e.name;
+  return e.isDirectory() ? walk(root, p) : [p];
+});
+/** Why a copy is not main's code (empty when it is), from `git ls-tree -r` of main over CODE_PATHS; and its identity. */
+export function treeCheck(tree, lsTree, read = p => (lstatSync(join(tree, p)).isSymbolicLink() ? Buffer.from(readlinkSync(join(tree, p))) : readFileSync(join(tree, p))), list = () => walk(tree)) {
+  // A submodule entry (type commit) carries no bytes and is not archived; every blob, symbolic links included, is checked.
+  const want = new Map(lsTree.split('\n').filter(Boolean).map(l => { const [meta, path] = l.split('\t'); return [path, meta.split(' ')]; }).filter(([, m]) => m[1] === 'blob').map(([path, m]) => [path, m[2]]));
+  const problems = [];
+  const have = list().filter(p => CODE_PATHS.some(c => p === c || p.startsWith(`${c}/`)));
+  for (const p of have) {
+    if (want.has(p)) { if (blobSha(read(p)) !== want.get(p)) problems.push(`${p}: not main's bytes`); }
+    else if (!/(^|\/)__pycache__\/[^/]+\.pyc$/.test(p)) problems.push(`${p}: not in main`);
+  }
+  const seen = new Set(have);
+  for (const p of want.keys()) if (!seen.has(p)) problems.push(`${p}: missing from the copy`);
+  const digest = createHash('sha256').update([...want].sort(([x], [y]) => (x < y ? -1 : 1)).map(([p, b]) => `${b} ${p}\n`).join('')).digest('hex');
+  return { problems, files: want.size, digest };
 }
 
 /** A listener list ("<command> <pid> <address>" per line) as rows. */
@@ -105,6 +129,10 @@ function fetch(into, a) {
     if (['tool', 'perf'].includes(role) && !bytes.equals(readFileSync(join(a.tree, path)))) throw new Error(`--tree: its ${role} is not the one at main`);
     writeFileSync(join(dir, 'files', role), bytes);
   }
+  // The whole copy the run started from is main's, file for file: every path under the archived folders matches main's
+  // blob (git's own object hash), none is missing, and nothing else is there but the bytecode Python wrote while it ran.
+  const code = treeCheck(a.tree, git('ls-tree', '-r', '--full-tree', main, ...CODE_PATHS).toString());
+  if (code.problems.length) throw new Error(`--tree is not main's code:\n  ${code.problems.slice(0, 10).join('\n  ')}`);
   for (const c of cites) {
     c.at = git('show', '-s', '--format=%cI', c.commit).toString().trim();
     c.check = JSON.parse(execFileSync('gh', ['api', `repos/${a.repo}/compare/${c.commit}...${main}`, '--jq', '{status: .status, behind_by: .behind_by}']).toString());
@@ -135,6 +163,7 @@ function fetch(into, a) {
       websockets: field(/^websockets==(\S+)/m, 'websockets version'),
     },
     resummarized,
+    code: { paths: CODE_PATHS, files: code.files, digest: code.digest },
     isolation: isolationOf({ before: readFileSync(a.before, 'utf8'), during: readFileSync(a.during, 'utf8'), after: readFileSync(a.after, 'utf8'), left: Number(field(/^leftover=\s*(\d+)/m, 'leftover count')) }),
   };
   writeFileSync(join(dir, 'source.json'), JSON.stringify(source, null, 1) + '\n');
@@ -152,8 +181,9 @@ export function build(dir) {
   if (source.run.exit !== 0) throw new Error('the run did not exit cleanly; nothing is recorded');
   if (!source.resummarized) throw new Error('the run\'s summary is not what its own files give again');
   if (run.browsers !== 0) throw new Error('the run started browsers; this page reports a run without them');
-  const steps = Object.values(run.probes);
-  const held = Object.fromEntries(PROBES.map(p => [p, steps.filter(s => s?.[p]?.held === true).length]));
+  // One probe round per step of the ramp, found by that step's own name; a round missing a probe counts for none of it.
+  const steps = run.ramp.map(g => run.probes[`${g} guests`]).filter(s => s && PROBES.every(p => typeof s[p]?.held === 'boolean'));
+  const held = Object.fromEntries(PROBES.map(p => [p, steps.filter(s => s[p].held === true).length]));
   return {
     format: 'odin-lab-strangers',
     version: 1,
@@ -183,6 +213,7 @@ export function build(dir) {
       rows: run.summary.map(rowOf),
       verdict: { tickUnder50: run.verdict.max_guests_tick_p95_under_50ms, smooth: run.verdict.max_guests_smooth },
       resummarized: source.resummarized,
+      code: { files: source.code.files, digest: source.code.digest, matchesMain: true },
       probes: { steps: steps.length, held },
       quota: { checks: run.quota.checks, mostInTenMinutes: run.quota.most_in_10_min, limit: 3, held: run.quota.held === true },
       isolation: source.isolation,

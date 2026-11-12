@@ -1,11 +1,11 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readStrangers, renderStrangers, strangersProblems, STRANGERS_PIN, STRANGERS_RECORD, STRANGERS_TEMPLATE, STRANGERS_TILE, verdictOf } from './lab-strangers.mjs';
-import { isolationOf, rowOf, sheetFigures } from './vendor-strangers.mjs';
+import { build, isolationOf, rowOf, sheetFigures, treeCheck } from './vendor-strangers.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
@@ -118,8 +118,8 @@ test('the vendor reads the sheet\'s figures from its own sentences and its rows 
   assert.throws(() => sheetFigures(sheet.replace('keep 40', 'keep about 40')), /recommended cap/);
   const e = record.estimate;
   assert.deepEqual([e.recommendedCap, e.dedicatedCoreCap, e.breaksAt, e.unusableAt, e.wireKiBPerGuest.low, e.wireKiBPerGuest.high], [40, 80, 150, 250, 1, 3]);
-  const s = { guests: 10, window_s: 45, tick_ms: { n: 3, p95: 1.234 }, step_ms: { p95: 2 }, crowd_ms: { p95: 0.5 }, loop_lag_ms: { p50: 1.26, p95: 3.04 }, states_per_s_per_guest: 1.99, rtt_ms: { move: { p95: 2.06 } }, host_cpu_pct: { mean: 5.55 }, host_cpu_ms_per_push: 2.356, host_rss_mb: { mean: 53.6 }, machine_cpu_pct: { mean: 61.16 }, guest_in_bytes_per_s: 15436 };
-  assert.deepEqual(rowOf(s), { guests: 10, windowS: 45, ticks: 3, tickP95: 1.23, stepP95: 2, crowdP95: 0.5, lagP50: 1.3, lagP95: 3, pushesPerGuest: 1.99, moveP95: 2.1, hostCpu: 5.6, cpuPerPush: 2.36, rssMb: 54, machineCpu: 61.2, downPerGuest: 15436 });
+  const s = { guests: 10, window_s: 45, tick_ms: { n: 3, p95: 1.234 }, step_ms: { n: 2, p95: 2 }, crowd_ms: { n: 4, p95: 0.5 }, loop_lag_ms: { n: 3, p50: 1.26, p95: 3.04 }, states_per_s_per_guest: 1.99, rtt_ms: { move: { n: 9, p95: 2.06 } }, host_cpu_pct: { n: 5, mean: 5.55 }, host_cpu_ms_per_push: 2.356, host_rss_mb: { mean: 53.6 }, machine_cpu_pct: { mean: 61.16 }, guest_in_bytes_per_s: 15436 };
+  assert.deepEqual(rowOf(s), { guests: 10, windowS: 45, ticks: 3, samples: { tick: 3, step: 2, crowd: 4, lag: 3, move: 9, cpu: 5 }, tickP95: 1.23, stepP95: 2, crowdP95: 0.5, lagP50: 1.3, lagP95: 3, pushesPerGuest: 1.99, moveP95: 2.1, hostCpu: 5.6, cpuPerPush: 2.36, rssMb: 54, machineCpu: 61.2, downPerGuest: 15436 });
 });
 
 test('the private commits are cited the way Lab 01 cites them, and the files by sha256', () => {
@@ -184,4 +184,61 @@ test('the page states its limits and does not claim a break point it did not fin
   if (m.verdict.smooth === m.ramp.at(-1) && m.verdict.tickUnder50 === m.ramp.at(-1)) assert.match(text, /It did not break within the steps tried, so this run does not say where it would\./);
   else assert.doesNotMatch(text, /It did not break within the steps tried/);
   assert.doesNotMatch(text, /proves|guarantee|always holds/i);
+});
+
+test('review 1: an empty measured window, or a percentile with no samples behind it, earns nothing and is refused', () => {
+  for (const [field, value] of [['windowS', 0], ['ticks', 0]]) {
+    const r = clone(); const row = r.measurement.rows[0];
+    row[field] = value; if (field === 'ticks') row.samples.tick = 0;
+    assert.ok(strangersProblems(r).some(p => /the 10-guest step has an empty measured window/.test(p)), field);
+  }
+  for (const k of ['tick', 'step', 'crowd', 'lag', 'move', 'cpu']) {
+    const r = clone(); r.measurement.rows.at(-1).samples[k] = 0;
+    assert.ok(strangersProblems(r).some(p => /no samples behind it/.test(p)), k);
+  }
+  // A step with zero percentiles and no samples does not count towards either verdict.
+  const rows = clone().measurement.rows;
+  const last = rows.at(-1);
+  Object.assign(last, { tickP95: 0, stepP95: 0, crowdP95: 0, lagP95: 0, pushesPerGuest: 2, samples: { ...last.samples, tick: 0, step: 0, crowd: 0, lag: 0 } });
+  assert.notEqual(verdictOf(rows).smooth, last.guests);
+  assert.notEqual(verdictOf(rows).tickUnder50, last.guests);
+});
+
+test('review 1: probe rounds are counted per step of the ramp, by that step\'s name; a missing or misnamed round counts for nothing', () => {
+  const dir = join(temp, 'vendor');
+  mkdirSync(join(dir, 'files'), { recursive: true });
+  const step = { flood: { held: true }, oversized_line: { held: true }, forged_evidence: { held: true }, operator_ops: { held: true }, oversized_frame: { held: true } };
+  const sheet = '| **Tick p95 under 50 ms** (x) | **150** (y) | z |\n| **Smooth** (x) | **100** | z |\n| **Breaks** (x) | **150** | z |\n| **Unusable** | **250** | z |\n| **Recommended public cap** | **keep 40** (d), at most **80** on a dedicated core | z |\nabout **1-3 KiB/s per guest**.';
+  const summary = g => ({ guests: g, window_s: 40, tick_ms: { n: 9, p95: 1 }, step_ms: { n: 9, p95: 1 }, crowd_ms: { n: 9, p95: 1 }, loop_lag_ms: { n: 9, p50: 1, p95: 2 }, states_per_s_per_guest: 2, rtt_ms: { move: { n: 9, p95: 1 } }, host_cpu_pct: { n: 9, mean: 1 }, host_cpu_ms_per_push: 1, host_rss_mb: { mean: 50 }, machine_cpu_pct: { mean: 10 }, guest_in_bytes_per_s: 100 });
+  const run = probes => ({ ramp: [10, 20], phase_s: 60, settle_s: 15, agents: 200, duty_pct: 25, browsers: 0, machine: { baseline: { machine_cpu_pct_mean: 10 } }, summary: [summary(10), summary(20)], verdict: { max_guests_tick_p95_under_50ms: 20, max_guests_smooth: 20 }, probes, quota: { checks: 1, most_in_10_min: 1, held: true } });
+  writeFileSync(join(dir, 'files', 'sheet'), sheet);
+  writeFileSync(join(dir, 'files', 'estimate-run'), JSON.stringify({ ...run({}), machine: { cpus: 12, baseline: { machine_cpu_pct_mean: 68 } } }));
+  for (const f of ['tool', 'perf']) writeFileSync(join(dir, 'files', f), f);
+  writeFileSync(join(dir, 'source.json'), JSON.stringify({ main: 'a'.repeat(40), committed: '2026-11-11T00:00:00Z', checked: '2026-11-12', cites: [{ commit: 'a'.repeat(40), what: 'x', at: '2026-11-11T00:00:00Z', check: { behind_by: 0 } }], run: { start: '2026-11-12T00:00:00Z', end: '2026-11-12T00:10:00Z', load1Start: 1, load1End: 1, exit: 0, left: 0, chip: 'Apple M5 Max', cores: 18, memGb: 128, os: '26.6.1', python: '3.12.13', websockets: '17.4' }, resummarized: true, code: { files: 1, digest: 'b'.repeat(64) }, isolation: {} }));
+  const probesOf = p => { writeFileSync(join(dir, 'files', 'run'), JSON.stringify(run(p))); return build(dir).measurement.probes; };
+  assert.deepEqual(probesOf({ '10 guests': step, '20 guests': step }), { steps: 2, held: { flood: 2, oversized_line: 2, forged_evidence: 2, operator_ops: 2, oversized_frame: 2 } });
+  // The 20-guest round is absent; two rounds under other names do not stand in for it.
+  assert.equal(probesOf({ '10 guests': step, '30 guests': step, '40 guests': step }).steps, 1);
+  // A round missing one probe counts for none of it.
+  const { flood, ...noFlood } = step;
+  assert.equal(probesOf({ '10 guests': step, '20 guests': noFlood }).steps, 1);
+  assert.equal(probesOf({ '10 guests': step, '20 guests': { error: 'ConnectionRefused' } }).steps, 1);
+});
+
+test('review 1: the copy the run started from is checked against main file for file, by git blob hash', () => {
+  const blob = text => createHash('sha1').update(`blob ${Buffer.byteLength(text)}\0`).update(text).digest('hex');
+  const files = { 'engine/a.py': 'print(1)\n', 'tools/scale/b.py': 'x = 2\n' };
+  const ls = Object.entries(files).map(([p, t]) => `100644 blob ${blob(t)}\t${p}`).join('\n') + '\n160000 commit ' + 'c'.repeat(40) + '\ttools/sub\n';
+  const check = (have, extra = []) => treeCheck('/nowhere', ls, p => Buffer.from(have[p]), () => [...Object.keys(have), ...extra]);
+  const ok = check(files, ['engine/__pycache__/a.cpython-312.pyc']);
+  assert.deepEqual(ok.problems, []);
+  assert.equal(ok.files, 2);
+  assert.match(ok.digest, /^[0-9a-f]{64}$/);
+  assert.ok(check({ ...files, 'engine/a.py': 'print(2)\n' }).problems.some(p => /engine\/a\.py: not main's bytes/.test(p)), 'a modified engine file');
+  assert.ok(check({ 'engine/a.py': files['engine/a.py'] }).problems.some(p => /tools\/scale\/b\.py: missing/.test(p)), 'a missing file');
+  assert.ok(check(files, ['engine/evil.py']).problems.some(p => /engine\/evil\.py: not in main/.test(p)), 'an added file');
+  assert.equal(record.measurement.code.matchesMain, true);
+  assert.ok(main.includes(`all ${record.measurement.code.files.toLocaleString('en-GB')} files of that copy were checked against main`));
+  const r = clone(); r.measurement.code.matchesMain = false;
+  assert.ok(strangersProblems(r).length > 0);
 });

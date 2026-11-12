@@ -235,6 +235,7 @@
        "guests",
        "windowS",
        "ticks",
+       "samples",
        "tickP95",
        "stepP95",
        "crowdP95",
@@ -309,6 +310,44 @@
        "downPerGuest": {
         "type": "integer",
         "minimum": 0
+       },
+       "samples": {
+        "type": "object",
+        "required": [
+         "tick",
+         "step",
+         "crowd",
+         "lag",
+         "move",
+         "cpu"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "tick": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "step": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "crowd": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "lag": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "move": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "cpu": {
+          "type": "integer",
+          "minimum": 0
+         }
+        }
        }
       }
      }
@@ -361,6 +400,7 @@
     "rows",
     "verdict",
     "resummarized",
+    "code",
     "probes",
     "quota",
     "isolation"
@@ -444,6 +484,7 @@
        "guests",
        "windowS",
        "ticks",
+       "samples",
        "tickP95",
        "stepP95",
        "crowdP95",
@@ -518,6 +559,44 @@
        "downPerGuest": {
         "type": "integer",
         "minimum": 0
+       },
+       "samples": {
+        "type": "object",
+        "required": [
+         "tick",
+         "step",
+         "crowd",
+         "lag",
+         "move",
+         "cpu"
+        ],
+        "additionalProperties": false,
+        "properties": {
+         "tick": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "step": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "crowd": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "lag": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "move": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "cpu": {
+          "type": "integer",
+          "minimum": 0
+         }
+        }
        }
       }
      }
@@ -673,6 +752,28 @@
       "changedByOthers": {
        "type": "integer",
        "minimum": 0
+      }
+     }
+    },
+    "code": {
+     "type": "object",
+     "required": [
+      "files",
+      "digest",
+      "matchesMain"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "files": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "digest": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$"
+      },
+      "matchesMain": {
+       "const": true
       }
      }
     }

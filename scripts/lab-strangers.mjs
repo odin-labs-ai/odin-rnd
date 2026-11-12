@@ -17,6 +17,8 @@
 //     every loop chore's p95 under 50 ms; smooth = loop lag p95 under 100 ms with at least 1.8 pushes a second each);
 //   - the run started at a one-minute load of 40 or more, started browsers, or its summary was not given again by the
 //     tool's resummarize from the run's own files;
+//   - a step's measured window is empty, or a percentile it reports has no samples behind it;
+//   - the copy of the code the run started from was not checked to be main's, file for file;
 //   - the isolation does not hold: the run's own listeners not all on loopback, any of them there before or after the
 //     run, or any process of the run left behind;
 //   - an abuse probe did not hold at every step, or a guest got more than the quota of Odin's checks;
@@ -43,9 +45,11 @@ export const PROBE_WORDS = {
 export const MAX_LOAD1 = 40;
 
 /** The tool's own verdict rules, applied again to a table's rows. */
+// A step with no samples behind a percentile it reports earns nothing (and the record is refused, below).
+export const sampled = (r, keys) => r.windowS > 0 && keys.every(k => r.samples[k] > 0);
 export function verdictOf(rows) {
-  const under = rows.filter(r => Math.max(r.tickP95, r.stepP95, r.crowdP95) < 50).map(r => r.guests);
-  const smooth = rows.filter(r => r.lagP95 < 100 && r.pushesPerGuest >= 1.8).map(r => r.guests);
+  const under = rows.filter(r => sampled(r, ['tick', 'step', 'crowd']) && Math.max(r.tickP95, r.stepP95, r.crowdP95) < 50).map(r => r.guests);
+  const smooth = rows.filter(r => sampled(r, ['lag']) && r.lagP95 < 100 && r.pushesPerGuest >= 1.8).map(r => r.guests);
   return { tickUnder50: under.length ? Math.max(...under) : null, smooth: smooth.length ? Math.max(...smooth) : null };
 }
 
@@ -62,12 +66,14 @@ export function strangersProblems(record, { now = new Date(), where = STRANGERS_
   if (roles.length !== ROLES.length || ROLES.some(r => !roles.includes(r))) problems.push(`${where}#/vendored/files: not exactly the five source files (${ROLES.join(', ')})`);
   for (const [name, t] of [['estimate', e], ['measurement', m]]) {
     if (JSON.stringify(t.rows.map(r => r.guests)) !== JSON.stringify(t.ramp)) problems.push(`${where}#/${name}/rows: its steps are not its ramp, in order`);
+    for (const r of t.rows) if (!sampled(r, ['tick', 'step', 'crowd', 'lag', 'move', 'cpu']) || r.ticks !== r.samples.tick) problems.push(`${where}#/${name}/rows: the ${r.guests}-guest step has an empty measured window or a percentile with no samples behind it`);
     const again = verdictOf(t.rows);
     if (again.tickUnder50 !== t.verdict.tickUnder50 || again.smooth !== t.verdict.smooth) problems.push(`${where}#/${name}/verdict: not what its own rows give (${JSON.stringify(again)})`);
   }
   if (!(e.recommendedCap <= e.dedicatedCoreCap && e.dedicatedCoreCap <= e.breaksAt && e.breaksAt < e.unusableAt)) problems.push(`${where}#/estimate: its cap, dedicated cap, break and unusable points are not in order`);
   if (e.wireKiBPerGuest.low > e.wireKiBPerGuest.high) problems.push(`${where}#/estimate/wireKiBPerGuest: low above high`);
   if (m.load1Start >= MAX_LOAD1) problems.push(`${where}#/measurement/load1Start: the run started at a one-minute load of ${m.load1Start}; a run is made only below ${MAX_LOAD1}`);
+  if (!m.code.matchesMain) problems.push(`${where}#/measurement/code: the copy the run started from is not main's code`);
   if (!m.resummarized) problems.push(`${where}#/measurement/resummarized: the summary was not given again from the run's own files`);
   const iso = m.isolation;
   if (iso.ownListenersDuring < 1 || iso.ownListenersLoopback !== iso.ownListenersDuring) problems.push(`${where}#/measurement/isolation: the run's own listeners were not all on loopback`);
@@ -123,7 +129,7 @@ export function renderMeasurement(record) {
 
 export function renderIsolation(record) {
   const i = record.measurement.isolation;
-  return `<p>A load test on a shared machine is only fair to the machine if it touches nothing else. This run:</p><ul class="rogue-list"><li>ran from its own copy of the code at the private main, taken with git archive, in a scratch Python environment of its own;</li><li>started its own space in its own run folder, on free loopback ports it chose at the start, avoiding the ports the live services use;</li><li>stopped only the processes it had started.</li></ul><p>Its listening sockets were listed before, during and after. During the run the space held <strong>${n(i.ownListenersDuring)} listeners, all ${n(i.ownListenersLoopback)} on loopback</strong>. None of them was there before the run, none was left after it, and <strong>${n(i.ownProcessesLeft)} of its processes</strong> were left running. Of the machine's other ${n(i.listenersBefore)} listeners, ${n(i.keptByOthers)} were exactly the same after the run; ${n(i.changedByOthers)} changed, and none of those was the run's own: other programs on the machine opened and closed theirs meanwhile.</p><p class="lab-source">The listings themselves are not published: they name ports and other programs on the machine. These are their counts.</p>`;
+  return `<p>A load test on a shared machine is only fair to the machine if it touches nothing else. This run:</p><ul class="rogue-list"><li>ran from its own copy of the code at the private main, taken with git archive: after the run, all ${n(record.measurement.code.files)} files of that copy were checked against main by git's own object hash, every one main's bytes, none missing, nothing added but the bytecode Python writes as it runs (the list of their hashes has sha256 <code>${escape(record.measurement.code.digest)}</code>);</li><li>used a scratch Python environment of its own;</li><li>started its own space in its own run folder, on free loopback ports it chose at the start, avoiding the ports the live services use;</li><li>stopped only the processes it had started.</li></ul><p>Its listening sockets were listed before, during and after. During the run the space held <strong>${n(i.ownListenersDuring)} listeners, all ${n(i.ownListenersLoopback)} on loopback</strong>. None of them was there before the run, none was left after it, and <strong>${n(i.ownProcessesLeft)} of its processes</strong> were left running. Of the machine's other ${n(i.listenersBefore)} listeners, ${n(i.keptByOthers)} were exactly the same after the run; ${n(i.changedByOthers)} changed, and none of those was the run's own: other programs on the machine opened and closed theirs meanwhile.</p><p class="lab-source">The listings themselves are not published: they name ports and other programs on the machine. These are their counts.</p>`;
 }
 
 export function renderProbes(record) {
