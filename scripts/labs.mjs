@@ -12,6 +12,7 @@
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 //   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
 //   labs/ai-jury/index.html       Lab 14's page, rendered by scripts/lab-ai-jury.mjs
+//   labs/same-model-harness/index.html  Lab 11's page, rendered by scripts/lab-same-model-harness.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -46,6 +47,7 @@ import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
 import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
+import { SMH_RECORD, renderSameModelHarness } from './lab-same-model-harness.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -256,6 +258,9 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
+  // Lab 11's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, SMH_RECORD))) throw new Error(`Lab 11 is required on the published site: ${SMH_RECORD} is missing`);
+  const sameModel = renderSameModelHarness(root);
   // A caller cannot turn off the published site's tile/page contract by passing requireBench: false.
   const requireTiles = resolve(root) === REPO_SITE || requireBench;
   const tiles = readTiles(root, { required: requireTiles });
@@ -333,6 +338,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...blind.pages,
     ...talkLeak.pages,
     ...jury.pages,
+    ...sameModel.pages,
   };
   if (requireTiles) requireRenderedTilePages(tiles, pages);
   return pages;

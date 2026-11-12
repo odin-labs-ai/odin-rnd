@@ -1,0 +1,9 @@
+--- a/planner/cost.py
++++ b/planner/cost.py
+@@ -5,5 +5,5 @@ from planner.routes import route_km
+ 
+ def route_cost(network, route, per_km, stop_fee):
+     """Price of a route. The departure depot is not a stop; every depot after it is."""
+-    stops = len(route) - 1
++    stops = len(route)
+     return round(route_km(network, route) * per_km + stops * stop_fee, 2)

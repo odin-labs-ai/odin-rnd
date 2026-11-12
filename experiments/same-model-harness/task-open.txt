@@ -1,0 +1,12 @@
+You are reviewing a change to the Northwind route planner, a small Python project.
+
+The change is this diff:
+
+{{DIFF}}
+
+Answer two questions about the repository after this change:
+1. files: the exact path of every file in the repository that this change touches, or that calls the changed function, including the test files that test it. Give paths relative to the repository root.
+2. tests: does the repository's full test suite pass after this change? Answer "PASS", "FAIL", or "UNKNOWN" if you cannot tell.
+
+Reply with one JSON object and nothing else, in this shape:
+{"files": ["path/one", "path/two"], "tests": "PASS" | "FAIL" | "UNKNOWN"}
