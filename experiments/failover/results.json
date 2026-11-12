@@ -1,0 +1,1273 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.results",
+  "experiment": "EXP 021",
+  "date": "2026-11-11",
+  "measuredFrom": "2026-11-08T10:17:44Z",
+  "measuredThrough": "2026-11-10T14:25:14Z",
+  "summary": "MongoDB fits six of eight compared scenarios on outage; PostgreSQL fits both peer-only partition scenarios through the feed gate. No overall winner. Strict-ack and disturbance uncertainties remain.",
+  "sourceCommit": "d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97",
+  "sourceVerdictSha256": "d2e7a0294d9158f1db6bba89b180a72d03135359a2dc02672fbbcee4b233e9fb",
+  "verdict": {
+    "scenarios": {
+      "default/F1": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 20.8747,
+              "pg": 36.114
+            },
+            {
+              "mongo": 11.3844,
+              "pg": 29.8535
+            },
+            {
+              "mongo": 11.7253,
+              "pg": 25.5455
+            },
+            {
+              "mongo": 20.8585,
+              "pg": 30.0085
+            },
+            {
+              "mongo": 11.7061,
+              "pg": 35.6122
+            }
+          ],
+          "2": [
+            {
+              "mongo": 10.6234,
+              "pg": 35.1979
+            },
+            {
+              "mongo": 11.6237,
+              "pg": 36.5879
+            },
+            {
+              "mongo": 12.0563,
+              "pg": 25.7791
+            },
+            {
+              "mongo": 10.6318,
+              "pg": 36.5632
+            },
+            {
+              "mongo": 10.6219,
+              "pg": 36.4862
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -24.9642,
+        "pg_variant": "classic-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "overhead:default/F1": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 20.8747,
+              "pg": 36.5217
+            },
+            {
+              "mongo": 11.3844,
+              "pg": 28.5349
+            },
+            {
+              "mongo": 11.7253,
+              "pg": 28.0406
+            },
+            {
+              "mongo": 20.8585,
+              "pg": 28.3539
+            },
+            {
+              "mongo": 11.7061,
+              "pg": 34.915
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": null,
+        "pg_variant": "outbox-only",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "outbox-only",
+            "outbox-only",
+            "outbox-only",
+            "outbox-only",
+            "outbox-only"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        }
+      },
+      "default/F1b": {
+        "verdict": "both-fit",
+        "basis": "outage rule not met",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 10.5922,
+              "pg": 10.132
+            },
+            {
+              "mongo": 10.5497,
+              "pg": 5.161
+            },
+            {
+              "mongo": 10.6465,
+              "pg": 10.1704
+            },
+            {
+              "mongo": 10.6335,
+              "pg": 10.1437
+            },
+            {
+              "mongo": 10.3992,
+              "pg": 5.1456
+            }
+          ],
+          "2": [
+            {
+              "mongo": 11.691,
+              "pg": 10.1631
+            },
+            {
+              "mongo": 11.1804,
+              "pg": 5.159
+            },
+            {
+              "mongo": 10.4928,
+              "pg": 10.1534
+            },
+            {
+              "mongo": 10.4065,
+              "pg": 5.1556
+            },
+            {
+              "mongo": 10.4115,
+              "pg": 10.1703
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 0,
+          "pg": 2
+        },
+        "repro_median_diff": null,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": true,
+        "compared_metric": "outage"
+      },
+      "default/F2a": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 17.9804,
+              "pg": 35.263
+            },
+            {
+              "mongo": 24.3601,
+              "pg": 31.6126
+            },
+            {
+              "mongo": 18.9057,
+              "pg": 27.1676
+            },
+            {
+              "mongo": 17.6783,
+              "pg": 35.8478
+            },
+            {
+              "mongo": 17.31,
+              "pg": 26.3557
+            }
+          ],
+          "2": [
+            {
+              "mongo": 22.8177,
+              "pg": 27.4471
+            },
+            {
+              "mongo": 17.3902,
+              "pg": 27.1364
+            },
+            {
+              "mongo": 22.747,
+              "pg": 35.5858
+            },
+            {
+              "mongo": 17.9072,
+              "pg": 26.9111
+            },
+            {
+              "mongo": 17.8998,
+              "pg": 31.4367
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -9.7462,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "default/F2b": {
+        "verdict": "postgres-fits",
+        "basis": "gate-only",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 21.3407,
+              "pg": 34.9322
+            },
+            {
+              "mongo": 20.6212,
+              "pg": 34.7721
+            },
+            {
+              "mongo": 11.5919,
+              "pg": 35.1138
+            },
+            {
+              "mongo": 11.9317,
+              "pg": 35.2664
+            },
+            {
+              "mongo": 18.7645,
+              "pg": 34.9186
+            }
+          ],
+          "2": [
+            {
+              "mongo": 11.8708,
+              "pg": 25.3527
+            },
+            {
+              "mongo": 24.6039,
+              "pg": 35.1731
+            },
+            {
+              "mongo": 18.6989,
+              "pg": 26.544
+            },
+            {
+              "mongo": 10.7093,
+              "pg": 34.6824
+            },
+            {
+              "mongo": 17.3537,
+              "pg": 34.775
+            }
+          ]
+        },
+        "wins": {},
+        "repro_median_diff": null,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": null,
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ]
+        },
+        "label": "gate-only",
+        "gates": {
+          "mongo": false,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "default/F3": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 0.4064,
+              "pg": 9.4733
+            },
+            {
+              "mongo": 0.4091,
+              "pg": 3.486
+            },
+            {
+              "mongo": 0.4601,
+              "pg": 3.477
+            },
+            {
+              "mongo": 0.4133,
+              "pg": 3.4696
+            },
+            {
+              "mongo": 0.4048,
+              "pg": 9.5098
+            }
+          ],
+          "2": [
+            {
+              "mongo": 0.5696,
+              "pg": 10.5967
+            },
+            {
+              "mongo": 0.4705,
+              "pg": 3.4577
+            },
+            {
+              "mongo": 0.4054,
+              "pg": 3.5172
+            },
+            {
+              "mongo": 0.4084,
+              "pg": 9.4474
+            },
+            {
+              "mongo": 0.4052,
+              "pg": 3.4826
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -3.1118,
+        "pg_variant": "classic-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "classic-strict",
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "ack_gap"
+      },
+      "tuned/F1": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 10.372,
+              "pg": 20.5154
+            },
+            {
+              "mongo": 10.1554,
+              "pg": 20.9535
+            },
+            {
+              "mongo": 10.3417,
+              "pg": 23.2344
+            },
+            {
+              "mongo": 10.1319,
+              "pg": 23.4946
+            },
+            {
+              "mongo": 10.1035,
+              "pg": 20.9965
+            }
+          ],
+          "2": [
+            {
+              "mongo": 10.3157,
+              "pg": 21.2865
+            },
+            {
+              "mongo": 10.1743,
+              "pg": 20.6273
+            },
+            {
+              "mongo": 10.2784,
+              "pg": 23.1617
+            },
+            {
+              "mongo": 10.2149,
+              "pg": 21.1519
+            },
+            {
+              "mongo": 10.3996,
+              "pg": 23.2241
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -10.9708,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict",
+            "classic-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "overhead:tuned/F1": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 10.372,
+              "pg": 23.2208
+            },
+            {
+              "mongo": 10.1554,
+              "pg": 20.9795
+            },
+            {
+              "mongo": 10.3417,
+              "pg": 26.0382
+            },
+            {
+              "mongo": 10.1319,
+              "pg": 25.5441
+            },
+            {
+              "mongo": 10.1035,
+              "pg": 23.2173
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": null,
+        "pg_variant": "outbox-only",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "outbox-only",
+            "outbox-only",
+            "outbox-only",
+            "outbox-only",
+            "outbox-only"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        }
+      },
+      "tuned/F1b": {
+        "verdict": "both-fit",
+        "basis": "outage rule not met",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 6.0304,
+              "pg": 10.3991
+            },
+            {
+              "mongo": 6.1232,
+              "pg": 5.1586
+            },
+            {
+              "mongo": 5.9074,
+              "pg": 5.1431
+            },
+            {
+              "mongo": 6.3441,
+              "pg": 5.1469
+            },
+            {
+              "mongo": 5.8809,
+              "pg": 5.1586
+            }
+          ],
+          "2": [
+            {
+              "mongo": 6.073,
+              "pg": 10.2492
+            },
+            {
+              "mongo": 5.4802,
+              "pg": 5.1475
+            },
+            {
+              "mongo": 5.7471,
+              "pg": 5.1539
+            },
+            {
+              "mongo": 5.2107,
+              "pg": 5.1485
+            },
+            {
+              "mongo": 5.8821,
+              "pg": 10.1639
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 1,
+          "pg": 0
+        },
+        "repro_median_diff": null,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": true,
+        "compared_metric": "outage"
+      },
+      "tuned/F2a": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 15.0905,
+              "pg": 21.4601
+            },
+            {
+              "mongo": 15.3246,
+              "pg": 21.7231
+            },
+            {
+              "mongo": 17.5226,
+              "pg": 27.0087
+            },
+            {
+              "mongo": 15.1017,
+              "pg": 23.6467
+            },
+            {
+              "mongo": 10.3435,
+              "pg": 21.5856
+            }
+          ],
+          "2": [
+            {
+              "mongo": 8.4645,
+              "pg": 24.0302
+            },
+            {
+              "mongo": 15.2968,
+              "pg": 24.9611
+            },
+            {
+              "mongo": 11.7142,
+              "pg": 21.9326
+            },
+            {
+              "mongo": 15.2115,
+              "pg": 26.7197
+            },
+            {
+              "mongo": 15.3415,
+              "pg": 22.0069
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -10.2184,
+        "pg_variant": "classic-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "classic-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "tuned/F2b": {
+        "verdict": "postgres-fits",
+        "basis": "gate-only",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 10.2644,
+              "pg": 25.2823
+            },
+            {
+              "mongo": 10.3535,
+              "pg": 21.915
+            },
+            {
+              "mongo": 15.187,
+              "pg": 22.1809
+            },
+            {
+              "mongo": 18.1776,
+              "pg": 22.5257
+            },
+            {
+              "mongo": 15.5153,
+              "pg": 22.4697
+            }
+          ],
+          "2": [
+            {
+              "mongo": 0.4209,
+              "pg": 24.9474
+            },
+            {
+              "mongo": 15.1499,
+              "pg": 25.1182
+            },
+            {
+              "mongo": 15.2096,
+              "pg": 25.0191
+            },
+            {
+              "mongo": 17.1324,
+              "pg": 21.8529
+            },
+            {
+              "mongo": 10.1288,
+              "pg": 24.8483
+            }
+          ]
+        },
+        "wins": {},
+        "repro_median_diff": null,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": null,
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict"
+          ]
+        },
+        "label": "gate-only",
+        "gates": {
+          "mongo": false,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "outage"
+      },
+      "tuned/F3": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 0.4051,
+              "pg": 3.5492
+            },
+            {
+              "mongo": 0.4087,
+              "pg": 3.4977
+            },
+            {
+              "mongo": 0.653,
+              "pg": 9.5907
+            },
+            {
+              "mongo": 0.4043,
+              "pg": 3.4687
+            },
+            {
+              "mongo": 0.4174,
+              "pg": 3.5
+            }
+          ],
+          "2": [
+            {
+              "mongo": 0.8028,
+              "pg": 9.5888
+            },
+            {
+              "mongo": 0.4841,
+              "pg": 9.485
+            },
+            {
+              "mongo": 0.4083,
+              "pg": 3.5595
+            },
+            {
+              "mongo": 0.4048,
+              "pg": 9.4439
+            },
+            {
+              "mongo": 0.4053,
+              "pg": 9.4726
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -9.0009,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "slot"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "classic-strict",
+            "classic-strict",
+            "quorum-strict",
+            "classic-strict",
+            "classic-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        },
+        "labelled_fault": false,
+        "compared_metric": "ack_gap"
+      },
+      "floor/F1": {
+        "verdict": "mongodb-fits",
+        "basis": "outage",
+        "pairs": {
+          "1": [
+            {
+              "mongo": 10.372,
+              "pg": 23.1595
+            },
+            {
+              "mongo": 10.1554,
+              "pg": 23.0906
+            },
+            {
+              "mongo": 10.3417,
+              "pg": 25.5418
+            },
+            {
+              "mongo": 10.1319,
+              "pg": 25.5209
+            },
+            {
+              "mongo": 10.1035,
+              "pg": 23.7439
+            }
+          ],
+          "2": [
+            {
+              "mongo": 10.3157,
+              "pg": 23.7092
+            },
+            {
+              "mongo": 10.1743,
+              "pg": 23.8598
+            },
+            {
+              "mongo": 10.2784,
+              "pg": 23.2594
+            },
+            {
+              "mongo": 10.2149,
+              "pg": 26.298
+            },
+            {
+              "mongo": 10.3996,
+              "pg": 23.2542
+            }
+          ]
+        },
+        "wins": {
+          "mongo": 5,
+          "pg": 0
+        },
+        "repro_median_diff": -13.3935,
+        "pg_variant": "quorum-strict",
+        "feeds": {
+          "mongo": "stream",
+          "pg": "outbox"
+        },
+        "flags": [],
+        "per_rep_best": {
+          "1": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ],
+          "2": [
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict",
+            "quorum-strict"
+          ]
+        },
+        "label": null,
+        "gates": {
+          "mongo": true,
+          "pg": true
+        }
+      }
+    },
+    "components": {
+      "verdict": "postgres-fits",
+      "basis": "gate-only",
+      "label": "gate-only",
+      "mongo_kinds": 4,
+      "pg_kinds": 12,
+      "pg_feed": "slot",
+      "mongo_processes": 0,
+      "pg_processes": 6,
+      "items": {
+        "mongo": [
+          {
+            "kind": "replica-set",
+            "class": "S",
+            "processes": 0,
+            "why": "replSet + rs.initiate config (3 members, priority 1 / votes 1)"
+          },
+          {
+            "kind": "keyfile",
+            "class": "O",
+            "processes": 0,
+            "why": "internal auth between members"
+          },
+          {
+            "kind": "oplog-window-alarm",
+            "class": "A",
+            "processes": 0,
+            "why": "an operator must watch the oplog window (rejoin / catch-up needs it)"
+          },
+          {
+            "kind": "feed-cursor-collection",
+            "class": "O",
+            "processes": 0,
+            "why": "the change stream's resume token, persisted with the effect"
+          }
+        ],
+        "pg": [
+          {
+            "kind": "patroni",
+            "class": "P",
+            "processes": 3,
+            "why": "one Patroni agent per node (co-located)"
+          },
+          {
+            "kind": "etcd",
+            "class": "P",
+            "processes": 3,
+            "why": "one etcd member per node (co-located), the DCS quorum"
+          },
+          {
+            "kind": "synchronous-mode",
+            "class": "S",
+            "processes": 0,
+            "why": "Patroni synchronous_mode (quorum ANY 1, or classic) + synchronous_commit=on"
+          },
+          {
+            "kind": "replication-role-hba",
+            "class": "O",
+            "processes": 0,
+            "why": "the replication role and its pg_hba entry"
+          },
+          {
+            "kind": "rewind-hygiene",
+            "class": "S",
+            "processes": 0,
+            "why": "initdb --data-checksums + use_pg_rewind (rejoin after failover)"
+          },
+          {
+            "kind": "physical-slot-wal-retention-alarm",
+            "class": "A",
+            "processes": 0,
+            "why": "WAL piles up behind a dead member's physical slot (use_slots)"
+          },
+          {
+            "kind": "wal-level-logical",
+            "class": "S",
+            "processes": 0,
+            "why": "wal_level=logical (a restart)"
+          },
+          {
+            "kind": "publication",
+            "class": "O",
+            "processes": 0,
+            "why": "the publication on the proof table"
+          },
+          {
+            "kind": "permanent-logical-slot",
+            "class": "O",
+            "processes": 0,
+            "why": "a Patroni permanent logical slot (copied to the replicas)"
+          },
+          {
+            "kind": "hot-standby-feedback",
+            "class": "S",
+            "processes": 0,
+            "why": "hot_standby_feedback=on (needed for the copied slot)"
+          },
+          {
+            "kind": "slot-retention-alarm",
+            "class": "A",
+            "processes": 0,
+            "why": "an operator must watch the slot's retained WAL"
+          },
+          {
+            "kind": "feed-cursor-table",
+            "class": "O",
+            "processes": 0,
+            "why": "the commit-LSN cursor, persisted with the effect"
+          }
+        ]
+      }
+    },
+    "flags": []
+  },
+  "recount": {
+    "countedCells": 334,
+    "steadyCells": 14,
+    "totals": {
+      "pss": {
+        "cells": 104,
+        "writePass": 104,
+        "acknowledged": 271105,
+        "lostAcknowledged": 0,
+        "singleCopyAcks": 0,
+        "singleCopyWindows": 0,
+        "feeds": {
+          "stream": 101
+        }
+      },
+      "classic-strict": {
+        "cells": 104,
+        "writePass": 104,
+        "acknowledged": 296414,
+        "lostAcknowledged": 0,
+        "singleCopyAcks": 3030,
+        "singleCopyWindows": 2,
+        "feeds": {
+          "outbox": 104,
+          "slot": 104,
+          "plain": 50
+        }
+      },
+      "quorum-strict": {
+        "cells": 116,
+        "writePass": 116,
+        "acknowledged": 350184,
+        "lostAcknowledged": 0,
+        "singleCopyAcks": 12537,
+        "singleCopyWindows": 12,
+        "feeds": {
+          "outbox": 116,
+          "slot": 116,
+          "plain": 52
+        }
+      },
+      "outbox-only": {
+        "cells": 10,
+        "writePass": 10,
+        "acknowledged": 24188,
+        "lostAcknowledged": 0,
+        "singleCopyAcks": 1565,
+        "singleCopyWindows": 1,
+        "feeds": {
+          "outbox": 10
+        }
+      }
+    },
+    "f2bFailingCells": [
+      "mongo-pss-default-F2b-rep1-seed1.json",
+      "mongo-pss-default-F2b-rep3-seed2.json",
+      "mongo-pss-tuned-F2b-rep3-seed2.json"
+    ],
+    "strictAckCells": [
+      {
+        "cell": "pg-classic-strict-default-F1-rep1-seed1.json",
+        "acks": 1505,
+        "windows": 1
+      },
+      {
+        "cell": "pg-classic-strict-tuned-F1-rep4-seed2.json",
+        "acks": 1525,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-default-F1-rep1-seed1.json",
+        "acks": 1630,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-default-F2b-rep1-seed2.json",
+        "acks": 2148,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-default-F2b-rep3-seed1.json",
+        "acks": 2171,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-floor-F1-rep4-seed2.json",
+        "acks": 1525,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-tuned-F1-rep0-seed1.json",
+        "acks": 1609,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-tuned-F1-rep4-seed2.json",
+        "acks": 1505,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-tuned-F1b-rep1-seed2.json",
+        "acks": 1,
+        "windows": 1
+      },
+      {
+        "cell": "pg-quorum-strict-tuned-F2b-rep2-seed1.json",
+        "acks": 1948,
+        "windows": 1
+      }
+    ],
+    "verdictPairValuesChecked": 240
+  },
+  "limits": [
+    "One Windows/WSL2 Docker host, three containerized nodes per arm, simulated partitions; no multi-host reliability claim and no overall winner.",
+    "PostgreSQL strict variants logged 15,567 acknowledgements in 10 counted cells while synchronous_standby_names was empty. Zero acknowledged writes were lost. The cause, a true single-copy interval or observer error, is unresolved. Equal two-copy durability throughout is not established; the frozen lost-write gate does not change its verdict for these windows.",
+    "Open disturbance window I has no recorded end: five counted seed-2 PostgreSQL files may overlap heavy test work. One is a compared default/F1 value; removing it leaves the sign unchanged. That sensitivity check does not prove clean-run provenance.",
+    "PostgreSQL variants are selected on seed1 and compared on seed1. Seed2 outage numbers are out of sample; its gate outcomes participate in selection.",
+    "F1b, the Patroni floor and the non-strict outbox-only overhead block are labelled context, never deciding a compared verdict. The overhead block does not isolate slot cost from the strict/non-strict difference.",
+    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all334 cell identities and240 verdict pair values but does not rerun the databases or independently audit all6020 manifest entries.",
+    "Original result advocate reviews are reviews of earlier drafts with vetoes and requested remedies, not final acceptance of this publication. The reported corrections are traceable; final publication review is recorded separately by the landing process."
+  ],
+  "report": "experiments/failover/results/RESULT.md",
+  "sourceHashes": "experiments/failover/results/publication-sources.json"
+}

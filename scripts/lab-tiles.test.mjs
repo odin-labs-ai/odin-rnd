@@ -12,7 +12,7 @@ const temp = mkdtempSync(join(tmpdir(), 'lab-tiles-'));
 after(() => rmSync(temp, { recursive: true, force: true }));
 const committed = JSON.parse(readFileSync('site/data/labs/failover.json', 'utf8'));
 
-test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that its counted runs have started with no result yet, and links EXP 021 and its amendments', () => {
+test('Lab 03 renders after Lab 01, carries the measured result and unresolved limits, and preserves its plan and amendments', () => {
   assert.deepEqual(tileProblems(committed), []);
   const page = renderLabs()['labs/index.html'];
   const lab01 = page.indexOf('<a class="lab-tile" href="agent-space/">'), lab03 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-failover">');
@@ -20,11 +20,13 @@ test('Lab 03 renders on the Labs index after Lab 01, says what it asks and that 
   const tile = page.slice(lab03, page.indexOf('</article>', lab03));
   assert.match(tile, /<span class="technical">LAB 03<\/span><h2 id="lab-tile-failover">Failover<\/h2>/);
   assert.match(tile, /MongoDB or PostgreSQL\?/);
-  assert.match(tile, /<p class="lab-tile-status">Pre-registered; the counted runs have started, no result yet\.<\/p>/);
+  assert.match(tile, /<p class="lab-tile-status">Measured on one host; strict-ack and overlap limits remain\.<\/p>/);
+  assert.match(tile, /<a href="\.\.\/journal\/failover-results\.html">The result and its limits \(EXP 021\)<\/a>/);
   assert.match(tile, /<a href="\.\.\/journal\/failover-pre-registration\.html">The pre-registration \(EXP 021\)<\/a>/);
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-01\.json">Amendment 01: how it will be run<\/a>/);
   assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-02\.json">Amendment 02: the strict switch and the runner fixes<\/a>/);
-  assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 0[12]/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
+  assert.match(tile, /<a href="\.\.\/data\/failover\/amendment-03\.json">Amendment 03: the completed run and open limits<\/a>/);
+  assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 0[123]/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
   assert.doesNotMatch(tile, /fits|predict|winner|faster|safer/i, 'no prediction or verdict');
   // Lab 02's tile (a results lab) sits between Lab 01 and Lab 03, once.
   const lab02 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-brain-bench">');
@@ -48,7 +50,7 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
     [t => { t.links[0].href = '../secret.html'; }, /links\/0\/href: not a page or record path/],
     [t => { t.question = `Which store keeps writes in ${[...'nrooH'].reverse().join('')}?`; }, /question: a place name/],
     [t => { t.how = 'See PROTOCOL-LAB02.md for details.'; }, /how: a file path or file name/],
-    [t => { t.experiment = 'nothing-here'; }, /data\/nothing-here\/preregistration\.json is not published/],
+    [t => { t.experiment = 'nothing-here'; t.kind = 'preregistered'; delete t.record; }, /data\/nothing-here\/preregistration\.json is not published/],
     [t => { t.extra = 'x'; }, /extra: not allowed/],
   ];
   for (const [edit, expected] of cases) {
@@ -61,9 +63,8 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.equal(readTiles(root).length, 1);
   // Once results are published, "not yet run" is refused until the tile is updated.
-  writeFileSync(join(root, 'data/failover/results.json'), '{}');
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify({ ...committed, status: 'Pre-registered, not yet run' }));
-  assert.throws(() => readTiles(root), /status: says not yet run, but data\/failover\/results\.json is published/);
+  assert.throws(() => readTiles(root), /status: a results lab has run/);
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.match(renderTile(committed), /^<article class="lab-tile lab-tile-static"/);
 });

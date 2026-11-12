@@ -4,6 +4,26 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-021-results",
+      "experiment": "EXP 021",
+      "title": "Kill the database mid-session, does anyone notice?",
+      "kind": "Results",
+      "text": "Measured on one host: MongoDB fits six outage scenarios, PostgreSQL two by the feed gate. No acknowledged writes lost; no overall winner. Strict-ack and disturbance uncertainties remain.",
+      "href": "journal/failover-results.html",
+      "source": "data/failover/results.json",
+      "date": "2026-11-11"
+    },
+    {
+      "key": "exp-021-amendment-03",
+      "experiment": "EXP 021",
+      "title": "Kill the database mid-session, does anyone notice?",
+      "kind": "Amendment",
+      "text": "The counted run is complete: 48 discards reconciled; strict acknowledgements and one disturbance window remain unresolved.",
+      "href": "journal/failover-results.html",
+      "source": "data/failover/amendment-03.json",
+      "date": "2026-11-11"
+    },
+    {
       "key": "exp-020-amendment-05",
       "experiment": "EXP 020",
       "title": "MongoDB on its home ground: where does it fit Odin?",
@@ -19,7 +39,7 @@
       "title": "Kill the database mid-session, does anyone notice?",
       "kind": "Amendment",
       "text": "The pre-registered single-copy rule fired, so the compared PostgreSQL variants are strict; ten runner fixes are recorded.",
-      "href": "journal/failover-pre-registration.html",
+      "href": "journal/failover-results.html",
       "source": "data/failover/amendment-02.json",
       "date": "2026-11-08"
     },
@@ -39,7 +59,7 @@
       "title": "Kill the database mid-session, does anyone notice?",
       "kind": "Amendment",
       "text": "The runner protocol and the design draft are published.",
-      "href": "journal/failover-pre-registration.html",
+      "href": "journal/failover-results.html",
       "source": "data/failover/amendment-01.json",
       "date": "2026-10-25"
     },
@@ -79,7 +99,7 @@
       "title": "Kill the database mid-session, does anyone notice?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "journal/failover-pre-registration.html",
+      "href": "journal/failover-results.html",
       "source": "data/failover/preregistration.json",
       "date": "2026-10-25"
     },

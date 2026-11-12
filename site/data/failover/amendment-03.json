@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 021",
+  "amendment": "03",
+  "title": "The counted run is complete: 48 discards reconciled; strict acknowledgements and one disturbance window remain unresolved",
+  "date": "2026-11-11",
+  "authoredOn": "2026-11-11",
+  "amends": {
+    "preregistration": "experiments/failover/preregistration.json",
+    "preregistrationSha256": "7e2f3159484251478acbda3910b230fdcd838222a7ac89a4cfd4f09902f38c5a",
+    "after": {
+      "amendment": "02",
+      "sha256": "22e35000961572782bcd3fc1bb933b90beec002cb2f50d7dbc8a42f4ab867f47"
+    }
+  },
+  "why": "Records the completed run and corrections requested by both result advocates. Changes no measure, gate, selection, verdict rule or prediction; written after the run, not a prospective amendment.",
+  "run": {
+    "firstCountedStartUTC": "2026-11-08T10:17:44Z",
+    "lastCountedEndUTC": "2026-11-10T14:25:14Z",
+    "planStarts": 22,
+    "resumes": 21,
+    "failedLines": 19,
+    "counted": 334,
+    "fault": 320,
+    "steady": 14,
+    "valid": 334,
+    "smokeNeverCounted": 20,
+    "invalidAttempts": 7,
+    "invalidSmoke": 5,
+    "invalidCounted": 2,
+    "supervisorSnapshot": "As of the 15:25:34 source draft on10 November:8 supervisor starts,19 restarts,3 finish attempts. Later lines record draft creation, draft commit and supervise done. These are snapshot counts, not a claim the log stopped then."
+  },
+  "discards": {
+    "count": 48,
+    "mongo": 7,
+    "postgresql": 41,
+    "causes": [
+      {
+        "cause": "foreign heavy work seen inside a running cell",
+        "count": 2
+      },
+      {
+        "cause": "other sessions reports, windows A/B/C",
+        "count": 16
+      },
+      {
+        "cause": "local model load found by hand, D/E/F/G",
+        "count": 4
+      },
+      {
+        "cause": "own agents test suites, H",
+        "count": 6
+      },
+      {
+        "cause": "model-load guard, H/K/L/M/N",
+        "count": 20
+      }
+    ],
+    "record": "## 3. Discards (all kept in `discarded/`, all re-run)\n- **48 counted cell runs** were discarded; `discarded/` holds 48 counted-cell files, and `DISTURBANCES.md` (\"Summary: every file in `discarded/`\") reconciles all 48. The per-window cell lists and causes are there verbatim.\n\n| Cause | Windows | Count |\n|---|---|---|\n| foreign heavy work seen by the lab (a lease and a browser; a local package registry), inside a running cell | `-disturbed-` | 2 |\n| other sessions' own reports of unleased heavy work | A (8), B (3), C (5) | 16 |\n| a local model load, found by hand | D, E, F, G | 4 |\n| this lab's own agents running test suites | H | 6 |\n| a local model load, the LLM guard (`lab03_llm_guard.py`, at cell end) | H (1), K (6), L (4), M (3), N (6) | 20 |\n| this lab's own agents (sketch 7b) | I | 0 (open) |\n| **total** | | **48** |\n\n- **MongoDB discards (7):** `mongo-pss-tuned-F1-rep3-seed1` (G); `mongo-pss-default-F3-rep3-seed1`, `mongo-pss-tuned-F3-rep4-seed1`, `mongo-pss-tuned-F2a-rep4-seed1` (K); `mongo-pss-default-F3-rep0-seed2` (M); `mongo-pss-default-F2b-rep4-seed2`, `mongo-pss-tuned-F1b-rep4-seed2` (N). The other 41 are PostgreSQL. None of MongoDB's 3 gate-failing F2b cells is a re-run of a discarded cell.\n- **The guard's suffix date is always `20261108`,** even for moves made on 11-09 and 11-10; the real dates are in `DISTURBANCES.md`.\n- **Open, window I** (sketch 7b's agents' test suites, 11-08 22:45 onwards, end time not recorded): 5 counted files that were not discarded have mtimes inside it: `pg-quorum-strict-default-F3-rep0-seed2` and `pg-classic-strict-default-{F1,F1b,F2a,F2b}-rep0-seed2`. Whether they overlapped heavy work cannot be decided from the record. One, `pg-classic-strict-default-F1-rep0-seed2`, is a compared seed-2 value; removing it would not change the `default/F1` sign.\n- **Window J** (11-09 about 01:32): every python.exe stopped; no cell running, nothing discarded (§1).\n- **Marked, but no file to move (3 cells, 4 marks):** `pg-quorum-strict-default-F2a-rep0-seed2`, `pg-quorum-strict-tuned-F2b-rep0-seed2`, `pg-classic-strict-default-F1b-rep4-seed2`, logged \"done but no file\"; the plan re-ran them as pending.\n- **Not discards:** 7 harness-invalid files in `invalid/` (5 smoke, 2 counted; §2); the memory-gate exits.\n- Six pauses between cells are recorded in the private disturbance log; no running cell was discarded for a pause alone.\n"
+  },
+  "sourceIntegrity": "experiments/failover/results/publication-sources.json",
+  "integrityCorrection": "The original frozen manifest remains unchanged and does not validate the later DISTURBANCES reconciliation. Later source hashes and final publication-document hashes are pinned separately; supervisor-log versions are distinguished.",
+  "sourceDraft": {
+    "commit": "d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97",
+    "sha256": "0acb016df2230ad7cf1749beb00c7665b3be4c0332164a9a01a907e494ecf0e9",
+    "published": "Restated with internal session, lane, private branch and process identifiers omitted. Times and scientific caveats retained; no claim of final advocate acceptance."
+  },
+  "limits": [
+    "One Windows/WSL2 Docker host, three containerized nodes per arm, simulated partitions; no multi-host reliability claim and no overall winner.",
+    "PostgreSQL strict variants logged 15,567 acknowledgements in 10 counted cells while synchronous_standby_names was empty. Zero acknowledged writes were lost. The cause, a true single-copy interval or observer error, is unresolved. Equal two-copy durability throughout is not established; the frozen lost-write gate does not change its verdict for these windows.",
+    "Open disturbance window I has no recorded end: five counted seed-2 PostgreSQL files may overlap heavy test work. One is a compared default/F1 value; removing it leaves the sign unchanged. That sensitivity check does not prove clean-run provenance.",
+    "PostgreSQL variants are selected on seed1 and compared on seed1. Seed2 outage numbers are out of sample; its gate outcomes participate in selection.",
+    "F1b, the Patroni floor and the non-strict outbox-only overhead block are labelled context, never deciding a compared verdict. The overhead block does not isolate slot cost from the strict/non-strict difference.",
+    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all334 cell identities and240 verdict pair values but does not rerun the databases or independently audit all6020 manifest entries.",
+    "Original result advocate reviews are reviews of earlier drafts with vetoes and requested remedies, not final acceptance of this publication. The reported corrections are traceable; final publication review is recorded separately by the landing process."
+  ],
+  "unchanged": "Pre-registration and amendments01/02 stay byte-identical. No rerun, new scientific rule or retroactive prospective approval."
+}
