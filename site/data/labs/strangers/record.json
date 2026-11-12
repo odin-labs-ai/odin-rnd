@@ -2,7 +2,7 @@
  "format": "odin-lab-strangers",
  "version": 1,
  "vendored": {
-  "from": "the public demo's capacity sheet and its load tool in the agent space's private repository, read at its main, and one run of that tool at that main on a Mac",
+  "from": "the public demo's capacity sheet and its load tool in the agent space's private repository, read at its main, and one run on a Mac from a copy of that main",
   "commit": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
   "committed": "2026-11-11T01:47:46Z",
   "mainCheck": {
@@ -502,7 +502,7 @@
    "digest": "737d684b19fa9dcde6f24d5253119458bbbf03e463f7c526d8a2f43f3ff2f5c5",
    "compiledCaches": 182,
    "matchesMain": true,
-   "boundToRun": true
+   "templatesFromCopy": true
   },
   "probes": {
    "steps": 9,

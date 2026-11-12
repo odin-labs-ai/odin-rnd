@@ -762,7 +762,7 @@
       "digest",
       "compiledCaches",
       "matchesMain",
-      "boundToRun"
+      "templatesFromCopy"
      ],
      "additionalProperties": false,
      "properties": {
@@ -781,7 +781,7 @@
        "type": "integer",
        "minimum": 0
       },
-      "boundToRun": {
+      "templatesFromCopy": {
        "const": true
       }
      }

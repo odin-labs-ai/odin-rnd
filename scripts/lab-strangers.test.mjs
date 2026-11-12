@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readStrangers, renderStrangers, strangersProblems, STRANGERS_PIN, STRANGERS_RECORD, STRANGERS_TEMPLATE, STRANGERS_TILE, verdictOf } from './lab-strangers.mjs';
-import { build, isolationOf, PYC_CHECK, rowOf, sheetFigures, treeCheck } from './vendor-strangers.mjs';
+import { build, isolationOf, PYC_CHECK, rowOf, sheetFigures, templatesFromCopy, treeCheck } from './vendor-strangers.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
@@ -214,7 +214,7 @@ test('review 1: probe rounds are counted per step of the ramp, by that step\'s n
   writeFileSync(join(dir, 'files', 'sheet'), sheet);
   writeFileSync(join(dir, 'files', 'estimate-run'), JSON.stringify({ ...run({}), machine: { cpus: 12, baseline: { machine_cpu_pct_mean: 68 } } }));
   for (const f of ['tool', 'perf']) writeFileSync(join(dir, 'files', f), f);
-  writeFileSync(join(dir, 'source.json'), JSON.stringify({ main: 'a'.repeat(40), committed: '2026-11-11T00:00:00Z', checked: '2026-11-12', cites: [{ commit: 'a'.repeat(40), what: 'x', at: '2026-11-11T00:00:00Z', check: { behind_by: 0 } }], run: { start: '2026-11-12T00:00:00Z', end: '2026-11-12T00:10:00Z', load1Start: 1, load1End: 1, exit: 0, left: 0, chip: 'Apple M5 Max', cores: 18, memGb: 128, os: '26.6.1', python: '3.12.13', websockets: '17.4' }, resummarized: true, code: { files: 1, digest: 'b'.repeat(64) }, isolation: {} }));
+  writeFileSync(join(dir, 'source.json'), JSON.stringify({ main: 'a'.repeat(40), committed: '2026-11-11T00:00:00Z', checked: '2026-11-12', cites: [{ commit: 'a'.repeat(40), what: 'x', at: '2026-11-11T00:00:00Z', check: { behind_by: 0 } }], run: { start: '2026-11-12T00:00:00Z', end: '2026-11-12T00:10:00Z', load1Start: 1, load1End: 1, exit: 0, left: 0, chip: 'Apple M5 Max', cores: 18, memGb: 128, os: '26.6.1', python: '3.12.13', websockets: '17.4' }, resummarized: true, code: { files: 1, digest: 'b'.repeat(64), compiled: 0, templatesFromCopy: true }, isolation: {} }));
   const probesOf = p => { writeFileSync(join(dir, 'files', 'run'), JSON.stringify(run(p))); return build(dir).measurement.probes; };
   assert.deepEqual(probesOf({ '10 guests': step, '20 guests': step }), { steps: 2, held: { flood: 2, oversized_line: 2, forged_evidence: 2, operator_ops: 2, oversized_frame: 2 } });
   // The 20-guest round is absent; two rounds under other names do not stand in for it.
@@ -247,10 +247,18 @@ test('review 1: the copy the run started from is checked against main file for f
   assert.ok(main.includes(`all ${record.measurement.code.files.toLocaleString('en-GB')} files of that copy were checked against main`));
   const r = clone(); r.measurement.code.matchesMain = false;
   assert.ok(strangersProblems(r).length > 0);
-  const b = clone(); b.measurement.code.boundToRun = false;
-  assert.ok(strangersProblems(b).length > 0, 'a run not bound to the checked copy');
-  assert.ok(record.measurement.code.boundToRun && record.measurement.code.compiledCaches > 0);
+  const b = clone(); b.measurement.code.templatesFromCopy = false;
+  assert.ok(strangersProblems(b).some(p => /templatesFromCopy|do not name the checked copy/.test(p)), 'a run whose records do not name the copy');
+  assert.ok(record.measurement.code.templatesFromCopy && record.measurement.code.compiledCaches > 0);
   assert.match(textOf(main), /each was checked to be exactly its own source compiled again\. The run's own records name this copy/);
-  const src = readFileSync('scripts/vendor-strangers.mjs', 'utf8');
-  assert.match(src, /realpathSync\(templates\) !== realpathSync\(join\(a\.tree, 'games', 'agent_space', 'templates'\)\)/, 'the run is bound to the copy by its own tenant root');
+  assert.match(textOf(main), /nothing here watched which code its processes executed/, 'the claim is no stronger than the check');
+  // The binding itself, on real folders: the run's tenant root must name this copy's templates, by real path.
+  const tree = join(temp, 'tree'), other = join(temp, 'other'), run = join(temp, 'run');
+  for (const d of [join(tree, 'games/agent_space/templates'), join(other, 'games/agent_space/templates'), join(run, 'root')]) mkdirSync(d, { recursive: true });
+  writeFileSync(join(run, 'root/templates.dir'), `${join(tree, 'games/agent_space/templates')}\n`);
+  assert.equal(templatesFromCopy(run, tree), true);
+  assert.equal(templatesFromCopy(run, other), false, 'templates read from another tree');
+  writeFileSync(join(run, 'root/templates.dir'), join(temp, 'nowhere'));
+  assert.equal(templatesFromCopy(run, tree), false, 'a path that does not exist');
+  assert.equal(templatesFromCopy(join(temp, 'no-run'), tree), false, 'no tenant root at all');
 });

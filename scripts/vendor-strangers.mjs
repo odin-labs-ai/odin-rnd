@@ -5,7 +5,7 @@
 //     would be hosted they are an estimate, and the page says so in the kit's estimate box. Its headline figures (the
 //     recommended cap, the cap on a dedicated core, where it breaks, where it is unusable, the wire bandwidth estimate)
 //     are read from the sheet's own sentences, and its rows from its run 3 file, never typed by hand.
-//   - THE MEASUREMENT: one fresh run of the same load tool, at that main, on a Mac, on an isolated instance: a copy of
+//   - THE MEASUREMENT: one fresh run of the load tool, from a copy checked against that main, on a Mac, isolated: a copy of
 //     the code taken with git archive, a scratch Python environment, its own free loopback ports and its own run
 //     folder, stopping only the processes it started. Its rows come from the run's result file; the result file itself
 //     is not published (it names local paths and ports), only its sha256. The listener lists taken before, during and
@@ -109,6 +109,11 @@ export function treeCheck(tree, lsTree, read = p => (lstatSync(join(tree, p)).is
   return { problems, files: want.size, digest, compiled: have.filter(p => !want.has(p) && compiled.has(p)).length };
 }
 
+/** Whether the run's own tenant root says its templates were read from this copy (real paths compared). */
+export function templatesFromCopy(run, tree) {
+  try { return realpathSync(readFileSync(join(run, 'root', 'templates.dir'), 'utf8').trim()) === realpathSync(join(tree, 'games', 'agent_space', 'templates')); } catch { return false; }
+}
+
 /** A listener list ("<command> <pid> <address>" per line) as rows. */
 export const listeners = text => text.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const [cmd, pid, addr] = l.split(/\s+/); return { cmd, pid, addr, line: l }; });
 
@@ -154,10 +159,10 @@ function fetch(into, a) {
   const compiled = new Set(JSON.parse(execFileSync(a.python, ['-I', '-B', '-c', PYC_CHECK, a.tree], { maxBuffer: 1 << 26 }).toString()));
   const code = treeCheck(a.tree, git('ls-tree', '-r', '--full-tree', main, ...CODE_PATHS).toString(), undefined, undefined, compiled);
   if (code.problems.length) throw new Error(`--tree is not main's code:\n  ${code.problems.slice(0, 10).join('\n  ')}`);
-  // And the run is bound to that copy: the tool derives the space's templates from its own location, and the run's own
-  // tenant root records where they were read from; it must be this copy's.
-  const templates = readFileSync(join(a.run, 'root', 'templates.dir'), 'utf8').trim();
-  if (realpathSync(templates) !== realpathSync(join(a.tree, 'games', 'agent_space', 'templates'))) throw new Error('--run was not started from --tree: its templates were read from elsewhere');
+  // What the run wrote names the copy: the tool derives the space's templates from its own location, and the run's own
+  // tenant root records that path. This ties the run to the copy through its own records; it does not watch which code
+  // the processes executed, and the page says so.
+  if (!templatesFromCopy(a.run, a.tree)) throw new Error('--run did not read its templates from --tree');
   for (const c of cites) {
     c.at = git('show', '-s', '--format=%cI', c.commit).toString().trim();
     c.check = JSON.parse(execFileSync('gh', ['api', `repos/${a.repo}/compare/${c.commit}...${main}`, '--jq', '{status: .status, behind_by: .behind_by}']).toString());
@@ -188,7 +193,7 @@ function fetch(into, a) {
       websockets: field(/^websockets==(\S+)/m, 'websockets version'),
     },
     resummarized,
-    code: { paths: CODE_PATHS, files: code.files, digest: code.digest, compiled: code.compiled, boundToRun: true },
+    code: { paths: CODE_PATHS, files: code.files, digest: code.digest, compiled: code.compiled, templatesFromCopy: true },
     isolation: isolationOf({ before: readFileSync(a.before, 'utf8'), during: readFileSync(a.during, 'utf8'), after: readFileSync(a.after, 'utf8'), left: Number(field(/^leftover=\s*(\d+)/m, 'leftover count')) }),
   };
   writeFileSync(join(dir, 'source.json'), JSON.stringify(source, null, 1) + '\n');
@@ -213,7 +218,7 @@ export function build(dir) {
     format: 'odin-lab-strangers',
     version: 1,
     vendored: {
-      from: 'the public demo\'s capacity sheet and its load tool in the agent space\'s private repository, read at its main, and one run of that tool at that main on a Mac',
+      from: 'the public demo\'s capacity sheet and its load tool in the agent space\'s private repository, read at its main, and one run on a Mac from a copy of that main',
       commit: source.main,
       committed: at(source.committed),
       mainCheck: { main: source.main, how: 'GitHub compare of each cited commit against the private main head; behind by 0 means the commit is part of main', checked: source.checked, commits: source.cites.map(c => c.commit) },
@@ -238,7 +243,7 @@ export function build(dir) {
       rows: run.summary.map(rowOf),
       verdict: { tickUnder50: run.verdict.max_guests_tick_p95_under_50ms, smooth: run.verdict.max_guests_smooth },
       resummarized: source.resummarized,
-      code: { files: source.code.files, digest: source.code.digest, compiledCaches: source.code.compiled, matchesMain: true, boundToRun: source.code.boundToRun === true },
+      code: { files: source.code.files, digest: source.code.digest, compiledCaches: source.code.compiled, matchesMain: true, templatesFromCopy: source.code.templatesFromCopy === true },
       probes: { steps: steps.length, held },
       quota: { checks: run.quota.checks, mostInTenMinutes: run.quota.most_in_10_min, limit: 3, held: run.quota.held === true },
       isolation: source.isolation,
