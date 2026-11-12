@@ -1,0 +1,99 @@
+{
+ "format": "odin-og-cards",
+ "version": 1,
+ "width": 1200,
+ "height": 630,
+ "cards": [
+  {
+   "page": "labs/agent-space/index.html",
+   "image": "assets/og/labs/agent-space.png",
+   "sha256": "4d7c332b17b70528839a3495ee6fba8a5d833f24b9ce93f5f0e468caa4be5392",
+   "title": "Lab 01: the agent space — Odin Labs R&D",
+   "description": "Recorded agent sessions with cited sources and stated limits. Propose a question for a future recording."
+  },
+  {
+   "page": "labs/ai-jury/index.html",
+   "image": "assets/og/labs/ai-jury.png",
+   "sha256": "faf758bb982f17389aa9681f71db5d4c4eef0ae08be70e462c10a54a42f62585",
+   "title": "Lab 14: can an AI jury judge how a room looks? — Odin Labs R&D",
+   "description": "An AI design jury and its calibration gate, from a record cited by hash. Numbers only."
+  },
+  {
+   "page": "labs/brain-bench/index.html",
+   "image": "assets/og/labs/brain-bench.png",
+   "sha256": "dd87dc005a4ecc88cb5f87dbbfcce5e3339458f742e165bd7dc6d83d9bdfa0da",
+   "title": "Lab 02: every brain on the same tasks — Odin Labs R&D",
+   "description": "Can a 1 GB model on your own machine keep up with the cloud models? The counts, the intervals and what we got wrong."
+  },
+  {
+   "page": "labs/failover/index.html",
+   "image": "assets/og/labs/failover.png",
+   "sha256": "329bb84b027728efd26c7e0b2d12bafacfeb52ef1cb56785f0358ae62111c866",
+   "title": "Lab 03: Failover — Odin Labs R&D",
+   "description": "When the database server a company writes to fails, which keeps the company's writes better: MongoDB or PostgreSQL? Pre-registered; the counted runs have started, no result yet."
+  },
+  {
+   "page": "labs/index.html",
+   "image": "assets/og/labs/index.png",
+   "sha256": "6ad973616b2ba667cb77c53b5f76bda61292c97041553ae7b4b6eafe15a83e6e",
+   "title": "Labs — Odin Labs R&D",
+   "description": "Long-running projects you can follow and take part in. Lab 01: the agent space."
+  },
+  {
+   "page": "labs/link-safety/index.html",
+   "image": "assets/og/labs/link-safety.png",
+   "sha256": "5ce5b33a3d7c99a01d396d61a1f86f5ed13940a4e8a64fd8bc118d16124fa06c",
+   "title": "Lab 07: can data trick a click? — Odin Labs R&D",
+   "description": "One rule decides when a URL from data may become a click. Every poisoned URL of its test, put through it."
+  },
+  {
+   "page": "labs/measured-blind/index.html",
+   "image": "assets/og/labs/measured-blind.png",
+   "sha256": "bf55873c5c0fa29d6a329c7fa8eb52d4c91830225c31d655a637b08c3e2ccf0f",
+   "title": "Lab 13: does an agent company get better, measured blind? — Odin Labs R&D",
+   "description": "Before and after our fixes, judged blind by a separate AI reviewer: three sets of nine work items, recounted from the committed labels."
+  },
+  {
+   "page": "labs/red-build/index.html",
+   "image": "assets/og/labs/red-build.png",
+   "sha256": "280f3ff2a851add5c3b9221b5acf9ea3a49be4a9c803ba33f9d4be936d62e49d",
+   "title": "Lab 08: can an agent fix a red build? — Odin Labs R&D",
+   "description": "An honest negative: nine fresh red builds, no fix judged real, the diagnoses better than the fixes."
+  },
+  {
+   "page": "labs/review/index.html",
+   "image": "assets/og/labs/review.png",
+   "sha256": "21b94401757e4da15e470a93ba11f9853cad3f51f031898e66799084184dfd58",
+   "title": "Lab 06: which model should review your code? — Odin Labs R&D",
+   "description": "Catches and false alarms per model, re-derived from the experiments' committed records, and the FIX-NEEDED receipts on this site's own pull requests."
+  },
+  {
+   "page": "labs/rogue/index.html",
+   "image": "assets/og/labs/rogue.png",
+   "sha256": "b1dc5a72aa004c85378e32a7ffd533626b03dbbdb97c678f3d92df427a37df7c",
+   "title": "Lab 05: can an agent go rogue? — Odin Labs R&D",
+   "description": "One staged poisoned ticket, run twice on a sandbox: once with no controls, once through the engine's real guards."
+  },
+  {
+   "page": "labs/same-model-harness/index.html",
+   "image": "assets/og/labs/same-model-harness.png",
+   "sha256": "d39ee9f7d72ef9668cc9730ac106aed759c73e1f971dafc20549de9fa37d3249",
+   "title": "Lab 11: same model, with and without a harness — Odin Labs R&D",
+   "description": "The same local models, the same question, bare and with a harness: what the harness changes, counted."
+  },
+  {
+   "page": "labs/strangers/index.html",
+   "image": "assets/og/labs/strangers.png",
+   "sha256": "74776c5e3f9deab01ef7384be90e1c0c18dc8a29e154102db22f102ac3a571d1",
+   "title": "Lab 12: how many strangers can the space hold? — Odin Labs R&D",
+   "description": "An estimate and a fresh measurement of how many anonymous guests one agent space holds, boxed apart."
+  },
+  {
+   "page": "labs/talk-leak/index.html",
+   "image": "assets/og/labs/talk-leak.png",
+   "sha256": "de36de8597e998eac1634e38a81f3ac80149eba70b5d4d958d5d4ad2e7eb17a5",
+   "title": "Lab 09: can a talk leak data? — Odin Labs R&D",
+   "description": "The leak scan behind our talks: how it reads, what it refuses, its tests run, and a fresh scan of the sealed build."
+  }
+ ]
+}
