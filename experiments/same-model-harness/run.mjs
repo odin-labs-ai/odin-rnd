@@ -46,7 +46,12 @@ export function runSuite(dir = FIXTURE) {
     cpSync(dir, scratch, { recursive: true });
     let out = '', status = 0;
     try { out = execFileSync('python3', ['-m', 'unittest', 'discover', '-s', 'tests', '-t', '.'], { cwd: scratch, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' }); }
-    catch (e) { out = `${e.stdout ?? ''}${e.stderr ?? ''}`; status = e.status ?? 1; }
+    catch (e) {
+      // Only a test run that completed is ground truth: a launch failure (no python3) or a signal has no exit status.
+      if (typeof e.status !== 'number' || e.signal) throw new Error(`the fixture's test suite did not run to completion: ${e.code ?? e.signal ?? e.message}`);
+      out = `${e.stdout ?? ''}${e.stderr ?? ''}`; status = e.status;
+    }
+    if (!/^Ran \d+ tests? in /m.test(out)) throw new Error('the fixture\'s test suite printed no "Ran N tests" line, so it did not run');
     const real = (() => { try { return execFileSync('realpath', [scratch], { encoding: 'utf8' }).trim(); } catch { return scratch; } })();
     const clean = out.split(real).join('.').split(scratch).join('.').replace(/Ran (\d+) tests? in [\d.]+s/, 'Ran $1 tests');
     return { output: clean, status, suite: status === 0 ? 'PASS' : 'FAIL' };

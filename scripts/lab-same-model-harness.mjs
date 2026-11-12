@@ -138,6 +138,13 @@ export function sameModelHarnessProblems(record, { now = new Date(), where = SMH
     }
     if (arm === 'harnessed') for (const f of first.filter(x => x.refused && x.answered)) if (!record.calls.some(c => c.model === model && c.variant === variant && c.arm === arm && c.attempt === 2 && c.run === f.run)) problems.push(`${at}: run ${f.run} was refused and has no second answer`);
   }
+  // Each (model, variant, arm, run, attempt) once; run n of both arms, and its re-ask, with one seed (the page says so).
+  const keys = record.calls.map(c => `${c.model}|${c.variant}|${c.arm}|${c.run}|${c.attempt}`);
+  for (const k of new Set(keys.filter((k, i) => keys.indexOf(k) !== i))) problems.push(`${where}#/calls: ${k.replaceAll('|', ' ')} is there more than once`);
+  for (const model of models) for (const variant of VARIANTS) for (let run = 1; run <= record.runsPerCell; run++) {
+    const seeds = new Set(record.calls.filter(c => c.model === model && c.variant === variant && c.run === run).map(c => c.seed));
+    if (seeds.size > 1) problems.push(`${where}#/calls (${model} ${variant} run ${run}): the arms and the re-ask do not share one seed`);
+  }
   for (const [i, c] of record.calls.entries()) {
     if (!models.includes(c.model)) problems.push(`${where}#/calls/${i}: a model the record does not list`);
     if (c.wrongPass !== (c.verdict === 'PASS')) problems.push(`${where}#/calls/${i}: wrongPass is not "said PASS" (the suite fails)`);

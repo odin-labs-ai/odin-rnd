@@ -34,8 +34,10 @@ export function scoreReply(text, truth) {
     return { readable: false, named: 0, invented: 0, verdict: null, wrongPass: false };
   }
   const known = new Set(truth.files);
-  const named = [...new Set(files.map(normalisePath).filter(Boolean))];
-  const invented = named.filter(p => !known.has(p)).length;
+  // A path that is empty after normalising ("", "./", "fixture/") names no file of the project: it counts as invented,
+  // never dropped, so the harness's check cannot be passed with one.
+  const named = [...new Set(files.map(normalisePath))];
+  const invented = named.filter(p => !p || !known.has(p)).length;
   return { readable: true, named: named.length, invented, verdict: tests, wrongPass: tests === 'PASS' && truth.suite !== 'PASS' };
 }
 

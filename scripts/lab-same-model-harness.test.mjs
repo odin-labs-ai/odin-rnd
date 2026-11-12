@@ -27,7 +27,7 @@ const truth = { files: fixtureOf(join(EXPERIMENT, 'fixture')).files, suite: 'FAI
 /** Every text file the experiment ships: the fixture, the questions, the harness's text, the diff, runner and scorer. */
 function experimentTexts(dir = EXPERIMENT) {
   const out = [];
-  (function walk(d) { for (const name of readdirSync(d)) { const p = join(d, name); if (name === 'runs') continue; if (statSync(p).isDirectory()) walk(p); else out.push([p, readFileSync(p, 'utf8')]); } })(dir);
+  (function walk(d) { for (const name of readdirSync(d)) { const p = join(d, name); if (statSync(p).isDirectory()) walk(p); else out.push([p, readFileSync(p, 'utf8')]); } })(dir);
   return out;
 }
 const bannedIn = text => namesRestricted(text, { anyWindow: true }) || screenHits(text).some(h => /^a (restricted|place) name/.test(h.reason));
@@ -45,6 +45,11 @@ test('the banned-term test fails on a planted client-theme word (a discriminatin
     const target = join(dir, 'fixture', 'README.md');
     writeFileSync(target, `${readFileSync(target, 'utf8')}\nA ${SYN_THEME} quote planner.\n`);
     assert.ok(experimentTexts(dir).some(([, text]) => bannedIn(text)), 'the planted word is caught');
+    cpSync(EXPERIMENT, dir, { recursive: true });
+    assert.ok(!experimentTexts(dir).some(([, text]) => bannedIn(text)), 'a clean copy passes');
+    const log = join(dir, 'runs', record.logDay, 'rows.jsonl');
+    writeFileSync(log, readFileSync(log, 'utf8').replace('"kind":"call"', `"kind":"call","note":"${SYN_THEME}"`));
+    assert.ok(experimentTexts(dir).some(([, text]) => bannedIn(text)), 'a word planted in a reply of the run log is caught');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -71,6 +76,11 @@ test('the scorer: invented paths, wrong PASS, UNKNOWN and unreadable replies', (
   assert.deepEqual(harnessRefusals(scoreReply('{"files": ["planner/cost.py"], "tests": "FAIL"}', truth), truth), []);
   assert.equal(harnessRefusals(scoreReply('{"files": ["planner/nope.py"], "tests": "FAIL"}', truth), truth).length, 1);
   assert.equal(harnessRefusals(scoreReply('{"files": [], "tests": "UNKNOWN"}', truth), truth).length, 1);
+  for (const empty of ['fixture/', './', '']) {
+    const s = scoreReply(JSON.stringify({ files: [empty], tests: 'FAIL' }), truth);
+    assert.equal(s.invented, 1, `${JSON.stringify(empty)} names no file: invented`);
+    assert.equal(harnessRefusals(s, truth).length, 1, `${JSON.stringify(empty)} is refused by the check`);
+  }
 });
 
 test('Wilson intervals', () => {
@@ -98,6 +108,8 @@ test('the record is refused when a call is retyped, a run dropped, a file change
   refused(r => { r.calls[bareFirst(r)].wrongPass = !r.calls[bareFirst(r)].wrongPass; }, /wrongPass is not/);
   refused(r => { r.calls[0].note = 'a path'; }, /not allowed/);
   refused(r => { r.suite = 'PASS'; }, /suite fails/);
+  refused(r => { r.calls.find(c => c.arm === 'harnessed' && c.attempt === 1).seed += 1; }, /share one seed/);
+  refused(r => { r.calls.push({ ...r.calls.find(c => c.arm === 'bare') }); }, /more than once/);
 });
 
 test('Lab 11 renders, its numbers are counted from the calls, and the check is boxed apart', () => {
