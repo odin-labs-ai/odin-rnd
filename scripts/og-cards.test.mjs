@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   CARD_DIR, MANIFEST_PATH, addOgCard, addOgCardsToDist, cardAlt, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText,
-  checkCards, needsCard, pngSize, readManifest, sha256,
+  checkCards, escapeRegExp, needsCard, pngSize, readManifest, sha256,
 } from './og-cards.mjs';
 import { addOpenGraph, addSocialCard } from './site-chrome.mjs';
 
@@ -47,6 +47,12 @@ test('only numbered lab pages and the Labs index need a card', () => {
   assert.equal(cardImagePath('labs/rogue/index.html'), `${CARD_DIR}/rogue.png`);
   assert.equal(cardImagePath('labs/index.html'), `${CARD_DIR}/index.png`);
   assert.throws(() => cardImagePath('labs/a/b/index.html'), /no card path/);
+});
+
+test('escapeRegExp makes every metacharacter literal, backslash included', () => {
+  const nasty = 'og:image\\.(a|b)*+?^${}[]';
+  assert.ok(new RegExp(`^${escapeRegExp(nasty)}$`).test(nasty));
+  assert.equal(new RegExp(escapeRegExp('og:image.alt')).test('og:imageXalt'), false);
 });
 
 test('pngSize reads the IHDR size and refuses anything else', () => {

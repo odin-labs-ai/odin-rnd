@@ -42,8 +42,11 @@ function onlyHead(html, label) {
   return heads[0][0];
 }
 
+/** Every regular-expression metacharacter escaped, backslash included, so a property name matches only itself. */
+export const escapeRegExp = text => text.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+
 function metaProperty(head, property, label) {
-  const found = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty="${property.replace(/[.:]/g, '\\$&')}"[^>]*>`, 'gi'))];
+  const found = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty="${escapeRegExp(property)}"[^>]*>`, 'gi'))];
   if (found.length > 1) throw new Error(`OG cards: duplicate ${property} in ${label}`);
   if (!found.length) return undefined;
   const content = found[0][0].match(/\bcontent="([^"]*)"/i)?.[1];
