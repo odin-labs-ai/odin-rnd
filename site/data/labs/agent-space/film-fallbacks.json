@@ -1,0 +1,409 @@
+{
+ "format": "odin-film-fallbacks",
+ "version": 1,
+ "lab": "agent-space",
+ "encoder": {
+  "tool": "ffmpeg 8.1",
+  "video": "H.264 (libx264), High profile level 4.0, yuv420p, constant frame rate, faststart; films at CRF 24, and two-pass to a bitrate where CRF 24 came out over the size limit; no metadata, no encoder text in the stream",
+  "audio": "AAC 128 kbit/s stereo where the WebM has sound (the HQ film); no audio track otherwise",
+  "note": "Each MP4 is encoded from the WebM it names, with no edit: same shots, same order, same length. Browsers that play WebM keep the WebM; the MP4 is listed second, for the ones that cannot."
+ },
+ "fallbacks": [
+  {
+   "webm": "assets/labs/agent-space/films/agent-space-30s.webm",
+   "webmSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+   "mp4": "assets/labs/agent-space/films/agent-space-30s.mp4",
+   "sha256": "60fa0ec6d680b42be45445400110e7d9eb0e32db89bc4d51be055633fd0b52d9",
+   "bytes": 4963265,
+   "seconds": 27,
+   "audio": false,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "60fa0ec6d680b42be45445400110e7d9eb0e32db89bc4d51be055633fd0b52d9",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "4f077c56a69fd41ced124cdac922bf1fb0b97b44435592fe4332a70ffa8c2492"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "c4e791eb7b25dff023f286b41eb1886cd4d25baf543ec8b6fd6ca6105ea9b887"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "4b9ee9de15ab212545fc9352d5f9996bbfb32d862ccaa11cef8a99e3d31fbec1"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "66640aff66233078ff825286228c1a8e2326e4581fda6df160e868431d0003d6"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "c31e4543095c3cc5ba4ecb10c7de696c6b5c760638029729d7613efcc45a0a5e"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "0a920e27d6ce43f9ff2e2d61f643d6ec4224fa81e5cf98825fdec9ea01e45e2a"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "webm": "assets/labs/agent-space/films/agent-space-tour.webm",
+   "webmSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+   "mp4": "assets/labs/agent-space/films/agent-space-tour.mp4",
+   "sha256": "e9c0dd1b1119a741ab4f0d850bbddab5376f8ef4108d945ad24e6d83c4884d5a",
+   "bytes": 5138199,
+   "seconds": 78,
+   "audio": false,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "e9c0dd1b1119a741ab4f0d850bbddab5376f8ef4108d945ad24e6d83c4884d5a",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "0fec91c7b8301f4a1a0cf70641b1ae4f6b8d51bb8462e282182ebc9805575e49"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "24eccbbd0d4cfd29b94e15187c19e4eb2267c866fa8d0b5081d8c2bc643ee040"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "4c1b34dd67e272457097aa9822be2008fc41b5de7109f2fc2fe1f94352b40140"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "1fe0a07ae539c9c9bf774c2347d57ad17c0e2d6687cada794c1017a3dcce7800"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "601669e203668b0b65183060e709ec0ad97e61f2343c9941a11072110ed60ee4"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "9682bd23738b744cd31edc4299601e61e0e1bba3bfb2ac76f9140af4c3dd8af0"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "0b8dc7ef6eacbfd36970db67285f6de97160a8463770937c8867185cb3bf3ade"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "c0c4c0da7df9f9db7010f175cabfa7db0db9875c5cd5edb003f46149d50fb278"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "18bdfba4e7f39e9061f0e80325b495211926f5eabca1017f950cda1fbdd3009c"
+     },
+     {
+      "t": 45,
+      "rgb24Sha256": "b69a182471940a16cf767ed4e86c386525eabb1defc3256d3e979bcd9167d048"
+     },
+     {
+      "t": 50,
+      "rgb24Sha256": "c61efea0b04a433db7507dc0ebfda947f669cb7c18e568dd5c8cf07f4ef153c7"
+     },
+     {
+      "t": 55,
+      "rgb24Sha256": "1ffbbd8e3bbc6d0701863cd86955d4ab136830e2d6f8c789e5045ec26b26176b"
+     },
+     {
+      "t": 60,
+      "rgb24Sha256": "05c4d4a777b93a11c09d9aadf85d32d735fda24a99baad71fe90b52dc8e385cf"
+     },
+     {
+      "t": 65,
+      "rgb24Sha256": "1a23606fafd8f0e8be7d7b0107e9944ff599074568ec9bdcd62296ca6d64bbbb"
+     },
+     {
+      "t": 70,
+      "rgb24Sha256": "3aa0a135278874bbbb93a01291e2fcdfc9b40752f904eb374c0d492bfd11c145"
+     },
+     {
+      "t": 75,
+      "rgb24Sha256": "8960f8ab0a8bfd43e4bfa11b7daa8d6d2849a8b8b8eba5969a2ef3a162f8f28e"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "webm": "assets/labs/agent-space/outage/dispatch-2-outage.webm",
+   "webmSha256": "452db0cd4029a7e0da8cdf6589e43f12a5337326abd298b6a8a917c271437c0f",
+   "mp4": "assets/labs/agent-space/outage/dispatch-2-outage.mp4",
+   "sha256": "d2d2a0d62efe44064a0c615a306c5d7fb82624117785e9658c4c2a6cfa7c3e88",
+   "bytes": 5370520,
+   "seconds": 51,
+   "audio": false,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "d2d2a0d62efe44064a0c615a306c5d7fb82624117785e9658c4c2a6cfa7c3e88",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "891577360ae61bc498e5b0887b560f451fcf05e3adc7642d27ea3e715bef3283"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "5f57e2463d85379ebdb12953bf5e712ec100bdd413e4f03ef6d45802bbce5765"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "304b84a391ef3cde941b1a3ea9e8cc41ae6cfd5cdcc9a72ead5a49706faacf54"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "5ab4a46765b58165694c1eb43c8b7935efe95f12d398ea484e3c481e7760bc59"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "2baf3cbc4a7b4a4bd70a5f047a4711051c9a0eebf3ded862a4b4c8aeca4db115"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "212fba0981b9761edfd414c6bca56f98bc55936306d3f8397869d01ef267e4f6"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "215582143304e56374e4bf3cc88ca9d20351d763b8de58f6a6a6a6abed7ac588"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "51b453f9425b34d1d8495c3d0eab3a06a2fb949e85ed2b308b0827648018bdfe"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "f9bfd464a3fc5edfa5075c20fb37cc15c498ea4d001d8c49ba6d267fe1c09b15"
+     },
+     {
+      "t": 45,
+      "rgb24Sha256": "cac8ab3510529772b4d0f5a60ff55c6a74d87a4c36d61a9ac68732bb14665dc0"
+     },
+     {
+      "t": 50,
+      "rgb24Sha256": "a4235bb485e4918150f61b103ac8f0931ec435437536b7625ec43a05211d15ae"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "webm": "assets/labs/agent-space/progress/hq-on-duty.webm",
+   "webmSha256": "352d933d6019b8d2df7c2fad8c6c9a2d125c8a4718cc49482788556647a65931",
+   "mp4": "assets/labs/agent-space/progress/hq-on-duty.mp4",
+   "sha256": "06cddcdb1f185fb6a38662f168b940a8dec709d7fbef289e94a0ffa4c1423d70",
+   "bytes": 4718326,
+   "seconds": 44,
+   "audio": true,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "06cddcdb1f185fb6a38662f168b940a8dec709d7fbef289e94a0ffa4c1423d70",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "60643d972346edee8188588cb2a5ee905c64342178d581fc3a03cf30f9ad9c1f"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "4c06746bb4ffc33aa750621ec103ba08d7a4a1661f99bdf47894fb27e917de83"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "6d8decb2efe2a278b56adfdf45da667357fddfb29656dc39245621cd5e52e0cb"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "8e5b3ebbd45f3dc72792766a58c602444bec662128dea0ac5f486a9e4658fd2a"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "3b123dc321f9a240fe8e07232073670530da68303a07c72d04fd1ebaa93d5d1a"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "98c3dc1d3278ac4f424d2df5804cf6aaa1563fd11238266cd8b02da77a501a26"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "723a0213ea4d36a27495ec27144e6dd261f74119ab9a52be9f83410b77984f99"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "21f7b6208028a0d95a8e877c2a074f74328c906ecf5c176eb8548f29f51c573e"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "0426f88f4b99c0fdd93878f625290e790b4858ed0cc80b58d9379aad4f99d119"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "webm": "assets/labs/agent-space/session-2026-10-25-b/clip.webm",
+   "webmSha256": "0955535ad0434178f5569576be92a77dc6586052dcd9b564f447b1fec84c60bc",
+   "mp4": "assets/labs/agent-space/session-2026-10-25-b/clip.mp4",
+   "sha256": "318c279d13933c6b1adc1718055c045ca9e5ce9196889d7118c318a5d0d2c6f4",
+   "bytes": 2530797,
+   "seconds": 48,
+   "audio": false,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "318c279d13933c6b1adc1718055c045ca9e5ce9196889d7118c318a5d0d2c6f4",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "06056084f738371af7db8d129d333564b23ac4affe56127b0a1b286b49b9d894"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "0c8d6cc31e51022f5af4bcdad9e6981f01dcbb608cbc64d6d9f440854ceb48dd"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "b3d242828470383d61183341cd420afd023b4a85714b19ed8436b32dd6bb6c21"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "d3b0c14ba4759be18fa352e0d4ad7e2734a5bfcfd100f160099d3f2ce3ac72ee"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "23c8b594fb75dbee300874fc70d1b61db8e7bee4cea01bca852707d8c04c9e58"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "0275d127b5c9b75451bb48caf7069e745fe179c6a07ede7c4c8ff7a05ca793da"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "f9315207767ef5deb4d8de5f065885c6f42d2e3d946ad27ce75d6356caf470ec"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "b085593f785c6ae528ae782ee2dadfc25970c1b34aa69295fde4a2a4d5439f91"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "4254b4e76904a77e728f1c6694f306488e53ee4532fd4063cef30ddadc04d44f"
+     },
+     {
+      "t": 45,
+      "rgb24Sha256": "b000e90c2a2269467e292082f111118ccb7ee6b547d88da6b1ff622966452795"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  },
+  {
+   "webm": "assets/labs/agent-space/session-2026-11-08/clip.webm",
+   "webmSha256": "f3abef831547242e318f85f6309cbdf7a245f75924cc082935c209afc068c174",
+   "mp4": "assets/labs/agent-space/session-2026-11-08/clip.mp4",
+   "sha256": "7c6ccf9ff424e118cacf003d0177169714dfa70d648f26caa41a7059167169f1",
+   "bytes": 2543867,
+   "seconds": 50,
+   "audio": false,
+   "screening": {
+    "method": "one frame every 5 s of the MP4 itself, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
+    "at": "2026-11-12",
+    "srcSha256": "7c6ccf9ff424e118cacf003d0177169714dfa70d648f26caa41a7059167169f1",
+    "frames": [
+     {
+      "t": 0,
+      "rgb24Sha256": "371eca44d18b57e746d71abeb56e68aaa9cfae1ae4117b9d4e1635605f315393"
+     },
+     {
+      "t": 5,
+      "rgb24Sha256": "894801d01f29d4989fd4a6d38bd2f6fdb3a109baeaea715337401a84a8bbc596"
+     },
+     {
+      "t": 10,
+      "rgb24Sha256": "d48f4f80da87e3c61e6d84abfe10de3a15b4c56a7d5af747d1ed4ca9aaac3879"
+     },
+     {
+      "t": 15,
+      "rgb24Sha256": "b0da13a5be799ecd0f90c34b3af44ce207d88a4055744631b0363984a82ccf47"
+     },
+     {
+      "t": 20,
+      "rgb24Sha256": "832282e3ab488f4706c1982e69d5032d71d1f272d5222bbc01d80aa40ab6287d"
+     },
+     {
+      "t": 25,
+      "rgb24Sha256": "9b26c11ac6bafc1b35177916f0ef53a408b1bc9ccb7f3bc79d60e761b9ec5029"
+     },
+     {
+      "t": 30,
+      "rgb24Sha256": "b75ec171a2494175f1d8b22454563186f0b9ef7d2450eb30abc58dc352615915"
+     },
+     {
+      "t": 35,
+      "rgb24Sha256": "77fc0165b4dd48aac8bfe2113c15ac688d18efbe87e891ba57fe3bb4bbf8bb7f"
+     },
+     {
+      "t": 40,
+      "rgb24Sha256": "fc24c214a5008cd4f520bb3bc9c6e7a961a4d057ceedecaf889a3b8153fae28a"
+     },
+     {
+      "t": 45,
+      "rgb24Sha256": "4df3ae815b61225fe53f9946f1bb60c8a7c99df5d40993b30484f428608720bd"
+     },
+     {
+      "t": 50,
+      "rgb24Sha256": "581ba421994899e629acccf278500be18c822fa125b97ceaa7414b1d0266a130"
+     }
+    ],
+    "checked": [
+     "no file path",
+     "no local or network address",
+     "no machine details",
+     "no private name",
+     "the same shots as the screened WebM, in order"
+    ],
+    "result": "pass"
+   }
+  }
+ ]
+}

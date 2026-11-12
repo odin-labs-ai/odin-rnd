@@ -9,6 +9,7 @@ import { validate } from './json-schema-lite.mjs';
 import { dispatchProblems, prepare, publish, PUBLIC_SCHEMA_FILE, screenText, SOURCE_SCHEMA_FILE } from './lab-dispatch-publish.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
 import { readFilms } from './lab-films.mjs';
+import { readFallbacks } from './film-fallbacks.mjs';
 import { readProgress } from './lab-progress.mjs';
 import { readOutage } from './lab-outage.mjs';
 
@@ -282,7 +283,9 @@ test('every committed session passes the publisher\'s checks, every Lab asset be
   const progressFiles = progress ? [progress.hero, ...progress.steps.filter(s => s.kind === 'film').map(s => s.film)].flatMap(f => [f.src, f.poster]).concat(progress.steps.filter(s => s.kind === 'still').map(s => s.src)) : [];
   const outage = readOutage('site');
   const referenced = new Set([...committed.flatMap(d => [d.clip.src, d.poster, ...d.stills]), ...films.flatMap(f => [f.src, f.poster]), ...progressFiles,
-    ...(outage ? [outage.film.src, outage.film.poster] : [])].map(src => join('site', src)));
+    ...(outage ? [outage.film.src, outage.film.poster] : []),
+    // film-fallbacks.json owns each film's MP4 copy: readFallbacks refuses a copy whose bytes or WebM do not match it.
+    ...(readFallbacks('site')?.fallbacks ?? []).map(f => f.mp4)].map(src => join('site', src)));
   const webpPin = JSON.parse(readFileSync('scripts/agent-space-webp.pin.json', 'utf8'));
   const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
   for (const image of webpPin.images) {
