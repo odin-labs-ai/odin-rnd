@@ -760,7 +760,9 @@
      "required": [
       "files",
       "digest",
-      "matchesMain"
+      "compiledCaches",
+      "matchesMain",
+      "boundToRun"
      ],
      "additionalProperties": false,
      "properties": {
@@ -773,6 +775,13 @@
        "pattern": "^[0-9a-f]{64}$"
       },
       "matchesMain": {
+       "const": true
+      },
+      "compiledCaches": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "boundToRun": {
        "const": true
       }
      }

@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readStrangers, renderStrangers, strangersProblems, STRANGERS_PIN, STRANGERS_RECORD, STRANGERS_TEMPLATE, STRANGERS_TILE, verdictOf } from './lab-strangers.mjs';
-import { build, isolationOf, rowOf, sheetFigures, treeCheck } from './vendor-strangers.mjs';
+import { build, isolationOf, PYC_CHECK, rowOf, sheetFigures, treeCheck } from './vendor-strangers.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
@@ -229,10 +229,16 @@ test('review 1: the copy the run started from is checked against main file for f
   const blob = text => createHash('sha1').update(`blob ${Buffer.byteLength(text)}\0`).update(text).digest('hex');
   const files = { 'engine/a.py': 'print(1)\n', 'tools/scale/b.py': 'x = 2\n' };
   const ls = Object.entries(files).map(([p, t]) => `100644 blob ${blob(t)}\t${p}`).join('\n') + '\n160000 commit ' + 'c'.repeat(40) + '\ttools/sub\n';
-  const check = (have, extra = []) => treeCheck('/nowhere', ls, p => Buffer.from(have[p]), () => [...Object.keys(have), ...extra]);
-  const ok = check(files, ['engine/__pycache__/a.cpython-312.pyc']);
+  const pyc = 'engine/__pycache__/a.cpython-312.pyc';
+  const check = (have, extra = [], compiled = new Set()) => treeCheck('/nowhere', ls, p => Buffer.from(have[p]), () => [...Object.keys(have), ...extra], compiled);
+  const ok = check(files, [pyc], new Set([pyc]));
   assert.deepEqual(ok.problems, []);
   assert.equal(ok.files, 2);
+  assert.equal(ok.compiled, 1);
+  // Review 1 recheck: a bytecode file that is not its own source compiled again is refused, as Python would run it.
+  assert.ok(check(files, [pyc]).problems.some(p => /a\.cpython-312\.pyc: not in main, and not its own source compiled again/.test(p)));
+  assert.match(PYC_CHECK, /marshal\.dumps\(code\) == data\[16:\]/, 'compared with its source compiled again, after the header');
+  assert.match(PYC_CHECK, /tree, good = sys\.argv\[1\]/, 'the tree reaches Python as an argument, never in the source');
   assert.match(ok.digest, /^[0-9a-f]{64}$/);
   assert.ok(check({ ...files, 'engine/a.py': 'print(2)\n' }).problems.some(p => /engine\/a\.py: not main's bytes/.test(p)), 'a modified engine file');
   assert.ok(check({ 'engine/a.py': files['engine/a.py'] }).problems.some(p => /tools\/scale\/b\.py: missing/.test(p)), 'a missing file');
@@ -241,4 +247,10 @@ test('review 1: the copy the run started from is checked against main file for f
   assert.ok(main.includes(`all ${record.measurement.code.files.toLocaleString('en-GB')} files of that copy were checked against main`));
   const r = clone(); r.measurement.code.matchesMain = false;
   assert.ok(strangersProblems(r).length > 0);
+  const b = clone(); b.measurement.code.boundToRun = false;
+  assert.ok(strangersProblems(b).length > 0, 'a run not bound to the checked copy');
+  assert.ok(record.measurement.code.boundToRun && record.measurement.code.compiledCaches > 0);
+  assert.match(textOf(main), /each was checked to be exactly its own source compiled again\. The run's own records name this copy/);
+  const src = readFileSync('scripts/vendor-strangers.mjs', 'utf8');
+  assert.match(src, /realpathSync\(templates\) !== realpathSync\(join\(a\.tree, 'games', 'agent_space', 'templates'\)\)/, 'the run is bound to the copy by its own tenant root');
 });

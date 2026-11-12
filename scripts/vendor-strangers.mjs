@@ -22,7 +22,7 @@
 //   node scripts/vendor-strangers.mjs --verify --from <dir>              (refuses unless the record is the same bytes)
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -73,20 +73,40 @@ const walk = (root, rel = '') => readdirSync(join(root, rel), { withFileTypes: t
   const p = rel ? `${rel}/${e.name}` : e.name;
   return e.isDirectory() ? walk(root, p) : [p];
 });
+// Bytecode Python wrote into the copy while the run imported it is not part of main, and Python would run a cached file
+// in place of its source; so each one must be exactly its own source compiled again by the run's Python (marshal bytes
+// after the 16-byte header), or it is refused. The tree is passed as an argument, never into the source (rule 13).
+export const PYC_CHECK = [
+  'import importlib.util, marshal, os, sys, json',
+  'tree, good = sys.argv[1], []',
+  'for d, _, fs in os.walk(tree):',
+  '    if os.path.basename(d) != "__pycache__": continue',
+  '    for f in fs:',
+  '        p = os.path.join(d, f)',
+  '        try: src = importlib.util.source_from_cache(p)',
+  '        except ValueError: continue',
+  '        data = open(p, "rb").read()',
+  '        if not os.path.exists(src) or data[:4] != importlib.util.MAGIC_NUMBER: continue',
+  // held in a name, as importlib holds it when it writes the cache: marshal marks objects by their reference count
+  '        code = compile(open(src, "rb").read(), src, "exec", dont_inherit=True)',
+  '        if marshal.dumps(code) == data[16:]: good.append(os.path.relpath(p, tree).replace(os.sep, "/"))',
+  'print(json.dumps(good))',
+].join('\n');
+
 /** Why a copy is not main's code (empty when it is), from `git ls-tree -r` of main over CODE_PATHS; and its identity. */
-export function treeCheck(tree, lsTree, read = p => (lstatSync(join(tree, p)).isSymbolicLink() ? Buffer.from(readlinkSync(join(tree, p))) : readFileSync(join(tree, p))), list = () => walk(tree)) {
+export function treeCheck(tree, lsTree, read = p => (lstatSync(join(tree, p)).isSymbolicLink() ? Buffer.from(readlinkSync(join(tree, p))) : readFileSync(join(tree, p))), list = () => walk(tree), compiled = new Set()) {
   // A submodule entry (type commit) carries no bytes and is not archived; every blob, symbolic links included, is checked.
   const want = new Map(lsTree.split('\n').filter(Boolean).map(l => { const [meta, path] = l.split('\t'); return [path, meta.split(' ')]; }).filter(([, m]) => m[1] === 'blob').map(([path, m]) => [path, m[2]]));
   const problems = [];
   const have = list().filter(p => CODE_PATHS.some(c => p === c || p.startsWith(`${c}/`)));
   for (const p of have) {
     if (want.has(p)) { if (blobSha(read(p)) !== want.get(p)) problems.push(`${p}: not main's bytes`); }
-    else if (!/(^|\/)__pycache__\/[^/]+\.pyc$/.test(p)) problems.push(`${p}: not in main`);
+    else if (!compiled.has(p)) problems.push(`${p}: not in main${/\.pyc$/.test(p) ? ', and not its own source compiled again' : ''}`);
   }
   const seen = new Set(have);
   for (const p of want.keys()) if (!seen.has(p)) problems.push(`${p}: missing from the copy`);
   const digest = createHash('sha256').update([...want].sort(([x], [y]) => (x < y ? -1 : 1)).map(([p, b]) => `${b} ${p}\n`).join('')).digest('hex');
-  return { problems, files: want.size, digest };
+  return { problems, files: want.size, digest, compiled: have.filter(p => !want.has(p) && compiled.has(p)).length };
 }
 
 /** A listener list ("<command> <pid> <address>" per line) as rows. */
@@ -131,8 +151,13 @@ function fetch(into, a) {
   }
   // The whole copy the run started from is main's, file for file: every path under the archived folders matches main's
   // blob (git's own object hash), none is missing, and nothing else is there but the bytecode Python wrote while it ran.
-  const code = treeCheck(a.tree, git('ls-tree', '-r', '--full-tree', main, ...CODE_PATHS).toString());
+  const compiled = new Set(JSON.parse(execFileSync(a.python, ['-I', '-B', '-c', PYC_CHECK, a.tree], { maxBuffer: 1 << 26 }).toString()));
+  const code = treeCheck(a.tree, git('ls-tree', '-r', '--full-tree', main, ...CODE_PATHS).toString(), undefined, undefined, compiled);
   if (code.problems.length) throw new Error(`--tree is not main's code:\n  ${code.problems.slice(0, 10).join('\n  ')}`);
+  // And the run is bound to that copy: the tool derives the space's templates from its own location, and the run's own
+  // tenant root records where they were read from; it must be this copy's.
+  const templates = readFileSync(join(a.run, 'root', 'templates.dir'), 'utf8').trim();
+  if (realpathSync(templates) !== realpathSync(join(a.tree, 'games', 'agent_space', 'templates'))) throw new Error('--run was not started from --tree: its templates were read from elsewhere');
   for (const c of cites) {
     c.at = git('show', '-s', '--format=%cI', c.commit).toString().trim();
     c.check = JSON.parse(execFileSync('gh', ['api', `repos/${a.repo}/compare/${c.commit}...${main}`, '--jq', '{status: .status, behind_by: .behind_by}']).toString());
@@ -163,7 +188,7 @@ function fetch(into, a) {
       websockets: field(/^websockets==(\S+)/m, 'websockets version'),
     },
     resummarized,
-    code: { paths: CODE_PATHS, files: code.files, digest: code.digest },
+    code: { paths: CODE_PATHS, files: code.files, digest: code.digest, compiled: code.compiled, boundToRun: true },
     isolation: isolationOf({ before: readFileSync(a.before, 'utf8'), during: readFileSync(a.during, 'utf8'), after: readFileSync(a.after, 'utf8'), left: Number(field(/^leftover=\s*(\d+)/m, 'leftover count')) }),
   };
   writeFileSync(join(dir, 'source.json'), JSON.stringify(source, null, 1) + '\n');
@@ -213,7 +238,7 @@ export function build(dir) {
       rows: run.summary.map(rowOf),
       verdict: { tickUnder50: run.verdict.max_guests_tick_p95_under_50ms, smooth: run.verdict.max_guests_smooth },
       resummarized: source.resummarized,
-      code: { files: source.code.files, digest: source.code.digest, matchesMain: true },
+      code: { files: source.code.files, digest: source.code.digest, compiledCaches: source.code.compiled, matchesMain: true, boundToRun: source.code.boundToRun === true },
       probes: { steps: steps.length, held },
       quota: { checks: run.quota.checks, mostInTenMinutes: run.quota.most_in_10_min, limit: 3, held: run.quota.held === true },
       isolation: source.isolation,

@@ -500,7 +500,9 @@
   "code": {
    "files": 3222,
    "digest": "737d684b19fa9dcde6f24d5253119458bbbf03e463f7c526d8a2f43f3ff2f5c5",
-   "matchesMain": true
+   "compiledCaches": 182,
+   "matchesMain": true,
+   "boundToRun": true
   },
   "probes": {
    "steps": 9,
