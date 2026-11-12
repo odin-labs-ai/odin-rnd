@@ -169,11 +169,18 @@ test('a commit field skips only the long-number reason, and only for an exact he
 });
 
 test('the engine note does not repeat the wording the 2 November correction withdrew', () => {
+  const withdrawn = /every figure (here )?carries its source/gi;
   const html = renderTelemetry(real);
   assert.ok(html.includes(`<p class="lab-telemetry-note">${escapeHtml(ENGINE_NOTE)}</p>`));
-  assert.equal(/every figure (here )?carries its source/i.test(html), false);
-  // On the built page the phrase survives only once: quoted inside the dated 2 November correction itself.
-  assert.equal(page.match(/every figure (here )?carries its source/gi).length, 1, 'the built Lab 01 page');
+  assert.equal((html.match(withdrawn) ?? []).length, 0, 'the rendered telemetry');
+  // On the built page the phrase survives exactly once, quoted inside the dated 2 November correction paragraph.
+  const marker = '<p><time datetime="2026-11-02">2 November 2026</time> wording correction:';
+  const corrections = page.split(marker).slice(1).map(rest => rest.slice(0, rest.indexOf('</p>')));
+  const correction = corrections.find(c => c.includes('the earlier “Every figure here carries its source”'));
+  assert.ok(correction, 'a dated 2 November correction on the built page quotes the withdrawn phrase');
+  assert.equal((correction.match(withdrawn) ?? []).length, 1, 'once, inside the correction');
+  assert.equal((page.match(withdrawn) ?? []).length, 1, 'nowhere else on the built Lab 01 page');
   assert.ok(page.includes(escapeHtml(ENGINE_NOTE)));
-  assert.ok(real.rule, 'the vendored pack rule stays in the data as vendored');
+  // The pack's own rule stays in the data exactly as vendored: the fix is in the renderer, not the pinned record.
+  assert.equal(real.rule, 'every figure carries its source; nothing without one is published');
 });
