@@ -54,8 +54,12 @@ export const labUrl = slug => `${SITE_URL}labs/${slug}/`;
 // tag is a break between words.
 const INLINE = /<\/?(a|abbr|b|bdi|cite|code|data|dfn|em|i|kbd|mark|q|s|samp|small|span|strong|sub|sup|time|u|var)\b[^>]*>/gi;
 
+// An inline tag becomes a private-use mark before visibleText runs (so a removed tag can never join the text around it
+// into new markup), and the mark is dropped from the visible text after.
+const JOIN = '\uE000';
+
 /** One line of text as a reader sees it: tags out, entities decoded, every run of whitespace one space. */
-export const flat = html => visibleText(html.replace(INLINE, '')).replace(/\s+/g, ' ').trim();
+export const flat = html => visibleText(html.replaceAll(JOIN, ' ').replace(INLINE, JOIN)).replaceAll(JOIN, '').replace(/\s+/g, ' ').trim();
 
 /** X's count of a post: the Lab 01 generator's weighted count, with every link counted as X counts it, 23. */
 export const xLength = text => length(text.replace(/https?:\/\/\S+/g, 'x'.repeat(X_LINK_WEIGHT)));
