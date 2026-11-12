@@ -70,8 +70,29 @@ jobs:
           path: shard-files.txt
           retention-days: 1
           if-no-files-found: error
+  # Path separators on Windows (relative() and join() give backslashes there). A module the build imports threw at import time on
+  # a separator comparison, and the build's corrections lookup silently missed every dated clarification. This job
+  # checks those two things on a Windows runner without an install. It is not a full Windows build.
+  windows-paths:
+    name: windows paths
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out with the repository's own line endings
+        # Bound files are hashed byte for byte; the Windows runner's default autocrlf would rewrite them.
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: The build's results-site module imports on Windows
+        run: node -e "import('./scripts/nina-changes-results-site.mjs').then(() => console.log('imported'), e => { console.error(e); process.exit(1); })"
+      - name: Corrections keys are POSIX and every one matches a site page
+        run: node --test scripts/windows-paths.test.mjs scripts/publication-corrections.test.mjs
   verify:
-    needs: test
+    needs: [test, windows-paths]
     # Runs whatever the shards did, and fails unless every one succeeded: a skipped, cancelled or failed shard can
     # never read as a pass.
     if: always()
@@ -86,6 +107,9 @@ jobs:
       - name: Every test shard succeeded
         run: |
           [ "${{ needs.test.result }}" = success ] || { echo "::error::the test shards concluded '${{ needs.test.result }}', not success"; exit 1; }
+      - name: The Windows path checks succeeded
+        run: |
+          [ "${{ needs.windows-paths.result }}" = success ] || { echo "::error::the windows paths job concluded '${{ needs.windows-paths.result }}', not success"; exit 1; }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the

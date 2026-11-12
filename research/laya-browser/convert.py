@@ -167,6 +167,13 @@ def _tensor_report(hosted_graph, rebuilt_graph):
             report["maxCodeDifference"] = max(report["maxCodeDifference"], int(d.max()))
         elif a.tobytes() != b.tobytes():
             report["otherDifferingTensors"].append(name)
+            detail = {"name": name, "dtype": str(a.dtype), "shape": list(a.shape), "differingElements": int((a != b).sum())}
+            if a.dtype.kind in "fiu":
+                detail["maxAbsDifference"] = float(np.abs(a.astype(np.float64) - b.astype(np.float64)).max())
+            # A constant the exporter named differently: the hosted value under another rebuilt name.
+            detail["hostedValueInRebuilt"] = sorted(k for k, v in r.items() if v.shape == a.shape and v.dtype == a.dtype
+                                                    and v.tobytes() == a.tobytes())
+            report.setdefault("otherDifferences", []).append(detail)
     return report
 
 
@@ -200,9 +207,13 @@ STAGES = {"export": stage_export, "q8e8": stage_q8e8, "compare": stage_compare}
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--cache", required=True, help="working directory outside the repository (~3 GB)")
+    ap.add_argument("--cache", required=True, type=os.path.expanduser,  # "~" reaches Windows shells unexpanded
+                    help="working directory outside the repository (~3 GB)")
     ap.add_argument("--stage", choices=list(STAGES), help=argparse.SUPPRESS)
     a = ap.parse_args()
+    # torch.onnx prints emoji; on Windows a redirected stdout is cp1252 and would end the export with UnicodeEncodeError.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     if a.stage:
         STAGES[a.stage](a.cache)
         return
@@ -210,7 +221,10 @@ def main():
     plan = [s for s, done in (("export", onnx_dir / "laya_fp32.onnx"), ("q8e8", onnx_dir / "laya_q8e8.onnx.data")) if not done.exists()]
     for stage in plan + ["compare"]:
         print(f"[convert] stage: {stage}", flush=True)
-        r = subprocess.run([sys.executable, __file__, "--stage", stage, "--cache", a.cache])
+        # A fixed hash seed: with a random one, CI runs exported expand_2 and expand_3 with values that differ from
+        # the hosted build's on some runs; with seed 0 every platform in .github/workflows/laya-reproduce.yml matches.
+        r = subprocess.run([sys.executable, __file__, "--stage", stage, "--cache", a.cache],
+                           env={**os.environ, "PYTHONHASHSEED": os.environ.get("PYTHONHASHSEED", "0")})
         if r.returncode != 0:
             sys.exit(f"stage {stage} failed with exit code {r.returncode}")
 

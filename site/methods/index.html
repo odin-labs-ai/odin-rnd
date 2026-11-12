@@ -96,14 +96,18 @@
     <section class="company-section company-width company-split" id="reproduce" aria-labelledby="reproduce-title">
       <h2 id="reproduce-title">6. Rerun it yourself.</h2>
       <div class="company-prose">
-        <p>With Node 22 and pnpm 10.11.1:</p>
-        <pre><code>git clone https://github.com/odin-labs-ai/odin-rnd
+        <p>You need git, Node 22, JDK 21 (with <code>JAVA_HOME</code> set to that JDK) and pnpm 10.11.1. Clone the repository: a ZIP download will not build, because the build reads git metadata. These are the same steps as <a href="https://github.com/odin-labs-ai/odin-rnd#run-locally">Run locally in the README</a>, one command per line, so they also paste into Windows PowerShell 5.1:</p>
+        <pre><code>git -c core.autocrlf=false clone https://github.com/odin-labs-ai/odin-rnd
 cd odin-rnd
-pnpm install --frozen-lockfile
-pnpm experiment   # rerun the three recorded blueprint experiments
-pnpm test         # every check on the recorded evidence
-pnpm build        # build the site from the records
-pnpm check        # links, digests, export boundary</code></pre>
+npm install --global pnpm@10.11.1
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm experiment
+node scripts/run-roi-demos.mjs
+pnpm test
+pnpm build
+pnpm check
+pnpm serve</code></pre>
+        <p><code>pnpm experiment</code> reruns the three recorded experiments, <code>pnpm test</code> runs every check on the recorded evidence, <code>pnpm build</code> builds the site from the records and <code>pnpm check</code> checks links, digests and the export boundary. The clone line keeps the committed line endings, which the sha256 pins check byte for byte; on Linux and macOS that setting is already off. <code>corepack enable</code> also installs the pinned pnpm, but on Windows it needs an elevated shell (Run as administrator), so the steps use <code>npm install --global pnpm@10.11.1</code>, as CI does. <code>pnpm test</code> also needs <code>python3</code> and <code>bash</code> on a POSIX system: on Windows, run it inside WSL or skip it.</p>
         <p>The commands are in <code>package.json</code> and <code>AGENTS.md</code>; <code>docs/VALIDATION.md</code> records how the site itself was validated. For a single experiment, its folder holds the inputs and the frozen analysis; its field note says which parts you can rerun and which depend on a private corpus.</p>
       </div>
     </section>

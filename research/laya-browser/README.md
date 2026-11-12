@@ -17,7 +17,8 @@ The page `site/projects/laya-browser/` runs the Laya typed-decisions checkpoint 
 The browser build names its base model (`convaiinnovations/laya-typed-decisions`) but no commit. `convert.py` rebuilds the int8 model from the pinned checkpoint with the same tool versions as layaForWeb (`requirements.txt`) and compares it with the hosted build.
 
 - **Byte comparison: failed, retained.** Weights `1ef12aff…` (rebuilt) against `e5ac4bfe…` (hosted), both 442,221,312 bytes; graph files also differ (4.3 MB against 3.6 MB).
-- **Tensor comparison: same source.** 363 named tensors on both sides with equal names, shapes and operator counts. Every float tensor, scale and the int8 embedding table is bit-identical; 5,259 of 369,099,776 int8 weight codes (0.0014%) differ, each by one step. A different checkpoint would change almost every code. Recorded in `provenance-2026-09-24.json`.
+- **Tensor comparison: same source.** 363 named tensors on both sides with equal names, shapes and operator counts. Every float tensor, scale and the int8 embedding table is bit-identical; 5,259 of 369,099,776 int8 weight codes (0.0014%) differ, each by one step. A different checkpoint would change almost every code. Recorded in `provenance-2026-09-24.json`. On Linux x86_64 and on Windows (x64 and arm64) the rebuilt weights are byte-identical to the hosted ones (`e5ac4bfe…`, all 363 tensors bit-identical); the graph files still differ.
+- **Fixed hash seed.** `convert.py` runs its stages with `PYTHONHASHSEED=0` unless the variable is already set. With a random seed, some runs exported two small float32 constants (`expand_2`, `expand_3`, shape [1, 32, 1]) with values that differ from the hosted build's, and the comparison failed. With the seed fixed, the rebuild matches on every runner of the `laya reproduce smoke` workflow (Linux x86_64 and aarch64, Windows x64 and arm64, macOS 15 on Apple silicon).
 
 The page therefore loads the hosted build, pinned to its commit and SHA-256, and the tokenizer and calibration file directly from the checkpoint commit (byte-identical to the copies in the browser build).
 
@@ -31,11 +32,25 @@ These are three cases on one machine. They show the port reproduces the original
 
 ## Reproduce
 
-```
-python3.12 -m venv .venv && . .venv/bin/activate
+Needs Python 3.12 on 64-bit Linux (x86_64 or aarch64), Windows (x64 or arm64; the arm64 torch build comes from the PyTorch CPU index) or macOS 14 or later on Apple silicon. Intel Macs and macOS 13 or older are not supported: the pinned torch 2.14.0 and onnxruntime 1.25.0 publish no wheels for them. Run the commands from the repository root, inside a virtual environment, so nothing is installed into the system Python.
+
+macOS or Linux:
+
+```sh
+python3.12 -m venv .venv
+. .venv/bin/activate
 pip install -r research/laya-browser/requirements.txt
 python research/laya-browser/reference.py --cache ~/.cache/odin-rnd-laya --out reference.json
 python research/laya-browser/convert.py --cache ~/.cache/odin-rnd-laya
 ```
 
-The cache needs about 4 GB. `convert.py` exits non-zero if the hosted build does not match a rebuild from the pinned checkpoint.
+Windows (PowerShell). These commands call the virtual environment's Python directly, so they need no activation script, which the default execution policy can block:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\python -m pip install -r research/laya-browser/requirements.txt
+.venv\Scripts\python research/laya-browser/reference.py --cache ~/.cache/odin-rnd-laya --out reference.json
+.venv\Scripts\python research/laya-browser/convert.py --cache ~/.cache/odin-rnd-laya
+```
+
+The cache needs about 4 GB. Both scripts expand the `~` in `--cache` themselves, so it works in PowerShell too. `convert.py` exits non-zero if the hosted build does not match a rebuild from the pinned checkpoint.

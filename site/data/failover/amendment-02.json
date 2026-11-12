@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 021",
+  "amendment": "02",
+  "title": "The pre-registered single-copy rule fired, so the compared PostgreSQL variants are strict; ten runner fixes are recorded",
+  "authoredOn": "2026-11-08",
+  "amends": {
+    "preregistration": "experiments/failover/preregistration.json",
+    "preregistrationSha256": "7e2f3159484251478acbda3910b230fdcd838222a7ac89a4cfd4f09902f38c5a",
+    "frozenCommit": "b36684cefb3b8b0ad3723fc88cb728fafd369a3a",
+    "after": {
+      "amendment": "01",
+      "record": "experiments/failover/amendment-01/amendment.json",
+      "sha256": "f209d14896353423882539706663d0c47a628d5c6b4b18ad011a906bb7cd2de9"
+    }
+  },
+  "why": "The smoke run, which is never counted, did what the record says it is for. It made one pre-registered rule fire, and it found the runner bugs that would otherwise have spoiled counted cells. The first counted cells found two more. The record says what happens when the single-copy rule fires, but not that it fired, and none of the ten fixes is written anywhere public. This amendment records both, with the commits, and publishes the one review that a fix to a definition needed.",
+  "timing": "The smoke cells ran on 2026-11-08 before 11:17 CET (10:17Z). The counted plan started at 11:17 CET from private commit 316684fae9118a790427476d41adf5c77c675c19, which already holds the strict switch, fixes 1 to 8 and fix 8's review. Fixes 9 and 10 came after the start: fix 9 touches only the run manifest, fix 10 only the verdict script. The runner owner drafted this amendment at private commit 3840408ade9773188a7a61329abf77905fa9a2ff and added its disturbance section at private commit 4ef984fb52f45da1efdfafe6b59c785f4b6578f8. It is published here after counted cells had started. So it is not, as the runner owner asked, published before any counted cell. It changes no rule the counted cells run under after the start; it records which rules those are.",
+  "changes": [
+    {
+      "what": "The pre-registered single-copy rule fired: the compared PostgreSQL variants are the synchronous_mode_strict ones",
+      "rule": "The record's rule (preregistration v1.1 and FREEZE-NOTES-v1.1.md, 'The single-copy window'): if a smoke cell finds writes acknowledged while the new primary's synchronous_standby_names was empty, the compared PostgreSQL variants become synchronous_mode_strict: true.",
+      "found": "In the non-strict quorum F1b smoke cell there was 1 window of 10 s with an empty synchronous_standby_names, and 236 writes were acknowledged with one copy. Quorum-strict on the same fault: 0 windows, 0 single-copy acknowledgements.",
+      "consequence": "The counted plan runs with --strict. The compared PostgreSQL variants are quorum-strict and classic-strict. The non-strict numbers are published from the smoke run only, as context, never as a compared variant.",
+      "evidence": "The smoke cells, the invalid attempts, the manifests and the Patroni validator probe are committed in the private repository at commit 5dddfe169a5886da1adec58827e555d26e257671, under runner/results/lab02/ (files smoke-*). They are cited by commit here, not published."
+    },
+    {
+      "what": "Ten runner fixes, found by the smoke run (1 to 8) and by the first counted cells (9 and 10)",
+      "rule": "Fixes 1 to 7 are mechanics, fix 9 is recording and fix 10 is analysis code: none of them changes a definition. Fix 8 changes a definition. It was reviewed by the PostgreSQL advocate, and that review and its tightening are in the counted plan's start commit.",
+      "fixes": [
+        {
+          "n": 1,
+          "kind": "mechanics",
+          "fix": "The MongoDB root user is created under the localhost exception. The runner treats error 51003 or Unauthorized from that call as already created and goes on; that is the runner's rule, and this record does not show a later authentication check."
+        },
+        {
+          "n": 2,
+          "kind": "mechanics",
+          "fix": "Docker Desktop's port proxy closes an early connection empty, so the control call retries."
+        },
+        {
+          "n": 3,
+          "kind": "mechanics",
+          "fix": "pg_hba allows Patroni's loopback connections (IPv4 and IPv6)."
+        },
+        {
+          "n": 4,
+          "kind": "mechanics",
+          "fix": "The Patroni validator probe needs --ignore-listen-port."
+        },
+        {
+          "n": 5,
+          "kind": "mechanics",
+          "fix": "pg_replication_slot_advance returns a record, so it is called as SELECT * FROM …"
+        },
+        {
+          "n": 6,
+          "kind": "mechanics",
+          "fix": "pg_hba allows Patroni's local replication connection. Without it, the old primary never rejoined after F2a."
+        },
+        {
+          "n": 7,
+          "kind": "mechanics",
+          "fix": "A8's read of the old primary retries for up to 60 s while Patroni demotes it, and the attempts are recorded."
+        },
+        {
+          "n": 8,
+          "kind": "definition, reviewed",
+          "fix": "Full redundancy tells quorum mode from classic mode. Quorum (ANY n (…)): every replica named, the V2 rule unchanged. Classic: one current replica named, and the others streaming with lag at or under 1 s. A bare * never counts, in either mode."
+        },
+        {
+          "n": 9,
+          "kind": "recording",
+          "fix": "The PostgreSQL run manifest was never written: docker image inspect prints a blank line for the two base images, which are not present locally under their tags, and the parse crashed. A blank output is now recorded as null."
+        },
+        {
+          "n": 10,
+          "kind": "analysis code",
+          "fix": "The verdict script read a cell's fault record as the fault's name and crashed on real cells. Found by a dry run of the verdict on the first counted cells."
+        }
+      ],
+      "commits": {
+        "fix 1": "624260410271c1891e83147b85c0635ff357b94e",
+        "fix 2": "db7187fb01ee6a38036c4f732e12f5548d8def52",
+        "fix 3": "5104b0d649a76df80f7c555360291cd0cc86818c",
+        "fix 4": "7bcf09f8a413074729353f05a32338ad960b4247",
+        "fix 5": "5b112109de2182f862ee0dee05d1760f03f702eb",
+        "fix 6": "f2b02d63d7a053811ac01e95fc3fb41ba18a58a5",
+        "fix 7": "7b334ec19921347289aa18dee87fb9bbcb324e14",
+        "fix 8, as first written": "f5caa7dd54dce8f5d3fddff1f7ffa9ef8e3f463f",
+        "the smoke cells (results only, no runner change)": "5dddfe169a5886da1adec58827e555d26e257671",
+        "the plan also waits on the host's shared pause": "15dd50d961adae2c25277d89637382de94236993",
+        "fix 8's review and its tightening (the counted plan's start commit)": "316684fae9118a790427476d41adf5c77c675c19",
+        "fix 9": "320a02cc12ce6707bf752993b857a36618d2eb74",
+        "fix 10": "77e23bcc8f595be894d59d2892b9bdd361aeab1b"
+      }
+    },
+    {
+      "what": "Fix 8 is reviewed: the PostgreSQL advocate accepts it, and its tightening is adopted",
+      "rule": "The review is published verbatim. The advocate checked Patroni 4.0.6's sync.py: quorum mode always writes ANY n (…), and a bare name can only come from classic mode. Its recommended tightening is adopted: * never counts as redundant, and classic needs a current replica named. That removes a window in which PostgreSQL could read as redundant up to one HA loop early, so it favours MongoDB's fairness, not PostgreSQL's.",
+      "file": "experiments/failover/reviews/smoke-fix8-postgresql-advocate.md",
+      "sha256": "96298b7e0078701e527622ab64099e99e6194b2799bc1763932d499d46c0d757"
+    },
+    {
+      "what": "Fix 9: the first PostgreSQL block's run manifest was written late",
+      "rule": "The first PostgreSQL block (seed 1, repetition 0) has a late manifest, manifest-pg-20261108T113520Z.json. It was written between cells under the shared pause, with no cell running, and records Patroni 4.0.6, etcd 3.5.21 and both local image IDs. That block's cells record manifest: None; the results attach this file to them. Later blocks write their own manifest. The late manifest records the images present when it was written; that the block's earlier cells ran those same images is not shown by it."
+    },
+    {
+      "what": "Fix 10: the verdict script was checked on synthetic cells",
+      "rule": "Fix 10 touches no measurement. The verdict was also run on a 334-cell synthetic set built from the shapes of real cells, and every scenario resolved. Those synthetic numbers are meaningless and are not published."
+    },
+    {
+      "what": "The counted plan, and its pauses and disturbances so far",
+      "rule": "334 cells, --strict, started 2026-11-08 at 11:17 CET from a clean worktree at 316684fa. The cell code that runs has not changed since; fixes 9 and 10 touch only the manifest step and the verdict. The plan waits on the host's shared pause as well as its own, so the disturbance rule applies: a counted cell that overlaps heavy work from another session is discarded and re-run, never pooled, and the discarded file is kept.",
+      "pauses": "With no cell running: fix 9's diagnosis (12:34:08 to 12:35:38 CET); two other sessions' leases; a Lab 01 recording session (14:02 to 14:04 CET); one other session's proof run; and a memory-gate stop at 14:11:43 CET, after which the plan was resumed with the same command at 14:16 CET.",
+      "discarded": "18 counted cell runs were discarded and re-run up to the disturbance section's commit: 2 for work started inside a running cell (a lease taken mid-cell; an unleased package install), and 16 on two other sessions' own reports of unleased heavy work in three windows, 12:57 to 13:40, 13:47 to 13:57 and 14:00 to 14:27 CET, each widened by 1 min. The counted cells that stand from seed 1, repetition 0 are the MongoDB block and PostgreSQL's default timing.",
+      "record": "The full record is runner/results/lab02/DISTURBANCES.md in the private repository, at commit 4ef984fb52f45da1efdfafe6b59c785f4b6578f8 for the state this amendment states. The plan is still running, so that file can still grow; the final count belongs with the results.",
+      "alsoAdded": "The host's cleanup rule gained one rule: taking the shared lease waits for the running cell to end before heavy work starts. An overnight supervisor resumes the plan after a memory-gate stop and after a pass that leaves re-runs. The memory gate itself is unchanged."
+    }
+  ],
+  "documents": [
+    {
+      "file": "experiments/failover/reviews/smoke-fix8-postgresql-advocate.md",
+      "source": "reviews/smoke-fix8-postgresql-advocate.md",
+      "sourceSha256": "96298b7e0078701e527622ab64099e99e6194b2799bc1763932d499d46c0d757",
+      "publishedSha256": "96298b7e0078701e527622ab64099e99e6194b2799bc1763932d499d46c0d757",
+      "substitutions": []
+    }
+  ],
+  "sources": [
+    {
+      "what": "The runner owner's draft of this amendment",
+      "commit": "3840408ade9773188a7a61329abf77905fa9a2ff",
+      "sha256": "9d9f1a2d0d68b26b57477ee3bbe7268407a78ecca73da270d02b2edc9475645a"
+    },
+    {
+      "what": "The same draft with its disturbance section",
+      "commit": "4ef984fb52f45da1efdfafe6b59c785f4b6578f8",
+      "sha256": "c8a5894261d3e039daacf3d409306b36289dcff12daf61d1c867858082ed1cc3"
+    }
+  ],
+  "substitutionRule": "The review is published byte for byte; it needed no substitution. The draft is not published: this record restates it, with machine names, session and lane names, the private branch and private tool paths left out, the same rule as amendment 01. File names inside the experiment's own runner are kept. Times are the host's local time, CET (UTC+01:00), as in the draft.",
+  "limits": [
+    "The smoke cells, the fixes, the counted cells and the disturbance record are in a private repository and are cited here by commit, not published. A reader can check that the commits are named, but cannot open them.",
+    "This amendment was published after the counted plan had started. The strict switch and fix 8 were in the start commit; fixes 9 and 10 were made while the plan ran.",
+    "Fix 8 was reviewed only by the PostgreSQL advocate. The thread records no review of fix 8 by the MongoDB advocate. The adopted tightening is the one that favours MongoDB.",
+    "Which fix is mechanics, recording or analysis code, and that fixes 9 and 10 touch no measurement, is the runner owner's statement. It is not independently verifiable from this repository.",
+    "The disturbance counts are the state at private commit 4ef984fb, while the plan runs. Whether a session's work was heavy, and its time window, come from that session's own report.",
+    "The runner owner's draft cites one commit for fixes 1 to 7, the commit that adds the smoke cells. That commit holds results only; this record cites each fix's own commit, read from the private history. Every fix commit is an ancestor of the start commit.",
+    "Fix 9's late manifest attests the image IDs at the time it was written, not, by itself, the images the first PostgreSQL block's earlier cells ran."
+  ],
+  "unchanged": "The question, arms, workload, faults, measures, gate, repetitions, verdict rule, predictions and out-of-scope list are unchanged, and the pre-registration, amendment 01 and every file they published stay byte-identical. The strict switch is the record's own rule applied, not a new rule.",
+  "notBefore": "Effective when merged to main of odin-labs-ai/odin-rnd. The counted plan was already running under the rules it records, so no counted cell waited for it."
+}

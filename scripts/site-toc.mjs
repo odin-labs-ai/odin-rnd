@@ -4,6 +4,10 @@
 //   - on a field note (journal/<slug>.html) or a lab page (labs/<slug>/index.html), as scripts/site-chrome.mjs pageClass
 //     names them, never on a number-provenance page (pageClass names none there, so no digit is ever added to one);
 //   - only when the page's main text runs past TOC_MIN_WORDS words and it has at least TOC_MIN_HEADINGS such headings.
+//     The main text leaves out the site's own chrome inside <main>: the breadcrumbs, this table of contents and the
+//     publication boundary note that scripts/build.mjs puts before </main> on every page AFTER this pass. Counting that
+//     note would let a page just under the line at build time meet the criteria on the finished page without a table
+//     of contents (odin-rnd #216: Lab 06's page, one record row longer, landed in that gap).
 // It goes right after the page's own header: a note's <header class="article-header">, a lab's hero section. Each entry
 // links the heading's own id; else, for a heading that opens a <section> with an id, that section's id (the heading
 // itself is left byte for byte as its generator rendered it); else the heading gets an id from its text (slugified,
@@ -35,11 +39,12 @@ function mainSpan(html, label) {
   return { start, end: html.indexOf('</main>') + '</main>'.length };
 }
 
-/** The words of the main text: no breadcrumb trail, no table of contents, no script, style or drawing. */
+/** The words of the main text: no breadcrumb trail, no table of contents, no publication boundary note, no script, style or drawing. */
 export function mainWords(html, label = 'page') {
   const { start, end } = mainSpan(html, label);
   const main = html.slice(start, end)
     .replace(/<nav class="(?:crumbs|toc)[^"]*"[\s\S]*?<\/nav>/g, ' ')
+    .replace(/<aside id="publication-boundary"[^>]*>[\s\S]*?<\/aside>/g, ' ')
     .replace(/<(script|style|svg)\b[\s\S]*?<\/\1>/g, ' ');
   return fragmentText(main).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 }

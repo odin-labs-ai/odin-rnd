@@ -2,9 +2,9 @@
 // the agent space filmed (`odin-dispatch` v1: manifest.json, clip.webm, poster.png, stills/, proofs/<evidence-id>.json),
 // downloaded from its private source, and writes only the public part into this site:
 //   site/data/labs/agent-space/dispatches/<session>.json   (odin-lab-dispatch v1, scripts/schemas/odin-lab-dispatch.schema.json)
-//   site/assets/labs/agent-space/<session>/                (clip, poster, stills, copied unchanged)
+//   site/assets/labs/agent-space/<session>/                (clip, poster, stills, copied as they are in <dir>)
 //
-//   node scripts/lab-dispatch-publish.mjs --session <dir> --answers-screen <file> [--site <dir>] [--check]
+//   node scripts/lab-dispatch-publish.mjs --session <dir> --answers-screen <file> [--treatment <file>] [--site <dir>] [--check]
 //   node scripts/lab-dispatch-publish.mjs --fingerprint "<term>"     (prints the hash to add to lab-screen-terms.json)
 //
 // It keeps the questions that were asked, each with its answer, its why, the kind of source and the evidence id the
@@ -26,6 +26,10 @@
 // answer screen, which is mandatory. scripts/labs.mjs runs the same checks (dispatchProblems) over every committed
 // dispatch when the site builds, so a hand-written dispatch fails the build the same way. It never rewrites a text:
 // the clip shows the same card, so a fix belongs at the source.
+// When <dir> is not the export byte for byte (pixels blurred, an end card cut), --treatment <file> (odin-dispatch-treatment
+// v1) says so: a note for the page, the export manifest's sha256 and the export sha256 of every changed asset. The
+// dispatch carries it as source.treatment and the page shows the note under the recording; without it, every asset is
+// the export's own bytes. A treatment that lists an unchanged file or a file the dispatch does not publish is refused.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -261,6 +265,36 @@ export function pinnedAssetProblems(path, at, { under, underLabel = under, root 
   return problems;
 }
 
+/** Why a dispatch's source.treatment may not ship: the note fails the screen, or an entry is not a changed asset of it. */
+export function treatmentProblems(dispatch, where) {
+  const treatment = dispatch.source.treatment;
+  if (!treatment) return [];
+  const problems = screenHits(treatment.note).map(hit => `${where}#/source/treatment/note: ${hit.reason} (${excerpt(normalise(treatment.note), hit.at)})`);
+  const entries = Object.entries(treatment.exportAssetsSha256);
+  if (!entries.length) problems.push(`${where}#/source/treatment/exportAssetsSha256: lists no changed asset`);
+  for (const [path, sha] of entries) {
+    if (!(path in dispatch.source.assetsSha256)) problems.push(`${where}#/source/treatment/exportAssetsSha256: ${path} is not one of this dispatch's assets`);
+    else if (dispatch.source.assetsSha256[path] === sha) problems.push(`${where}#/source/treatment/exportAssetsSha256: ${path} is listed as changed but has the export's bytes`);
+  }
+  return problems;
+}
+
+/** The treatment record for a session dir (odin-dispatch-treatment v1); a list of problems. */
+export function treatmentRecordProblems(record, session, files) {
+  if (!record) return [];
+  const problems = [];
+  if (record.format !== 'odin-dispatch-treatment' || record.version !== 1) problems.push('the treatment is not odin-dispatch-treatment v1');
+  if (record.session !== session) problems.push(`the treatment is for ${JSON.stringify(record.session)}, not ${JSON.stringify(session)}`);
+  if (typeof record.note !== 'string' || !record.note.trim()) problems.push('the treatment has no note');
+  if (!/^[0-9a-f]{64}$/.test(record.export?.manifestSha256 ?? '')) problems.push('the treatment does not give the export manifest sha256');
+  const published = new Set(files.map(([from]) => from));
+  for (const [file, sha] of Object.entries(record.export?.files ?? {})) {
+    if (!published.has(file)) problems.push(`the treatment lists ${file}, which the dispatch does not publish`);
+    if (!/^[0-9a-f]{64}$/.test(sha)) problems.push(`the treatment gives no sha256 for ${file}`);
+  }
+  return problems;
+}
+
 /**
  * Everything that makes a public dispatch unpublishable, for the publisher (before it writes) and the build (for every
  * committed dispatch): the public schema, the screen over every string it carries (asset paths are screened for names
@@ -280,6 +314,7 @@ export function dispatchProblems(dispatch, where, root = null) {
   for (const path of Object.keys(dispatch.source.assetsSha256)) if (!listed.has(path)) problems.push(`${where}#/source/assetsSha256: ${path} is not one of this dispatch's assets`);
   for (const path of listed) if (!(path in dispatch.source.assetsSha256)) problems.push(`${where}#/source/assetsSha256: no recorded sha256 for ${path}`);
   if (!dispatch.session.startsWith(`session-${dispatch.date}`)) problems.push(`${where}#/session: the name does not carry the session date`);
+  problems.push(...treatmentProblems(dispatch, where));
   const screened = new Map(dispatch.answersScreen.answers.map(answer => [answer.evidence, answer]));
   for (const [i, question] of dispatch.questions.entries()) {
     if (!screened.has(question.evidence)) problems.push(`${where}#/questions/${i}/evidence: ${question.evidence} has no passing answer screen`);
@@ -293,7 +328,7 @@ const readJson = (file, problems, label) => {
 };
 
 /** Read and screen one session dir. Returns { problems, dispatch, files } where files maps source → site path. */
-export function prepare(sessionDir, answerScreen) {
+export function prepare(sessionDir, answerScreen, treatment = null) {
   const problems = [];
   const sourceSchemaRaw = readFileSync(SOURCE_SCHEMA_FILE);
   const manifestRaw = existsSync(join(sessionDir, 'manifest.json')) ? readFileSync(join(sessionDir, 'manifest.json')) : null;
@@ -342,6 +377,7 @@ export function prepare(sessionDir, answerScreen) {
   const base = `assets/labs/agent-space/${session}`;
   const files = [[manifest.clip.file, `${base}/clip.webm`], [manifest.poster, `${base}/poster.png`],
     ...manifest.stills.map(still => [still, `${base}/${still}`])];
+  problems.push(...treatmentRecordProblems(treatment, session, files));
   const dispatch = {
     format: 'odin-lab-dispatch', version: 1, lab: 'agent-space', session, date: manifest.date,
     clip: { src: `${base}/clip.webm`, bytes: manifest.clip.bytes, mime: manifest.clip.mime, seconds: manifest.clip.seconds },
@@ -349,8 +385,11 @@ export function prepare(sessionDir, answerScreen) {
     answersScreen: { by: answerScreen?.by ?? '', answers: (Array.isArray(answerScreen?.answers) ? answerScreen.answers : [])
       .filter(answer => proofs.has(answer?.evidence)).map(({ evidence, verdict, checks }) => ({ evidence, verdict, checks })) },
     source: { schema: 'odin-dispatch-v1', schemaSha256: sha256(sourceSchemaRaw), manifestSha256: sha256(manifestRaw),
-      // Every published asset's bytes, as copied unchanged from the session: the build re-hashes each one and refuses a mismatch.
-      assetsSha256: Object.fromEntries(files.filter(([from]) => existsSync(join(sessionDir, from))).map(([from, to]) => [to, sha256(readFileSync(join(sessionDir, from)))])) },
+      // Every published asset's bytes, as copied from the session dir: the build re-hashes each one and refuses a mismatch.
+      assetsSha256: Object.fromEntries(files.filter(([from]) => existsSync(join(sessionDir, from))).map(([from, to]) => [to, sha256(readFileSync(join(sessionDir, from)))])),
+      // What differs from the export, when anything does (--treatment): shown under the recording.
+      ...(treatment ? { treatment: { note: String(treatment.note ?? ''), exportManifestSha256: String(treatment.export?.manifestSha256 ?? ''),
+        exportAssetsSha256: Object.fromEntries(files.filter(([from]) => from in (treatment.export?.files ?? {})).map(([from, to]) => [to, treatment.export.files[from]])) } } : {}) },
   };
   // The dispatch as it would be written is screened as a whole, so a session or file name carries nothing either.
   if (!problems.length) problems.push(...dispatchProblems(dispatch, 'dispatch'));
@@ -358,8 +397,8 @@ export function prepare(sessionDir, answerScreen) {
 }
 
 /** Publish a prepared session into a site root. Returns the dispatch file it wrote. */
-export function publish({ sessionDir, answerScreen, site }) {
-  const { problems, dispatch, files } = prepare(sessionDir, answerScreen);
+export function publish({ sessionDir, answerScreen, treatment = null, site }) {
+  const { problems, dispatch, files } = prepare(sessionDir, answerScreen, treatment);
   if (problems.length) return { problems };
   for (const [from, to] of files) { mkdirSync(dirname(join(site, to)), { recursive: true }); copyFileSync(join(sessionDir, from), join(site, to)); }
   const out = join(site, 'data/labs/agent-space/dispatches', `${dispatch.session}.json`);
@@ -373,7 +412,7 @@ function args(argv) {
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === '--check') out.check = true;
-    else if (['--session', '--answers-screen', '--site', '--fingerprint'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
+    else if (['--session', '--answers-screen', '--treatment', '--site', '--fingerprint'].includes(flag) && argv[i + 1]) out[flag.slice(2)] = argv[++i];
     else throw new Error(`unknown or incomplete argument ${flag}`);
   }
   if (!out.session && !out.fingerprint) throw new Error('--session <dir> is required');
@@ -383,13 +422,14 @@ function args(argv) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   let options;
   try { options = args(process.argv.slice(2)); } catch (error) {
-    console.error(`usage: node scripts/lab-dispatch-publish.mjs --session <dir> --answers-screen <file> [--site <dir>] [--check]\n${error.message}`);
+    console.error(`usage: node scripts/lab-dispatch-publish.mjs --session <dir> --answers-screen <file> [--treatment <file>] [--site <dir>] [--check]\n${error.message}`);
     process.exit(2);
   }
   if (options.fingerprint) { console.log(fingerprint(options.fingerprint)); process.exit(0); }
   const answerScreen = options['answers-screen'] ? JSON.parse(readFileSync(options['answers-screen'], 'utf8')) : null;
+  const treatment = options.treatment ? JSON.parse(readFileSync(options.treatment, 'utf8')) : null;
   const sessionDir = resolve(options.session);
-  const result = options.check ? prepare(sessionDir, answerScreen) : publish({ sessionDir, answerScreen, site: resolve(options.site ?? join(here, '..', 'site')) });
+  const result = options.check ? prepare(sessionDir, answerScreen, treatment) : publish({ sessionDir, answerScreen, treatment, site: resolve(options.site ?? join(here, '..', 'site')) });
   if (result.problems.length) {
     console.error(`REFUSED ${basename(sessionDir)}: ${result.problems.length} reason${result.problems.length === 1 ? '' : 's'}; nothing was written.`);
     for (const problem of result.problems) console.error(`  - ${problem}`);

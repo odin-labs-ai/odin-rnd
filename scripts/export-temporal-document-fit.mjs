@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir, readdir, mkdtemp, copyFile, utimes, chmod, lstat } from 'node:fs/promises';
-import { resolve, join, relative, dirname, basename } from 'node:path';
+import { resolve, join, relative, dirname, basename, sep } from 'node:path';
 import { tmpdir, homedir, hostname } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -68,7 +68,7 @@ export async function exportEvidence({run, out, prior = [], reproduction, repo =
     else bytes=json(normalize(JSON.parse(original),replacements));
     assertPrivateFree(bytes.toString(),forbidden);
     await mkdir(dirname(dest),{recursive:true});await writeFile(dest,bytes);
-    entries.push({path:relative(staging,dest),originalLocalFile:source?normalize(source,replacements):null,originalLocalSHA256:original?sha256(original):null,exportedSHA256:sha256(bytes),bytes:bytes.length,transformation:exact?'byte-identical':derived?'derived-summary':'normalized',...(sourceProperty?{sourceProperty}: {})});
+    entries.push({path:relative(staging,dest).split(sep).join('/'),originalLocalFile:source?normalize(source,replacements):null,originalLocalSHA256:original?sha256(original):null,exportedSHA256:sha256(bytes),bytes:bytes.length,transformation:exact?'byte-identical':derived?'derived-summary':'normalized',...(sourceProperty?{sourceProperty}: {})});
   }
   for(const [name,expected] of Object.entries(manifest.sources)){
     if(!name.startsWith('experiments/temporal-document-fit/') || name.includes('..'))throw new Error('Unexpected frozen source path');

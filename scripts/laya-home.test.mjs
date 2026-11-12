@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { stations } from './station-contract.mjs';
 import { renderStations, renderStationLinks } from './station-render.mjs';
 import { factoryFloor } from './floor.mjs';
-import { loadLaya, benchBlock, assertBenchCurrent, spliceBench, reproduceCommand, renderLayaBench, readmePath, pagePath } from './laya-bench.mjs';
+import { loadLaya, benchBlock, assertBenchCurrent, spliceBench, reproduceCommand, renderLayaBench, readmePath, pagePath, cloneStep } from './laya-bench.mjs';
 
 // The bench is on the experiments page (site/experiments/index.html, rendered by laya-bench.mjs --write); the home page
 // (site/index.html) keeps the station compartment renderStations adds during the build and the featured project row.
@@ -55,9 +55,13 @@ test('a drifted page or a changed record fails the build-time bench check', () =
 
 test('the bench explains the model, the lock-in, the result and the limits, and reproduces from the README', () => {
   for (const phrase of ['WHAT IS A SYSTEM-1 DECISION MODEL?', 'does not write text', 'WHY NO VENDOR LOCK-IN MATTERS', 'Apache-2.0 weights that run on your own machine', 'hosted API', 'not a benchmark', 'one busy laptop']) assert(bench.includes(phrase), `Bench is missing: ${phrase}`);
-  const escaped = reproduceCommand(readFileSync(readmePath, 'utf8')).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  // The page is read outside a checkout: its command clones the repository first, then runs the README's block verbatim.
+  const escaped = `${cloneStep}\n${reproduceCommand(readFileSync(readmePath, 'utf8'))}`.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
   assert(bench.includes(`id="laya-reproduce-command" tabindex="0">${escaped}</pre>`));
   assert(escaped.includes('run.py'));
+  assert(escaped.startsWith('git clone --depth 1 https://github.com/odin-labs-ai/odin-rnd &amp;&amp; cd odin-rnd\ncd experiments/laya-vs-jev\n'), 'The command says which repository to clone');
+  assert(bench.includes('APPLE SILICON, MACOS 14 OR LATER'), 'The bench states the macOS floor of the pinned wheels');
+  assert(bench.includes('<a href="https://github.com/odin-labs-ai/odin-rnd">THIS REPOSITORY</a>'), 'The bench links the repository it asks you to clone');
   assert.doesNotMatch(bench, /<script|<link|<img|<iframe|\bsrc=/, 'The bench adds no requests to the experiments page');
 });
 

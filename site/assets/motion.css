@@ -16,6 +16,32 @@
 @media(max-width:900px){.update-item>a{grid-template-columns:100px minmax(0,1fr)}.update-title,.update-text{grid-column:2}}
 @media(max-width:560px){.update-item>a{grid-template-columns:minmax(0,1fr)}.update-kind,.update-title,.update-text{grid-column:1}.update-item>a{gap:6px}}
 
+/* A short window into the pinned lab-run records, separate from dated editorial updates. */
+.latest-runs{margin:40px 0 14px;padding-top:28px;border-top:1px solid var(--rule)}
+.updates-all>.latest-runs{margin:0 0 48px;padding-top:0;border-top:0}
+.latest-runs h2,.latest-runs h3{margin:0 0 8px;font-family:var(--display);font-size:clamp(24px,3vw,34px);line-height:1.2}
+.latest-runs>p{max-width:72ch;color:var(--steel);font-size:15px;line-height:1.6}
+.latest-runs-disclosure{margin-top:14px;border-top:1px solid var(--rule)}
+.latest-runs-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:44px;padding:12px 0;color:var(--brand);font:12px/1.8 var(--mono);letter-spacing:.04em;cursor:pointer}
+.latest-runs-disclosure>summary>strong{font-weight:400}
+.latest-runs-disclosure>summary::marker{content:''}
+.latest-runs-disclosure>summary::-webkit-details-marker{display:none}
+.latest-runs-disclosure>summary:hover{text-decoration:underline;text-underline-offset:4px}
+.latest-runs-disclosure>summary:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.latest-runs-disclosure>summary::after{content:'+';font:22px/1 var(--mono);color:var(--orange)}
+.latest-runs-disclosure[open]>summary{border-bottom:1px solid var(--rule)}
+.latest-runs-disclosure[open]>summary::after{content:'−'}
+.latest-runs-disclosure>p{max-width:72ch;margin:20px 0 0;color:var(--steel);font-size:15px;line-height:1.6}
+.latest-runs-list{list-style:none;margin:24px 0 0;padding:0;border-top:1px solid var(--rule)}
+.latest-run{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;padding:20px 0;border-bottom:1px solid var(--rule)}
+.latest-run-meta{grid-column:1/-1;margin:0 0 6px;color:var(--steel);font-size:12px;font-variant-numeric:tabular-nums}
+.latest-run h3,.latest-run h4{grid-column:1;grid-row:2/4;margin:0;font-family:var(--display);font-size:19px;line-height:1.35}
+.latest-run h3 a,.latest-run h4 a{color:var(--paper);text-underline-offset:4px;overflow-wrap:anywhere}
+.latest-run>p:not(.latest-run-meta){grid-column:2;margin:0 0 7px;color:var(--steel);font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.latest-run>p:last-child a,.latest-runs-all a{color:var(--brand);font-weight:600;text-underline-offset:4px}
+.latest-runs-all{margin:18px 0 0}
+@media(max-width:560px){.latest-runs{margin-top:30px;padding-top:24px}.latest-run{grid-template-columns:minmax(0,1fr);gap:4px}.latest-run h3,.latest-run h4,.latest-run>p:not(.latest-run-meta){grid-column:1;grid-row:auto}.latest-run>p:not(.latest-run-meta){margin-top:4px}}
+
 /* The four-step story */
 .story-rail{position:relative}
 .story-track{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--rule)}

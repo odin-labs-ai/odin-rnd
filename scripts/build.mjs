@@ -7,7 +7,9 @@ if (buildArgs.length > 1 || buildArgs.some(arg => arg !== '--refresh-updates')) 
 const refreshUpdatesRequested = buildArgs.includes('--refresh-updates');
 const witnesses = await validateRecords();
 import { readFileSync, writeFileSync, cpSync, copyFileSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
-import { relative, dirname, resolve } from 'node:path';
+import { relative, dirname, resolve, sep } from 'node:path';
+// A URL or key built from a native path uses '/' on every OS (relative() gives '\' on Windows).
+const urlPath = path => path.split(sep).join('/');
 import { apiOrigin } from '../site/assets/activity.mjs';
 import { factoryFloor } from './floor.mjs';
 import { execFileSync } from 'node:child_process';
@@ -169,6 +171,14 @@ if (refreshUpdatesRequested) {
   const { renderLabs } = await import('./labs.mjs');
   for (const [file, body] of Object.entries(renderLabs())) writeFileSync(`dist/${file}`, body);
 }
+// Show one latest, validated run per lab beside the editorial updates. This is built-only: the updates feed's
+// frozen dates and committed HTML do not change when a lab appends another record check.
+{
+  const { latestRunPages } = await import('./lab-latest.mjs');
+  const pages = latestRunPages(readFileSync('dist/index.html', 'utf8'), readFileSync('dist/updates/index.html', 'utf8'));
+  writeFileSync('dist/index.html', pages.home);
+  writeFileSync('dist/updates/index.html', pages.updates);
+}
 mkdirSync('dist/data', { recursive: true });
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf8'));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
@@ -188,7 +198,7 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
 {
   const { loadIndex, TOPICS_PATH } = await import('./site-index.mjs');
   const { placeFind } = await import('./find-build.mjs');
-  const { injectChrome, fixJournalDestinations, fixLabIndexLinks, addOpenGraphToDist } = await import('./site-chrome.mjs');
+  const { injectChrome, fixJournalDestinations, fixLabIndexLinks, addOpenGraphToDist, addSocialCardToDist } = await import('./site-chrome.mjs');
   // Wave 3: the journal/ and projects/ index pages and the All experiments section on experiments/, rendered from the
   // same items, then every page's header nav rewritten to the one canonical list (site-sections.mjs, site-header.mjs;
   // both fail closed), before Find and the chrome, so the Find link lands last in the canonical nav.
@@ -206,6 +216,8 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   fixJournalDestinations({ distDir: 'dist' });
   fixLabIndexLinks({ distDir: 'dist' });
   addOpenGraphToDist({ distDir: 'dist' });
+  // The large link card on X for every page with an og:image (the home page authors its own; site-chrome.mjs).
+  addSocialCardToDist({ distDir: 'dist' });
   // Wave 4: "On this page" on long field notes and lab pages, after the chrome so it sees the breadcrumbs
   // (scripts/site-toc.mjs; never on a number-provenance page).
   const { addTocs } = await import('./site-toc.mjs');
@@ -216,7 +228,7 @@ const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatM
 // copy there is what vp-rnd-frontier-residuals R7 found (activity-sitewide.test.mjs checks every built page).
 const activityModule = resolve('dist/assets/activity.mjs');
 for (const file of htmlFiles('dist')) {
-  const modulePath = relative(dirname(file),'dist/assets/activity.mjs');
+  const modulePath = urlPath(relative(dirname(file),'dist/assets/activity.mjs'));
   const source = readFileSync(file,'utf8');
   const loadsActivity = [...source.matchAll(/<script\b[^>]*\btype="module"[^>]*\bsrc="([^"]+)"/g)]
     .some(([, src]) => resolve(dirname(file), src) === activityModule);
@@ -227,7 +239,7 @@ for (const file of htmlFiles('dist')) {
 // The beacon is this site's own file: no script from another origin runs on these pages. It loads async, so it never
 // holds up the page's own scripts or DOMContentLoaded.
 for (const file of htmlFiles('dist')) {
-  const tag = `<script async src="${relative(dirname(file),'dist/assets/view-beacon.js')}"></script>`;
+  const tag = `<script async src="${urlPath(relative(dirname(file),'dist/assets/view-beacon.js'))}"></script>`;
   const source = readFileSync(file,'utf8');
   writeFileSync(file,source.replace('</head>',`${tag}\n</head>`));
 }
@@ -238,15 +250,23 @@ for (const file of htmlFiles('dist')) {
   if ((source.match(/<header class="site-header[ "]/g) || []).length !== 1) throw new Error('Expected exactly one site header in '+file);
   writeFileSync(file,source.replace(/(<header class="site-header[^"]*"[^>]*>[\s\S]*?)<\/header>/,`$1${parentSiteLink}</header>`));
 }
-const { clarifyPublication } = await import('./publication-corrections.mjs');
+const { clarifyPublication, publicationPage, unmatchedCorrections } = await import('./publication-corrections.mjs');
 // Every public page carries the same interpretation boundary, including pages emitted by generators.
 // Individual results still need their own method and limitations; this note cannot validate a claim.
+const builtPages = [];
 for (const file of htmlFiles('dist')) {
-  const source = clarifyPublication(readFileSync(file, 'utf8'), relative('dist', file));
+  const page = publicationPage('dist', file);
+  builtPages.push(page);
+  const source = clarifyPublication(readFileSync(file, 'utf8'), page);
   if ((source.match(/<\/main>/g) || []).length !== 1 || source.includes('id="publication-boundary"')) throw new Error('Expected one main and no duplicate publication boundary in '+file);
-  const methods = relative(dirname(file), 'dist/methods/index.html').replace(/index\.html$/, '') + '#publication-standard';
+  const methods = urlPath(relative(dirname(file), 'dist/methods/index.html')).replace(/index\.html$/, '') + '#publication-standard';
   const note = `<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="${methods}">How to read these results</a>.</p></aside>`;
   writeFileSync(file, source.replace('</main>', note + '</main>'));
+}
+// Fails closed when a dated clarification reached no page (a renamed page, or a key that missed on a path separator).
+{
+  const missed = unmatchedCorrections(builtPages);
+  if (missed.length) throw new Error('Publication corrections matched no built page: '+missed.join(', '));
 }
 // Provider terms before naming (vp-grow-odin-r-d bundle-2 WO-05): the build refuses a page that names a broker next to a
 // measured number unless site/data/provider-terms.json allows it (scripts/provider-terms.mjs; tests in

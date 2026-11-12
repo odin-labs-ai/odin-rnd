@@ -52,6 +52,19 @@ test('the criteria: more than TOC_MIN_WORDS words of main text and at least TOC_
   assert.deepEqual(mainHeadings(note(), rel).map(h => h.text), ['One', 'Two', 'Three', 'Four']);
 });
 
+test('the publication boundary note the build adds before </main> after this pass is chrome: it never counts toward the words', () => {
+  // scripts/build.mjs adds this note to every page after addTocs; the words below are its own, as built.
+  const boundary = '<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="../methods/#publication-standard">How to read these results</a>.</p></aside>';
+  const rel = 'labs/x/index.html';
+  const page = lab({ count: 5, total: 1990 });
+  const words = mainWords(page, rel);
+  assert.ok(words <= 2000, `the fixture is at most 2000 words without the note (${words})`);
+  const withNote = page.replace('</main>', `${boundary}</main>`);
+  assert.equal(mainWords(withNote, rel), words, 'the note adds no words');
+  assert.ok(words + 20 > 2000, 'the note alone would have carried the fixture past the line (odin-rnd #216)');
+  assert.equal(addToc(withNote, rel), withNote, 'so the finished page and the build pass agree: no table of contents');
+});
+
 test('only field notes and lab pages, never a number-provenance page, a section index or any other page', () => {
   const page = note({ total: 5000 });
   for (const rel of ['journal/a.html', 'labs/x/index.html']) assert.ok(tocCandidate(rel), rel);
@@ -161,12 +174,17 @@ test('as built: the long notes and Lab 01 have one, short pages and number-prove
   }
 });
 
-test('as built: exactly the 11 pages that meet the criteria have a table of contents, and every page that meets them has one', () => {
+// Lab pages that gain a row with every records/ data pull request (the bot's daily "Lab NN runs on org machines"): their
+// main text only grows, so one of them can cross the criteria on any data day. They are held to the criteria (the second
+// assertion below), never to the fixed list, so a data pull request is never red for a page that rightly gained one.
+const RECORD_FED_LAB_PAGES = new Set(['labs/review/index.html', 'labs/rogue/index.html', 'labs/red-build/index.html', 'labs/measured-blind/index.html']);
+
+test('as built: exactly the 10 fixed pages that meet the criteria have a table of contents, record-fed lab pages have one exactly when they meet them, and every page that meets them has one', () => {
   const dist = join(builtCopy(), 'dist');
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
   const pages = new Map(walk(dist).map(file => [relative(dist, file).split('\\').join('/'), readFileSync(file, 'utf8')]));
   const withToc = [...pages].filter(([, html]) => html.includes('<nav class="toc')).map(([rel]) => rel).sort();
-  assert.deepEqual(withToc, [
+  assert.deepEqual(withToc.filter(rel => !RECORD_FED_LAB_PAGES.has(rel)), [
     'journal/composable-harness-results.html',
     'journal/jev-as-a-fast-gate.html',
     'journal/latent-handoff-pre-registration.html',
@@ -177,8 +195,9 @@ test('as built: exactly the 11 pages that meet the criteria have a table of cont
     'journal/which-rules-need-a-model.html',
     'labs/agent-space/index.html',
     'labs/brain-bench/index.html',
-    'labs/rogue/index.html',
   ]);
+  // This record-fed page has crossed already, and a record-fed page only grows.
+  assert.ok(withToc.includes('labs/rogue/index.html'), 'labs/rogue/index.html keeps its table of contents');
   // The criteria, measured again on every built page (the table of contents is left out of both counts).
   const meets = [...pages].filter(([rel, html]) => tocCandidate(rel) && mainHeadings(html, rel).length >= TOC_MIN_HEADINGS && mainWords(html, rel) > TOC_MIN_WORDS).map(([rel]) => rel).sort();
   assert.deepEqual(meets, withToc, 'one exactly where the criteria hold');

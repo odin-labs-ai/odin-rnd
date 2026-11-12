@@ -23,10 +23,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 // lab; its record is data/labs/review/record.json, its page scripts/lab-review.mjs), then Lab 07 (a results lab; its
 // record is data/labs/link-safety/record.json, its page scripts/lab-link-safety.mjs), then Lab 08 (a results lab; its
 // record is data/labs/red-build/record.json, its page scripts/lab-red-build.mjs), then Lab 09 (a results lab; its
-// record is data/labs/talk-leak/record.json, its page scripts/lab-talk-leak.mjs), then Lab 13 (a results lab; its
+// record is data/labs/talk-leak/record.json, its page scripts/lab-talk-leak.mjs), then Lab 11 (a results lab; its record is
+// data/labs/same-model-harness/record.json, its page scripts/lab-same-model-harness.mjs), then Lab 12 (a results lab; its
+// record is data/labs/strangers/record.json, its page scripts/lab-strangers.mjs), then Lab 13 (a results lab; its
 // record is data/labs/measured-blind/record.json, its page scripts/lab-measured-blind.mjs), then Lab 14
 // (a results lab; its record is data/labs/ai-jury/record.json, its page scripts/lab-ai-jury.mjs).
-export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json', 'data/labs/review-tile.json', 'data/labs/link-safety-tile.json', 'data/labs/red-build-tile.json', 'data/labs/talk-leak-tile.json', 'data/labs/measured-blind-tile.json', 'data/labs/ai-jury-tile.json'];
+export const TILE_FILES = ['data/labs/brain-bench-tile.json', 'data/labs/failover.json', 'data/labs/rogue-tile.json', 'data/labs/review-tile.json', 'data/labs/link-safety-tile.json', 'data/labs/red-build-tile.json', 'data/labs/talk-leak-tile.json', 'data/labs/same-model-harness-tile.json', 'data/labs/strangers-tile.json', 'data/labs/measured-blind-tile.json', 'data/labs/ai-jury-tile.json'];
 const schema = JSON.parse(readFileSync(join(here, 'schemas/odin-lab-tile.schema.json'), 'utf8'));
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const isFile = path => existsSync(path) && statSync(path).isFile();
@@ -39,6 +41,9 @@ export function tileProblems(tile, root = 'site', where = 'tile') {
   const { links, record, ...words } = tile;
   problems.push(...screenTree({ ...words, links: links.map(l => l.label) }, where));
   for (const key of ['question', 'how', 'status']) if (/\p{Nd}/u.test(tile[key])) problems.push(`${where}#/${key}: a tile carries no number`);
+  // The published catalogue must lead to a page for every lab, including a lab that has a plan but no result.
+  const detail = `labs/${tile.experiment}/index.html`;
+  if (resolve(root) === REPO_SITE && !isFile(join(root, detail))) problems.push(`${where}#/detail: ${detail} is missing`);
   for (const [i, { href }] of links.entries()) {
     if (!/^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9.-]*)*\.(html|json)$/.test(href) || /(^|\/)\.\.?(\/|$)/.test(href)) problems.push(`${where}#/links/${i}/href: not a page or record path of this site`);
     else if (!isFile(join(root, href))) problems.push(`${where}#/links/${i}/href: ${href} is not on this site`);
@@ -101,6 +106,7 @@ export function readTiles(root = 'site', { required = resolve(root) === REPO_SIT
 
 /** One tile: what the lab asks, its status, and links to its frozen records. `up` is the way from labs/ to the site root. */
 export function renderTile(tile, up = '../') {
-  const links = tile.links.map(l => `<li><a href="${up}${escape(l.href)}">${escape(l.label)}</a></li>`).join('');
-  return `<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-${escape(tile.experiment)}"><span class="technical">${escape(tile.label.toUpperCase())}</span><h2 id="lab-tile-${escape(tile.experiment)}">${escape(tile.title)}</h2><p>${escape(tile.question)}</p><p>${escape(tile.how)}</p><p class="lab-tile-status">${escape(tile.status)}.</p><ul class="lab-tile-links">${links}</ul></article>`;
+  const detail = `labs/${tile.experiment}/index.html`;
+  const links = tile.links.filter(l => l.href !== detail).map(l => `<li><a href="${up}${escape(l.href)}">${escape(l.label)}</a></li>`).join('');
+  return `<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-${escape(tile.experiment)}"><span class="technical">${escape(tile.label.toUpperCase())}</span><h2 id="lab-tile-${escape(tile.experiment)}">${escape(tile.title)}</h2><p class="lab-tile-open"><a href="${up}${escape(detail)}"><span class="sr-only">${escape(tile.title)} — </span>Open the lab page <span aria-hidden="true">↗</span></a></p><p>${escape(tile.question)}</p><p>${escape(tile.how)}</p><p class="lab-tile-status">${escape(tile.status)}.</p><ul class="lab-tile-links">${links}</ul></article>`;
 }

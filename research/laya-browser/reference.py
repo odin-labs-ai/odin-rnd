@@ -5,6 +5,7 @@
 """
 import argparse
 import json
+import os
 import platform
 import time
 from pathlib import Path
@@ -14,7 +15,8 @@ from laya_pinned import HERE, PINS, fetch, load_agent
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--cache", required=True, help="directory for the ~843 MB checkpoint (outside the repository)")
+    ap.add_argument("--cache", required=True, type=os.path.expanduser,  # "~" reaches Windows shells unexpanded
+                    help="directory for the ~843 MB checkpoint (outside the repository)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     import torch

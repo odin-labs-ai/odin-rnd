@@ -11,7 +11,9 @@
 //   labs/red-build/index.html     Lab 08's page, rendered by scripts/lab-red-build.mjs
 //   labs/measured-blind/index.html  Lab 13's page, rendered by scripts/lab-measured-blind.mjs
 //   labs/talk-leak/index.html     Lab 09's page, rendered by scripts/lab-talk-leak.mjs
+//   labs/strangers/index.html     Lab 12's page, rendered by scripts/lab-strangers.mjs
 //   labs/ai-jury/index.html       Lab 14's page, rendered by scripts/lab-ai-jury.mjs
+//   labs/same-model-harness/index.html  Lab 11's page, rendered by scripts/lab-same-model-harness.mjs
 // Lab 01's "How this site got built" section comes from site/data/labs/delivery/odin-rnd.json (scripts/lab-delivery.mjs);
 // its "This week in Lab 01" section from that record, the story record and the dispatches (scripts/lab-week.mjs).
 // The lab's words come from site/data/labs/agent-space.json; under site/data/labs/agent-space/, its films from films.json
@@ -45,7 +47,9 @@ import { LINK_RECORD, renderLinkSafety } from './lab-link-safety.mjs';
 import { RED_RECORD, renderRedBuild } from './lab-red-build.mjs';
 import { BLIND_RECORD, renderMeasuredBlind } from './lab-measured-blind.mjs';
 import { TALK_RECORD, renderTalkLeak } from './lab-talk-leak.mjs';
+import { STRANGERS_RECORD, renderStrangers } from './lab-strangers.mjs';
 import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
+import { SMH_RECORD, renderSameModelHarness } from './lab-same-model-harness.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
@@ -145,7 +149,7 @@ function dispatchBlock(dispatch, up, latest, proofs = false) {
   const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
   // The same-directory -1280.webp sibling is used for video posters; <video poster> has no responsive srcset.
   const poster = dispatch.poster.replace(/\.(png|jpe?g)$/i, '-1280.webp');
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below"><source src="${up}${escape(dispatch.clip.src)}" type="video/webm"></video><figcaption>Recorded during the session, no sound.${dispatch.source.treatment ? ` ${escape(dispatch.source.treatment.note)}` : ''}</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
@@ -203,6 +207,13 @@ function checkedProofs(html, dispatches) {
 // Lab 01's top figure before the progress record existed: a still from the first build, kept for a root without one.
 const EARLIER_HERO = '<figure class="lab-hero-media"><img src="../../assets/agent-space/agent-space-overview.jpg" width="1280" height="720" alt="The Odin agent space: agents in their own spots in a small 3D world."><figcaption>From an earlier recording, also on <a href="../../#agent-space">the home page</a>.</figcaption></figure>';
 
+function requireRenderedTilePages(tiles, pages) {
+  for (const tile of tiles) {
+    const detailPage = `labs/${tile.experiment}/index.html`;
+    if (!pages[detailPage]) throw new Error(`${detailPage}: checked tile has no rendered page`);
+  }
+}
+
 /** The rendered Labs pages and feed, keyed by their dist/ path. */
 export function renderLabPages(root = 'site', { requireBench = resolve(root) === REPO_SITE, now = new Date() } = {}) {
   const lab = readLab(root);
@@ -246,9 +257,24 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
   // Lab 09's page: required on the published site, as Lab 05's is; a fixture renders it only when it carries the record.
   if (requireBench && !existsSync(join(root, TALK_RECORD))) throw new Error(`Lab 09 is required on the published site: ${TALK_RECORD} is missing`);
   const talkLeak = renderTalkLeak(root);
+  // Lab 12's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, STRANGERS_RECORD))) throw new Error(`Lab 12 is required on the published site: ${STRANGERS_RECORD} is missing`);
+  const strangers = renderStrangers(root);
   // Lab 14's page: required on the published site in the same way.
   if (requireBench && !existsSync(join(root, JURY_RECORD))) throw new Error(`Lab 14 is required on the published site: ${JURY_RECORD} is missing`);
   const jury = renderAiJury(root);
+  // Lab 11's page: required on the published site in the same way.
+  if (requireBench && !existsSync(join(root, SMH_RECORD))) throw new Error(`Lab 11 is required on the published site: ${SMH_RECORD} is missing`);
+  const sameModel = renderSameModelHarness(root);
+  // A caller cannot turn off the published site's tile/page contract by passing requireBench: false.
+  const requireTiles = resolve(root) === REPO_SITE || requireBench;
+  const tiles = readTiles(root, { required: requireTiles });
+  const failover = tiles.find(tile => tile.experiment === 'failover');
+  const failoverPage = 'labs/failover/index.html';
+  const hasFailoverPage = existsSync(join(root, failoverPage));
+  if (requireTiles && hasFailoverPage && !failover) throw new Error(`${failoverPage}: template has no checked tile`);
+  const failoverPrereg = failover?.links.filter(link => /pre-?registration/i.test(link.label) && /pre-?registration/i.test(link.href)) ?? [];
+  if (failover && failoverPrereg.length !== 1) throw new Error(`${failoverPage}: expected one pre-registration link in the checked tile`);
   const embeddedFilms = new Set(progress?.steps.filter(step => step.kind === 'film-ref').map(step => step.film) ?? []);
   const fill = (template, values) => {
     let html = readFileSync(join(root, template), 'utf8');
@@ -263,11 +289,11 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     }
     return html;
   };
-  return {
+  const pages = {
     'labs/index.html': fill('labs/index.html', {
       // Lab 01's tile, then the experiment labs' tiles, Lab 02 then Lab 03 (scripts/lab-tiles.mjs gates them; the build
       // fails on a problem).
-      '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + readTiles(root).map(tile => renderTile(tile)).join(''),
+      '<!--LABS_LIST-->': renderLabsList(lab, dispatches) + tiles.map(tile => renderTile(tile)).join(''),
       // "Where each store fits": the vendored fit map (scripts/lab-fit-map.mjs gates it; the build fails on a problem).
       '<!--LABS_FIT_MAP-->': renderFitMap(readFitMap(root), '../', { questions: readQuestionSet(root) }),
     }),
@@ -289,6 +315,24 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...(story ? { [STORY_PAGE]: fill(STORY_PAGE, storyValues(story)) } : {}),
     ...(proofs ? { [PROOFS_PAGE]: checkedProofs(fill(PROOFS_PAGE, { '<!--LAB_PROOFS-->': renderProofs(dispatches) }), dispatches) } : {}),
     'labs/agent-space/feed.xml': renderFeed(lab, dispatches),
+    // Lab 03 is a continuing project even while it has a plan but no result. Its source links and status come from
+    // the same checked tile as the index, so a later published amendment appears on both pages.
+    ...(failover && hasFailoverPage ? { [failoverPage]: fill(failoverPage, {
+      '<!--FAILOVER_PAGE_TITLE-->': escape(`${failover.label}: ${failover.title}`),
+      '<!--FAILOVER_OG_TITLE-->': escape(`${failover.label}: ${failover.title}`),
+      '<!--FAILOVER_META_DESCRIPTION-->': escape(`${failover.question} ${failover.status}.`),
+      '<!--FAILOVER_OG_DESCRIPTION-->': escape(`${failover.question} ${failover.status}.`),
+      '<!--FAILOVER_LABEL-->': escape(failover.label.toUpperCase()),
+      '<!--FAILOVER_TITLE-->': escape(failover.title),
+      '<!--FAILOVER_QUESTION-->': escape(failover.question),
+      '<!--FAILOVER_STATUS-->': escape(failover.status),
+      '<!--FAILOVER_RESULT_STATE-->': failover.kind === 'results'
+        ? 'A result is published. Read its record and limits before treating it as a finding.'
+        : 'No counted result is published yet. This is a plan, not a finding.',
+      '<!--FAILOVER_HOW-->': escape(failover.how),
+      '<!--FAILOVER_PREREG_LINK-->': `<a href="../../${escape(failoverPrereg[0].href)}">${escape(failoverPrereg[0].label)}</a>.`,
+      '<!--FAILOVER_LINKS-->': failover.links.filter(link => link.href !== failoverPrereg[0].href && link.href !== failoverPage).map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
+    }) } : {}),
     // "How we decide": the decision ledger, when its words ship (scripts/lab-decisions.mjs gates it; the build fails on a problem).
     ...(existsSync(join(root, DECISIONS_FILE)) ? { [DECISIONS_PAGE]: fill(DECISIONS_PAGE, decisionValues(readDecisions(root))) } : {}),
     ...bench.pages,
@@ -298,8 +342,12 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
     ...redBuild.pages,
     ...blind.pages,
     ...talkLeak.pages,
+    ...strangers.pages,
     ...jury.pages,
+    ...sameModel.pages,
   };
+  if (requireTiles) requireRenderedTilePages(tiles, pages);
+  return pages;
 }
 
 /**

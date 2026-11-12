@@ -1,0 +1,25 @@
+{
+ "format": "odin-lab-tile",
+ "version": 1,
+ "kind": "results",
+ "label": "Lab 12",
+ "title": "How many strangers can the space hold?",
+ "question": "Before a public link to the agent space is shared, how many anonymous guests can one space take before it falls behind?",
+ "how": "The capacity sheet's estimate, made on another machine, beside a fresh run of the same load tool on a Mac, on an isolated instance. The two are boxed apart.",
+ "experiment": "strangers",
+ "status": "Estimate and measurement apart · record cited by hash",
+ "record": {
+  "href": "data/labs/strangers/record.json",
+  "pin": "data/labs/strangers/record.sha256"
+ },
+ "links": [
+  {
+   "label": "The estimate, the measurement and the isolation",
+   "href": "labs/strangers/index.html"
+  },
+  {
+   "label": "The record, pinned by its hash",
+   "href": "data/labs/strangers/record.json"
+  }
+ ]
+}

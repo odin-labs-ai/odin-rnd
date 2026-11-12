@@ -17,9 +17,23 @@ Working documents: [company readiness](docs/company-readiness.md), [pilot delive
 
 ## Run locally
 
-Node 22, pnpm 10.11.1 and JDK 21 (set `JAVA_HOME` to that JDK):
+Requires git, Node 22, JDK 21 (set `JAVA_HOME` to that JDK) and pnpm 10.11.1. Clone the repository; a ZIP download will not build, because the build scripts read git metadata. Each command below is on its own line, so the block also pastes into Windows PowerShell 5.1, which has no `&&`.
+
+The block installs pnpm with `npm install --global pnpm@10.11.1`, which is what CI uses. `corepack enable` (Node 22 ships corepack) also provides the pnpm version pinned in `package.json`, but on Windows it writes into the Node install folder, so it needs an elevated shell (Run as administrator); in a normal shell it fails with EPERM.
+
+The clone line turns off `core.autocrlf`. The build checks sha256 pins against the exact committed bytes, and a Windows checkout with CRLF line endings fails those checks; on Linux and macOS the setting is already off. If you cloned before `.gitattributes` was added, run these two commands once to check the files out again:
 
 ```sh
+git rm --cached -r .
+git reset --hard
+```
+
+Then:
+
+```sh
+git -c core.autocrlf=false clone https://github.com/odin-labs-ai/odin-rnd
+cd odin-rnd
+npm install --global pnpm@10.11.1
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm experiment
 node scripts/run-roi-demos.mjs
@@ -30,6 +44,10 @@ pnpm serve
 ```
 
 Open `http://127.0.0.1:4173/odin-rnd/`. The development server mirrors the GitHub Pages project prefix.
+
+CI builds and tests on Linux (ubuntu-latest). A Windows job checks path handling only; macOS is not tested.
+
+`pnpm test` (`node --test scripts/*.test.mjs`) also needs Python 3 on `PATH` as `python3`, and `bash`; several tests call them directly. The test suite needs a POSIX system (Linux, or macOS, which CI does not test): some tests use `#!/bin/sh` stub binaries, `chmod` and `tar`. On Windows, run `pnpm test` inside WSL, or skip it and run the other steps.
 
 The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authored SVG. There is no visitor account, third-party tracker, model API or hosted experiment execution. Engine logic comes from the released `bce-engine@0.3.1` package; this repository does not implement its own conformance engine.
 

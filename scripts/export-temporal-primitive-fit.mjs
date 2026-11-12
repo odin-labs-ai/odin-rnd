@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir,readdir,mkdtemp,copyFile,utimes,chmod,lstat,rm} from 'node:fs/promises';
-import {resolve,join,relative,dirname,basename} from 'node:path';
+import {resolve,join,relative,dirname,basename,sep} from 'node:path';
 import {tmpdir,homedir,hostname} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL,fileURLToPath} from 'node:url';
@@ -61,7 +61,7 @@ export async function exportEvidence({run,reproduction,evaluation,out,prior=[],r
   else if(source.endsWith('.jsonl'))bytes=Buffer.from(original.toString().split('\n').filter(Boolean).map(line=>JSON.stringify(normalize(JSON.parse(line),replacements))).join('\n')+'\n');
   else bytes=json(normalize(JSON.parse(original),replacements));
   assertPrivateFree(bytes.toString(),forbidden);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,bytes);
-  entries.push({path:relative(staging,dest),originalLocalFile:normalize(source,replacements),originalLocalSHA256:sha256(original),exportedSHA256:sha256(bytes),bytes:bytes.length,transformation:exact?'byte-identical':derived?'derived-summary':'normalized',...(sourceProperty?{sourceProperty}:{})});
+  entries.push({path:relative(staging,dest).split(sep).join('/'),originalLocalFile:normalize(source,replacements),originalLocalSHA256:sha256(original),exportedSHA256:sha256(bytes),bytes:bytes.length,transformation:exact?'byte-identical':derived?'derived-summary':'normalized',...(sourceProperty?{sourceProperty}:{})});
  }
  for(const name of [...sourceNames,'frozen-source.json'])await emit(join(sourceRoot,name),join(raw,'sources',name),{exact:true});
  for(const [label,path] of [['main',run],['reproduction',reproduction]]){
