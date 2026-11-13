@@ -87,6 +87,24 @@ test('pngSize reads the size of a whole, decodable PNG and refuses anything else
   assert.throws(() => pngSize(Buffer.concat([SIGNATURE, chunk('IHDR', badFilter.subarray(16, 29)), chunk('IDAT', deflateSync(Buffer.from([9, 0, 0, 0]))), chunk('IEND', Buffer.alloc(0))])), /filter type 9/);
 });
 
+test('a palette PNG needs a usable PLTE that every pixel index names', () => {
+  // 4x2, 8-bit palette; rows use filter 0 (none) and 2 (up) so reconstruction is exercised.
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(4, 0); ihdr.writeUInt32BE(2, 4); ihdr[8] = 8; ihdr[9] = 3;
+  const raw = Buffer.from([0, 0, 1, 1, 0, 2, 0, 0, 0, 2]); // row 2 = row 1 + up: 0,1,1,2
+  const pal = n => chunk('PLTE', Buffer.alloc(n * 3, 7));
+  const build = (...mid) => Buffer.concat([SIGNATURE, chunk('IHDR', ihdr), ...mid, chunk('IEND', Buffer.alloc(0))]);
+  const idat = chunk('IDAT', deflateSync(raw));
+  assert.deepEqual(pngSize(build(pal(3), idat)), { width: 4, height: 2 });
+  assert.throws(() => pngSize(build(idat)), /palette picture without PLTE/);
+  assert.throws(() => pngSize(build(chunk('PLTE', Buffer.alloc(0)), idat)), /PLTE of 0 bytes/);
+  assert.throws(() => pngSize(build(chunk('PLTE', Buffer.alloc(4)), idat)), /PLTE of 4 bytes/);
+  assert.throws(() => pngSize(build(pal(2), idat)), /palette index 2, the PLTE has 2 entries/);
+  assert.throws(() => pngSize(build(pal(3), pal(3), idat)), /more than one PLTE/);
+  assert.throws(() => pngSize(build(idat, pal(3))), /PLTE after IDAT|IDAT chunks are not consecutive/);
+  const grey = Buffer.from(png(8, 1));
+  assert.throws(() => pngSize(Buffer.concat([grey.subarray(0, 33), pal(1), grey.subarray(33)])), /PLTE in a greyscale picture/);
+});
+
 test('a picture holds only with its pinned bytes at 1200x630; one flipped byte is refused', () => {
   const bytes = png(1200, 630);
   const card = { page: 'labs/rogue/index.html', image: `${CARD_DIR}/rogue.png`, sha256: sha256(bytes) };
@@ -138,12 +156,28 @@ test('addOgCard adds og:image, its size and alt text once, and refuses an author
   assert.throws(() => addOgCard(out.replace('Can an agent go rogue?">', 'Something else">'), card, card.page), /og:image:alt is "Odin Labs R&D link card: Lab 05, Something else"/);
 });
 
-test('og: properties are read in single, double or no quotes, and a form the reader cannot parse refuses', () => {
+test('og: properties are read as HTML attributes: any quote form, never a data- look-alike', () => {
   const single = "<!doctype html><html><head><meta property='og:title' content='Lab 07: new lab'><meta property=og:description content='Words.'></head></html>";
   assert.equal(needsCard('labs/new/index.html', single), true);
   assert.deepEqual(cardInputs(single, 'labs/new/index.html'), { title: 'Lab 07: new lab', description: 'Words.' });
-  const odd = '<!doctype html><html><head><meta property=og:title"x content="Lab 07: odd"></head></html>';
-  assert.throws(() => needsCard('labs/odd/index.html', odd), /og:title in labs\/odd\/index\.html is written in a form this check cannot read/);
+  // data-property is not property, data-content is not content.
+  const lookalike = '<!doctype html><html><head><meta data-property="og:title" content="Lab 08: hidden"><meta property="og:title" data-content="Lab 08: decoy" content="Lab 09: real"></head></html>';
+  assert.equal(cardInputs(lookalike.replace('</head>', '<meta property="og:description" content="d"></head>'), 'x').title, 'Lab 09: real');
+  assert.throws(() => needsCard('labs/x/index.html', '<html><head><meta property="og:title" content="a" content="b"></head></html>'), /exactly one content attribute/);
+  assert.throws(() => needsCard('labs/x/index.html', '<html><head><meta property="og:title" property="og:x" content="a"></head></html>'), /more than one property attribute/);
+});
+
+test('an authored og:image cannot hide behind data-content, and an upper-case </HEAD> still takes the card', () => {
+  const card = { page: 'labs/rogue/index.html', image: `${CARD_DIR}/rogue.png`, ...cardInputs(ROGUE) };
+  const ours = 'https://odin-labs-ai.github.io/odin-rnd/assets/og/labs/rogue.png';
+  const sneaky = ROGUE.replace('</head>', `<meta property="og:image" data-content="${ours}" content="https://example.org/foreign.png">`
+    + '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+    + '<meta property="og:image:alt" content="Odin Labs R&amp;D link card: Lab 05, Can an agent go rogue?"></head>');
+  assert.throws(() => addOgCard(sneaky, card, card.page), /already carries og:image https:\/\/example\.org\/foreign\.png/);
+  const upper = ROGUE.replace('</head>', '</HEAD>');
+  const out = addOgCard(upper, card, card.page);
+  assert.match(out, /og:image" content="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/assets\/og\/labs\/rogue\.png">[\s\S]*<\/HEAD>/);
+  assert.equal(addOgCard(out, card, card.page), out);
 });
 
 test('after the card, the site-wide passes add no second og:image and give the large X card', () => {

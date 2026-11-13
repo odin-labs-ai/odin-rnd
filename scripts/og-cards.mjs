@@ -5,8 +5,8 @@
 //
 // The build (addOgCardsToDist, before addOpenGraphToDist in scripts/build.mjs) fails closed when:
 //   - a lab page (labs/<slug>/index.html whose og:title starts "Lab <n>:") or the Labs index has no card;
-//   - a card's picture is missing, its bytes do not match the pinned sha256, or it is not a whole, decodable
-//     1200x630 PNG (every chunk CRC, IHDR, IDAT inflating to exactly the rows the size needs, IEND; pngSize);
+//   - a card's picture is missing, its bytes do not match the pinned sha256, or it fails the structural PNG check
+//     at 1200x630 (every chunk CRC, IHDR, PLTE rules, IDAT inflating to exactly the rows the size needs, IEND; pngSize);
 //   - the page's og:title or og:description no longer match the text the card was drawn from (a stale card);
 //   - a PNG sits in assets/og/labs/ without a card (a foreign picture), or a card names a page that does not exist;
 //   - a carded page already carries an og:image of its own, or carries the card's og:image with a missing or
@@ -50,22 +50,30 @@ function onlyHead(html, label) {
 /** Every regular-expression metacharacter escaped, backslash included, so a property name matches only itself. */
 export const escapeRegExp = text => text.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
 
-/** A meta tag's property value, read with double, single or no quotes; a property spelled in a way this cannot read throws. */
-function metaProperty(head, property, label) {
-  const name = escapeRegExp(property);
-  const found = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty\\s*=\\s*(?:"${name}"|'${name}'|${name}(?=[\\s/>]))[^>]*>`, 'gi'))];
-  if (found.length > 1) throw new Error(`OG cards: duplicate ${property} in ${label}`);
-  if (!found.length) {
-    // Fail closed rather than read "absent": a tag naming this property that the pattern above did not match.
-    const loose = new RegExp(`<meta\\b[^>]*${name}[^>]*>`, 'gi');
-    const unread = [...head.matchAll(loose)].filter(tag => new RegExp(`\\bproperty\\s*=\\s*["']?${name}(?:["'\\s/>])`, 'i').test(tag[0]));
-    if (unread.length) throw new Error(`OG cards: ${property} in ${label} is written in a form this check cannot read`);
-    return undefined;
+/** A tag's attributes as a list of [lower-case name, value], read the way HTML tokenises them (quotes, no quotes, bare). */
+export function tagAttributes(tag) {
+  const inner = tag.replace(/^<[a-zA-Z][^\s/>]*/, '').replace(/\/?>$/, '');
+  const attrs = [];
+  for (const m of inner.matchAll(/([^\s"'=<>\/`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g)) {
+    attrs.push([m[1].toLowerCase(), m[2] ?? m[3] ?? m[4] ?? '']);
   }
-  const tag = found[0][0];
-  const content = tag.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);
-  if (!content) throw new Error(`OG cards: ${property} needs content in ${label}`);
-  return decodeEntities(content[1] ?? content[2] ?? content[3]);
+  return attrs;
+}
+
+/** A meta tag's content for an exact property attribute (not data-property); several or a content-less tag throws. */
+function metaProperty(head, property, label) {
+  const found = [];
+  for (const tag of head.match(/<meta\b[^>]*>/gi) ?? []) {
+    const attrs = tagAttributes(tag);
+    const props = attrs.filter(([name]) => name === 'property');
+    if (props.length > 1) throw new Error(`OG cards: a meta tag in ${label} has more than one property attribute`);
+    if (props.length && decodeEntities(props[0][1]).toLowerCase() === property.toLowerCase()) found.push(attrs);
+  }
+  if (found.length > 1) throw new Error(`OG cards: duplicate ${property} in ${label}`);
+  if (!found.length) return undefined;
+  const contents = found[0].filter(([name]) => name === 'content');
+  if (contents.length !== 1) throw new Error(`OG cards: ${property} in ${label} needs exactly one content attribute`);
+  return decodeEntities(contents[0][1]);
 }
 
 /** The text a card is drawn from: the built page's og:title and og:description, as plain text. */
@@ -125,9 +133,11 @@ const PNG_SAMPLES = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
 
 /**
  * Width and height of a PNG that decodes; throws on anything else. Checks the signature, every chunk's length and
- * CRC, IHDR first with a legal depth/colour type and no interlace, a PLTE for a palette image, one run of IDAT that
- * inflates to exactly height rows of (1 filter byte + the row's pixel bytes) with legal filter types, and IEND last
- * with nothing after it. It proves the bytes are a whole, decodable picture of that size, not what the picture shows.
+ * CRC, IHDR first with a legal depth/colour type and no interlace, at most one PLTE (before IDAT, 1-256 entries,
+ * none in greyscale, required for a palette picture, and every palette index in the pixels names an entry), one run
+ * of IDAT that inflates to exactly height rows of (1 filter byte + the row's pixel bytes) with legal filter types, and
+ * IEND last with nothing after it. Ancillary chunks are skipped, not interpreted. It is a structural check of the PNG
+ * format, not a full decoder, and it says nothing about what the picture shows.
  */
 export function pngSize(bytes, label = 'image') {
   const fail = why => { throw new Error(`OG cards: ${label} is not a PNG (${why})`); };
@@ -155,7 +165,13 @@ export function pngSize(bytes, label = 'image') {
       if (header.compression !== 0 || header.filter !== 0) fail('unknown compression or filter method');
       if (header.interlace !== 0) fail('interlaced pictures are not accepted');
     } else if (type === 'PLTE') {
-      palette = true;
+      if (palette) fail('more than one PLTE');
+      if (idat.length) fail('PLTE after IDAT');
+      if (header.colour === 0 || header.colour === 4) fail('PLTE in a greyscale picture');
+      const entries = length / 3;
+      if (!Number.isInteger(entries) || entries < 1 || entries > 256) fail(`PLTE of ${length} bytes is not 1-256 RGB entries`);
+      if (header.colour === 3 && entries > 2 ** header.depth) fail(`PLTE has ${entries} entries, more than ${2 ** header.depth} for bit depth ${header.depth}`);
+      palette = entries;
     } else if (type === 'IDAT') {
       if (idatDone) fail('IDAT chunks are not consecutive');
       idat.push(data);
@@ -177,6 +193,37 @@ export function pngSize(bytes, label = 'image') {
   const rowBytes = Math.ceil((header.width * header.depth * PNG_SAMPLES[header.colour]) / 8);
   if (raw.length !== header.height * (rowBytes + 1)) fail(`pixel data is ${raw.length} bytes, ${header.height * (rowBytes + 1)} expected`);
   for (let row = 0; row < header.height; row += 1) if (raw[row * (rowBytes + 1)] > 4) fail(`row ${row} has filter type ${raw[row * (rowBytes + 1)]}`);
+  if (header.colour === 3) {
+    // Every palette index must name an entry. Reconstruct the rows (filters 0-4) and read each index.
+    const bpp = Math.max(1, Math.ceil(header.depth / 8));
+    let prior = Buffer.alloc(rowBytes);
+    for (let row = 0; row < header.height; row += 1) {
+      const start = row * (rowBytes + 1);
+      const type = raw[start];
+      const line = Buffer.from(raw.subarray(start + 1, start + 1 + rowBytes));
+      for (let i = 0; i < rowBytes; i += 1) {
+        const left = i >= bpp ? line[i - bpp] : 0;
+        const up = prior[i];
+        const upLeft = i >= bpp ? prior[i - bpp] : 0;
+        let add = 0;
+        if (type === 1) add = left;
+        else if (type === 2) add = up;
+        else if (type === 3) add = (left + up) >> 1;
+        else if (type === 4) {
+          const p = left + up - upLeft;
+          const pa = Math.abs(p - left); const pb = Math.abs(p - up); const pc = Math.abs(p - upLeft);
+          add = pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft;
+        }
+        line[i] = (line[i] + add) & 0xff;
+      }
+      for (let x = 0; x < header.width; x += 1) {
+        const bit = x * header.depth;
+        const index = (line[bit >> 3] >> (8 - header.depth - (bit & 7))) & ((1 << header.depth) - 1);
+        if (index >= palette) fail(`pixel ${x},${row} uses palette index ${index}, the PLTE has ${palette} entries`);
+      }
+      prior = line;
+    }
+  }
   return { width: header.width, height: header.height };
 }
 
@@ -245,7 +292,12 @@ export function addOgCard(html, card, label = 'page') {
     `<meta property="og:image:height" content="${CARD_HEIGHT}">`,
     `<meta property="og:image:alt" content="${escapeAttr(cardAlt(card))}">`,
   ];
-  return html.replace(head, () => head.replace('</head>', () => `${tags.join('\n')}\n</head>`));
+  const close = head.match(/<\/head>$/i);
+  if (!close) throw new Error(`OG cards: ${label} head does not end with </head>`);
+  const carded = `${head.slice(0, -close[0].length)}${tags.join('\n')}\n${close[0]}`;
+  const out = html.replace(head, () => carded);
+  if (metaProperty(onlyHead(out, label), 'og:image', label) !== url) throw new Error(`OG cards: ${label} did not take its card`);
+  return out;
 }
 
 function htmlFiles(directory) {
