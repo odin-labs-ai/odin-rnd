@@ -5,10 +5,14 @@
 //
 // The build (addOgCardsToDist, before addOpenGraphToDist in scripts/build.mjs) fails closed when:
 //   - a lab page (labs/<slug>/index.html whose og:title starts "Lab <n>:") or the Labs index has no card;
-//   - a card's picture is missing, its bytes do not match the pinned sha256, or it is not a 1200x630 PNG;
+//   - a card's picture is missing, its bytes do not match the pinned sha256, or it is not a whole, decodable
+//     1200x630 PNG (every chunk CRC, IHDR, IDAT inflating to exactly the rows the size needs, IEND; pngSize);
 //   - the page's og:title or og:description no longer match the text the card was drawn from (a stale card);
 //   - a PNG sits in assets/og/labs/ without a card (a foreign picture), or a card names a page that does not exist;
-//   - a carded page already carries an og:image of its own.
+//   - a carded page already carries an og:image of its own, or carries the card's og:image with a missing or
+//     different og:image:width/height/alt;
+//   - a page states og:title/og:description in a form the reader cannot parse (it is not silently read as absent).
+// What no check here proves is what a picture shows: the pin binds bytes, a person or agent viewing the card binds content.
 // The fix for any of these is the same loop: `pnpm build` (refuses, naming the pages), `node scripts/og-cards-render.mjs`, `pnpm build`.
 //
 // Pages under labs/ that are not labs (every run, how we decide, the agent space's sub-pages) keep the site card.
@@ -16,6 +20,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { inflateSync } from 'node:zlib';
 
 export const MANIFEST_PATH = 'site/data/og-cards.json';
 export const CARD_DIR = 'assets/og/labs';
@@ -45,13 +50,22 @@ function onlyHead(html, label) {
 /** Every regular-expression metacharacter escaped, backslash included, so a property name matches only itself. */
 export const escapeRegExp = text => text.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
 
+/** A meta tag's property value, read with double, single or no quotes; a property spelled in a way this cannot read throws. */
 function metaProperty(head, property, label) {
-  const found = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty="${escapeRegExp(property)}"[^>]*>`, 'gi'))];
+  const name = escapeRegExp(property);
+  const found = [...head.matchAll(new RegExp(`<meta\\b[^>]*\\bproperty\\s*=\\s*(?:"${name}"|'${name}'|${name}(?=[\\s/>]))[^>]*>`, 'gi'))];
   if (found.length > 1) throw new Error(`OG cards: duplicate ${property} in ${label}`);
-  if (!found.length) return undefined;
-  const content = found[0][0].match(/\bcontent="([^"]*)"/i)?.[1];
-  if (content === undefined) throw new Error(`OG cards: ${property} needs content in ${label}`);
-  return decodeEntities(content);
+  if (!found.length) {
+    // Fail closed rather than read "absent": a tag naming this property that the pattern above did not match.
+    const loose = new RegExp(`<meta\\b[^>]*${name}[^>]*>`, 'gi');
+    const unread = [...head.matchAll(loose)].filter(tag => new RegExp(`\\bproperty\\s*=\\s*["']?${name}(?:["'\\s/>])`, 'i').test(tag[0]));
+    if (unread.length) throw new Error(`OG cards: ${property} in ${label} is written in a form this check cannot read`);
+    return undefined;
+  }
+  const tag = found[0][0];
+  const content = tag.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);
+  if (!content) throw new Error(`OG cards: ${property} needs content in ${label}`);
+  return decodeEntities(content[1] ?? content[2] ?? content[3]);
 }
 
 /** The text a card is drawn from: the built page's og:title and og:description, as plain text. */
@@ -95,12 +109,75 @@ export function cardImagePath(page) {
   return `${CARD_DIR}/${slug}.png`;
 }
 
-/** Width and height from a PNG's IHDR chunk; throws on anything that is not a PNG. */
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+const crc32 = bytes => {
+  let c = 0xffffffff;
+  for (const byte of bytes) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+};
+// Bits per sample allowed per colour type (PNG spec table 11.1), and samples per pixel.
+const PNG_DEPTHS = { 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] };
+const PNG_SAMPLES = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
+
+/**
+ * Width and height of a PNG that decodes; throws on anything else. Checks the signature, every chunk's length and
+ * CRC, IHDR first with a legal depth/colour type and no interlace, a PLTE for a palette image, one run of IDAT that
+ * inflates to exactly height rows of (1 filter byte + the row's pixel bytes) with legal filter types, and IEND last
+ * with nothing after it. It proves the bytes are a whole, decodable picture of that size, not what the picture shows.
+ */
 export function pngSize(bytes, label = 'image') {
-  if (bytes.length < 24 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE) || bytes.toString('latin1', 12, 16) !== 'IHDR') {
-    throw new Error(`OG cards: ${label} is not a PNG`);
+  const fail = why => { throw new Error(`OG cards: ${label} is not a PNG (${why})`); };
+  if (bytes.length < 8 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE)) fail('no PNG signature');
+  let offset = 8;
+  let header;
+  let palette = false;
+  let idatDone = false;
+  let ended = false;
+  const idat = [];
+  while (offset < bytes.length) {
+    if (ended) fail('bytes after IEND');
+    if (offset + 12 > bytes.length) fail('truncated chunk');
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.toString('latin1', offset + 4, offset + 8);
+    if (offset + 12 + length > bytes.length) fail(`truncated ${type} chunk`);
+    const data = bytes.subarray(offset + 8, offset + 8 + length);
+    if (crc32(bytes.subarray(offset + 4, offset + 8 + length)) !== bytes.readUInt32BE(offset + 8 + length)) fail(`bad CRC on ${type}`);
+    if (!header && type !== 'IHDR') fail('IHDR is not the first chunk');
+    if (type === 'IHDR') {
+      if (header || length !== 13) fail('bad IHDR');
+      header = { width: data.readUInt32BE(0), height: data.readUInt32BE(4), depth: data[8], colour: data[9], compression: data[10], filter: data[11], interlace: data[12] };
+      if (!header.width || !header.height) fail('zero size');
+      if (!PNG_DEPTHS[header.colour]?.includes(header.depth)) fail('illegal bit depth or colour type');
+      if (header.compression !== 0 || header.filter !== 0) fail('unknown compression or filter method');
+      if (header.interlace !== 0) fail('interlaced pictures are not accepted');
+    } else if (type === 'PLTE') {
+      palette = true;
+    } else if (type === 'IDAT') {
+      if (idatDone) fail('IDAT chunks are not consecutive');
+      idat.push(data);
+    } else if (type === 'IEND') {
+      if (length !== 0) fail('IEND carries data');
+      ended = true;
+    } else if (!(type.charCodeAt(0) & 0x20)) {
+      fail(`unknown critical chunk ${type}`);
+    }
+    if (idat.length && type !== 'IDAT') idatDone = true;
+    offset += 12 + length;
   }
-  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  if (!header) fail('no IHDR');
+  if (!ended) fail('no IEND');
+  if (!idat.length) fail('no IDAT');
+  if (header.colour === 3 && !palette) fail('palette picture without PLTE');
+  let raw;
+  try { raw = inflateSync(Buffer.concat(idat)); } catch { fail('IDAT does not inflate'); }
+  const rowBytes = Math.ceil((header.width * header.depth * PNG_SAMPLES[header.colour]) / 8);
+  if (raw.length !== header.height * (rowBytes + 1)) fail(`pixel data is ${raw.length} bytes, ${header.height * (rowBytes + 1)} expected`);
+  for (let row = 0; row < header.height; row += 1) if (raw[row * (rowBytes + 1)] > 4) fail(`row ${row} has filter type ${raw[row * (rowBytes + 1)]}`);
+  return { width: header.width, height: header.height };
 }
 
 /** Shape check of the manifest; returns the cards keyed by page. */
@@ -149,9 +226,17 @@ export function addOgCard(html, card, label = 'page') {
   const head = onlyHead(html, label);
   const url = SITE_URL + card.image;
   const existing = metaProperty(head, 'og:image', label);
-  if (existing === url) return html;
+  const companions = { 'og:image:width': String(CARD_WIDTH), 'og:image:height': String(CARD_HEIGHT), 'og:image:alt': cardAlt(card) };
+  if (existing === url) {
+    // Already carded (a second run over the same dist): every companion must be present and exactly what we write.
+    for (const [property, value] of Object.entries(companions)) {
+      const found = metaProperty(head, property, label);
+      if (found !== value) throw new Error(`OG cards: ${label} carries the card's og:image but ${property} is ${found === undefined ? 'missing' : `"${found}"`}, not "${value}"`);
+    }
+    return html;
+  }
   if (existing !== undefined) throw new Error(`OG cards: ${label} already carries og:image ${existing}; a carded page takes its card`);
-  for (const property of ['og:image:width', 'og:image:height', 'og:image:alt']) {
+  for (const property of Object.keys(companions)) {
     if (metaProperty(head, property, label) !== undefined) throw new Error(`OG cards: ${label} carries ${property} without og:image`);
   }
   const tags = [

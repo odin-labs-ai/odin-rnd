@@ -4,17 +4,18 @@
 //
 // The loop: `pnpm build` (refuses, naming the pages whose card is missing or stale; the lab pages are already in dist/
 // by then), `node scripts/og-cards-render.mjs`, `pnpm build`. A card whose text and picture still hold is left as it is, so a re-run
-// changes nothing; `node scripts/og-cards-render.mjs --all` redraws every card.
+// changes nothing; `node scripts/og-cards-render.mjs --all` redraws every card. A .png in site/assets/og/labs/ that no
+// current lab page uses (a lab removed or renamed) is deleted, so the loop also clears the build's "no card pins" refusal.
 //
 // Each card is a 1200x630 page drawn from the built page's og:title and og:description only, with the site's own
 // fonts and logo inlined, so the picture shows exactly the words the page states about itself.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  CARD_HEIGHT, CARD_WIDTH, MANIFEST_PATH, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText, needsCard, readManifest, sha256,
+  CARD_DIR, CARD_HEIGHT, CARD_WIDTH, MANIFEST_PATH, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText, needsCard, readManifest, sha256,
 } from './og-cards.mjs';
 
 const escapeHtml = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -143,4 +144,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   }
   writeFileSync(MANIFEST_PATH, `${JSON.stringify({ format: 'odin-og-cards', version: 1, width: CARD_WIDTH, height: CARD_HEIGHT, cards }, null, 1)}\n`);
   console.log(`pinned ${cards.length} cards in ${MANIFEST_PATH}`);
+  const pinned = new Set(cards.map(card => card.image));
+  const cardDir = join('site', CARD_DIR);
+  for (const name of existsSync(cardDir) ? readdirSync(cardDir).sort() : []) {
+    if (pinned.has(`${CARD_DIR}/${name}`)) continue;
+    if (!name.endsWith('.png')) throw new Error(`og-cards: ${CARD_DIR}/${name} is not a card picture; move it out of the card folder by hand`);
+    unlinkSync(join(cardDir, name));
+    console.log(`removed ${CARD_DIR}/${name}: no lab page uses it`);
+  }
 }

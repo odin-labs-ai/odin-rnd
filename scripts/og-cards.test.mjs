@@ -5,21 +5,38 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { deflateSync } from 'node:zlib';
 import {
   CARD_DIR, MANIFEST_PATH, addOgCard, addOgCardsToDist, cardAlt, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText,
   checkCards, escapeRegExp, needsCard, pngSize, readManifest, sha256,
 } from './og-cards.mjs';
 import { addOpenGraph, addSocialCard } from './site-chrome.mjs';
 
-/** A PNG signature and IHDR chunk of the given size: enough bytes for pngSize, not a viewable picture. */
-function pngHeader(width, height, tail = 'pixels') {
-  const bytes = Buffer.alloc(33);
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(bytes, 0);
-  bytes.writeUInt32BE(13, 8);
-  bytes.write('IHDR', 12, 'latin1');
-  bytes.writeUInt32BE(width, 16);
-  bytes.writeUInt32BE(height, 20);
-  return Buffer.concat([bytes, Buffer.from(tail)]);
+const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+const crc = bytes => { let c = 0xffffffff; for (const b of bytes) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+const chunk = (type, data) => {
+  const head = Buffer.alloc(8); head.writeUInt32BE(data.length, 0); head.write(type, 4, 'latin1');
+  const tail = Buffer.alloc(4); tail.writeUInt32BE(crc(Buffer.concat([head.subarray(4), data])), 0);
+  return Buffer.concat([head, data, tail]);
+};
+const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** A real, decodable 1-bit greyscale PNG of the given size; `seed` varies the pixels so two pictures differ. */
+function png(width, height, seed = 'pixels', { rows = height } = {}) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4); ihdr[8] = 1; ihdr[9] = 0;
+  const rowBytes = Math.ceil(width / 8);
+  const raw = Buffer.alloc(rows * (rowBytes + 1));
+  Buffer.from(seed).copy(raw, 1);
+  return Buffer.concat([SIGNATURE, chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+
+/** The old fixture shape: a signature and an IHDR of the right size, then junk. Not a picture. */
+function headerOnly(width, height) {
+  const bytes = Buffer.alloc(24);
+  SIGNATURE.copy(bytes, 0); bytes.writeUInt32BE(13, 8); bytes.write('IHDR', 12, 'latin1');
+  bytes.writeUInt32BE(width, 16); bytes.writeUInt32BE(height, 20);
+  return Buffer.concat([bytes, Buffer.from('not a viewable picture')]);
 }
 
 const page = (title, description, extra = '') => `<!doctype html><html><head><title>${title}</title>`
@@ -55,22 +72,33 @@ test('escapeRegExp makes every metacharacter literal, backslash included', () =>
   assert.equal(new RegExp(escapeRegExp('og:image.alt')).test('og:imageXalt'), false);
 });
 
-test('pngSize reads the IHDR size and refuses anything else', () => {
-  assert.deepEqual(pngSize(pngHeader(1200, 630)), { width: 1200, height: 630 });
-  assert.throws(() => pngSize(Buffer.from('GIF89a, not a png at all, padded out')), /not a PNG/);
-  assert.throws(() => pngSize(pngHeader(1200, 630).subarray(0, 20)), /not a PNG/);
+test('pngSize reads the size of a whole, decodable PNG and refuses anything else', () => {
+  const good = png(1200, 630);
+  assert.deepEqual(pngSize(good), { width: 1200, height: 630 });
+  assert.throws(() => pngSize(Buffer.from('GIF89a, not a png at all, padded out')), /not a PNG \(no PNG signature\)/);
+  assert.throws(() => pngSize(good.subarray(0, 20)), /not a PNG \(truncated/);
+  assert.throws(() => pngSize(headerOnly(1200, 630)), /not a PNG/);
+  assert.throws(() => pngSize(good.subarray(0, good.length - 12)), /not a PNG \(no IEND\)/);
+  assert.throws(() => pngSize(Buffer.concat([good, Buffer.from('x')])), /not a PNG \(bytes after IEND|truncated chunk\)/);
+  const badCrc = Buffer.from(good); badCrc[40] ^= 0x01;
+  assert.throws(() => pngSize(badCrc), /not a PNG \(bad CRC/);
+  assert.throws(() => pngSize(png(1200, 630, 'short', { rows: 629 })), /not a PNG \(pixel data is/);
+  const badFilter = png(8, 2, '\u0009');
+  assert.throws(() => pngSize(Buffer.concat([SIGNATURE, chunk('IHDR', badFilter.subarray(16, 29)), chunk('IDAT', deflateSync(Buffer.from([9, 0, 0, 0]))), chunk('IEND', Buffer.alloc(0))])), /filter type 9/);
 });
 
 test('a picture holds only with its pinned bytes at 1200x630; one flipped byte is refused', () => {
-  const bytes = pngHeader(1200, 630);
+  const bytes = png(1200, 630);
   const card = { page: 'labs/rogue/index.html', image: `${CARD_DIR}/rogue.png`, sha256: sha256(bytes) };
   assert.deepEqual(checkCardImage(card, bytes), []);
   const flipped = Buffer.from(bytes);
   flipped[flipped.length - 1] ^= 0x01;
   assert.match(checkCardImage(card, flipped).join('\n'), /has sha256 [a-f0-9]{64}, the manifest pins/);
-  const small = pngHeader(600, 315);
+  const small = png(600, 315);
   assert.match(checkCardImage({ ...card, sha256: sha256(small) }, small).join('\n'), /is 600x315, not 1200x630/);
   assert.match(checkCardImage(card, undefined).join('\n'), /is missing/);
+  const fake = headerOnly(1200, 630);
+  assert.match(checkCardImage({ ...card, sha256: sha256(fake) }, fake).join('\n'), /is not a PNG/);
 });
 
 test('a card drawn from older text is stale', () => {
@@ -103,6 +131,19 @@ test('addOgCard adds og:image, its size and alt text once, and refuses an author
   const authored = page('Lab 05: x', 'y', '<meta property="og:image" content="https://example.org/a.png">');
   assert.throws(() => addOgCard(authored, card, card.page), /already carries og:image/);
   assert.throws(() => addOgCard(page('Lab 05: x', 'y', '<meta property="og:image:alt" content="z">'), card, card.page), /og:image:alt without og:image/);
+  // The card's own og:image already present: idempotent only when every companion tag is exactly what we write.
+  const url = '<meta property="og:image" content="https://odin-labs-ai.github.io/odin-rnd/assets/og/labs/rogue.png">';
+  assert.throws(() => addOgCard(ROGUE.replace('</head>', `${url}</head>`), card, card.page), /og:image:width is missing/);
+  assert.throws(() => addOgCard(out.replace('content="630"', 'content="315"'), card, card.page), /og:image:height is "315", not "630"/);
+  assert.throws(() => addOgCard(out.replace('Can an agent go rogue?">', 'Something else">'), card, card.page), /og:image:alt is "Odin Labs R&D link card: Lab 05, Something else"/);
+});
+
+test('og: properties are read in single, double or no quotes, and a form the reader cannot parse refuses', () => {
+  const single = "<!doctype html><html><head><meta property='og:title' content='Lab 07: new lab'><meta property=og:description content='Words.'></head></html>";
+  assert.equal(needsCard('labs/new/index.html', single), true);
+  assert.deepEqual(cardInputs(single, 'labs/new/index.html'), { title: 'Lab 07: new lab', description: 'Words.' });
+  const odd = '<!doctype html><html><head><meta property=og:title"x content="Lab 07: odd"></head></html>';
+  assert.throws(() => needsCard('labs/odd/index.html', odd), /og:title in labs\/odd\/index\.html is written in a form this check cannot read/);
 });
 
 test('after the card, the site-wide passes add no second og:image and give the large X card', () => {
@@ -122,8 +163,8 @@ test('the build step checks a whole dist and fails closed with every problem', (
     write('labs/index.html', labsIndex);
     write('labs/rogue/index.html', ROGUE);
     write('labs/runs/index.html', page('Every lab run — Odin Labs R&amp;D', 'Every run.'));
-    const rogue = pngHeader(1200, 630, 'rogue');
-    const index = pngHeader(1200, 630, 'index');
+    const rogue = png(1200, 630, 'rogue');
+    const index = png(1200, 630, 'index');
     write(`${CARD_DIR}/rogue.png`, rogue);
     write(`${CARD_DIR}/index.png`, index);
     const entry = (pagePath, html, bytes) => ({ page: pagePath, image: cardImagePath(pagePath), sha256: sha256(bytes), ...cardInputs(html) });
@@ -152,7 +193,7 @@ test('the build step checks a whole dist and fails closed with every problem', (
   }
 });
 
-test('every committed card picture matches its pin and is a 1200x630 PNG', () => {
+test('every committed card picture matches its pin and is a whole, decodable 1200x630 PNG', () => {
   const cards = readManifest(JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')));
   assert.ok(cards.has('labs/index.html'), 'the Labs index has a card');
   assert.ok(cards.size >= 2, 'lab pages have cards');
