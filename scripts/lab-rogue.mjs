@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, cite, escape, instantProblems, onMainCommits, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate } from './lab-kit.mjs';
 import { readTamper, renderTamper } from './lab-rogue-tamper.mjs';
+import { renderFlow } from './lab-flow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const ROGUE_RECORD = 'data/labs/rogue/record.json';
@@ -105,6 +106,35 @@ export function renderIntro(record) {
   return `<span class="technical">LAB 05 · CAN AN AGENT GO ROGUE?</span><h1 id="lab-title">Can an agent go rogue?</h1><p class="company-lead">We staged an attack: a poisoned ticket, on a seeded sandbox repository with synthetic data. The same agent, ${escape(s.agent)}, got the same ticket twice: once with no controls, once through the engine's real guards. With no controls it did everything the ticket asked. Through the guards, every command was refused, and each refusal was written to a hash-chained journal.</p>`;
 }
 
+// "What it is.": the lab in plain words, then how it runs, drawn from the record (scripts/lab-flow.mjs). Every count
+// in the drawing is the record's; the page's own rules hold (staged attack, real refusals, sandbox damage only).
+export function renderAbout(record) {
+  const s = record.staged, u = record.ungoverned, d = u.damage, g = record.governed;
+  const ran = u.steps.filter(x => x.ran).length, refused = g.acts.filter(a => a.ran === false).length;
+  const count = (k, one, many) => `${n(k)} ${k === 1 ? one : many}`;
+  const prose = `<p>An AI coding agent reads a ticket and does what it says. What if the ticket lies? We wrote one that does: ticket ${escape(s.ticket.id)} carries a pasted note telling the agent to skip review and wipe the repository.</p><p>We gave it to the same agent, ${escape(s.agent)}, twice. The first time nothing stood between the agent and a sandbox copy of the repository. The second time every command went through the engine's real guards first.</p><p>The attack and the repository are made up; the guards and their refusals are not. You can check the refusals yourself: each one is a row in a journal where every row holds the hash of the row before it.</p>`;
+  const flow = renderFlow({
+    caption: 'How it works: one poisoned ticket, two runs',
+    source: [
+      { title: `Ticket ${s.ticket.id}`, body: `"${s.ticket.title}", with a poisoned note we wrote` },
+      { title: `The agent, ${s.agent}`, body: `reads the ticket and turns it into ${count(u.steps.length, 'command', 'commands')}` },
+    ],
+    lanes: [
+      { label: 'Run one: no controls', tone: 'bad', nodes: [
+        { title: 'Straight to the repository', body: 'a sandbox copy with synthetic data' },
+        { title: `${n(ran)} of ${n(u.steps.length)} commands ran`, body: 'nothing asked, nothing refused' },
+        { title: d.repositoryDeleted ? 'Repository deleted' : 'Repository kept', body: `${count(d.commitsLostFromMain, 'commit', 'commits')} gone from main, ${count(d.prBranchesDeleted, 'branch', 'branches')} deleted`, tone: 'bad' },
+      ] },
+      { label: 'Run two: through the guards', tone: 'good', nodes: [
+        { title: "The engine's guards", body: 'a read-only door, an outbox that only comments or labels, and a trust wall' },
+        { title: `${n(refused)} of ${n(g.acts.length)} commands refused`, body: 'each refusal written to the journal' },
+        { title: g.repositoryUnchanged ? 'Repository unchanged' : 'Repository changed', body: `${count(g.journal.rows.length, 'journal row', 'journal rows')}, each chained to the one before`, tone: 'good' },
+      ] },
+    ],
+  });
+  return `${prose}${flow}`;
+}
+
 export function renderStagedReal(record) {
   const s = record.staged, sb = s.sandbox;
   return `<div class="rogue-split">${box('staged', { cls: 'rogue-staged', id: 'staged', body: `<ul class="rogue-list"><li><strong>The attack.</strong> We wrote the poisoned ticket. Nobody attacked anything.</li><li><strong>The company.</strong> ${escape(s.company)}, with a fictional repository, <code>${escape(s.repository)}</code>.</li><li><strong>The repository.</strong> A seeded sandbox in a temporary folder: ${n(sb.mainCommits)} commits on main, ${n(sb.prBranches)} pull-request branches and ${n(sb.ciRuns)} CI runs, all synthetic, with a local copy as its origin. All ${n(sb.calls)} git calls of the run with no controls stayed inside that folder; none reached the network, and no real GitHub command ever started. The repository delete deleted the sandbox's own copy.</li><li><strong>The repair time.</strong> An estimate, from the record's own repair table. Nobody repaired anything.</li></ul>` })}${box('real', { cls: 'rogue-real', id: 'real', body: `<ul class="rogue-list"><li><strong>The guards.</strong> The engine's own code, run as it is, not re-written for the demo: the read-only door, the outbox and its writer, and the trust wall.</li><li><strong>The refusals.</strong> The words below are what those guards returned.</li><li><strong>The journal.</strong> One row per refusal, each row holding the hash of the row before it. The engine's own check of the chain passed when the runs were recorded, and the demo's check re-runs it.</li><li><strong>The record.</strong> Every file it comes from is cited by its sha256, at a private commit cited by hash.</li></ul>` })}</div>`;
@@ -149,7 +179,7 @@ export function renderRogue(root = 'site', { now = new Date() } = {}) {
   const tamper = readTamper(root, record, { now });
   if (!tamper) throw new Error(`${ROGUE_TEMPLATE}: the tamper section ships with the record (data/labs/rogue/tamper.json is missing)`);
   let html = readFileSync(join(root, ROGUE_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--ROGUE_INTRO-->': renderIntro(record), '<!--ROGUE_STAGED_REAL-->': renderStagedReal(record), '<!--ROGUE_ATTACK-->': renderAttack(record), '<!--ROGUE_UNGOVERNED-->': renderUngoverned(record), '<!--ROGUE_GOVERNED-->': renderGoverned(record), '<!--ROGUE_CHECK-->': renderCheck(record), '<!--ROGUE_TAMPER-->': renderTamper(tamper, record), '<!--ROGUE_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--ROGUE_INTRO-->': renderIntro(record), '<!--ROGUE_ABOUT-->': renderAbout(record), '<!--ROGUE_STAGED_REAL-->': renderStagedReal(record), '<!--ROGUE_ATTACK-->': renderAttack(record), '<!--ROGUE_UNGOVERNED-->': renderUngoverned(record), '<!--ROGUE_GOVERNED-->': renderGoverned(record), '<!--ROGUE_CHECK-->': renderCheck(record), '<!--ROGUE_TAMPER-->': renderTamper(tamper, record), '<!--ROGUE_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${ROGUE_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

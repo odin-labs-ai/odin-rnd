@@ -64,7 +64,8 @@ test('both lab-bar blueprints grade the real tree as a pass, over a non-empty su
 });
 
 test('a results-lab builder without the kit, or reaching past it to the publisher screen, is refused', () => {
-  const dir = copyOf([...BUILDERS, 'scripts/lab-kit.mjs']);
+  // lab-flow.mjs: the How it works diagram lab-rogue.mjs imports (it imports the kit too, so it is no way round it).
+  const dir = copyOf([...BUILDERS, 'scripts/lab-kit.mjs', 'scripts/lab-flow.mjs']);
   try {
     assert.equal(grade(dir, KIT).verdict, 'pass');
     for (const file of BUILDERS) {

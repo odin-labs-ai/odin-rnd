@@ -192,3 +192,26 @@
 .jury-table td,.jury-table th{text-align:left}
 .jury-n{font-size:13px;color:var(--steel)}
 .jury-median th,.jury-median td{font-weight:600}
+
+/* "How it works" diagrams (scripts/lab-flow.mjs): lanes of boxes, read left to right, stacked on a narrow screen. */
+.lab-flow{margin:24px 0 0;padding:22px;border:1px solid var(--rule);border-radius:12px}
+.lab-flow figcaption{color:var(--steel);letter-spacing:.06em;margin-bottom:16px}
+.lab-flow-row{display:flex;flex-wrap:wrap;align-items:stretch;gap:28px;margin:0;padding:0;list-style:none}
+.lab-flow-node{position:relative;flex:1 1 170px;min-width:150px;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;line-height:1.45}
+.lab-flow-node strong{display:block;font-size:15px}
+.lab-flow-node span{display:block;margin-top:4px;font-size:13px;color:var(--steel)}
+.lab-flow-node+.lab-flow-node::before{content:"\2192";position:absolute;left:-22px;top:50%;transform:translateY(-50%);color:var(--steel);font-size:16px}
+.lab-flow-source{margin-bottom:20px}
+.lab-flow-lanes{display:grid;gap:18px}
+.lab-flow-lane{padding:14px 14px 16px;border-left:3px solid var(--rule);border-radius:4px}
+.lab-flow-lane-bad{border-left-color:var(--orange,var(--brand))}
+.lab-flow-lane-good{border-left-color:var(--cyan,var(--steel))}
+.lab-flow-label{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--steel)}
+.lab-flow-bad{border-color:var(--orange,var(--brand));border-style:dashed}
+.lab-flow-good{border-color:var(--cyan,var(--steel))}
+@media (max-width:640px){
+  .lab-flow{padding:16px}
+  .lab-flow-row{flex-direction:column;gap:22px}
+  .lab-flow-node{flex:none;min-width:0}
+  .lab-flow-node+.lab-flow-node::before{content:"\2193";left:50%;top:-20px;transform:translateX(-50%)}
+}
