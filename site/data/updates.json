@@ -8,7 +8,7 @@
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",
       "kind": "Results",
-      "text": "Measured on one host: MongoDB fits four scenarios on write outage and two on acknowledgement gap; PostgreSQL fits two by the feed gate. No acknowledged writes lost; no overall winner. Strict-ack and disturbance uncertainties remain.",
+      "text": "Single host: MongoDB fits four write-outage and two acknowledgement-gap scenarios; PostgreSQL two by feed gate. No acknowledged writes lost; no overall winner. Strict-ack and disturbance uncertainties remain.",
       "href": "journal/failover-results.html",
       "source": "data/failover/results.json",
       "date": "2026-11-11"
