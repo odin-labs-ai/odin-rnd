@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { addToc, mainHeadings, mainWords, slugify, tocCandidate, TOC_MIN_HEADINGS, TOC_MIN_WORDS } from './site-toc.mjs';
+import { addToc, mainHeadings, mainWords, meetsToc, slugify, tocCandidate, TOC_MIN_HEADINGS, TOC_MIN_WORDS } from './site-toc.mjs';
 import { NUMBER_PROVENANCE_DIRS } from './site-chrome.mjs';
 import { builtCopy } from './test-build.mjs';
 
@@ -55,14 +55,25 @@ test('the criteria: more than TOC_MIN_WORDS words of main text and at least TOC_
 test('the publication boundary note the build adds before </main> after this pass is chrome: it never counts toward the words', () => {
   // scripts/build.mjs adds this note to every page after addTocs; the words below are its own, as built.
   const boundary = '<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="../methods/#publication-standard">How to read these results</a>.</p></aside>';
-  const rel = 'labs/x/index.html';
-  const page = lab({ count: 5, total: 1990 });
+  const rel = 'journal/a-note.html';
+  const page = note({ total: 1990 });
   const words = mainWords(page, rel);
   assert.ok(words <= 2000, `the fixture is at most 2000 words without the note (${words})`);
   const withNote = page.replace('</main>', `${boundary}</main>`);
   assert.equal(mainWords(withNote, rel), words, 'the note adds no words');
   assert.ok(words + 20 > 2000, 'the note alone would have carried the fixture past the line (odin-rnd #216)');
   assert.equal(addToc(withNote, rel), withNote, 'so the finished page and the build pass agree: no table of contents');
+});
+
+test('a lab page gets one whatever its length: every lab page is a detail page in one flow, as Lab 01 is', () => {
+  const rel = 'labs/x/index.html';
+  const short = lab({ count: 4, total: 120 });
+  assert.ok(mainWords(short, rel) < 2000, 'a short lab page');
+  assert.match(addToc(short, rel), /<nav class="toc toc-lab company-width" aria-label="On this page">/, 'short, four headings: added');
+  const three = lab({ count: 3, total: 6000 });
+  assert.equal(addToc(three, rel), three, 'three headings: unchanged, on a lab page too');
+  // A field note keeps the word minimum.
+  assert.ok(!meetsToc(note({ total: 1980 }), 'journal/a-note.html'));
 });
 
 test('only field notes and lab pages, never a number-provenance page, a section index or any other page', () => {
@@ -174,17 +185,12 @@ test('as built: the long notes and Lab 01 have one, short pages and number-prove
   }
 });
 
-// Lab pages that gain a row with every records/ data pull request (the bot's daily "Lab NN runs on org machines"): their
-// main text only grows, so one of them can cross the criteria on any data day. They are held to the criteria (the second
-// assertion below), never to the fixed list, so a data pull request is never red for a page that rightly gained one.
-const RECORD_FED_LAB_PAGES = new Set(['labs/review/index.html', 'labs/rogue/index.html', 'labs/red-build/index.html', 'labs/measured-blind/index.html']);
-
-test('as built: exactly the 10 fixed pages that meet the criteria have a table of contents, record-fed lab pages have one exactly when they meet them, and every page that meets them has one', () => {
+test('as built: exactly the 8 long notes and every lab page with four sections have a table of contents, and every page that meets the criteria has one', () => {
   const dist = join(builtCopy(), 'dist');
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
   const pages = new Map(walk(dist).map(file => [relative(dist, file).split('\\').join('/'), readFileSync(file, 'utf8')]));
   const withToc = [...pages].filter(([, html]) => html.includes('<nav class="toc')).map(([rel]) => rel).sort();
-  assert.deepEqual(withToc.filter(rel => !RECORD_FED_LAB_PAGES.has(rel)), [
+  assert.deepEqual(withToc.filter(rel => !rel.startsWith('labs/')), [
     'journal/composable-harness-results.html',
     'journal/jev-as-a-fast-gate.html',
     'journal/latent-handoff-pre-registration.html',
@@ -193,13 +199,13 @@ test('as built: exactly the 10 fixed pages that meet the criteria have a table o
     'journal/nina-reviews-the-change.html',
     'journal/where-a-model-reviewer-earns-its-keep.html',
     'journal/which-rules-need-a-model.html',
-    'labs/agent-space/index.html',
-    'labs/brain-bench/index.html',
   ]);
-  // This record-fed page has crossed already, and a record-fed page only grows.
-  assert.ok(withToc.includes('labs/rogue/index.html'), 'labs/rogue/index.html keeps its table of contents');
+  // Every lab detail page the Labs index opens has the same nav as Lab 01 (2026-11-13: eight of twelve had none).
+  for (const lab of ['agent-space', 'brain-bench', 'failover', 'rogue', 'review', 'link-safety', 'red-build', 'talk-leak', 'same-model-harness', 'strangers', 'measured-blind', 'ai-jury']) {
+    assert.ok(withToc.includes(`labs/${lab}/index.html`), `labs/${lab}/index.html has one`);
+  }
   // The criteria, measured again on every built page (the table of contents is left out of both counts).
-  const meets = [...pages].filter(([rel, html]) => tocCandidate(rel) && mainHeadings(html, rel).length >= TOC_MIN_HEADINGS && mainWords(html, rel) > TOC_MIN_WORDS).map(([rel]) => rel).sort();
+  const meets = [...pages].filter(([rel, html]) => meetsToc(html.replace(/<nav class="toc[\s\S]*?<\/nav>/, ''), rel)).map(([rel]) => rel).sort();
   assert.deepEqual(meets, withToc, 'one exactly where the criteria hold');
 });
 

@@ -3,7 +3,10 @@
 // or reach their sections. This pass adds, to the built page only, a table of contents listing the page's <h2>s:
 //   - on a field note (journal/<slug>.html) or a lab page (labs/<slug>/index.html), as scripts/site-chrome.mjs pageClass
 //     names them, never on a number-provenance page (pageClass names none there, so no digit is ever added to one);
-//   - only when the page's main text runs past TOC_MIN_WORDS words and it has at least TOC_MIN_HEADINGS such headings.
+//   - only when it has at least TOC_MIN_HEADINGS such headings, and, on a field note, its main text runs past
+//     TOC_MIN_WORDS words. A lab page needs no word count: every lab page is a detail page in one flow, as
+//     /labs/agent-space/ is, and its "On this page" nav must not come and go as daily record rows grow it past the line
+//     or a short lab has fewer words (2026-11-13: four of twelve lab pages had the nav, eight did not).
 //     The main text leaves out the site's own chrome inside <main>: the breadcrumbs, this table of contents and the
 //     publication boundary note that scripts/build.mjs puts before </main> on every page AFTER this pass. Counting that
 //     note would let a page just under the line at build time meet the criteria on the finished page without a table
@@ -25,6 +28,8 @@ import { SECTION_INDEX_PAGES, escapeHtml, fragmentText, pageClass } from './site
 
 export const TOC_MIN_WORDS = 2000;
 export const TOC_MIN_HEADINGS = 4;
+/** Lab pages: no word minimum (see the header). */
+export const TOC_LAB_MIN_WORDS = 0;
 export const TOC_LABEL = 'On this page';
 const TOC_OPEN = '<nav class="toc';
 
@@ -105,6 +110,13 @@ export function tocCandidate(rel) {
   return kind === 'note' || kind === 'lab';
 }
 
+/** Whether the page at `rel` meets the criteria (before any table of contents is added). */
+export function meetsToc(html, rel, { minWords = TOC_MIN_WORDS, minHeadings = TOC_MIN_HEADINGS } = {}) {
+  if (!tocCandidate(rel)) return false;
+  const words = pageClass(rel) === 'lab' ? TOC_LAB_MIN_WORDS : minWords;
+  return mainHeadings(html, rel).length >= minHeadings && (words <= 0 || mainWords(html, rel) > words);
+}
+
 /** Where the table of contents goes: the offset right after the page's own header. Throws when there is none. */
 function insertionPoint(html, kind, label) {
   if (kind === 'note') {
@@ -132,8 +144,8 @@ export function tocHtml(entries, kind) {
  */
 export function addToc(html, rel, { minWords = TOC_MIN_WORDS, minHeadings = TOC_MIN_HEADINGS } = {}) {
   if (!tocCandidate(rel) || html.includes(TOC_OPEN)) return html;
+  if (!meetsToc(html, rel, { minWords, minHeadings })) return html;
   const headings = mainHeadings(html, rel);
-  if (headings.length < minHeadings || mainWords(html, rel) <= minWords) return html;
   // Ids already on the page, read as scripts/check.mjs reads them (any id="…" anywhere), so a new one never repeats one.
   const taken = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
   const entries = headings.map(h => {
