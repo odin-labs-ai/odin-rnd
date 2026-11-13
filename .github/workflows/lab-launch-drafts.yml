@@ -1,0 +1,67 @@
+# Launch drafts for every lab that landed or changed in the last week: LinkedIn, X and Discussions drafts quoting only
+# the lab page's own sentences, plus the page's share card, in a dated folder (scripts/lab-launch-drafts.mjs). Runs on
+# GitHub-hosted runners under the org's GitHub identity, never on a laptop. It posts nothing: the drafts are uploaded as
+# a workflow artifact for the founder to read, edit and post by hand. Read-only: no secret, and the token holds only
+# contents: read. upload-artifact does not use that token (it writes through the runner's own artifact service), as
+# broker-probe.yml already shows in this repository: contents: read, and its runs carry their uploaded artifact.
+#
+# The window is the seven days before the run, matching the weekly schedule. A manual run can name labs instead
+# (comma-separated catalogue slugs) or start the window on another date.
+name: lab-launch-drafts
+
+on:
+  schedule:
+    # Monday 07:00 UTC, after the Monday publish run (06:17) has put any new lab page live.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      labs:
+        description: 'Comma-separated lab slugs to draft (e.g. same-model-harness,strangers); empty = labs changed in the window'
+        required: false
+        default: ''
+      since:
+        description: 'First UTC day of the window (YYYY-MM-DD); empty = seven days ago'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab-launch-drafts
+  cancel-in-progress: false
+
+jobs:
+  drafts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          # The whole history, so git log can say which lab pages changed in the window.
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Draft the labs (reads each lab's live page; sends nothing)
+        id: draft
+        env:
+          LABS: ${{ inputs.labs }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          set -euo pipefail
+          today="$(date -u +%F)"
+          if [ -n "$LABS" ]; then
+            node scripts/lab-launch-drafts.mjs --out launch-drafts --date "$today" --labs "$LABS"
+          else
+            node scripts/lab-launch-drafts.mjs --out launch-drafts --date "$today" --since "${SINCE:-$(date -u -d '7 days ago' +%F)}"
+          fi
+          cat "launch-drafts/$today/INDEX.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "date=$today" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lab-launch-drafts-${{ steps.draft.outputs.date }}
+          path: launch-drafts/
+          retention-days: 90
+          if-no-files-found: error
