@@ -4,6 +4,19 @@
 
 A public workshop for Odin's research: open-source tools, reproducible experiments and field notes that connect engineering work to its meaning. The factory drawing is a conceptual assembly; its stations lead into real projects and evidence.
 
+## Odin Labs R&D is open
+
+Twelve labs and 21 experiments testing AI models, agent tools and vendors. Pre-registered experiments state their question before counted runs; exploratory studies are labelled separately. Results are published whatever they show, and a refuted claim stays refuted.
+
+- Site: https://odin-labs-ai.github.io/odin-rnd/
+- Labs: https://odin-labs-ai.github.io/odin-rnd/labs/
+- All experiments: https://odin-labs-ai.github.io/odin-rnd/experiments/
+- Newest result: [Lab 03, failover: kill the database mid-session, does anyone notice?](https://odin-labs-ai.github.io/odin-rnd/labs/failover/) ([EXP 021 results](https://odin-labs-ai.github.io/odin-rnd/journal/failover-results.html))
+- Method: https://odin-labs-ai.github.io/odin-rnd/methods/
+- Every lab run, with its commit and record hash: https://odin-labs-ai.github.io/odin-rnd/labs/runs/
+- Launch announcement and discussion: https://github.com/odin-labs-ai/odin-rnd/discussions/227
+- Propose an experiment: https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml
+
 ## Explore
 
 - [Factory floor and blueprint view](https://odin-labs-ai.github.io/odin-rnd/)
