@@ -14,9 +14,14 @@ const box = (type, body = Buffer.alloc(0)) => { const head = Buffer.alloc(8); he
 const u32 = n => { const b = Buffer.alloc(4); b.writeUInt32BE(n); return b; };
 const full = (type, body) => box(type, Buffer.concat([Buffer.alloc(4), body]));
 /** One track: its handler, its first sample entry and, for avc1, the avcC's profile and level; `seconds` at timescale 1000. */
-function trak({ handler = 'vide', codec = 'avc1', profile = 100, level = 40, seconds = 4 } = {}) {
+const desc = (tag, body) => Buffer.concat([Buffer.from([tag, body.length]), body]);
+/** An esds naming `oti` (0x40 MPEG-4 audio) and audio object type `aot` (2 AAC LC). */
+const esds = (oti = 0x40, aot = 2) => full('esds', desc(0x03, Buffer.concat([Buffer.from([0, 1, 0]),
+  desc(0x04, Buffer.concat([Buffer.from([oti, 0x15]), Buffer.alloc(11), desc(0x05, Buffer.from([(aot << 3) | 1, 0x10]))])), desc(0x06, Buffer.from([2]))])));
+function trak({ handler = 'vide', codec = 'avc1', profile = 100, level = 40, seconds = 4, oti = 0x40, aot = 2, withEsds = true } = {}) {
   const avcC = box('avcC', Buffer.from([1, profile, 0, level]));
-  const entry = codec === 'avc1' ? box('avc1', Buffer.concat([Buffer.alloc(78), avcC])) : box(codec, Buffer.alloc(28));
+  const entry = codec === 'avc1' ? box('avc1', Buffer.concat([Buffer.alloc(78), avcC]))
+    : codec === 'mp4a' ? box('mp4a', Buffer.concat([Buffer.alloc(28), withEsds ? esds(oti, aot) : Buffer.alloc(0)])) : box(codec, Buffer.alloc(28));
   const stsd = full('stsd', Buffer.concat([u32(1), entry]));
   const hdlr = full('hdlr', Buffer.concat([Buffer.alloc(4), Buffer.from(handler, 'latin1'), Buffer.alloc(12)]));
   const mdhd = full('mdhd', Buffer.concat([u32(0), u32(0), u32(1000), u32(Math.round(seconds * 1000)), Buffer.alloc(4)]));
@@ -119,7 +124,7 @@ test('a page gets the MP4 source right after the WebM one, with the same relativ
 test('a WebM with no copy is reported, and a non-WebM source is left alone', () => {
   const byWebm = new Map();
   const r = pairPage('<source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"><source srcset="d.webp" type="image/webp">', 'x/index.html', byWebm);
-  assert.deepEqual(r.unpaired, ['x/index.html: a/b.webm']);
+  assert.deepEqual(r.unpaired, ['x/index.html: <source> src=a/b.webm']);
   assert.equal(r.html, '<source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"><source srcset="d.webp" type="image/webp">');
 });
 
@@ -132,7 +137,7 @@ test('the dist pass fails closed on an unpaired WebM and on a copy no page plays
     writeFileSync(join(dist, 'index.html'), '<p>no film</p>');
     assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /has an MP4 copy but no page plays it/);
     writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"><source src="assets/other.webm" type="video/webm"></video>');
-    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /index\.html: assets\/other\.webm plays a WebM with no MP4 copy/);
+    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /index\.html: <source> src=assets\/other\.webm plays a WebM with no MP4 copy/);
     writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
     assert.deepEqual(addFilmFallbacks({ distDir: dist, root }), { pages: 1, films: 1 });
     assert.match(readFileSync(join(dist, 'index.html'), 'utf8'), /a-film\.webm" type="video\/webm"><source src="assets\/labs\/agent-space\/films\/a-film\.mp4" type="video\/mp4">/);
@@ -142,7 +147,7 @@ test('the dist pass fails closed on an unpaired WebM and on a copy no page plays
 test('a copy must be one H.264 video track a browser decodes, with sound exactly when recorded, of the recorded length', () => {
   const entry = { seconds: 4, audio: false };
   assert.deepEqual(trackProblems(progressive(), entry), []);
-  assert.deepEqual(mp4Facts(progressive()).tracks, [{ handler: 'vide', codec: 'avc1', profile: 100, level: 40, seconds: 4 }]);
+  assert.deepEqual(mp4Facts(progressive()).tracks, [{ handler: 'vide', codec: 'avc1', profile: 100, level: 40, seconds: 4, objectType: null, audioObjectType: null }]);
   const refused = (tracks, e, pattern) => assert.ok(trackProblems(progressive(1, tracks), { ...entry, ...e }).some(p => pattern.test(p)), String(pattern));
   refused([trak({ codec: 'hvc1' })], {}, /is hvc1, not H\.264/);
   refused([trak({ codec: 'av01' })], {}, /is av01, not H\.264/);
@@ -156,6 +161,10 @@ test('a copy must be one H.264 video track a browser decodes, with sound exactly
   refused([trak(), trak({ handler: 'soun', codec: 'Opus' })], { audio: true }, /\(Opus\), not one AAC/);
   refused([trak(), trak({ handler: 'text', codec: 'tx3g' })], {}, /1 other tracks/);
   assert.deepEqual(trackProblems(progressive(1, [trak(), trak({ handler: 'soun', codec: 'mp4a' })]), { ...entry, audio: true }), []);
+  refused([trak(), trak({ handler: 'soun', codec: 'mp4a', oti: 0x6b })], { audio: true }, /not AAC LC \(object type 107/);
+  refused([trak(), trak({ handler: 'soun', codec: 'mp4a', aot: 5 })], { audio: true }, /audio object type 5/);
+  refused([trak(), trak({ handler: 'soun', codec: 'mp4a', withEsds: false })], { audio: true }, /not AAC LC \(object type unreadable/);
+  refused([trak(), trak({ handler: 'soun', codec: 'mp4a', seconds: 300 })], { audio: true }, /sound track is 300\.00 s/);
   const { root, record } = fixture({ mp4: progressive(1, [trak({ codec: 'hvc1' })]) });
   try { assert.ok(fallbacksProblems(record, FALLBACKS_FILE, root).some(p => /not H\.264/.test(p))); } finally { rmSync(root, { recursive: true, force: true }); }
 });
@@ -164,7 +173,8 @@ test('every committed copy is H.264 High at level 4.0 or below, with sound only 
   for (const entry of readFallbacks('site').fallbacks) {
     const [video, ...rest] = mp4Facts(readFileSync(join('site', entry.mp4))).tracks;
     assert.equal(video.codec, 'avc1', entry.mp4);
-    assert.ok(video.level <= 40, entry.mp4);
+    assert.equal(video.profile, 100, `${entry.mp4} is High profile`);
+    assert.equal(video.level, 40, `${entry.mp4} is level 4.0`);
     assert.deepEqual(rest.map(t => t.codec), entry.audio ? ['mp4a'] : [], entry.mp4);
   }
 });
@@ -173,14 +183,82 @@ test('every committed copy is H.264 High at level 4.0 or below, with sound only 
 // WebM has sound exactly when the copy does. The build cannot run ffprobe; this is the check anyone can repeat.
 let ffprobe = true;
 try { execFileSync('ffprobe', ['-version'], { stdio: 'ignore' }); } catch { ffprobe = false; }
-test('each copy is as long as its WebM and has sound exactly when the WebM does (ffprobe)', { skip: !ffprobe && 'ffprobe is not installed' }, () => {
+test('each copy ends within half a second of its WebM and has sound exactly when the WebM does (ffprobe)', { skip: !ffprobe && 'ffprobe is not installed' }, () => {
   for (const entry of readFallbacks('site').fallbacks) {
     const webm = join('site', entry.webm);
-    const times = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time', '-of', 'csv=p=0', webm], { encoding: 'utf8' })
-      .split('\n').map(line => parseFloat(line)).filter(Number.isFinite);
-    const last = Math.max(...times);
-    assert.ok(Math.abs(last - entry.seconds) < 1.5, `${entry.webm}: its last frame is at ${last} s, the copy is ${entry.seconds} s`);
+    const lastPacket = file => Math.max(...execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time', '-of', 'csv=p=0', file], { encoding: 'utf8' })
+      .split('\n').map(line => parseFloat(line)).filter(Number.isFinite));
+    const last = lastPacket(webm), copy = lastPacket(join('site', entry.mp4));
+    assert.ok(Math.abs(last - entry.seconds) < 1.5, `${entry.webm}: its last frame is at ${last} s, the record says ${entry.seconds} s`);
+    // The copy's own packets, not its header: its last frame is within half a second of the WebM's.
+    assert.ok(Math.abs(copy - last) < 0.5, `${entry.mp4}: its last frame is at ${copy} s, the WebM's at ${last} s`);
     const streams = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', webm], { encoding: 'utf8' });
     assert.equal(/audio/.test(streams), entry.audio, `${entry.webm}: sound`);
   }
+});
+
+// Where ffmpeg is installed: every screened frame's hash is recomputed from the copy itself, the way the record was made
+// (ffmpeg -ss <t> -i <copy> -frames:v 1, raw rgb24), so the frame list is bound to the bytes, not only to the author.
+let ffmpeg = true;
+try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { ffmpeg = false; }
+test('every screened frame of every copy hashes to its record (ffmpeg)', { skip: !ffmpeg && 'ffmpeg is not installed' }, () => {
+  for (const entry of readFallbacks('site').fallbacks) {
+    for (const frame of entry.screening.frames) {
+      const raw = execFileSync('ffmpeg', ['-nostdin', '-v', 'error', '-ss', String(frame.t), '-i', join('site', entry.mp4), '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 64 * 1024 * 1024 });
+      assert.equal(sha256(raw), frame.rgb24Sha256, `${entry.mp4} at ${frame.t} s`);
+    }
+  }
+});
+
+test('a missing copy, a missing WebM, a copy of another size, a WebM listed twice and a screening of other bytes are refused', () => {
+  const { root, record } = fixture();
+  try {
+    const entry = record.fallbacks[0];
+    const has = (rec, pattern) => assert.ok(fallbacksProblems(rec, FALLBACKS_FILE, root).some(p => pattern.test(p)), String(pattern));
+    has({ ...record, fallbacks: [{ ...entry, bytes: entry.bytes + 1 }] }, /is \d+ bytes on disk, the record says/);
+    has({ ...record, fallbacks: [entry, entry] }, /is listed twice/);
+    has({ ...record, fallbacks: [{ ...entry, screening: { ...entry.screening, srcSha256: 'b'.repeat(64) } }] }, /screened bbbbbbbbbbbb/);
+    has({ ...record, fallbacks: [{ ...entry, screening: { ...entry.screening, result: 'fail' } }] }, /"fail", not "pass"/);
+    rmSync(join(root, entry.mp4));
+    has(record, /a-film\.mp4 is missing/);
+    rmSync(join(root, entry.webm));
+    has(record, /a-film\.webm is missing/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a box that runs past the end of the file is refused', () => {
+  const data = progressive();
+  assert.ok(progressiveProblems(data.subarray(0, data.length - 4)).some(p => /runs past the end/.test(p)));
+});
+
+test('pairing reads attributes the way a browser does, and reports every WebM it cannot pair', () => {
+  const byWebm = new Map([['assets/f.webm', { webm: 'assets/f.webm' }]]);
+  const paired = ["<source src='assets/f.webm' type='video/webm'>", '<source src=assets/f.webm type=video/webm>', '<SOURCE SRC="assets/f.webm" TYPE="video/webm">', '<source src = "assets/f.webm">'];
+  for (const tag of paired) {
+    const r = pairPage(tag, 'index.html', byWebm);
+    assert.deepEqual(r.unpaired, [], tag);
+    assert.equal(r.html, `${tag}<source src="assets/f.mp4" type="video/mp4">`, tag);
+  }
+  const reported = ['<video src="assets/f.webm" controls></video>', '<source data-src="assets/f.webm" type="video/webm">', '<source type="video/webm">', '<source src="assets/g.webm">', '<source src="assets/f.webm" data-alt="x.webm">'];
+  for (const html of reported) {
+    const r = pairPage(html, 'index.html', byWebm);
+    assert.equal(r.unpaired.length, 1, html);
+    assert.equal(r.html, html, `${html} is left as it is`);
+  }
+  assert.deepEqual(pairPage('<p>The films are WebM files (.webm) with an MP4 copy.</p>', 'index.html', byWebm).unpaired, [], 'text is not a tag');
+  assert.deepEqual(pairPage('<a href="assets/f.webm">download the film</a>', 'index.html', byWebm).unpaired, [], 'a link is not a player');
+  assert.equal(pairPage('<embed src="assets/f.webm">', 'index.html', byWebm).unpaired.length, 1, 'an embed is');
+});
+
+test('the dist pass refuses a published copy whose bytes are not the record\'s', () => {
+  const { root } = fixture();
+  const dist = mkdtempSync(join(tmpdir(), 'film-fallbacks-dist-'));
+  try {
+    mkdirSync(join(dist, 'assets/labs/agent-space/films'), { recursive: true });
+    const good = readFileSync(join(root, 'assets/labs/agent-space/films/a-film.mp4')), bad = Buffer.from(good);
+    bad[bad.length - 1] ^= 1;
+    writeFileSync(join(dist, 'assets/labs/agent-space/films/a-film.mp4'), bad);
+    writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
+    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /is not in .* with its recorded sha256/);
+  } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
 });

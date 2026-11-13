@@ -39,6 +39,7 @@ export function progressiveProblems(data) {
     if (size === 1 && at + 16 <= data.length) size = Number(data.readBigUInt64BE(at + 8));
     else if (size === 0) size = data.length - at;
     if (size < 8) return ['a box with an impossible size'];
+    if (at + size > data.length) return [`the ${type} box runs past the end of the file`];
     boxes.push(type);
     at += size;
   }
@@ -66,6 +67,34 @@ function* children(data, start, end) {
 }
 
 /**
+ * The decoder an esds names (ISO 14496-1 descriptors after the version and flags): the DecoderConfigDescriptor's
+ * objectTypeIndication (0x40 is MPEG-4 audio; MP3 is 0x69 or 0x6b) and, inside it, the AudioSpecificConfig's first five
+ * bits, the audio object type (2 is AAC LC).
+ */
+export function esdsFacts(body) {
+  const facts = { objectType: null, audioObjectType: null };
+  const descriptor = at => { // tag, then a length of up to four 7-bit bytes
+    if (at >= body.length) return null;
+    let length = 0, i = at + 1;
+    for (let n = 0; n < 4 && i < body.length; n++, i++) { length = (length << 7) | (body[i] & 0x7f); if (!(body[i] & 0x80)) { i++; break; } }
+    return { tag: body[at], start: i, end: Math.min(body.length, i + length) };
+  };
+  const es = descriptor(0);
+  if (!es || es.tag !== 0x03 || es.end - es.start < 3) return facts;
+  const flags = body[es.start + 2];
+  let at = es.start + 3;
+  if (flags & 0x80) at += 2;
+  if (flags & 0x40) at += 1 + (body[at] ?? 0);
+  if (flags & 0x20) at += 2;
+  const config = descriptor(at);
+  if (!config || config.tag !== 0x04 || config.end - config.start < 13) return facts;
+  facts.objectType = body[config.start];
+  const specific = descriptor(config.start + 13);
+  if (specific && specific.tag === 0x05 && specific.end > specific.start) facts.audioObjectType = body[specific.start] >> 3;
+  return facts;
+}
+
+/**
  * What an MP4 says about itself, read from its own boxes (no decoder): each track's handler (vide, soun), its first
  * sample entry (avc1, mp4a, …), for avc1 the profile and level from its avcC, and its length in seconds from mdhd.
  */
@@ -76,13 +105,13 @@ export function mp4Facts(data) {
   if (!moov) return { tracks };
   for (const trak of children(data, moov.start, moov.end)) {
     if (trak.type !== 'trak') continue;
-    const track = { handler: null, codec: null, profile: null, level: null, seconds: null };
+    const track = { handler: null, codec: null, profile: null, level: null, seconds: null, objectType: null, audioObjectType: null };
     const mdia = find(trak.start, trak.end, 'mdia');
     if (mdia) {
       const hdlr = find(mdia.start, mdia.end, 'hdlr');
       if (hdlr && hdlr.end - hdlr.start >= 12) track.handler = data.toString('latin1', hdlr.start + 8, hdlr.start + 12);
       const mdhd = find(mdia.start, mdia.end, 'mdhd');
-      if (mdhd) {
+      if (mdhd && mdhd.end - mdhd.start >= (data[mdhd.start] === 1 ? 32 : 20)) {
         const v1 = data[mdhd.start] === 1;
         const scale = data.readUInt32BE(mdhd.start + (v1 ? 20 : 12));
         const length = v1 ? Number(data.readBigUInt64BE(mdhd.start + 24)) : data.readUInt32BE(mdhd.start + 16);
@@ -98,6 +127,9 @@ export function mp4Facts(data) {
           // compatibility, level.
           const avcC = entry.type === 'avc1' && entry.end - entry.start > 78 ? find(entry.start + 78, entry.end, 'avcC') : null;
           if (avcC && avcC.end - avcC.start >= 4) { track.profile = data[avcC.start + 1]; track.level = data[avcC.start + 3]; }
+          // An audio sample entry has 28 bytes of fields before its child boxes; its esds names the decoder.
+          const esds = entry.type === 'mp4a' && entry.end - entry.start > 28 ? find(entry.start + 28, entry.end, 'esds') : null;
+          if (esds) Object.assign(track, esdsFacts(data.subarray(esds.start + 4, esds.end)));
         }
       }
     }
@@ -118,6 +150,11 @@ export function trackProblems(data, entry) {
     if (v.seconds === null || Math.abs(v.seconds - entry.seconds) >= 1) problems.push(`the video track is ${v.seconds?.toFixed(2) ?? 'of unreadable length'} s, the record says ${entry.seconds} s`);
   }
   if (entry.audio && (sound.length !== 1 || sound[0].codec !== 'mp4a')) problems.push(`the record says it has sound, but it has ${sound.length} sound tracks${sound[0] ? ` (${sound[0].codec})` : ''}, not one AAC (mp4a) track`);
+  else if (entry.audio) {
+    const [a] = sound;
+    if (a.objectType !== 0x40 || a.audioObjectType !== 2) problems.push(`the sound track is not AAC LC (object type ${a.objectType ?? 'unreadable'}, audio object type ${a.audioObjectType ?? 'unreadable'})`);
+    if (a.seconds === null || Math.abs(a.seconds - entry.seconds) >= 1) problems.push(`the sound track is ${a.seconds?.toFixed(2) ?? 'of unreadable length'} s, the record says ${entry.seconds} s`);
+  }
   if (!entry.audio && sound.length) problems.push(`the record says it has no sound, but it has ${sound.length} sound tracks`);
   if (tracks.length !== video.length + sound.length) problems.push(`${tracks.length - video.length - sound.length} other tracks`);
   return problems;
@@ -162,24 +199,48 @@ export function readFallbacks(root = 'site') {
   return record;
 }
 
-const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1] ?? null;
-const isWebm = tag => /\.webm(?:[?#][^"]*)?$/i.test(attr(tag, 'src') ?? '') || /^video\/webm/i.test(attr(tag, 'type') ?? '');
+// Every start tag, with its attributes read the way a browser reads them: names in any case, values double-quoted,
+// single-quoted or bare, white space allowed around "=".
+const TAG = /<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+const ATTR = /([^\s"'=<>/`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+export function attributes(rest) {
+  const out = new Map();
+  for (const m of rest.matchAll(ATTR)) { const name = m[1].toLowerCase(); if (!out.has(name)) out.set(name, m[2] ?? m[3] ?? m[4] ?? ''); }
+  return out;
+}
+const WEBM_URL = /\.webm(?:[?#]|$)/i;
+// The tags that play or embed media. A link to a film (<a href>) opens the file and is not a player, so it is not paired.
+const PLAYERS = new Set(['video', 'audio', 'source', 'embed', 'object', 'iframe']);
+const isWebmValue = value => WEBM_URL.test(value.trim()) || /^\s*video\/webm/i.test(value);
 
 /**
  * One page with an MP4 <source> after each WebM <source>. `page` is the page's path inside the site ('labs/x/index.html'),
  * `byWebm` maps a site path ('assets/…/film.webm') to its copy. Returns the new html, the WebMs it played and every
- * WebM it plays that has no copy. A page that already carries the copy right after the WebM is left as it is.
+ * WebM reference it could not pair. A <source> is a WebM when its src ends in .webm or its type is video/webm; it is
+ * paired when its src resolves to a listed film. Any other media tag (video, audio, source, embed, object, iframe) with
+ * an attribute that names a WebM (a <video src>, a data-src, a <source> with no src) cannot be paired here and is
+ * reported, so the build stops rather than ship a player with no MP4. A link to a film (<a href>) is not a player. A page that already carries the copy right after the WebM is left as it is.
  */
 export function pairPage(html, page, byWebm) {
   const used = new Set(), unpaired = [];
-  const out = html.replace(/<source\b[^>]*>/gi, (tag, offset) => {
-    if (!isWebm(tag)) return tag;
-    const src = attr(tag, 'src');
-    const resolved = src && !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(src) ? posix.normalize(posix.join(posix.dirname(page), src.replace(/[?#].*$/, ''))) : null;
+  const out = html.replace(TAG, (tag, name, rest, offset) => {
+    const attrs = attributes(rest);
+    if (!PLAYERS.has(name.toLowerCase())) return tag;
+    const webmAttrs = [...attrs].filter(([, value]) => isWebmValue(value));
+    if (!webmAttrs.length) return tag;
+    const src = attrs.get('src');
+    const isSource = name.toLowerCase() === 'source';
+    const others = webmAttrs.filter(([key]) => !(isSource && (key === 'src' || key === 'type')));
+    if (!isSource || others.length || src === undefined || !WEBM_URL.test(src.trim())) {
+      unpaired.push(`${page}: <${name.toLowerCase()}> ${webmAttrs.map(([key, value]) => `${key}=${value}`).join(' ')}`);
+      return tag;
+    }
+    const url = src.trim();
+    const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(url) ? posix.normalize(posix.join(posix.dirname(page), url.replace(/[?#].*$/, ''))) : null;
     const entry = resolved && byWebm.get(resolved);
-    if (!entry) { unpaired.push(`${page}: ${src ?? '(no src)'}`); return tag; }
+    if (!entry || url.includes('"')) { unpaired.push(`${page}: <source> src=${url}`); return tag; }
     used.add(entry.webm);
-    const mp4Src = src.replace(/\.webm(?=$|[?#])/i, '.mp4');
+    const mp4Src = url.replace(/\.webm(?=$|[?#])/i, '.mp4');
     const insert = `<source src="${mp4Src}" type="video/mp4">`;
     return html.startsWith(insert, offset + tag.length) ? tag : tag + insert;
   });
