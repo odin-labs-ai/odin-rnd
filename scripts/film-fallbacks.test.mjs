@@ -257,23 +257,26 @@ test('each copy ends within half a second of its WebM and has sound exactly when
   }
 });
 
-// The copy against its WebM, picture by picture: at every screened time the two decoded frames are compared with SSIM.
-// A re-encode scores near 1; another shot scores far lower. The median over a film must be at least 0.9 and no frame
-// under 0.6 (a frame of motion can land a few milliseconds apart in the two files: measured 0.73 at worst, 2026-11-13).
-const SSIM_MEDIAN = 0.9, SSIM_FLOOR = 0.6;
-test('every copy shows its WebM: SSIM at every screened time (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
-  for (const entry of readFallbacks('site').fallbacks) {
-    const scores = entry.screening.frames.map(frame => {
-      const t = String(frame.t);
-      const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'info', '-ss', t, '-i', join('site', entry.webm), '-ss', t, '-i', join('site', entry.mp4), '-frames:v', '1',
-        '-lavfi', '[0:v]format=yuv420p[a];[1:v]format=yuv420p[b];[a][b]ssim', '-f', 'null', '-'], { encoding: 'utf8' });
-      const m = /All:([0-9.]+)/.exec(run.stderr);
-      assert.ok(m, `${entry.mp4} at ${t} s: no SSIM`);
-      return Number(m[1]);
-    }).sort((a, b) => a - b);
-    const median = scores[Math.floor(scores.length / 2)];
-    assert.ok(median >= SSIM_MEDIAN, `${entry.mp4}: median SSIM ${median} against its WebM`);
-    assert.ok(scores[0] >= SSIM_FLOOR, `${entry.mp4}: a screened frame scores ${scores[0]} against its WebM`);
+// The copy against its WebM, the whole film: both decoded at 5 frames a second and compared frame by frame with SSIM.
+// A re-encode of the same film scores near 1 (measured 0.89 to 0.99, 2026-11-13; the lowest is the 15 fps session clip,
+// whose WebM has a variable frame rate). The negative control: the same copy against ANOTHER film's WebM must score at
+// least 0.1 lower (measured 0.55 to 0.74, the highest between the two session clips, which show the same space), so
+// the threshold separates this film from a different one.
+const SSIM_FILM = 0.85, SSIM_MARGIN = 0.1;
+const ssim = (webm, mp4) => {
+  const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'info', '-i', webm, '-i', mp4, '-lavfi', '[0:v]fps=5,format=yuv420p[a];[1:v]fps=5,format=yuv420p[b];[a][b]ssim', '-shortest', '-f', 'null', '-'], { encoding: 'utf8' });
+  const m = /All:([0-9.]+)/.exec(run.stderr);
+  assert.ok(m, `no SSIM for ${mp4} against ${webm}`);
+  return Number(m[1]);
+};
+test('every copy shows its own WebM over the whole film, and not another film (ffmpeg SSIM)', { skip: decoderSkip('ffmpeg') }, () => {
+  const all = readFallbacks('site').fallbacks;
+  for (const [i, entry] of all.entries()) {
+    const own = ssim(join('site', entry.webm), join('site', entry.mp4));
+    const other = all[(i + 1) % all.length];
+    const control = ssim(join('site', other.webm), join('site', entry.mp4));
+    assert.ok(own >= SSIM_FILM, `${entry.mp4}: SSIM ${own} against its own WebM`);
+    assert.ok(own - control >= SSIM_MARGIN, `${entry.mp4}: SSIM ${own} against its WebM, ${control} against ${other.webm}`);
   }
 });
 
@@ -335,6 +338,11 @@ test('anything that names a WebM outside the paired forms stops the build, in an
     '<template><template></template><video controls><source src="assets/f.webm" type="video/webm"></video></template>',
     '<video><picture><source src="assets/f.webm" type="video/webm"></picture></video>', '<video src="assets/u.%77ebm"></video>',
     '<p>x.WebM</p>', '<a href="assets/f.webm"><b>the film</b></a>',
+    '<video controls><source src="other.webm#/../assets/f.webm" type="video/webm"></video>', '<video controls><source src="other.webm?/../assets/f.webm" type="video/webm"></video>',
+    '<video src="assets/u.&percnt;77ebm"></video>', '<video src="assets/u.\nWebM"></video>', '<video src="assets/u.&Tab;WebM"></video>',
+    '<p>a --> b</p><!-- <video controls><source src="assets/f.webm" type="video/webm"></video> -->',
+    '<title><video controls><source src="assets/f.webm" type="video/webm"></video></title>', '<xmp><video controls><source src="assets/f.webm" type="video/webm"></video></xmp>',
+    `<div data-x='<video controls><source src="assets/f.webm" type="video/webm"></video>'></div>`, '<p>MP4/WebM</p>', '<p>WebMs</p>',
     '<picture><source src="assets/f.webm" type="video/webm"></picture>', '<video></video><source src="assets/f.webm" type="video/webm">',
     '<p title="&#99999999;">x</p><video src=v=1/f.webm></video>'];
   for (const html of reported) {
@@ -347,6 +355,7 @@ test('anything that names a WebM outside the paired forms stops the build, in an
   assert.deepEqual(pairPage('<a href="assets/f.webm">download the film</a>', 'index.html', byWebm).unpaired, [], 'a plain link is not a player');
   assert.deepEqual(pairPage('<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', 'index.html', byWebm).unpaired, [], 'a plain link and its text play nothing');
   assert.deepEqual(pairPage('<p>The films are recorded as WebM, with an MP4 copy.</p>', 'index.html', byWebm).unpaired, [], 'the English word');
+  assert.deepEqual(pairPage('<p>The web makes this easy, a web model.</p>', 'index.html', byWebm).unpaired, [], 'spaces are not removed, so words do not run together');
   assert.equal(pairPage('<p>A tag in prose: &lt;video src=x.webm&gt;</p>', 'index.html', byWebm).unpaired.length, 1, 'a file name in text is read too');
   assert.deepEqual(pairPage('<p title="&#99999999;">a code point no browser accepts</p>', 'index.html', byWebm).unpaired, [], 'it does not throw');
 });

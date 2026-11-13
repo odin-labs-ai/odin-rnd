@@ -12,13 +12,13 @@
 // track (read from its esds) exactly when the record says so, or sound samples outside mdat; when a track's length is
 // not the record's; or when its screening record does not match it or leaves part of it out.
 //
-// WHAT A DECODER SHOWS is in scripts/film-fallbacks.test.mjs, and the Film copies workflow
-// (.github/workflows/film-copies.yml) installs ffmpeg and runs it on every pull request and on the default branch with
-// FILM_DECODER_REQUIRED set, so there a missing decoder fails instead of skipping: every copy decodes start to end with
+// WHAT A DECODER SHOWS is in scripts/film-fallbacks.test.mjs, and the Film copies job of .github/workflows/publish.yml
+// installs ffmpeg and runs it on every pull request and on the default branch with FILM_DECODER_REQUIRED set (verify,
+// and so every deploy, needs that job), so there a missing decoder fails instead of skipping: every copy decodes start to end with
 // no error, to exactly as many frames as it has samples, ends within half a second of its WebM, and its screened frames,
 // decoded as raw yuv420p (the decoder's own output, the same on every platform), hash to the screening record's
-// yuv420pSha256; and at every screened time the copy's frame is compared with its WebM's by SSIM (median at least 0.9,
-// none under 0.6), so the copy shows the WebM's pictures. The per-frame rgb24 hashes go through ffmpeg's default scaler,
+// yuv420pSha256; and the whole copy is compared with its WebM by SSIM (at least 0.85, and at least 0.1 above its score
+// against another film's WebM), so the copy shows the WebM's pictures, start to end. The per-frame rgb24 hashes go through ffmpeg's default scaler,
 // which differs across versions and CPUs, so they are recomputed only with the ffmpeg version the record names (the CI
 // distribution's ffmpeg is another version: there they are skipped, the yuv420p digest binds the frames instead). What
 // the screened frames show was viewed by an AI agent; no machine judges that.
@@ -27,7 +27,8 @@
 // <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
 // byte for byte). It fails closed both ways: a page that names a WebM anywhere outside the paired forms (markup,
 // comment, script or text, in any spelling) stops the build (see pairPage), and so does a listed copy whose WebM no page
-// plays. Only built .html pages are read.
+// plays live. Only built .html pages are read. The Film copies job in .github/workflows/publish.yml runs the decoder
+// tests, and verify needs it, so nothing publishes without them.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
@@ -351,30 +352,67 @@ export function readFallbacks(root = 'site') {
 
 // Character references, resolved the way a browser does before it reads text or fetches a URL (&#46;webm is .webm); a
 // code point a browser would not accept becomes U+FFFD, as it does there.
-const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', colon: ':', num: '#', quest: '?', equals: '=', tab: '\t', newline: '\n' };
+// Every named reference that stands for an ASCII character (no named reference stands for an ASCII letter or digit).
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', bsol: '\\', colon: ':', semi: ';', num: '#',
+  quest: '?', equals: '=', percnt: '%', excl: '!', dollar: '$', lpar: '(', rpar: ')', ast: '*', midast: '*', plus: '+', comma: ',',
+  commat: '@', lsqb: '[', lbrack: '[', rsqb: ']', rbrack: ']', hat: '^', lowbar: '_', grave: '`', lcub: '{', lbrace: '{',
+  rcub: '}', rbrace: '}', verbar: '|', vert: '|', tab: '\t', newline: '\n' };
 const codePoint = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : '�');
 export const decodeValue = value => value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));?/g, (whole, dec, hex, name) =>
   dec ? codePoint(Number(dec)) : hex ? codePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
 
 // The one form a WebM film is played in on this site, as every generator and the home page write it: a <video> start
-// tag followed directly by a <source> with a plain double-quoted src ending in .webm and a video/webm type. Only this
-// exact text is paired; anything else that names a WebM is refused (pairPage).
-const PLAYED = /(<video\b[^<>]*>)<source src="([^"<>&\s]+\.webm)" type="video\/webm[^"<>&]*">/g;
+// tag (after ">", white space or the start of the page, never inside a value) followed directly by a <source> whose
+// src is a plain relative path of letters, digits, ".", "_", "-" and "/" ending in .webm, with a video/webm type. Only
+// this exact text is paired; anything else that names a WebM is refused (pairPage).
+const PLAYED = /(?<=^|[>\s])(<video\b[^<>"']*(?:"[^"<>]*"[^<>"']*)*>)<source src="([A-Za-z0-9._/-]+\.webm)" type="video\/webm[^"<>&]*">/g;
 // What may name a WebM besides that: a plain link to the file with plain link text (it opens the file and plays
-// nothing here), and the English word "WebM" in running text (not after a "." or "/", so never a file name).
-const LINKED = /<a href="[^"<>&\s]+\.webm"(?: [a-z-]+="[^"<>&]*")*>[^<>&]*<\/a>/g;
-const WORD = /(?<![./\\%\w])WebM(?![\w])/g;
-// Before looking for "webm": character references resolved, %XX escapes decoded, and white space and control characters
-// removed (what a browser strips from a URL), so no spelling of the name hides it.
+// nothing here), and the English word "WebM" in running text (a separate word not after ".", "/", "\" or "%", even
+// across white space, so never part of a file name).
+const LINKED = /<a href="[A-Za-z0-9._/:-]+\.webm"(?: [a-z-]+="[^"<>&]*")*>[^<>&]*<\/a>/g;
+const isWord = (text, at) => {
+  let k = at - 1;
+  while (k >= 0 && /\s/.test(text[k])) k--;
+  return !(k >= 0 && /[./\\%\w]/.test(text[k]) && (k === at - 1 || /[./\\%]/.test(text[k]))) && !/\w/.test(text[at + 4] ?? '');
+};
+// Before looking for "webm": character references resolved, %XX escapes decoded, and tab, line feed, carriage return
+// and other control characters removed (what a browser strips from a URL), so no spelling of a file name hides it.
 const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-const spelled = text => percent(decodeValue(text)).replace(/[\s\u0000-\u001f\u007f]+/g, '');
-// Whether a position sits inside something that never plays: an open comment, script, style, template or textarea.
-// Counted, not last-seen: more openings than closings before the position means it is inside one (nesting included).
-function inert(lower, at) {
-  const before = lower.slice(0, at);
-  const count = text => before.split(text).length - 1;
-  const open = (a, b) => count(a) > count(b);
-  return open('<!--', '-->') || open('<script', '</script') || open('<style', '</style') || open('<template', '</template') || open('<textarea', '</textarea');
+const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
+// The stretches of a page that never play: comments (through --> or --!>), the content of raw-text and other inert
+// elements through their end tag, and template content (nested templates counted), found by one scan from the start.
+const RAW = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes', 'plaintext'];
+export function inertRanges(html) {
+  const lower = html.toLowerCase(), ranges = [];
+  let i = 0;
+  while (i < lower.length) {
+    const lt = lower.indexOf('<', i);
+    if (lt < 0) break;
+    if (lower.startsWith('<!--', lt)) {
+      const short = /^<!--->|^<!-->/.exec(lower.slice(lt, lt + 6));
+      const m = short ? null : /--!?>/g; if (m) m.lastIndex = lt + 4;
+      const close = m && m.exec(lower);
+      const end = short ? lt + short[0].length : close ? close.index + close[0].length : lower.length;
+      ranges.push([lt, end]); i = end; continue;
+    }
+    const name = /^<([a-z][a-z0-9-]*)/.exec(lower.slice(lt, lt + 32))?.[1];
+    if (name && (RAW.includes(name) || name === 'template')) {
+      let end;
+      if (name === 'template') {
+        let depth = 0, j = lt;
+        const re = /<(\/?)template[\s/>]/g; re.lastIndex = lt;
+        for (let m; (m = re.exec(lower));) { depth += m[1] ? -1 : 1; if (!depth) { j = m.index; break; } }
+        end = depth ? lower.length : j;
+      } else {
+        const re = new RegExp(`</${name}[\\s/>]`, 'g'); re.lastIndex = lt + 1;
+        const m = re.exec(lower);
+        end = name === 'plaintext' || !m ? lower.length : m.index;
+      }
+      ranges.push([lt, end]); i = end + 1; continue;
+    }
+    i = lt + 1;
+  }
+  return ranges;
 }
 
 /**
@@ -382,31 +420,30 @@ function inert(lower, at) {
  * `byWebm` maps a site path ('assets/…/film.webm') to its copy. Returns the new html, the WebMs it played and every
  * WebM mention it could not account for.
  *
- * No HTML is parsed for the refusal: the PLAYED text of a listed film (outside any comment, script, style, template or
- * textarea) is paired; then the paired text, its inserted copy, LINKED links and the WORD are taken out of a copy of the
- * page, the rest is spelled out (character references, %XX escapes, white space and control characters removed), and
- * any "webm" left anywhere, in any case, stops the build. A page that already carries the copy is left as it is.
+ * No HTML is parsed for the refusal: the PLAYED text of a listed film, outside every inert stretch (inertRanges), is
+ * paired; then exactly the paired text with its own inserted copy, LINKED links and the English word "WebM" are taken
+ * out of a copy of the page, the rest is spelled out (character references, %XX escapes, control characters), and any
+ * "webm" left anywhere, in any case, stops the build. A page that already carries the copy is left as it is.
  */
 export function pairPage(html, page, byWebm) {
-  const used = new Set(), unpaired = [];
-  const lower = html.toLowerCase();
+  const used = new Set(), unpaired = [], paired = [];
+  const inertAt = inertRanges(html);
+  const isInert = at => inertAt.some(([a, b]) => at >= a && at < b);
   const out = html.replace(PLAYED, (whole, video, src, offset) => {
-    const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(src) ? posix.normalize(posix.join(posix.dirname(page), src)) : null;
-    const entry = resolved && byWebm.get(resolved);
-    if (!entry || inert(lower, offset)) return whole;
+    const entry = byWebm.get(posix.normalize(posix.join(posix.dirname(page), src)));
+    if (!entry || src.startsWith('/') || isInert(offset)) return whole;
     used.add(entry.webm);
-    const insert = `<source src="${src.replace(/\.webm$/, '.mp4')}" type="video/mp4">`;
+    const insert = `<source src="${src.slice(0, -'.webm'.length)}.mp4" type="video/mp4">`;
+    paired.push(whole + insert);
     return html.startsWith(insert, offset + whole.length) ? whole : whole + insert;
   });
-  // What is left once every paired film, its copy, every plain link and the English word are taken out.
+  // What is left once exactly the paired texts, every plain link and the English word are taken out.
   let rest = out;
-  for (const webm of used) {
-    const src = new RegExp(`<source src="([^"<>&\\s]+\\.webm)" type="video\\/webm[^"<>&]*"><source src="[^"<>&\\s]+\\.mp4" type="video\\/mp4">`, 'g');
-    rest = rest.replace(src, (whole, s) => byWebm.get(posix.normalize(posix.join(posix.dirname(page), s)))?.webm === webm ? ' ' : whole);
-  }
-  rest = decodeValue(rest.replace(LINKED, ' ')).replace(WORD, ' ');
+  for (const text of paired) rest = rest.split(text).join(' ');
+  rest = decodeValue(rest.replace(LINKED, ' '));
+  rest = rest.replace(/WebM/g, (word, at, all) => (isWord(all, at) ? '    ' : word));
   const spelledRest = spelled(rest);
-  for (const m of spelledRest.matchAll(/webm/gi)) unpaired.push(`${page}: "${spelledRest.slice(Math.max(0, m.index - 50), m.index + 12)}" names a WebM outside the paired forms`);
+  for (const m of spelledRest.matchAll(/webm/gi)) unpaired.push(`${page}: "${spelledRest.slice(Math.max(0, m.index - 50), m.index + 12).replace(/\s+/g, ' ')}" names a WebM outside the paired forms`);
   return { html: out, used, unpaired };
 }
 
