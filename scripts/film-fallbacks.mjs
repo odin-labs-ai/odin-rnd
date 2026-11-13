@@ -17,17 +17,20 @@
 // and so every deploy, needs that job), so there a missing decoder fails instead of skipping: every copy decodes start to end with
 // no error, to exactly as many frames as it has samples, ends within half a second of its WebM, and its screened frames,
 // decoded as raw yuv420p (the decoder's own output, the same on every platform), hash to the screening record's
-// yuv420pSha256; and the whole copy is compared with its WebM by SSIM (at least 0.85, and at least 0.1 above its score
-// against another film's WebM), so the copy shows the WebM's pictures, start to end. The per-frame rgb24 hashes go through ffmpeg's default scaler,
+// yuv420pSha256; and the whole copy is compared with its WebM by SSIM, frame by frame at 5 a second (average at least
+// 0.85, every one-second stretch at least 0.6, and the average 0.1 above the same copy against another film's WebM). SSIM
+// measures likeness: it refuses a copy whose pictures are unlike its WebM's anywhere for a second or more, not footage
+// that merely looks alike. The per-frame rgb24 hashes go through ffmpeg's default scaler,
 // which differs across versions and CPUs, so they are recomputed only with the ffmpeg version the record names (the CI
 // distribution's ffmpeg is another version: there they are skipped, the yuv420p digest binds the frames instead). What
 // the screened frames show was viewed by an AI agent; no machine judges that.
 //
 // The pages are not edited for this: after the build has written every page, addFilmFallbacks() puts a
 // <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
-// byte for byte). It fails closed both ways: a page that names a WebM anywhere outside the paired forms (markup,
-// comment, script or text, in any spelling) stops the build (see pairPage), and so does a listed copy whose WebM no page
-// plays live. Only built .html pages are read. The Film copies job in .github/workflows/publish.yml runs the decoder
+// byte for byte). A page that names a WebM anywhere outside the paired forms (markup, comment, script or text, in any
+// spelling) stops the build (see pairPage), and so does a listed copy that no page pairs. Pairing is by exact generator
+// text; a page that copies that exact text into a comment, script or attribute is not something any generator writes,
+// and such a copy would be paired there too. Only built .html pages are read. The Film copies job in .github/workflows/publish.yml runs the decoder
 // tests, and verify needs it, so nothing publishes without them.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -361,15 +364,17 @@ const codePoint = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 
 export const decodeValue = value => value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));?/g, (whole, dec, hex, name) =>
   dec ? codePoint(Number(dec)) : hex ? codePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
 
-// The one form a WebM film is played in on this site, as every generator and the home page write it: a <video> start
-// tag (after ">", white space or the start of the page, never inside a value) followed directly by a <source> whose
-// src is a plain relative path of letters, digits, ".", "_", "-" and "/" ending in .webm, with a video/webm type. Only
-// this exact text is paired; anything else that names a WebM is refused (pairPage).
-const PLAYED = /(?<=^|[>\s])(<video\b[^<>"']*(?:"[^"<>]*"[^<>"']*)*>)<source src="([A-Za-z0-9._/-]+\.webm)" type="video\/webm[^"<>&]*">/g;
-// What may name a WebM besides that: a plain link to the file with plain link text (it opens the file and plays
-// nothing here), and the English word "WebM" in running text (a separate word not after ".", "/", "\" or "%", even
-// across white space, so never part of a file name).
-const LINKED = /<a href="[A-Za-z0-9._/:-]+\.webm"(?: [a-z-]+="[^"<>&]*")*>[^<>&]*<\/a>/g;
+// The one form a WebM film is played in on this site, as every generator and the home page write it: their exact
+// <video> start tag (controls preload="none" playsinline, an optional class and size, a plain poster path and an
+// aria-label), after ">", white space or the page start, followed directly by a <source> whose src is a plain relative
+// path of letters, digits, ".", "_", "-" and "/" ending in .webm, with a video/webm type. Only this exact text is
+// paired, and only the <source> is taken out before the search: the <video> tag itself is still read, so a src or
+// any other WebM on it is refused.
+const PLAYED = /(?<=^|[>\s])(<video(?: class="[a-z0-9 -]*")? controls preload="none" playsinline(?: width="\d+" height="\d+")? poster="[A-Za-z0-9._/-]+" aria-label="[^"<>]*">)<source src="([A-Za-z0-9._/-]+\.webm)" type="video\/webm[^"<>&]*">/g;
+// What may name a WebM besides that: a plain link to the file (an href and nothing else) with plain link text, which
+// opens the file and plays nothing here, and the English word "WebM" in running text (a separate word, not after ".",
+// "/", "\" or "%" even across white space, judged after the text is spelled out, so never part of a file name).
+const LINKED = /<a href="[A-Za-z0-9._/:-]+\.webm">[^<>&]*<\/a>/g;
 const isWord = (text, at) => {
   let k = at - 1;
   while (k >= 0 && /\s/.test(text[k])) k--;
@@ -434,15 +439,13 @@ export function pairPage(html, page, byWebm) {
     if (!entry || src.startsWith('/') || isInert(offset)) return whole;
     used.add(entry.webm);
     const insert = `<source src="${src.slice(0, -'.webm'.length)}.mp4" type="video/mp4">`;
-    paired.push(whole + insert);
+    paired.push(whole.slice(video.length) + insert);
     return html.startsWith(insert, offset + whole.length) ? whole : whole + insert;
   });
   // What is left once exactly the paired texts, every plain link and the English word are taken out.
   let rest = out;
   for (const text of paired) rest = rest.split(text).join(' ');
-  rest = decodeValue(rest.replace(LINKED, ' '));
-  rest = rest.replace(/WebM/g, (word, at, all) => (isWord(all, at) ? '    ' : word));
-  const spelledRest = spelled(rest);
+  const spelledRest = spelled(decodeValue(rest.replace(LINKED, ' '))).replace(/WebM/g, (word, at, all) => (isWord(all, at) ? '    ' : word));
   for (const m of spelledRest.matchAll(/webm/gi)) unpaired.push(`${page}: "${spelledRest.slice(Math.max(0, m.index - 50), m.index + 12).replace(/\s+/g, ' ')}" names a WebM outside the paired forms`);
   return { html: out, used, unpaired };
 }
