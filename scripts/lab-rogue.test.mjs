@@ -173,3 +173,18 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.equal(readFileSync(join('site', ROGUE_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, every count the record\'s', () => {
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(main.indexOf('id="about"') < main.indexOf('id="staged-and-real"'), 'right after the hero, before the detail');
+  assert.match(about, /<h2 id="about-title">What it is\.<\/h2>/);
+  assert.match(about, /<figure class="lab-flow">/);
+  const r = JSON.parse(readFileSync(join('site', ROGUE_RECORD), 'utf8'));
+  const u = r.ungoverned, g = r.governed;
+  assert.ok(about.includes(`${u.steps.filter(s => s.ran).length} of ${u.steps.length} commands ran`));
+  assert.ok(about.includes(`${g.acts.filter(a => a.ran === false).length} of ${g.acts.length} commands refused`));
+  assert.ok(about.includes(`${u.damage.commitsLostFromMain} commits gone from main`));
+  assert.ok(about.includes(`${g.journal.rows.length} journal rows`));
+  assert.ok(about.includes(`Ticket ${r.staged.ticket.id}`) && about.includes(`The agent, ${r.staged.agent}`));
+});
