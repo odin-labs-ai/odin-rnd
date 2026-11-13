@@ -21,7 +21,7 @@ test('everything passed is escaped, never markup', () => {
   const html = flow({ caption: '<script>x</script>', lanes: [{ label: 'a & b', nodes: [{ title: '"q"', body: '<b>' }] }] });
   assert.ok(html.includes('&lt;script&gt;x&lt;/script&gt;'));
   assert.ok(html.includes('a &amp; b') && html.includes('&quot;q&quot;') && html.includes('&lt;b&gt;'));
-  assert.doesNotMatch(html, /<script|<b>/);
+  assert.ok(!html.includes('<script') && !html.includes('<b>'), 'no passed markup survives');
 });
 
 test('a diagram with no caption, no lane, an empty lane, an untitled box or an unknown tone is refused', () => {
