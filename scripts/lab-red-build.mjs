@@ -23,6 +23,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonical } from './lab-record.mjs';
+import { renderFlow } from './lab-flow.mjs';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -172,6 +173,41 @@ export function renderIntro(record) {
   return `<span class="technical">LAB 08 · CAN AN AGENT FIX A RED BUILD?</span><h1 id="lab-title">Can an agent fix a red build?</h1><p class="company-lead">Not yet. We gave the agent space's CI doctor ${s.cases} fresh red builds from ${record.heldOut.repos === 1 ? 'one of our own private repositories' : 'our own private repositories'}, frozen before it saw any of them. Two separate AI reviewers judged every answer, each blind to the other. <strong>Judged real fixes: ${s.judgedFix} of ${s.cases}.</strong> The diagnoses held up better than the fixes did, and the page says which set every number comes from.</p>`;
 }
 
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count is the record's, through
+// why() and the held-out score, which whyProblems and the recount already hold to the page's claims. No diagnosis tally
+// appears here: those stay in the numbers box, each beside the set it counts.
+export function renderAbout(record) {
+  const h = record.heldOut, s = h.score, y = why(record);
+  const verdicts = s.cases * Object.keys(h.rounds).length;
+  const other = s.cases - y.ruled.length - y.code.length;
+  const of = (k, total, what) => `${k} of ${total} ${what}`;
+  const prose = `<p>When a build goes red, someone has to read the log, find the cause and fix it. This lab asks whether an agent can do that job.</p><p>The agent space's CI doctor got ${s.cases} fresh red builds from ${h.repos === 1 ? 'one of our own private repositories' : 'our own private repositories'}, frozen before it saw any of them. Two separate AI reviewers, each blind to the other, judged every answer.</p><p>The answer so far is no. Most of the ${s.cases} had nothing in the code to fix, and on the ${y.code.length} that did, none of its answers was judged a real fix. Its diagnoses held up better than its fixes.</p>`;
+  const flow = renderFlow({
+    caption: `How it works: ${s.cases} red builds, one CI doctor, two blind reviewers`,
+    source: [
+      { title: `${s.cases} red builds`, body: `frozen before the doctor ran: ${y.ruled.length} closed by a rule, ${y.code.length} code bugs${other ? `, ${other} not runnable here` : ''}` },
+      { title: 'The CI doctor', body: "the agent space's own agent: reads the failure, names a cause, may write a patch" },
+    ],
+    lanes: [
+      { label: 'Nothing in the code to fix', nodes: [
+        { title: `${y.ruled.length} closed by a rule`, body: 'red by design, or a cause outside the repository; no model is asked' },
+        { title: 'No patch', body: 'both reviewers agreed that was right, every time', tone: 'good' },
+      ] },
+      { label: 'Code bugs', tone: 'bad', nodes: [
+        { title: `${y.code.length} code bugs`, body: 'the most this set could have had fixed' },
+        { title: of(y.reproduced.length, y.code.length, 'failed again here'), body: 'the rest passed when run again, so there was nothing to check a fix against' },
+        { title: `${s.passes} fixes passed`, body: 'the patcher found none that made the build green', tone: 'bad' },
+      ] },
+      { label: 'Two AI reviewers, blind to each other', nodes: [
+        { title: `${verdicts} verdicts`, body: `each of the ${s.cases} builds judged twice, one case at a time` },
+        { title: 'Cause and fix, judged apart', body: 'the diagnosis tallies are in the numbers below, each with the set it counts' },
+        { title: `Judged real fixes: ${of(s.judgedFix, s.cases, 'builds')}`, body: 'none of these verdicts is a person\'s', tone: 'bad' },
+      ] },
+    ],
+  });
+  return `${prose}${flow}`;
+}
+
 export function renderNumbers(record) {
   const h = record.heldOut, s = h.score, e = record.earlier;
   const verdicts = s.cases * Object.keys(h.rounds).length;
@@ -242,7 +278,7 @@ export function renderRedBuild(root = 'site', { now = new Date() } = {}) {
   const record = readRedBuild(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, RED_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--RED_INTRO-->': renderIntro(record), '<!--RED_NUMBERS-->': renderNumbers(record), '<!--RED_RUNS-->': renderRuns(record), '<!--RED_WHY-->': renderWhy(record), '<!--RED_CHECK-->': renderCheck(record), '<!--RED_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--RED_INTRO-->': renderIntro(record), '<!--RED_ABOUT-->': renderAbout(record), '<!--RED_NUMBERS-->': renderNumbers(record), '<!--RED_RUNS-->': renderRuns(record), '<!--RED_WHY-->': renderWhy(record), '<!--RED_CHECK-->': renderCheck(record), '<!--RED_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${RED_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

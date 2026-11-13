@@ -190,3 +190,18 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.equal(readFileSync(join('site', RED_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, every count the record\'s, no diagnosis tally', () => {
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(main.indexOf('id="about"') < main.indexOf('id="numbers-section"'), 'right after the hero, before the numbers');
+  assert.match(about, /<h2 id="about-title">What it is\.<\/h2>/);
+  assert.match(about, /<figure class="lab-flow">/);
+  const h = record.heldOut, s = h.score;
+  const ruled = h.runs.filter(r => r.how === 'no patch by rule').length, code = h.runs.filter(r => r.cls === 'code_bug').length;
+  assert.ok(about.includes(`${s.cases} red builds`));
+  assert.ok(about.includes(`${ruled} closed by a rule`) && about.includes(`${code} code bugs`));
+  assert.ok(about.includes(`${s.cases * Object.keys(h.rounds).length} verdicts`));
+  assert.ok(about.includes(`Judged real fixes: ${s.judgedFix} of ${s.cases} builds`));
+  assert.doesNotMatch(about.replace(/<[^>]+>/g, ' '), /\b(?:17|11) (?:of|right)\b|10 partly/, 'the diagnosis tallies stay in the numbers box');
+});
