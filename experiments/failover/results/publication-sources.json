@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-11",
+  "experiment": "EXP 021",
+  "source": {
+    "visibility": "private",
+    "commit": "d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97",
+    "relativePathMeaning": "Relative to the source experiment directory, historically named Lab02; public Lab03.",
+    "sha256": {
+      "RESULT-PAGE-DRAFT.md": "5f05614218bbd6318daa2d89152fd3c0f867642e24e1df1561ed52c824a54467",
+      "AMENDMENT-03-DRAFT.md": "0acb016df2230ad7cf1749beb00c7665b3be4c0332164a9a01a907e494ecf0e9",
+      "runner/results/lab02/VERDICT.json": "d2e7a0294d9158f1db6bba89b180a72d03135359a2dc02672fbbcee4b233e9fb",
+      "runner/results/lab02/DISTURBANCES.md": "c13174ece428dc180232c3e3451607dd49a1d0ab05e01bd54f3a0d8a601a0a6f",
+      "runner/results/lab02/SHA256SUMS": "16ec00d2d1f3b9e462934d09dd376154dc3ed4c4cf5e7705ccf160a6c808f98a",
+      "reviews/result-mongodb-advocate.md": "03124dd0261b5fb4f45236a86a18176a88a8cf09da9f329172f73cd1ea564dd6",
+      "reviews/result-postgresql-advocate.md": "4ecef26702e3870e77d0188babeaf207ca2d874da1636193d6d81efbaaebb979",
+      "runner/results/lab02/supervise.log": "e5cc4e61ee03c52af61a7b38cb3388a2b07974932e2aa147c0922f2da19e820a"
+    },
+    "exception": "supervise.log final version is from later private commit dc62a35fbb3a534738738d983cc24e3359dc9d6f; at d5e74de7 it was f6c8342b8e16e3ded02fd1adf80d4513a9c3b67687388c55044237679dbd23ce."
+  },
+  "originalManifest": {
+    "entries": 6020,
+    "preservedUnchanged": true,
+    "retainedWhere": "Private source at the pinned commit and mission evidence archive; not copied to the public site.",
+    "listedDisturbancesSha256": "f04fef34188eb9ccc140c86460138f123acfaa6bfef88098a9e5e09bef389036",
+    "doesNotVerifyLaterDocuments": true
+  },
+  "laterDocuments": {
+    "DISTURBANCES.md": {
+      "sha256": "c13174ece428dc180232c3e3451607dd49a1d0ab05e01bd54f3a0d8a601a0a6f",
+      "change": "Reconciled all 48 discards after original manifest creation."
+    },
+    "supervise.log": {
+      "sha256": "e5cc4e61ee03c52af61a7b38cb3388a2b07974932e2aa147c0922f2da19e820a",
+      "earlierDraftSha256": "5699fc7c074a5d241648eef60b41a0b5dda10c4ce30b34b997ad0d718bf3313a",
+      "commit": "dc62a35fbb3a534738738d983cc24e3359dc9d6f",
+      "change": "Includes finish and supervise-done lines after the draft snapshot."
+    }
+  },
+  "publicationPolicy": "Additive final-document pins; original manifest is never described as validating later documents.",
+  "recount": {
+    "sourceCellFiles": 334,
+    "gitBlobIdentitiesVerified": 334,
+    "verdictPairValuesChecked": 240,
+    "databaseExperimentRerun": false,
+    "full6020FileAudit": false
+  },
+  "reviewBoundary": "Original result advocate reviews are reviews of earlier drafts with vetoes and requested remedies, not final acceptance of this publication. The reported corrections are traceable; final publication review is recorded separately by the landing process."
+}

@@ -58,6 +58,7 @@
   "composable-harness-pre-registration": ["agents", "infrastructure"],
   "composable-harness-results": ["agents", "infrastructure"],
   "failover-pre-registration": ["databases", "infrastructure"],
+  "failover-results": ["databases", "infrastructure"],
   "flash-on-the-review-bench": ["reviewers", "models", "cost"],
   "free-model-own-bug-history": ["reviewers", "models"],
   "jev-as-a-fast-gate": ["gates", "architecture", "models"],

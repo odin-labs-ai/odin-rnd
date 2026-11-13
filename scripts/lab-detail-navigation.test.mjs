@@ -47,7 +47,9 @@ test('the published render requires checked tiles and pages, and Failover metada
     tile.status = 'Pre-registered; next step under review';
     const alternatePrereg = 'journal/failover-pre-registration-alt.html';
     copyFileSync(join(fixture, 'site/journal/failover-pre-registration.html'), join(fixture, 'site', alternatePrereg));
-    tile.links[0].href = alternatePrereg;
+    const planIndex = tile.links.findIndex(link => /pre-?registration/i.test(link.label) && /pre-?registration/i.test(link.href));
+    assert.ok(planIndex >= 0, 'the fixture changes the actual plan rather than a result link');
+    tile.links[planIndex].href = alternatePrereg;
     tile.links.push({ label: 'Another plan copy', href: alternatePrereg });
     tile.links.push({ label: 'This lab page', href: 'labs/failover/index.html' });
     writeFileSync(tilePath, JSON.stringify(tile));
@@ -65,12 +67,12 @@ test('the published render requires checked tiles and pages, and Failover metada
     assert.ok(!sources.includes(`href="../../${alternatePrereg}"`), 'the source list omits both copies of the plan link');
     assert.equal(changed.stdout.split(`href="../../${alternatePrereg}"`).length - 1, 1, 'the plan link appears once');
     assert.ok(!sources.includes('href="../../labs/failover/index.html"'), 'the source list omits a link to itself');
-    tile.links[0].label = 'The plan';
+    tile.links[planIndex].label = 'The plan';
     writeFileSync(tilePath, JSON.stringify(tile));
     const noPrereg = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
     assert.equal(noPrereg.status, 1, noPrereg.stderr);
     assert.match(noPrereg.stderr, /expected one pre-registration link in the checked tile/);
-    tile.links[0].label = 'The pre-registration (EXP 021)';
+    tile.links[planIndex].label = 'The pre-registration (EXP 021)';
     tile.links.push({ label: 'Pre-registration record', href: 'data/failover/preregistration.json' });
     writeFileSync(tilePath, JSON.stringify(tile));
     const twoPrereg = spawnSync(process.execPath, ['--input-type=module', '-e', "import {renderLabs} from './scripts/labs.mjs'; renderLabs('site', {requireBench: false});"], { cwd: fixture, encoding: 'utf8' });
@@ -93,14 +95,17 @@ test('the published render requires checked tiles and pages, and Failover metada
   }
 });
 
-test('the failover page shows the published plan and status without implying a result', () => {
+test('the failover page shows its published result, plan and bounded status', () => {
   const page = renderLabs()['labs/failover/index.html'];
   const tile = readTiles().find(item => item.experiment === 'failover');
   assert.ok(page);
   assert.ok(page.includes(tile.question));
   assert.ok(page.includes(tile.how));
   assert.ok(page.includes(tile.status), 'the page reflects the checked tile status');
-  assert.ok(page.includes(tile.kind === 'results' ? 'A result is published.' : 'No counted result is published yet.'));
+  assert.equal(tile.kind, 'results', 'the completed experiment uses the results metadata contract');
+  assert.ok(page.includes('A result is published.'));
+  assert.doesNotMatch(page, /No counted result is published yet\./);
+  assert.ok(page.includes(`href="../../${tile.record.href}"`), 'the published result record is reachable');
   const prereg = `data/${tile.experiment}/preregistration.json`;
   assert.ok(existsSync(join('site', prereg)), 'the checked tile requires a published pre-registration');
   const preregLinks = tile.links.filter(link => /pre-?registration/i.test(link.label) && /pre-?registration/i.test(link.href));

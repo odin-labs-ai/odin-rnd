@@ -16,7 +16,7 @@ const webpSibling = (path, width) => path.replace(/\.(png|jpe?g)$/, `-${width}.w
 // Lab 03's tile is required on every Labs index, so a fixture site carries it and the records it links.
 // Lab 02 (scripts/brain-bench.mjs): its template, words, record, the record's pin and its tile (scripts/lab-tiles.mjs).
 const LAB02_FILES = ['labs/brain-bench/index.html', 'data/labs/brain-bench.json', 'data/labs/brain-bench/results.json', 'data/labs/brain-bench/results.sha256', 'data/labs/brain-bench-tile.json'];
-const LAB03_FILES = ['data/labs/failover.json', 'data/failover/preregistration.json', 'data/failover/amendment-01.json', 'data/failover/amendment-02.json', 'journal/failover-pre-registration.html'];
+const LAB03_FILES = ['data/labs/failover.json', 'data/failover/preregistration.json', 'data/failover/amendment-01.json', 'data/failover/amendment-02.json', 'journal/failover-pre-registration.html', 'journal/failover-results.html', 'data/failover/amendment-03.json', 'data/failover/results.json', 'data/failover/results.sha256'];
 function emptyPages() {
   const root = mkdtempSync(join(tmpdir(), 'labs-empty-'));
   try {
