@@ -18,16 +18,41 @@ const desc = (tag, body) => Buffer.concat([Buffer.from([tag, body.length]), body
 /** An esds naming `oti` (0x40 MPEG-4 audio) and audio object type `aot` (2 AAC LC). */
 const esds = (oti = 0x40, aot = 2) => full('esds', desc(0x03, Buffer.concat([Buffer.from([0, 1, 0]),
   desc(0x04, Buffer.concat([Buffer.from([oti, 0x15]), Buffer.alloc(11), desc(0x05, Buffer.from([(aot << 3) | 1, 0x10]))])), desc(0x06, Buffer.from([2]))])));
-function trak({ handler = 'vide', codec = 'avc1', profile = 100, level = 40, seconds = 4, oti = 0x40, aot = 2, withEsds = true } = {}) {
-  const avcC = box('avcC', Buffer.from([1, profile, 0, level]));
+/** A sequence parameter set NAL: High (or `profile`), level 4.0, the given chroma format, 8-bit. */
+function sps(profile = 100, chroma = 1) {
+  const bitsOf = { 1: '1' + '010' + '1' + '1', 3: '1' + '00100' + '0' + '1' + '1' }[chroma];
+  const body = [100, 110, 122, 244].includes(profile) ? bitsOf + '1' : '1' + '1';
+  const padded = body.padEnd(Math.ceil(body.length / 8) * 8, '0');
+  return Buffer.concat([Buffer.from([0x67, profile, 0, 40]), Buffer.from(padded.match(/.{8}/g).map(b => parseInt(b, 2)))]);
+}
+const u16 = n => { const b = Buffer.alloc(2); b.writeUInt16BE(n); return b; };
+function avcCBody({ profile = 100, level = 40, chroma = 1, pps = true } = {}) {
+  const s = sps(profile, chroma), p = Buffer.from([0x68, 0xce, 0x38, 0x80]);
+  return Buffer.concat([Buffer.from([1, profile, 0, level, 0xff, 0xe1]), u16(s.length), s, pps ? Buffer.concat([Buffer.from([1]), u16(p.length), p]) : Buffer.from([0])]);
+}
+// A track is described by its options; progressive() lays the file out and points each track's one sample into mdat.
+const trak = (options = {}) => options;
+const VIDEO_SAMPLE = Buffer.from([0, 0, 0, 3, 0x65, 0x88, 0x84]), AUDIO_SAMPLE = Buffer.alloc(4, 0x21);
+function trakBox({ handler = 'vide', codec = 'avc1', profile = 100, level = 40, chroma = 1, pps = true, seconds = 4, oti = 0x40, aot = 2, withEsds = true, entries = 1, sample = null } = {}, offset = 0) {
+  const avcC = box('avcC', avcCBody({ profile, level, chroma, pps }));
   const entry = codec === 'avc1' ? box('avc1', Buffer.concat([Buffer.alloc(78), avcC]))
     : codec === 'mp4a' ? box('mp4a', Buffer.concat([Buffer.alloc(28), withEsds ? esds(oti, aot) : Buffer.alloc(0)])) : box(codec, Buffer.alloc(28));
-  const stsd = full('stsd', Buffer.concat([u32(1), entry]));
+  const stsd = full('stsd', Buffer.concat([u32(entries), ...Array(entries).fill(entry)]));
+  const size = (sample ?? (handler === 'soun' ? AUDIO_SAMPLE : VIDEO_SAMPLE)).length;
+  const stbl = box('stbl', Buffer.concat([stsd, full('stsc', Buffer.concat([u32(1), u32(1), u32(1), u32(1)])), full('stsz', Buffer.concat([u32(0), u32(1), u32(size)])), full('stco', Buffer.concat([u32(1), u32(offset)]))]));
   const hdlr = full('hdlr', Buffer.concat([Buffer.alloc(4), Buffer.from(handler, 'latin1'), Buffer.alloc(12)]));
   const mdhd = full('mdhd', Buffer.concat([u32(0), u32(0), u32(1000), u32(Math.round(seconds * 1000)), Buffer.alloc(4)]));
-  return box('trak', box('mdia', Buffer.concat([mdhd, hdlr, box('minf', box('stbl', stsd))])));
+  return box('trak', box('mdia', Buffer.concat([mdhd, hdlr, box('minf', stbl)])));
 }
-const progressive = (fill = 1, tracks = [trak()]) => Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0isomavc1', 'latin1')), box('moov', Buffer.concat(tracks)), box('mdat', Buffer.alloc(32, fill))]);
+const FTYP = box('ftyp', Buffer.from('isom\0\0\x02\0isomavc1', 'latin1'));
+/** A faststart MP4: ftyp, moov with the given tracks, then mdat holding each track's one sample. */
+function progressive(fill = 1, tracks = [trak()]) {
+  const samples = tracks.map(t => t.sample ?? (t.handler === 'soun' ? AUDIO_SAMPLE : VIDEO_SAMPLE));
+  const moovAt = offsets => box('moov', Buffer.concat(tracks.map((t, i) => trakBox(t, offsets[i]))));
+  const start = FTYP.length + moovAt(tracks.map(() => 0)).length + 8;
+  const offsets = samples.map((_, i) => start + samples.slice(0, i).reduce((n, b) => n + b.length, 0) + (tracks[i].shift ?? 0));
+  return Buffer.concat([FTYP, moovAt(offsets), box('mdat', Buffer.concat([...samples, Buffer.alloc(32, fill)]))]);
+}
 const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
 
 /** A site root with one film, its copy and a record for it; returns the root and the record. */
@@ -86,7 +111,7 @@ test('a WebM that changed after its copy was made is refused', () => {
 });
 
 test('a copy with moov after mdat (not faststart) is refused', () => {
-  const late = Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0', 'latin1')), box('mdat', Buffer.alloc(32)), box('moov', trak())]);
+  const late = Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0', 'latin1')), box('mdat', Buffer.alloc(32)), box('moov', trakBox())]);
   assert.deepEqual(progressiveProblems(progressive()), []);
   assert.ok(progressiveProblems(late).some(p => /not faststart/.test(p)));
   assert.ok(progressiveProblems(Buffer.from('not an mp4 at all')).length > 0);
@@ -147,7 +172,8 @@ test('the dist pass fails closed on an unpaired WebM and on a copy no page plays
 test('a copy must be one H.264 video track a browser decodes, with sound exactly when recorded, of the recorded length', () => {
   const entry = { seconds: 4, audio: false };
   assert.deepEqual(trackProblems(progressive(), entry), []);
-  assert.deepEqual(mp4Facts(progressive()).tracks, [{ handler: 'vide', codec: 'avc1', profile: 100, level: 40, seconds: 4, objectType: null, audioObjectType: null }]);
+  const [facts] = mp4Facts(progressive()).tracks;
+  assert.deepEqual({ ...facts, avcC: undefined, samples: facts.samples.length }, { handler: 'vide', codec: 'avc1', entries: 1, profile: 100, level: 40, seconds: 4, objectType: null, audioObjectType: null, avcC: undefined, samples: 1 });
   const refused = (tracks, e, pattern) => assert.ok(trackProblems(progressive(1, tracks), { ...entry, ...e }).some(p => pattern.test(p)), String(pattern));
   refused([trak({ codec: 'hvc1' })], {}, /is hvc1, not H\.264/);
   refused([trak({ codec: 'av01' })], {}, /is av01, not H\.264/);
@@ -199,12 +225,15 @@ test('each copy ends within half a second of its WebM and has sound exactly when
 
 // Where ffmpeg is installed: every screened frame's hash is recomputed from the copy itself, the way the record was made
 // (ffmpeg -ss <t> -i <copy> -frames:v 1, raw rgb24), so the frame list is bound to the bytes, not only to the author.
+// The YUV to RGB step is ffmpeg's default scaler, which is not promised to be bit-identical across ffmpeg builds: a
+// mismatch on another build is a reason to compare decoders before suspecting the copy.
 let ffmpeg = true;
 try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { ffmpeg = false; }
 test('every screened frame of every copy hashes to its record (ffmpeg)', { skip: !ffmpeg && 'ffmpeg is not installed' }, () => {
   for (const entry of readFallbacks('site').fallbacks) {
     for (const frame of entry.screening.frames) {
       const raw = execFileSync('ffmpeg', ['-nostdin', '-v', 'error', '-ss', String(frame.t), '-i', join('site', entry.mp4), '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 64 * 1024 * 1024 });
+      assert.equal(raw.length, 1280 * 720 * 3, `${entry.mp4} at ${frame.t} s decodes to one whole 1280x720 frame`);
       assert.equal(sha256(raw), frame.rgb24Sha256, `${entry.mp4} at ${frame.t} s`);
     }
   }
@@ -261,4 +290,33 @@ test('the dist pass refuses a published copy whose bytes are not the record\'s',
     writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
     assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /is not in .* with its recorded sha256/);
   } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
+});
+
+test('every video sample must lie in the media data and be a whole sequence of H.264 NAL units, the first an IDR frame', () => {
+  const entry = { seconds: 4, audio: false };
+  const has = (tracks, pattern) => assert.ok(trackProblems(progressive(1, tracks), entry).some(p => pattern.test(p)), String(pattern));
+  has([trak({ sample: Buffer.from([0, 0, 0, 3, 0x41, 0x9a, 0x02]) })], /first video sample is not an IDR frame/);
+  has([trak({ sample: Buffer.from([0, 0, 0, 9, 0x65, 0x88, 0x84]) })], /not a whole sequence of H\.264 NAL units/);
+  has([trak({ sample: Buffer.from([0, 0, 0, 3, 0xe5, 0x88, 0x84]) })], /not a whole sequence/);
+  has([trak({ sample: Buffer.from([0, 0, 0, 3, 0x67, 0x88, 0x84]) })], /holds no picture slice/);
+  has([trak({ shift: 100 })], /lies outside the media data/);
+  has([trak({ entries: 2 })], /2 sample descriptions, not 1/);
+  has([trak({ chroma: 3, profile: 244 })], /not 8-bit 4:2:0 \(chroma format 3/);
+  has([trak({ pps: false })], /no picture parameter set/);
+  assert.ok(trackProblems(progressive(1, [trak(), trak({ handler: 'soun', codec: 'mp4a', shift: 100 })]), { ...entry, audio: true }).some(p => /sound samples do not all lie inside/.test(p)));
+  const data = progressive();
+  assert.ok(progressiveProblems(Buffer.concat([data, Buffer.alloc(3)])).some(p => /3 stray bytes after the last box/.test(p)));
+});
+
+test('pairing resolves character references and ignores comments, scripts and styles', () => {
+  const byWebm = new Map([['assets/f.webm', { webm: 'assets/f.webm' }]]);
+  const entity = pairPage('<source src="assets/f&#46;webm">', 'index.html', byWebm);
+  assert.deepEqual([[...entity.used], entity.unpaired], [['assets/f.webm'], []]);
+  assert.match(entity.html, /<source src="assets\/f\.mp4" type="video\/mp4">$/);
+  assert.equal(pairPage('<source src="assets/g&period;webm">', 'index.html', byWebm).unpaired.length, 1, 'an unlisted film behind a reference is reported');
+  for (const inert of ['<!-- <source src="assets/f.webm"> -->', '<script>const t = "<source src=assets/f.webm>";</script>', '<style>/* <video src="x.webm"> */</style>']) {
+    const r = pairPage(inert, 'index.html', byWebm);
+    assert.deepEqual([r.html, r.used.size, r.unpaired], [inert, 0, []], inert);
+  }
+  assert.equal(pairPage("<source src='assets/f.webm?a=\"1\"'>", 'index.html', byWebm).unpaired.length, 1, 'a src that would need escaping is not written back');
 });
