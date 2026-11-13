@@ -29,7 +29,7 @@
     "invalidAttempts": 7,
     "invalidSmoke": 5,
     "invalidCounted": 2,
-    "supervisorSnapshot": "As of the 15:25:34 source draft on10 November:8 supervisor starts,19 restarts,3 finish attempts. Later lines record draft creation, draft commit and supervise done. These are snapshot counts, not a claim the log stopped then."
+    "supervisorSnapshot": "As of the 15:25:34 source draft on 10 November: 8 supervisor starts, 19 restarts, 3 finish attempts. Later lines record draft creation, draft commit and supervise done. These are snapshot counts, not a claim the log stopped then."
   },
   "discards": {
     "count": 48,
@@ -72,8 +72,8 @@
     "Open disturbance window I has no recorded end: five counted seed-2 PostgreSQL files may overlap heavy test work. One is a compared default/F1 value; removing it leaves the sign unchanged. That sensitivity check does not prove clean-run provenance.",
     "PostgreSQL variants are selected on seed1 and compared on seed1. Seed2 outage numbers are out of sample; its gate outcomes participate in selection.",
     "F1b, the Patroni floor and the non-strict outbox-only overhead block are labelled context, never deciding a compared verdict. The overhead block does not isolate slot cost from the strict/non-strict difference.",
-    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all334 cell identities and240 verdict pair values but does not rerun the databases or independently audit all6020 manifest entries.",
+    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all 334 cell identities and 240 verdict pair values but does not rerun the databases or independently audit all 6020 manifest entries.",
     "Original result advocate reviews are reviews of earlier drafts with vetoes and requested remedies, not final acceptance of this publication. The reported corrections are traceable; final publication review is recorded separately by the landing process."
   ],
-  "unchanged": "Pre-registration and amendments01/02 stay byte-identical. No rerun, new scientific rule or retroactive prospective approval."
+  "unchanged": "Pre-registration and amendments 01/02 stay byte-identical. No rerun, new scientific rule or retroactive prospective approval."
 }

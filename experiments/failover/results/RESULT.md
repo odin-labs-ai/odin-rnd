@@ -410,7 +410,7 @@ The original frozen SHA256SUMS is retained in the private evidence archive, unch
 
 Instead of overwriting the frozen manifest, publication-sources.json pins the later source versions separately, and final-document-hashes.sha256 pins this publication's documents. The generator's earlier 22/48 discard mismatch is corrected by the complete 48-file reconciliation above. This additive accounting closes the publication-document identity gap; it does not establish that all raw records match the original manifest.
 
-The source result and amendment drafts are from private revision d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97, dated10 November2026. Source result advocate reviews requested corrections and include vetoes. They are published as earlier draft reviews, not final acceptance. The later result draft incorporates remedies; final independent publication review is a separate landing requirement. Raw cells and runner remain private, so this is an internally evidenced study, not a publicly rerunnable experiment or an independent replication.
+The source result and amendment drafts are from private revision d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97, dated 10 November 2026. Source result advocate reviews requested corrections and include vetoes. They are published as earlier draft reviews, not final acceptance. The later result draft incorporates remedies; final independent publication review is a separate landing requirement. Raw cells and runner remain private, so this is an internally evidenced study, not a publicly rerunnable experiment or an independent replication.
 
 ## Sources
 All paths are relative to the experiment directory.

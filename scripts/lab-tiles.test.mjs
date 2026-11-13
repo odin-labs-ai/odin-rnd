@@ -62,7 +62,17 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   assert.deepEqual(readTiles(root), [], 'a fixture site without the tile renders none');
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
   assert.equal(readTiles(root).length, 1);
-  // Once results are published, "not yet run" is refused until the tile is updated.
+  // A preregistered tile is valid without results, then refused when that file appears.
+  const resultFile = join(root, 'data/failover/results.json');
+  const resultBytes = readFileSync(resultFile);
+  const preregistered = { ...committed, kind: 'preregistered', status: 'Pre-registered, not yet run', links: committed.links.filter(link => link.href !== committed.record.href) };
+  delete preregistered.record;
+  rmSync(resultFile);
+  writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(preregistered));
+  assert.equal(readTiles(root).length, 1, 'the unpublished preregistered tile is valid');
+  writeFileSync(resultFile, resultBytes);
+  assert.throws(() => readTiles(root), /status: says not yet run, but data\/failover\/results\.json is published/);
+  // Independently, kind "results" cannot say "not yet run" even with a valid pin.
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify({ ...committed, status: 'Pre-registered, not yet run' }));
   assert.throws(() => readTiles(root), /status: a results lab has run/);
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));

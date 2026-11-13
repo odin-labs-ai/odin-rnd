@@ -24,3 +24,17 @@ test('EXP 021 public document pins and copied records retain the publication evi
   assert.doesNotMatch(page, /REPOresults|REPOreviews/);
   for (const caveat of ['no overall winner', 'does not establish equal two-copy durability', 'Window I remains open', 'not final acceptance']) assert(page.toLowerCase().includes(caveat.toLowerCase()), caveat);
 });
+
+
+test('EXP 021 summaries distinguish the four write-outage fits from the two acknowledgement-gap fits', () => {
+  const result = JSON.parse(readFileSync('experiments/failover/results.json'));
+  const compared = ['default', 'tuned'].flatMap(mode => ['F1', 'F2a', 'F2b', 'F3'].map(fault => result.verdict.scenarios[`${mode}/${fault}`]));
+  const mongo = compared.filter(row => row.verdict === 'mongodb-fits');
+  assert.equal(mongo.filter(row => row.compared_metric === 'outage').length, 4);
+  assert.equal(mongo.filter(row => row.compared_metric === 'ack_gap').length, 2);
+  assert.equal(compared.filter(row => row.verdict === 'postgres-fits' && row.basis === 'gate-only').length, 2);
+  assert.match(result.summary, /four on write outage and two on acknowledgement gap/);
+  for (const file of ['site/journal/failover-results.html', 'site/index.html', 'site/data/updates.json', 'site/updates/index.html']) {
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /fits six outage scenarios|six of eight compared(?: fault)? scenarios on outage/, file);
+  }
+});

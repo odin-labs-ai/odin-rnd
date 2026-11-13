@@ -5,7 +5,7 @@
   "date": "2026-11-11",
   "measuredFrom": "2026-11-08T10:17:44Z",
   "measuredThrough": "2026-11-10T14:25:14Z",
-  "summary": "MongoDB fits six of eight compared scenarios on outage; PostgreSQL fits both peer-only partition scenarios through the feed gate. No overall winner. Strict-ack and disturbance uncertainties remain.",
+  "summary": "MongoDB fits six of eight compared scenarios on the selected timing metric: four on write outage and two on acknowledgement gap; PostgreSQL fits both peer-only partition scenarios through the feed gate. No overall winner. Strict-ack and disturbance uncertainties remain.",
   "sourceCommit": "d5e74de709cfe0ab0e6ef575cdefd28bdaf6ae97",
   "sourceVerdictSha256": "d2e7a0294d9158f1db6bba89b180a72d03135359a2dc02672fbbcee4b233e9fb",
   "verdict": {
@@ -1265,7 +1265,7 @@
     "Open disturbance window I has no recorded end: five counted seed-2 PostgreSQL files may overlap heavy test work. One is a compared default/F1 value; removing it leaves the sign unchanged. That sensitivity check does not prove clean-run provenance.",
     "PostgreSQL variants are selected on seed1 and compared on seed1. Seed2 outage numbers are out of sample; its gate outcomes participate in selection.",
     "F1b, the Patroni floor and the non-strict outbox-only overhead block are labelled context, never deciding a compared verdict. The overhead block does not isolate slot cost from the strict/non-strict difference.",
-    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all334 cell identities and240 verdict pair values but does not rerun the databases or independently audit all6020 manifest entries.",
+    "Source cells, runner, raw logs and original checksum manifest remain private. Hashes identify records, not correctness or independent replication. This publication recount checks all 334 cell identities and 240 verdict pair values but does not rerun the databases or independently audit all 6020 manifest entries.",
     "Original result advocate reviews are reviews of earlier drafts with vetoes and requested remedies, not final acceptance of this publication. The reported corrections are traceable; final publication review is recorded separately by the landing process."
   ],
   "report": "experiments/failover/results/RESULT.md",
