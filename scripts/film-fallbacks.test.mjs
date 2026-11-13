@@ -221,7 +221,7 @@ test('a decoder is present wherever one is required', () => {
   if (required) assert.ok(ffmpeg && ffprobe, 'FILM_DECODER_REQUIRED is set but ffmpeg or ffprobe is missing');
 });
 
-test('every copy decodes start to end with no error, to exactly as many video frames as it has samples (ffmpeg, ffprobe)', { skip: decoderSkip('ffmpeg') || decoderSkip('ffprobe') }, () => {
+test('every copy decodes start to end with no error, to exactly as many video frames as it has samples, and its screened frames hash to the record (ffmpeg, ffprobe)', { skip: decoderSkip('ffmpeg') || decoderSkip('ffprobe') }, () => {
   for (const entry of readFallbacks('site').fallbacks) {
     const file = join('site', entry.mp4);
     const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-xerror', '-i', file, '-map', '0', '-f', 'null', '-'], { encoding: 'utf8' });
@@ -231,6 +231,14 @@ test('every copy decodes start to end with no error, to exactly as many video fr
     const [video] = mp4Facts(readFileSync(file)).tracks;
     assert.equal(frames, video.samples.length, `${entry.mp4}: decoded frames vs samples`);
     assert.ok(frames >= entry.seconds * 14, `${entry.mp4}: ${frames} frames for ${entry.seconds} s`);
+    // The screened frames, as the decoder outputs them (raw yuv420p, no scaler: the same bytes on every platform).
+    const digest = createHash('sha256');
+    for (const frame of entry.screening.frames) {
+      const raw = execFileSync('ffmpeg', ['-nostdin', '-v', 'error', '-ss', String(frame.t), '-i', file, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'yuv420p', '-'], { maxBuffer: 16 * 1024 * 1024 });
+      assert.equal(raw.length, 1280 * 720 * 3 / 2, `${entry.mp4} at ${frame.t} s decodes to one whole 1280x720 frame`);
+      digest.update(raw);
+    }
+    assert.equal(digest.digest('hex'), entry.screening.yuv420pSha256, `${entry.mp4}: the screened frames`);
   }
 });
 
@@ -284,7 +292,7 @@ test('a box that runs past the end of the file is refused', () => {
   assert.ok(progressiveProblems(data.subarray(0, data.length - 4)).some(p => /runs past the end/.test(p)));
 });
 
-test('anything in markup or a script that names a WebM outside the paired forms stops the build, whatever its markup', () => {
+test('anything in a tag, a comment or an opaque element that names a WebM outside the paired forms stops the build', () => {
   const byWebm = new Map([['assets/f.webm', { webm: 'assets/f.webm' }]]);
   const ok = '<video controls><source src="assets/f.webm" type="video/webm"></video>';
   const reported = [
@@ -294,17 +302,24 @@ test('anything in markup or a script that names a WebM outside the paired forms 
     '<video><source type="video/webm"></video>', '<video><source src="assets/f&#46;webm" type="video/mp4"></video>',
     '<video><source src="assets/f.web&#109;" type="video/mp4"></video>', '<embed src="assets/f.webm">',
     '<!-- <source src="assets/f.webm" type="video/webm"> -->', '<script>const t = "<source src=assets/f.webm>";</script>',
-    '<script-x></script-x><video><source src="assets/f.WEBM" type="video/mp4"></video>', '<p>&lt;video src=x.webm&gt;</p>',
+    '<script-x></script-x><video><source src="assets/f.WEBM" type="video/mp4"></video>',
+    '<video title="a > b" src="assets/u.webm" controls></video>', '<video aria-label="Lab 01 &gt; tour" src="assets/u.webm"></video>',
+    '<video><source title="A > B" src="assets/u.webm" type="video/webm"></video>', `<button onclick="if(n>0)v.src='assets/u.webm'">x</button>`,
+    '<video src="assets/u.we&#9;bm"></video>', '<video src="assets/u.we&Tab;bm"></video>', '<video src="assets/u.we\nbm"></video>',
+    '<video><!-- <source src="assets/f.webm" type="video/webm"> --></video>', '<template><video><source src="assets/f.webm" type="video/webm"></video></template>',
+    `<script>const t = '<video controls><source src="assets/f.webm" type="video/webm"></video>';</script>`,
     '<picture><source src="assets/f.webm" type="video/webm"></picture>', '<video></video><source src="assets/f.webm" type="video/webm">',
     '<p title="&#99999999;">x</p><video src=v=1/f.webm></video>'];
   for (const html of reported) {
     const r = pairPage(html, 'index.html', byWebm);
     assert.ok(r.unpaired.length >= 1, html);
+    assert.equal(r.used.size, 0, `${html}: nothing inert or unlisted counts as played`);
   }
   const r = pairPage(ok, 'index.html', byWebm);
   assert.deepEqual([[...r.used], r.unpaired], [['assets/f.webm'], []]);
   assert.deepEqual(pairPage('<a href="assets/f.webm">download the film</a>', 'index.html', byWebm).unpaired, [], 'a plain link is not a player');
   assert.deepEqual(pairPage('<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', 'index.html', byWebm).unpaired, [], 'prose and link text play nothing');
+  assert.deepEqual(pairPage('<p>A tag in prose: &lt;video src=x.webm&gt;</p>', 'index.html', byWebm).unpaired, [], 'escaped markup in prose is text');
   assert.deepEqual(pairPage('<p title="&#99999999;">a code point no browser accepts</p>', 'index.html', byWebm).unpaired, [], 'it does not throw');
 });
 

@@ -13,18 +13,20 @@
 // not the record's; or when its screening record does not match it or leaves part of it out.
 //
 // WHAT A DECODER SHOWS is in scripts/film-fallbacks.test.mjs, and the Film copies workflow
-// (.github/workflows/film-copies.yml) installs ffmpeg and runs it on every pull request and push to main with
+// (.github/workflows/film-copies.yml) installs ffmpeg and runs it on every pull request and on the default branch with
 // FILM_DECODER_REQUIRED set, so there a missing decoder fails instead of skipping: every copy decodes start to end with
-// no error, to exactly as many frames as it has samples, and ends within half a second of its WebM. The screened frame
-// hashes are recomputed where the ffmpeg version is the one the record names. That a copy shows the same shots as its
-// WebM is what its screening record states (one frame every five seconds, viewed by an AI agent); a decoder shows the
-// copy plays, not what it shows.
+// no error, to exactly as many frames as it has samples, ends within half a second of its WebM, and its screened frames,
+// decoded as raw yuv420p (the decoder's own output, the same on every platform), hash to the screening record's
+// yuv420pSha256. The per-frame rgb24 hashes go through ffmpeg's default scaler, which differs across versions and CPUs,
+// so they are recomputed only with the ffmpeg version the record names. That a copy shows the same shots as its WebM is
+// what its screening record states (one frame every five seconds, viewed by an AI agent); a decoder shows the copy
+// plays and which frames were screened, not what they show.
 //
 // The pages are not edited for this: after the build has written every page, addFilmFallbacks() puts a
 // <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
-// byte for byte). It fails closed both ways: a page that names a WebM anywhere outside the paired forms stops the
-// build (see pairPage), and so does a listed copy whose WebM no page plays. Only built .html pages are read: no page of
-// this site builds a player in script (a script naming a WebM would itself be refused, being outside the forms).
+// byte for byte). It fails closed both ways: a page that names a WebM in a tag, a comment or a script outside the
+// paired forms stops the build (see pairPage), and so does a listed copy whose WebM no page plays. Only built .html
+// pages are read; an inline script naming a WebM is refused, and no page of this site loads a script from elsewhere.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
@@ -318,7 +320,7 @@ export function fallbacksProblems(record, where = FALLBACKS_FILE, root = null) {
     if (seen.has(entry.webm)) problems.push(`${at}/webm: ${entry.webm} is listed twice`);
     seen.add(entry.webm);
     if (entry.mp4 !== entry.webm.replace(/\.webm$/, '.mp4')) problems.push(`${at}/mp4: must sit beside its WebM with the same name (${entry.webm.replace(/\.webm$/, '.mp4')})`);
-    const { frames, srcSha256, ...screeningText } = entry.screening;
+    const { frames, srcSha256, yuv420pSha256, ...screeningText } = entry.screening;
     problems.push(...screenTree(screeningText, `${at}/screening`));
     problems.push(...screeningProblems({ screening: entry.screening, sha256: { src: entry.sha256 }, seconds: entry.seconds }, `${at}/screening`));
     const limit = limitFor(entry.webm);
@@ -348,51 +350,109 @@ export function readFallbacks(root = 'site') {
 
 // Character references, resolved the way a browser does before it reads text or fetches a URL (&#46;webm is .webm); a
 // code point a browser would not accept becomes U+FFFD, as it does there.
-const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', colon: ':', num: '#', quest: '?', equals: '=' };
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', colon: ':', num: '#', quest: '?', equals: '=', tab: '\t', newline: '\n' };
 const codePoint = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : '�');
 export const decodeValue = value => value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));?/g, (whole, dec, hex, name) =>
   dec ? codePoint(Number(dec)) : hex ? codePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
 
 // The one form a WebM film is played in on this site, as every generator and the home page write it: a <source> with a
-// plain double-quoted src ending in .webm and a video/webm type, inside a <video>. Only this form is paired.
-const PLAYED = /<source src="([^"<>&\s]+\.webm)" type="video\/webm[^"<>]*">/g;
-// The one form a page may otherwise name a WebM in: a plain link to the file, which opens it and plays nothing here.
-const LINKED = /<a\b[^<>]*?\shref="[^"<>\s]+\.webm"[^<>]*>/g;
+// plain double-quoted src ending in .webm and a video/webm type, as a live tag inside an open <video>. Only this form is
+// paired. A tag must be exactly this text, start to end.
+const PLAYED = /^<source src="([^"<>&\s]+\.webm)" type="video\/webm[^"<>&]*">$/;
+// The one form a page may otherwise name a WebM in markup: a plain link to the file, which opens it and plays nothing.
+const LINKED = /^<a href="[^"<>&\s]+\.webm"(?: [a-z-]+="[^"<>&]*")*>$/;
+// Elements whose content is not live markup: raw text (script, style, textarea, title, xmp, noscript, plaintext) and
+// <template>, whose content is parsed but never rendered. A WebM named anywhere inside one stops the build.
+const OPAQUE = new Set(['script', 'style', 'textarea', 'title', 'xmp', 'noscript', 'plaintext', 'template', 'noembed', 'noframes', 'iframe']);
+// What a browser strips from a URL before it fetches it (tab, line feed, carriage return), and white space generally:
+// a WebM is found whatever is written between its letters.
+const named = text => /webm/i.test(decodeValue(text).replace(/[\s\u0000-\u001f]+/g, ''));
+
+/**
+ * The page cut into tokens the way a browser's tokenizer does, as far as it matters here: text; a comment (through -->
+ * or --!>, or <!--> and <!--->, or the end); a tag (through the first > outside a quoted attribute value), with its name;
+ * and the content of an opaque element (through its end tag, or the end of the page).
+ */
+export function tokens(html) {
+  const out = [];
+  let i = 0;
+  const push = (kind, start, end, name = '') => { if (end > start) out.push({ kind, start, end, name, text: html.slice(start, end) }); };
+  while (i < html.length) {
+    const lt = html.indexOf('<', i);
+    if (lt < 0) { push('text', i, html.length); break; }
+    push('text', i, lt);
+    if (html.startsWith('<!--', lt)) {
+      const short = /^<!--->?|^<!-->/.exec(html.slice(lt, lt + 5));
+      if (short) { push('comment', lt, lt + short[0].length); i = lt + short[0].length; continue; }
+      const m = /--!?>/g; m.lastIndex = lt + 4;
+      const close = m.exec(html);
+      const end = close ? close.index + close[0].length : html.length;
+      push('comment', lt, end); i = end; continue;
+    }
+    const name = /^<\/?([a-zA-Z][^\s/>]*)/.exec(html.slice(lt, lt + 64));
+    if (!name) {
+      // <! , <? and </ not followed by a letter are bogus comments through the next >; a lone < is text.
+      if (/^<[!?]|^<\/[^a-zA-Z]/.test(html.slice(lt, lt + 3))) { const gt = html.indexOf('>', lt); const end = gt < 0 ? html.length : gt + 1; push('comment', lt, end); i = end; continue; }
+      push('text', lt, lt + 1); i = lt + 1; continue;
+    }
+    // Through the first > outside a quoted value; a quote only opens a value right after "=" (with optional space).
+    let j = lt + name[0].length, quote = null;
+    for (; j < html.length; j++) {
+      const c = html[j];
+      if (quote) { if (c === quote) quote = null; continue; }
+      if (c === '>') break;
+      if ((c === '"' || c === "'") && /=\s*$/.test(html.slice(Math.max(lt, j - 16), j))) quote = c;
+    }
+    const end = Math.min(html.length, j + 1);
+    const tagName = name[1].toLowerCase(), closing = html[lt + 1] === '/';
+    push(closing ? 'endtag' : 'tag', lt, end, tagName);
+    i = end;
+    if (!closing && OPAQUE.has(tagName)) {
+      const close = new RegExp(`</${tagName}[\\s/>]`, 'gi'); close.lastIndex = i;
+      const m = close.exec(html);
+      const stop = m ? m.index : html.length;
+      push('opaque', i, stop, tagName); i = stop;
+    }
+  }
+  return out;
+}
 
 /**
  * One page with an MP4 <source> after each WebM <source>. `page` is the page's path inside the site ('labs/x/index.html'),
  * `byWebm` maps a site path ('assets/…/film.webm') to its copy. Returns the new html, the WebMs it played and every
  * WebM mention it could not account for.
  *
- * Fail closed without parsing HTML: a <source> in the PLAYED form inside an open <video> whose src resolves to a listed
- * film is paired; then every PLAYED tag, its inserted copy and every LINKED link are taken out of a copy of the page,
- * character references in what is left are resolved, and any "webm" still inside markup or a script (any case: another
- * tag or quoting, a data-src, a <video src>, a comment, a script string) stops the build. Prose and link text, which
- * play nothing, are not read; a WebM written there is only words.
- * A page that already carries the copy right after the WebM is left as it is.
+ * Fail closed: the page is tokenized (tokens()); a live tag that is exactly the PLAYED form, inside an open <video>,
+ * whose src resolves to a listed film, is paired, and a live tag that is exactly the LINKED form is a link. Every other
+ * tag, every comment and the content of every opaque element is read for a WebM, with character references resolved and
+ * white space and control characters taken out (what a browser strips from a URL); any one stops the build. Text between
+ * tags (prose, link text) plays nothing and is not read. A page that already carries the copy right after the WebM is
+ * left as it is.
  */
 export function pairPage(html, page, byWebm) {
   const used = new Set(), unpaired = [];
-  const out = html.replace(PLAYED, (tag, src, offset) => {
-    const before = html.slice(0, offset).toLowerCase();
-    const open = before.lastIndexOf('<video'), close = before.lastIndexOf('</video');
-    const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(src) ? posix.normalize(posix.join(posix.dirname(page), src)) : null;
-    const entry = resolved && byWebm.get(resolved);
-    if (open < 0 || close > open || !entry) { unpaired.push(`${page}: <source src="${src}">${open < 0 || close > open ? ' outside a <video>' : ' is not a listed film'}`); return tag; }
-    used.add(entry.webm);
-    const insert = `<source src="${src.replace(/\.webm$/, '.mp4')}" type="video/mp4">`;
-    return html.startsWith(insert, offset + tag.length) ? tag : tag + insert;
-  });
-  // Everything left that names a WebM where it could play: inside markup (a tag, a comment) or inside a script, after the
-  // accounted forms are taken out and character references resolved. Prose and link text play nothing and are not read.
-  const rest = decodeValue(out.replace(PLAYED, ' ').replace(/<source src="[^"<>]*\.mp4" type="video\/mp4">/g, ' ').replace(LINKED, ' '));
-  const lower = rest.toLowerCase();
-  for (const m of rest.matchAll(/webm/gi)) {
-    const before = lower.slice(0, m.index);
-    const inMarkup = before.lastIndexOf('<') > before.lastIndexOf('>');
-    const inScript = before.lastIndexOf('<script') > before.lastIndexOf('</script');
-    if (inMarkup || inScript) unpaired.push(`${page}: "${rest.slice(Math.max(0, m.index - 40), m.index + 20).replace(/\s+/g, ' ')}" names a WebM ${inScript ? 'in a script' : 'in markup'} outside the paired forms`);
+  const all = tokens(html);
+  let videos = 0, out = '', last = 0;
+  for (const [n, t] of all.entries()) {
+    if (t.kind === 'tag' && t.name === 'video') videos++;
+    if (t.kind === 'endtag' && t.name === 'video') videos = Math.max(0, videos - 1);
+    if (t.kind === 'text' || t.kind === 'endtag' && !named(t.text)) continue;
+    const played = t.kind === 'tag' ? PLAYED.exec(t.text) : null;
+    if (played) {
+      const src = played[1];
+      const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(src) ? posix.normalize(posix.join(posix.dirname(page), src)) : null;
+      const entry = resolved && byWebm.get(resolved);
+      if (!videos || !entry) { unpaired.push(`${page}: <source src="${src}">${!videos ? ' outside a <video>' : ' is not a listed film'}`); continue; }
+      used.add(entry.webm);
+      const insert = `<source src="${src.replace(/\.webm$/, '.mp4')}" type="video/mp4">`;
+      const next = all[n + 1];
+      if (!(next && next.text === insert)) { out += html.slice(last, t.end) + insert; last = t.end; }
+      continue;
+    }
+    if (t.kind === 'tag' && LINKED.test(t.text)) continue;
+    if (named(t.text)) unpaired.push(`${page}: "${t.text.slice(0, 80).replace(/\s+/g, ' ')}" names a WebM in ${t.kind === 'tag' || t.kind === 'endtag' ? 'a tag' : t.kind === 'comment' ? 'a comment' : `<${t.name}>`} outside the paired forms`);
   }
+  out += html.slice(last);
   return { html: out, used, unpaired };
 }
 

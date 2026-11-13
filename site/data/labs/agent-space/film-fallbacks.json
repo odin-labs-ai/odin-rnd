@@ -47,6 +47,7 @@
       "rgb24Sha256": "2e9c342826ade6d69b26f14343c93a092752cbd1fd6d9ff1ff032fd2dc71b3b1"
      }
     ],
+    "yuv420pSha256": "4837dbe36672baf688a7c69f65d33eb49c76e59af74e1f826e7436317b50b6ae",
     "checked": [
      "no file path",
      "no local or network address",
@@ -135,6 +136,7 @@
       "rgb24Sha256": "0204e0a4ffe4a1bd751f0d46e1c4deef7898a1802f6cadc82924a657ffb9055b"
      }
     ],
+    "yuv420pSha256": "c6a42a459ba38694d220ca0c919fc7aae196df8ad6644407d606eacd6c5d0b1b",
     "checked": [
      "no file path",
      "no local or network address",
@@ -203,6 +205,7 @@
       "rgb24Sha256": "a4235bb485e4918150f61b103ac8f0931ec435437536b7625ec43a05211d15ae"
      }
     ],
+    "yuv420pSha256": "1de36aeebec485055d756998554f23a28010e55bc9cf0bd6c5a6d4220b1d42cd",
     "checked": [
      "no file path",
      "no local or network address",
@@ -263,6 +266,7 @@
       "rgb24Sha256": "50a3b0140fe76b3edf40ff8bddbd4fdf5eb5f3b92a62cb0e68f0612b20d9afe3"
      }
     ],
+    "yuv420pSha256": "602c5f85e457c3622f973e1df254aec51ff77e134e87c04c1ca99af2dd043d5a",
     "checked": [
      "no file path",
      "no local or network address",
@@ -327,6 +331,7 @@
       "rgb24Sha256": "21b82fb43bc18270f2d18e4aa06c144da9bf9ee233b8392101ba2e8794906095"
      }
     ],
+    "yuv420pSha256": "3c5af3ab90a8774c9efa02e087baa3ddf662e1b3445f328ca40bfbe2e3ddfbeb",
     "checked": [
      "no file path",
      "no local or network address",
@@ -395,6 +400,7 @@
       "rgb24Sha256": "8e3d6b29fe8cbb87c6e304e4be2cea9c32f3ca2bef27f2c1791317c38371bbcb"
      }
     ],
+    "yuv420pSha256": "9bb1f3339f0be8a8b18eeaee59f118ab4ed2f30382005a36c5894eba9e9fa2cf",
     "checked": [
      "no file path",
      "no local or network address",
