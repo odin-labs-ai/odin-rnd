@@ -18,7 +18,10 @@
 // no error, to exactly as many frames as it has samples, ends within half a second of its WebM, and its screened frames,
 // decoded as raw yuv420p (the decoder's own output, the same on every platform), hash to the screening record's
 // yuv420pSha256; and the whole copy is compared with its WebM by SSIM, frame by frame at 5 a second (average at least
-// 0.85, every one-second stretch at least 0.6, and the average 0.1 above the same copy against another film's WebM). SSIM
+// 0.85, every one-second stretch at least 0.6, and the average 0.1 above the same copy against another film's WebM); and
+// a copy with sound carries its WebM's sound: both decoded to mono 8 kHz PCM, correlated sample by sample (the whole film
+// at least 0.98, every second at least 0.9), the same loudness within 1 dB and length within 0.1 s, with a negative
+// control (the same sound moved by a second) and refusal tests for silent, moved, quieter and cut sound. SSIM
 // measures likeness: it refuses a copy whose pictures are unlike its WebM's anywhere for a second or more, not footage
 // that merely looks alike. The per-frame rgb24 hashes go through ffmpeg's default scaler,
 // which differs across versions and CPUs, so they are recomputed only with the ffmpeg version the record names (the CI

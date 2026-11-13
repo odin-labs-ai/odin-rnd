@@ -291,6 +291,75 @@ test('every copy shows its own WebM over the whole film, second by second, and n
   }
 });
 
+// The copy's sound against its WebM's sound, for every film that has sound (only the HQ film today). Both are decoded
+// to mono 8 kHz 16-bit PCM and compared sample by sample (Pearson correlation), at the best offset within 10 ms (an AAC
+// encoder's priming is trimmed by the decoder, so the offset is 0 here; the window allows a decoder that trims it a
+// little differently). Measured 2026-11-13 (ffmpeg 8.1): the HQ copy against its WebM correlates 0.9992 over the
+// whole film and at least 0.986 in every whole second, the same loudness to 0.4%, 44.31 s against 44.30 s; the same
+// copy against its WebM moved by one second correlates below 0.1. So: the whole film at least 0.98, every second at
+// least 0.9 (a second that is silent in one and not the other is refused), the loudness within 1 dB, the length within
+// 0.1 s, and the whole film at least 0.5 above the same comparison moved by one second (the negative control).
+const SOUND_FILM = 0.98, SOUND_SECOND = 0.9, SOUND_DB = 1, SOUND_SECONDS = 0.1, SOUND_MARGIN = 0.5, RATE = 8000;
+const pcm = file => {
+  const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', file, '-map', '0:a:0', '-ac', '1', '-ar', String(RATE), '-f', 's16le', '-'], { maxBuffer: 256 * 1024 * 1024 });
+  assert.equal(run.status, 0, `ffmpeg exited ${run.status} decoding the sound of ${file}: ${run.stderr}`);
+  return new Int16Array(run.stdout.buffer, run.stdout.byteOffset, run.stdout.length >> 1);
+};
+// Pearson correlation of a[from..to) with b shifted by `lag` samples; null when either stretch is (near) silent.
+const SILENT = 8;
+const correlation = (a, b, lag, from = 0, to = a.length) => {
+  let n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+  for (let i = Math.max(from, -lag); i < to && i + lag < b.length; i++) { const x = a[i], y = b[i + lag]; n++; sa += x; sb += y; saa += x * x; sbb += y * y; sab += x * y; }
+  if (!n) return null;
+  const va = saa / n - (sa / n) ** 2, vb = sbb / n - (sb / n) ** 2;
+  if (Math.sqrt(va) < SILENT && Math.sqrt(vb) < SILENT) return null;
+  if (Math.sqrt(va) < SILENT || Math.sqrt(vb) < SILENT) return 0;
+  return (sab / n - (sa / n) * (sb / n)) / Math.sqrt(va * vb);
+};
+const rms = s => Math.sqrt(s.reduce((sum, x) => sum + x * x, 0) / s.length);
+/** Why the sound of `mp4` is not its WebM's sound (an empty list when it is). */
+function soundProblems(webm, mp4) {
+  const a = pcm(webm), b = pcm(mp4), problems = [];
+  if (Math.abs(a.length - b.length) / RATE > SOUND_SECONDS) problems.push(`its sound lasts ${(b.length / RATE).toFixed(2)} s, the WebM's ${(a.length / RATE).toFixed(2)} s`);
+  let lag = 0, whole = -2;
+  for (let l = -RATE / 100; l <= RATE / 100; l++) { const c = correlation(a, b, l) ?? -2; if (c > whole) [whole, lag] = [c, l]; }
+  if (whole < SOUND_FILM) problems.push(`its sound correlates ${whole.toFixed(4)} with the WebM's (at least ${SOUND_FILM})`);
+  for (let k = 0; k + RATE <= Math.min(a.length, b.length - lag); k += RATE) {
+    const c = correlation(a, b, lag, k, k + RATE);
+    if (c !== null && c < SOUND_SECOND) problems.push(`second ${k / RATE} of its sound correlates ${c.toFixed(4)} with the WebM's (at least ${SOUND_SECOND})`);
+  }
+  const db = 20 * Math.log10(Math.max(rms(b), 1e-9) / Math.max(rms(a), 1e-9));
+  if (Math.abs(db) > SOUND_DB) problems.push(`its sound is ${db.toFixed(2)} dB from the WebM's loudness (within ${SOUND_DB} dB)`);
+  const control = correlation(a, b, lag + RATE) ?? 0;
+  if (whole - control < SOUND_MARGIN) problems.push(`its sound correlates ${whole.toFixed(4)} with the WebM's and ${control.toFixed(4)} with the WebM's moved by one second`);
+  return problems;
+}
+test('every copy with sound carries its WebM\'s sound, second by second (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
+  const withSound = readFallbacks('site').fallbacks.filter(entry => entry.audio);
+  assert.ok(withSound.length >= 1, 'the record lists the HQ film with sound');
+  for (const entry of withSound) assert.deepEqual(soundProblems(join('site', entry.webm), join('site', entry.mp4)), [], entry.mp4);
+});
+test('a copy whose sound is silent, moved by a second, quieter or cut short is refused (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
+  const entry = readFallbacks('site').fallbacks.find(e => e.audio);
+  const webm = join('site', entry.webm), mp4 = join('site', entry.mp4);
+  const dir = mkdtempSync(join(tmpdir(), 'film-sound-'));
+  try {
+    // The copy's own pictures with other sound: AAC LC encoded by ffmpeg from the WebM's sound, changed.
+    const remux = (name, filter, extra = []) => {
+      const out = join(dir, `${name}.mp4`);
+      const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', mp4, '-i', webm, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-af', filter, '-c:a', 'aac', '-b:a', '128k', ...extra, out], { encoding: 'utf8' });
+      assert.equal(run.status, 0, `${name}: ${run.stderr}`);
+      return out;
+    };
+    const control = remux('same', 'anull', ['-shortest']);
+    assert.deepEqual(soundProblems(webm, control), [], 'the WebM\'s own sound, encoded again, passes');
+    assert.ok(soundProblems(webm, remux('silent', 'volume=0', ['-shortest'])).some(p => /correlates/.test(p)), 'silent sound');
+    assert.ok(soundProblems(webm, remux('moved', 'adelay=1000:all=1', ['-t', String(entry.seconds)])).some(p => /correlates/.test(p)), 'sound moved by a second');
+    assert.ok(soundProblems(webm, remux('quieter', 'volume=-6dB', ['-shortest'])).some(p => /dB from the WebM's loudness/.test(p)), 'sound 6 dB quieter');
+    assert.ok(soundProblems(webm, remux('short', 'atrim=0:30', ['-shortest'])).some(p => /its sound lasts/.test(p)), 'sound cut at 30 s');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 // Every screened frame's hash, recomputed from the copy itself the way the record was made (ffmpeg -ss <t> -i <copy>
 // -frames:v 1, raw rgb24). The YUV to RGB step is ffmpeg's default scaler, which is not bit-identical across ffmpeg
 // versions and CPUs, so this runs only with the ffmpeg version the record names (encoder.tool); elsewhere it says so.
