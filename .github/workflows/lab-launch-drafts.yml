@@ -1,7 +1,9 @@
 # Launch drafts for every lab that landed or changed in the last week: LinkedIn, X and Discussions drafts quoting only
 # the lab page's own sentences, plus the page's share card, in a dated folder (scripts/lab-launch-drafts.mjs). Runs on
 # GitHub-hosted runners under the org's GitHub identity, never on a laptop. It posts nothing: the drafts are uploaded as
-# a workflow artifact for the founder to read, edit and post by hand. Read-only: no secret, no write permission.
+# a workflow artifact for the founder to read, edit and post by hand. Read-only: no secret, and the token holds only
+# contents: read. upload-artifact does not use that token (it writes through the runner's own artifact service), as
+# broker-probe.yml already shows in this repository: contents: read, and its runs carry their uploaded artifact.
 #
 # The window is the seven days before the run, matching the weekly schedule. A manual run can name labs instead
 # (comma-separated catalogue slugs) or start the window on another date.

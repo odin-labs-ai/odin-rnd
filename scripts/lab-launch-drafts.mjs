@@ -19,8 +19,9 @@
 // read of our own public page (the GitHub Actions workflow does this after the page has been published).
 //
 // Every sentence a draft carries is the page's own: the headline, the lead and the numbered sentences are lifted from
-// the page's visible text (tables, the header and the "Related" links left out) and each one is checked to stand in that
-// text verbatim, whitespace aside. A draft adds only a few fixed words (the lab's label, "Read the page:", a heading).
+// the page's visible text (tables, the header and the "Related" links left out), and each one is then checked to occur
+// in that visible text as one unbroken run, whitespace aside (a substring check: it guards against the extractor and
+// the page drifting apart, it does not check where a sentence starts or ends). A draft adds only a few fixed words (the lab's label, "Read the page:", a heading).
 // Nothing is abridged: an X post is built from whole sentences that fit, and when no sentence fits beside the headline
 // and the link, the post is the headline and the link alone and says so in its header comment.
 // It REFUSES (exit 1, every reason listed, nothing written, the out dir not even created) when a lab is not on the
@@ -67,7 +68,8 @@ export const xLength = text => length(text.replace(/https?:\/\/\S+/g, 'x'.repeat
 /** Sentences of a passage, split after . ! or ? before a capital or an opening quote, so "1.54 pushes" stays whole. */
 export const sentences = text => text.split(/(?<=[.!?])\s+(?=[A-Z“"(])/u).map(s => s.trim()).filter(Boolean);
 
-const attr = (tag, name) => (new RegExp(`\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'i').exec(tag) ?? [])[2] ?? null;
+// An attribute's value, double- or single-quoted.
+const attr = (tag, name) => { const m = new RegExp(`\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'i').exec(tag); return m ? (m[2] ?? m[3]) : null; };
 const metaContent = (html, key) => {
   const tag = [...html.matchAll(/<meta\b[^>]*>/gi)].map(m => m[0]).find(t => attr(t, 'property') === key || attr(t, 'name') === key);
   return tag ? flat(attr(tag, 'content') ?? '') : null;

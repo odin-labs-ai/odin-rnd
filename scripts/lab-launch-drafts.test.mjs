@@ -70,6 +70,14 @@ test('a lab drafts four files, each sentence quoted from the page, the X post wi
   assert.match(r.files['linkedin.md'], /What this does not show: Only round pebbles were tried\./);
 });
 
+test('single-quoted attributes are read too', () => {
+  const html = page().replace(`<meta property="og:image" content="${CARD}">`, `<meta property='og:image' content='${CARD}'>`).replace(`<link rel="canonical" href="${labUrl('strangers')}">`, `<link rel='canonical' href='${labUrl('strangers')}'>`);
+  const p = readPage(html);
+  assert.equal(p.canonical, labUrl('strangers'));
+  assert.equal(p.ogImage, CARD);
+  assert.deepEqual(labDrafts(tile, html).problems, []);
+});
+
 test('a lab card of its own is reported as its own', () => {
   const r = labDrafts(tile, page({ og: `${SITE_URL}assets/og/labs/strangers.png` }));
   assert.equal(JSON.parse(r.files['card.json']).siteDefault, false);
@@ -102,6 +110,17 @@ test('changedSince counts a page or tile change, never a data append', () => {
   assert.deepEqual(changedSince('2026-11-05', { cat, log }), ['same-model-harness', 'strangers']);
   assert.deepEqual(changedSince('2026-11-05', { cat, log: 'site/data/labs/review/records/day.json\n' }), []);
   assert.throws(() => changedSince('last week', { cat, log }), /YYYY-MM-DD/);
+});
+
+test('changedSince reads a real git history: a page commit in the window counts, one before it and a data append do not', () => {
+  const repo = join(temp, 'git'); mkdirSync(repo);
+  const git = (env, ...a) => { const r = spawnSync('git', ['-C', repo, ...a], { encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.invalid', ...env } }); assert.equal(r.status, 0, r.stderr); };
+  const commit = (date, file) => { mkdirSync(join(repo, dirname(file)), { recursive: true }); writeFileSync(join(repo, file), date); git({}, 'add', file); git({ GIT_AUTHOR_DATE: `${date}T12:00:00Z`, GIT_COMMITTER_DATE: `${date}T12:00:00Z` }, 'commit', '-q', '-m', file); };
+  git({}, 'init', '-q');
+  commit('2026-10-01', 'site/labs/same-model-harness/index.html');
+  commit('2026-11-10', 'site/labs/strangers/index.html');
+  commit('2026-11-11', 'site/data/labs/review/records/day.json');
+  assert.deepEqual(changedSince('2026-11-05', { cat: catalogue(), repo }), ['strangers']);
 });
 
 test('writeLaunchDrafts writes a dated folder, and refuses an unknown lab or an out dir under site/ with nothing written', () => {
