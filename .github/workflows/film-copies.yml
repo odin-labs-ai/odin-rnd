@@ -1,0 +1,37 @@
+# Film copies, decoded: every MP4 copy of a WebM film (site/data/labs/agent-space/film-fallbacks.json) is decoded here
+# with ffmpeg, start to end, because the build machine has no decoder and checks only what the files say about
+# themselves (scripts/film-fallbacks.mjs). FILM_DECODER_REQUIRED makes the decoder tests in
+# scripts/film-fallbacks.test.mjs fail, not skip, when ffmpeg or ffprobe is missing. The job needs no secret and no
+# dependency install beyond the distribution's ffmpeg; it runs no code from the films.
+name: Film copies
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: film-copies-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  decode:
+    name: Film copies, decoded
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
+      - name: Decode every film copy and check it against its WebM and its record
+        env:
+          FILM_DECODER_REQUIRED: '1'
+        run: node --test scripts/film-fallbacks.test.mjs

@@ -12,16 +12,19 @@
 // track (read from its esds) exactly when the record says so, or sound samples outside mdat; when a track's length is
 // not the record's; or when its screening record does not match it or leaves part of it out.
 //
-// WHAT ONLY A DECODER SHOWS is in scripts/film-fallbacks.test.mjs and runs where ffmpeg and ffprobe are installed (not on
-// the CI runners, which have neither): every screened frame is decoded from the copy and must hash to its record, and
-// each copy's last frame must be within half a second of its WebM's. That a copy shows the same shots as its WebM is
-// what its screening record states (one frame every five seconds, viewed by an AI agent), not something any of this
-// proves.
+// WHAT A DECODER SHOWS is in scripts/film-fallbacks.test.mjs, and the Film copies workflow
+// (.github/workflows/film-copies.yml) installs ffmpeg and runs it on every pull request and push to main with
+// FILM_DECODER_REQUIRED set, so there a missing decoder fails instead of skipping: every copy decodes start to end with
+// no error, to exactly as many frames as it has samples, and ends within half a second of its WebM. The screened frame
+// hashes are recomputed where the ffmpeg version is the one the record names. That a copy shows the same shots as its
+// WebM is what its screening record states (one frame every five seconds, viewed by an AI agent); a decoder shows the
+// copy plays, not what it shows.
 //
 // The pages are not edited for this: after the build has written every page, addFilmFallbacks() puts a
 // <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
-// byte for byte). It fails closed both ways: a page whose media tag names a WebM it cannot pair stops the build, and so
-// does a listed copy whose WebM no page plays. Only built .html pages are read; no page builds a player in script.
+// byte for byte). It fails closed both ways: a page that names a WebM anywhere outside the paired forms stops the
+// build (see pairPage), and so does a listed copy whose WebM no page plays. Only built .html pages are read: no page of
+// this site builds a player in script (a script naming a WebM would itself be refused, being outside the forms).
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
@@ -63,6 +66,9 @@ export function progressiveProblems(data) {
 // H.264 profiles every browser that plays MP4 decodes (Baseline, Main, High) and the highest level allowed (4.0).
 export const AVC_PROFILES = new Set([66, 77, 100]);
 export const MAX_AVC_LEVEL = 40;
+// A film plays at least this many frames a second (every film here is 15 to 30): a copy whose header claims a length its
+// frames do not fill is refused.
+export const MIN_FPS = 5;
 
 function* children(data, start, end) {
   for (let at = start; at + 8 <= end;) {
@@ -133,6 +139,17 @@ export function sampleRanges(data, stbl, find) {
   return ranges.length === count ? ranges : null;
 }
 
+/** A track's own sample durations (stts): their sum in seconds, or null when the table does not cover exactly `count` samples. */
+export function sampleTiming(data, stbl, find, scale, count) {
+  const stts = find(stbl.start, stbl.end, 'stts');
+  if (!stts || stts.end - stts.start < 8) return null;
+  const runs = data.readUInt32BE(stts.start + 4);
+  if (stts.start + 8 + 8 * runs > stts.end) return null;
+  let samples = 0, ticks = 0;
+  for (let i = 0; i < runs; i++) { const n = data.readUInt32BE(stts.start + 8 + 8 * i); samples += n; ticks += n * data.readUInt32BE(stts.start + 12 + 8 * i); }
+  return samples === count ? { seconds: ticks / scale } : null;
+}
+
 /** The emulation-prevention bytes (00 00 03) taken out of a NAL unit, and its bits read as ue(v) and u(n). */
 function bits(nal) {
   const raw = [];
@@ -155,7 +172,7 @@ export function avcConfig(avcC) {
     const spsLength = avcC.readUInt16BE(6), nal = avcC.subarray(8, 8 + spsLength);
     if (nal.length !== spsLength || (nal[0] & 31) !== 7) return null;
     const b = bits(nal.subarray(1));
-    const profile = b.u(8); b.u(8); b.u(8); b.ue();
+    const profile = b.u(8); b.u(8); const level = b.u(8); b.ue();
     let chroma = 1, lumaBits = 8, chromaBits = 8;
     if ([100, 110, 122, 244, 44, 83, 86, 118, 128, 138, 139, 134, 135].includes(profile)) {
       chroma = b.ue(); if (chroma === 3) b.u(1);
@@ -163,7 +180,10 @@ export function avcConfig(avcC) {
     }
     let at = 8 + spsLength;
     const pps = avcC[at++] ?? 0;
-    return { lengthSize, profile, chroma, lumaBits, chromaBits, pps };
+    // The first picture parameter set: present, longer than its header, and a PPS NAL unit (type 8).
+    const ppsLength = pps && at + 2 <= avcC.length ? avcC.readUInt16BE(at) : 0;
+    const ppsOk = ppsLength > 1 && at + 2 + ppsLength <= avcC.length && (avcC[at + 2] & 31) === 8 && !(avcC[at + 2] & 0x80);
+    return { lengthSize, profile, level, chroma, lumaBits, chromaBits, pps: ppsOk ? pps : 0 };
   } catch { return null; }
 }
 
@@ -205,7 +225,7 @@ export function mp4Facts(data) {
   if (!moov) return { tracks };
   for (const trak of children(data, moov.start, moov.end)) {
     if (trak.type !== 'trak') continue;
-    const track = { handler: null, codec: null, entries: 0, profile: null, level: null, seconds: null, objectType: null, audioObjectType: null, avcC: null, samples: null };
+    const track = { handler: null, codec: null, entries: 0, profile: null, level: null, seconds: null, scale: 0, objectType: null, audioObjectType: null, avcC: null, samples: null, timing: null };
     const mdia = find(trak.start, trak.end, 'mdia');
     if (mdia) {
       const hdlr = find(mdia.start, mdia.end, 'hdlr');
@@ -215,11 +235,12 @@ export function mp4Facts(data) {
         const v1 = data[mdhd.start] === 1;
         const scale = data.readUInt32BE(mdhd.start + (v1 ? 20 : 12));
         const length = v1 ? Number(data.readBigUInt64BE(mdhd.start + 24)) : data.readUInt32BE(mdhd.start + 16);
-        if (scale > 0) track.seconds = length / scale;
+        if (scale > 0) { track.seconds = length / scale; track.scale = scale; }
       }
       const minf = find(mdia.start, mdia.end, 'minf'), stbl = minf && find(minf.start, minf.end, 'stbl');
       const box = stbl && find(stbl.start, stbl.end, 'stsd');
       if (stbl) track.samples = sampleRanges(data, stbl, find);
+      if (stbl && track.scale) track.timing = sampleTiming(data, stbl, find, track.scale, track.samples?.length ?? -1);
       if (box && box.end - box.start >= 16) {
         track.entries = data.readUInt32BE(box.start + 4);
         const entry = children(data, box.start + 8, box.end).next().value;
@@ -259,7 +280,13 @@ export function trackProblems(data, entry) {
       else {
         if (config.profile !== v.profile) problems.push(`the sequence parameter set says profile ${config.profile}, the avcC ${v.profile}`);
         if (config.chroma !== 1 || config.lumaBits !== 8 || config.chromaBits !== 8) problems.push(`the picture is not 8-bit 4:2:0 (chroma format ${config.chroma}, ${config.lumaBits}/${config.chromaBits} bits)`);
-        if (!config.pps) problems.push('the avcC carries no picture parameter set');
+        if (!config.pps) problems.push('the avcC carries no readable picture parameter set');
+        if (!(config.level <= MAX_AVC_LEVEL)) problems.push(`the sequence parameter set says level ${config.level}, over ${MAX_AVC_LEVEL / 10}`);
+        if (!v.timing) problems.push('the video sample durations (stts) cannot be read or do not cover every sample');
+        else {
+          if (Math.abs(v.timing.seconds - entry.seconds) >= 1) problems.push(`the video samples last ${v.timing.seconds.toFixed(2)} s, the record says ${entry.seconds} s`);
+          if (v.samples && v.samples.length / Math.max(v.timing.seconds, 1e-9) < MIN_FPS) problems.push(`${v.samples?.length} video frames in ${v.timing.seconds.toFixed(2)} s, under ${MIN_FPS} frames a second`);
+        }
         const mdat = topBox(data, 'mdat');
         problems.push(...(mdat ? avcSampleProblems(data, v.samples, config.lengthSize, mdat) : ['no media data']));
       }
@@ -319,69 +346,54 @@ export function readFallbacks(root = 'site') {
   return record;
 }
 
-// Every start tag, with its attributes read the way a browser reads them: names in any case, values double-quoted,
-// single-quoted or bare, white space allowed around "=".
-const TAG = /<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
-const ATTR = /([^\s"'=<>/`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
-// Character references in a value, as the browser resolves them before it fetches (&#46;webm is .webm).
+// Character references, resolved the way a browser does before it reads text or fetches a URL (&#46;webm is .webm); a
+// code point a browser would not accept becomes U+FFFD, as it does there.
 const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', colon: ':', num: '#', quest: '?', equals: '=' };
+const codePoint = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : '�');
 export const decodeValue = value => value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));?/g, (whole, dec, hex, name) =>
-  dec ? String.fromCodePoint(Number(dec)) : hex ? String.fromCodePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
-export function attributes(rest) {
-  const out = new Map();
-  for (const m of rest.matchAll(ATTR)) { const name = m[1].toLowerCase(); if (!out.has(name)) out.set(name, decodeValue(m[2] ?? m[3] ?? m[4] ?? '')); }
-  return out;
-}
-// Comments, scripts and styles hold text, not tags: a <source> written inside one plays nothing and pairs nothing.
-const INERT = /<!--[\s\S]*?(?:-->|$)|<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi;
-const WEBM_URL = /\.webm(?:[?#]|$)/i;
-// The tags that play or embed media. A link to a film (<a href>) opens the file and is not a player, so it is not paired.
-const PLAYERS = new Set(['video', 'audio', 'source', 'embed', 'object', 'iframe']);
-const isWebmValue = value => WEBM_URL.test(value.trim()) || /^\s*video\/webm/i.test(value);
+  dec ? codePoint(Number(dec)) : hex ? codePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
+
+// The one form a WebM film is played in on this site, as every generator and the home page write it: a <source> with a
+// plain double-quoted src ending in .webm and a video/webm type, inside a <video>. Only this form is paired.
+const PLAYED = /<source src="([^"<>&\s]+\.webm)" type="video\/webm[^"<>]*">/g;
+// The one form a page may otherwise name a WebM in: a plain link to the file, which opens it and plays nothing here.
+const LINKED = /<a\b[^<>]*?\shref="[^"<>\s]+\.webm"[^<>]*>/g;
 
 /**
  * One page with an MP4 <source> after each WebM <source>. `page` is the page's path inside the site ('labs/x/index.html'),
  * `byWebm` maps a site path ('assets/…/film.webm') to its copy. Returns the new html, the WebMs it played and every
- * WebM reference it could not pair. A <source> is a WebM when its src ends in .webm or its type is video/webm; it is
- * paired when its src resolves to a listed film. Any other media tag (video, audio, source, embed, object, iframe) with
- * an attribute that names a WebM (a <video src>, a data-src, a <source> with no src) cannot be paired here and is
- * reported, so the build stops rather than ship a player with no MP4. A link to a film (<a href>) is not a player. A page that already carries the copy right after the WebM is left as it is.
+ * WebM mention it could not account for.
+ *
+ * Fail closed without parsing HTML: a <source> in the PLAYED form inside an open <video> whose src resolves to a listed
+ * film is paired; then every PLAYED tag, its inserted copy and every LINKED link are taken out of a copy of the page,
+ * character references in what is left are resolved, and any "webm" still inside markup or a script (any case: another
+ * tag or quoting, a data-src, a <video src>, a comment, a script string) stops the build. Prose and link text, which
+ * play nothing, are not read; a WebM written there is only words.
+ * A page that already carries the copy right after the WebM is left as it is.
  */
 export function pairPage(html, page, byWebm) {
   const used = new Set(), unpaired = [];
-  // Only the markup between inert blocks is read; the blocks themselves are kept byte for byte.
-  const parts = [];
-  let last = 0;
-  for (const m of html.matchAll(INERT)) { parts.push([html.slice(last, m.index), true], [m[0], false]); last = m.index + m[0].length; }
-  parts.push([html.slice(last), true]);
-  const out = parts.map(([text, live]) => live ? pairMarkup(text, page, byWebm, used, unpaired) : text).join('');
-  return { html: out, used, unpaired };
-}
-
-function pairMarkup(html, page, byWebm, used, unpaired) {
-  return html.replace(TAG, (tag, name, rest, offset) => {
-    const attrs = attributes(rest);
-    if (!PLAYERS.has(name.toLowerCase())) return tag;
-    const webmAttrs = [...attrs].filter(([, value]) => isWebmValue(value));
-    if (!webmAttrs.length) return tag;
-    const src = attrs.get('src');
-    const isSource = name.toLowerCase() === 'source';
-    const others = webmAttrs.filter(([key]) => !(isSource && (key === 'src' || key === 'type')));
-    if (!isSource || others.length || src === undefined || !WEBM_URL.test(src.trim())) {
-      unpaired.push(`${page}: <${name.toLowerCase()}> ${webmAttrs.map(([key, value]) => `${key}=${value}`).join(' ')}`);
-      return tag;
-    }
-    const url = src.trim();
-    const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(url) ? posix.normalize(posix.join(posix.dirname(page), url.replace(/[?#].*$/, ''))) : null;
+  const out = html.replace(PLAYED, (tag, src, offset) => {
+    const before = html.slice(0, offset).toLowerCase();
+    const open = before.lastIndexOf('<video'), close = before.lastIndexOf('</video');
+    const resolved = !/^[a-z][a-z0-9+.-]*:|^\/|^#/i.test(src) ? posix.normalize(posix.join(posix.dirname(page), src)) : null;
     const entry = resolved && byWebm.get(resolved);
-    // The inserted tag writes the src back as a plain double-quoted value: only a src without characters that would
-    // need escaping there is paired (every generated one is plain).
-    if (!entry || /["&<>\s]/.test(url)) { unpaired.push(`${page}: <source> src=${url}`); return tag; }
+    if (open < 0 || close > open || !entry) { unpaired.push(`${page}: <source src="${src}">${open < 0 || close > open ? ' outside a <video>' : ' is not a listed film'}`); return tag; }
     used.add(entry.webm);
-    const mp4Src = url.replace(/\.webm(?=$|[?#])/i, '.mp4');
-    const insert = `<source src="${mp4Src}" type="video/mp4">`;
+    const insert = `<source src="${src.replace(/\.webm$/, '.mp4')}" type="video/mp4">`;
     return html.startsWith(insert, offset + tag.length) ? tag : tag + insert;
   });
+  // Everything left that names a WebM where it could play: inside markup (a tag, a comment) or inside a script, after the
+  // accounted forms are taken out and character references resolved. Prose and link text play nothing and are not read.
+  const rest = decodeValue(out.replace(PLAYED, ' ').replace(/<source src="[^"<>]*\.mp4" type="video\/mp4">/g, ' ').replace(LINKED, ' '));
+  const lower = rest.toLowerCase();
+  for (const m of rest.matchAll(/webm/gi)) {
+    const before = lower.slice(0, m.index);
+    const inMarkup = before.lastIndexOf('<') > before.lastIndexOf('>');
+    const inScript = before.lastIndexOf('<script') > before.lastIndexOf('</script');
+    if (inMarkup || inScript) unpaired.push(`${page}: "${rest.slice(Math.max(0, m.index - 40), m.index + 20).replace(/\s+/g, ' ')}" names a WebM ${inScript ? 'in a script' : 'in markup'} outside the paired forms`);
+  }
+  return { html: out, used, unpaired };
 }
 
 const htmlFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? htmlFiles(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
@@ -404,7 +416,7 @@ export function addFilmFallbacks({ distDir = 'dist', root = 'site' } = {}) {
   }
   const unused = [...byWebm.keys()].filter(webm => !used.has(webm));
   if (unpaired.length || unused.length) throw new Error(`Film fallbacks refused:\n  ${[
-    ...unpaired.map(line => `${line} plays a WebM with no MP4 copy in ${FALLBACKS_FILE}`),
+    ...unpaired.map(line => `${line}: no MP4 copy can be paired (${FALLBACKS_FILE})`),
     ...unused.map(webm => `${webm} has an MP4 copy but no page plays it`)].join('\n  ')}`);
   return { pages, films: used.size };
 }

@@ -223,13 +223,6 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   const { addTocs } = await import('./site-toc.mjs');
   addTocs({ distDir: 'dist' });
 }
-// Films on every browser (mission rnd-nightshift-1112): an MP4 (H.264) <source> after each WebM <source> on every built
-// page, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json; the committed pages stay as they
-// are. Fails closed on a WebM with no copy and on a copy no page plays (scripts/film-fallbacks.mjs).
-{
-  const { addFilmFallbacks } = await import('./film-fallbacks.mjs');
-  addFilmFallbacks({ distDir: 'dist', root: 'site' });
-}
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
 // Every page loads the collector once. The note generators already put it in their <head>; adding a second
 // copy there is what vp-rnd-frontier-residuals R7 found (activity-sitewide.test.mjs checks every built page).
@@ -269,6 +262,14 @@ for (const file of htmlFiles('dist')) {
   const methods = urlPath(relative(dirname(file), 'dist/methods/index.html')).replace(/index\.html$/, '') + '#publication-standard';
   const note = `<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="${methods}">How to read these results</a>.</p></aside>`;
   writeFileSync(file, source.replace('</main>', note + '</main>'));
+}
+// Films on every browser (mission rnd-nightshift-1112): an MP4 (H.264) <source> after each WebM <source> on every built
+// page, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json, after the last step that writes
+// pages; the committed pages stay as they are. Fails closed on any WebM mention it cannot pair and on a copy no page
+// plays (scripts/film-fallbacks.mjs).
+{
+  const { addFilmFallbacks } = await import('./film-fallbacks.mjs');
+  addFilmFallbacks({ distDir: 'dist', root: 'site' });
 }
 // Fails closed when a dated clarification reached no page (a renamed page, or a key that missed on a path separator).
 {
