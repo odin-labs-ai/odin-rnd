@@ -153,7 +153,8 @@ test('a page gets the MP4 source right after the WebM one, with the same relativ
 test('a WebM with no copy is reported, and other sources are left alone', () => {
   const byWebm = new Map();
   const r = pairPage('<video><source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"></video><picture><source srcset="d.webp" type="image/webp"></picture>', 'x/index.html', byWebm);
-  assert.deepEqual(r.unpaired, ['x/index.html: <source src="a/b.webm"> is not a listed film']);
+  assert.ok(r.unpaired.length >= 1);
+  for (const line of r.unpaired) assert.match(line, /^x\/index\.html: ".*" names a WebM outside the paired forms$/);
   assert.equal(r.html, '<video><source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"></video><picture><source srcset="d.webp" type="image/webp"></picture>');
 });
 
@@ -166,7 +167,7 @@ test('the dist pass fails closed on an unpaired WebM and on a copy no page plays
     writeFileSync(join(dist, 'index.html'), '<p>no film</p>');
     assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /has an MP4 copy but no page plays it/);
     writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"><source src="assets/other.webm" type="video/webm"></video>');
-    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /index\.html: <source src="assets\/other\.webm"> is not a listed film: no MP4 copy can be paired/);
+    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /index\.html: ".*other\.webm.*" names a WebM outside the paired forms: no MP4 copy can be paired/);
     writeFileSync(join(dist, 'index.html'), '<video><source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
     assert.deepEqual(addFilmFallbacks({ distDir: dist, root }), { pages: 1, films: 1 });
     assert.match(readFileSync(join(dist, 'index.html'), 'utf8'), /a-film\.webm" type="video\/webm"><source src="assets\/labs\/agent-space\/films\/a-film\.mp4" type="video\/mp4">/);
@@ -256,6 +257,26 @@ test('each copy ends within half a second of its WebM and has sound exactly when
   }
 });
 
+// The copy against its WebM, picture by picture: at every screened time the two decoded frames are compared with SSIM.
+// A re-encode scores near 1; another shot scores far lower. The median over a film must be at least 0.9 and no frame
+// under 0.6 (a frame of motion can land a few milliseconds apart in the two files: measured 0.73 at worst, 2026-11-13).
+const SSIM_MEDIAN = 0.9, SSIM_FLOOR = 0.6;
+test('every copy shows its WebM: SSIM at every screened time (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
+  for (const entry of readFallbacks('site').fallbacks) {
+    const scores = entry.screening.frames.map(frame => {
+      const t = String(frame.t);
+      const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'info', '-ss', t, '-i', join('site', entry.webm), '-ss', t, '-i', join('site', entry.mp4), '-frames:v', '1',
+        '-lavfi', '[0:v]format=yuv420p[a];[1:v]format=yuv420p[b];[a][b]ssim', '-f', 'null', '-'], { encoding: 'utf8' });
+      const m = /All:([0-9.]+)/.exec(run.stderr);
+      assert.ok(m, `${entry.mp4} at ${t} s: no SSIM`);
+      return Number(m[1]);
+    }).sort((a, b) => a - b);
+    const median = scores[Math.floor(scores.length / 2)];
+    assert.ok(median >= SSIM_MEDIAN, `${entry.mp4}: median SSIM ${median} against its WebM`);
+    assert.ok(scores[0] >= SSIM_FLOOR, `${entry.mp4}: a screened frame scores ${scores[0]} against its WebM`);
+  }
+});
+
 // Every screened frame's hash, recomputed from the copy itself the way the record was made (ffmpeg -ss <t> -i <copy>
 // -frames:v 1, raw rgb24). The YUV to RGB step is ffmpeg's default scaler, which is not bit-identical across ffmpeg
 // versions and CPUs, so this runs only with the ffmpeg version the record names (encoder.tool); elsewhere it says so.
@@ -292,7 +313,7 @@ test('a box that runs past the end of the file is refused', () => {
   assert.ok(progressiveProblems(data.subarray(0, data.length - 4)).some(p => /runs past the end/.test(p)));
 });
 
-test('anything in a tag, a comment or an opaque element that names a WebM outside the paired forms stops the build', () => {
+test('anything that names a WebM outside the paired forms stops the build, in any markup or spelling', () => {
   const byWebm = new Map([['assets/f.webm', { webm: 'assets/f.webm' }]]);
   const ok = '<video controls><source src="assets/f.webm" type="video/webm"></video>';
   const reported = [
@@ -308,6 +329,12 @@ test('anything in a tag, a comment or an opaque element that names a WebM outsid
     '<video src="assets/u.we&#9;bm"></video>', '<video src="assets/u.we&Tab;bm"></video>', '<video src="assets/u.we\nbm"></video>',
     '<video><!-- <source src="assets/f.webm" type="video/webm"> --></video>', '<template><video><source src="assets/f.webm" type="video/webm"></video></template>',
     `<script>const t = '<video controls><source src="assets/f.webm" type="video/webm"></video>';</script>`,
+    `<video title=${' '.repeat(16)}"a > b" src="assets/u.webm" controls></video>`, '<p data-x=a="q><video title="x>y" src="assets/u.webm" controls></video>',
+    `<!--- <i a=' --><video title="it's>" src="assets/u.webm" controls></video>`, '<!--- <video controls><source src="assets/f.webm" type="video/webm"></video> --->',
+    `<script><!-- x='<script>'; y='</script>'; document.querySelector('video').src = 'assets/u.webm';</script>`,
+    '<template><template></template><video controls><source src="assets/f.webm" type="video/webm"></video></template>',
+    '<video><picture><source src="assets/f.webm" type="video/webm"></picture></video>', '<video src="assets/u.%77ebm"></video>',
+    '<p>x.WebM</p>', '<a href="assets/f.webm"><b>the film</b></a>',
     '<picture><source src="assets/f.webm" type="video/webm"></picture>', '<video></video><source src="assets/f.webm" type="video/webm">',
     '<p title="&#99999999;">x</p><video src=v=1/f.webm></video>'];
   for (const html of reported) {
@@ -318,8 +345,9 @@ test('anything in a tag, a comment or an opaque element that names a WebM outsid
   const r = pairPage(ok, 'index.html', byWebm);
   assert.deepEqual([[...r.used], r.unpaired], [['assets/f.webm'], []]);
   assert.deepEqual(pairPage('<a href="assets/f.webm">download the film</a>', 'index.html', byWebm).unpaired, [], 'a plain link is not a player');
-  assert.deepEqual(pairPage('<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', 'index.html', byWebm).unpaired, [], 'prose and link text play nothing');
-  assert.deepEqual(pairPage('<p>A tag in prose: &lt;video src=x.webm&gt;</p>', 'index.html', byWebm).unpaired, [], 'escaped markup in prose is text');
+  assert.deepEqual(pairPage('<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', 'index.html', byWebm).unpaired, [], 'a plain link and its text play nothing');
+  assert.deepEqual(pairPage('<p>The films are recorded as WebM, with an MP4 copy.</p>', 'index.html', byWebm).unpaired, [], 'the English word');
+  assert.equal(pairPage('<p>A tag in prose: &lt;video src=x.webm&gt;</p>', 'index.html', byWebm).unpaired.length, 1, 'a file name in text is read too');
   assert.deepEqual(pairPage('<p title="&#99999999;">a code point no browser accepts</p>', 'index.html', byWebm).unpaired, [], 'it does not throw');
 });
 
