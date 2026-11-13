@@ -4,13 +4,25 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { addFilmFallbacks, fallbacksProblems, FALLBACKS_FILE, limitFor, pairPage, progressiveProblems, readFallbacks } from './film-fallbacks.mjs';
+import { addFilmFallbacks, fallbacksProblems, FALLBACKS_FILE, limitFor, mp4Facts, pairPage, progressiveProblems, readFallbacks, trackProblems } from './film-fallbacks.mjs';
+import { execFileSync } from 'node:child_process';
 import { MAX_FILM_BYTES } from './lab-films.mjs';
 import { MAX_CLIP_BYTES } from './lab-dispatch-publish.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const box = (type, body = Buffer.alloc(0)) => { const head = Buffer.alloc(8); head.writeUInt32BE(8 + body.length); head.write(type, 4, 'latin1'); return Buffer.concat([head, body]); };
-const progressive = (fill = 1) => Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0isomavc1', 'latin1')), box('moov', Buffer.alloc(16)), box('mdat', Buffer.alloc(32, fill))]);
+const u32 = n => { const b = Buffer.alloc(4); b.writeUInt32BE(n); return b; };
+const full = (type, body) => box(type, Buffer.concat([Buffer.alloc(4), body]));
+/** One track: its handler, its first sample entry and, for avc1, the avcC's profile and level; `seconds` at timescale 1000. */
+function trak({ handler = 'vide', codec = 'avc1', profile = 100, level = 40, seconds = 4 } = {}) {
+  const avcC = box('avcC', Buffer.from([1, profile, 0, level]));
+  const entry = codec === 'avc1' ? box('avc1', Buffer.concat([Buffer.alloc(78), avcC])) : box(codec, Buffer.alloc(28));
+  const stsd = full('stsd', Buffer.concat([u32(1), entry]));
+  const hdlr = full('hdlr', Buffer.concat([Buffer.alloc(4), Buffer.from(handler, 'latin1'), Buffer.alloc(12)]));
+  const mdhd = full('mdhd', Buffer.concat([u32(0), u32(0), u32(1000), u32(Math.round(seconds * 1000)), Buffer.alloc(4)]));
+  return box('trak', box('mdia', Buffer.concat([mdhd, hdlr, box('minf', box('stbl', stsd))])));
+}
+const progressive = (fill = 1, tracks = [trak()]) => Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0isomavc1', 'latin1')), box('moov', Buffer.concat(tracks)), box('mdat', Buffer.alloc(32, fill))]);
 const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
 
 /** A site root with one film, its copy and a record for it; returns the root and the record. */
@@ -69,7 +81,7 @@ test('a WebM that changed after its copy was made is refused', () => {
 });
 
 test('a copy with moov after mdat (not faststart) is refused', () => {
-  const late = Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0', 'latin1')), box('mdat', Buffer.alloc(32)), box('moov', Buffer.alloc(16))]);
+  const late = Buffer.concat([box('ftyp', Buffer.from('isom\0\0\x02\0', 'latin1')), box('mdat', Buffer.alloc(32)), box('moov', trak())]);
   assert.deepEqual(progressiveProblems(progressive()), []);
   assert.ok(progressiveProblems(late).some(p => /not faststart/.test(p)));
   assert.ok(progressiveProblems(Buffer.from('not an mp4 at all')).length > 0);
@@ -125,4 +137,50 @@ test('the dist pass fails closed on an unpaired WebM and on a copy no page plays
     assert.deepEqual(addFilmFallbacks({ distDir: dist, root }), { pages: 1, films: 1 });
     assert.match(readFileSync(join(dist, 'index.html'), 'utf8'), /a-film\.webm" type="video\/webm"><source src="assets\/labs\/agent-space\/films\/a-film\.mp4" type="video\/mp4">/);
   } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
+});
+
+test('a copy must be one H.264 video track a browser decodes, with sound exactly when recorded, of the recorded length', () => {
+  const entry = { seconds: 4, audio: false };
+  assert.deepEqual(trackProblems(progressive(), entry), []);
+  assert.deepEqual(mp4Facts(progressive()).tracks, [{ handler: 'vide', codec: 'avc1', profile: 100, level: 40, seconds: 4 }]);
+  const refused = (tracks, e, pattern) => assert.ok(trackProblems(progressive(1, tracks), { ...entry, ...e }).some(p => pattern.test(p)), String(pattern));
+  refused([trak({ codec: 'hvc1' })], {}, /is hvc1, not H\.264/);
+  refused([trak({ codec: 'av01' })], {}, /is av01, not H\.264/);
+  refused([trak({ profile: 244 })], {}, /profile 244 level 40/);
+  refused([trak({ level: 51 })], {}, /profile 100 level 51/);
+  refused([trak({ seconds: 9 })], {}, /9\.00 s, the record says 4 s/);
+  refused([trak(), trak()], {}, /2 video tracks/);
+  refused([], {}, /0 video tracks/);
+  refused([trak(), trak({ handler: 'soun', codec: 'mp4a' })], {}, /no sound, but it has 1 sound tracks/);
+  refused([trak()], { audio: true }, /has sound, but it has 0 sound tracks/);
+  refused([trak(), trak({ handler: 'soun', codec: 'Opus' })], { audio: true }, /\(Opus\), not one AAC/);
+  refused([trak(), trak({ handler: 'text', codec: 'tx3g' })], {}, /1 other tracks/);
+  assert.deepEqual(trackProblems(progressive(1, [trak(), trak({ handler: 'soun', codec: 'mp4a' })]), { ...entry, audio: true }), []);
+  const { root, record } = fixture({ mp4: progressive(1, [trak({ codec: 'hvc1' })]) });
+  try { assert.ok(fallbacksProblems(record, FALLBACKS_FILE, root).some(p => /not H\.264/.test(p))); } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('every committed copy is H.264 High at level 4.0 or below, with sound only for the film that has it', () => {
+  for (const entry of readFallbacks('site').fallbacks) {
+    const [video, ...rest] = mp4Facts(readFileSync(join('site', entry.mp4))).tracks;
+    assert.equal(video.codec, 'avc1', entry.mp4);
+    assert.ok(video.level <= 40, entry.mp4);
+    assert.deepEqual(rest.map(t => t.codec), entry.audio ? ['mp4a'] : [], entry.mp4);
+  }
+});
+
+// Where ffprobe is installed: each copy is as long as the WebM it was made from (the WebM's last video packet), and the
+// WebM has sound exactly when the copy does. The build cannot run ffprobe; this is the check anyone can repeat.
+let ffprobe = true;
+try { execFileSync('ffprobe', ['-version'], { stdio: 'ignore' }); } catch { ffprobe = false; }
+test('each copy is as long as its WebM and has sound exactly when the WebM does (ffprobe)', { skip: !ffprobe && 'ffprobe is not installed' }, () => {
+  for (const entry of readFallbacks('site').fallbacks) {
+    const webm = join('site', entry.webm);
+    const times = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time', '-of', 'csv=p=0', webm], { encoding: 'utf8' })
+      .split('\n').map(line => parseFloat(line)).filter(Number.isFinite);
+    const last = Math.max(...times);
+    assert.ok(Math.abs(last - entry.seconds) < 1.5, `${entry.webm}: its last frame is at ${last} s, the copy is ${entry.seconds} s`);
+    const streams = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', webm], { encoding: 'utf8' });
+    assert.equal(/audio/.test(streams), entry.audio, `${entry.webm}: sound`);
+  }
 });

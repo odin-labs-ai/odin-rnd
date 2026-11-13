@@ -3,16 +3,19 @@
 // lists each copy: the WebM it was encoded from, by path and sha256, and the MP4 by path, sha256 and size. The build
 // refuses the record, every reason listed, when it misses the schema, when a WebM on disk no longer hashes to the sha256
 // its copy was made from (a changed film needs a new copy), when an MP4 is missing, a different size, does not hash to
-// its sha256, is over its film's size limit or is not a progressive MP4 (ftyp first, moov before mdat, so it starts
-// playing before it has fully loaded), or when its screening record does not match it or leaves part of it out. Like
-// the films themselves, the gate cannot read pixels: each copy carries its own screening record, one decoded frame every
-// five seconds, each hashed, viewed by an AI agent before it was committed.
+// its sha256, is over its film's size limit, is not a progressive MP4 (ftyp first, moov before mdat, so it starts
+// playing before it has fully loaded), is not one H.264 video track (Baseline, Main or High, level 4.0 or below) with an
+// AAC sound track exactly when the record says it has sound, has a length other than the record's, or when its
+// screening record does not match it or leaves part of it out. The record's length is checked against the WebM's by
+// the tests where ffprobe is installed (scripts/film-fallbacks.test.mjs). Like the films themselves, the gate cannot
+// read pixels: that a copy shows the same shots as its WebM is what its screening record states (one decoded frame every
+// five seconds, each hashed, viewed by an AI agent before it was committed), not something the build can prove.
 //
 // The pages are not edited for this: after the build has written every page, addFilmFallbacks() puts a
 // <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
 // byte for byte). It fails closed both ways: a page that plays a WebM with no listed copy stops the build, and so does a
 // listed copy whose WebM no page plays.
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
@@ -47,6 +50,79 @@ export function progressiveProblems(data) {
   return problems;
 }
 
+// H.264 profiles every browser that plays MP4 decodes (Baseline, Main, High) and the highest level allowed (4.0).
+export const AVC_PROFILES = new Set([66, 77, 100]);
+export const MAX_AVC_LEVEL = 40;
+
+function* children(data, start, end) {
+  for (let at = start; at + 8 <= end;) {
+    let size = data.readUInt32BE(at), head = 8;
+    if (size === 1) { if (at + 16 > end) return; size = Number(data.readBigUInt64BE(at + 8)); head = 16; }
+    else if (size === 0) size = end - at;
+    if (size < head || at + size > end) return;
+    yield { type: data.toString('latin1', at + 4, at + 8), start: at + head, end: at + size };
+    at += size;
+  }
+}
+
+/**
+ * What an MP4 says about itself, read from its own boxes (no decoder): each track's handler (vide, soun), its first
+ * sample entry (avc1, mp4a, …), for avc1 the profile and level from its avcC, and its length in seconds from mdhd.
+ */
+export function mp4Facts(data) {
+  const tracks = [];
+  const find = (start, end, type) => { for (const box of children(data, start, end)) if (box.type === type) return box; return null; };
+  const moov = find(0, data.length, 'moov');
+  if (!moov) return { tracks };
+  for (const trak of children(data, moov.start, moov.end)) {
+    if (trak.type !== 'trak') continue;
+    const track = { handler: null, codec: null, profile: null, level: null, seconds: null };
+    const mdia = find(trak.start, trak.end, 'mdia');
+    if (mdia) {
+      const hdlr = find(mdia.start, mdia.end, 'hdlr');
+      if (hdlr && hdlr.end - hdlr.start >= 12) track.handler = data.toString('latin1', hdlr.start + 8, hdlr.start + 12);
+      const mdhd = find(mdia.start, mdia.end, 'mdhd');
+      if (mdhd) {
+        const v1 = data[mdhd.start] === 1;
+        const scale = data.readUInt32BE(mdhd.start + (v1 ? 20 : 12));
+        const length = v1 ? Number(data.readBigUInt64BE(mdhd.start + 24)) : data.readUInt32BE(mdhd.start + 16);
+        if (scale > 0) track.seconds = length / scale;
+      }
+      let box = mdia;
+      for (const type of ['minf', 'stbl', 'stsd']) box = box && find(box.start, box.end, type);
+      if (box && box.end - box.start >= 16) {
+        const entry = children(data, box.start + 8, box.end).next().value;
+        if (entry) {
+          track.codec = entry.type;
+          // A visual sample entry has 78 bytes of fields before its child boxes; avcC opens with version, profile,
+          // compatibility, level.
+          const avcC = entry.type === 'avc1' && entry.end - entry.start > 78 ? find(entry.start + 78, entry.end, 'avcC') : null;
+          if (avcC && avcC.end - avcC.start >= 4) { track.profile = data[avcC.start + 1]; track.level = data[avcC.start + 3]; }
+        }
+      }
+    }
+    tracks.push(track);
+  }
+  return { tracks };
+}
+
+/** Why an MP4 copy is not what its entry says: one H.264 video track a browser decodes, sound exactly when recorded, its length. */
+export function trackProblems(data, entry) {
+  const { tracks } = mp4Facts(data), problems = [];
+  const video = tracks.filter(t => t.handler === 'vide'), sound = tracks.filter(t => t.handler === 'soun');
+  if (video.length !== 1) problems.push(`${video.length} video tracks, not 1`);
+  else {
+    const [v] = video;
+    if (v.codec !== 'avc1') problems.push(`the video track is ${v.codec ?? 'unreadable'}, not H.264 (avc1)`);
+    else if (!AVC_PROFILES.has(v.profile) || !(v.level <= MAX_AVC_LEVEL)) problems.push(`H.264 profile ${v.profile} level ${v.level}, not Baseline, Main or High at level ${MAX_AVC_LEVEL / 10} or below`);
+    if (v.seconds === null || Math.abs(v.seconds - entry.seconds) >= 1) problems.push(`the video track is ${v.seconds?.toFixed(2) ?? 'of unreadable length'} s, the record says ${entry.seconds} s`);
+  }
+  if (entry.audio && (sound.length !== 1 || sound[0].codec !== 'mp4a')) problems.push(`the record says it has sound, but it has ${sound.length} sound tracks${sound[0] ? ` (${sound[0].codec})` : ''}, not one AAC (mp4a) track`);
+  if (!entry.audio && sound.length) problems.push(`the record says it has no sound, but it has ${sound.length} sound tracks`);
+  if (tracks.length !== video.length + sound.length) problems.push(`${tracks.length - video.length - sound.length} other tracks`);
+  return problems;
+}
+
 /** Everything that makes a fallbacks record unpublishable; with `root`, every file must exist there with its recorded bytes. */
 export function fallbacksProblems(record, where = FALLBACKS_FILE, root = null) {
   const problems = validate(JSON.parse(readFileSync(FALLBACKS_SCHEMA_FILE, 'utf8')), record).map(problem => `${where}#${problem} (does not match odin-film-fallbacks v1)`);
@@ -72,6 +148,7 @@ export function fallbacksProblems(record, where = FALLBACKS_FILE, root = null) {
     if (data.length !== entry.bytes) problems.push(`${at}/bytes: ${entry.mp4} is ${data.length} bytes on disk, the record says ${entry.bytes}`);
     if (sha256(data) !== entry.sha256) problems.push(`${at}/sha256: ${entry.mp4} does not match its recorded sha256`);
     for (const problem of progressiveProblems(data)) problems.push(`${at}/mp4: ${entry.mp4}: ${problem}`);
+    for (const problem of trackProblems(data, entry)) problems.push(`${at}/mp4: ${entry.mp4}: ${problem}`);
   }
   return problems;
 }
@@ -115,7 +192,8 @@ const htmlFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => 
 export function addFilmFallbacks({ distDir = 'dist', root = 'site' } = {}) {
   const record = readFallbacks(root);
   const byWebm = new Map((record?.fallbacks ?? []).map(entry => [entry.webm, entry]));
-  for (const entry of byWebm.values()) if (!existsSync(join(distDir, entry.mp4)) || statSync(join(distDir, entry.mp4)).size !== entry.bytes) throw new Error(`Film fallbacks: ${entry.mp4} is not in ${distDir} with its recorded size`);
+  // The published copy, not only the source one, must be the recorded bytes.
+  for (const entry of byWebm.values()) if (!existsSync(join(distDir, entry.mp4)) || sha256(readFileSync(join(distDir, entry.mp4))) !== entry.sha256) throw new Error(`Film fallbacks: ${entry.mp4} is not in ${distDir} with its recorded sha256`);
   const used = new Set(), unpaired = [];
   let pages = 0;
   for (const file of htmlFiles(distDir)) {
