@@ -447,8 +447,9 @@ export function inertRanges(html) {
 //
 // The home page (site/index.html) is written by hand and carries one player. Its exact text up to the end of the WebM
 // <source> is pinned below (HOME_PLAYER). The dist pass inserts the MP4 <source> after that text, after checking that it
-// is on the page exactly once and not inside a comment, script, template or other inert stretch (inertRanges, which
-// reads the forms in this file; it is a check on one pinned place, not a parser). It inserts nowhere else.
+// is on the page exactly once, not inside a comment, script, template or other inert stretch (inertRanges) and not
+// under an open svg, math, select, object, datalist or noembed parent. This is a check on one pinned place, not a
+// parser. It inserts nowhere else.
 //
 // Then every file in dist that is not media, a font or an archive (archives download, they do not render) is read: each WebM-then-MP4
 // <source> pair of a listed film is counted, and for every film the pairs found in dist must equal the pairs the build
@@ -494,13 +495,30 @@ export const HOME = {
   player: '<figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/labs/agent-space/progress/hq-on-duty-poster.jpg" aria-label="The HQ on duty: the Odin Labs HQ at dawn, the Engineering floor, the review wall, the trust wall and the outbox that waits for the founder’s click"><source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus">',
 };
 
+// Parents the home pass refuses around its player, failing closed: svg and math (foreign content, where a <video> tag
+// makes no HTML video outside a foreignObject), and select, object, datalist and noembed, whose content a browser may
+// not show.
+const NO_PLAY_PARENTS = ['svg', 'math', 'select', 'object', 'datalist', 'noembed'];
+/** Which of those parents are still open at the end of `before` (start tags minus end tags outside inert stretches). */
+function openParents(before, inert) {
+  const counts = new Map();
+  for (const m of before.toLowerCase().matchAll(/<(\/?)([a-z][a-z0-9-]*)(?=[\s/>])/g)) {
+    if (!NO_PLAY_PARENTS.includes(m[2]) || inert.some(([a, b]) => m.index >= a && m.index < b)) continue;
+    counts.set(m[2], (counts.get(m[2]) ?? 0) + (m[1] ? -1 : 1));
+  }
+  return [...counts].filter(([, n]) => n > 0).map(([name]) => name);
+}
+
 /** The home page with the MP4 <source> after its pinned player, or why not. */
 export function pairHome(html, home, byWebm) {
   const at = html.indexOf(home.player), entry = byWebm.get(home.webm), where = `${home.page}: the pinned home player (HOME in scripts/film-fallbacks.mjs)`;
   if (!entry) return { html, problems: [`${where} plays ${home.webm}, which has no MP4 copy`] };
   if (at < 0) return { html, problems: [`${where} is not on the page; when the player changes, change the pin with it`] };
   if (html.indexOf(home.player, at + 1) >= 0) return { html, problems: [`${where} is on the page more than once`] };
-  if (inertRanges(html).some(([a, b]) => at >= a && at < b)) return { html, problems: [`${where} sits inside a comment, script, template or other inert stretch`] };
+  const inert = inertRanges(html);
+  if (inert.some(([a, b]) => at >= a && at < b)) return { html, problems: [`${where} sits inside a comment, script, template or other inert stretch`] };
+  const open = openParents(html.slice(0, at), inert);
+  if (open.length) return { html, problems: [`${where} sits inside ${open.map(name => `<${name}>`).join(', ')}, which the home pass refuses (a <video> there may not play)`] };
   const end = at + home.player.length, insert = `<source src="${entry.mp4}" type="video/mp4">`;
   return { html: html.startsWith(insert, end) ? html : html.slice(0, end) + insert + html.slice(end), problems: [] };
 }
