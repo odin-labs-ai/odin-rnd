@@ -316,7 +316,9 @@ test('every copy shows its own WebM over the whole film, second by second, and n
 // 0.1 s, and the whole film at least 0.5 above the same comparison moved by one second (the negative control).
 const SOUND_FILM = 0.98, SOUND_SECOND = 0.9, SOUND_DB = 1, SOUND_SECONDS = 0.1, SOUND_MARGIN = 0.5, RATE = 8000;
 const pcm = file => {
-  const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', file, '-map', '0:a:0', '-ac', '1', '-ar', String(RATE), '-f', 's16le', '-'], { maxBuffer: 256 * 1024 * 1024 });
+  // aresample first_pts=0: the samples are laid on the presentation timeline from 0 (a track that starts late is padded
+  // with silence, one that starts early is cut), so sound that plays at another time than the WebM's does not match.
+  const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', file, '-map', '0:a:0', '-af', 'aresample=async=1:first_pts=0', '-ac', '1', '-ar', String(RATE), '-f', 's16le', '-'], { maxBuffer: 256 * 1024 * 1024 });
   assert.equal(run.status, 0, `ffmpeg exited ${run.status} decoding the sound of ${file}: ${run.stderr}`);
   return new Int16Array(run.stdout.buffer, run.stdout.byteOffset, run.stdout.length >> 1);
 };
@@ -332,9 +334,17 @@ const correlation = (a, b, lag, from = 0, to = a.length) => {
   return (sab / n - (sa / n) * (sb / n)) / Math.sqrt(va * vb);
 };
 const rms = s => Math.sqrt(s.reduce((sum, x) => sum + x * x, 0) / s.length);
-/** Why the sound of `mp4` is not its WebM's sound (an empty list when it is). */
+// When each stream starts playing (ffprobe start_time, edit lists applied), in seconds.
+const starts = file => Object.fromEntries(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type,start_time', '-of', 'csv=p=0', file], { encoding: 'utf8' })
+  .trim().split('\n').map(line => line.split(',')).map(([type, start]) => [type, Number(start)]));
+const SOUND_SYNC = 0.05;
+/** Why the sound of `mp4` is not its WebM's sound, played at the same time against the pictures (an empty list when it is). */
 function soundProblems(webm, mp4) {
   const a = pcm(webm), b = pcm(mp4), problems = [];
+  const [sw, sm] = [starts(webm), starts(mp4)];
+  for (const [label, s] of [['WebM', sw], ['copy', sm]]) if (!Number.isFinite(s.audio) || !Number.isFinite(s.video)) problems.push(`the ${label} has no readable start time for its sound or pictures`);
+  const offset = (sm.audio - sm.video) - (sw.audio - sw.video);
+  if (!(Math.abs(offset) <= SOUND_SYNC)) problems.push(`its sound starts ${offset.toFixed(3)} s from where the WebM's starts against the pictures (within ${SOUND_SYNC} s)`);
   if (Math.abs(a.length - b.length) / RATE > SOUND_SECONDS) problems.push(`its sound lasts ${(b.length / RATE).toFixed(2)} s, the WebM's ${(a.length / RATE).toFixed(2)} s`);
   let lag = 0, whole = -2;
   for (let l = -RATE / 100; l <= RATE / 100; l++) { const c = correlation(a, b, l) ?? -2; if (c > whole) [whole, lag] = [c, l]; }
@@ -354,7 +364,7 @@ test('every copy with sound carries its WebM\'s sound, second by second (ffmpeg)
   assert.ok(withSound.length >= 1, 'the record lists the HQ film with sound');
   for (const entry of withSound) assert.deepEqual(soundProblems(join('site', entry.webm), join('site', entry.mp4)), [], entry.mp4);
 });
-test('a copy whose sound is silent, moved by a second, quieter or cut short is refused (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
+test('a copy whose sound is silent, moved by a second (re-encoded or by timestamps alone), quieter or cut short is refused (ffmpeg)', { skip: decoderSkip('ffmpeg') }, () => {
   const entry = readFallbacks('site').fallbacks.find(e => e.audio);
   const webm = join('site', entry.webm), mp4 = join('site', entry.mp4);
   const dir = mkdtempSync(join(tmpdir(), 'film-sound-'));
@@ -372,6 +382,13 @@ test('a copy whose sound is silent, moved by a second, quieter or cut short is r
     assert.ok(soundProblems(webm, remux('moved', 'adelay=1000:all=1', ['-t', String(entry.seconds)])).some(p => /correlates/.test(p)), 'sound moved by a second');
     assert.ok(soundProblems(webm, remux('quieter', 'volume=-6dB', ['-shortest'])).some(p => /dB from the WebM's loudness/.test(p)), 'sound 6 dB quieter');
     assert.ok(soundProblems(webm, remux('short', 'atrim=0:30', ['-shortest'])).some(p => /its sound lasts/.test(p)), 'sound cut at 30 s');
+    // The same AAC packets, only their timestamps moved a second later (no re-encode): the PCM is identical, the timing not.
+    const late = join(dir, 'late.mp4');
+    const shift = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', mp4, '-itsoffset', '1', '-i', mp4, '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', late], { encoding: 'utf8' });
+    assert.equal(shift.status, 0, shift.stderr);
+    const lateProblems = soundProblems(webm, late);
+    assert.ok(lateProblems.some(p => /starts .* from where the WebM's starts/.test(p)), 'sound timestamps moved a second later');
+    assert.ok(lateProblems.some(p => /correlates/.test(p)), 'and the sound laid on the timeline no longer matches');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

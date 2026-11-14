@@ -21,7 +21,8 @@
 // yuv420pSha256; and the whole copy is compared with its WebM by SSIM, frame by frame at 5 a second (average at least
 // 0.85, every one-second stretch at least 0.6, and the average 0.1 above the same copy against another film's WebM); and
 // a copy with sound carries its WebM's sound: both decoded to mono 8 kHz PCM, correlated sample by sample (the whole film
-// at least 0.98, every second at least 0.9), the same loudness within 1 dB and length within 0.1 s, with a negative
+// at least 0.98, every second at least 0.9, laid on the presentation timeline), starting within 0.05 s of where the
+// WebM's starts against its pictures, the same loudness within 1 dB and length within 0.1 s, with a negative
 // control (the same sound moved by a second) and refusal tests for silent, moved, quieter and cut sound. SSIM
 // measures likeness: it refuses a copy whose pictures are unlike its WebM's anywhere for a second or more, not footage
 // that merely looks alike. The per-frame rgb24 hashes go through ffmpeg's default scaler,
