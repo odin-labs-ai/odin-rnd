@@ -187,3 +187,70 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.equal(readFileSync(join('site', LINK_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('"What it is." opens the page as on Lab 05: plain words, then how it works, every number the record\'s, no fixture count', async () => {
+  const { renderAbout } = await import('./lab-link-safety.mjs');
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  const hero = main.indexOf('</section>');
+  assert.equal(main.indexOf('<section', hero), main.indexOf('id="about"') - '<section class="company-section company-width" '.length, 'right after the hero');
+  assert.ok(main.indexOf('id="about"') < main.indexOf('id="defect"'), 'before the defect');
+  assert.match(about, /<figure class="lab-flow">/);
+  const t = record.run.tests, text = textOf(about.replace(/<time[^>]*>[^<]*<\/time>/g, ' '));
+  // Each verdict sentence, recomputed from the record.
+  const yes = (ok, a, b) => (ok ? a : b);
+  const said = [
+    yes(record.poison.every(x => x.open === 'refused' && x.allowlisted === 'refused'), 'every poisoned URL was refused', 'not every poisoned URL was refused'),
+    yes(record.lookalikes.every(x => x.allowlisted === 'refused'), 'every lookalike was refused under the allowlist', 'not every lookalike was refused under the allowlist'),
+    yes(record.good.every(x => x.open === 'kept'), 'every good URL was kept as it is', 'not every good URL was kept'),
+    yes(record.unsafeLines.every(x => x.caught === 1), 'the audit caught every unsafe line of code', 'the audit did not catch every unsafe line of code'),
+    yes(record.safeLines.every(x => x.caught === 0), 'it flagged none of the safe lines', 'it flagged a safe line'),
+  ];
+  assert.ok(text.includes(`What came out: ${said.join(', ')}.`), 'the outcome sentence is the record\'s');
+  const run = `${t.passed} of its ${t.total} test cases passed`;
+  assert.equal(t.skipped, 0); assert.equal(t.failed, 0);
+  assert.ok(about.includes(`<strong>${run}</strong>`), 'the run\'s own counts');
+  assert.ok(text.includes(`the test run: ${run}`), 'the caption carries the run\'s counts');
+  assert.ok(about.includes(`at most ${record.maxLength} characters`), 'the rule\'s own length cap');
+  assert.ok(about.includes(`The ${record.allowlist.join(', ')} allowlist`), 'the record\'s allowlist');
+  assert.ok(about.includes(`<time datetime="${record.run.on}">`), 'the run\'s own date');
+  // The caption and prose say which check each kind of fixture went through: URLs the rule, lines of code the audit.
+  assert.match(text, /every URL of the test put through the one link rule, every line of code through the test's audit/);
+  assert.match(text, /We put every URL of the test through the rule itself.*We put every line of client code of the test through the test's own audit/);
+  assert.doesNotMatch(text, /every fixture of the (?:rule's )?test/, 'lines of code never went through the link rule');
+  const outcomes = ['Refused, every one', 'Refused under the allowlist, every one', 'Kept, every one', 'Caught, every one', 'None flagged'];
+  for (const o of outcomes) assert.ok(about.includes(`<li class="lab-flow-node lab-flow-good"><strong>${o}</strong>`), `${o}: good, as the record shows`);
+  assert.equal((about.match(/lab-flow-node lab-flow-good/g) ?? []).length, 5, 'five outcomes, each protective');
+  assert.match(text, /The fixtures are attacks we wrote, not ones found in the wild\./);
+  assert.ok(!text.includes("would have opened too"), "the hero tells the defect; What it is does not repeat it");
+  assert.match(text, /the host must be exactly this one/, 'one allowlisted host, said as one');
+  // Every number is the record's: change them and the page changes with them.
+  const c = clone(); c.run.tests = { total: 9, passed: 8, failed: 0, skipped: 1 }; c.maxLength = 250; c.run.on = '2026-10-20'; c.allowlist = ['example.org'];
+  const changed = renderAbout(c);
+  assert.ok(changed.includes('<strong>8 of its 9 test cases passed, 1 was skipped</strong>'), 'a skipped test case is named');
+  assert.ok(textOf(changed).includes('the test run: 8 of its 9 test cases passed, 1 was skipped'));
+  assert.ok(changed.includes('at most 250 characters') && changed.includes('The example.org allowlist') && changed.includes('<time datetime="2026-10-20">20 October 2026</time>'));
+  for (const old of [`${t.passed} of its ${t.total}`, `at most ${record.maxLength} characters`, `The ${record.allowlist[0]} allowlist`, `datetime="${record.run.on}"`]) assert.ok(!changed.includes(old), `${old} is gone once the record changes`);
+  // Each outcome's tone is the record's, failing closed: one fixture the other way turns its box bad.
+  const flips = [
+    [r => { r.poison[0].open = 'kept'; }, 'Not every one refused', 'not every poisoned URL was refused'],
+    [r => { r.lookalikes[0].allowlisted = 'kept'; }, 'Not every one refused under the allowlist', 'not every lookalike was refused under the allowlist'],
+    [r => { r.good[0].open = 'refused'; }, 'Not every one kept', 'not every good URL was kept'],
+    [r => { r.unsafeLines[0].caught = 0; }, 'Not every one caught', 'the audit did not catch every unsafe line of code'],
+    [r => { r.safeLines[0].caught = 1; }, 'One or more flagged', 'it flagged a safe line'],
+  ];
+  for (const [plant, title, sentence] of flips) {
+    const r = clone(); plant(r); const html = renderAbout(r);
+    assert.ok(html.includes(`<li class="lab-flow-node lab-flow-bad"><strong>${title}</strong>`), `${title}: bad`);
+    assert.equal((html.match(/lab-flow-node lab-flow-good/g) ?? []).length, 4, `${title}: only its own box turns`);
+    assert.ok(textOf(html).includes(sentence), sentence);
+  }
+  // An empty list is unknown, never good.
+  const e = clone(); e.safeLines = [];
+  assert.ok(renderAbout(e).includes('<li class="lab-flow-node lab-flow-neutral"><strong>None in the record</strong>'));
+  // The page's own rule: fixture counts live in the authored box and the note's figures in its summary box, never here.
+  for (const k of [record.poison.length, record.lookalikes.length, record.good.length, record.unsafeLines.length, record.safeLines.length, record.note.oldCode.failed, record.note.oldCode.passed, record.note.oldCode.tests]) {
+    assert.doesNotMatch(text, new RegExp(`\\b${k}\\b`), `${k} is not in What it is`);
+  }
+  assert.doesNotMatch(text, /\b(?:real|live) attacks?\b|we ran the old code|\bred\/green\b/i, 'the fixtures are never called real, and the old code was not run here');
+});

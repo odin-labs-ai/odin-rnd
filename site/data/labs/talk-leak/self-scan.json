@@ -4,11 +4,11 @@
  "scanner": "aa35e6dbf07d5e61d5d836389daa214bd9c5e49a",
  "scannerSha256": "e4d8c9f5229c75e211e80c966c6b95a1d2e408d3f5c475252edb0e0023eb5c27",
  "denylistSha256": "bd92d70c6679ae3ab5b08b4849763b23bd97813f291d64933a872485642af649",
- "at": "2026-10-28T02:31:41Z",
+ "at": "2026-11-14T03:59:19Z",
  "files": [
   {
    "what": "the rendered page",
-   "sha256": "55aa222ed1b33c7f40d01d054d15e2a973f570329abdf2e404a810977274ebb1"
+   "sha256": "5865ae426ab7d9b1cd222bf3a0cbb6df787a35de5d40539941cd9733d1c28228"
   },
   {
    "what": "the record",
@@ -20,7 +20,7 @@
   },
   {
    "what": "the page template",
-   "sha256": "7a4f3352c8a821cb22a972427139ba9e806b0e1d61f45012586ba3c7857011b7"
+   "sha256": "58891fe5a9681c0cd4c6734b224734755250d6590799202d5f8f06e802245043"
   }
  ],
  "publicNames": 50,
