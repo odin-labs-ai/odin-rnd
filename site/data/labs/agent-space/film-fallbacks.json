@@ -6,7 +6,7 @@
   "tool": "ffmpeg 8.1",
   "video": "H.264 (libx264), High profile level 4.0, yuv420p limited range, constant frame rate, faststart; two-pass to a bitrate under the size limit (the outage film at CRF 24); no metadata, no encoder text in the stream",
   "audio": "AAC 127 kbit/s stereo where the WebM has sound (the HQ film); no audio track otherwise",
-  "note": "Each MP4 is encoded from the WebM it names, with no edit: same shots, same order, same length. Where the compressed bytes spelled a screened word by chance, the bitrate was lowered a step and the film encoded again. The MP4 is listed second, for browsers that cannot play WebM."
+  "note": "Encoded from the WebM it names, settings above, no edit step. CI checks, per second, that each copy decodes and looks (SSIM) and, with sound, sounds like its own WebM, at its length: likeness, not bit identity; the encode is not bit-reproducible on other ffmpeg builds. A copy whose bytes spelled a screened word by chance was encoded again a bitrate step lower."
  },
  "fallbacks": [
   {
