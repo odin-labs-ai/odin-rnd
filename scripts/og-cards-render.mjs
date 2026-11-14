@@ -104,10 +104,11 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
     '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1', '--no-first-run',
     '--no-default-browser-check', '--font-render-hinting=none', `--user-data-dir=${join(dir, 'profile')}`,
     `--window-size=${CARD_WIDTH},${CARD_HEIGHT}`, '--remote-debugging-port=0', 'about:blank',
-  ], { stdio: 'ignore' });
+  ], { stdio: 'ignore', detached: process.platform !== 'win32' });
   let exited = false;
-  child.on('exit', () => { exited = true; });
+  const gone = new Promise(resolve => child.once('exit', () => { exited = true; resolve(); }));
   let socket;
+  let closeBrowser;
   try {
     const portFile = join(dir, 'profile', 'DevToolsActivePort');
     const started = Date.now();
@@ -135,6 +136,7 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
       pending.set(id, { resolve, reject });
       socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
     });
+    closeBrowser = () => send('Browser.close');
     const results = [];
     for (const { inputs, page } of jobs) {
       const file = join(dir, `card-${results.length}.html`);
@@ -188,9 +190,21 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
     }
     return results;
   } finally {
+    // Close Chrome the way it expects (so no helper process is still writing into the profile), then make sure the
+    // whole process group is gone before the profile is removed.
+    if (closeBrowser && !exited) await Promise.race([closeBrowser().catch(() => {}), wait(5000)]);
     try { socket?.close(); } catch { /* already closed */ }
-    if (!exited) { child.kill('SIGKILL'); await new Promise(resolve => (exited ? resolve() : child.once('exit', resolve))); }
-    rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+    await Promise.race([gone, wait(10000)]);
+    if (!exited) {
+      try { process.platform === 'win32' ? child.kill('SIGKILL') : process.kill(-child.pid, 'SIGKILL'); } catch { /* already gone */ }
+      await gone;
+    }
+    try {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+    } catch (error) {
+      // A leftover temporary profile is not a failed draw; say so and leave it to the OS.
+      console.warn(`og-cards: could not remove ${dir}: ${error.message}`);
+    }
   }
 }
 
