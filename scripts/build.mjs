@@ -167,9 +167,15 @@ if (refreshUpdatesRequested) {
 }
 // Labs (mission rnd-labs-human-first-1024): the Labs index, Lab 01's page and its Atom feed, rendered from
 // site/data/labs/ into dist/ only. scripts/labs.mjs refuses a dispatch that misses its schema or the public screen.
+// Every film player the generators write is counted while they render (scripts/film-fallbacks.mjs, startFilmLedger).
+const { startFilmLedger } = await import('./film-fallbacks.mjs');
+let filmPairsWritten;
 {
   const { renderLabs } = await import('./labs.mjs');
-  for (const [file, body] of Object.entries(renderLabs())) writeFileSync(`dist/${file}`, body);
+  const closeFilmLedger = startFilmLedger();
+  const pages = renderLabs();
+  filmPairsWritten = closeFilmLedger();
+  for (const [file, body] of Object.entries(pages)) writeFileSync(`dist/${file}`, body);
 }
 // Show one latest, validated run per lab beside the editorial updates. This is built-only: the updates feed's
 // frozen dates and committed HTML do not change when a lab appends another record check.
@@ -267,13 +273,14 @@ for (const file of htmlFiles('dist')) {
   const note = `<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="${methods}">How to read these results</a>.</p></aside>`;
   writeFileSync(file, source.replace('</main>', note + '</main>'));
 }
-// Films on every browser (mission rnd-nightshift-1112): an MP4 (H.264) <source> after each WebM <source> on every built
-// page, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json, after the last step that writes
-// pages; the committed pages stay as they are. Fails closed on any WebM mention it cannot pair and on a copy no page
-// plays (scripts/film-fallbacks.mjs).
+// Films on every browser (mission rnd-nightshift-1112): the generators wrote an MP4 (H.264) <source> after each WebM
+// <source>, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json; this pass adds it after the
+// home page's one pinned player and then reads every built file, after the last step that writes pages. It fails closed
+// when a film's pairs in dist are not the pairs the build wrote, on any other WebM mention and on a copy no page plays
+// (scripts/film-fallbacks.mjs). The committed pages stay as they are.
 {
   const { addFilmFallbacks } = await import('./film-fallbacks.mjs');
-  addFilmFallbacks({ distDir: 'dist', root: 'site' });
+  addFilmFallbacks({ distDir: 'dist', root: 'site', written: filmPairsWritten });
 }
 // Fails closed when a dated clarification reached no page (a renamed page, or a key that missed on a path separator).
 {
