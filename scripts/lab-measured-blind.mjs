@@ -22,6 +22,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderFlow } from './lab-flow.mjs';
 import { box, cite, escape, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 import { canonical } from './lab-record.mjs';
 
@@ -111,6 +112,33 @@ export function renderIntro(record) {
   return `<span class="technical">LAB 13 · DOES AN AGENT COMPANY GET BETTER, MEASURED BLIND?</span><h1 id="lab-title">Does an agent company get better, measured blind?</h1><p class="company-lead">The agents of our company on duty answered the same work items before and after we fixed their recipes and tools, and a separate AI reviewer judged every answer without being told which was which. On the nine items the fixes were made on, useful answers went from ${useful(t, 'before')} to ${useful(t, 'after')}. On nine items held out from the fixing, from ${useful(a, 'before')} to ${useful(a, 'after')}; on nine fresh ones, judged on the next version, from ${useful(b, 'before')} to ${useful(b, 'after')}.</p><p>Each side of a set is ${per(t)} verdicts, not ${t.items.length}: nine items, each answered twice. The set the fixes were made on gained ${compare(gain(t), gain(a))} the first held-out set: ${gain(t)} useful answers against ${gain(a)}.</p>`;
 }
 
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count is the record's; each
+// side of a set reads "of 18" (useful()), never nine, and the judge is named as an AI reviewer with partial blinding.
+export function renderAbout(record) {
+  const s = record.setup, sets = SET_IDS.map(id => set(record, id));
+  const items = sets.reduce((k, x) => k + x.items.length, 0);
+  const prose = `<p>An agent company is a team of AI agents, each with a job, such as reading a failed CI run and saying what went wrong. We fixed their recipes and tools. Did that make them better?</p><p>To find out without fooling ourselves, the agents answered the same work items before the fixes and after them, and a separate AI reviewer judged every answer without being told which version gave it. The blinding is partial, and the box below says how.</p><p>One set of items is the one we fixed on, so it says the least. Two other sets were held out from the fixing; the second was fresh, judged on the next version.</p>`;
+  const flow = renderFlow({
+    caption: `How it works: ${items} work items, answered before and after the fixes, judged with partial blinding`,
+    source: [
+      { title: `${items} work items in ${sets.length} sets`, body: sets.map(x => x.name).join(', ') },
+      { title: 'The agents on duty', body: `real agent sessions on a small local model, ${s.model}, with read-only tools` },
+    ],
+    lanes: [
+      { label: 'Before the fixes', nodes: [
+        { title: 'The old engine and recipes', body: 'as they were on the main branch' },
+        { title: s.runs === 2 ? 'Each item answered twice' : `Each item answered ${s.runs} times`, body: 'the same model, budget and agent per department in both arms' },
+      ] },
+      { label: 'After the fixes', nodes: [
+        { title: 'The fixed engine and recipes', body: sets.map(x => `${x.afterVersion} for ${x.name[0].toLowerCase()}${x.name.slice(1)}`).join(', ') },
+        { title: s.runs === 2 ? 'Each item answered twice again' : `Each item answered ${s.runs} times again`, body: 'the same items, the same reviewer' },
+      ] },
+      { label: 'Judged by a separate AI reviewer, not a person', tone: 'good', nodes: sets.map(x => ({ title: x.name, body: `useful answers: ${useful(x, 'before')} before, ${useful(x, 'after')} after` })) },
+    ],
+  });
+  return `${prose}${flow}`;
+}
+
 export function renderJudge(record) {
   const s = record.setup;
   return box('judge', { cls: 'blind-judge', id: 'judge', body: `<p>Every verdict on this page was given by ${escape(s.judge)}. It is not a human's verdict. It gave each answer one of four labels: useful, partly, wrong or stuck; ${escape(s.stuck)}.</p><p>The review sheet showed ${escape(s.blinding)}.</p>` });
@@ -158,7 +186,7 @@ export function renderMeasuredBlind(root = 'site', { now = new Date() } = {}) {
   const record = readMeasuredBlind(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, BLIND_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--BLIND_INTRO-->': renderIntro(record), '<!--BLIND_JUDGE-->': renderJudge(record), '<!--BLIND_HOW-->': renderHow(record), '<!--BLIND_NUMBERS-->': renderNumbers(record), '<!--BLIND_READING-->': renderReading(record), '<!--BLIND_LIVE-->': renderLive(record), '<!--BLIND_CHECK-->': renderCheck(record), '<!--BLIND_BOUNDARY-->': renderBoundary(record) })) {
+  for (const [marker, value] of Object.entries({ '<!--BLIND_INTRO-->': renderIntro(record), '<!--BLIND_ABOUT-->': renderAbout(record), '<!--BLIND_JUDGE-->': renderJudge(record), '<!--BLIND_HOW-->': renderHow(record), '<!--BLIND_NUMBERS-->': renderNumbers(record), '<!--BLIND_READING-->': renderReading(record), '<!--BLIND_LIVE-->': renderLive(record), '<!--BLIND_CHECK-->': renderCheck(record), '<!--BLIND_BOUNDARY-->': renderBoundary(record) })) {
     if (!html.includes(marker)) throw new Error(`${BLIND_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

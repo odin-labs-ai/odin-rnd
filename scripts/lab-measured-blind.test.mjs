@@ -190,3 +190,20 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.equal(readFileSync(join('site', BLIND_PIN), 'utf8'), `${sha256(raw)}  record.json\n`, 'the committed pin is the committed record\'s');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, each side of a set of 18, the judge an AI', () => {
+  const html = renderMeasuredBlind().pages['labs/measured-blind/index.html'];
+  const body = html.split('<main id="main">')[1].split('</main>')[0];
+  const about = body.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(body.indexOf('id="about"') < body.indexOf('id="judge-section"'), 'right after the hero, before who judged');
+  assert.match(about, /<figure class="lab-flow">/);
+  const rec = JSON.parse(readFileSync(join('site', 'data/labs/measured-blind/record.json'), 'utf8'));
+  for (const s of rec.sets) {
+    const per = s.items.length * s.items[0].before.length;
+    assert.ok(about.includes(`useful answers: ${s.counts.before.useful} of ${per} before, ${s.counts.after.useful} of ${per} after`), s.name);
+  }
+  assert.match(about, /separate AI reviewer, not a person/);
+  assert.match(about, /partial/);
+  assert.doesNotMatch(about.replace(/<[^>]+>/g, ' '), /\bof 9\b|judged blind\b/, 'never nine a side, never fully blind');
+});

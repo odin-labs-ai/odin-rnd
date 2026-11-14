@@ -203,5 +203,10 @@ test('"What it is." opens the page as on Lab 01: plain words, then how it works,
   assert.ok(about.includes(`${ruled} closed by a rule`) && about.includes(`${code} code bugs`));
   assert.ok(about.includes(`${s.cases * Object.keys(h.rounds).length} verdicts`));
   assert.ok(about.includes(`Judged real fixes: ${s.judgedFix} of ${s.cases} builds`));
-  assert.doesNotMatch(about.replace(/<[^>]+>/g, ' '), /\b(?:17|11) (?:of|right)\b|10 partly/, 'the diagnosis tallies stay in the numbers box');
+  // The diagnosis tallies of both sets, read from the record, stay in the numbers box.
+  const text = about.replace(/<[^>]+>/g, ' ');
+  for (const [k, total] of [[s.diagnosis.right, s.cases * Object.keys(h.rounds).length], [s.diagnosis.partly, s.cases * Object.keys(h.rounds).length], [record.earlier.diagnosis.right, record.earlier.judgments], [record.earlier.diagnosis.partly, record.earlier.judgments]]) {
+    assert.ok(!text.includes(`${k} of ${total}`), `no diagnosis tally ${k} of ${total} outside the numbers box`);
+  }
+  assert.doesNotMatch(text, /diagnoses? right|partly right/, 'no diagnosis wording either');
 });
