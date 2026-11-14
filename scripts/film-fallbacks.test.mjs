@@ -215,6 +215,57 @@ test('every committed copy is H.264 High at level 4.0 or below, with sound only 
 // The decoder tests. Where ffmpeg and ffprobe are installed they run; with FILM_DECODER_REQUIRED set (the Film copies
 // workflow, which installs ffmpeg) a missing decoder is a failure, not a skip. The build cannot run a decoder; these
 // are the checks the description's "decoded" claims rest on.
+// The publish workflow is what makes the decoder tests a gate: this reads .github/workflows/publish.yml and refuses it
+// unless the Film copies job runs on every trigger, installs ffmpeg and runs this file with FILM_DECODER_REQUIRED=1,
+// verify needs it and fails unless it succeeded, and gate (the deploy's leak gate) needs verify and publish needs gate.
+// Line-based (no YAML library in this repo): each job is the block of lines under its two-space key.
+const jobBlocks = text => {
+  const jobs = {}, lines = text.split('\n'), at = lines.indexOf('jobs:');
+  let name = null;
+  for (const line of lines.slice(at + 1)) {
+    const key = /^  ([a-z][a-z0-9-]*):\s*$/.exec(line);
+    if (key) { name = key[1]; jobs[name] = []; continue; }
+    if (/^\S/.test(line)) name = null;
+    if (name) jobs[name].push(line);
+  }
+  return jobs;
+};
+const needsOf = lines => { const m = lines.map(l => /^    needs:\s*(.+)$/.exec(l)).find(Boolean); return m ? m[1].replace(/[[\]\s]/g, '').split(',').filter(Boolean) : []; };
+function publishGateProblems(text) {
+  const problems = [], jobs = jobBlocks(text);
+  const on = text.slice(0, text.indexOf('\njobs:'));
+  if (!/\n  pull_request:/.test(on) || !/\n  push:\n    branches: \[main\]/.test(on)) problems.push('the workflow does not run on pull requests and on pushes to main');
+  const film = jobs['film-copies'];
+  if (!film) return [...problems, 'there is no film-copies job'];
+  if (film.some(l => /^    if:/.test(l))) problems.push('the film-copies job has a condition, so it can be skipped');
+  if (!film.some(l => /^    name: Film copies, decoded$/.test(l))) problems.push('the film-copies job is not named "Film copies, decoded"');
+  if (!film.some(l => /apt-get install .*\bffmpeg\b/.test(l))) problems.push('the film-copies job does not install ffmpeg');
+  const env = film.findIndex(l => /^          FILM_DECODER_REQUIRED: '1'$/.test(l));
+  if (env < 0 || !/^        run: node --test scripts\/film-fallbacks\.test\.mjs$/.test(film[env + 1] ?? '')) problems.push('the film-copies job does not run scripts/film-fallbacks.test.mjs with FILM_DECODER_REQUIRED=1');
+  const verify = jobs.verify ?? [];
+  if (!needsOf(verify).includes('film-copies')) problems.push('verify does not need film-copies');
+  if (!verify.some(l => l.includes('[ "${{ needs.film-copies.result }}" = success ] ||') && /exit 1; }$/.test(l))) problems.push('verify does not fail unless film-copies succeeded');
+  if (!needsOf(jobs.gate ?? []).includes('verify')) problems.push('gate does not need verify');
+  if (!needsOf(jobs.publish ?? []).includes('gate')) problems.push('publish does not need gate');
+  return problems;
+}
+test('the publish workflow runs the decoder tests on every pull request and push, and nothing deploys unless they pass', () => {
+  const text = readFileSync('.github/workflows/publish.yml', 'utf8');
+  assert.deepEqual(publishGateProblems(text), []);
+  const broken = [
+    [text.replace('needs: [test, windows-paths, film-copies]', 'needs: [test, windows-paths]'), /verify does not need film-copies/],
+    [text.replace('[ "${{ needs.film-copies.result }}" = success ]', '[ "${{ needs.film-copies.result }}" != cancelled ]'), /verify does not fail unless/],
+    [text.replace("          FILM_DECODER_REQUIRED: '1'\n", ''), /FILM_DECODER_REQUIRED=1/],
+    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /has a condition/],
+    [text.replace(/(  gate:[\s\S]*?\n    needs: )verify/, '$1test'), /gate does not need verify/],
+    [text.replace(/(  publish:[\s\S]*?\n    needs: )gate/, '$1verify'), /publish does not need gate/],
+  ];
+  for (const [changed, pattern] of broken) {
+    assert.notEqual(changed, text, String(pattern));
+    assert.ok(publishGateProblems(changed).some(p => pattern.test(p)), String(pattern));
+  }
+});
+
 const has = tool => { try { execFileSync(tool, ['-version'], { stdio: 'ignore' }); return true; } catch { return false; } };
 const required = process.env.FILM_DECODER_REQUIRED === '1';
 const ffmpeg = has('ffmpeg'), ffprobe = has('ffprobe');
