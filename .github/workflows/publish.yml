@@ -91,8 +91,33 @@ jobs:
         run: node -e "import('./scripts/nina-changes-results-site.mjs').then(() => console.log('imported'), e => { console.error(e); process.exit(1); })"
       - name: Corrections keys are POSIX and every one matches a site page
         run: node --test scripts/windows-paths.test.mjs scripts/publication-corrections.test.mjs
+  # Film copies, decoded (scripts/film-fallbacks.mjs): the build machine has no decoder, so this job installs the
+  # distribution's ffmpeg and runs scripts/film-fallbacks.test.mjs with FILM_DECODER_REQUIRED, where a missing decoder
+  # fails instead of skipping: every MP4 copy of a WebM film decodes start to end, to as many frames as it has samples,
+  # its screened frames hash to the record, and it matches its WebM by SSIM. verify needs it, so nothing publishes
+  # without it.
+  film-copies:
+    name: Film copies, decoded
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
+      - name: Decode every film copy and check it against its WebM and its record
+        env:
+          FILM_DECODER_REQUIRED: '1'
+        run: node --test scripts/film-fallbacks.test.mjs
   verify:
-    needs: [test, windows-paths]
+    needs: [test, windows-paths, film-copies]
     # Runs whatever the shards did, and fails unless every one succeeded: a skipped, cancelled or failed shard can
     # never read as a pass.
     if: always()
@@ -110,6 +135,9 @@ jobs:
       - name: The Windows path checks succeeded
         run: |
           [ "${{ needs.windows-paths.result }}" = success ] || { echo "::error::the windows paths job concluded '${{ needs.windows-paths.result }}', not success"; exit 1; }
+      - name: The film copies decoded
+        run: |
+          [ "${{ needs.film-copies.result }}" = success ] || { echo "::error::the film copies job concluded '${{ needs.film-copies.result }}', not success"; exit 1; }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the

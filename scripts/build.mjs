@@ -263,6 +263,14 @@ for (const file of htmlFiles('dist')) {
   const note = `<aside id="publication-boundary" class="publication-boundary" aria-label="Research status and limits"><p>Read results within their stated method, date and scope. A source card or matching record hash does not independently validate a conclusion. <a href="${methods}">How to read these results</a>.</p></aside>`;
   writeFileSync(file, source.replace('</main>', note + '</main>'));
 }
+// Films on every browser (mission rnd-nightshift-1112): an MP4 (H.264) <source> after each WebM <source> on every built
+// page, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json, after the last step that writes
+// pages; the committed pages stay as they are. Fails closed on any WebM mention it cannot pair and on a copy no page
+// plays (scripts/film-fallbacks.mjs).
+{
+  const { addFilmFallbacks } = await import('./film-fallbacks.mjs');
+  addFilmFallbacks({ distDir: 'dist', root: 'site' });
+}
 // Fails closed when a dated clarification reached no page (a renamed page, or a key that missed on a path separator).
 {
   const missed = unmatchedCorrections(builtPages);
