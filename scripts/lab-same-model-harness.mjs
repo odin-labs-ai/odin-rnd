@@ -25,6 +25,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate } from './lab-kit.mjs';
 import { harnessRefusals, scoreReply } from '../experiments/same-model-harness/score.mjs';
+import { renderFlow } from './lab-flow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const SMH_RECORD = 'data/labs/same-model-harness/record.json';
@@ -200,6 +201,66 @@ export function renderIntro() {
   return `<span class="technical">LAB 11 · SAME MODEL, WITH AND WITHOUT A HARNESS</span><h1 id="lab-title">Same model, with and without a harness</h1><p class="company-lead">We like to say the model is rented and the harness is yours. This lab tests that instead of saying it. One small made-up project, one change to it, one question: which files does the change touch, and does the test suite still pass? Each local model answers it bare, and again with a harness that ran three tools for it first. Same model, same question, same seed. The only difference is the harness.</p>`;
 }
 
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count is totals()' first
+// answers over the record's calls; the project is said to be made up, and the harness's own check (its refusals and
+// second answers) is named only as kept apart, never counted here: it is not a result of the model.
+// How often each model was asked is read from the record too: a group (model, form, arm) the runner did not start
+// because the machine was busy (record.refusedCells) is said so, never counted as run. Bare and harnessed are compared
+// only when every not-run group's other arm was not run either (so both sides hold the same groups) and both sides have
+// answers; otherwise the section says less. A box or lane with no answers gets the neutral tone, never good. A first
+// answer that never came back or could not be read (readable false) makes neither mistake, so it is no answer either:
+// a box or lane with any such answer is never good, its box says how many, and the sides are compared only when they
+// hold as many of them (fail closed: a harness whose every call failed must not read as a win).
+export function renderAbout(record) {
+  const errs = t => t.wrongPass + t.invented;
+  const k = record.models.length, runs = record.runsPerCell;
+  const notRun = (model, variant, arm) => record.refusedCells.some(c => c.model === model && c.variant === variant && c.arm === arm);
+  const groups = k * VARIANTS.length * ARMS.length, skipped = record.refusedCells.length;
+  const paired = record.refusedCells.every(c => notRun(c.model, c.variant, c.arm === 'bare' ? 'harnessed' : 'bare'));
+  const all = Object.fromEntries(VARIANTS.map(v => [v, Object.fromEntries(ARMS.map(a => [a, totals(record, v, a)]))]));
+  const sum = (arm, f) => VARIANTS.reduce((s, v) => s + f(all[v][arm]), 0);
+  const bareErrs = sum('bare', errs), harnErrs = sum('harnessed', errs), bareN = sum('bare', t => t.n), harnN = sum('harnessed', t => t.n);
+  const bareUnread = sum('bare', t => t.unreadable), harnUnread = sum('harnessed', t => t.unreadable);
+  const sameRuns = paired && bareN > 0 && bareN === harnN;
+  const comparable = sameRuns && bareUnread === harnUnread;
+  const side = harnErrs < bareErrs ? 'fewer' : harnErrs > bareErrs ? 'more' : 'as many';
+  const suite = record.suite === 'FAIL' ? 'fail' : 'pass';
+  const asked = skipped === 0
+    ? `each model got each form ${runs} times bare and ${runs} times with the harness`
+    : `each model was to get each form ${runs} times bare and ${runs} times with the harness, but ${skipped} of these ${groups} groups of ${runs} (one model, one form, bare or with the harness) were not run because the computer was too busy, so they have no answers`;
+  const counted = 'Two mistakes are counted: saying the failing tests pass, and naming a file that does not exist.';
+  const unreadNote = bareUnread === 0 ? '' : ` On each side, ${bareUnread} of the ${harnN} first answers could not be read (no reply came back, or it could not be scored), so they count as neither mistake.`;
+  const verdict = !sameRuns
+    ? `${counted} Because not every group was run on both sides, the two sides are not compared here; the counts below are only for the groups that ran.`
+    : !comparable
+      ? `${counted} Some first answers could not be read (no reply came back, or it could not be scored): ${bareUnread} of ${bareN} without the harness and ${harnUnread} of ${harnN} with it. Such an answer makes neither mistake, so the two sides are not compared here; the counts below show both.`
+    : bareErrs + harnErrs === 0 && bareUnread === 0 ? 'Neither way made either mistake: on this project the harness had nothing to fix.'
+    : `${counted} With the harness, the same models made ${side} of them in their first answers: ${harnErrs} mistakes with the harness against ${bareErrs} without it, over ${harnN} first answers each way.${unreadNote}`;
+  const prose = `<p>People say the AI model is rented and the harness around it is yours. A harness is the code that runs tools for the model and checks what it says. This lab tests whether the harness changes the answers, with the model kept the same.</p><p>We made up a small project and one change to it, after which its tests ${suite}. ${k === 1 ? 'One local model was' : `${k} local models were`} asked which files the change touches and whether the tests still pass: once with only the question and the change, and once with what the harness's tools found in the project first. The question came in two forms, one where the model may say it cannot tell and one where it must say pass or fail, and ${asked}. Every first answer was scored by code, not by a person.</p><p>${verdict} The harness can also check an answer and ask again; that is shown further down, kept apart from these counts.</p>`;
+  const toneOf = ts => (ts.some(t => errs(t) > 0) ? 'bad' : ts.every(t => t.n > 0 && t.unreadable === 0) ? 'good' : 'neutral');
+  const outcome = (variant, arm) => {
+    const t = all[variant][arm];
+    const body = t.n === 0 ? 'not run: the computer was too busy' : `${t.wrongPass} of ${t.n} first answers said the failing tests pass; ${t.invented} of ${t.n} named a file that does not exist${t.unreadable ? `; ${t.unreadable} of ${t.n} could not be read` : ''}`;
+    return { title: variant === 'open' ? 'May say UNKNOWN' : 'Must say PASS or FAIL', body, tone: toneOf([t]) };
+  };
+  const lane = (arm, label, first) => ({ label, tone: toneOf(VARIANTS.map(v => all[v][arm])), nodes: [first, ...VARIANTS.map(v => outcome(v, arm))] });
+  const each = skipped === 0
+    ? `each asked ${runs} times bare and ${runs} times with the harness, for each form of the question`
+    : `each to be asked ${runs} times bare and ${runs} times with the harness, for each form of the question; ${skipped} of ${groups} groups not run (the computer was too busy)`;
+  const flow = renderFlow({
+    caption: `How it works: ${k} local models, the same question, asked bare and with a harness`,
+    source: [
+      { title: 'A made-up project and one change', body: `${record.fixtureFiles} files; after the change its tests ${suite}` },
+      { title: `${k} local models`, body: `${record.models.map(x => x.model).join(', ')}; ${each}` },
+    ],
+    lanes: [
+      lane('bare', 'Bare: the model alone', { title: 'The question and the change', body: 'nothing else' }),
+      lane('harnessed', 'With a harness: the same model', { title: 'The question, the change and the tool output', body: "the harness's tools look at the project before the model is asked" }),
+    ],
+  });
+  return `${prose}${flow}`;
+}
+
 export function renderSetup(record) {
   return `${box('fixture', { cls: 'smh-fixture', id: 'fixture', body: `<p>The project is a route planner for Northwind Labs, a courier we made up: ${record.fixtureFiles} files of Python, four modules and their tests. The change moves one line in the pricing module, so that the departure depot is charged as a stop. The tests say it is not one, so after the change the suite fails. We wrote the project, the change and the question; nothing in it comes from a client.</p>` })}
 <ul class="rogue-list"><li><strong>Bare.</strong> The model gets the question and the diff. Nothing else.</li><li><strong>With a harness.</strong> The model gets the same question and diff, plus the output of three tools the harness ran on the project before asking: the list of files, a search for the changed function, and the test run with its exit status.</li><li><strong>Two ways to ask.</strong> In the open question the model may answer UNKNOWN for the tests. In the forced one it must say PASS or FAIL, the shape of a coding agent's closing report.</li><li><strong>The test files too.</strong> The question asks for the test files that cover the changed function. The bare arm cannot see the project, so any test file it names is a guess.</li><li><strong>Scored by code.</strong> A reply invents a file when it names a path that is not in the project. It is a wrong PASS when it says the suite passes. Both are counted from the model's first answer, by the same scorer the runner uses.</li></ul>`;
@@ -213,8 +274,8 @@ function cellRow(record, model, variant, arm) {
 
 /** Totals over all models for one variant and arm (first answers). */
 export function totals(record, variant, arm) {
-  const sum = { n: 0, wrongPass: 0, invented: 0, unknown: 0 };
-  for (const { model } of record.models) { const c = cellCounts(record.calls, model, variant, arm); sum.n += c.n; sum.wrongPass += c.wrongPass; sum.invented += c.invented; sum.unknown += c.unknown; }
+  const sum = { n: 0, wrongPass: 0, invented: 0, unknown: 0, unreadable: 0 };
+  for (const { model } of record.models) { const c = cellCounts(record.calls, model, variant, arm); sum.n += c.n; sum.wrongPass += c.wrongPass; sum.invented += c.invented; sum.unknown += c.unknown; sum.unreadable += c.unreadable; }
   return sum;
 }
 
@@ -223,7 +284,9 @@ export function verdictSentence(record, variant) {
   const b = totals(record, variant, 'bare'), h = totals(record, variant, 'harnessed');
   const errs = t => t.wrongPass + t.invented;
   const what = variant === 'open' ? 'When the model may say UNKNOWN' : 'When the model must say PASS or FAIL';
-  if (errs(b) === 0 && errs(h) === 0) return `${what}, neither arm made either mistake: on this fixture the harness had nothing to fix.`;
+  if (errs(b) === 0 && errs(h) === 0 && b.unreadable === 0 && h.unreadable === 0) return `${what}, neither arm made either mistake: on this fixture the harness had nothing to fix.`;
+  // An unreadable first answer (no reply, or none that could be scored) makes neither mistake: compare only like with like.
+  if (b.unreadable !== h.unreadable) return `${what}, across all models: bare, ${frac(b.wrongPass, b.n)} first answers said the failing suite passes, ${frac(b.invented, b.n)} named a file that does not exist and ${frac(b.unreadable, b.n)} could not be read; with the harness, ${frac(h.wrongPass, h.n)}, ${frac(h.invented, h.n)} and ${frac(h.unreadable, h.n)}. An answer that could not be read makes neither mistake, so the two arms are not compared.`;
   const side = errs(h) < errs(b) ? 'fewer' : errs(h) > errs(b) ? 'more' : 'as many';
   return `${what}, across all models: bare, ${frac(b.wrongPass, b.n)} first answers said the failing suite passes and ${frac(b.invented, b.n)} named a file that does not exist; with the harness, ${frac(h.wrongPass, h.n)} and ${frac(h.invented, h.n)}. The same models made ${side} of these mistakes with the harness.`;
 }
@@ -264,7 +327,7 @@ export function renderSameModelHarness(root = 'site', { now = new Date() } = {})
   const record = readSameModelHarness(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, SMH_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--SMH_INTRO-->': renderIntro(record), '<!--SMH_SETUP-->': renderSetup(record), '<!--SMH_NUMBERS-->': renderNumbers(record), '<!--SMH_CHECK-->': renderCheck(record), '<!--SMH_RUN-->': renderRun(record), '<!--SMH_BOUNDARY-->': renderBoundary(record) })) {
+  for (const [marker, value] of Object.entries({ '<!--SMH_INTRO-->': renderIntro(record), '<!--SMH_ABOUT-->': renderAbout(record), '<!--SMH_SETUP-->': renderSetup(record), '<!--SMH_NUMBERS-->': renderNumbers(record), '<!--SMH_CHECK-->': renderCheck(record), '<!--SMH_RUN-->': renderRun(record), '<!--SMH_BOUNDARY-->': renderBoundary(record) })) {
     if (!html.includes(marker)) throw new Error(`${SMH_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { changes, JURY_PIN, JURY_RECORD, JURY_TEMPLATE, juryProblems, median, pageLeaks, readAiJury, recordHashes, renderAiJury, renderIntro } from './lab-ai-jury.mjs';
+import { changes, JURY_PIN, JURY_RECORD, JURY_TEMPLATE, juryProblems, median, pageLeaks, readAiJury, recordHashes, renderAbout, renderAiJury, renderIntro, score, words } from './lab-ai-jury.mjs';
 import { renderLabs } from './labs.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
@@ -174,4 +174,66 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.doesNotThrow(() => readAiJury(root));
     assert.equal(readFileSync(join('site', JURY_PIN), 'utf8'), `${sha256(raw)}  record.json\n`);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('"What it is." opens the page right after the hero: plain words, then how it works, every count the record\'s, the jurors AI', () => {
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  const hero = main.indexOf('</section>'), at = main.indexOf('id="about"'), next = main.indexOf('<section', hero);
+  assert.ok(at > hero && main.lastIndexOf('<section', at) === next, 'the first section after the hero');
+  assert.ok(at < main.indexOf('id="jurors"'), 'before the jurors');
+  assert.match(about, /<figure class="lab-flow">/);
+  const text = textOf(about), rooms = record.rounds[0].rooms.length;
+  assert.ok(text.includes(`How it works: ${rooms} rooms, scored blind by an AI jury in ${record.rounds.length} rounds`));
+  assert.ok(text.includes(`One rubric, ${record.rubric.criteria.length} criteria`));
+  assert.ok(text.includes(`by at least ${score(record.rubric.minMargin)} points`));
+  assert.ok(text.includes(`single rooms moved by up to ${score(Math.max(...changes(record).map(Math.abs)))}`));
+  for (const round of record.rounds) {
+    const asked = round.reviewers.filter(r => r.kind === 'cloud');
+    assert.ok(text.includes(`Round ${round.round}: ${asked.length} AI models tried for the jury`), `round ${round.round}: tried`);
+    assert.ok(text.includes(`${round.jury.length} of ${asked.length} passed`), `round ${round.round}: passed`);
+    assert.ok(text.includes(`${round.jury.length} jurors score the ${rooms} rooms`), `round ${round.round}: jurors`);
+    assert.ok(text.includes(`The median of the rooms: ${score(round.median)} out of 10`), `round ${round.round}: median`);
+    // The verdict a reader takes away: the round counts, by the jury's own margin on the pair, in the good tone.
+    assert.ok(text.includes(`the jury ranked the pair by ${score(round.juryMargin)}, so the round counts`), `round ${round.round}: the verdict sentence`);
+    assert.ok(about.includes(`lab-flow-good"><strong>The median of the rooms: ${score(round.median)} out of 10</strong><span>the jury ranked the pair by ${score(round.juryMargin)}, so the round counts`), `round ${round.round}: the verdict box is good`);
+    // A juror taken off for a missing score: the box names the picture the record says it could not read, and only it.
+    for (const r of asked.filter(r => !round.jury.includes(r.id) && r.margin === null)) {
+      const pictures = ['good', 'bad'].filter(k => r[k] === null).map(k => (k === 'good' ? 'good' : 'ruined'));
+      assert.ok(pictures.length && r.unreadable.length === pictures.length, `${r.model}: the record names the unread picture`);
+      assert.ok(text.includes(`${r.model} gave no usable score for the ${pictures.join(' and the ')} picture${pictures.length > 1 ? 's' : ''} and was taken off`), `${r.model}: the unread picture`);
+      for (const k of ['good', 'bad'].filter(k => r[k] !== null)) assert.ok(!text.includes(`${r.model} gave no usable score for the ${k === 'good' ? 'good' : 'ruined'}`), `${r.model} did score the ${k} picture`);
+    }
+  }
+  // The prose: every number a reader takes away, recomputed from the record.
+  const [a, b] = [record.rounds[0], record.rounds.at(-1)];
+  assert.ok(text.includes(`The rooms are ${words(rooms)} rooms of a 3D presentation space`), 'rooms in words');
+  assert.ok(text.includes(`on one rubric of ${words(record.rubric.criteria.length)} criteria`), 'criteria in words');
+  assert.ok(text.includes(`We did this in ${words(record.rounds.length)} rounds`), 'rounds in words');
+  assert.ok(text.includes(`The median of the rooms was ${score(a.median)} out of 10 the first time and ${score(b.median)} the second, with ${words(a.jury.length)} jurors and then ${words(b.jury.length)};`), 'medians and jury sizes, in order');
+  assert.ok(text.includes(`Only these ${words(record.rounds.length)} rounds are shown.`), 'rounds shown');
+  const left = record.excluded.map(e => e.round).join(' and ');
+  assert.ok(text.includes(`${words(record.excluded.length)[0].toUpperCase()}${words(record.excluded.length).slice(1)} more rounds, ${left}, are left out: they ran on a lane only, never on the private main.`), 'the left-out rounds, named');
+  assert.match(text, /the jurors are AI models, not people: no person scored a picture\./);
+  assert.match(text, /a pair we made ourselves/);
+  // The jurors are never people, and the lane-only rounds and the plateau are never counted or claimed.
+  assert.doesNotMatch(text, /\bhuman (juror|judge|panel|review)|\b(judged|scored|rated) by (a person|people|humans?)\b|plateau/i);
+  assert.doesNotMatch(text.replaceAll('not people', '').replaceAll('no person scored a picture', ''), /\b(person|people|human)/i, 'people appear only to say none scored');
+  // The outcome tone comes from the record and fails closed: break ONE condition at a time; each alone makes the round
+  // void, in the bad tone, and the box names that condition and no other. The untouched round still counts.
+  const voided = (mutate, reason) => {
+    const r = clone(); mutate(r);
+    const flow = renderAbout(r), last = r.rounds[1], first = r.rounds[0];
+    const box = `<strong>The median of the rooms: ${score(last.median)} out of 10</strong><span>`;
+    assert.ok(flow.includes(`lab-flow-bad">${box}${reason}, so the round is void</span>`), `void for: ${reason}`);
+    assert.ok(!flow.includes(`lab-flow-good">${box}`), `not good when: ${reason}`);
+    assert.ok(flow.includes(`lab-flow-good"><strong>The median of the rooms: ${score(first.median)} out of 10</strong><span>the jury ranked the pair by ${score(first.juryMargin)}, so the round counts`), 'the other round still counts');
+    return textOf(flow);
+  };
+  voided(r => { r.rounds[1].juryMargin = 1; }, `the jury ranked the pair by only ${score(1)}, less than the ${score(record.rubric.minMargin)} needed`);
+  voided(r => { r.rounds[1].valid = false; }, 'the record marks the round as not valid');
+  voided(r => { r.rounds[1].juryMargin = null; }, 'the jury has no margin on the pair');
+  const short = voided(r => { r.rounds[1].reviewers[2].margin = 1.2; r.rounds[1].jury = r.rounds[1].jury.filter(id => id !== 'jury-c'); }, `only ${words(record.rounds[1].jury.length - 1)} jurors passed, fewer than the ${words(record.rubric.minJury)} needed`);
+  assert.match(short, /Gemini 3\.8 Flash \(Google\) ranked the pair by only 1\.2 and was taken off/);
+  assert.doesNotMatch(about, /<(img|picture|svg|video)\b|€|\$/);
 });

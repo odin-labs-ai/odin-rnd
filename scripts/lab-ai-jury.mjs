@@ -24,6 +24,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
+import { renderFlow } from './lab-flow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const JURY_RECORD = 'data/labs/ai-jury/record.json';
@@ -94,8 +95,11 @@ export { pageLeaks, recordHashes };
 const longDate = d => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const time = d => `<time datetime="${escape(d)}">${escape(longDate(d))}</time>`;
 const cap = t => t[0].toUpperCase() + t.slice(1);
-const words = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven'][n] ?? String(n);
+export const words = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven'][n] ?? String(n);
 const signed = x => (x > 0 ? `+${score(x)}` : x < 0 ? `−${score(-x)}` : '0.0');
+/** The pictures of the pair a reviewer gave no usable score for, from the record's unreadable replies (the build
+ *  refuses a missing score without them): 'good picture', 'ruined picture', or both. */
+export const unscored = r => r.unreadable.map(u => (u.picture === 'bad' ? 'ruined' : u.picture)).join(' and the ') + (r.unreadable.length > 1 ? ' pictures' : ' picture');
 /** Per room, the change from the first round to the last. */
 export const changes = record => record.rounds[0].rooms.map((room, i) => r3(record.rounds.at(-1).rooms[i].median - room.median));
 const dropped = record => record.rounds.slice(1).flatMap(round => record.rounds[0].jury.filter(id => !round.jury.includes(id)).map(id => ({ round, reviewer: round.reviewers.find(r => r.id === id) })));
@@ -107,6 +111,43 @@ export function renderIntro(record) {
   const scored = record.rounds.flatMap(round => round.reviewers.filter(r => r.margin !== null));
   const ranked = scored.every(r => r.passes) ? 'Every juror that could score our calibration pair told a good picture from a deliberately ruined one.' : `${words(scored.filter(r => r.passes).length)} of the ${words(scored.length)} scorings of our calibration pair told a good picture from a deliberately ruined one by the gate's margin.`;
   return `<span class="technical">LAB 14 · CAN AN AI JURY JUDGE HOW A ROOM LOOKS?</span><h1 id="lab-title">Can an AI jury judge how a room looks?</h1><p class="company-lead">A jury of AI models scored pictures of the rooms of a 3D presentation space, blind, on one rubric, twice. ${ranked} On ${words(a.rooms.length)} rooms that did not change between the two sittings, the jury's median was ${score(a.median)} out of 10 the first time and ${score(b.median)} the second, with ${words(a.jury.length)} jurors and then ${words(b.jury.length)}. Single rooms moved by up to ${score(most)}.</p><p>So a difference between two rooms smaller than that is not, on these two rounds, a verdict on the rooms. This page shows numbers only: no picture.</p>`;
+}
+
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count, score and model name is
+// the record's; the jurors are AI models, never people; the calibration pair is said to be ours; only the rounds on the
+// private main are drawn, and the lane-only ones are named as left out; no picture, no money.
+export function renderAbout(record) {
+  const [a, b] = [record.rounds[0], record.rounds.at(-1)], rooms = a.rooms.length, r = record.rubric;
+  const most = Math.max(...changes(record).map(Math.abs));
+  const left = record.excluded.map(e => escape(e.round)).join(' and ');
+  const prose = `<p>Can a jury of AI models judge how a room looks, and does it give the same answer twice? The rooms are ${words(rooms)} rooms of a 3D presentation space, and the jurors are AI models, not people: no person scored a picture.</p><p>Each juror scored pictures of the rooms one at a time, blind, on one rubric of ${words(r.criteria.length)} criteria. To count, a juror first had to tell a good picture from a deliberately ruined copy of it, a pair we made ourselves, by at least ${score(r.minMargin)} points; a juror that could not was off the jury for that round. We did this in ${words(record.rounds.length)} rounds, on rooms that were not reworked in between, though each was photographed again.</p><p>The median of the rooms was ${score(a.median)} out of 10 the first time and ${score(b.median)} the second, with ${words(a.jury.length)} jurors and then ${words(b.jury.length)}; single rooms moved by up to ${score(most)}. Only these ${words(record.rounds.length)} rounds are shown. ${record.excluded.length === 1 ? `One more round, ${left}, is left out: it` : `${cap(words(record.excluded.length))} more rounds, ${left}, are left out: they`} ran on a lane only, never on the private main.</p>`;
+  const lanes = record.rounds.map(round => {
+    const asked = round.reviewers.filter(x => x.kind === 'cloud');
+    const out = asked.filter(x => !round.jury.includes(x.id));
+    // Fail closed: the round counts only when every condition holds; a void round names each condition that failed.
+    const hasMargin = typeof round.juryMargin === 'number' && Number.isFinite(round.juryMargin);
+    const why = [
+      round.valid !== true && 'the record marks the round as not valid',
+      !hasMargin ? 'the jury has no margin on the pair' : round.juryMargin < r.minMargin && `the jury ranked the pair by only ${score(round.juryMargin)}, less than the ${score(r.minMargin)} needed`,
+      round.jury.length < r.minJury && `only ${words(round.jury.length)} jurors passed, fewer than the ${words(r.minJury)} needed`,
+    ].filter(Boolean);
+    const counts = why.length === 0;
+    return { label: `Round ${round.round}: ${asked.length} AI models tried for the jury`, nodes: [
+      { title: 'The calibration gate', tone: out.length ? 'good' : 'neutral', body: `${round.jury.length} of ${asked.length} passed${out.map(x => `; ${x.model} ${x.margin === null ? `gave no usable score for the ${unscored(x)}` : `ranked the pair by only ${score(x.margin)}`} and was taken off`).join('')}` },
+      { title: `${round.jury.length} jurors score the ${rooms} rooms`, body: 'AI models, not people; each room gets the median of its jurors\' scores' },
+      { title: `The median of the rooms: ${score(round.median)} out of 10`, tone: counts ? 'good' : 'bad', body: counts ? `the jury ranked the pair by ${score(round.juryMargin)}, so the round counts` : `${why.join('; ')}, so the round is void` },
+    ] };
+  });
+  const flow = renderFlow({
+    caption: `How it works: ${rooms} rooms, scored blind by an AI jury in ${record.rounds.length} rounds`,
+    source: [
+      { title: `${rooms} rooms, the same in every round`, body: record.blinding.split(';')[0] },
+      { title: 'The calibration pair, made by us', body: record.calibrationPair },
+      { title: `One rubric, ${r.criteria.length} criteria`, body: `each scored ${r.scale}` },
+    ],
+    lanes,
+  });
+  return `${prose}${flow}`;
 }
 
 export function renderJudge(record) {
@@ -160,7 +201,7 @@ export function renderAiJury(root = 'site', { now = new Date() } = {}) {
   const record = readAiJury(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, JURY_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--JURY_INTRO-->': renderIntro(record), '<!--JURY_JUDGE-->': renderJudge(record), '<!--JURY_HOW-->': renderHow(record), '<!--JURY_CALIBRATION-->': renderCalibration(record), '<!--JURY_ROOMS-->': renderRooms(record), '<!--JURY_READING-->': renderReading(record), '<!--JURY_LEFT_OUT-->': renderLeftOut(record), '<!--JURY_CHECK-->': renderCheck(record), '<!--JURY_BOUNDARY-->': renderBoundary(record) })) {
+  for (const [marker, value] of Object.entries({ '<!--JURY_INTRO-->': renderIntro(record), '<!--JURY_ABOUT-->': renderAbout(record), '<!--JURY_JUDGE-->': renderJudge(record), '<!--JURY_HOW-->': renderHow(record), '<!--JURY_CALIBRATION-->': renderCalibration(record), '<!--JURY_ROOMS-->': renderRooms(record), '<!--JURY_READING-->': renderReading(record), '<!--JURY_LEFT_OUT-->': renderLeftOut(record), '<!--JURY_CHECK-->': renderCheck(record), '<!--JURY_BOUNDARY-->': renderBoundary(record) })) {
     if (!html.includes(marker)) throw new Error(`${JURY_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }
