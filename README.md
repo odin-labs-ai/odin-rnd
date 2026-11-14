@@ -13,7 +13,7 @@ Twelve labs and 21 experiments testing AI models, agent tools and vendors. Pre-r
 - All experiments: https://odin-labs-ai.github.io/odin-rnd/experiments/
 - Newest result: [Lab 03, failover: kill the database mid-session, does anyone notice?](https://odin-labs-ai.github.io/odin-rnd/labs/failover/) ([EXP 021 results](https://odin-labs-ai.github.io/odin-rnd/journal/failover-results.html))
 - Method: https://odin-labs-ai.github.io/odin-rnd/methods/
-- Every lab run, with its commit and record hash: https://odin-labs-ai.github.io/odin-rnd/labs/runs/
+- Record checks for Labs 05, 06, 08 and 13: each published run, with its runner, commit and record hash: https://odin-labs-ai.github.io/odin-rnd/labs/runs/
 - Launch announcement and discussion: https://github.com/odin-labs-ai/odin-rnd/discussions/227
 - Propose an experiment: https://github.com/odin-labs-ai/odin-rnd/issues/new?template=experiment.yml
 
