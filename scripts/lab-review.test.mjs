@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderReview, reviewProblems } from './lab-review.mjs';
+import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
 import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { maskKit } from './lab-rerun.mjs';
@@ -168,4 +168,138 @@ test('leak screen: the page, the record and the tile, and a planted value of eac
     const planted = maskKit(page, 'review', record).replace('<main id="main">', `<main id="main"><p>${plant}</p>`);
     assert.ok(pageLeaks(planted, [...recordHashes(record), ...receiptTokens(record)]).some(p => reason.test(p)), plant);
   }
+});
+
+// What a reader of "What it is." takes away, recomputed here from the record: every count with its unit, every verdict
+// sentence, and the tone of each outcome box. The expected words are written out per case below, not copied from the renderer.
+const aboutOf = html => html.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+const spreadOf = xs => Math.max(...xs) - Math.min(...xs);
+const rangeOf = xs => (Math.min(...xs) === Math.max(...xs) ? `${Math.min(...xs)}` : `${Math.min(...xs)} to ${Math.max(...xs)}`);
+const timesOf = k => ({ 1: 'once', 2: 'twice' })[k] ?? `${k} times`;
+/** The sentences a reader should find for this record, and the opposite ones that must be absent. */
+function expectedAbout(r) {
+  const f = r.frontier, s0 = f.seats[0], n = r.nina, v = r.selfVerify;
+  const defects = s0.caughtOf / s0.runs, clean = s0.falseAlarmsOf / s0.runs, twice = timesOf(s0.runs);
+  const caught = f.seats.map(x => x.caught), flagged = f.seats.map(x => x.falseAlarms);
+  const runGap = Math.max(...f.seats.map(x => Math.max(...x.caughtPerRun) - Math.min(...x.caughtPerRun)));
+  const apart = `the models were up to ${spreadOf(caught)} catches apart, and a single model's own runs were up to ${runGap} apart`;
+  const ahead = { yes: `on catches, no model was clearly ahead: ${apart}.`, no: `on catches, the models differed by more than one model's own runs did: ${apart}.` };
+  const further = { yes: `On false alarms, the models were further apart, up to ${spreadOf(flagged)}:`, no: `On false alarms, the models were no further apart than on catches, up to ${spreadOf(flagged)}:` };
+  const bar = { PASS: 'The tool reviewer met the bar set for it beforehand.', FAIL: 'The tool reviewer did not meet the bar set for it beforehand.' };
+  const self = { yes: 'Checking its own findings did get that reviewer out of its false alarms.', no: 'Checking its own findings did not get that reviewer out of its false alarms.' };
+  const pick = (table, key) => [table[key] ?? null, Object.entries(table).filter(([k]) => k !== key).map(([, s]) => s)];
+  const [aheadS, aheadNot] = pick(ahead, spreadOf(caught) <= runGap ? 'yes' : 'no');
+  const [furtherS, furtherNot] = pick(further, spreadOf(flagged) > spreadOf(caught) ? 'yes' : 'no');
+  const [barS, barNot] = pick(bar, n.verdict);
+  // "met the bar" stands alone only on a recorded read-check PASS; any other read result is said right after it
+  const read = { PASS: null, FAIL: 'The check that it actually read the changes failed.' };
+  const readS = n.manipulation in read ? read[n.manipulation] : `The check that it actually read the changes is recorded as "${n.manipulation}".`;
+  const [selfS, selfNot] = pick(self, v.decision);
+  return {
+    present: [
+      'It is made of three experiments.',
+      `we gave ${f.seats.length} models the same ${defects + clean} cases to review, ${defects} with a known defect and ${clean} clean, and each model reviewed every case ${twice}.`,
+      `a reviewer that runs as a tool checked ${n.selfAgreement.n} other changes we wrote to keep or break a set of rules, not the known defects.`,
+      'In the third, one model reviewed and then checked its own findings.',
+      'every case in these experiments was chosen or written by us.',
+      aheadS,
+      `Each caught ${rangeOf(caught)} of ${s0.caughtOf} tries (${defects} known defects, each reviewed ${twice}).`,
+      furtherS,
+      `each flagged ${rangeOf(flagged)} of ${s0.falseAlarmsOf} tries (${clean} clean cases, each reviewed ${twice}).`,
+      (barS ?? `The tool reviewer's result against the bar set for it beforehand is recorded as "${n.verdict}".`) + (readS ? ` ${readS}` : ''),
+      selfS ?? `Whether checking its own findings got that reviewer out of its false alarms is recorded as "${v.decision}".`,
+      `${r.gallery.length} of this site's own pull requests record a FIX-NEEDED from the AI reviewer in their description; those receipts are further down.`,
+      // the diagram, one lane per experiment, each starting from its own input
+      `${f.experiment}: ${f.seats.length} models, each reviews every case ${twice} ${defects + clean} cases to review, chosen by us ${defects} with a known defect, ${clean} clean; reviewed by ${f.seats.map(x => x.name).join(', ')}`,
+      `Defects caught, per model ${rangeOf(caught)} of ${s0.caughtOf} tries (${defects} known defects, each reviewed ${twice})`,
+      `Clean cases flagged, per model ${rangeOf(flagged)} of ${s0.falseAlarmsOf} tries (${clean} clean cases, each reviewed ${twice})`,
+      `on the frontier: ${f.onFrontier.map(id => f.seats.find(x => x.seat === id).name).join(', ')}`,
+      `${n.experiment}: a reviewer that runs as a tool, ${n.countedRuns / n.selfAgreement.n} runs per change ${n.selfAgreement.n} other changes we wrote each written to keep or break a set of rules; not the known defects`,
+      `${n.countedRuns} runs blind runs: ${n.blindRuns}, each scored as an error`,
+      `rule-breaking changes accepted: ${n.missedDrift.x} of ${n.missedDrift.n} runs; good changes rejected: ${n.falseReject.x} of ${n.falseReject.n} runs`,
+      `${v.experiment}: review, then check its own findings (summary only) One model reviews, then checks its own findings summary only`,
+    ],
+    // never the read result when it is a recorded PASS; never "planted" (the corpus's seededDefinition, in
+    // experiments/self-verify/preregistration.json, takes 18 of the 30 defects from past reviews);
+    // never "separate" or "own changes" (EXP 017's preregistration says its corpus is EXP 012's, a fact this record does not hold, so neither is said)
+    absent: [...aheadNot, ...furtherNot, ...barNot, ...selfNot, ...(readS ? [] : Object.values(read).filter(Boolean)), 'planted', 'separate experiments', 'own changes', '60 changes',
+      // never that every change here is AI-reviewed (#79 merged by hand, PR #80 says so), never that the reviewer "first"
+      // said FIX-NEEDED on each receipt PR (#80's receipt counts rounds on #71 to #79, not on #80 itself)
+      'On this site, that someone is', 'every change', 'first said FIX-NEEDED', 'first answered FIX-NEEDED'],
+    caption: 'How it works: three experiments',
+    // tone of each outcome box: good only for a recorded PASS+PASS / yes, bad for a recorded FAIL / no, else neutral
+    barTone: n.verdict === 'PASS' && n.manipulation === 'PASS' ? 'good' : [n.verdict, n.manipulation].includes('FAIL') ? 'bad' : 'neutral',
+    barTitle: ({ PASS: 'The registered bar: met', FAIL: 'The registered bar: not met' })[n.verdict] ?? `The registered bar: ${n.verdict}`,
+    selfTone: ({ yes: 'good', no: 'bad' })[v.decision] ?? 'neutral',
+    selfTitle: ({ yes: 'Dropped its false alarms: yes', no: 'Dropped its false alarms: no' })[v.decision] ?? `Dropped its false alarms: ${v.decision}`,
+  };
+}
+function assertAbout(about, r, label) {
+  const text = textOf(about), want = expectedAbout(r);
+  for (const s of want.present) assert.ok(text.includes(s), `${label}: missing "${s}"`);
+  for (const s of want.absent) assert.ok(!text.includes(s), `${label}: says "${s}", which the record does not support`);
+  assert.ok(about.includes(`lab-flow-${want.barTone}"><strong>${want.barTitle}</strong>`), `${label}: the bar box is "${want.barTitle}" in the ${want.barTone} tone`);
+  assert.ok(about.includes(`lab-flow-${want.selfTone}"><strong>${want.selfTitle}</strong>`), `${label}: the self-check box is "${want.selfTitle}" in the ${want.selfTone} tone`);
+  assert.doesNotMatch(about, /lab-flow-source/, `${label}: no input row shared by all three experiments`);
+  assert.equal(about.match(/<figcaption[^>]*>([^<]*)<\/figcaption>/)?.[1], want.caption, `${label}: the caption names the experiments and claims nothing about what they share`);
+  for (const x of r.selfVerify.runs) for (const k of [x.caught, x.falseAlarms]) assert.ok(!text.includes(`${k} of ${x.of}`), `${label}: ${x.id}: EXP 012's counts stay in its summary box`);
+  assert.match(text, /an AI, not a person/);
+  assert.doesNotMatch(text, /[$€£]|\bprice\b|\bdollars?\b|\beuros?\b|\bhuman review/i, `${label}: no money figure, and never a human reviewer`);
+}
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, every count and verdict the record\'s, the reviewers AI', () => {
+  const about = aboutOf(main);
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(main.indexOf('</section>') < main.indexOf('id="about"') && main.indexOf('id="about"') < main.indexOf('id="frontier"'), 'right after the hero, before the frontier');
+  assert.match(about, /<figure class="lab-flow">/);
+  assertAbout(about, record, 'committed record');
+});
+
+// The rest of the page uses the same words as "What it is.": EXP 017 counts cases (58 changes give 60 cases), its defects
+// are known, never "planted", and the boundary does not call them hand-made. Counts recomputed from the record.
+test('outside "What it is." too: EXP 017 counts cases, its defects are known, never planted', () => {
+  const s0 = record.frontier.seats[0], defects = s0.caughtOf / s0.runs, clean = s0.falseAlarmsOf / s0.runs, cases = defects + clean;
+  const section = id => textOf(main.match(new RegExp(`<section[^>]*id="${id}"[\\s\\S]*?</section>`))?.[0] ?? '');
+  const hero = textOf(main.match(/<section[^>]*lab-hero[\s\S]*?<\/section>/)[0]);
+  assert.ok(hero.includes(`We gave four models the same ${cases} cases to review, twice each,`), 'the intro counts cases');
+  // #79 merged by hand (PR #80 says so): the hero never says an AI reviewer checks every change, only shows where one said no
+  for (const s of ['each change before it merges', 'every change', 'checks each change', 'each change']) assert.ok(!hero.includes(s), `the intro says "${s}", which #79 (merged by hand) contradicts`);
+  assert.ok(hero.includes('And below are pull requests on this site where an AI reviewer said no.'), 'the intro only points to the receipts');
+  assert.ok(page.includes(`content="Four models review the same ${cases} cases twice:`), 'the description counts cases');
+  const frontier = section('frontier');
+  for (const s of [`Four models, the same ${cases} cases.`, `how many of ${defects} known defects does a review catch, and how many of ${clean} clean cases does it flag anyway? Each model reviewed all ${cases} cases twice`, `${defects} with a known defect, ${clean} clean.`, `Clean cases flagged, of ${s0.falseAlarmsOf} (each run)`]) assert.ok(frontier.includes(s), `frontier: missing "${s}"`);
+  assert.ok(section('nina').includes('not the known defects above;'), 'nina: the known defects above');
+  assert.ok(section('boundary').includes('We chose the cases with known defects and wrote the rule-checking changes ourselves. Neither is a random sample of the bugs a team meets.'), 'boundary: chosen, not a random sample');
+  assert.doesNotMatch(textOf(main), /planted|real bugs/i, 'never "planted", never "not a sample of real bugs"');
+  for (const id of ['about', 'frontier', 'self-verify', 'boundary']) assert.doesNotMatch(section(id), new RegExp(`\\b${cases} changes\\b`), `${id}: EXP 017's ${cases} are cases, not changes`);
+});
+
+test('"What it is." follows the record on every branch, and an unknown outcome fails closed to the neutral tone', () => {
+  const cases = [
+    ['self-check worked', r => { r.selfVerify.decision = 'yes'; }],
+    ['self-check undecided', r => { r.selfVerify.decision = 'inconclusive'; }],
+    ['self-check mixed', r => { r.selfVerify.decision = 'mixed'; }],
+    ['tool reviewer failed its bar', r => { r.nina.verdict = 'FAIL'; }],
+    ['tool reviewer blind', r => { r.nina.manipulation = 'FAIL'; }],
+    ['tool reviewer read check unknown', r => { r.nina.manipulation = 'NOT RUN'; }],
+    ['tool reviewer failed its bar and was blind', r => { r.nina.verdict = 'FAIL'; r.nina.manipulation = 'FAIL'; }],
+    ['one model clearly ahead on catches', r => { r.frontier.seats[0].caught = 45; }],
+    ['false alarms no wider than catches', r => { for (const x of r.frontier.seats) x.falseAlarms = 30 + (x.caught % 3); }],
+  ];
+  for (const [label, plant] of cases) {
+    const r = clone();
+    plant(r);
+    assertAbout(`<section id="about">${renderAbout(r)}</section>`, r, label);
+  }
+  const lead = { yes: 'It worked: ', no: 'It did not work: ' };
+  for (const decision of ['yes', 'no', 'inconclusive']) {
+    const r = clone();
+    r.selfVerify.decision = decision;
+    const text = textOf(renderSelfVerify(r));
+    for (const [k, s] of Object.entries(lead)) assert.equal(text.includes(s), k === decision, `EXP 012 box, decision ${decision}: "${s}"`);
+    assert.ok(text.includes(`the decision registered beforehand was ${decision} .`), `EXP 012 box shows the decision word ${decision}`);
+  }
+  const r = clone();
+  r.frontier.seats[1].caughtOf = 58;
+  assert.throws(() => renderAbout(r), /caughtOf 58/, 'models counted on different totals cannot share one sentence');
 });
