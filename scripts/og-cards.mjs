@@ -17,17 +17,18 @@
 //
 // The build (addOgCardsToDist, before addOpenGraphToDist in scripts/build.mjs) fails closed when:
 //   - a lab page or the Labs index has no card, or a card names a page that is not one of them or does not exist;
-//   - a card's picture is missing, its bytes do not match the pinned sha256, or it does not decode as an 8-bit RGB or
-//     RGBA, non-interlaced 1200x630 PNG (every chunk CRC, IDAT inflated and every row's filter undone to pixels);
+//   - a card's picture is missing, its bytes do not match the pinned sha256, or it does not decode as an 8-bit RGB,
+//     non-interlaced 1200x630 PNG of only IHDR, IDAT and IEND (every chunk CRC, every row's filter undone to pixels);
 //   - the page's og:title or og:description no longer match the text the card was drawn from (a stale card);
 //   - a file sits in assets/og/labs/ that no card pins;
 //   - a carded page already carries an og:image, an og:image:* or a twitter:image of its own, or carries the card's
 //     og:image with a missing or different og:image:width/height/alt;
 //   - a page this step reads breaks the head form above.
 // What the picture shows is checked outside the build: scripts/og-cards-visual.test.mjs redraws every card from its
-// pinned text in a real Chrome (required on GitHub Actions) and compares it, pixel block by block, with the committed
-// picture, against a control drawn from another card's text.
-// The fix for any refusal is the same loop: `pnpm build` (refuses, naming the pages), `node scripts/og-cards-render.mjs`, `pnpm build`.
+// pinned text in a real Chrome (required on GitHub Actions) and compares it block by block with the committed picture,
+// against controls with another heading, another lab number and another card (see that file for what it resolves).
+// A missing, stale or unpinned card is fixed by `node scripts/og-cards-render.mjs` and another `pnpm build`; every
+// other refusal names a page or the manifest to fix by hand.
 //
 // Pages under labs/ that are not labs (every run, how we decide, the agent space's sub-pages) keep the site card.
 // Every function below is string or bytes in, value out, except checkCards and addOgCardsToDist, which read dist/.
@@ -91,6 +92,7 @@ export function readHead(html, label = 'page') {
   const prefix = PREFIX.exec(html);
   if (!prefix) fail('does not start with <!doctype html>, <html> and <head> in the form the site writes');
   const metas = [];
+  const links = [];
   let at = prefix[0].length;
   for (;;) {
     SPACE.lastIndex = at; SPACE.exec(html); at = SPACE.lastIndex;
@@ -108,13 +110,13 @@ export function readHead(html, label = 'page') {
       if (attrs.has(name)) fail(`has a <${tag[1]}> with the ${name} attribute twice`);
       attrs.set(name, decodeEntities(value ?? '', label));
     }
-    if (tag[1] === 'meta') metas.push({ attrs });
+    (tag[1] === 'meta' ? metas : links).push({ attrs });
     at = VOID.lastIndex;
   }
   const rest = html.slice(at + '</head>'.length);
   if (new RegExp(`<meta(?=${WS}|/|>|$)`, 'i').test(rest)) fail('has a <meta> after its head (meta tags belong in the head, not in a comment, script or the body)');
   if (new RegExp(`<head(?=${WS}|/|>|$)`, 'i').test(rest)) fail('has a second <head>');
-  return { metas, close: at };
+  return { metas, links, close: at };
 }
 
 /** The content of the one meta with exactly this property (lower case); undefined when there is none. */
@@ -128,18 +130,22 @@ function metaProperty(head, property, label) {
 }
 
 /**
- * Every og: or twitter: meta must be named exactly, in lower case, with property= for og: (a crawler may honour a
- * differently spelt one that the checks here would not see).
+ * Every og: or twitter: name must be written exactly: one token, in lower case, on a <meta>, and for og: as
+ * property=. A value a crawler might read as that name in another way (padded, upper case, one token of several, on a
+ * <link>) is refused rather than skipped, because the checks here would not see it.
  */
 function checkMetaNames(head, label) {
-  for (const { attrs } of head.metas) {
-    for (const key of ['property', 'name']) {
+  const tags = [...head.metas.map(tag => ['meta', tag]), ...head.links.map(tag => ['link', tag])];
+  for (const [element, { attrs }] of tags) {
+    for (const key of ['property', 'name', 'rel']) {
       const value = attrs.get(key);
       if (value === undefined) continue;
-      const folded = value.trim().toLowerCase();
-      if (!/^(og|twitter):/.test(folded)) continue;
-      if (value !== folded) throw new Error(`OG cards: ${label} spells a meta ${key} "${value}"; write it "${folded}"`);
-      if (key === 'name' && folded.startsWith('og:')) throw new Error(`OG cards: ${label} gives ${folded} as name=, not property=`);
+      const tokens = value.toLowerCase().split(/[ \t\n\r\f]+/).filter(Boolean);
+      const named = tokens.find(token => /^(og|twitter):/.test(token));
+      if (named === undefined) continue;
+      if (element !== 'meta' || key === 'rel') throw new Error(`OG cards: ${label} has ${named} on a <${element} ${key}=>; it belongs on a <meta>`);
+      if (value !== named) throw new Error(`OG cards: ${label} spells a meta ${key} "${value}"; write it "${named}"`);
+      if (key === 'name' && named.startsWith('og:')) throw new Error(`OG cards: ${label} gives ${named} as name=, not property=`);
     }
   }
 }
@@ -222,13 +228,14 @@ const crc32 = bytes => {
   for (const byte of bytes) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 };
-const CHANNELS = { 2: 3, 6: 4 };
+const CHANNELS = { 2: 3 };
 
 /**
- * Decode a PNG of the one kind a Chrome screenshot is: 8-bit RGB or RGBA, not interlaced. Checks the signature, every
- * chunk's length and CRC, IHDR first, no PLTE, one run of IDAT, IEND last with nothing after it, then inflates the
- * pixel data and undoes every row's filter. Ancillary chunks are skipped. Returns { width, height, channels, pixels }
- * (pixels: height rows of width*channels bytes). Anything else throws.
+ * Decode a PNG of the one kind the card renderer writes: 8-bit RGB, not interlaced, and nothing but IHDR, IDAT and IEND
+ * (no alpha, palette, gamma, colour profile or text chunk that could change what a viewer sees or carry other bytes).
+ * Checks the signature, every chunk's length and CRC, IHDR first, one run of IDAT, IEND last with nothing after it,
+ * then inflates the pixel data and undoes every row's filter. Returns { width, height, channels, pixels } (pixels:
+ * height rows of width*3 bytes). Anything else throws.
  */
 export function decodePng(bytes, label = 'image') {
   const fail = why => { throw new Error(`OG cards: ${label} is not a card PNG (${why})`); };
@@ -251,19 +258,17 @@ export function decodePng(bytes, label = 'image') {
       if (header || length !== 13) fail('bad IHDR');
       header = { width: data.readUInt32BE(0), height: data.readUInt32BE(4), depth: data[8], colour: data[9], compression: data[10], filter: data[11], interlace: data[12] };
       if (!header.width || !header.height) fail('zero size');
-      if (header.depth !== 8 || !CHANNELS[header.colour]) fail(`bit depth ${header.depth}, colour type ${header.colour}; a card is 8-bit RGB or RGBA`);
+      if (header.depth !== 8 || !CHANNELS[header.colour]) fail(`bit depth ${header.depth}, colour type ${header.colour}; a card is 8-bit RGB`);
       if (header.compression !== 0 || header.filter !== 0) fail('unknown compression or filter method');
       if (header.interlace !== 0) fail('interlaced pictures are not accepted');
-    } else if (type === 'PLTE') {
-      fail('a card has no palette');
     } else if (type === 'IDAT') {
       if (idatDone) fail('IDAT chunks are not consecutive');
       idat.push(data);
     } else if (type === 'IEND') {
       if (length !== 0) fail('IEND carries data');
       ended = true;
-    } else if (!(type.charCodeAt(0) & 0x20)) {
-      fail(`unknown critical chunk ${type}`);
+    } else {
+      fail(`a ${type} chunk; a card holds only IHDR, IDAT and IEND`);
     }
     if (idat.length && type !== 'IDAT') idatDone = true;
     offset += 12 + length;
@@ -429,6 +434,9 @@ export function checkCards({ distDir, manifest }) {
     const card = cards.get(page);
     if (!card) { problems.push(`${page}: lab page without a card`); continue; }
     try { problems.push(...checkCardText(card, cardInputs(html, page))); } catch (error) { problems.push(error.message.replace(/^OG cards: /, '')); }
+    // The tags can go on this page (no own og:image, og:image:* or twitter:image): checked here, before any page is
+    // written, so every refusal is reported at once.
+    try { addOgCard(html, card, page); } catch (error) { problems.push(error.message.replace(/^OG cards: /, '')); }
     const file = join(distDir, card.image);
     problems.push(...checkCardImage(card, existsSync(file) ? readFileSync(file) : undefined));
   }
@@ -443,12 +451,12 @@ export function checkCards({ distDir, manifest }) {
   return problems;
 }
 
-/** Build step: check every card, then put each one on its page. Fails closed with every problem at once. */
+/** Build step: check every card and page, then put each card on its page. Refuses with every problem at once, before writing. */
 export function addOgCardsToDist({ distDir, manifestPath = MANIFEST_PATH }) {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const problems = checkCards({ distDir, manifest });
   if (problems.length) {
-    throw new Error(`OG cards refused (${MANIFEST_PATH}):\n${problems.join('\n')}\nRedraw and re-pin them: node scripts/og-cards-render.mjs, then pnpm build.`);
+    throw new Error(`OG cards refused (${MANIFEST_PATH}):\n${problems.join('\n')}\nA missing, stale or unpinned card: node scripts/og-cards-render.mjs, then pnpm build. Any other line names a page or the manifest to fix.`);
   }
   for (const card of readManifest(manifest).values()) {
     const file = join(distDir, card.page);

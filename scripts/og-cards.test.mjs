@@ -92,13 +92,17 @@ test('pngSize reads the size of a card PNG that decodes and refuses anything els
   assert.throws(() => pngSize(png(1200, 630, 'short', { rows: 629 })), /not a card PNG \(pixel data is/);
   const tiny = png(2, 1);
   assert.throws(() => pngSize(Buffer.concat([SIGNATURE, chunk('IHDR', tiny.subarray(16, 29)), chunk('IDAT', deflateSync(Buffer.from([9, 0, 0, 0, 0, 0, 0]))), chunk('IEND', Buffer.alloc(0))])), /filter type 9/);
-  // Only what a Chrome screenshot is: 8-bit RGB or RGBA, no palette, not interlaced.
+  // Only what the renderer writes: 8-bit RGB, not interlaced, and no chunk but IHDR, IDAT and IEND.
   assert.throws(() => pngSize(png(8, 2, 'x', { depth: 1, colour: 0 })), /bit depth 1, colour type 0/);
   assert.throws(() => pngSize(png(8, 2, 'x', { colour: 3 })), /colour type 3/);
+  assert.throws(() => pngSize(png(8, 2, 'x', { colour: 6 })), /colour type 6; a card is 8-bit RGB/);
   assert.throws(() => pngSize(png(8, 2, 'x', { depth: 16 })), /bit depth 16/);
-  assert.deepEqual(pngSize(png(8, 2, 'x', { colour: 6 })), { width: 8, height: 2 });
-  const withPalette = png(8, 2);
-  assert.throws(() => pngSize(Buffer.concat([withPalette.subarray(0, 33), chunk('PLTE', Buffer.alloc(3)), withPalette.subarray(33)])), /a card has no palette/);
+  const plain = png(8, 2);
+  const insert = extra => Buffer.concat([plain.subarray(0, 33), extra, plain.subarray(33)]);
+  assert.throws(() => pngSize(insert(chunk('PLTE', Buffer.alloc(3)))), /a PLTE chunk; a card holds only IHDR, IDAT and IEND/);
+  assert.throws(() => pngSize(insert(chunk('tRNS', Buffer.alloc(6)))), /a tRNS chunk/);
+  assert.throws(() => pngSize(insert(chunk('gAMA', Buffer.alloc(4)))), /a gAMA chunk/);
+  assert.throws(() => pngSize(insert(chunk('tEXt', Buffer.from('k\0v')))), /a tEXt chunk/);
 });
 
 test('decodePng undoes every row filter to the real pixels', () => {
@@ -221,6 +225,10 @@ test('attribute values decode only references HTML reads the same way; a spelt-o
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta name="og:image" content="x"></head>'), card, card.page), /gives og:image as name=/);
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta name="twitter:image" content="x"></head>'), card, card.page), /its own twitter:image/);
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta property="og:image:url" content="x"></head>'), card, card.page), /og:image:url without og:image/);
+  // A name as one token of several, or on a <link>, is refused too (eced23d9 follow-up, review 91f64642 #3).
+  assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta property="og:image x" content="x"></head>'), card, card.page), /spells a meta property "og:image x"; write it "og:image"/);
+  assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta property="x og:image" content="x"></head>'), card, card.page), /spells a meta property "x og:image"/);
+  assert.throws(() => addOgCard(ROGUE.replace('</head>', '<link property="og:image" href="x"></head>'), card, card.page), /og:image on a <link property=>/);
 });
 
 test('an authored og:image cannot hide behind data-content, and an upper-case </HEAD> still takes the card', () => {
@@ -289,7 +297,15 @@ test('the build step checks a whole dist and fails closed with every problem', (
     assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), /OG cards refused[\s\S]*lab page without a card[\s\S]*node scripts\/og-cards-render\.mjs/);
     assert.equal(readFileSync(join(dist, 'labs/rogue/index.html'), 'utf8'), ROGUE);
 
+    // Two pages with their own og:image: both refused in one report, and no page is written (review 91f64642 #4).
+    const authored = extra => (html => html.replace('</head>', `${extra}</head>`));
+    write('labs/index.html', authored('<meta property="og:image" content="https://example.org/a.png">')(labsIndex));
+    write('labs/rogue/index.html', authored('<meta name="twitter:image" content="https://example.org/b.png">')(ROGUE));
     writeFileSync(manifestPath, JSON.stringify(good));
+    assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), error => /labs\/index\.html already carries og:image/.test(error.message) && /labs\/rogue\/index\.html carries its own twitter:image/.test(error.message));
+    assert.doesNotMatch(readFileSync(join(dist, 'labs/index.html'), 'utf8'), /assets\/og\/labs\/index\.png/);
+    write('labs/index.html', labsIndex);
+    write('labs/rogue/index.html', ROGUE);
     addOgCardsToDist({ distDir: dist, manifestPath });
     assert.match(readFileSync(join(dist, 'labs/rogue/index.html'), 'utf8'), /og:image" content="https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/assets\/og\/labs\/rogue\.png"/);
     assert.match(readFileSync(join(dist, 'labs/index.html'), 'utf8'), /assets\/og\/labs\/index\.png/);
