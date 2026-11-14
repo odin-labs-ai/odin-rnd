@@ -8,6 +8,7 @@ import { addFilmFallbacks, fallbacksProblems, FALLBACKS_FILE, filmSources, HOME,
 import { execFileSync, spawnSync } from 'node:child_process';
 import { MAX_FILM_BYTES } from './lab-films.mjs';
 import { MAX_CLIP_BYTES } from './lab-dispatch-publish.mjs';
+import { renderLabs } from './labs.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const box = (type, body = Buffer.alloc(0)) => { const head = Buffer.alloc(8); head.writeUInt32BE(8 + body.length); head.write(type, 4, 'latin1'); return Buffer.concat([head, body]); };
@@ -182,8 +183,7 @@ test('a generator writes the WebM <source> and its MP4 copy in one call, and the
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('the generators write every pair the built pages carry, and the ledger counts exactly those (the committed site)', async () => {
-  const { renderLabs } = await import('./labs.mjs');
+test('the generators write every pair the built pages carry, and the ledger counts exactly those (the committed site)', () => {
   const record = readFallbacks('site'), byWebm = new Map(record.fallbacks.map(e => [e.webm, e]));
   const close = startFilmLedger();
   const pages = renderLabs();
