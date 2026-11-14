@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { callsFromRows, cellCounts, logPathOf, EXPERIMENT, fixtureOf, renderAbout, SMH_RECORD, SMH_TEMPLATE, sameModelHarnessProblems, totals, verdictSentence, wilson } from './lab-same-model-harness.mjs';
+import { armsPaired, callsFromRows, cellCounts, logPathOf, EXPERIMENT, fixtureOf, renderAbout, SMH_RECORD, SMH_TEMPLATE, sameModelHarnessProblems, totals, verdictSentence, wilson } from './lab-same-model-harness.mjs';
 import { harnessRefusals, scoreReply } from '../experiments/same-model-harness/score.mjs';
 import { fixtureManifest, runSuite } from '../experiments/same-model-harness/run.mjs';
 import { namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
@@ -253,11 +253,25 @@ test('"What it is." follows the record when it changes: arms swapped, groups not
   const n = renderAbout(none);
   expectAbout(none, n);
   // The numbers section's verdict holds the same rule: with no harness answers it compares nothing (pool row ee7d9955).
-  for (const variant of ['open', 'forced']) {
-    const sentence = verdictSentence(none, variant);
-    assert.match(sentence, /did not run the same number of times, so they are not compared\.$/, variant);
-    assert.doesNotMatch(sentence, /fewer|more of these|as many/, variant);
-  }
+  const notCompared = (rec, why) => {
+    for (const variant of ['open', 'forced']) {
+      const sentence = verdictSentence(rec, variant);
+      assert.match(sentence, /did not run the same runs, so they are not compared\.$/, `${why}, ${variant}`);
+      assert.doesNotMatch(sentence, /fewer|more of these|as many|nothing to fix/, `${why}, ${variant}`);
+      assert.equal(armsPaired(rec, variant), false, `${why}, ${variant}`);
+    }
+  };
+  notCompared(none, 'no harness answers');
+  // Both arms empty: no runs at all is not "nothing to fix".
+  const empty = clone(); empty.calls = [];
+  notCompared(empty, 'no answers in either arm');
+  // Equal totals, unpaired: each model keeps the same number of runs per arm, but other run numbers on each side.
+  const unpaired = clone();
+  unpaired.calls = unpaired.calls.filter(c => c.attempt !== 1 || (c.arm === 'bare' ? c.run % 2 === 1 : c.run % 2 === 0));
+  assert.equal(totals(unpaired, 'open', 'bare').n, totals(unpaired, 'open', 'harnessed').n, 'the fixture keeps the totals equal');
+  notCompared(unpaired, 'equal totals, other runs');
+  // The committed record is paired, so its verdicts stand.
+  for (const variant of ['open', 'forced']) assert.equal(armsPaired(clone(), variant), true, variant);
   assert.deepEqual(lanesOf(n).map(l => l.tone), ['bad', 'neutral']);
   assert.doesNotMatch(plain(n), /made fewer/);
   // Every harnessed first answer never came back (the model call failed): no reply is no answer, not "no mistake".
