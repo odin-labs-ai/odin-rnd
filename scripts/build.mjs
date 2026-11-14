@@ -215,6 +215,10 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   injectChrome({ distDir: 'dist', items });
   fixJournalDestinations({ distDir: 'dist' });
   fixLabIndexLinks({ distDir: 'dist' });
+  // Each lab page and the Labs index share with their own pinned 1200x630 card, before the site-wide Open Graph pass,
+  // which then leaves their og:image alone (scripts/og-cards.mjs; fails closed on a missing, stale or unpinned card).
+  const { addOgCardsToDist } = await import('./og-cards.mjs');
+  addOgCardsToDist({ distDir: 'dist' });
   addOpenGraphToDist({ distDir: 'dist' });
   // The large link card on X for every page with an og:image (the home page authors its own; site-chrome.mjs).
   addSocialCardToDist({ distDir: 'dist' });
