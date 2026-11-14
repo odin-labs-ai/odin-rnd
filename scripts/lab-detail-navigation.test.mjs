@@ -191,6 +191,14 @@ test('"What it is." on the failover page fails closed: an open strict-ack questi
   const reworded = structuredClone(rec);
   reworded.limits = reworded.limits.map(l => l.replace('synchronous_standby_names was empty', 'the standby list were empty'));
   assert.throws(() => renderFailoverAbout(reworded, prereg), new RegExp(`no limit names the ${strictAcks} strict acknowledgements in ${rec.recount.strictAckCells.length} runs`));
+  // The limit says the standby list was NOT empty, or says nothing of its state: the diagram's "named no standby copy"
+  // would be false, so the build stops (pool row e12ccb33).
+  for (const [from, to] of [['synchronous_standby_names was empty', 'synchronous_standby_names was not empty'], ['synchronous_standby_names was empty', 'synchronous_standby_names was set']]) {
+    const changed = structuredClone(rec);
+    changed.limits = changed.limits.map(l => l.replace(from, to));
+    assert.ok(changed.limits.some(l => l.includes(to)), `the fixture says "${to}"`);
+    assert.throws(() => renderFailoverAbout(changed, prereg), /with synchronous_standby_names empty, as not established/, to);
+  }
   // A strict acknowledgement in a run that is not PostgreSQL's: the build stops.
   const foreign = structuredClone(rec);
   foreign.recount.strictAckCells[0].cell = `mongo-${foreign.recount.strictAckCells[0].cell.slice(3)}`;

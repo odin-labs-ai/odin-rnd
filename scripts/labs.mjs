@@ -233,8 +233,10 @@ export function renderFailoverAbout(result, prereg) {
   if (strictOpen) {
     const notPg = strictAckCells.filter(c => !c.cell.startsWith('pg-')).map(c => c.cell);
     if (notPg.length) throw new Error(`data/failover/results.json: strict acknowledgements in runs that are not PostgreSQL's: ${notPg.join(', ')}`);
-    if (!result.limits.some(l => l.includes(`${fmt(strictAcks)} acknowledgements in ${strictAckCells.length} counted cells`) && /synchronous_standby_names/.test(l) && /not established/.test(l))) {
-      throw new Error(`data/failover/results.json: no limit names the ${fmt(strictAcks)} strict acknowledgements in ${strictAckCells.length} runs as not established`);
+    // The diagram says PostgreSQL "named no standby copy": the limit must say the list was empty, in those words
+    // (pool row e12ccb33); "was not empty", or no word on its state, refuses the build.
+    if (!result.limits.some(l => l.includes(`${fmt(strictAcks)} acknowledgements in ${strictAckCells.length} counted cells`) && /\bsynchronous_standby_names was empty\b/.test(l) && !/synchronous_standby_names was not empty/.test(l) && /not established/.test(l))) {
+      throw new Error(`data/failover/results.json: no limit names the ${fmt(strictAcks)} strict acknowledgements in ${strictAckCells.length} runs, with synchronous_standby_names empty, as not established`);
     }
   }
   const lostWords = lost === 0 ? `Neither database lost a write it had confirmed, in any of the ${fmt(cells)} counted runs.` : `${fmt(lost)} confirmed writes were lost across the ${fmt(cells)} counted runs.`;
