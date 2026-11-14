@@ -205,8 +205,10 @@ test('"What it is." opens the page as on Lab 01: plain words, then how it works,
   assert.ok(about.includes(`Judged real fixes: ${s.judgedFix} of ${s.cases} builds`));
   // The diagnosis tallies of both sets, read from the record, stay in the numbers box.
   const text = about.replace(/<[^>]+>/g, ' ');
-  for (const [k, total] of [[s.diagnosis.right, s.cases * Object.keys(h.rounds).length], [s.diagnosis.partly, s.cases * Object.keys(h.rounds).length], [record.earlier.diagnosis.right, record.earlier.judgments], [record.earlier.diagnosis.partly, record.earlier.judgments]]) {
-    assert.ok(!text.includes(`${k} of ${total}`), `no diagnosis tally ${k} of ${total} outside the numbers box`);
+  // Every tally of both sets, in every form a tally takes ("11 of 18", "17 right", "10 partly", "4 wrong").
+  const v = s.cases * Object.keys(h.rounds).length, e = record.earlier;
+  for (const [k, total] of [[s.diagnosis.right, v], [s.diagnosis.partly, v], [s.diagnosis.wrong, v], [e.diagnosis.right, e.judgments], [e.diagnosis.partly, e.judgments], [e.diagnosis.wrong, e.judgments]]) {
+    assert.doesNotMatch(text, new RegExp(`\\b${k} (?:of ${total}|right|partly|wrong)\\b`), `no diagnosis tally ${k} (of ${total}) outside the numbers box`);
   }
   assert.doesNotMatch(text, /diagnoses? right|partly right/, 'no diagnosis wording either');
 });
