@@ -249,9 +249,49 @@ function publishGateProblems(text) {
   if (!needsOf(jobs.publish ?? []).includes('gate')) problems.push('publish does not need gate');
   return problems;
 }
+// The exact workflow text the gate rests on, verbatim from .github/workflows/publish.yml at this commit: a reviewer of this
+// file sees the job, the verify dependency and step, and the deploy chain themselves, and the test below fails unless the
+// workflow contains each of them byte for byte (on top of the structural checks of publishGateProblems).
+const PUBLISH_GATE_TEXT = [
+  [
+  "  film-copies:",
+  "    name: Film copies, decoded",
+  "    runs-on: ubuntu-latest",
+  "    timeout-minutes: 10",
+  "    steps:",
+  "      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+  "        with:",
+  "          persist-credentials: false",
+  "      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4",
+  "        with:",
+  "          node-version: '22'",
+  "      - name: Install ffmpeg",
+  "        run: |",
+  "          sudo apt-get update -q",
+  "          sudo apt-get install -y -q --no-install-recommends ffmpeg",
+  "          ffmpeg -version | head -1",
+  "      - name: Decode every film copy and check it against its WebM and its record",
+  "        env:",
+  "          FILM_DECODER_REQUIRED: '1'",
+  "        run: node --test scripts/film-fallbacks.test.mjs",
+].join('\n'),
+  [
+  "  verify:",
+  "    needs: [test, windows-paths, film-copies]",
+].join('\n'),
+  [
+  "      - name: The film copies decoded",
+  "        run: |",
+  "          [ \"${{ needs.film-copies.result }}\" = success ] || { echo \"::error::the film copies job concluded '${{ needs.film-copies.result }}', not success\"; exit 1; }",
+].join('\n'),
+  ["  gate:", "    # The leak gate for a push to main (the deploy): main's code is trusted, so it runs inline here with the term set,", "    # which only the leak-screen environment holds and only main may use.", "    if: github.event_name != 'pull_request'", "    needs: verify"].join('\n'),
+  ["  publish:", "    if: github.event_name != 'pull_request'", "    needs: gate"].join('\n'),
+  ["on:", "  push:", "    branches: [main]", "  pull_request:"].join('\n'),
+];
 test('the publish workflow runs the decoder tests on every pull request and push, and nothing deploys unless they pass', () => {
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
   assert.deepEqual(publishGateProblems(text), []);
+  for (const part of PUBLISH_GATE_TEXT) assert.ok(text.includes(part), `.github/workflows/publish.yml no longer contains, byte for byte:\n${part}`);
   const broken = [
     [text.replace('needs: [test, windows-paths, film-copies]', 'needs: [test, windows-paths]'), /verify does not need film-copies/],
     [text.replace('[ "${{ needs.film-copies.result }}" = success ]', '[ "${{ needs.film-copies.result }}" != cancelled ]'), /verify does not fail unless/],
