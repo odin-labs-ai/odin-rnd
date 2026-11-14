@@ -5,7 +5,8 @@
 // WHAT THE BUILD ENFORCES (no decoder; the build machine has none): it refuses the record, every reason listed, when it
 // misses the schema; when a WebM on disk no longer hashes to the sha256 its copy was made from; when an MP4 is missing,
 // a different size, does not hash to its sha256 or is over its film's size limit; when it is not a progressive MP4 (ftyp
-// first, moov before mdat, nothing after the last box); when it is not exactly one H.264 video track (one sample
+// first, moov before mdat, nothing after the last box,
+// and inside moov every container's boxes tiling it exactly, none running past its parent); when it is not exactly one H.264 video track (one sample
 // description, Baseline, Main or High at level 4.0 or below, a readable avcC whose sequence parameter set says 8-bit
 // 4:2:0 and which carries a picture parameter set) whose every sample lies in mdat and is a whole sequence of valid
 // length-prefixed NAL units holding a picture slice, the first an IDR frame; when it has sound other than one AAC LC
@@ -66,6 +67,7 @@ export function progressiveProblems(data) {
   }
   const problems = [];
   if (at !== data.length) problems.push(`${data.length - at} stray bytes after the last box`);
+  else problems.push(...nestingProblems(data, 0, data.length, ''));
   if (boxes[0] !== 'ftyp') problems.push('the first box is not ftyp');
   const moov = boxes.indexOf('moov'), mdat = boxes.indexOf('mdat');
   if (moov < 0 || mdat < 0) problems.push('no moov or no mdat box');
@@ -79,6 +81,27 @@ export const MAX_AVC_LEVEL = 40;
 // A film plays at least this many frames a second (every film here is 15 to 30): a copy whose header claims a length its
 // frames do not fill is refused.
 export const MIN_FPS = 5;
+
+// The boxes that hold only boxes. Inside each, the children must tile it exactly: none may run past its parent, none may
+// declare an impossible size, and no bytes may be left over that are not a whole box (children() below stops quietly
+// at such a box, so this check is what refuses it).
+const CONTAINERS = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'dinf', 'edts', 'mvex']);
+function nestingProblems(data, start, end, path) {
+  const problems = [];
+  let at = start;
+  while (at < end) {
+    if (at + 8 > end) { problems.push(`${end - at} stray bytes at the end of ${path || 'the file'}`); break; }
+    let size = data.readUInt32BE(at), head = 8;
+    const type = data.toString('latin1', at + 4, at + 8);
+    if (size === 1) { if (at + 16 > end) { problems.push(`the ${type} box in ${path || 'the file'} has a cut 64-bit size`); break; } size = Number(data.readBigUInt64BE(at + 8)); head = 16; }
+    else if (size === 0) size = end - at;
+    if (size < head) { problems.push(`the ${type} box in ${path || 'the file'} has an impossible size`); break; }
+    if (at + size > end) { problems.push(`the ${type} box runs past the end of ${path || 'the file'}`); break; }
+    if (CONTAINERS.has(type)) problems.push(...nestingProblems(data, at + head, at + size, path ? `${path}/${type}` : type));
+    at += size;
+  }
+  return problems;
+}
 
 function* children(data, start, end) {
   for (let at = start; at + 8 <= end;) {

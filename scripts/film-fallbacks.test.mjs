@@ -406,6 +406,25 @@ test('a missing copy, a missing WebM, a copy of another size, a WebM listed twic
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('a box nested inside moov that runs past its parent, or bytes in moov that are not a whole box, are refused', () => {
+  const data = progressive();
+  const at = FTYP.length, size = data.readUInt32BE(at);
+  assert.equal(data.toString('latin1', at + 4, at + 8), 'moov');
+  const body = data.subarray(at + 8, at + size), rest = data.subarray(at + size);
+  const withMoov = extra => Buffer.concat([FTYP, box('moov', Buffer.concat([body, extra])), rest]);
+  assert.deepEqual(progressiveProblems(data), [], 'the fixture itself is well formed');
+  const longer = Buffer.concat([u32(4096), Buffer.from('free', 'latin1')]);
+  assert.ok(progressiveProblems(withMoov(longer)).some(p => /the free box runs past the end of moov/.test(p)), 'a child header declaring more than moov holds');
+  assert.ok(progressiveProblems(withMoov(Buffer.alloc(5))).some(p => /5 stray bytes at the end of moov/.test(p)), 'bytes too short for a box header');
+  assert.ok(progressiveProblems(withMoov(Buffer.concat([u32(4), Buffer.from('free', 'latin1')]))).some(p => /free box in moov has an impossible size/.test(p)), 'a size below the header');
+  // One level deeper: the same inside the trak.
+  const trakAt = 8, trakSize = body.readUInt32BE(trakAt - 8 + 0);
+  assert.equal(body.toString('latin1', 4, 8), 'trak');
+  const deep = Buffer.concat([box('trak', Buffer.concat([body.subarray(8, trakSize), longer])), body.subarray(trakSize)]);
+  assert.ok(progressiveProblems(Buffer.concat([FTYP, box('moov', deep), rest])).some(p => /runs past the end of moov\/trak/.test(p)), 'inside the trak');
+  for (const entry of readFallbacks('site').fallbacks) assert.deepEqual(progressiveProblems(readFileSync(join('site', entry.mp4))), [], entry.mp4);
+});
+
 test('a box that runs past the end of the file is refused', () => {
   const data = progressive();
   assert.ok(progressiveProblems(data.subarray(0, data.length - 4)).some(p => /runs past the end/.test(p)));
