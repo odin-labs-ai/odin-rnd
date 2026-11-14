@@ -11,6 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { benchScreen, benchScreenTree, wilson } from './brain-bench-import.mjs';
+import { renderFlow } from './lab-flow.mjs';
 
 export const NOTES = 'data/labs/brain-bench.json';
 export const RESULTS = 'data/labs/brain-bench/results.json';
@@ -202,7 +203,78 @@ export function renderIntro({ notes }) {
   return `<span class="technical">${escape(notes.label.toUpperCase())} · ${escape(notes.title.toUpperCase())}</span><h1 id="lab-title">${escape(notes.title)}.</h1><p class="company-lead"><strong>${escape(notes.question)}</strong> ${escape(notes.oneLine)}</p><div class="company-actions"><a class="button button-primary" href="#findings">What we found</a><a href="../../${RESULTS}">The results as JSON</a></div>`;
 }
 
-export const renderAbout = ({ notes }) => `${notes.whatItIs.map(line => `<p>${escape(line)}</p>`).join('')}<p class="lab-boundary">${escape(notes.boundary)}</p>`;
+// Two 95 % intervals overlap when neither ends before the other starts: by the lab's rule, no detectable difference.
+const overlap = (a, b) => a[0] <= b[1] && b[0] <= a[1];
+// The rows with the most tasks finished: more than one when they tie, so a tie is never shown as one winner.
+// An experiment counts as written down first only when the record names its pre-registration commit and the file's hash.
+const registered = e => /^[0-9a-f]{7,40}$/.test(e.prereg?.commit ?? '') && /^[0-9a-f]{64}$/.test(e.prereg?.sha256 ?? '');
+const tops = rows => rows.filter(r => rows.every(o => o.successes <= r.successes));
+const names = rows => rows.map(r => r.label).join(' and ');
+
+/**
+ * What a sensitivity re-run on one row of a lane changes, in the record's own words: how many of the row's episodes were
+ * run again, in which world and on which seeds, and what the row finished with them. The cause (a service outage) is
+ * said only when the record's own note says so. Without the world the episode count reads wrong (seeds x worlds), so
+ * then the sentence names no episodes at all.
+ */
+function rerunSentence(r, notes) {
+  const s = r.sensitivity, world = notes.labels?.worlds?.[s.world];
+  const where = world && s.seeds && Number.isInteger(s.rerun)
+    ? `${s.rerun} of ${r.label}'s ${r.n} episodes (${world}, seeds ${s.seeds.from}–${s.seeds.to}) ${/outage/i.test(s.packNote ?? '') ? 'ran during a service outage' : 'were run again'}.`
+    : `Some of ${r.label}'s ${r.n} episodes were run again.`;
+  return `${where} With them re-run, which is not the registered result, ${r.label} finished ${of(s)}.`;
+}
+
+/**
+ * How it works, drawn from the record: one lane per measurement (experiments on the same tasks, seeds and harness share
+ * one, as on the charts below), its last box the best cloud brain against the best local one. A sensitivity re-run, on
+ * any row of a lane, is shown only as what it is, never as the registered result, and a lane with one is never drawn
+ * as a good outcome: the registered comparison is then stated but not claimed. A lane without both a cloud and a local
+ * brain draws no comparison box.
+ */
+export function aboutFlow({ notes, record }) {
+  const brains = [...new Set(record.experiments.flatMap(e => e.brains.map(b => b.id)))];
+  const count = where => brains.filter(id => notes.brains[id].where === where).length;
+  const episodes = record.experiments.reduce((t, e) => t + e.design.episodes, 0);
+  const groups = [];
+  for (const exp of record.experiments) {
+    const d = exp.design, key = JSON.stringify([d.tasks, d.worlds, d.seeds, d.harness]);
+    const group = groups.find(g => g.key === key);
+    if (group) group.exps.push(exp); else groups.push({ key, exps: [exp] });
+  }
+  const lanes = groups.map(({ exps }) => {
+    const d = exps[0].design, rows = exps.flatMap(e => e.brains.map(b => ({ ...b, label: notes.brains[b.id].label })));
+    const cloud = tops(rows.filter(r => r.where === 'cloud')), local = tops(rows.filter(r => r.where === 'local')), rules = tops(rows.filter(r => r.where === 'rules'))[0];
+    const n = where => rows.filter(r => r.where === where).length;
+    const nodes = [
+      { title: `${d.tasks === 1 ? 'One task' : `${d.tasks} task families`} in ${d.worlds} worlds`, body: `seeds ${d.seeds.from}–${d.seeds.to}, the same for every brain, harness ${d.harness.join(', ')}` },
+      { title: `${rows.length} brains, ${d.episodesPerBrain} episodes each`, body: [rules && 'the rules', n('local') && `${n('local')} local`, n('cloud') && `${n('cloud')} cloud`].filter(Boolean).join(', ') },
+    ];
+    if (cloud.length && local.length) {
+      const c = cloud[0], l = local[0], doubted = rows.filter(r => r.sensitivity), same = overlap(c.ci, l.ci);
+      // With a re-run on any row of the lane, the registered comparison is stated but not claimed, as the experiment's own
+      // prediction says; the re-run intervals are compared only when the re-run is on one of the two best rows.
+      let verdict;
+      if (doubted.length) {
+        // The re-run intervals are compared only for the two rows whose counts the box's title shows.
+        const after = c.sensitivity || l.sensitivity ? ` Counted with the re-run, the best cloud and best local 95 % intervals ${overlap(c.sensitivity?.ci ?? c.ci, l.sensitivity?.ci ?? l.ci) ? 'overlap' : 'do not overlap'}.` : '';
+        verdict = `The registered 95 % intervals ${same ? 'overlap' : 'do not overlap'}, but that is not claimed. ${doubted.map(r => rerunSentence(r, notes)).join(' ')}${after}`;
+      } else verdict = same ? 'The 95 % intervals overlap: no detectable difference.' : 'The 95 % intervals do not overlap: the gap is real.';
+      nodes.push({ title: `Best cloud ${of(c)}, best local ${of(l)}`, tone: same && !doubted.length ? 'good' : 'neutral', body: `Cloud: ${names(cloud)}. Local: ${names(local)}.${rules ? ` The rules: ${of(rules)}.` : ''} ${verdict}` });
+    }
+    return { label: `${exps.map(e => e.id).join(' and ')}: ${exps.length > 1 ? 'the whole task set, local and cloud' : exps[0].title}`, nodes };
+  });
+  return renderFlow({
+    caption: `How it works: ${brains.length} brains on the same seeded tasks, ${thousands(episodes)} episodes in ${record.experiments.length} experiments, a task done only when the world says so`,
+    source: [
+      { title: `${brains.length} brains`, body: `hand-written rules, ${count('local')} on our own machine, ${count('cloud')} in the cloud` },
+      { title: 'Predictions first', body: `${record.experiments.filter(registered).length} experiments, each written down and committed before its run` },
+    ],
+    lanes,
+  });
+}
+
+export const renderAbout = page => `${page.notes.whatItIs.map(line => `<p>${escape(line)}</p>`).join('')}${aboutFlow(page)}<p class="lab-boundary">${escape(page.notes.boundary)}</p>`;
 export const renderFindings = page => `<ol class="bench-findings">${page.notes.findings.map(f => `<li><h3>${resolve(f.head, page)}</h3><p>${resolve(f.text, page)}</p></li>`).join('')}</ol>`;
 export const renderMethod = ({ notes, record }) => `<ul class="bench-method">${notes.howItWasRun.map(line => { const [head, ...rest] = line.split('. '); return `<li><strong>${escape(head)}.</strong> ${escape(rest.join('. '))}</li>`; }).join('')}</ul><p class="bench-source-note">${escape(notes.sourceAbout)} Commit <code>${escape(record.source.commit)}</code>. <a href="../../${RESULTS}">Read the full record</a>, with the rows each figure was counted from.</p>`;
 

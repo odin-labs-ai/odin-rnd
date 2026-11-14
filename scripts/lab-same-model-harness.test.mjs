@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { callsFromRows, cellCounts, logPathOf, EXPERIMENT, fixtureOf, SMH_RECORD, SMH_TEMPLATE, sameModelHarnessProblems, totals, verdictSentence, wilson } from './lab-same-model-harness.mjs';
+import { armsPaired, callsFromRows, cellCounts, logPathOf, EXPERIMENT, fixtureOf, renderAbout, SMH_RECORD, SMH_TEMPLATE, sameModelHarnessProblems, totals, verdictSentence, wilson } from './lab-same-model-harness.mjs';
 import { harnessRefusals, scoreReply } from '../experiments/same-model-harness/score.mjs';
 import { fixtureManifest, runSuite } from '../experiments/same-model-harness/run.mjs';
 import { namesRestricted, screenHits } from './lab-dispatch-publish.mjs';
@@ -133,4 +133,156 @@ test('Lab 11 renders, its numbers are counted from the calls, and the check is b
   assert.match(page, /by construction, not a result of the model/);
   const head = page.split('<main id="main">')[0];
   assert.doesNotMatch(head.replace(/ten runs a cell/, ''), /\d+ of \d+|fewer|more mistakes|wrong PASS rate/i, 'the meta descriptions state no outcome');
+});
+
+// What a reader takes away from "What it is.", recounted here straight from a record's calls (not through totals()):
+// per form and arm, the first answers, the wrong PASSes, the answers naming a file that does not exist, and the first
+// answers with no verdict (no reply came back, or it could not be scored), which make neither mistake.
+function recount(rec) {
+  const out = {};
+  for (const variant of ['open', 'forced']) for (const arm of ['bare', 'harnessed']) {
+    const first = rec.calls.filter(c => c.variant === variant && c.arm === arm && c.attempt === 1);
+    out[`${variant} ${arm}`] = { n: first.length, wrongPass: first.filter(c => c.verdict === 'PASS').length, invented: first.filter(c => c.invented > 0).length, unreadable: first.filter(c => c.verdict === null).length };
+  }
+  return out;
+}
+const plain = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&#39;', "'").replaceAll('&amp;', '&').replace(/\s+/g, ' ');
+/** The diagram's lanes, in order: label, lane tone, and each box as {title, body, tone}. */
+function lanesOf(about) {
+  return [...about.matchAll(/<div class="lab-flow-lane lab-flow-lane-(\w+)"><p class="lab-flow-label">([^<]*)<\/p><ol class="lab-flow-row">([\s\S]*?)<\/ol><\/div>/g)].map(m => ({
+    tone: m[1], label: m[2],
+    nodes: [...m[3].matchAll(/<li class="lab-flow-node lab-flow-(\w+)"><strong>([^<]*)<\/strong>(?:<span>([^<]*)<\/span>)?<\/li>/g)].map(n => ({ tone: n[1], title: n[2], body: (n[3] ?? '').replaceAll('&#39;', "'") })),
+  }));
+}
+/** What the about section must say for a record, computed from its calls; the expected tones fail closed: good only
+ * when every box had answers, none of them unreadable, and no mistake. */
+function expectAbout(rec, about) {
+  const r = recount(rec), errs = t => t.wrongPass + t.invented;
+  const tone = ts => (ts.some(t => errs(t) > 0) ? 'bad' : ts.every(t => t.n > 0 && t.unreadable === 0) ? 'good' : 'neutral');
+  const lanes = lanesOf(about);
+  assert.deepEqual(lanes.map(l => l.label), ['Bare: the model alone', 'With a harness: the same model'], 'bare first, then with the harness');
+  for (const [i, arm] of ['bare', 'harnessed'].entries()) {
+    const l = lanes[i];
+    assert.equal(l.nodes.length, 3, `${arm}: an input box and one box per form`);
+    assert.equal(l.nodes[0].title, arm === 'bare' ? 'The question and the change' : 'The question, the change and the tool output');
+    assert.equal(l.nodes[0].tone, 'neutral');
+    for (const [j, variant] of ['open', 'forced'].entries()) {
+      const t = r[`${variant} ${arm}`], box = l.nodes[j + 1];
+      assert.equal(box.title, variant === 'open' ? 'May say UNKNOWN' : 'Must say PASS or FAIL', `${arm} box ${j + 1}`);
+      assert.equal(box.body, t.n === 0 ? 'not run: the computer was too busy' : `${t.wrongPass} of ${t.n} first answers said the failing tests pass; ${t.invented} of ${t.n} named a file that does not exist${t.unreadable ? `; ${t.unreadable} of ${t.n} could not be read` : ''}`, `${variant} ${arm}`);
+      assert.equal(box.tone, tone([t]), `${variant} ${arm}: its tone follows its counts`);
+    }
+    assert.equal(l.tone, tone(['open', 'forced'].map(v => r[`${v} ${arm}`])), `${arm}: the lane tone follows its counts`);
+  }
+  const text = plain(about);
+  const models = rec.models.map(x => x.model).join(', ');
+  const groups = rec.models.length * 4, skipped = rec.refusedCells.length, runs = rec.runsPerCell;
+  if (skipped === 0) {
+    assert.ok(text.includes(`each model got each form ${runs} times bare and ${runs} times with the harness`), 'how often each model was asked');
+    assert.ok(text.includes(`${models}; each asked ${runs} times bare and ${runs} times with the harness, for each form of the question`), 'the models and how often, in the source box');
+  } else {
+    assert.ok(!text.includes('each model got each form'), 'never claims every group ran');
+    assert.ok(text.includes(`${skipped} of these ${groups} groups of ${runs}`) && text.includes('were not run because the computer was too busy'), 'the groups not run are said');
+    assert.ok(text.includes(`${models}; each to be asked ${runs} times bare and ${runs} times with the harness, for each form of the question; ${skipped} of ${groups} groups not run`));
+  }
+  const sum = (arm, f) => ['open', 'forced'].reduce((s, v) => s + f(r[`${v} ${arm}`]), 0);
+  const be = sum('bare', errs), he = sum('harnessed', errs), bn = sum('bare', t => t.n), hn = sum('harnessed', t => t.n);
+  const bu = sum('bare', t => t.unreadable), hu = sum('harnessed', t => t.unreadable);
+  const notRun = (m, v, a) => rec.refusedCells.some(c => c.model === m && c.variant === v && c.arm === a);
+  const paired = rec.refusedCells.every(c => notRun(c.model, c.variant, c.arm === 'bare' ? 'harnessed' : 'bare'));
+  if (!(paired && bn > 0 && bn === hn && bu === hu)) {
+    assert.ok(text.includes('the two sides are not compared here'), 'unequal sides are not compared');
+    assert.doesNotMatch(text, /made (fewer|more|as many) of them|Neither way made/);
+    if (paired && bn > 0 && bn === hn) assert.ok(text.includes(`could not be read (no reply came back, or it could not be scored): ${bu} of ${bn} without the harness and ${hu} of ${hn} with it`), 'the unreadable answers are counted on both sides');
+  } else if (be + he === 0 && bu === 0) assert.ok(text.includes('Neither way made either mistake'));
+  else {
+    const side = he < be ? 'fewer' : he > be ? 'more' : 'as many';
+    assert.ok(text.includes(`With the harness, the same models made ${side} of them in their first answers: ${he} mistakes with the harness against ${be} without it, over ${hn} first answers each way.`), `the comparison says ${side}`);
+    if (bu) assert.ok(text.includes(`On each side, ${bu} of the ${hn} first answers could not be read`));
+  }
+}
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, first answers only, the check kept apart', () => {
+  const html = renderLabs()[SMH_TEMPLATE];
+  const body = html.split('<main id="main">')[1].split('</main>')[0];
+  const about = body.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(body.indexOf('id="about"') > body.indexOf('lab-hero') && body.indexOf('id="about"') < body.indexOf('id="setup-section"'), 'right after the hero, before the setup');
+  assert.match(about, /<figure class="lab-flow">/);
+  assert.ok(about.includes(`How it works: ${record.models.length} local models`));
+  assert.ok(about.includes(`${record.fixtureFiles} files; after the change its tests fail`));
+  assert.match(about, /made up/);
+  expectAbout(record, about);
+  // The committed record: every group ran, the harness lane made no mistake, so it reads fewer and the lanes bad/good.
+  assert.deepEqual(record.refusedCells, []);
+  assert.deepEqual(lanesOf(about).map(l => l.tone), ['bad', 'good']);
+  assert.ok(plain(about).includes('made fewer of them'));
+  // The harness's own check is never shown as a model result: no refusal or second-answer count in this section.
+  const text = plain(about);
+  assert.doesNotMatch(text, /refused|accepted|second answer|after one more ask|\barm\b/i, 'the check is not counted here, and no jargon');
+  assert.match(text, /kept apart from these counts/);
+});
+
+test('"What it is." follows the record when it changes: arms swapped, groups not run, a side with no answers', () => {
+  // Arms swapped: the harness made the mistakes, so the lanes flip and the word is "more".
+  const swapped = clone();
+  for (const c of swapped.calls) c.arm = c.arm === 'bare' ? 'harnessed' : 'bare';
+  const sw = renderAbout(swapped);
+  expectAbout(swapped, sw);
+  assert.deepEqual(lanesOf(sw).map(l => l.tone), ['good', 'bad']);
+  assert.ok(plain(sw).includes('made more of them'));
+  // One harnessed group not run (its bare twin ran): said so, and the sides are not compared.
+  const one = clone(), m0 = one.models[0].model;
+  one.calls = one.calls.filter(c => !(c.model === m0 && c.variant === 'forced' && c.arm === 'harnessed'));
+  one.refusedCells = [{ model: m0, variant: 'forced', arm: 'harnessed', load1: one.maxLoad + 1 }];
+  assert.deepEqual(sameModelHarnessProblems(one), [], 'a record with a group not run is a valid record');
+  const o = renderAbout(one);
+  expectAbout(one, o);
+  assert.ok(plain(o).includes(`1 of these ${one.models.length * 4} groups`));
+  // Both arms of a group not run: the sides hold the same groups, so the comparison stands.
+  const both = clone();
+  both.calls = both.calls.filter(c => !(c.model === m0 && c.variant === 'forced'));
+  both.refusedCells = ['bare', 'harnessed'].map(arm => ({ model: m0, variant: 'forced', arm, load1: both.maxLoad + 1 }));
+  const b = renderAbout(both);
+  expectAbout(both, b);
+  assert.ok(plain(b).includes('made fewer of them'));
+  // Every harnessed group not run: no answers is not "good"; the lane and its boxes are neutral.
+  const none = clone();
+  none.calls = none.calls.filter(c => c.arm !== 'harnessed');
+  none.refusedCells = none.models.flatMap(({ model }) => ['open', 'forced'].map(variant => ({ model, variant, arm: 'harnessed', load1: none.maxLoad + 1 })));
+  const n = renderAbout(none);
+  expectAbout(none, n);
+  // The numbers section's verdict holds the same rule: with no harness answers it compares nothing (pool row ee7d9955).
+  const notCompared = (rec, why) => {
+    for (const variant of ['open', 'forced']) {
+      const sentence = verdictSentence(rec, variant);
+      assert.match(sentence, /did not run the same runs, so they are not compared\.$/, `${why}, ${variant}`);
+      assert.doesNotMatch(sentence, /fewer|more of these|as many|nothing to fix/, `${why}, ${variant}`);
+      assert.equal(armsPaired(rec, variant), false, `${why}, ${variant}`);
+    }
+  };
+  notCompared(none, 'no harness answers');
+  // Both arms empty: no runs at all is not "nothing to fix".
+  const empty = clone(); empty.calls = [];
+  notCompared(empty, 'no answers in either arm');
+  // Equal totals, unpaired: each model keeps the same number of runs per arm, but other run numbers on each side.
+  const unpaired = clone();
+  unpaired.calls = unpaired.calls.filter(c => c.attempt !== 1 || (c.arm === 'bare' ? c.run % 2 === 1 : c.run % 2 === 0));
+  assert.equal(totals(unpaired, 'open', 'bare').n, totals(unpaired, 'open', 'harnessed').n, 'the fixture keeps the totals equal');
+  notCompared(unpaired, 'equal totals, other runs');
+  // The committed record is paired, so its verdicts stand.
+  for (const variant of ['open', 'forced']) assert.equal(armsPaired(clone(), variant), true, variant);
+  assert.deepEqual(lanesOf(n).map(l => l.tone), ['bad', 'neutral']);
+  assert.doesNotMatch(plain(n), /made fewer/);
+  // Every harnessed first answer never came back (the model call failed): no reply is no answer, not "no mistake".
+  const dead = clone();
+  dead.calls = dead.calls.filter(c => !(c.arm === 'harnessed' && c.attempt === 2));
+  for (const c of dead.calls.filter(c => c.arm === 'harnessed')) Object.assign(c, { answered: false, replySha256: null, readable: false, verdict: null, wrongPass: false, named: 0, invented: 0, refused: true });
+  assert.deepEqual(sameModelHarnessProblems(dead), [], 'a record whose harnessed calls all failed is a valid record');
+  const d = renderAbout(dead);
+  expectAbout(dead, d);
+  assert.deepEqual(lanesOf(d).map(l => l.tone), ['bad', 'neutral'], 'a lane of unanswered calls is never good');
+  assert.ok(lanesOf(d)[1].nodes.slice(1).every(x => x.tone === 'neutral' && x.body.endsWith(`; ${dead.runsPerCell * dead.models.length} of ${dead.runsPerCell * dead.models.length} could not be read`)));
+  assert.doesNotMatch(plain(d), /made (fewer|more|as many)|Neither way/);
+  for (const variant of ['open', 'forced']) assert.doesNotMatch(verdictSentence(dead, variant), /fewer|more|as many|nothing to fix/, `${variant}: the numbers section does not compare either`);
 });

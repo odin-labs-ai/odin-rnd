@@ -26,6 +26,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderFlow } from './lab-flow.mjs';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, realInstant, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -104,7 +105,53 @@ export function renderIntro() {
   return `<span class="technical">LAB 12 · HOW MANY STRANGERS CAN THE SPACE HOLD?</span><h1 id="lab-title">How many strangers can the space hold?</h1><p class="company-lead">The agent space can be opened to anonymous guests: anyone with the link walks in, talks to the agents and asks Odin to check them. Before a link like that is shared, someone has to say how many guests one space can take. We had a written answer, measured on another machine. This page sets it beside a fresh measurement on a Mac, and keeps the two apart.</p>`;
 }
 
+/** How a guest's most checks in ten minutes stands against the quota, worded from the comparison itself. */
+export const quotaWords = q => `${q.mostInTenMinutes < q.limit ? 'under' : q.mostInTenMinutes === q.limit ? 'at' : 'over'} the limit of ${n(q.limit)}`;
+
+/** The tone of the run's outcome box: good only when it held at every step tried; bad when smooth at none; neutral otherwise. */
+export const outcomeTone = m => (m.verdict.smooth === null ? 'bad' : m.verdict.smooth === m.ramp.at(-1) && m.verdict.tickUnder50 === m.ramp.at(-1) ? 'good' : 'neutral');
+
+/** The tone of the probes box: good only when every probe held at every step and the quota held; bad on a known miss; neutral when unsure. */
+export function probesTone(m) {
+  const held = Object.values(m.probes.held);
+  if (held.some(v => v < m.probes.steps) || m.quota.held === false || m.quota.mostInTenMinutes > m.quota.limit) return 'bad';
+  return held.length > 0 && held.every(v => v === m.probes.steps) && m.quota.held === true ? 'good' : 'neutral';
+}
+
 const reach = (t, key) => (t.verdict[key] === null ? 'none of the steps tried' : `${n(t.verdict[key])} guests${t.verdict[key] === t.ramp.at(-1) ? ', the last step tried' : ''}`);
+
+/** "What it is.": the lab in plain words, then how it runs, every count from the record. The sheet and the run stay in lanes of their own. */
+export function renderAbout(record) {
+  const e = record.estimate, m = record.measurement;
+  const heldAll = m.verdict.smooth === m.ramp.at(-1) && m.verdict.tickUnder50 === m.ramp.at(-1);
+  const next = m.rows.find(r => r.guests > (m.verdict.smooth ?? 0));
+  const probes = Object.keys(m.probes.held), heldEvery = probes.filter(k => m.probes.held[k] === m.probes.steps);
+  const outcome = heldAll ? `It did not break within the steps tried, so this run does not say where it would.` : next ? `At ${n(next.guests)} guests it fell behind.` : '';
+  const prose = `<p>The agent space can be opened to anonymous guests: anyone with the link walks in and talks to the agents. The question is how many guests one space can take before it falls behind.</p><p>We had a written answer, a capacity sheet measured on another machine, so for any other host it is an estimate. We ran the load tool once more, on a Mac, stepping guests in from ${n(m.ramp[0])} to ${n(m.ramp.at(-1))}, and kept the two results apart.</p><p>The sheet recommends a public cap of ${n(e.recommendedCap)} guests; on its own machine it stayed smooth up to ${reach(e, 'smooth')}. The fresh run on the Mac stayed smooth up to ${reach(m, 'smooth')}. ${outcome} The machines and the code differ, so read these as an estimate and a measurement, not as a before and after.</p>`;
+  const steps = t => `${n(t.ramp.length)} steps, ${n(t.ramp[0])} to ${n(t.ramp.at(-1))} guests`;
+  const flow = renderFlow({
+    caption: 'How it works: one load tool, run on two different machines with different versions of the code, the estimate and the measurement kept apart',
+    source: [
+      { title: e.crowdAgents === m.crowdAgents ? `The agent space, with ${n(m.crowdAgents)} resident crowd agents` : 'The agent space', body: 'guests stepped in, a set number at a time, each step held for a while and then measured' },
+      { title: 'The load tool', body: 'a swarm of guests that keep to the rules; the fresh run also sent hostile ones' },
+    ],
+    lanes: [
+      { label: 'The capacity sheet: an estimate, made on another machine', nodes: [
+        { title: steps(e), body: `${n(e.phaseS)} seconds a step` },
+        { title: `Recommended public cap: ${n(e.recommendedCap)} guests`, body: e.verdict.smooth === null ? 'smooth at none of its steps' : `smooth up to ${n(e.verdict.smooth)} on that machine` },
+      ] },
+      { label: 'A fresh run on a Mac: a measurement', nodes: [
+        { title: steps(m), body: `${n(m.phaseS)} seconds a step, no browsers` },
+        { title: m.verdict.smooth === null ? 'Smooth at none of the steps' : `Smooth up to ${n(m.verdict.smooth)} guests`, body: heldAll ? 'it did not break within the steps tried' : next ? `at ${n(next.guests)} it fell behind` : '', tone: outcomeTone(m) },
+      ] },
+      { label: 'In the same run on the Mac: hostile guests', nodes: [
+        { title: `${n(probes.length)} abuse probes`, body: `tried on a fresh guest connection at each of the ${n(m.probes.steps)} steps` },
+        { title: heldEvery.length === probes.length ? `All ${n(probes.length)} held at every step` : `${n(heldEvery.length)} of ${n(probes.length)} held at every step`, body: `no guest got more than ${n(m.quota.mostInTenMinutes)} of Odin's checks in ten minutes, ${quotaWords(m.quota)}`, tone: probesTone(m) },
+      ] },
+    ],
+  });
+  return `${prose}${flow}`;
+}
 
 export function renderSideBySide(record) {
   const e = record.estimate, m = record.measurement;
@@ -136,7 +183,7 @@ export function renderIsolation(record) {
 export function renderProbes(record) {
   const m = record.measurement;
   const items = Object.keys(m.probes.held).map(k => `<li>${escape(cap(PROBE_WORDS[k]))}: held at ${n(m.probes.held[k])} of ${n(m.probes.steps)} steps.</li>`).join('');
-  return `<p>At every step of the ramp, on a fresh guest connection, the tool tries what a hostile guest would:</p><ul class="rogue-list">${items}</ul><p>After the run, Odin's own inspection records were read back: ${n(m.quota.checks)} checks in all, and no guest got more than ${n(m.quota.mostInTenMinutes)} in ten minutes, under the limit of ${n(m.quota.limit)}.</p>`;
+  return `<p>At every step of the ramp, on a fresh guest connection, the tool tries what a hostile guest would:</p><ul class="rogue-list">${items}</ul><p>After the run, Odin's own inspection records were read back: ${n(m.quota.checks)} checks in all, and no guest got more than ${n(m.quota.mostInTenMinutes)} in ten minutes, ${quotaWords(m.quota)}.</p>`;
 }
 
 export function renderCheck(record) {
@@ -155,7 +202,7 @@ export function renderStrangers(root = 'site', { now = new Date() } = {}) {
   const record = readStrangers(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, STRANGERS_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--STRANGERS_INTRO-->': renderIntro(record), '<!--STRANGERS_SIDE_BY_SIDE-->': renderSideBySide(record), '<!--STRANGERS_ESTIMATE-->': renderEstimate(record), '<!--STRANGERS_MEASUREMENT-->': renderMeasurement(record), '<!--STRANGERS_ISOLATION-->': renderIsolation(record), '<!--STRANGERS_PROBES-->': renderProbes(record), '<!--STRANGERS_CHECK-->': renderCheck(record), '<!--STRANGERS_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--STRANGERS_INTRO-->': renderIntro(record), '<!--STRANGERS_ABOUT-->': renderAbout(record), '<!--STRANGERS_SIDE_BY_SIDE-->': renderSideBySide(record), '<!--STRANGERS_ESTIMATE-->': renderEstimate(record), '<!--STRANGERS_MEASUREMENT-->': renderMeasurement(record), '<!--STRANGERS_ISOLATION-->': renderIsolation(record), '<!--STRANGERS_PROBES-->': renderProbes(record), '<!--STRANGERS_CHECK-->': renderCheck(record), '<!--STRANGERS_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${STRANGERS_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

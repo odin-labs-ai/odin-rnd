@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { benchScreen, build, clearScreenCache, serialise, wilson, WORLD_TERMS } from './brain-bench-import.mjs';
 import { fingerprint } from './lab-dispatch-publish.mjs';
-import { figures, pageTextProblems, prose, readBench, renderBench } from './brain-bench.mjs';
+import { aboutFlow, figures, pageTextProblems, prose, readBench, renderBench } from './brain-bench.mjs';
 import { renderLabs } from './labs.mjs';
 
 // Lab 02 (mission rnd-labs-human-first-1024). The import runs on a committed fixture of made-up rows (the real sources
@@ -273,4 +273,115 @@ test('on the published site Lab 02 is required: its words missing refuse the Lab
 test('Lab 02 is in the sitemap; its Labs tile goes through the lab-tiles gate (scripts/lab-tiles.test.mjs)', () => {
   assert.ok(readFileSync('site/sitemap.xml', 'utf8').includes('<loc>https://odin-labs-ai.github.io/odin-rnd/labs/brain-bench/</loc>'));
   assert.ok(renderLabs()['labs/brain-bench/index.html'].includes('<h1 id="lab-title">Every brain on the same tasks.</h1>'));
+});
+
+test('"What it is." opens the page right after the hero: plain words, then how it works, every count the record\'s, a re-run never the result', () => {
+  const html = renderBench().pages['labs/brain-bench/index.html'];
+  const body = html.split('<main id="main">')[1].split('</main>')[0];
+  const about = body.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(body.indexOf('bench-hero') < body.indexOf('id="about"') && body.indexOf('id="about"') < body.indexOf('id="findings"'), 'right after the hero, before what we found');
+  assert.match(about, /<figure class="lab-flow">/);
+  const notes = JSON.parse(readFileSync('site/data/labs/brain-bench.json', 'utf8'));
+  const rec = JSON.parse(readFileSync('site/data/labs/brain-bench/results.json', 'utf8'));
+  const brains = new Set(rec.experiments.flatMap(e => e.brains.map(b => b.id)));
+  const episodes = rec.experiments.reduce((t, e) => t + e.design.episodes, 0);
+  assert.ok(about.includes(`How it works: ${brains.size} brains on the same seeded tasks, ${episodes.toLocaleString('en-GB')} episodes in ${rec.experiments.length} experiments`));
+  const where = w => [...brains].filter(id => notes.brains[id].where === w).length;
+  assert.ok(about.includes(`hand-written rules, ${where('local')} on our own machine, ${where('cloud')} in the cloud`));
+  assert.ok(about.includes(`${rec.experiments.filter(e => /^[0-9a-f]{7,40}$/.test(e.prereg?.commit ?? '') && /^[0-9a-f]{64}$/.test(e.prereg?.sha256 ?? '')).length} experiments, each written down and committed before its run`), 'the predictions-first count');
+  for (const exp of rec.experiments) assertLane(about, exp, rec, notes);
+  const text = about.replace(/<[^>]+>/g, ' ');
+  for (const exp of rec.experiments) for (const b of exp.brains) if (b.sensitivity) assert.doesNotMatch(text, new RegExp(`Best cloud ${b.sensitivity.successes} / ${b.sensitivity.n}`), 'a re-run is never shown as the best result');
+  assert.deepEqual(pageTextProblems(about), [], 'no money figure and no private name on it');
+});
+
+// One lane of the How it works diagram, every sentence a reader takes away recomputed from the record: the brains in the
+// lane, the best cloud and best local brains by name and count, the rules' count, the verdict by the lab's rule (two
+// 95 % intervals that overlap are no detectable difference), each sensitivity re-run in the lane as what it is, and the
+// tone: good only when the intervals overlap and no row of the lane has a re-run.
+function assertLane(html, exp, rec, notes) {
+  const lane = html.split('<div class="lab-flow-lane').find(l => l.includes(exp.id));
+  const key = e => JSON.stringify([e.design.tasks, e.design.worlds, e.design.seeds, e.design.harness]);
+  const rows = rec.experiments.filter(e => key(e) === key(exp)).flatMap(e => e.brains).map(b => ({ ...b, label: notes.brains[b.id].label }));
+  const top = w => { const of = rows.filter(r => r.where === w), max = Math.max(...of.map(r => r.successes)); return of.filter(r => r.successes === max); };
+  const cloud = top('cloud'), local = top('local'), rules = top('rules')[0];
+  const [c, l] = [cloud[0], local[0]];
+  const mix = [rules && 'the rules', ...['local', 'cloud'].map(w => rows.filter(r => r.where === w).length ? `${rows.filter(r => r.where === w).length} ${w}` : '')].filter(Boolean).join(', ');
+  assert.ok(lane.includes(`${rows.length} brains, ${exp.design.episodesPerBrain} episodes each</strong><span>${mix}</span>`), `${exp.id}: the brains in the lane, ${mix}`);
+  assert.ok(lane.includes(`seeds ${exp.design.seeds.from}–${exp.design.seeds.to}`), exp.id);
+  assert.ok(lane.includes(`Best cloud ${c.successes} / ${c.n}, best local ${l.successes} / ${l.n}`), exp.id);
+  assert.ok(lane.includes(`Cloud: ${cloud.map(r => r.label).join(' and ')}. Local: ${local.map(r => r.label).join(' and ')}.`), `${exp.id}: the best brains by name`);
+  if (rules) assert.ok(lane.includes(`The rules: ${rules.successes} / ${rules.n}.`), `${exp.id}: the rules' count`);
+  const overlaps = (a, b) => a[0] <= b[1] && b[0] <= a[1];
+  const doubted = rows.filter(r => r.sensitivity);
+  if (doubted.length) {
+    // The lab's rule: a sensitivity check is never the registered result, so the registered comparison is not claimed.
+    assert.ok(lane.includes(`The registered 95 % intervals ${overlaps(c.ci, l.ci) ? 'overlap' : 'do not overlap'}, but that is not claimed.`), exp.id);
+    for (const r of doubted) {
+      const s = r.sensitivity, world = notes.labels.worlds[s.world];
+      assert.ok(world, `${exp.id}/${r.id}: the re-run names its world`);
+      const cause = /outage/i.test(s.packNote ?? '') ? 'ran during a service outage' : 'were run again';
+      assert.ok(lane.includes(`${s.rerun} of ${r.label}'s ${r.n} episodes (${world}, seeds ${s.seeds.from}–${s.seeds.to}) ${cause}.`), `${exp.id}/${r.id}: the re-run episodes, their world and seeds`);
+      assert.ok(lane.includes(`With them re-run, which is not the registered result, ${r.label} finished ${s.successes} / ${s.n}.`), `${exp.id}/${r.id}`);
+    }
+    if (c.sensitivity || l.sensitivity) assert.ok(lane.includes(`Counted with the re-run, the best cloud and best local 95 % intervals ${overlaps(c.sensitivity?.ci ?? c.ci, l.sensitivity?.ci ?? l.ci) ? 'overlap' : 'do not overlap'}.`), exp.id);
+    else assert.doesNotMatch(lane, /Counted with the re-run/, `${exp.id}: a re-run on a row whose count the box does not show gets no verdict`);
+    assert.doesNotMatch(lane, /service errors/, `${exp.id}: the record counts episodes in the outage window, not episodes with an error`);
+  } else {
+    assert.ok(lane.includes(overlaps(c.ci, l.ci) ? 'The 95 % intervals overlap: no detectable difference.' : 'The 95 % intervals do not overlap: the gap is real.'), exp.id);
+    assert.doesNotMatch(lane, /not claimed|re-run/, exp.id);
+  }
+  assert.equal(/lab-flow-good/.test(lane), overlaps(c.ci, l.ci) && !doubted.length, `${exp.id}: drawn as good exactly when the intervals overlap and no row of the lane has a re-run`);
+}
+
+test('How it works: a re-run on any row of a lane, not only the best cloud one, keeps that lane from being drawn as good', () => {
+  const notes = JSON.parse(readFileSync('site/data/labs/brain-bench.json', 'utf8'));
+  const real = JSON.parse(readFileSync('site/data/labs/brain-bench/results.json', 'utf8'));
+  const plant = (exp, brain) => {
+    const rec = structuredClone(real);
+    const b = rec.experiments.find(e => e.id === exp).brains.find(x => x.id === brain);
+    const seeds = { from: rec.experiments.find(e => e.id === exp).design.seeds.from, to: rec.experiments.find(e => e.id === exp).design.seeds.from + 3 };
+    b.sensitivity = { world: 'b', seeds, rerun: 4, n: b.n, successes: b.successes - 1, ci: wilson(b.successes - 1, b.n), packNote: 'a check, re-run' };
+    return rec;
+  };
+  // The only lane drawn good on the real record is EXP-W01 with EXP-W02: plant a re-run on its best local row, then
+  // on a row that is best in nothing, and the lane must turn neutral and say the re-run.
+  for (const [exp, brain] of [['EXP-W01', 'tuned-1gb'], ['EXP-W01', 'qwen2.5-1.5b'], ['EXP-W02', 'gemini-2.5-flash']]) {
+    const rec = plant(exp, brain);
+    const html = aboutFlow({ notes, record: rec });
+    assert.doesNotMatch(html.split('<div class="lab-flow-lane').find(l => l.includes('EXP-W01')), /lab-flow-good/, `${exp}/${brain}`);
+    for (const e of rec.experiments) assertLane(html, e, rec, notes);
+  }
+  // The real record: no lane where any row has a re-run is drawn good.
+  const html = aboutFlow({ notes, record: real });
+  for (const e of real.experiments) if (e.brains.some(b => b.sensitivity)) assert.doesNotMatch(html.split('<div class="lab-flow-lane').find(l => l.includes(e.id)), /lab-flow-good/, e.id);
+});
+
+test('How it works: a tie at the top names every tied brain, and a re-run on the second of them gets no re-run verdict', () => {
+  const notes = JSON.parse(readFileSync('site/data/labs/brain-bench.json', 'utf8'));
+  const rec = JSON.parse(readFileSync('site/data/labs/brain-bench/results.json', 'utf8'));
+  const w02 = rec.experiments.find(e => e.id === 'EXP-W02').brains;
+  const first = w02.find(b => b.id === 'mistral-small-3.2'), second = w02.find(b => b.id === 'gpt-4o-mini');
+  Object.assign(second, { successes: first.successes, ci: wilson(first.successes, first.n) });
+  second.sensitivity = { world: 'c', seeds: { from: 40, to: 41 }, rerun: 2, n: second.n, successes: 200, ci: wilson(200, second.n), packNote: 'a check' };
+  const html = aboutFlow({ notes, record: rec });
+  const lane = html.split('<div class="lab-flow-lane').find(l => l.includes('EXP-W01'));
+  assert.ok(lane.includes(`Cloud: ${notes.brains['mistral-small-3.2'].label} and ${notes.brains['gpt-4o-mini'].label}.`));
+  for (const e of rec.experiments) assertLane(html, e, rec, notes);
+});
+
+test('How it works: a re-run whose world the record does not name states no episode count; a lane without a cloud brain draws no comparison', () => {
+  const notes = JSON.parse(readFileSync('site/data/labs/brain-bench.json', 'utf8'));
+  const rec = JSON.parse(readFileSync('site/data/labs/brain-bench/results.json', 'utf8'));
+  const w04 = rec.experiments.find(e => e.id === 'EXP-W04');
+  delete w04.brains.find(b => b.sensitivity).sensitivity.world;
+  const w03 = rec.experiments.find(e => e.id === 'EXP-W03');
+  w03.brains = w03.brains.filter(b => b.where !== 'cloud');
+  const html = aboutFlow({ notes, record: rec });
+  const lane = id => html.split('<div class="lab-flow-lane').find(l => l.includes(id));
+  const m = w04.brains.find(b => b.sensitivity), label = notes.brains[m.id].label;
+  assert.ok(lane('EXP-W04').includes(`Some of ${label}'s ${m.n} episodes were run again. With them re-run, which is not the registered result, ${label} finished ${m.sensitivity.successes} / ${m.sensitivity.n}.`));
+  assert.doesNotMatch(lane('EXP-W04'), /seeds 140–164\)|lab-flow-good/);
+  assert.doesNotMatch(lane('EXP-W03'), /Best cloud|lab-flow-good/);
 });

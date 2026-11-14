@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readStrangers, renderStrangers, strangersProblems, STRANGERS_PIN, STRANGERS_RECORD, STRANGERS_TEMPLATE, STRANGERS_TILE, verdictOf } from './lab-strangers.mjs';
+import { readStrangers, renderAbout, renderStrangers, strangersProblems, STRANGERS_PIN, STRANGERS_RECORD, STRANGERS_TEMPLATE, STRANGERS_TILE, verdictOf } from './lab-strangers.mjs';
 import { build, isolationOf, PYC_CHECK, rowOf, sheetFigures, templatesFromCopy, treeCheck } from './vendor-strangers.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
@@ -261,4 +261,84 @@ test('review 1: the copy the run started from is checked against main file for f
   writeFileSync(join(run, 'root/templates.dir'), join(temp, 'nowhere'));
   assert.equal(templatesFromCopy(run, tree), false, 'a path that does not exist');
   assert.equal(templatesFromCopy(join(temp, 'no-run'), tree), false, 'no tenant root at all');
+});
+
+test('"What it is." opens the page as on Lab 01: plain words, then how it works, every count from the record, the sheet and the run in lanes of their own', () => {
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(main.indexOf('</section>') < main.indexOf('id="about"') && main.indexOf('id="about"') < main.indexOf('id="side-by-side"'), 'right after the hero, before the side by side');
+  assert.match(about, /<figure class="lab-flow">/);
+  const e = record.estimate, m = record.measurement, text = textOf(about);
+  const probes = Object.keys(m.probes.held);
+  for (const s of [
+    `public cap of ${e.recommendedCap} guests`, `Recommended public cap: ${e.recommendedCap} guests`, `smooth up to ${e.verdict.smooth} on that machine`,
+    `stepping guests in from ${m.ramp[0]} to ${m.ramp.at(-1)}`, `${e.ramp.length} steps, ${e.ramp[0]} to ${e.ramp.at(-1)} guests`, `${m.ramp.length} steps, ${m.ramp[0]} to ${m.ramp.at(-1)} guests`,
+    `Smooth up to ${m.verdict.smooth} guests`, `${m.crowdAgents} resident crowd agents`, `${probes.length} abuse probes`, `at each of the ${m.probes.steps} steps`,
+    `more than ${m.quota.mostInTenMinutes} of Odin's checks in ten minutes, ${m.quota.mostInTenMinutes < m.quota.limit ? 'under' : 'at'} the limit of ${m.quota.limit}`,
+  ]) assert.ok(text.includes(s), s);
+  // Like for like in the plain words: the sheet's cap AND the sheet's own smooth point, then the run's smooth point.
+  const prose = textOf(about.split('<figure')[0]);
+  const reachOf = t => (t.verdict.smooth === t.ramp.at(-1) ? `${t.verdict.smooth} guests, the last step tried` : `${t.verdict.smooth} guests`);
+  assert.ok(prose.includes(`The sheet recommends a public cap of ${e.recommendedCap} guests; on its own machine it stayed smooth up to ${reachOf(e)}. The fresh run on the Mac stayed smooth up to ${reachOf(m)}.`), 'the sheet\'s smooth point stands beside its cap in the prose');
+  const next = m.rows.find(r => r.guests > m.verdict.smooth);
+  if (next) assert.ok(text.includes(`at ${next.guests} it fell behind`));
+  // Review 3: the verdict sentence in the prose, exactly, recomputed from the run's rows: smooth up to its smooth point, then the first step past it.
+  const tail = 'The machines and the code differ, so read these as an estimate and a measurement, not as a before and after.';
+  if (next) assert.ok(prose.includes(`The fresh run on the Mac stayed smooth up to ${reachOf(m)}. At ${next.guests} guests it fell behind. ${tail}`), 'the prose names the first step past the smooth point');
+  // When nothing broke within the steps tried, the prose says so and names no break point.
+  const heldRun = clone(); heldRun.measurement.verdict.smooth = heldRun.measurement.verdict.tickUnder50 = heldRun.measurement.ramp.at(-1);
+  const heldProse = textOf(renderAbout(heldRun).split('<figure')[0]);
+  assert.ok(heldProse.includes(`The fresh run on the Mac stayed smooth up to ${heldRun.measurement.ramp.at(-1)} guests, the last step tried. It did not break within the steps tried, so this run does not say where it would. ${tail}`), 'the held-all sentence');
+  assert.doesNotMatch(heldProse, /fell behind/, 'no break point when none was found');
+  // The sheet and the run are never mixed: nothing of the run in the sheet's lane, nothing of the sheet in the run's.
+  const lanes = about.match(/<div class="lab-flow-lane[\s\S]*?<\/ol><\/div>/g).map(textOf);
+  assert.equal(lanes.length, 3);
+  // Review 3: how long each step was held, in each lane from its own record.
+  assert.ok(lanes[0].includes(`${e.ramp.length} steps, ${e.ramp[0]} to ${e.ramp.at(-1)} guests ${e.phaseS} seconds a step`), 'the sheet\'s step length');
+  assert.ok(lanes[1].includes(`${m.ramp.length} steps, ${m.ramp[0]} to ${m.ramp.at(-1)} guests ${m.phaseS} seconds a step, no browsers`), 'the run\'s step length');
+  assert.equal(m.browsers, 0, 'no browsers is what the record says');
+  assert.doesNotMatch(lanes[0], /\bMac\b|measurement|no browsers|\b300\b/, 'nothing of the fresh run in the sheet\'s lane');
+  for (const l of lanes.slice(1)) assert.doesNotMatch(l, /estimate|Windows|recommended|cap/i, 'nothing of the sheet in the run\'s lanes');
+  if (!(m.verdict.smooth === m.ramp.at(-1) && m.verdict.tickUnder50 === m.ramp.at(-1))) assert.doesNotMatch(text, /did not break/, 'no break point claimed it did not find, and none denied it did');
+  assert.doesNotMatch(text, /measured cap|proves|guarantee/i);
+});
+
+test('review 2: the How it works tones follow the record and fail closed, and the quota is worded from the comparison', () => {
+  const nodes = html => [...html.matchAll(/<li class="lab-flow-node lab-flow-(\w+)"><strong>([^<]*)<\/strong>(?:<span>([^<]*)<\/span>)?/g)].map(([, tone, title, body]) => ({ tone, title, body: body ?? '' }));
+  const outcomeOf = r => nodes(renderAbout(r)).find(x => /^Smooth (up to|at none)/.test(x.title));
+  const probesOf = r => nodes(renderAbout(r)).find(x => /held at every step$/.test(x.title));
+  const m = record.measurement;
+  // The record as published: the run fell behind past its smooth point, so its outcome is neutral, never good.
+  const next = m.rows.find(r => r.guests > m.verdict.smooth);
+  const live = outcomeOf(record);
+  assert.equal(live.title, `Smooth up to ${m.verdict.smooth} guests`);
+  if (next) { assert.equal(live.tone, 'neutral', 'fell behind: neutral'); assert.equal(live.body, `at ${next.guests} it fell behind`); }
+  // Nothing broke within the steps tried: good.
+  const held = clone(); held.measurement.verdict.smooth = held.measurement.verdict.tickUnder50 = held.measurement.ramp.at(-1);
+  assert.equal(outcomeOf(held).tone, 'good');
+  assert.equal(outcomeOf(held).body, 'it did not break within the steps tried');
+  // Smooth at none of the steps: bad.
+  const none = clone(); none.measurement.verdict.smooth = null;
+  assert.equal(outcomeOf(none).tone, 'bad');
+  assert.equal(outcomeOf(none).title, 'Smooth at none of the steps');
+  // Probes: good only when every probe held at every step and the quota held.
+  const probes = Object.keys(m.probes.held);
+  assert.equal(probesOf(record).tone, 'good');
+  assert.equal(probesOf(record).title, `All ${probes.length} held at every step`);
+  const miss = clone(); miss.measurement.probes.held.flood -= 1;
+  assert.equal(probesOf(miss).tone, 'bad');
+  assert.equal(probesOf(miss).title, `${probes.length - 1} of ${probes.length} held at every step`);
+  const quota = clone(); quota.measurement.quota.held = false;
+  assert.equal(probesOf(quota).tone, 'bad');
+  const unknown = clone(); delete unknown.measurement.quota.held;
+  assert.equal(probesOf(unknown).tone, 'neutral', 'an unknown quota is never good');
+  // The quota is worded from the comparison: under it, or at it, never "under" a limit it equals.
+  const at = clone(); at.measurement.quota.mostInTenMinutes = at.measurement.quota.limit;
+  assert.ok(probesOf(at).body.endsWith(`at the limit of ${m.quota.limit}`));
+  assert.doesNotMatch(probesOf(at).body, /under the limit/);
+  assert.ok(probesOf(record).body.endsWith(`${m.quota.mostInTenMinutes < m.quota.limit ? 'under' : 'at'} the limit of ${m.quota.limit}`));
+  assert.ok(textOf(main).includes(`no guest got more than ${m.quota.mostInTenMinutes} in ten minutes, ${m.quota.mostInTenMinutes < m.quota.limit ? 'under' : 'at'} the limit of ${m.quota.limit}.`), 'the probes section words it the same way');
+  // Diagram numbers are formatted as the prose formats them.
+  const big = clone(); big.measurement.ramp = big.measurement.ramp.map(g => g * 10); big.measurement.verdict.smooth *= 10;
+  assert.ok(nodes(renderAbout(big)).some(x => x.title === `Smooth up to ${(m.verdict.smooth * 10).toLocaleString('en-GB')} guests`), 'thousands separator in the diagram');
 });
