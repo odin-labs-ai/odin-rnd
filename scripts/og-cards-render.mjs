@@ -17,8 +17,8 @@ import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  CARD_DIR, CARD_HEIGHT, CARD_WIDTH, MANIFEST_PATH, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText, needsCard, readListedLabs,
-  readManifest, sha256,
+  CARD_DIR, CARD_HEIGHT, CARD_WIDTH, LABS_INDEX, MANIFEST_PATH, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText, needsCard,
+  readListedLabs, readManifest, sha256,
 } from './og-cards.mjs';
 
 /** The footer rule's top edge: the line under the heading must end above it. */
@@ -56,9 +56,9 @@ p{margin-top:26px;font-size:27px;line-height:1.4;color:#b9cdc2;display:-webkit-b
 <div class="foot"><span>${escapeHtml(path)}</span><span>Odin Labs R&amp;D · Labs</span></div>
 <script>
 document.fonts.ready.then(() => {
-  // The heading shrinks (not below 40px) until it takes at most three lines; then, while it is above 44px, it shrinks
-  // further until the whole line under it clears the footer rule. Only if even that fails is the line cut to the whole
-  // lines that fit, the rest ellipsised.
+  // The heading shrinks, not below 40px, until it takes at most three lines (renderCards refuses one that still
+  // takes more); then, while it is above 44px, it shrinks further until the whole line under it clears the footer
+  // rule. Only if even that fails is the line cut to the whole lines that fit, the rest ellipsised.
   const h = document.getElementById('h');
   const p = document.getElementById('p');
   const LIMIT = ${LINE_LIMIT};
@@ -94,10 +94,10 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
  * Draw cards in one headless Chrome over the DevTools protocol. For each card: load its page, wait until its fitting
  * script has finished (body[data-ready], set after document.fonts.ready), then capture exactly 1200x630 CSS pixels at
  * scale 1. Returns [{ png, layout }] in input order. Refuses a draw when Chrome is missing, the viewport is not
- * 1200x630, one of the three fonts did not load, the kicker, heading or line read back is not the escaped input, the big
- * number is not the kicker's number, a word of the heading is wider than its column or the heading shrank below 40px,
- * or the line runs past the footer rule. A line too long for the card is cut to whole lines with an ellipsis; that is
- * allowed and reported as layout.lineCut.
+ * 1200x630, one of the three fonts did not load, the kicker, heading or line read back is not the escaped input (an
+ * escaping fault), a word of the heading is wider than its column, the heading still takes more than three lines at
+ * 40px, or the line runs past the footer rule. A line too long for the card is cut to whole lines with an ellipsis;
+ * that is allowed and reported as layout.lineCut.
  */
 export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 60000 } = {}) {
   if (!chrome) throw new Error('og-cards: no Chrome or Chromium found; set CHROME_BIN');
@@ -162,7 +162,7 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
                 kicker: document.querySelector('.kicker').textContent, heading: h.textContent, line: p.textContent,
                 headingBox: box(h), lineBox: box(p), headingFontPx: parseFloat(getComputedStyle(h).fontSize),
                 kickerBox: box(document.querySelector('.kicker')), numberBox: document.querySelector('.number') ? box(document.querySelector('.number')) : null,
-                numberText: document.querySelector('.number')?.textContent ?? '',
+                headingLines: Math.round(h.getBoundingClientRect().height / (parseFloat(getComputedStyle(h).fontSize) * 1.06)),
                 headingOverflows: h.scrollWidth > h.clientWidth + 1,
                 lineClamp: getComputedStyle(p).webkitLineClamp, lineCut: p.scrollHeight > p.clientHeight + 1,
                 viewport: { width: innerWidth, height: innerHeight },
@@ -187,8 +187,7 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
       if (layout.heading !== want.heading) problems.push(`heading holds "${layout.heading}", not "${want.heading}"`);
       if (layout.line !== want.line) problems.push(`line holds "${layout.line}", not "${want.line}"`);
       if (layout.headingOverflows) problems.push('a word of the heading is wider than its column');
-      if (layout.headingFontPx < 40) problems.push(`heading shrank to ${layout.headingFontPx}px`);
-      if (layout.numberText !== (want.kicker.match(/\d+$/)?.[0] ?? '')) problems.push(`big number shows "${layout.numberText}", not the kicker's number`);
+      if (layout.headingLines > 3) problems.push(`the heading takes ${layout.headingLines} lines at ${layout.headingFontPx}px; shorten the page's og:title`);
       if (layout.lineBox.bottom > LINE_LIMIT) problems.push(`line runs to ${layout.lineBox.bottom}px, past the footer rule at ${LINE_LIMIT}px`);
       if (problems.length) throw new Error(`og-cards: ${page}: ${problems.join('; ')}`);
       const shot = await send('Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT, scale: 1 }, captureBeyondViewport: false }, sessionId);
@@ -226,6 +225,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!existsSync(join(distDir, 'labs'))) throw new Error('og-cards: run pnpm build first; the cards are drawn from the built lab pages in dist/');
   const old = existsSync(MANIFEST_PATH) ? readManifest(JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'))) : new Map();
   const labs = readListedLabs(distDir);
+  // Rewriting the manifest and clearing unpinned pictures from a partial dist would drop committed cards: every page
+  // the site index lists, and the Labs index, must be in dist first.
+  const missing = [LABS_INDEX, ...labs.keys()].filter(page => !existsSync(join(distDir, page)));
+  if (missing.length) throw new Error(`og-cards: dist/ lacks ${missing.join(', ')}; run a whole pnpm build first`);
   const wanted = [];
   for (const page of htmlFiles(join(distDir, 'labs')).map(file => relative(distDir, file).split(sep).join('/')).sort()) {
     const html = readFileSync(join(distDir, page), 'utf8');

@@ -9,11 +9,14 @@
 //
 // The head of a page this step reads is not parsed the way a browser would parse arbitrary HTML. It must be in the one
 // form the site writes: `<!doctype html>`, `<html>` (optionally lang="..."), `<head>`, then only <meta>, <link> and
-// <title> elements, every attribute double-quoted or bare, no '<' or '>' inside a value, every '&' one of &amp; &lt;
-// &gt; &quot; &apos; &#39; or a numeric reference, then `</head>`. Anything else in that head (a comment, a script, a
-// style, single quotes, an unquoted value, an unknown entity, a repeated attribute) is refused, not interpreted, so no
-// text that a browser or crawler would read differently can satisfy or dodge a check. After the head, a page may hold
-// no <meta> at all (not even inside a comment or a script) and no second <head>.
+// <title> elements and empty external scripts (`<script src="..."></script>`, which the build adds after this step and
+// scripts/og-cards-render.mjs then sees), every attribute double-quoted or bare, no '<' or '>' inside a value, every '&'
+// one of &amp; &lt; &gt; &quot; &apos; &#39; or a numeric reference, then `</head>`. Anything else in that head (a
+// comment, an inline script, a style, single quotes, an unquoted value, an unknown entity, a repeated attribute) is
+// refused, not interpreted: the
+// reader never has to guess how a browser would tokenise it. After the head, a page may hold no <meta> at all (not
+// even inside a comment or a script) and no second <head>. How a particular crawler treats an unusual property value
+// (padding, several tokens) is not knowable here, so such values are refused too (checkMetaNames).
 //
 // The build (addOgCardsToDist, before addOpenGraphToDist in scripts/build.mjs) fails closed when:
 //   - a lab page or the Labs index has no card, or a card names a page that is not one of them or does not exist;
@@ -82,6 +85,9 @@ const TITLE = /<title>[^<]*<\/title>/y;
 const VOID = new RegExp(`<(meta|link)((?:${WS}+[a-z][a-z0-9-]*(?:="[^"<>]*")?)*)${WS}*/?>`, 'y');
 const ATTR = new RegExp(`${WS}+([a-z][a-z0-9-]*)(?:="([^"<>]*)")?`, 'g');
 const HEAD_CLOSE = /<\/head>/iy;
+// An external script with nothing between its tags, as the build writes it after this step (the activity collector,
+// the view beacon): no script text, so nothing in it can be read as markup.
+const EMPTY_SCRIPT = new RegExp(`<script((?:${WS}+[a-z][a-z0-9-]*(?:="[^"<>]*")?)*)${WS}*></script>`, 'y');
 
 /**
  * Read a page's head in the one form the site writes (see the top of this file) and return its <meta> elements as
@@ -100,10 +106,20 @@ export function readHead(html, label = 'page') {
     if (HEAD_CLOSE.test(html)) break;
     TITLE.lastIndex = at;
     if (TITLE.test(html)) { at = TITLE.lastIndex; continue; }
+    EMPTY_SCRIPT.lastIndex = at;
+    const script = EMPTY_SCRIPT.exec(html);
+    if (script) {
+      const names = [...script[1].matchAll(ATTR)].map(([, name, value]) => [name, value]);
+      if (new Set(names.map(([name]) => name)).size !== names.length) fail('has a <script> with an attribute twice');
+      if (!names.some(([name, value]) => name === 'src' && value)) fail('has an inline <script> in its head; only an empty external one (src="...") is read');
+      for (const [, value] of names) decodeEntities(value ?? '', label);
+      at = EMPTY_SCRIPT.lastIndex;
+      continue;
+    }
     VOID.lastIndex = at;
     const tag = VOID.exec(html);
     if (!tag) {
-      fail(`has ${JSON.stringify(html.slice(at, at + 40))} in its head; og-cards reads only <meta>, <link> and <title> with double-quoted or bare attributes (no comment, script, style, '<' or '>' in a value)`);
+      fail(`has ${JSON.stringify(html.slice(at, at + 40))} in its head; og-cards reads only <meta>, <link>, <title> and empty external <script src> elements with double-quoted or bare attributes (no comment, inline script, style, '<' or '>' in a value)`);
     }
     const attrs = new Map();
     for (const [, name, value] of tag[2].matchAll(ATTR)) {
@@ -131,8 +147,9 @@ function metaProperty(head, property, label) {
 
 /**
  * Every og: or twitter: name must be written exactly: one token, in lower case, on a <meta>, and for og: as
- * property=. A value a crawler might read as that name in another way (padded, upper case, one token of several, on a
- * <link>) is refused rather than skipped, because the checks here would not see it.
+ * property=. A value a crawler might read as that name in another way (padded with any Unicode space, control or
+ * format character, upper case, one token of several, on a <link>) is refused rather than skipped, because the checks
+ * here would not see it.
  */
 function checkMetaNames(head, label) {
   const tags = [...head.metas.map(tag => ['meta', tag]), ...head.links.map(tag => ['link', tag])];
@@ -140,7 +157,9 @@ function checkMetaNames(head, label) {
     for (const key of ['property', 'name', 'rel']) {
       const value = attrs.get(key);
       if (value === undefined) continue;
-      const tokens = value.toLowerCase().split(/[ \t\n\r\f]+/).filter(Boolean);
+      // Any Unicode space, control or format character (a no-break or zero-width space) separates tokens here, so a
+      // padded name is found and then refused below, whatever a crawler's trimming does with it.
+      const tokens = value.toLowerCase().split(/[\s\p{Cc}\p{Cf}]+/u).filter(Boolean);
       const named = tokens.find(token => /^(og|twitter):/.test(token));
       if (named === undefined) continue;
       if (element !== 'meta' || key === 'rel') throw new Error(`OG cards: ${label} has ${named} on a <${element} ${key}=>; it belongs on a <meta>`);
@@ -277,7 +296,11 @@ export function decodePng(bytes, label = 'image') {
   if (!ended) fail('no IEND');
   if (!idat.length) fail('no IDAT');
   let raw;
-  try { raw = inflateSync(Buffer.concat(idat)); } catch { fail('IDAT does not inflate'); }
+  const compressed = Buffer.concat(idat);
+  let inflated;
+  try { inflated = inflateSync(compressed, { info: true }); } catch { fail('IDAT does not inflate'); }
+  if (inflated.engine.bytesWritten !== compressed.length) fail(`IDAT holds ${compressed.length - inflated.engine.bytesWritten} bytes after its compressed pixel data`);
+  raw = inflated.buffer;
   const channels = CHANNELS[header.colour];
   const rowBytes = header.width * channels;
   if (raw.length !== header.height * (rowBytes + 1)) fail(`pixel data is ${raw.length} bytes, ${header.height * (rowBytes + 1)} expected`);

@@ -103,6 +103,11 @@ test('pngSize reads the size of a card PNG that decodes and refuses anything els
   assert.throws(() => pngSize(insert(chunk('tRNS', Buffer.alloc(6)))), /a tRNS chunk/);
   assert.throws(() => pngSize(insert(chunk('gAMA', Buffer.alloc(4)))), /a gAMA chunk/);
   assert.throws(() => pngSize(insert(chunk('tEXt', Buffer.from('k\0v')))), /a tEXt chunk/);
+  // Bytes after the end of the compressed pixel data are refused (review 91f64642 recheck #39).
+  const ihdrOnly = plain.subarray(8, 33);
+  const pixels = deflateSync(Buffer.alloc(2 * (8 * 3 + 1)));
+  assert.deepEqual(pngSize(Buffer.concat([SIGNATURE, ihdrOnly, chunk('IDAT', pixels), chunk('IEND', Buffer.alloc(0))])), { width: 8, height: 2 });
+  assert.throws(() => pngSize(Buffer.concat([SIGNATURE, ihdrOnly, chunk('IDAT', Buffer.concat([pixels, Buffer.from('hidden')])), chunk('IEND', Buffer.alloc(0))])), /IDAT holds 6 bytes after its compressed pixel data/);
 });
 
 test('decodePng undoes every row filter to the real pixels', () => {
@@ -189,9 +194,13 @@ test('a head is read only in the form the site writes; anything else is refused,
   assert.throws(() => addOgCard(quoted, card, card.page), /has "<meta data-note=\\">\\" property/);
   // eced23d9 #13: the same trick on a new lab's og:title no longer makes it look unnumbered.
   const newLab = '<!doctype html><html><head><meta data-note=">" property="og:title" content="Lab 07: new lab"><meta property="og:description" content="d"></head></html>';
-  assert.throws(() => needsCard('labs/new/index.html', newLab, LABS), /og-cards reads only <meta>, <link> and <title>/);
-  // Single quotes, unquoted values, scripts, styles, upper-case tags: refused.
-  for (const extra of ["<meta property='og:image' content='x'>", '<meta property=og:image content=x>', '<script>var a = "</head>";</script>',
+  assert.throws(() => needsCard('labs/new/index.html', newLab, LABS), /og-cards reads only <meta>, <link>, <title>/);
+  // An empty external script, as the build writes it later, is read past; anything with script text is not.
+  assert.equal(readHead(ROGUE.replace('</head>', '<script type="module" src="../../assets/activity.mjs"></script>\n<script async src="../../assets/view-beacon.js"></script></head>'), 'p').metas.length, 2);
+  assert.throws(() => readHead(ROGUE.replace('</head>', '<script type="module"></script></head>'), 'p'), /an inline <script>/);
+  assert.throws(() => readHead(ROGUE.replace('</head>', '<script src="a.js" src="b.js"></script></head>'), 'p'), /attribute twice/);
+  // Single quotes, unquoted values, scripts with text, styles, upper-case tags: refused.
+  for (const extra of ["<meta property='og:image' content='x'>", '<meta property=og:image content=x>', '<script>var a = "</head>";</script>', '<script src="a.js"><meta property="og:image" content="x"></script>',
     '<style>p{}</style>', '<META property="og:image" content="x">', '<meta property="og:image" content="a"b">', '<base href="/">']) {
     assert.throws(() => readHead(ROGUE.replace('</head>', `${extra}</head>`), 'p'), /og-cards reads only/, extra);
   }
@@ -229,6 +238,11 @@ test('attribute values decode only references HTML reads the same way; a spelt-o
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta property="og:image x" content="x"></head>'), card, card.page), /spells a meta property "og:image x"; write it "og:image"/);
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta property="x og:image" content="x"></head>'), card, card.page), /spells a meta property "x og:image"/);
   assert.throws(() => addOgCard(ROGUE.replace('</head>', '<link property="og:image" href="x"></head>'), card, card.page), /og:image on a <link property=>/);
+  // Padded with a no-break space (written as a reference or raw) or a zero-width space: refused (recheck #34).
+  for (const padded of ['og:image&#160;', '&#xA0;og:image', 'og:image\u00a0', 'og:image\u200b']) {
+    assert.throws(() => addOgCard(ROGUE.replace('</head>', `<meta property="${padded}" content="https://example.org/a.png"></head>`), card, card.page), /spells a meta property/, padded);
+  }
+  assert.throws(() => addOgCard(ROGUE.replace('</head>', '<meta name="&#160;twitter:image" content="x"></head>'), card, card.page), /spells a meta name/);
 });
 
 test('an authored og:image cannot hide behind data-content, and an upper-case </HEAD> still takes the card', () => {
@@ -297,6 +311,11 @@ test('the build step checks a whole dist and fails closed with every problem', (
     assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), /OG cards refused[\s\S]*lab page without a card[\s\S]*node scripts\/og-cards-render\.mjs/);
     assert.equal(readFileSync(join(dist, 'labs/rogue/index.html'), 'utf8'), ROGUE);
 
+    // A page whose text changed after its card was drawn: refused as stale, by the build step itself (recheck #31).
+    write('labs/rogue/index.html', ROGUE.replace('the guards.', 'the new guards.'));
+    writeFileSync(manifestPath, JSON.stringify(good));
+    assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), /labs\/rogue\/index\.html: og:description is now "One staged poisoned ticket, run twice: \"no controls\" & the new guards\."/);
+    write('labs/rogue/index.html', ROGUE);
     // Two pages with their own og:image: both refused in one report, and no page is written (review 91f64642 #4).
     const authored = extra => (html => html.replace('</head>', `${extra}</head>`));
     write('labs/index.html', authored('<meta property="og:image" content="https://example.org/a.png">')(labsIndex));

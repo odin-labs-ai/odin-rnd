@@ -7,17 +7,18 @@
 // Three controls per card prove the comparison can tell what matters apart: a redraw with another card's heading, a
 // redraw with the lab number one higher (numbered cards), and the next committed card.
 //
-// Measured on 2026-11-13/14:
-//   - a redraw of the same text: whole card 0.00% of blocks on macOS Chrome, also with the card shifted by
-//     (0.4px, 0.3px); 0.00% to 0.22% on ubuntu-latest Chrome against the macOS-drawn pictures (PR #230, run
-//     43550080667). Number box: 0 blocks on macOS (also shifted, at most 1 block at a move of 2).
-//   - another heading: 0.92% to 12.40% (ubuntu-latest), 0.94% to 12.35% (macOS);
-//   - the lab number one higher: 99 to 260 blocks of the number box (macOS);
-//   - Lab 03's card drawn from a description that differed only in its second sentence: 1.28% (macOS);
+// Measured on 2026-11-13/14 (ubuntu-latest Chrome: CI run 43583648908 at b7f34db, against the macOS-drawn pictures;
+// macOS Chrome: local runs):
+//   - a redraw of the same text: whole card 0.00% to 0.22% of 11,700 blocks (0 to 26 blocks) on ubuntu, 0.00% on
+//     macOS, also with the card shifted by (0.4px, 0.3px); number box 0 blocks on both;
+//   - another heading: 0.92% to 12.40% (ubuntu), 0.94% to 12.35% (macOS);
+//   - the lab number one higher: 101 to 260 number-box blocks (ubuntu), 99 to 260 (macOS);
+//   - Lab 03's card drawn from a description that differed only in its second sentence: 1.28%, about 150 blocks (macOS);
 //   - the next committed card: 5.06% to 12.60%.
-// The limits sit between those: a redraw may differ in at most 0.5% of the card and 40 blocks of the number box; each
-// heading or next-card control in at least 0.75% of the card; each number control in at least 80 blocks of the number
-// box. What this does not resolve: a single changed letter in the heading or the line under it.
+// The limits: a redraw may differ in at most 0.5% of the card (58 blocks) and 10 blocks of the number box; each
+// heading or next-card control in at least 0.75% (88 blocks); each number control in at least 80 number-box blocks.
+// What fits inside the 58-block allowance, and so is NOT resolved: a change of a few letters in the heading, or a
+// short word in the line under it. Headings, lab numbers, whole cards and a changed sentence are resolved.
 //
 // Chrome is required on GitHub Actions (ubuntu-latest ships it) and wherever OG_CARDS_RENDER_REQUIRED=1; elsewhere,
 // without a Chrome, the test is skipped and says so.
@@ -36,7 +37,7 @@ export const SAME_MAX = 0.005;
 /** Every heading or next-card control must differ in at least this share of blocks. */
 export const CONTROL_MIN = 0.0075;
 /** At most this many number-box blocks may differ in a redraw of the same text; a number control needs at least NUMBER_CONTROL_MIN. */
-export const NUMBER_SAME_MAX = 40;
+export const NUMBER_SAME_MAX = 10;
 export const NUMBER_CONTROL_MIN = 80;
 
 /** Mean luma of each BLOCK x BLOCK block of a decoded 8-bit RGB picture. */
@@ -95,7 +96,7 @@ test('the block comparison sees a changed block and ignores an unchanged one', (
 const chrome = chromeBinary();
 const required = process.env.GITHUB_ACTIONS === 'true' || process.env.OG_CARDS_RENDER_REQUIRED === '1';
 
-test('every committed card shows the text it is pinned to', { skip: !chrome && !required ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 600000 }, async t => {
+test('every committed card is a redraw of its pinned text, to the resolution stated above', { skip: !chrome && !required ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 600000 }, async t => {
   assert.ok(chrome, 'Chrome is required here: set CHROME_BIN or install Chrome');
   const cards = [...readManifest(JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'))).values()];
   assert.ok(cards.length >= 2, 'the manifest pins cards');
