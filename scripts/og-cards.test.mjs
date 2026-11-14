@@ -162,6 +162,9 @@ test('the manifest is shape-checked', () => {
   assert.throws(() => readManifest(manifest([{ ...card, image: 'assets/og/odin-rnd-og-image.png' }])), /must use assets\/og\/labs\/rogue\.png/);
   assert.throws(() => readManifest(manifest([{ ...card, sha256: 'XYZ' }])), /64 hex/);
   assert.throws(() => readManifest(manifest([{ ...card, description: '' }])), /nonempty description/);
+  // A lab whose folder is called "index" would share the Labs index's picture: refused.
+  const labsCard = { ...card, page: 'labs/index.html', image: `${CARD_DIR}/index.png` };
+  assert.throws(() => readManifest(manifest([labsCard, { ...card, page: 'labs/index/index.html', image: `${CARD_DIR}/index.png` }])), /would share assets\/og\/labs\/index\.png/);
 });
 
 test('addOgCard adds og:image, its size and alt text once, and refuses an authored og:image', () => {
@@ -322,7 +325,10 @@ test('the build step checks a whole dist and fails closed with every problem', (
     write('labs/rogue/index.html', authored('<meta name="twitter:image" content="https://example.org/b.png">')(ROGUE));
     writeFileSync(manifestPath, JSON.stringify(good));
     assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), error => /labs\/index\.html already carries og:image/.test(error.message) && /labs\/rogue\/index\.html carries its own twitter:image/.test(error.message));
-    assert.doesNotMatch(readFileSync(join(dist, 'labs/index.html'), 'utf8'), /assets\/og\/labs\/index\.png/);
+    // One clean carded page beside one that is refused: the clean page is not written either (refusal before any write).
+    write('labs/index.html', labsIndex);
+    assert.throws(() => addOgCardsToDist({ distDir: dist, manifestPath }), /labs\/rogue\/index\.html carries its own twitter:image/);
+    assert.equal(readFileSync(join(dist, 'labs/index.html'), 'utf8'), labsIndex);
     write('labs/index.html', labsIndex);
     write('labs/rogue/index.html', ROGUE);
     addOgCardsToDist({ distDir: dist, manifestPath });

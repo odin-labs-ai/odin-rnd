@@ -348,6 +348,8 @@ export function readManifest(manifest) {
     if (!/^[a-f0-9]{64}$/.test(card.sha256)) throw new Error(`OG cards: ${card.page} sha256 must be 64 hex characters`);
     if (card.image !== cardImagePath(card.page)) throw new Error(`OG cards: ${card.page} must use ${cardImagePath(card.page)}, not ${card.image}`);
     if (byPage.has(card.page)) throw new Error(`OG cards: duplicate card for ${card.page}`);
+    const sharing = [...byPage.values()].find(other => other.image === card.image);
+    if (sharing) throw new Error(`OG cards: ${card.page} and ${sharing.page} would share ${card.image}`);
     byPage.set(card.page, card);
   }
   return byPage;

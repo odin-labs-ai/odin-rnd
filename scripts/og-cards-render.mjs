@@ -12,10 +12,10 @@
 // fonts and logo inlined. renderCards() drives Chrome over the DevTools protocol and captures a card only after its
 // fonts have loaded and its fitting script has finished; see renderCards for what it refuses.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   CARD_DIR, CARD_HEIGHT, CARD_WIDTH, LABS_INDEX, MANIFEST_PATH, cardImagePath, cardInputs, cardText, checkCardImage, checkCardText, needsCard,
   readListedLabs, readManifest, sha256,
@@ -58,7 +58,8 @@ p{margin-top:26px;font-size:27px;line-height:1.4;color:#b9cdc2;display:-webkit-b
 document.fonts.ready.then(() => {
   // The heading shrinks, not below 40px, until it takes at most three lines (renderCards refuses one that still
   // takes more); then, while it is above 44px, it shrinks further until the whole line under it clears the footer
-  // rule. Only if even that fails is the line cut to the whole lines that fit, the rest ellipsised.
+  // rule. The line is then shown in at most four lines, and in fewer whole lines if four still reach the footer rule;
+  // whatever does not fit is cut with an ellipsis (layout.lineCut).
   const h = document.getElementById('h');
   const p = document.getElementById('p');
   const LIMIT = ${LINE_LIMIT};
@@ -125,6 +126,11 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
     let id = 0;
     const pending = new Map();
     const events = [];
+    // A DevTools call still waiting when the connection ends (Chrome crashed or quit) fails at once instead of hanging.
+    socket.onclose = () => {
+      for (const { reject } of pending.values()) reject(new Error('og-cards: Chrome closed the DevTools connection'));
+      pending.clear();
+    };
     socket.onmessage = ({ data }) => {
       const message = JSON.parse(data);
       if (message.id && pending.has(message.id)) {
@@ -134,6 +140,7 @@ export async function renderCards(jobs, { chrome = chromeBinary(), timeoutMs = 6
       } else if (message.method) events.push(message);
     };
     const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
+      if (socket.readyState !== WebSocket.OPEN) { reject(new Error('og-cards: the DevTools connection is closed')); return; }
       id += 1;
       pending.set(id, { resolve, reject });
       socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
@@ -219,7 +226,8 @@ const htmlFiles = directory => readdirSync(directory, { withFileTypes: true }).f
   return entry.isDirectory() ? htmlFiles(path) : entry.name.endsWith('.html') ? [path] : [];
 });
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Run as a script (also through a symlinked checkout path): compare real paths, not the spelling of argv[1].
+if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {
   const all = process.argv.includes('--all');
   const distDir = 'dist';
   if (!existsSync(join(distDir, 'labs'))) throw new Error('og-cards: run pnpm build first; the cards are drawn from the built lab pages in dist/');

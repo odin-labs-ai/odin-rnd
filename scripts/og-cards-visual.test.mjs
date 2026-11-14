@@ -17,8 +17,10 @@
 //   - the next committed card: 5.06% to 12.60%.
 // The limits: a redraw may differ in at most 0.5% of the card (58 blocks) and 10 blocks of the number box; each
 // heading or next-card control in at least 0.75% (88 blocks); each number control in at least 80 number-box blocks.
-// What fits inside the 58-block allowance, and so is NOT resolved: a change of a few letters in the heading, or a
-// short word in the line under it. Headings, lab numbers, whole cards and a changed sentence are resolved.
+// What fits inside the 58-block allowance, and so is NOT resolved on its own: a change of a few letters in the heading,
+// a short word in the line under it, or small text such as the kicker ("LAB 05") or the footer path. The renderer draws
+// the kicker and the big number from the same title, so a kicker that disagrees with the big number needs a hand-edited
+// picture. Resolved: headings, the big lab number, whole cards and a changed sentence.
 //
 // Chrome is required on GitHub Actions (ubuntu-latest ships it) and wherever OG_CARDS_RENDER_REQUIRED=1; elsewhere,
 // without a Chrome, the test is skipped and says so.
