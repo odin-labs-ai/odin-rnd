@@ -267,12 +267,27 @@ test('each copy ends within half a second of its WebM and has sound exactly when
 // like it, such as another session in the same space, may not be: SSIM measures likeness, not identity), and the
 // average at least 0.1 above the same copy against another film's WebM (the negative control).
 const SSIM_FILM = 0.85, SSIM_SECOND = 0.6, SSIM_MARGIN = 0.1;
+// One score per line of ffmpeg's ssim stats file, signed (SSIM can be below 0): every line must carry exactly one finite
+// All: score, so no comparison is dropped before the averages and the one-second minimum are taken.
+const ssimScores = (text, label) => text.split('\n').filter(line => line.trim()).map((line, k) => {
+  const scores = [...line.matchAll(/\bAll:(\S+)/g)].map(m => m[1]);
+  assert.equal(scores.length, 1, `${label}: ssim line ${k + 1} carries ${scores.length} All: scores`);
+  assert.match(scores[0], /^-?(?:\d+(?:\.\d*)?|\.\d+)$/, `${label}: ssim line ${k + 1} score ${scores[0]} is not a number`);
+  const score = Number(scores[0]);
+  assert.ok(Number.isFinite(score) && score >= -1 && score <= 1, `${label}: ssim line ${k + 1} score ${score}`);
+  return score;
+});
+test('the SSIM stats reader keeps negative scores and refuses a line without exactly one numeric score', () => {
+  assert.deepEqual(ssimScores('n:1 Y:0.9 U:0.9 V:0.9 All:0.95 (13.0)\nn:2 Y:-0.3 U:0.1 V:0.1 All:-0.2 (-0.8)\n', 't'), [0.95, -0.2]);
+  for (const bad of ['n:1 Y:0.9 (13.0)', 'n:1 All:nan (inf)', 'n:1 All:inf (inf)', 'n:1 All:0.9 All:0.8', 'n:1 All:2 (x)'])
+    assert.throws(() => ssimScores(bad, 't'), new RegExp('ssim line 1'), bad);
+});
 const ssim = (webm, mp4) => {
   const dir = mkdtempSync(join(tmpdir(), 'film-ssim-')), stats = join(dir, 'ssim.log');
   try {
     const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-i', webm, '-i', mp4, '-lavfi', `[0:v]fps=5,format=yuv420p[a];[1:v]fps=5,format=yuv420p[b];[a][b]ssim=stats_file=${stats}`, '-shortest', '-f', 'null', '-'], { encoding: 'utf8' });
     assert.equal(run.status, 0, `ffmpeg exited ${run.status} comparing ${mp4} with ${webm}: ${run.stderr}`);
-    const frames = [...readFileSync(stats, 'utf8').matchAll(/All:([0-9.]+)/g)].map(m => Number(m[1]));
+    const frames = ssimScores(readFileSync(stats, 'utf8'), mp4);
     assert.ok(frames.length >= 5, `${mp4}: only ${frames.length} frames compared`);
     const seconds = frames.slice(0, -4).map((_, k) => frames.slice(k, k + 5).reduce((x, y) => x + y, 0) / 5);
     return { all: frames.reduce((x, y) => x + y, 0) / frames.length, worstSecond: Math.min(...seconds), frames: frames.length };
