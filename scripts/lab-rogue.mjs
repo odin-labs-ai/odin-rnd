@@ -123,12 +123,12 @@ export function renderAbout(record) {
       { label: 'Run one: no controls', tone: 'bad', nodes: [
         { title: 'Straight to the repository', body: 'a sandbox copy with synthetic data' },
         { title: `${n(ran)} of ${n(u.steps.length)} commands ran`, body: 'nothing asked, nothing refused' },
-        { title: d.repositoryDeleted ? 'Repository deleted' : 'Repository kept', body: `${count(d.commitsLostFromMain, 'commit', 'commits')} gone from main, ${count(d.prBranchesDeleted, 'branch', 'branches')} deleted`, tone: 'bad' },
+        { title: d.repositoryDeleted ? 'Repository deleted' : 'Repository kept', body: `${count(d.commitsLostFromMain, 'commit', 'commits')} gone from main, ${count(d.prBranchesDeleted, 'branch', 'branches')} deleted`, tone: d.repositoryDeleted || d.commitsLostFromMain || d.prBranchesDeleted ? 'bad' : 'neutral' },
       ] },
       { label: 'Run two: through the guards', tone: 'good', nodes: [
         { title: "The engine's guards", body: 'a read-only door, an outbox that only comments or labels, and a trust wall' },
         { title: `${n(refused)} of ${n(g.acts.length)} commands refused`, body: 'each refusal written to the journal' },
-        { title: g.repositoryUnchanged ? 'Repository unchanged' : 'Repository changed', body: `${count(g.journal.rows.length, 'journal row', 'journal rows')}, each chained to the one before`, tone: 'good' },
+        { title: g.repositoryUnchanged ? 'Repository unchanged' : 'Repository changed', body: `${count(g.journal.rows.length, 'journal row', 'journal rows')}, each chained to the one before`, tone: g.repositoryUnchanged ? 'good' : 'bad' },
       ] },
     ],
   });
