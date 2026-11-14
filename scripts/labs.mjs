@@ -36,6 +36,7 @@ import { readEngineHistory } from './lab-engine-history.mjs';
 import { STORY_PAGE, readMilestones, renderStoryLink, storyValues } from './lab-milestones.mjs';
 import { readFitMap, readQuestionSet, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
+import { renderFlow } from './lab-flow.mjs';
 import { withLabRuns } from './lab-runs.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
@@ -173,6 +174,97 @@ export function renderIntro(lab) {
 
 export function renderAbout(lab) {
   return `${lab.whatItIs.map(line => `<p>${escape(line)}</p>`).join('')}<h3>Why it matters</h3><p>${escape(lab.whyItMatters)}</p><h3>How a question becomes a dispatch</h3><ol class="lab-steps">${lab.howItWorks.map(line => `<li>${escape(line)}</li>`).join('')}</ol><p class="lab-boundary">${escape(lab.boundary)}</p>`;
+}
+
+// Lab 03's "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count comes from the
+// published result record (data/failover/results.json, its pin checked by readTiles), each database's name from
+// that record's own summary, and the decision rule's margin and pair count from the frozen fault-verdict line of the
+// published pre-registration beside it (data/failover/preregistration.json, pinned by scripts/ledger-publish.mjs);
+// nothing here is typed. An open question the record carries is shown, or the build fails: never silently dropped. The record's own wording rules bind it: there is no overall winner unless one database
+// fits every compared scenario; a database's timing fits are split by the metric each compared (write outage or
+// acknowledgement gap), never all called outage; a gate-only fit is a fit by the gate, not by time; and the strict
+// PostgreSQL acknowledgements are an open question, never equal two-copy durability.
+const FAILOVER_METRIC = { outage: 'write outage', ack_gap: 'acknowledgement gap' };
+const FAILOVER_RULE = /≥ (\d+) % shorter than the other arm's compared variant in ≥ (\d+) of (\d+) paired repetitions, with the same direction in the reproduction \(the median of its \d+ paired differences has the same sign\)/;
+const PART = { 50: 'a half', 25: 'a quarter', 20: 'a fifth', 10: 'a tenth' };
+export function renderFailoverAbout(result, prereg) {
+  const name = key => {
+    const hit = result.summary.match(new RegExp(`\\b(${key}\\w*)`, 'i'));
+    if (!hit) throw new Error(`data/failover/results.json: the summary names no ${key}`);
+    return hit[1];
+  };
+  const fmt = n => n.toLocaleString('en-GB');
+  const arms = ['mongodb', 'postgres'].map(key => ({ key, name: name(key) }));
+  const [mongo, pg] = arms;
+  const compared = Object.values(result.verdict.scenarios).filter(row => row.labelled_fault === false);
+  const C = compared.length;
+  for (const arm of arms) {
+    arm.rows = compared.filter(row => row.verdict === `${arm.key}-fits`);
+    arm.gateOnly = arm.rows.filter(row => row.basis === 'gate-only').length;
+    arm.byMetric = Object.entries(Object.groupBy(arm.rows.filter(row => row.basis !== 'gate-only'), row => row.compared_metric)).map(([metric, rows]) => {
+      if (!FAILOVER_METRIC[metric]) throw new Error(`data/failover/results.json: no words for the compared metric ${metric}`);
+      return `${rows.length} on ${FAILOVER_METRIC[metric]}`;
+    });
+  }
+  const overall = arms.find(arm => arm.rows.length === C);
+  const { countedCells, steadyCells, totals, strictAckCells } = result.recount;
+  const all = Object.values(totals);
+  const cells = all.reduce((k, t) => k + t.cells, 0), acked = all.reduce((k, t) => k + t.acknowledged, 0), lost = all.reduce((k, t) => k + t.lostAcknowledged, 0);
+  const reps = new Set(compared.flatMap(row => Object.values(row.pairs).map(list => list.length)));
+  const rounds = new Set(compared.map(row => Object.keys(row.pairs).length));
+  const repeats = reps.size === 1 && rounds.size === 1 ? `, each repeated ${[...reps][0]} times in each of ${[...rounds][0]} rounds` : '';
+  // The rule as frozen: the margin and the pair count read from the pre-registration's fault-verdict line, never typed.
+  const rule = prereg?.prereg?.sections?.flatMap(section => section.lines ?? []).find(line => line.startsWith('**A fault verdict**'))?.match(FAILOVER_RULE);
+  if (!rule) throw new Error('data/failover/preregistration.json: no frozen fault-verdict rule with a margin and a pair count');
+  const [, margin, need, of] = rule.map(Number);
+  if (!(reps.size === 1 && [...reps][0] === of)) throw new Error(`data/failover/results.json: the frozen rule counts ${of} paired runs, the record's rounds hold ${[...reps].join(', ')}`);
+  const marginWords = PART[margin] ?? `${margin} per cent`;
+  const fitText = arm => [...arm.byMetric, ...(arm.gateOnly ? [`${arm.gateOnly} where only it passed the checks`] : [])].join(', ');
+  // The open strict-ack question: shown whenever the record holds strict acknowledgements. It fails closed: a run that
+  // is not PostgreSQL's, or no limit that names these acknowledgements (their count, an empty standby list, two-copy
+  // safety not established), stops the build rather than letting the open lane vanish. The other way round too: a
+  // record without its list of strict-ack runs, or with an empty list while a limit still names the empty standby list
+  // or something not established, stops the build; the lane is never dropped because the list went missing.
+  if (!Array.isArray(strictAckCells)) throw new Error('data/failover/results.json: recount.strictAckCells is missing, so the open strict-ack question cannot be shown or ruled out');
+  const openLimit = result.limits.find(l => /synchronous_standby_names|not established/.test(l));
+  if (strictAckCells.length === 0 && openLimit) throw new Error(`data/failover/results.json: a limit names an open question (${openLimit.slice(0, 60)}…) but recount.strictAckCells lists no runs`);
+  const strictAcks = strictAckCells.reduce((k, c) => k + c.acks, 0);
+  const strictOpen = strictAckCells.length > 0;
+  if (strictOpen) {
+    const notPg = strictAckCells.filter(c => !c.cell.startsWith('pg-')).map(c => c.cell);
+    if (notPg.length) throw new Error(`data/failover/results.json: strict acknowledgements in runs that are not PostgreSQL's: ${notPg.join(', ')}`);
+    // The diagram says PostgreSQL "named no standby copy": the limit must say the list was empty, in those words
+    // (pool row e12ccb33); "was not empty", or no word on its state, refuses the build.
+    if (!result.limits.some(l => l.includes(`${fmt(strictAcks)} acknowledgements in ${strictAckCells.length} counted cells`) && /\bsynchronous_standby_names was empty\b/.test(l) && !/synchronous_standby_names was not empty/.test(l) && /not established/.test(l))) {
+      throw new Error(`data/failover/results.json: no limit names the ${fmt(strictAcks)} strict acknowledgements in ${strictAckCells.length} runs, with synchronous_standby_names empty, as not established`);
+    }
+  }
+  const lostWords = lost === 0 ? `Neither database lost a write it had confirmed, in any of the ${fmt(cells)} counted runs.` : `${fmt(lost)} confirmed writes were lost across the ${fmt(cells)} counted runs.`;
+  const outcome = overall ? `${escape(overall.name)} fits every compared scenario.` : 'There is no overall winner.';
+  const prose = `<p>A company's apps keep writing to one main database server. If that server fails, are the writes it said were saved still there, and how soon can the company write again? This lab put that question to ${escape(mongo.name)} and ${escape(pg.name)}.</p>`
+    + `<p>We ran each database as a small group of servers. In ${fmt(countedCells - steadyCells)} of the ${fmt(countedCells)} counted runs we disrupted the main server on purpose in the middle of the work; in the other ${fmt(steadyCells)} we left it alone. Then we counted what happened.</p>`
+    + `<p>A rule written down before anything ran decides each scenario. First, a database must keep every confirmed write and pass its other checks; if only one database does, that one fits. If both do, one fits only when its break in confirmed writes is clearly shorter (by at least ${marginWords}, a margin fixed in advance) in at least ${need} of ${of} paired runs of a first round, and still shorter on the middle value of a second round of runs. Otherwise both fit.</p>`
+    + `<p>${lostWords} ${arms.map(arm => `${escape(arm.name)} fits ${arm.rows.length} of ${C} compared scenarios${arm.rows.length ? ` (${escape(fitText(arm))})` : ''}`).join('; ')}. ${outcome}${strictOpen ? ' Some questions stay open; the last lane below shows one of them, and the record\'s limits name the rest.' : ''}</p>`;
+  const fits = arm => ({ title: `${arm.name} fits ${arm.rows.length} of ${C}`, body: fitText(arm) || 'no compared scenario' });
+  const flow = renderFlow({
+    caption: `How it works: ${fmt(countedCells)} counted runs, ${C} compared fault scenarios, judged by a rule fixed in advance`,
+    source: [
+      { title: `${fmt(countedCells)} counted runs`, body: `${fmt(countedCells - steadyCells)} fault runs, ${fmt(steadyCells)} steady runs` },
+      { title: `${mongo.name} and ${pg.name}`, body: `the same ${C} compared fault scenarios${repeats}` },
+    ],
+    lanes: [
+      { label: 'Were confirmed writes kept?', nodes: [
+        { title: `${fmt(acked)} confirmed writes`, body: `counted in ${fmt(cells)} runs` },
+        { title: lost === 0 ? 'None lost' : `${fmt(lost)} lost`, body: lost === 0 ? 'on either database' : 'see the result record', tone: lost === 0 ? 'good' : 'bad' },
+      ] },
+      { label: 'Which fits each compared scenario, by the rule fixed in advance', nodes: [fits(mongo), fits(pg), { title: overall ? `${overall.name} fits every one` : 'No overall winner', body: `${C} compared scenarios` }] },
+      ...(strictOpen ? [{ label: 'Still open', nodes: [
+        { title: `${fmt(strictAcks)} confirmed writes in ${strictAckCells.length} runs`, body: `${pg.name} in strict mode confirmed them while it named no standby copy` },
+        { title: 'Equal two-copy safety not established', body: 'whether a second copy existed then is unresolved' },
+      ] }] : []),
+    ],
+  });
+  return `${prose}${flow}`;
 }
 
 /** The hard parts: what makes the answers checkable, each linked to the record it stands on. */
@@ -330,6 +422,8 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
         ? 'A result is published. Read its record and limits before treating it as a finding.'
         : 'No counted result is published yet. This is a plan, not a finding.',
       '<!--FAILOVER_HOW-->': escape(failover.how),
+      // "What it is.": from the result record when the tile carries one (its pin already checked by readTiles), else the tile's plan.
+      '<!--FAILOVER_ABOUT-->': failover.kind === 'results' ? renderFailoverAbout(JSON.parse(readFileSync(join(root, failover.record.href), 'utf8')), JSON.parse(readFileSync(join(root, dirname(failover.record.href), 'preregistration.json'), 'utf8'))) : `<p>${escape(failover.how)}</p>`,
       '<!--FAILOVER_PREREG_LINK-->': `<a href="../../${escape(failoverPrereg[0].href)}">${escape(failoverPrereg[0].label)}</a>.`,
       '<!--FAILOVER_LINKS-->': failover.links.filter(link => link.href !== failoverPrereg[0].href && link.href !== failoverPage).map(link => `<li><a href="../../${escape(link.href)}">${escape(link.label)}</a></li>`).join(''),
     }) } : {}),

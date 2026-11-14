@@ -14,7 +14,9 @@
 //     marked "Summary only, not reproducible here";
 //   - no money figure: EXP 017 measured price per review too; the page states its decision in words and points to the
 //     experiment's record for the figures;
-//   - the 60 changes each experiment reviews were written or seeded by us: boxed as authored fixtures;
+//   - the cases each experiment reviews were chosen, written or seeded by us: boxed as authored fixtures. EXP 017's
+//     30 defects are "known" (seeded), never "planted": the corpus definition in experiments/self-verify/
+//     preregistration.json (seededDefinition; the same corpus, same manifest hash) takes 18 of them from past reviews;
 //   - a "Re-run this" block (scripts/lab-rerun.mjs): the exact commands that recompute EXP 017's and EXP 006's records,
 //     and the lines they print, with the hashes this record cites; CI runs the same list (.github/workflows/lab-kits.yml);
 //   - the findings gallery quotes the PR bodies word for word (vendor-review.mjs --verify re-reads them), and is boxed as
@@ -26,6 +28,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { box, escape, pageLeaks, readPinned, recordHashes, screenRecord, sha256, sidecarPinProblems, validate } from './lab-kit.mjs';
+import { renderFlow } from './lab-flow.mjs';
 import { maskKit, renderKit } from './lab-rerun.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -151,26 +154,98 @@ const names = (record, seats) => seats.map(id => escape(SEAT_NAMES[id])).join(',
 const source = (record, role) => record.sources.find(s => s.role === role);
 
 export function renderIntro() {
-  return `<span class="technical">LAB 06 · WHICH MODEL SHOULD REVIEW YOUR CODE?</span><h1 id="lab-title">Which model should review your code?</h1><p class="company-lead">We gave four models the same 60 changes to review, twice each, and counted what they caught and what they flagged that was fine. We measured a second reviewer on 60 more changes, and a third set-up that reviews and then checks its own findings. And on this site's own pull requests, where an AI reviewer checks each change before it merges, below are times it said no.</p>`;
+  return `<span class="technical">LAB 06 · WHICH MODEL SHOULD REVIEW YOUR CODE?</span><h1 id="lab-title">Which model should review your code?</h1><p class="company-lead">We gave four models the same 60 cases to review, twice each, and counted what they caught and what they flagged that was fine. We measured a second reviewer on 60 more changes, and a third set-up that reviews and then checks its own findings. And below are pull requests on this site where an AI reviewer said no.</p>`;
+}
+
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every count and name is the record's.
+// Each lane of the diagram is one experiment and starts from its own box, never one shared input row; the page does not
+// say which experiments share their cases, because this record does not hold what each one reviewed (EXP 017's
+// preregistration says its corpus is EXP 012's; that is not in the record, so the section says neither "same" nor
+// "separate"). EXP 017 counts cases, not changes (its fixture box: two changes each give two cases), and its counts
+// are tries (each case reviewed once per run), so every "of N" names its unit; EXP 006's runs per change come
+// from its counted runs over the changes it scores; EXP 012 shows its decision only: its counts stay inside its summary
+// box. The tool reviewer "met the bar" stands alone only when its read check is a recorded PASS; otherwise that check's
+// result follows it. Tones fail closed: only a recorded yes / PASS is good, a recorded no / FAIL is bad, anything else is neutral and
+// shown as the record words it. No price; the reviewers are AI, never a person.
+
+/** EXP 012's registered decision, read closed: 'yes' and 'no' carry a claim, any other word is shown as it is. */
+export function selfVerifyOutcome(decision) {
+  if (decision === 'yes') return { tone: 'good', worked: true };
+  if (decision === 'no') return { tone: 'bad', worked: false };
+  return { tone: 'neutral', worked: null };
+}
+
+/** EXP 006's registered bar (its verdict) and the check that it read the changes (its manipulation check). */
+export function ninaOutcome(n) {
+  const met = n.verdict === 'PASS' ? true : n.verdict === 'FAIL' ? false : null;
+  const read = n.manipulation === 'PASS' ? true : n.manipulation === 'FAIL' ? false : null;
+  return { met, read, tone: met === true && read === true ? 'good' : met === false || read === false ? 'bad' : 'neutral' };
+}
+
+export function renderAbout(record) {
+  const f = record.frontier, n = record.nina, v = record.selfVerify, s0 = f.seats[0];
+  for (const x of f.seats) for (const k of ['runs', 'caughtOf', 'falseAlarmsOf']) if (x[k] !== s0[k]) throw new Error(`Lab 06 What it is: ${x.name} has ${k} ${x[k]}, ${s0.name} ${s0[k]}; one sentence cannot cover both`);
+  const runs = s0.runs, defects = s0.caughtOf / runs, clean = s0.falseAlarmsOf / runs;
+  if (!Number.isInteger(defects) || !Number.isInteger(clean)) throw new Error('Lab 06 What it is: tries do not divide into changes per run');
+  const caught = f.seats.map(x => x.caught), flagged = f.seats.map(x => x.falseAlarms);
+  const span = xs => (Math.min(...xs) === Math.max(...xs) ? `${Math.min(...xs)}` : `${Math.min(...xs)} to ${Math.max(...xs)}`);
+  const word = k => ['zero', 'one', 'two', 'three', 'four', 'five', 'six'][k] ?? `${k}`;
+  const times = k => (k === 1 ? 'once' : k === 2 ? 'twice' : `${k} times`);
+  const tries = (of, kind, count) => `of ${of} tries (${count} ${kind}, each reviewed ${times(runs)})`;
+  const cases = defects + clean;
+  const ninaChanges = n.selfAgreement.n, ninaPer = n.countedRuns / ninaChanges;
+  const nina = ninaOutcome(n), sv = selfVerifyOutcome(v.decision);
+  // Whether one model is ahead on catches is computed, as frontierReading() does: the spread between models against
+  // how far one model's own two runs differ.
+  const runGap = Math.max(...f.seats.map(x => Math.max(...x.caughtPerRun) - Math.min(...x.caughtPerRun)));
+  const spread = xs => Math.max(...xs) - Math.min(...xs);
+  const apart = `the models were up to ${spread(caught)} catches apart, and a single model's own runs were up to ${runGap} apart`;
+  const catches = spread(caught) <= runGap ? `no model was clearly ahead: ${apart}` : `the models differed by more than one model's own runs did: ${apart}`;
+  const alarms = spread(flagged) > spread(caught) ? `the models were further apart, up to ${spread(flagged)}` : `the models were no further apart than on catches, up to ${spread(flagged)}`;
+  const readSentence = nina.read === true ? '' : nina.read === false ? ' The check that it actually read the changes failed.' : ` The check that it actually read the changes is recorded as "${escape(n.manipulation)}".`;
+  const barSentence = (nina.met === true ? 'The tool reviewer met the bar set for it beforehand.' : nina.met === false ? 'The tool reviewer did not meet the bar set for it beforehand.' : `The tool reviewer's result against the bar set for it beforehand is recorded as "${escape(n.verdict)}".`) + readSentence;
+  const svSentence = sv.worked === true ? 'Checking its own findings did get that reviewer out of its false alarms.' : sv.worked === false ? 'Checking its own findings did not get that reviewer out of its false alarms.' : `Whether checking its own findings got that reviewer out of its false alarms is recorded as "${escape(v.decision)}".`;
+  const lanes = [
+      { label: `${f.experiment}: ${f.seats.length} models, each reviews every case ${times(runs)}`, nodes: [
+        { title: `${cases} cases to review, chosen by us`, body: `${defects} with a known defect, ${clean} clean; reviewed by ${f.seats.map(x => x.name).join(', ')}` },
+        { title: 'Defects caught, per model', body: `${span(caught)} ${tries(s0.caughtOf, 'known defects', defects)}` },
+        { title: 'Clean cases flagged, per model', body: `${span(flagged)} ${tries(s0.falseAlarmsOf, 'clean cases', clean)}` },
+        { title: 'Weighed against what a review costs', body: `on the frontier: ${f.onFrontier.map(id => f.seats.find(x => x.seat === id).name).join(', ')}` },
+      ] },
+      { label: `${n.experiment}: a reviewer that runs as a tool, ${ninaPer} runs per change`, nodes: [
+        { title: `${ninaChanges} other changes we wrote`, body: 'each written to keep or break a set of rules; not the known defects' },
+        { title: `${n.countedRuns} runs`, body: `blind runs: ${n.blindRuns}, each scored as an error` },
+        { title: 'Scored against the known answer', body: `rule-breaking changes accepted: ${n.missedDrift.x} of ${n.missedDrift.n} runs; good changes rejected: ${n.falseReject.x} of ${n.falseReject.n} runs` },
+        { title: nina.met === true ? 'The registered bar: met' : nina.met === false ? 'The registered bar: not met' : `The registered bar: ${n.verdict}`, body: `the check that it read the changes ${nina.read === true ? 'passed' : nina.read === false ? 'failed' : `is recorded as ${n.manipulation}`}`, tone: nina.tone },
+      ] },
+      { label: `${v.experiment}: review, then check its own findings (summary only)`, nodes: [
+        { title: 'One model reviews, then checks its own findings', body: 'summary only: its record holds the counts, not the cases or the reviews, so they are shown only in the box below' },
+        { title: sv.worked === true ? 'Dropped its false alarms: yes' : sv.worked === false ? 'Dropped its false alarms: no' : `Dropped its false alarms: ${v.decision}`, body: 'the decision registered beforehand', tone: sv.tone },
+      ] },
+  ];
+  const prose = `<p>Before a change to code is merged, someone should check it. This lab asks which model should do it: a good reviewer catches the real problems and leaves the good changes alone. It is made of ${escape(word(lanes.length))} experiments.</p><p>In the first, we gave ${escape(f.seats.length)} models the same ${escape(cases)} cases to review, ${escape(defects)} with a known defect and ${escape(clean)} clean, and each model reviewed every case ${escape(times(runs))}. We counted what each caught and what it flagged that was fine. In the second, a reviewer that runs as a tool checked ${escape(ninaChanges)} other changes we wrote to keep or break a set of rules, not the known defects. In the third, one model reviewed and then checked its own findings.</p><p>What came out: on catches, ${escape(catches)}. Each caught ${escape(span(caught))} ${tries(s0.caughtOf, 'known defects', defects)}. On false alarms, ${escape(alarms)}: each flagged ${escape(span(flagged))} ${tries(s0.falseAlarmsOf, 'clean cases', clean)}. ${barSentence} ${svSentence} Every reviewer here is an AI, not a person, and every case in these experiments was chosen or written by us. ${escape(record.gallery.length)} of this site's own pull requests record a FIX-NEEDED from the AI reviewer in their description; those receipts are further down.</p>`;
+  const flow = renderFlow({ caption: `How it works: ${word(lanes.length)} experiments`, lanes });
+  return `${prose}${flow}`;
 }
 
 export function renderFrontier(record) {
   const f = record.frontier, s = source(record, 'frontier');
   const rows = f.seats.map(x => `<tr><th scope="row">${escape(x.name)}</th><td><strong>${of(x.caught, x.caughtOf)}</strong> (${x.caughtPerRun.map(escape).join(' and ')})</td><td>${of(x.falseAlarms, x.falseAlarmsOf)} (${x.falseAlarmsPerRun.map(escape).join(' and ')})</td><td>${escape(x.noVerdict)}</td><td>${f.onFrontier.includes(x.seat) ? 'on' : 'off'}</td></tr>`).join('');
-  const corpus = box('fixture', { cls: 'review-fixture', body: '<p>The 60 cases are 58 changes from our own private repositories: 30 with a defect we planted, 30 clean. The changes are not published; their sealed hashes are. Every model got the same prompt, one request per change, no tools and no file access.</p>' });
-  return `<p>The question: per model, how many of 30 planted defects does a review catch, and how many of 30 clean changes does it flag anyway? Each model reviewed all 60 twice, so each count is of 60.</p>${corpus}<div class="lab-table-wrap"><table><thead><tr><th scope="col">Model</th><th scope="col">Defects caught, of 60 (each run)</th><th scope="col">Clean changes flagged, of 60 (each run)</th><th scope="col">No verdict</th><th scope="col">On the frontier</th></tr></thead><tbody>${rows}</tbody></table></div><p>${frontierReading(f)}</p><p><strong>The decision the experiment registered</strong> weighs catches against what one review costs. A model is on the frontier when no other model catches at least as many defects for no more per review. On it: ${names(record, f.onFrontier)}. Off it: ${names(record, f.offFrontier)}, because another model caught at least as many for no more per review. The price of a review is in ${fileLink(s)}, not on this page; this site does not show money figures.</p><p class="lab-source">From ${escape(f.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived from that record at every build of this page; in CI, the experiment's own frozen analysis, run in its check mode, recomputes the record from the committed runs and must find it unchanged.</p>`;
+  const corpus = box('fixture', { cls: 'review-fixture', body: '<p>The 60 cases are 58 changes from our own private repositories: 30 with a known defect, 30 clean. The changes are not published; their sealed hashes are. Every model got the same prompt, one request per change, no tools and no file access.</p>' });
+  return `<p>The question: per model, how many of 30 known defects does a review catch, and how many of 30 clean cases does it flag anyway? Each model reviewed all 60 cases twice, so each count is of 60.</p>${corpus}<div class="lab-table-wrap"><table><thead><tr><th scope="col">Model</th><th scope="col">Defects caught, of 60 (each run)</th><th scope="col">Clean cases flagged, of 60 (each run)</th><th scope="col">No verdict</th><th scope="col">On the frontier</th></tr></thead><tbody>${rows}</tbody></table></div><p>${frontierReading(f)}</p><p><strong>The decision the experiment registered</strong> weighs catches against what one review costs. A model is on the frontier when no other model catches at least as many defects for no more per review. On it: ${names(record, f.onFrontier)}. Off it: ${names(record, f.offFrontier)}, because another model caught at least as many for no more per review. The price of a review is in ${fileLink(s)}, not on this page; this site does not show money figures.</p><p class="lab-source">From ${escape(f.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived from that record at every build of this page; in CI, the experiment's own frozen analysis, run in its check mode, recomputes the record from the committed runs and must find it unchanged.</p>`;
 }
 
 export function renderNina(record) {
   const n = record.nina, s = source(record, 'nina');
   const corpus = box('fixture', { cls: 'review-fixture', body: '<p>The 60 changes are authored: we wrote each one to keep to, or break, a set of architecture rules, so the right answer is known for every one.</p>' });
-  return `<p>A different question: does a reviewer that runs as a tool, nina, reject the changes that break the rules and accept the ones that keep them? ${escape(n.countedRuns / 60)} runs per change, ${escape(n.countedRuns)} runs. Every run is counted. A run whose own tool calls do not show it read the change is blind, and a blind run is scored as an error, whatever it decided: an earlier measurement had found its reviewer auditing the unchanged code instead.</p>${corpus}<ul class="rogue-list"><li>Rule-breaking changes it accepted: <strong>${of(n.missedDrift.x, n.missedDrift.n)}</strong> runs.</li><li>Good changes it rejected: <strong>${of(n.falseReject.x, n.falseReject.n)}</strong> runs.</li><li>Changes given the same verdict in every one of their runs: <strong>${of(n.selfAgreement.x, n.selfAgreement.n)}</strong>.</li><li>Runs where the harness failed: ${of(n.harnessFailures.x, n.harnessFailures.n)}. Blind runs, each scored as an error above: ${of(n.blindRuns, n.countedRuns)}; the registered check allowed at most ${escape(n.maxBlindRuns)}.</li></ul><p>Verdict on the registered bar: <strong>${n.verdict === 'PASS' ? 'met' : 'not met'}</strong>; the check that it read the changes: <strong>${n.manipulation === 'PASS' ? 'passed' : 'failed'}</strong>. These are rule-checking changes in one codebase, not the planted bugs above; the two are not one league table.</p><p class="lab-source">From ${escape(n.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived at every build; in CI, the experiment's own frozen scorer, run in its check mode, recomputes the record from the committed run and must match it byte for byte.</p>`;
+  return `<p>A different question: does a reviewer that runs as a tool, nina, reject the changes that break the rules and accept the ones that keep them? ${escape(n.countedRuns / 60)} runs per change, ${escape(n.countedRuns)} runs. Every run is counted. A run whose own tool calls do not show it read the change is blind, and a blind run is scored as an error, whatever it decided: an earlier measurement had found its reviewer auditing the unchanged code instead.</p>${corpus}<ul class="rogue-list"><li>Rule-breaking changes it accepted: <strong>${of(n.missedDrift.x, n.missedDrift.n)}</strong> runs.</li><li>Good changes it rejected: <strong>${of(n.falseReject.x, n.falseReject.n)}</strong> runs.</li><li>Changes given the same verdict in every one of their runs: <strong>${of(n.selfAgreement.x, n.selfAgreement.n)}</strong>.</li><li>Runs where the harness failed: ${of(n.harnessFailures.x, n.harnessFailures.n)}. Blind runs, each scored as an error above: ${of(n.blindRuns, n.countedRuns)}; the registered check allowed at most ${escape(n.maxBlindRuns)}.</li></ul><p>Verdict on the registered bar: <strong>${n.verdict === 'PASS' ? 'met' : 'not met'}</strong>; the check that it read the changes: <strong>${n.manipulation === 'PASS' ? 'passed' : 'failed'}</strong>. These are rule-checking changes in one codebase, not the known defects above; the two are not one league table.</p><p class="lab-source">From ${escape(n.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived at every build; in CI, the experiment's own frozen scorer, run in its check mode, recomputes the record from the committed run and must match it byte for byte.</p>`;
 }
 
 export function renderSelfVerify(record) {
-  const v = record.selfVerify, s = source(record, 'self-verify');
+  const v = record.selfVerify, s = source(record, 'self-verify'), worked = selfVerifyOutcome(v.decision).worked;
+  const lead = worked === true ? 'It worked: ' : worked === false ? 'It did not work: ' : '';
   const runs = v.runs.map(r => `<li>Run ${escape(r.id.slice(-1))}: caught <strong>${of(r.caught, r.of)}</strong> defects, flagged <strong>${of(r.falseAlarms, r.of)}</strong> clean changes.</li>`).join('');
-  return box('summary', { cls: 'review-summary', id: 'self-verify-summary', body: `<h3>Can a reviewer talk itself out of its false alarms?</h3><p>${escape(v.experiment)} had one model review each change and then check its own findings, to drop the wrong ones. It did not work: the decision registered beforehand was <strong>${v.decision === 'no' ? 'no' : escape(v.decision)}</strong>.</p><ul class="rogue-list">${runs}</ul><p>This is a summary. The experiment's committed record holds these counts, not the reviews they come from, so this page, and anyone reading this repository, cannot re-run them. From ${escape(v.experiment)}'s results record, commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>.</p>` });
+  return box('summary', { cls: 'review-summary', id: 'self-verify-summary', body: `<h3>Can a reviewer talk itself out of its false alarms?</h3><p>${escape(v.experiment)} had one model review each change and then check its own findings, to drop the wrong ones. ${lead}the decision registered beforehand was <strong>${escape(v.decision)}</strong>.</p><ul class="rogue-list">${runs}</ul><p>This is a summary. The experiment's committed record holds these counts, not the reviews they come from, so this page, and anyone reading this repository, cannot re-run them. From ${escape(v.experiment)}'s results record, commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>.</p>` });
 }
 
 export function renderGallery(record) {
@@ -180,7 +255,7 @@ export function renderGallery(record) {
 }
 
 export function renderBoundary() {
-  return `<ul class="rogue-list"><li>Each experiment is one corpus, one prompt, one moment. A model's next version, or a different prompt, can change the counts.</li><li>The planted defects and the authored changes were written by us. They are not a sample of real bugs.</li><li>The review experiments measure catches and false alarms, not whether a team would act on a finding.</li><li>The receipts are the reviewer's verdicts as the pull requests record them; this page does not re-judge them.</li></ul>`;
+  return `<ul class="rogue-list"><li>Each experiment is one corpus, one prompt, one moment. A model's next version, or a different prompt, can change the counts.</li><li>We chose the cases with known defects and wrote the rule-checking changes ourselves. Neither is a random sample of the bugs a team meets.</li><li>The review experiments measure catches and false alarms, not whether a team would act on a finding.</li><li>The receipts are the reviewer's verdicts as the pull requests record them; this page does not re-judge them.</li></ul>`;
 }
 
 /** Every short commit and row id a receipt quotes: public text, so the page screen may let it through. */
@@ -191,7 +266,7 @@ export function renderReview(root = 'site', options = {}) {
   const record = readReview(root, options);
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, REVIEW_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_FRONTIER-->': renderFrontier(record), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_RERUN-->': renderKit('review', record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_ABOUT-->': renderAbout(record), '<!--REVIEW_FRONTIER-->': renderFrontier(record), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_RERUN-->': renderKit('review', record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${REVIEW_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }
