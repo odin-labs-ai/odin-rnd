@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { LINK_PIN, LINK_RECORD, LINK_TEMPLATE, linkSafetyProblems, readLinkSafety, renderLinkSafety } from './lab-link-safety.mjs';
+import { LINK_PIN, LINK_RECORD, LINK_TEMPLATE, linkSafetyProblems, readLinkSafety, renderAbout, renderLinkSafety } from './lab-link-safety.mjs';
 import { fixturesOf, LABELS_FILE, parseList } from './vendor-link-safety.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
@@ -188,8 +188,7 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('"What it is." opens the page as on Lab 05: plain words, then how it works, every number the record\'s, no fixture count', async () => {
-  const { renderAbout } = await import('./lab-link-safety.mjs');
+test('"What it is." opens the page as on Lab 05: plain words, then how it works, every number the record\'s, no fixture count', () => {
   const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
   assert.ok(about, 'the page has a What it is section');
   const hero = main.indexOf('</section>');
