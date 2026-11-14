@@ -252,6 +252,12 @@ test('"What it is." follows the record when it changes: arms swapped, groups not
   none.refusedCells = none.models.flatMap(({ model }) => ['open', 'forced'].map(variant => ({ model, variant, arm: 'harnessed', load1: none.maxLoad + 1 })));
   const n = renderAbout(none);
   expectAbout(none, n);
+  // The numbers section's verdict holds the same rule: with no harness answers it compares nothing (pool row ee7d9955).
+  for (const variant of ['open', 'forced']) {
+    const sentence = verdictSentence(none, variant);
+    assert.match(sentence, /did not run the same number of times, so they are not compared\.$/, variant);
+    assert.doesNotMatch(sentence, /fewer|more of these|as many/, variant);
+  }
   assert.deepEqual(lanesOf(n).map(l => l.tone), ['bad', 'neutral']);
   assert.doesNotMatch(plain(n), /made fewer/);
   // Every harnessed first answer never came back (the model call failed): no reply is no answer, not "no mistake".

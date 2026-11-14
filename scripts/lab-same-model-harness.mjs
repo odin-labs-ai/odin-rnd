@@ -285,6 +285,9 @@ export function verdictSentence(record, variant) {
   const errs = t => t.wrongPass + t.invented;
   const what = variant === 'open' ? 'When the model may say UNKNOWN' : 'When the model must say PASS or FAIL';
   if (errs(b) === 0 && errs(h) === 0 && b.unreadable === 0 && h.unreadable === 0) return `${what}, neither arm made either mistake: on this fixture the harness had nothing to fix.`;
+  // The arms are compared only over the same number of first answers, more than none: a side that did not run (or ran
+  // fewer groups) makes no mistakes it was never asked to make (pool row ee7d9955).
+  if (b.n !== h.n || b.n === 0) return `${what}, across all models: bare, ${frac(b.wrongPass, b.n)} first answers said the failing suite passes and ${frac(b.invented, b.n)} named a file that does not exist; with the harness, ${frac(h.wrongPass, h.n)} and ${frac(h.invented, h.n)}. The two arms did not run the same number of times, so they are not compared.`;
   // An unreadable first answer (no reply, or none that could be scored) makes neither mistake: compare only like with like.
   if (b.unreadable !== h.unreadable) return `${what}, across all models: bare, ${frac(b.wrongPass, b.n)} first answers said the failing suite passes, ${frac(b.invented, b.n)} named a file that does not exist and ${frac(b.unreadable, b.n)} could not be read; with the harness, ${frac(h.wrongPass, h.n)}, ${frac(h.invented, h.n)} and ${frac(h.unreadable, h.n)}. An answer that could not be read makes neither mistake, so the two arms are not compared.`;
   const side = errs(h) < errs(b) ? 'fewer' : errs(h) > errs(b) ? 'more' : 'as many';
