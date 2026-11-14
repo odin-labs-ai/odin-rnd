@@ -211,7 +211,7 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
   for (const wrap of [h => `<svg>${h}</svg>`, h => `<svg><foreignObject>${h}</foreignObject></svg>`, h => `<math>${h}</math>`, h => `<select><option>${h}</option></select>`,
     h => `<object data="x">${h}</object>`, h => `<datalist>${h}</datalist>`, h => `<SVG viewBox="0 0 1 1">${h}</SVG>`])
     refused(distRun({}, { home: wrap(HOME_PAGE) }), /which the home pass refuses/, wrap('x'));
-  assert.ifError(distRun({}, { home: `<svg><path d="M0"/></svg><!-- <svg> --><math><mi>x</mi></math>${HOME_PAGE}` }).error, 'closed parents before the player, and one in a comment, are fine');
+  assert.ifError(distRun({}, { home: `<svg><path d="M0"/></svg><!-- <svg> --><math><mi>x</mi></math><svg viewBox="0 0 1 1"/>${HOME_PAGE}` }).error, 'closed or self-closed parents before the player, and one in a comment, are fine');
 });
 
 test('a copy no page plays, and a WebM with no copy, are refused', () => {

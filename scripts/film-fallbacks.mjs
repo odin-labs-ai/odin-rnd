@@ -499,11 +499,12 @@ export const HOME = {
 // makes no HTML video outside a foreignObject), and select, object, datalist and noembed, whose content a browser may
 // not show.
 const NO_PLAY_PARENTS = ['svg', 'math', 'select', 'object', 'datalist', 'noembed'];
-/** Which of those parents are still open at the end of `before` (start tags minus end tags outside inert stretches). */
+/** Which of those parents are still open at the end of `before` (start tags minus end tags outside inert stretches; a
+ * self-closed <svg/> or <math/> opens nothing). */
 function openParents(before, inert) {
   const counts = new Map();
-  for (const m of before.toLowerCase().matchAll(/<(\/?)([a-z][a-z0-9-]*)(?=[\s/>])/g)) {
-    if (!NO_PLAY_PARENTS.includes(m[2]) || inert.some(([a, b]) => m.index >= a && m.index < b)) continue;
+  for (const m of before.toLowerCase().matchAll(/<(\/?)([a-z][a-z0-9-]*)(?=[\s/>])[^>]*?(\/?)>/g)) {
+    if (!NO_PLAY_PARENTS.includes(m[2]) || (m[3] && !m[1] && ['svg', 'math'].includes(m[2])) || inert.some(([a, b]) => m.index >= a && m.index < b)) continue;
     counts.set(m[2], (counts.get(m[2]) ?? 0) + (m[1] ? -1 : 1));
   }
   return [...counts].filter(([, n]) => n > 0).map(([name]) => name);
