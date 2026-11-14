@@ -18,10 +18,16 @@
 //     names a file whose bytes have changed since (the page, the record, the tile or the template);
 //   - a date is not real or is after the build, or any text fails the publisher's screen.
 // The rendered page is screened again as a whole (pageLeaks), with only the record's own hashes masked.
+// The page opens with "What it is." (renderAbout): the lab in plain words, then a How it works diagram (renderFlow in
+// scripts/lab-flow.mjs). Counts only, every one the record's, and no guarantee (unlikely, not impossible). Its outcome
+// boxes take their tone from the record: good only when every count it rests on is 0, bad when one is above 0, neutral
+// when one is not a count. Any change to what this file renders changes the page's bytes, so the self-scan must be run
+// again (scripts/vendor-talk-leak.mjs --self-scan) before the build will publish it.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderFlow } from './lab-flow.mjs';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, realInstant, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -93,9 +99,43 @@ const time = d => `<time datetime="${escape(d)}">${escape(longDate(d))}</time>`;
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const n = v => escape(Number(v).toLocaleString('en-GB'));
 const kind = k => escape(KIND_WORDS[k] ?? k.replaceAll('-', ' '));
+// An outcome's tone, from the counts it rests on: good only when each is 0, bad when one is above 0, else neutral.
+const isCount = v => Number.isInteger(v) && v >= 0;
+export const outcomeTone = (...counts) => counts.every(isCount) ? (counts.every(v => v === 0) ? 'good' : 'bad') : (counts.some(v => isCount(v) && v > 0) ? 'bad' : 'neutral');
 
 export function renderIntro() {
   return `<span class="technical">LAB 09 · CAN A TALK LEAK DATA?</span><h1 id="lab-title">Can a talk leak data?</h1><p class="company-lead">A talk shows real software to a room, and anything private on a screen or in a shipped file is a leak. Ours is built to make one unlikely, not impossible: a made-up company to show, a sealed build that is the only way the talk leaves the machine it is made on, and a leak scan that fails the build. This page shows how the scan works, runs its own tests, and runs it again, fresh, over the sealed build.</p>`;
+}
+
+// "What it is.": the lab in plain words, then how it runs. Every count is the record's; renderFlow escapes. Counts
+// only, no guarantee (unlikely, not impossible), and the build is not said to have been watched running.
+export function renderAbout(record) {
+  const t = record.tests, s = record.scan, d = record.denylist;
+  const f = v => Number(v).toLocaleString('en-GB');
+  const scanned = s.entries - s.manifests, others = t.passed - t.plants.length;
+  const testsTone = outcomeTone(t.failed, t.errors);
+  const scanTone = outcomeTone(s.verifyProblems, s.errors);
+  const prose = `<p>A talk shows real software to a room, and anything private on a screen or in a file it ships is a leak. The question: does our leak scan catch what it should, and is the build of the talk clean?</p><p>The talk shows a made-up company, and it leaves the machine it is made on only as one sealed build. A scan checks every file in that build: of its ${n(scanned)} files, it reads the ${n(s.files)} text files in full and only the names of the other ${n(s.binary)}. It fails the build when it finds something private: one of the ${n(d.errors)} terms on its list that fail the build, or the shape of a key, a path or an address. The list holds ${n(d.terms)} terms, kept only as hashes; the other ${n(d.warns)} are common words, which fail it only when written as a repository's address and otherwise give a warning.</p><p>We ran the scan's own tests, which plant leaks on purpose and check that each one is caught, and ran the build's check again over the sealed build. It makes a leak unlikely, not impossible: a scan only finds what its list and its shapes know.</p>`;
+  const flow = renderFlow({
+    caption: `How it works: ${f(t.plants.length)} planted leaks the scan must catch, then each of the sealed build's ${f(scanned)} files scanned`,
+    source: [
+      { title: 'The sealed build', body: `${f(scanned)} files: ${f(s.files)} read as text, ${f(s.binary)} by name only` },
+      { title: 'The deny-list', body: `${f(d.terms)} terms under ${f(d.labels)} labels, kept only as hashes` },
+    ],
+    lanes: [
+      { label: "The scan's own tests", nodes: [
+        { title: `${f(t.plants.length)} planted leaks`, body: 'written by us, each to be caught with its kind' },
+        { title: `${f(others)} other checks`, body: 'the made-up company and the build pass, the deny-list holds no plain text' },
+        { title: `${f(t.passed)} passed, ${f(t.failed)} failed`, tone: testsTone },
+      ] },
+      { label: 'A fresh scan of the sealed build', nodes: [
+        { title: 'Each file checked', body: "by sha256, against the build's own manifest" },
+        { title: 'Each file scanned', body: `${f(s.files)} as text, ${f(s.binary)} as binary` },
+        { title: `${f(s.verifyProblems)} problems, ${f(s.errors)} errors`, body: `${f(s.warns)} warnings from the list's warn-only terms, and ${f(s.jsDollarDigit)} allowed by the gate's one rule for code, explained below; neither fails the build`, tone: scanTone },
+      ] },
+    ],
+  });
+  return `${prose}${flow}`;
 }
 
 export function renderStagedReal(record) {
@@ -134,7 +174,7 @@ export function renderTalkLeak(root = 'site', { now = new Date(), selfScan = tru
   const record = readTalkLeak(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, TALK_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--TALK_INTRO-->': renderIntro(record), '<!--TALK_STAGED_REAL-->': renderStagedReal(record), '<!--TALK_METHOD-->': renderMethod(record), '<!--TALK_TESTS-->': renderTests(record), '<!--TALK_SCAN-->': renderScan(record), '<!--TALK_CHECK-->': renderCheck(record), '<!--TALK_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--TALK_INTRO-->': renderIntro(record), '<!--TALK_ABOUT-->': renderAbout(record), '<!--TALK_STAGED_REAL-->': renderStagedReal(record), '<!--TALK_METHOD-->': renderMethod(record), '<!--TALK_TESTS-->': renderTests(record), '<!--TALK_SCAN-->': renderScan(record), '<!--TALK_CHECK-->': renderCheck(record), '<!--TALK_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${TALK_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

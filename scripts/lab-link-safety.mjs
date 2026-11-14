@@ -24,6 +24,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderFlow } from './lab-flow.mjs';
 import { box, cite, escape, instantProblems, pageLeaks, readPinned, recordHashes, screenRecord, sidecarPinProblems, validate, vendoredProblems } from './lab-kit.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -81,6 +82,63 @@ export function renderIntro() {
   return `<span class="technical">LAB 07 · CAN DATA TRICK A CLICK?</span><h1 id="lab-title">Can data trick a click?</h1><p class="company-lead">On the agent space's floor, a card can carry a receipt: a URL that came from data. A click on the card opened it in the visitor's browser. So a receipt written to run a script, or to look like a trusted host, would have opened too. It was a real defect, on the main branch, and it was fixed. This page shows the rule that fixed it and puts every one of its test's fixtures through that rule.</p>`;
 }
 
+// "What it is.": the lab in plain words, then how it runs (scripts/lab-flow.mjs). Every number and every outcome is
+// the record's, computed here. The page's own rules hold: the fixtures are attacks we wrote, each URL's verdict is the
+// pinned rule's and each line's is the test's audit, the run is real; the fixture counts stay in the authored box and
+// the note's red/green figures in its summary box, so neither appears here. A tone is 'good' only when the record shows
+// it for every fixture of a non-empty list; an empty list is neutral, never good.
+export function renderAbout(record) {
+  const t = record.run.tests, hosts = record.allowlist.join(', ');
+  const all = (list, test) => (list.length === 0 ? null : list.every(test));
+  const poisonRefused = all(record.poison, x => x.open === 'refused' && x.allowlisted === 'refused');
+  const lookalikesRefused = all(record.lookalikes, x => x.allowlisted === 'refused');
+  const goodKept = all(record.good, x => x.open === 'kept');
+  const unsafeCaught = all(record.unsafeLines, x => x.caught === 1);
+  const safeClear = all(record.safeLines, x => x.caught === 0);
+  const say = (ok, yes, no, none) => (ok === null ? none : ok ? yes : no);
+  const outcome = [
+    say(poisonRefused, 'every poisoned URL was refused', 'not every poisoned URL was refused', 'the record holds no poisoned URL'),
+    say(lookalikesRefused, 'every lookalike was refused under the allowlist', 'not every lookalike was refused under the allowlist', 'the record holds no lookalike'),
+    say(goodKept, 'every good URL was kept as it is', 'not every good URL was kept', 'the record holds no good URL'),
+    say(unsafeCaught, 'the audit caught every unsafe line of code', 'the audit did not catch every unsafe line of code', 'the record holds no unsafe line of code'),
+    say(safeClear, 'it flagged none of the safe lines', 'it flagged a safe line', 'the record holds no safe line of code'),
+  ];
+  const run = `${t.passed} of its ${t.total} test cases passed${t.failed ? `, ${t.failed} failed` : ''}${t.skipped ? `, ${t.skipped} ${t.skipped === 1 ? 'was' : 'were'} skipped` : ''}`;
+  const prose = `<p>The engine's link-safety test is the check that guards the fix. This lab asks what that test shows: does the rule refuse every bad URL the test throws at it and keep the good ones, and does the test catch every line of client code that could open a URL on its own?</p><p>We put every URL of the test through the rule itself: URLs written to run a script or to slip past the rule, lookalikes of the trusted host, and good URLs. We put every line of client code of the test through the test's own audit, which looks for code that could open a URL. The fixtures are attacks we wrote, not ones found in the wild. The verdict on each URL is the rule's own, and on each line of code the audit's own; none is typed by hand.</p><p>What came out: ${outcome.join(', ')}. On ${time(record.run.on)}, on ${escape(record.run.host)}, the test itself ran: <strong>${run}</strong>.</p>`;
+  const end = (ok, yes, no, body) => ({ title: say(ok, yes, no, 'None in the record'), tone: ok === null ? 'neutral' : ok ? 'good' : 'bad', body });
+  const flow = renderFlow({
+    caption: `How it works: every URL of the test put through the one link rule, every line of code through the test's audit; the test run: ${run}`,
+    source: [
+      { title: 'A URL from data', body: "such as a card's receipt: whoever wrote the data wrote the URL" },
+      { title: 'The fixtures, written by us', body: "attacks, good URLs and lines of code from the engine's link-safety test, not found in the wild" },
+    ],
+    lanes: [
+      { label: 'A poisoned URL', nodes: [
+        { title: 'The link rule', body: `absolute https, a plain host, printable ASCII, at most ${record.maxLength} characters` },
+        end(poisonRefused, 'Refused, every one', 'Not every one refused', `with and without the ${hosts} allowlist; shown as text, never opened`),
+      ] },
+      { label: 'A lookalike of the trusted host', nodes: [
+        { title: 'The link rule', body: 'well-formed, so with no allowlist it is a link' },
+        { title: `The ${hosts} allowlist`, body: record.allowlist.length === 1 ? 'the host must be exactly this one' : 'the host must be exactly one of these' },
+        end(lookalikesRefused, 'Refused under the allowlist, every one', 'Not every one refused under the allowlist', 'its host is not exactly the trusted one'),
+      ] },
+      { label: 'A good URL', nodes: [
+        { title: 'The link rule', body: 'the same rule, with no allowlist' },
+        end(goodKept, 'Kept, every one', 'Not every one kept', 'returned unchanged, as a link'),
+      ] },
+      { label: 'An unsafe line of client code', nodes: [
+        { title: "The test's audit", body: 'flags any line that could open a URL outside the one link rule' },
+        end(unsafeCaught, 'Caught, every one', 'Not every one caught', 'each caught exactly once'),
+      ] },
+      { label: 'A safe line of client code', nodes: [
+        { title: "The test's audit", body: 'the same audit, on lines that look close but open nothing' },
+        end(safeClear, 'None flagged', 'One or more flagged', 'a false alarm would teach people to ignore the audit'),
+      ] },
+    ],
+  });
+  return `${prose}${flow}`;
+}
+
 export function renderDefect(record) {
   const n = record.note, o = n.oldCode;
   return `${box('real', { cls: 'link-real', id: 'real', body: `<ul class="rogue-list"><li><strong>The defect.</strong> A card's receipt, and the URLs in a work panel, a trajectory, the chat's sources and the owner page, could be any string. A click opened it. The server's old rule took plain http on any host, a user name and password inside the URL, unicode and lookalike hosts.</li><li><strong>Where.</strong> On the main branch, found in a review. It mattered at once: the agent space was being opened to anonymous guests.</li><li><strong>The fix.</strong> One rule, the same bytes on the server, in the contract and in the web clients. A URL from data that is not a link is shown as text and never opened.</li></ul>` })}${box('summary', { cls: 'link-summary', id: 'summary', body: `<h3>Red on the old code, green on the new</h3><p>The note that came with the fix ran the engine's own link-safety tests against the code before it. The old code: <strong>${o.failed} failed, ${o.passed} passed</strong>, of ${o.tests}. The new code: <strong>${n.newCode.passed} of ${n.newCode.tests} passed</strong>. In the note's words, the ${o.passed} that passed are cases the old rule already refused. This is the note's table, not a run of ours: the old code is not on this site, and we did not run it again.</p><p class="lab-source">${cite(n.cites[0], n.mainCheck)}</p>` })}`;
@@ -122,7 +180,7 @@ export function renderLinkSafety(root = 'site', { now = new Date() } = {}) {
   const record = readLinkSafety(root, { now });
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, LINK_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--LINK_INTRO-->': renderIntro(record), '<!--LINK_DEFECT-->': renderDefect(record), '<!--LINK_RULE-->': renderRule(record), '<!--LINK_FIXTURES-->': renderFixtures(record), '<!--LINK_RUN-->': renderRun(record), '<!--LINK_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--LINK_INTRO-->': renderIntro(record), '<!--LINK_ABOUT-->': renderAbout(record), '<!--LINK_DEFECT-->': renderDefect(record), '<!--LINK_RULE-->': renderRule(record), '<!--LINK_FIXTURES-->': renderFixtures(record), '<!--LINK_RUN-->': renderRun(record), '<!--LINK_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${LINK_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }

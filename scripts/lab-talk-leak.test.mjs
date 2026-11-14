@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readTalkLeak, renderTalkLeak, selfScanProblems, TALK_PIN, TALK_RECORD, TALK_SELF_SCAN, TALK_TEMPLATE, TALK_TILE, talkLeakProblems } from './lab-talk-leak.mjs';
+import { outcomeTone, readTalkLeak, renderAbout, renderTalkLeak, selfScanProblems, TALK_PIN, TALK_RECORD, TALK_SELF_SCAN, TALK_TEMPLATE, TALK_TILE, talkLeakProblems } from './lab-talk-leak.mjs';
 import { PUBLIC_NAMES, pristineProblems } from './vendor-talk-leak.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
@@ -173,4 +173,58 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     assert.throws(() => renderTalkLeak(root), /self-scan refused[\s\S]*has changed since it was scanned/);
     assert.equal(readFileSync(join('site', TALK_PIN), 'utf8'), `${sha256(raw)}  record.json\n`);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// What a reader takes from "What it is.", rebuilt from a record: each count and verdict sentence, and the outcome tones.
+function assertAbout(rec, about, label) {
+  const t = rec.tests, s = rec.scan, d = rec.denylist, f = v => v.toLocaleString('en-GB');
+  const scanned = s.entries - s.manifests, text = textOf(about);
+  for (const want of [
+    `A scan checks every file in that build: of its ${f(scanned)} files, it reads the ${f(s.files)} text files in full and only the names of the other ${f(s.binary)}.`,
+    `It fails the build when it finds something private: one of the ${f(d.errors)} terms on its list that fail the build, or the shape of a key, a path or an address.`,
+    `The list holds ${f(d.terms)} terms, kept only as hashes; the other ${f(d.warns)} are common words, which fail it only when written as a repository's address and otherwise give a warning.`,
+    `${f(t.plants.length)} planted leaks the scan must catch, then each of the sealed build's ${f(scanned)} files scanned`,
+    `${f(scanned)} files: ${f(s.files)} read as text, ${f(s.binary)} by name only`,
+    `${f(d.terms)} terms under ${f(d.labels)} labels, kept only as hashes`,
+    `${f(t.plants.length)} planted leaks`,
+    `${f(t.passed - t.plants.length)} other checks`,
+    `${f(t.passed)} passed, ${f(t.failed)} failed`,
+    `${f(s.files)} as text, ${f(s.binary)} as binary`,
+    `${f(s.verifyProblems)} problems, ${f(s.errors)} errors`,
+    `${f(s.warns)} warnings from the list's warn-only terms, and ${f(s.jsDollarDigit)} allowed by the gate's one rule for code, explained below; neither fails the build`,
+  ]) assert.ok(text.includes(want), `${label}: ${want}`);
+  // The two outcome boxes, in order: the tests, then the fresh scan; each tone from the record's own counts.
+  const tones = [...about.matchAll(/lab-flow-node lab-flow-(\w+)"><strong>([^<]*)</g)].filter(m => /passed, .* failed|problems, .* errors/.test(m[2])).map(m => m[1]);
+  assert.deepEqual(tones, [outcomeTone(t.failed, t.errors), outcomeTone(s.verifyProblems, s.errors)], `${label}: outcome tones`);
+}
+
+test('"What it is." opens the page as on Lab 13: plain words, then how it works, every count the record\'s, no guarantee', () => {
+  const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(about, 'the page has a What it is section');
+  assert.ok(main.indexOf('id="about"') > main.indexOf('id="lab-title"') && main.indexOf('id="about"') < main.indexOf('id="staged-and-real"'), 'right after the hero, before what is staged');
+  assert.match(about, /<figure class="lab-flow">/);
+  assertAbout(record, about, 'the committed page');
+  // The committed record is clean, so both outcomes are drawn as protective.
+  assert.equal((about.match(/lab-flow-node lab-flow-good/g) ?? []).length, 2);
+  assert.match(textOf(about), /unlikely, not impossible/);
+  // No guarantee, no name the record does not hold, no list term, and no claim the build was watched running.
+  assert.doesNotMatch(textOf(about), /cannot leak|can ?not leak|guarantee|leak-proof|never leaks|Northwind|no network|offline/i);
+});
+
+test('"What it is." follows a changed record: every count moves with it, and a failed run is never drawn as good', () => {
+  const r = clone();
+  r.tests.plants = r.tests.plants.slice(2); r.tests.passed = 19; r.tests.failed = 1;
+  r.scan.files = 700; r.scan.binary = 300; r.scan.entries = 1001; r.scan.warns = 7; r.scan.jsDollarDigit = 12; r.scan.verifyProblems = 1;
+  r.denylist.terms = 120; r.denylist.errors = 101; r.denylist.warns = 19; r.denylist.labels = 9;
+  const about = renderAbout(r);
+  assertAbout(r, about, 'a changed record');
+  assert.ok(textOf(about).includes('5 other checks') && textOf(about).includes('1,000 files'), 'the other checks and the file total are recomputed');
+  assert.equal((about.match(/lab-flow-good/g) ?? []).length, 0, 'no outcome is good');
+  assert.equal((about.match(/lab-flow-node lab-flow-bad/g) ?? []).length, 2, 'both outcomes are bad');
+  // An outcome that is not a count fails closed to the neutral tone, never good.
+  const u = clone(); delete u.tests.errors; u.scan.errors = 'none';
+  const unknown = renderAbout(u);
+  assert.equal((unknown.match(/lab-flow-good/g) ?? []).length, 0);
+  assert.equal((unknown.match(/lab-flow-node lab-flow-neutral"><strong>[^<]*(?:failed|errors)/g) ?? []).length, 2);
+  assert.equal(outcomeTone(0, 0), 'good'); assert.equal(outcomeTone(0, 2), 'bad'); assert.equal(outcomeTone(3, undefined), 'bad'); assert.equal(outcomeTone(0, null), 'neutral'); assert.equal(outcomeTone(-1, 0), 'neutral');
 });
