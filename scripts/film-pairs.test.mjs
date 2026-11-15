@@ -25,7 +25,7 @@ const fixture = () => ({ root: ROOT });
 // The fixture's film, as a generator writes it at '../../' and as a hand-written home page pins it.
 const FILM = 'assets/labs/agent-space/session-2026-11-08/clip.webm';
 const PAIR_AT = up => `<source src="${up}${FILM}" type="video/webm"><source src="${up}assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`;
-const HOME_FIXTURE = { page: 'index.html', webm: FILM, player: `<figure class="m">${V}${PAIR_AT('')}` };
+const HOME_FIXTURE = { page: 'index.html', webm: FILM, player: `<figure class="m">${V}<source src="${FILM}" type="video/webm">` };
 const HOME_PAGE = `<main>${HOME_FIXTURE.player}</video></figure></main>`;
 const LAB_PAGE = `<main>${V}${PAIR_AT('../../')}</video></main>`;
 
@@ -45,6 +45,14 @@ function distRun(files = {}, { written = wrote(), home = HOME_PAGE, lab = LAB_PA
     const all = { 'index.html': home, 'labs/agent-space/index.html': lab, ...files };
     for (const [file, text] of Object.entries(all)) if (text !== null) { mkdirSync(join(dist, file, '..'), { recursive: true }); writeFileSync(join(dist, file), text); }
     try { return { result: addFilmFallbacks({ distDir: dist, root, written, home: HOME_FIXTURE }), home: readFileSync(join(dist, 'index.html'), 'utf8') }; } catch (error) { return { error }; }
+  } finally { rmSync(dist, { recursive: true, force: true }); }
+}
+function distRunWith(home) {
+  const dist = mkdtempSync(join(tmpdir(), 'film-fallbacks-dist-'));
+  try {
+    place(join(ROOT, REAL.mp4), join(dist, REAL.mp4));
+    writeFileSync(join(dist, 'index.html'), HOME_PAGE);
+    try { return { result: addFilmFallbacks({ distDir: dist, root: ROOT, written: new Map(), home }) }; } catch (error) { return { error }; }
   } finally { rmSync(dist, { recursive: true, force: true }); }
 }
 const refused = (run, pattern, label) => { assert.ok(run.error, `${label}: refused`); assert.match(run.error.message, pattern, label); };
@@ -87,22 +95,25 @@ test('the generators write every pair the built pages carry, and the ledger coun
   assert.throws(() => pagePairs(copied, written), /rendered pages carry pairs filmSources\(\) did not write:\n  assets\/labs\/agent-space\/films\/agent-space-30s\.webm: 2 on the pages, 1 written/);
 });
 
-test('the home page carries its pinned player, both sources, exactly once, and the dist pass writes nothing', () => {
-  const committed = readFileSync('site/index.html', 'utf8');
-  assert.equal(committed.split(HOME.player).length, 2, 'site/index.html carries HOME.player exactly once');
-  assert.ok(HOME.player.endsWith('<source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus"><source src="assets/labs/agent-space/progress/hq-on-duty.mp4" type="video/mp4">'));
+test('the home page carries its pinned player exactly once, and the dist pass adds the MP4 source after it and nowhere else', () => {
+  assert.equal(readFileSync('site/index.html', 'utf8').split(HOME.player).length, 2, 'site/index.html carries HOME.player exactly once');
+  assert.ok(!readFileSync('site/index.html', 'utf8').includes('.mp4"'), 'the committed home page names no MP4: the build adds it');
   const run = distRun();
   assert.ifError(run.error);
   assert.deepEqual(run.result, { films: 1, pairs: 2 });
-  assert.equal(run.home, HOME_PAGE, 'the home page is left byte for byte');
+  assert.equal(run.home, `<main>${HOME_FIXTURE.player}<source src="${REAL.mp4}" type="video/mp4"></video></figure></main>`);
   refused(distRun({}, { home: '<main>no film</main>' }), /pinned home player .* is not on the page/, 'pin missing');
   refused(distRun({}, { home: HOME_PAGE + HOME_PAGE }), /pinned home player .* more than once/, 'pin twice');
-  refused(distRun({}, { home: HOME_PAGE.replace(/<source src="[^"]+\.mp4" type="video\/mp4">/, '') }), /pinned home player .* is not on the page/, 'the MP4 source taken out');
   refused(distRun({}, { home: HOME_PAGE.replace('</video>', `${PAIR_AT('')}</video>`) }), /index\.html: 2 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'a second pair beside the pin');
+  refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}` }), /does not end with the WebM source/, 'a pin without its WebM source');
   // The stated limit (OUT in #243, follow-on in #228): where the hand-written home player sits is not judged. Wrapped by
-  // hand in a comment or a template it keeps its one pair and passes. This keeps the limit visible; it is not a claim
-  // that such a page plays.
-  for (const wrap of [h => `<!-- ${h} -->`, h => `<template>${h}</template>`]) assert.ifError(distRun({}, { home: wrap(HOME_PAGE) }).error);
+  // hand in a comment or a template, it is still paired, once, and passes. This keeps the limit visible; it is not a
+  // claim that such a page plays.
+  for (const wrap of [h => `<!-- ${h} -->`, h => `<template>${h}</template>`]) {
+    const wrapped = distRun({}, { home: wrap(HOME_PAGE) });
+    assert.ifError(wrapped.error);
+    assert.equal(wrapped.home.split(`<source src="${REAL.mp4}" type="video/mp4">`).length, 2, 'inserted once, inside the wrap');
+  }
 });
 
 test('a copy no page plays, and a WebM with no copy, are refused', () => {

@@ -1,7 +1,7 @@
 // The dist pass for the films' MP4 copies (mission rnd-nightshift-1112, follow-on #243 to #221): which built files may
 // name a WebM, where a WebM-then-MP4 <source> pair plays, and the count of pairs per page against the pairs the build
 // wrote. The copies themselves, their record and filmSources() are in scripts/film-fallbacks.mjs.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
 import { readFallbacks } from './film-fallbacks.mjs';
@@ -33,16 +33,17 @@ const isWord = (text, at) => {
 // and other control characters removed (what a browser strips from a URL), so no spelling of a file name hides it.
 const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
 const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
-// WHO WRITES A PLAYER. The build inserts no markup: every pair is in a page as it was written.
+// WHO WRITES A PLAYER. Nothing searches a page to decide where a copy goes.
 //
 // Generated pages: every generator that plays a film (lab-films.mjs, lab-progress.mjs, lab-outage.mjs, labs.mjs) writes
 // its <source> elements through filmSources() (scripts/film-sources.mjs), which writes the WebM <source> and, when the
 // record lists a copy, the MP4 <source> right after it, in one call. While the build renders the pages, a ledger
 // (startFilmLedger) counts the pairs filmSources() wrote, and pagePairs() binds them to the page they were written on.
 //
-// The home page (site/index.html) is written by hand and carries one player with both sources in its committed text.
-// That text, through the end of the MP4 <source>, is pinned below (HOME); the dist pass checks it is on the page exactly
-// once and counts it as the home page's one pair.
+// The home page (site/index.html) is written by hand, stays byte for byte as committed, and carries one player. Its
+// exact text through the end of the WebM <source> is pinned below (HOME). The dist pass inserts the MP4 <source> after
+// that text, only when the text is on the page exactly once, and counts it as the home page's one pair. It inserts
+// nowhere else.
 //
 // What this does not judge: where in the hand-written markup a pair sits. A hand edit that wraps the committed home
 // player, or a generator's marker in a page template, in a comment, <template>, svg or other place that does not play
@@ -58,22 +59,25 @@ const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
 // "webm" in it stops the build too. JSON files are data, not markup: there a string may name a WebM only as a plain
 // path or URL to the file, as a WebM type, or as the English word, and a key also as a field name.
 
-// The home page's one hand-written player, exactly as site/index.html carries it, through the end of its MP4 <source>.
+// The home page's one hand-written player, exactly as site/index.html carries it, through the end of its WebM <source>.
 export const HOME = {
   page: 'index.html',
   webm: 'assets/labs/agent-space/progress/hq-on-duty.webm',
-  player: '<figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/labs/agent-space/progress/hq-on-duty-poster.jpg" aria-label="The HQ on duty: the Odin Labs HQ at dawn, the Engineering floor, the review wall, the trust wall and the outbox that waits for the founder’s click"><source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus"><source src="assets/labs/agent-space/progress/hq-on-duty.mp4" type="video/mp4">',
+  player: '<figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/labs/agent-space/progress/hq-on-duty-poster.jpg" aria-label="The HQ on duty: the Odin Labs HQ at dawn, the Engineering floor, the review wall, the trust wall and the outbox that waits for the founder’s click"><source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus">',
 };
 
-/** Why the home page does not carry its pinned player, both sources, exactly once; [] when it does. */
-export function homeProblems(html, home, byWebm) {
-  const entry = byWebm.get(home.webm), where = `${home.page}: the pinned home player (HOME in scripts/film-pairs.mjs)`;
-  if (!entry) return [`${where} plays ${home.webm}, which has no MP4 copy`];
-  if (!home.player.includes(`<source src="${home.webm}" type="video/webm`) || !home.player.endsWith(`<source src="${entry.mp4}" type="video/mp4">`)) return [`${where} does not carry the WebM source of ${home.webm} and end with its MP4 source`];
-  const at = html.indexOf(home.player);
-  if (at < 0) return [`${where} is not on the page; when the player changes, change the pin with it`];
-  if (html.indexOf(home.player, at + 1) >= 0) return [`${where} is on the page more than once`];
-  return [];
+/** The home page with the MP4 <source> after its pinned player, or why not (the pin missing or on the page twice). */
+export function pairHome(html, home, byWebm) {
+  const at = html.indexOf(home.player), entry = byWebm.get(home.webm), where = `${home.page}: the pinned home player (HOME in scripts/film-pairs.mjs)`;
+  if (!entry) return { html, problems: [`${where} plays ${home.webm}, which has no MP4 copy`] };
+  const last = home.player.lastIndexOf('<source ');
+  if (last < 0) return { html, problems: [`${where} does not end with the WebM source of ${home.webm}`] };
+  const tail = home.player.slice(last);
+  if (!tail.startsWith(`<source src="${home.webm}" type="`) || !WEBM_TYPE.test(tail.slice(`<source src="${home.webm}" type="`.length, -2)) || !tail.endsWith('">')) return { html, problems: [`${where} does not end with the WebM source of ${home.webm}`] };
+  if (at < 0) return { html, problems: [`${where} is not on the page; when the player changes, change the pin with it`] };
+  if (html.indexOf(home.player, at + 1) >= 0) return { html, problems: [`${where} is on the page more than once`] };
+  const end = at + home.player.length, insert = `<source src="${entry.mp4}" type="video/mp4">`;
+  return { html: html.startsWith(insert, end) ? html : html.slice(0, end) + insert + html.slice(end), problems: [] };
 }
 
 // A WebM <source> directly followed by an MP4 <source>, the form filmSources() and the home pass write.
@@ -144,7 +148,7 @@ const JSON_FILE = /\.(json|jsonl|webmanifest|map)$/i;
 const allFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? allFiles(join(dir, e.name)) : [join(dir, e.name)]);
 
 /**
- * The dist pass. It writes nothing: it reads every built file. Fails closed on any WebM
+ * The dist pass: the MP4 <source> after the home page's pinned player (the one insertion), then every built file read. Fails closed on any WebM
  * mention outside a counted pair, on a film whose pairs in dist are not the pairs the build wrote, and on a copy no page
  * plays. `written` is pagePairs() of the rendered pages (dist path -> film -> pairs the generators wrote there).
  */
@@ -155,9 +159,11 @@ export function addFilmFallbacks({ distDir = 'dist', root = 'site', written = ne
   for (const entry of byWebm.values()) if (!existsSync(join(distDir, entry.mp4)) || sha256(readFileSync(join(distDir, entry.mp4))) !== entry.sha256) throw new Error(`Film fallbacks: ${entry.mp4} is not in ${distDir} with its recorded sha256`);
   const expected = new Map([...written].map(([file, films]) => [file, new Map(films)])), problems = [];
   const homeFile = join(distDir, home.page);
-  const homeWrong = homeProblems(existsSync(homeFile) ? readFileSync(homeFile, 'utf8') : '', home, byWebm);
-  problems.push(...homeWrong);
-  if (!homeWrong.length) {
+  const before = existsSync(homeFile) ? readFileSync(homeFile, 'utf8') : '';
+  const paired = pairHome(before, home, byWebm);
+  problems.push(...paired.problems);
+  if (!paired.problems.length) {
+    if (paired.html !== before) writeFileSync(homeFile, paired.html);
     if (!expected.has(home.page)) expected.set(home.page, new Map());
     expected.get(home.page).set(home.webm, (expected.get(home.page).get(home.webm) ?? 0) + 1);
   }

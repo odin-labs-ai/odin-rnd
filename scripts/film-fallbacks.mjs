@@ -30,9 +30,10 @@
 // distribution's ffmpeg is another version: there they are skipped, the yuv420p digest binds the frames instead). What
 // the screened frames show was viewed by an AI agent; no machine judges that.
 //
-// The generators write each MP4 <source> beside its WebM one (scripts/film-sources.mjs) and the home page carries its
-// pair in its committed text; the dist pass (scripts/film-pairs.mjs) inserts nothing and reads every built file: per
-// page the pairs must be exactly the pairs the build wrote, and any other WebM mention stops the build. The Film copies job in .github/workflows/publish.yml runs the decoder tests, and verify needs it, so
+// The committed pages are not edited for this. The generators write each MP4 <source> beside its WebM one
+// (scripts/film-sources.mjs); the dist pass (scripts/film-pairs.mjs) adds it after the home page's one pinned player and
+// reads every built file: per page the pairs must be exactly the pairs the build wrote, and any other WebM mention stops
+// the build. The Film copies job in .github/workflows/publish.yml runs the decoder tests, and verify needs it, so
 // nothing publishes without them.
 import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';

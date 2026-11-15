@@ -276,10 +276,10 @@ for (const file of htmlFiles('dist')) {
   writeFileSync(file, source.replace('</main>', note + '</main>'));
 }
 // Films on every browser (mission rnd-nightshift-1112): the generators wrote an MP4 (H.264) <source> after each WebM
-// <source>, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json, and the home page carries
-// its pair in site/index.html. This pass writes nothing: after the last step that writes pages it reads every built
-// file and fails closed when a page's pairs are not the pairs the build wrote there, on any other WebM mention and on a
-// copy no page plays (scripts/film-pairs.mjs).
+// <source>, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json. This pass adds it after the
+// home page's one pinned player and then reads every built file, after the last step that writes pages. It fails closed
+// when a page's pairs are not the pairs the build wrote there, on any other WebM mention and on a copy no page plays
+// (scripts/film-pairs.mjs). The committed pages stay as they are.
 {
   const { addFilmFallbacks } = await import('./film-pairs.mjs');
   addFilmFallbacks({ distDir: 'dist', root: 'site', written: filmPairsWritten });
