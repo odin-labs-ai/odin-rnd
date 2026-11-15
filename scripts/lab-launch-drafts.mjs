@@ -29,7 +29,8 @@
 // sentence is not on the page, when any draft fails the publisher's text screen (screenHits, after the page link and
 // the card URL are taken out; each is checked as a URL on the site's host by urlProblems), when the X post is over 280,
 // or when --out resolves under site/ or dist/ (drafts are never published; outProblems, from the Lab 01 generator).
-// Nothing here posts, sends or calls anything but the page read: posting stays the founder's own act.
+// Nothing here posts, sends or calls anything but the page read. The LinkedIn and X drafts stay the founder's to post by
+// hand; the Discussions draft is posted by scripts/lab-launch-post.mjs in the weekly workflow, after its own checks.
 // Exit codes: 0 done (also when no lab changed: INDEX.md says so), 1 refused, 3 usage.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
