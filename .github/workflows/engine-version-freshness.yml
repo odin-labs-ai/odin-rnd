@@ -1,0 +1,41 @@
+# Engine version freshness: the home page's card 001 (its release link and Release field) must name the bce-engine
+# release bce activated, which is bce main's .engine-pin.json "pin". When npm latest for bce-engine differs from that
+# pin, bce is mid-release and the run passes with a notice. See scripts/engine-version-freshness.mjs.
+#
+# Not a required check. Runs daily (the engine moves without a commit here), by hand, and on a pull request that
+# touches the card or this check. Reads only public data over HTTPS; no secret and no write token.
+name: Engine version freshness
+
+on:
+  schedule:
+    - cron: '41 7 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - site/index.html
+      - scripts/engine-version-freshness.mjs
+      - scripts/engine-version-freshness.test.mjs
+      - .github/workflows/engine-version-freshness.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engine-version-freshness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: The check's own tests (a lagging card fails, a matching card passes)
+        run: node --test scripts/engine-version-freshness.test.mjs
+      - name: Card 001 names the activated bce-engine
+        run: node scripts/engine-version-freshness.mjs
