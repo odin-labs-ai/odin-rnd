@@ -37,14 +37,17 @@ const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.from
 const scriptEscapes = text => text.replace(/\\x([0-9a-fA-F]{2})|\\u\{([0-9a-fA-F]{1,6})\}|\\u([0-9a-fA-F]{4})|\\([0-9a-fA-F]{1,6})[ \t\n\f\r]?/g,
   (whole, x, braced, u, css) => codePoint(parseInt(x ?? braced ?? u ?? css, 16)));
 const spelled = text => percent(scriptEscapes(text)).replace(/[\u0000-\u001f\u007f]+/g, '');
-// Kept from main verbatim, as an extra refusal and never as a proof of where a pair plays: a counted pair whose start
-// lies in one of these stretches is refused, so this PR refuses at least what main refused (comments, raw text and
-// template content, including a stretch that never ends). It is not a parser; what it misses is the OUT limit.
+// Kept from main (one change: ASCII lower case, so no offset shifts), as an extra refusal and never as a proof of where
+// a pair plays: a counted pair whose start lies in one of these stretches is refused, so this PR refuses at least what
+// main refused (comments, raw text and template content, including a stretch that never ends). It is not a parser;
+// what it misses is the OUT limit.
 // The stretches of a page that never play: comments (through --> or --!>), the content of raw-text and other inert
 // elements through their end tag, and template content (nested templates counted), found by one scan from the start.
 const RAW = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes', 'plaintext'];
 export function inertRanges(html) {
-  const lower = html.toLowerCase(), ranges = [];
+  // ASCII lower case, one character for one (main's String#toLowerCase lengthens some letters, such as U+0130, and
+  // would shift every range after them).
+  const lower = html.replace(/[A-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + 32)), ranges = [];
   let i = 0;
   while (i < lower.length) {
     const lt = lower.indexOf('<', i);

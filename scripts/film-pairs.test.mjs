@@ -111,7 +111,7 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
   refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}<source src="${FILM}" type="video/mp4">` }), /does not end with the WebM source/, 'not a WebM type');
   // Main's inert scan is kept as an extra refusal (review d788cd8f item 2): every wrap main refused is refused here, on
   // the home pin and on a generated page.
-  const wraps = [h => `<!-- ${h} -->`, h => `<template>${h}</template>`, h => `<noscript>${h}</noscript>`, h => `<!-- unterminated ${h}`, h => `<script>${h}`,
+  const wraps = [h => `\u0130\u0130\u0130\u0130\u0130\u0130<!-- ${h} -->`, h => `<!-- ${h} -->`, h => `<template>${h}</template>`, h => `<noscript>${h}</noscript>`, h => `<!-- unterminated ${h}`, h => `<script>${h}`,
     h => `<title>${h}`, h => `<textarea>${h}`, h => `<style>${h}`, h => `<xmp>${h}</xmp>`, h => `<iframe>${h}</iframe>`, h => `<plaintext>${h}`];
   for (const wrap of wraps) {
     refused(distRun({}, { home: wrap(HOME_PAGE) }), /pinned home player .* sits inside a comment, raw text or template content/, `home: ${wrap('PIN')}`);
