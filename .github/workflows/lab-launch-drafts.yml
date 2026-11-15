@@ -1,9 +1,18 @@
 # Launch drafts for every lab that landed or changed in the last week: LinkedIn, X and Discussions drafts quoting only
 # the lab page's own sentences, plus the page's share card, in a dated folder (scripts/lab-launch-drafts.mjs). Runs on
-# GitHub-hosted runners under the org's GitHub identity, never on a laptop. It posts nothing: the drafts are uploaded as
-# a workflow artifact for the founder to read, edit and post by hand. Read-only: no secret, and the token holds only
-# contents: read. upload-artifact does not use that token (it writes through the runner's own artifact service), as
-# broker-probe.yml already shows in this repository: contents: read, and its runs carry their uploaded artifact.
+# GitHub-hosted runners under the org's GitHub identity, never on a laptop. The drafts job is read-only: no secret, and
+# its token holds only contents: read. upload-artifact does not use that token (it writes through the runner's own
+# artifact service), as broker-probe.yml already shows in this repository: contents: read, and its runs carry their
+# uploaded artifact. The LinkedIn and X drafts are uploaded for the founder to read, edit and post by hand.
+#
+# The post job (scripts/lab-launch-post.mjs) then posts each lab's github-discussion.md to this repository's
+# Discussions, category "Show and tell", title and body exactly as generated. It uses this run's own GITHUB_TOKEN with
+# discussions: write (no personal token, nothing a single person must rotate) and runs only in odin-labs-ai/odin-rnd on
+# main: never on a fork, never for a pull request (this workflow has no pull_request trigger, and the job checks the
+# repository and ref). Before posting it re-reads each page (200, no redirect), re-checks that every line is the page's
+# own, re-runs the generator's text screen, and skips a draft whose title is already a discussion. Any refusal posts
+# nothing. The schedule posts; a manual run is a dry run unless dry_run is unticked. Its audit (posted, skipped,
+# refused: title, address, body sha256, never the body) is the step summary and an artifact.
 #
 # The window is the seven days before the run, matching the weekly schedule. A manual run can name labs instead
 # (comma-separated catalogue slugs) or start the window on another date.
@@ -23,6 +32,11 @@ on:
         description: 'First UTC day of the window (YYYY-MM-DD); empty = seven days ago'
         required: false
         default: ''
+      dry_run:
+        description: 'Check and list only, post nothing (untick to post the Discussions)'
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: read
@@ -35,6 +49,8 @@ jobs:
   drafts:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      date: ${{ steps.draft.outputs.date }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -65,3 +81,48 @@ jobs:
           path: launch-drafts/
           retention-days: 90
           if-no-files-found: error
+
+  post:
+    needs: drafts
+    # Only this repository, only main: a fork's schedule or a run on another branch never posts.
+    if: github.repository == 'odin-labs-ai/odin-rnd' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: lab-launch-drafts-${{ needs.drafts.outputs.date }}
+          path: launch-drafts/
+      - name: Post the Discussions drafts (schedule posts; a manual run is dry unless dry_run is unticked)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          # Positive flag: only the schedule, or a manual run with dry_run unticked, posts. The dispatch arm compares the
+          # input as text, because GitHub expressions coerce a missing input (null) to false: an absent dry_run is ''.
+          # This workflow has exactly two triggers, schedule and workflow_dispatch (no workflow_call: a caller would lend
+          # it its own event), and scripts/lab-launch-post.test.mjs pins that.
+          POST: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && format('{0}', inputs.dry_run) == 'false') }}
+          DRAFT_DATE: ${{ needs.drafts.outputs.date }}
+        run: |
+          set -euo pipefail
+          mode=--dry-run
+          if [ "$POST" = "true" ]; then mode=; fi
+          rc=0
+          node scripts/lab-launch-post.mjs --dir "launch-drafts/$DRAFT_DATE" --repo "$GITHUB_REPOSITORY" --category 'Show and tell' --audit discussion-post-audit.json $mode || rc=$?
+          { echo '### Discussions'; echo; echo '```json'; cat discussion-post-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lab-launch-discussions-${{ needs.drafts.outputs.date }}
+          path: discussion-post-audit.json
+          retention-days: 90
+          if-no-files-found: warn
