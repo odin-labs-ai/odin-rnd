@@ -167,14 +167,15 @@ if (refreshUpdatesRequested) {
 }
 // Labs (mission rnd-labs-human-first-1024): the Labs index, Lab 01's page and its Atom feed, rendered from
 // site/data/labs/ into dist/ only. scripts/labs.mjs refuses a dispatch that misses its schema or the public screen.
-// Every film player the generators write is counted while they render (scripts/film-fallbacks.mjs, startFilmLedger).
-const { startFilmLedger } = await import('./film-fallbacks.mjs');
+// Every film player the generators write is counted while they render, then bound to its page (scripts/film-fallbacks.mjs,
+// startFilmLedger and pagePairs).
+const { pagePairs, startFilmLedger } = await import('./film-fallbacks.mjs');
 let filmPairsWritten;
 {
   const { renderLabs } = await import('./labs.mjs');
   const closeFilmLedger = startFilmLedger();
   const pages = renderLabs();
-  filmPairsWritten = closeFilmLedger();
+  filmPairsWritten = pagePairs(pages, closeFilmLedger());
   for (const [file, body] of Object.entries(pages)) writeFileSync(`dist/${file}`, body);
 }
 // Show one latest, validated run per lab beside the editorial updates. This is built-only: the updates feed's

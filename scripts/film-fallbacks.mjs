@@ -402,42 +402,6 @@ const isWord = (text, at) => {
 // and other control characters removed (what a browser strips from a URL), so no spelling of a file name hides it.
 const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
 const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
-// The stretches of a page that never play: comments (through --> or --!>), the content of raw-text and other inert
-// elements through their end tag, and template content (nested templates counted), found by one scan from the start.
-const RAW = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes', 'plaintext'];
-export function inertRanges(html) {
-  const lower = html.toLowerCase(), ranges = [];
-  let i = 0;
-  while (i < lower.length) {
-    const lt = lower.indexOf('<', i);
-    if (lt < 0) break;
-    if (lower.startsWith('<!--', lt)) {
-      const short = /^<!--->|^<!-->/.exec(lower.slice(lt, lt + 6));
-      const m = short ? null : /--!?>/g; if (m) m.lastIndex = lt + 4;
-      const close = m && m.exec(lower);
-      const end = short ? lt + short[0].length : close ? close.index + close[0].length : lower.length;
-      ranges.push([lt, end]); i = end; continue;
-    }
-    const name = /^<([a-z][a-z0-9-]*)/.exec(lower.slice(lt, lt + 32))?.[1];
-    if (name && (RAW.includes(name) || name === 'template')) {
-      let end;
-      if (name === 'template') {
-        let depth = 0, j = lt;
-        const re = /<(\/?)template[\s/>]/g; re.lastIndex = lt;
-        for (let m; (m = re.exec(lower));) { depth += m[1] ? -1 : 1; if (!depth) { j = m.index; break; } }
-        end = depth ? lower.length : j;
-      } else {
-        const re = new RegExp(`</${name}[\\s/>]`, 'g'); re.lastIndex = lt + 1;
-        const m = re.exec(lower);
-        end = name === 'plaintext' || !m ? lower.length : m.index;
-      }
-      ranges.push([lt, end]); i = end + 1; continue;
-    }
-    i = lt + 1;
-  }
-  return ranges;
-}
-
 // WHO WRITES A PLAYER. Pairing is not found by searching pages; it is written, and then counted.
 //
 // Generated pages: every generator that plays a film (lab-films.mjs, lab-progress.mjs, lab-outage.mjs, labs.mjs) writes
@@ -446,14 +410,18 @@ export function inertRanges(html) {
 // film by film, the pairs filmSources() wrote. Nothing searches a generated page to insert a copy.
 //
 // The home page (site/index.html) is written by hand and carries one player. Its exact text up to the end of the WebM
-// <source> is pinned below (HOME_PLAYER). The dist pass inserts the MP4 <source> after that text, after checking that it
-// is on the page exactly once, not inside a comment, script, template or other inert stretch (inertRanges) and not
-// under an open svg, math, select, object, datalist or noembed parent. This is a check on one pinned place, not a
-// parser. It inserts nowhere else.
+// <source> is pinned below (HOME). The dist pass inserts the MP4 <source> after that text and nowhere else, only when
+// the text is on the page exactly once and homeContext() finds it in plain markup: not inside a tag, a comment, a
+// bogus comment or raw text, and under no open template, svg, math, select, object or datalist. homeContext() reads tags the
+// way the HTML tokenizer does (quoted and unquoted attribute values, the self-closing flag, stray end tags ignored;
+// inside svg or math a <title>, <style> or <script> holds markup, not raw text). An svg or math stays open until its
+// end tag even where a browser would close it early for an HTML tag, which only refuses more. It fails closed on what
+// it does not model: CDATA, a script holding "<!--", a tag or comment that never ends. It reads one pinned place and
+// is not a parser for the rest of the site.
 //
 // Then every file in dist that is not media, a font or an archive (archives download, they do not render) is read: each WebM-then-MP4
-// <source> pair of a listed film is counted, and for every film the pairs found in dist must equal the pairs the build
-// wrote (the ledger, plus the home page's one). A copied player, in a comment, script, template, attribute, svg or any
+// <source> pair of a listed film is counted, and for every file and film the pairs found must equal the pairs the build
+// wrote there (pagePairs: the rendered pages, which must hold exactly the ledger's pairs, plus the home page's one). A copied player, in a comment, script, template, attribute, svg or any
 // other file, adds a pair the build did not write and stops the build. What is left after the counted pairs, plain
 // links and the English word "WebM" is spelled out (character references, %XX escapes, control characters), and any
 // "webm" in it stops the build too. JSON files are data, not markup: there a string may name a WebM only as a plain
@@ -495,19 +463,98 @@ export const HOME = {
   player: '<figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/labs/agent-space/progress/hq-on-duty-poster.jpg" aria-label="The HQ on duty: the Odin Labs HQ at dawn, the Engineering floor, the review wall, the trust wall and the outbox that waits for the founder’s click"><source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus">',
 };
 
-// Parents the home pass refuses around its player, failing closed: svg and math (foreign content, where a <video> tag
-// makes no HTML video outside a foreignObject), and select, object, datalist and noembed, whose content a browser may
-// not show.
-const NO_PLAY_PARENTS = ['svg', 'math', 'select', 'object', 'datalist', 'noembed'];
-/** Which of those parents are still open at the end of `before` (start tags minus end tags outside inert stretches; a
- * self-closed <svg/> or <math/> opens nothing). */
-function openParents(before, inert) {
-  const counts = new Map();
-  for (const m of before.toLowerCase().matchAll(/<(\/?)([a-z][a-z0-9-]*)(?=[\s/>])[^>]*?(\/?)>/g)) {
-    if (!NO_PLAY_PARENTS.includes(m[2]) || (m[3] && !m[1] && ['svg', 'math'].includes(m[2])) || inert.some(([a, b]) => m.index >= a && m.index < b)) continue;
-    counts.set(m[2], (counts.get(m[2]) ?? 0) + (m[1] ? -1 : 1));
+// ASCII lower case, one character for one (String#toLowerCase changes the length of some letters, such as U+0130).
+const asciiLower = text => text.replace(/[A-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + 32));
+const SPACE = /[\t\n\f\r ]/;
+/**
+ * One tag from `lt` (its "<"), read as the HTML tokenizer reads a tag: its name, whether it is an end tag, the
+ * self-closing flag, and the index just after its ">" (Infinity when it never ends). Attribute values in quotes may
+ * hold ">"; an unquoted value runs to white space or ">" and keeps a "/" in it.
+ */
+export function readTag(html, lt) {
+  let i = lt + 1;
+  const end = html[i] === '/';
+  if (end) i++;
+  const nameAt = i;
+  while (i < html.length && !SPACE.test(html[i]) && html[i] !== '/' && html[i] !== '>') i++;
+  const name = asciiLower(html.slice(nameAt, i));
+  let selfClosing = false;
+  for (let state = 'before'; i < html.length;) {
+    const c = html[i];
+    if (state === 'before' || state === 'afterName') {
+      if (SPACE.test(c)) { i++; continue; }
+      if (c === '/') { i++; state = 'selfClosing'; continue; }
+      if (c === '>') return { name, end, selfClosing, after: i + 1 };
+      if (state === 'afterName' && c === '=') { i++; state = 'value'; continue; }
+      i++; state = 'name'; continue;
+    }
+    if (state === 'name') {
+      if (SPACE.test(c)) { i++; state = 'afterName'; continue; }
+      if (c === '/' || c === '>') { state = 'before'; continue; }
+      if (c === '=') { i++; state = 'value'; continue; }
+      i++; continue;
+    }
+    if (state === 'value') {
+      if (SPACE.test(c)) { i++; continue; }
+      if (c === '"' || c === "'") { const close = html.indexOf(c, i + 1); if (close < 0) break; i = close + 1; state = 'afterQuoted'; continue; }
+      if (c === '>') return { name, end, selfClosing, after: i + 1 };
+      while (i < html.length && !SPACE.test(html[i]) && html[i] !== '>') i++;
+      state = 'before'; continue;
+    }
+    if (state === 'afterQuoted') {
+      if (SPACE.test(c)) { i++; state = 'before'; continue; }
+      if (c === '/') { i++; state = 'selfClosing'; continue; }
+      if (c === '>') return { name, end, selfClosing, after: i + 1 };
+      state = 'before'; continue;
+    }
+    if (state === 'selfClosing') {
+      if (c === '>') return { name, end, selfClosing: !end, after: i + 1 };
+      state = 'before'; continue;
+    }
   }
-  return [...counts].filter(([, n]) => n > 0).map(([name]) => name);
+  return { name, end, selfClosing, after: Infinity };
+}
+
+// Elements whose content is raw text up to their own end tag, and parents the home player may not sit under: template
+// (inert), svg and math (foreign content; a self-closed one opens nothing), select and object (content a browser may
+// not show). Failing closed, a foreignObject counts as svg.
+const RAW_TEXT = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes'];
+const NO_PLAY = ['template', 'svg', 'math', 'select', 'object', 'datalist'];
+/** Why the text at `at` is not in plain markup a browser plays, or null. Reads html from its start up to `at`. */
+export function homeContext(html, at) {
+  const open = new Map(NO_PLAY.map(name => [name, 0]));
+  const foreign = () => open.get('svg') > 0 || open.get('math') > 0;
+  for (let i = 0; i < at;) {
+    const lt = html.indexOf('<', i);
+    if (lt < 0 || lt >= at) break;
+    let after;
+    if (html.startsWith('<!--', lt)) {
+      const short = /^<!--->|^<!-->/.exec(html.slice(lt, lt + 6));
+      const close = short ? null : /--!?>/g; if (close) close.lastIndex = lt + 4;
+      const m = close && close.exec(html);
+      after = short ? lt + short[0].length : m ? m.index + m[0].length : Infinity;
+    } else if (html.startsWith('<![CDATA[', lt)) return 'a CDATA section comes before it';
+    else if (/^<[!?]/.test(html.slice(lt, lt + 2)) || /^<\/[^A-Za-z>]/.test(html.slice(lt, lt + 3))) {
+      const close = html.indexOf('>', lt); after = close < 0 ? Infinity : close + 1;
+    } else if (/^<\/?[A-Za-z]/.test(html.slice(lt, lt + 3))) {
+      const tag = readTag(html, lt);
+      after = tag.after;
+      if (after > at) return 'it sits inside a tag';
+      if (tag.end) { if (open.has(tag.name) && open.get(tag.name) > 0) open.set(tag.name, open.get(tag.name) - 1); }
+      else if (tag.name === 'plaintext') return 'a <plaintext> comes before it';
+      else if (RAW_TEXT.includes(tag.name) && !foreign()) {
+        const close = new RegExp(`</${tag.name}[\\t\\n\\f\\r />]`, 'gi'); close.lastIndex = after;
+        const m = close.exec(html);
+        if (!m || m.index >= at) return `it sits inside <${tag.name}>`;
+        if (tag.name === 'script' && html.slice(after, m.index).includes('<!--')) return 'a script holding "<!--" comes before it';
+        after = m.index;
+      } else if (open.has(tag.name) && !(tag.selfClosing && ['svg', 'math'].includes(tag.name))) open.set(tag.name, open.get(tag.name) + 1);
+    } else { i = lt + 1; continue; }
+    if (after > at) return 'it sits inside a comment';
+    i = after;
+  }
+  const parents = [...open].filter(([, n]) => n > 0).map(([name]) => `<${name}>`);
+  return parents.length ? `it sits inside ${parents.join(', ')}, which the home pass refuses (a <video> there may not play)` : null;
 }
 
 /** The home page with the MP4 <source> after its pinned player, or why not. */
@@ -516,10 +563,8 @@ export function pairHome(html, home, byWebm) {
   if (!entry) return { html, problems: [`${where} plays ${home.webm}, which has no MP4 copy`] };
   if (at < 0) return { html, problems: [`${where} is not on the page; when the player changes, change the pin with it`] };
   if (html.indexOf(home.player, at + 1) >= 0) return { html, problems: [`${where} is on the page more than once`] };
-  const inert = inertRanges(html);
-  if (inert.some(([a, b]) => at >= a && at < b)) return { html, problems: [`${where} sits inside a comment, script, template or other inert stretch`] };
-  const open = openParents(html.slice(0, at), inert);
-  if (open.length) return { html, problems: [`${where} sits inside ${open.map(name => `<${name}>`).join(', ')}, which the home pass refuses (a <video> there may not play)`] };
+  const why = homeContext(html, at);
+  if (why) return { html, problems: [`${where}: ${why}`] };
   const end = at + home.player.length, insert = `<source src="${entry.mp4}" type="video/mp4">`;
   return { html: html.startsWith(insert, end) ? html : html.slice(0, end) + insert + html.slice(end), problems: [] };
 }
@@ -566,6 +611,24 @@ export function jsonMentions(text, file) {
   return unpaired;
 }
 
+/**
+ * The pairs the build wrote, file by file (dist path -> film -> pairs), from the pages the generators rendered and the
+ * ledger kept while they did. Refuses when a film's pairs on the rendered pages are not the ledger's (a pair in a
+ * template or other text that did not come from filmSources()).
+ */
+export function pagePairs(pages, ledger, root = 'site') {
+  const byWebm = new Map((readFallbacks(root)?.fallbacks ?? []).map(entry => [entry.webm, entry]));
+  const written = new Map(), total = new Map();
+  for (const [file, html] of Object.entries(pages)) {
+    const { found } = textMentions(html, file, byWebm);
+    if (found.size) written.set(file, found);
+    for (const [webm, n] of found) total.set(webm, (total.get(webm) ?? 0) + n);
+  }
+  const off = [...new Set([...total.keys(), ...ledger.keys()])].filter(webm => (total.get(webm) ?? 0) !== (ledger.get(webm) ?? 0));
+  if (off.length) throw new Error(`Film fallbacks refused: the rendered pages carry pairs filmSources() did not write:\n  ${off.map(webm => `${webm}: ${total.get(webm) ?? 0} on the pages, ${ledger.get(webm) ?? 0} written`).join('\n  ')}`);
+  return written;
+}
+
 // Media, fonts and archives hold no markup a browser renders (an archive downloads); every other file in dist is read as text.
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|bmp|webm|mp4|m4v|mov|mkv|ogg|ogv|mp3|wav|flac|woff2?|ttf|otf|eot|pdf|zip|gz|tgz|tar|bz2|xz|7z)$/i;
 const JSON_FILE = /\.(json|jsonl|webmanifest|map)$/i;
@@ -574,21 +637,22 @@ const allFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e
 /**
  * The dist pass: the MP4 <source> after the home page's pinned player, then every file read. Fails closed on any WebM
  * mention outside a counted pair, on a film whose pairs in dist are not the pairs the build wrote, and on a copy no page
- * plays. `written` is the ledger (film -> pairs filmSources() wrote while the pages were rendered).
+ * plays. `written` is pagePairs() of the rendered pages (dist path -> film -> pairs the generators wrote there).
  */
 export function addFilmFallbacks({ distDir = 'dist', root = 'site', written = new Map(), home = HOME } = {}) {
   const record = readFallbacks(root);
   const byWebm = new Map((record?.fallbacks ?? []).map(entry => [entry.webm, entry]));
   // The published copy, not only the source one, must be the recorded bytes.
   for (const entry of byWebm.values()) if (!existsSync(join(distDir, entry.mp4)) || sha256(readFileSync(join(distDir, entry.mp4))) !== entry.sha256) throw new Error(`Film fallbacks: ${entry.mp4} is not in ${distDir} with its recorded sha256`);
-  const expected = new Map(written), problems = [];
+  const expected = new Map([...written].map(([file, films]) => [file, new Map(films)])), problems = [];
   const homeFile = join(distDir, home.page);
   const before = existsSync(homeFile) ? readFileSync(homeFile, 'utf8') : '';
   const paired = pairHome(before, home, byWebm);
   problems.push(...paired.problems);
   if (!paired.problems.length) {
     if (paired.html !== before) writeFileSync(homeFile, paired.html);
-    expected.set(home.webm, (expected.get(home.webm) ?? 0) + 1);
+    if (!expected.has(home.page)) expected.set(home.page, new Map());
+    expected.get(home.page).set(home.webm, (expected.get(home.page).get(home.webm) ?? 0) + 1);
   }
   const found = new Map();
   for (const path of allFiles(distDir)) {
@@ -596,14 +660,19 @@ export function addFilmFallbacks({ distDir = 'dist', root = 'site', written = ne
     const file = relative(distDir, path).split(sep).join('/'), text = readFileSync(path, 'utf8');
     if (JSON_FILE.test(file)) { problems.push(...jsonMentions(text, file)); continue; }
     const result = textMentions(text, file, byWebm);
-    for (const [webm, n] of result.found) found.set(webm, (found.get(webm) ?? 0) + n);
+    if (result.found.size) found.set(file, result.found);
     problems.push(...result.unpaired);
   }
-  for (const webm of new Set([...byWebm.keys(), ...expected.keys(), ...found.keys()])) {
-    const want = expected.get(webm) ?? 0, got = found.get(webm) ?? 0;
-    if (!want && byWebm.has(webm)) problems.push(`${webm} has an MP4 copy but no page plays it`);
-    else if (want !== got) problems.push(`${webm}: ${got} WebM-then-MP4 <source> pairs in ${distDir}, but the build wrote ${want} (a copied or hand-written player)`);
+  const played = new Set();
+  for (const file of new Set([...expected.keys(), ...found.keys()])) {
+    const want = expected.get(file) ?? new Map(), got = found.get(file) ?? new Map();
+    for (const webm of new Set([...want.keys(), ...got.keys()])) {
+      if (want.get(webm)) played.add(webm);
+      if ((want.get(webm) ?? 0) !== (got.get(webm) ?? 0)) problems.push(`${file}: ${got.get(webm) ?? 0} WebM-then-MP4 <source> pairs of ${webm}, but the build wrote ${want.get(webm) ?? 0} there (a copied, moved or hand-written player)`);
+    }
   }
+  for (const webm of byWebm.keys()) if (!played.has(webm)) problems.push(`${webm} has an MP4 copy but no page plays it`);
   if (problems.length) throw new Error(`Film fallbacks refused (${FALLBACKS_FILE}):\n  ${problems.join('\n  ')}`);
-  return { films: [...expected.values()].filter(Boolean).length, pairs: [...expected.values()].reduce((a, b) => a + b, 0) };
+  const pairs = [...expected.values()].flatMap(films => [...films.values()]);
+  return { films: played.size, pairs: pairs.reduce((a, b) => a + b, 0) };
 }
