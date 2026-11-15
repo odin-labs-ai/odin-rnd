@@ -6,20 +6,25 @@
 //   node scripts/lab-launch-post.mjs --dir <out>/<YYYY-MM-DD> --repo <owner/name> --category <name> --audit <file> [--dry-run]
 //
 // What it posts: the title is the line under "## Title"; the body is every byte after the "## Body" line (it starts
-// with the blank line that follows the heading, as the hand-posted Lab 11 and Lab 12 discussions do, so a body's sha256
-// matches theirs for the same draft). Before anything is posted every draft is checked again, against the page as it is
-// live now (fetchPage: its own address, no redirect, status exactly 200):
-//   - the title is "<Lab N>: <the page's headline>";
-//   - every line of the body is the page's own text: the fixed words the generator adds ("### In numbers", "### What
-//     this does not show", a "- " list mark, "Read the page: <the page link>") aside, each line occurs in the page's
-//     visible text (readPage, the generator's own reader);
+// with the blank line that follows the heading, the shape the hand-posted Lab 11 and Lab 12 discussions were given).
+// Before anything is posted every draft is checked again, against the page as it is live now (the page link first
+// passes urlProblems; then fetchPage: its own address, no redirect, status exactly 200):
+//   - the title is "<the lab's catalogue label>: <the page's headline>";
+//   - every line of the body is one of the passages the generator lifts from the page (readPage, the generator's own
+//     reader): the lead, a numbered sentence after a "- " list mark, or the "does not show" line, exactly and whole,
+//     besides the fixed words the generator adds ("### In numbers", "### What this does not show", "Read the page:
+//     <the page link>");
 //   - the title and the body pass the publisher's text screen (screenHits, after the page link is taken out), and the
 //     page link passes urlProblems on the site's host: the generator's own screen, reused, not a second one.
 // All or nothing: when any draft fails any check the run REFUSES (exit 1) and posts nothing, as the generator writes
-// nothing when any lab fails. A refusal names the draft and the check, and the line by its number and sha256, never by
-// its text, so the Actions log carries no draft text.
-// Idempotent: the repository's discussions are listed first (GraphQL, every page, every category); a draft whose title
-// is already a discussion's title is SKIPPED, with that discussion's address. Skips are not failures.
+// nothing when any lab fails. A refusal names the draft and the check, and the title and lines by their sha256, never by
+// their text, so neither the Actions log nor the audit carries the text of a draft that was refused.
+// Idempotent: the repository's discussions are listed first (GraphQL, every page); a draft is SKIPPED, with that
+// discussion's address, when a discussion in the target category already has its title and was opened by a trusted
+// author (an OWNER, MEMBER or COLLABORATOR of the repository, or this workflow's own github-actions bot). A same-titled
+// discussion by anyone else does not stop the post: a stranger cannot pre-empt a lab's launch by squatting its title.
+// The key is the title: a lab whose headline changes is a new title and is posted again. Skips are not failures.
+// The workflow's concurrency group serialises runs, so a manual run and the schedule never list-then-post at once.
 // --dry-run lists and checks exactly as a real run does and posts nothing: its would-post rows are reported as such.
 // Every GraphQL query is a constant in this file; titles, bodies, owner, name and cursors travel only as GraphQL
 // variables, never inside the query text. The token is GITHUB_TOKEN from the environment (the workflow's own job token,
@@ -33,7 +38,7 @@ import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { screenHits, urlProblems } from './lab-dispatch-publish.mjs';
 import { SITE_HOST } from './lab-dispatch-drafts.mjs';
-import { labUrl, readPage } from './lab-launch-drafts.mjs';
+import { catalogue, labUrl, readPage } from './lab-launch-drafts.mjs';
 
 export const DRAFT_FILE = 'github-discussion.md';
 export const GRAPHQL_URL = 'https://api.github.com/graphql';
@@ -46,7 +51,7 @@ export const REPO_QUERY = `query($owner: String!, $name: String!) {
 }`;
 export const DISCUSSIONS_QUERY = `query($owner: String!, $name: String!, $after: String) {
   repository(owner: $owner, name: $name) {
-    discussions(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { number title url } }
+    discussions(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { number title url authorAssociation category { name } author { __typename login } } }
   }
 }`;
 export const CREATE_MUTATION = `mutation($repositoryId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
@@ -64,19 +69,22 @@ export function parseDiscussionDraft(text) {
 }
 
 /** Why one draft may not be posted, checked against the lab's live page html: [reason] (empty when it may). */
-export function postProblems({ slug, title, body, html }) {
+export function postProblems({ slug, label, title, body, html }) {
   const url = labUrl(slug);
   const problems = urlProblems(url, [SITE_HOST]).map(r => `the page link: ${r}`);
   const page = readPage(html);
   if (page.canonical !== url) problems.push('the page does not name itself at its own address');
-  if (!page.headline || !/^Lab \d+: /.test(title) || title.slice(title.indexOf(': ') + 2) !== page.headline) problems.push('the title is not "Lab N: <the page headline>"');
+  if (!label || !page.headline || title !== `${label}: ${page.headline}`) problems.push('the title is not "<the lab\'s catalogue label>: <the page headline>"');
+  // The passages the generator lifts, whole: a body line must be exactly one of them, never a fragment of one.
+  const passages = new Set([page.lead, ...(page.boundary ? [page.boundary] : [])].filter(Boolean));
+  const numbered = new Set(page.numbered);
   let linked = false;
   body.split('\n').forEach((raw, i) => {
     const line = raw.trim();
     if (!line || FIXED_LINES.has(line)) return;
     if (line.startsWith('Read the page: ')) { if (line === `Read the page: ${url}`) linked = true; else problems.push(`body line ${i + 1} (sha256 ${sha256(line).slice(0, 12)}): a page link other than ${url}`); return; }
-    const quote = line.startsWith('- ') ? line.slice(2) : line;
-    if (!page.text.includes(quote)) problems.push(`body line ${i + 1} (sha256 ${sha256(line).slice(0, 12)}): not on the page`);
+    const ok = line.startsWith('- ') ? numbered.has(line.slice(2)) : passages.has(line);
+    if (!ok) problems.push(`body line ${i + 1} (sha256 ${sha256(line).slice(0, 12)}): not a passage of the page, whole`);
   });
   if (!linked) problems.push('the body does not link the lab page');
   for (const hit of screenHits(title)) problems.push(`title: ${hit.reason}`);
@@ -101,7 +109,7 @@ export function tokenGraphql(token, endpoint = GRAPHQL_URL) {
   };
 }
 
-/** Every discussion of the repository, all pages: [{ number, title, url }]. */
+/** Every discussion of the repository, all pages: [{ number, title, url, authorAssociation, category, author }]. */
 export async function listDiscussions(graphql, owner, name) {
   const all = [];
   let after = null;
@@ -115,6 +123,10 @@ export async function listDiscussions(graphql, owner, name) {
   }
   throw new Error('more than 1000 pages of discussions');
 }
+
+const TRUSTED = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+/** A discussion this workflow may treat as the lab's own: opened by the repository's people or by this workflow's bot. */
+export const trustedAuthor = d => TRUSTED.has(d.authorAssociation) || (d.author?.__typename === 'Bot' && d.author?.login === 'github-actions');
 
 /** The drafts in a dated folder: [{ slug, file, title, body }] (folders without a discussion draft are left out). */
 export function draftsIn(dir) {
@@ -130,31 +142,40 @@ export function draftsIn(dir) {
  * Returns { posted, wouldPost, skipped, refused }, filled into `out` as it goes (so a failure part way keeps the rows
  * already posted); nothing is posted when refused is not empty.
  */
-export async function postLaunchDiscussions({ drafts, repo, category, dryRun, graphql, fetchPage: read = fetchPage, out = { posted: [], wouldPost: [], skipped: [], refused: [] } }) {
+export async function postLaunchDiscussions({ drafts, repo, category, dryRun, graphql, fetchPage: read = fetchPage, cat = catalogue(), out = { posted: [], wouldPost: [], skipped: [], refused: [] } }) {
   const [owner, name] = repo.split('/');
   const ready = [];
   for (const d of drafts) {
     if (d.title === null) { out.refused.push({ slug: d.slug, reasons: [`${DRAFT_FILE} is not in the generator's shape (## Title, ## Body)`] }); continue; }
     const row = { slug: d.slug, title: d.title, page: labUrl(d.slug), bodySha256: sha256(d.body) };
+    // A refused row names the draft by hashes only: its title may be the very text that failed the screen.
+    const refuse = reasons => out.refused.push({ slug: d.slug, page: row.page, titleSha256: sha256(d.title), bodySha256: row.bodySha256, reasons });
+    const label = cat.get(d.slug)?.label;
+    if (!label) { refuse(['not on the lab catalogue (TILE_FILES)']); continue; }
+    const linkProblems = urlProblems(row.page, [SITE_HOST]);
+    if (linkProblems.length) { refuse(linkProblems.map(r => `the page link: ${r}`)); continue; }
     let html;
-    try { html = await read(labUrl(d.slug)); } catch (error) { out.refused.push({ ...row, reasons: [`the page ${labUrl(d.slug)} ${error.message}`] }); continue; }
-    const reasons = postProblems({ slug: d.slug, title: d.title, body: d.body, html });
-    if (reasons.length) out.refused.push({ ...row, reasons });
+    try { html = await read(row.page); } catch (error) { refuse([`the page ${row.page} ${error.message}`]); continue; }
+    const reasons = postProblems({ slug: d.slug, label, title: d.title, body: d.body, html });
+    if (reasons.length) refuse(reasons);
     else ready.push({ ...row, body: d.body });
   }
   if (out.refused.length || !ready.length) return out;
   const repository = (await graphql(REPO_QUERY, { owner, name }))?.repository;
-  const cat = repository?.discussionCategories?.nodes?.find(c => c.name === category);
-  if (!repository?.id || !cat) throw new Error(`${repo} has no discussion category named ${JSON.stringify(category)}`);
-  const existing = new Map((await listDiscussions(graphql, owner, name)).map(d => [d.title, d]));
+  const target = repository?.discussionCategories?.nodes?.find(c => c.name === category);
+  if (!repository?.id || !target) throw new Error(`${repo} has no discussion category named ${JSON.stringify(category)}`);
+  const all = await listDiscussions(graphql, owner, name);
+  const existing = new Map(all.filter(d => d.category?.name === category && trustedAuthor(d)).map(d => [d.title, d]));
   for (const { body, ...row } of ready) {
     const seen = existing.get(row.title);
-    if (seen) { out.skipped.push({ ...row, url: seen.url, reason: `a discussion with this title exists (#${seen.number})` }); continue; }
+    if (seen) { out.skipped.push({ ...row, url: seen.url, reason: `a discussion with this title exists in ${category} (#${seen.number})` }); continue; }
+    const squatted = all.filter(d => d.title === row.title).map(d => d.number);
+    if (squatted.length) row.note = `same-titled discussion(s) by an untrusted author or in another category not counted: #${squatted.join(', #')}`;
     if (dryRun) { out.wouldPost.push(row); continue; }
-    const made = (await graphql(CREATE_MUTATION, { repositoryId: repository.id, categoryId: cat.id, title: row.title, body }))?.createDiscussion?.discussion;
+    const made = (await graphql(CREATE_MUTATION, { repositoryId: repository.id, categoryId: target.id, title: row.title, body }))?.createDiscussion?.discussion;
     if (!made?.url) throw new Error(`${row.slug}: createDiscussion answered no discussion`);
     out.posted.push({ ...row, url: made.url, number: made.number });
-    existing.set(row.title, made);
+    existing.set(row.title, { ...made, title: row.title });
   }
   return out;
 }
@@ -190,7 +211,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   for (const r of audit.posted) console.log(`POSTED ${r.slug}: ${r.title} -> ${r.url} (body sha256 ${r.bodySha256})`);
   for (const r of audit.wouldPost) console.log(`DRY-RUN would post ${r.slug}: ${r.title} (body sha256 ${r.bodySha256})`);
   for (const r of audit.skipped) console.log(`SKIP ${r.slug}: ${r.title} -> ${r.url} (${r.reason})`);
-  for (const r of audit.refused) { console.error(`REFUSED ${r.slug}: nothing was posted`); for (const reason of r.reasons) console.error(`  - ${reason}`); }
+  for (const r of audit.refused) { console.error(`REFUSED ${r.slug} (title sha256 ${r.titleSha256 ?? '-'}): nothing was posted`); for (const reason of r.reasons) console.error(`  - ${reason}`); }
   if (audit.error) console.error(`FAILED: ${audit.error}`);
   if (!code && !audit.posted.length && !audit.wouldPost.length && !audit.skipped.length) console.log('Nothing to post: no discussion draft in this folder.');
   process.exit(code);

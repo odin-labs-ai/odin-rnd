@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SYN_THEME } from './test-synthetic-names.mjs';
 import { labDrafts, labUrl } from './lab-launch-drafts.mjs';
-import { CREATE_MUTATION, DISCUSSIONS_QUERY, REPO_QUERY, draftsIn, parseDiscussionDraft, postLaunchDiscussions, postProblems, sha256 } from './lab-launch-post.mjs';
+import { CREATE_MUTATION, DISCUSSIONS_QUERY, GRAPHQL_URL, REPO_QUERY, draftsIn, fetchPage, parseDiscussionDraft, postLaunchDiscussions, postProblems, sha256, tokenGraphql, trustedAuthor } from './lab-launch-post.mjs';
 import { SITE_URL } from './labs.mjs';
 
 // The Discussions poster (mission social-ai-driven-1114). Every page here is made up at run time, in the shape the lab
@@ -58,7 +58,9 @@ const served = (map = pages) => async url => {
   if (typeof map[slug] === 'number') throw new Error(`answered ${map[slug]}`);
   return map[slug];
 };
-const run = (graphql, drafts, extra = {}) => postLaunchDiscussions({ drafts, repo: 'odin-labs-ai/odin-rnd', category: 'Show and tell', dryRun: false, graphql, fetchPage: served(), ...extra });
+const cat = new Map(Object.entries(LABS));
+const run = (graphql, drafts, extra = {}) => postLaunchDiscussions({ drafts, repo: 'odin-labs-ai/odin-rnd', category: 'Show and tell', dryRun: false, graphql, fetchPage: served(), cat, ...extra });
+const ours = (number, title, more = {}) => ({ number, title, url: `https://github.com/odin-labs-ai/odin-rnd/discussions/${number}`, authorAssociation: 'MEMBER', category: { name: 'Show and tell' }, author: { __typename: 'User', login: 'someone' }, ...more });
 
 test('parseDiscussionDraft takes the title line and every byte after the Body heading', () => {
   const file = draftFile('strangers');
@@ -87,14 +89,24 @@ test('posts each draft to Show and tell, title and body exactly as generated, pa
 });
 
 test('dedupe: a draft whose title is already a discussion (on any page of the list) is skipped, the rest posted', async () => {
-  const existing = [{ number: 1, title: 'Something else', url: 'https://github.com/odin-labs-ai/odin-rnd/discussions/1' }, { number: 2, title: 'Another', url: 'https://github.com/odin-labs-ai/odin-rnd/discussions/2' },
-    { number: 247, title: 'Lab 98: How many pebbles fit in the jar?', url: 'https://github.com/odin-labs-ai/odin-rnd/discussions/247' }];
+  const existing = [ours(1, 'Something else'), ours(2, 'Another'), ours(247, 'Lab 98: How many pebbles fit in the jar?')];
   const gql = mockGraphql({ existing, pageSize: 1 });
   const out = await run(gql, [draft('same-model-harness'), draft('strangers')]);
   assert.equal(gql.calls.filter(c => c.query === DISCUSSIONS_QUERY).length, 3, 'every page of the list is read');
   assert.deepEqual(out.skipped.map(s => [s.slug, s.url]), [['strangers', 'https://github.com/odin-labs-ai/odin-rnd/discussions/247']]);
   assert.deepEqual(out.posted.map(p => p.slug), ['same-model-harness']);
   assert.deepEqual(gql.creates().map(c => c.variables.title), ['Lab 97: Do two jars hold more than one?']);
+});
+
+test('dedupe trusts only the repository\'s people or its own bot, in the target category: a squatted title still posts', async () => {
+  const title98 = 'Lab 98: How many pebbles fit in the jar?', title97 = 'Lab 97: Do two jars hold more than one?';
+  const existing = [ours(5, title98, { authorAssociation: 'NONE' }), ours(6, title97, { category: { name: 'General' } }), ours(7, 'x', { authorAssociation: 'NONE', author: { __typename: 'Bot', login: 'github-actions' } })];
+  const gql = mockGraphql({ existing, pageSize: 10 });
+  const out = await run(gql, [draft('same-model-harness'), draft('strangers')]);
+  assert.deepEqual(out.skipped, []);
+  assert.deepEqual(out.posted.map(p => [p.slug, p.note]), [['same-model-harness', 'same-titled discussion(s) by an untrusted author or in another category not counted: #6'], ['strangers', 'same-titled discussion(s) by an untrusted author or in another category not counted: #5']]);
+  assert.ok(trustedAuthor(existing[2]), 'this workflow\'s own bot is trusted');
+  assert.ok(!trustedAuthor({ authorAssociation: 'NONE', author: { __typename: 'User', login: 'github-actions' } }), 'a user named like the bot is not');
 });
 
 test('refused: a page that does not answer 200 refuses the run and nothing is posted', async () => {
@@ -115,19 +127,29 @@ test('refused: a draft that fails the text screen, or quotes a line not on the p
   const out = await run(gql, [draft('same-model-harness'), screened], { fetchPage: served(servedDirty) });
   assert.deepEqual(out.refused.map(r => r.slug), ['strangers']);
   assert.match(out.refused[0].reasons.join('\n'), /restricted name/);
-  assert.ok(!out.refused[0].reasons.join('\n').includes(SYN_THEME), 'the refusal never repeats the text');
+  assert.ok(!JSON.stringify(out.refused).includes(SYN_THEME), 'the refusal never repeats the text');
+  assert.ok(!('title' in out.refused[0]) && /^[0-9a-f]{64}$/.test(out.refused[0].titleSha256), 'a refused row names its title by sha256 only');
   assert.equal(gql.calls.length, 0);
 
   const invented = { ...good, body: good.body.replace(LEAD, 'A sentence the page never said, 7 times.') };
-  const reasons = postProblems({ slug: 'strangers', title: invented.title, body: invented.body, html: pages.strangers });
-  assert.match(reasons.join('\n'), /body line 2 \(sha256 [0-9a-f]{12}\): not on the page/);
-  assert.match(postProblems({ ...good, title: 'Lab 98: A headline of our own', html: pages.strangers }).join('\n'), /the title is not/);
-  assert.match(postProblems({ ...good, body: good.body.replace(labUrl('strangers'), `${SITE_URL}labs/other/`), html: pages.strangers }).join('\n'), /a page link other than/);
-  assert.deepEqual(postProblems({ ...good, html: pages.strangers }), []);
+  const label = 'Lab 98';
+  const reasons = postProblems({ slug: 'strangers', label, title: invented.title, body: invented.body, html: pages.strangers });
+  assert.match(reasons.join('\n'), /body line 2 \(sha256 [0-9a-f]{12}\): not a passage of the page, whole/);
+  // A fragment of a page sentence (here one that drops its first words) is not the page's own text.
+  const fragment = { ...good, body: good.body.replace('- Guessed cap: 40 pebbles, at most 80 on a quiet day.', '- at most 80 on a quiet day.') };
+  assert.notEqual(fragment.body, good.body);
+  assert.match(postProblems({ ...fragment, label, html: pages.strangers }).join('\n'), /not a passage of the page, whole/);
+  assert.match(postProblems({ ...good, label, title: 'Lab 98: A headline of our own', html: pages.strangers }).join('\n'), /the title is not/);
+  assert.match(postProblems({ ...good, label: 'Lab 12', html: pages.strangers }).join('\n'), /the title is not/, 'the lab number must be the catalogue\'s');
+  assert.match(postProblems({ ...good, label, body: good.body.replace(labUrl('strangers'), `${SITE_URL}labs/other/`), html: pages.strangers }).join('\n'), /a page link other than/);
+  assert.match(postProblems({ ...good, label, body: good.body.replace(labUrl('strangers'), 'https://example.com/elsewhere/'), html: pages.strangers }).join('\n'), /a page link other than|a link to somewhere other than this lab/);
+  assert.deepEqual(postProblems({ ...good, label, html: pages.strangers }), []);
+  const offCatalogue = await run(mockGraphql(), [{ ...good, slug: 'not-a-lab' }]);
+  assert.match(offCatalogue.refused[0].reasons.join('\n'), /not on the lab catalogue/);
 });
 
 test('dry run: lists and checks, posts nothing, reports would-post and skip rows', async () => {
-  const gql = mockGraphql({ existing: [{ number: 248, title: 'Lab 97: Do two jars hold more than one?', url: 'https://github.com/odin-labs-ai/odin-rnd/discussions/248' }] });
+  const gql = mockGraphql({ existing: [ours(248, 'Lab 97: Do two jars hold more than one?')] });
   const out = await run(gql, [draft('same-model-harness'), draft('strangers')], { dryRun: true });
   assert.equal(gql.creates().length, 0);
   assert.deepEqual(out.posted, []);
@@ -151,4 +173,35 @@ test('the CLI: refuses usage, and without a token writes an audit with the error
   assert.equal(a.dryRun, true);
   assert.match(a.error, /GITHUB_TOKEN/);
   assert.deepEqual(a.posted, []);
+});
+
+test('fetchPage asks for no redirect and takes only a 200; tokenGraphql throws without echoing the variables', async t => {
+  const real = globalThis.fetch;
+  t.after(() => { globalThis.fetch = real; });
+  const seen = [];
+  globalThis.fetch = async (url, init) => { seen.push({ url, init }); return seen.length === 1 ? new Response('<html>', { status: 200 }) : new Response('', { status: seen.length === 2 ? 404 : 203 }); };
+  assert.equal(await fetchPage(labUrl('strangers')), '<html>');
+  await assert.rejects(fetchPage(labUrl('strangers')), /answered 404/);
+  await assert.rejects(fetchPage(labUrl('strangers')), /answered 203/);
+  assert.ok(seen.every(s => s.init.redirect === 'error'));
+  const secret = `body ${SYN_THEME}`;
+  globalThis.fetch = async (url, init) => { seen.push({ url, init }); return new Response(JSON.stringify({ errors: [{ type: 'FORBIDDEN', message: `cannot post ${secret}` }] }), { status: 200 }); };
+  const gql = tokenGraphql('tok-test');
+  const error = await gql(CREATE_MUTATION, { title: secret, body: secret }).catch(e => e);
+  assert.match(error.message, /GraphQL answered 200: FORBIDDEN/);
+  assert.ok(!error.message.includes(SYN_THEME) && !error.message.includes('tok-test'));
+  const last = seen.at(-1);
+  assert.equal(last.url, GRAPHQL_URL);
+  assert.deepEqual(JSON.parse(last.init.body), { query: CREATE_MUTATION, variables: { title: secret, body: secret } });
+});
+
+test('the workflow posts only from this repository\'s main, on the schedule or an unticked manual run', () => {
+  const wf = readFileSync(join(here, '..', '.github/workflows/lab-launch-drafts.yml'), 'utf8');
+  const post = wf.slice(wf.indexOf('\n  post:\n'));
+  assert.match(post, /\n    if: github.repository == 'odin-labs-ai\/odin-rnd' && github.ref == 'refs\/heads\/main'\n/);
+  assert.match(post, /\n    permissions:\n      contents: read\n      discussions: write\n/);
+  assert.match(post, /POST: \$\{\{ github.event_name == 'schedule' \|\| \(github.event_name == 'workflow_dispatch' && inputs.dry_run == false\) \}\}/);
+  assert.match(wf, /dry_run:\n        description: [^\n]+\n        type: boolean\n        required: false\n        default: true\n/);
+  assert.doesNotMatch(wf, /\n  pull_request|\n  pull_request_target|secrets\./, 'no pull request trigger, no secret');
+  assert.match(wf, /\nconcurrency:\n  group: lab-launch-drafts\n  cancel-in-progress: false\n/);
 });
