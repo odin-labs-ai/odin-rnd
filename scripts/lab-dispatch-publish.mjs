@@ -148,10 +148,13 @@ const PATTERNS = [
 // The lab's own repository, the only place a public text may link to.
 const LAB_REPO = '/odin-labs-ai/odin-rnd';
 
-// An Instagram follow link is exactly a profile, written plainly: https://www.instagram.com/<handle>/ with a lowercase
-// handle of letters, digits, "_" and inner single dots, the trailing slash, no query, fragment or percent-encoding, and
-// not one of the site's own one-segment routes. A post, a reel, a dot segment or a tracking parameter is refused.
-const INSTAGRAM_ROUTES = new Set(['p', 'reel', 'reels', 'tv', 'explore', 'accounts', 'direct', 'stories', 'about', 'legal', 'developer', 'web']);
+// An Instagram follow link has the shape of a profile, written plainly: https://www.instagram.com/<handle>/ with a
+// lowercase handle of letters, digits, "_" and inner single dots, the trailing slash, and no query, fragment or
+// percent-encoding. A post, a reel, a dot segment or a tracking parameter is refused, and so are the site's own
+// one-segment routes listed here. This checks the shape only: the list of routes cannot be complete, and it does not
+// show whose account the handle is. Which account the lab links to is the reviewed value in its data file.
+const INSTAGRAM_ROUTES = new Set(['p', 'reel', 'reels', 'tv', 'explore', 'accounts', 'direct', 'stories', 'about', 'legal',
+  'developer', 'developers', 'web', 'oauth', 'challenge', 'directory', 'emails', 'session', 'privacy', 'api', 'graphql']);
 function isInstagramProfile(url, u) {
   const handle = /^\/([a-z0-9_](?:[a-z0-9._]{0,28}[a-z0-9_])?)\/$/.exec(u.path)?.[1];
   return !!handle && !handle.includes('..') && !INSTAGRAM_ROUTES.has(handle) && !u.rest.trim() && url === `https://www.instagram.com/${handle}/`;
@@ -185,8 +188,8 @@ export function screenHits(text) {
 export const screenText = text => screenHits(text).map(hit => hit.reason);
 
 /**
- * A URL the page links to: https, its host exactly one of `hosts` (on github.com only this lab's repository), and its
- * host, path and query pass the screen. `templates` lets the query name a form template file.
+ * A URL the page links to: https, its host exactly one of `hosts` (on github.com only this lab's repository, on
+ * www.instagram.com only a profile-shaped link, see isInstagramProfile), and its host, path and query pass the screen. `templates` lets the query name a form template file.
  */
 export function urlProblems(url, hosts, { templates = false } = {}) {
   if (typeof url !== 'string' || !/^https:\/\/[^\s"<>]+$/.test(url)) return ['not an https URL'];

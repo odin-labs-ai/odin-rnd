@@ -60,7 +60,7 @@ export const LAB_FILE = 'data/labs/agent-space.json';
 export const DISPATCH_DIR = 'data/labs/agent-space/dispatches';
 export const HARD_PARTS_FILE = 'data/labs/agent-space/hard-parts.json';
 // Where a follow link may point: exactly these hosts (on github.com only this lab's repository, on www.instagram.com only a
-// profile, https://www.instagram.com/<handle>/). Anything else is refused.
+// profile-shaped link, https://www.instagram.com/<handle>/). Anything else is refused.
 export const FOLLOW_HOSTS = ['www.linkedin.com', 'linkedin.com', 'www.reddit.com', 'reddit.com', 'x.com', 'twitter.com', 'github.com', 'www.instagram.com'];
 
 const escape = v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');

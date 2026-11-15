@@ -181,6 +181,7 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
       [withLink('https://www.instagram.com/odin..labs/'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.instagram.com/p/'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.instagram.com/explore/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/oauth/'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.instagram.com/odin%6Cabs/'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.instagram.com/odinlabs/#top'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.instagram.com/'), /follow\/0\/url: an Instagram link that is not a profile/],
