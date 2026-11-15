@@ -106,10 +106,21 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
   refused(distRun({}, { home: HOME_PAGE + HOME_PAGE }), /pinned home player .* more than once/, 'pin twice');
   refused(distRun({}, { home: HOME_PAGE.replace('</video>', `${PAIR_AT('')}</video>`) }), /index\.html: 2 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'a second pair beside the pin');
   refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}` }), /does not end with the WebM source/, 'a pin without its WebM source');
-  // The stated limit (OUT in #243, follow-on in #228): where the hand-written home player sits is not judged. Wrapped by
-  // hand in a comment or a template, it is still paired, once, and passes. This keeps the limit visible; it is not a
-  // claim that such a page plays.
-  for (const wrap of [h => `<!-- ${h} -->`, h => `<template>${h}</template>`]) {
+  // A pin whose last source is another film's, or not a WebM type (review d788cd8f item 14).
+  refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}<source src="assets/other.webm" type="video/webm">` }), /does not end with the WebM source/, 'another film');
+  refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}<source src="${FILM}" type="video/mp4">` }), /does not end with the WebM source/, 'not a WebM type');
+  // Main's inert scan is kept as an extra refusal (review d788cd8f item 2): every wrap main refused is refused here, on
+  // the home pin and on a generated page.
+  const wraps = [h => `<!-- ${h} -->`, h => `<template>${h}</template>`, h => `<noscript>${h}</noscript>`, h => `<!-- unterminated ${h}`, h => `<script>${h}`,
+    h => `<title>${h}`, h => `<textarea>${h}`, h => `<style>${h}`, h => `<xmp>${h}</xmp>`, h => `<iframe>${h}</iframe>`, h => `<plaintext>${h}`];
+  for (const wrap of wraps) {
+    refused(distRun({}, { home: wrap(HOME_PAGE) }), /pinned home player .* sits inside a comment, raw text or template content/, `home: ${wrap('PIN')}`);
+    refused(distRun({}, { lab: `<main>${wrap(`${V}${PAIR_AT('../../')}</video>`)}</main>` }), /labs\/agent-space\/index\.html: (0 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there|.*names a WebM outside the paired forms)/, `generated: ${wrap('PIN')}`);
+  }
+  // The stated limit (OUT in #243, follow-on in #228): beyond that scan, where hand-written markup puts the player is not
+  // judged. Under an svg parent or a non-rendering element it is still paired once and passes (as on main). This keeps
+  // the limit visible; it is not a claim that such a page plays.
+  for (const wrap of [h => `<svg>${h}</svg>`, h => `<datalist>${h}</datalist>`]) {
     const wrapped = distRun({}, { home: wrap(HOME_PAGE) });
     assert.ifError(wrapped.error);
     assert.equal(wrapped.home.split(`<source src="${REAL.mp4}" type="video/mp4">`).length, 2, 'inserted once, inside the wrap');
@@ -197,6 +208,7 @@ test('every built file is read, and JSON may name a WebM only as data (#228 item
   for (const [file, text] of Object.entries({ 'player.js': `v.src = 'assets/labs/agent-space/session-2026-11-08/clip.webm';`, 'style.css': `.x { background: url(session-2026-11-08/clip.webm); }`,
     'feed.xml': `<feed><link href="clip.web&#109;"/></feed>`, 'page.htm': '<video src="f.webm"></video>', 'page.xhtml': '<video src="f.webm"/>', 'notes': 'f.webm',
     'data/x.json': JSON.stringify({ html: `<video src="${FILM}"></video>` }), 'data/y.json': JSON.stringify({ src: `${FILM}#t=1` }), 'data/z.json': `{"src": "${FILM.replace('.webm', '.we\\u0062m')}#t=1"}`,
+    'player-x.js': `v.src = 'assets/f.\\x77ebm';`, 'player-u.js': `v.src = 'assets/f.\\u0077ebm';`, 'player-b.js': `v.src = 'assets/f.\\u{77}ebm';`, 'style-e.css': `.x { background: url(f.\\77 ebm); }`,
     'data/k.json': JSON.stringify({ [`<source src="${FILM}">`]: 1 }), 'data/l.jsonl': `{"a":1}\n{"x":"see f.webm here"}\n`, 'data/broken.json': `{"src": "${FILM}"`, 'site.webmanifest': JSON.stringify({ icons: [{ src: 'f.webm#x' }] }) }))
     refused(distRun({ [file]: text }), /names a WebM/, file);
   const data = { 'data/films.json': JSON.stringify({ webm: FILM, webmSha256: 'a', mime: 'video/webm;codecs=vp9,opus', url: `https://odin-labs-ai.github.io/odin-rnd/${FILM}`, note: 'Encoded from the WebM, likeness not identity.', [`site/${FILM}`]: 'b' }),

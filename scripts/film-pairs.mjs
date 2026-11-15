@@ -1,6 +1,6 @@
 // The dist pass for the films' MP4 copies (mission rnd-nightshift-1112, follow-on #243 to #221): which built files may
-// name a WebM, where a WebM-then-MP4 <source> pair plays, and the count of pairs per page against the pairs the build
-// wrote. The copies themselves, their record and filmSources() are in scripts/film-fallbacks.mjs.
+// name a WebM, which WebM-then-MP4 <source> pairs count, and the count of pairs per page against the pairs the build
+// wrote. The copies and their record are in scripts/film-fallbacks.mjs; filmSources() is in scripts/film-sources.mjs.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, posix, relative, sep } from 'node:path';
@@ -32,7 +32,50 @@ const isWord = (text, at) => {
 // Before looking for "webm": character references resolved, %XX escapes decoded, and tab, line feed, carriage return
 // and other control characters removed (what a browser strips from a URL), so no spelling of a file name hides it.
 const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
+// JavaScript escapes (\xHH, \uHHHH, \u{H...}) and CSS escapes (\ and 1 to 6 hex digits, then an optional white space)
+// are spelled out too, since every built file is read, scripts and style sheets included.
+const scriptEscapes = text => text.replace(/\\x([0-9a-fA-F]{2})|\\u\{([0-9a-fA-F]{1,6})\}|\\u([0-9a-fA-F]{4})|\\([0-9a-fA-F]{1,6})[ \t\n\f\r]?/g,
+  (whole, x, braced, u, css) => codePoint(parseInt(x ?? braced ?? u ?? css, 16)));
+const spelled = text => percent(scriptEscapes(text)).replace(/[\u0000-\u001f\u007f]+/g, '');
+// Kept from main verbatim, as an extra refusal and never as a proof of where a pair plays: a counted pair whose start
+// lies in one of these stretches is refused, so this PR refuses at least what main refused (comments, raw text and
+// template content, including a stretch that never ends). It is not a parser; what it misses is the OUT limit.
+// The stretches of a page that never play: comments (through --> or --!>), the content of raw-text and other inert
+// elements through their end tag, and template content (nested templates counted), found by one scan from the start.
+const RAW = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes', 'plaintext'];
+export function inertRanges(html) {
+  const lower = html.toLowerCase(), ranges = [];
+  let i = 0;
+  while (i < lower.length) {
+    const lt = lower.indexOf('<', i);
+    if (lt < 0) break;
+    if (lower.startsWith('<!--', lt)) {
+      const short = /^<!--->|^<!-->/.exec(lower.slice(lt, lt + 6));
+      const m = short ? null : /--!?>/g; if (m) m.lastIndex = lt + 4;
+      const close = m && m.exec(lower);
+      const end = short ? lt + short[0].length : close ? close.index + close[0].length : lower.length;
+      ranges.push([lt, end]); i = end; continue;
+    }
+    const name = /^<([a-z][a-z0-9-]*)/.exec(lower.slice(lt, lt + 32))?.[1];
+    if (name && (RAW.includes(name) || name === 'template')) {
+      let end;
+      if (name === 'template') {
+        let depth = 0, j = lt;
+        const re = /<(\/?)template[\s/>]/g; re.lastIndex = lt;
+        for (let m; (m = re.exec(lower));) { depth += m[1] ? -1 : 1; if (!depth) { j = m.index; break; } }
+        end = depth ? lower.length : j;
+      } else {
+        const re = new RegExp(`</${name}[\\s/>]`, 'g'); re.lastIndex = lt + 1;
+        const m = re.exec(lower);
+        end = name === 'plaintext' || !m ? lower.length : m.index;
+      }
+      ranges.push([lt, end]); i = end + 1; continue;
+    }
+    i = lt + 1;
+  }
+  return ranges;
+}
+
 // WHO WRITES A PLAYER. Nothing searches a page to decide where a copy goes.
 //
 // Generated pages: every generator that plays a film (lab-films.mjs, lab-progress.mjs, lab-outage.mjs, labs.mjs) writes
@@ -45,10 +88,11 @@ const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
 // that text, only when the text is on the page exactly once, and counts it as the home page's one pair. It inserts
 // nowhere else.
 //
-// What this does not judge: where in the hand-written markup a pair sits. A hand edit that wraps the committed home
-// player, or a generator's marker in a page template, in a comment, <template>, svg or other place that does not play
-// keeps its count and passes; that needs a real HTML parser (follow-on, odin-labs-ai/odin-rnd#228). Copies and moves
-// are what is caught.
+// A pair, the home pin included, that starts inside a comment, raw text or template content (inertRanges, main's scan,
+// kept) is not counted and is refused. What this does not judge beyond that scan: where else hand-written markup puts
+// a pair. A hand edit that wraps the home player, or a generator's marker in a page template, in an svg, a
+// non-rendering parent, a quoted attribute or another place the scan does not model keeps its count and passes; that
+// needs a real HTML parser (follow-on, odin-labs-ai/odin-rnd#228). Copies, and moves to another page, are caught.
 //
 // Then every file in dist that is not media, a font or an archive (archives download, they do not render) is read.
 // Each WebM-then-MP4 <source> pair of a listed film in an .html page is counted, and for every file and film the pairs
@@ -76,6 +120,7 @@ export function pairHome(html, home, byWebm) {
   if (!tail.startsWith(`<source src="${home.webm}" type="`) || !WEBM_TYPE.test(tail.slice(`<source src="${home.webm}" type="`.length, -2)) || !tail.endsWith('">')) return { html, problems: [`${where} does not end with the WebM source of ${home.webm}`] };
   if (at < 0) return { html, problems: [`${where} is not on the page; when the player changes, change the pin with it`] };
   if (html.indexOf(home.player, at + 1) >= 0) return { html, problems: [`${where} is on the page more than once`] };
+  if (inertRanges(html).some(([a, b]) => at >= a && at < b)) return { html, problems: [`${where} sits inside a comment, raw text or template content`] };
   const end = at + home.player.length, insert = `<source src="${entry.mp4}" type="video/mp4">`;
   return { html: html.startsWith(insert, end) ? html : html.slice(0, end) + insert + html.slice(end), problems: [] };
 }
@@ -92,9 +137,11 @@ export function textMentions(text, file, byWebm) {
   const found = new Map(), unpaired = [], dir = posix.dirname(file);
   // Only an .html page plays; a pair in any other file is left in the text and refused below.
   const page = /\.html$/i.test(file);
-  const rest = text.replace(PAIR, (whole, webmSrc, type, mp4Src) => {
+  const inert = page && new RegExp(PAIR.source).test(text) ? inertRanges(text) : [];
+  const rest = text.replace(PAIR, (whole, webmSrc, type, mp4Src, offset) => {
     const entry = byWebm.get(posix.normalize(posix.join(dir, webmSrc)));
     if (!page || !entry || webmSrc.startsWith('/') || !WEBM_TYPE.test(type) || mp4Src !== `${webmSrc.slice(0, -'.webm'.length)}.mp4`) return whole;
+    if (inert.some(([a, b]) => offset >= a && offset < b)) return whole;
     found.set(entry.webm, (found.get(entry.webm) ?? 0) + 1);
     return ' ';
   });
