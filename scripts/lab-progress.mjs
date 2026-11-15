@@ -13,7 +13,7 @@ import { validate } from './json-schema-lite.mjs';
 import { pinnedAssetProblems, screenTree } from './lab-dispatch-publish.mjs';
 import { MAX_FILM_BYTES, SCREEN_STEP_S, screeningProblems } from './lab-films.mjs';
 import { cite, escape, onMainCommits } from './lab-kit.mjs';
-import { filmSources } from './film-fallbacks.mjs';
+import { filmSources } from './film-sources.mjs';
 
 export const PROGRESS_FILE = 'data/labs/agent-space/progress.json';
 export const PROGRESS_SCHEMA_FILE = new URL('./schemas/odin-lab-progress.schema.json', import.meta.url);

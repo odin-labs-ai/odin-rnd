@@ -26,7 +26,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LEAKS, cite, escape, laneCite, laneCiteProblems, pageLeaks, recordHashes, screenRecord, sha256, validate } from './lab-kit.mjs';
-import { filmSources } from './film-fallbacks.mjs';
+import { filmSources } from './film-sources.mjs';
 import { MAX_FILM_BYTES, screeningProblems } from './lab-films.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));

@@ -52,7 +52,7 @@ import { STRANGERS_RECORD, renderStrangers } from './lab-strangers.mjs';
 import { JURY_RECORD, renderAiJury } from './lab-ai-jury.mjs';
 import { SMH_RECORD, renderSameModelHarness } from './lab-same-model-harness.mjs';
 import { readOutage, renderOutage } from './lab-outage.mjs';
-import { filmSources } from './film-fallbacks.mjs';
+import { filmSources } from './film-sources.mjs';
 
 // The site this repository publishes, where Lab 02 is required.
 const REPO_SITE = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'site');

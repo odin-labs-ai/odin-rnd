@@ -167,9 +167,10 @@ if (refreshUpdatesRequested) {
 }
 // Labs (mission rnd-labs-human-first-1024): the Labs index, Lab 01's page and its Atom feed, rendered from
 // site/data/labs/ into dist/ only. scripts/labs.mjs refuses a dispatch that misses its schema or the public screen.
-// Every film player the generators write is counted while they render, then bound to its page (scripts/film-fallbacks.mjs,
-// startFilmLedger and pagePairs).
-const { pagePairs, startFilmLedger } = await import('./film-fallbacks.mjs');
+// Every film player the generators write is counted while they render, then bound to its page (startFilmLedger in
+// scripts/film-sources.mjs, pagePairs in scripts/film-pairs.mjs).
+const { startFilmLedger } = await import('./film-sources.mjs');
+const { pagePairs } = await import('./film-pairs.mjs');
 let filmPairsWritten;
 {
   const { renderLabs } = await import('./labs.mjs');
@@ -275,12 +276,12 @@ for (const file of htmlFiles('dist')) {
   writeFileSync(file, source.replace('</main>', note + '</main>'));
 }
 // Films on every browser (mission rnd-nightshift-1112): the generators wrote an MP4 (H.264) <source> after each WebM
-// <source>, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json; this pass adds it after the
-// home page's one pinned player and then reads every built file, after the last step that writes pages. It fails closed
-// when a film's pairs in dist are not the pairs the build wrote, on any other WebM mention and on a copy no page plays
-// (scripts/film-fallbacks.mjs). The committed pages stay as they are.
+// <source>, from the hash-pinned copies in site/data/labs/agent-space/film-fallbacks.json, and the home page carries
+// its pair in site/index.html. This pass writes nothing: after the last step that writes pages it reads every built
+// file and fails closed when a page's pairs are not the pairs the build wrote there, on any other WebM mention and on a
+// copy no page plays (scripts/film-pairs.mjs).
 {
-  const { addFilmFallbacks } = await import('./film-fallbacks.mjs');
+  const { addFilmFallbacks } = await import('./film-pairs.mjs');
   addFilmFallbacks({ distDir: 'dist', root: 'site', written: filmPairsWritten });
 }
 // Fails closed when a dated clarification reached no page (a renamed page, or a key that missed on a path separator).

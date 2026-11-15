@@ -12,7 +12,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
 import { pinnedAssetProblems, screenTree } from './lab-dispatch-publish.mjs';
-import { filmSources } from './film-fallbacks.mjs';
+import { filmSources } from './film-sources.mjs';
 
 export const FILMS_FILE = 'data/labs/agent-space/films.json';
 export const FILMS_SCHEMA_FILE = new URL('./schemas/odin-lab-films.schema.json', import.meta.url);
