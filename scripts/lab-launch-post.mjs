@@ -22,7 +22,8 @@
 // Idempotent: the repository's discussions are listed first (GraphQL, every page); a draft is SKIPPED, with that
 // discussion's address, when a discussion in the target category already has its title and was opened by a trusted
 // author (an OWNER, MEMBER or COLLABORATOR of the repository, or this workflow's own github-actions bot). A same-titled
-// discussion by anyone else does not stop the post: a stranger cannot pre-empt a lab's launch by squatting its title.
+// discussion in that category by any other author is ambiguous and REFUSES the run (nothing posted): a stranger cannot
+// make it skip a lab silently, and a hidden association cannot make it post a duplicate. One in another category is noted.
 // The key is the title: a lab whose headline changes is a new title and is posted again. Skips are not failures.
 // The workflow's concurrency group serialises runs, so a manual run and the schedule never list-then-post at once.
 // --dry-run lists and checks exactly as a real run does and posts nothing: its would-post rows are reported as such.
@@ -166,11 +167,26 @@ export async function postLaunchDiscussions({ drafts, repo, category, dryRun, gr
   if (!repository?.id || !target) throw new Error(`${repo} has no discussion category named ${JSON.stringify(category)}`);
   const all = await listDiscussions(graphql, owner, name);
   const existing = new Map(all.filter(d => d.category?.name === category && trustedAuthor(d)).map(d => [d.title, d]));
-  for (const { body, ...row } of ready) {
+  // Decide every draft before posting any: a same-titled discussion in the target category whose author this job cannot
+  // confirm is ambiguous (a squatter, or one of ours whose association the job token does not see), and an ambiguous
+  // draft refuses the whole run, so it neither skips silently nor posts a duplicate: a person looks.
+  const toPost = [];
+  for (const item of ready) {
+    const { body, ...row } = item;
     const seen = existing.get(row.title);
     if (seen) { out.skipped.push({ ...row, url: seen.url, reason: `a discussion with this title exists in ${category} (#${seen.number})` }); continue; }
-    const squatted = all.filter(d => d.title === row.title).map(d => d.number);
-    if (squatted.length) row.note = `same-titled discussion(s) by an untrusted author or in another category not counted: #${squatted.join(', #')}`;
+    const unconfirmed = all.filter(d => d.title === row.title && d.category?.name === category);
+    if (unconfirmed.length) {
+      out.refused.push({ slug: row.slug, page: row.page, titleSha256: sha256(row.title), bodySha256: row.bodySha256,
+        reasons: [`a same-titled discussion in ${category} by an author this job cannot confirm: ${unconfirmed.map(d => `#${d.number} (${d.authorAssociation ?? 'no association'})`).join(', ')}`] });
+      continue;
+    }
+    const elsewhere = all.filter(d => d.title === row.title).map(d => d.number);
+    if (elsewhere.length) row.note = `same-titled discussion(s) in another category not counted: #${elsewhere.join(', #')}`;
+    toPost.push({ ...row, body });
+  }
+  if (out.refused.length) return out;
+  for (const { body, ...row } of toPost) {
     if (dryRun) { out.wouldPost.push(row); continue; }
     const made = (await graphql(CREATE_MUTATION, { repositoryId: repository.id, categoryId: target.id, title: row.title, body }))?.createDiscussion?.discussion;
     if (!made?.url) throw new Error(`${row.slug}: createDiscussion answered no discussion`);

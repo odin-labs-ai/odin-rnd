@@ -98,15 +98,25 @@ test('dedupe: a draft whose title is already a discussion (on any page of the li
   assert.deepEqual(gql.creates().map(c => c.variables.title), ['Lab 97: Do two jars hold more than one?']);
 });
 
-test('dedupe trusts only the repository\'s people or its own bot, in the target category: a squatted title still posts', async () => {
+test('dedupe trusts only the repository\'s people or its own bot: an unconfirmed same title in the category refuses, another category is noted', async () => {
   const title98 = 'Lab 98: How many pebbles fit in the jar?', title97 = 'Lab 97: Do two jars hold more than one?';
-  const existing = [ours(5, title98, { authorAssociation: 'NONE' }), ours(6, title97, { category: { name: 'General' } }), ours(7, 'x', { authorAssociation: 'NONE', author: { __typename: 'Bot', login: 'github-actions' } })];
-  const gql = mockGraphql({ existing, pageSize: 10 });
+  const squat = [ours(5, title98, { authorAssociation: 'CONTRIBUTOR' }), ours(6, title97, { category: { name: 'General' } })];
+  const gql = mockGraphql({ existing: squat, pageSize: 10 });
   const out = await run(gql, [draft('same-model-harness'), draft('strangers')]);
   assert.deepEqual(out.skipped, []);
-  assert.deepEqual(out.posted.map(p => [p.slug, p.note]), [['same-model-harness', 'same-titled discussion(s) by an untrusted author or in another category not counted: #6'], ['strangers', 'same-titled discussion(s) by an untrusted author or in another category not counted: #5']]);
-  assert.ok(trustedAuthor(existing[2]), 'this workflow\'s own bot is trusted');
+  assert.deepEqual(out.posted, [], 'an ambiguous draft refuses the whole run');
+  assert.equal(gql.creates().length, 0);
+  assert.deepEqual(out.refused.map(r => r.slug), ['strangers']);
+  assert.match(out.refused[0].reasons[0], /#5 \(CONTRIBUTOR\)/);
+  assert.ok(!('title' in out.refused[0]));
+  const gql2 = mockGraphql({ existing: [squat[1]], pageSize: 10 });
+  const out2 = await run(gql2, [draft('same-model-harness')]);
+  assert.deepEqual(out2.posted.map(p => [p.slug, p.note]), [['same-model-harness', 'same-titled discussion(s) in another category not counted: #6']]);
+  const bot = ours(7, 'x', { authorAssociation: 'NONE', author: { __typename: 'Bot', login: 'github-actions' } });
+  assert.ok(trustedAuthor(bot), 'this workflow\'s own bot is trusted');
   assert.ok(!trustedAuthor({ authorAssociation: 'NONE', author: { __typename: 'User', login: 'github-actions' } }), 'a user named like the bot is not');
+  const out3 = await run(mockGraphql({ existing: [{ ...bot, title: title98 }] }), [draft('strangers')]);
+  assert.deepEqual(out3.skipped.map(s => s.slug), ['strangers'], 'a discussion this workflow posted is a skip');
 });
 
 test('refused: a page that does not answer 200 refuses the run and nothing is posted', async () => {
