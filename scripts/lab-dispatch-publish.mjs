@@ -148,6 +148,15 @@ const PATTERNS = [
 // The lab's own repository, the only place a public text may link to.
 const LAB_REPO = '/odin-labs-ai/odin-rnd';
 
+// An Instagram follow link is exactly a profile, written plainly: https://www.instagram.com/<handle>/ with a lowercase
+// handle of letters, digits, "_" and inner single dots, the trailing slash, no query, fragment or percent-encoding, and
+// not one of the site's own one-segment routes. A post, a reel, a dot segment or a tracking parameter is refused.
+const INSTAGRAM_ROUTES = new Set(['p', 'reel', 'reels', 'tv', 'explore', 'accounts', 'direct', 'stories', 'about', 'legal', 'developer', 'web']);
+function isInstagramProfile(url, u) {
+  const handle = /^\/([a-z0-9_](?:[a-z0-9._]{0,28}[a-z0-9_])?)\/$/.exec(u.path)?.[1];
+  return !!handle && !handle.includes('..') && !INSTAGRAM_ROUTES.has(handle) && !u.rest.trim() && url === `https://www.instagram.com/${handle}/`;
+}
+
 /** The URL, parsed: null when it is not one. Its path is percent-decoded, so an escaped dot or slash is seen. */
 function parseUrl(url) {
   try { const u = new URL(url); return { protocol: u.protocol, host: u.hostname, port: u.port, user: u.username || u.password, path: decodeURIComponent(u.pathname), rest: decodeURIComponent(`${u.search} ${u.hash}`) }; }
@@ -186,6 +195,7 @@ export function urlProblems(url, hosts, { templates = false } = {}) {
   const problems = [];
   if (!hosts.includes(u.host) || u.port || u.user) problems.push(`not on an allowed host (${hosts.join(', ')})`);
   else if (u.host === 'github.com' && !isLabLink(url)) problems.push('a GitHub link outside this lab\'s repository');
+  else if (u.host === 'www.instagram.com' && !isInstagramProfile(url, u)) problems.push('an Instagram link that is not a profile (https://www.instagram.com/<handle>/)');
   problems.push(...screenText(`${u.host} ${u.path.replaceAll('/', ' ')}`));
   const query = screenText(u.rest.replace(/[?&=#]/g, ' '));
   problems.push(...(templates ? query.filter(reason => !reason.startsWith('a file path')) : query));

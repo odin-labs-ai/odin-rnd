@@ -127,7 +127,7 @@ test('a follow channel without a page says coming soon and links nowhere; only r
     if (url) assert.match(page, new RegExp(`<a href="${url.replaceAll('.', '\\.')}">${channel} `));
     else assert.match(page, new RegExp(`<li><span class="lab-soon">${channel}</span> <span class="technical">COMING SOON</span></li>`));
   }
-  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://github.com/odin-labs-ai/odin-rnd']);
+  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://www.instagram.com/odinlabsai/']);
 });
 
 test('Labs is in the header of the home, the partner pages and both Labs pages, and in the sitemap', () => {
@@ -167,6 +167,23 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
       [withLink('https://github.com/odin-labs-ai/odin-rnd%2F..%2Fother'), /follow\/0\/url: a GitHub link outside this lab's repository|a file path/],
       [withLink('https://user@www.linkedin.com/company/odin-labs'), /follow\/0\/url: not on an allowed host/],
       [withLink('http://www.linkedin.com/company/odin-labs'), /follow\/0\/url: not an https URL/],
+      [withLink('https://instagram.com/odinlabsai/'), /follow\/0\/url: not on an allowed host/],
+      [withLink('https://www.instagram.com.evil.example/odinlabsai/'), /follow\/0\/url: not on an allowed host/],
+      [withLink('https://www.instagram.com/odinlabsai'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/p/abc123/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/odinlabsai/?igsh=abc'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/OdinLabsAI/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/../'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/./'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/%2e%2e/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/.odin/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/odin./'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/odin..labs/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/p/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/explore/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/odin%6Cabs/'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/odinlabs/#top'), /follow\/0\/url: an Instagram link that is not a profile/],
+      [withLink('https://www.instagram.com/'), /follow\/0\/url: an Instagram link that is not a profile/],
       [withLink('https://www.linkedin.com/company/odin%2Dlabs/config.py'), /follow\/0\/url: a file path/],
       [{ ...good, ask: { ...good.ask, url: `https://github.com/odin-labs-ai/odin-rnd/issues/new?template=ask-${studio}.yml` } }, /ask\/url: a restricted name/],
     ];
@@ -175,7 +192,8 @@ test('a follow or ask link is screened as a URL: allowed hosts only, and no rest
       assert.throws(() => readLab(root), expected, String(expected));
     }
     for (const url of ['https://www.linkedin.com/company/odin-labs-rnd', 'https://x.com/odinlabs', 'https://twitter.com/odinlabs',
-      'https://www.reddit.com/r/odinlabs/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd/discussions']) {
+      'https://www.reddit.com/r/odinlabs/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://github.com/odin-labs-ai/odin-rnd/discussions',
+      'https://www.instagram.com/odinlabsai/', 'https://www.instagram.com/odin_labs.ai/']) {
       writeFileSync(join(root, 'data/labs/agent-space.json'), JSON.stringify(withLink(url)));
       assert.equal(readLab(root).follow[0].url, url);
     }
