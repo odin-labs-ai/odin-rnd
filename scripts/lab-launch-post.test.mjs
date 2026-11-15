@@ -210,7 +210,10 @@ test('the workflow posts only from this repository\'s main, on the schedule or a
   const post = wf.slice(wf.indexOf('\n  post:\n'));
   assert.match(post, /\n    if: github.repository == 'odin-labs-ai\/odin-rnd' && github.ref == 'refs\/heads\/main'\n/);
   assert.match(post, /\n    permissions:\n      contents: read\n      discussions: write\n/);
-  assert.match(post, /POST: \$\{\{ github.event_name == 'schedule' \|\| \(github.event_name == 'workflow_dispatch' && inputs.dry_run == false\) \}\}/);
+  assert.match(post, /POST: \$\{\{ github.event_name == 'schedule' \|\| \(github.event_name == 'workflow_dispatch' && format\('\{0\}', inputs.dry_run\) == 'false'\) \}\}/);
+  // Exactly two triggers: a workflow_call (or any other) would lend this workflow its caller's event and inputs.
+  const on = wf.slice(wf.indexOf('\non:\n') + 5, wf.indexOf('\npermissions:\n'));
+  assert.deepEqual([...on.matchAll(/^  ([a-z_]+):/gm)].map(m => m[1]), ['schedule', 'workflow_dispatch']);
   assert.match(wf, /dry_run:\n        description: [^\n]+\n        type: boolean\n        required: false\n        default: true\n/);
   assert.doesNotMatch(wf, /\n  pull_request|\n  pull_request_target|secrets\./, 'no pull request trigger, no secret');
   assert.match(wf, /\nconcurrency:\n  group: lab-launch-drafts\n  cancel-in-progress: false\n/);

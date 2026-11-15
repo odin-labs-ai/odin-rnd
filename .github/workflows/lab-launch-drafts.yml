@@ -105,9 +105,11 @@ jobs:
       - name: Post the Discussions drafts (schedule posts; a manual run is dry unless dry_run is unticked)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          # Positive flag: only the schedule, or a manual run with dry_run unticked, posts. The event is named on both
-          # arms because GitHub expressions coerce a missing input to false: any other trigger is a dry run.
-          POST: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false) }}
+          # Positive flag: only the schedule, or a manual run with dry_run unticked, posts. The dispatch arm compares the
+          # input as text, because GitHub expressions coerce a missing input (null) to false: an absent dry_run is ''.
+          # This workflow has exactly two triggers, schedule and workflow_dispatch (no workflow_call: a caller would lend
+          # it its own event), and scripts/lab-launch-post.test.mjs pins that.
+          POST: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && format('{0}', inputs.dry_run) == 'false') }}
           DRAFT_DATE: ${{ needs.drafts.outputs.date }}
         run: |
           set -euo pipefail
