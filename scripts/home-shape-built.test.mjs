@@ -18,9 +18,12 @@ import { idOf, openAround } from '../site/assets/home-fold.mjs';
 // hidden, and is refused here until it is named.
 const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
 // Words a visitor sees on the home without opening anything (main, outside every <details>, every hidden station and the
-// dated correction, which is required to stay visible).
+// dated correction and the findings' limit lines, which are required to stay visible).
 // Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
-const VISIBLE_WORDS = 1250;
+// Measured 1,247 on main on 16 November 2026, three under the old bound of 1,250. The plain-language home (mission
+// rnd-site-human PR 1) moved what we found up under the hero in plainer, longer sentences and lists the lab on a page
+// in Go further; the bound moves to 1,350 for that, still with room for an update, not for an unfolded section.
+const VISIBLE_WORDS = 1350;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -108,6 +111,9 @@ test('the home a visitor sees without opening anything is short: under the word 
   // The hero's dated correction is left out of the count by name: #168 requires corrections to stay visible, so they are
   // never folded, and its words are not copy the short home is meant to trim (scripts/home-shape.mjs labelCorrection).
   visible = without(visible, /<div class="factory-correction" role="note">/);
+  // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its
+  // words are not copy the short home may trim (scripts/lab-pages.mjs renderLabProof requires one per finding).
+  visible = without(visible, /<p class="lab-limit">/);
   const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
   const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
   assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);

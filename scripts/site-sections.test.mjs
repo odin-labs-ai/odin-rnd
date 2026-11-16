@@ -76,7 +76,7 @@ test('a note\'s kind names the experiments whose ledger entry links it, from the
 });
 
 test('the section pages are well formed: one header and nav, the right section current, unique ids, links that resolve', () => {
-  for (const [page, html, current] of [[JOURNAL_PAGE, renderJournalIndex(ITEMS), 'Field notes'], [PROJECTS_PAGE, renderProjectsIndex(ITEMS), null]]) {
+  for (const [page, html, current] of [[JOURNAL_PAGE, renderJournalIndex(ITEMS), 'Notes &amp; updates'], [PROJECTS_PAGE, renderProjectsIndex(ITEMS), null]]) {
     assert.equal((html.match(/<header class="site-header[ "]/g) || []).length, 1, page);
     const { start, end } = navSpan(html, page);
     const nav = html.slice(start, end);

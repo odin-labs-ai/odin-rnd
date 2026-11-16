@@ -45,11 +45,11 @@ export const FOLDS = [
 /** The "Go further" destinations: site-relative href, link text and one plain line. The labels match the header's
  *  (scripts/site-header.mjs), so a link reads the same wherever it is. */
 export const FURTHER = [
-  { href: 'one-pager/', label: 'Start here', text: 'The lab on a page: what we do, what we found and how to work with us.' },
-  { href: 'experiments/', label: 'All results', text: 'All our experiments and where each stands, with the data to rerun them.' },
+  { href: 'one-pager/', label: 'Start here', text: 'The lab on a page: what we do and what we found.' },
+  { href: 'experiments/', label: 'All results', text: 'All our experiments, where each stands, and their data.' },
   { href: 'labs/', label: 'Labs', text: 'Our longer pieces of work, each with the record behind it.' },
-  { href: 'journal/', label: 'Notes & updates', text: 'What we set out to test, what happened and what is still open.' },
-  { href: 'find/', label: 'Find', text: 'Search the whole site by topic, by kind or by what came out.' },
+  { href: 'journal/', label: 'Notes & updates', text: 'What we set out to test, what happened, what is still open.' },
+  { href: 'find/', label: 'Find', text: 'Search the site by topic, by kind or by outcome.' },
   { href: 'projects/', label: 'Tools', text: 'Open-source tools you can take apart and build on.' },
 ];
 
