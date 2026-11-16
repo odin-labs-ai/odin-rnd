@@ -8,6 +8,7 @@ import { outcomeTone, readTalkLeak, renderAbout, renderTalkLeak, selfScanProblem
 import { PUBLIC_NAMES, pristineProblems } from './vendor-talk-leak.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
+import { withoutOpening } from './lab-pages.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -15,11 +16,14 @@ import { SYN_REPO, SYN_THEME } from './test-synthetic-names.mjs';
 
 // Lab 09, "Can a talk leak data?" (scripts/lab-talk-leak.mjs). A page about leaks is only worth publishing if it does
 // not leak: counts only, never a term, label, figure or finding; the fiction boxed as fiction; and a self-scan by the
-// same scanner, bound to the very bytes that ship.
+// same scanner, bound to the very bytes this lab renders. The published page is those bytes with the plain opening every
+// lab page gets and its "How we checked" folds (mission rnd-site-human PR 3, scripts/lab-pages.mjs), which the site's
+// leak gate screens with the rest of the site; taking them out gives back the scanned bytes exactly.
 const raw = readFileSync(join('site', TALK_RECORD), 'utf8');
 const record = JSON.parse(raw);
 const pages = renderLabs();
 const page = pages[TALK_TEMPLATE];
+const rendered = withoutOpening(page);
 const main = page.split('<main id="main">')[1].split('</main>')[0];
 const textOf = html => html.replace(/<[^>]+>/g, ' ').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&').replace(/\s+/g, ' ');
 const clone = () => JSON.parse(raw);
@@ -73,15 +77,17 @@ test('the company on stage is boxed as staged fiction, the planted leaks as auth
   for (const text of [raw, main, tile]) assert.ok(!namesRestricted(text), 'the talk\'s client theme is never named');
 });
 
-test('the self-scan stands beside exactly the bytes that ship, found nothing beyond this site\'s own names, and is refused otherwise', () => {
-  const files = [Buffer.from(page), readFileSync(join('site', TALK_RECORD)), readFileSync(join('site', TALK_TILE)), readFileSync(join('site', TALK_TEMPLATE))];
+test('the self-scan stands beside exactly the bytes the lab renders, found nothing beyond this site\'s own names, and is refused otherwise', () => {
+  const files = [Buffer.from(rendered), readFileSync(join('site', TALK_RECORD)), readFileSync(join('site', TALK_TILE)), readFileSync(join('site', TALK_TEMPLATE))];
+  assert.equal(rendered, renderTalkLeak('site').pages[TALK_TEMPLATE], 'the published page, its opening and folds taken out, is the lab\'s own page');
+  assert.ok(page.includes('id="in-short"') && page !== rendered, 'the published page carries the opening');
   assert.deepEqual(selfScanProblems(selfScan, files, record), []);
   assert.deepEqual(selfScan.findings, {});
   assert.equal(selfScan.scanner, record.vendored.commit);
   assert.ok(selfScan.publicNames > 0, 'the public names it set aside are counted, not hidden');
   assert.deepEqual(PUBLIC_NAMES, ['odin-labs-ai', 'odin-labs.ai', 'odin labs', 'odin-labs', 'odin-rnd', 'open-docs', 'open docs'], 'only this site\'s own public names are set aside');
   // A changed byte in any scanned file, a finding, or another scanner refuses it.
-  const edited = [Buffer.from(page.replace('Can a talk leak data?', 'Can a talk leak?')), ...files.slice(1)];
+  const edited = [Buffer.from(rendered.replace('Can a talk leak data?', 'Can a talk leak?')), ...files.slice(1)];
   assert.ok(selfScanProblems(selfScan, edited, record).some(p => /the rendered page has changed since it was scanned/.test(p)));
   assert.ok(selfScanProblems({ ...selfScan, findings: { repo: 1 } }, files, record).some(p => /found something beyond/.test(p)));
   assert.ok(selfScanProblems({ ...selfScan, scanner: 'f'.repeat(40) }, files, record).some(p => /not the scanner at the record's main/.test(p)));
@@ -162,7 +168,7 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [TALK_RECORD, TALK_PIN, TALK_TEMPLATE, TALK_SELF_SCAN, TALK_TILE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readTalkLeak(root).scan.files, 830);
-    assert.equal(renderTalkLeak(root).pages[TALK_TEMPLATE], page, 'a fixture with the same files renders the same page');
+    assert.equal(renderTalkLeak(root).pages[TALK_TEMPLATE], rendered, 'a fixture with the same files renders the same page');
     writeFileSync(join(root, TALK_RECORD), raw.replace('"failed": 0', '"failed": 0 '));
     assert.throws(() => readTalkLeak(root), /record\.sha256: does not pin the sha256/);
     // A re-pinned edit still refuses the page: the self-scan no longer stands beside these bytes.

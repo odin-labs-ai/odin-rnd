@@ -8,6 +8,7 @@ import { LINK_PIN, LINK_RECORD, LINK_TEMPLATE, linkSafetyProblems, readLinkSafet
 import { fixturesOf, LABELS_FILE, parseList } from './vendor-link-safety.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
+import { OPENING_SECTION, withoutOpening } from './lab-pages.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -177,7 +178,8 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [LINK_RECORD, LINK_PIN, LINK_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readLinkSafety(root).run.at, record.run.at);
-    assert.equal(renderLinkSafety(root).pages[LINK_TEMPLATE], page, 'a fixture with the same files renders the same page');
+    // The published page is this page with its plain opening and "How we checked" folds (scripts/lab-pages.mjs).
+    assert.equal(renderLinkSafety(root).pages[LINK_TEMPLATE], withoutOpening(page), 'a fixture with the same files renders the same page');
     writeFileSync(join(root, LINK_RECORD), raw.replace('"failed": 0', '"failed": 0 '));
     assert.throws(() => readLinkSafety(root), /record\.sha256: does not pin the sha256/);
     const changed = raw.replace(record.poison[0].label, 'something else entirely');
@@ -191,8 +193,10 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
 test('"What it is." opens the page as on Lab 05: plain words, then how it works, every number the record\'s, no fixture count', () => {
   const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
   assert.ok(about, 'the page has a What it is section');
-  const hero = main.indexOf('</section>');
-  assert.equal(main.indexOf('<section', hero), main.indexOf('id="about"') - '<section class="company-section company-width" '.length, 'right after the hero');
+  // Only the plain opening (In short, mission rnd-site-human PR 3) sits between the hero and it.
+  const hero = main.indexOf('</section>'), opening = main.slice(main.indexOf('<section', hero)).match(new RegExp(`^${OPENING_SECTION.source}`))?.[0];
+  assert.ok(opening, 'the opening right after the hero');
+  assert.equal(main.indexOf('<section', main.indexOf(opening) + opening.length), main.indexOf('id="about"') - '<section class="company-section company-width" '.length, 'right after the opening');
   assert.ok(main.indexOf('id="about"') < main.indexOf('id="defect"'), 'before the defect');
   assert.match(about, /<figure class="lab-flow">/);
   const t = record.run.tests, text = textOf(about.replace(/<time[^>]*>[^<]*<\/time>/g, ' '));

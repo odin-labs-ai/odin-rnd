@@ -618,6 +618,13 @@ export function unfoldChecks(html) {
   return out;
 }
 
+/** A lab page's plain opening section, as openLabPages() puts it right after the hero. */
+export const OPENING_SECTION = /<section class="company-section company-width lab-opening" id="in-short"[\s\S]*?<\/section>/;
+
+/** openLabPages() undone on one page: its folds' tags and its opening taken out, nothing else. What is left is the page
+ *  as the lab's own generator rendered it from its pinned record, byte for byte (scripts/lab-openings.test.mjs). */
+export const withoutOpening = html => unfoldChecks(html).replace(OPENING_SECTION, '');
+
 /** The glossary entry ids that How we test (methods/index.html under `root`) holds. */
 export function glossaryIds(root = 'site') {
   const page = readFileSync(join(root, 'methods/index.html'), 'utf8');
