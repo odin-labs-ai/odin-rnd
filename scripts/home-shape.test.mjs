@@ -12,7 +12,7 @@ const row = n => `<a class="journal-row" href="journal/${n}.html"><div><h3>Note 
 const heading = (id, title) => `<div class="section-heading"><h2 id="${id}">${title}</h2><p>Intro.</p></div>`;
 const SECTIONS = {
   floor: '<section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title"><h1 id="hero-title">Factory</h1><section class="nested"><p>Station.</p></section></section>',
-  lab: `<section class="lab-launch content-section" id="lab" aria-labelledby="lab-title">${heading('lab-title', 'Measured')}<ol class="proof-strip"><li data-source="x">One</li></ol></section>`,
+  findings: `<section class="lab-launch content-section" id="findings" aria-labelledby="findings-title">${heading('findings-title', 'What we found')}<ol class="proof-strip"><li data-source="x">One</li></ol></section>`,
   'work-with-us': `<section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">${heading('offer-title', 'Work with us')}<p>Offer.</p></section>`,
   'partner-tracks': `<section class="partner-tracks content-section" id="partner-tracks" aria-labelledby="tracks-title">${heading('tracks-title', 'Tracks')}<ol class="track-cards"><li>Track.</li></ol></section>`,
   'agent-space': '<section class="agent-space dark-surface" id="agent-space" aria-labelledby="agent-space-title"><div class="agent-space-copy"><h2 id="agent-space-title">Agent space</h2><div><p>Nested div.</p></div></div><figure class="agent-space-media"><video controls></video></figure></section>',
@@ -25,7 +25,7 @@ const SECTIONS = {
   journal: `<section class="journal content-section" id="journal" aria-labelledby="journal-title">${heading('journal-title', 'Notes')}\n      ${row(1)}\n      ${row(2)}\n      <details class="journal-more"><summary>Show the earlier note</summary>${row(3)}</details>\n    </section>`,
   closing: '<section class="closing"><p>The next good question.</p></section>',
 };
-const SOURCE_ORDER = ['floor', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
+const SOURCE_ORDER = ['floor', 'findings', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
 const page = (order = SOURCE_ORDER, sections = SECTIONS) => `<!doctype html><html><head>\n  <link rel="stylesheet" href="assets/launch.css">\n  <script type="module" src="assets/motion.mjs"></script>\n</head><body><header><nav aria-label="Main navigation"><a href="./#floor">Factory</a></nav></header>\n  <main id="main">\n    ${order.map(k => sections[k]).join('\n    ')}\n  </main>\n</body></html>`;
 const HOME = page();
 const keyOf = open => /\sid="([^"]*)"/.exec(open)?.[1] ?? /\sclass="([^"\s]*)/.exec(open)[1];
@@ -40,18 +40,19 @@ const topOrder = html => {
   return out;
 };
 
-test('the shaped home opens with the factory, the updates, the lab and the offer, then Go further, then the rest in source order', () => {
+test('the shaped home opens with the factory, what we found, the updates and the offer, then Go further, then the rest in source order', () => {
   const out = shapeHome(HOME);
   assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
   assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal']);
-  // The updates feed moves with its two markers, which stay around it.
-  assert.match(out, /<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="lab-launch/);
+  // The updates feed moves with its two markers, which stay around it, right after what we found.
+  assert.match(out, /<section class="lab-launch[^]*?<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
   assert.equal(out.split('<!-- /updates -->').length, 2);
   // The open sections are byte for byte as they were.
-  for (const key of ['floor', 'lab', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
-  // Go further, after the offer, links the five section pages.
+  for (const key of ['floor', 'findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
+  // Go further, after the offer, links the lab on a page and the section pages, with the header's labels.
   const nav = out.slice(out.indexOf('<nav class="home-further'), out.indexOf('</nav>', out.indexOf('<nav class="home-further')));
-  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['find/', 'experiments/', 'labs/', 'journal/', 'projects/']);
+  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['one-pager/', 'experiments/', 'labs/', 'journal/', 'find/', 'projects/']);
+  assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Start here', 'All results', 'Labs', 'Notes &amp; updates', 'Find', 'Tools']);
   assert.match(nav, new RegExp(`aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Go further</h2>`));
   assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="work-with-us"') && out.indexOf('<nav class="home-further') < out.indexOf('id="partner-tracks"'));
   // Only the home links its stylesheet and opener, once each, after the home's own.
@@ -91,7 +92,7 @@ test('the shaped home refuses a page it does not expect', () => {
   const without = key => page(SOURCE_ORDER.filter(k => k !== key));
   const cases = [
     [shapeHome(HOME), /already shaped/],
-    [without('lab'), /no section "lab" \(the proof strip\)/],
+    [without('findings'), /no section "findings" \(the proof strip\)/],
     [without('journal'), /no section "journal"/],
     [without('closing'), /no section "closing"/],
     [page([...SOURCE_ORDER, 'projects']), /section "projects" appears twice/],

@@ -132,6 +132,16 @@
 
 /* Home hero: the premise carries two links side by side. */
 .factory-premise a+a{margin-left:22px}
+/* Plain-language home (2026-11-16): the premise leads with one primary action, "See what we found", then Work with us;
+   both are 44px targets. The primary keeps white on the brand green, its focus ring from the dark surface. */
+.factory-premise a{min-height:44px;align-items:center;vertical-align:middle}
+.factory-premise a:not(.button){display:inline-flex}
+.factory-premise a.premise-primary{display:inline-flex;color:#fff;text-decoration:none;font-weight:600}
+.factory-premise a.premise-primary:hover{color:#fff}
+/* A finding's limit sits between the claim and its dated source line, in words, never by colour alone. */
+.lab-limit{font-size:15px;line-height:1.5;color:var(--steel)}
+.lab-limit strong{color:var(--paper);font-weight:600}
+.proof-strip>li>.lab-limit{margin:0}
 
 /* Home field notes: the latest five open, the rest folded behind one control (build.mjs foldJournal). */
 .journal-more{border-top:1px solid var(--rule)}

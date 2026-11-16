@@ -1,9 +1,11 @@
 // A shorter home page (mission rnd-site-ux-nav-1101, wave 5). The built home ran to about six thousand words in thirteen
 // sections; a visitor met the factory, the latest updates, the lab's measured results and the offer only after scrolling
 // past most of the rest. This pass reshapes the finished dist/index.html only, after foldJournal and every qualify step:
-//   - the factory hero (#floor), the latest updates (#updates), the lab's results (#lab) and the offer (#work-with-us)
-//     stay open, in that order;
-//   - a "Go further" navigation follows them, to Find, the experiments, the labs, the field notes and the tools;
+//   - the factory hero (#floor), what we've found (#findings, the lab's results), the latest updates (#updates) and the
+//     offer (#work-with-us) stay open, in that order (plain-language home, 2026-11-16: the findings moved up, under the
+//     hero's "See what we found" button);
+//   - a "Go further" navigation follows them, to the lab on a page, the experiments, the labs, the notes, Find and the
+//     tools;
 //   - every other section follows in its source order, its <section> (and id) and its heading block visible, the rest
 //     of its content in a closed <details class="home-fold">. Nothing is removed: the folded content stays on the page
 //     byte for byte, so the experiment ledger, the field-note rows and every reader of the built home find what they
@@ -25,7 +27,7 @@ export const HOME_JS = 'assets/home-fold.mjs';
 export const FURTHER_ID = 'home-further-title';
 
 /** The sections that stay open, in the order they are shown. */
-export const OPEN_ORDER = ['floor', 'updates', 'lab', 'work-with-us'];
+export const OPEN_ORDER = ['floor', 'findings', 'updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and
  *  the words of the fold's summary. */
@@ -40,17 +42,19 @@ export const FOLDS = [
   { key: 'journal', head: 'section-heading', summary: 'Show the latest field notes' },
 ];
 
-/** The "Go further" destinations: site-relative href, link text and one plain line. */
+/** The "Go further" destinations: site-relative href, link text and one plain line. The labels match the header's
+ *  (scripts/site-header.mjs), so a link reads the same wherever it is. */
 export const FURTHER = [
-  { href: 'find/', label: 'Find', text: 'Search the whole site by topic, by kind or by what came out.' },
-  { href: 'experiments/', label: 'Experiments', text: 'Rerun our workbenches yourself, and see where each experiment stands.' },
+  { href: 'one-pager/', label: 'Start here', text: 'The lab on a page: what we do, what we found and how to work with us.' },
+  { href: 'experiments/', label: 'All results', text: 'All our experiments and where each stands, with the data to rerun them.' },
   { href: 'labs/', label: 'Labs', text: 'Our longer pieces of work, each with the record behind it.' },
-  { href: 'journal/', label: 'Field notes', text: 'What we set out to test, what happened and what is still open.' },
+  { href: 'journal/', label: 'Notes & updates', text: 'What we set out to test, what happened and what is still open.' },
+  { href: 'find/', label: 'Find', text: 'Search the whole site by topic, by kind or by what came out.' },
   { href: 'projects/', label: 'Tools', text: 'Open-source tools you can take apart and build on.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
-const EXPECTED = ['floor', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
+const EXPECTED = ['floor', 'findings', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
 const CLOSING = 'closing';
 // Every expected section is shown exactly once: open, folded or the closing line.
 if (JSON.stringify([...OPEN_ORDER, ...FOLDS.map(f => f.key), CLOSING].sort()) !== JSON.stringify([...EXPECTED].sort())) throw new Error('Home shape: OPEN_ORDER, FOLDS and the closing line do not cover the expected sections');
@@ -156,7 +160,7 @@ export function shapeHome(html) {
     if (byKey.has(s.key)) throw new Error(`Home shape: section "${s.key}" appears twice`);
     byKey.set(s.key, s);
   }
-  for (const key of EXPECTED) if (!byKey.has(key)) throw new Error(`Home shape: the home has no section "${key}"${key === 'lab' ? ' (the proof strip)' : ''}`);
+  for (const key of EXPECTED) if (!byKey.has(key)) throw new Error(`Home shape: the home has no section "${key}"${key === 'findings' ? ' (the proof strip)' : ''}`);
   // Only whitespace, and the updates feed's two markers around it, may sit between the sections.
   const first = sections[0], last = sections.at(-1);
   if (html.slice(from, first.start).trim() || html.slice(last.end, to).trim()) throw new Error('Home shape: content in <main> outside its sections');

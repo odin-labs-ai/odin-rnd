@@ -54,7 +54,7 @@ const home = readFileSync(join(dist, 'index.html'), 'utf8');
 test('the built home is shaped: four open sections, Go further, eight closed folds, its stylesheet and opener', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'floor, updates, lab, work with us, in that order');
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'floor, findings, updates, work with us, in that order');
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1), 'Go further follows the offer');
   assert.equal((main.match(/<details class="home-fold">/g) || []).length, FOLDS.length);
   for (const { summary } of FOLDS) assert.ok(main.includes(`<summary>${summary}<span aria-hidden="true">+</span></summary>`), summary);
@@ -93,7 +93,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
   assert.ok(links > MIN_HOME_LINKS, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
   assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
-  for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
+  for (const id of ['floor', 'findings', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
     assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
     const fold = home.indexOf('<details class="home-fold">', ids.get(id));
     assert.match(home.slice(ids.get(id), fold < 0 ? undefined : fold), /<h[12] id="[^"]+">/, `#${id} shows its heading before any fold`);
@@ -145,7 +145,7 @@ test('the opener, run on the built home, opens every fold around each named targ
     assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
     assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
   }
-  for (const id of ['journal', 'experiments', 'lab']) {
+  for (const id of ['journal', 'experiments', 'findings']) {
     const { folds, document } = domAround(home, id);
     assert.equal(folds.length, 0, `#${id} is outside every fold`);
     assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
