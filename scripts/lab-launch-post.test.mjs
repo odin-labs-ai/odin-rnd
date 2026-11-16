@@ -205,12 +205,14 @@ test('fetchPage asks for no redirect and takes only a 200; tokenGraphql throws w
   assert.deepEqual(JSON.parse(last.init.body), { query: CREATE_MUTATION, variables: { title: secret, body: secret } });
 });
 
-test('the workflow posts only from this repository\'s main, on the schedule or an unticked manual run', () => {
+test('the workflow posts only from this repository\'s main, on an unticked manual run, never on the schedule', () => {
   const wf = readFileSync(join(here, '..', '.github/workflows/lab-launch-drafts.yml'), 'utf8');
   const post = wf.slice(wf.indexOf('\n  post:\n'));
-  assert.match(post, /\n    if: github.repository == 'odin-labs-ai\/odin-rnd' && github.ref == 'refs\/heads\/main'\n/);
+  assert.match(post, /\n    if: github.repository == 'odin-labs-ai\/odin-rnd' && github.ref == 'refs\/heads\/main' && github.event_name == 'workflow_dispatch'\n/);
   assert.match(post, /\n    permissions:\n      contents: read\n      discussions: write\n/);
-  assert.match(post, /POST: \$\{\{ github.event_name == 'schedule' \|\| \(github.event_name == 'workflow_dispatch' && format\('\{0\}', inputs.dry_run\) == 'false'\) \}\}/);
+  assert.match(post, /POST: \$\{\{ github.event_name == 'workflow_dispatch' && format\('\{0\}', inputs.dry_run\) == 'false' \}\}/);
+  // Rule 36 Guard 2: a public post needs a person's choice on a read body. The schedule only drafts.
+  assert.doesNotMatch(post, /event_name == 'schedule'/, 'the schedule must never reach the post step');
   // Exactly two triggers: a workflow_call (or any other) would lend this workflow its caller's event and inputs.
   const on = wf.slice(wf.indexOf('\non:\n') + 5, wf.indexOf('\npermissions:\n'));
   assert.deepEqual([...on.matchAll(/^  ([a-z_]+):/gm)].map(m => m[1]), ['schedule', 'workflow_dispatch']);

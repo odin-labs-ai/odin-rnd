@@ -11,8 +11,11 @@
 # main: never on a fork, never for a pull request (this workflow has no pull_request trigger, and the job checks the
 # repository and ref). Before posting it re-reads each page (200, no redirect), re-checks that every line is the page's
 # own, re-runs the generator's text screen, and skips a draft whose title is already a discussion. Any refusal posts
-# nothing. The schedule posts; a manual run is a dry run unless dry_run is unticked. Its audit (posted, skipped,
-# refused: title, address, body sha256, never the body) is the step summary and an artifact.
+# nothing. The schedule never posts: it only drafts. A Discussions post is a public post, and rule 36 (Public-Channel
+# Posting, Guard 2) allows one only after a person has read the exact body and chosen to post it; a schedule is not that
+# choice. So the post job runs only for a manual run, which is a dry run unless dry_run is unticked: the person who
+# unticks it, after reading the drafts artifact, is the confirmation. Its audit (posted, skipped, refused: title,
+# address, body sha256, never the body) is the step summary and an artifact.
 #
 # The window is the seven days before the run, matching the weekly schedule. A manual run can name labs instead
 # (comma-separated catalogue slugs) or start the window on another date.
@@ -84,8 +87,8 @@ jobs:
 
   post:
     needs: drafts
-    # Only this repository, only main: a fork's schedule or a run on another branch never posts.
-    if: github.repository == 'odin-labs-ai/odin-rnd' && github.ref == 'refs/heads/main'
+    # Only this repository, only main, only a manual run: a fork, another branch or the schedule never posts.
+    if: github.repository == 'odin-labs-ai/odin-rnd' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -102,14 +105,14 @@ jobs:
         with:
           name: lab-launch-drafts-${{ needs.drafts.outputs.date }}
           path: launch-drafts/
-      - name: Post the Discussions drafts (schedule posts; a manual run is dry unless dry_run is unticked)
+      - name: Post the Discussions drafts (manual runs only; dry unless dry_run is unticked)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          # Positive flag: only the schedule, or a manual run with dry_run unticked, posts. The dispatch arm compares the
-          # input as text, because GitHub expressions coerce a missing input (null) to false: an absent dry_run is ''.
+          # Positive flag: only a manual run with dry_run unticked posts; the schedule never does. The input is compared
+          # as text, because GitHub expressions coerce a missing input (null) to false: an absent dry_run is ''.
           # This workflow has exactly two triggers, schedule and workflow_dispatch (no workflow_call: a caller would lend
           # it its own event), and scripts/lab-launch-post.test.mjs pins that.
-          POST: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && format('{0}', inputs.dry_run) == 'false') }}
+          POST: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.dry_run) == 'false' }}
           DRAFT_DATE: ${{ needs.drafts.outputs.date }}
         run: |
           set -euo pipefail
