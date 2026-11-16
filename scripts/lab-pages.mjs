@@ -11,6 +11,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
+import { CHROME_WITHOUT_ITEM } from './site-chrome.mjs';
+import { bannedIn, jargon, plainBanned } from './plain-words.mjs';
 
 export const PAGES = {
   'provider-economics': { marker: '<!--PROVIDER_ECONOMICS-->', config: 'data/provider-economics.json' },
@@ -426,6 +428,260 @@ export function renderLabPages({ root = 'site', read = siteReader(root), weeks =
     const body = page === 'evidence' ? renderEvidence(read) : page === 'providers' ? renderPartners(read) : page === 'provider-brief' ? renderProviderBrief(read) : page === 'one-pager' ? renderLabProof(read) : renderProviderEconomics(read, weeks);
     out[page] = template.replace(marker, body);
     if (/<!--[A-Z_]+-->/.test(out[page])) throw new Error(`Unresolved content marker in ${page}`);
+  }
+  return out;
+}
+
+/*
+ * Lab page openings (mission rnd-site-human PR 3, 2026-11-16; the founder found the site "too technical / jargon" and
+ * "hard to navigate"; PLAN A4). scripts/labs.mjs runs openLabPages() over the lab pages it renders (scripts/build.mjs is
+ * pinned by the witness records, so it is not changed), so every lab page opens the same way, right after its hero:
+ * "In short" (two plain sentences), "What we found", "Why it matters" and a one-line "Limit", then the existing detail,
+ * unchanged. The words come from site/data/lab-openings.json; nothing rendered is committed.
+ *
+ * Where each word and number comes from (fail closed, every reason a build stop):
+ *   - a plain string: words only, with no digit and no number word (statesNumber), and none of the plan's banned lab
+ *     words (plainBanned, scripts/plain-words.mjs);
+ *   - { "quote": "…" }: a passage of the same page's own text, verbatim. The lab's generator rendered that text from its
+ *     pinned record, so a number in a quote is the record's number as the page already states it; a quote the page no
+ *     longer holds (the record changed) stops the build;
+ *   - { "value": { "source", "format" } }: a number read from a measured experiment record and linked to it (num());
+ *   - { "window": { "from", "to" } }: dates read from a record, as the proof strip shows them.
+ * A `glossary` map links the first use of a phrase in the plain words to its entry on How we test (methods/#glossary-
+ * <entry>, the map of PR 2); a phrase that is not used, or an entry the glossary does not hold, stops the build.
+ * A `pairs` list links a lab's written plan to its result; the build checks that both are built, that a plan which is a
+ * page links its result, and that the result links back to its plan.
+ *
+ * The same pass folds the record's identifiers out of the reading line, verbatim: each "Check it yourself" section's
+ * text, every source line that cites a commit, a sha256 or the hash disclaimer, the latest-run provenance blocks, the
+ * bench's source lines and the re-run commands go into a closed native <details> titled "How we checked". Nothing is
+ * reworded or removed: taking the folds' own tags out gives back the page byte for byte (unfoldChecks).
+ */
+export const OPENINGS_CONFIG = 'data/lab-openings.json';
+/** The parts every opening shows, in this order. */
+export const OPENING_PARTS = ['In short', 'What we found', 'Why it matters', 'Limit'];
+export const CHECKED_SUMMARY = 'How we checked';
+export const CHECKED_OPEN = `<details class="method-details lab-checked"><summary>${CHECKED_SUMMARY} <span aria-hidden="true">+</span></summary>`;
+const CHECKED_CLOSE = '</details>';
+
+/** The built lab pages that are pages about the labs, not labs (site-chrome's CHROME_WITHOUT_ITEM): no opening. */
+export const NOT_A_LAB = [...CHROME_WITHOUT_ITEM.keys()].filter(p => /^labs\/[^/]+\/index\.html$/.test(p));
+
+const BLOCK_TAGS = 'p|li|ul|ol|dl|dt|dd|div|section|article|header|footer|aside|nav|main|h[1-6]|table|thead|tbody|tfoot|tr|td|th|caption|figure|figcaption|details|summary|blockquote|pre|br|hr';
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const decodeRefs = t => t.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, r) => (r[0] === '#' ? String.fromCodePoint(/^#x/i.test(r) ? parseInt(r.slice(2), 16) : Number(r.slice(1))) : NAMED[r.toLowerCase()] ?? m));
+
+/** The text a reader sees in an HTML fragment: block tags break words, inline tags do not; scripts, styles and drawings out. */
+export function blockText(html) {
+  return decodeRefs(String(html)
+    .replace(/<(script|style|svg|template)\b[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(new RegExp(`</?(?:${BLOCK_TAGS})\\b[^>]*>`, 'gi'), ' ')
+    .replace(/<[^>]*>/g, ''))
+    .replace(/\s+/g, ' ').trim();
+}
+
+/** The end (index after its close tag) of the element whose open tag starts at `at`, nesting counted. */
+export function elementEnd(html, at) {
+  const name = /^<([a-z][a-z0-9]*)/i.exec(html.slice(at))?.[1];
+  if (!name) throw new Error(`no element at ${at}`);
+  const tags = new RegExp(`<(/?)${name}\\b[^>]*>`, 'gi');
+  tags.lastIndex = at;
+  let depth = 0;
+  for (let m; (m = tags.exec(html));) { depth += m[1] ? -1 : 1; if (depth === 0) return m.index + m[0].length; }
+  throw new Error(`unclosed <${name}> at ${at}`);
+}
+
+/** [start, end] of the page's hero section (the first <section class="company-hero…">). */
+function heroSpan(html, label) {
+  const at = html.search(/<section class="company-hero\b/);
+  if (at < 0) throw new Error(`Lab opening: ${label} has no hero section`);
+  return [at, elementEnd(html, at)];
+}
+
+/** One part of an opening (a string, a segment, or a list of segments) as HTML; `ctx` carries the page and the glossary. */
+function renderSegments(read, part, ctx, where) {
+  const segments = Array.isArray(part) ? part : [part];
+  if (!segments.length) throw new Error(`${where}: empty`);
+  // The first use, across the whole opening, of each glossary phrase not linked yet. Only a link is added: the words,
+  // a quote's included, stay as they are.
+  const link = text => {
+    for (const [phrase, entry] of [...ctx.glossary]) {
+      const words = escape(phrase);
+      const m = new RegExp(`(?<![\\w-])${words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).exec(text);
+      if (!m) continue;
+      text = `${text.slice(0, m.index)}\u0000${ctx.links.length}\u0000${text.slice(m.index + words.length)}`;
+      ctx.links.push(`<a class="glossary-link" href="${ctx.up}methods/#glossary-${entry}">${words}</a>`);
+      ctx.glossary.delete(phrase);
+    }
+    return text;
+  };
+  return segments.map((seg, i) => {
+    const at = `${where}[${i}]`;
+    if (typeof seg === 'string') {
+      if (!seg) throw new Error(`${at}: empty words`);
+      if (statesNumber(seg)) throw new Error(`${at}: plain words state a number (a digit or a number word); quote the page or read the record`);
+      return link(escape(seg));
+    }
+    if (seg && typeof seg.quote === 'string') {
+      if (!seg.quote.trim()) throw new Error(`${at}: empty quote`);
+      if (!ctx.pageText.includes(seg.quote)) throw new Error(`${at}: the page no longer says "${seg.quote}" (a quote must be the page's own words, verbatim)`);
+      return link(escape(seg.quote));
+    }
+    if (seg?.value) return num(read, seg.value.source, seg.value.format, ctx.up);
+    if (seg?.window) return claimWindow(read, seg.window).replace(/^Measured /, '').replace(/\.$/, '');
+    throw new Error(`${at}: not words, a quote, a value or a window`);
+  }).join('').replace(/\u0000(\d+)\u0000/g, (_, n) => ctx.links[n]);
+}
+
+/** The opening section for one lab page. `pageText` is the page's own text, before the opening, for the quotes. */
+export function renderOpening(read, lab, opening, { pageText, up = '../../', glossaryIds = null } = {}) {
+  const where = `${OPENINGS_CONFIG} ${lab}`;
+  for (const key of Object.keys(opening)) if (!['short', 'found', 'why', 'limit', 'glossary', 'pairs'].includes(key)) throw new Error(`${where}: unknown field '${key}'`);
+  for (const key of ['short', 'found', 'why', 'limit']) if (opening[key] === undefined) throw new Error(`${where}: no '${key}'`);
+  if (!Array.isArray(opening.found) || !opening.found.length || opening.found.length > 3) throw new Error(`${where}: 'found' holds one to three findings`);
+  const glossary = new Map(Object.entries(opening.glossary ?? {}));
+  for (const [phrase, entry] of glossary) {
+    if (!phrase.trim() || statesNumber(phrase) || /[{}]/.test(phrase)) throw new Error(`${where}: glossary phrase '${phrase}' must be words, with no digit or number word`);
+    if (typeof entry !== 'string' || !GLOSSARY_ENTRY.test(entry)) throw new Error(`${where}: glossary entry '${entry}' is not a slug`);
+    if (glossaryIds && !glossaryIds.has(entry)) throw new Error(`${where}: glossary entry '${entry}' is not on How we test (methods/#glossary-${entry})`);
+  }
+  const ctx = { pageText, up, glossary, links: [] };
+  const short = renderSegments(read, opening.short, ctx, `${where} short`);
+  const found = opening.found.map((f, i) => `<li>${renderSegments(read, f, ctx, `${where} found[${i}]`)}</li>`).join('');
+  const why = renderSegments(read, opening.why, ctx, `${where} why`);
+  const limit = renderSegments(read, opening.limit, ctx, `${where} limit`);
+  if (ctx.glossary.size) throw new Error(`${where}: glossary ${[...ctx.glossary.keys()].map(p => `'${p}'`).join(', ')} not used in the plain words`);
+  const sentences = blockText(short).split(/(?<=[.?!])\s+(?=[A-Z])/).filter(Boolean);
+  if (sentences.length !== 2) throw new Error(`${where}: "In short" is two sentences, not ${sentences.length}`);
+  const pairs = (opening.pairs ?? []).map((p, i) => {
+    if (!p?.plan?.href || !p?.plan?.label || !p?.result?.href || !p?.result?.label) throw new Error(`${where}: pairs[${i}] needs a plan and a result, each with a label and an href`);
+    for (const x of [p.plan, p.result]) if (statesNumber(x.label.replace(/\bEXP \d{3}\b/g, ''))) throw new Error(`${where}: pairs[${i}] label '${x.label}' states a number`);
+    return `<li><a href="${up}${escape(p.plan.href)}">${escape(p.plan.label)}</a> · <a href="${up}${escape(p.result.href)}">${escape(p.result.label)}</a></li>`;
+  });
+  const banned = bannedIn(blockText(`${short} ${found} ${why} ${limit}`), [...jargon, ...plainBanned]);
+  if (banned.length) throw new Error(`${where}: the opening uses a banned lab word:\n  ${banned.join('\n  ')}`);
+  return `<section class="company-section company-width lab-opening" id="in-short" aria-labelledby="in-short-title"><div class="company-section-heading"><h2 id="in-short-title">In short.</h2></div><div class="company-prose">`
+    + `<p class="lab-opening-short">${short}</p>`
+    + `<h3 class="lab-opening-head" id="opening-found">What we found</h3><ul class="lab-opening-found">${found}</ul>`
+    + `<h3 class="lab-opening-head" id="opening-why">Why it matters</h3><p class="lab-opening-why">${why}</p>`
+    + `<p class="lab-limit lab-opening-limit"><strong>Limit:</strong> ${limit}</p>`
+    + (pairs.length ? `<p class="lab-opening-head">The plan, written before the run, and its result</p><ul class="lab-opening-pairs">${pairs.join('')}</ul>` : '')
+    + `<p class="lab-opening-more">The detail follows. Lab words link to <a href="${up}methods/#glossary">what they mean</a>, and the record’s identifiers sit under “${CHECKED_SUMMARY}”.</p>`
+    + '</div></section>';
+}
+
+// What the fold takes out of the reading line (see the header): every element a match opens, whole.
+const HASHY = /\b[0-9a-f]{12,64}\b|\bsha-?256\b|\bcommit [0-9a-f]{7,}\b|independent(?:ly)? validat|matching (?:record )?hash/i;
+const FOLD_TARGETS = [
+  { open: /<p class="lab-source(?: [^"]*)?"[^>]*>/g, when: html => HASHY.test(blockText(html)) },
+  { open: /<div class="lab-provenance"[^>]*>/g },
+  { open: /<p class="bench-source[^"]*"[^>]*>/g },
+  { open: /<div class="lab-rerun-kit"[^>]*>/g },
+  // A list in which every item cites a full digest (a file's sha256, a model's digest): the list goes, its heading stays.
+  { open: /<ul\b[^>]*>/g, when: html => { const items = html.match(/<li\b[\s\S]*?<\/li>/g) ?? []; return items.length > 0 && items.every(li => /\b[0-9a-f]{40,64}\b/.test(blockText(li))); } },
+];
+
+/** The lab page `html` with its record identifiers folded under "How we checked" (see the header). Idempotent. */
+export function foldChecks(html, label = 'page') {
+  if (html.includes(CHECKED_OPEN)) return html;
+  const ranges = [];
+  // A "Check it yourself" section keeps its heading in view; its text goes into one fold.
+  for (const m of html.matchAll(/<section\b[^>]*\bid="check"[^>]*>/g)) {
+    const end = elementEnd(html, m.index);
+    const prose = html.slice(m.index, end).search(/<div class="company-prose"/);
+    if (prose < 0) throw new Error(`How we checked: ${label}'s Check it yourself section has no text block`);
+    ranges.push([m.index + prose, elementEnd(html, m.index + prose)]);
+  }
+  for (const t of FOLD_TARGETS) for (const m of html.matchAll(t.open)) {
+    const end = elementEnd(html, m.index);
+    if (!t.when || t.when(html.slice(m.index, end))) ranges.push([m.index, end]);
+  }
+  // Inside another fold, one of the page's own <details>, or the hero: left as it is.
+  const details = [...html.matchAll(/<details\b/g)].map(m => [m.index, elementEnd(html, m.index)]);
+  const hero = html.search(/<section class="company-hero\b/) >= 0 ? [heroSpan(html, label)] : [];
+  const inside = (r, list) => list.some(o => o !== r && o[0] <= r[0] && r[1] <= o[1]);
+  const sorted = ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  const keep = sorted.filter((r, i) => !inside(r, sorted.slice(0, i)) && !inside(r, details) && !inside(r, hero));
+  let out = html;
+  for (const [start, end] of keep.reverse()) out = `${out.slice(0, start)}${CHECKED_OPEN}${out.slice(start, end)}${CHECKED_CLOSE}${out.slice(end)}`;
+  return out;
+}
+
+/** foldChecks undone: the fold tags taken out, nothing else. Used to show that a fold keeps its text byte for byte. */
+export function unfoldChecks(html) {
+  let out = html, at;
+  while ((at = out.indexOf(CHECKED_OPEN)) >= 0) {
+    const end = elementEnd(out, at);
+    out = `${out.slice(0, at)}${out.slice(at + CHECKED_OPEN.length, end - CHECKED_CLOSE.length)}${out.slice(end)}`;
+  }
+  return out;
+}
+
+/** A lab page's plain opening section, as openLabPages() puts it right after the hero. */
+export const OPENING_SECTION = /<section class="company-section company-width lab-opening" id="in-short"[\s\S]*?<\/section>/;
+
+/** openLabPages() undone on one page: its folds' tags and its opening taken out, nothing else. What is left is the page
+ *  as the lab's own generator rendered it from its pinned record, byte for byte (scripts/lab-openings.test.mjs). */
+export const withoutOpening = html => unfoldChecks(html).replace(OPENING_SECTION, '');
+
+/** The glossary entry ids that How we test (methods/index.html under `root`) holds. */
+export function glossaryIds(root = 'site') {
+  const page = readFileSync(join(root, 'methods/index.html'), 'utf8');
+  return new Set([...page.matchAll(/<div id="glossary-([a-z0-9-]+)">/g)].map(m => m[1]));
+}
+
+/** `href` from the page at dist-relative `rel`, as a dist-relative file path (a folder link to its index.html). */
+export function resolveHref(rel, href) {
+  const parts = rel.split('/').slice(0, -1);
+  for (const seg of href.split('/')) { if (seg === '..') parts.pop(); else if (seg && seg !== '.') parts.push(seg); }
+  const out = parts.join('/');
+  return href.endsWith('/') || href === '' ? `${out}${out ? '/' : ''}index.html` : out;
+}
+const GITHUB_BLOB = 'https://github.com/odin-labs-ai/odin-rnd/blob/main/';
+
+/** Whether the page `html` at dist-relative `rel` links `target`: locally, or (a record) as its experiment file on GitHub. */
+export function pageLinks(html, rel, target) {
+  const local = [...html.matchAll(/\bhref="([^"#?]*)(?:[?#][^"]*)?"/g)].map(m => decodeRefs(m[1])).filter(h => h && !/^[a-z][a-z0-9+.-]*:/i.test(h)).map(h => resolveHref(rel, h));
+  if (local.includes(target)) return true;
+  const exp = /^data\/([a-z0-9-]+)\/(preregistration|results)\.json$/.exec(target);
+  return Boolean(exp) && html.includes(`href="${GITHUB_BLOB}experiments/${exp[1]}/${exp[2]}.json"`);
+}
+
+/**
+ * The rendered lab pages (scripts/labs.mjs renderLabs, keyed by their dist/ path) with every lab page's opening and
+ * folds. A lab page with no opening in the config, an opening for a lab page that is not rendered, or a plan and result
+ * that are not published under `root` or do not link each other stops the build. Pages about the labs (NOT_A_LAB) and
+ * every other file pass through unchanged. A root without the config (a test fixture) is returned as it is, unless
+ * `required` (the published site).
+ */
+export function openLabPages(pages, { root = 'site', read = siteReader(root), required = false } = {}) {
+  if (!existsSync(join(root, OPENINGS_CONFIG))) {
+    if (required) throw new Error(`site/${OPENINGS_CONFIG} is required on the published site: every lab page opens with it`);
+    return pages;
+  }
+  const config = read(OPENINGS_CONFIG);
+  if (!config?.labs || typeof config.labs !== 'object') throw new Error(`site/${OPENINGS_CONFIG}: no labs`);
+  const ids = glossaryIds(root);
+  const rendered = Object.keys(pages).map(p => /^labs\/([^/]+)\/index\.html$/.exec(p)?.[1]).filter(Boolean)
+    .filter(lab => !NOT_A_LAB.includes(`labs/${lab}/index.html`)).sort();
+  const configured = Object.keys(config.labs).sort();
+  const missing = rendered.filter(l => !configured.includes(l)), extra = configured.filter(l => !rendered.includes(l));
+  if (missing.length) throw new Error(`site/${OPENINGS_CONFIG}: no opening for ${missing.map(l => `labs/${l}/`).join(', ')}`);
+  if (extra.length && required) throw new Error(`site/${OPENINGS_CONFIG}: an opening for a lab page that is not rendered: ${extra.join(', ')}`);
+  const out = { ...pages };
+  for (const lab of rendered) {
+    const rel = `labs/${lab}/index.html`, source = pages[rel];
+    if (source.includes('id="in-short"')) throw new Error(`Lab opening: ${rel} already has an opening`);
+    const [, heroEnd] = heroSpan(source, rel);
+    const main = source.slice(source.indexOf('<main'), source.indexOf('</main>'));
+    const opening = renderOpening(read, lab, config.labs[lab], { pageText: blockText(main), glossaryIds: ids });
+    for (const p of config.labs[lab].pairs ?? []) {
+      for (const href of [p.plan.href, p.result.href]) if (!existsSync(join(root, href))) throw new Error(`Lab opening: ${rel} links ${href}, which is not published`);
+      if (p.plan.href.endsWith('.html') && !pageLinks(readFileSync(join(root, p.plan.href), 'utf8'), p.plan.href, p.result.href)) throw new Error(`Lab opening: the plan ${p.plan.href} does not link its result ${p.result.href}`);
+      if (!pageLinks(readFileSync(join(root, p.result.href), 'utf8'), p.result.href, p.plan.href)) throw new Error(`Lab opening: the result ${p.result.href} does not link back to its plan ${p.plan.href}`);
+    }
+    out[rel] = foldChecks(source.slice(0, heroEnd) + opening + source.slice(heroEnd), rel);
   }
   return out;
 }

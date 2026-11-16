@@ -9,6 +9,7 @@ import { consensus, RED_PIN, RED_RECORD, RED_TEMPLATE, readRedBuild, recount, re
 import { anonymous } from './vendor-red-build.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabPages, renderLabs } from './labs.mjs';
+import { openLabPages, withoutOpening } from './lab-pages.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -174,14 +175,16 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
     for (const file of [RED_RECORD, RED_PIN, RED_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readRedBuild(root).heldOut.score.cases, 9);
     // The copy renders exactly as the site's own record does, and, put through the same Labs assembly (which adds the
-    // runs section and its links when the record holds runs), gives exactly the published page.
+    // runs section and its links when the record holds runs, then the plain opening and its folds), gives exactly the
+    // published page.
     const fixture = renderRedBuild(root).pages[RED_TEMPLATE];
     assert.equal(fixture, renderRedBuild('site').pages[RED_TEMPLATE], 'a fixture with the same files renders the same page');
-    assert.equal(withLabRuns({ ...renderLabPages('site'), [RED_TEMPLATE]: fixture }, 'site')[RED_TEMPLATE], page, 'and assembles into the published page');
-    // Independently of that assembly: the published page's main is the fixture's main, unchanged, followed by at most
-    // the runs section the record's runs give (renderLabRunsSection), and nothing else.
+    assert.equal(openLabPages(withLabRuns({ ...renderLabPages('site'), [RED_TEMPLATE]: fixture }, 'site'), { root: 'site' })[RED_TEMPLATE], page, 'and assembles into the published page');
+    // Independently of that assembly: the published page, its opening and folds taken out (scripts/lab-pages.mjs), has
+    // as its main the fixture's main, unchanged, followed by at most the runs section the record's runs give
+    // (renderLabRunsSection), and nothing else.
     const mainOf = html => html.split('<main id="main">')[1].split('</main>')[0];
-    const pub = mainOf(page), own = mainOf(fixture);
+    const pub = mainOf(withoutOpening(page)), own = mainOf(fixture);
     assert.ok(pub.startsWith(own), 'the record content is on the published page, unchanged');
     const lab = readLabRuns().find(l => l.tile.experiment === 'red-build');
     assert.equal(pub.slice(own.length), lab ? renderLabRunsSection(lab) : '', 'after it, only the runs section, when there are runs');

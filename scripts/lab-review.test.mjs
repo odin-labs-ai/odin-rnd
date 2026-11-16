@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
+import { COST_RECORD, PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, maskCosts, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
 import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { maskKit } from './lab-rerun.mjs';
@@ -64,12 +64,25 @@ test('every figure is what the committed experiment records give, and the record
   assert.match(t, /Rule-breaking changes it accepted: 1 of 90 runs\. Good changes it rejected: 2 of 90 runs\. Changes given the same verdict in every one of their runs: 57 of 60 \./);
 });
 
-test('no money figure anywhere: not on the page, not in the record, not on the tile', () => {
+// Founder ruling 2026-11-16 (mission rnd-site-human PR 3), verbatim: "Show costs, fix the claim (Recommended)": keep the
+// dated, sourced dollar-per-review figures, and say that costs are shown with their date and source.
+test('the only money figures are EXP 017\'s costs per review, each read from its record, dated, with its source; none in the record or on the tile', () => {
   const tile = readFileSync('site/data/labs/review-tile.json', 'utf8');
-  for (const [name, text] of [['page', textOf(main)], ['record', raw], ['tile', tile]]) {
-    assert.doesNotMatch(text, /[€$£¥]\s?\d|\d\s?(?:usd|eur|cents?|dollars?)\b|\bcost(?:Usd|PerReview)|\bper 1m\b|listPrice/i, name);
+  const money = /[€$£¥]\s?\d|\d\s?(?:usd|eur|cents?|dollars?)\b|\bcost(?:Usd|PerReview)|\bper 1m\b|listPrice/i;
+  for (const [name, text] of [['record', raw], ['tile', tile]]) assert.doesNotMatch(text, money, name);
+  const results = JSON.parse(readFileSync('site/data/review-frontier/results.json', 'utf8'));
+  const cost = main.match(/<p class="lab-cost">([\s\S]*?)<\/p>/)?.[1];
+  assert.ok(cost, 'the page shows what one review cost');
+  for (const [i, seat] of results.seats.entries()) {
+    const name = record.frontier.seats.find(x => x.seat === seat.seat).name;
+    assert.ok(cost.includes(`${name} <a class="lab-num" href="../../data/review-frontier/results.json" data-source="data/review-frontier/results.json#/seats/${i}/costPerReviewUsd" data-format="usd">$${seat.costPerReviewUsd}</a>`), `${name}: its cost, linked to the record`);
   }
-  assert.match(textOf(main), /The price of a review is in the experiment's record , not on this page; this site does not show money figures\./);
+  assert.match(textOf(cost), /pooled over each model's runs on 23 October 2026 ?: /, 'dated by the record\'s runs');
+  assert.match(cost, /<time datetime="2026-10-23">/);
+  assert.match(textOf(cost), /This site shows a cost only with its date and its source; the source here is the experiment's record \.$/);
+  // Taking the sourced costs out leaves no money figure on the page, and the old claim is gone.
+  assert.doesNotMatch(textOf(main.replace(/<a class="lab-num"[^>]*data-format="usd">[^<]*<\/a>/g, ' ')), money);
+  assert.doesNotMatch(textOf(main), /does not show money figures|not on this page/);
 });
 
 test('the parts that are not a measurement here are boxed: authored fixtures, the summary and the AI reviewer', () => {
@@ -143,21 +156,25 @@ test('the record is refused when it would make the page say something untrue', (
 });
 
 test('the record is pinned: a changed byte refuses the build', () => {
-  const root = mkdtempSync(join(tmpdir(), 'lab-review-'));
+  const top = mkdtempSync(join(tmpdir(), 'lab-review-')), root = join(top, 'site');
   try {
-    for (const file of [REVIEW_RECORD, REVIEW_PIN, REVIEW_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    // With EXP 017's published record and its experiment folder beside it, which the costs are read and checked from.
+    for (const file of [REVIEW_RECORD, REVIEW_PIN, REVIEW_TEMPLATE, COST_RECORD]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    cpSync('experiments/review-frontier', join(top, 'experiments/review-frontier'), { recursive: true });
     // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
     assert.equal(renderReview(root).pages[REVIEW_TEMPLATE], renderReview('site').pages[REVIEW_TEMPLATE]);
     writeFileSync(join(root, REVIEW_RECORD), raw.replace('"version": 1', '"version": 1 '));
     assert.throws(() => readReview(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', REVIEW_PIN), 'utf8'), `${sha256(raw)}  record.json\n`);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(top, { recursive: true, force: true }); }
 });
 
 // The leak screen, a discriminating negative per class it guards.
 test('leak screen: the page, the record and the tile, and a planted value of each class is caught', () => {
-  // The "Re-run this" block's own commands and outputs are masked (scripts/lab-rerun.mjs), and nothing else is.
-  assert.deepEqual(pageLeaks(maskKit(page, 'review', record), [...recordHashes(record), ...receiptTokens(record)]), []);
+  // The "Re-run this" block's own commands and outputs are masked (scripts/lab-rerun.mjs), and so are EXP 017's sourced
+  // costs (maskCosts, mission rnd-site-human PR 3), and nothing else is.
+  assert.deepEqual(pageLeaks(maskCosts(maskKit(page, 'review', record), record), [...recordHashes(record), ...receiptTokens(record)]), []);
+  assert.ok(pageLeaks(maskKit(page, 'review', record), [...recordHashes(record), ...receiptTokens(record)]).some(p => /price or currency/.test(p)), 'unmasked, the costs are what the screen refuses');
   const tile = readFileSync('site/data/labs/review-tile.json', 'utf8');
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     for (const re of [/\/Users\//, /\/home\//, /localhost/i, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /\bghp_|\bsk-[A-Za-z0-9]|-----BEGIN/, /odin-labs-ai\/(?!odin-rnd)/]) assert.doesNotMatch(text, re, `${name}: ${re}`);

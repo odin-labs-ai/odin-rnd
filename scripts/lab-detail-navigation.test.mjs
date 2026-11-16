@@ -113,7 +113,9 @@ test('the failover page shows its published result, plan and bounded status', ()
   const preregLink = preregLinks[0];
   const plan = page.match(/<section[^>]*id="plan"[\s\S]*?<\/section>/)?.[0];
   assert.ok(plan?.includes(`href="../../${preregLink.href}"`), 'the plan links the checked tile source');
-  assert.equal(page.split(`href="../../${preregLink.href}"`).length - 1, 1, 'the page links the plan once');
+  // Once in the detail; the plain opening (mission rnd-site-human PR 3) links the plan beside its result as well.
+  const detail = page.replace(/<section class="company-section company-width lab-opening" id="in-short"[\s\S]*?<\/section>/, '');
+  assert.equal(detail.split(`href="../../${preregLink.href}"`).length - 1, 1, 'the detail links the plan once');
   const description = page.match(/<meta name="description" content="([^"]*)">/)?.[1];
   assert.ok(description);
   assert.ok(description.includes(tile.question));
@@ -130,7 +132,9 @@ test('"What it is." opens the failover page as on Lab 13: plain words, then how 
   assert.ok(about, 'the page has a What it is section');
   const hero = body.indexOf('lab-hero'), at = body.indexOf('id="about"');
   assert.ok(hero >= 0 && hero < at && at < body.indexOf('id="status"'), 'right after the hero, before where it stands');
-  assert.equal(body.slice(hero, at).split('<section').length - 1, 1, 'no other section between the hero and it');
+  // Only the plain opening (In short, mission rnd-site-human PR 3) sits between the hero and it.
+  assert.equal(body.slice(hero, at).split('<section').length - 1, 2, 'no other section between the hero and it but the opening');
+  assert.match(body.slice(hero, at), /<section class="company-section company-width lab-opening" id="in-short"/);
   assert.match(about, /<figure class="lab-flow">/);
   const tile = readTiles().find(item => item.experiment === 'failover');
   const rec = JSON.parse(readFileSync(join('site', tile.record.href), 'utf8'));

@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { KITS, kitProblems, kitSteps, maskKit, renderKit, runKit } from './lab-rerun.mjs';
-import { REVIEW_RECORD, REVIEW_TEMPLATE, readReview, receiptTokens } from './lab-review.mjs';
+import { maskCosts, REVIEW_RECORD, REVIEW_TEMPLATE, readReview, receiptTokens } from './lab-review.mjs';
 import { escape, pageLeaks, recordHashes } from './lab-kit.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -57,7 +57,9 @@ test('the page renders the block: every command and every line, in order, as the
 test('the mask lets through exactly the kit\'s commands and lines: any other path on the page is still refused', () => {
   const known = [...recordHashes(record), ...receiptTokens(record)];
   assert.ok(pageLeaks(page, known).some(p => /a file path or file name/.test(p)), 'unmasked, the screen refuses the block');
-  assert.deepEqual(pageLeaks(maskKit(page, 'review', record), known), []);
+  // EXP 017's sourced costs are masked too, as renderReview masks them (scripts/lab-review.mjs maskCosts), and only they.
+  assert.deepEqual(pageLeaks(maskCosts(maskKit(page, 'review', record), record), known), []);
+  assert.ok(pageLeaks(maskKit(page, 'review', record), known).some(p => /a price or currency amount/.test(p)), 'unmasked, the screen refuses the costs');
   // The same command or line OUTSIDE the block is not masked: only the block, as rendered, once.
   for (const plant of ['node experiments/review-frontier/collect.mjs --check', 'cat site/data/labs/review/record.json', '<code>node experiments/review-frontier/analyse.mjs --write</code>',
     '<code>node experiments/review-frontier/analyse.mjs --check</code>', '<samp>EXP 017: results.json matches the frozen analysis</samp>']) {

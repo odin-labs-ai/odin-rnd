@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { changes, JURY_PIN, JURY_RECORD, JURY_TEMPLATE, juryProblems, median, pageLeaks, readAiJury, recordHashes, renderAbout, renderAiJury, renderIntro, score, words } from './lab-ai-jury.mjs';
 import { renderLabs } from './labs.mjs';
+import { OPENING_SECTION, withoutOpening } from './lab-pages.mjs';
 import { screenHits } from './lab-dispatch-publish.mjs';
 import { namesRestricted } from './lab-dispatch-publish.mjs';
 // Made-up restricted names (random per run, added to the lab screen): a real one is never spelled in this public repo.
@@ -165,7 +166,8 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
   try {
     for (const file of [JURY_RECORD, JURY_PIN, JURY_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); writeFileSync(join(root, file), readFileSync(join('site', file))); }
     assert.equal(readAiJury(root).rounds.length, 2);
-    assert.equal(renderAiJury(root).pages[JURY_TEMPLATE], page, 'a fixture with the same files renders the same page');
+    // The published page is this page with its plain opening and "How we checked" folds (scripts/lab-pages.mjs).
+    assert.equal(renderAiJury(root).pages[JURY_TEMPLATE], withoutOpening(page), 'a fixture with the same files renders the same page');
     writeFileSync(join(root, JURY_RECORD), raw.replace('"minJury": 3', '"minJury": 3 '));
     assert.throws(() => readAiJury(root), /record\.sha256: does not pin the sha256/);
     const changed = raw.replace('"minJury": 3', '"minJury": 2');
@@ -179,8 +181,11 @@ test('the record is pinned: a changed byte refuses the build until the pin is re
 test('"What it is." opens the page right after the hero: plain words, then how it works, every count the record\'s, the jurors AI', () => {
   const about = main.match(/<section[^>]*id="about"[\s\S]*?<\/section>/)?.[0];
   assert.ok(about, 'the page has a What it is section');
-  const hero = main.indexOf('</section>'), at = main.indexOf('id="about"'), next = main.indexOf('<section', hero);
-  assert.ok(at > hero && main.lastIndexOf('<section', at) === next, 'the first section after the hero');
+  // Only the plain opening (In short, mission rnd-site-human PR 3) sits between the hero and it.
+  const hero = main.indexOf('</section>'), opening = main.slice(main.indexOf('<section', hero)).match(new RegExp(`^${OPENING_SECTION.source}`))?.[0];
+  assert.ok(opening, 'the opening right after the hero');
+  const at = main.indexOf('id="about"'), next = main.indexOf('<section', main.indexOf(opening) + opening.length);
+  assert.ok(at > hero && main.lastIndexOf('<section', at) === next, 'the first section after the opening');
   assert.ok(at < main.indexOf('id="jurors"'), 'before the jurors');
   assert.match(about, /<figure class="lab-flow">/);
   const text = textOf(about), rooms = record.rounds[0].rooms.length;

@@ -12,8 +12,12 @@
 //     (scripts/lab-review.test.mjs), which recomputes those records from the experiment's committed runs;
 //   - EXP 012 (self-verify): its committed record holds counts only, not the reviews, so the page shows it inside a box
 //     marked "Summary only, not reproducible here";
-//   - no money figure: EXP 017 measured price per review too; the page states its decision in words and points to the
-//     experiment's record for the figures;
+//   - EXP 017's cost per review, with its date and its source (founder ruling 2026-11-16, "Show costs, fix the claim";
+//     mission rnd-site-human PR 3): each model's cost is read from the published experiment record
+//     (data/review-frontier/results.json, byte for byte the experiment's own) and linked to it by num() from
+//     scripts/lab-pages.mjs, as the home's proof strip does, dated by the record's runs. This page used to say the site
+//     shows no money figures; the home already showed them. The figures are masked, and only they, before the page screen,
+//     which refuses any other money figure;
 //   - the cases each experiment reviews were chosen, written or seeded by us: boxed as authored fixtures. EXP 017's
 //     30 defects are "known" (seeded), never "planted": the corpus definition in experiments/self-verify/
 //     preregistration.json (seededDefinition; the same corpus, same manifest hash) takes 18 of them from past reviews;
@@ -30,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { box, escape, pageLeaks, readPinned, recordHashes, screenRecord, sha256, sidecarPinProblems, validate } from './lab-kit.mjs';
 import { renderFlow } from './lab-flow.mjs';
 import { maskKit, renderKit } from './lab-rerun.mjs';
+import { num, siteReader } from './lab-pages.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const REVIEW_RECORD = 'data/labs/review/record.json';
@@ -64,7 +69,7 @@ export const SOURCES = {
 // The models EXP 017 names, in plain words (a model id is a path-shaped string the screen refuses).
 export const SEAT_NAMES = { flash: 'MiniMax M3.1 Flash', 'gpt-oss': 'gpt-oss 120B', sonnet: 'Claude Sonnet 5.5', opus: 'Claude Opus 5.5' };
 
-/** EXP 017's figures this page shows, from its results record: no price, no time. */
+/** EXP 017's figures this record holds, from its results record: no price, no time (the costs are read by renderCosts). */
 export function deriveFrontier(r) {
   return {
     experiment: r.experiment,
@@ -148,7 +153,6 @@ export function frontierReading(f) {
 }
 
 const commitLink = s => `<a href="${REPO}/commit/${escape(s.commit)}"><code>${escape(s.commit.slice(0, 8))}</code></a>`;
-const fileLink = s => `<a href="${REPO}/blob/main/${escape(s.file)}">the experiment's record</a>`;
 const of = (x, n) => `${escape(x)} of ${escape(n)}`;
 const names = (record, seats) => seats.map(id => escape(SEAT_NAMES[id])).join(', ');
 const source = (record, role) => record.sources.find(s => s.role === role);
@@ -228,11 +232,40 @@ export function renderAbout(record) {
   return `${prose}${flow}`;
 }
 
-export function renderFrontier(record) {
+/** The record EXP 017's costs are read from: the published copy of its results record (number-provenance checks it). */
+export const COST_RECORD = 'data/review-frontier/results.json';
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const day = iso => `<time datetime="${escape(iso.slice(0, 10))}">${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}</time>`;
+
+/** What one review cost, per model, as EXP 017's record states it, with the dates of its runs: { html, figures }, where
+ *  figures are the sourced links (each a cost), which renderReview masks, and only them, before the page screen. */
+export function renderCosts(record, root = 'site') {
+  const read = siteReader(root);
+  const results = read(COST_RECORD);
+  if (!results) throw new Error(`Lab 06: ${COST_RECORD} is missing; the costs are read from it`);
+  if (results.experiment !== record.frontier.experiment) throw new Error(`Lab 06: ${COST_RECORD} is ${results.experiment}, not ${record.frontier.experiment}`);
+  const figures = record.frontier.seats.map(x => {
+    const i = results.seats.findIndex(r => r.seat === x.seat);
+    if (i < 0) throw new Error(`Lab 06: ${COST_RECORD} has no seat ${x.seat}`);
+    return num(read, `${COST_RECORD}#/seats/${i}/costPerReviewUsd`, 'usd', '../../');
+  });
+  const starts = results.runs.map(r => r.start).sort(), ends = results.runs.map(r => r.end).sort();
+  if (!starts.length || starts.some(x => typeof x !== 'string') || ends.some(x => typeof x !== 'string')) throw new Error(`Lab 06: ${COST_RECORD} has no dated runs`);
+  const from = starts[0], to = ends.at(-1);
+  const when = from.slice(0, 10) === to.slice(0, 10) ? `on ${day(from)}` : `from ${day(from)} to ${day(to)}`;
+  const list = record.frontier.seats.map((x, i) => `${escape(x.name)} ${figures[i]}`).join(', ');
+  return { figures, html: `<strong>What one review cost</strong>, as the broker billed it, pooled over each model's runs ${when}: ${list}. This site shows a cost only with its date and its source; the source here is <a href="../../${COST_RECORD}">the experiment's record</a>.` };
+}
+
+/** `html` with EXP 017's sourced costs (renderCosts' figures, each a link to its record) masked, and nothing else: the
+ *  page screen refuses any other money figure. */
+export const maskCosts = (html, record, root = 'site') => renderCosts(record, root).figures.reduce((page, figure) => page.replaceAll(figure, 'a sourced cost'), html);
+
+export function renderFrontier(record, root = 'site') {
   const f = record.frontier, s = source(record, 'frontier');
   const rows = f.seats.map(x => `<tr><th scope="row">${escape(x.name)}</th><td><strong>${of(x.caught, x.caughtOf)}</strong> (${x.caughtPerRun.map(escape).join(' and ')})</td><td>${of(x.falseAlarms, x.falseAlarmsOf)} (${x.falseAlarmsPerRun.map(escape).join(' and ')})</td><td>${escape(x.noVerdict)}</td><td>${f.onFrontier.includes(x.seat) ? 'on' : 'off'}</td></tr>`).join('');
   const corpus = box('fixture', { cls: 'review-fixture', body: '<p>The 60 cases are 58 changes from our own private repositories: 30 with a known defect, 30 clean. The changes are not published; their sealed hashes are. Every model got the same prompt, one request per change, no tools and no file access.</p>' });
-  return `<p>The question: per model, how many of 30 known defects does a review catch, and how many of 30 clean cases does it flag anyway? Each model reviewed all 60 cases twice, so each count is of 60.</p>${corpus}<div class="lab-table-wrap"><table><thead><tr><th scope="col">Model</th><th scope="col">Defects caught, of 60 (each run)</th><th scope="col">Clean cases flagged, of 60 (each run)</th><th scope="col">No verdict</th><th scope="col">On the frontier</th></tr></thead><tbody>${rows}</tbody></table></div><p>${frontierReading(f)}</p><p><strong>The decision the experiment registered</strong> weighs catches against what one review costs. A model is on the frontier when no other model catches at least as many defects for no more per review. On it: ${names(record, f.onFrontier)}. Off it: ${names(record, f.offFrontier)}, because another model caught at least as many for no more per review. The price of a review is in ${fileLink(s)}, not on this page; this site does not show money figures.</p><p class="lab-source">From ${escape(f.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived from that record at every build of this page; in CI, the experiment's own frozen analysis, run in its check mode, recomputes the record from the committed runs and must find it unchanged.</p>`;
+  return `<p>The question: per model, how many of 30 known defects does a review catch, and how many of 30 clean cases does it flag anyway? Each model reviewed all 60 cases twice, so each count is of 60.</p>${corpus}<div class="lab-table-wrap"><table><thead><tr><th scope="col">Model</th><th scope="col">Defects caught, of 60 (each run)</th><th scope="col">Clean cases flagged, of 60 (each run)</th><th scope="col">No verdict</th><th scope="col">On the frontier</th></tr></thead><tbody>${rows}</tbody></table></div><p>${frontierReading(f)}</p><p><strong>The decision the experiment registered</strong> weighs catches against what one review costs. A model is on the frontier when no other model catches at least as many defects for no more per review. On it: ${names(record, f.onFrontier)}. Off it: ${names(record, f.offFrontier)}, because another model caught at least as many for no more per review.</p><p class="lab-cost">${renderCosts(record, root).html}</p><p class="lab-source">From ${escape(f.experiment)}'s results record, last written by commit ${commitLink(s)}, sha256 <code>${escape(s.sha256)}</code>. Re-derived from that record at every build of this page; in CI, the experiment's own frozen analysis, run in its check mode, recomputes the record from the committed runs and must find it unchanged.</p>`;
 }
 
 export function renderNina(record) {
@@ -266,7 +299,7 @@ export function renderReview(root = 'site', options = {}) {
   const record = readReview(root, options);
   if (!record) return { pages: {} };
   let html = readFileSync(join(root, REVIEW_TEMPLATE), 'utf8');
-  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_ABOUT-->': renderAbout(record), '<!--REVIEW_FRONTIER-->': renderFrontier(record), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_RERUN-->': renderKit('review', record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
+  for (const [marker, value] of Object.entries({ '<!--REVIEW_INTRO-->': renderIntro(), '<!--REVIEW_ABOUT-->': renderAbout(record), '<!--REVIEW_FRONTIER-->': renderFrontier(record, root), '<!--REVIEW_NINA-->': renderNina(record), '<!--REVIEW_SELF_VERIFY-->': renderSelfVerify(record), '<!--REVIEW_RERUN-->': renderKit('review', record), '<!--REVIEW_GALLERY-->': renderGallery(record), '<!--REVIEW_BOUNDARY-->': renderBoundary() })) {
     if (!html.includes(marker)) throw new Error(`${REVIEW_TEMPLATE}: ${marker} is missing`);
     html = html.replace(marker, () => value);
   }
@@ -274,7 +307,8 @@ export function renderReview(root = 'site', options = {}) {
   const known = [...recordHashes(record), ...receiptTokens(record)];
   // The "Re-run this" block shows this repository's own commands and file names, which the screen refuses on sight:
   // exactly those (scripts/lab-rerun.mjs) are masked first, and nothing else.
-  const leaks = pageLeaks(maskKit(html, 'review', record), known);
+  // So are EXP 017's sourced costs (renderCosts), each a link to its record: exactly those, and nothing else.
+  const leaks = pageLeaks(maskCosts(maskKit(html, 'review', record), record, root), known);
   if (leaks.length) throw new Error(`${REVIEW_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [REVIEW_TEMPLATE]: html } };
 }
