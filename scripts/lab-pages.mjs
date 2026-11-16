@@ -153,10 +153,31 @@ export function renderProviderEconomics(read, weeks) {
     + `<section class="company-section company-width" id="not-yet" aria-labelledby="not-yet-title"><h2 id="not-yet-title">No published result yet.</h2><div class="company-prose"><p>These questions are part of the series. Until a result is published here, this site makes no claim about them.</p><ul class="lab-pending">${pending.join('')}</ul></div></section>`;
 }
 
-/** Fill a claim's text: {name} placeholders become sourced numbers, model ids, broker names, words or dates. */
-export function fillClaim(read, claim, up = '../') {
+/** A claim's glossary phrases linked where each is first used in its escaped text: `glossary` maps a phrase of the text
+ *  to an entry of the glossary on the methods page (methods/#glossary-<entry>; mission rnd-site-human PR 2, 2026-11-16).
+ *  A phrase the text does not use, one with a digit, a number word or a placeholder brace, or an entry that is not a
+ *  plain slug stops the build. The links are words only: the numbers stay the sourced values filled in afterwards. */
+export const GLOSSARY_ENTRY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+function linkGlossary(text, claim, up) {
+  const links = [];
+  for (const [phrase, entry] of Object.entries(claim.glossary ?? {})) {
+    if (!phrase.trim() || /[{}]/.test(phrase) || statesNumber(phrase)) throw new Error(`claim ${claim.id}: glossary phrase '${phrase}' must be words, with no digit, number word or brace`);
+    if (typeof entry !== 'string' || !GLOSSARY_ENTRY.test(entry)) throw new Error(`claim ${claim.id}: glossary entry '${entry}' is not a slug`);
+    const words = escape(phrase);
+    const at = new RegExp(`(?<![\\w-])${words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).exec(text);
+    if (!at) throw new Error(`claim ${claim.id}: glossary phrase '${phrase}' is not in its text`);
+    links.push(`<a class="glossary-link" href="${up}methods/#glossary-${entry}">${words}</a>`);
+    text = `${text.slice(0, at.index)}\u0000${links.length - 1}\u0000${text.slice(at.index + words.length)}`;
+  }
+  return text.replace(/\u0000(\d+)\u0000/g, (_, i) => links[i]);
+}
+
+/** Fill a claim's text: {name} placeholders become sourced numbers, model ids, broker names, words or dates. With
+ *  `glossary` (the home page), the claim's glossary phrases link to their entries on the methods page. */
+export function fillClaim(read, claim, up = '../', { glossary = false } = {}) {
   if (statesNumber(claim.text)) throw new Error(`claim ${claim.id}: its text states a number (a digit or a number word); every number must be a sourced value`);
-  return escape(claim.text).replace(/\{([a-zA-Z0-9]+)\}/g, (whole, name) => {
+  const text = glossary ? linkGlossary(escape(claim.text), claim, up) : escape(claim.text);
+  return text.replace(/\{([a-zA-Z0-9]+)\}/g, (whole, name) => {
     const v = claim.values?.[name];
     if (!v) throw new Error(`claim ${claim.id}: no value for {${name}}`);
     if (v.format === 'code') return `<code>${escape(str(read, v.source))}</code>`;
@@ -259,7 +280,7 @@ export function renderClaims(read, list, up = '../', { plain = false } = {}) {
     }
     if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
     const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p></li>`;
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up, { glossary: plain })}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p></li>`;
   }).join('');
 }
 

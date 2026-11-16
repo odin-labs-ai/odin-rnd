@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#102b22">
-  <title>How we run experiments — Odin R&amp;D</title>
-  <meta name="description" content="How the Odin R&amp;D lab works: questions written down and hashed before any counted run, a spend bound on every experiment, decision rules that can refute us, review before merge, and how to rerun it yourself.">
-  <meta property="og:title" content="How the Odin R&amp;D lab runs experiments">
-  <meta property="og:description" content="Pre-registration, sha256 freezing, spend bounds, refutation and how to reproduce a result.">
+  <title>How we test — Odin R&amp;D</title>
+  <meta name="description" content="How the Odin R&amp;D lab tests: the question and the pass mark written down before a study runs, the limits each result states, results that did not hold up kept published, the words we use in plain English, and how to rerun it yourself.">
+  <meta property="og:title" content="How the Odin R&amp;D lab tests">
+  <meta property="og:description" content="Plans written down before a study runs, the limits each result states, results that did not hold up kept published, and a glossary of the lab's words.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://odin-labs-ai.github.io/odin-rnd/methods/">
   <link rel="canonical" href="https://odin-labs-ai.github.io/odin-rnd/methods/">
@@ -28,15 +28,123 @@
   <main id="main">
     <section class="company-hero company-width" aria-labelledby="methods-title">
       <div>
-        <h1 id="methods-title">How we run <br>experiments.</h1>
-        <p class="company-lead">A public number should have an inspectable method, date and source boundary. Some underlying corpora and operational receipts are private, so some results lack enough public material for outside reproduction. This page says how: what we write down before a run, how it is frozen, what each experiment may spend, what would prove us wrong, who checks a change before it is published, and how to rerun it yourself. Every claim below points to a file in <a href="https://github.com/odin-labs-ai/odin-rnd">the repository</a>.</p>
-        <div class="company-actions"><a class="button button-primary" href="../experiments/#every-experiment">Every experiment and its status</a><a href="#reproduce">Rerun it yourself</a></div>
+        <h1 id="methods-title">How we <br>test.</h1>
+        <p class="company-lead">We test AI models, coding tools and the services that sell access to them. Before a study runs, we write down the question and what would count as a yes. Then we publish what happened, with its limits, including when the idea did not hold up.</p>
+        <div class="company-actions"><a class="button button-primary" href="../experiments/#every-experiment">Every experiment and its status</a><a href="#glossary">Words we use</a><a href="#reproduce">Rerun it yourself</a></div>
+      </div>
+      <nav class="methods-onpage" aria-label="On this page">
+        <p>On this page</p>
+        <ol>
+          <li><a href="#in-plain-words">How we test, in plain words</a></li>
+          <li><a href="#glossary">Words we use, explained</a></li>
+          <li><a href="#publication-standard">What a public claim must establish</a></li>
+          <li><a href="#pre-registration">The method, step by step</a></li>
+          <li><a href="#reproduce">Rerun it yourself</a></li>
+        </ol>
+      </nav>
+    </section>
+
+    <section class="company-section company-width company-split" id="in-plain-words" aria-labelledby="plain-title">
+      <h2 id="plain-title">How we test, in plain words.</h2>
+      <div class="company-prose method-opening">
+        <h3>What we test.</h3>
+        <p>We test AI models, coding tools and <a href="#glossary-broker">resellers of model access</a> on work close to ours. They review code changes, fix bugs, answer quick yes-or-no questions and keep a database running through a failure. Most examples are ones we wrote ourselves or changes from our own code, not customer code.</p>
+        <h3>Planned in writing before it runs.</h3>
+        <p>Before the runs that count, we <a href="#glossary-pre-registered">write down the plan</a>. It says what we ask, what we measure, how we score it and what would count as a yes. It also says what the study may spend and what it cannot show. We publish the plan and lock it, so it cannot change quietly. A later change is a new, dated file that says what changed and why.</p>
+        <h3>What a limit means.</h3>
+        <p>Every result says what it does not show: how many examples, whose examples, which machine and which models. That is its <a href="#glossary-limit">limit</a>. A limit is part of the result, not small print, so read it before you quote a number. When our own team runs a study again on another machine, that shows it repeats. It is not a check by an outside team.</p>
+        <h3>When a result does not hold up.</h3>
+        <p>If a result misses the pass mark written down before the run, we say the idea <a href="#glossary-refuted">did not hold up</a>. We do not soften that to “mixed”, and the result stays published. A negative result still tells you something: what not to rely on. In one study, a plain rule-checking script missed no rule breaks. A fast AI decision model missed one, so the AI was no better there. In another, an AI reviewer that double-checked its own findings still raised far more false alarms than the bar we set.</p>
+        <h3>Why some results are exploratory.</h3>
+        <p>A few studies were not planned in writing before they ran. They are <a href="#glossary-exploratory">exploratory</a>: we publish their method and data, but nothing about them was fixed in advance. They are labelled separately in the experiment list and on their own pages, so you can tell them apart from planned studies. Treat them as leads, not settled answers.</p>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
+          <p>A public number should have an inspectable method, date and source boundary. Some underlying corpora and operational receipts are private, so some results lack enough public material for outside reproduction. This page says how: what we write down before a run, how it is frozen, what each experiment may spend, what would prove us wrong, who checks a change before it is published, and how to rerun it yourself. Every claim below points to a file in <a href="https://github.com/odin-labs-ai/odin-rnd">the repository</a>.</p>
+          <p>The two examples above are EXP 005 (its claim is refuted: a model-free line linter written from the same seven architecture rules missed none of the drift items, and Jev missed one) and EXP 012 (the answer is no). The exploratory studies are EXP 013 and EXP 014; the experiment list marks them “not pre-registered”.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="company-section company-width company-split" id="glossary" aria-labelledby="glossary-title">
+      <h2 id="glossary-title">Words we use, explained.</h2>
+      <div class="company-prose">
+        <p>Our pages use some lab words. Here each one is explained in plain English, with an example from our own published records where there is one. The example only points at what the record says; it adds nothing to it.</p>
+        <nav class="glossary-index" aria-label="Words in the glossary">
+          <ul>
+            <li><a href="#glossary-arm">Arm</a></li>
+            <li><a href="#glossary-blind-run">Blind run</a></li>
+            <li><a href="#glossary-broker">Broker</a></li>
+            <li><a href="#glossary-census">Census</a></li>
+            <li><a href="#glossary-counted-run">Counted run</a></li>
+            <li><a href="#glossary-exploratory">Exploratory study</a></li>
+            <li><a href="#glossary-station">Factory, floor and station</a></li>
+            <li><a href="#glossary-fixture">Fixture</a></li>
+            <li><a href="#glossary-frozen-analysis">Frozen analysis</a></li>
+            <li><a href="#glossary-gate">Gate and validity gate</a></li>
+            <li><a href="#glossary-green-red">GREEN, RED, UNVERIFIED</a></li>
+            <li><a href="#glossary-harness">Harness</a></li>
+            <li><a href="#glossary-jev">Jev</a></li>
+            <li><a href="#glossary-kv-cache">KV cache</a></li>
+            <li><a href="#glossary-latent-handoff">Latent handoff</a></li>
+            <li><a href="#glossary-laya">Laya</a></li>
+            <li><a href="#glossary-limit">Limit</a></li>
+            <li><a href="#glossary-linter">Linter</a></li>
+            <li><a href="#glossary-machine-names">Machine names</a></li>
+            <li><a href="#glossary-nina">nina</a></li>
+            <li><a href="#glossary-pre-registered">Pre-registered</a></li>
+            <li><a href="#glossary-record">Record</a></li>
+            <li><a href="#glossary-record-hash">Record hash (sha256)</a></li>
+            <li><a href="#glossary-refuted">Refuted, or a negative result</a></li>
+            <li><a href="#glossary-same">SAME, with 0 breaches</a></li>
+            <li><a href="#glossary-seat">Seat</a></li>
+            <li><a href="#glossary-silent-inert">Silent-inert</a></li>
+            <li><a href="#glossary-source-card">Source card</a></li>
+            <li><a href="#glossary-strict-ack">Strict-ack and acknowledgement gap</a></li>
+            <li><a href="#glossary-system-1">System-1 decision model</a></li>
+            <li><a href="#glossary-uncertainty-range">Uncertainty range</a></li>
+            <li><a href="#glossary-value-frontier">Value frontier</a></li>
+          </ul>
+        </nav>
+        <dl class="glossary-list">
+          <div id="glossary-arm"><dt>Arm</dt><dd><p>One of the options a study compares, each run under the same conditions. We also say “option” or “setup”.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/router-arm-results.html">EXP 018</a> compared three arms on the same coding tasks: routing each task by our own rulebook, and two fixed choices that always used the same model.</p></dd></div>
+          <div id="glossary-blind-run"><dt>Blind run</dt><dd><p>A run in which the AI reviewer never actually read the change it was asked to review, so its verdict says nothing about that change.</p><p class="glossary-example"><strong>Example:</strong> in EXP 005, the reviewer’s own tool fence kept it from reading the change in 131 of 180 runs. <a href="../journal/nina-reviews-the-change.html">EXP 006</a> measured it again with a fence that allows the commands it uses.</p></dd></div>
+          <div id="glossary-broker"><dt>Broker</dt><dd><p>A reseller of access to AI models: you pay the broker, and it passes your request on to the model. We name brokers by letter.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/broker-same-model-results.html">EXP 016</a> we sent the same requests through three brokers. Broker A and Broker C billed the list price; Broker B billed above it on both models.</p></dd></div>
+          <div id="glossary-census"><dt>Census</dt><dd><p>A survey that sorts every item in a set, here a set of rules.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/which-rules-need-a-model.html">EXP 007</a> is a census of the rules that eight code-review plugins ship: for each rule, how much could a plain checker decide on its own, before any model is asked?</p></dd></div>
+          <div id="glossary-counted-run"><dt>Counted run</dt><dd><p>A run that counts toward the result. A few trial calls made before the plan is written do not count, and the record says when there were any.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/composable-harness-results.html">EXP 009</a>’s counted run was 40 blocks, starting on 8 October 2026.</p></dd></div>
+          <div id="glossary-exploratory"><dt>Exploratory study</dt><dd><p>A study that was not planned in writing before it ran. Its method and data are published, but nothing about it was fixed in advance, so read it as a lead rather than a settled answer.</p><p class="glossary-example"><strong>Example:</strong> EXP 013 and EXP 014, two database studies, are marked “not pre-registered” in <a href="../#all-experiments">the experiment list</a>.</p></dd></div>
+          <div id="glossary-station"><dt>Factory, floor and station</dt><dd><p>Our words for the concept drawing on the home page, in which each station (a step: Blueprint, Workcell, Gate, Record, Decision, Triage, Floor) opens one separate experiment and its record. The stations are not stages that results pass through, and the drawing is not a map of real machines.</p><p class="glossary-example"><strong>Example:</strong> the Gate station opens “A passing test missed the defect.”</p></dd></div>
+          <div id="glossary-fixture"><dt>Fixture</dt><dd><p>Test examples we wrote ourselves, not customer code. A result on them shows that a mechanism works on those examples; it does not show it works on unseen work or customer systems.</p><p class="glossary-example"><strong>Example:</strong> the 60 code changes in <a href="../journal/jev-as-a-fast-gate.html">EXP 005</a> were written by us and scored by our rules engine.</p></dd></div>
+          <div id="glossary-frozen-analysis"><dt>Frozen analysis</dt><dd><p>Analysis code fixed before the results came in, so it cannot be adjusted to fit them.</p><p class="glossary-example"><strong>Example:</strong> EXP 008 pins its analysis script by its hash in a dated amendment, and EXP 005 recomputes its published results from the committed runs (see <a href="#pre-registration">step 1</a>).</p></dd></div>
+          <div id="glossary-gate"><dt>Gate and validity gate</dt><dd><p>A gate is a check that a change or a result must pass. A validity gate is a check on the run itself: if the run fails it, the result does not count.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/jev-as-a-fast-gate.html">EXP 005</a> asked whether a fast model could serve as the first gate on code changes. <a href="../journal/composable-harness-results.html">EXP 009</a> passed all five of its validity gates, so its result counts.</p></dd></div>
+          <div id="glossary-green-red"><dt>GREEN, RED, UNVERIFIED</dt><dd><p>Outcome labels, always written out in words as well as colour: GREEN means passed, RED means failed and UNVERIFIED means not checked.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/system-1-decisions-without-lock-in.html">EXP 004</a>, a criterion stays UNVERIFIED when Jev was not run, and turns RED past its stated margin.</p></dd></div>
+          <div id="glossary-harness"><dt>Harness</dt><dd><p>The test setup around a model: what it is given, which tools it may use, and how its answers are collected and scored.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/composable-harness-results.html">EXP 009</a> asked whether loading and unloading parts of our research harness leaves it the same as a fresh start. Its first prediction did not hold up: 1 of 400 trials differed.</p></dd></div>
+          <div id="glossary-jev"><dt>Jev</dt><dd><p>A fast decision model from an outside vendor, which we call as a hosted service; it is not ours. It answers a typed question: pick one of these options, give a score, or say yes or no.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/system-1-decisions-without-lock-in.html">EXP 004</a> compared Jev with Laya on 48 hand-written rows, on one laptop.</p></dd></div>
+          <div id="glossary-kv-cache"><dt>KV cache</dt><dd><p>A model’s working memory of text it has already read, kept so it does not have to read that text again.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/latent-handoff-pre-registration.html">EXP 008</a> asks whether one model can make a decision from another model’s KV cache instead of rereading the text.</p></dd></div>
+          <div id="glossary-latent-handoff"><dt>Latent handoff</dt><dd><p>Passing that working memory (the KV cache) from one model to another, instead of passing the text.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/latent-handoff-pre-registration.html">EXP 008</a>, planned in writing with no results published yet, is to measure on public examples only whether this matches rereading the text closely enough, and fast enough, to be worth having.</p></dd></div>
+          <div id="glossary-laya"><dt>Laya</dt><dd><p>An open-weight decision model published by an outside team; it is not ours. It runs on a laptop, with no vendor key.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/system-1-decisions-without-lock-in.html">EXP 004</a> asked whether Laya can answer the same typed decisions locally, so that a hosted model becomes a comparison rather than a dependency.</p></dd></div>
+          <div id="glossary-limit"><dt>Limit</dt><dd><p>What a result does not show: how many examples, whose examples, which machine, which models and who ran it. Every finding states its limit; read it before you quote a number.</p><p class="glossary-example"><strong>Example:</strong> the code-review finding on <a href="../#findings">the home page</a> is limited to our own changes and planted defects, reviewed without tools.</p></dd></div>
+          <div id="glossary-linter"><dt>Linter</dt><dd><p>An ordinary rule-checking tool: a script that checks code against fixed rules, with no AI model.</p><p class="glossary-example"><strong>Example:</strong> in EXP 005, a linter written from the same seven architecture rules missed none of the 30 rule breaks, and Jev missed one. Those were rules a plain check can decide.</p></dd></div>
+          <div id="glossary-machine-names"><dt>Machine names</dt><dd><p>Names such as <code>org-ci-heavy</code> or <code>ubuntu-latest</code> are the computers that ran a check. Two of our machines agreeing shows the result repeats inside our organisation; it is not independent replication.</p><p class="glossary-example"><strong>Example:</strong> the <a href="../labs/runs/">lab runs page</a> lists each re-check with the machine that ran it.</p></dd></div>
+          <div id="glossary-nina"><dt>nina</dt><dd><p>An AI code reviewer by an outside author, published on GitHub; it is not ours. We measure it.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/nina-reviews-the-change.html">EXP 006</a> measured nina’s reviewer again on the same 60 changes as EXP 005, counting a run only when it showed the reviewer had read the change.</p></dd></div>
+          <div id="glossary-pre-registered"><dt>Pre-registered</dt><dd><p>We wrote down the question and what would count as a yes before running anything, published it and locked it by its hash. A later change is a new, dated file.</p><p class="glossary-example"><strong>Example:</strong> EXP 012’s plan, <code>experiments/self-verify/preregistration.json</code>, set the bar for false alarms that <a href="../journal/self-verify-results.html">its result</a> then missed.</p></dd></div>
+          <div id="glossary-record"><dt>Record</dt><dd><p>The published file that holds an experiment’s results, with its dates and how it was run. Numbers on our pages are read from it when the site is built, and link to it.</p><p class="glossary-example"><strong>Example:</strong> the code-review finding on the home page reads its prices and counts from <a href="../data/review-frontier/results.json">the EXP 017 record</a>.</p></dd></div>
+          <div id="glossary-record-hash"><dt>Record hash (sha256)</dt><dd><p>A fingerprint of a file’s exact bytes: change one byte and the fingerprint changes. It shows that a file is the one we published; it does not show that the experiment was right or that a claim is true.</p><p class="glossary-example"><strong>Example:</strong> each plan has a fingerprint file beside it, such as <code>experiments/self-verify/preregistration.sha256</code>.</p></dd></div>
+          <div id="glossary-refuted"><dt>Refuted, or a negative result</dt><dd><p>The idea did not hold up: the result missed the pass mark written down before the run. It is never softened to “mixed”, and it stays published.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/self-verify-results.html">EXP 012</a>, a reviewer asked to check its own findings still raised false alarms on 20 and 22 of 30 clean changes, against a bar of 2. <a href="#refutation">Step 4</a> lists the others.</p></dd></div>
+          <div id="glossary-same"><dt>SAME, with 0 breaches</dt><dd><p>What a re-check prints when a lab’s published result still matches its data: the counts taken again from the evidence give the same hash as the published record, and no group of counts differs. It counts again; it does not score or judge again.</p><p class="glossary-example"><strong>Example:</strong> the re-checks on the <a href="../labs/runs/">lab runs page</a>.</p></dd></div>
+          <div id="glossary-seat"><dt>Seat</dt><dd><p>The setup a model works in, mainly whether it has tools. A tool-free seat sees only what we give it; an agentic seat can use tools and read files.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/review-frontier-results.html">EXP 017</a> put four models through one tool-free seat. Our earlier review measurements had used different seats, and one of them could read the answer key.</p></dd></div>
+          <div id="glossary-silent-inert"><dt>Silent-inert</dt><dd><p>A setting that looks switched on but silently does nothing.</p><p class="glossary-example"><strong>Example:</strong> <a href="../journal/composable-harness-results.html">EXP 009</a> found no silent-inert settings among 120 configurations of its harness core, against 44 for the unchanged baseline filter.</p></dd></div>
+          <div id="glossary-source-card"><dt>Source card</dt><dd><p>A note beside an answer saying where it came from. It records attribution, not whether the answer is correct.</p><p class="glossary-example"><strong>Example:</strong> answers in <a href="../labs/agent-space/">Lab 01, the agent space</a>, carry source cards.</p></dd></div>
+          <div id="glossary-strict-ack"><dt>Strict-ack and acknowledgement gap</dt><dd><p>The acknowledgement gap is the longest wait, after a database switches to its backup copy, for the database to confirm to a writer that its data is saved. Strict-ack is a stricter setting in which a write is confirmed only once a second copy holds it.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/failover-results.html">EXP 021</a>, the strict variants have an unresolved anomaly in the check that watches durability, and some files may overlap heavy work on the same machine. Both limits travel with the result.</p></dd></div>
+          <div id="glossary-system-1"><dt>System-1 decision model</dt><dd><p>A model that answers a typed question about a situation quickly: pick one of these options, give a score, or say yes or no.</p><p class="glossary-example"><strong>Example:</strong> Jev and Laya, compared in <a href="../journal/system-1-decisions-without-lock-in.html">EXP 004</a>.</p></dd></div>
+          <div id="glossary-uncertainty-range"><dt>Uncertainty range</dt><dd><p>The range the true value could plausibly lie in, given how few examples we ran (an interval). When two results’ ranges overlap, neither is clearly ahead.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/review-frontier-results.html">EXP 017</a>, four reviewers caught between 26 and 31 of 60 defects, all inside one another’s intervals.</p></dd></div>
+          <div id="glossary-value-frontier"><dt>Value frontier</dt><dd><p>Best value for money: a model is on the frontier when no other model catches at least as many defects for no more per review.</p><p class="glossary-example"><strong>Example:</strong> in <a href="../journal/review-frontier-results.html">EXP 017</a>, under the rule written down beforehand, three of the four models were on the frontier and one was not.</p></dd></div>
+        </dl>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="publication-standard" aria-labelledby="publication-title">
       <h2 id="publication-title">What a public claim must establish.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: a public claim says only what its evidence supports, with its limits beside it. This standard applies to every page on this site.</p>
         <p>Publish a useful finding when its evidence supports the exact wording. A plan, merged change, passing build, source card or matching hash is not a verified outcome. Progress may be shared as progress, with what remains unknown stated beside it. Repeated runs and routine commits do not each need a new announcement.</p>
         <dl>
           <div><dt>Planned or pre-registered</dt><dd>A question and method are recorded. There is no result yet.</dd></div>
@@ -53,49 +161,65 @@
     <section class="company-section company-width company-split" id="pre-registration" aria-labelledby="prereg-title">
       <h2 id="prereg-title">1. The question comes first.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: before the runs that count, we write down the question and what would count as a yes, and publish it.</p>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
         <p>Before any counted run, an experiment's pre-registration is written down and published. It states the question, what is measured, how it is scored, the decision rule, what the experiment may spend and its known limits. Each one lives in its own folder, for example <code>experiments/self-verify/preregistration.json</code> (EXP 012) or <code>experiments/jev-gate/preregistration.json</code> (EXP 005).</p>
         <p>Where the analysis is code, the code is frozen with the question: EXP 008 pins its analysis script <code>experiments/latent-handoff/analyse.mjs</code> by hash in a dated amendment (<code>experiments/latent-handoff/amendment-02.json</code>), and EXP 005 recomputes its published results from the committed runs with <code>experiments/jev-gate/results.mjs</code>.</p>
         <p>Two studies on this site were published without a pre-registration: EXP 013 and EXP 014, the MongoDB studies. They are numbered so they can be cited, and the experiment list marks them “not pre-registered”: their method and data are published, but nothing about them was fixed before they ran.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="freezing" aria-labelledby="freeze-title">
       <h2 id="freeze-title">2. Frozen by sha256.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: each written plan is locked by its fingerprint (a hash), so a later change shows up as a new, dated file.</p>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
         <p>Each pre-registration has a <code>.sha256</code> beside it, such as <code>experiments/self-verify/preregistration.sha256</code>, written when the record is pushed. The push time is the freeze time. After that the record does not change.</p>
         <p>A change after the freeze is a new, dated file that names its parent by hash: an amendment (<code>experiments/jev-gate/amendment-01.json</code>, <code>experiments/self-verify/amendment-01/amendment.json</code>) or an erratum (<code>experiments/jev-gate/erratum-01.json</code>). The site build refuses to publish a record whose bytes no longer match its hash: see <code>scripts/jev-gate-prereg.mjs</code> and <code>scripts/ledger-publish.mjs</code>. The published copy under <code>site/data/</code> (served as <code>data/</code> on this site) is the record, byte for byte.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="spend" aria-labelledby="spend-title">
       <h2 id="spend-title">3. A spend bound on every run.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: every study has a spending limit, and says what happens when it is reached.</p>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
         <p>Every pre-registration bounds its spend (a <code>spend</code> block; EXP 005, the first, calls it <code>spendCap</code>): the most the run may cost and what happens when that bound is reached. In EXP 012, for example, the run stops and the experiment is published as incomplete, with the finished count; nothing is extrapolated.</p>
         <p>Experiments that pay for model calls keep a per-call spend ledger next to their results, for example <code>experiments/jev-gate/spend-ledger.jsonl</code>, <code>experiments/nina-changes/spend-ledger.jsonl</code> and <code>experiments/blueprint-floor/spend-ledger.jsonl</code>.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="refutation" aria-labelledby="refute-title">
       <h2 id="refute-title">4. Rules that can prove us wrong.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: the pass mark is fixed before the run, and a result that misses it stays published.</p>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
         <p>The decision rule is part of the frozen record, so the result cannot choose its own bar. Results are published whatever they show, and a refuted claim stays refuted. So far that includes EXP 005 (the claim is refuted), EXP 007 (the premise is refuted), EXP 009 (its first prediction is refuted) and EXP 012 (the answer is no). Each status sentence on <a href="../#all-experiments">the experiment list</a> comes from the experiment's own note, unedited (<code>scripts/experiment-ledger.mjs</code>).</p>
         <p>Before a pre-registration is written we sometimes run a few calibration calls. When we do, the record says so, and states what we expect, so the result can contradict it.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="review" aria-labelledby="review-title">
       <h2 id="review-title">5. Checked before it is published.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: changes to this site are checked automatically, and our policy asks for a separate review before they are merged.</p>
+        <details class="method-details"><summary>The details, and a wording correction of 2 November 2026 <span aria-hidden="true">+</span></summary>
         <p>Changes to this site arrive as pull requests. On each one, the <code>verify</code> job in <code>.github/workflows/publish.yml</code> reruns the three recorded experiments with the released engine, runs every test, builds the site and checks it (links, anchors, transcript digests and the public export boundary, <code>scripts/check.mjs</code>). The same job runs again on every push to main, before the site is deployed.</p>
         <p>Our review policy requires a separate review of the final change on its exact head before merge (<code>AGENTS.md</code>). A different agent or model can provide that code review; this is not external scientific peer review or independent reproduction of an experiment. A particular change’s review receipt must establish what was actually checked.</p>
         <p><time datetime="2026-11-02">2 November 2026</time> wording correction: earlier copy said every change had review by “a different agent and model”. The policy requires a separate exact-head review; the recorded receipt establishes the reviewer and scope for a particular change. That earlier sentence did not establish a different model for every review.</p>
         <p>One gap is disclosed here. On 22 October 2026 a pull request was merged while its <code>verify</code> job was still running; that job then failed on a fence test whose base had moved, while the push run on main passed. Since 23 October the current version of our landing tool refuses to merge a pull request in this repository until <code>verify</code> has passed on its exact head. That is a check in our own tooling, not yet on GitHub's side: a rule there that requires the same check is waiting on the repository owner, and until it exists an older copy of the tool, or a person merging by hand, could still merge early.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="reproduce" aria-labelledby="reproduce-title">
       <h2 id="reproduce-title">6. Rerun it yourself.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: these steps rebuild this site and rerun its recorded checks on your own computer.</p>
         <p>You need git, Node 22, JDK 21 (with <code>JAVA_HOME</code> set to that JDK) and pnpm 10.11.1. Clone the repository: a ZIP download will not build, because the build reads git metadata. These are the same steps as <a href="https://github.com/odin-labs-ai/odin-rnd#run-locally">Run locally in the README</a>, one command per line, so they also paste into Windows PowerShell 5.1:</p>
         <pre><code>git -c core.autocrlf=false clone https://github.com/odin-labs-ai/odin-rnd
 cd odin-rnd
@@ -107,17 +231,22 @@ pnpm test
 pnpm build
 pnpm check
 pnpm serve</code></pre>
+        <details class="method-details"><summary>The details <span aria-hidden="true">+</span></summary>
         <p><code>pnpm experiment</code> reruns the three recorded experiments, <code>pnpm test</code> runs every check on the recorded evidence, <code>pnpm build</code> builds the site from the records and <code>pnpm check</code> checks links, digests and the export boundary. The clone line keeps the committed line endings, which the sha256 pins check byte for byte; on Linux and macOS that setting is already off. <code>corepack enable</code> also installs the pinned pnpm, but on Windows it needs an elevated shell (Run as administrator), so the steps use <code>npm install --global pnpm@10.11.1</code>, as CI does. <code>pnpm test</code> also needs <code>python3</code> and <code>bash</code> on a POSIX system: on Windows, run it inside WSL or skip it.</p>
         <p>The commands are in <code>package.json</code> and <code>AGENTS.md</code>; <code>docs/VALIDATION.md</code> records how the site itself was validated. For a single experiment, its folder holds the inputs and the frozen analysis; its field note says which parts you can rerun and which depend on a private corpus.</p>
+        </details>
       </div>
     </section>
 
     <section class="company-section company-width company-split" id="limits" aria-labelledby="limits-title">
       <h2 id="limits-title">7. What this does not prove.</h2>
       <div class="company-prose">
+        <p class="method-plain">In short: most studies are small and some use private data, so read each result’s limits before you quote a number.</p>
+        <details class="method-details"><summary>The details, and a wording clarification of 2 November 2026 <span aria-hidden="true">+</span></summary>
         <p>Most experiments here are small: one laptop, one model or a few dozen cases. Several use a private corpus, so you can check the hashes, the method and the counts but not rerun the cases. We wrote the experiments ourselves, about our own tools. A pre-registration stops us from moving the bar after the fact; it does not make a narrow question broad. Each field note states its own limits; read them before quoting a number.</p>
         <p>Two pages hold the lab to this mechanically: <a href="../provider-economics/">provider economics</a> and <a href="../evidence/">selected evidence and open questions</a>. The build stops if a number on either is not read from an experiment record and linked to it (<code>scripts/number-provenance.mjs</code>).</p>
         <p><time datetime="2026-11-02">2 November 2026</time> wording clarification: the earlier Evidence link “what we have measured, and not” implied a complete inventory. The linked page presents selected published claims and open questions; this build check validates numbers shown there, not completeness.</p>
+        </details>
       </div>
     </section>
   </main>
