@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W47",
+  "startedAt": "2026-11-16T07:32:31.140Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 597,
+          "latencyMsP95": 891,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 590,
+          "latencyMsP95": 866,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 433,
+        "sha256": "1be7db48fe58d7b03452339ac46cb30ded1be6dd4b3b177289f83fa07cabe98d",
+        "diff": {
+          "added": 20,
+          "removed": 12,
+          "repriced": 33,
+          "addedIds": [
+            "anthropic/claude-fable-5.2",
+            "anthropic/claude-fable-5.2:batch",
+            "baidu/ernie-5.5-flash-preview:free",
+            "baidu/ernie-light-dt-1.0-intl",
+            "google/gemini-4-carbon",
+            "google/gemini-4-carbon:batch",
+            "google/gemini-4-hydrogen",
+            "google/gemini-4-hydrogen:batch",
+            "inclusionai/ling-3.2-flash:free",
+            "kt/midm-k-3.0-pro",
+            "meta/muse-ember",
+            "moonshotai/kimi-k3.1-pro:batch",
+            "motif-technologies/motif-3",
+            "nex-agi/nex-n2.6",
+            "particle-ai/particle-1:free",
+            "qwen/qwen3.8-max-0902:batch",
+            "qwen/qwen4-max",
+            "thinkingmachines/inkling-2-small",
+            "thinkingmachines/inkling-2-small:free",
+            "unbiased/pareto-26.10-preview"
+          ],
+          "removedIds": [
+            "bytedance-seed/seed-1.6",
+            "bytedance-seed/seed-1.6-flash",
+            "bytedance-seed/seed-2.0-code",
+            "liquid/lfm-2.5-2.6b:free",
+            "minimax/minimax-m1",
+            "qwen/qwen-2.5-7b-instruct",
+            "qwen/qwen3-vl-30b-a3b-thinking",
+            "stealth/crouton-alpha",
+            "stepfun/step-3.5-flash",
+            "tencent/hunyuan-a13b-instruct",
+            "xingchen-agi/xing4.0-29b-a4b:free",
+            "z-ai/glm-5.2:batch"
+          ],
+          "repricedIds": [
+            "~anthropic/claude-fable-latest",
+            "~deepseek/deepseek-flash-latest",
+            "~google/gemini-flash-latest",
+            "~moonshotai/kimi-latest",
+            "~z-ai/glm-flash-latest",
+            "deepseek/deepseek-chat",
+            "deepseek/deepseek-v4-flash",
+            "deepseek/deepseek-v4-flash-0731",
+            "deepseek/deepseek-v4-pro",
+            "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017",
+            "deepseek/deepseek-v4.1-flash-1017:batch",
+            "deepseek/deepseek-v4.1-flash:batch",
+            "google/gemma-3-27b-it",
+            "ibm-granite/granite-4.2-8b",
+            "mancer/weaver",
+            "meta-llama/llama-3.2-3b-instruct",
+            "meta-llama/llama-3.3-70b-instruct",
+            "minimax/minimax-m2.5",
+            "mistralai/mistral-small-3.2-24b-instruct",
+            "moonshotai/kimi-k2.5",
+            "moonshotai/kimi-k3:batch",
+            "moonshotai/kimi-k3.1-pro",
+            "openai/gpt-oss-20b",
+            "particle-ai/particle-1",
+            "qwen/qwen3.5-397b-a17b",
+            "qwen/qwen3.5-9b",
+            "ricursiveai/ripple-65b-preview",
+            "undi95/remm-slerp-l2-13b",
+            "xiaomi/mimo-v2.5-pro",
+            "z-ai/glm-4.7",
+            "z-ai/glm-5.2",
+            "z-ai/glm-5.3-flash"
+          ]
+        },
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-11-16T07:33:05.636Z"
+}
