@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "odin-rnd.page-config",
   "page": "index.html, one-pager/",
-  "note": "Page configuration, not a record. The proof strip on the home page and the lab on a page (lab launch, 2026-10-24). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs renderLabProof) and linked to it, and the build checks the rendered strip with scripts/number-provenance.mjs. A claim's record must be a measured experiment record with a decided verdict (briefProblems refuses the router-arm records). Brokers appear by the letters their published records use; no provider is named. Plain-language home (2026-11-16): each claim also carries a `limit` in words, shown under it as \"Limit:\" on the home and the lab on a page; a limit, like a text, holds no digit and no number word, and every claim on this list must have one.",
+  "note": "Page configuration, not a record. The proof strip on the home page and the lab on a page (lab launch, 2026-10-24). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs renderLabProof) and linked to it, and the build checks the rendered strip with scripts/number-provenance.mjs. A claim's record must be a measured experiment record with a decided verdict (briefProblems refuses the router-arm records). Brokers appear by the letters their published records use; no provider is named. Plain-language home (2026-11-16): each claim also carries a `limit` in words, shown under it as \"Limit:\" on the home and the lab on a page; a limit, like a text, holds no digit and no number word, and every claim on this list must have one. Glossary links (2026-11-16): a claim's `glossary` maps a phrase of its text to an entry of the glossary on the methods page (methods/#glossary-<entry>); on the home page only, that phrase links there where it is first used (scripts/lab-pages.mjs fillClaim).",
   "claims": [
     {
       "id": "proof-review-cost",
@@ -10,6 +10,7 @@
       "note": "journal/review-frontier-results.html",
       "text": "Paying more for AI code review bought little. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
       "limit": "Our own changes and planted defects, reviewed without tools; a catch means the right file was flagged. Cost is what the reseller billed.",
+      "glossary": { "uncertainty ranges": "uncertainty-range" },
       "values": {
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
         "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
@@ -35,6 +36,7 @@
       "note": "journal/broker-same-model-results.html",
       "text": "Resellers of model access (brokers) served the model we asked for, at different prices. We sent {calls} identical requests at the same moment: {subS} were silently swapped to another model for {modelS} and {subM} for {modelM}. Broker A and Broker C charged list price; Broker B charged more, a price spread of {spreadS} on each model.",
       "limit": "Only the resellers we use, within minutes on that morning; some requests got no answer. Resellers are named by letter.",
+      "glossary": { "brokers": "broker" },
       "values": {
         "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
         "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
@@ -59,6 +61,7 @@
       "note": "journal/self-verify-results.html",
       "text": "A negative result stays published. Can an AI reviewer talk itself out of its own false alarms? Against a pass mark we wrote down in advance, the answer was {decision}: with a self-check step, its false alarms on clean changes stayed at {faA} and {faB} in its separate runs.",
       "limit": "The reviewer model named in the record, on our own private changes; other models may differ. The diagnosis itself is not checked.",
+      "glossary": { "negative result": "refuted" },
       "values": {
         "decision": { "source": "data/self-verify/results.json#/decision", "format": "word" },
         "faA": { "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms", "format": "int" },

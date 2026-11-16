@@ -82,3 +82,26 @@
    the heading's measure; the boxed notes keep a narrower inset on phones. Scoped by .company-page to win over launch.css. */
 @media(max-width:900px){.company-page .track-grid>div,.company-page .tier-row article{padding-right:0}}
 @media(max-width:760px){.company-page .independence,.company-page .measure-box{padding:20px 18px}}
+/* How we test (methods/; mission rnd-site-human PR 2, 2026-11-16): a plain opening, the glossary, and each method step's
+   dense text folded under "The details" (native <details>, readable without JavaScript, 44px summaries and links). */
+.methods-onpage{align-self:end;border-top:1px solid var(--rule);padding-top:14px}
+.methods-onpage p{font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.methods-onpage ol{list-style:none;margin:6px 0 0;padding:0}
+.methods-onpage a{display:flex;align-items:center;min-height:44px;border-bottom:1px solid var(--rule);font-weight:600;text-decoration:none}
+.method-opening h3{font:600 22px/1.3 var(--display);letter-spacing:-.01em;margin-top:34px}
+.method-opening h3:first-child{margin-top:0}
+.company-prose .method-opening h3+p,.method-opening h3+p{margin-top:8px}
+.method-plain{font-weight:600}
+.method-details{margin-top:22px;border-top:1px solid var(--rule)}
+.method-details>summary{min-height:44px;box-sizing:border-box;padding:10px 0;gap:16px;font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.method-details>summary span{font-size:22px;line-height:1}
+.method-details[open]>summary{margin-bottom:10px}
+.glossary-index ul{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-wrap:wrap;gap:0 20px}
+.glossary-index a{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
+.glossary-list{margin-top:26px}
+.glossary-list>div{padding-block:20px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+.glossary-list dt{font:600 21px/1.3 var(--display)}
+.company-prose .glossary-list dd p{margin-top:8px}
+.glossary-example{font-size:15px;line-height:1.7;color:var(--steel)}
+.glossary-list>div:target dt{color:var(--brand)}
+@media(max-width:760px){.method-opening h3{font-size:20px}.glossary-list dt{font-size:19px}.glossary-index ul{gap:0 16px}}
