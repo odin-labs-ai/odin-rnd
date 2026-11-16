@@ -40,7 +40,7 @@
         ["Still open: in ", { "quote": "15,567 confirmed writes in 10 runs" }, ", ", { "quote": "PostgreSQL in strict mode confirmed them while it named no standby copy" }, "; ", { "quote": "whether a second copy existed then is unresolved" }, "."]
       ],
       "why": "If your company’s apps must not lose a saved write when a database server fails, this shows how each database behaved under the failures we caused, and where the answer is still open.",
-      "limit": [{ "quote": "Measured on one host" }, ", with some questions still open; the record’s limits name them."],
+      "limit": "All the runs were on the same host, and some questions are still open; the record’s limits name them.",
       "glossary": { "counted runs": "counted-run", "record": "record" },
       "pairs": [
         { "plan": { "href": "journal/failover-pre-registration.html", "label": "The plan (EXP 021)" }, "result": { "href": "journal/failover-results.html", "label": "The result and its limits" } }

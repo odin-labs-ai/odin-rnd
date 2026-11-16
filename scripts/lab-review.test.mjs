@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, maskCosts, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
+import { COST_RECORD, PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, maskCosts, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
 import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { maskKit } from './lab-rerun.mjs';
@@ -77,7 +77,7 @@ test('the only money figures are EXP 017\'s costs per review, each read from its
     const name = record.frontier.seats.find(x => x.seat === seat.seat).name;
     assert.ok(cost.includes(`${name} <a class="lab-num" href="../../data/review-frontier/results.json" data-source="data/review-frontier/results.json#/seats/${i}/costPerReviewUsd" data-format="usd">$${seat.costPerReviewUsd}</a>`), `${name}: its cost, linked to the record`);
   }
-  assert.match(textOf(cost), /pooled over each model's runs on 23 October 2026: /, 'dated by the record\'s runs');
+  assert.match(textOf(cost), /pooled over each model's runs on 23 October 2026 ?: /, 'dated by the record\'s runs');
   assert.match(cost, /<time datetime="2026-10-23">/);
   assert.match(textOf(cost), /This site shows a cost only with its date and its source; the source here is the experiment's record \.$/);
   // Taking the sourced costs out leaves no money figure on the page, and the old claim is gone.
@@ -156,15 +156,17 @@ test('the record is refused when it would make the page say something untrue', (
 });
 
 test('the record is pinned: a changed byte refuses the build', () => {
-  const root = mkdtempSync(join(tmpdir(), 'lab-review-'));
+  const top = mkdtempSync(join(tmpdir(), 'lab-review-')), root = join(top, 'site');
   try {
-    for (const file of [REVIEW_RECORD, REVIEW_PIN, REVIEW_TEMPLATE]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    // With EXP 017's published record and its experiment folder beside it, which the costs are read and checked from.
+    for (const file of [REVIEW_RECORD, REVIEW_PIN, REVIEW_TEMPLATE, COST_RECORD]) { mkdirSync(join(root, file, '..'), { recursive: true }); cpSync(join('site', file), join(root, file)); }
+    cpSync('experiments/review-frontier', join(top, 'experiments/review-frontier'), { recursive: true });
     // The copy renders exactly as the site's own record does (the Labs build then adds the runs section, if any).
     assert.equal(renderReview(root).pages[REVIEW_TEMPLATE], renderReview('site').pages[REVIEW_TEMPLATE]);
     writeFileSync(join(root, REVIEW_RECORD), raw.replace('"version": 1', '"version": 1 '));
     assert.throws(() => readReview(root), /record\.sha256: does not pin the sha256/);
     assert.equal(readFileSync(join('site', REVIEW_PIN), 'utf8'), `${sha256(raw)}  record.json\n`);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(top, { recursive: true, force: true }); }
 });
 
 // The leak screen, a discriminating negative per class it guards.
