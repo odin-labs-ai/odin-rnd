@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
+import { PLAN_ONLY, RECEIPTS, RECEIPT_PRS, REVIEW_PIN, REVIEW_RECORD, REVIEW_TEMPLATE, SOURCES, maskCosts, readReview, receiptTokens, renderAbout, renderReview, renderSelfVerify, reviewProblems } from './lab-review.mjs';
 import { SOURCE_COMMITS, build, serialise } from './vendor-review.mjs';
 import { pageLeaks, recordHashes } from './lab-kit.mjs';
 import { maskKit } from './lab-rerun.mjs';
@@ -169,8 +169,10 @@ test('the record is pinned: a changed byte refuses the build', () => {
 
 // The leak screen, a discriminating negative per class it guards.
 test('leak screen: the page, the record and the tile, and a planted value of each class is caught', () => {
-  // The "Re-run this" block's own commands and outputs are masked (scripts/lab-rerun.mjs), and nothing else is.
-  assert.deepEqual(pageLeaks(maskKit(page, 'review', record), [...recordHashes(record), ...receiptTokens(record)]), []);
+  // The "Re-run this" block's own commands and outputs are masked (scripts/lab-rerun.mjs), and so are EXP 017's sourced
+  // costs (maskCosts, mission rnd-site-human PR 3), and nothing else is.
+  assert.deepEqual(pageLeaks(maskCosts(maskKit(page, 'review', record), record), [...recordHashes(record), ...receiptTokens(record)]), []);
+  assert.ok(pageLeaks(maskKit(page, 'review', record), [...recordHashes(record), ...receiptTokens(record)]).some(p => /price or currency/.test(p)), 'unmasked, the costs are what the screen refuses');
   const tile = readFileSync('site/data/labs/review-tile.json', 'utf8');
   for (const [name, text] of [['page', main], ['record', raw], ['tile', tile]]) {
     for (const re of [/\/Users\//, /\/home\//, /localhost/i, /\b\d{1,3}(?:\.\d{1,3}){3}\b/, /\bghp_|\bsk-[A-Za-z0-9]|-----BEGIN/, /odin-labs-ai\/(?!odin-rnd)/]) assert.doesNotMatch(text, re, `${name}: ${re}`);

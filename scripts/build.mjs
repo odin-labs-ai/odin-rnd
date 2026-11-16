@@ -171,13 +171,6 @@ if (refreshUpdatesRequested) {
   const { renderLabs } = await import('./labs.mjs');
   for (const [file, body] of Object.entries(renderLabs())) writeFileSync(`dist/${file}`, body);
 }
-// Plain openings on every lab page (mission rnd-site-human PR 3, 2026-11-16): In short, What we found, Why it matters
-// and a Limit after each lab page's hero, from site/data/lab-openings.json, and the record's identifiers folded, verbatim,
-// under "How we checked" (scripts/lab-pages.mjs; fails closed). Before the site index and the chrome, which read them.
-{
-  const { placeLabOpenings } = await import('./lab-pages.mjs');
-  placeLabOpenings({ distDir: 'dist', root: 'site' });
-}
 // Show one latest, validated run per lab beside the editorial updates. This is built-only: the updates feed's
 // frozen dates and committed HTML do not change when a lab appends another record check.
 {

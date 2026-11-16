@@ -1,7 +1,8 @@
 // Plain openings on every lab page (mission rnd-site-human PR 3, 2026-11-16; the founder found the site "too technical /
 // jargon" and "hard to navigate"; PLAN A4). Each lab page opens, right after its hero, with In short (two plain
 // sentences), What we found, Why it matters and a one-line Limit, then the existing detail; the record's identifiers sit,
-// verbatim, in closed "How we checked" folds (scripts/lab-pages.mjs, placeLabOpenings, from site/data/lab-openings.json).
+// verbatim, in closed "How we checked" folds (scripts/lab-pages.mjs openLabPages, run by scripts/labs.mjs renderLabs, from
+// site/data/lab-openings.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -9,7 +10,8 @@ import { join } from 'node:path';
 import { builtCopy } from './test-build.mjs';
 import { bannedIn, jargon, plainBanned } from './plain-words.mjs';
 import { blockText, CHECKED_OPEN, CHECKED_SUMMARY, elementEnd, foldChecks, glossaryIds, NOT_A_LAB, OPENINGS_CONFIG, pageLinks, renderOpening, resolveHref, siteReader, statesNumber, unfoldChecks } from './lab-pages.mjs';
-import { renderLabs } from './labs.mjs';
+import { renderLabPages, renderLabs } from './labs.mjs';
+import { withLabRuns } from './lab-runs.mjs';
 
 const config = JSON.parse(readFileSync(join('site', OPENINGS_CONFIG), 'utf8'));
 const labPages = readdirSync('site/labs', { withFileTypes: true }).filter(d => d.isDirectory() && existsSync(join('site/labs', d.name, 'index.html'))).map(d => d.name);
@@ -50,13 +52,12 @@ test('a glossary phrase links its first use in the opening only, a quote\'s word
   assert.match(blockText(html), /Limit: A broker served it\./);
 });
 
-test('the folds keep the text: on every rendered lab page, taking the fold tags out gives back the page byte for byte, and no full hash is left in view', () => {
-  const pages = renderLabs();
+test('the folds keep the text: on every rendered lab page, taking the opening and the fold tags out gives back the page byte for byte, and no source line with a hash is left in view', () => {
+  const before = withLabRuns(renderLabPages('site'), 'site'), pages = renderLabs();
   for (const lab of labs) {
-    const page = pages[`labs/${lab}/index.html`];
-    assert.ok(page, `labs/${lab}/ is rendered`);
-    const folded = foldChecks(page, lab);
-    assert.equal(unfoldChecks(folded), page, `${lab}: nothing reworded or removed`);
+    const rel = `labs/${lab}/index.html`, page = before[rel], folded = pages[rel];
+    assert.ok(page && folded, `labs/${lab}/ is rendered`);
+    assert.equal(unfoldChecks(folded).replace(openingOf(folded), ''), page, `${lab}: nothing reworded or removed`);
     assert.equal(foldChecks(folded, lab), folded, `${lab}: folding twice changes nothing`);
     for (const at of [...folded.matchAll(/<details class="method-details lab-checked">/g)].map(m => m.index)) {
       const fold = folded.slice(at, elementEnd(folded, at));
@@ -84,6 +85,12 @@ test('the plain words of every opening carry no digit and no number word, and no
       }
     }
   }
+});
+
+test('the pages about the labs pass through: no opening and no fold on the runs list or the How we decide ledger', () => {
+  const before = withLabRuns(renderLabPages('site'), 'site'), pages = renderLabs();
+  for (const rel of NOT_A_LAB) assert.equal(pages[rel], before[rel], rel);
+  for (const rel of Object.keys(before).filter(p => !/^labs\/[^/]+\/index\.html$/.test(p))) assert.equal(pages[rel], before[rel], rel);
 });
 
 test('as built: every lab page opens with the four parts in order, right after its hero; plan and result link each other; the folds are closed and keep the record\'s words', { timeout: 600_000 }, () => {

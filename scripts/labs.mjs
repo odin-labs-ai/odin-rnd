@@ -38,6 +38,7 @@ import { readFitMap, readQuestionSet, renderFitMap } from './lab-fit-map.mjs';
 import { readTiles, renderTile } from './lab-tiles.mjs';
 import { renderFlow } from './lab-flow.mjs';
 import { withLabRuns } from './lab-runs.mjs';
+import { openLabPages } from './lab-pages.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
 import { renderWeek, weekOf } from './lab-week.mjs';
@@ -449,6 +450,8 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
  * record hash" and badge read from its record's runs (scripts/lab-runs.mjs; the build fails on a problem).
  */
 export function renderLabs(root = 'site', options = {}) {
-  // The runs' dates are checked against the build's own clock (as Lab 05's are), not a caller's `now`.
-  return withLabRuns(renderLabPages(root, options), root);
+  // The runs' dates are checked against the build's own clock (as Lab 05's are), not a caller's `now`. Then every lab
+  // page's plain opening and its "How we checked" folds (mission rnd-site-human PR 3; scripts/lab-pages.mjs), last, so
+  // they see the page as finished, its runs included; required on the published site.
+  return openLabPages(withLabRuns(renderLabPages(root, options), root), { root, required: resolve(root) === REPO_SITE });
 }

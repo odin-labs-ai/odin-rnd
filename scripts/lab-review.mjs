@@ -257,6 +257,10 @@ export function renderCosts(record, root = 'site') {
   return { figures, html: `<strong>What one review cost</strong>, as the broker billed it, pooled over each model's runs ${when}: ${list}. This site shows a cost only with its date and its source; the source here is <a href="../../${COST_RECORD}">the experiment's record</a>.` };
 }
 
+/** `html` with EXP 017's sourced costs (renderCosts' figures, each a link to its record) masked, and nothing else: the
+ *  page screen refuses any other money figure. */
+export const maskCosts = (html, record, root = 'site') => renderCosts(record, root).figures.reduce((page, figure) => page.replaceAll(figure, 'a sourced cost'), html);
+
 export function renderFrontier(record, root = 'site') {
   const f = record.frontier, s = source(record, 'frontier');
   const rows = f.seats.map(x => `<tr><th scope="row">${escape(x.name)}</th><td><strong>${of(x.caught, x.caughtOf)}</strong> (${x.caughtPerRun.map(escape).join(' and ')})</td><td>${of(x.falseAlarms, x.falseAlarmsOf)} (${x.falseAlarmsPerRun.map(escape).join(' and ')})</td><td>${escape(x.noVerdict)}</td><td>${f.onFrontier.includes(x.seat) ? 'on' : 'off'}</td></tr>`).join('');
@@ -304,8 +308,7 @@ export function renderReview(root = 'site', options = {}) {
   // The "Re-run this" block shows this repository's own commands and file names, which the screen refuses on sight:
   // exactly those (scripts/lab-rerun.mjs) are masked first, and nothing else.
   // So are EXP 017's sourced costs (renderCosts), each a link to its record: exactly those, and nothing else.
-  const masked = renderCosts(record, root).figures.reduce((page, figure) => page.replaceAll(figure, 'a sourced cost'), maskKit(html, 'review', record));
-  const leaks = pageLeaks(masked, known);
+  const leaks = pageLeaks(maskCosts(maskKit(html, 'review', record), record, root), known);
   if (leaks.length) throw new Error(`${REVIEW_TEMPLATE}: the rendered page fails the screen:\n  ${leaks.join('\n  ')}`);
   return { pages: { [REVIEW_TEMPLATE]: html } };
 }

@@ -1,5 +1,5 @@
 {
-  "about": "The plain opening of every lab page (mission rnd-site-human PR 3, 2026-11-16), rendered after the hero by placeLabOpenings() in scripts/lab-pages.mjs. A plain string is words only: no digit and no number word. A number appears only as a quote of the same page's own words, verbatim, or as a value read from a measured experiment record. The build stops on a quote the page no longer holds, a glossary phrase that is not used, or a plan and result that do not link each other.",
+  "about": "The plain opening of every lab page (mission rnd-site-human PR 3, 2026-11-16), rendered after the hero by openLabPages() in scripts/lab-pages.mjs (run by scripts/labs.mjs). A plain string is words only: no digit and no number word. A number appears only as a quote of the same page's own words, verbatim, or as a value read from a measured experiment record. The build stops on a quote the page no longer holds, a glossary phrase that is not used, or a plan and result that do not link each other.",
   "labs": {
     "agent-space": {
       "short": "In recorded sessions, AI agents in a small virtual world answer questions that visitors send in. Each answer shows a card naming what it cited, so you can see where it came from, though the card does not show that the answer is right.",

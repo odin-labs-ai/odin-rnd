@@ -7,7 +7,7 @@
 // scripts/number-provenance.mjs as a link to that record; the same module checks the built pages at the end of the
 // build. The page configuration files (site/data/provider-economics.json, site/data/evidence.json) hold words and
 // JSON pointers, never a number that is shown.
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
@@ -434,10 +434,10 @@ export function renderLabPages({ root = 'site', read = siteReader(root), weeks =
 
 /*
  * Lab page openings (mission rnd-site-human PR 3, 2026-11-16; the founder found the site "too technical / jargon" and
- * "hard to navigate"; PLAN A4). scripts/build.mjs runs placeLabOpenings() over the built lab pages in dist/ (after
- * scripts/labs.mjs wrote them, before the site index and the chrome), so every lab page opens the same way, right after
- * its hero: "In short" (two plain sentences), "What we found", "Why it matters" and a one-line "Limit", then the
- * existing detail, unchanged. The words come from site/data/lab-openings.json; nothing rendered is committed.
+ * "hard to navigate"; PLAN A4). scripts/labs.mjs runs openLabPages() over the lab pages it renders (scripts/build.mjs is
+ * pinned by the witness records, so it is not changed), so every lab page opens the same way, right after its hero:
+ * "In short" (two plain sentences), "What we found", "Why it matters" and a one-line "Limit", then the existing detail,
+ * unchanged. The words come from site/data/lab-openings.json; nothing rendered is committed.
  *
  * Where each word and number comes from (fail closed, every reason a build stop):
  *   - a plain string: words only, with no digit and no number word (statesNumber), and none of the plan's banned lab
@@ -642,36 +642,39 @@ export function pageLinks(html, rel, target) {
 }
 
 /**
- * Every lab page under `distDir`/labs/ gets its opening and its folds. A lab page with no opening in the config, an
- * opening for a page that is not built, or a plan and result that do not link each other stops the build.
+ * The rendered lab pages (scripts/labs.mjs renderLabs, keyed by their dist/ path) with every lab page's opening and
+ * folds. A lab page with no opening in the config, an opening for a lab page that is not rendered, or a plan and result
+ * that are not published under `root` or do not link each other stops the build. Pages about the labs (NOT_A_LAB) and
+ * every other file pass through unchanged. A root without the config (a test fixture) is returned as it is, unless
+ * `required` (the published site).
  */
-export function placeLabOpenings({ distDir = 'dist', root = 'site', read = siteReader(root) } = {}) {
+export function openLabPages(pages, { root = 'site', read = siteReader(root), required = false } = {}) {
+  if (!existsSync(join(root, OPENINGS_CONFIG))) {
+    if (required) throw new Error(`site/${OPENINGS_CONFIG} is required on the published site: every lab page opens with it`);
+    return pages;
+  }
   const config = read(OPENINGS_CONFIG);
   if (!config?.labs || typeof config.labs !== 'object') throw new Error(`site/${OPENINGS_CONFIG}: no labs`);
   const ids = glossaryIds(root);
-  const labsDir = join(distDir, 'labs');
-  const built = readdirSync(labsDir, { withFileTypes: true }).filter(d => d.isDirectory() && existsSync(join(labsDir, d.name, 'index.html'))).map(d => d.name)
+  const rendered = Object.keys(pages).map(p => /^labs\/([^/]+)\/index\.html$/.exec(p)?.[1]).filter(Boolean)
     .filter(lab => !NOT_A_LAB.includes(`labs/${lab}/index.html`)).sort();
   const configured = Object.keys(config.labs).sort();
-  const missing = built.filter(l => !configured.includes(l)), extra = configured.filter(l => !built.includes(l));
+  const missing = rendered.filter(l => !configured.includes(l)), extra = configured.filter(l => !rendered.includes(l));
   if (missing.length) throw new Error(`site/${OPENINGS_CONFIG}: no opening for ${missing.map(l => `labs/${l}/`).join(', ')}`);
-  if (extra.length) throw new Error(`site/${OPENINGS_CONFIG}: an opening for a lab page that is not built: ${extra.join(', ')}`);
-  const pages = {};
-  for (const lab of built) {
-    const file = join(labsDir, lab, 'index.html'), rel = `labs/${lab}/index.html`;
-    const source = readFileSync(file, 'utf8');
+  if (extra.length && required) throw new Error(`site/${OPENINGS_CONFIG}: an opening for a lab page that is not rendered: ${extra.join(', ')}`);
+  const out = { ...pages };
+  for (const lab of rendered) {
+    const rel = `labs/${lab}/index.html`, source = pages[rel];
     if (source.includes('id="in-short"')) throw new Error(`Lab opening: ${rel} already has an opening`);
     const [, heroEnd] = heroSpan(source, rel);
     const main = source.slice(source.indexOf('<main'), source.indexOf('</main>'));
     const opening = renderOpening(read, lab, config.labs[lab], { pageText: blockText(main), glossaryIds: ids });
     for (const p of config.labs[lab].pairs ?? []) {
-      for (const href of [p.plan.href, p.result.href]) if (!existsSync(join(distDir, resolveHref('', href)))) throw new Error(`Lab opening: ${rel} links ${href}, which is not built`);
-      if (p.plan.href.endsWith('.html') && !pageLinks(readFileSync(join(distDir, p.plan.href), 'utf8'), p.plan.href, p.result.href)) throw new Error(`Lab opening: the plan ${p.plan.href} does not link its result ${p.result.href}`);
-      if (!pageLinks(readFileSync(join(distDir, p.result.href), 'utf8'), p.result.href, p.plan.href)) throw new Error(`Lab opening: the result ${p.result.href} does not link back to its plan ${p.plan.href}`);
+      for (const href of [p.plan.href, p.result.href]) if (!existsSync(join(root, href))) throw new Error(`Lab opening: ${rel} links ${href}, which is not published`);
+      if (p.plan.href.endsWith('.html') && !pageLinks(readFileSync(join(root, p.plan.href), 'utf8'), p.plan.href, p.result.href)) throw new Error(`Lab opening: the plan ${p.plan.href} does not link its result ${p.result.href}`);
+      if (!pageLinks(readFileSync(join(root, p.result.href), 'utf8'), p.result.href, p.plan.href)) throw new Error(`Lab opening: the result ${p.result.href} does not link back to its plan ${p.plan.href}`);
     }
-    const html = foldChecks(source.slice(0, heroEnd) + opening + source.slice(heroEnd), rel);
-    writeFileSync(file, html);
-    pages[rel] = html;
+    out[rel] = foldChecks(source.slice(0, heroEnd) + opening + source.slice(heroEnd), rel);
   }
-  return pages;
+  return out;
 }
