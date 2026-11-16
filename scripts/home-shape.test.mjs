@@ -4,14 +4,24 @@ import assert from 'node:assert/strict';
 import { journalRows } from './experiment-ledger.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { assertCorrectionKept, assertKept, CORRECTION_BLOCK, CORRECTION_PARAGRAPHS_SHA256, CORRECTION_SOURCE, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, labelCorrection, ledgerOf, OPEN_ORDER, shapeHome } from './home-shape.mjs';
+import { ADDED_IDS, assertCorrectionKept, assertKept, CHECK_HEADING, CHECK_ID, CHECK_INTRO, CHECK_TITLE_ID, CORRECTION_BLOCK, CORRECTION_LEAD, CORRECTION_OPEN, CORRECTION_PARAGRAPHS_SHA256, CORRECTION_SOURCE, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, labelCorrection, ledgerOf, OPEN_ORDER, shapeHome } from './home-shape.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
 const LEDGER = '<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">List.</h3><ol aria-labelledby="all-experiments-title"><li><a href="journal/a.html">EXP 004</a></li></ol></div>';
 const row = n => `<a class="journal-row" href="journal/${n}.html"><div><h3>Note ${n}</h3><p>Text ${n}.</p></div></a>`;
 const heading = (id, title) => `<div class="section-heading"><h2 id="${id}">${title}</h2><p>Intro.</p></div>`;
+// The committed #floor's five parts, in order (scripts/home-shape.mjs splitFloor).
+const FLOOR = {
+  open: '<section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">',
+  premise: '<div class="factory-premise"><h1 id="hero-title">Who we are</h1><div><p>We test.</p><a class="button button-primary premise-primary" href="#findings">See what we found</a></div></div>',
+  drawing: '<div class="factory-drawing" data-view="floor"><div class="drawing-toolbar"><p>Open a step</p></div><div class="floor-art"></div></div>',
+  stations: '<div class="station-compartment" aria-label="Selected experiment"><section class="nested"><p>Station.</p></section><p id="station-status"></p></div>',
+  boundary: '<p class="factory-boundary">Four ways to check a result.</p>',
+  correction: '<details class="factory-correction" open><summary>Wording clarification · <time datetime="2026-11-01">1 November 2026</time></summary><p>Earlier wording.</p></details>',
+};
+const floorOf = (parts = FLOOR) => `${parts.open}\n      ${parts.premise}\n      ${parts.drawing}\n      ${parts.stations}\n      ${parts.boundary}\n      ${parts.correction}\n    </section>`;
 const SECTIONS = {
-  floor: '<section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title"><h1 id="hero-title">Factory</h1><section class="nested"><p>Station.</p></section></section>',
+  floor: floorOf(),
   findings: `<section class="lab-launch content-section" id="findings" aria-labelledby="findings-title">${heading('findings-title', 'What we found')}<ol class="proof-strip"><li data-source="x">One</li></ol></section>`,
   'work-with-us': `<section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">${heading('offer-title', 'Work with us')}<p>Offer.</p></section>`,
   'partner-tracks': `<section class="partner-tracks content-section" id="partner-tracks" aria-labelledby="tracks-title">${heading('tracks-title', 'Tracks')}<ol class="track-cards"><li>Track.</li></ol></section>`,
@@ -40,15 +50,17 @@ const topOrder = html => {
   return out;
 };
 
-test('the shaped home opens with the factory, what we found, the updates and the offer, then Go further, then the rest in source order', () => {
+test('the shaped home opens with the hero, what we found, how we check, the updates and the offer, then Go further, then the rest in source order', () => {
   const out = shapeHome(HOME);
+  assert.deepEqual(OPEN_ORDER, ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us']);
   assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
   assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal']);
-  // The updates feed moves with its two markers, which stay around it, right after what we found.
-  assert.match(out, /<section class="lab-launch[^]*?<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
+  // The updates feed moves with its two markers, which stay around it, right after the drawing's section.
+  assert.match(out, /<p class="factory-boundary">[^<]*<\/p>\n {4}<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
+  assert.ok(out.indexOf(`id="${CHECK_ID}"`) > out.indexOf('id="findings"') && out.indexOf(`id="${CHECK_ID}"`) < out.indexOf('<!-- updates:'), 'how we check sits between what we found and the updates');
   assert.equal(out.split('<!-- /updates -->').length, 2);
   // The open sections are byte for byte as they were.
-  for (const key of ['floor', 'findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
+  for (const key of ['findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
   // Go further, after the offer, links the lab on a page and the section pages, with the header's labels.
   const nav = out.slice(out.indexOf('<nav class="home-further'), out.indexOf('</nav>', out.indexOf('<nav class="home-further')));
   assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['one-pager/', 'experiments/', 'labs/', 'journal/', 'find/', 'projects/']);
@@ -58,6 +70,19 @@ test('the shaped home opens with the factory, what we found, the updates and the
   // Only the home links its stylesheet and opener, once each, after the home's own.
   assert.ok(out.includes(`<link rel="stylesheet" href="assets/launch.css">\n  <link rel="stylesheet" href="${HOME_CSS}">`));
   assert.ok(out.includes(`<script type="module" src="assets/motion.mjs"></script>\n  <script type="module" src="${HOME_JS}"></script>`));
+});
+
+test('the hero keeps who we are, See what we found and the correction; the drawing moves under what we found, byte for byte', () => {
+  const out = shapeHome(HOME);
+  const i = '\n      ';
+  // The hero: its own open tag, the premise, the correction (folded later by labelCorrection), nothing else.
+  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.findings}`), 'hero, then what we found');
+  // The drawing's section: a plain heading and sentence, then the drawing, the stations and the boundary line as they were.
+  const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${CHECK_HEADING}</h2><p>${CHECK_INTRO}</p></div>`;
+  assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
+  assert.match(CHECK_INTRO, /^[A-Z][^.!?]*\.$/, 'one plain sentence');
+  // Each part of the committed #floor appears exactly once.
+  for (const [name, part] of Object.entries(FLOOR)) assert.equal(out.split(part).length, 2, name);
 });
 
 test('each folded section keeps its section, id and heading block visible, and its whole body in one closed fold', () => {
@@ -84,7 +109,8 @@ test('everything a reader of the built home relies on is kept: field-note rows, 
   assert.deepEqual(journalRows(out), journalRows(HOME));
   assert.equal(journalRows(out).length, 3);
   assert.equal(ledgerOf(out), LEDGER);
-  assert.deepEqual(idsOf(out).filter(id => id !== FURTHER_ID).sort(), idsOf(HOME).sort());
+  assert.deepEqual(idsOf(out).filter(id => !ADDED_IDS.includes(id)).sort(), idsOf(HOME).sort());
+  assert.deepEqual(idsOf(out).filter(id => !idsOf(HOME).includes(id)), ADDED_IDS);
   assert.ok(out.includes('<details class="journal-more"><summary>Show the earlier note</summary>'), 'the journal fold nests inside its section fold');
 });
 
@@ -106,6 +132,10 @@ test('the shaped home refuses a page it does not expect', () => {
     [HOME.replace('<main id="main">', '<main id="main"></main><main>'), /exactly one <main>/],
     [HOME.replace('<link rel="stylesheet" href="assets/launch.css">', ''), /assets\/launch\.css exactly once/],
     [HOME.replace('<script type="module" src="assets/motion.mjs"></script>', ''), /assets\/motion\.mjs exactly once/],
+    [page(SOURCE_ORDER, { ...SECTIONS, floor: floorOf({ ...FLOOR, boundary: '<p class="other">Boundary.</p>' }) }), /#floor does not hold its boundary where expected/],
+    [page(SOURCE_ORDER, { ...SECTIONS, floor: floorOf({ ...FLOOR, premise: FLOOR.drawing, drawing: FLOOR.premise }) }), /#floor does not hold its premise where expected/],
+    [page(SOURCE_ORDER, { ...SECTIONS, floor: floorOf({ ...FLOOR, correction: `${FLOOR.correction}<p>Loose.</p>` }) }), /#floor holds more than/],
+    [HOME.replace('<section class="closing">', `<section class="closing" id="${CHECK_ID}">`), /already shaped/],
   ];
   for (const [html, expected] of cases) assert.throws(() => shapeHome(html), expected, String(expected));
 });
@@ -120,11 +150,12 @@ test('the kept-check refuses changed field-note rows, ledger bytes or ids', () =
   assert.throws(() => assertKept(HOME, out.replace(' id="tracks-title"', '')), /page ids changed/);
   assert.throws(() => assertKept(HOME, out.replace('<p>Offer.</p>', '<p id="new">Offer.</p>')), /page ids changed/);
   assert.throws(() => assertKept(HOME, out.replace(` id="${FURTHER_ID}"`, '')), /page ids changed/);
+  assert.throws(() => assertKept(HOME, out.replace(` id="${CHECK_TITLE_ID}"`, '')), /page ids changed/);
 });
 
 // The lab's working words (scripts/home-plain-language.test.mjs) are checked on the whole built home, these words included.
 test('the new words are plain: no digit, no "every", one line each', () => {
-  const words = [...FOLDS.map(f => f.summary), 'Go further', ...FURTHER.flatMap(f => [f.label, f.text])];
+  const words = [...FOLDS.map(f => f.summary), 'Go further', ...FURTHER.flatMap(f => [f.label, f.text]), CHECK_HEADING, CHECK_INTRO, CORRECTION_LEAD, CORRECTION_OPEN];
   for (const text of words) {
     assert.doesNotMatch(text, /\p{Nd}/u, text);
     assert.doesNotMatch(text, /\bevery\b/i, text);
@@ -147,12 +178,12 @@ test('the fold opener opens every fold around a linked target and reads the hash
   assert.equal(idOf(''), '');
 });
 
-// The hero's dated correction (labelCorrection, wave 6), on the committed home's own block: a block that cannot be closed,
-// in place, dated, every word kept.
+// The hero's dated correction (labelCorrection: wave 6, folded on the plain-language home 2026-11-16), on the committed
+// home's own block: one closed fold in place, its summary dating the correction in plain words, every word kept inside.
 // The committed block, label and paragraphs, as #168 published it (213e1f1): a reword fails here.
 const HOME_CORRECTION_SHA256 = '40aedf437370f2d7f8baf931867b62fb7dfd42046e69a46d66c9f08564db61be';
 
-test('the home correction becomes an open block that cannot be closed, under a dated label, every word kept', () => {
+test('the home correction folds under a plain dated summary, in place, every word kept and in the HTML', () => {
   const source = readFileSync('site/index.html', 'utf8');
   const at = source.indexOf(CORRECTION_SOURCE);
   const block = source.slice(at, source.indexOf('</details>', at) + '</details>'.length);
@@ -164,16 +195,19 @@ test('the home correction becomes an open block that cannot be closed, under a d
   assert.equal(createHash('sha256').update(block).digest('hex'), HOME_CORRECTION_SHA256, 'the committed correction is byte for byte what #168 published');
   assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), CORRECTION_PARAGRAPHS_SHA256, 'the build pins the same paragraphs');
   const out = labelCorrection(source);
-  assert.ok(!out.includes(CORRECTION_SOURCE) && !out.includes('<details class="factory-correction"'), 'no disclosure left');
-  assert.equal(out.split('class="factory-correction"').length, 2, 'exactly one correction');
+  assert.ok(!out.includes(CORRECTION_SOURCE), 'no longer open by default');
+  assert.equal(out.split('class="factory-correction').length, 2, 'exactly one correction');
   const start = out.indexOf(CORRECTION_BLOCK);
-  const shown = out.slice(start, out.indexOf('</div>', start) + '</div>'.length);
+  const shown = out.slice(start, out.indexOf('</details>', start) + '</details>'.length);
   // In place: nothing outside the block changed.
   assert.equal(start, at);
   assert.equal(out.slice(start + shown.length), source.slice(at + block.length));
-  // The dated label, #168's label line, then every paragraph byte for byte, in order; no summary, no toggle, no "+".
-  assert.equal(shown, `${CORRECTION_BLOCK}<p class="correction-when">Corrected on <time datetime="2026-11-01">1 November 2026</time> and <time datetime="2026-11-02">2 November 2026</time></p><p class="correction-label">${label}</p>${paragraphs.join('')}</div>`);
-  assert.doesNotMatch(shown, /<summary|<details|aria-hidden="true">\+/);
+  // One closed fold: the summary says in plain words what was corrected and when, then "Read the correction"; inside,
+  // #168's label line, then every paragraph byte for byte, in order.
+  const summary = `<summary><span class="correction-when">${CORRECTION_LEAD}<time datetime="2026-11-01">1 November 2026</time> and <time datetime="2026-11-02">2 November 2026</time>.</span><span class="correction-open">${CORRECTION_OPEN}<span aria-hidden="true">+</span></span></summary>`;
+  assert.equal(shown, `${CORRECTION_BLOCK}${summary}<p class="correction-label">${label}</p>${paragraphs.join('')}</details>`);
+  assert.equal(CORRECTION_BLOCK, '<details class="factory-correction correction-fold">', 'closed, no open attribute');
+  assert.equal(CORRECTION_LEAD, 'We corrected our earlier headline and wording on ');
   // It stops on a page it does not expect, a closed block included.
   assert.throws(() => labelCorrection(out), /expected exactly one open/);
   assert.throws(() => labelCorrection(source.replace(CORRECTION_SOURCE, '<details class="factory-correction">')), /expected exactly one open/);
@@ -182,13 +216,15 @@ test('the home correction becomes an open block that cannot be closed, under a d
   assert.throws(() => labelCorrection(source.replace(block, block.replace(/<time datetime="[^"]+">([^<]*)<\/time>/g, '$1'))), /no dated <time>/);
   assert.throws(() => labelCorrection(source.replace(block, `${CORRECTION_SOURCE}<summary>${label}</summary></details>`)), /anything but its paragraphs/);
   assert.throws(() => labelCorrection(source.replace(paragraphs[0], paragraphs[0].replace('</p>', ' More.</p>'))), /differ from the text #168 published/, 'a reword of the committed text stops the build');
-  // The kept-check: only the block may change, in place, inside the factory hero, never closable.
+  // The kept-check: only the block may change, in place, inside the hero, one fold with its dated summary.
   assert.doesNotThrow(() => assertCorrectionKept(source, out));
-  assert.throws(() => assertCorrectionKept(source, out.replace(paragraphs[0], paragraphs[0].replace('</p>', ' More.</p>'))), /label or its body changed/);
-  assert.throws(() => assertCorrectionKept(source, out.replace(`<p class="correction-label">${label}</p>`, '<p class="correction-label"></p>')), /label or its body changed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(paragraphs[0], paragraphs[0].replace('</p>', ' More.</p>'))), /earlier label or its body changed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(`<p class="correction-label">${label}</p>`, '<p class="correction-label"></p>')), /earlier label or its body changed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(CORRECTION_LEAD, 'Updated on ')), /dated summary/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(' and <time datetime="2026-11-02">', ' and <b datetime="2026-11-02">')), /dated summary|outside the correction/);
   assert.throws(() => assertCorrectionKept(source, out.replace('Four ways to check a result', 'Five ways to check a result')), /outside the correction/);
-  assert.throws(() => assertCorrectionKept(source, out.replace(CORRECTION_BLOCK, '<div class="factory-correction">')), /not where the correction was/);
-  assert.throws(() => assertCorrectionKept(source, out.replace('<p class="correction-label">', '<details open><summary>x</summary></details><p class="correction-label">')), /can be closed/);
+  assert.throws(() => assertCorrectionKept(source, out.replace(CORRECTION_BLOCK, '<details class="factory-correction" open>')), /not where the correction was/);
+  assert.throws(() => assertCorrectionKept(source, out.replace('<p class="correction-label">', '<details open><summary>x</summary></details><p class="correction-label">')), /one fold with one summary/);
   const moved = source.replace(block, '').replace('</main>', `<section class="moved">${block}</section></main>`);
   assert.throws(() => labelCorrection(moved), /inside the factory hero/);
 });

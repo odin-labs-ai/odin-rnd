@@ -24,7 +24,8 @@ export const jargon = [
 /**
  * The plain-language home (2026-11-16; founder: "too technical / jargon", "hard to navigate"; mission rnd-site-human
  * PLAN B3). Words and marks banned from the part of the home a visitor reads first: the header navigation, the hero's
- * premise and drawing toolbar, what we've found (#findings), the "Go further" list and the fold summaries. The lab's
+ * premise and its dated correction summary, what we've found (#findings), the plain heading and sentence over the
+ * drawing and its toolbar, the "Go further" list and the fold summaries. The lab's
  * working words stay on the detail pages, in "How we checked" folds and in the records. The station drawing, the
  * latest updates and the folded sections are rewritten in later PRs of the same plan (PR 5, PR 6), so they are not
  * read here yet; their old wording is listed in the plan.
@@ -80,6 +81,8 @@ export function homeFirstRead(home) {
     'header nav': elementAt(elementAt(home, /<header class="site-header[ "]/), /<nav\b/),
     'hero premise': elementAt(home, /<div class="factory-premise"/),
     'drawing toolbar': elementAt(home, /<div class="drawing-toolbar"/),
+    'how we check intro': elementAt(home, /<div class="home-check-intro"/),
+    'correction summary': elementAt(elementAt(home, /<details class="factory-correction correction-fold"/), /<summary>/),
     'what we found': elementAt(home, /<section\b[^>]*\sid="findings"/),
     'go further': elementAt(home, /<nav class="home-further/),
     'fold summaries': [...home.matchAll(/<details class="home-fold"><summary>([^<]*)</g)].map(m => `<p>${m[1]}</p>`).join(''),
@@ -146,13 +149,17 @@ test('the plain-language reader catches each banned word and mark, and leaves pl
   assert.deepEqual(bannedIn(readable(`<p>${plain}</p>`)), [], 'plain words, dates, counts and prices pass');
 });
 
-test('the built home reads plain where a visitor starts: header, hero, what we found, Go further and the folds', { timeout: 600_000 }, () => {
+test('the built home reads plain where a visitor starts, plain first: header, hero, what we found, how we check, Go further and the folds', { timeout: 600_000 }, () => {
   const home = readFileSync(join(builtCopy(), 'dist', 'index.html'), 'utf8');
   const parts = homeFirstRead(home);
   for (const [name, html] of Object.entries(parts)) {
     assert.ok(stripTags(html).trim(), `${name}: found on the built home`);
     assert.deepEqual(bannedIn(readable(html)), [], `${name}: say it plainly (PLAN B2/B3), or move the term to a detail page`);
   }
+  // Plain first (founder, on the PR 1 screenshot): who we are, then what we've found, and only then the drawing.
+  const order = [parts['hero premise'], parts['what we found'], parts['how we check intro'], parts['drawing toolbar']].map(part => home.indexOf(part));
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, what we found, how we check, the drawing: ${order.join(', ')}`);
+  assert.ok(home.indexOf(parts['correction summary']) < home.indexOf(parts['what we found']), 'the dated correction summary stays in the hero, by the headline');
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Find']);

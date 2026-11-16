@@ -43,10 +43,10 @@ export const DESTINATIONS = Object.freeze([
  * href leads anywhere else stops the build: that link would be a destination this table does not account for.
  */
 export const RETIRED_LABELS = new Map([
-  ['The floor', { target: '#floor', to: null, reason: 'the factory drawing (#floor) is still the top of the home, which the brand link leads to; the header now leads to what we found (#findings) and to how we test (methods/)' }],
+  ['The floor', { target: '#floor', to: null, reason: '#floor is still the top of the home (its hero), which the brand link leads to, and the factory drawing sits under what we found (#how-we-check); the header now leads to what we found (#findings) and to how we test (methods/)' }],
   ['Open source', { target: '#projects', to: null, reason: 'the home tools list (#projects) keeps no header link; every tool page is listed on projects/, which the tool pages\' breadcrumbs, the notes page, the home\'s Go further list and Find lead to, and the home still has the list' }],
   // Plain-language home, 2026-11-16 (founder: "too technical / jargon", "hard to navigate").
-  ['Factory', { target: '#floor', to: null, reason: '"Factory" hid what the lab found; the factory drawing (#floor) is still the top of the home, which the brand link leads to, and the header now leads to what we found (#findings) and to how we test (methods/)' }],
+  ['Factory', { target: '#floor', to: null, reason: '"Factory" hid what the lab found; #floor is still the top of the home (its hero), which the brand link leads to, the factory drawing sits under what we found (#how-we-check), and the header now leads to what we found (#findings) and to how we test (methods/)' }],
   // Older pages led "Experiments" to the home's list (#experiments); it has led to experiments/ since wave 3.
   ['Experiments', { target: ['experiments/', '#experiments'], to: 'experiments', reason: 'renamed "All results": the same experiments page, with every experiment and where it stands' }],
   // Older pages led "Field notes" to the home's notes (#journal); it has led to journal/ since wave 3.
