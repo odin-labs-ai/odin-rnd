@@ -11,7 +11,7 @@
 .factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:0 18px;margin-top:4px}
 .correction-fold>summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 20px;min-height:44px;padding:10px 0;font-weight:400;list-style:none}
 .correction-fold>summary::-webkit-details-marker{display:none}
-.correction-fold>summary>.correction-when{color:#dbe7df}
+.correction-fold>summary>.correction-when{font:inherit;font-size:15px;line-height:1.5;letter-spacing:normal;text-transform:none;margin:0;color:#dbe7df}
 .correction-fold>summary>.correction-open{display:inline-flex;align-items:center;gap:12px;font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#ffb38f;text-decoration:underline;text-underline-offset:4px}
 .correction-fold>summary>.correction-open>span{font:20px/1 var(--mono);text-decoration:none;color:var(--orange)}
 .correction-fold>summary:hover>.correction-open{color:#ffd2bd}

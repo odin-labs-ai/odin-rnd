@@ -33,8 +33,8 @@ export const FURTHER_ID = 'home-further-title';
 export const CHECK_ID = 'how-we-check';
 export const CHECK_TITLE_ID = 'how-we-check-title';
 /** The plain heading and one plain sentence over the drawing. */
-export const CHECK_HEADING = 'How we check a result, step by step';
-export const CHECK_INTRO = 'Before we publish a result, it goes through the same few steps; pick a step in the drawing to see a real example and the record behind it.';
+export const CHECK_HEADING = 'The checks we study, in one drawing';
+export const CHECK_INTRO = 'A concept drawing of the checks we test, each step a separate experiment rather than a stage every result passes through; pick a step to see a real example and the record behind it.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
 export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 

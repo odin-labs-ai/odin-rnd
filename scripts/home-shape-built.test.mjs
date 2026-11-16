@@ -211,7 +211,7 @@ test('the built home folds its dated correction in the hero under a plain dated 
 test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const at = key => main.indexOf(key);
-  const order = ['id="hero-title"', 'See what we found', 'id="findings"', 'id="how-we-check"', 'How we check a result, step by step', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  const order = ['id="hero-title"', 'See what we found', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
   // Nothing of the drawing or the station panel sits in the hero any more.
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
