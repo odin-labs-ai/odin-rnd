@@ -64,12 +64,25 @@ test('every figure is what the committed experiment records give, and the record
   assert.match(t, /Rule-breaking changes it accepted: 1 of 90 runs\. Good changes it rejected: 2 of 90 runs\. Changes given the same verdict in every one of their runs: 57 of 60 \./);
 });
 
-test('no money figure anywhere: not on the page, not in the record, not on the tile', () => {
+// Founder ruling 2026-11-16 (mission rnd-site-human PR 3), verbatim: "Show costs, fix the claim (Recommended)": keep the
+// dated, sourced dollar-per-review figures, and say that costs are shown with their date and source.
+test('the only money figures are EXP 017\'s costs per review, each read from its record, dated, with its source; none in the record or on the tile', () => {
   const tile = readFileSync('site/data/labs/review-tile.json', 'utf8');
-  for (const [name, text] of [['page', textOf(main)], ['record', raw], ['tile', tile]]) {
-    assert.doesNotMatch(text, /[€$£¥]\s?\d|\d\s?(?:usd|eur|cents?|dollars?)\b|\bcost(?:Usd|PerReview)|\bper 1m\b|listPrice/i, name);
+  const money = /[€$£¥]\s?\d|\d\s?(?:usd|eur|cents?|dollars?)\b|\bcost(?:Usd|PerReview)|\bper 1m\b|listPrice/i;
+  for (const [name, text] of [['record', raw], ['tile', tile]]) assert.doesNotMatch(text, money, name);
+  const results = JSON.parse(readFileSync('site/data/review-frontier/results.json', 'utf8'));
+  const cost = main.match(/<p class="lab-cost">([\s\S]*?)<\/p>/)?.[1];
+  assert.ok(cost, 'the page shows what one review cost');
+  for (const [i, seat] of results.seats.entries()) {
+    const name = record.frontier.seats.find(x => x.seat === seat.seat).name;
+    assert.ok(cost.includes(`${name} <a class="lab-num" href="../../data/review-frontier/results.json" data-source="data/review-frontier/results.json#/seats/${i}/costPerReviewUsd" data-format="usd">$${seat.costPerReviewUsd}</a>`), `${name}: its cost, linked to the record`);
   }
-  assert.match(textOf(main), /The price of a review is in the experiment's record , not on this page; this site does not show money figures\./);
+  assert.match(textOf(cost), /pooled over each model's runs on 23 October 2026: /, 'dated by the record\'s runs');
+  assert.match(cost, /<time datetime="2026-10-23">/);
+  assert.match(textOf(cost), /This site shows a cost only with its date and its source; the source here is the experiment's record \.$/);
+  // Taking the sourced costs out leaves no money figure on the page, and the old claim is gone.
+  assert.doesNotMatch(textOf(main.replace(/<a class="lab-num"[^>]*data-format="usd">[^<]*<\/a>/g, ' ')), money);
+  assert.doesNotMatch(textOf(main), /does not show money figures|not on this page/);
 });
 
 test('the parts that are not a measurement here are boxed: authored fixtures, the summary and the AI reviewer', () => {

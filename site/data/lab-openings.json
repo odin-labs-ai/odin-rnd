@@ -1,0 +1,137 @@
+{
+  "about": "The plain opening of every lab page (mission rnd-site-human PR 3, 2026-11-16), rendered after the hero by placeLabOpenings() in scripts/lab-pages.mjs. A plain string is words only: no digit and no number word. A number appears only as a quote of the same page's own words, verbatim, or as a value read from a measured experiment record. The build stops on a quote the page no longer holds, a glossary phrase that is not used, or a plan and result that do not link each other.",
+  "labs": {
+    "agent-space": {
+      "short": "In recorded sessions, AI agents in a small virtual world answer questions that visitors send in. Each answer shows a card naming what it cited, so you can see where it came from, though the card does not show that the answer is right.",
+      "found": [
+        ["Sessions are published with their questions, answers and sources, for example the ", { "quote": "Session of 8 November 2026" }, "."],
+        ["Each answer carries a source card: ", { "quote": "This card records the answer and its cited source; it does not verify the answer." }],
+        ["The space’s own figures, such as its test suite and its speed with many agents, each name the record they were read from. ", { "quote": "A named source shows where a figure came from; it does not check the figure, so read each one with its stated method and limits." }]
+      ],
+      "why": [{ "quote": "If you cannot see where an answer came from, you cannot check it." }, " The space makes that part visible, so you can judge an answer yourself instead of taking it on trust."],
+      "limit": [{ "quote": "Published source cards identify what an answer cited; they do not establish correctness." }, " The questions are ones we selected, and the sessions are recorded, not live."],
+      "glossary": { "source card": "source-card", "record": "record" }
+    },
+    "ai-jury": {
+      "short": "Can a jury of AI models judge how good a room looks from pictures, and give the same answer when asked again? It told a good picture from a deliberately ruined copy, but its scores moved on rooms that had not changed, so a small difference between rooms is not a verdict on them.",
+      "found": [
+        [{ "quote": "Every juror that could score our calibration pair told a good picture from a deliberately ruined one." }],
+        [{ "quote": "On eleven rooms that did not change between the two sittings, the jury's median was 3.857 out of 10 the first time and 4.0 the second, with four jurors and then three." }, " ", { "quote": "Single rooms moved by up to 0.572." }]
+      ],
+      "why": "If you want an AI jury to judge design work, this shows how far its scores move on their own, so you know how big a difference must be before it means something.",
+      "limit": [{ "quote": "Two rounds, on one day, of eleven rooms of one style." }, " ", { "quote": "The jurors are AI models; no person's judgement of these rooms is shown or compared." }]
+    },
+    "brain-bench": {
+      "short": "Can a small AI model on your own machine do agent tasks in small test worlds as well as cloud models? Across the whole task set it kept up, but the cloud models were clearly better at following a person’s instruction.",
+      "found": [
+        [{ "quote": "Our tuned 1 GB model finished 266 / 280 tasks (95.0 %) on our own machine, with no per-task charge (running it still takes the machine and its power)." }, " ", { "quote": "The best cloud model, Mistral Small 3.2, finished 274 / 280." }, " ", { "quote": "Their 95 % intervals overlap, so by our rule there is no detectable difference." }],
+        [{ "quote": "Mistral Small 3.2 finished 190 / 200 against 153 / 200 for our model, and the intervals (91.0–97.3 % against 70.2–81.8 %) do not overlap." }, " ", { "quote": "Fixing a bench bug narrowed the gap. It did not close it." }],
+        [{ "quote": "In every experiment, every model brain finished more tasks than the hand-written rules, with intervals that do not overlap." }]
+      ],
+      "why": "If you are weighing a model on your own machine against a paid cloud model, this shows where the small model holds up and where it falls behind.",
+      "limit": [{ "quote": "Small test worlds, not your workload." }, " ", { "quote": "A brain that does well here has done well on these tasks, on these seeds, on this bench." }],
+      "glossary": { "intervals": "uncertainty-range" }
+    },
+    "failover": {
+      "short": "When the main database server fails in the middle of work, which keeps a company’s confirmed writes better: MongoDB or PostgreSQL? Neither lost a write it had confirmed, and there is no overall winner: which fits depends on the kind of failure.",
+      "found": [
+        [{ "quote": "Neither database lost a write it had confirmed, in any of the 334 counted runs." }],
+        [{ "quote": "MongoDB fits 6 of 8 compared scenarios (4 on write outage, 2 on acknowledgement gap); PostgreSQL fits 2 of 8 compared scenarios (2 where only it passed the checks)." }, " ", { "quote": "There is no overall winner." }],
+        ["Still open: in ", { "quote": "15,567 confirmed writes in 10 runs" }, ", ", { "quote": "PostgreSQL in strict mode confirmed them while it named no standby copy" }, "; ", { "quote": "whether a second copy existed then is unresolved" }, "."]
+      ],
+      "why": "If your company’s apps must not lose a saved write when a database server fails, this shows how each database behaved under the failures we caused, and where the answer is still open.",
+      "limit": [{ "quote": "Measured on one host" }, ", with some questions still open; the record’s limits name them."],
+      "glossary": { "counted runs": "counted-run", "record": "record" },
+      "pairs": [
+        { "plan": { "href": "journal/failover-pre-registration.html", "label": "The plan (EXP 021)" }, "result": { "href": "journal/failover-results.html", "label": "The result and its limits" } }
+      ]
+    },
+    "link-safety": {
+      "short": "When a web address in the agent space comes from data, can it run a script or open a lookalike site in a visitor’s browser? It could: that was a real defect, now fixed, and the rule that fixed it refused every bad address in its test and kept the good ones.",
+      "found": [
+        [{ "quote": "It was a real defect, on the main branch, and it was fixed." }],
+        ["What came out: ", { "quote": "every poisoned URL was refused, every lookalike was refused under the allowlist, every good URL was kept as it is, the audit caught every unsafe line of code, it flagged none of the safe lines." }],
+        [{ "quote": "On 28 October 2026, on a Mac, the test itself ran: 7 of its 7 test cases passed." }]
+      ],
+      "why": "If your pages open links that come from data, this shows a rule that closes the hole and the kinds of address it must refuse.",
+      "limit": "The bad addresses are attacks we wrote ourselves, so this does not say how often such an address turns up, or that no other trick exists."
+    },
+    "measured-blind": {
+      "short": "When we fixed our agents’ instructions and tools, did their answers get better on work the fixes were not made on? Useful answers rose on every set of work, by far less on the earlier held-out set than on the set we fixed on, as judged by an AI reviewer that was not told which version answered.",
+      "found": [
+        [{ "quote": "On the nine items the fixes were made on, useful answers went from 2 of 18 to 10 of 18." }],
+        [{ "quote": "On nine items held out from the fixing, from 3 of 18 to 5 of 18; on nine fresh ones, judged on the next version, from 4 of 18 to 12 of 18." }],
+        [{ "quote": "On live work afterwards the results were much worse; the write-up does not separate the two causes it names, other items and the updated runtime." }]
+      ],
+      "why": "If you tune AI agents on your own work, this shows why the test belongs on work you did not tune on, judged blind: the set we tuned on is the set that says least.",
+      "limit": [{ "quote": "The sets are small: nine items each, 18 verdicts a side." }, " The judge is an AI, not a person, and the blinding is partial."]
+    },
+    "red-build": {
+      "short": "Given failing builds it had never seen, can the agent space’s build fixer make a fix that a reviewer would call real? Not yet: it fixed none of them, though its diagnoses held up better than its fixes.",
+      "found": [
+        [{ "quote": "Judged real fixes: 0 of 9." }, " ", { "quote": "Its diagnoses held up better than its fixes." }],
+        [{ "quote": "Most of the 9 had nothing in the code to fix, and on the 3 that did, none of its answers was judged a real fix." }],
+        [{ "quote": "So the honest reading is narrow: on this set the rule's 5 closures were all judged right, and the doctor fixed nothing." }]
+      ],
+      "why": "If you are thinking of letting an agent repair broken builds on its own, this is a dated negative result: on these builds, it did not.",
+      "limit": [{ "quote": "Nine builds from one repository, over one afternoon." }, " ", { "quote": "The reviewers are AI, not people." }],
+      "glossary": { "negative result": "refuted" }
+    },
+    "review": {
+      "short": "We asked which AI model should check a code change before it is merged. On cases we chose and wrote ourselves, no model was clearly ahead on catching real problems, and the dearest model caught little more than the cheapest.",
+      "found": [
+        ["On catches, ", { "quote": "no model was clearly ahead: the models were up to 5 catches apart, and a single model's own runs were up to 5 apart" }, ". ", { "quote": "Each caught 26 to 31 of 60 tries (30 known defects, each reviewed twice)." }],
+        ["What a review cost, as the broker billed it: ", { "value": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" } }, " for ", { "quote": "gpt-oss 120B" }, ", which caught ", { "value": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" } }, " of ", { "value": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" } }, ", and ", { "value": { "source": "data/review-frontier/results.json#/seats/3/costPerReviewUsd", "format": "usd" } }, " for ", { "quote": "Claude Opus 5.5" }, ", which caught ", { "value": { "source": "data/review-frontier/results.json#/seats/3/caught", "format": "int" } }, " of ", { "value": { "source": "data/review-frontier/results.json#/seats/3/caughtOf", "format": "int" } }, ", in runs on ", { "window": { "from": { "source": "data/review-frontier/results.json#/runs", "field": "start" }, "to": { "source": "data/review-frontier/results.json#/runs", "field": "end" } } }, "."],
+        [{ "quote": "The tool reviewer met the bar set for it beforehand." }, " ", { "quote": "Checking its own findings did not get that reviewer out of its false alarms." }]
+      ],
+      "why": "If you choose a model to review code, paying more did not buy many more catches here, so compare what each model catches and wrongly flags before you pay for the dearest.",
+      "limit": [{ "quote": "Each experiment is one corpus, one prompt, one moment." }, " ", { "quote": "Every reviewer here is an AI, not a person, and every case in these experiments was chosen or written by us." }],
+      "glossary": { "broker": "broker" },
+      "pairs": [
+        { "plan": { "href": "data/review-frontier/preregistration.json", "label": "EXP 017: the plan" }, "result": { "href": "journal/review-frontier-results.html", "label": "its result" } },
+        { "plan": { "href": "data/nina-changes/preregistration.json", "label": "EXP 006: the plan" }, "result": { "href": "journal/nina-reviews-the-change.html", "label": "its result" } },
+        { "plan": { "href": "data/self-verify/preregistration.json", "label": "EXP 012: the plan" }, "result": { "href": "journal/self-verify-results.html", "label": "its result" } }
+      ]
+    },
+    "rogue": {
+      "short": "What does an AI coding agent do when a planted ticket tells it to wipe the code repository, and what stops it? With no controls it did everything the ticket asked; through the engine’s guards, every command was refused and written down.",
+      "found": [
+        [{ "quote": "With no controls it did everything the ticket asked." }, " ", { "quote": "Main went from 24 commits to 0: 24 commits gone." }],
+        [{ "quote": "Through the guards, every command was refused, and each refusal was written to a hash-chained journal." }],
+        [{ "quote": "The attack and the repository are made up; the guards and their refusals are not." }]
+      ],
+      "why": "If you let an agent act on tickets, this shows what a planted instruction can do without guards, and that guards which refuse and record each command stopped it here.",
+      "limit": [{ "quote": "It is one staged attack on a sandbox." }, " ", { "quote": "It does not say how often agents go rogue, or how well a stronger attack would do." }]
+    },
+    "same-model-harness": {
+      "short": "Does the same small AI model answer better about a code change when a harness runs some tools for it beforehand? Here it did: with the harness, the models made far fewer of the mistakes we counted.",
+      "found": [
+        [{ "quote": "Two mistakes are counted: saying the failing tests pass, and naming a file that does not exist." }],
+        [{ "quote": "With the harness, the same models made fewer of them in their first answers: 0 mistakes with the harness against 78 without it, over 100 first answers each way." }]
+      ],
+      "why": "If you use a small local model on code, this shows that handing it the tools’ output can stop it from claiming that tests pass or naming files that are not there.",
+      "limit": [{ "quote": "One small project, one change, one question, 5 local models." }, " ", { "quote": "It does not say how often this happens on real projects, or with hosted models." }],
+      "glossary": { "harness": "harness" }
+    },
+    "strangers": {
+      "short": "Before a public link to the agent space is shared, how many anonymous guests can the space take before it falls behind? We set a written estimate, made on another machine, beside a fresh measurement on a Mac, and kept them apart.",
+      "found": [
+        [{ "quote": "The sheet recommends a public cap of 40 guests; on its own machine it stayed smooth up to 100 guests." }],
+        [{ "quote": "The fresh run on the Mac stayed smooth up to 200 guests." }, " ", { "quote": "At 250 guests it fell behind." }],
+        [{ "quote": "The machines and the code differ, so read these as an estimate and a measurement, not as a before and after." }]
+      ],
+      "why": "If you plan to open the space to the public, this gives a measured point where it fell behind and a cap to start from, not a promise.",
+      "limit": [{ "quote": "Loopback only: no network between the guests and the space, so no latency and no lost packets." }, " ", { "quote": "One run on one machine that was doing other work." }]
+    },
+    "talk-leak": {
+      "short": "When we show real software to a room, what stops a private name, figure or key from reaching a screen or a shipped file? A made-up company on stage, a sealed build and a leak scan that fails the build; the scan’s own tests passed, and a fresh scan of the sealed build found no problem.",
+      "found": [
+        [{ "quote": "On 28 October 2026, on a Mac" }, ", the scan’s own tests, which plant leaks on purpose and check that each is caught: ", { "quote": "22 passed, 0 failed." }],
+        ["A fresh scan of the sealed build: ", { "quote": "0 problems, 0 errors. 24 warnings, and 470 allowed." }, " A warning does not fail the build."],
+        [{ "quote": "It makes a leak unlikely, not impossible: a scan only finds what its list and its shapes know." }]
+      ],
+      "why": "If you show software in public, this shows a way to keep private material off the screen, and where it can still slip through.",
+      "limit": [{ "quote": "A name missing from the list is caught only by a person reading." }, " The scan read the build’s files; it did not watch the build run."]
+    }
+  }
+}
