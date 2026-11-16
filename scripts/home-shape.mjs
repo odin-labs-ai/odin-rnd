@@ -34,7 +34,7 @@ export const CHECK_ID = 'how-we-check';
 export const CHECK_TITLE_ID = 'how-we-check-title';
 /** The plain heading and one plain sentence over the drawing. */
 export const CHECK_HEADING = 'The checks we study, in one drawing';
-export const CHECK_INTRO = 'A concept drawing of the checks we test, each step a separate experiment rather than a stage every result passes through; pick a step to see a real example and the record behind it.';
+export const CHECK_INTRO = 'A concept drawing of the checks we test, each its own experiment and not a stage results pass through; pick one to see a real example and its record.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
 export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
