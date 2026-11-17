@@ -290,14 +290,18 @@
       ]
     },
     "journal/flash-on-the-review-bench.html": {
-      "short": "Can a free AI model review a whole code change and say correctly whether it needs fixing? It caught a similar number of real defects to a costly model measured earlier in a different way, but it flagged too many good changes, so no reviewer we tested may vote yet.",
+      "short": "Can a free AI model review a whole code change and say correctly whether it needs fixing? It was credited with about as many real defects as a model that costs far more, measured earlier in a different way, but it flagged too many good changes, so no reviewer we tested may vote yet.",
       "found": [
         [
           "It was credited with ",
           {
             "quote": "16 of 30 defects in both of its standard-prompt runs"
           },
-          ", in the same range as the costly model, but this is ",
+          ", in the same range as that model at ",
+          {
+            "quote": "a small fraction of the cost"
+          },
+          ", but this is ",
           {
             "quote": "a description, not an equivalence test"
           },
@@ -385,7 +389,11 @@
           "."
         ],
         [
-          "Letting Jev settle the calls it was sure of, and sending the rest to a slower AI reviewer, missed no rule breaks and cut the cost per change to ",
+          "Letting Jev settle the calls it was sure of, and sending the rest to a slower AI reviewer, missed no rule breaks, though against the reviewer alone that check is only ",
+          {
+            "quote": "passes, not established at this N"
+          },
+          ", and cut the cost per change to ",
           {
             "quote": "$0.2743 against $0.6495 per change"
           },
@@ -579,7 +587,12 @@
           "The page's verdict: ",
           {
             "quote": "Measured — bar met, nina in the spotlight."
-          }
+          },
+          " Counted change by change instead of run by run, missed rule breaks were ",
+          {
+            "quote": "on the 30 items, 0 of 30 (0.0%), 95% interval 0.0%–11.4%: passes, not established at this N"
+          },
+          ": that check passes, but at this number of changes it is not established."
         ],
         [
           "This time the reviewer saw the change in nearly every run: only ",
@@ -689,8 +702,8 @@
           "."
         ]
       ],
-      "why": "If you are deciding how to pick models for coding tasks, routing by the rule saved money here against always using the costliest model we compared, but it fixed fewer cases and is not a general policy.",
-      "limit": "We used tasks from our own repository and prices from the broker we used, compared these new runs with fixed-model runs from an earlier experiment, and no outside party has reproduced the savings.",
+      "why": "If you are deciding how to pick models for coding tasks, routing by the rule cost less per case fixed than always using Opus on these tasks, but it fixed fewer cases, and the note draws that lesson only for this kind of work.",
+      "limit": "Tasks from our own repository, which are private and cannot be rerun, and prices from the broker we used; these new runs are compared with fixed-model runs from an earlier experiment, and the rule's picks were chosen on most of these same tasks.",
       "glossary": {
         "broker": "broker"
       }
