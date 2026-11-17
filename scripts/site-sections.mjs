@@ -14,9 +14,11 @@
 // (scripts/number-provenance.mjs PAGES), so their dates read as on the updates page ("6 Nov 2026", in a <time> with
 // the ISO day); were either page ever added to PAGES, its digits would have to follow that rule instead.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { SITE_ORIGIN, canonicalHeader } from './site-header.mjs';
 import { escapeHtml } from './site-chrome.mjs';
+import { NOTE_OPENINGS_CONFIG, noteStage, openNotePages } from './note-openings.mjs';
 
 export const JOURNAL_PAGE = 'journal/index.html';
 export const PROJECTS_PAGE = 'projects/index.html';
@@ -137,11 +139,14 @@ function sectionPage({ path, current, crumb, title, heading, description, lead, 
 `;
 }
 
-/** journal/index.html: every field note, newest first, grouped by month, each with its kind label. */
-export function renderJournalIndex(items) {
+/** journal/index.html: every field note, newest first, grouped by month, each with its kind label. With `stages` (a map
+ *  from a note's href to its place in a plan and result pair, scripts/note-openings.mjs noteStage; mission rnd-site-human
+ *  PR 4), the label says it in words too: "Result", "Plan, result published", "Plan, not run yet". */
+export function renderJournalIndex(items, { stages = null } = {}) {
   const notes = ofType(items, 'note').sort(newestFirst);
   if (!notes.length) throw new Error('Section pages: the site index has no field notes');
-  const rows = notes.map(n => ({ href: `../${n.href}`, date: n.date, kind: noteKind(n, items), title: n.title, summary: n.summary, where: n.id }));
+  const kindOf = n => { const stage = stages?.get(String(n.href).split('#')[0]); return stage ? `${noteKind(n, items)} · ${stage}` : noteKind(n, items); };
+  const rows = notes.map(n => ({ href: `../${n.href}`, date: n.date, kind: kindOf(n), title: n.title, summary: n.summary, where: n.id }));
   return sectionPage({
     path: JOURNAL_PAGE, current: 'notes', crumb: 'Field notes', title: 'Field notes', heading: 'Field notes.',
     description: 'Odin R&D field notes: what we set out to test, what happened, and what is still open.',
@@ -197,8 +202,16 @@ export function addAllExperiments(html, items, relPrefix, label = EXPERIMENTS_PA
  * would be overwritten silently otherwise). Returns the paths it wrote.
  */
 export function renderSectionPages({ distDir, items }) {
+  // Every field note opens in plain words, and each plan is paired with its result (mission rnd-site-human PR 4;
+  // scripts/note-openings.mjs, required on the published site), before the notes' list is rendered from the same config.
+  const opened = openNotePages({ distDir });
+  let stages = null;
+  if (opened.length) {
+    const config = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'site', NOTE_OPENINGS_CONFIG), 'utf8'));
+    stages = new Map(opened.map(rel => [rel, noteStage(rel, config)]).filter(([, s]) => s));
+  }
   const written = [];
-  for (const [page, render] of [[JOURNAL_PAGE, renderJournalIndex], [PROJECTS_PAGE, renderProjectsIndex]]) {
+  for (const [page, render] of [[JOURNAL_PAGE, its => renderJournalIndex(its, { stages })], [PROJECTS_PAGE, renderProjectsIndex]]) {
     const file = join(distDir, page);
     let exists = false;
     try { readFileSync(file); exists = true; } catch { /* absent, as it should be */ }

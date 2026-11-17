@@ -11,6 +11,7 @@ import { amendNoteResults, checkResults, isCompound, spotlightShown, spotlightDe
 import { renderStations } from './station-render.mjs';
 import { classify } from '../experiments/jev-gate/diff-visibility.mjs';
 import { stripBlocks, stripTags } from './test-html-text.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 
 const data = checkResults();
 const { results, facts } = data;
@@ -164,7 +165,8 @@ test('the built note: results and the harness first, the pre-registration text o
   assert(extended.length <= 3, `Parent lines changed: ${extended.length}`);
   for (const line of extended) assert(/No results yet|no results yet|including a refutation/.test(line), `An unexpected parent line changed: ${line.slice(0, 80)}`);
   assert.throws(() => amendNoteResults(note, data), /exactly once|already carries/);
-  if (existsSync('dist/journal/jev-as-a-fast-gate.html')) assert(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8').includes(renderResultsSection(data)), 'The built note is not the committed results: pnpm build');
+  // Under the note's plain opening and its "How we checked" folds (scripts/note-openings.mjs), the generator's page.
+  if (existsSync('dist/journal/jev-as-a-fast-gate.html')) assert(withoutNoteOpening(readFileSync('dist/journal/jev-as-a-fast-gate.html', 'utf8')).includes(renderResultsSection(data)), 'The built note is not the committed results: pnpm build');
 });
 
 test('the results and harness sections cannot scroll sideways at 375px or 320px', () => {

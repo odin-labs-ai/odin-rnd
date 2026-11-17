@@ -535,9 +535,14 @@ function renderSegments(read, part, ctx, where) {
 }
 
 /** The opening section for one lab page. `pageText` is the page's own text, before the opening, for the quotes. */
-export function renderOpening(read, lab, opening, { pageText, up = '../../', glossaryIds = null } = {}) {
-  const where = `${OPENINGS_CONFIG} ${lab}`;
-  for (const key of Object.keys(opening)) if (!['short', 'found', 'why', 'limit', 'glossary', 'pairs'].includes(key)) throw new Error(`${where}: unknown field '${key}'`);
+/** With `shell: 'note'` (a field note, scripts/note-openings.mjs) the same parts sit in the note's reading column, under an
+ *  <h2> the note's own "On this page" list can name; `plan: true` in the opening (a plan whose page holds no result yet)
+ *  heads its findings "Not run yet: what would count as a yes"; `more` replaces the closing line. */
+export function renderOpening(read, lab, opening, { pageText, up = '../../', glossaryIds = null, shell = 'lab', config = OPENINGS_CONFIG, more = null } = {}) {
+  const where = `${config} ${lab}`;
+  for (const key of Object.keys(opening)) if (!['short', 'found', 'why', 'limit', 'glossary', 'pairs', 'plan'].includes(key)) throw new Error(`${where}: unknown field '${key}'`);
+  if (opening.plan !== undefined && opening.plan !== true) throw new Error(`${where}: 'plan' is true or absent`);
+  if (!['lab', 'note'].includes(shell)) throw new Error(`${where}: unknown shell '${shell}'`);
   for (const key of ['short', 'found', 'why', 'limit']) if (opening[key] === undefined) throw new Error(`${where}: no '${key}'`);
   if (!Array.isArray(opening.found) || !opening.found.length || opening.found.length > 3) throw new Error(`${where}: 'found' holds one to three findings`);
   const glossary = new Map(Object.entries(opening.glossary ?? {}));
@@ -561,13 +566,17 @@ export function renderOpening(read, lab, opening, { pageText, up = '../../', glo
   });
   const banned = bannedIn(blockText(`${short} ${found} ${why} ${limit}`), [...jargon, ...plainBanned]);
   if (banned.length) throw new Error(`${where}: the opening uses a banned lab word:\n  ${banned.join('\n  ')}`);
-  return `<section class="company-section company-width lab-opening" id="in-short" aria-labelledby="in-short-title"><div class="company-section-heading"><h2 id="in-short-title">In short.</h2></div><div class="company-prose">`
+  const head = shell === 'note'
+    ? '<section class="note-opening lab-opening" id="in-short" aria-labelledby="in-short-title"><h2 id="in-short-title">In short</h2><div class="note-opening-prose">'
+    : '<section class="company-section company-width lab-opening" id="in-short" aria-labelledby="in-short-title"><div class="company-section-heading"><h2 id="in-short-title">In short.</h2></div><div class="company-prose">';
+  const foundHead = opening.plan ? 'Not run yet: what would count as a yes' : 'What we found';
+  return head
     + `<p class="lab-opening-short">${short}</p>`
-    + `<h3 class="lab-opening-head" id="opening-found">What we found</h3><ul class="lab-opening-found">${found}</ul>`
+    + `<h3 class="lab-opening-head" id="opening-found">${foundHead}</h3><ul class="lab-opening-found">${found}</ul>`
     + `<h3 class="lab-opening-head" id="opening-why">Why it matters</h3><p class="lab-opening-why">${why}</p>`
     + `<p class="lab-limit lab-opening-limit"><strong>Limit:</strong> ${limit}</p>`
     + (pairs.length ? `<p class="lab-opening-head">The plan, written before the run, and its result</p><ul class="lab-opening-pairs">${pairs.join('')}</ul>` : '')
-    + `<p class="lab-opening-more">The detail follows. Lab words link to <a href="${up}methods/#glossary">what they mean</a>, and the record’s identifiers sit under “${CHECKED_SUMMARY}”.</p>`
+    + `<p class="lab-opening-more">${more ?? `The detail follows. Lab words link to <a href="${up}methods/#glossary">what they mean</a>, and the record’s identifiers sit under “${CHECKED_SUMMARY}”.`}</p>`
     + '</div></section>';
 }
 

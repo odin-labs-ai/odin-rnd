@@ -119,4 +119,15 @@
 .lab-opening .lab-opening-pairs a{display:inline-flex;align-items:center;min-height:44px}
 .lab-opening .lab-opening-more{margin-top:18px;font-size:15px;line-height:1.6;color:var(--steel)}
 .lab-checked{margin-top:14px}
+/* Field note openings (mission rnd-site-human PR 4, 2026-11-17): the lab opening's parts in the note's 740px reading
+   column, under its own header and before the note (scripts/note-openings.mjs); its "How we checked" folds as above. */
+.note-opening{max-width:740px;margin:45px auto 0;padding-bottom:30px;border-bottom:1px solid var(--rule);font-size:18px;line-height:1.7}
+.note-opening>h2{font-size:30px;line-height:1.1;margin:0 0 16px}
+.note-opening .note-opening-prose>p{max-width:68ch}
+.note-opening .note-opening-prose>p.lab-opening-short{font-size:20px;line-height:1.5;font-weight:600}
+.note-opening .lab-opening-found li{max-width:68ch}
+.note-opening a{color:var(--brand)}
+.article-body .lab-checked{margin-block:18px}
+@media(min-width:1100px){.article-shell:has(>.toc-note)>.note-opening{grid-column:1;width:100%}}
+@media(max-width:760px){.note-opening{font-size:16px;margin-top:32px}.note-opening>h2{font-size:27px}.note-opening .note-opening-prose>p.lab-opening-short{font-size:18px}}
 @media(max-width:760px){.lab-opening .company-prose>p.lab-opening-short{font-size:18px}.lab-opening .lab-opening-head{font-size:19px}}
