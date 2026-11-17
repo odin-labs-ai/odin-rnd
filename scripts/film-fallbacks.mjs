@@ -30,21 +30,21 @@
 // distribution's ffmpeg is another version: there they are skipped, the yuv420p digest binds the frames instead). What
 // the screened frames show was viewed by an AI agent; no machine judges that.
 //
-// The pages are not edited for this: after the build has written every page, addFilmFallbacks() puts a
-// <source type="video/mp4"> right after each WebM <source> in dist/ (the committed pages, frozen pages included, stay
-// byte for byte). A page that names a WebM anywhere outside the paired forms (markup, comment, script or text, in any
-// spelling) stops the build (see pairPage), and so does a listed copy that no page pairs. Pairing is by exact generator
-// text; a page that copies that exact text into a comment, script or attribute is not something any generator writes,
-// and such a copy would be paired there too. Only built .html pages are read. The Film copies job in .github/workflows/publish.yml runs the decoder
-// tests, and verify needs it, so nothing publishes without them.
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+// The committed pages are not edited for this. The generators write each MP4 <source> beside its WebM one
+// (scripts/film-sources.mjs); the dist pass (scripts/film-pairs.mjs) adds it after the home page's one pinned player and
+// reads every built file: per page the pairs must be exactly the pairs the build wrote, and any other WebM mention stops
+// the build. The Film copies job in .github/workflows/publish.yml runs the decoder tests, and verify needs it, so
+// nothing publishes without them.
+import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join, posix, relative, sep } from 'node:path';
+import { join } from 'node:path';
 import { validate } from './json-schema-lite.mjs';
 import { MAX_FILM_BYTES, screeningProblems } from './lab-films.mjs';
 import { MAX_CLIP_BYTES, screenTree } from './lab-dispatch-publish.mjs';
 
-export const FALLBACKS_FILE = 'data/labs/agent-space/film-fallbacks.json';
+import { FALLBACKS_FILE } from './film-sources.mjs';
+
+export { FALLBACKS_FILE };
 export const FALLBACKS_SCHEMA_FILE = new URL('./schemas/odin-film-fallbacks.schema.json', import.meta.url);
 // A dispatch's session clip has the dispatch clip limit; every other film has the film limit.
 const CLIP = /^assets\/labs\/agent-space\/session-[0-9a-z-]+\/clip\.webm$/;
@@ -378,126 +378,4 @@ export function readFallbacks(root = 'site') {
   const problems = fallbacksProblems(record, FALLBACKS_FILE, root);
   if (problems.length) throw new Error(`Film fallbacks refused:\n  ${problems.join('\n  ')}`);
   return record;
-}
-
-// Character references, resolved the way a browser does before it reads text or fetches a URL (&#46;webm is .webm); a
-// code point a browser would not accept becomes U+FFFD, as it does there.
-// Every named reference that stands for an ASCII character (no named reference stands for an ASCII letter or digit).
-const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", period: '.', sol: '/', bsol: '\\', colon: ':', semi: ';', num: '#',
-  quest: '?', equals: '=', percnt: '%', excl: '!', dollar: '$', lpar: '(', rpar: ')', ast: '*', midast: '*', plus: '+', comma: ',',
-  commat: '@', lsqb: '[', lbrack: '[', rsqb: ']', rbrack: ']', hat: '^', lowbar: '_', grave: '`', lcub: '{', lbrace: '{',
-  rcub: '}', rbrace: '}', verbar: '|', vert: '|', tab: '\t', newline: '\n' };
-const codePoint = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : '�');
-export const decodeValue = value => value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));?/g, (whole, dec, hex, name) =>
-  dec ? codePoint(Number(dec)) : hex ? codePoint(parseInt(hex, 16)) : NAMED[name.toLowerCase()] ?? whole);
-
-// The one form a WebM film is played in on this site, as every generator and the home page write it: their exact
-// <video> start tag (controls preload="none" playsinline, an optional class and size, a plain poster path and an
-// aria-label), after ">", white space or the page start, followed directly by a <source> whose src is a plain relative
-// path of letters, digits, ".", "_", "-" and "/" ending in .webm, with a video/webm type. Only this exact text is
-// paired, and only the <source> is taken out before the search: the <video> tag itself is still read, so a src or
-// any other WebM on it is refused.
-const PLAYED = /(?<=^|[>\s])(<video(?: class="[a-z0-9 -]*")? controls preload="none" playsinline(?: width="\d+" height="\d+")? poster="[A-Za-z0-9._/-]+" aria-label="[^"<>]*">)<source src="([A-Za-z0-9._/-]+\.webm)" type="video\/webm[^"<>&]*">/g;
-// What may name a WebM besides that: a plain link to the file (an href and nothing else) with plain link text, which
-// opens the file and plays nothing here, and the English word "WebM" in running text (a separate word, not after ".",
-// "/", "\" or "%" even across white space, judged after the text is spelled out, so never part of a file name).
-const LINKED = /<a href="[A-Za-z0-9._/:-]+\.webm">[^<>&]*<\/a>/g;
-const isWord = (text, at) => {
-  let k = at - 1;
-  while (k >= 0 && /\s/.test(text[k])) k--;
-  return !(k >= 0 && /[./\\%\w]/.test(text[k]) && (k === at - 1 || /[./\\%]/.test(text[k]))) && !/\w/.test(text[at + 4] ?? '');
-};
-// Before looking for "webm": character references resolved, %XX escapes decoded, and tab, line feed, carriage return
-// and other control characters removed (what a browser strips from a URL), so no spelling of a file name hides it.
-const percent = text => text.replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-const spelled = text => percent(text).replace(/[\u0000-\u001f\u007f]+/g, '');
-// The stretches of a page that never play: comments (through --> or --!>), the content of raw-text and other inert
-// elements through their end tag, and template content (nested templates counted), found by one scan from the start.
-const RAW = ['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noscript', 'noembed', 'noframes', 'plaintext'];
-export function inertRanges(html) {
-  const lower = html.toLowerCase(), ranges = [];
-  let i = 0;
-  while (i < lower.length) {
-    const lt = lower.indexOf('<', i);
-    if (lt < 0) break;
-    if (lower.startsWith('<!--', lt)) {
-      const short = /^<!--->|^<!-->/.exec(lower.slice(lt, lt + 6));
-      const m = short ? null : /--!?>/g; if (m) m.lastIndex = lt + 4;
-      const close = m && m.exec(lower);
-      const end = short ? lt + short[0].length : close ? close.index + close[0].length : lower.length;
-      ranges.push([lt, end]); i = end; continue;
-    }
-    const name = /^<([a-z][a-z0-9-]*)/.exec(lower.slice(lt, lt + 32))?.[1];
-    if (name && (RAW.includes(name) || name === 'template')) {
-      let end;
-      if (name === 'template') {
-        let depth = 0, j = lt;
-        const re = /<(\/?)template[\s/>]/g; re.lastIndex = lt;
-        for (let m; (m = re.exec(lower));) { depth += m[1] ? -1 : 1; if (!depth) { j = m.index; break; } }
-        end = depth ? lower.length : j;
-      } else {
-        const re = new RegExp(`</${name}[\\s/>]`, 'g'); re.lastIndex = lt + 1;
-        const m = re.exec(lower);
-        end = name === 'plaintext' || !m ? lower.length : m.index;
-      }
-      ranges.push([lt, end]); i = end + 1; continue;
-    }
-    i = lt + 1;
-  }
-  return ranges;
-}
-
-/**
- * One page with an MP4 <source> after each WebM <source>. `page` is the page's path inside the site ('labs/x/index.html'),
- * `byWebm` maps a site path ('assets/…/film.webm') to its copy. Returns the new html, the WebMs it played and every
- * WebM mention it could not account for.
- *
- * No HTML is parsed for the refusal: the PLAYED text of a listed film, outside every inert stretch (inertRanges), is
- * paired; then exactly the paired text with its own inserted copy, LINKED links and the English word "WebM" are taken
- * out of a copy of the page, the rest is spelled out (character references, %XX escapes, control characters), and any
- * "webm" left anywhere, in any case, stops the build. A page that already carries the copy is left as it is.
- */
-export function pairPage(html, page, byWebm) {
-  const used = new Set(), unpaired = [], paired = [];
-  const inertAt = inertRanges(html);
-  const isInert = at => inertAt.some(([a, b]) => at >= a && at < b);
-  const out = html.replace(PLAYED, (whole, video, src, offset) => {
-    const entry = byWebm.get(posix.normalize(posix.join(posix.dirname(page), src)));
-    if (!entry || src.startsWith('/') || isInert(offset)) return whole;
-    used.add(entry.webm);
-    const insert = `<source src="${src.slice(0, -'.webm'.length)}.mp4" type="video/mp4">`;
-    paired.push(whole.slice(video.length) + insert);
-    return html.startsWith(insert, offset + whole.length) ? whole : whole + insert;
-  });
-  // What is left once exactly the paired texts, every plain link and the English word are taken out.
-  let rest = out;
-  for (const text of paired) rest = rest.split(text).join(' ');
-  const spelledRest = spelled(decodeValue(rest.replace(LINKED, ' '))).replace(/WebM/g, (word, at, all) => (isWord(all, at) ? '    ' : word));
-  for (const m of spelledRest.matchAll(/webm/gi)) unpaired.push(`${page}: "${spelledRest.slice(Math.max(0, m.index - 50), m.index + 12).replace(/\s+/g, ' ')}" names a WebM outside the paired forms`);
-  return { html: out, used, unpaired };
-}
-
-const htmlFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? htmlFiles(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
-
-/** The dist pass: every built page gets its MP4 sources; fails closed on an unpaired WebM or an unused copy. */
-export function addFilmFallbacks({ distDir = 'dist', root = 'site' } = {}) {
-  const record = readFallbacks(root);
-  const byWebm = new Map((record?.fallbacks ?? []).map(entry => [entry.webm, entry]));
-  // The published copy, not only the source one, must be the recorded bytes.
-  for (const entry of byWebm.values()) if (!existsSync(join(distDir, entry.mp4)) || sha256(readFileSync(join(distDir, entry.mp4))) !== entry.sha256) throw new Error(`Film fallbacks: ${entry.mp4} is not in ${distDir} with its recorded sha256`);
-  const used = new Set(), unpaired = [];
-  let pages = 0;
-  for (const file of htmlFiles(distDir)) {
-    const page = relative(distDir, file).split(sep).join('/');
-    const before = readFileSync(file, 'utf8');
-    const result = pairPage(before, page, byWebm);
-    result.used.forEach(webm => used.add(webm));
-    unpaired.push(...result.unpaired);
-    if (result.html !== before) { writeFileSync(file, result.html); pages++; }
-  }
-  const unused = [...byWebm.keys()].filter(webm => !used.has(webm));
-  if (unpaired.length || unused.length) throw new Error(`Film fallbacks refused:\n  ${[
-    ...unpaired.map(line => `${line}: no MP4 copy can be paired (${FALLBACKS_FILE})`),
-    ...unused.map(webm => `${webm} has an MP4 copy but no page plays it`)].join('\n  ')}`);
-  return { pages, films: used.size };
 }
