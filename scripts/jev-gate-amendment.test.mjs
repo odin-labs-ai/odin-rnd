@@ -6,6 +6,7 @@ import { amendmentPath, amendmentPinPath, assertPriorCalls, priorCallsPath, asse
 import { amendNote, cardQualifier, noteQualifier, qualifyHome, qualifyStation, renderAmendmentLine, renderAmendmentSection, sectionId, stationQualifier } from './jev-gate-amendment-note.mjs';
 import { join } from 'node:path';
 import { builtCopy } from './test-build.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 import { articlePath } from './jev-gate-journal.mjs';
 import { renderStations } from './station-render.mjs';
 
@@ -189,7 +190,7 @@ test('the home card, station 06 and the note qualify the parent\'s "before any g
   const built = readFileSync(join(dist, 'index.html'), 'utf8');
   // Once results are committed, station 06 shows the measured exhibit, which has no pre-registration sentence to qualify.
   assert(built.includes(cardQualifier(record)) && (existsSync('experiments/jev-gate/results/results.json') || built.includes(stationQualifier(record))), 'the built home page is not qualified by the committed amendment');
-  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment');
+  assert(withoutNoteOpening(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8')).includes(noteQualifier(record)), 'The built note is not qualified by the committed amendment');
   // A changed record changes every qualifier, and a qualifier that no longer states the record's facts is refused.
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('6 uncounted', '7 uncounted');
   assert.throws(() => validateAmendment(changed, parent), /siteQualifier.card must state/);

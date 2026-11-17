@@ -20,6 +20,8 @@ Use a dated article under `site/journal/`, add it to the floor and sitemap, and 
 4. A public source trail, or an explicit internally evidenced boundary.
 5. What remains open and what the next experiment could establish.
 
+Every field note also needs its plain opening in `site/data/note-openings.json` (In short, What we found, Why it matters, Limit; `plan: true` for a plan not run yet), and a plan with a published result needs its pair there; the build stops on a note without one (`scripts/note-openings.mjs`).
+
 Link public repositories and source revisions. Check that old availability statements still describe the linked material; the paper archive predates the public BCE engine release. Never promote a dated observation into a current fleet claim.
 
 ## The site index and Find

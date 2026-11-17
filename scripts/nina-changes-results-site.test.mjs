@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { corpusItems } from '../experiments/jev-gate/run_reviewer.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 import { checkRun6 } from '../experiments/nina-changes/guard6.mjs';
 import { callDigests6 } from '../experiments/nina-changes/run_reviewer6.mjs';
 import { classifyDiffSeen } from '../experiments/nina-changes/diff-seen.mjs';
@@ -194,7 +195,7 @@ test('PASS with held:false renders nina\'s entry and "Measured", the measured ho
   assert(withEntry.includes(`Pre-registered; measured ${dd}: bar met, nina in the spotlight. <span class="amendment-qualifier">`), 'the measured lead, then amendment 01\'s qualifier');
   assert(!withEntry.includes('Pre-registered, not yet run.'), 'the EXP 006 row no longer says it has not run');
   noMissing(withEntry, 'the home page with nina\'s entry');
-  const exp005Before = readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').replace(/<p id="exp006">.*?<\/p>/, '<p id="exp006">That experiment is pre-registered: <a href="nina-reviews-the-change.html">EXP 006, nina reviews the change</a>.</p>');
+  const exp005Before = withoutNoteOpening(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8')).replace(/<p id="exp006">.*?<\/p>/, '<p id="exp006">That experiment is pre-registered: <a href="nina-reviews-the-change.html">EXP 006, nina reviews the change</a>.</p>');
   const exp005 = qualifyExp005Note(exp005Before, data);
   assert(exp005.includes(`<p id="exp006">That experiment has been measured, ${dd}: <a href="nina-reviews-the-change.html#results">EXP 006, nina reviews the change</a>, bar met, nina in the spotlight.</p>`));
   assert(!exp005.includes('That experiment is pre-registered'));

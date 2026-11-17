@@ -10,6 +10,7 @@ import { amendNoteResults, censusPublication, censusScope, headline, measuredHea
 import { readHead } from './page-head.mjs';
 import { stations } from './station-contract.mjs';
 import { builtCopy } from './test-build.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 import { removeScratch, scratchDir } from './jev-gate-scratch.mjs';
 
 // EXP 007 results on the site: everything rendered comes from the pinned census gate's return; a results record the gate
@@ -203,7 +204,8 @@ test('the built site: results.json byte for byte, the measured note and head, st
   const dist = join(builtCopy(), 'dist');
   assert.equal(sha(readFileSync(join(dist, 'data/blueprint-floor/results.json'))), pub.resultsSha256);
   assert.equal(readFileSync(publishedResultsPath, 'utf8'), readFileSync(resultsPath, 'utf8'), 'the committed site copy is the results record');
-  const note = readFileSync(join(dist, 'journal/which-rules-need-a-model.html'), 'utf8');
+  // Under the note's plain opening and its "How we checked" folds (scripts/note-openings.mjs), the generator's page.
+  const note = withoutNoteOpening(readFileSync(join(dist, 'journal/which-rules-need-a-model.html'), 'utf8'));
   assert.ok(note.includes('id="results"') && note.includes('id="amendment-01"'));
   assert.match(readHead(note).title, /Measured: the premise is refuted/);
   for (const d of results.disclosures) assert.ok(note.includes(escape(d)));

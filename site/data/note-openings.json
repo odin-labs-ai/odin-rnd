@@ -1,0 +1,893 @@
+{
+  "about": "The plain opening of every field note (mission rnd-site-human PR 4, 2026-11-17), rendered after the note’s own header by openNotePages() in scripts/note-openings.mjs (run by scripts/site-sections.mjs) with the lab openings’ renderOpening(). A plain string is words only: no digit and no number word. A number appears only as a quote of the same note’s own words, verbatim, or as a value read from a measured experiment record. plan: true marks a plan whose page holds no result yet. pairs names each written plan (a note or its record) and the note with its result; both notes link the pair, and the build stops when the plan page does not link its result or the result does not link back.",
+  "pairs": [
+    {
+      "exp": "EXP 005",
+      "plan": "data/jev-gate/preregistration.json",
+      "result": "journal/jev-as-a-fast-gate.html"
+    },
+    {
+      "exp": "EXP 006",
+      "plan": "data/nina-changes/preregistration.json",
+      "result": "journal/nina-reviews-the-change.html"
+    },
+    {
+      "exp": "EXP 007",
+      "plan": "data/blueprint-floor/preregistration.json",
+      "result": "journal/which-rules-need-a-model.html"
+    },
+    {
+      "exp": "EXP 009",
+      "plan": "journal/composable-harness-pre-registration.html",
+      "result": "journal/composable-harness-results.html"
+    },
+    {
+      "exp": "EXP 012",
+      "plan": "data/self-verify/preregistration.json",
+      "result": "journal/self-verify-results.html"
+    },
+    {
+      "exp": "EXP 016",
+      "plan": "data/broker-same-model/preregistration.json",
+      "result": "journal/broker-same-model-results.html"
+    },
+    {
+      "exp": "EXP 017",
+      "plan": "data/review-frontier/preregistration.json",
+      "result": "journal/review-frontier-results.html"
+    },
+    {
+      "exp": "EXP 018",
+      "plan": "data/router-arm/preregistration.json",
+      "result": "journal/router-arm-results.html"
+    },
+    {
+      "exp": "EXP 019",
+      "plan": "data/router-arm-fresh/preregistration.json",
+      "result": "journal/router-arm-fresh-results.html"
+    },
+    {
+      "exp": "EXP 021",
+      "plan": "journal/failover-pre-registration.html",
+      "result": "journal/failover-results.html"
+    }
+  ],
+  "notes": {
+    "journal/a-passing-pipeline.html": {
+      "short": "Did a green release status mean the release had made its coverage report? No: coverage ran out of memory, the tests then passed without it, and the report did not exist until we fixed the job.",
+      "found": [
+        [
+          "Generated build output was entering the coverage collection. After we excluded it, the release produced the complete report on its ",
+          {
+            "quote": "first coverage attempt"
+          },
+          "."
+        ],
+        [
+          "A complete report still showed gaps: lines and statements at ",
+          {
+            "quote": "31.52%"
+          },
+          ", functions at ",
+          {
+            "quote": "54.28%"
+          },
+          " and branches at ",
+          {
+            "quote": "76.22%"
+          },
+          "."
+        ],
+        [
+          "The same qualified image ran in a disposable local tenant, where an ordinary owner shipped a new version of an app and opened it, with ",
+          {
+            "quote": "zero restarts"
+          },
+          " of the main container."
+        ]
+      ],
+      "why": "Before you call a release done, follow it from the change to its checks, the exact artifact and the user outcome, instead of trusting a green status.",
+      "limit": [
+        {
+          "quote": "This is an author-reported internal rollout case, observed on 7 September 2026."
+        },
+        " Its logs are private, and it did not measure hours saved, cost or incidents."
+      ]
+    },
+    "journal/broker-same-model-results.html": {
+      "short": [
+        "Does the same model cost the same through every broker? Not quite: Broker B billed ",
+        {
+          "quote": "exactly 10% above list"
+        },
+        " on every successful call, while Broker A and Broker C billed the list price."
+      ],
+      "found": [
+        [
+          "The markup was steady, so it ",
+          {
+            "quote": "can be priced into a routing decision exactly"
+          },
+          "."
+        ],
+        [
+          {
+            "quote": "No broker ever served a different model than the one requested."
+          }
+        ],
+        [
+          "Not every call was answered: ",
+          {
+            "quote": "On Sonnet, 17 of 360 were not"
+          },
+          ", more than we predicted, and some empty answers were still billed."
+        ]
+      ],
+      "why": "When you pick a broker for the same model, you can treat Broker A and Broker C as list price and add Broker B's markup, then choose on speed and reliability.",
+      "limit": [
+        {
+          "quote": "One client, one day, two models, three brokers."
+        },
+        " Discounts, caching, long contexts and answer quality were not measured."
+      ],
+      "glossary": {
+        "broker": "broker"
+      }
+    },
+    "journal/composable-harness-pre-registration.html": {
+      "short": "Can research parts be loaded, unloaded and swapped while a long-lived program keeps running, without leaving any trace a fresh start would not have? This page is the plan, written before the run, with the question and the pass mark; the result is published on a separate page.",
+      "found": [
+        [
+          "A yes needs the long-running program to differ from a fresh start ",
+          {
+            "quote": "in 0 of n = 400 trials"
+          },
+          ", and any difference at all counts against it."
+        ],
+        "It also checks that a part missing something it needs is always labelled inactive, never left silently doing nothing.",
+        "That labelling check could be worked out ahead of time and was, before this plan was published, so only the trial check tests something unknown."
+      ],
+      "why": "If it holds, a team can swap research parts inside a running program instead of restarting it to get a clean slate.",
+      "limit": [
+        "It tests our own small kernel: ",
+        {
+          "quote": "One kernel, one language, one Mac"
+        },
+        ". Matching a fresh start says nothing about accuracy, and the trial count supports ",
+        {
+          "quote": "at most 1% of trials"
+        },
+        ", ",
+        {
+          "quote": "not zero"
+        },
+        "."
+      ],
+      "glossary": {
+        "the plan, written before the run": "pre-registered"
+      },
+      "plan": true
+    },
+    "journal/composable-harness-results.html": {
+      "short": [
+        "Does our kernel, after loading, swapping and unloading parts, answer the same as a fresh start, and does it flag parts that silently stopped working? The fresh-start claim did not hold up, with a difference in ",
+        {
+          "quote": "1 of 400"
+        },
+        " trials, while the flagging claim held on each of the test setups."
+      ],
+      "found": [
+        [
+          "Our kernel gave a different answer from a fresh process in ",
+          {
+            "quote": "1 of 400"
+          },
+          " trials, and the plan written before the run said any difference counts against the claim. Our later diagnosis points to the fresh reference process failing at that moment; the cause is inferred, not recorded, and the verdict stands."
+        ],
+        [
+          "The kernel flagged idle or missing parts correctly: ",
+          {
+            "quote": "correct on 120 of 120"
+          },
+          ", against ",
+          {
+            "quote": "correct on 60 of 120"
+          },
+          " for the unchanged older filter."
+        ],
+        [
+          "We had already seen the flagging result before writing the plan, so it is ",
+          {
+            "quote": "a disclosure, not a prediction"
+          },
+          "."
+        ]
+      ],
+      "why": "If you want to swap parts in and out of a running system instead of restarting it, this says the restart-free path is not yet shown to be identical, while its check for silently idle parts worked on our test setups.",
+      "limit": [
+        {
+          "quote": "One kernel, one language, one Mac."
+        },
+        " The test setups for the flagging check were synthetic, written to a spec whose fault types we chose."
+      ],
+      "glossary": {
+        "did not hold up": "refuted"
+      }
+    },
+    "journal/failover-pre-registration.html": {
+      "short": "When a database's main server dies mid-session, which setup keeps every write it confirmed and has the shortest outage? This page is the plan, written before the run, for comparing a document database with a relational database; the result is now published on its own page.",
+      "found": [
+        [
+          "A setup fits a fault only if it loses no confirmed write and its outage is ",
+          {
+            "quote": "at least 20% shorter"
+          },
+          " than the other's ",
+          {
+            "quote": "in at least 4 of 5 paired repetitions"
+          },
+          ", with the same direction on a repeat with a new seed."
+        ],
+        [
+          "Each kind of fault gets its own verdict, with no overall winner, and a separate verdict on moving parts needs ",
+          {
+            "quote": "at least 2 fewer component kinds"
+          },
+          "."
+        ],
+        "A practice run triggered a written rule that made the relational database's strict mode the option compared; the page says that change was published after the counted runs had started."
+      ],
+      "why": "It fixes in advance how to judge which database setup better survives a main-server failure, so the published result cannot move the goalposts.",
+      "limit": [
+        {
+          "quote": "Everything runs on one Docker host, so it says nothing about failover across machines."
+        },
+        " The runner code is private, so the study itself cannot be rerun."
+      ],
+      "glossary": {
+        "counted runs": "counted-run",
+        "the plan, written before the run": "pre-registered"
+      },
+      "plan": true
+    },
+    "journal/failover-results.html": {
+      "short": [
+        "When a database's main server fails, which setup keeps every confirmed write and recovers fastest? The document database fit ",
+        {
+          "quote": "six of eight compared fault scenarios"
+        },
+        " on timing, while the relational database fit the peer-only split cases on the feed check alone, and there is no overall winner."
+      ],
+      "found": [
+        [
+          "In the peer-only split cases the document database lost ",
+          {
+            "quote": "no acknowledged writes in the 20 peer-only partition cells"
+          },
+          ", but ",
+          {
+            "quote": "its feed duplicated one effect in 3"
+          },
+          ", so the rule gave those cases to the relational database."
+        ],
+        [
+          "The relational database's strict mode still logged ",
+          {
+            "quote": "15,567 acknowledgements in 10 cells"
+          },
+          " while no standby server was listed, and the page says: ",
+          {
+            "quote": "This run does not establish equal two-copy durability throughout."
+          }
+        ],
+        "Some relational database runs may have overlapped other heavy work on the machine, and that question is still open."
+      ],
+      "why": "A team choosing a database for failover should weigh the shorter outages against the duplicated feed effect and the open durability question, fault by fault.",
+      "limit": [
+        {
+          "quote": "One machine, simulated partitions and privately held raw evidence; no overall winner or independent replication."
+        }
+      ]
+    },
+    "journal/flash-on-the-review-bench.html": {
+      "short": "Can a free AI model review a whole code change and say correctly whether it needs fixing? It caught a similar number of real defects to a costly model measured earlier in a different way, but it flagged too many good changes, so no reviewer we tested may vote yet.",
+      "found": [
+        [
+          "It was credited with ",
+          {
+            "quote": "16 of 30 defects in both of its standard-prompt runs"
+          },
+          ", in the same range as the costly model, but this is ",
+          {
+            "quote": "a description, not an equivalence test"
+          },
+          "."
+        ],
+        [
+          "It also flagged ",
+          {
+            "quote": "21 and 19 of 30 clean changes"
+          },
+          ", while a reviewer that may vote must have ",
+          {
+            "quote": "at most 2 of 30 clean changes flagged in a run"
+          },
+          "."
+        ],
+        [
+          "Given tools, the model left its empty folder and searched a copy of our code that holds the answer key. Every command was read-only, but nothing stopped it: ",
+          {
+            "quote": "An empty working directory is a convention, not a sandbox."
+          }
+        ]
+      ],
+      "why": "It changes how we test reviewers: we now measure them with no tools at all, and no reviewer gets a vote on a change by itself yet.",
+      "limit": [
+        "Private code, so only counts are published; the runs took place ",
+        {
+          "quote": "on one laptop"
+        },
+        ", and the run plan was fixed locally, not published in advance."
+      ]
+    },
+    "journal/free-model-own-bug-history.html": {
+      "short": "Can a free AI model point to the real bug in private code it has probably never seen? On bugs visible from the code alone, its top guess landed next to the real fix most of the time, but few of our fixes could be found that way.",
+      "found": [
+        [
+          "Its top guess landed right next to a line the real fix changed in ",
+          {
+            "quote": "19/30 · 63%"
+          },
+          " of those cases; our current default model managed ",
+          {
+            "quote": "7/30 · 23%"
+          },
+          ", and random guessing would score ",
+          {
+            "quote": "6.5%"
+          },
+          "."
+        ],
+        [
+          "The bigger finding came before any model ran: ",
+          {
+            "quote": "only about 1 in 10 of the small fixes we sampled could be found from the code alone"
+          },
+          "."
+        ],
+        [
+          "It clearly beat our default model, but not its own older version: ",
+          {
+            "quote": "Against its predecessor the difference is not significant at this size"
+          },
+          "."
+        ]
+      ],
+      "why": "It shows that a better code reader alone will not catch most of our bugs, because most fixes depend on context the file does not show.",
+      "limit": [
+        "AI agents, not people, sorted the cases and checked the diagnoses. ",
+        {
+          "quote": "Private code is a strong guard, but not a verified one."
+        }
+      ]
+    },
+    "journal/jev-as-a-fast-gate.html": {
+      "short": "Can Jev, a fast decision model, act as a quick early check that spots code changes breaking simple architecture rules? It missed slightly more rule breaks than a plain rule checker written from the same rules, so the claim did not hold up.",
+      "found": [
+        [
+          {
+            "quote": "The claim is refuted, by the criterion jev-vs-best-baseline."
+          },
+          " The rule checker ",
+          {
+            "quote": "missed 0 of 30 drift items; Jev missed 1 of 30"
+          },
+          "."
+        ],
+        [
+          "Letting Jev settle the calls it was sure of, and sending the rest to a slower AI reviewer, missed no rule breaks and cut the cost per change to ",
+          {
+            "quote": "$0.2743 against $0.6495 per change"
+          },
+          " (mixed price bases)."
+        ],
+        [
+          "Our own tool fence kept the AI reviewer from reading the change most of the time: ",
+          {
+            "quote": "In 131 of the 180 reviewer runs the reviewer never saw the change it was asked to review"
+          },
+          ". ",
+          {
+            "quote": "The cause was the fence, not nina."
+          }
+        ]
+      ],
+      "why": "If your rules are simple enough for a rule checker, run the checker before you pay for a model; this test says nothing about rules a checker cannot express.",
+      "limit": [
+        {
+          "quote": "This tests whether Jev applies mechanical rules as well as a linter, not rules a linter cannot express."
+        },
+        " We wrote the test changes and the rules ourselves."
+      ],
+      "glossary": {
+        "Jev": "jev",
+        "rule checker": "linter",
+        "did not hold up": "refuted"
+      }
+    },
+    "journal/latent-handoff-pre-registration.html": {
+      "short": "Can a small model hand its cache, its working memory of a code change, to a model from another family, so the receiver decides nearly as well as re-reading the text, and faster? This page is the plan, written before the run, and the counted run has not started.",
+      "found": [
+        [
+          "A yes needs item-by-item agreement with re-reading the text, on an interval ",
+          {
+            "quote": "whose lower bound is ≥ 0.90"
+          },
+          "."
+        ],
+        [
+          "It also needs the handoff, mapping time included, to be much faster: the time ratio needs an interval ",
+          {
+            "quote": "whose upper bound is ≤ 0.5"
+          },
+          "."
+        ],
+        "The team expects the answer to be no, and will publish it the same way."
+      ],
+      "why": "It decides whether handing over a cache is worth adopting instead of making the receiving model re-read the whole text.",
+      "limit": [
+        "The longest test texts are padding, so ",
+        {
+          "quote": "it tests the mechanism at 16K tokens, not a real factory context of that size"
+        },
+        "; it uses small models, so nothing here carries over to larger models or other tasks."
+      ],
+      "glossary": {
+        "cache": "kv-cache",
+        "the plan, written before the run": "pre-registered"
+      },
+      "plan": true
+    },
+    "journal/mongodb-ai-context.html": {
+      "short": "After a saved answer is tied to the right policy version, can similar wording still make it answer the wrong question? Yes: at the lowest cutoff we tested, the cache reused a yes for questions asking the opposite, and higher cutoffs removed every hit, valid ones included.",
+      "found": [
+        "Tying each cached answer to trusted tenant, model and policy versions blocked the cases where the policy had changed.",
+        [
+          "At the ",
+          {
+            "quote": "0.8"
+          },
+          " score cutoff, the cache still answered yes in ",
+          {
+            "quote": "all eight same-version questions that asked whether an allowed action was forbidden"
+          },
+          "."
+        ],
+        [
+          "Raising the cutoff to ",
+          {
+            "quote": "0.9 or 0.95"
+          },
+          " removed every hit, including the valid ones, in this configuration."
+        ]
+      ],
+      "why": "If you reuse saved answers based on similar wording, do not count on version keys and a score cutoff alone to keep those answers correct.",
+      "limit": [
+        {
+          "quote": "These intentionally paired cases do not estimate a real traffic error rate or select a universally safe cutoff."
+        },
+        " The cases are a small set we wrote ourselves."
+      ]
+    },
+    "journal/mongodb-ai-ecosystem.html": {
+      "short": "Do the AI tools around a document database give us a reason to replace our relational database? Not yet: each database resumed the tested workflows and returned the same nearest matches from the same embeddings.",
+      "found": [
+        "Saved agent workflows resumed after a crash, but the tool ran again in each recovery; only an operation key in the application kept a duplicate effect from being stored.",
+        "Shared thread names and cache contexts led to shared test data, so the application must supply trusted identity scope.",
+        [
+          "A near question that stated a new policy still got the old allowed answer at score threshold ",
+          {
+            "quote": "0.8"
+          },
+          "; adding the new policy and corpus versions to the cache context gave a miss at every tested threshold."
+        ]
+      ],
+      "why": "Better AI tooling alone is not a reason to switch databases; start by making sure your application handles retries, tenant identity and changed policies.",
+      "limit": [
+        {
+          "quote": "All were local single-node trials."
+        },
+        " The data was made up for the test, and no speed, availability or cost result is claimed."
+      ]
+    },
+    "journal/mongodb-home-ground-pre-registration.html": {
+      "short": "Where a document database should shine, which database solves each problem correctly with fewer moving parts? Only the change-feed test has run so far, and its report says the relational database fits it at each data size tested.",
+      "found": [
+        [
+          "The change-feed test is complete (",
+          {
+            "quote": "all 60 counted cells exist"
+          },
+          "), and the report's verdict is that the relational database fits, with its log-based feed as the chosen option."
+        ],
+        "Against the relational database's outbox option alone, the document database fits, but that is a side analysis that never decides.",
+        [
+          "Some rules were set late: the runner changed after early cells ran, and the way to pick the relational option was chosen after early results were seen, ",
+          {
+            "quote": "so it is not blind"
+          },
+          "."
+        ]
+      ],
+      "why": "It tells a team which database the evidence favours for a change feed that survives a restart, and leaves the other problems open.",
+      "limit": [
+        {
+          "quote": "S1, S3 and S4 have not run"
+        },
+        ". ",
+        {
+          "quote": "Two databases, one host plus a second-OS replication, synthetic data sized from one recorded store, no failover or scale-out."
+        }
+      ],
+      "glossary": {
+        "counted cells": "counted-run"
+      }
+    },
+    "journal/mongodb-primitive-fit.html": {
+      "short": "Could a document database earn a bounded role next to our relational database? Not on this evidence: it beat a plain JSON layout in some session tests, but not the stronger relational design, so the relational database stays our default.",
+      "found": [
+        [
+          "The document database showed ",
+          {
+            "quote": "a repeatable advantage over monolithic JSONB in two 64 KiB session workloads"
+          },
+          ", where each session sits in large JSON values."
+        ],
+        "It did not beat the stronger relational designs, which keep a busy field in its own row or store changed fields in a separate table.",
+        "For flexible metadata queries, it was slower in every measured query class in the main run and the repeat, though it used less storage."
+      ],
+      "why": "If a JSON layout is slow in your relational database, test a better relational layout before adding a new database.",
+      "limit": "This ran on a shared, throttled machine with synthetic data, and failover, recovery, backup and cost were not measured."
+    },
+    "journal/mongodb-temporal-document-fit.html": {
+      "short": "Does flexible workflow data need a document database? We found no reason: our relational database with JSON support passed the same tests, so it stays our default.",
+      "found": [
+        [
+          "Each store passed the tested mechanisms; the run recorded ",
+          {
+            "quote": "20,000 of 20,000 measured operations"
+          },
+          ", ",
+          {
+            "quote": "42 passing correctness and fault checks"
+          },
+          " and ",
+          {
+            "quote": "ten passing schema-evolution suites"
+          },
+          "."
+        ],
+        "The run did not show that the document database is a better fit, so that question stays open."
+      ],
+      "why": "Flexible JSON data alone is not a reason to add or switch databases; look for a specific workload that needs it.",
+      "limit": "This was a local test on a shared, CPU-throttled machine with synthetic data, not proof that the stores are equivalent."
+    },
+    "journal/nina-reviews-the-change.html": {
+      "short": "When nina, an open-source AI code reviewer, can actually read each change, does it judge rule breaks correctly? Yes: it met the bar we wrote down before running the test, so nina is now in the spotlight.",
+      "found": [
+        [
+          "The page's verdict: ",
+          {
+            "quote": "Measured — bar met, nina in the spotlight."
+          }
+        ],
+        [
+          "This time the reviewer saw the change in nearly every run: only ",
+          {
+            "quote": "3 of 180 counted runs were diff-blind"
+          },
+          ", under the limit of ",
+          {
+            "quote": "18 of 180"
+          },
+          "."
+        ],
+        [
+          "It missed ",
+          {
+            "quote": "1 of 90 (1.1%)"
+          },
+          " rule-breaking runs, wrongly rejected ",
+          {
+            "quote": "2 of 90 (2.2%)"
+          },
+          " clean runs, and gave the same answer across its repeat runs on ",
+          {
+            "quote": "57 of 60 (95.0%)"
+          },
+          " changes."
+        ]
+      ],
+      "why": "It tells a reader that nina met our bar for checking simple architecture rules on changes like these, which the earlier test could not show because the reviewer was blocked from reading the change.",
+      "limit": [
+        "Changes we wrote ourselves. ",
+        {
+          "quote": "The runs are sequential, on one machine"
+        },
+        "; ",
+        {
+          "quote": "this measures nina 0.34.0's reviewer on mechanical architecture rules and nothing else about nina."
+        }
+      ],
+      "glossary": {
+        "nina": "nina"
+      }
+    },
+    "journal/review-frontier-results.html": {
+      "short": [
+        "Does paying more for an AI code reviewer buy more caught defects? Not on our test, where the models caught about the same number of defects even though the ",
+        {
+          "quote": "price per review differed by more than a hundredfold"
+        },
+        "."
+      ],
+      "found": [
+        [
+          {
+            "quote": "Pooled over two runs, they caught between 26 and 31 of 60 defects, and every interval overlaps every other."
+          }
+        ],
+        [
+          "On this test, ",
+          {
+            "quote": "paying about 130 times more per review (Opus against gpt-oss-120b) bought 2 more catches out of 60, which is inside the noise"
+          },
+          "."
+        ],
+        "False alarms separate the models more than catches do, and no model came near our bar for wrongly flagged clean changes."
+      ],
+      "why": "When you choose a model to review code, this suggests (expected, not measured) that picking on price alone catches about as many defects, so compare false alarms instead.",
+      "limit": [
+        "We used our own private code changes, prices from the broker we used on ",
+        {
+          "quote": "23 October 2026"
+        },
+        ", and a scorer that does not check whether the diagnosis is right."
+      ],
+      "glossary": {
+        "broker": "broker"
+      }
+    },
+    "journal/router-arm-fresh-results.html": {
+      "short": [
+        "Does choosing a model for each coding task by our own rulebook beat always using a fixed model? Under the pass mark we wrote down before the run, ",
+        {
+          "quote": "routing beats always-Opus and does not beat always-Luna"
+        },
+        "."
+      ],
+      "found": [
+        [
+          {
+            "quote": "Routing paid $0.143 per case fixed, against $0.247 for Opus and $0.043 for Luna."
+          }
+        ],
+        [
+          {
+            "quote": "Routing fixed 7.8 points fewer cases than Opus."
+          },
+          " The rule allowed this only because the routed runs varied so much: ",
+          {
+            "quote": "The result is \"cheaper, and not measurably worse by this rule\". It is not \"as good\"."
+          }
+        ],
+        [
+          "Where the rule's picks had not been tested before, its cheapest pick was unreliable: on a task like that, ",
+          {
+            "quote": "GPT-6 Luna fixed 0, 12 and 0 of 16 cases across these runs"
+          },
+          "."
+        ]
+      ],
+      "why": "If you are deciding how to pick models for coding tasks, routing by the rule saved money here against always using the costliest model we compared, but it fixed fewer cases and is not a general policy.",
+      "limit": "We used tasks from our own repository and prices from the broker we used, compared these new runs with fixed-model runs from an earlier experiment, and no outside party has reproduced the savings.",
+      "glossary": {
+        "broker": "broker"
+      }
+    },
+    "journal/router-arm-results.html": {
+      "short": [
+        "Does choosing a model for each coding task by our own rulebook beat always using a fixed model? Under the pass mark we wrote down before the run, ",
+        {
+          "quote": "the answer is \"incomplete\""
+        },
+        ", because a spending stop cut a task short and left too few complete runs."
+      ],
+      "found": [
+        [
+          "The counts point a way but are not a verdict: ",
+          {
+            "quote": "So routing cost about half as much per case as Opus, for a share 3 points lower."
+          }
+        ],
+        [
+          {
+            "quote": "Luna cost about a third as much as routing, for a share 9 points lower."
+          }
+        ],
+        "The spending stop worked as written but was set too tight for how much a task's cost can vary, and nothing was re-run."
+      ],
+      "why": "If you are deciding whether to route tasks by this rule, this run does not settle it; a new experiment, published before it runs, is needed.",
+      "limit": [
+        {
+          "quote": "Eight tasks from one repository, three replicates, one broker."
+        },
+        " The rule's model picks were based on earlier results from most of these same tasks."
+      ],
+      "glossary": {
+        "broker": "broker"
+      }
+    },
+    "journal/self-verify-results.html": {
+      "short": "Can a code-reviewing model talk itself out of its false alarms? No: when we asked it to back each alarm with a concrete failing input, it kept nearly all of them, so false alarms stayed far above our pass mark.",
+      "found": [
+        [
+          {
+            "quote": "MiniMax M3.1 Flash kept 249 of the 269 findings it had raised."
+          }
+        ],
+        [
+          {
+            "quote": "False alarms ended at 20 and 22 of 30 clean changes in the two counted runs."
+          },
+          " The bar, set before any counted call, was ",
+          {
+            "quote": "at most 2"
+          },
+          "."
+        ],
+        [
+          {
+            "quote": "Defects caught stayed above the floor of 12, at 13 and 14 of 30."
+          },
+          " Under the published decision rule, the answer is no."
+        ]
+      ],
+      "why": "If you hoped a self-check prompt would make a noisy model reviewer safe enough to block a merge, this says it does not on this model; a different kind of check, such as another model, needs its own test.",
+      "limit": [
+        "We tested this model only, on private code changes, on ",
+        {
+          "quote": "one laptop"
+        },
+        "; the scorer does not check whether the diagnosis is right."
+      ]
+    },
+    "journal/system-1-decisions-without-lock-in.html": {
+      "short": "Can a free model that runs on a laptop answer small typed questions well enough that the hosted decision model Jev becomes optional? On questions we wrote ourselves, the offline model Laya was much faster but fell too far behind Jev on accuracy, so the claim did not hold up.",
+      "found": [
+        [
+          "Laya was right on ",
+          {
+            "quote": "81.3% (39/48)"
+          },
+          " of the questions and Jev on ",
+          {
+            "quote": "95.8% (46/48)"
+          },
+          ". That gap is past the limit we set, so ",
+          {
+            "quote": "the claim is refuted as stated"
+          },
+          "."
+        ],
+        [
+          "Laya answered far faster: a ",
+          {
+            "quote": "median 9 ms locally against 378 ms for the hosted call, including network"
+          },
+          "."
+        ],
+        [
+          "Our local copy of Laya matched the model's reference code: ",
+          {
+            "quote": "0 decision mismatches against the reference implementation across 48 rows"
+          },
+          "."
+        ]
+      ],
+      "why": "It shows that, on these questions, swapping the hosted model for the offline model costs real accuracy, even though the offline model is much faster and needs no vendor key.",
+      "limit": [
+        "A small set of questions we wrote ourselves, not a benchmark. ",
+        {
+          "quote": "One machine, one run."
+        }
+      ],
+      "glossary": {
+        "Jev": "jev",
+        "Laya": "laya",
+        "did not hold up": "refuted"
+      }
+    },
+    "journal/where-a-model-reviewer-earns-its-keep.html": {
+      "short": "On code rules that an earlier study found a rule checker could not express, does a model reviewer spot rule-breaking changes better than standard off-the-shelf tools? This page is the plan, written before the run; no test item exists yet and no paid call has been made.",
+      "found": [
+        [
+          "A yes needs the reviewer's balanced accuracy to be ",
+          {
+            "quote": "at least 0.20 above"
+          },
+          " the best standard tool, with ",
+          {
+            "quote": "the 95% lower bound of the class-stratified bootstrap > 0"
+          },
+          "."
+        ],
+        [
+          "The reviewer must also keep its false rejections of clean changes to ",
+          {
+            "quote": "at most 15%"
+          },
+          ", the same budget the tools get."
+        ],
+        [
+          "The best standard tool's balanced accuracy ",
+          {
+            "quote": "must be <= 0.75"
+          },
+          "; otherwise the rules count as decidable without a model and no counted run happens."
+        ]
+      ],
+      "why": "It tells a team whether a paid model reviewer is worth adding for rules that ordinary tools cannot check.",
+      "limit": "Just nina as the reviewer, on a small code base we wrote ourselves, with the test items still to be written and the spending cap still awaiting founder sign-off.",
+      "glossary": {
+        "the plan, written before the run": "pre-registered"
+      },
+      "plan": true
+    },
+    "journal/which-rules-need-a-model.html": {
+      "short": "Could a plain rule checker, with no AI model, decide the rules that add-on tools for Jev ship with? Almost never: it could fully decide hardly any of them, so the idea did not hold up.",
+      "found": [
+        [
+          "The typical share of rules the checker could fully decide was ",
+          {
+            "quote": "0.0% across 7 plugins"
+          },
+          ". The idea counted as refuted if that share fell ",
+          {
+            "quote": "below 25%"
+          },
+          "."
+        ],
+        [
+          "Many rules could be partly checked, with a model still needed for the rest: ",
+          {
+            "quote": "Median with partial counted as 0.5 (sensitivity, not decisive): 25.0%."
+          }
+        ],
+        "Because of this result, the planned next stage, testing Jev on the remaining rules, was cancelled."
+      ],
+      "why": "If you build a gate on rules like these, a plain checker will not take the model's place; at best it can settle part of a rule before the model is asked.",
+      "limit": [
+        {
+          "quote": "The target language is bce-engine 0.3.1's static vocabulary and nothing more"
+        },
+        "; an AI model sorted each rule, and a newer checker may decide more."
+      ],
+      "glossary": {
+        "rule checker": "linter",
+        "did not hold up": "refuted",
+        "Jev": "jev"
+      }
+    },
+    "journal/why-open-the-floor.html": {
+      "short": "Why show our research work in public while it is still happening? Because the interesting work happens before a launch, and here anyone can read the code, repeat an experiment or report a different result.",
+      "found": [
+        "What we set out: the research subject is the software factory itself, from intent and construction to checking and learning.",
+        "What we offer to run: a released tool that checks code against architecture rules people write down, plus small packaged experiments the site reruns on changes, on request and weekly.",
+        "What we do not claim: these small experiments do not show that agents become faster, cheaper or more successful."
+      ],
+      "why": "You can check our claims yourself by reading the code or repeating an experiment, rather than only reading about them.",
+      "limit": "This is a direction note, not a measured result, and the experiments it points to are small and controlled by us."
+    }
+  }
+}

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { builtCopy } from './test-build.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 import { sha256 } from './jev-gate-prereg.mjs';
 import { amendNote, qualifyHome, cardQualifier } from './jev-gate-amendment-note.mjs';
 import { checkAmendment } from './jev-gate-amendment.mjs';
@@ -164,7 +165,7 @@ test('the home card, station 06 and the note say "amended again", from the recor
   const page = readFileSync(join(dist, 'index.html'), 'utf8');
   // Once results are committed, station 06 shows the measured exhibit, which has no pre-registration sentence to qualify.
   assert(page.includes(cardQualifier02(record)) && (existsSync('experiments/jev-gate/results/results.json') || page.includes(stationQualifier02(record))), 'the built home page is not qualified by the committed amendment 02');
-  assert(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8').includes(noteQualifier02(record)), 'The built note is not qualified by the committed amendment 02');
+  assert(withoutNoteOpening(readFileSync(join(dist, 'journal/jev-as-a-fast-gate.html'), 'utf8')).includes(noteQualifier02(record)), 'The built note is not qualified by the committed amendment 02');
   const changed = copy(); changed.siteQualifier.card = changed.siteQualifier.card.replace('Amended again', 'Amended');
   assert.throws(() => validateAmendment02(changed, context), /amended again/);
   assert.throws(() => amendNote02(note, record, digest), /already carries/);
