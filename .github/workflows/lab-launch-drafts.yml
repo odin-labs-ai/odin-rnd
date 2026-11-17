@@ -13,9 +13,14 @@
 # own, re-runs the generator's text screen, and skips a draft whose title is already a discussion. Any refusal posts
 # nothing. The schedule never posts: it only drafts. A Discussions post is a public post, and rule 36 (Public-Channel
 # Posting, Guard 2) allows one only after a person has read the exact body and chosen to post it; a schedule is not that
-# choice. So the post job runs only for a manual run, which is a dry run unless dry_run is unticked: the person who
-# unticks it, after reading the drafts artifact, is the confirmation. Its audit (posted, skipped, refused: title,
-# address, body sha256, never the body) is the step summary and an artifact.
+# choice. So the post job runs only for a manual run, which is a dry run unless dry_run is unticked, and an unticked run
+# posts only the drafts a person approved by their exact text: a dry run (manual, or the schedule's drafts) lists each
+# draft with its postSha256, the sha256 of exactly the title and body that would be posted; the person reads those
+# drafts, then starts a manual run with dry_run unticked and approve set to the postSha256 values they chose. This run
+# drafts again and posts a draft only when its regenerated title and body hash to an approved value: a page that changed
+# since it was read, a lab not chosen, or an empty approve posts nothing (scripts/lab-launch-post.mjs --approve). Its
+# audit (posted, skipped, refused, notApproved: title, address, body sha256 and postSha256, never the body) is the step
+# summary and an artifact.
 #
 # The window is the seven days before the run, matching the weekly schedule. A manual run can name labs instead
 # (comma-separated catalogue slugs) or start the window on another date.
@@ -40,6 +45,10 @@ on:
         type: boolean
         required: false
         default: true
+      approve:
+        description: 'With dry_run unticked: the postSha256 values (comma-separated) of the drafts you read in a dry run and chose to post; empty = post nothing'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -114,12 +123,15 @@ jobs:
           # it its own event), and scripts/lab-launch-post.test.mjs pins that.
           POST: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.dry_run) == 'false' }}
           DRAFT_DATE: ${{ needs.drafts.outputs.date }}
+          # The exact-text approval (rule 36 Guard 2), passed as data, never into the script source; the script validates
+          # it (64-hex values only) and refuses a real run without one.
+          APPROVE: ${{ inputs.approve }}
         run: |
           set -euo pipefail
-          mode=--dry-run
-          if [ "$POST" = "true" ]; then mode=; fi
+          mode=(--dry-run)
+          if [ "$POST" = "true" ]; then mode=(--approve "$APPROVE"); fi
           rc=0
-          node scripts/lab-launch-post.mjs --dir "launch-drafts/$DRAFT_DATE" --repo "$GITHUB_REPOSITORY" --category 'Show and tell' --audit discussion-post-audit.json $mode || rc=$?
+          node scripts/lab-launch-post.mjs --dir "launch-drafts/$DRAFT_DATE" --repo "$GITHUB_REPOSITORY" --category 'Show and tell' --audit discussion-post-audit.json "${mode[@]}" || rc=$?
           { echo '### Discussions'; echo; echo '```json'; cat discussion-post-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit "$rc"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -30,7 +30,8 @@
 // the card URL are taken out; each is checked as a URL on the site's host by urlProblems), when the X post is over 280,
 // or when --out resolves under site/ or dist/ (drafts are never published; outProblems, from the Lab 01 generator).
 // Nothing here posts, sends or calls anything but the page read. The LinkedIn and X drafts stay the founder's to post by
-// hand; the Discussions draft is posted by scripts/lab-launch-post.mjs in the weekly workflow, after its own checks.
+// hand; the Discussions draft is posted by scripts/lab-launch-post.mjs only in a manual run of the workflow, after its
+// own checks and only when a person approved its exact text (--approve; the weekly schedule only drafts).
 // Exit codes: 0 done (also when no lab changed: INDEX.md says so), 1 refused, 3 usage.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';

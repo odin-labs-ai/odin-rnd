@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SYN_THEME } from './test-synthetic-names.mjs';
 import { labDrafts, labUrl } from './lab-launch-drafts.mjs';
-import { CREATE_MUTATION, DISCUSSIONS_QUERY, GRAPHQL_URL, REPO_QUERY, draftsIn, fetchPage, parseDiscussionDraft, postLaunchDiscussions, postProblems, sha256, tokenGraphql, trustedAuthor } from './lab-launch-post.mjs';
+import { CREATE_MUTATION, DISCUSSIONS_QUERY, GRAPHQL_URL, REPO_QUERY, draftsIn, fetchPage, parseApprovals, parseDiscussionDraft, postLaunchDiscussions, postProblems, postSha256, sha256, tokenGraphql, trustedAuthor } from './lab-launch-post.mjs';
 import { SITE_URL } from './labs.mjs';
 
 // The Discussions poster (mission social-ai-driven-1114). Every page here is made up at run time, in the shape the lab
@@ -59,7 +59,9 @@ const served = (map = pages) => async url => {
   return map[slug];
 };
 const cat = new Map(Object.entries(LABS));
-const run = (graphql, drafts, extra = {}) => postLaunchDiscussions({ drafts, repo: 'odin-labs-ai/odin-rnd', category: 'Show and tell', dryRun: false, graphql, fetchPage: served(), cat, ...extra });
+// By default every well-formed draft handed in is approved by its exact text, as a person would after reading a dry run.
+const approveAll = drafts => new Set(drafts.filter(d => d.title !== null).map(postSha256));
+const run = (graphql, drafts, extra = {}) => postLaunchDiscussions({ drafts, repo: 'odin-labs-ai/odin-rnd', category: 'Show and tell', dryRun: false, approved: approveAll(drafts), graphql, fetchPage: served(), cat, ...extra });
 const ours = (number, title, more = {}) => ({ number, title, url: `https://github.com/odin-labs-ai/odin-rnd/discussions/${number}`, authorAssociation: 'MEMBER', category: { name: 'Show and tell' }, author: { __typename: 'User', login: 'someone' }, ...more });
 
 test('parseDiscussionDraft takes the title line and every byte after the Body heading', () => {
@@ -167,6 +169,44 @@ test('dry run: lists and checks, posts nothing, reports would-post and skip rows
   assert.deepEqual(out.wouldPost.map(s => s.slug), ['strangers']);
 });
 
+test('rule 36 Guard 2: a real run posts only drafts approved by their exact title and body', async () => {
+  const drafts = [draft('same-model-harness'), draft('strangers')];
+  // No approval (absent or empty): refused before any read or call, nothing posted.
+  for (const approved of [null, new Set()]) {
+    const gql = mockGraphql();
+    let reads = 0;
+    await assert.rejects(run(gql, drafts, { approved, fetchPage: async url => { reads++; return served()(url); } }), /needs --approve/);
+    assert.equal(gql.calls.length, 0);
+    assert.equal(reads, 0);
+  }
+  // A subset: only the chosen draft is posted; the other is reported notApproved, with its key, never its body.
+  const gql = mockGraphql();
+  const out = await run(gql, drafts, { approved: new Set([postSha256(drafts[1])]) });
+  assert.deepEqual(out.posted.map(p => p.slug), ['strangers']);
+  assert.deepEqual(gql.creates().map(c => c.variables.title), [drafts[1].title]);
+  assert.deepEqual(out.notApproved.map(r => [r.slug, r.postSha256]), [['same-model-harness', postSha256(drafts[0])]]);
+  assert.ok(!('body' in out.notApproved[0]));
+  // The key binds the exact text: the approval of yesterday's body does not cover a body that changed (same title).
+  const changedPage = page({ slug: 'strangers', headline: LABS.strangers.headline, lead: `${LEAD} One more sentence.` });
+  const changed = { slug: 'strangers', ...parseDiscussionDraft(labDrafts(LABS.strangers, changedPage).files['github-discussion.md']) };
+  assert.equal(changed.title, drafts[1].title);
+  assert.notEqual(postSha256(changed), postSha256(drafts[1]));
+  const gql2 = mockGraphql();
+  const out2 = await run(gql2, [changed], { approved: new Set([postSha256(drafts[1])]), fetchPage: served({ ...pages, strangers: changedPage }) });
+  assert.deepEqual(out2.refused, []);
+  assert.deepEqual(out2.posted, []);
+  assert.deepEqual(out2.notApproved.map(r => r.slug), ['strangers']);
+  assert.equal(gql2.creates().length, 0);
+  // The dry run reports the key a person approves with.
+  const dry = await run(mockGraphql(), drafts, { dryRun: true, approved: null });
+  assert.deepEqual(dry.wouldPost.map(r => r.postSha256), drafts.map(postSha256));
+  // --approve takes only 64-hex values.
+  assert.deepEqual([...parseApprovals(` ${'a'.repeat(64)}, ${'b'.repeat(64)}\n`)], ['a'.repeat(64), 'b'.repeat(64)]);
+  assert.equal(parseApprovals('').size, 0);
+  assert.throws(() => parseApprovals('abc'), /64 lowercase hex/);
+  assert.throws(() => parseApprovals(`${'a'.repeat(64)};rm -rf /`), /64 lowercase hex/);
+});
+
 test('the CLI: refuses usage, and without a token writes an audit with the error and posts nothing', () => {
   const script = join(here, 'lab-launch-post.mjs');
   assert.equal(spawnSync(process.execPath, [script, '--dir', temp], { encoding: 'utf8' }).status, 3);
@@ -211,6 +251,10 @@ test('the workflow posts only from this repository\'s main, on an unticked manua
   assert.match(post, /\n    if: github.repository == 'odin-labs-ai\/odin-rnd' && github.ref == 'refs\/heads\/main' && github.event_name == 'workflow_dispatch'\n/);
   assert.match(post, /\n    permissions:\n      contents: read\n      discussions: write\n/);
   assert.match(post, /POST: \$\{\{ github.event_name == 'workflow_dispatch' && format\('\{0\}', inputs.dry_run\) == 'false' \}\}/);
+  // Rule 36 Guard 2, the exact text: a real run hands the person's approval to the poster, as data.
+  assert.match(post, /\n          APPROVE: \$\{\{ inputs.approve \}\}\n/);
+  assert.match(post, /if \[ "\$POST" = "true" \]; then mode=\(--approve "\$APPROVE"\); fi/);
+  assert.match(wf, /\n      approve:\n        description: /);
   // Rule 36 Guard 2: a public post needs a person's choice on a read body. The schedule only drafts.
   assert.doesNotMatch(post, /event_name == 'schedule'/, 'the schedule must never reach the post step');
   // Exactly two triggers: a workflow_call (or any other) would lend this workflow its caller's event and inputs.
