@@ -3,7 +3,7 @@
 // or changed; this script posts each one to this repository's Discussions, in the category named by --category ("Show
 // and tell"), with the title and body exactly as generated. It is the only thing in the repository that posts.
 //
-//   node scripts/lab-launch-post.mjs --dir <out>/<YYYY-MM-DD> --repo <owner/name> --category <name> --audit <file> [--dry-run]
+//   node scripts/lab-launch-post.mjs --dir <out>/<YYYY-MM-DD> --repo <owner/name> --category <name> --audit <file> (--dry-run | --approve <postSha256,...>)
 //
 // What it posts: the title is the line under "## Title"; the body is every byte after the "## Body" line (it starts
 // with the blank line that follows the heading, the shape the hand-posted Lab 11 and Lab 12 discussions were given).
@@ -27,10 +27,16 @@
 // The key is the title: a lab whose headline changes is a new title and is posted again. Skips are not failures.
 // The workflow's concurrency group serialises runs, so a manual run and the schedule never list-then-post at once.
 // --dry-run lists and checks exactly as a real run does and posts nothing: its would-post rows are reported as such.
+// A real run posts ONLY what a person approved (rule 36, Public-Channel Posting, Guard 2: a public post needs a person who
+// has read the exact body and chosen to post it). Every row carries postSha256, the sha256 of the exact title and body
+// that would be posted (postSha256 below). A person reads a dry run's drafts, then names the drafts they choose with
+// --approve <postSha256,...>; a real run without --approve refuses before any call and posts nothing, and a draft whose
+// postSha256 is not named (a page that changed since, a new lab, a lab the person left out) is NOT posted: it is reported
+// as notApproved. The approval binds the exact text, so a draft regenerated in the posting run must be byte-identical.
 // Every GraphQL query is a constant in this file; titles, bodies, owner, name and cursors travel only as GraphQL
 // variables, never inside the query text. The token is GITHUB_TOKEN from the environment (the workflow's own job token,
 // permissions: discussions: write), and it is never printed.
-// Audit: --audit <file> gets one JSON document: { date, repo, category, dryRun, posted, wouldPost, skipped, refused },
+// Audit: --audit <file> gets one JSON document: { date, repo, category, dryRun, approved, posted, wouldPost, skipped, refused, notApproved },
 // where each row carries slug, title, url and the body's sha256, and never the body.
 // Exit codes: 0 done (also when nothing was drafted, or all were skipped), 1 refused or failed, 3 usage.
 import { createHash } from 'node:crypto';
@@ -46,6 +52,14 @@ export const GRAPHQL_URL = 'https://api.github.com/graphql';
 const FIXED_LINES = new Set(['### In numbers', '### What this does not show']);
 
 export const sha256 = text => createHash('sha256').update(text, 'utf8').digest('hex');
+/** The approval key of one post: the sha256 of exactly the title and body that would be posted, unambiguously joined. */
+export const postSha256 = ({ title, body }) => sha256(JSON.stringify([title, body]));
+/** Parse an --approve value: postSha256 values separated by commas or whitespace; anything else throws. */
+export function parseApprovals(text) {
+  const list = String(text ?? '').split(/[\s,]+/).filter(Boolean);
+  for (const v of list) if (!/^[0-9a-f]{64}$/.test(v)) throw new Error('--approve takes postSha256 values (64 lowercase hex), separated by commas');
+  return new Set(list);
+}
 
 export const REPO_QUERY = `query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) { id discussionCategories(first: 50) { nodes { id name } } }
@@ -143,12 +157,15 @@ export function draftsIn(dir) {
  * Returns { posted, wouldPost, skipped, refused }, filled into `out` as it goes (so a failure part way keeps the rows
  * already posted); nothing is posted when refused is not empty.
  */
-export async function postLaunchDiscussions({ drafts, repo, category, dryRun, graphql, fetchPage: read = fetchPage, cat = catalogue(), out = { posted: [], wouldPost: [], skipped: [], refused: [] } }) {
+export async function postLaunchDiscussions({ drafts, repo, category, dryRun, approved = null, graphql, fetchPage: read = fetchPage, cat = catalogue(), out = { posted: [], wouldPost: [], skipped: [], refused: [], notApproved: [] } }) {
+  // Fail closed before any read or call: a real run with no approval posts nothing (rule 36 Guard 2).
+  if (!dryRun && !(approved instanceof Set && approved.size)) throw new Error('a real run needs --approve <postSha256,...> naming the drafts a person read and chose to post; nothing was posted');
+  out.notApproved ??= [];
   const [owner, name] = repo.split('/');
   const ready = [];
   for (const d of drafts) {
     if (d.title === null) { out.refused.push({ slug: d.slug, reasons: [`${DRAFT_FILE} is not in the generator's shape (## Title, ## Body)`] }); continue; }
-    const row = { slug: d.slug, title: d.title, page: labUrl(d.slug), bodySha256: sha256(d.body) };
+    const row = { slug: d.slug, title: d.title, page: labUrl(d.slug), bodySha256: sha256(d.body), postSha256: postSha256(d) };
     // A refused row names the draft by hashes only: its title may be the very text that failed the screen.
     const refuse = reasons => out.refused.push({ slug: d.slug, page: row.page, titleSha256: sha256(d.title), bodySha256: row.bodySha256, reasons });
     const label = cat.get(d.slug)?.label;
@@ -188,6 +205,7 @@ export async function postLaunchDiscussions({ drafts, repo, category, dryRun, gr
   if (out.refused.length) return out;
   for (const { body, ...row } of toPost) {
     if (dryRun) { out.wouldPost.push(row); continue; }
+    if (!approved.has(row.postSha256)) { out.notApproved.push({ ...row, reason: 'its postSha256 is not in --approve: no person chose this exact text' }); continue; }
     const made = (await graphql(CREATE_MUTATION, { repositoryId: repository.id, categoryId: target.id, title: row.title, body }))?.createDiscussion?.discussion;
     if (!made?.url) throw new Error(`${row.slug}: createDiscussion answered no discussion`);
     out.posted.push({ ...row, url: made.url, number: made.number });
@@ -197,10 +215,11 @@ export async function postLaunchDiscussions({ drafts, repo, category, dryRun, gr
 }
 
 function args(argv) {
-  const o = { dryRun: false };
+  const o = { dryRun: false, approve: null };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === '--dry-run') o.dryRun = true;
+    else if (flag === '--approve' && argv[i + 1] !== undefined) o.approve = parseApprovals(argv[++i]);
     else if (['--dir', '--repo', '--category', '--audit'].includes(flag) && argv[i + 1] !== undefined) o[flag.slice(2)] = argv[++i];
     else throw new Error(`unknown or incomplete argument ${flag}`);
   }
@@ -212,23 +231,24 @@ function args(argv) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   let o;
   try { o = args(process.argv.slice(2)); } catch (error) {
-    console.error(`usage: node scripts/lab-launch-post.mjs --dir <out>/<YYYY-MM-DD> --repo <owner/name> --category <name> --audit <file> [--dry-run]\n${error.message}`);
+    console.error(`usage: node scripts/lab-launch-post.mjs --dir <out>/<YYYY-MM-DD> --repo <owner/name> --category <name> --audit <file> (--dry-run | --approve <postSha256,...>)\n${error.message}`);
     process.exit(3);
   }
   const token = process.env.GITHUB_TOKEN;
-  const audit = { date: basename(resolve(o.dir)), repo: o.repo, category: o.category, dryRun: o.dryRun, posted: [], wouldPost: [], skipped: [], refused: [] };
+  const audit = { date: basename(resolve(o.dir)), repo: o.repo, category: o.category, dryRun: o.dryRun, approved: o.approve ? [...o.approve] : [], posted: [], wouldPost: [], skipped: [], refused: [], notApproved: [] };
   let code = 0;
   try {
     if (!token) throw new Error('GITHUB_TOKEN is not set');
-    await postLaunchDiscussions({ drafts: draftsIn(resolve(o.dir)), repo: o.repo, category: o.category, dryRun: o.dryRun, graphql: tokenGraphql(token), out: audit });
+    await postLaunchDiscussions({ drafts: draftsIn(resolve(o.dir)), repo: o.repo, category: o.category, dryRun: o.dryRun, approved: o.approve, graphql: tokenGraphql(token), out: audit });
     if (audit.refused.length) code = 1;
   } catch (error) { audit.error = error.message; code = 1; }
   writeFileSync(resolve(o.audit), `${JSON.stringify(audit, null, 1)}\n`);
   for (const r of audit.posted) console.log(`POSTED ${r.slug}: ${r.title} -> ${r.url} (body sha256 ${r.bodySha256})`);
-  for (const r of audit.wouldPost) console.log(`DRY-RUN would post ${r.slug}: ${r.title} (body sha256 ${r.bodySha256})`);
+  for (const r of audit.wouldPost) console.log(`DRY-RUN would post ${r.slug}: ${r.title} (body sha256 ${r.bodySha256}; to post it, approve postSha256 ${r.postSha256})`);
+  for (const r of audit.notApproved) console.log(`NOT APPROVED ${r.slug}: ${r.title} (postSha256 ${r.postSha256}): not posted`);
   for (const r of audit.skipped) console.log(`SKIP ${r.slug}: ${r.title} -> ${r.url} (${r.reason})`);
   for (const r of audit.refused) { console.error(`REFUSED ${r.slug} (title sha256 ${r.titleSha256 ?? '-'}): nothing was posted`); for (const reason of r.reasons) console.error(`  - ${reason}`); }
   if (audit.error) console.error(`FAILED: ${audit.error}`);
-  if (!code && !audit.posted.length && !audit.wouldPost.length && !audit.skipped.length) console.log('Nothing to post: no discussion draft in this folder.');
+  if (!code && !audit.posted.length && !audit.wouldPost.length && !audit.skipped.length && !audit.notApproved.length) console.log('Nothing to post: no discussion draft in this folder.');
   process.exit(code);
 }
