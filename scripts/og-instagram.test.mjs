@@ -14,6 +14,18 @@ import { join } from 'node:path';
 const DIR = join('site', 'assets', 'og', 'instagram');
 const CARDS = join('site', 'assets', 'og', 'labs');
 
+// Where each image came from: the exact source card bytes (sha256) at conversion time and how it was made. A
+// re-rendered card changes its sha256, so a stale Instagram image fails here instead of drifting silently. The
+// decoded comparison against that source is scripts/og-instagram-compare.mjs (macOS: sips decodes JPEG; CI cannot).
+const PROVENANCE = {
+  'ai-jury.e0d096038d65e4f2.jpg': {
+    source: 'ai-jury.png',
+    sourceSha256: 'faf758bb982f17389aa9681f71db5d4c4eef0ae08be70e462c10a54a42f62585',
+    made: 'sips-316 (macOS 26.6.1): sips -s format jpeg -s formatOptions 92 ai-jury.png',
+    compared: 'og-instagram-compare.mjs ai-jury: mean abs diff 0.420 vs ai-jury.png, 8.102 vs rogue.png, 90720 samples',
+  },
+};
+
 /**
  * Width and height of a baseline (SOF0) or progressive (SOF2) JPEG; null for anything else or anything malformed.
  * The reader walks every marker segment from SOI up to and including the start of scan (SOS) and refuses: no SOI
@@ -67,7 +79,13 @@ test('every Instagram image is named by its own sha256, is a 1200x630 JPEG, and 
     assert.equal(createHash('sha256').update(bytes).digest('hex').slice(0, 16), m[2], `${name}: the sha16 in the name is not the sha256 of its bytes`);
     assert.deepEqual(jpegSize(bytes), { width: 1200, height: 630 }, `${name}: must be a 1200x630 baseline or progressive JPEG`);
     assert.ok(existsSync(join(CARDS, `${m[1]}.png`)), `${name}: no share card ${CARDS}/${m[1]}.png to have been re-encoded from`);
+    const prov = PROVENANCE[name];
+    assert.ok(prov, `${name}: no PROVENANCE entry (source card sha256 + how it was made)`);
+    assert.equal(prov.source, `${m[1]}.png`, `${name}: provenance names another card`);
+    assert.equal(createHash('sha256').update(readFileSync(join(CARDS, prov.source))).digest('hex'), prov.sourceSha256,
+      `${name}: ${CARDS}/${prov.source} changed since this image was made from it — re-make the image (stale)`);
   }
+  for (const name of Object.keys(PROVENANCE)) assert.ok(names.includes(name), `PROVENANCE names ${name}, which is not in ${DIR}`);
 });
 
 // A minimal well-formed SOF0 frame: FF D8, FF C0 length 17 (8 + 3 x 3 components), precision 8, height, width,
