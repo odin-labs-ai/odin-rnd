@@ -18,6 +18,7 @@ import { articlePath, assertNoteCurrent, renderAmendedNote, renderJournalRow, re
 import { checkRecord, recordPath as preregPath } from './nina-changes-prereg.mjs';
 import { checkResults6, qualifyHome6 } from './nina-changes-results-site.mjs';
 import { builtCopy } from './test-build.mjs';
+import { withoutNoteOpening } from './note-openings.mjs';
 import { stripBlocks, stripTags } from './test-html-text.mjs';
 
 // EXP 006 amendment 01 (WO-1-09): A1 the record lint and digests, A2 the git call, A3-A4 the record, A5 the guard
@@ -272,7 +273,8 @@ test('A6: the built site publishes the amendment byte for byte, the amended note
   const dist = join(builtCopy(), 'dist');
   assert.equal(sha256(readFileSync(join(dist, publishedPath.slice('site/'.length)))), amendmentSha);
   assert.equal(sha256(readFileSync(publishedPath)), amendmentSha, 'the committed site copy is the record');
-  const note = readFileSync(join(dist, articlePath.slice('site/'.length)), 'utf8');
+  // Under the note's plain opening and its "How we checked" folds (scripts/note-openings.mjs), the generator's page.
+  const note = withoutNoteOpening(readFileSync(join(dist, articlePath.slice('site/'.length)), 'utf8'));
   assert(note.includes(renderAmendmentSection(amendment, amendmentSha)));
   // The qualified row; once EXP 006's results are committed, the results renderer also switches its lead to measured.
   const row = qualifyRow(renderJournalRow(checkRecord().record), amendment), measured = checkResults6();

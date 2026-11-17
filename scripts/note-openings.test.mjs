@@ -57,7 +57,7 @@ test('a note opens right after its own header, and taking the opening and the fo
   assert.equal(foldNoteChecks(foldNoteChecks(page)), foldNoteChecks(page), 'folding twice changes nothing');
   assert.throws(() => openNote(read, 'journal/x.html', out, sample, { ids }), /already has an opening/);
   assert.match(blockText(openingOf(out)), /the record’s identifiers sit under “How we checked”/);
-  const plain = notePage('<p>No identifier here.</p>');
+  const plain = notePage('<p>No identifier here. The model caught 26 of 60 tries.</p>');
   assert.doesNotMatch(blockText(openingOf(openNote(read, 'journal/x.html', plain, sample, { ids }))), /How we checked/, 'no fold, no promise of one');
 });
 
