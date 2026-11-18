@@ -32,7 +32,7 @@ const footerDom = `(() => {
   const footers = [...document.querySelectorAll('footer.site-footer')];
   const footer = footers[0];
   const links = footer ? [...footer.querySelectorAll('a')].filter(visible).filter(a => a.innerText.trim() === 'Partners') : [];
-  return { url: location.href, footers: footers.length, footerVisible: visible(footer), partners: links.map(a => a.href), downloads: links.filter(a => a.hasAttribute('download')).length };
+  return { url: location.href, footers: footers.length, footerVisible: visible(footer), partners: links.map(a => a.href), downloads: links.filter(a => a.hasAttribute('download')).length, targets: links.filter(a => a.hasAttribute('target')).length };
 })()`;
 
 test('Chrome sees one usable Partners footer on every built page and rejects hidden or misdirected fixtures', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 600000 }, async () => {
@@ -48,6 +48,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<footer class="site-footer" style="display: none /* temporarily hidden */;" ><a href="partners/">Partners</a></footer>`,
     `<style>.site-footer { transform: scale(0) }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
+    '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
   const result = await inspectDom([...pages.map(file => ({ file: join(dist, file), expression: footerDom })), ...fixtures.map(html => ({ html, expression: footerDom }))], { chrome });
   const expected = new URL('partners/', pathToFileURL(join(dist, 'index.html'))).href;
@@ -56,8 +57,9 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].footerVisible, true, `${page}: footer is visible`);
     assert.deepEqual(result[i].partners, [page === '404.html' ? new URL('partners/', SITE_ORIGIN).href : expected], `${page}: one visible Partners link to the real page`);
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
+    assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, download] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -68,6 +70,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.equal(scaled.footerVisible, false, 'a zero-area transformed footer is not visible');
   assert.deepEqual(scaled.partners, [], 'a zero-area transformed link is not usable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
+  assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });
 
 test('the build writes the site index with every item schema-valid and linking a file of the built site', () => {

@@ -11,6 +11,7 @@ import { parse } from './html-source-tree.mjs';
 import { checkSite } from './number-provenance.mjs';
 import { inspectDom } from './chrome-dom-test.mjs';
 import { chromeBinary } from './og-cards-render.mjs';
+import { renderLabProof, siteReader } from './lab-pages.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
@@ -105,11 +106,19 @@ const wordsDom = `(() => {
   const copy = main.cloneNode(true);
   copy.querySelectorAll('script,style,svg').forEach(element => element.remove());
   const correction = main.querySelector('.factory-correction.correction-note');
-  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  const visible = el => {
+    if (!el || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+    el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
+    return [...el.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).some(rect => {
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === el || el.contains(hit);
+    });
+  };
   const limits = [...main.querySelectorAll('#findings li[id^="proof-"]')].map(item => {
-    const claim = item.querySelector('p');
+    const claim = item.querySelector('p:not(.lab-limit):not(.lab-source)');
     const limit = item.querySelector('p.lab-limit');
-    return { id: item.id, claimVisible: visible(claim), limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '' };
+    return { id: item.id, claimVisible: visible(claim), claimText: claim?.innerText.replace(/\\s+/g, ' ').trim() ?? '', claimBeforeLimit: !!claim && !!limit && !!(claim.compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING),
+      limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '' };
   });
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
@@ -128,8 +137,11 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const correctionAt = home.indexOf('<div class="factory-correction correction-note">');
   const correctionBlock = home.slice(correctionAt, elementEnd(home, correctionAt));
   const faded = `<style>.correction-note > p { opacity: 0 }</style><main>${correctionBlock}</main>`;
+  const clipped = `<style>.correction-note { clip-path: inset(50%) }</style><main>${correctionBlock}</main>`;
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
-  const [actual, control, long, pinned, fadedCorrection, hiddenFinding] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }], { chrome });
+  const reorderedClaim = '<style>.claim { display: none }</style><main><section id="findings"><li id="proof-fixture"><p class="lab-limit">Limit: a full fixture limit appears first.</p><p class="claim">The real claim is hidden.</p></li></section></main>';
+  const proof = `<main><section id="findings">${renderLabProof(siteReader(join(root, 'site'), root), '', { plain: true })}</section></main>`;
+  const [actual, control, long, pinned, fadedCorrection, clippedCorrection, hiddenFinding, reorderedFinding, expectedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }], { chrome });
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
   assert.ok(long.visible > VISIBLE_WORDS, 'quoted > and encoded spaces cannot hide an over-bound open body');
   assert.equal(actual.correctionVisible, true, 'the dated correction has visible area in the rendered main');
@@ -140,14 +152,19 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.ok(actual.correctionParagraphVisible.every(Boolean), 'every pinned paragraph has visible area');
   for (const paragraph of pinned) assert.ok(actual.text.includes(paragraph), 'the rendered main includes the full correction paragraph');
   assert.ok(fadedCorrection.correctionParagraphVisible.every(value => value === false), 'opacity zero on child paragraphs is caught');
+  assert.equal(clippedCorrection.correctionVisible, false, 'a fully clipped correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
+  assert.deepEqual(actual.limits.map(({ id, claimText }) => ({ id, claimText })), expectedProof.limits.map(({ id, claimText }) => ({ id, claimText })), 'each visible finding retains its source claim');
   for (const limit of actual.limits) {
     assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
+    assert.equal(limit.claimBeforeLimit, true, `${limit.id}: claim precedes its limit`);
     assert.equal(limit.limitVisible, true, `${limit.id}: limit is visible beside its claim`);
     assert.match(limit.limitText, /^Limit: .{20,}/, `${limit.id}: a full limit is rendered`);
     assert.ok(actual.text.includes(limit.limitText), `${limit.id}: rendered main includes the limit`);
   }
   assert.equal(hiddenFinding.limits[0].limitVisible, false, 'a CSS-hidden finding limit is caught');
+  assert.equal(reorderedFinding.limits[0].claimVisible, false, 'a limit placed before a hidden claim cannot stand in for it');
+  assert.equal(reorderedFinding.limits[0].claimBeforeLimit, false, 'a claim after its limit is caught');
   t.diagnostic(`Chrome reads ${actual.visible} visible words of ${actual.all} total on the built home`);
   assert.ok(actual.visible < VISIBLE_WORDS, `${actual.visible} visible words on the home (bound ${VISIBLE_WORDS})`);
   assert.ok(actual.all > actual.visible * 3, `under a third of the home's words show unopened (${actual.visible} of ${actual.all})`);
