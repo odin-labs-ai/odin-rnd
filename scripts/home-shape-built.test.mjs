@@ -138,6 +138,7 @@ const wordsDom = `(() => {
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
     correctionWhenVisible: visible(correction?.querySelector('.correction-when')), correctionLabelVisible: visible(correction?.querySelector('.correction-label')),
+    correctionTimesVisible: correction ? [...correction.querySelectorAll('time')].map(visible) : [],
     correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(1).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [],
     correctionParagraphVisible: correction ? [...correction.querySelectorAll('p')].slice(1).map(visible) : [], limits };
 })()`;
@@ -154,6 +155,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const faded = `<style>.correction-note > p { opacity: 0 }</style><main>${correctionBlock}</main>`;
   const transparent = `<style>.correction-note > p, .correction-note > p * { color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
   const transparentFill = `<style>.correction-note > p, .correction-note > p * { -webkit-text-fill-color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
+  const transparentTimes = `<style>.correction-note time { -webkit-text-fill-color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
   const clipped = `<style>.correction-note { clip-path: inset(50%) }</style><main>${correctionBlock}</main>`;
   const filtered = `<style>.correction-note { filter: opacity(0) }</style><main>${correctionBlock}</main>`;
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
@@ -189,7 +191,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -197,6 +199,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(actual.correctionVisible, true, 'the dated correction has visible area in the rendered main');
   assert.equal(actual.correctionWhenVisible, true, 'the dated correction heading is visible');
   assert.equal(actual.correctionLabelVisible, true, 'the dated correction label is visible');
+  assert.deepEqual(actual.correctionTimesVisible, [true, true, true, true], 'both heading dates and both original correction dates are readable');
   assert.ok(actual.correctionText.includes('Wording clarification · 1 November 2026'), 'the dated label is rendered');
   assert.deepEqual(actual.correctionParagraphs, pinned, 'every pinned paragraph is rendered verbatim');
   assert.ok(actual.correctionParagraphVisible.every(Boolean), 'every pinned paragraph has visible area');
@@ -206,6 +209,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.ok(transparentCorrection.correctionParagraphVisible.every(value => value === false), 'transparent correction paragraphs are unreadable');
   assert.equal(transparentFillCorrection.correctionLabelVisible, false, 'a transparent correction glyph fill makes the label unreadable');
   assert.ok(transparentFillCorrection.correctionParagraphVisible.every(value => value === false), 'a transparent correction glyph fill makes every paragraph unreadable');
+  assert.deepEqual(transparentTimeCorrection.correctionTimesVisible, [false, false, false, false], 'transparent child glyph fill hides each correction date');
   assert.equal(clippedCorrection.correctionVisible, false, 'a fully clipped correction is caught');
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');

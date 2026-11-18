@@ -176,6 +176,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     if (child.nodeName === '#text' && !child.value.trim()) continue;
     if (child.tagName !== 'a' || !child.sourceCodeLocation?.endTag) throw new Error(`The header navigation of ${label} holds more than links`);
     if (elements(child, 'a').length !== 1) throw new Error(`The header navigation of ${label} has a nested anchor that this pass would discard`);
+    if ((child.childNodes ?? []).some(node => node.tagName)) throw new Error(`The header navigation of ${label} has child markup that this pass would discard`);
     links.push([source(html, child), textOf(child), child]);
   }
   for (const [whole, text, anchor] of links) {
@@ -192,6 +193,10 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   const finds = links.filter(([whole]) => FIND.test(whole)).map(([whole]) => whole);
   if (links.some(([, text]) => text === 'Find') && finds.length !== links.filter(([, text]) => text === 'Find').length) throw new Error(`A Find link in ${label} is not of the form <a href="...find/">Find</a>`);
   if (finds.length > 1) throw new Error(`The header navigation of ${label} has ${finds.length} Find links`);
+  // The committed nav templates use only these attributes. Any other attribute could be an inbound target or behavior
+  // that replacing the whole anchor would silently discard.
+  const knownAttributes = new Set(['href', 'aria-current', 'data-contact-opened']);
+  if (links.some(([, , anchor]) => (anchor.attrs ?? []).some(item => !knownAttributes.has(item.name)))) throw new Error(`The header navigation of ${label} has an anchor attribute that this pass would discard`);
   const canonical = canonicalNav(relPrefix, current);
   const next = finds.length ? canonical.replace('</nav>', `${finds[0]}</nav>`) : canonical;
   if (/\d/.test(next)) throw new Error(`The header navigation of ${label} would carry a digit`);

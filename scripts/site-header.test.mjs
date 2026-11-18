@@ -162,6 +162,9 @@ test('fails closed on a page it cannot place', () => {
   const nested = canonicalHome.replace('<a href="methods/">How we test</a>', '<a href="methods/"><a href="evidence/">How we test</a></a>');
   assert.notEqual(nested, canonicalHome, 'the recognized navigation anchor gained a second destination');
   assert.throws(() => normaliseHeader(nested, { relPrefix: '', label: 'index.html' }), /nested anchor/, 'a descendant anchor cannot be erased with its parent');
+  const anchored = canonicalHome.replace('<a href="methods/">How we test</a>', '<a id="methods-entry" href="methods/">How we test</a>');
+  assert.notEqual(anchored, canonicalHome, 'the recognized navigation anchor gained a fragment target');
+  assert.throws(() => normaliseHeader(anchored, { relPrefix: '', label: 'index.html' }), /anchor attribute/, 'an anchor ID cannot be erased by replacement');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
   const lab = read('labs/rogue/index.html');
@@ -228,6 +231,21 @@ test('a document base inside a recognized nav link is refused before normalizati
     writeFileSync(join(dir, 'index.html'), poisoned);
     assert.throws(() => normaliseHeaders({ distDir: dir }), /Unexpected document base/, 'the named-page build path refuses the original parsed base');
     assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the rejected page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a named page keeps an inbound fragment target from being discarded with navigation markup', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-fragment-preflight-'));
+  try {
+    const source = read('index.html');
+    const poisoned = source.replace('<a href="#floor">Factory</a>', '<a href="#floor"><span id="methods-entry">Factory</span></a>')
+      .replace('</main>', '<a href="#methods-entry">Jump to methods</a></main>');
+    assert.notEqual(poisoned, source, 'the recognized Factory link gained a fragment target');
+    assert.match(poisoned, /href="#methods-entry">Jump to methods/, 'a surviving link points at that target');
+    assert.throws(() => normaliseHeader(poisoned, { relPrefix: '', label: 'index.html' }), /child markup/, 'direct normalization refuses to erase the fragment target');
+    writeFileSync(join(dir, 'index.html'), poisoned);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /child markup/, 'the named-page build path refuses the target removal');
+    assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the refused page was not rewritten');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
