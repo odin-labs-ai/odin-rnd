@@ -38,6 +38,9 @@ const PROVENANCE = {
  *   - every segment's length is at least 2 and stays inside the bytes;
  *   - exactly one frame header, SOF0 or SOF2 (SOF1, SOF3, SOF5-7, SOF9-15 are refused), of length 8 + 3 x Nf with
  *     precision 8, Nf 1, 3 or 4 and a non-zero width and height;
+ *   - the frame's component ids are distinct, sampling factors 1-4, quantisation tables 0-3; DQT and DHT segments hold
+ *     whole tables and nothing else (DQT precision 0/1, id 0-3; DHT class 0/1, id 0-3, at most 256 codes); DRI is
+ *     exactly 4 bytes; a scan names each frame component at most once, with table selectors 0-3;
  *   - only these other segments: DHT, DQT, DRI and at most one APP0 that is exactly a plain JFIF header (16 bytes:
  *     "JFIF\0", version 1.00-1.02, units 0-2, non-zero densities, no thumbnail). Every other APPn (Exif, ICC, XMP,
  *     Photoshop ...), COM, DAC, DNL and any unknown marker is refused, so the public file carries no metadata;
@@ -50,6 +53,21 @@ const PROVENANCE = {
  *   - the first EOI is the end of the file: a second image after it, or a second SOI anywhere, is refused.
  * The entropy-coded data itself is not decoded here; the decoded test below does that with ffmpeg.
  */
+/**
+ * True when the payload [from, to) is exactly a whole number of tables, each sized by tableBytes(at) (-1 = malformed),
+ * so a DQT or DHT segment carries its tables and no other bytes.
+ */
+function tablesFill(bytes, from, to, tableBytes) {
+  let at = from;
+  if (at >= to) return false;
+  while (at < to) {
+    const size = tableBytes(at);
+    if (size < 0 || at + size > to) return false;
+    at += size;
+  }
+  return at === to;
+}
+
 /** A plain JFIF APP0 payload: "JFIF\0", version 1.00-1.02, units 0-2, non-zero densities, a 0x0 thumbnail. */
 export function isPlainJfif(p) {
   return p.length === 14 && p.subarray(0, 5).equals(Buffer.from('JFIF\0', 'latin1')) && p[5] === 1 && p[6] <= 2 && p[7] <= 2
@@ -77,7 +95,13 @@ export function jpegSize(bytes) {
       const width = bytes.readUInt16BE(i + 7);
       const components = bytes[i + 9];
       if (precision !== 8 || ![1, 3, 4].includes(components) || len !== 8 + 3 * components || !width || !height) return null;
-      size = { width, height, components, progressive: marker === 0xc2 };
+      const ids = [];
+      for (let k = 0; k < components; k += 1) {
+        const id = bytes[i + 10 + 3 * k], h = bytes[i + 11 + 3 * k] >> 4, v = bytes[i + 11 + 3 * k] & 15, tq = bytes[i + 12 + 3 * k];
+        if (ids.includes(id) || h < 1 || h > 4 || v < 1 || v > 4 || tq > 3) return null; // distinct ids, sampling 1-4, table 0-3
+        ids.push(id);
+      }
+      size = { width, height, components, ids, progressive: marker === 0xc2 };
     } else if (marker === 0xda) {
       if (!size) return null;
       const ns = len >= 3 ? bytes[i + 4] : 0;
@@ -85,8 +109,11 @@ export function jpegSize(bytes) {
       const ss = bytes[i + 5 + 2 * ns], se = bytes[i + 6 + 2 * ns], ah = bytes[i + 7 + 2 * ns] >> 4, al = bytes[i + 7 + 2 * ns] & 15;
       if (!size.progressive && (ss !== 0 || se !== 63 || ah !== 0 || al !== 0)) return null;
       if (size.progressive && (ss === 0 ? se !== 0 : (se < ss || se > 63 || ns !== 1))) return null;
+      const seen = [];
       for (let k = 0; k < ns; k += 1) {
-        const tables = bytes[i + 6 + 2 * k];
+        const id = bytes[i + 5 + 2 * k], tables = bytes[i + 6 + 2 * k];
+        if (!size.ids.includes(id) || seen.includes(id) || (tables >> 4) > 3 || (tables & 15) > 3) return null; // a frame component, once; tables 0-3
+        seen.push(id);
         if (size.progressive && ss === 0 && (tables & 15) !== 0) return null; // a DC scan selects no AC table
         if (size.progressive && ss !== 0 && (tables >> 4) !== 0) return null; // an AC scan selects no DC table
       }
@@ -107,7 +134,18 @@ export function jpegSize(bytes) {
       continue;
     } else if (marker === 0xe0) {
       if (!isPlainJfif(bytes.subarray(i + 4, i + 2 + len)) || ++jfif > 1) return null;
-    } else if (![0xc4, 0xdb, 0xdd].includes(marker)) {
+    } else if (marker === 0xdd) {
+      if (len !== 4) return null; // DRI: exactly the two-byte restart interval
+    } else if (marker === 0xdb) {
+      if (!tablesFill(bytes, i + 4, i + 2 + len, (at) => { const pq = bytes[at] >> 4; return pq > 1 || (bytes[at] & 15) > 3 ? -1 : 1 + 64 * (pq + 1); })) return null;
+    } else if (marker === 0xc4) {
+      if (!tablesFill(bytes, i + 4, i + 2 + len, (at) => {
+        if (bytes[at] >> 4 > 1 || (bytes[at] & 15) > 3 || at + 17 > n) return -1;
+        let count = 0;
+        for (let k = 1; k <= 16; k += 1) count += bytes[at + k];
+        return count > 256 ? -1 : 17 + count;
+      })) return null;
+    } else {
       return null; // SOI again, APP1-15, COM, DAC, DNL, RSTn outside a scan, or anything unknown
     }
     i += 2 + len;
@@ -211,6 +249,24 @@ test('the scan parameters must fit the frame type (refute row f67ac5a8 #3)', () 
   assert.equal(jpegSize(frame(0xc2, 16, 32, [], [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x10, 3, 0x10, 0x00, 0x00, 0xe0, 0x12, 0x34])), null, 'Ah 14');
   assert.equal(jpegSize(frame(0xc0, 16, 32, [], scan(0, 0))), null, 'a baseline frame with Se 0');
   assert.equal(jpegSize(frame(0xc0, 16, 32, [], scan(0, 63, 0x01))), null, 'a baseline frame with Al 1');
+});
+
+test('every table segment holds exactly its tables; component ids and selectors are consistent (refute row c63c8d5a #11)', () => {
+  const dqt = [0xff, 0xdb, 0x00, 0x43, 0x00, ...Array(64).fill(1)];
+  const dht = [0xff, 0xc4, 0x00, 0x14, 0x00, 1, ...Array(15).fill(0), 0x00];
+  assert.deepEqual(jpegSize(frame(0xc0, 630, 1200, [...dqt, ...dht, 0xff, 0xdd, 0x00, 0x04, 0x00, 0x00])), { width: 1200, height: 630 }, 'a DQT, a DHT and a DRI of the right sizes');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xdd, 0x00, 0x06, 0x00, 0x00, 0xab, 0xcd])), null, 'a DRI with two extra bytes');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xdd, 0x00, 0x02])), null, 'a DRI with no interval');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xdb, 0x00, 0x44, 0x00, ...Array(65).fill(1)])), null, 'a DQT with one extra byte');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xdb, 0x00, 0x43, 0x20, ...Array(64).fill(1)])), null, 'a DQT of precision 2');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xc4, 0x00, 0x15, 0x00, 1, ...Array(15).fill(0), 0x00, 0x99])), null, 'a DHT with one extra byte');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xc4, 0x00, 0x14, 0x20, 1, ...Array(15).fill(0), 0x00])), null, 'a DHT of class 2');
+  const f = frame(0xc0, 630, 1200);
+  const at = f.indexOf(Buffer.from([0xff, 0xc0])) + 10; // first component id
+  { const b = Buffer.from(f); b[at + 3] = b[at]; assert.equal(jpegSize(b), null, 'two frame components with the same id'); }
+  { const b = Buffer.from(f); b[at + 1] = 0x50; assert.equal(jpegSize(b), null, 'a sampling factor of 5'); }
+  { const b = Buffer.from(f); const sos = b.indexOf(Buffer.from([0xff, 0xda])); b[sos + 5] = 9; assert.equal(jpegSize(b), null, 'a scan naming a component the frame does not have'); }
+  { const b = Buffer.from(f); const sos = b.indexOf(Buffer.from([0xff, 0xda])); b[sos + 7] = 1; assert.equal(jpegSize(b), null, 'a scan naming one component twice'); }
 });
 
 test('one complete image and no metadata segments (refute row f67ac5a8 #1 and the APP13 finding)', () => {
@@ -387,9 +443,13 @@ export function ogStepProblems(text) {
   if (stepEnd < 0) stepEnd = jobLines.length;
   const step = at < 0 ? '' : jobLines.slice(at, stepEnd).filter(l => l.trim() && !/^\s*#/.test(l)).join('\n');
   if (step !== OG_STEP) problems.push('the film-copies job does not run scripts/og-instagram.test.mjs with FILM_DECODER_REQUIRED=1 as exactly this step (no if:, no continue-on-error:)');
-  // Job-level keys, plain or quoted (YAML reads 'if', "if" and if alike).
-  if (/\n    (['"]?)if\1\s*:/.test(job)) problems.push('the film-copies job has a condition, so it can be skipped');
-  if (/\n    (['"]?)continue-on-error\1\s*:/.test(job)) problems.push('the film-copies job may fail without failing the run (continue-on-error)');
+  // The job's own keys are an allowlist, read line by line rather than matched by spelling: any job-level line other
+  // than name, runs-on, timeout-minutes and steps (plain keys) fails, so an if: or continue-on-error: in any YAML
+  // spelling (quoted, escaped, a merge key, a flow mapping) cannot slip in.
+  const jobKeys = jobLines.slice(1).filter(l => /^ {1,5}\S/.test(l) && !/^\s*#/.test(l));
+  const allowed = [/^    name: /, /^    runs-on: /, /^    timeout-minutes: /, /^    steps:$/];
+  for (const l of jobKeys) if (!allowed.some(a => a.test(l))) problems.push(`the film-copies job has a key other than name, runs-on, timeout-minutes, steps: ${l.trim()}`);
+  if (jobKeys.filter(l => /^    steps:$/.test(l)).length !== 1) problems.push('the film-copies job has no single steps: key');
   if (!/apt-get install .*\bffmpeg\b/.test(job)) problems.push('the film-copies job does not install ffmpeg');
   return problems;
 }
@@ -400,10 +460,13 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
   const broken = [
     [text.replace("          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs", '        run: node --test scripts/og-instagram.test.mjs'), /does not run/],
     [text.replace('run: node --test scripts/og-instagram.test.mjs', 'run: echo skipped'), /does not run/],
-    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /has a condition/],
-    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    continue-on-error: true\n'), /continue-on-error/],
-    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    'continue-on-error': true\n"), /continue-on-error/],
-    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    "if": false\n'), /has a condition/],
+    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    continue-on-error: true\n'), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    'continue-on-error': true\n"), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    "if": false\n'), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    "continue\\u002Don-error": true\n'), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    <<: *lenient\n'), /key other than/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    { continue-on-error: true }\n'), /key other than/],
     [text.replace('        run: node --test scripts/og-instagram.test.mjs', '        run: node --test scripts/og-instagram.test.mjs\n        if: false'), /exactly this step/],
     [text.replace('        run: node --test scripts/og-instagram.test.mjs', '        run: node --test scripts/og-instagram.test.mjs\n        continue-on-error: true'), /exactly this step/],
     [text.replace('      - name: Decode every Instagram image and compare it with its share card\n', "      - name: Decode every Instagram image and compare it with its share card\n        if: github.event_name == 'push'\n"), /exactly this step/],
