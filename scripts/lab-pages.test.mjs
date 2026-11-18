@@ -219,6 +219,23 @@ test('the home proof strip renders from lab-proof.json with root-relative links 
   assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
 });
 
+test('a proof claim refuses a missing or placeholder written plan', () => {
+  const source = siteReader();
+  const results = 'data/review-frontier/results.json';
+  const plan = 'data/review-frontier/preregistration.json';
+  const changed = (record, planExists = true) => {
+    const read = path => path === results ? record : path === plan && !planExists ? null : source(path);
+    return () => renderLabProof(read, '../');
+  };
+  assert.throws(changed({ ...source(results), preregistration: null }), /no linked pre-registration document/);
+  assert.throws(changed({ ...source(results), preregistration: 'none' }), /no linked pre-registration document/);
+  assert.throws(changed(source(results), false), /no linked pre-registration document/);
+  const broker = 'data/broker-same-model/results.json';
+  const wrongPin = path => path === broker ? { ...source(broker), preregistrationSha256: '0'.repeat(64) } : source(path);
+  wrongPin.raw = source.raw;
+  assert.throws(() => renderLabProof(wrongPin, '../'), /no linked pre-registration document/);
+});
+
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results
 // must carry the closed-door exception, so no preview claims blanket publication (refute 2026-10-24, PR #70).
 test('home descriptions never claim blanket publication without the closed-door clause', () => {

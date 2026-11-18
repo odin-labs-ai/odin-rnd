@@ -81,8 +81,8 @@ export function sectionFor(rel) {
   // A record page (scripts/site-records.mjs) shows an experiment's published record: it belongs to All results.
   if (/^records\//.test(path)) return 'experiments';
   if (/^labs\//.test(path)) return 'labs';
-  // The updates feed is reached through Notes & updates.
-  if (/^updates\//.test(path)) return 'notes';
+  // updates/ is its own page; the header's Notes link leads to journal/.
+  if (/^updates\//.test(path)) return null;
   if (/^journal\//.test(path)) return 'notes';
   if (/^methods\//.test(path)) return 'methods';
   if (/^work-with-us\//.test(path)) return 'work';
@@ -147,7 +147,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     const retired = RETIRED_LABELS.get(text);
     const href = whole.match(/\bhref="([^"]*)"/)?.[1] ?? '';
     // A page's link to itself ("./", the updates and partners pages' own) leads to a page the table names, which stays.
-    const self = href === './' && retiredTargets(retired ?? { target: [] }).some(target => target.endsWith('/'));
+    const self = href === './' && retiredTargets(retired ?? { target: [] }).some(target => target.endsWith('/') && label === `${target}index.html`);
     if (retired && !self && !retiredTargets(retired).some(target => href.endsWith(target))) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
   }
   const finds = links.filter(([whole]) => FIND.test(whole)).map(([whole]) => whole);
@@ -184,7 +184,7 @@ export function normaliseHeaders({ distDir }) {
 /**
  * Links that left the header for the site footer (plain-language home, 2026-11-16): Partners. Each is added once to the
  * link group of the page's site footer (its first <div>, or before </footer> when it has none), relative to the page.
- * A page with no site footer is left alone; one with more than one stops the build. No label or path holds a digit, so
+ * A page with no site footer stops the build; one with more than one does too. No label or path holds a digit, so
  * the number-provenance pages may carry it. Idempotent.
  */
 export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/' }]);
@@ -192,8 +192,7 @@ export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
   const opens = html.match(/<footer class="site-footer[ "]/g) || [];
-  if (opens.length === 0) return html;
-  if (opens.length > 1) throw new Error(`Expected at most one site footer in ${label}, found ${opens.length}`);
+  if (opens.length !== 1) throw new Error(`Expected exactly one site footer in ${label}, found ${opens.length}`);
   const start = html.search(/<footer class="site-footer[ "]/);
   const end = html.indexOf('</footer>', start);
   if (end < 0) throw new Error(`Unclosed site footer in ${label}`);

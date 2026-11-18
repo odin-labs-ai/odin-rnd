@@ -131,9 +131,10 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
-    // Partners is in the footer of every page with a site footer, no longer in the header.
+    // Partners is in the footer of every page, no longer in the header.
     const footer = html.match(/<footer class="site-footer[\s\S]*?<\/footer>/)?.[0];
-    if (footer) assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
+    assert.ok(footer, `${rel}: site footer exists`);
+    assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();

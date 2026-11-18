@@ -237,23 +237,14 @@ export function shapeHome(html) {
   return out;
 }
 
-// The home's dated correction (mission rnd-site-ux-nav-1101 wave 6; folded on the plain-language home, 2026-11-16).
-// #168 put a wording correction, open, at the foot of the factory hero in site/index.html (frozen, as a <details open>).
-// Wave 6 made it an open block that could not be closed; the founder, on the plain-language home's first screenshot,
-// found that long notice standing between the hero and the plain findings. On the built home it is now a closed
-// <details>, in place, still in the hero, its visible summary saying in plain words that the earlier headline and
-// wording were corrected and when ("We corrected our earlier headline and wording on 1 November 2026 and 2 November
-// 2026.", the block's own <time> elements reused as written), then "Read the correction". Inside: #168's own label line,
-// then its paragraphs byte for byte. Without JavaScript a <details> opens on a click, Enter or Space, and the whole text
-// stays in the HTML. Exactly one such block in the hero, its paragraphs as #168 published them, its summary dated, or
-// the build stops: a correction must never drop off the page, lose its dates or change its words unnoticed.
+// #168's dated correction stays visible on the built home. The source is a frozen <details open> block; the build
+// turns it into a noncollapsible notice in place, preserving the label and pinned paragraphs byte for byte.
 /** The committed block's opening tag (site/index.html, frozen). */
 export const CORRECTION_SOURCE = '<details class="factory-correction" open>';
-/** The built block's opening tag: closed, its summary always visible. */
-export const CORRECTION_BLOCK = '<details class="factory-correction correction-fold">';
-/** The words of the built summary around its dates. */
+/** The built block's opening tag: a visible, noncollapsible notice. */
+export const CORRECTION_BLOCK = '<div class="factory-correction correction-note">';
+/** The words of the notice heading around its dates. */
 export const CORRECTION_LEAD = 'We corrected our earlier headline and wording on ';
-export const CORRECTION_OPEN = 'Read the correction';
 /** sha256 of the correction's paragraphs as #168 published them (213e1f1). A reword stops the build; a new dated
  *  correction is a deliberate change of this pin. */
 export const CORRECTION_PARAGRAPHS_SHA256 = '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29';
@@ -283,7 +274,7 @@ function sourceParts(html, at) {
   return { block, label: head[1], body };
 }
 
-/** The built home with its correction folded under a dated, plain summary (see above). Throws on a page it does not
+/** The built home with its correction visible under a dated, plain heading (see above). Throws on a page it does not
  *  expect. */
 export function labelCorrection(html) {
   const count = html.split(CORRECTION_SOURCE).length - 1;
@@ -296,8 +287,8 @@ export function labelCorrection(html) {
   for (const m of block.matchAll(/<time datetime="(\d{4}-\d{2}-\d{2})">[^<]+<\/time>/g)) if (!seen.has(m[1])) seen.set(m[1], m[0]);
   if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
   const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
-  const summary = `<summary><span class="correction-when">${CORRECTION_LEAD}${when}.</span><span class="correction-open">${CORRECTION_OPEN}<span aria-hidden="true">+</span></span></summary>`;
-  const built = `${CORRECTION_BLOCK}${summary}<p class="correction-label">${label}</p>${body}</details>`;
+  const heading = `<p class="correction-when">${CORRECTION_LEAD}${when}.</p>`;
+  const built = `${CORRECTION_BLOCK}${heading}<p class="correction-label">${label}</p>${body}</div>`;
   const out = html.slice(0, at) + built + html.slice(at + block.length);
   assertCorrectionKept(html, out);
   return out;
@@ -313,7 +304,7 @@ function heroOf(html) {
 const escapeRe = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Throws unless `out` is `html` with only its correction rebuilt: the same bytes outside the block; one built block where
- *  the committed one was, inside the hero, one closed <details> with one summary that dates the correction in plain words;
+ *  the committed one was, inside the hero, one noncollapsible notice that dates the correction in plain words;
  *  #168's label line and every byte of its paragraphs after it, which match the pinned hash. */
 export function assertCorrectionKept(html, out) {
   const was = html.indexOf(CORRECTION_SOURCE), now = out.indexOf(CORRECTION_BLOCK);
@@ -325,8 +316,8 @@ export function assertCorrectionKept(html, out) {
   const [heroStart, heroEnd] = heroOf(out);
   if (!(heroStart < now && nowEnd < heroEnd)) throw new Error('Home correction: the block is not inside the factory hero');
   const after = out.slice(now, nowEnd);
-  if ((after.match(/<details\b/g) || []).length !== 1 || (after.match(/<summary\b/g) || []).length !== 1) throw new Error('Home correction: the block is not one fold with one summary');
-  const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<summary><span class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</span><span class="correction-open">${escapeRe(CORRECTION_OPEN)}<span aria-hidden="true">\\+</span></span></summary><p class="correction-label">`).exec(after);
-  if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</details>`) throw new Error('Home correction: its dated summary, its earlier label or its body changed');
+  if (/<details\b|<summary\b/.test(after)) throw new Error('Home correction: the notice can be closed');
+  const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<p class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</p><p class="correction-label">`).exec(after);
+  if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</div>`) throw new Error('Home correction: its dated heading, its earlier label or its body changed');
   if (createHash('sha256').update(body).digest('hex') !== CORRECTION_PARAGRAPHS_SHA256) throw new Error('Home correction: its paragraphs differ from the text #168 published');
 }

@@ -56,7 +56,7 @@ test('only the nav changes: brand, View source and Back to odin-labs.ai stay byt
 });
 
 test('aria-current marks the page\'s own section, and only that', () => {
-  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': 'Labs', 'updates/index.html': 'Notes &amp; updates', 'work-with-us/index.html': 'Work with us', 'partners/index.html': null, 'experiments/index.html': 'All results', 'journal/a-passing-pipeline.html': 'Notes &amp; updates', 'one-pager/index.html': 'Start here', 'methods/index.html': 'How we test', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
+  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': 'Labs', 'updates/index.html': null, 'work-with-us/index.html': 'Work with us', 'partners/index.html': null, 'experiments/index.html': 'All results', 'journal/a-passing-pipeline.html': 'Notes &amp; updates', 'one-pager/index.html': 'Start here', 'methods/index.html': 'How we test', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
   for (const [rel, want] of Object.entries(cases)) {
     const nav = navOf(normalise(read(rel), rel));
     const marked = [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
@@ -128,12 +128,13 @@ test('every retired label is named with its destination and fate; nothing leaves
       if (to) {
         const dest = DESTINATIONS.find(d => d.key === to);
         assert.ok(dest, `${text} -> ${to} is a canonical destination`);
-        // The same page, or (Updates) a page that links it: then the reason names the address that stays live.
-        assert.ok(targets.some(target => dest.path.endsWith(target)) || reason.includes(targets[0]), `${text} -> ${dest.label} leads to the same place, or its reason says where ${targets[0]} is reached`);
+        // Updates changed its header destination; its old feed remains linked from the notes page and home.
+        assert.ok(targets.some(target => dest.path.endsWith(target)) || (text === 'Updates' && dest.path === 'journal/' && reason.includes('updates/ stays live')), `${text} -> ${dest.label} leads to the same place, or Updates names its surviving feed`);
         assert.ok(after.includes(`href="${prefixOf(rel)}${dest.path}"`) && labels(after).includes(dest.label), `${rel}: "${text}" became "${dest.label}"`);
       } else {
         for (const target of targets) assert.equal(DESTINATIONS.some(d => d.path.endsWith(target)), false, `${text}: no canonical link leads to ${target}`);
-        assert.match(reason, /\b(?:projects|methods|partners)\/|#findings/, `${text}: the reason names where its destination is reached now`);
+        if (text === 'Partners') assert.match(reason, /site footer.*partners\//i, `${text}: the reason names its new footer location`);
+        else assert.match(reason, /\b(?:projects|methods)\/|#findings/, `${text}: the reason names where its destination is reached now`);
       }
     }
   }
@@ -146,16 +147,19 @@ test('every retired label is named with its destination and fate; nothing leaves
 
 test('fails closed on a page it cannot place', () => {
   const page = read('updates/index.html');
+  const atUpdates = { relPrefix: '../', label: 'updates/index.html' };
   assert.throws(() => normaliseHeader('<html><body></body></html>', { relPrefix: '' }), /exactly one site header/);
   assert.throws(() => normaliseHeader(page.replace('</header>', '</header><header class="site-header"></header>'), { relPrefix: '../' }), /exactly one site header/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '</nav><nav aria-label="x"></nav>'), { relPrefix: '../' }), /exactly one navigation/);
-  assert.throws(() => normaliseHeader(page.replace('>Updates</a>', '>Updates</a><a href="../x/">Something new</a>'), { relPrefix: '../' }), /does not know/);
-  assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), { relPrefix: '../' }), /does not account for/);
-  assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), { relPrefix: '../' }), /more than links/);
-  assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), { relPrefix: '../' }), /not of the form/);
+  assert.throws(() => normaliseHeader(page.replace('>Updates</a>', '>Updates</a><a href="../x/">Something new</a>'), atUpdates), /does not know/);
+  assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), atUpdates), /does not account for/);
+  assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
+  assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
+  assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), atUpdates), /more than links/);
+  assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), atUpdates), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
   assert.throws(() => normaliseHeader(page, { relPrefix: 'https://example.com/' }), /prefix/);
-  assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'tools' }), /Unknown header section/);
+  assert.throws(() => normaliseHeader(page, { ...atUpdates, current: 'tools' }), /Unknown header section/);
 });
 
 test('no digit or number word enters a number-provenance page through the header or the footer links', () => {
@@ -191,7 +195,6 @@ test('Partners moved to the footer: once in the site footer of every committed p
     const src = read(rel);
     const out = addFooterLinks(normalise(src, rel), { relPrefix: prefixOf(rel), label: rel });
     const footers = out.match(/<footer class="site-footer[\s\S]*?<\/footer>/g) || [];
-    if (!footers.length) { assert.equal(out, normalise(src, rel), `${rel}: no footer, nothing added`); continue; }
     assert.equal(footers.length, 1, rel);
     for (const { label, path } of FOOTER_LINKS) assert.equal(footers[0].split(`href="${prefixOf(rel)}${path}">${label}</a>`).length, 2, `${rel}: ${label} once in the footer`);
     assert.equal(addFooterLinks(out, { relPrefix: prefixOf(rel), label: rel }), out, `${rel}: idempotent`);
@@ -199,7 +202,8 @@ test('Partners moved to the footer: once in the site footer of every committed p
     const at = out.indexOf('<footer class="site-footer');
     assert.equal(out.slice(0, at), normalise(src, rel).slice(0, at), `${rel}: nothing before the footer changes`);
   }
-  assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /at most one site footer/);
+  assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /exactly one site footer/);
+  assert.throws(() => addFooterLinks('<header class="site-header"><nav></nav></header>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
   assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');
 });

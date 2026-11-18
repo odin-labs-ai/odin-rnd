@@ -8,7 +8,7 @@
       "id": "proof-review-cost",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "Paying more for AI code review bought little. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
+      "text": "Paying more for AI code review was not clearly better. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
       "limit": "Our own changes and planted defects, reviewed without tools; a catch means the right file was flagged. Cost is what the reseller billed.",
       "values": {
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
@@ -33,8 +33,8 @@
       "id": "proof-brokers",
       "record": "data/broker-same-model/results.json",
       "note": "journal/broker-same-model-results.html",
-      "text": "Resellers of model access (brokers) served the model we asked for, at different prices. We sent {calls} identical requests at the same moment: {subS} were silently swapped to another model for {modelS} and {subM} for {modelM}. Broker A and Broker C charged list price; Broker B charged more, a price spread of {spreadS} on each model.",
-      "limit": "Only the resellers we use, within minutes on that morning; some requests got no answer. Resellers are named by letter.",
+      "text": "Resellers of model access (brokers) served the model we asked for, at different prices. We sent {calls} identical requests in a short run: {subS} were silently swapped to another model for {modelS} and {subM} for {modelM}. Broker A and Broker C charged list price; Broker B charged more, a price spread of {spreadS} on each model.",
+      "limit": "Only the resellers in this run; other services and days may differ. Resellers are named by letter.",
       "values": {
         "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
         "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
@@ -58,7 +58,7 @@
       "record": "data/self-verify/results.json",
       "note": "journal/self-verify-results.html",
       "text": "A negative result stays published. Can an AI reviewer talk itself out of its own false alarms? Against a pass mark we wrote down in advance, the answer was {decision}: with a self-check step, its false alarms on clean changes stayed at {faA} and {faB} in its separate runs.",
-      "limit": "The reviewer model named in the record, on our own private changes; other models may differ. The diagnosis itself is not checked.",
+      "limit": "The reviewer model named in the record, on our own private changes; other models and tasks may differ.",
       "values": {
         "decision": { "source": "data/self-verify/results.json#/decision", "format": "word" },
         "faA": { "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms", "format": "int" },

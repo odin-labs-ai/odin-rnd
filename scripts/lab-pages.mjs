@@ -8,6 +8,7 @@
 // build. The page configuration files (site/data/provider-economics.json, site/data/evidence.json) hold words and
 // JSON pointers, never a number that is shown.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
@@ -32,6 +33,7 @@ export function siteReader(root = 'site', repoRoot = join(root, '..')) {
   // The same record check the build gate runs: a number comes only from a measured experiment record.
   read.recordProblem = path => { const full = join(root, path); return existsSync(full) ? recordProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
   read.quoteProblem = path => { const full = join(root, path); return existsSync(full) ? quoteProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
+  read.raw = path => { const full = join(root, path); return existsSync(full) ? readFileSync(full) : null; };
   return read;
 }
 
@@ -344,9 +346,19 @@ export function renderLabProof(read, up = '../', { plain = false } = {}) {
   // Every finding on the home and the lab on a page carries its limit (plain-language home, 2026-11-16).
   const bare = config.claims.filter(c => typeof c.limit !== 'string' || !c.limit.trim()).map(c => c.id);
   if (bare.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${bare.join(', ')} has no limit`);
-  // The home says each finding shown was planned in writing before it ran: every claim's record must carry its pre-registration.
-  const unplanned = config.claims.filter(c => !Object.keys(read(c.record) ?? {}).some(k => /^preregistration/.test(k))).map(c => c.id);
-  if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} reads a record with no pre-registration`);
+  // Each finding links a real written plan. A key name or a null/status value is not evidence of one.
+  const unplanned = config.claims.filter(c => {
+    const path = c.record.split('#')[0];
+    const record = read(path);
+    const planPath = path.replace(/results\.json$/, 'preregistration.json');
+    const slug = /data\/([^/]+)\/results\.json$/.exec(path)?.[1];
+    const pointer = record?.preregistration;
+    const pinned = record?.preregistrationSha256;
+    const raw = read.raw?.(planPath);
+    const value = pointer === `experiments/${slug}/preregistration.json` || (typeof pinned === 'string' && /^[a-f0-9]{64}$/.test(pinned) && raw && createHash('sha256').update(raw).digest('hex') === pinned);
+    return !slug || !value || !read(planPath);
+  }).map(c => c.id);
+  if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} has no linked pre-registration document`);
   return renderClaims(read, config.claims, up, { plain });
 }
 
