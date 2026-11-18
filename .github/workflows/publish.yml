@@ -119,6 +119,7 @@ jobs:
       # The same decoder proves each Instagram image (site/assets/og/instagram/) decodes to its own lab share card and
       # to no other card (scripts/og-instagram.test.mjs pins this step).
       - name: Decode every Instagram image and compare it with its share card
+        shell: bash
         env:
           FILM_DECODER_REQUIRED: '1'
         run: node --test scripts/og-instagram.test.mjs

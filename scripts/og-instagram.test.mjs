@@ -27,6 +27,7 @@ const CARDS = join('site', 'assets', 'og', 'labs');
 const PROVENANCE = {
   'ai-jury.b9d0adfbcbc140f0.jpg': {
     source: 'ai-jury.png',
+    sha256: 'b9d0adfbcbc140f068a80434298a2e02a5e081b71aa7a1c9c1bbecb9e10bc701',
     sourceSha256: 'faf758bb982f17389aa9681f71db5d4c4eef0ae08be70e462c10a54a42f62585',
     made: 'sips-316 (macOS 26.6.1): sips -s format jpeg -s formatOptions 92 ai-jury.png; then its APP1 (Exif) and APP13 '
       + '(Photoshop) segments were cut out byte for byte, every other byte kept (the decoded pixels are unchanged)',
@@ -59,9 +60,10 @@ export function isPlainJfif(p) {
  * JPEG validator: it bounds every segment by its length, allows only DQT, DHT, DRI, one plain JFIF APP0, one SOF0/SOF2
  * frame, SOS scans and the EOI that must end the file, and checks the header fields listed below. It does NOT judge
  * table CONTENTS (whether a Huffman table is a valid code, whether quantisation values are sensible) or the
- * entropy-coded data: the decoder does that. ffmpeg decodes each image with -xerror in the decoded test below (CI,
- * FILM_DECODER_REQUIRED=1), so a malformed table or scan fails there; one test pins that with an oversubscribed Huffman
- * table. The committed image itself is pinned byte for byte by its sha16 name; these shape checks defend a FUTURE file.
+ * entropy-coded data. What the decode adds: ffmpeg -xerror exiting 0 shows that this decoder produced a 1200x630 frame
+ * from the file under these flags (CI, FILM_DECODER_REQUIRED=1), and one regression shows it refuses an oversubscribed
+ * Huffman table; it is not a proof that every malformed table is refused. The committed image is pinned byte for byte
+ * by the full sha256 in PROVENANCE; these shape checks defend a FUTURE file in this folder.
  * Shape checked here:
  *   - every segment's length is at least 2 and stays inside the bytes; the first EOI is the end of the file (a second
  *     image after it, or a second SOI anywhere, is refused);
@@ -164,6 +166,7 @@ test('every Instagram image is named by its own sha256, is a 1200x630 JPEG, and 
     const prov = PROVENANCE[name];
     assert.ok(prov, `${name}: no PROVENANCE entry (source card sha256 + how it was made)`);
     assert.equal(prov.source, `${m[1]}.png`, `${name}: provenance names another card`);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), prov.sha256, `${name}: its full sha256 is not the recorded one (the name pins only the first 64 bits)`);
     assert.equal(createHash('sha256').update(readFileSync(join(CARDS, prov.source))).digest('hex'), prov.sourceSha256,
       `${name}: ${CARDS}/${prov.source} changed since this image was made from it — re-make the image (stale)`);
   }
@@ -396,12 +399,25 @@ test('the decoded comparison refuses an image of another card, a blank, and a wr
   assert.deepEqual(decodedProblems(own, own, []), ['no other card of the same size to compare against'], 'no control card passed');
 });
 
+/** Offset of the first segment with this marker, found by walking segment lengths from SOI (never a raw byte search). */
+function segmentAt(bytes, marker) {
+  let i = 2;
+  while (i + 4 <= bytes.length && bytes[i] === 0xff && bytes[i + 1] !== 0xda) {
+    if (bytes[i + 1] === marker) return i;
+    i += 2 + bytes.readUInt16BE(i + 2);
+  }
+  return -1;
+}
+
 test('a table the shape walk accepts but no decoder can use is refused by the decode (ffmpeg -xerror)', { skip: decoderSkip }, () => {
-  const name = readdirSync(DIR).find(n => n.endsWith('.jpg'));
+  const name = 'ai-jury.b9d0adfbcbc140f0.jpg'; // the named committed asset, not whichever file sorts first
   const bytes = Buffer.from(readFileSync(join(DIR, name)));
   // The first DHT's code-length counts, rewritten to three 1-bit codes (only two exist) with the same total, so the
-  // segment keeps its exact size: an oversubscribed Huffman table (refute row 51ca87d0 #12).
-  const at = bytes.indexOf(Buffer.from([0xff, 0xc4])) + 5;
+  // segment keeps its exact size: an oversubscribed Huffman table (refute row 51ca87d0 #12). The DHT is found at a
+  // segment boundary by walking lengths, and must be a DC/AC table header.
+  const dht = segmentAt(bytes, 0xc4);
+  assert.ok(dht > 0 && (bytes[dht + 4] >> 4) <= 1, 'no DHT segment before the scan');
+  const at = dht + 5;
   const counts = [...bytes.subarray(at, at + 16)];
   let move = 3 - counts[0];
   counts[0] = 3;
@@ -418,7 +434,7 @@ test('a table the shape walk accepts but no decoder can use is refused by the de
 
 test('the other-card half and the block half each refuse on their own (refute row f67ac5a8 #4, #5)', { skip: decoderSkip }, () => {
   const cards = decodedCards();
-  const name = readdirSync(DIR).find(n => n.endsWith('.jpg'));
+  const name = 'ai-jury.b9d0adfbcbc140f0.jpg';
   const own = cards.get(`${name.split('.')[0]}.png`);
   const image = decodeRgb(join(DIR, name));
   // Close to its own card, and just as close to a competing card: only the other-card loop can refuse it.
@@ -431,20 +447,29 @@ test('the other-card half and the block half each refuse on their own (refute ro
   // is not a claim that every local edit is caught.
   const worst = worstBlock(image, own);
   const patched = { ...image, rgb: Buffer.from(image.rgb) };
-  const x0 = Math.max(0, worst.x - 7), y0 = Math.max(0, worst.y - 7);
+  const clamp = (v, max) => Math.min(Math.max(0, v), max);
+  const x0 = clamp(worst.x - 7, image.width - 32), y0 = clamp(worst.y - 7, image.height - 32);
   for (let y = 0; y < 32; y += 1) for (let x = 0; x < 32; x += 1) for (let c = 0; c < 3; c += 1) {
     patched.rgb[((y0 + y) * image.width + x0 + x) * 3 + c] = own.rgb[((5 + y) * image.width + 5 + x) * 3 + c];
   }
   assert.ok(meanAbsDiff(patched, own) < OWN_MAX, 'the patch must leave the whole-image mean under OWN_MAX for this test to mean anything');
   const patchedProblems = decodedProblems(patched, own, [...cards].filter(([k]) => k !== `${name.split('.')[0]}.png`));
-  assert.ok(patchedProblems.some(p => p.startsWith('block at')), `a 32x32 edit passed: ${patchedProblems.join('; ')}`);
+  assert.equal(patchedProblems.length, 1, `only the block check may refuse it: ${patchedProblems.join('; ')}`);
+  const where = /^block at (\d+),(\d+):/.exec(patchedProblems[0]);
+  assert.ok(where, patchedProblems[0]);
+  const [bx, by] = [Number(where[1]), Number(where[2])];
+  assert.ok(bx + BLOCK > x0 && bx < x0 + 32 && by + BLOCK > y0 && by < y0 + 32, `the refused block ${bx},${by} is not inside the patch at ${x0},${y0}`);
 });
 
 // The CI wiring this file's decoded claims rest on: .github/workflows/publish.yml's "Film copies, decoded" job, pinned
-// BYTE FOR BYTE (the film-fallbacks test pins verify's dependency on it and the deploy chain). A byte-exact pin has no
-// spelling to get around: any added key (if:, continue-on-error:, quoted, escaped, a merge key, a flow mapping), any
-// change to a step, fails. The file may hold no line break other than LF (YAML also breaks lines on CR, and YAML 1.1 on
-// NEL, LS and PS, which would let one source line hide a second key), and exactly one film-copies job.
+// BYTE FOR BYTE (the film-fallbacks test pins verify's dependency on it and the deploy chain). The decoder step names
+// its own shell (bash), so a workflow defaults.run.shell cannot change how it runs. The pinned text must be the jobs
+// mapping's film-copies entry: a single plain `jobs:` line at column 0, the job line after it and before the next
+// column-0 key, every job key in that block plain (no quoted or escaped key that could be a second film-copies), and no
+// other line anywhere naming a film-copies key. The file may hold no line break other than LF (YAML also breaks lines
+// on CR, and YAML 1.1 on NEL, LS and PS). This is a text guard, not a YAML parser: it fails closed on the shapes above;
+// anything subtler (a workflow-level env that changes how node runs, for example) is for the review of the workflow
+// change itself.
 const FILM_JOB = [
   "  film-copies:",
   "    name: Film copies, decoded",
@@ -469,6 +494,7 @@ const FILM_JOB = [
   "      # The same decoder proves each Instagram image (site/assets/og/instagram/) decodes to its own lab share card and",
   "      # to no other card (scripts/og-instagram.test.mjs pins this step).",
   "      - name: Decode every Instagram image and compare it with its share card",
+  "        shell: bash",
   "        env:",
   "          FILM_DECODER_REQUIRED: '1'",
   "        run: node --test scripts/og-instagram.test.mjs",
@@ -477,8 +503,16 @@ export function ogStepProblems(text) {
   const problems = [];
   if (/[\r\u0085\u2028\u2029]/.test(text)) problems.push('the workflow holds a line break other than LF (CR, NEL, LS or PS)');
   const lines = text.split('\n');
-  const starts = lines.reduce((at, l, i) => (l === '  film-copies:' ? [...at, i] : at), []);
-  if (starts.length !== 1) return [...problems, `expected exactly one film-copies job, found ${starts.length}`];
+  const jobsAt = lines.reduce((at, l, i) => (/^["']?jobs["']?\s*:/.test(l) ? [...at, i] : at), []);
+  if (jobsAt.length !== 1 || lines[jobsAt[0]] !== 'jobs:') return [...problems, 'expected exactly one plain `jobs:` mapping line'];
+  let jobsEnd = lines.findIndex((l, i) => i > jobsAt[0] && /^\S/.test(l) && !/^#/.test(l));
+  if (jobsEnd < 0) jobsEnd = lines.length;
+  for (let i = jobsAt[0] + 1; i < jobsEnd; i += 1) {
+    if (/^  \S/.test(lines[i]) && !/^  #/.test(lines[i]) && !/^  [a-z][a-z0-9_-]*:\s*$/.test(lines[i])) problems.push(`a job key that is not a plain name: ${lines[i].trim()}`);
+  }
+  const named = lines.reduce((at, l, i) => (/film(?:-|\\u002d|\\x2d)copies["']?\s*:/i.test(l) ? [...at, i] : at), []);
+  const starts = named.filter(i => lines[i] === '  film-copies:' && i > jobsAt[0] && i < jobsEnd);
+  if (named.length !== 1 || starts.length !== 1) return [...problems, `expected exactly one film-copies job (a plain key in the jobs mapping), found ${named.length} key line(s)`];
   const start = starts[0];
   let end = lines.findIndex((l, i) => i > start && /^  \S/.test(l) && !/^  #/.test(l));
   if (end < 0) end = lines.length;
@@ -505,6 +539,11 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
     [text.replace('    runs-on: ubuntu-latest\n    timeout-minutes: 10', '    runs-on: ubuntu-latest\r    continue-on-error: true\n    timeout-minutes: 10'), /other than LF/],
     [text.replace('    runs-on: ubuntu-latest\n    timeout-minutes: 10', '    runs-on: ubuntu-latest\u2028    continue-on-error: true\n    timeout-minutes: 10'), /other than LF/],
     [text.replace('  verify:\n', '  film-copies:\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /exactly one film-copies job/],
+    [text.replace('  verify:\n', '  "film-copies":\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /not a plain name|exactly one film-copies/],
+    [text.replace('  verify:\n', '  "film\\u002dcopies":\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /not a plain name|exactly one film-copies/],
+    [text.replace('jobs:\n', 'jobs: |\n'), /plain `jobs:`/],
+    [text.replace('jobs:\n', 'notes: |\n') + '\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps: []\n', /exactly one film-copies job/],
+    [text.replace("        shell: bash\n        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs", "        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs"), /byte for byte/],
   ];
   for (const [changed, pattern] of broken) {
     assert.notEqual(changed, text, String(pattern));
