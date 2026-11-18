@@ -6,8 +6,8 @@
 // largest audience of any Odin surface, and the newest result record (journal/failover-results.html) had no way to the
 // contact form; the week brought 1 contact send.
 //
-// The link is attributable on the lead itself: odin-labs.ai keeps only the landing PATH and the utm_ tags of an arrival
-// (src/scripts/attribution.ts in odin-website-preview), and api/contact.js prints them on the lead's Source line, e.g.
+// The link is attributable on the lead itself: the odin-labs.ai contact form keeps only the landing PATH and the utm_
+// tags of an arrival, and prints them on the lead's Source line, e.g.
 // "campaign: odin-labs-ai.github.io, landed on /contact/, utm_source=odin-rnd, utm_medium=result-record,
 // utm_content=failover-results". Any other query key (a `from=`, say) is dropped before the lead is written, so the tag
 // is utm_ only. `topic=lab` preselects the R&D topic; `#contact-form` scrolls to the form. data-contact-opened makes
