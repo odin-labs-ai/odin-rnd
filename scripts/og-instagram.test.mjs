@@ -443,7 +443,8 @@ test('the other-card half and the block half each refuse on their own (refute ro
   assert.equal(onlyTwin.length, 1, onlyTwin.join('; '));
   assert.match(onlyTwin[0], /to twin\.png is not more than/);
   // A 32x32 patch over the card's own text (copied from a plain area), at a place no block grid line is aligned to: the
-  // whole-image mean stays under OWN_MAX, so only the block check can refuse it. This pins that the block check runs; it
+  // whole-image mean stays under OWN_MAX, so only the block check can refuse it, and the block it reports overlaps the
+  // patch (overlap, not containment, is what is asserted). This pins that the block check runs; it
   // is not a claim that every local edit is caught.
   const worst = worstBlock(image, own);
   const patched = { ...image, rgb: Buffer.from(image.rgb) };
@@ -458,7 +459,7 @@ test('the other-card half and the block half each refuse on their own (refute ro
   const where = /^block at (\d+),(\d+):/.exec(patchedProblems[0]);
   assert.ok(where, patchedProblems[0]);
   const [bx, by] = [Number(where[1]), Number(where[2])];
-  assert.ok(bx + BLOCK > x0 && bx < x0 + 32 && by + BLOCK > y0 && by < y0 + 32, `the refused block ${bx},${by} is not inside the patch at ${x0},${y0}`);
+  assert.ok(bx + BLOCK > x0 && bx < x0 + 32 && by + BLOCK > y0 && by < y0 + 32, `the refused block ${bx},${by} does not overlap the patch at ${x0},${y0}`);
 });
 
 // The CI wiring this file's decoded claims rest on: .github/workflows/publish.yml's "Film copies, decoded" job, pinned
@@ -499,8 +500,32 @@ const FILM_JOB = [
   "          FILM_DECODER_REQUIRED: '1'",
   "        run: node --test scripts/og-instagram.test.mjs",
 ].join('\n');
+/**
+ * The workflow PARSED by a YAML parser (Ruby's Psych, YAML.safe_load: no aliases, no merge keys, no custom tags), as
+ * JSON; null when ruby is missing; an object { error } when the file does not parse under those rules. Ruby ships on
+ * the GitHub ubuntu runners; FILM_DECODER_REQUIRED=1 makes a missing ruby a failure, like a missing decoder.
+ */
+export function parsedWorkflow(text) {
+  const run = spawnSync('ruby', ['-ryaml', '-rjson', '-e', 'print JSON.generate(YAML.safe_load($stdin.read))'], { input: text, encoding: 'utf8' });
+  if (run.error && run.error.code === 'ENOENT') return null;
+  if (run.status !== 0) return { error: (run.stderr || '').split('\n').find(l => l.trim()) || `ruby exited ${run.status}` };
+  return JSON.parse(run.stdout);
+}
+
 export function ogStepProblems(text) {
   const problems = [];
+  // Bound to the PARSED job, not to text: whatever the spelling, indentation or scalar tricks, the jobs mapping's
+  // film-copies entry must be the pinned job, parsed the same way.
+  const parsed = parsedWorkflow(text);
+  if (parsed === null) {
+    if (required) problems.push('ruby (the YAML parser) is missing but FILM_DECODER_REQUIRED is set');
+  } else if (parsed.error) {
+    problems.push(`the workflow does not parse as plain YAML (no aliases or merge keys): ${parsed.error}`);
+  } else {
+    const pinned = parsedWorkflow(`jobs:\n${FILM_JOB}\n`);
+    const job = parsed && typeof parsed.jobs === 'object' && parsed.jobs ? parsed.jobs['film-copies'] : undefined;
+    if (JSON.stringify(job) !== JSON.stringify(pinned.jobs['film-copies'])) problems.push('the parsed jobs.film-copies is not the pinned job (parsed)');
+  }
   if (/[\r\u0085\u2028\u2029]/.test(text)) problems.push('the workflow holds a line break other than LF (CR, NEL, LS or PS)');
   const lines = text.split('\n');
   const jobsAt = lines.reduce((at, l, i) => (/^["']?jobs["']?\s*:/.test(l) ? [...at, i] : at), []);
@@ -510,7 +535,7 @@ export function ogStepProblems(text) {
   for (let i = jobsAt[0] + 1; i < jobsEnd; i += 1) {
     if (/^  \S/.test(lines[i]) && !/^  #/.test(lines[i]) && !/^  [a-z][a-z0-9_-]*:\s*$/.test(lines[i])) problems.push(`a job key that is not a plain name: ${lines[i].trim()}`);
   }
-  const named = lines.reduce((at, l, i) => (/film(?:-|\\u002d|\\x2d)copies["']?\s*:/i.test(l) ? [...at, i] : at), []);
+  const named = lines.reduce((at, l, i) => (/film(?:-|\\u002d|\\x2d|\\U0000002d)copies["']?\s*:/i.test(l) ? [...at, i] : at), []);
   const starts = named.filter(i => lines[i] === '  film-copies:' && i > jobsAt[0] && i < jobsEnd);
   if (named.length !== 1 || starts.length !== 1) return [...problems, `expected exactly one film-copies job (a plain key in the jobs mapping), found ${named.length} key line(s)`];
   const start = starts[0];
@@ -523,6 +548,7 @@ export function ogStepProblems(text) {
 test('the publish workflow decodes the Instagram images on every run, with a missing decoder a failure', () => {
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
   assert.deepEqual(ogStepProblems(text), []);
+  if (required) assert.ok(parsedWorkflow(text) && !parsedWorkflow(text).error, 'the parsed check must have run');
   const after = (anchor, add) => text.replace(anchor, anchor + add);
   const NAME = '    name: Film copies, decoded\n', RUN = '        run: node --test scripts/og-instagram.test.mjs';
   const broken = [
@@ -542,6 +568,9 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
     [text.replace('  verify:\n', '  "film-copies":\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /not a plain name|exactly one film-copies/],
     [text.replace('  verify:\n', '  "film\\u002dcopies":\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /not a plain name|exactly one film-copies/],
     [text.replace('jobs:\n', 'jobs: |\n'), /plain `jobs:`/],
+    [text.replace('  verify:\n', ' "film\\U0000002dcopies":\n    runs-on: ubuntu-latest\n    steps: []\n  verify:\n'), /parsed|exactly one film-copies/],
+    [text.replace('  film-copies:\n', '  film-copies-x: "\n').replace('    needs: [test, windows-paths, film-copies]', '    needs: [test, windows-paths, film-copies]') + '', /./],
+    [text.replace('    timeout-minutes: 10\n    steps:\n      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4', '    timeout-minutes: 10\n    steps: &s\n      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4'), /plain YAML|byte for byte/],
     [text.replace('jobs:\n', 'notes: |\n') + '\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps: []\n', /exactly one film-copies job/],
     [text.replace("        shell: bash\n        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs", "        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs"), /byte for byte/],
   ];
