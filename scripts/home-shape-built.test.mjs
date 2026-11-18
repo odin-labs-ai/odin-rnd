@@ -168,7 +168,9 @@ const wordsDom = `(() => {
       citationVisible: visible(citation), citationText: citation?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
       citationLinks: citation ? [...citation.querySelectorAll('a')].map(a => ({ text: a.innerText.trim(), href: a.getAttribute('href'), resolved: a.href,
         visible: visible(a), download: a.hasAttribute('download'), target: a.getAttribute('target') ?? '' })) : [],
-      citationDates: citation ? [...citation.querySelectorAll('time')].map(time => [time.innerText.trim(), time.getAttribute('datetime')]) : [] };
+      citationDates: citation ? [...citation.querySelectorAll('time')].map(time => ({
+        text: time.innerText.trim(), datetime: time.getAttribute('datetime'), visible: visible(time),
+      })) : [] };
   });
   return { pageUrl: location.href, text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
@@ -233,7 +235,10 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.notEqual(extraText, proof, 'the text-node conclusion control adds visible words before the cost limit');
   const extraCitation = proof.replace('the written plan</a>.</p>', 'the written plan</a>. The cheaper reviewer is better.</p>');
   assert.notEqual(extraCitation, proof, 'the source-paragraph control adds an unsupported ranking after the last link');
+  const hiddenCitationLabel = `<style>#proof-review-cost .lab-source { opacity: 0 }</style>${proof}`;
+  const hiddenCitationDate = `<style>#proof-review-cost .lab-source time { opacity: 0 }</style>${proof}`;
   const hiddenCitationLink = `<style>#proof-review-cost .lab-source a[href$="preregistration.json"] { opacity: 0 }</style>${proof}`;
+  const hiddenLimitOpacity = `<style>#proof-review-cost .lab-limit { opacity: 0 }</style>${proof}`;
   const downloadCitationLink = proof.replace('<a href="data/review-frontier/preregistration.json">the written plan</a>', '<a href="data/review-frontier/preregistration.json" download>the written plan</a>');
   assert.notEqual(downloadCitationLink, proof, 'the written-plan control changes navigation to a download');
   const framedCitationLink = proof.replace('<a href="data/review-frontier/preregistration.json">the written plan</a>', '<a href="data/review-frontier/preregistration.json" target="hidden-frame">the written plan</a>');
@@ -256,7 +261,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, partlyClippedCorrection, overflowClippedCorrection, paintClippedCorrection, strictClippedCorrection, borderedPaintCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, extraCitationProof, hiddenCitationProof, downloadCitationProof, framedCitationProof, overflowLimitProof, paintLimitProof, borderedLimitProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: partlyClipped, expression: wordsDom }, { html: overflowClipped, expression: wordsDom }, { html: paintClipped, expression: wordsDom }, { html: strictClipped, expression: wordsDom }, { html: borderedPaintClipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: extraCitation, expression: wordsDom }, { html: hiddenCitationLink, expression: wordsDom }, { html: downloadCitationLink, expression: wordsDom }, { html: framedCitationLink, expression: wordsDom }, { html: overflowClippedLimit, expression: wordsDom }, { html: paintClippedLimit, expression: wordsDom }, { html: borderedClippedLimit, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, partlyClippedCorrection, overflowClippedCorrection, paintClippedCorrection, strictClippedCorrection, borderedPaintCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, extraCitationProof, hiddenCitationLabelProof, hiddenCitationDateProof, hiddenCitationProof, downloadCitationProof, framedCitationProof, hiddenLimitOpacityProof, overflowLimitProof, paintLimitProof, borderedLimitProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: partlyClipped, expression: wordsDom }, { html: overflowClipped, expression: wordsDom }, { html: paintClipped, expression: wordsDom }, { html: strictClipped, expression: wordsDom }, { html: borderedPaintClipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: extraCitation, expression: wordsDom }, { html: hiddenCitationLabel, expression: wordsDom }, { html: hiddenCitationDate, expression: wordsDom }, { html: hiddenCitationLink, expression: wordsDom }, { html: downloadCitationLink, expression: wordsDom }, { html: framedCitationLink, expression: wordsDom }, { html: hiddenLimitOpacity, expression: wordsDom }, { html: overflowClippedLimit, expression: wordsDom }, { html: paintClippedLimit, expression: wordsDom }, { html: borderedClippedLimit, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -293,7 +298,9 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
   const citationsMatch = result => result.limits.every(({ id, citationVisible, citationText, citationLinks, citationDates }) => {
     const expected = sourceCitations.get(id);
-    return citationVisible && citationText === expected.text && JSON.stringify(citationDates) === JSON.stringify(expected.dates)
+    return citationVisible && citationText === expected.text && citationDates.length === expected.dates.length
+      && citationDates.every((date, index) => date.text === expected.dates[index][0]
+        && date.datetime === expected.dates[index][1] && date.visible)
       && citationLinks.length === expected.links.length && citationLinks.every((link, index) => link.text === expected.links[index][0]
         && link.href === expected.links[index][1] && link.resolved === new URL(expected.links[index][1], result.pageUrl).href
         && link.visible && !link.download && !link.target);
@@ -301,6 +308,13 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(citationsMatch(actual), true, 'each full citation, date and visible navigation link matches the independently authored source');
   assert.equal(extraCitationProof.limits[0].claimShape, true, 'the added source-paragraph sentence leaves the three-child shape intact');
   assert.equal(citationsMatch(extraCitationProof), false, 'an unsupported ranking after a source link fails the citation comparison');
+  assert.equal(hiddenCitationLabelProof.limits[0].citationVisible, false, 'an invisible source label and paragraph cannot pass the evidence proof');
+  assert.equal(citationsMatch(hiddenCitationLabelProof), false, 'the source label must remain visible');
+  assert.equal(hiddenCitationDateProof.limits[0].citationVisible, true, 'the date control keeps its source paragraph visible');
+  assert.ok(hiddenCitationDateProof.limits[0].citationLinks.every(link => link.visible), 'the date control keeps its citation links visible');
+  assert.equal(hiddenCitationDateProof.limits[0].citationText, actual.limits[0].citationText, 'the date control preserves the authored citation text');
+  assert.equal(hiddenCitationDateProof.limits[0].citationDates.every(date => date.visible), false, 'hiding only the measurement date is detected');
+  assert.equal(citationsMatch(hiddenCitationDateProof), false, 'every authored measurement date must remain visible');
   assert.equal(citationsMatch(hiddenCitationProof), false, 'an invisible written-plan label fails the link proof');
   assert.equal(citationsMatch(downloadCitationProof), false, 'a written-plan download fails the navigation proof');
   assert.equal(citationsMatch(framedCitationProof), false, 'a written-plan frame target fails the navigation proof');
@@ -339,6 +353,9 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     assert.ok(actual.text.includes(limit.limitText), `${limit.id}: rendered main includes the limit`);
   }
   assert.equal(hiddenFinding.limits[0].limitVisible, false, 'a CSS-hidden finding limit is caught');
+  assert.equal(hiddenLimitOpacityProof.limits[0].claimVisible, true, 'the hidden-limit control keeps its claim visible');
+  assert.equal(hiddenLimitOpacityProof.limits[0].citationVisible, true, 'the hidden-limit control keeps its source visible');
+  assert.equal(hiddenLimitOpacityProof.limits[0].limitVisible, false, 'hiding only a limit with opacity is caught');
   assert.equal(overflowLimitProof.limits[0].limitVisible, false, 'a one-line overflow crop cannot conceal a finding limit');
   assert.equal(paintLimitProof.limits[0].limitVisible, false, 'paint containment cannot conceal a finding limit');
   assert.equal(borderedLimitProof.limits[0].limitVisible, false, 'a transparent border cannot enlarge the clip edge enough to hide a finding limit');
