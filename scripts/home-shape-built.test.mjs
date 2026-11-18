@@ -17,13 +17,8 @@ import { idOf, openAround } from '../site/assets/home-fold.mjs';
 // nina's tools entry, linked from EXP 006's generated field note. Any other target inside a fold is a link the fold has
 // hidden, and is refused here until it is named.
 const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
-// Words a visitor sees on the home without opening anything (main, outside every <details>, every hidden station and the
-// dated correction and the findings' limit lines, which are required to stay visible).
-// Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
-// Measured 1,247 on main on 16 November 2026, three under the old bound of 1,250. The plain-language home (mission
-// rnd-site-human PR 1) moved what we found up under the hero in plainer, longer sentences and lists the lab on a page
-// in Go further; the bound moves to 1,350 for that, still with room for an update, not for an unfolded section.
-const VISIBLE_WORDS = 1350;
+// Keep the first read short. Limits and correction text are required disclosures and counted separately below.
+const VISIBLE_WORDS = 450;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -54,11 +49,11 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
-test('the built home is shaped: five open sections, Go further, eight closed folds, its stylesheet and opener', () => {
+test('the built home is shaped: featured study, findings, archive, stylesheet and opener', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'hero, findings, how we check, updates, work with us, in that order');
-  assert.ok(main.indexOf('<nav class="home-further') > order.at(-1), 'Go further follows the offer');
+  assert.ok(main.indexOf('<nav class="home-further') > order[1] && main.indexOf('<nav class="home-further') < order[2], 'further reading follows the findings before the archive');
   assert.equal((main.match(/<details class="home-fold">/g) || []).length, FOLDS.length);
   for (const { summary } of FOLDS) assert.ok(main.includes(`<summary>${summary}<span aria-hidden="true">+</span></summary>`), summary);
   for (const { href } of FURTHER) assert.ok(main.includes(`<a href="${href}">`), href);
@@ -95,11 +90,14 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
   assert.ok(links > MIN_HOME_LINKS, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
-  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
-  for (const id of ['floor', 'findings', 'how-we-check', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
-    assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
-    const fold = home.indexOf('<details class="home-fold">', ids.get(id));
-    assert.match(home.slice(ids.get(id), fold < 0 ? undefined : fold), /<h[12] id="[^"]+">/, `#${id} shows its heading before any fold`);
+  for (const id of hidden) {
+    const { target, folds, document } = domAround(home, id);
+    assert.equal(openAround(document, id), target);
+    assert.ok(folds.every(f => f.open), `#${id} opens through its enclosing disclosures`);
+  }
+  for (const id of ['floor', 'findings', 'home-further-title']) assert.ok(ids.has(id) && !insideFold(id), id);
+  for (const id of ['how-we-check', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
+    assert.ok(ids.has(id) && insideFold(id), `#${id} remains reachable in the archive`);
   }
 });
 
@@ -150,7 +148,7 @@ test('the opener, run on the built home, opens every fold around each named targ
     assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
     assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
   }
-  for (const id of ['journal', 'experiments', 'findings']) {
+  for (const id of ['floor', 'findings', 'home-further-title']) {
     const { folds, document } = domAround(home, id);
     assert.equal(folds.length, 0, `#${id} is outside every fold`);
     assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
@@ -175,19 +173,13 @@ test('the methods page: every fragment link resolves in the built site, and its 
   assert.ok(OPENED_BY_SCRIPT.includes('all-experiments'));
 });
 
-test('a height proxy measurable without a browser: four sections, Go further and the closing line open, the other eight folded', () => {
-  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
-  const tops = [];
-  let depth = 0;
-  for (const m of main.matchAll(/<(\/?)(section|nav)\b[^>]*>/g)) {
-    if (m[1]) { depth--; if (depth === 0) tops.at(-1).end = m.index; continue; }
-    if (depth === 0) tops.push({ key: /\sid="([^"]*)"/.exec(m[0])?.[1] ?? /\sclass="([^"\s]*)/.exec(m[0])[1], start: m.index });
-    depth++;
-  }
-  const folded = tops.filter(t => main.slice(t.start, t.end).includes('<details class="home-fold">')).map(t => t.key);
-  const open = tops.filter(t => !folded.includes(t.key)).map(t => t.key);
-  assert.deepEqual(open, [...OPEN_ORDER, 'home-further', 'closing']);
-  assert.deepEqual(folded, FOLDS.map(f => f.key));
+test('the archive rests closed below the findings and the short list of next reads', () => {
+  const at = home.indexOf('<details class="home-archive"><summary>Explore the factory and earlier work</summary>');
+  const end = elementEnd(home, at);
+  const archive = home.slice(at, end);
+  for (const id of ['how-we-check', 'journal', 'work-with-us']) assert.ok(archive.includes(`id="${id}"`));
+  assert.ok(!archive.includes('id="findings"'));
+  assert.ok(home.indexOf('id="home-further-title"') < at);
 });
 
 test('the built home folds its dated correction in the hero under a plain dated summary, every word verbatim in the HTML', () => {
@@ -211,25 +203,21 @@ test('the built home folds its dated correction in the hero under a plain dated 
 test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const at = key => main.indexOf(key);
-  const order = ['id="hero-title"', 'See what we found', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  const order = ['id="hero-title"', 'Read the failover study', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
   // Nothing of the drawing or the station panel sits in the hero any more.
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
   assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
 });
 
-test('the entrance offers a native research search, topic searches, the recorded film and the failover result', () => {
+test('the entrance leads with a real study and a native research search; the film is available below', () => {
   const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="findings"'));
   assert.match(hero, /<form[^>]*role="search"[^>]*action="find\/"[^>]*method="get"/);
   assert.match(hero, /<label for="research-query">[^<]+<\/label>/);
   assert.match(hero, /<input[^>]*id="research-query"[^>]*type="search"[^>]*name="q"/);
-  const topicForm = /<form action="find\/" method="get" aria-label="Browse research topics">([\s\S]*?)<\/form>/.exec(hero);
-  assert.ok(topicForm);
-  for (const query of ['MongoDB', 'code review']) {
-    assert.ok(topicForm[1].includes(`<button name="q" value="${query}">`));
-  }
-  assert.ok(topicForm[1].includes('<button name="topic" value="agents">'));
-  assert.ok(hero.includes('href="labs/agent-space/#film-agent-space-30s"'));
+  assert.ok(!hero.includes('name="topic"'));
+  assert.ok(!hero.includes('href="labs/agent-space/#film-agent-space-30s"'));
+  assert.ok(home.includes('href="labs/agent-space/#film-agent-space-30s"'));
   assert.ok(hero.includes('href="journal/failover-results.html"'));
   assert.ok(!hero.includes('<video'), 'the film only downloads when the visitor chooses to watch');
 });

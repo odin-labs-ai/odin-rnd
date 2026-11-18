@@ -41,29 +41,15 @@
   <main id="main">
     <section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">
       <div class="factory-premise">
-        <div class="discovery-intro">
-          <h1 id="hero-title">AI systems <em>under test.</em></h1>
-          <p>We test models, agents and databases on engineering tasks. Explore what worked, what failed and where the evidence ends.</p>
-          <form class="research-search" role="search" action="find/" method="get">
-            <label for="research-query">Search the research</label>
-            <div class="research-query"><input id="research-query" type="search" name="q" placeholder="Try MongoDB or code review"><button type="submit">Search <span aria-hidden="true">↗</span></button></div>
-          </form>
-          <div class="discovery-links">
-            <a class="button button-primary premise-primary" href="#findings">See what we found</a>
-            <form action="find/" method="get" aria-label="Browse research topics">
-              <button name="q" value="MongoDB">MongoDB</button>
-              <button name="q" value="code review">Code review</button>
-              <button name="topic" value="agents">Agents</button>
-            </form>
-          </div>
+        <div class="featured-study">
+          <h1 id="hero-title">Can an agent keep writing when its database fails?</h1>
+          <p>We tested MongoDB and PostgreSQL on a single host. MongoDB resumed writes sooner in several tests, but its change feed sometimes delivered a change twice when nodes lost contact.</p>
+          <a class="study-link" href="journal/failover-results.html">Read the failover study <span aria-hidden="true">→</span></a>
         </div>
-        <aside class="research-feature" aria-label="From the lab">
-          <a class="feature-film" href="labs/agent-space/#film-agent-space-30s">
-            <img src="assets/labs/agent-space/films/agent-space-30s-poster-800.webp" srcset="assets/labs/agent-space/films/agent-space-30s-poster-800.webp 800w, assets/labs/agent-space/films/agent-space-30s-poster-1280.webp 1280w" sizes="(min-width: 860px) 36vw, 90vw" width="800" height="450" alt="Two figures meet in the agent campus, with the agent’s answer and its source displayed alongside.">
-            <span class="film-caption"><span class="film-play" aria-hidden="true">▶</span><span><small>Recorded session</small><strong>Inside the Agent Space</strong></span><span class="feature-arrow" aria-hidden="true">↗</span></span>
-          </a>
-          <a class="feature-study" href="journal/failover-results.html"><span><small>Database study</small><strong>MongoDB and PostgreSQL under failover</strong></span><span class="feature-arrow" aria-hidden="true">↗</span></a>
-        </aside>
+        <form class="research-search" role="search" action="find/" method="get">
+          <label for="research-query">Search the library</label>
+          <div class="research-query"><input id="research-query" type="search" name="q" placeholder="Search by topic"><button type="submit">Search</button></div>
+        </form>
       </div>
       <div class="factory-drawing" data-view="floor">
         <div class="drawing-toolbar"><p>Open a step to see a real example</p><div class="drawing-actions"><button id="factory-replay" hidden>Replay drawing <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5a5 5 0 1 1-1 4M3 1v4h4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div></div>
@@ -80,7 +66,7 @@
       <details class="factory-correction" open><summary>Wording clarification · <time datetime="2026-11-01">1 November 2026</time></summary><p>The earlier headline “Every model and vendor, on real work” implied universal coverage that the published experiments do not establish. Earlier offers to “prove the result” and show that “nothing else broke” were too broad: checks cover agreed examples and conditions. The earlier BLUEPRINTS line “checked automatically on every change” did not establish that integration for every repository. The Lab 01 phrase “real answers” did not establish answer correctness; source cards record attribution. The earlier subsidy wording “qualifies for innovation subsidies” was not supported by an eligibility decision on this page. See our <a href="methods/#publication-standard">publication standard</a>.</p><p><time datetime="2026-11-02">2 November 2026</time>: the earlier Evidence links “Everything we have measured, and not” and “what we have measured, and not” implied a complete inventory; the linked page holds selected claims and open questions.</p></details>
     </section>
     <section class="lab-launch content-section" id="findings" aria-labelledby="findings-title">
-      <div class="section-heading"><h2 id="findings-title">What we’ve found.</h2><p>Each study below was planned before it ran. Follow a finding to its dated result, original record and limits. <a href="evidence/">Selected evidence and open questions</a></p></div>
+      <div class="section-heading"><h2 id="findings-title">More findings</h2><p><a href="evidence/">View the evidence</a></p></div>
       <ol class="lab-claims proof-strip"><!--LAB_PROOF--></ol>
     </section>
     <section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">

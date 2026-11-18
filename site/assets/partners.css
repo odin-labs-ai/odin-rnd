@@ -14,7 +14,8 @@
   border-top: 4px solid #db8650;
 }
 .partner-study-meta,
-.partner-study-sources {
+.partner-study-sources > div,
+.partner-resources {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -25,7 +26,7 @@
   padding-bottom: 14px;
   border-bottom: 1px solid #55766a;
   color: #c4d6cc;
-  font: 12px/1.6 var(--mono);
+  font: 14px/1.5 var(--mono);
 }
 .partner-study h2 {
   margin: 24px 0 16px;
@@ -37,13 +38,13 @@
 }
 .partner-study p {
   max-width: 55ch;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.55;
 }
 .partner-study .partner-study-limit {
   margin-top: 16px;
-  font-size: 14px;
-  color: #c4d6cc;
+  font-size: 17px;
+  color: #d4e2d8;
 }
 .partner-study a {
   min-height: 44px;
@@ -60,7 +61,7 @@
   margin-top: 8px;
   padding-top: 6px;
   border-top: 1px solid #55766a;
-  font-size: 14px;
+  font-size: 16px;
 }
 .partner-study a:focus-visible {
   outline: 3px solid #ffbd84;
@@ -72,3 +73,28 @@
     gap: 32px;
   }
 }
+
+.partner-intro h1 { max-width: 12ch; }
+.partner-intro .company-lead { font-size: clamp(21px, 2vw, 28px); line-height: 1.45; }
+.partner-correction { margin-top: 18px; color: var(--steel); }
+.partner-correction .source-correction { margin: 6px 0 14px; }
+.partner-correction summary, .partner-study-sources summary, .partner-track summary, .partner-notes summary {
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.partner-correction summary, .partner-study-sources summary, .partner-notes summary { font-size: 16px; }
+.partner-study summary:focus-visible { outline: 3px solid #ffbd84; outline-offset: 3px; }
+#tracks:has(.partner-track) { padding-block: clamp(40px, 5vw, 74px); }
+.partner-track { border-bottom: 1px solid var(--rule); scroll-margin-top: 24px; }
+.partner-track:first-of-type { margin-top: 24px; border-top: 1px solid var(--rule); }
+.partner-track summary { padding-block: 22px; font: 500 clamp(20px, 2vw, 28px)/1.3 var(--display); }
+.partner-track summary::marker, .partner-notes summary::marker { color: var(--brand); }
+.partner-track-body { padding-bottom: 32px; }
+.partner-track-intent { max-width: 65ch; margin: 0 0 20px; font-size: 19px; }
+.partner-track-intent .technical { display: block; color: var(--steel); margin-bottom: 8px; }
+.partner-track dd, .partner-track .tier-row p, .partner-track .measure-box p, .partner-track .measure-box li,
+.partner-track .independence p, .partner-track .independence li { font-size: 17px; }
+.partner-notes .company-section { width: 100%; padding-block: 24px; }
+.partner-resources { padding-block: 18px 48px; }
+.partner-resources a { display: inline-flex; align-items: center; min-height: 44px; }

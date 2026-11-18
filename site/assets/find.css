@@ -1,79 +1,62 @@
-/* /find/: search and filters on the light reading floor. Ruled rows, no cards, no motion. Mobile first. */
-.find-hero{padding-block:40px 26px}
-.find-hero h1{font-family:var(--display);font-size:clamp(43px,9.5vw,76px);font-weight:600;line-height:1.06;letter-spacing:-.04em;max-width:15ch}
-.find-hero .company-lead{font-size:17px;margin-top:14px;max-width:44ch}
+/* One reading column, with the full record and filters available on demand. */
+.find-hero.company-width,.find.company-width{width:min(900px,88%);margin-inline:auto}
+.find-hero{padding-block:clamp(36px,6vw,76px) 24px}
+.find-hero h1{font:600 clamp(42px,7vw,72px)/1.04 var(--display);letter-spacing:-.05em}
 .find{padding-bottom:80px}
 .find-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.find-form{padding:clamp(16px,2.2vw,28px);background:#e9f0e6;border-top:3px solid var(--brand)}
-.find-search label,.find-month label{display:block;font-size:15px;font-weight:600}
-.find-search input,.find-month select{width:100%;min-height:48px;margin-top:8px;padding:11px 14px;border:1px solid #789381;border-radius:8px;background:#fafcf8;color:var(--paper);font:400 17px/1.5 Manrope,sans-serif}
-.find-search input:focus-visible,.find-month select:focus-visible,.find-check input:focus-visible,.find-clear:focus-visible,.find-chip:focus-visible,.find-more:focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
-.find-hint{margin-top:8px;font-size:13px;color:var(--steel)}
-.find-hint kbd{font:12px var(--mono);border:1px solid var(--rule);border-radius:4px;padding:1px 6px;background:var(--panel)}
-.find-filters{margin-top:20px;border-block:1px solid var(--rule)}
-.find-filters summary{min-height:48px;padding:12px 0;font-size:15px;font-weight:600}
-.find-filters summary span{font-size:22px;color:var(--brand)}
-.find-facets{display:grid;grid-template-columns:1fr;gap:22px;padding-bottom:24px}
+.find-form{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;column-gap:20px}
+.find-search{position:relative;grid-column:1/-1}
+.find-search input,.find-month select{width:100%;border:1px solid #789381;border-radius:8px;background:#fafcf8;color:var(--paper);font:400 18px/1.5 Manrope,sans-serif}
+.find-search input{min-height:58px;padding:12px 48px 12px 18px}
+.find-hint{position:absolute;top:50%;right:14px;transform:translateY(-50%);pointer-events:none;padding:2px 8px;border:1px solid var(--rule);border-radius:4px;color:var(--steel);font:14px var(--mono)}
+.find :is(input,select,button,a,summary):focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.find-filters{margin:0;border:0}
+.find-filters summary,.find-history summary{display:list-item;list-style:disclosure-closed;min-height:44px;margin:0;padding:12px 0;color:var(--brand);font:600 16px/1.5 Manrope,sans-serif}
+.find-filters[open]>summary,.find-history[open]>summary{list-style:disclosure-open}
+.find-filters summary::-webkit-details-marker,.find-history summary::-webkit-details-marker{display:inline}
+.find-filters[open]{grid-column:1/-1}
+.find-facets{display:grid;gap:22px;padding:14px 0 24px;border-bottom:1px solid var(--rule)}
 .find-facets fieldset{border:0;margin:0;padding:0;min-width:0}
-.find-facets legend{padding:0;margin-bottom:6px;font:12px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
-.find-options{display:flex;flex-wrap:wrap;gap:4px 18px}
-.find-topics .find-options{max-height:264px;overflow:auto}
-.find-check{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
-.find-check input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--brand)}
-.find-status{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding:18px 0}
+.find-facets legend,.find-month label{display:block;margin-bottom:4px;font-size:17px;font-weight:600}
+.find-month select{min-height:46px;padding:6px 12px}
+.find-options{display:flex;flex-wrap:wrap;gap:0 18px}
+.find-check{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:16px;cursor:pointer}
+.find-check input{width:20px;height:20px;margin:0;accent-color:var(--brand)}
+.find-status{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:0 14px;min-height:48px}
+.find-filters[open]+.find-status{grid-column:1/-1}
 .find-count{font-size:15px;color:var(--steel)}
-.find-clear{min-height:44px;padding:0 16px;border:1px solid var(--rule);border-radius:8px;background:none;font-size:14px}
-.find-clear:hover{border-color:var(--brand);color:var(--brand)}
-.find-results,.find-static ol,.find-static ul{list-style:none;margin:0;padding:0}
-.find-result{padding:22px 0;border-top:1px solid var(--rule);overflow-wrap:anywhere}
-.find-result:last-child{border-bottom:1px solid var(--rule)}
-.find-result h3{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.2;letter-spacing:-.025em}
+.find-clear,.find-chip{color:var(--brand);background:transparent;border:0;text-decoration:underline;text-underline-offset:4px}
+.find-clear{min-height:44px;font:600 16px/1.5 Manrope,sans-serif}
+.find-chip{min-height:44px;font:500 16px/1.5 Manrope,sans-serif}
+.find-results,.find-static ul,.find-records,.find-chips{list-style:none;margin:0;padding:0}
+.find-result,.find-empty,.find-more-row{padding:clamp(18px,2.3vw,28px) 0;border-top:1px solid var(--rule);overflow-wrap:anywhere}
+.find-result h3{font:600 clamp(24px,3.3vw,33px)/1.2 var(--display);letter-spacing:-.035em}
 .find-result h3 a{text-decoration:none}
 .find-result h3 a:hover{color:var(--brand);text-decoration:underline;text-decoration-thickness:1px}
-.find-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;margin-bottom:8px;font:12px/1.6 var(--mono);color:var(--steel);font-variant-numeric:tabular-nums}
-.find-badge{color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.find-outcome{color:var(--paper)}
-.find-summary{margin-top:12px;font-size:16px;color:var(--steel);max-width:68ch}
-.find-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:14px 0 0;padding:0}
-.find-chip{min-height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);font-size:13px}
-.find-chip:hover{border-color:var(--brand);color:var(--brand)}
-.find-more-row{padding:16px 0;border-block:1px solid var(--rule)}
-.find-more{min-height:44px;padding:0 16px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);font-size:14px;color:var(--paper)}
+.find-history{margin:6px 0 0;border:0}
+.find-history time{color:var(--steel);font-variant-numeric:tabular-nums}
+.find-history summary{list-style-position:inside}
+.find-history summary span{color:inherit;font:inherit;transform:none}
+.find-history summary time{display:inline-block;margin-left:12px;font-weight:400;white-space:nowrap}
+.find-filters summary{list-style-position:inside}
+.find-records{padding-inline-start:18px;border-inline-start:2px solid var(--rule);max-width:70ch}
+.find-records li+li{margin-top:16px;padding-top:16px;border-top:1px solid var(--rule)}
+.find-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px;color:var(--steel);font-size:15px}
+.find-records strong{display:block;margin:5px 0;font:600 20px/1.35 var(--display)}
+.find-summary{font-size:18px;line-height:1.6;margin-top:6px}
+.find-chips{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:8px}
+.find-more{min-height:44px;padding:0 16px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);font-size:16px;color:var(--paper)}
 .find-more:hover{border-color:var(--brand);color:var(--brand)}
-/* The build-injected list for reading without JavaScript: groups by kind, title, kind and date per row. */
-.find-static h2,.find-static h3{font-family:var(--display);font-size:28px;font-weight:600;line-height:1.2;margin:40px 0 12px}
-.find-static li{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;min-height:44px;padding:12px 0;border-top:1px solid var(--rule)}
-.find-static li a{font-size:16px}
-.find-static time,.find-static li span{font:12px/1.6 var(--mono);color:var(--steel);font-variant-numeric:tabular-nums}
-@media(min-width:761px){
-  .find-hero{display:flex;gap:5%;align-items:end;justify-content:space-between;padding-block:58px 32px}
-  .find-hero h1{flex:none}
-  .find-hero .company-lead{max-width:37ch}
-  .find-hero .company-lead{font-size:20px}
-  .find-facets{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 40px}
-  .find-topics{grid-column:1/-1}
-  .find-month{max-width:320px}
-  .find-result{padding:24px 0}
-  .find-result h3{font-size:26px}
+.find-static h2{font:600 30px/1.2 var(--display);margin:40px 0 12px}
+.find-static li{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;padding:14px 0;border-top:1px solid var(--rule)}
+.find-static li a,.find-static>p{font-size:18px}
+.find-static li span{font-size:15px;color:var(--steel)}
+@media(min-width:700px){
+  .find-facets{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 40px}
 }
-.find-empty{border-block:1px solid var(--rule);padding:30px 0;color:var(--steel)}
-.find-history{margin:12px 0 0;border:0}
-.find-history summary{display:list-item;list-style:disclosure-closed;margin-inline-start:16px;min-height:44px;padding:12px 0;color:var(--brand);font-size:14px}
-.find-history[open]>summary{list-style:disclosure-open}
-.find-history summary::-webkit-details-marker{display:inline}
-.find-history ul{list-style:none;padding:0 0 0 16px;margin:0;border-left:2px solid var(--rule)}
-.find-history li+li{border-top:1px solid var(--rule);margin-top:14px;padding-top:14px}
-.find-history strong{display:block;font-family:var(--display)}
-.find-history li>p:not(.find-meta){font-size:15px;color:var(--steel);margin-top:4px}
-.find-status{padding:14px 0 0}
-.find-form[hidden]~.find-static{grid-column:1/-1}
-@media(min-width:980px){
-  .find{display:grid;grid-template-columns:minmax(270px,.72fr) minmax(0,1.55fr);gap:clamp(28px,4vw,64px);align-items:start}
-  .find-form{position:sticky;top:12px}
-  .find-form:has(.find-filters[open]){position:static}
-  .find-results{border-top:3px solid var(--brand)}
-  .find-result:first-child{border-top:0}
-  .find-facets{grid-template-columns:1fr;gap:18px}
+@media(max-width:480px){
+  .find-form{column-gap:10px}
+  .find-status{gap:0 8px}
+  .find-search input{font-size:16px}
 }
 @media(pointer:coarse){.find-hint{display:none}}
-@media(prefers-reduced-motion:reduce){.find *{transition:none!important;animation:none!important}}

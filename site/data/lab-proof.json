@@ -6,6 +6,7 @@
   "claims": [
     {
       "id": "proof-review-cost",
+      "question": "Does a more expensive AI reviewer catch more bugs?",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
       "text": "Paying more for AI code review bought little. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
@@ -31,6 +32,7 @@
     },
     {
       "id": "proof-brokers",
+      "question": "Do model resellers deliver the model you asked for?",
       "record": "data/broker-same-model/results.json",
       "note": "journal/broker-same-model-results.html",
       "text": "Resellers of model access (brokers) served the model we asked for, at different prices. We sent {calls} identical requests at the same moment: {subS} were silently swapped to another model for {modelS} and {subM} for {modelM}. Broker A and Broker C charged list price; Broker B charged more, a price spread of {spreadS} on each model.",
@@ -55,6 +57,7 @@
     },
     {
       "id": "proof-self-verify",
+      "question": "Can an AI reviewer recognise its own false alarms?",
       "record": "data/self-verify/results.json",
       "note": "journal/self-verify-results.html",
       "text": "A negative result stays published. Can an AI reviewer talk itself out of its own false alarms? Against a pass mark we wrote down in advance, the answer was {decision}: with a self-check step, its false alarms on clean changes stayed at {faA} and {faB} in its separate runs.",

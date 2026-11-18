@@ -1,25 +1,7 @@
-// A shorter home page (mission rnd-site-ux-nav-1101, wave 5). The built home ran to about six thousand words in thirteen
-// sections; a visitor met the factory, the latest updates, the lab's measured results and the offer only after scrolling
-// past most of the rest. This pass reshapes the finished dist/index.html only, after foldJournal and every qualify step:
-//   - the hero (#floor), what we've found (#findings, the lab's results), how we check a result (#how-we-check), the
-//     latest updates (#updates) and the offer (#work-with-us) stay open, in that order (plain-language home,
-//     2026-11-16: the findings moved up, under the hero's "See what we found" button; founder, on the PR 1 screenshot:
-//     the drawing, the station panel and the long correction still came before the plain findings). The committed
-//     #floor section is split in two: the hero keeps its premise (who we are, See what we found) and the dated
-//     correction; the drawing, the station panel and the boundary line move, byte for byte, into a section of their
-//     own under what we've found, with a plain heading and one plain sentence (splitFloor);
-//   - a "Go further" navigation follows them, to the lab on a page, the experiments, the labs, the notes, Find and the
-//     tools;
-//   - every other section follows in its source order, its <section> (and id) and its heading block visible, the rest
-//     of its content in a closed <details class="home-fold">. Nothing is removed: the folded content stays on the page
-//     byte for byte, so the experiment ledger, the field-note rows and every reader of the built home find what they
-//     found before. site/index.html is never edited.
-// It stops the build on a page it does not expect: a missing, repeated or unknown top-level section, a heading block
-// that is not where it should be, a page already shaped, or an outcome that changed the field-note rows, the ledger
-// bytes or the page's ids (beyond the three this pass adds).
-// A link into folded content (the experiment list, nina's tools entry) opens the folds around its target
-// (site/assets/home-fold.mjs, linked from the home only).
-// Honest limit: the fold shortens the page a visitor scrolls, not the words the page carries.
+// Assemble the research homepage after records, result links and corrections have been generated.
+// The featured study, measured findings and next reads stay visible. A native disclosure holds the
+// historical factory, updates and longer sections. Preserve their fragment links and records, since
+// other pages and published bookmarks still point into this page. The hash opener handles nested folds.
 import { createHash } from 'node:crypto';
 import { journalRows } from './experiment-ledger.mjs';
 
@@ -36,9 +18,9 @@ export const CHECK_TITLE_ID = 'how-we-check-title';
 export const CHECK_HEADING = 'The checks we study, in one drawing';
 export const CHECK_INTRO = 'A concept drawing of the checks we test, each its own experiment and not a stage results pass through; pick one to see a real example and its record.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
-export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
+export const ADDED_IDS = [FURTHER_ID, CHECK_ID, CHECK_TITLE_ID];
 
-/** The sections that stay open, in the order they are shown (CHECK_ID is split out of #floor, see splitFloor). */
+/** Source order for the study and findings, then the detailed factory, updates and offer in the archive. */
 export const OPEN_ORDER = ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and
@@ -54,15 +36,11 @@ export const FOLDS = [
   { key: 'journal', head: 'section-heading', summary: 'Show the latest field notes' },
 ];
 
-/** The "Go further" destinations: site-relative href, link text and one plain line. The labels match the header's
- *  (scripts/site-header.mjs), so a link reads the same wherever it is. */
+/** Selected next reads after the findings: a recording, the research method and a partner evaluation. */
 export const FURTHER = [
-  { href: 'one-pager/', label: 'Start here', text: 'The lab on a page: what we do and what we found.' },
-  { href: 'experiments/', label: 'All results', text: 'All our experiments, where each stands, and their data.' },
-  { href: 'labs/', label: 'Labs', text: 'Our longer pieces of work, each with the record behind it.' },
-  { href: 'journal/', label: 'Notes & updates', text: 'What we set out to test, what happened, what is still open.' },
-  { href: 'find/', label: 'Find', text: 'Search the site by topic, by kind or by outcome.' },
-  { href: 'projects/', label: 'Tools', text: 'Open-source tools you can take apart and build on.' },
+  { href: 'labs/agent-space/#film-agent-space-30s', label: 'Watch the Agent Space', text: 'A recorded walk through the lab where agents answer questions about their world.' },
+  { href: 'methods/', label: 'How we test', text: 'How we set a question, measure a result and keep a record of what failed.' },
+  { href: 'partners/', label: 'Work with the lab', text: 'Bring an engineering question for a public study or a private engagement.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
@@ -79,7 +57,7 @@ const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '
 /** The "Go further" navigation. */
 export function renderFurther() {
   const items = FURTHER.map(f => `<li><a href="${escape(f.href)}"><span class="home-further-label">${escape(f.label)}</span><span class="home-further-text">${escape(f.text)}</span></a></li>`).join('');
-  return `<nav class="home-further content-section" aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Go further</h2><ul>${items}</ul></nav>`;
+  return `<nav class="home-further content-section" aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Inside the lab</h2><ul>${items}</ul></nav>`;
 }
 
 /** Every id="…" value in `html`, in page order. */
@@ -224,9 +202,14 @@ export function shapeHome(html) {
   const indent = /\n[ \t]*$/.exec(html.slice(from, first.start))?.[0] ?? '\n';
   const floor = splitFloor(html, byKey.get('floor'), indent);
   const piece = key => key === 'updates' ? html.slice(updatesStart, updatesEnd) : key === 'floor' ? floor.hero : key === CHECK_ID ? floor.check : html.slice(byKey.get(key).start, byKey.get(key).end);
-  const parts = [...OPEN_ORDER.map(piece), renderFurther()];
-  for (const f of FOLDS) parts.push(fold(html, byKey.get(f.key), f));
-  parts.push(piece(CLOSING));
+  const archive = OPEN_ORDER.slice(2).map(piece);
+  for (const f of FOLDS) archive.push(fold(html, byKey.get(f.key), f));
+  archive.push(piece(CLOSING));
+  const parts = [
+    floor.hero, piece('findings'), renderFurther(),
+    '<details class="home-archive"><summary>Explore the factory and earlier work</summary>',
+    ...archive, '</details>',
+  ];
   let out = html.slice(0, first.start) + parts.join(indent) + html.slice(last.end);
   // The stylesheet after the home's own stylesheets, and the fold opener after its own scripts.
   const once = (needle, what) => { if (out.split(needle).length !== 2) throw new Error(`Home shape: the home does not carry ${what} exactly once`); };

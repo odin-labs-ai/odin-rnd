@@ -53,7 +53,7 @@ const topOrder = html => {
 test('the shaped home opens with the hero, what we found, how we check, the updates and the offer, then Go further, then the rest in source order', () => {
   const out = shapeHome(HOME);
   assert.deepEqual(OPEN_ORDER, ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us']);
-  assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
+  assert.deepEqual(topOrder(out), [...OPEN_ORDER.slice(0, 2), 'nav', ...OPEN_ORDER.slice(2), 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
   assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal']);
   // The updates feed moves with its two markers, which stay around it, right after the drawing's section.
   assert.match(out, /<p class="factory-boundary">[^<]*<\/p>\n {4}<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
@@ -63,10 +63,10 @@ test('the shaped home opens with the hero, what we found, how we check, the upda
   for (const key of ['findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
   // Go further, after the offer, links the lab on a page and the section pages, with the header's labels.
   const nav = out.slice(out.indexOf('<nav class="home-further'), out.indexOf('</nav>', out.indexOf('<nav class="home-further')));
-  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['one-pager/', 'experiments/', 'labs/', 'journal/', 'find/', 'projects/']);
-  assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Start here', 'All results', 'Labs', 'Notes &amp; updates', 'Find', 'Tools']);
-  assert.match(nav, new RegExp(`aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Go further</h2>`));
-  assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="work-with-us"') && out.indexOf('<nav class="home-further') < out.indexOf('id="partner-tracks"'));
+  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['labs/agent-space/#film-agent-space-30s', 'methods/', 'partners/']);
+  assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Watch the Agent Space', 'How we test', 'Work with the lab']);
+  assert.match(nav, new RegExp(`aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Inside the lab</h2>`));
+  assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="findings"') && out.indexOf('<nav class="home-further') < out.indexOf('<details class="home-archive">'));
   // Only the home links its stylesheet and opener, once each, after the home's own.
   assert.ok(out.includes(`<link rel="stylesheet" href="assets/launch.css">\n  <link rel="stylesheet" href="${HOME_CSS}">`));
   assert.ok(out.includes(`<script type="module" src="assets/motion.mjs"></script>\n  <script type="module" src="${HOME_JS}"></script>`));
@@ -79,7 +79,7 @@ test('the hero keeps who we are, See what we found and the correction; the drawi
   assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.findings}`), 'hero, then what we found');
   // The drawing's section: a plain heading and sentence, then the drawing, the stations and the boundary line as they were.
   const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${CHECK_HEADING}</h2><p>${CHECK_INTRO}</p></div>`;
-  assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
+  assert.ok(out.includes(`<details class="home-archive"><summary>Explore the factory and earlier work</summary>\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
   assert.match(CHECK_INTRO, /^[A-Z][^.!?]*\.$/, 'one plain sentence');
   // Each part of the committed #floor appears exactly once.
   for (const [name, part] of Object.entries(FLOOR)) assert.equal(out.split(part).length, 2, name);
@@ -155,7 +155,7 @@ test('the kept-check refuses changed field-note rows, ledger bytes or ids', () =
 
 // The lab's working words (scripts/home-plain-language.test.mjs) are checked on the whole built home, these words included.
 test('the new words are plain: no digit, no "every", one line each', () => {
-  const words = [...FOLDS.map(f => f.summary), 'Go further', ...FURTHER.flatMap(f => [f.label, f.text]), CHECK_HEADING, CHECK_INTRO, CORRECTION_LEAD, CORRECTION_OPEN];
+  const words = [...FOLDS.map(f => f.summary), 'Inside the lab', ...FURTHER.flatMap(f => [f.label, f.text]), CHECK_HEADING, CHECK_INTRO, CORRECTION_LEAD, CORRECTION_OPEN];
   for (const text of words) {
     assert.doesNotMatch(text, /\p{Nd}/u, text);
     assert.doesNotMatch(text, /\bevery\b/i, text);

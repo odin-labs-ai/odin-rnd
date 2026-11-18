@@ -70,6 +70,8 @@ const labelText = html => html.replaceAll('&amp;', '&');
 export const HEADER_EXEMPT = new Map();
 
 const NAV_OPEN = '<nav aria-label="Main navigation">';
+const MENU_OPEN = '<details class="site-menu"><summary>Menu</summary><div class="site-menu-links">';
+const MENU_CLOSE = '</div></details>';
 // A Find link as scripts/site-chrome.mjs writes it; on the Find page itself it carries aria-current="page".
 const FIND = /^<a href="[^"]*find\/"(?: aria-current="page")?>Find<\/a>$/;
 
@@ -100,7 +102,7 @@ export function canonicalNav(relPrefix, current = null) {
   checkPrefix(relPrefix);
   if (current !== null && !DESTINATIONS.some(d => d.key === current)) throw new Error(`Unknown header section "${current}"`);
   const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? ' aria-current="page"' : ''}>${labelHtml(d.label)}</a>`).join('');
-  return `${NAV_OPEN}${links}</nav>`;
+  return `${NAV_OPEN}${MENU_OPEN}${links}${MENU_CLOSE}</nav>`;
 }
 
 /** The whole site header for a page rendered from code (the section index pages), with the canonical nav. */
@@ -139,7 +141,10 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
   const links = [...nav.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)];
-  const rest = nav.slice(NAV_OPEN.length, -'</nav>'.length).replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
+  // Accept our own native menu when normalising an already-built page.
+  const content = nav.slice(NAV_OPEN.length, -'</nav>'.length);
+  const flat = content.startsWith(MENU_OPEN) ? content.slice(MENU_OPEN.length).replace(MENU_CLOSE, '') : content;
+  const rest = flat.replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
   if (rest.trim()) throw new Error(`The header navigation of ${label} holds more than links: "${rest.trim().slice(0, 60)}"`);
   for (const [whole, html] of links) {
     const text = labelText(html);

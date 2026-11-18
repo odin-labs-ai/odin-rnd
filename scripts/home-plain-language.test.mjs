@@ -163,10 +163,10 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Find']);
-  // The hero says who we are in at most two sentences, then leads to the findings.
-  const premise = readable(parts['hero premise'].match(/<p>[\s\S]*?<\/p>/)[0]).trim();
-  assert.ok(premise.split(/(?<=[.!?])\s+/).filter(Boolean).length <= 2, `two sentences at most: ${premise}`);
-  assert.match(parts['hero premise'], /<a class="button button-primary[^"]*" href="#findings">See what we found<\/a>/);
+  // A real question, a scoped answer, and the full study share the same reading path.
+  assert.match(parts['hero premise'], /<h1[^>]*>[^<]+\?<\/h1>/);
+  assert.match(parts['hero premise'], /on a single host/);
+  assert.match(parts['hero premise'], /href="journal\/failover-results\.html">Read the failover study/);
   // Every finding has its limit in words and a dated line, and links its result and its record.
   const findings = [...parts['what we found'].matchAll(/<li id="proof-[^"]+">[\s\S]*?<\/li>/g)].map(m => m[0]);
   assert.ok(findings.length >= 3 && findings.length <= 5, `three to five findings, found ${findings.length}`);

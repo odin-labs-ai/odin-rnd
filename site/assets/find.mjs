@@ -321,11 +321,12 @@ function init(doc, win) {
 
     function metadata(item) {
       const meta = element(doc, 'p', { class: 'find-meta' });
-      meta.append(element(doc, 'span', { class: 'find-badge', 'data-type': String(item.type ?? '') }, TYPE_LABELS[item.type] ?? humanize(item.type)));
+      const kind = TYPE_LABELS[item.type] ?? humanize(item.type);
+      meta.append(element(doc, 'span', {}, kind));
       const label = numberLabel(item);
       if (label) meta.append(element(doc, 'span', {}, label));
       if (item.date) meta.append(element(doc, 'time', { datetime: String(item.date) }, String(item.date).slice(0, 10)));
-      if (item.stage) meta.append(element(doc, 'span', {}, stageLabel(item.stage)));
+      if (item.stage && stageLabel(item.stage) !== kind) meta.append(element(doc, 'span', {}, stageLabel(item.stage)));
       if (OUTCOME_LABELS[item.outcome]) meta.append(element(doc, 'span', { class: 'find-outcome' }, OUTCOME_LABELS[item.outcome]));
       return meta;
     }
@@ -337,34 +338,37 @@ function init(doc, win) {
       const href = safeHref(item.href);
       if (href) heading.append(element(doc, 'a', { href: `../${href}` }, String(item.title ?? '')));
       else heading.textContent = String(item.title ?? '');
-      li.append(metadata(item), heading);
-      if (item.summary) li.append(element(doc, 'p', { class: 'find-summary' }, String(item.summary)));
-      const topics = Array.isArray(item.topics) ? item.topics.filter(t => typeof t === 'string' && t) : [];
+      li.append(heading);
+
+      const details = element(doc, 'details', { class: 'find-history' });
+      const summary = element(doc, 'summary');
+      const detailLabel = group.length > 1 ? `Details · ${group.length} entries` : 'Details';
+      summary.append(element(doc, 'span', {}, detailLabel));
+      if (item.date) summary.append(element(doc, 'time', { datetime: item.date }, item.date.slice(0, 10)));
+      details.append(summary);
+
+      const entries = element(doc, 'ul', { class: 'find-records' });
+      for (const entry of group) {
+        const record = element(doc, 'li');
+        record.append(metadata(entry));
+        if (entry.title !== item.title) record.append(element(doc, 'strong', {}, entry.title));
+        if (entry.summary) record.append(element(doc, 'p', { class: 'find-summary' }, entry.summary));
+        entries.append(record);
+      }
+      details.append(entries);
+
+      const topics = [...new Set(group.flatMap(entry => Array.isArray(entry.topics) ? entry.topics : []))];
       if (topics.length) {
-        const list = element(doc, 'ul', { class: 'find-chips', 'aria-label': 'Topics' });
+        const list = element(doc, 'ul', { class: 'find-chips', 'aria-label': 'Filter by topic' });
         for (const topic of topics) {
-          const li2 = element(doc, 'li');
-          li2.append(element(doc, 'button', { type: 'button', class: 'find-chip', 'data-topic': topic,
+          const chip = element(doc, 'li');
+          chip.append(element(doc, 'button', { type: 'button', class: 'find-chip', 'data-topic': topic,
             'aria-label': `Show only ${topicLabel(topic).toLowerCase()}` }, topicLabel(topic)));
-          list.append(li2);
+          list.append(chip);
         }
-        li.append(list);
+        details.append(list);
       }
-      if (group.length > 1) {
-        const details = element(doc, 'details', { class: 'find-history' });
-        const others = group.filter(entry => entry !== item);
-        details.append(element(doc, 'summary', {},
-          `${others.length} more matching ${others.length === 1 ? 'entry' : 'entries'} on this page`));
-        const entries = element(doc, 'ul');
-        for (const entry of others) {
-          const record = element(doc, 'li');
-          record.append(metadata(entry), element(doc, 'strong', {}, entry.title));
-          if (entry.summary) record.append(element(doc, 'p', {}, entry.summary));
-          entries.append(record);
-        }
-        details.append(entries);
-        li.append(details);
-      }
+      li.append(details);
       return li;
     }
   }

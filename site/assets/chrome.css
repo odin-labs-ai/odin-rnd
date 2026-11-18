@@ -17,19 +17,31 @@
 .related-title{font-size:16px;line-height:1.45;color:var(--paper)}
 .related-list a:hover .related-title{color:var(--brand);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}
 @media(max-width:760px){.crumbs{font-size:12px;margin:18px 6% 0}.article-shell>.crumbs{margin:0 0 20px}.related{margin:56px 6% 40px}.related-heading{font-size:24px}.related-list{grid-template-columns:1fr}}
-/* Every header carries the one canonical navigation (scripts/site-header.mjs) plus Find: eight links on every page.
-   From 761px to 1359px those links, the wordmark and the two header actions do not fit one 84px row (measured
-   2026-11-01, mission scripts/header-widths.mjs), so the header takes company.css's tablet layout: the links on their
-   own row. From 1360px the single row fits and never wraps. One rule for every header; it needs no :has(). Mobile
-   (760px and below) is unchanged. */
-@media(min-width:761px) and (max-width:1359px){
-  header.site-header{height:auto;min-height:84px;flex-wrap:wrap;padding-block:15px;gap:12px}
-  header.site-header nav{order:3;width:100%;margin-inline:0;flex-wrap:wrap;justify-content:flex-start;gap:8px 24px}
-  header.site-header .source-link{margin-left:auto}
+/* One quiet row. Opening the native menu expands the header in normal flow. */
+@media screen {
+  header.site-header:has(.site-menu) {
+    height:auto; min-height:68px; padding-block:10px; gap:12px;
+    justify-content:space-between; align-items:flex-start; flex-wrap:wrap;
+  }
+  header.site-header .wordmark { min-height:48px; }
+  header.site-header:has(.site-menu) nav {
+    order:1; flex:0 1 auto; width:auto; margin:0 0 0 auto; align-items:flex-start;
+    flex-wrap:nowrap; justify-content:flex-end; gap:clamp(16px,3vw,36px);
+    overflow:visible; background:none;
+  }
+  header.site-header nav a, .site-menu summary {
+    min-height:48px; align-content:center; font:500 17px/1.35 Manrope,sans-serif;
+  }
+  .site-menu summary { display:flex; gap:8px; align-items:center; cursor:pointer; padding:12px 0; }
+  .site-menu summary::after { content:""; width:6px; height:6px; border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+  .site-menu[open] summary::after { transform:rotate(225deg); }
+  .site-menu-links { padding:4px 0 12px; }
+  header.site-header .site-menu-links a { display:flex; white-space:normal; }
+  header.site-header nav > a { text-decoration:underline; text-underline-offset:5px; }
+  body:has(.site-footer a[href="https://odin-labs.ai/"]) header.site-header .parent-site-link,
+  body:has(.site-footer a[href="https://github.com/odin-labs-ai/odin-rnd"]) header.site-header .source-link { display:none; }
+  header.site-header:has(.site-menu) .brand-rnd { font-size:16px; }
 }
-@media(min-width:1360px){header.site-header nav{flex-wrap:nowrap}header.site-header nav a{white-space:nowrap}}
-/* On phones the header nav is one sideways-scrolling row; Find goes first there so it is visible without a swipe. */
-@media(max-width:760px){.site-header nav a[href$="find/"]{order:-1;font-weight:600}}
 /* The page's own section in the header nav (aria-current="page", scripts/site-header.mjs; Find on /find/): a thin brand
    underline in the colour of the rest of the nav, the same underline the breadcrumbs and related links use on hover. */
 .site-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:1px;text-underline-offset:6px}

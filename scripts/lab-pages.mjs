@@ -259,7 +259,9 @@ export function renderClaims(read, list, up = '../', { plain = false } = {}) {
     }
     if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
     const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p></li>`;
+    const result = `<p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p>`;
+    const body = plain && c.question ? `<details><summary>${escape(c.question)}</summary>${result}</details>` : result;
+    return `<li id="${escape(c.id)}">${body}</li>`;
   }).join('');
 }
 

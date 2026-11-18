@@ -67,8 +67,8 @@ test('aria-current marks the page\'s own section, and only that', () => {
 
 test('links lead to the section pages, relative to the page; Work with us keeps its contact marker', () => {
   const nav = navOf(normalise(read('journal/a-passing-pipeline.html'), 'journal/a-passing-pipeline.html'));
-  assert.equal(nav, '<nav aria-label="Main navigation"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>');
-  assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><a href="one-pager\/">Start here<\/a><a href="#findings">Findings<\/a>/);
+  assert.equal(nav, '<nav aria-label="Main navigation"><details class="site-menu"><summary>Menu</summary><div class="site-menu-links"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></div></details></nav>');
+  assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><details[^>]*><summary>Menu<\/summary><div[^>]*><a href="one-pager\/">Start here<\/a><a href="#findings">Findings<\/a>/);
   assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/journal\/">Notes &amp; updates<\/a>/);
   assert.doesNotMatch(nav, /partners\//, 'Partners is not in the header');
 });
