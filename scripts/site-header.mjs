@@ -156,7 +156,8 @@ export function navSpan(html, label = 'page') {
 
 function refuseUnexpectedBases(document, label) {
   const bases = elements(document, 'base');
-  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
+  const inDocumentHead = base => base.parentNode?.tagName === 'head' && base.parentNode.parentNode?.tagName === 'html' && base.parentNode.parentNode.parentNode === document;
+  if (bases.length && (label !== '404.html' || bases.length !== 1 || !inDocumentHead(bases[0]) || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
 }
 
 /**
@@ -204,7 +205,8 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   if (links.some(([, , anchor]) => (anchor.attrs ?? []).some(item => !knownAttributes.has(item.name)))) throw new Error(`The header navigation of ${label} has an anchor attribute that this pass would discard`);
   const destination = DESTINATIONS.find(item => item.key === current);
   const canonical = canonicalNav(relPrefix, current, { currentPage: !!destination && label === `${destination.path}index.html` });
-  const next = finds.length ? canonical.replace('</nav>', `${finds[0]}</nav>`) : canonical;
+  const find = label === '404.html' && finds.length ? finds[0].replace(/^<a href="[^"]*"/, `<a href="${new URL('find/', SITE_ORIGIN).href}"`) : finds[0];
+  const next = finds.length ? canonical.replace('</nav>', `${find}</nav>`) : canonical;
   if (/\d/.test(next)) throw new Error(`The header navigation of ${label} would carry a digit`);
   return html.slice(0, start) + next + html.slice(end);
 }

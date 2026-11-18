@@ -294,9 +294,9 @@ test('the permitted 404 base cannot be discarded with its recognized navigation 
     const moved = source.replace(base, '').replace(originalLink, `<a href="${SITE_ORIGIN}#floor">${base}Factory</a>`);
     assert.notEqual(moved, source, 'the original permitted base moved into a recognized nav link');
     assert.equal((moved.match(/<base\b/g) ?? []).length, 1, 'one permitted base remains');
-    assert.throws(() => normaliseHeader(moved, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Document base in replaced navigation/, 'direct normalization refuses to remove the base');
+    assert.throws(() => normaliseHeader(moved, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Unexpected document base/, 'direct normalization refuses a base moved out of the document head');
     writeFileSync(join(dir, '404.html'), moved);
-    assert.throws(() => normaliseHeaders({ distDir: dir }), /Document base in replaced navigation/, 'the named 404 build path refuses to remove the base');
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /Unexpected document base/, 'the named 404 build path refuses a base moved out of the document head');
     assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), moved, 'the rejected 404 page was not rewritten');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -343,7 +343,20 @@ test('a nested missing URL cannot redirect a no-base 404 Find link into that fol
     assert.throws(() => normaliseHeaders({ distDir: dir }), /relative "Find" link without its permitted base/, 'the named-page build refuses the nested-URL hazard');
     assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), relativeFind, 'the refused page was not rewritten');
     const withBase = source.replace(`href="${SITE_ORIGIN}find/">Find`, 'href="find/">Find');
-    assert.doesNotThrow(() => normaliseHeader(withBase, { relPrefix: SITE_ORIGIN, label: '404.html' }), 'the permitted base makes the same relative Find link safe');
+    assert.ok(normaliseHeader(withBase, { relPrefix: SITE_ORIGIN, label: '404.html' }).includes(`href="${SITE_ORIGIN}find/">Find`), 'the permitted-base relative Find link is validated and emitted absolute');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('an SVG base cannot stand in for the HTML head base on 404', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-404-svg-base-'));
+  try {
+    const source = normalise(read('404.html'), '404.html');
+    const fake = source.replace(`<base href="${SITE_ORIGIN}">`, '').replace('<header class="site-header', `<svg><base href="${SITE_ORIGIN}"></base></svg><header class="site-header`).replace(`href="${SITE_ORIGIN}find/">Find`, 'href="find/">Find');
+    assert.notEqual(fake, source, 'the only base is now inside SVG and Find is relative');
+    assert.throws(() => normaliseHeader(fake, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Unexpected document base/, 'an SVG element named base is not the document base');
+    writeFileSync(join(dir, '404.html'), fake);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /Unexpected document base/, 'the named-page build refuses the fake base');
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), fake, 'the refused page was not rewritten');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

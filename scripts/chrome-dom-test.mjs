@@ -107,6 +107,11 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
         if (navigation.errorText) throw new Error(navigation.errorText);
         await loaded;
         if (job.clickSelector) {
+          if (job.historyPath) {
+            const changed = await send('Runtime.evaluate', { expression: `history.replaceState(null, '', location.origin + ${JSON.stringify(job.historyPath)})`, returnByValue: true }, sessionId);
+            if (changed.exceptionDetails) throw new Error(changed.exceptionDetails.exception?.description ?? changed.exceptionDetails.text);
+          }
+          const from = await send('Runtime.evaluate', { expression: 'location.href', returnByValue: true }, sessionId);
           const moved = new Promise(resolve => {
             const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, 2000);
             loads.set(sessionId, () => { clearTimeout(timer); resolve(true); });
@@ -115,7 +120,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
           if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
           const navigated = await moved;
           const at = await send('Runtime.evaluate', { expression: 'location.href', returnByValue: true }, sessionId);
-          values.push({ navigated, sourceUrl: url, url: at.result.value });
+          values.push({ navigated, sourceUrl: from.result.value, url: at.result.value });
           continue;
         }
         const expression = `new Promise((resolve, reject) => {

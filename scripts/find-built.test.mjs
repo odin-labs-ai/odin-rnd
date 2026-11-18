@@ -26,6 +26,14 @@ const built = () => {
 };
 const chrome = chromeBinary();
 const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
+test('Chrome activates the absolute Find link from a nested missing-page URL', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async () => {
+  assert.ok(chrome, 'Chrome is required in CI');
+  const dist = join(builtCopy(), 'dist');
+  const [result] = await inspectDom([{ file: join(dist, '404.html'), historyPath: '/odin-rnd/labs/missing', clickSelector: 'header.site-header nav a:last-of-type' }], { chrome, siteRoot: dist });
+  assert.equal(new URL(result.sourceUrl).pathname, '/odin-rnd/labs/missing', 'the error document is viewed at a nested missing URL');
+  assert.equal(result.navigated, true, 'activating Find loads the same tab');
+  assert.equal(result.url, new URL('find/', SITE_ORIGIN).href, 'Find reaches the published site root from that nested URL');
+});
 const footerDom = `(() => {
   const paint = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   const readableForeground = el => {
