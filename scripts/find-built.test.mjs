@@ -49,15 +49,22 @@ test('Chrome activates the absolute Find link from a nested missing-page URL', {
 test('Chrome activates Partners in the current tab and rejects a canceled click', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async () => {
   assert.ok(chrome, 'Chrome is required in CI');
   const dist = join(builtCopy(), 'dist');
-  const [real, canceled, childCanceled] = await inspectDom([
+  const [real, canceled, childCanceled, keyboard, skippedByTab] = await inspectDom([
     { file: join(dist, 'index.html'), clickSelector: 'footer.site-footer a[href$="partners/"]' },
     { html: '<footer class="site-footer"><a href="partners/" onclick="return false">Partners</a></footer>', clickSelector: 'footer.site-footer a', expectNoNavigation: true },
     { html: '<footer class="site-footer"><a href="partners/"><span onclick="event.preventDefault()">Partners</span></a></footer>', clickSelector: 'footer.site-footer a', expectNoNavigation: true },
+    { file: join(dist, 'index.html'), clickSelector: 'footer.site-footer a[href$="partners/"]', activation: 'keyboard' },
+    { html: '<main><a href="ahead/">Ahead</a></main><footer class="site-footer"><a href="partners/" tabindex="-1">Partners</a></footer>', clickSelector: 'footer.site-footer a', activation: 'keyboard' },
   ], { chrome, siteRoot: dist });
   assert.equal(successfulDocument(real, { url: new URL('partners/', real.sourceUrl).href }), true, 'the built Partners link loads its site page in this tab');
   assert.match(real.heading, /Partner with/, 'the destination is the Partners page');
   assert.equal(canceled.navigated, false, 'an onclick return false control cannot prove navigation');
   assert.equal(childCanceled.navigated, false, 'activating the rendered child label catches navigation canceled below the anchor');
+  assert.equal(keyboard.focused, true, 'Tab reaches the built Partners link in the footer');
+  assert.equal(successfulDocument(keyboard, { url: new URL('partners/', keyboard.sourceUrl).href }), true, 'Enter on the focused Partners link loads its page with HTTP 200');
+  assert.match(keyboard.heading, /Partner with/, 'keyboard navigation reaches the actual Partners page');
+  assert.equal(skippedByTab.focused, false, 'Tab skips a Partners link with negative tabindex');
+  assert.equal(skippedByTab.navigated, false, 'the skipped link cannot satisfy keyboard navigation');
 });
 const footerDom = `(() => {
   const paint = document.createElement('canvas').getContext('2d', { willReadFrequently: true });

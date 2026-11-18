@@ -42,6 +42,10 @@ const hidden = node => node.tagName === 'datalist' || (node.tagName === 'details
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
 const handlerWithin = node => (node.attrs ?? []).some(item => item.name.startsWith('on'))
   || (node.childNodes ?? []).some(handlerWithin);
+const skippedByTab = node => {
+  const value = attr(node, 'tabindex');
+  return value !== undefined && Number.isInteger(Number(value)) && Number(value) < 0;
+};
 const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || node.tagName === 'datalist' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
   const { startOffset, endOffset } = node.sourceCodeLocation ?? {};
@@ -292,7 +296,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   const missing = FOOTER_LINKS.filter(link => {
     if (anchors.some(anchor => attr(anchor, 'href') === `${relPrefix}${link.path}` && textOf(anchor, true).trim() !== link.label)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     const named = anchors.filter(anchor => textOf(anchor).trim() === link.label || textOf(anchor, true).trim() === link.label);
-    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || handlerWithin(named[0]) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     return named.length === 0;
   });
   if (!missing.length) return html;

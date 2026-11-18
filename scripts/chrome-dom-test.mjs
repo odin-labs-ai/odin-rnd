@@ -140,16 +140,40 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
             if (changed.exceptionDetails) throw new Error(changed.exceptionDetails.exception?.description ?? changed.exceptionDetails.text);
           }
           const from = await send('Runtime.evaluate', { expression: 'location.href', returnByValue: true }, sessionId);
+          let focused;
+          if (job.activation === 'keyboard') {
+            const selector = JSON.stringify(job.clickSelector);
+            const present = await send('Runtime.evaluate', { expression: `!!document.querySelector(${selector})`, returnByValue: true }, sessionId);
+            if (!present.result.value) throw new Error('Missing keyboard navigation link');
+            focused = false;
+            for (let tab = 0; tab < 250; tab++) {
+              await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+              await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+              const at = await send('Runtime.evaluate', { expression: `document.activeElement === document.querySelector(${selector})`, returnByValue: true }, sessionId);
+              if (at.result.value) { focused = true; break; }
+            }
+            if (!focused) {
+              values.push({ navigated: false, focused, sourceUrl: from.result.value, url: from.result.value });
+              responses.delete(sessionId);
+              responseHits.delete(sessionId);
+              continue;
+            }
+          }
           const moved = new Promise(resolve => {
             const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, job.expectNoNavigation ? 2000 : timeoutMs);
             loads.set(sessionId, () => { clearTimeout(timer); resolve(true); });
           });
-          const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); const label = link.innerText?.trim(); const target = label && [...link.querySelectorAll('*')].filter(node => node.innerText?.trim() === label).at(-1) || link; target.click(); return true; })()`, returnByValue: true }, sessionId);
-          if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
+          if (job.activation === 'keyboard') {
+            await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, sessionId);
+            await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, sessionId);
+          } else {
+            const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); const label = link.innerText?.trim(); const target = label && [...link.querySelectorAll('*')].filter(node => node.innerText?.trim() === label).at(-1) || link; target.click(); return true; })()`, returnByValue: true }, sessionId);
+            if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
+          }
           const navigated = await moved;
           if (responseErrors.length) throw responseErrors[0];
           const at = await send('Runtime.evaluate', { expression: `({ url: location.href, heading: document.querySelector('main h1')?.innerText.trim() ?? '', bodyText: document.body?.innerText.trim() ?? '', responseStatus: performance.getEntriesByType('navigation').at(-1)?.responseStatus ?? null })`, returnByValue: true }, sessionId);
-          values.push({ navigated, sourceUrl: from.result.value, fixtureHits: responseHits.get(sessionId) ?? 0, ...at.result.value });
+          values.push({ navigated, ...(job.activation === 'keyboard' ? { focused } : {}), sourceUrl: from.result.value, fixtureHits: responseHits.get(sessionId) ?? 0, ...at.result.value });
           responses.delete(sessionId);
           responseHits.delete(sessionId);
           continue;

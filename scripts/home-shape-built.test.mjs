@@ -308,10 +308,17 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const featuredMatch = result => result.limits.length === sourceClaimTexts.size && result.limits.every(limit =>
     limit.claimShape && limit.claimVisible && limit.claimBeforeLimit && limit.claimText === sourceClaimTexts.get(limit.id)
       && limit.limitVisible && limit.limitText === sourceLimits.get(limit.id)) && citationsMatch(result);
+  const correctionMatches = result => result.correctionVisible && result.correctionWhenVisible && result.correctionLabelVisible
+    && result.correctionText.includes('Wording clarification · 1 November 2026')
+    && result.correctionTimesVisible.length === 4 && result.correctionTimesVisible.every(Boolean)
+    && JSON.stringify(result.correctionParagraphs) === JSON.stringify(pinned)
+    && result.correctionParagraphVisible.length === pinned.length && result.correctionParagraphVisible.every(Boolean);
   assert.equal(featuredMatch(actual), true, 'the built desktop shows every authored claim, limit and citation');
+  assert.equal(correctionMatches(actual), true, 'the built desktop keeps the full dated correction visible');
   const mobileRule = rule => `<style>@media (max-width: 480px) { ${rule} }</style>${proof}`;
   const dateRule = mobileRule('#proof-review-cost .lab-source time { opacity: 0 }');
-  const [phoneActual, desktopDateControl, phoneDateControl, phoneClaimControl, phoneLimitControl, phoneCitationControl, phoneLinkControl] = await inspectDom([
+  const hiddenCorrectionOnPhone = `<style>@media (max-width: 480px) { .correction-note { display: none } }</style><main>${correctionBlock}</main>`;
+  const [phoneActual, desktopDateControl, phoneDateControl, phoneClaimControl, phoneLimitControl, phoneCitationControl, phoneLinkControl, desktopCorrectionControl, phoneCorrectionControl] = await inspectDom([
     { file: join(dist, 'index.html'), viewport: { width: 390, height: 844 }, expression: wordsDom },
     { html: dateRule, viewport: { width: 1440, height: 900 }, expression: wordsDom },
     { html: dateRule, viewport: { width: 390, height: 844 }, expression: wordsDom },
@@ -319,8 +326,14 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     { html: mobileRule('#proof-review-cost .lab-limit { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
     { html: mobileRule('#proof-review-cost .lab-source { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
     { html: mobileRule('#proof-review-cost .lab-source a[href$="preregistration.json"] { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: hiddenCorrectionOnPhone, viewport: { width: 1440, height: 900 }, expression: wordsDom },
+    { html: hiddenCorrectionOnPhone, viewport: { width: 390, height: 844 }, expression: wordsDom },
   ], { chrome, siteRoot: dist });
   assert.equal(featuredMatch(phoneActual), true, 'the actual built phone shows every authored claim, limit and citation');
+  assert.equal(correctionMatches(phoneActual), true, 'the actual built phone keeps the full dated correction visible');
+  assert.equal(correctionMatches(desktopCorrectionControl), true, 'the phone-only correction rule leaves the desktop notice visible');
+  assert.equal(phoneCorrectionControl.correctionVisible, false, 'the phone-only rule hides the correction notice');
+  assert.equal(correctionMatches(phoneCorrectionControl), false, 'a hidden phone correction fails the same notice proof');
   assert.equal(featuredMatch(desktopDateControl), true, 'the phone-only date rule leaves the desktop proof intact');
   assert.equal(phoneDateControl.limits[0].citationVisible, true, 'the phone date control leaves its source paragraph visible');
   assert.equal(phoneDateControl.limits[0].citationDates.every(date => date.visible), false, 'the phone-only rule hides the measurement date');
