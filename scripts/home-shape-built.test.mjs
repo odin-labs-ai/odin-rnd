@@ -311,7 +311,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.notEqual(canceled, proof, 'the canceled-click control changes only the written-plan anchor');
   const activated = await inspectDom([
     ...clickLinks.map(({ clickSelector }) => ({ file: join(dist, 'index.html'), clickSelector })),
-    { html: canceled, clickSelector: '#proof-review-cost .lab-source a:last-of-type' },
+    { html: canceled, clickSelector: '#proof-review-cost .lab-source a:last-of-type', expectNoNavigation: true },
   ], { chrome, siteRoot: dist });
   for (const [index, link] of clickLinks.entries()) {
     assert.equal(activated[index].navigated, true, `${link.id}: activating ${link.label} loads this tab`);

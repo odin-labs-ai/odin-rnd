@@ -65,6 +65,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
     const pending = new Map();
     const loads = new Map();
     const responses = new Map();
+    const responseHits = new Map();
     const responseErrors = [];
     socket.onclose = () => { for (const { reject } of pending.values()) reject(new Error('Chrome DevTools closed')); pending.clear(); };
     socket.onmessage = ({ data }) => {
@@ -79,12 +80,17 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
       } else if (message.method === 'Fetch.requestPaused' && responses.has(message.sessionId)) {
         const fixture = responses.get(message.sessionId);
         const matched = message.params.request.url === fixture.url;
-        const body = matched ? fixture.body : '';
-        void send('Fetch.fulfillRequest', {
-          requestId: message.params.requestId, responseCode: matched ? fixture.status : 204,
-          responseHeaders: [{ name: 'Content-Type', value: matched ? 'text/html; charset=utf-8' : 'text/plain' }],
-          body: Buffer.from(body).toString('base64'),
-        }, message.sessionId).catch(error => responseErrors.push(error));
+        if (matched) {
+          if (message.params.resourceType !== 'Document') responseErrors.push(new Error('The controlled response was not a document request'));
+          responseHits.set(message.sessionId, (responseHits.get(message.sessionId) ?? 0) + 1);
+        }
+        const method = matched ? 'Fetch.fulfillRequest' : 'Fetch.continueRequest';
+        const args = matched ? {
+          requestId: message.params.requestId, responseCode: fixture.status,
+          responseHeaders: [{ name: 'Content-Type', value: 'text/html; charset=utf-8' }],
+          body: Buffer.from(fixture.body).toString('base64'),
+        } : { requestId: message.params.requestId };
+        void send(method, args, message.sessionId).catch(error => responseErrors.push(error));
       }
     };
     const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
@@ -120,7 +126,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
         if (job.clickSelector) {
           if (job.responseFixture) {
             responses.set(sessionId, job.responseFixture);
-            await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] }, sessionId);
+            await send('Fetch.enable', { patterns: [{ urlPattern: job.responseFixture.url }] }, sessionId);
           }
           if (job.historyPath) {
             const changed = await send('Runtime.evaluate', { expression: `history.replaceState(null, '', location.origin + ${JSON.stringify(job.historyPath)})`, returnByValue: true }, sessionId);
@@ -128,7 +134,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
           }
           const from = await send('Runtime.evaluate', { expression: 'location.href', returnByValue: true }, sessionId);
           const moved = new Promise(resolve => {
-            const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, 2000);
+            const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, job.expectNoNavigation ? 2000 : timeoutMs);
             loads.set(sessionId, () => { clearTimeout(timer); resolve(true); });
           });
           const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); link.click(); return true; })()`, returnByValue: true }, sessionId);
@@ -136,8 +142,9 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
           const navigated = await moved;
           if (responseErrors.length) throw responseErrors[0];
           const at = await send('Runtime.evaluate', { expression: `({ url: location.href, heading: document.querySelector('main h1')?.innerText.trim() ?? '', responseStatus: performance.getEntriesByType('navigation').at(-1)?.responseStatus ?? null })`, returnByValue: true }, sessionId);
-          values.push({ navigated, sourceUrl: from.result.value, ...at.result.value });
+          values.push({ navigated, sourceUrl: from.result.value, fixtureHits: responseHits.get(sessionId) ?? 0, ...at.result.value });
           responses.delete(sessionId);
+          responseHits.delete(sessionId);
           continue;
         }
         const expression = `new Promise((resolve, reject) => {

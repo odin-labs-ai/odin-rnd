@@ -38,8 +38,10 @@ test('Chrome activates the absolute Find link from a nested missing-page URL', {
   const usable = result => result.navigated && result.url === findUrl && result.responseStatus === 200 && result.heading === 'Find something.';
   assert.equal(new URL(found.sourceUrl).pathname, '/odin-rnd/labs/missing', 'the error document is viewed at a nested missing URL');
   assert.equal(usable(found), true, 'clicking Find loads the built Find response in this tab at the canonical URL');
+  assert.equal(found.fixtureHits, 1, 'one main-document request received the built Find response');
   assert.equal(missing.url, findUrl, 'the 404 control reaches the same URL');
   assert.equal(missing.responseStatus, 404, 'the control is an HTTP 404 response');
+  assert.equal(missing.fixtureHits, 1, 'one main-document request received the 404 control');
   assert.equal(usable(missing), false, 'a 404 response cannot pass on its URL alone');
 });
 test('Chrome activates Partners in the current tab and rejects a canceled click', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async () => {
@@ -47,7 +49,7 @@ test('Chrome activates Partners in the current tab and rejects a canceled click'
   const dist = join(builtCopy(), 'dist');
   const [real, canceled] = await inspectDom([
     { file: join(dist, 'index.html'), clickSelector: 'footer.site-footer a[href$="partners/"]' },
-    { html: '<footer class="site-footer"><a href="partners/" onclick="return false">Partners</a></footer>', clickSelector: 'footer.site-footer a' },
+    { html: '<footer class="site-footer"><a href="partners/" onclick="return false">Partners</a></footer>', clickSelector: 'footer.site-footer a', expectNoNavigation: true },
   ], { chrome, siteRoot: dist });
   assert.equal(real.navigated, true, 'the built Partners link loads this tab');
   assert.equal(real.url, new URL('partners/', real.sourceUrl).href, 'the built Partners link reaches the site page');
