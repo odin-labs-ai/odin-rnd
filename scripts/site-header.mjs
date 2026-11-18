@@ -40,7 +40,7 @@ const elements = (root, tag) => {
 // declarations with comments such as `display: none /* ... */` that a simple declaration match would miss.
 const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
-const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
+const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || node.tagName === 'datalist' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
   const { startOffset, endOffset } = node.sourceCodeLocation ?? {};
   if (!Number.isInteger(startOffset) || !Number.isInteger(endOffset)) throw new Error('A parsed site element has no source location');
@@ -219,16 +219,35 @@ export function normaliseHeaders({ distDir }) {
  */
 export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/' }]);
 
+// The committed templates and all built pages have this one-line footer shape. Five built pages put one known JSON
+// data script after it. Pin that tail before using source offsets: unsupported HTML elsewhere cannot impersonate it.
+function knownFooterTail(html, label) {
+  const open = '<footer class="site-footer">';
+  const close = '</footer>';
+  const start = html.indexOf(open);
+  const end = html.indexOf(close, start + open.length);
+  const footer = html.slice(start, end + close.length);
+  const suffix = html.slice(end + close.length);
+  if (start < 0 || end < 0 || html.indexOf(open, start + 1) >= 0 || html.indexOf(close, end + 1) >= 0
+    || /[\r\n]/.test(footer) || footer.split('<div>').length !== 2 || footer.split('</div>').length !== 2
+    || !/^\s*(?:<script type="application\/json" id="(?:station-data|experiment-data|witness-data)">[\s\S]*?<\/script>\s*)?<\/body>\s*<\/html>\s*$/.test(suffix)) {
+    throw new Error(`Unexpected site footer shape in ${label}`);
+  }
+  return { start, end: end + close.length };
+}
+
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
   const document = parse(html, { sourceCodeLocationInfo: true });
   const bases = elements(document, 'base');
   if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
+  const tail = label === 'page' ? null : knownFooterTail(html, label);
   const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
   if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
   const footer = footers[0];
   const end = footer.sourceCodeLocation?.endTag?.startOffset;
   if (!Number.isInteger(end)) throw new Error(`Unclosed site footer in ${label}`);
+  if (tail && (footer.sourceCodeLocation.startOffset !== tail.start || footer.sourceCodeLocation.endOffset !== tail.end)) throw new Error(`Unexpected site footer shape in ${label}`);
   const anchors = elements(footer, 'a');
   const missing = FOOTER_LINKS.filter(link => {
     if (anchors.some(anchor => attr(anchor, 'href') === `${relPrefix}${link.path}` && textOf(anchor, true).trim() !== link.label)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
