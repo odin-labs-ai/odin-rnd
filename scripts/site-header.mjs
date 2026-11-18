@@ -40,11 +40,18 @@ const elements = (root, tag) => {
 // declarations with comments such as `display: none /* ... */` that a simple declaration match would miss.
 const hidden = node => node.tagName === 'datalist' || (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
-const handlerWithin = node => (node.attrs ?? []).some(item => item.name.startsWith('on'))
-  || (node.childNodes ?? []).some(handlerWithin);
+const hasHandler = node => (node.attrs ?? []).some(item => item.name.startsWith('on'));
+const handlerWithin = node => hasHandler(node) || (node.childNodes ?? []).some(handlerWithin);
+const handlerOnPath = (node, stop) => {
+  for (let at = node; at; at = at.parentNode) {
+    if (hasHandler(at)) return true;
+    if (at === stop) break;
+  }
+  return false;
+};
 const skippedByTab = node => {
   const value = attr(node, 'tabindex');
-  return value !== undefined && Number.isInteger(Number(value)) && Number(value) < 0;
+  return value !== undefined && Number.parseInt(value, 10) < 0;
 };
 const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || node.tagName === 'datalist' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
@@ -296,7 +303,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   const missing = FOOTER_LINKS.filter(link => {
     if (anchors.some(anchor => attr(anchor, 'href') === `${relPrefix}${link.path}` && textOf(anchor, true).trim() !== link.label)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     const named = anchors.filter(anchor => textOf(anchor).trim() === link.label || textOf(anchor, true).trim() === link.label);
-    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || handlerOnPath(named[0].parentNode, footer) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     return named.length === 0;
   });
   if (!missing.length) return html;
