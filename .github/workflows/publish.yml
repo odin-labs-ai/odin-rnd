@@ -91,7 +91,7 @@ jobs:
         run: node -e "import('./scripts/nina-changes-results-site.mjs').then(() => console.log('imported'), e => { console.error(e); process.exit(1); })"
       - name: Corrections keys are POSIX and every one matches a site page
         run: node --test scripts/windows-paths.test.mjs scripts/publication-corrections.test.mjs
-  # Film copies, decoded (scripts/film-fallbacks.mjs): the build machine has no decoder, so this job installs the
+  # Film copies, decoded (scripts/film-fallbacks.mjs; also the Instagram images): the build machine has no decoder, so this job installs the
   # distribution's ffmpeg and runs scripts/film-fallbacks.test.mjs with FILM_DECODER_REQUIRED, where a missing decoder
   # fails instead of skipping: every MP4 copy of a WebM film decodes start to end, to as many frames as it has samples,
   # its screened frames hash to the record, and it matches its WebM by SSIM. verify needs it, so nothing publishes
@@ -116,6 +116,12 @@ jobs:
         env:
           FILM_DECODER_REQUIRED: '1'
         run: node --test scripts/film-fallbacks.test.mjs
+      # The same decoder proves each Instagram image (site/assets/og/instagram/) decodes to its own lab share card and
+      # to no other card (scripts/og-instagram.test.mjs pins this step).
+      - name: Decode every Instagram image and compare it with its share card
+        env:
+          FILM_DECODER_REQUIRED: '1'
+        run: node --test scripts/og-instagram.test.mjs
   verify:
     needs: [test, windows-paths, film-copies]
     # Runs whatever the shards did, and fails unless every one succeeded: a skipped, cancelled or failed shard can
