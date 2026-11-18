@@ -224,7 +224,7 @@ export const ASSERTS = {
     for (const [arm, x] of Object.entries(arms)) {
       const brokers = x.perBroker ?? {};
       if (JSON.stringify(Object.keys(brokers).sort()) !== JSON.stringify(want)) return `${arm}: the brokers are ${Object.keys(brokers).join(', ')}, not ${want.join(', ')}`;
-      for (const b of a.atList) { const v = brokers[b]; if (v.billedToListMedian !== 1 || v.billedToListRange?.[0] !== 1 || v.billedToListRange?.[1] !== 1) return `${arm}/${b}: did not bill list price on every priced call`; }
+      for (const b of a.atList) { const v = brokers[b]; if (v.billedToListMedian !== 1 || !Array.isArray(v.billedToListRange) || v.billedToListRange.length !== 2 || v.billedToListRange[0] !== 1 || v.billedToListRange[1] !== 1) return `${arm}/${b}: did not bill list price on every priced call`; }
       const v = brokers[a.above];
       const range = v?.billedToListRange;
       if (!Array.isArray(range) || range.length !== 2 || !Number.isFinite(v?.billedToListMedian) || !range.every(Number.isFinite)

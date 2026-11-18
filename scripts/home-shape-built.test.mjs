@@ -145,6 +145,13 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
   const reorderedClaim = '<style>.claim { display: none }</style><main><section id="findings"><li id="proof-fixture"><p class="lab-limit">Limit: a full fixture limit appears first.</p><p class="claim">The real claim is hidden.</p></li></section></main>';
   const proof = `<main><section id="findings">${renderLabProof(siteReader(join(root, 'site'), root), '', { plain: true })}</section></main>`;
+  const proofLimits = [...proof.matchAll(/<p class="lab-limit">[\s\S]*?<\/p>/g)].map(match => match[0]);
+  assert.equal(proofLimits.length, 3, 'one generated limit for each featured finding');
+  let limitAt = 0;
+  const swappedLimits = proof.replace(/<p class="lab-limit">[\s\S]*?<\/p>/g, match => {
+    const at = limitAt++;
+    return at === 0 ? proofLimits[1] : at === 1 ? proofLimits[0] : match;
+  });
   const moduleProbe = `(() => {
     const fold = document.getElementById('all-experiments')?.closest('details');
     const targetExists = !!fold;
@@ -153,7 +160,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, expectedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, expectedProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -170,6 +177,9 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
   assert.deepEqual(actual.limits.map(({ id, claimText }) => ({ id, claimText })), expectedProof.limits.map(({ id, claimText }) => ({ id, claimText })), 'each visible finding retains its source claim');
+  const sourceLimits = new Map(expectedProof.limits.map(({ id, limitText }) => [id, limitText]));
+  assert.ok(actual.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), 'each visible limit stays paired with its own source finding');
+  assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
   for (const limit of actual.limits) {
     assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
     assert.equal(limit.claimBeforeLimit, true, `${limit.id}: claim precedes its limit`);

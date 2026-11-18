@@ -271,6 +271,13 @@ test('a proof claim refuses a missing or placeholder written plan', () => {
   reversedRead.recordProblem = source.recordProblem;
   reversedRead.quoteProblem = source.quoteProblem;
   assert.throws(() => renderLabProof(reversedRead, '../'), /did not bill above list price/, 'an upper endpoint below list cannot prove every priced call was above list');
+  const extraEndpoint = structuredClone(source(broker));
+  Object.values(extraEndpoint.perArm)[0].perBroker.A.billedToListRange = [1, 1, 2];
+  const extraRead = path => path === broker ? extraEndpoint : source(path);
+  extraRead.raw = source.raw;
+  extraRead.recordProblem = source.recordProblem;
+  extraRead.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(extraRead, '../'), /did not bill list price/, 'a third endpoint cannot be ignored for an at-list broker');
 });
 
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results
