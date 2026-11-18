@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { parse } from './html-source-tree.mjs';
+import { decode } from './lab-kit.mjs';
 
 /** The site's own origin: the only prefix besides a run of ../ that a header may use (the 404 page's absolute links). */
 export const SITE_ORIGIN = 'https://odin-labs-ai.github.io/odin-rnd/';
@@ -35,9 +36,11 @@ const elements = (root, tag) => {
   visit(root);
   return found;
 };
-const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+// A static source pass cannot compute CSS. Inline style on this visibility path is therefore refused, including
+// declarations with comments such as `display: none /* ... */` that a simple declaration match would miss.
+const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
-const textOf = (node, visible = false) => node.nodeName === '#text' ? node.value.replaceAll('&amp;', '&') : node.tagName === 'template' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
+const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
   const { startOffset, endOffset } = node.sourceCodeLocation ?? {};
   if (!Number.isInteger(startOffset) || !Number.isInteger(endOffset)) throw new Error('A parsed site element has no source location');

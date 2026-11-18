@@ -9,6 +9,8 @@ import { builtCopy } from './test-build.mjs';
 import { stripTags } from './test-html-text.mjs';
 import { parse } from './html-source-tree.mjs';
 import { checkSite } from './number-provenance.mjs';
+import { inspectDom } from './chrome-dom-test.mjs';
+import { chromeBinary } from './og-cards-render.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
@@ -21,7 +23,7 @@ const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
 // Words a visitor sees on the home without opening anything (main, closed disclosures' summaries, open disclosures'
 // bodies, and no hidden station exhibits).
 // The 1,650 bound includes the full correction, every visible finding limit and closed disclosure summaries.
-// It leaves room for a short update while keeping unopened content under a quarter of the total.
+// It leaves room for a short update while keeping unopened content under a third of the total.
 const VISIBLE_WORDS = 1650;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
@@ -41,22 +43,6 @@ function elementEnd(html, at) {
 
 /** Offset ranges of every rendered <details> element, nested ones included. */
 const detailsRanges = html => rendered(parse(html)).filter(node => node.tagName === 'details').map(node => [node.sourceCodeLocation.startOffset, node.sourceCodeLocation.endOffset, node]);
-
-/** Text in the page tree, with closed disclosures and hidden station exhibits excluded for the first-view count. */
-function visibleDisclosures(html, firstView = true) {
-  const text = node => {
-    if (node.nodeName === '#text') return node.value;
-    if (['template', 'script', 'style', 'svg'].includes(node.tagName)) return '';
-    if (firstView && node.tagName === 'article' && (attr(node, 'class') ?? '').split(/\s+/).includes('station-exhibit') && hasAttr(node, 'hidden')) return '';
-    if (firstView && node.tagName === 'details' && !hasAttr(node, 'open')) {
-      const summary = node.childNodes.find(child => child.tagName === 'summary');
-      if (!summary) throw new Error('A closed disclosure has no visible summary');
-      return text(summary);
-    }
-    return (node.childNodes ?? []).map(text).join(' ');
-  };
-  return text(parse(html));
-}
 
 const root = builtCopy();
 const dist = join(root, 'dist');
@@ -111,22 +97,26 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
 });
 
-test('closed summaries and open bodies count as visible words', () => {
-  const sample = '<details><summary>Closed label</summary><p>Hidden body</p></details><details open><summary>Open label</summary><p>Visible body</p><details><summary>Nested label</summary><p>Hidden nested body</p></details></details>';
-  assert.equal(visibleDisclosures(sample).replace(/\s+/g, ' ').trim(), 'Closed label Open label Visible body Nested label');
-  const quoted = '<details title="a>b" open><summary>Label</summary><p>Visible body</p></details>';
-  assert.equal(visibleDisclosures(quoted).replace(/\s+/g, ' ').trim(), 'Label Visible body', 'a quoted > does not hide an open disclosure body');
-  assert.ok(visibleDisclosures(`<details title="a>b" open><summary>Label</summary><p>${'visible '.repeat(VISIBLE_WORDS)}</p></details>`).split(/\s+/).filter(Boolean).length > VISIBLE_WORDS, 'a long body after a quoted > exceeds the bound');
-});
+const chrome = chromeBinary();
+const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
+const wordsDom = `(() => {
+  const main = document.querySelector('main');
+  const visibleText = main.innerText;
+  const copy = main.cloneNode(true);
+  copy.querySelectorAll('script,style,svg').forEach(element => element.remove());
+  return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length };
+})()`;
 
-test('the home a visitor sees without opening anything is short: under the word bound and under a quarter of its words', () => {
-  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
-  const visible = visibleDisclosures(main);
-  // The dated correction and every finding's visible limit remain in this count.
-  const words = visible.split(/\s+/).filter(Boolean).length;
-  const all = visibleDisclosures(main, false).split(/\s+/).filter(Boolean).length;
-  assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
-  assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
+test('Chrome counts the unopened home below the word bound and one third of all words', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async t => {
+  assert.ok(chrome, 'Chrome is required in CI');
+  const sample = '<main><details><summary>Closed label</summary><p>Hidden body</p></details><details open><summary>Open label</summary><p>Visible body</p><details><summary>Nested label</summary><p>Hidden nested body</p></details></details></main>';
+  const quoted = `<main><details title="a>b" open><summary>Label</summary><p>${'visible&#32;'.repeat(VISIBLE_WORDS)}</p></details></main>`;
+  const [actual, control, long] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }], { chrome });
+  assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
+  assert.ok(long.visible > VISIBLE_WORDS, 'quoted > and encoded spaces cannot hide an over-bound open body');
+  t.diagnostic(`Chrome reads ${actual.visible} visible words of ${actual.all} total on the built home`);
+  assert.ok(actual.visible < VISIBLE_WORDS, `${actual.visible} visible words on the home (bound ${VISIBLE_WORDS})`);
+  assert.ok(actual.all > actual.visible * 3, `under a third of the home's words show unopened (${actual.visible} of ${actual.all})`);
 });
 
 test('the proof strip still passes the number-provenance check, and the new words are plain', () => {

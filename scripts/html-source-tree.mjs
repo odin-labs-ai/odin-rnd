@@ -20,8 +20,10 @@ export function parse(html) {
     if (at < 0) { text(i, html.length); break; }
     text(i, at);
     if (html.startsWith('<!--', at)) {
-      const end = html.startsWith('<!-->', at) ? at + 5 : html.startsWith('<!--->', at) ? at + 6 : html.indexOf('-->', at + 4) + 3;
-      if (end < at + 4) throw new Error('Unclosed HTML comment');
+      // HTML also ends a comment at --!>; skipping only to --> can hide a live <base> or footer.
+      const close = [html.indexOf('-->', at + 4), html.indexOf('--!>', at + 4)].filter(index => index >= 0);
+      const end = html.startsWith('<!-->', at) ? at + 5 : html.startsWith('<!--->', at) ? at + 6 : close.length ? Math.min(...close.map(index => index + (html.startsWith('-->', index) ? 3 : 4))) : -1;
+      if (end < 0) throw new Error('Unclosed HTML comment');
       i = end;
       continue;
     }

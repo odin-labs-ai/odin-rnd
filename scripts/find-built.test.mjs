@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
 import { hrefOnSite, experimentIdsInData } from './site-index.mjs';
 import { FIND_MARKER, GROUPS } from './find-build.mjs';
@@ -12,7 +13,8 @@ import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
 import { SITE_ORIGIN } from './site-header.mjs';
-import { parse } from './html-source-tree.mjs';
+import { inspectDom } from './chrome-dom-test.mjs';
+import { chromeBinary } from './og-cards-render.mjs';
 
 const schema = JSON.parse(readFileSync('scripts/schemas/site-index.schema.json', 'utf8'));
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
@@ -23,35 +25,43 @@ const built = () => {
   const index = JSON.parse(readFileSync(join(dist, 'data/index.json'), 'utf8'));
   return { root, dist, files, index };
 };
-const rendered = (node, tag) => node.tagName === 'template' ? [] : [...(node.tagName === tag ? [node] : []), ...(node.childNodes ?? []).flatMap(child => rendered(child, tag))];
-const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
-const hasAttr = (node, name) => node.attrs?.some(item => item.name === name) ?? false;
-const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'hidden' || name === 'sr-only');
-const text = (node, visible = false) => node.nodeName === '#text' ? node.value : visible && hidden(node) ? '' : (node.childNodes ?? []).map(child => text(child, visible)).join('');
+const chrome = chromeBinary();
+const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
+const footerDom = `(() => {
+  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && el.getClientRects().length > 0;
+  const footers = [...document.querySelectorAll('footer.site-footer')];
+  const footer = footers[0];
+  const partners = footer ? [...footer.querySelectorAll('a')].filter(visible).filter(a => a.innerText.trim() === 'Partners').map(a => a.href) : [];
+  return { url: location.href, footers: footers.length, footerVisible: visible(footer), partners };
+})()`;
 
-function assertPartnersFooter(html, rel) {
-  const document = parse(html);
-  const footers = rendered(document, 'footer').filter(node => attr(node, 'class')?.split(/\s+/).includes('site-footer'));
-  assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
-  const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners' || text(node, true).trim() === 'Partners');
-  assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
-  for (let at = partners[0]; at; at = at.parentNode) assert.ok(!hidden(at), `${rel}: Partners link is visible`);
-  assert.equal(text(partners[0], true).trim(), 'Partners', `${rel}: Partners has a visible label`);
-  const actualHref = attr(partners[0], 'href');
-  assert.ok(actualHref, `${rel}: Partners has a real href`);
-  const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);
-  const bases = rendered(document, 'base');
-  assert.ok(bases.length <= 1, `${rel}: at most one document base`);
-  const effectiveBase = bases.length ? new URL(attr(bases[0], 'href') ?? '', pageUrl) : pageUrl;
-  assert.equal(new URL(actualHref, effectiveBase).href, new URL('partners/', SITE_ORIGIN).href, `${rel}: Partners leads to the site page`);
-}
-
-test('Partners assertion follows browser visibility and the effective document base', () => {
+test('Chrome sees one usable Partners footer on every built page and rejects hidden or misdirected fixtures', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 600000 }, async () => {
+  assert.ok(chrome, 'Chrome is required in CI');
+  const { dist, files } = built();
+  const pages = files.filter(file => file.endsWith('.html'));
   const footer = '<footer class="site-footer"><a href="partners/">Partners</a></footer>';
-  assert.throws(() => assertPartnersFooter(`<dialog>${footer}</dialog>`, 'index.html'), /visible/, 'a closed dialog is hidden');
-  assert.doesNotThrow(() => assertPartnersFooter(`<dialog open>${footer}</dialog>`, 'index.html'), 'an open dialog is visible');
-  assert.throws(() => assertPartnersFooter(`<footer class="site-footer"><div popover><a href="partners/">Partners</a></div></footer>`, 'index.html'), /visible/, 'a closed popover is hidden');
-  assert.throws(() => assertPartnersFooter(`<base href="journal/">${footer}`, 'index.html'), /leads to the site page/, 'a base changes the actual destination');
+  const fixtures = [
+    `<dialog>${footer}</dialog>`, `<dialog open>${footer}</dialog>`,
+    '<footer class="site-footer"><div popover><a href="partners/">Partners</a></div></footer>',
+    '<footer class="site-footer"><a href="partners/"><template>Partners</template></a></footer>',
+    `<!-- first --!><base href="journal/"><!-- second -->${footer}`,
+    `<footer class="site-footer" style="display: none /* temporarily hidden */;" ><a href="partners/">Partners</a></footer>`,
+  ];
+  const result = await inspectDom([...pages.map(file => ({ file: join(dist, file), expression: footerDom })), ...fixtures.map(html => ({ html, expression: footerDom }))], { chrome });
+  const expected = new URL('partners/', pathToFileURL(join(dist, 'index.html'))).href;
+  pages.forEach((page, i) => {
+    assert.equal(result[i].footers, 1, `${page}: one footer in the browser DOM`);
+    assert.equal(result[i].footerVisible, true, `${page}: footer is visible`);
+    assert.deepEqual(result[i].partners, [page === '404.html' ? new URL('partners/', SITE_ORIGIN).href : expected], `${page}: one visible Partners link to the real page`);
+  });
+  const [closed, open, popover, template, base, style] = result.slice(pages.length);
+  assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
+  assert.equal(open.footerVisible, true, 'open dialog shows its footer');
+  assert.equal(open.partners.length, 1, 'open dialog shows its link');
+  assert.deepEqual(popover.partners, [], 'closed popover hides the link');
+  assert.deepEqual(template.partners, [], 'template text does not label a link');
+  assert.notEqual(base.partners[0], new URL('partners/', base.url).href, 'abrupt comment end exposes a base that changes the destination');
+  assert.equal(style.footerVisible, false, 'inline CSS comment still hides the footer');
 });
 
 test('the build writes the site index with every item schema-valid and linking a file of the built site', () => {
@@ -163,8 +173,7 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
-    // Partners is in the footer of every page, no longer in the header.
-    assertPartnersFooter(html, rel);
+    // The browser test above checks the rendered Partners footer and its effective destination on every page.
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();
