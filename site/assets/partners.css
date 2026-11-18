@@ -1,5 +1,9 @@
 .partner-intro {
   align-items: start;
+  width: 100%;
+  padding-inline: max(4.2%, calc((100% - 1320px) / 2));
+  background: #102d25;
+  color: #eef3e9;
   grid-template-columns: minmax(0, 1fr) minmax(0, .95fr);
   column-gap: clamp(32px, 7vw, 100px);
 }
@@ -9,12 +13,12 @@
 .partner-study {
   align-self: start;
   padding: clamp(24px, 3vw, 44px);
-  color: #eef5ec;
-  background: #14332c;
-  border-top: 4px solid #db8650;
+  color: #202622;
+  background: #e5eadd;
+  border-top: 4px solid #60ddb0;
 }
 .partner-study-meta,
-.partner-study-sources > div,
+.partner-study-sources,
 .partner-resources {
   display: flex;
   align-items: center;
@@ -25,7 +29,7 @@
   justify-content: space-between;
   padding-bottom: 14px;
   border-bottom: 1px solid #55766a;
-  color: #c4d6cc;
+  color: #496559;
   font: 14px/1.5 var(--mono);
 }
 .partner-study h2 {
@@ -44,7 +48,7 @@
 .partner-study .partner-study-limit {
   margin-top: 16px;
   font-size: 17px;
-  color: #d4e2d8;
+  color: #496559;
 }
 .partner-study a {
   min-height: 44px;
@@ -64,7 +68,7 @@
   font-size: 16px;
 }
 .partner-study a:focus-visible {
-  outline: 3px solid #ffbd84;
+  outline: 3px solid #236747;
   outline-offset: 3px;
 }
 @media (max-width: 860px) {
@@ -74,17 +78,19 @@
   }
 }
 
-.partner-intro h1 { max-width: 12ch; }
-.partner-intro .company-lead { font-size: clamp(21px, 2vw, 28px); line-height: 1.45; }
-.partner-correction { margin-top: 18px; color: var(--steel); }
+.partner-intro h1 { max-width: 12ch; color: #eef3e9; }
+.partner-intro .button-primary { color: #102d25; background: #60ddb0; }
+.partner-intro .button-primary:hover { background: #85e8c3; }
+.partner-intro .company-lead { font-size: clamp(20px, 1.65vw, 25px); line-height: 1.5; color: #d6e3d9; }
+.partner-correction { margin-top: 18px; color: #b2c6b9; }
+.partner-correction summary:focus-visible, .partner-intro .button:focus-visible { outline: 3px solid #60ddb0; outline-offset: 4px; }
 .partner-correction .source-correction { margin: 6px 0 14px; }
-.partner-correction summary, .partner-study-sources summary, .partner-track summary, .partner-notes summary {
+.partner-correction summary, .partner-track summary, .partner-notes summary {
   min-height: 44px;
   padding: 10px 0;
   cursor: pointer;
 }
-.partner-correction summary, .partner-study-sources summary, .partner-notes summary { font-size: 16px; }
-.partner-study summary:focus-visible { outline: 3px solid #ffbd84; outline-offset: 3px; }
+.partner-correction summary, .partner-notes summary { font-size: 16px; }
 #tracks:has(.partner-track) { padding-block: clamp(40px, 5vw, 74px); }
 .partner-track { border-bottom: 1px solid var(--rule); scroll-margin-top: 24px; }
 .partner-track:first-of-type { margin-top: 24px; border-top: 1px solid var(--rule); }

@@ -10,6 +10,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
+import { failoverFigure } from './failover-figure.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
 
 export const PAGES = {
@@ -260,8 +261,8 @@ export function renderClaims(read, list, up = '../', { plain = false } = {}) {
     if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
     const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
     const result = `<p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p>`;
-    const body = plain && c.question ? `<details><summary>${escape(c.question)}</summary>${result}</details>` : result;
-    return `<li id="${escape(c.id)}">${body}</li>`;
+    const heading = c.headline ? `<h3 class="lab-finding">${fillClaim(read, { ...c, text: c.headline }, up)}</h3>` : '';
+    return `<li id="${escape(c.id)}">${heading}${result}</li>`;
   }).join('');
 }
 
@@ -395,7 +396,10 @@ export const HOME_MARKER = '<!--LAB_PROOF-->';
 export function placeHomeProof(html, read = siteReader()) {
   const parts = html.split(HOME_MARKER);
   if (parts.length !== 2) throw new Error(`site/index.html must hold ${HOME_MARKER} exactly once`);
-  return parts.join(renderLabProof(read, '', { plain: true }));
+  const page = parts.join(renderLabProof(read, '', { plain: true }));
+  const figure = page.split('<!--FAILOVER_FIGURE-->');
+  if (figure.length !== 2) throw new Error('Expected the featured failover figure exactly once');
+  return figure.join(failoverFigure(read('data/failover/results.json')));
 }
 
 /** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */

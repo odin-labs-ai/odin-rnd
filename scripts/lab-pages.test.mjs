@@ -207,8 +207,16 @@ test('page configuration holds no number that is shown: claim texts and not-meas
 // The home proof strip, on the real render path: placed at the marker, its links root-relative (no ../ from the home
 // page), and passing the home strip check against the committed records.
 test('the home proof strip renders from lab-proof.json with root-relative links and passes the strip check', () => {
-  const home = placeHomeProof(`<html><body><section id="findings"><ol>${HOME_MARKER}</ol></section></body></html>`);
+  const home = placeHomeProof(`<html><body><!--FAILOVER_FIGURE--><section id="findings"><ol>${HOME_MARKER}</ol></section></body></html>`);
   assert.ok(!home.includes(HOME_MARKER));
+  const findings = [...home.matchAll(/<li id="proof-[^"]+">([\s\S]*?)<\/li>/g)].map(match => match[1]);
+  assert.equal(findings.length, 3);
+  for (const finding of findings) {
+    assert.doesNotMatch(finding, /<details\b|\shidden\b/, 'the measurement, limit and source links are visible');
+    assert.match(finding, /<h3 class="lab-finding">[^<]*<a class="lab-num"[^>]+data-source=/, 'the headline names a record-bound measurement');
+    assert.match(finding, /class="lab-limit"/);
+    assert.match(finding, /class="lab-source"[\s\S]+href="journal\/[^"]+"[\s\S]+href="data\/[^"]+\/results\.json"/);
+  }
   const hrefs = [...home.matchAll(/href="([^"]*)"/g)].map(m => m[1]);
   assert.ok(hrefs.length >= 6, 'the strip links its numbers and sources');
   assert.deepEqual(hrefs.filter(h => h.startsWith('../')), [], 'no ../ link on the home page');

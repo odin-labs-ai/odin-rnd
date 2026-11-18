@@ -1,6 +1,6 @@
 // Assemble the research homepage after records, result links and corrections have been generated.
-// The featured study, measured findings and next reads stay visible. A native disclosure holds the
-// historical factory, updates and longer sections. Preserve their fragment links and records, since
+// The featured study, measured findings, interactive factory and next reads stay visible. A native
+// disclosure holds updates and longer sections. Preserve their fragment links and records, since
 // other pages and published bookmarks still point into this page. The hash opener handles nested folds.
 import { createHash } from 'node:crypto';
 import { journalRows } from './experiment-ledger.mjs';
@@ -18,9 +18,9 @@ export const CHECK_TITLE_ID = 'how-we-check-title';
 export const CHECK_HEADING = 'The checks we study, in one drawing';
 export const CHECK_INTRO = 'A concept drawing of the checks we test, each its own experiment and not a stage results pass through; pick one to see a real example and its record.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
-export const ADDED_IDS = [FURTHER_ID, CHECK_ID, CHECK_TITLE_ID];
+export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
-/** Source order for the study and findings, then the detailed factory, updates and offer in the archive. */
+/** Source order for the study, findings, factory, and the updates and offer retained in the archive. */
 export const OPEN_ORDER = ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and
@@ -38,9 +38,9 @@ export const FOLDS = [
 
 /** Selected next reads after the findings: a recording, the research method and a partner evaluation. */
 export const FURTHER = [
-  { href: 'labs/agent-space/#film-agent-space-30s', label: 'Watch the Agent Space', text: 'A recorded walk through the lab where agents answer questions about their world.' },
+  { href: 'labs/', label: 'Explore the labs', text: 'Follow our ongoing work on agents, models and databases.' },
   { href: 'methods/', label: 'How we test', text: 'How we set a question, measure a result and keep a record of what failed.' },
-  { href: 'partners/', label: 'Work with the lab', text: 'Bring an engineering question for a public study or a private engagement.' },
+  { href: 'projects/', label: 'Use the tools', text: 'Inspect the public tools behind our engineering experiments.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
@@ -202,12 +202,12 @@ export function shapeHome(html) {
   const indent = /\n[ \t]*$/.exec(html.slice(from, first.start))?.[0] ?? '\n';
   const floor = splitFloor(html, byKey.get('floor'), indent);
   const piece = key => key === 'updates' ? html.slice(updatesStart, updatesEnd) : key === 'floor' ? floor.hero : key === CHECK_ID ? floor.check : html.slice(byKey.get(key).start, byKey.get(key).end);
-  const archive = OPEN_ORDER.slice(2).map(piece);
+  const archive = OPEN_ORDER.slice(3).map(piece);
   for (const f of FOLDS) archive.push(fold(html, byKey.get(f.key), f));
   archive.push(piece(CLOSING));
   const parts = [
-    floor.hero, piece('findings'), renderFurther(),
-    '<details class="home-archive"><summary>Explore the factory and earlier work</summary>',
+    floor.hero, piece('findings'), floor.check, renderFurther(),
+    '<details class="home-archive"><summary>Earlier work and project notes</summary>',
     ...archive, '</details>',
   ];
   let out = html.slice(0, first.start) + parts.join(indent) + html.slice(last.end);

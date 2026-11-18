@@ -6,11 +6,11 @@
   "claims": [
     {
       "id": "proof-review-cost",
-      "question": "Does a more expensive AI reviewer catch more bugs?",
+      "headline": "The cheapest reviewer caught defects in {cheapCaught} of {cheapOf} reviews",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "Paying more for AI code review bought little. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
-      "limit": "Our own changes and planted defects, reviewed without tools; a catch means the right file was flagged. Cost is what the reseller billed.",
+      "text": "It cost {cheapCost} per review. The most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. Their uncertainty ranges overlapped.",
+      "limit": "Repeat runs on private changes with planted defects. A catch meant flagging the right file.",
       "values": {
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
         "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
@@ -32,17 +32,13 @@
     },
     {
       "id": "proof-brokers",
-      "question": "Do model resellers deliver the model you asked for?",
+      "headline": "Reseller prices differed by {spreadS}",
       "record": "data/broker-same-model/results.json",
       "note": "journal/broker-same-model-results.html",
-      "text": "Resellers of model access (brokers) served the model we asked for, at different prices. We sent {calls} identical requests at the same moment: {subS} were silently swapped to another model for {modelS} and {subM} for {modelM}. Broker A and Broker C charged list price; Broker B charged more, a price spread of {spreadS} on each model.",
-      "limit": "Only the resellers we use, within minutes on that morning; some requests got no answer. Resellers are named by letter.",
+      "text": "Across {calls} requests, resellers A and C billed list price and B billed more for the same models. Every successful response reported the requested model.",
+      "limit": "Prices cover billed calls during the test window. Some requests failed.",
       "values": {
         "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
-        "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
-        "subS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/silentSubstitutions", "format": "int" },
-        "modelM": { "source": "data/broker-same-model/results.json#/perArm/mini/family", "format": "code" },
-        "subM": { "source": "data/broker-same-model/results.json#/perArm/mini/silentSubstitutions", "format": "int" },
         "spreadS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/rate/spread", "format": "pct" }
       },
       "window": {
@@ -57,12 +53,16 @@
     },
     {
       "id": "proof-self-verify",
-      "question": "Can an AI reviewer recognise its own false alarms?",
+      "headline": "Self-check cleared {clearedA} of {flaggedA} flagged reviews",
       "record": "data/self-verify/results.json",
       "note": "journal/self-verify-results.html",
-      "text": "A negative result stays published. Can an AI reviewer talk itself out of its own false alarms? Against a pass mark we wrote down in advance, the answer was {decision}: with a self-check step, its false alarms on clean changes stayed at {faA} and {faB} in its separate runs.",
-      "limit": "The reviewer model named in the record, on our own private changes; other models may differ. The diagnosis itself is not checked.",
+      "text": "In the repeat, it cleared {clearedB} of {flaggedB}. With {faA} and {faB} false alarms left, the study’s answer on adopting the extra check was {decision}.",
+      "limit": "We scored verdicts on private changes. We did not check the model’s explanations.",
       "values": {
+        "clearedA": { "source": "data/self-verify/results.json#/verdictChanges/0/turnedToShipByVerify", "format": "int" },
+        "flaggedA": { "source": "data/self-verify/results.json#/verdictChanges/0/pass1NonShip", "format": "int" },
+        "clearedB": { "source": "data/self-verify/results.json#/verdictChanges/1/turnedToShipByVerify", "format": "int" },
+        "flaggedB": { "source": "data/self-verify/results.json#/verdictChanges/1/pass1NonShip", "format": "int" },
         "decision": { "source": "data/self-verify/results.json#/decision", "format": "word" },
         "faA": { "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms", "format": "int" },
         "faB": { "source": "data/self-verify/results.json#/arms/A1-b/falseAlarms", "format": "int" }

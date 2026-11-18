@@ -163,10 +163,10 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Find']);
-  // A real question, a scoped answer, and the full study share the same reading path.
-  assert.match(parts['hero premise'], /<h1[^>]*>[^<]+\?<\/h1>/);
-  assert.match(parts['hero premise'], /on a single host/);
-  assert.match(parts['hero premise'], /href="journal\/failover-results\.html">Read the failover study/);
+  // Both public research and private evaluation are legible in the entrance.
+  assert.match(parts['hero premise'], /<h1[^>]*>Experiment results<\/h1>/);
+  assert.match(parts['hero premise'], /Run a closed-door study/);
+  assert.ok(parts['hero premise'].includes('href="partners/#closed-door"'));
   // Every finding has its limit in words and a dated line, and links its result and its record.
   const findings = [...parts['what we found'].matchAll(/<li id="proof-[^"]+">[\s\S]*?<\/li>/g)].map(m => m[0]);
   assert.ok(findings.length >= 3 && findings.length <= 5, `three to five findings, found ${findings.length}`);
