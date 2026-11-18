@@ -444,6 +444,11 @@ test('Partners moved to the footer: once in the site footer of every committed p
   assert.throws(() => addFooterLinks('<footer class="site-footer"><a href="partners/">Partners</a><a href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'duplicate Partners links are refused');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
   assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');
+  const safeInsertion = '<footer class="site-footer"><section><div></div></section></footer>';
+  const inserted = addFooterLinks(safeInsertion, { relPrefix: '' });
+  assert.equal(inserted, '<footer class="site-footer"><section><div><a href="partners/">Partners</a></div></section></footer>', 'a safe wrapper allows one Partners insertion');
+  assert.equal(addFooterLinks(inserted, { relPrefix: '' }), inserted, 'a safe insertion stays idempotent');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><section onclick="return false"><div></div></section></footer>', { relPrefix: '' }), /invalid Partners insertion site/, 'a wrapping handler refuses insertion before writing a link that could not navigate');
   const hiddenFirst = '<footer class="site-footer"><div hidden></div><div><a href="x">X</a></div></footer>';
   const visibleSecond = '<footer class="site-footer"><div hidden></div><div><a href="x">X</a><a href="partners/">Partners</a></div></footer>';
   assert.equal(addFooterLinks(hiddenFirst, { relPrefix: '' }), visibleSecond, 'insert into the visible div');

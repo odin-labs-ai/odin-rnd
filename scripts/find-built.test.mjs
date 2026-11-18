@@ -85,7 +85,8 @@ const footerDom = `(() => {
     if (!el || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
     if (!readableForeground(el)) return false;
     for (let node = el; node; node = node.parentElement) {
-      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(getComputedStyle(node).filter)) return false;
+      const style = getComputedStyle(node);
+      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(style.filter) || style.clipPath !== 'none') return false;
     }
     return [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
   };
@@ -100,7 +101,7 @@ const footerDom = `(() => {
     const nodes = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
     const parts = [];
     while (nodes.nextNode()) if (nodes.currentNode.textContent.trim()) parts.push(nodes.currentNode.parentElement);
-    return parts.length > 0 && parts.every(visible);
+    return parts.length > 0 && parts.every(part => visible(part) && hittable(part));
   };
   const footers = [...document.querySelectorAll('footer.site-footer')];
   const footer = footers[0];
@@ -132,6 +133,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<style>.site-footer a { -webkit-text-fill-color: transparent; text-shadow: none }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { opacity: 0 }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
+    '<style>.site-footer a span { clip-path: inset(50%) }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -144,7 +146,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, fadedNestedLabel, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, fadedNestedLabel, clippedNestedLabel, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -161,6 +163,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(transparentFill.partners, [], 'a transparent glyph fill makes the Partners label unreadable');
   assert.deepEqual(nestedLabel.partners, [new URL('partners/', nestedLabel.url).href], 'a visible nested label remains usable');
   assert.deepEqual(fadedNestedLabel.partners, [], 'an invisible nested label cannot make the anchor appear usable');
+  assert.deepEqual(clippedNestedLabel.partners, [], 'a fully clipped nested label cannot make the anchor appear usable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });

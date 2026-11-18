@@ -313,6 +313,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
     for (let at = node.parentNode; at && at !== footer; at = at.parentNode) if (at.tagName === 'a') return false;
     return true;
   });
+  if (handlerOnPath(div ?? footer, footer)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
   const at = div?.sourceCodeLocation?.endTag?.startOffset ?? end;
   return html.slice(0, at) + links + html.slice(at);
 }
