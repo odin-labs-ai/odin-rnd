@@ -175,6 +175,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   for (const child of node.childNodes ?? []) {
     if (child.nodeName === '#text' && !child.value.trim()) continue;
     if (child.tagName !== 'a' || !child.sourceCodeLocation?.endTag) throw new Error(`The header navigation of ${label} holds more than links`);
+    if (elements(child, 'a').length !== 1) throw new Error(`The header navigation of ${label} has a nested anchor that this pass would discard`);
     links.push([source(html, child), textOf(child), child]);
   }
   for (const [whole, text, anchor] of links) {
@@ -214,6 +215,8 @@ export function normaliseHeaders({ distDir }) {
     const relPrefix = rel === '404.html' ? SITE_ORIGIN : '../'.repeat(rel.split('/').length - 1);
     const source = readFileSync(file, 'utf8');
     refuseUnsupportedFooterSource(source);
+    const originalFooters = elements(parse(source), 'footer').filter(node => hasClass(node, 'site-footer'));
+    if (originalFooters.length !== 1) throw new Error(`Expected exactly one original site footer in ${rel}, found ${originalFooters.length}`);
     const html = addFooterLinks(normaliseHeader(source, { relPrefix, current: sectionFor(rel), label: rel }), { relPrefix, label: rel });
     if (html !== source) { writeFileSync(file, html); counts.changed++; }
   }

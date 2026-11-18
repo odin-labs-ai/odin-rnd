@@ -31,7 +31,8 @@ const footerDom = `(() => {
   const readableForeground = el => {
     paint.clearRect(0, 0, 1, 1);
     paint.fillStyle = '#000';
-    paint.fillStyle = getComputedStyle(el).color;
+    const style = getComputedStyle(el);
+    paint.fillStyle = style.getPropertyValue('-webkit-text-fill-color') || style.color;
     paint.fillRect(0, 0, 1, 1);
     return paint.getImageData(0, 0, 1, 1).data[3] > 0;
   };
@@ -77,6 +78,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<style>.site-footer a { filter: opacity(0) }</style>${footer}`,
     `<style>.site-footer a { color: transparent; text-shadow: none }</style>${footer}`,
     `<style>.site-footer a { color: color(srgb 0 0 0 / 0); text-shadow: none }</style>${footer}`,
+    `<style>.site-footer a { -webkit-text-fill-color: transparent; text-shadow: none }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -89,7 +91,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -103,6 +105,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(filtered.partners, [], 'a fully transparent Partners link is not visible');
   assert.deepEqual(transparentText.partners, [], 'a transparent Partners label without a text shadow is unreadable');
   assert.deepEqual(modernTransparentText.partners, [], 'a color(srgb) transparent Partners label is unreadable');
+  assert.deepEqual(transparentFill.partners, [], 'a transparent glyph fill makes the Partners label unreadable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });

@@ -110,7 +110,8 @@ const wordsDom = `(() => {
   const readableForeground = el => {
     paint.clearRect(0, 0, 1, 1);
     paint.fillStyle = '#000';
-    paint.fillStyle = getComputedStyle(el).color;
+    const style = getComputedStyle(el);
+    paint.fillStyle = style.getPropertyValue('-webkit-text-fill-color') || style.color;
     paint.fillRect(0, 0, 1, 1);
     return paint.getImageData(0, 0, 1, 1).data[3] > 0;
   };
@@ -152,6 +153,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const correctionBlock = home.slice(correctionAt, elementEnd(home, correctionAt));
   const faded = `<style>.correction-note > p { opacity: 0 }</style><main>${correctionBlock}</main>`;
   const transparent = `<style>.correction-note > p, .correction-note > p * { color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
+  const transparentFill = `<style>.correction-note > p, .correction-note > p * { -webkit-text-fill-color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
   const clipped = `<style>.correction-note { clip-path: inset(50%) }</style><main>${correctionBlock}</main>`;
   const filtered = `<style>.correction-note { filter: opacity(0) }</style><main>${correctionBlock}</main>`;
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
@@ -187,7 +189,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -202,6 +204,8 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.ok(fadedCorrection.correctionParagraphVisible.every(value => value === false), 'opacity zero on child paragraphs is caught');
   assert.equal(transparentCorrection.correctionLabelVisible, false, 'a transparent correction label is unreadable');
   assert.ok(transparentCorrection.correctionParagraphVisible.every(value => value === false), 'transparent correction paragraphs are unreadable');
+  assert.equal(transparentFillCorrection.correctionLabelVisible, false, 'a transparent correction glyph fill makes the label unreadable');
+  assert.ok(transparentFillCorrection.correctionParagraphVisible.every(value => value === false), 'a transparent correction glyph fill makes every paragraph unreadable');
   assert.equal(clippedCorrection.correctionVisible, false, 'a fully clipped correction is caught');
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');

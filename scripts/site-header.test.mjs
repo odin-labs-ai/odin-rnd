@@ -159,6 +159,9 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), atUpdates), /does not account for/);
   const canonicalHome = normalise(read('index.html'), 'index.html');
   assert.throws(() => normaliseHeader(canonicalHome.replace('href="methods/">How we test', 'href="evidence/">How we test'), { relPrefix: '', label: 'index.html' }), /does not account for/, 'a canonical label cannot hide an unaccounted destination');
+  const nested = canonicalHome.replace('<a href="methods/">How we test</a>', '<a href="methods/"><a href="evidence/">How we test</a></a>');
+  assert.notEqual(nested, canonicalHome, 'the recognized navigation anchor gained a second destination');
+  assert.throws(() => normaliseHeader(nested, { relPrefix: '', label: 'index.html' }), /nested anchor/, 'a descendant anchor cannot be erased with its parent');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
   const lab = read('labs/rogue/index.html');
@@ -225,6 +228,18 @@ test('a document base inside a recognized nav link is refused before normalizati
     writeFileSync(join(dir, 'index.html'), poisoned);
     assert.throws(() => normaliseHeaders({ distDir: dir }), /Unexpected document base/, 'the named-page build path refuses the original parsed base');
     assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the rejected page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the named-page build refuses a second parsed footer before navigation can erase it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-footer-preflight-'));
+  try {
+    const source = read('index.html');
+    const poisoned = source.replace('<a href="#floor">Factory</a>', '<a href="#floor"><footer class="site-footer"><div></div></footer>Factory</a>');
+    assert.notEqual(poisoned, source, 'the recognized Factory link gained a second parsed footer');
+    writeFileSync(join(dir, 'index.html'), poisoned);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /exactly one original site footer/, 'the original parsed page has two site footers');
+    assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the refused page was not rewritten');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
