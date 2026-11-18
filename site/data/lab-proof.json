@@ -8,7 +8,7 @@
       "id": "proof-review-cost",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "Paying more for AI code review was not clearly better. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap, so none was clearly ahead.",
+      "text": "AI code reviewers varied in price and defects caught in this run. On a sealed set of private code changes, the cheapest reviewer cost {cheapCost} a review and caught {cheapCaught} of {cheapOf} planted defects; the most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. The uncertainty ranges of all the reviewers overlap.",
       "limit": "Our own changes and planted defects, reviewed without tools; a catch means the right file was flagged. Cost is what the reseller billed.",
       "values": {
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },

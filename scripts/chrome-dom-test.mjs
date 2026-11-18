@@ -85,6 +85,11 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
       try {
         const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
         await send('Page.enable', {}, sessionId);
+        if (job.blockedUrls) {
+          await send('Network.enable', {}, sessionId);
+          await send('Network.setCacheDisabled', { cacheDisabled: true }, sessionId);
+          await send('Network.setBlockedURLs', { urls: job.blockedUrls }, sessionId);
+        }
         const loaded = new Promise((resolve, reject) => {
           const timer = setTimeout(() => { loads.delete(sessionId); reject(new Error(`Chrome did not load ${url}`)); }, timeoutMs);
           loads.set(sessionId, () => { clearTimeout(timer); resolve(); });

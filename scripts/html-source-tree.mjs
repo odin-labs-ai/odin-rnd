@@ -70,6 +70,9 @@ export function parse(html) {
       let close = lower.indexOf(`</${name}`, end);
       while (close >= 0 && ![...WS, '/', '>'].includes(html[close + name.length + 2])) close = lower.indexOf(`</${name}`, close + 1);
       if (close < 0) throw new Error(`Unclosed raw HTML tag <${name}>`);
+      // Script double-escaped state can keep a footer after this first end tag inside script text.
+      // We need exact offsets for mutation, so refuse that unsupported state instead of inventing a footer.
+      if (name === 'script' && /<!--[\s\S]*<script(?=[\s/>])/i.test(html.slice(end, close))) throw new Error('Unsupported double-escaped script text');
       const closeEnd = html.indexOf('>', close);
       if (closeEnd < 0) throw new Error(`Unclosed raw HTML tag </${name}>`);
       node.sourceCodeLocation.endTag = { startOffset: close, endOffset: closeEnd + 1 };
