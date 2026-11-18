@@ -1,9 +1,10 @@
 // Assemble the research homepage after records, result links and corrections have been generated.
-// The featured study, measured findings, interactive factory and next reads stay visible. A native
+// The featured study, tools, measured findings, interactive factory and next reads stay visible. A native
 // disclosure holds updates and longer sections. Preserve their fragment links and records, since
 // other pages and published bookmarks still point into this page. The hash opener handles nested folds.
 import { createHash } from 'node:crypto';
 import { journalRows } from './experiment-ledger.mjs';
+import { presentTools } from './tool-directory.mjs';
 
 /** The stylesheet the shaped home links (and only the home). */
 export const HOME_CSS = 'assets/home.css';
@@ -20,8 +21,9 @@ export const CHECK_INTRO = 'A concept drawing of the checks we test, each its ow
 /** The ids this pass adds, in page order; no other id may appear or go. */
 export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
-/** Source order for the study, findings, factory, and the updates and offer retained in the archive. */
-export const OPEN_ORDER = ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us'];
+/** Sections a visitor can explore immediately, in their reading order. */
+export const OPEN_ORDER = ['floor', 'projects', 'findings', CHECK_ID];
+const ARCHIVE_LEAD = ['updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and
  *  the words of the fold's summary. */
@@ -31,23 +33,21 @@ export const FOLDS = [
   { key: 'how-it-works', head: 'section-heading', summary: 'Show how a change moves through the factory' },
   { key: 'experiments', head: 'section-heading', summary: 'Show the experiments and where each one stands' },
   { key: 'research-note', head: '', summary: 'Read the build note' },
-  { key: 'projects', head: 'section-heading', summary: 'Show the tools' },
   { key: 'drawing-board', head: 'drawing-board-header', summary: 'Show the two products' },
   { key: 'journal', head: 'section-heading', summary: 'Show the latest field notes' },
 ];
 
-/** Selected next reads after the findings: a recording, the research method and a partner evaluation. */
+/** Additional research collections and methods. */
 export const FURTHER = [
   { href: 'labs/', label: 'Explore the labs', text: 'Follow our ongoing work on agents, models and databases.' },
   { href: 'methods/', label: 'How we test', text: 'How we set a question, measure a result and keep a record of what failed.' },
-  { href: 'projects/', label: 'Use the tools', text: 'Inspect the public tools behind our engineering experiments.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
 const EXPECTED = ['floor', 'findings', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
 const CLOSING = 'closing';
 // Every expected section is shown exactly once: open, folded or the closing line.
-if (JSON.stringify([...OPEN_ORDER.filter(key => key !== CHECK_ID), ...FOLDS.map(f => f.key), CLOSING].sort()) !== JSON.stringify([...EXPECTED].sort())) throw new Error('Home shape: OPEN_ORDER, FOLDS and the closing line do not cover the expected sections');
+if (JSON.stringify([...OPEN_ORDER.filter(key => key !== CHECK_ID), ...ARCHIVE_LEAD, ...FOLDS.map(f => f.key), CLOSING].sort()) !== JSON.stringify([...EXPECTED].sort())) throw new Error('Home shape: OPEN_ORDER, FOLDS and the closing line do not cover the expected sections');
 const UPDATES_OPEN = /<!-- updates:[^>]*-->\s*$/;
 const UPDATES_CLOSE = /^\s*<!-- \/updates -->/;
 const LEDGER_OPEN = '<div class="experiment-ledger" id="all-experiments">';
@@ -201,12 +201,19 @@ export function shapeHome(html) {
   }
   const indent = /\n[ \t]*$/.exec(html.slice(from, first.start))?.[0] ?? '\n';
   const floor = splitFloor(html, byKey.get('floor'), indent);
-  const piece = key => key === 'updates' ? html.slice(updatesStart, updatesEnd) : key === 'floor' ? floor.hero : key === CHECK_ID ? floor.check : html.slice(byKey.get(key).start, byKey.get(key).end);
-  const archive = OPEN_ORDER.slice(3).map(piece);
+  const piece = key => {
+    if (key === 'floor') return floor.hero;
+    if (key === CHECK_ID) return floor.check;
+    if (key === 'updates') return html.slice(updatesStart, updatesEnd);
+    const section = byKey.get(key);
+    const original = html.slice(section.start, section.end);
+    return key === 'projects' ? presentTools(original) : original;
+  };
+  const archive = ARCHIVE_LEAD.map(piece);
   for (const f of FOLDS) archive.push(fold(html, byKey.get(f.key), f));
   archive.push(piece(CLOSING));
   const parts = [
-    floor.hero, piece('findings'), floor.check, renderFurther(),
+    ...OPEN_ORDER.map(piece), renderFurther(),
     '<details class="home-archive"><summary>Earlier work and project notes</summary>',
     ...archive, '</details>',
   ];

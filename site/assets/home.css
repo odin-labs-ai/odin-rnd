@@ -110,3 +110,41 @@
   #findings .proof-strip > li + li { border-top: 1px solid var(--rule); }
   #findings .lab-finding { min-height: 0; margin-bottom: 8px; }
 }
+
+/* Keep the tool and its usable links together on the first read. */
+#projects {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 clamp(28px,4vw,68px);
+  padding-block:clamp(36px,5vw,76px);
+}
+#projects .section-heading {
+  grid-column:1/-1; display:flex; align-items:baseline; justify-content:space-between;
+  flex-wrap:wrap; gap:8px 24px; margin-bottom:20px;
+}
+#projects .section-heading h2 { font-size:clamp(32px,3.4vw,52px); line-height:1.1; }
+#projects .section-heading a { display:inline-flex; align-items:center; gap:8px; min-height:44px; color:var(--brand); }
+#projects .project-row { display:block; margin:0; padding:22px 0 16px; border:0; border-top:1px solid var(--rule); }
+#projects .project-number { display:none; }
+#projects .project-description { min-width:0; max-width:none; }
+#projects .project-description h3 { margin:0; font:600 clamp(22px,2.3vw,32px)/1.16 var(--display); letter-spacing:-.035em; }
+#projects .tool-purpose { max-width:57ch; margin:10px 0 2px; font-size:17px; line-height:1.5; }
+#projects .project-links { display:flex; flex-wrap:wrap; gap:0 18px; margin:2px 0 0; }
+#projects .project-links a { min-height:44px; font-size:16px; }
+#projects .tool-notes { margin:0; border:0; }
+#projects .tool-notes summary {
+  display:list-item; list-style:disclosure-closed inside; width:fit-content; min-height:44px;
+  padding:10px 0; color:var(--steel); cursor:pointer; font:500 16px/1.5 Manrope,sans-serif;
+}
+#projects .tool-notes[open]>summary { list-style-type:disclosure-open; }
+#projects .tool-notes p { margin:8px 0 14px; max-width:58ch; font-size:16px; }
+#projects .tool-notes .project-spec { max-width:34em; padding:0; margin:18px 0 6px; border:0; }
+#projects .tool-notes .project-spec div { display:flex; gap:16px; justify-content:space-between; }
+#projects .tool-notes .project-spec :is(dt,dd) { font-size:14px; }
+#projects :is(summary,a):focus-visible { outline:2px solid var(--brand); outline-offset:3px; }
+.home-further ul { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(max-width:760px) {
+  #projects,.home-further ul { grid-template-columns:minmax(0,1fr); }
+  #projects .section-heading { margin-bottom:10px; }
+  #projects .project-row { padding-block:18px 12px; }
+}

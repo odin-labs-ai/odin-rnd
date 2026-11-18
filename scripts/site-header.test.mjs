@@ -33,6 +33,7 @@ test('every page gets one nav with the canonical destinations in order, the old 
     const header = out.match(/<header class="site-header[\s\S]*?<\/header>/g);
     assert.equal(header.length, 1, `${rel}: one header`);
     assert.equal((header[0].match(/<nav\b/g) || []).length, 1, `${rel}: one nav`);
+    assert.ok(navOf(out).includes(`</details><a href="${prefixOf(rel)}#projects">Tools</a>`), `${rel}: Tools is reachable with Menu closed`);
     const got = labels(navOf(out));
     const want = rel === '404.html' ? [...CANONICAL, 'Find'] : CANONICAL;
     assert.deepEqual(got, want, `${rel}: canonical order`);
@@ -67,7 +68,7 @@ test('aria-current marks the page\'s own section, and only that', () => {
 
 test('links lead to the section pages, relative to the page; Work with us keeps its contact marker', () => {
   const nav = navOf(normalise(read('journal/a-passing-pipeline.html'), 'journal/a-passing-pipeline.html'));
-  assert.equal(nav, '<nav aria-label="Main navigation"><details class="site-menu"><summary>Menu</summary><div class="site-menu-links"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></div></details></nav>');
+  assert.equal(nav, '<nav aria-label="Main navigation"><details class="site-menu"><summary>Menu</summary><div class="site-menu-links"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></div></details><a href="../#projects">Tools</a></nav>');
   assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><details[^>]*><summary>Menu<\/summary><div[^>]*><a href="one-pager\/">Start here<\/a><a href="#findings">Findings<\/a>/);
   assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/journal\/">Notes &amp; updates<\/a>/);
   assert.doesNotMatch(nav, /partners\//, 'Partners is not in the header');
@@ -155,7 +156,7 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), { relPrefix: '../' }), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
   assert.throws(() => normaliseHeader(page, { relPrefix: 'https://example.com/' }), /prefix/);
-  assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'tools' }), /Unknown header section/);
+  assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'unknown' }), /Unknown header section/);
 });
 
 test('no digit or number word enters a number-provenance page through the header or the footer links', () => {

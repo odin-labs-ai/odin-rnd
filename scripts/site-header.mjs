@@ -34,6 +34,7 @@ export const DESTINATIONS = Object.freeze([
   { key: 'methods', label: 'How we test', path: 'methods/' },
   // data-contact-opened: site/assets/activity.mjs counts a click on it as contact_opened.
   { key: 'work', label: 'Work with us', path: 'work-with-us/', attrs: ' data-contact-opened' },
+  { key: 'tools', label: 'Tools', path: '#projects', outsideMenu: true },
 ]);
 
 /**
@@ -44,7 +45,7 @@ export const DESTINATIONS = Object.freeze([
  */
 export const RETIRED_LABELS = new Map([
   ['The floor', { target: '#floor', to: null, reason: '#floor is still the top of the home (its hero), which the brand link leads to, and the factory drawing sits under what we found (#how-we-check); the header now leads to what we found (#findings) and to how we test (methods/)' }],
-  ['Open source', { target: '#projects', to: null, reason: 'the home tools list (#projects) keeps no header link; every tool page is listed on projects/, which the tool pages\' breadcrumbs, the notes page, the home\'s Go further list and Find lead to, and the home still has the list' }],
+  ['Open source', { target: '#projects', to: 'tools', reason: 'renamed Tools and kept as a direct link to the home tools list at #projects' }],
   // Plain-language home, 2026-11-16 (founder: "too technical / jargon", "hard to navigate").
   ['Factory', { target: '#floor', to: null, reason: '"Factory" hid what the lab found; #floor is still the top of the home (its hero), which the brand link leads to, the factory drawing sits under what we found (#how-we-check), and the header now leads to what we found (#findings) and to how we test (methods/)' }],
   // Older pages led "Experiments" to the home's list (#experiments); it has led to experiments/ since wave 3.
@@ -101,8 +102,10 @@ function checkPrefix(relPrefix) {
 export function canonicalNav(relPrefix, current = null) {
   checkPrefix(relPrefix);
   if (current !== null && !DESTINATIONS.some(d => d.key === current)) throw new Error(`Unknown header section "${current}"`);
-  const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? ' aria-current="page"' : ''}>${labelHtml(d.label)}</a>`).join('');
-  return `${NAV_OPEN}${MENU_OPEN}${links}${MENU_CLOSE}</nav>`;
+  const link = d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? ' aria-current="page"' : ''}>${labelHtml(d.label)}</a>`;
+  const menu = DESTINATIONS.filter(d => !d.outsideMenu).map(link).join('');
+  const direct = DESTINATIONS.filter(d => d.outsideMenu).map(link).join('');
+  return `${NAV_OPEN}${MENU_OPEN}${menu}${MENU_CLOSE}${direct}</nav>`;
 }
 
 /** The whole site header for a page rendered from code (the section index pages), with the canonical nav. */

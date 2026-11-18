@@ -125,7 +125,7 @@ test('the sitemap lists /journal/ and /projects/ directly before /find/, which s
 
 test('wave 3, as built: one canonical nav on every page, journal/ and projects/ listing every note and tool, crumbs to them', () => {
   const { dist, files, index } = built();
-  const CANONICAL = ['Start here', 'Findings', 'Labs', 'All results', 'Notes &amp; updates', 'How we test', 'Work with us', 'Find'];
+  const CANONICAL = ['Start here', 'Findings', 'Labs', 'All results', 'Notes &amp; updates', 'How we test', 'Work with us', 'Tools', 'Find'];
   for (const rel of files.filter(f => f.endsWith('.html'))) {
     const html = readFileSync(join(dist, rel), 'utf8');
     const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];

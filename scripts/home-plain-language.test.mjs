@@ -162,7 +162,7 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   assert.ok(home.indexOf(parts['correction summary']) < home.indexOf(parts['what we found']), 'the dated correction summary stays in the hero, by the headline');
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
-  assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Find']);
+  assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Tools', 'Find']);
   // Both public research and private evaluation are legible in the entrance.
   assert.match(parts['hero premise'], /<h1[^>]*>Experiment results<\/h1>/);
   assert.match(parts['hero premise'], /Run a closed-door study/);

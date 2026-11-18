@@ -50,21 +50,21 @@ const topOrder = html => {
   return out;
 };
 
-test('the shaped home opens with the hero, what we found, how we check, the updates and the offer, then Go further, then the rest in source order', () => {
+test('the homepage leads with the entrance, tools, findings and factory before the research archive', () => {
   const out = shapeHome(HOME);
-  assert.deepEqual(OPEN_ORDER, ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us']);
-  assert.deepEqual(topOrder(out), [...OPEN_ORDER.slice(0, 3), 'nav', ...OPEN_ORDER.slice(3), 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
-  assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal']);
+  assert.deepEqual(OPEN_ORDER, ['floor', 'projects', 'findings', CHECK_ID]);
+  assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'drawing-board', 'journal', 'closing']);
+  assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'drawing-board', 'journal']);
   // The updates feed moves with its two markers, which stay around it, right after the drawing's section.
   assert.match(out, /<details class="home-archive"><summary>Earlier work and project notes<\/summary>\s*<!-- updates:[^>]*-->\s*<section class="updates-feed[^]*?<\/section>\s*<!-- \/updates -->\s*<section class="offer/);
   assert.ok(out.indexOf(`id="${CHECK_ID}"`) > out.indexOf('id="findings"') && out.indexOf(`id="${CHECK_ID}"`) < out.indexOf('<!-- updates:'), 'how we check sits between what we found and the updates');
   assert.equal(out.split('<!-- /updates -->').length, 2);
   // The open sections are byte for byte as they were.
-  for (const key of ['findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
-  // Go further, after the offer, links the lab on a page and the section pages, with the header's labels.
+  for (const key of ['projects', 'findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
+  // Further reading offers the lab collection and methods; tools are already on the page.
   const nav = out.slice(out.indexOf('<nav class="home-further'), out.indexOf('</nav>', out.indexOf('<nav class="home-further')));
-  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['labs/', 'methods/', 'projects/']);
-  assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Explore the labs', 'How we test', 'Use the tools']);
+  assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['labs/', 'methods/']);
+  assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Explore the labs', 'How we test']);
   assert.match(nav, new RegExp(`aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Inside the lab</h2>`));
   assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="findings"') && out.indexOf('<nav class="home-further') < out.indexOf('<details class="home-archive">'));
   // Only the home links its stylesheet and opener, once each, after the home's own.
@@ -72,11 +72,11 @@ test('the shaped home opens with the hero, what we found, how we check, the upda
   assert.ok(out.includes(`<script type="module" src="assets/motion.mjs"></script>\n  <script type="module" src="${HOME_JS}"></script>`));
 });
 
-test('the hero keeps who we are, See what we found and the correction; the drawing moves under what we found, byte for byte', () => {
+test('the entrance retains its correction, the tools immediately follow, and the factory stays intact below the findings', () => {
   const out = shapeHome(HOME);
   const i = '\n      ';
   // The hero: its own open tag, the premise, the correction (folded later by labelCorrection), nothing else.
-  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.findings}`), 'hero, then what we found');
+  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.projects}\n    ${SECTIONS.findings}`), 'hero, tools, then findings');
   // The drawing's section: a plain heading and sentence, then the drawing, the stations and the boundary line as they were.
   const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${CHECK_HEADING}</h2><p>${CHECK_INTRO}</p></div>`;
   assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
@@ -123,7 +123,7 @@ test('the shaped home refuses a page it does not expect', () => {
     [without('closing'), /no section "closing"/],
     [page([...SOURCE_ORDER, 'projects']), /section "projects" appears twice/],
     [page([...SOURCE_ORDER, 'extra'], { ...SECTIONS, extra: '<section class="new-thing" id="new-thing"><p>New.</p></section>' }), /unknown top-level section "new-thing"/],
-    [page(SOURCE_ORDER, { ...SECTIONS, projects: SECTIONS.projects.replace('<div class="section-heading">', '<div class="intro">') }), /section projects does not open with its heading block/],
+    [page(SOURCE_ORDER, { ...SECTIONS, journal: SECTIONS.journal.replace('<div class="section-heading">', '<div class="intro">') }), /section journal does not open with its heading block/],
     [page(SOURCE_ORDER, { ...SECTIONS, 'research-note': SECTIONS['research-note'].replace('<div><h2', '<div class="x"><h2') }), /section research-note does not open with its heading block \(a bare <div>\)/],
     [page(SOURCE_ORDER, { ...SECTIONS, closing: SECTIONS.closing.replace('</section>', '') }), /unclosed <section>/],
     [page(SOURCE_ORDER, { ...SECTIONS, updates: SECTIONS.updates.replace('<!-- /updates -->', '') }), /not between its <!-- updates: --> and <!-- \/updates --> markers/],

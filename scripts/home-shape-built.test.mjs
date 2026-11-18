@@ -12,13 +12,10 @@ import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs'
 import { jargonIn, readable } from './home-plain-language.test.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
-// The targets a link may reach inside a fold, each opened by site/assets/home-fold.mjs: the home's experiment list, which
-// the site index still links for an experiment whose record lives in another repository (scripts/site-index.mjs), and
-// nina's tools entry, linked from EXP 006's generated field note. Any other target inside a fold is a link the fold has
-// hidden, and is refused here until it is named.
-const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
+// The experiment ledger still lives in the archive. Published tool anchors live in the open tools section.
+const OPENED_BY_SCRIPT = ['all-experiments'];
 // Keep the first read short. Limits and correction text are required disclosures and counted separately below.
-const VISIBLE_WORDS = 600; // Includes the visible factory controls, chart and measured result rows.
+const VISIBLE_WORDS = 720; // The fully built page measured 689, including the six visible tool entries.
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -49,11 +46,24 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
-test('the built home is shaped: featured study, findings, archive, stylesheet and opener', () => {
+test('the built homepage exposes the featured study, tool directory, findings and factory outside the archive', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'hero, findings, how we check, updates, work with us, in that order');
-  assert.ok(main.indexOf('<nav class="home-further') > order[2] && main.indexOf('<nav class="home-further') < order[3], 'further reading follows the findings before the archive');
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'entrance, tools, findings and factory, in that order');
+  assert.ok(main.indexOf('<nav class="home-further') > order.at(-1) && main.indexOf('<nav class="home-further') < main.indexOf('<details class="home-archive">'), 'further reading follows the findings before the archive');
+  const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="findings"'));
+  const rows = [...projects.matchAll(/<article\b[^>]*class="project-row[^"]*"[^>]*>[\s\S]*?<\/article>/g)];
+  assert.ok(rows.length > 0, 'the tools section contains tools');
+  const disclosures = detailsRanges(projects);
+  for (const row of rows) {
+    for (const marker of ['<h3', 'class="project-links"']) {
+      const offset = row[0].indexOf(marker);
+      assert.ok(offset >= 0, `each tool retains its ${marker}`);
+      const position = row.index + offset;
+      assert.ok(!disclosures.some(([start, end]) => start < position && position < end),
+        `the tool’s ${marker} is available before opening its research notes`);
+    }
+  }
   assert.equal((main.match(/<details class="home-fold">/g) || []).length, FOLDS.length);
   for (const { summary } of FOLDS) assert.ok(main.includes(`<summary>${summary}<span aria-hidden="true">+</span></summary>`), summary);
   for (const { href } of FURTHER) assert.ok(main.includes(`<a href="${href}">`), href);
@@ -95,8 +105,8 @@ test('every in-site link into the home targets an id that exists and is not hidd
     assert.equal(openAround(document, id), target);
     assert.ok(folds.every(f => f.open), `#${id} opens through its enclosing disclosures`);
   }
-  for (const id of ['floor', 'findings', 'how-we-check', 'home-further-title']) assert.ok(ids.has(id) && !insideFold(id), id);
-  for (const id of ['updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
+  for (const id of ['floor', 'projects', 'project-nina', 'findings', 'how-we-check', 'home-further-title']) assert.ok(ids.has(id) && !insideFold(id), id);
+  for (const id of ['updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'journal']) {
     assert.ok(ids.has(id) && insideFold(id), `#${id} remains reachable in the archive`);
   }
 });
@@ -148,7 +158,7 @@ test('the opener, run on the built home, opens every fold around each named targ
     assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
     assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
   }
-  for (const id of ['floor', 'findings', 'how-we-check', 'home-further-title']) {
+  for (const id of ['floor', 'projects', 'project-nina', 'findings', 'how-we-check', 'home-further-title']) {
     const { folds, document } = domAround(home, id);
     assert.equal(folds.length, 0, `#${id} is outside every fold`);
     assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
@@ -203,7 +213,7 @@ test('the built home folds its dated correction in the hero under a plain dated 
 test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const at = key => main.indexOf(key);
-  const order = ['id="hero-title"', 'Run a closed-door study', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  const order = ['id="hero-title"', 'Run a closed-door study', 'id="projects"', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
   // Nothing of the drawing or the station panel sits in the hero any more.
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
@@ -211,7 +221,7 @@ test('the built home reads plain-first: the hero, then what we found, then how w
 });
 
 test('the entrance puts the figure before the recording poster, with public and private paths', () => {
-  const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="findings"'));
+  const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="projects"'));
   assert.ok(!hero.includes('<form'), 'site navigation supplies the search path');
   assert.ok(hero.indexOf('class="entry-evidence"') < hero.indexOf('class="factory-plate"'));
   assert.ok(!hero.includes('name="topic"'));
