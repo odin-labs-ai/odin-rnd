@@ -105,9 +105,17 @@ const wordsDom = `(() => {
   const copy = main.cloneNode(true);
   copy.querySelectorAll('script,style,svg').forEach(element => element.remove());
   const correction = main.querySelector('.factory-correction.correction-note');
-  const correctionVisible = !!correction && correction.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...correction.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  const limits = [...main.querySelectorAll('#findings li[id^="proof-"]')].map(item => {
+    const claim = item.querySelector('p');
+    const limit = item.querySelector('p.lab-limit');
+    return { id: item.id, claimVisible: visible(claim), limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '' };
+  });
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
-    correctionVisible, correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '', correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(2).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [] };
+    correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
+    correctionWhenVisible: visible(correction?.querySelector('.correction-when')), correctionLabelVisible: visible(correction?.querySelector('.correction-label')),
+    correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(2).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [],
+    correctionParagraphVisible: correction ? [...correction.querySelectorAll('p')].slice(2).map(visible) : [], limits };
 })()`;
 
 test('Chrome counts the unopened home below the word bound and one third of all words', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async t => {
@@ -117,13 +125,29 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
   const at = source.indexOf('<details class="factory-correction" open>');
   const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
-  const [actual, control, long, pinned] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }], { chrome });
+  const correctionAt = home.indexOf('<div class="factory-correction correction-note">');
+  const correctionBlock = home.slice(correctionAt, elementEnd(home, correctionAt));
+  const faded = `<style>.correction-note > p { opacity: 0 }</style><main>${correctionBlock}</main>`;
+  const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
+  const [actual, control, long, pinned, fadedCorrection, hiddenFinding] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }], { chrome });
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
   assert.ok(long.visible > VISIBLE_WORDS, 'quoted > and encoded spaces cannot hide an over-bound open body');
   assert.equal(actual.correctionVisible, true, 'the dated correction has visible area in the rendered main');
+  assert.equal(actual.correctionWhenVisible, true, 'the dated correction heading is visible');
+  assert.equal(actual.correctionLabelVisible, true, 'the dated correction label is visible');
   assert.ok(actual.correctionText.includes('Wording clarification · 1 November 2026'), 'the dated label is rendered');
   assert.deepEqual(actual.correctionParagraphs, pinned, 'every pinned paragraph is rendered verbatim');
+  assert.ok(actual.correctionParagraphVisible.every(Boolean), 'every pinned paragraph has visible area');
   for (const paragraph of pinned) assert.ok(actual.text.includes(paragraph), 'the rendered main includes the full correction paragraph');
+  assert.ok(fadedCorrection.correctionParagraphVisible.every(value => value === false), 'opacity zero on child paragraphs is caught');
+  assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
+  for (const limit of actual.limits) {
+    assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
+    assert.equal(limit.limitVisible, true, `${limit.id}: limit is visible beside its claim`);
+    assert.match(limit.limitText, /^Limit: .{20,}/, `${limit.id}: a full limit is rendered`);
+    assert.ok(actual.text.includes(limit.limitText), `${limit.id}: rendered main includes the limit`);
+  }
+  assert.equal(hiddenFinding.limits[0].limitVisible, false, 'a CSS-hidden finding limit is caught');
   t.diagnostic(`Chrome reads ${actual.visible} visible words of ${actual.all} total on the built home`);
   assert.ok(actual.visible < VISIBLE_WORDS, `${actual.visible} visible words on the home (bound ${VISIBLE_WORDS})`);
   assert.ok(actual.all > actual.visible * 3, `under a third of the home's words show unopened (${actual.visible} of ${actual.all})`);
