@@ -254,6 +254,16 @@ test('a proof claim refuses a missing or placeholder written plan', () => {
   const emptyPointer = path => path === broker ? { ...source(broker), preregistration: null } : source(path);
   emptyPointer.raw = source.raw;
   assert.throws(() => renderLabProof(emptyPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'an explicit empty pointer cannot be excused by a valid pin');
+  const nonnumeric = structuredClone(source(broker));
+  for (const arm of Object.values(nonnumeric.perArm)) {
+    arm.perBroker.B.billedToListMedian = [2];
+    arm.perBroker.B.billedToListRange[0] = [2];
+  }
+  const numericRead = path => path === broker ? nonnumeric : source(path);
+  numericRead.raw = source.raw;
+  numericRead.recordProblem = source.recordProblem;
+  numericRead.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(numericRead, '../'), /did not bill above list price/, 'arrays must not prove above-list billing');
 });
 
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results

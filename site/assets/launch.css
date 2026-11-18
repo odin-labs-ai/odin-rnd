@@ -7,7 +7,7 @@
 .factory-correction p{margin-top:8px}
 /* Built home: the dated correction remains visible in a ruled notice. */
 .factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:16px 18px;margin-top:4px}
-.correction-note>.correction-when{font:inherit;font-size:15px;line-height:1.5;letter-spacing:normal;text-transform:none;margin:0;color:#dbe7df}
+.correction-note>.correction-when{font:inherit;font-size:15px;font-weight:600;line-height:1.5;letter-spacing:normal;text-transform:none;margin:0;color:#dbe7df}
 .factory-correction>.correction-label{font-weight:600;color:var(--paper)}
 /* The open correction section follows the findings; the interactive drawing stays in the hero. */
 .home-check{margin-top:96px}

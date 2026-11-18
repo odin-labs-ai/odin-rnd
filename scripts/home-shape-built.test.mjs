@@ -126,8 +126,8 @@ const wordsDom = `(() => {
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
     correctionWhenVisible: visible(correction?.querySelector('.correction-when')), correctionLabelVisible: visible(correction?.querySelector('.correction-label')),
-    correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(2).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [],
-    correctionParagraphVisible: correction ? [...correction.querySelectorAll('p')].slice(2).map(visible) : [], limits };
+    correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(1).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [],
+    correctionParagraphVisible: correction ? [...correction.querySelectorAll('p')].slice(1).map(visible) : [], limits };
 })()`;
 
 test('Chrome counts the unopened home below the word bound and one third of all words', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async t => {
@@ -137,7 +137,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
   const at = source.indexOf('<details class="factory-correction" open>');
   const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
-  const correctionAt = home.indexOf('<div class="factory-correction correction-note">');
+  const correctionAt = home.indexOf('<div class="factory-correction correction-note" role="note">');
   const correctionBlock = home.slice(correctionAt, elementEnd(home, correctionAt));
   const faded = `<style>.correction-note > p { opacity: 0 }</style><main>${correctionBlock}</main>`;
   const clipped = `<style>.correction-note { clip-path: inset(50%) }</style><main>${correctionBlock}</main>`;
@@ -264,12 +264,12 @@ test('the built home keeps its dated correction visible after findings, every wo
   // The paragraphs as #168 published them (213e1f1): a reword fails here, in the source and on the built page.
   assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
   assert.equal(home.split('class="factory-correction').length, 2, 'once');
-  const start = home.indexOf('<div class="factory-correction correction-note">');
+  const start = home.indexOf('<div class="factory-correction correction-note" role="note">');
   assert.ok(start >= 0, 'the visible notice');
   const block = home.slice(start, elementEnd(home, start));
   assert.ok(start > home.indexOf('id="findings"') && start > home.indexOf('id="how-we-check"') && start < home.indexOf('id="updates"'), 'visible after what we found, before updates');
   assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'not inside another <details>');
-  assert.match(block, /^<div class="factory-correction correction-note"><p class="correction-when">We corrected our earlier headline and wording on <time datetime="2026-11-01">1 November 2026<\/time> and <time datetime="2026-11-02">2 November 2026<\/time>\.<\/p><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
+  assert.match(block, /^<div class="factory-correction correction-note" role="note"><h3 class="correction-when">We corrected our earlier headline and wording on <time datetime="2026-11-01">1 November 2026<\/time> and <time datetime="2026-11-02">2 November 2026<\/time>\.<\/h3><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
   assert.ok(block.endsWith(`${paragraphs.join('')}</div>`), 'every paragraph of the correction, verbatim, in the HTML');
   assert.doesNotMatch(block, /<details|<summary/, 'the correction cannot be closed');
 });

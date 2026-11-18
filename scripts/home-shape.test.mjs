@@ -204,9 +204,9 @@ test('the home correction stays visible under a plain dated heading, in place, e
   assert.equal(out.slice(start + shown.length), source.slice(at + block.length));
   // One visible notice: the heading says in plain words what was corrected and when; below it,
   // #168's label line, then every paragraph byte for byte, in order.
-  const heading = `<p class="correction-when">${CORRECTION_LEAD}<time datetime="2026-11-01">1 November 2026</time> and <time datetime="2026-11-02">2 November 2026</time>.</p>`;
+  const heading = `<h3 class="correction-when">${CORRECTION_LEAD}<time datetime="2026-11-01">1 November 2026</time> and <time datetime="2026-11-02">2 November 2026</time>.</h3>`;
   assert.equal(shown, `${CORRECTION_BLOCK}${heading}<p class="correction-label">${label}</p>${paragraphs.join('')}</div>`);
-  assert.equal(CORRECTION_BLOCK, '<div class="factory-correction correction-note">', 'visible, noncollapsible');
+  assert.equal(CORRECTION_BLOCK, '<div class="factory-correction correction-note" role="note">', 'visible, noncollapsible and announced as a note');
   assert.equal(CORRECTION_LEAD, 'We corrected our earlier headline and wording on ');
   // It stops on a page it does not expect, a closed block included.
   assert.throws(() => labelCorrection(out), /expected exactly one open/);

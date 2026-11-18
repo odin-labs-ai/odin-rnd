@@ -2,7 +2,7 @@
 // committed pages (every site/**/*.html), never on the files themselves.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { parse } from './html-source-tree.mjs';
@@ -198,6 +198,20 @@ test('normaliseHeaders rewrites a built copy only, and leaves the committed fiel
     assert.deepEqual(counts, { pages: 5, changed: 5, exempt: 0 });
     assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 5, changed: 0, exempt: 0 }, 'idempotent on files');
     assert.deepEqual(notes.map(read), before, 'site/journal/*.html unchanged');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the build checks original bytes before navigation normalization discards unsupported attributes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-preflight-'));
+  try {
+    const source = read('index.html');
+    for (const [attribute, expected] of [['title="<![CDATA["', /Unsupported HTML CDATA section/], ['title="</textarea/ x=y>"', /Unsupported raw HTML end tag/]]) {
+      const poisoned = source.replace('<a href="#floor">Factory</a>', `<a ${attribute} href="#floor">Factory</a>`);
+      assert.notEqual(poisoned, source, 'the recognized navigation anchor was altered');
+      writeFileSync(join(dir, 'index.html'), poisoned);
+      assert.throws(() => normaliseHeaders({ distDir: dir }), expected, 'the original attribute is refused before it could be discarded');
+      assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the refused page was not rewritten');
+    }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

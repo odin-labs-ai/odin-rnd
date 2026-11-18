@@ -240,7 +240,7 @@ export function shapeHome(html) {
 /** The committed block's opening tag (site/index.html, frozen). */
 export const CORRECTION_SOURCE = '<details class="factory-correction" open>';
 /** The built block's opening tag: a visible, noncollapsible notice. */
-export const CORRECTION_BLOCK = '<div class="factory-correction correction-note">';
+export const CORRECTION_BLOCK = '<div class="factory-correction correction-note" role="note">';
 /** The words of the notice heading around its dates. */
 export const CORRECTION_LEAD = 'We corrected our earlier headline and wording on ';
 /** sha256 of the correction's paragraphs as #168 published them (213e1f1). A reword stops the build; a new dated
@@ -285,7 +285,7 @@ export function labelCorrection(html) {
   for (const m of block.matchAll(/<time datetime="(\d{4}-\d{2}-\d{2})">[^<]+<\/time>/g)) if (!seen.has(m[1])) seen.set(m[1], m[0]);
   if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
   const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
-  const heading = `<p class="correction-when">${CORRECTION_LEAD}${when}.</p>`;
+  const heading = `<h3 class="correction-when">${CORRECTION_LEAD}${when}.</h3>`;
   const built = `${CORRECTION_BLOCK}${heading}<p class="correction-label">${label}</p>${body}</div>`;
   const out = html.slice(0, at) + built + html.slice(at + block.length);
   assertCorrectionKept(html, out);
@@ -319,7 +319,7 @@ export function assertCorrectionKept(html, out) {
   if (!(sectionStart < now && nowEnd < sectionEnd)) throw new Error('Home correction: the block is not inside the visible check section');
   const after = out.slice(now, nowEnd);
   if (/<details\b|<summary\b/.test(after)) throw new Error('Home correction: the notice can be closed');
-  const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<p class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</p><p class="correction-label">`).exec(after);
+  const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<h3 class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</h3><p class="correction-label">`).exec(after);
   if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</div>`) throw new Error('Home correction: its dated heading, its earlier label or its body changed');
   if (createHash('sha256').update(body).digest('hex') !== CORRECTION_PARAGRAPHS_SHA256) throw new Error('Home correction: its paragraphs differ from the text #168 published');
 }

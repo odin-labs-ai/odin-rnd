@@ -205,6 +205,7 @@ export function normaliseHeaders({ distDir }) {
     if (HEADER_EXEMPT.has(rel)) { counts.exempt++; continue; }
     const relPrefix = rel === '404.html' ? SITE_ORIGIN : '../'.repeat(rel.split('/').length - 1);
     const source = readFileSync(file, 'utf8');
+    refuseUnsupportedFooterSource(source);
     const html = addFooterLinks(normaliseHeader(source, { relPrefix, current: sectionFor(rel), label: rel }), { relPrefix, label: rel });
     if (html !== source) { writeFileSync(file, html); counts.changed++; }
   }
@@ -218,6 +219,12 @@ export function normaliseHeaders({ distDir }) {
  * the number-provenance pages may carry it. Idempotent.
  */
 export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/' }]);
+
+function refuseUnsupportedFooterSource(html) {
+  // Run before navigation normalization can discard a hazardous attribute from the original page.
+  if (html.includes('<![CDATA[')) throw new Error('Unsupported HTML CDATA section');
+  if (/<\/(?:script|style|textarea|title|xmp|iframe|noembed|noframes|noscript)(?=[\s/])/i.test(html)) throw new Error('Unsupported raw HTML end tag with attributes');
+}
 
 // The committed templates and all built pages have this one-line footer shape. Five built pages put one known JSON
 // data script after it. Pin that tail before using source offsets: unsupported HTML elsewhere cannot impersonate it.
@@ -238,10 +245,7 @@ function knownFooterTail(html, label) {
 
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  // These tokenizer states are outside this source-offset reader's contract. Refuse them anywhere in the page,
-  // including before the expected footer or inside a permitted data trailer, before trusting any parsed offsets.
-  if (html.includes('<![CDATA[')) throw new Error('Unsupported HTML CDATA section');
-  if (/<\/(?:script|style|textarea|title|xmp|iframe|noembed|noframes|noscript)\s/i.test(html)) throw new Error('Unsupported raw HTML end tag with attributes');
+  refuseUnsupportedFooterSource(html);
   const document = parse(html, { sourceCodeLocationInfo: true });
   const bases = elements(document, 'base');
   if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
