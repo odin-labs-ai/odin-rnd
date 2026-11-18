@@ -223,7 +223,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
   const document = parse(html, { sourceCodeLocationInfo: true });
   const bases = elements(document, 'base');
-  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN)) throw new Error(`Unexpected document base in ${label}`);
+  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
   const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
   if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
   const footer = footers[0];

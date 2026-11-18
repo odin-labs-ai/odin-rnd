@@ -29,9 +29,16 @@ const chrome = chromeBinary();
 const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
 const footerDom = `(() => {
   const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  const hittable = el => {
+    el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
+    return [...el.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).some(rect => {
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === el || el.contains(hit);
+    });
+  };
   const footers = [...document.querySelectorAll('footer.site-footer')];
   const footer = footers[0];
-  const links = footer ? [...footer.querySelectorAll('a')].filter(visible).filter(a => a.innerText.trim() === 'Partners') : [];
+  const links = footer ? [...footer.querySelectorAll('a')].filter(visible).filter(hittable).filter(a => a.innerText.trim() === 'Partners') : [];
   return { url: location.href, footers: footers.length, footerVisible: visible(footer), partners: links.map(a => a.href), downloads: links.filter(a => a.hasAttribute('download')).length, targets: links.filter(a => a.hasAttribute('target')).length };
 })()`;
 
@@ -47,6 +54,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<!-- first --!><base href="journal/"><!-- second -->${footer}`,
     `<footer class="site-footer" style="display: none /* temporarily hidden */;" ><a href="partners/">Partners</a></footer>`,
     `<style>.site-footer { transform: scale(0) }</style>${footer}`,
+    `<style>.site-footer a { clip-path: inset(50%) }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -59,7 +67,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -69,6 +77,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.equal(style.footerVisible, false, 'inline CSS comment still hides the footer');
   assert.equal(scaled.footerVisible, false, 'a zero-area transformed footer is not visible');
   assert.deepEqual(scaled.partners, [], 'a zero-area transformed link is not usable');
+  assert.deepEqual(clipped.partners, [], 'a fully clipped Partners link is not usable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });
