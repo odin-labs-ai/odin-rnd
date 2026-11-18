@@ -51,6 +51,9 @@ const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
 test('the built home is shaped: five open sections, Go further, eight closed folds, its stylesheet and opener', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
+  const findingsAt = home.indexOf('<section class="lab-launch content-section" id="findings"');
+  const findings = home.slice(findingsAt, elementEnd(home, findingsAt));
+  assert.ok(findingsAt >= 0 && findings.includes('id="lab"') && findings.includes('<h2 id="lab-title">') && findings.includes('aria-labelledby="lab-title"'), 'both legacy #lab and #lab-title resolve inside the visible findings section');
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'hero, findings, how we check, updates, work with us, in that order');
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1), 'Go further follows the offer');
@@ -130,10 +133,14 @@ const wordsDom = `(() => {
   const limits = [...main.querySelectorAll('#findings li[id^="proof-"]')].map(item => {
     const claim = item.querySelector('p:not(.lab-limit):not(.lab-source)');
     const limit = item.querySelector('p.lab-limit');
+    const citation = item.querySelector('p.lab-source');
     return { id: item.id, claimVisible: visible(claim), claimText: claim?.innerText.replace(/\\s+/g, ' ').trim() ?? '', claimBeforeLimit: !!claim && !!limit && !!(claim.compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING),
-      claimShape: item.children.length === 3 && item.children[0] === claim && item.children[1] === limit && item.children[2].matches('p.lab-source')
+      claimShape: item.children.length === 3 && item.children[0] === claim && item.children[1] === limit && item.children[2] === citation
         && ![...item.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim()),
-      limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '' };
+      limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
+      citationVisible: visible(citation), citationText: citation?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
+      citationLinks: citation ? [...citation.querySelectorAll('a')].map(a => [a.innerText.trim(), a.getAttribute('href')]) : [],
+      citationDates: citation ? [...citation.querySelectorAll('time')].map(time => [time.innerText.trim(), time.getAttribute('datetime')]) : [] };
   });
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
@@ -169,6 +176,21 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     const measured = resolvePointer(readSource(path), pointer);
     return value.format === 'code' || value.format === 'word' ? String(measured) : format(measured, value.format);
   }).replace(/\s+/g, ' ').trim()]));
+  const sourceCitations = new Map(authoredClaims.map(claim => {
+    const windowValue = (spec, first) => {
+      const [path, pointer = ''] = spec.source.split('#');
+      const at = resolvePointer(readSource(path), pointer);
+      const values = (Array.isArray(at) ? at.map(value => spec.field ? value[spec.field] : value) : [at]).filter(value => typeof value === 'string').sort();
+      assert.ok(values.length, `${claim.id}: a cited measurement date exists`);
+      return first ? values[0] : values.at(-1);
+    };
+    const from = windowValue(claim.window.from, true);
+    const to = claim.window.to ? windowValue(claim.window.to, false) : null;
+    const dates = [from, ...(to && to.slice(0, 10) !== from.slice(0, 10) ? [to] : [])].map(value => [value.slice(0, 10), value]);
+    const record = claim.record.split('#')[0];
+    const links = [...(claim.note ? [['Read the result', claim.note]] : []), ['the record', record], ['the written plan', record.replace(/results\.json$/, 'preregistration.json')]];
+    return [claim.id, { text: `Measured ${dates.map(([date]) => date).join(' to ')}. ${links.map(([label]) => label).join(' · ')}.`, dates, links }];
+  }));
   const proof = `<main><section id="findings">${renderLabProof(siteReader(join(root, 'site'), root), '', { plain: true })}</section></main>`;
   const extraConclusion = proof.replace('The uncertainty ranges of all the reviewers overlap.</p>', 'The uncertainty ranges of all the reviewers overlap. The cheaper reviewer is better.</p>');
   assert.notEqual(extraConclusion, proof, 'the unsupported conclusion control changes only the review-cost claim');
@@ -176,6 +198,8 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.notEqual(extraSibling, proof, 'the sibling conclusion control adds one visible paragraph before the cost limit');
   const extraText = proof.replace('The uncertainty ranges of all the reviewers overlap.</p>', 'The uncertainty ranges of all the reviewers overlap.</p>The cheaper reviewer is better.');
   assert.notEqual(extraText, proof, 'the text-node conclusion control adds visible words before the cost limit');
+  const extraCitation = proof.replace('the written plan</a>.</p>', 'the written plan</a>. The cheaper reviewer is better.</p>');
+  assert.notEqual(extraCitation, proof, 'the source-paragraph control adds an unsupported ranking after the last link');
   const proofLimits = [...proof.matchAll(/<p class="lab-limit">[\s\S]*?<\/p>/g)].map(match => match[0]);
   assert.equal(proofLimits.length, 3, 'one generated limit for each featured finding');
   let limitAt = 0;
@@ -191,7 +215,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, extraCitationProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: extraCitation, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -221,6 +245,11 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const sourceLimits = new Map(authoredClaims.map(({ id, limit }) => [id, `Limit: ${limit}`]));
   assert.ok(actual.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), 'each visible limit stays paired with its own source finding');
   assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
+  assert.ok(actual.limits.every(({ id, citationVisible, citationText, citationLinks, citationDates }) => citationVisible
+    && citationText === sourceCitations.get(id).text && JSON.stringify(citationLinks) === JSON.stringify(sourceCitations.get(id).links)
+    && JSON.stringify(citationDates) === JSON.stringify(sourceCitations.get(id).dates)), 'each complete visible citation, its dates and its links match independent authored sources');
+  assert.equal(extraCitationProof.limits[0].claimShape, true, 'the added source-paragraph sentence leaves the three-child shape intact');
+  assert.equal(extraCitationProof.limits.every(({ id, citationText }) => citationText === sourceCitations.get(id).text), false, 'an unsupported ranking after a source link fails the citation comparison');
   for (const limit of actual.limits) {
     assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
     assert.equal(limit.claimBeforeLimit, true, `${limit.id}: claim precedes its limit`);

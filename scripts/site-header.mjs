@@ -287,7 +287,11 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   });
   if (!missing.length) return html;
   const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
-  const div = elements(footer, 'div').find(node => !hiddenWithin(node));
+  const div = elements(footer, 'div').find(node => {
+    if (hiddenWithin(node)) return false;
+    for (let at = node.parentNode; at && at !== footer; at = at.parentNode) if (at.tagName === 'a') return false;
+    return true;
+  });
   const at = div?.sourceCodeLocation?.endTag?.startOffset ?? end;
   return html.slice(0, at) + links + html.slice(at);
 }

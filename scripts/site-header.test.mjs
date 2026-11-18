@@ -261,6 +261,26 @@ test('the named-page build refuses a second parsed footer before navigation can 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('footer insertion keeps an existing link with a div and trailing text intact', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-footer-link-'));
+  try {
+    const source = read('index.html');
+    const start = source.indexOf('<footer class="site-footer">');
+    const end = source.indexOf('</footer>', start) + '</footer>'.length;
+    assert.ok(start >= 0 && end > start, 'the named source has one footer to replace');
+    const original = '<footer class="site-footer"><a href="journal/"><div>Read</div> all notes</a></footer>';
+    writeFileSync(join(dir, 'index.html'), source.slice(0, start) + original + source.slice(end));
+    assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 1, changed: 1, exempt: 0 });
+    const output = readFileSync(join(dir, 'index.html'), 'utf8');
+    assert.match(output, /<a href="journal\/">\<div\>Read\<\/div\> all notes<\/a><a href="partners\/">Partners<\/a>/, 'Partners is inserted after the complete original link');
+    const footer = actualElements(parse(output), 'footer').find(node => actualAttr(node, 'class') === 'site-footer');
+    const journal = actualElements(footer, 'a').find(node => actualAttr(node, 'href') === 'journal/');
+    assert.equal(actualText(journal), 'Read all notes', 'the original link retains its full label');
+    assert.equal(actualElements(journal, 'a').length, 1, 'Partners is a separate anchor');
+    assert.equal(actualElements(footer, 'a').filter(node => actualAttr(node, 'href') === 'partners/').length, 1, 'one Partners link remains');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('the permitted 404 base cannot be discarded with its recognized navigation link', () => {
   const dir = mkdtempSync(join(tmpdir(), 'site-header-404-base-'));
   try {
