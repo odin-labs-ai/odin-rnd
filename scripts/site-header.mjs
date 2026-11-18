@@ -38,7 +38,7 @@ const elements = (root, tag) => {
 };
 // A static source pass cannot compute CSS. Inline style on this visibility path is therefore refused, including
 // declarations with comments such as `display: none /* ... */` that a simple declaration match would miss.
-const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+const hidden = node => node.tagName === 'datalist' || (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
 const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || node.tagName === 'datalist' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
@@ -238,6 +238,10 @@ function knownFooterTail(html, label) {
 
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
+  // These tokenizer states are outside this source-offset reader's contract. Refuse them anywhere in the page,
+  // including before the expected footer or inside a permitted data trailer, before trusting any parsed offsets.
+  if (html.includes('<![CDATA[')) throw new Error('Unsupported HTML CDATA section');
+  if (/<\/(?:script|style|textarea|title|xmp|iframe|noembed|noframes|noscript)\s/i.test(html)) throw new Error('Unsupported raw HTML end tag with attributes');
   const document = parse(html, { sourceCodeLocationInfo: true });
   const bases = elements(document, 'base');
   if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
