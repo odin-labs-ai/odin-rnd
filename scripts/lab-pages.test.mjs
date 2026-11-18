@@ -207,7 +207,7 @@ test('page configuration holds no number that is shown: claim texts and not-meas
 // The home proof strip, on the real render path: placed at the marker, its links root-relative (no ../ from the home
 // page), and passing the home strip check against the committed records.
 test('the home proof strip renders from lab-proof.json with root-relative links and passes the strip check', () => {
-  const home = placeHomeProof(`<html><body><section id="lab"><ol>${HOME_MARKER}</ol></section></body></html>`);
+  const home = placeHomeProof(`<html><body><section id="findings"><ol>${HOME_MARKER}</ol></section></body></html>`);
   assert.ok(!home.includes(HOME_MARKER));
   const hrefs = [...home.matchAll(/href="([^"]*)"/g)].map(m => m[1]);
   assert.ok(hrefs.length >= 6, 'the strip links its numbers and sources');

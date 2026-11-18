@@ -255,7 +255,8 @@ export function isIdentifier(text) {
  * section is cut out by its id and checked as a page. A missing section, one with no sourced number, or one that still
  * holds its marker fails (fail closed).
  */
-export const HOME_PROOF = { page: 'index.html', id: 'lab', marker: '<!--LAB_PROOF-->' };
+// The section is #findings since the plain-language home (2026-11-16; it was #lab, "Measured, and linked to the record").
+export const HOME_PROOF = { page: 'index.html', id: 'findings', marker: '<!--LAB_PROOF-->' };
 
 /** The section with id `id` in `html`, matched to its own closing tag (nested sections included), or null. */
 export function sectionById(html, id) {

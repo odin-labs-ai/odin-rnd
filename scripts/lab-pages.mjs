@@ -211,6 +211,32 @@ export const ASSERTS = {
     }
     return null;
   },
+  // Brokers by letter (lab-proof.json, plain-language home 2026-11-16): in every arm, exactly the brokers `atList` and
+  // `above` were measured; each in `atList` billed list price (median and whole range 1), and `above` billed above it on
+  // every priced call. "Broker A and Broker C charged the list price; Broker B charged more" stays true or stops the build.
+  'billed-above-list': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const arms = resolvePointer(read(path), pointer);
+    if (!arms || typeof arms !== 'object' || !Object.keys(arms).length) return 'no arms';
+    const want = [...a.atList, a.above].sort();
+    for (const [arm, x] of Object.entries(arms)) {
+      const brokers = x.perBroker ?? {};
+      if (JSON.stringify(Object.keys(brokers).sort()) !== JSON.stringify(want)) return `${arm}: the brokers are ${Object.keys(brokers).join(', ')}, not ${want.join(', ')}`;
+      for (const b of a.atList) { const v = brokers[b]; if (v.billedToListMedian !== 1 || v.billedToListRange?.[0] !== 1 || v.billedToListRange?.[1] !== 1) return `${arm}/${b}: did not bill list price on every priced call`; }
+      const v = brokers[a.above];
+      if (!(v.billedToListMedian > 1) || !(v.billedToListRange?.[0] > 1)) return `${arm}/${a.above}: did not bill above list price on every priced call`;
+    }
+    return null;
+  },
+  // The same value at `path` in every entry of an object or list ("a spread of X on each model").
+  'equal-across': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const at = resolvePointer(read(path), pointer);
+    const list = at && typeof at === 'object' ? Object.values(at) : [];
+    if (list.length < 2) return 'fewer than two entries to compare';
+    const values = list.map(x => a.path.reduce((v, k) => v?.[k], x));
+    return values.every(v => v !== undefined && v === values[0]) ? null : `${a.path.join('/')} differs: ${values.join(', ')}`;
+  },
   'intervals-overlap': (read, a) => {
     const [path, pointer = ''] = a.source.split('#');
     const ivs = resolvePointer(read(path), pointer).map(x => x[a.field]);
@@ -220,7 +246,9 @@ export const ASSERTS = {
 };
 
 /** Sourced claims as list items: each claim's asserts are checked, its numbers read from and linked to its record. */
-export function renderClaims(read, list, up = '../') {
+/** `plain` (the home page only): the dated line reads "Read the result · the record" instead of the record's path in <code>;
+ *  it still links the same note and record, and the dated line stays beside the claim. */
+export function renderClaims(read, list, up = '../', { plain = false } = {}) {
   return list.map(c => {
     const [path] = (c.record ?? '').split('#');
     if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
@@ -229,7 +257,9 @@ export function renderClaims(read, list, up = '../') {
       const why = check ? check(read, a) : `unknown assertion '${a.kind}'`;
       if (why) throw new Error(`claim ${c.id}: ${a.kind}: ${why}`);
     }
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
+    if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
+    const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p></li>`;
   }).join('');
 }
 
@@ -307,11 +337,17 @@ export function renderProviderBrief(read) {
  * claims from data/lab-proof.json, rendered by the evidence page's machinery, so the two never drift. `up` is '' on the
  * home page and '../' on a page one folder down. Like the brief, a claim may not read a record without a decided result.
  */
-export function renderLabProof(read, up = '../') {
+export function renderLabProof(read, up = '../', { plain = false } = {}) {
   const config = read(PAGES['one-pager'].config);
   const problems = briefProblems(config);
   if (problems.length) throw new Error(`site/${PAGES['one-pager'].config} is refused:\n${problems.join('\n')}`);
-  return renderClaims(read, config.claims, up);
+  // Every finding on the home and the lab on a page carries its limit (plain-language home, 2026-11-16).
+  const bare = config.claims.filter(c => typeof c.limit !== 'string' || !c.limit.trim()).map(c => c.id);
+  if (bare.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${bare.join(', ')} has no limit`);
+  // The home says each finding shown was planned in writing before it ran: every claim's record must carry its pre-registration.
+  const unplanned = config.claims.filter(c => !Object.keys(read(c.record) ?? {}).some(k => /^preregistration/.test(k))).map(c => c.id);
+  if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} reads a record with no pre-registration`);
+  return renderClaims(read, config.claims, up, { plain });
 }
 
 /**
@@ -357,7 +393,7 @@ export const HOME_MARKER = '<!--LAB_PROOF-->';
 export function placeHomeProof(html, read = siteReader()) {
   const parts = html.split(HOME_MARKER);
   if (parts.length !== 2) throw new Error(`site/index.html must hold ${HOME_MARKER} exactly once`);
-  return parts.join(renderLabProof(read, ''));
+  return parts.join(renderLabProof(read, '', { plain: true }));
 }
 
 /** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */

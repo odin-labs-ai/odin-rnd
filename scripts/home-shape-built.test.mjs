@@ -18,9 +18,12 @@ import { idOf, openAround } from '../site/assets/home-fold.mjs';
 // hidden, and is refused here until it is named.
 const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
 // Words a visitor sees on the home without opening anything (main, outside every <details>, every hidden station and the
-// dated correction, which is required to stay visible).
+// dated correction and the findings' limit lines, which are required to stay visible).
 // Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
-const VISIBLE_WORDS = 1250;
+// Measured 1,247 on main on 16 November 2026, three under the old bound of 1,250. The plain-language home (mission
+// rnd-site-human PR 1) moved what we found up under the hero in plainer, longer sentences and lists the lab on a page
+// in Go further; the bound moves to 1,350 for that, still with room for an update, not for an unfolded section.
+const VISIBLE_WORDS = 1350;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -51,10 +54,10 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
-test('the built home is shaped: four open sections, Go further, eight closed folds, its stylesheet and opener', () => {
+test('the built home is shaped: five open sections, Go further, eight closed folds, its stylesheet and opener', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'floor, updates, lab, work with us, in that order');
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'hero, findings, how we check, updates, work with us, in that order');
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1), 'Go further follows the offer');
   assert.equal((main.match(/<details class="home-fold">/g) || []).length, FOLDS.length);
   for (const { summary } of FOLDS) assert.ok(main.includes(`<summary>${summary}<span aria-hidden="true">+</span></summary>`), summary);
@@ -93,7 +96,7 @@ test('every in-site link into the home targets an id that exists and is not hidd
   assert.ok(links > MIN_HOME_LINKS, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
   assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
-  for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
+  for (const id of ['floor', 'findings', 'how-we-check', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
     assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
     const fold = home.indexOf('<details class="home-fold">', ids.get(id));
     assert.match(home.slice(ids.get(id), fold < 0 ? undefined : fold), /<h[12] id="[^"]+">/, `#${id} shows its heading before any fold`);
@@ -105,9 +108,11 @@ test('the home a visitor sees without opening anything is short: under the word 
   let visible = stripBlocks(main, ['script', 'style', 'svg']);
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
   visible = without(visible, /<article class="station-exhibit"[^>]*\shidden>/);
-  // The hero's dated correction is left out of the count by name: #168 requires corrections to stay visible, so they are
-  // never folded, and its words are not copy the short home is meant to trim (scripts/home-shape.mjs labelCorrection).
-  visible = without(visible, /<div class="factory-correction" role="note">/);
+  // The hero's dated correction is a closed fold now (scripts/home-shape.mjs labelCorrection): like every <details>, it
+  // is left out above, its dated summary included.
+  // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its
+  // words are not copy the short home may trim (scripts/lab-pages.mjs renderLabProof requires one per finding).
+  visible = without(visible, /<p class="lab-limit">/);
   const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
   const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
   assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
@@ -145,7 +150,7 @@ test('the opener, run on the built home, opens every fold around each named targ
     assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
     assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
   }
-  for (const id of ['journal', 'experiments', 'lab']) {
+  for (const id of ['journal', 'experiments', 'findings']) {
     const { folds, document } = domAround(home, id);
     assert.equal(folds.length, 0, `#${id} is outside every fold`);
     assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
@@ -185,21 +190,30 @@ test('a height proxy measurable without a browser: four sections, Go further and
   assert.deepEqual(folded, FOLDS.map(f => f.key));
 });
 
-test('the built home shows its dated correction as an open block in the hero that cannot be closed, every word verbatim', () => {
+test('the built home folds its dated correction in the hero under a plain dated summary, every word verbatim in the HTML', () => {
   const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
   const at = source.indexOf('<details class="factory-correction" open>');
   const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
   assert.ok(paragraphs.length >= 2);
   // The paragraphs as #168 published them (213e1f1): a reword fails here, in the source and on the built page.
   assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
-  assert.equal(home.split('class="factory-correction"').length, 2, 'once');
-  assert.ok(!home.includes('<details class="factory-correction"'), 'no longer a disclosure');
-  const start = home.indexOf('<div class="factory-correction" role="note">');
-  assert.ok(start >= 0, 'the open block');
+  assert.equal(home.split('class="factory-correction').length, 2, 'once');
+  const start = home.indexOf('<details class="factory-correction correction-fold">');
+  assert.ok(start >= 0, 'the fold, closed by default (no open attribute)');
   const block = home.slice(start, elementEnd(home, start));
-  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="updates"'), 'in the factory hero, before the latest updates');
-  assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'outside every <details> on the built home');
-  assert.doesNotMatch(block, /<details|<summary|aria-hidden="true">\+/, 'no toggle');
-  assert.match(block, /^<div class="factory-correction" role="note"><p class="correction-when">Corrected on <time datetime="2026-11-01">[^<]+<\/time> and <time datetime="2026-11-02">[^<]+<\/time><\/p><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
-  assert.ok(block.endsWith(`${paragraphs.join('')}</div>`), 'every paragraph of the correction, verbatim');
+  // In the hero, before what we found: a reader meets the dated summary next to the headline it corrects.
+  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="findings"'), 'in the hero, before what we found');
+  assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'not inside another <details>');
+  assert.match(block, /^<details class="factory-correction correction-fold"><summary><span class="correction-when">We corrected our earlier headline and wording on <time datetime="2026-11-01">1 November 2026<\/time> and <time datetime="2026-11-02">2 November 2026<\/time>\.<\/span><span class="correction-open">Read the correction<span aria-hidden="true">\+<\/span><\/span><\/summary><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
+  assert.ok(block.endsWith(`${paragraphs.join('')}</details>`), 'every paragraph of the correction, verbatim, in the HTML');
+});
+
+test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
+  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
+  const at = key => main.indexOf(key);
+  const order = ['id="hero-title"', 'See what we found', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
+  // Nothing of the drawing or the station panel sits in the hero any more.
+  const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
+  assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
 });
