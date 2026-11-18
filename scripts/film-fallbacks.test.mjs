@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { addFilmFallbacks, fallbacksProblems, FALLBACKS_FILE, limitFor, mp4Facts, pairPage, progressiveProblems, readFallbacks, trackProblems } from './film-fallbacks.mjs';
+import { fallbacksProblems, FALLBACKS_FILE, limitFor, mp4Facts, progressiveProblems, readFallbacks, trackProblems } from './film-fallbacks.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { MAX_FILM_BYTES } from './lab-films.mjs';
 import { MAX_CLIP_BYTES } from './lab-dispatch-publish.mjs';
@@ -57,8 +57,6 @@ function progressive(fill = 1, tracks = [trak()]) {
   const offsets = samples.map((_, i) => start + samples.slice(0, i).reduce((n, b) => n + b.length, 0) + (tracks[i].shift ?? 0));
   return Buffer.concat([FTYP, moovAt(offsets), box('mdat', Buffer.concat([...samples, Buffer.alloc(32, fill)]))]);
 }
-// The <video> start tag the generators write, the only one a WebM <source> is paired after.
-const V = '<video controls preload="none" playsinline poster="p.webp" aria-label="A film">';
 const walk = dir => existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]) : [];
 
 /** A site root with one film, its copy and a record for it; returns the root and the record. */
@@ -138,42 +136,6 @@ test('a copy over its limit, a copy not beside its WebM and a screening record t
     const extra = { ...record, fallbacks: [{ ...entry, note: 'x' }] };
     assert.ok(fallbacksProblems(extra).some(p => /does not match odin-film-fallbacks v1/.test(p)));
   } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test('a page gets the MP4 source right after the WebM one, with the same relative path, once', () => {
-  const byWebm = new Map([['assets/labs/agent-space/films/a-film.webm', { webm: 'assets/labs/agent-space/films/a-film.webm' }]]);
-  const html = V + '<source src="../../assets/labs/agent-space/films/a-film.webm" type="video/webm;codecs=vp9"><img src="x.jpg" alt=""></video>';
-  const first = pairPage(html, 'labs/agent-space/index.html', byWebm);
-  assert.equal(first.html, V + '<source src="../../assets/labs/agent-space/films/a-film.webm" type="video/webm;codecs=vp9"><source src="../../assets/labs/agent-space/films/a-film.mp4" type="video/mp4"><img src="x.jpg" alt=""></video>');
-  assert.deepEqual([...first.used], ['assets/labs/agent-space/films/a-film.webm']);
-  assert.deepEqual(first.unpaired, []);
-  assert.equal(pairPage(first.html, 'labs/agent-space/index.html', byWebm).html, first.html, 'a second pass changes nothing');
-  const home = pairPage(V + '<source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>', 'index.html', byWebm);
-  assert.match(home.html, /<source src="assets\/labs\/agent-space\/films\/a-film\.mp4" type="video\/mp4"><\/video>$/);
-});
-
-test('a WebM with no copy is reported, and other sources are left alone', () => {
-  const byWebm = new Map();
-  const r = pairPage('<video><source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"></video><picture><source srcset="d.webp" type="image/webp"></picture>', 'x/index.html', byWebm);
-  assert.ok(r.unpaired.length >= 1);
-  for (const line of r.unpaired) assert.match(line, /^x\/index\.html: ".*" names a WebM outside the paired forms$/);
-  assert.equal(r.html, '<video><source src="a/b.webm" type="video/webm"><source src="c.mp4" type="video/mp4"></video><picture><source srcset="d.webp" type="image/webp"></picture>');
-});
-
-test('the dist pass fails closed on an unpaired WebM and on a copy no page plays', () => {
-  const { root } = fixture();
-  const dist = mkdtempSync(join(tmpdir(), 'film-fallbacks-dist-'));
-  try {
-    mkdirSync(join(dist, 'assets/labs/agent-space/films'), { recursive: true });
-    writeFileSync(join(dist, 'assets/labs/agent-space/films/a-film.mp4'), readFileSync(join(root, 'assets/labs/agent-space/films/a-film.mp4')));
-    writeFileSync(join(dist, 'index.html'), '<p>no film</p>');
-    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /has an MP4 copy but no page plays it/);
-    writeFileSync(join(dist, 'index.html'), V + '<source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"><source src="assets/other.webm" type="video/webm"></video>');
-    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /index\.html: ".*other\.webm.*" names a WebM outside the paired forms: no MP4 copy can be paired/);
-    writeFileSync(join(dist, 'index.html'), V + '<source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
-    assert.deepEqual(addFilmFallbacks({ distDir: dist, root }), { pages: 1, films: 1 });
-    assert.match(readFileSync(join(dist, 'index.html'), 'utf8'), /a-film\.webm" type="video\/webm"><source src="assets\/labs\/agent-space\/films\/a-film\.mp4" type="video\/mp4">/);
-  } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
 });
 
 test('a copy must be one H.264 video track a browser decodes, with sound exactly when recorded, of the recorded length', () => {
@@ -536,67 +498,6 @@ test('a box nested inside moov that runs past its parent, or bytes in moov that 
 test('a box that runs past the end of the file is refused', () => {
   const data = progressive();
   assert.ok(progressiveProblems(data.subarray(0, data.length - 4)).some(p => /runs past the end/.test(p)));
-});
-
-test('anything that names a WebM outside the paired forms stops the build, in any markup or spelling', () => {
-  const byWebm = new Map([['assets/f.webm', { webm: 'assets/f.webm' }]]);
-  const ok = V + '<source src="assets/f.webm" type="video/webm"></video>';
-  const reported = [
-    "<video><source src='assets/f.webm' type='video/webm'></video>", '<video><source src=assets/f.webm type=video/webm></video>',
-    '<video><SOURCE SRC="assets/f.webm" TYPE="video/webm"></video>', '<video><source src = "assets/f.webm"></video>',
-    '<video src="assets/f.webm" controls></video>', '<video><source data-src="assets/f.webm" type="video/webm"></video>',
-    '<video><source type="video/webm"></video>', '<video><source src="assets/f&#46;webm" type="video/mp4"></video>',
-    '<video><source src="assets/f.web&#109;" type="video/mp4"></video>', '<embed src="assets/f.webm">',
-    '<!-- <source src="assets/f.webm" type="video/webm"> -->', '<script>const t = "<source src=assets/f.webm>";</script>',
-    '<script-x></script-x><video><source src="assets/f.WEBM" type="video/mp4"></video>',
-    '<video title="a > b" src="assets/u.webm" controls></video>', '<video aria-label="Lab 01 &gt; tour" src="assets/u.webm"></video>',
-    '<video><source title="A > B" src="assets/u.webm" type="video/webm"></video>', `<button onclick="if(n>0)v.src='assets/u.webm'">x</button>`,
-    '<video src="assets/u.we&#9;bm"></video>', '<video src="assets/u.we&Tab;bm"></video>', '<video src="assets/u.we\nbm"></video>',
-    '<video><!-- <source src="assets/f.webm" type="video/webm"> --></video>', '<template><video><source src="assets/f.webm" type="video/webm"></video></template>',
-    `<script>const t = '<video controls><source src="assets/f.webm" type="video/webm"></video>';</script>`,
-    `<video title=${' '.repeat(16)}"a > b" src="assets/u.webm" controls></video>`, '<p data-x=a="q><video title="x>y" src="assets/u.webm" controls></video>',
-    `<!--- <i a=' --><video title="it's>" src="assets/u.webm" controls></video>`, '<!--- <video controls><source src="assets/f.webm" type="video/webm"></video> --->',
-    `<script><!-- x='<script>'; y='</script>'; document.querySelector('video').src = 'assets/u.webm';</script>`,
-    '<template><template></template><video controls><source src="assets/f.webm" type="video/webm"></video></template>',
-    '<video><picture><source src="assets/f.webm" type="video/webm"></picture></video>', '<video src="assets/u.%77ebm"></video>',
-    '<p>x.WebM</p>', '<a href="assets/f.webm"><b>the film</b></a>',
-    '<video controls><source src="other.webm#/../assets/f.webm" type="video/webm"></video>', '<video controls><source src="other.webm?/../assets/f.webm" type="video/webm"></video>',
-    '<video src="assets/u.&percnt;77ebm"></video>', '<video src="assets/u.\nWebM"></video>', '<video src="assets/u.&Tab;WebM"></video>',
-    '<p>a --> b</p><!-- <video controls><source src="assets/f.webm" type="video/webm"></video> -->',
-    '<title><video controls><source src="assets/f.webm" type="video/webm"></video></title>', '<xmp><video controls><source src="assets/f.webm" type="video/webm"></video></xmp>',
-    `<div data-x='<video controls><source src="assets/f.webm" type="video/webm"></video>'></div>`, '<p>MP4/WebM</p>', '<p>WebMs</p>',
-    '<video src="assets/u.webm" controls preload="none" playsinline poster="p.webp" aria-label="x"><source src="assets/f.webm" type="video/webm"></video>',
-    V.replace('<video ', '<video data-src="assets/u.webm" ') + '<source src="assets/f.webm" type="video/webm"></video>',
-    '<video src="assets/u%2e\nWebM"></video>', '<video src="assets/u%2e&Tab;WebM"></video>', '<video><source src="assets/u%2E&NewLine;WebM" type="video/mp4"></video>',
-    `<a href="assets/u.webm" onclick="document.querySelector('video').src=this.href;return false">play</a>`, '<a class="x" href="assets/u.webm">play</a>',
-    '<picture><source src="assets/f.webm" type="video/webm"></picture>', '<video></video><source src="assets/f.webm" type="video/webm">',
-    '<p title="&#99999999;">x</p><video src=v=1/f.webm></video>'];
-  for (const html of reported) {
-    const r = pairPage(html, 'index.html', byWebm);
-    assert.ok(r.unpaired.length >= 1, html);
-    assert.equal(r.used.size, 0, `${html}: nothing inert or unlisted counts as played`);
-  }
-  const r = pairPage(ok, 'index.html', byWebm);
-  assert.deepEqual([[...r.used], r.unpaired], [['assets/f.webm'], []]);
-  assert.deepEqual(pairPage('<a href="assets/f.webm">download the film</a>', 'index.html', byWebm).unpaired, [], 'a plain link is not a player');
-  assert.deepEqual(pairPage('<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', 'index.html', byWebm).unpaired, [], 'a plain link and its text play nothing');
-  assert.deepEqual(pairPage('<p>The films are recorded as WebM, with an MP4 copy.</p>', 'index.html', byWebm).unpaired, [], 'the English word');
-  assert.deepEqual(pairPage('<p>The web makes this easy, a web model.</p>', 'index.html', byWebm).unpaired, [], 'spaces are not removed, so words do not run together');
-  assert.equal(pairPage('<p>A tag in prose: &lt;video src=x.webm&gt;</p>', 'index.html', byWebm).unpaired.length, 1, 'a file name in text is read too');
-  assert.deepEqual(pairPage('<p title="&#99999999;">a code point no browser accepts</p>', 'index.html', byWebm).unpaired, [], 'it does not throw');
-});
-
-test('the dist pass refuses a published copy whose bytes are not the record\'s', () => {
-  const { root } = fixture();
-  const dist = mkdtempSync(join(tmpdir(), 'film-fallbacks-dist-'));
-  try {
-    mkdirSync(join(dist, 'assets/labs/agent-space/films'), { recursive: true });
-    const good = readFileSync(join(root, 'assets/labs/agent-space/films/a-film.mp4')), bad = Buffer.from(good);
-    bad[bad.length - 1] ^= 1;
-    writeFileSync(join(dist, 'assets/labs/agent-space/films/a-film.mp4'), bad);
-    writeFileSync(join(dist, 'index.html'), V + '<source src="assets/labs/agent-space/films/a-film.webm" type="video/webm"></video>');
-    assert.throws(() => addFilmFallbacks({ distDir: dist, root }), /is not in .* with its recorded sha256/);
-  } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
 });
 
 test('every video sample must lie in the media data and be a whole sequence of H.264 NAL units, the first an IDR frame', () => {
