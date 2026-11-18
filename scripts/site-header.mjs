@@ -235,16 +235,23 @@ function refuseUnsupportedFooterSource(html) {
 
 // The committed templates and all built pages have this one-line footer shape. Five built pages put one known JSON
 // data script after it. Pin that tail before using source offsets: unsupported HTML elsewhere cannot impersonate it.
-function knownFooterTail(html, label) {
+function knownFooterTail(html, label, document) {
   const open = '<footer class="site-footer">';
   const close = '</footer>';
   const start = html.indexOf(open);
   const end = html.indexOf(close, start + open.length);
   const footer = html.slice(start, end + close.length);
   const suffix = html.slice(end + close.length);
+  const trailerOpen = /^\s*<script type="application\/json" id="(?:station-data|experiment-data|witness-data)">/.exec(suffix);
+  const trailerAt = trailerOpen ? end + close.length + trailerOpen[0].indexOf('<script') : -1;
+  const trailer = trailerOpen ? elements(document, 'script').find(node => node.sourceCodeLocation?.startOffset === trailerAt) : null;
+  // A permitted data script ends at its first real parsed end tag. Nothing except whitespace and document closing
+  // tags may follow it, so a second script cannot make a wildcard swallow an intervening visible element.
+  const afterTrailer = trailerOpen && trailer?.sourceCodeLocation?.endTag ? html.slice(trailer.sourceCodeLocation.endOffset) : suffix;
   if (start < 0 || end < 0 || html.indexOf(open, start + 1) >= 0 || html.indexOf(close, end + 1) >= 0
     || /[\r\n]/.test(footer) || footer.split('<div>').length !== 2 || footer.split('</div>').length !== 2
-    || !/^\s*(?:<script type="application\/json" id="(?:station-data|experiment-data|witness-data)">[\s\S]*?<\/script>\s*)?<\/body>\s*<\/html>\s*$/.test(suffix)) {
+    || (trailerOpen && !trailer?.sourceCodeLocation?.endTag)
+    || !/^\s*<\/body>\s*<\/html>\s*$/.test(afterTrailer)) {
     throw new Error(`Unexpected site footer shape in ${label}`);
   }
   return { start, end: end + close.length };
@@ -255,7 +262,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   refuseUnsupportedFooterSource(html);
   const document = parse(html, { sourceCodeLocationInfo: true });
   refuseUnexpectedBases(document, label);
-  const tail = label === 'page' ? null : knownFooterTail(html, label);
+  const tail = label === 'page' ? null : knownFooterTail(html, label, document);
   const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
   if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
   const footer = footers[0];
