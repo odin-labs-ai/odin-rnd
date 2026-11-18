@@ -27,7 +27,13 @@ const built = () => {
 const chrome = chromeBinary();
 const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
 const footerDom = `(() => {
-  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  const visible = el => {
+    if (!el || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+    for (let node = el; node; node = node.parentElement) {
+      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(getComputedStyle(node).filter)) return false;
+    }
+    return [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  };
   const hittable = el => {
     el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
     return [...el.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).some(rect => {
@@ -43,8 +49,13 @@ const footerDom = `(() => {
 
 test('Chrome sees one usable Partners footer on every built page and rejects hidden or misdirected fixtures', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 600000 }, async () => {
   assert.ok(chrome, 'Chrome is required in CI');
-  const { dist, files } = built();
+  const { root, dist, files } = built();
   const pages = files.filter(file => file.endsWith('.html'));
+  // Compare the build with its source pages plus the four pages rendered only by generators. A missing built page
+  // must fail before the browser loop; walking dist alone would silently skip it.
+  const sourcePages = walk(join(root, 'site')).filter(file => file.endsWith('.html')).map(file => relative(join(root, 'site'), file).split('\\').join('/'));
+  const generatedPages = ['journal/index.html', 'projects/index.html', 'records/document-store/index.html', 'records/telemetry-truth/index.html'];
+  assert.deepEqual([...pages].sort(), [...sourcePages, ...generatedPages].sort(), 'all source and generator pages are present before Chrome checks them');
   const footer = '<footer class="site-footer"><a href="partners/">Partners</a></footer>';
   const fixtures = [
     `<dialog>${footer}</dialog>`, `<dialog open>${footer}</dialog>`,
@@ -54,6 +65,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<footer class="site-footer" style="display: none /* temporarily hidden */;" ><a href="partners/">Partners</a></footer>`,
     `<style>.site-footer { transform: scale(0) }</style>${footer}`,
     `<style>.site-footer a { clip-path: inset(50%) }</style>${footer}`,
+    `<style>.site-footer a { filter: opacity(0) }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -66,7 +78,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -77,6 +89,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.equal(scaled.footerVisible, false, 'a zero-area transformed footer is not visible');
   assert.deepEqual(scaled.partners, [], 'a zero-area transformed link is not usable');
   assert.deepEqual(clipped.partners, [], 'a fully clipped Partners link is not usable');
+  assert.deepEqual(filtered.partners, [], 'a fully transparent Partners link is not visible');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });

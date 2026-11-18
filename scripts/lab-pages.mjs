@@ -226,7 +226,9 @@ export const ASSERTS = {
       if (JSON.stringify(Object.keys(brokers).sort()) !== JSON.stringify(want)) return `${arm}: the brokers are ${Object.keys(brokers).join(', ')}, not ${want.join(', ')}`;
       for (const b of a.atList) { const v = brokers[b]; if (v.billedToListMedian !== 1 || v.billedToListRange?.[0] !== 1 || v.billedToListRange?.[1] !== 1) return `${arm}/${b}: did not bill list price on every priced call`; }
       const v = brokers[a.above];
-      if (!Number.isFinite(v?.billedToListMedian) || !Number.isFinite(v?.billedToListRange?.[0]) || !(v.billedToListMedian > 1) || !(v.billedToListRange[0] > 1)) return `${arm}/${a.above}: did not bill above list price on every priced call`;
+      const range = v?.billedToListRange;
+      if (!Array.isArray(range) || range.length !== 2 || !Number.isFinite(v?.billedToListMedian) || !range.every(Number.isFinite)
+        || !(1 < range[0] && range[0] <= v.billedToListMedian && v.billedToListMedian <= range[1])) return `${arm}/${a.above}: did not bill above list price on every priced call`;
     }
     return null;
   },
