@@ -12,8 +12,17 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 /** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value. It may set a viewport.
  * Built pages use the site's loopback server so their ES modules load as they do on Pages. */
 export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, timeoutMs = 30000 } = {}) {
+  for (const job of jobs) {
+    const hasFile = typeof job.file === 'string' && job.file.length > 0;
+    const hasHtml = typeof job.html === 'string';
+    if (hasFile === hasHtml) throw new Error('Each Chrome job must have exactly one file or HTML fixture');
+    if (hasFile && !siteRoot) throw new Error('siteRoot is required for built-page browser checks');
+    if (hasFile) {
+      const rel = relative(siteRoot, job.file).split(sep).join('/');
+      if (rel.startsWith('../') || rel === '..') throw new Error(`Built page outside siteRoot: ${job.file}`);
+    }
+  }
   if (!chrome) throw new Error('Chrome is required for rendered-page assertions; set CHROME_BIN');
-  if (jobs.some(job => job.file) && !siteRoot) throw new Error('siteRoot is required for built-page browser checks');
   const dir = mkdtempSync(join(tmpdir(), 'rnd-dom-'));
   const child = spawn(chrome, [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
@@ -77,9 +86,8 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
     const values = [];
     for (const [index, job] of jobs.entries()) {
       const file = job.file ?? join(dir, `fixture-${index}.html`);
-      if (job.html !== undefined) writeFileSync(file, job.html);
+      if (job.html !== undefined) writeFileSync(join(dir, `fixture-${index}.html`), job.html);
       const rel = job.file ? relative(siteRoot, file).split(sep).join('/') : '';
-      if (job.file && (rel.startsWith('../') || rel === '..')) throw new Error(`Built page outside siteRoot: ${file}`);
       const url = (job.file ? new URL(rel, siteUrl).href : pathToFileURL(file).href) + (job.hash ?? '');
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       try {
@@ -98,6 +106,18 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
         const navigation = await send('Page.navigate', { url }, sessionId);
         if (navigation.errorText) throw new Error(navigation.errorText);
         await loaded;
+        if (job.clickSelector) {
+          const moved = new Promise(resolve => {
+            const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, 2000);
+            loads.set(sessionId, () => { clearTimeout(timer); resolve(true); });
+          });
+          const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); link.click(); return true; })()`, returnByValue: true }, sessionId);
+          if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
+          const navigated = await moved;
+          const at = await send('Runtime.evaluate', { expression: 'location.href', returnByValue: true }, sessionId);
+          values.push({ navigated, sourceUrl: url, url: at.result.value });
+          continue;
+        }
         const expression = `new Promise((resolve, reject) => {
           const until = Date.now() + ${timeoutMs};
           const tick = () => {

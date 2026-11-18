@@ -168,7 +168,8 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   checkPrefix(relPrefix);
   const { start, end, node, document } = navSpan(html, label);
   refuseUnexpectedBases(document, label);
-  if (elements(document, 'base').some(base => base.sourceCodeLocation?.startOffset >= start && base.sourceCodeLocation?.endOffset <= end)) throw new Error(`Document base in replaced navigation of ${label}`);
+  const bases = elements(document, 'base');
+  if (bases.some(base => base.sourceCodeLocation?.startOffset >= start && base.sourceCodeLocation?.endOffset <= end)) throw new Error(`Document base in replaced navigation of ${label}`);
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
   const links = [];
@@ -184,7 +185,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     const retired = RETIRED_LABELS.get(text);
     const href = attr(anchor, 'href') ?? '';
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
-    const actual = new URL(href, label === 'index.html' || label === '404.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
+    const actual = new URL(href, label === 'index.html' || (label === '404.html' && bases.length === 1) ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
     const canonical = DESTINATIONS.find(destination => destination.label === text);
     if (canonical && actual !== new URL(canonical.path, SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${canonical.path} as DESTINATIONS records; this pass would drop a destination it does not account for`);
     if (text === 'Find' && actual !== new URL('find/', SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "Find" leading to "${href}", not the site Find page`);

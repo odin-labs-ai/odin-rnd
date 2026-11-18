@@ -310,7 +310,20 @@ test('a permitted 404 base resolves a Findings fragment against the site home', 
     assert.doesNotThrow(() => normaliseHeader(changed, { relPrefix: SITE_ORIGIN, label: '404.html' }), 'direct normalization honors the base');
     writeFileSync(join(dir, '404.html'), changed);
     assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 1, changed: 1, exempt: 0 });
-    assert.match(readFileSync(join(dir, '404.html'), 'utf8'), new RegExp(`href="${SITE_ORIGIN}#findings">Findings`), 'the named-page output keeps the correct home target');
+    assert.ok(readFileSync(join(dir, '404.html'), 'utf8').includes(`href="${SITE_ORIGIN}#findings">Findings`), 'the named-page output keeps the correct home target');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('without the 404 base, a Findings fragment cannot be mistaken for the site home', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-404-no-base-'));
+  try {
+    const source = normalise(read('404.html'), '404.html');
+    const changed = source.replace(`<base href="${SITE_ORIGIN}">`, '').replace(`href="${SITE_ORIGIN}#findings">Findings`, 'href="#findings">Findings');
+    assert.notEqual(changed, source, 'the base is removed and the recognized Findings link is relative to the error page');
+    assert.throws(() => normaliseHeader(changed, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Findings.*not #findings/, 'direct normalization refuses the wrong fragment target');
+    writeFileSync(join(dir, '404.html'), changed);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /Findings.*not #findings/, 'the named-page build refuses the wrong fragment target');
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), changed, 'the refused page was not rewritten');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
