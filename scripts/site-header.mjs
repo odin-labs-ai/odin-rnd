@@ -184,6 +184,9 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
     const retired = RETIRED_LABELS.get(text);
     const href = attr(anchor, 'href') ?? '';
+    // A 404 page may be served at any missing nested URL. Without its permitted base, only an absolute site link
+    // has the same destination there as it has when checked at the build filename.
+    if (label === '404.html' && bases.length === 0 && !href.startsWith(SITE_ORIGIN)) throw new Error(`The header navigation of 404.html has a relative "${text}" link without its permitted base`);
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
     const actual = new URL(href, label === 'index.html' || (label === '404.html' && bases.length === 1) ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
     const canonical = DESTINATIONS.find(destination => destination.label === text);

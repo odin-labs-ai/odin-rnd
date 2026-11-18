@@ -320,10 +320,30 @@ test('without the 404 base, a Findings fragment cannot be mistaken for the site 
     const source = normalise(read('404.html'), '404.html');
     const changed = source.replace(`<base href="${SITE_ORIGIN}">`, '').replace(`href="${SITE_ORIGIN}#findings">Findings`, 'href="#findings">Findings');
     assert.notEqual(changed, source, 'the base is removed and the recognized Findings link is relative to the error page');
-    assert.throws(() => normaliseHeader(changed, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Findings.*not #findings/, 'direct normalization refuses the wrong fragment target');
+    assert.ok(!changed.includes(`<base href="${SITE_ORIGIN}">`) && changed.includes('href="#findings">Findings'), 'both the base removal and relative fragment are present');
+    assert.throws(() => normaliseHeader(changed, { relPrefix: SITE_ORIGIN, label: '404.html' }), /relative "Findings" link without its permitted base/, 'direct normalization refuses the wrong fragment target');
     writeFileSync(join(dir, '404.html'), changed);
-    assert.throws(() => normaliseHeaders({ distDir: dir }), /Findings.*not #findings/, 'the named-page build refuses the wrong fragment target');
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /relative "Findings" link without its permitted base/, 'the named-page build refuses the wrong fragment target');
     assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), changed, 'the refused page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a nested missing URL cannot redirect a no-base 404 Find link into that folder', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-404-nested-find-'));
+  try {
+    const source = normalise(read('404.html'), '404.html');
+    const withoutBase = source.replace(`<base href="${SITE_ORIGIN}">`, '');
+    assert.notEqual(withoutBase, source, 'the permitted base was removed');
+    assert.doesNotThrow(() => normaliseHeader(withoutBase, { relPrefix: SITE_ORIGIN, label: '404.html' }), 'absolute links remain valid without a base');
+    const relativeFind = withoutBase.replace(`href="${SITE_ORIGIN}find/">Find`, 'href="find/">Find');
+    assert.notEqual(relativeFind, withoutBase, 'Find now has a relative path');
+    assert.notEqual(new URL('find/', `${SITE_ORIGIN}labs/missing`).href, `${SITE_ORIGIN}find/`, 'the nested error URL would misroute a relative Find link');
+    assert.throws(() => normaliseHeader(relativeFind, { relPrefix: SITE_ORIGIN, label: '404.html' }), /relative "Find" link without its permitted base/, 'direct normalization refuses the nested-URL hazard');
+    writeFileSync(join(dir, '404.html'), relativeFind);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /relative "Find" link without its permitted base/, 'the named-page build refuses the nested-URL hazard');
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), relativeFind, 'the refused page was not rewritten');
+    const withBase = source.replace(`href="${SITE_ORIGIN}find/">Find`, 'href="find/">Find');
+    assert.doesNotThrow(() => normaliseHeader(withBase, { relPrefix: SITE_ORIGIN, label: '404.html' }), 'the permitted base makes the same relative Find link safe');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
