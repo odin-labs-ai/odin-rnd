@@ -18,6 +18,7 @@ function timeline(slug, dates) {
   assert.deepEqual(times, dates.map(date => [date, day(date)]), `${slug} uses its source dates`);
   assert.deepEqual(dates, [...dates].sort(), `${slug} milestones are ordered`);
   for (const [, href] of section.matchAll(/href="([^"]+)"/g)) {
+    assert.ok(href.startsWith('#') || href.startsWith('../../'), `${slug} has an unsupported timeline link: ${href}`);
     if (href.startsWith('#')) assert.ok(page.includes(`id="${href.slice(1)}"`), `${slug} resolves ${href}`);
     else if (href.startsWith('../../')) assert.ok(existsSync(resolve(`site/labs/${slug}`, href.split('#')[0])), `${slug} resolves ${href}`);
   }
