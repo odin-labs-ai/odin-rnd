@@ -225,9 +225,10 @@ test('the entrance offers a native research search, topic searches, the recorded
   assert.match(hero, /<input[^>]*id="research-query"[^>]*type="search"[^>]*name="q"/);
   const topicForm = /<form action="find\/" method="get" aria-label="Browse research topics">([\s\S]*?)<\/form>/.exec(hero);
   assert.ok(topicForm);
-  for (const query of ['MongoDB', 'review', 'agents']) {
+  for (const query of ['MongoDB', 'code review']) {
     assert.ok(topicForm[1].includes(`<button name="q" value="${query}">`));
   }
+  assert.ok(topicForm[1].includes('<button name="topic" value="agents">'));
   assert.ok(hero.includes('href="labs/agent-space/#film-agent-space-30s"'));
   assert.ok(hero.includes('href="journal/failover-results.html"'));
   assert.ok(!hero.includes('<video'), 'the film only downloads when the visitor chooses to watch');

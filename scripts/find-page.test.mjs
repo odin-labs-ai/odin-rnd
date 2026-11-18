@@ -181,7 +181,9 @@ test('the template carries the search UI the module expects', () => {
   for (const name of ['type', 'outcome']) assert.match(html, new RegExp(`<fieldset[\\s\\S]*name="${name}"`));
   assert.equal(html.match(/<fieldset\b/g)?.length, 4);
   assert.match(html, /<form id="find-form"[^>]*\shidden>/, 'the form stays hidden until the index loads');
-  assert.doesNotMatch(html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0], /\shidden/, 'the static list is visible without JavaScript');
+  const fallback = html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0];
+  assert.doesNotMatch(fallback, /\shidden/, 'the static list is visible without JavaScript');
+  assert.match(fallback, /All library entries are shown.*Find on Page/, 'the unfiltered list explains how to search when enhancement is unavailable');
 });
 
 test('the template loads nothing from elsewhere and holds no numbers or index link', () => {
