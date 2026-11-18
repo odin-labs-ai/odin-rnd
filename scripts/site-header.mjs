@@ -308,12 +308,19 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   });
   if (!missing.length) return html;
   const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
-  const div = elements(footer, 'div').find(node => {
+  const groups = elements(footer, 'div').filter(node => {
     if (hiddenWithin(node)) return false;
     for (let at = node.parentNode; at && at !== footer; at = at.parentNode) if (at.tagName === 'a') return false;
     return true;
   });
-  if (handlerOnPath(div ?? footer, footer)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
-  const at = div?.sourceCodeLocation?.endTag?.startOffset ?? end;
+  if (groups.length !== 1) throw new Error(`The site footer of ${label} has no unique Partners insertion group`);
+  const div = groups[0];
+  const at = div.sourceCodeLocation?.endTag?.startOffset;
+  if (!Number.isInteger(at) || (div.childNodes ?? []).some(child => {
+    if (child.nodeName === '#comment') return false;
+    if (child.nodeName === '#text') return child.value.trim() !== '';
+    return child.tagName !== 'a' || !child.sourceCodeLocation?.endTag || child.sourceCodeLocation.endOffset > at;
+  })) throw new Error(`The site footer of ${label} has an invalid Partners insertion group`);
+  if (handlerOnPath(div, footer)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
   return html.slice(0, at) + links + html.slice(at);
 }

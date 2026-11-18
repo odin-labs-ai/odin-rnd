@@ -265,7 +265,7 @@ test('the named-page build refuses a second parsed footer before navigation can 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('footer insertion keeps an existing link with a div and trailing text intact', () => {
+test('footer insertion refuses a page without a separate safe link group', () => {
   const dir = mkdtempSync(join(tmpdir(), 'site-header-footer-link-'));
   try {
     const source = read('index.html');
@@ -274,14 +274,8 @@ test('footer insertion keeps an existing link with a div and trailing text intac
     assert.ok(start >= 0 && end > start, 'the named source has one footer to replace');
     const original = '<footer class="site-footer"><a href="journal/"><div>Read</div> all notes</a></footer>';
     writeFileSync(join(dir, 'index.html'), source.slice(0, start) + original + source.slice(end));
-    assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 1, changed: 1, exempt: 0 });
-    const output = readFileSync(join(dir, 'index.html'), 'utf8');
-    assert.match(output, /<a href="journal\/">\<div\>Read\<\/div\> all notes<\/a><a href="partners\/">Partners<\/a>/, 'Partners is inserted after the complete original link');
-    const footer = actualElements(parse(output), 'footer').find(node => actualAttr(node, 'class') === 'site-footer');
-    const journal = actualElements(footer, 'a').find(node => actualAttr(node, 'href') === 'journal/');
-    assert.equal(actualText(journal), 'Read all notes', 'the original link retains its full label');
-    assert.equal(actualElements(journal, 'a').length, 1, 'Partners is a separate anchor');
-    assert.equal(actualElements(footer, 'a').filter(node => actualAttr(node, 'href') === 'partners/').length, 1, 'one Partners link remains');
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /no unique Partners insertion group/, 'a nested div inside an old link is not a safe place for another link');
+    assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), source.slice(0, start) + original + source.slice(end), 'the unsupported footer remains byte for byte when refused');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -449,12 +443,13 @@ test('Partners moved to the footer: once in the site footer of every committed p
   assert.equal(inserted, '<footer class="site-footer"><section><div><a href="partners/">Partners</a></div></section></footer>', 'a safe wrapper allows one Partners insertion');
   assert.equal(addFooterLinks(inserted, { relPrefix: '' }), inserted, 'a safe insertion stays idempotent');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><section onclick="return false"><div></div></section></footer>', { relPrefix: '' }), /invalid Partners insertion site/, 'a wrapping handler refuses insertion before writing a link that could not navigate');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><div><p onclick="return false">More</div></footer>', { relPrefix: '' }), /invalid Partners insertion group/, 'an omitted paragraph close cannot leave a handler active at the insertion offset');
   const hiddenFirst = '<footer class="site-footer"><div hidden></div><div><a href="x">X</a></div></footer>';
   const visibleSecond = '<footer class="site-footer"><div hidden></div><div><a href="x">X</a><a href="partners/">Partners</a></div></footer>';
   assert.equal(addFooterLinks(hiddenFirst, { relPrefix: '' }), visibleSecond, 'insert into the visible div');
   assert.equal(addFooterLinks(visibleSecond, { relPrefix: '' }), visibleSecond, 'visible insertion stays idempotent');
   const hiddenPopover = '<footer class="site-footer"><div popover></div></footer>';
   const visibleFooter = '<footer class="site-footer"><div popover></div><a href="partners/">Partners</a></footer>';
-  assert.equal(addFooterLinks(hiddenPopover, { relPrefix: '' }), visibleFooter, 'a closed popover is not an insertion group');
+  assert.throws(() => addFooterLinks(hiddenPopover, { relPrefix: '' }), /no unique Partners insertion group/, 'a closed popover does not provide a safe insertion group');
   assert.equal(addFooterLinks(visibleFooter, { relPrefix: '' }), visibleFooter, 'fallback insertion stays idempotent');
 });

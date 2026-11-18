@@ -97,11 +97,30 @@ const footerDom = `(() => {
       return hit === el || el.contains(hit);
     });
   };
+  const unclippedText = text => {
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const lines = [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0);
+    if (!lines.length) return false;
+    for (let node = text.parentElement; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const overflowClips = ['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowX) || ['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowY);
+      const containClips = style.contain.split(/\\s+/).includes('paint') || style.contain === 'strict' || style.contain === 'content';
+      if (!overflowClips && !containClips) continue;
+      const box = node.getBoundingClientRect();
+      const edge = {
+        top: box.top + parseFloat(style.borderTopWidth), bottom: box.bottom - parseFloat(style.borderBottomWidth),
+        left: box.left + parseFloat(style.borderLeftWidth), right: box.right - parseFloat(style.borderRightWidth),
+      };
+      if (lines.some(rect => rect.top < edge.top - 1 || rect.bottom > edge.bottom + 1 || rect.left < edge.left - 1 || rect.right > edge.right + 1)) return false;
+    }
+    return true;
+  };
   const visibleLabel = link => {
     const nodes = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
     const parts = [];
-    while (nodes.nextNode()) if (nodes.currentNode.textContent.trim()) parts.push(nodes.currentNode.parentElement);
-    return parts.length > 0 && parts.every(part => visible(part) && hittable(part));
+    while (nodes.nextNode()) if (nodes.currentNode.textContent.trim()) parts.push(nodes.currentNode);
+    return parts.length > 0 && parts.every(text => visible(text.parentElement) && hittable(text.parentElement) && unclippedText(text));
   };
   const footers = [...document.querySelectorAll('footer.site-footer')];
   const footer = footers[0];
@@ -134,6 +153,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     '<footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { opacity: 0 }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { clip-path: inset(50%) }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
+    '<style>.site-footer a span { display: inline-block; width: 8em; white-space: nowrap; text-indent: 100%; overflow: hidden }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -146,7 +166,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, fadedNestedLabel, clippedNestedLabel, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, fadedNestedLabel, clippedNestedLabel, overflowNestedLabel, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -164,6 +184,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(nestedLabel.partners, [new URL('partners/', nestedLabel.url).href], 'a visible nested label remains usable');
   assert.deepEqual(fadedNestedLabel.partners, [], 'an invisible nested label cannot make the anchor appear usable');
   assert.deepEqual(clippedNestedLabel.partners, [], 'a fully clipped nested label cannot make the anchor appear usable');
+  assert.deepEqual(overflowNestedLabel.partners, [], 'text outside a nested overflow clip cannot make the anchor appear usable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });
