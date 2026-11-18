@@ -41,6 +41,8 @@ test('Review progression uses the dated public result updates and keeps the nega
   assert.ok(rows.every(Boolean), 'all three source updates exist');
   const section = timeline('review', rows.map(row => row.date));
   for (const row of rows) assert.ok(section.includes(`href="../../${row.source}"`), `links ${row.key}'s public record`);
+  assert.match(section, /href="\.\.\/\.\.\/journal\/nina-reviews-the-change\.html#amendment-01">EXP 006's pre-run amendment<\/a>/);
+  assert.match(section, /href="\.\.\/\.\.\/data\/nina-changes\/results\.json">the result record<\/a> reports the counted runs and manipulation check/);
   assert.equal(read('data/labs/review/record.json').selfVerify.decision, 'no');
   assert.match(section, /did not bring false alarms below its pre-set bar/);
   assert.match(section, /not new reviewer trials/);
