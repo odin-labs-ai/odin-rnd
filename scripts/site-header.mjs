@@ -124,18 +124,18 @@ function checkPrefix(relPrefix) {
 }
 
 /** The canonical <nav> for a page whose way to the site root is `relPrefix`, `current` marked aria-current="page". */
-export function canonicalNav(relPrefix, current = null) {
+export function canonicalNav(relPrefix, current = null, { currentPage = true } = {}) {
   checkPrefix(relPrefix);
   if (current !== null && !DESTINATIONS.some(d => d.key === current)) throw new Error(`Unknown header section "${current}"`);
-  const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? ' aria-current="page"' : ''}>${labelHtml(d.label)}</a>`).join('');
+  const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? currentPage ? ' aria-current="page"' : ' data-current-section' : ''}>${labelHtml(d.label)}</a>`).join('');
   return `${NAV_OPEN}${links}</nav>`;
 }
 
 /** The whole site header for a page rendered from code (the section index pages), with the canonical nav. */
-export function canonicalHeader(relPrefix, current = null) {
+export function canonicalHeader(relPrefix, current = null, options = {}) {
   return `<header class="site-header dark-surface">
     <a href="${relPrefix || './'}" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="${relPrefix}assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
-    ${canonicalNav(relPrefix, current)}
+    ${canonicalNav(relPrefix, current, options)}
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>`;
 }
@@ -184,9 +184,10 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     const retired = RETIRED_LABELS.get(text);
     const href = attr(anchor, 'href') ?? '';
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
-    const actual = new URL(href, label === 'index.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
+    const actual = new URL(href, label === 'index.html' || label === '404.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
     const canonical = DESTINATIONS.find(destination => destination.label === text);
     if (canonical && actual !== new URL(canonical.path, SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${canonical.path} as DESTINATIONS records; this pass would drop a destination it does not account for`);
+    if (text === 'Find' && actual !== new URL('find/', SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "Find" leading to "${href}", not the site Find page`);
     if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
     if (retired && !retiredTargets(retired).some(target => actual === new URL(target, SITE_ORIGIN).href)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
   }
@@ -195,9 +196,10 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   if (finds.length > 1) throw new Error(`The header navigation of ${label} has ${finds.length} Find links`);
   // The committed nav templates use only these attributes. Any other attribute could be an inbound target or behavior
   // that replacing the whole anchor would silently discard.
-  const knownAttributes = new Set(['href', 'aria-current', 'data-contact-opened']);
+  const knownAttributes = new Set(['href', 'aria-current', 'data-current-section', 'data-contact-opened']);
   if (links.some(([, , anchor]) => (anchor.attrs ?? []).some(item => !knownAttributes.has(item.name)))) throw new Error(`The header navigation of ${label} has an anchor attribute that this pass would discard`);
-  const canonical = canonicalNav(relPrefix, current);
+  const destination = DESTINATIONS.find(item => item.key === current);
+  const canonical = canonicalNav(relPrefix, current, { currentPage: !!destination && label === `${destination.path}index.html` });
   const next = finds.length ? canonical.replace('</nav>', `${finds[0]}</nav>`) : canonical;
   if (/\d/.test(next)) throw new Error(`The header navigation of ${label} would carry a digit`);
   return html.slice(0, start) + next + html.slice(end);

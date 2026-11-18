@@ -59,19 +59,21 @@ test('only the nav changes: brand, View source and Back to odin-labs.ai stay byt
   }
 });
 
-test('aria-current marks the page\'s own section, and only that', () => {
-  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': 'Labs', 'updates/index.html': null, 'work-with-us/index.html': 'Work with us', 'partners/index.html': null, 'experiments/index.html': 'All results', 'journal/a-passing-pipeline.html': 'Notes &amp; updates', 'one-pager/index.html': 'Start here', 'methods/index.html': 'How we test', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
+test('aria-current marks only exact pages; parent sections keep a visual marker', () => {
+  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': null, 'updates/index.html': null, 'work-with-us/index.html': 'Work with us', 'partners/index.html': null, 'experiments/index.html': 'All results', 'journal/a-passing-pipeline.html': null, 'one-pager/index.html': 'Start here', 'methods/index.html': 'How we test', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
   for (const [rel, want] of Object.entries(cases)) {
     const nav = navOf(normalise(read(rel), rel));
     const marked = [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
     assert.deepEqual(marked, want ? [want] : [], rel);
   }
   for (const rel of PAGE_FILES) assert.ok((navOf(normalise(read(rel), rel)).match(/aria-current/g) || []).length <= 1, rel);
+  assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/labs\/" data-current-section>Labs<\/a>/, 'a lab story highlights its parent without calling it the current page');
+  assert.match(navOf(normalise(read('journal/a-passing-pipeline.html'), 'journal/a-passing-pipeline.html')), /<a href="\.\.\/journal\/" data-current-section>Notes &amp; updates<\/a>/, 'a note highlights its parent without calling it the current page');
 });
 
 test('links lead to the section pages, relative to the page; Work with us keeps its contact marker', () => {
   const nav = navOf(normalise(read('journal/a-passing-pipeline.html'), 'journal/a-passing-pipeline.html'));
-  assert.equal(nav, '<nav aria-label="Main navigation"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>');
+  assert.equal(nav, '<nav aria-label="Main navigation"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" data-current-section>Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></nav>');
   assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><a href="one-pager\/">Start here<\/a><a href="#findings">Findings<\/a>/);
   assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/journal\/">Notes &amp; updates<\/a>/);
   assert.doesNotMatch(nav, /partners\//, 'Partners is not in the header');
@@ -165,6 +167,8 @@ test('fails closed on a page it cannot place', () => {
   const anchored = canonicalHome.replace('<a href="methods/">How we test</a>', '<a id="methods-entry" href="methods/">How we test</a>');
   assert.notEqual(anchored, canonicalHome, 'the recognized navigation anchor gained a fragment target');
   assert.throws(() => normaliseHeader(anchored, { relPrefix: '', label: 'index.html' }), /anchor attribute/, 'an anchor ID cannot be erased by replacement');
+  const wrongFind = canonicalHome.replace('</nav>', '<a href="journal/find/">Find</a></nav>');
+  assert.throws(() => normaliseHeader(wrongFind, { relPrefix: '', label: 'index.html' }), /site Find page/, 'a nested find/ suffix is not the root Find destination');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
   const lab = read('labs/rogue/index.html');
@@ -297,6 +301,31 @@ test('the permitted 404 base cannot be discarded with its recognized navigation 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('a permitted 404 base resolves a Findings fragment against the site home', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-404-findings-'));
+  try {
+    const source = normalise(read('404.html'), '404.html');
+    const changed = source.replace(`href="${SITE_ORIGIN}#findings">Findings`, 'href="#findings">Findings');
+    assert.notEqual(changed, source, 'the recognized Findings link now relies on the permitted base');
+    assert.doesNotThrow(() => normaliseHeader(changed, { relPrefix: SITE_ORIGIN, label: '404.html' }), 'direct normalization honors the base');
+    writeFileSync(join(dir, '404.html'), changed);
+    assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 1, changed: 1, exempt: 0 });
+    assert.match(readFileSync(join(dir, '404.html'), 'utf8'), new RegExp(`href="${SITE_ORIGIN}#findings">Findings`), 'the named-page output keeps the correct home target');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the named 404 build refuses a Find link with a misleading suffix', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-find-url-'));
+  try {
+    const source = read('404.html');
+    const poisoned = source.replace(`href="${SITE_ORIGIN}find/">Find`, 'href="journal/find/">Find');
+    assert.notEqual(poisoned, source, 'the recognized Find link now points to a nested page');
+    writeFileSync(join(dir, '404.html'), poisoned);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /site Find page/, 'the named-page build refuses the wrong resolved destination');
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), poisoned, 'the refused page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('Partners moved to the footer: once in the site footer of every committed page, relative to the page, idempotent', () => {
   for (const rel of PAGE_FILES) {
     const src = read(rel);
@@ -310,9 +339,15 @@ test('Partners moved to the footer: once in the site footer of every committed p
     }
     assert.equal(addFooterLinks(out, { relPrefix: prefixOf(rel), label: rel }), out, `${rel}: idempotent`);
     // Only the footer changes.
+    const before = normalise(src, rel);
     const at = out.indexOf('<footer class="site-footer');
-    assert.equal(out.slice(0, at), normalise(src, rel).slice(0, at), `${rel}: nothing before the footer changes`);
+    assert.equal(out.slice(0, at), before.slice(0, at), `${rel}: nothing before the footer changes`);
+    const close = '</footer>';
+    assert.equal(out.slice(out.indexOf(close, at) + close.length), before.slice(before.indexOf(close, at) + close.length), `${rel}: nothing after the footer changes`);
   }
+  const dataTrailer = '<!doctype html><html><body><footer class="site-footer"><div></div></footer><script type="application/json" id="station-data">{"rows":[{"value":"kept"}]}</script></body></html>';
+  const withLink = addFooterLinks(dataTrailer, { relPrefix: '', label: 'index.html' });
+  assert.equal(withLink.slice(withLink.indexOf('</footer>') + '</footer>'.length), dataTrailer.slice(dataTrailer.indexOf('</footer>') + '</footer>'.length), 'a nonempty data script after the footer is unchanged');
   assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<header class="site-header"><nav></nav></header>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> -->', { relPrefix: '' }), /exactly one site footer/, 'a commented footer is absent');

@@ -239,7 +239,7 @@ export const ASSERTS = {
     const list = at && typeof at === 'object' ? Object.values(at) : [];
     if (list.length < 2) return 'fewer than two entries to compare';
     const values = list.map(x => a.path.reduce((v, k) => v?.[k], x));
-    return values.every(v => v !== undefined && v === values[0]) ? null : `${a.path.join('/')} differs: ${values.join(', ')}`;
+    return values.every(Number.isFinite) && values.every(v => v === values[0]) ? null : `${a.path.join('/')} differs or is not finite: ${values.join(', ')}`;
   },
   'intervals-overlap': (read, a) => {
     const [path, pointer = ''] = a.source.split('#');

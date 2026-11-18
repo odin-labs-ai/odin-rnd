@@ -9,7 +9,7 @@ import { chromeBinary } from './og-cards-render.mjs';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-/** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value.
+/** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value. It may set a viewport.
  * Built pages use the site's loopback server so their ES modules load as they do on Pages. */
 export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, timeoutMs = 30000 } = {}) {
   if (!chrome) throw new Error('Chrome is required for rendered-page assertions; set CHROME_BIN');
@@ -85,6 +85,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
       try {
         const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
         await send('Page.enable', {}, sessionId);
+        if (job.viewport) await send('Emulation.setDeviceMetricsOverride', { width: job.viewport.width, height: job.viewport.height, deviceScaleFactor: 1, mobile: false }, sessionId);
         if (job.blockedUrls) {
           await send('Network.enable', {}, sessionId);
           await send('Network.setCacheDisabled', { cacheDisabled: true }, sessionId);

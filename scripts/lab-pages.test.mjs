@@ -286,6 +286,10 @@ test('a proof claim refuses a missing or placeholder written plan', () => {
   extraRead.recordProblem = source.recordProblem;
   extraRead.quoteProblem = source.quoteProblem;
   assert.throws(() => renderLabProof(extraRead, '../'), /did not bill list price/, 'a third endpoint cannot be ignored for an at-list broker');
+  const absentSpreads = structuredClone(source(broker));
+  for (const arm of Object.values(absentSpreads.perArm)) arm.rate.spread = null;
+  const spreadRead = path => path === broker ? absentSpreads : source(path);
+  assert.match(ASSERTS['equal-across'](spreadRead, { source: `${broker}#/perArm`, path: ['rate', 'spread'] }), /not finite/, 'two absent spreads cannot prove an equal measured spread');
 });
 
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results

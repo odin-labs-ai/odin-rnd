@@ -181,17 +181,20 @@ test('the sitemap lists /find/', () => {
   assert.match(readFileSync('site/sitemap.xml', 'utf8'), /<url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/find\/<\/loc><\/url><\/urlset>/);
 });
 
-test('each built page marks its own section current in the header, and only that one', () => {
+test('each built page marks only its own page current, while parent sections keep a visual marker', () => {
   const { dist } = built();
-  const currentOf = rel => {
+  const marksOf = rel => {
     const nav = readFileSync(join(dist, rel), 'utf8').match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
-    return [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
+    return {
+      page: [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]),
+      section: [...nav.matchAll(/<a\b[^>]*data-current-section[^>]*>([^<]*)<\/a>/g)].map(m => m[1]),
+    };
   };
   const expected = {
     'index.html': [],
-    'journal/a-passing-pipeline.html': ['Notes &amp; updates'],
+    'journal/a-passing-pipeline.html': [],
     'journal/index.html': ['Notes &amp; updates'],
-    'labs/rogue/index.html': ['Labs'],
+    'labs/rogue/index.html': [],
     'labs/index.html': ['Labs'],
     'experiments/index.html': ['All results'],
     'updates/index.html': [],
@@ -204,7 +207,9 @@ test('each built page marks its own section current in the header, and only that
     'projects/ci-witness/index.html': [],
     'find/index.html': ['Find'],
   };
-  for (const [rel, current] of Object.entries(expected)) assert.deepEqual(currentOf(rel), current, rel);
+  for (const [rel, current] of Object.entries(expected)) assert.deepEqual(marksOf(rel).page, current, rel);
+  assert.deepEqual(marksOf('journal/a-passing-pipeline.html').section, ['Notes &amp; updates'], 'a note highlights its parent section');
+  assert.deepEqual(marksOf('labs/rogue/index.html').section, ['Labs'], 'a lab page highlights its parent section');
 });
 
 test('the sitemap lists /journal/ and /projects/ directly before /find/, which stays last', () => {

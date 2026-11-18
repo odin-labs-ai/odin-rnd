@@ -122,7 +122,8 @@ const wordsDom = `(() => {
     if (!el || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
     if (!readableForeground(el)) return false;
     for (let node = el; node; node = node.parentElement) {
-      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(getComputedStyle(node).filter)) return false;
+      const style = getComputedStyle(node);
+      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(style.filter) || style.clipPath !== 'none') return false;
     }
     el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
     return [...el.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).some(rect => {
@@ -139,10 +140,11 @@ const wordsDom = `(() => {
         && ![...item.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim()),
       limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
       citationVisible: visible(citation), citationText: citation?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
-      citationLinks: citation ? [...citation.querySelectorAll('a')].map(a => [a.innerText.trim(), a.getAttribute('href')]) : [],
+      citationLinks: citation ? [...citation.querySelectorAll('a')].map(a => ({ text: a.innerText.trim(), href: a.getAttribute('href'), resolved: a.href,
+        visible: visible(a), download: a.hasAttribute('download'), target: a.getAttribute('target') ?? '' })) : [],
       citationDates: citation ? [...citation.querySelectorAll('time')].map(time => [time.innerText.trim(), time.getAttribute('datetime')]) : [] };
   });
-  return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
+  return { pageUrl: location.href, text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
     correctionVisible: visible(correction), correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '',
     correctionWhenVisible: visible(correction?.querySelector('.correction-when')), correctionLabelVisible: visible(correction?.querySelector('.correction-label')),
     correctionTimesVisible: correction ? [...correction.querySelectorAll('time')].map(visible) : [],
@@ -164,6 +166,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const transparentFill = `<style>.correction-note > p, .correction-note > p * { -webkit-text-fill-color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
   const transparentTimes = `<style>.correction-note time { -webkit-text-fill-color: transparent; text-shadow: none }</style><main>${correctionBlock}</main>`;
   const clipped = `<style>.correction-note { clip-path: inset(50%) }</style><main>${correctionBlock}</main>`;
+  const partlyClipped = `<style>.correction-note > p { clip-path: inset(40% 0) }</style><main>${correctionBlock}</main>`;
   const filtered = `<style>.correction-note { filter: opacity(0) }</style><main>${correctionBlock}</main>`;
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
   const reorderedClaim = '<style>.claim { display: none }</style><main><section id="findings"><li id="proof-fixture"><p class="lab-limit">Limit: a full fixture limit appears first.</p><p class="claim">The real claim is hidden.</p></li></section></main>';
@@ -200,6 +203,11 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.notEqual(extraText, proof, 'the text-node conclusion control adds visible words before the cost limit');
   const extraCitation = proof.replace('the written plan</a>.</p>', 'the written plan</a>. The cheaper reviewer is better.</p>');
   assert.notEqual(extraCitation, proof, 'the source-paragraph control adds an unsupported ranking after the last link');
+  const hiddenCitationLink = `<style>#proof-review-cost .lab-source a[href$="preregistration.json"] { opacity: 0 }</style>${proof}`;
+  const downloadCitationLink = proof.replace('<a href="data/review-frontier/preregistration.json">the written plan</a>', '<a href="data/review-frontier/preregistration.json" download>the written plan</a>');
+  assert.notEqual(downloadCitationLink, proof, 'the written-plan control changes navigation to a download');
+  const framedCitationLink = proof.replace('<a href="data/review-frontier/preregistration.json">the written plan</a>', '<a href="data/review-frontier/preregistration.json" target="hidden-frame">the written plan</a>');
+  assert.notEqual(framedCitationLink, proof, 'the written-plan control changes navigation to another target');
   const proofLimits = [...proof.matchAll(/<p class="lab-limit">[\s\S]*?<\/p>/g)].map(match => match[0]);
   assert.equal(proofLimits.length, 3, 'one generated limit for each featured finding');
   let limitAt = 0;
@@ -215,7 +223,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, extraCitationProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: extraCitation, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, transparentCorrection, transparentFillCorrection, transparentTimeCorrection, clippedCorrection, partlyClippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, extraCitationProof, hiddenCitationProof, downloadCitationProof, framedCitationProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: transparent, expression: wordsDom }, { html: transparentFill, expression: wordsDom }, { html: transparentTimes, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: partlyClipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: extraCitation, expression: wordsDom }, { html: hiddenCitationLink, expression: wordsDom }, { html: downloadCitationLink, expression: wordsDom }, { html: framedCitationLink, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -235,6 +243,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.ok(transparentFillCorrection.correctionParagraphVisible.every(value => value === false), 'a transparent correction glyph fill makes every paragraph unreadable');
   assert.deepEqual(transparentTimeCorrection.correctionTimesVisible, [false, false, false, false], 'transparent child glyph fill hides each correction date');
   assert.equal(clippedCorrection.correctionVisible, false, 'a fully clipped correction is caught');
+  assert.ok(partlyClippedCorrection.correctionParagraphVisible.every(value => value === false), 'any clip path on a required correction paragraph is refused before its first or last lines can be cut');
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
   assert.ok(actual.limits.every(({ claimShape }) => claimShape), 'the complete visible claim is one paragraph before its own limit and source');
@@ -245,11 +254,19 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const sourceLimits = new Map(authoredClaims.map(({ id, limit }) => [id, `Limit: ${limit}`]));
   assert.ok(actual.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), 'each visible limit stays paired with its own source finding');
   assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
-  assert.ok(actual.limits.every(({ id, citationVisible, citationText, citationLinks, citationDates }) => citationVisible
-    && citationText === sourceCitations.get(id).text && JSON.stringify(citationLinks) === JSON.stringify(sourceCitations.get(id).links)
-    && JSON.stringify(citationDates) === JSON.stringify(sourceCitations.get(id).dates)), 'each complete visible citation, its dates and its links match independent authored sources');
+  const citationsMatch = result => result.limits.every(({ id, citationVisible, citationText, citationLinks, citationDates }) => {
+    const expected = sourceCitations.get(id);
+    return citationVisible && citationText === expected.text && JSON.stringify(citationDates) === JSON.stringify(expected.dates)
+      && citationLinks.length === expected.links.length && citationLinks.every((link, index) => link.text === expected.links[index][0]
+        && link.href === expected.links[index][1] && link.resolved === new URL(expected.links[index][1], result.pageUrl).href
+        && link.visible && !link.download && !link.target);
+  });
+  assert.equal(citationsMatch(actual), true, 'each full citation, date and visible navigation link matches the independently authored source');
   assert.equal(extraCitationProof.limits[0].claimShape, true, 'the added source-paragraph sentence leaves the three-child shape intact');
-  assert.equal(extraCitationProof.limits.every(({ id, citationText }) => citationText === sourceCitations.get(id).text), false, 'an unsupported ranking after a source link fails the citation comparison');
+  assert.equal(citationsMatch(extraCitationProof), false, 'an unsupported ranking after a source link fails the citation comparison');
+  assert.equal(citationsMatch(hiddenCitationProof), false, 'an invisible written-plan label fails the link proof');
+  assert.equal(citationsMatch(downloadCitationProof), false, 'a written-plan download fails the navigation proof');
+  assert.equal(citationsMatch(framedCitationProof), false, 'a written-plan frame target fails the navigation proof');
   for (const limit of actual.limits) {
     assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
     assert.equal(limit.claimBeforeLimit, true, `${limit.id}: claim precedes its limit`);
@@ -263,6 +280,46 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   t.diagnostic(`Chrome reads ${actual.visible} visible words of ${actual.all} total on the built home`);
   assert.ok(actual.visible < VISIBLE_WORDS, `${actual.visible} visible words on the home (bound ${VISIBLE_WORDS})`);
   assert.ok(actual.all > actual.visible * 3, `under a third of the home's words show unopened (${actual.visible} of ${actual.all})`);
+});
+
+test('Chrome resolves both legacy findings fragments to a visible heading and shows the visual hero in the first viewport', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async () => {
+  assert.ok(chrome, 'Chrome is required in CI');
+  const fragment = `(() => {
+    const findings = document.getElementById('findings');
+    const heading = document.getElementById('lab-title');
+    const target = document.getElementById(location.hash.slice(1));
+    const rect = heading?.getBoundingClientRect();
+    return { hash: location.hash, targetInside: !!target && findings.contains(target), headingInside: !!heading && findings.contains(heading),
+      labelledByHeading: findings.getAttribute('aria-labelledby') === heading?.id,
+      headingVisible: !!heading && heading.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !!rect && rect.width > 0 && rect.height > 0 };
+  })()`;
+  const viewport = `(() => {
+    const intersects = selector => {
+      const element = document.querySelector(selector);
+      const rect = element?.getBoundingClientRect();
+      return !!rect && rect.width > 0 && rect.height > 0 && rect.top < innerHeight && rect.bottom > 0 && rect.left < innerWidth && rect.right > 0;
+    };
+    return { width: innerWidth, height: innerHeight, scrollX, scrollY,
+      drawing: intersects('.factory-drawing'), panel: intersects('.station-compartment'), panelExists: !!document.querySelector('.station-compartment') };
+  })()`;
+  const hiddenHeading = home.replace('</head>', '<style>#lab-title { display: none }</style></head>');
+  const [lab, labTitle, hidden, desktop, phone] = await inspectDom([
+    { file: join(dist, 'index.html'), hash: '#lab', expression: fragment },
+    { file: join(dist, 'index.html'), hash: '#lab-title', expression: fragment },
+    { html: hiddenHeading, hash: '#lab-title', expression: fragment },
+    { file: join(dist, 'index.html'), viewport: { width: 1440, height: 900 }, expression: viewport },
+    { file: join(dist, 'index.html'), viewport: { width: 390, height: 844 }, expression: viewport },
+  ], { chrome, siteRoot: dist });
+  for (const [value, hash] of [[lab, '#lab'], [labTitle, '#lab-title']]) assert.deepEqual(value, {
+    hash, targetInside: true, headingInside: true, labelledByHeading: true, headingVisible: true,
+  }, `${hash}: a real Chrome fragment resolves inside findings to its visible heading`);
+  assert.equal(hidden.headingVisible, false, 'HTML strings alone cannot make a hidden legacy heading usable');
+  for (const [value, size] of [[desktop, [1440, 900]], [phone, [390, 844]]]) {
+    assert.deepEqual([value.width, value.height, value.scrollX, value.scrollY], [size[0], size[1], 0, 0], `${size.join('×')}: viewport before scrolling`);
+    assert.equal(value.drawing, true, `${size.join('×')}: the drawing intersects the first viewport`);
+    assert.equal(value.panelExists, true, `${size.join('×')}: the selected panel remains in the hero`);
+  }
+  assert.equal(desktop.panel, true, 'the desktop first viewport also shows the selected station panel');
 });
 
 test('the proof strip still passes the number-provenance check, and the new words are plain', () => {

@@ -30,9 +30,9 @@
 @media(min-width:1360px){header.site-header nav{flex-wrap:nowrap}header.site-header nav a{white-space:nowrap}}
 /* On phones the header nav is one sideways-scrolling row; Find goes first there so it is visible without a swipe. */
 @media(max-width:760px){.site-header nav a[href$="find/"]{order:-1;font-weight:600}}
-/* The page's own section in the header nav (aria-current="page", scripts/site-header.mjs; Find on /find/): a thin brand
+/* Exact pages use aria-current="page"; parent section links use data-current-section. Both have a thin brand
    underline in the colour of the rest of the nav, the same underline the breadcrumbs and related links use on hover. */
-.site-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:1px;text-underline-offset:6px}
+.site-header nav a[aria-current=page],.site-header nav a[data-current-section]{text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:1px;text-underline-offset:6px}
 /* "On this page" (scripts/site-toc.mjs, wave 4): on long notes and lab pages only. The nav holds the list twice; one
    shows. Narrow screens: a closed fold under the page's header. From 1100px: a plain list; on a field note it sits in
    the right margin beside the 740px text and stays in view while the note scrolls (the note's grid applies only to a

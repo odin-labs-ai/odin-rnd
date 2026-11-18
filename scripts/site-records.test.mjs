@@ -44,7 +44,7 @@ test('a record page shows the allowlisted fields as written, escaped, and nothin
   assert.ok(html.includes(`href="${BLOB}experiments/telemetry-truth/preregistration.json"`), 'and the repository file');
   assert.match(html, /<code>[0-9a-f]{64}<\/code>/, 'with the file\'s sha256');
   assert.equal((html.match(/<header class="site-header[ "]/g) || []).length, 1, 'one site header');
-  assert.match(html, /aria-current="page">All results<\/a>/, 'under All results (the experiments page)');
+  assert.match(html, /data-current-section>All results<\/a>/, 'under All results without calling the parent the current page');
   // A field the record lacks is left out, not filled in.
   const bare = { experiment: { id: 'EXP 015', title: entry.title } };
   assert.deepEqual(recordRows(bare), []);
@@ -145,13 +145,13 @@ test('as built: removing a rendered record page makes the site index refuse to b
   assert.ok(loadIndex({ root, dist }).length > 0, 'both pages back: the index builds');
 });
 
-test('as built: each record page links the chrome stylesheet exactly once, after its own, and marks All results current', () => {
+test('as built: each record page links the chrome stylesheet once and highlights its All results parent', () => {
   const dist = join(builtCopy(), 'dist');
   for (const slug of ['document-store', 'telemetry-truth']) {
     const html = readFileSync(join(dist, 'records', slug, 'index.html'), 'utf8');
     const sheets = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)].map(m => m[1]);
     assert.deepEqual(sheets, ['../../assets/style.css', '../../assets/company.css', '../../assets/chrome.css'], `${slug}: chrome.css once, last`);
-    assert.match(html, /<a href="\.\.\/\.\.\/experiments\/" aria-current="page">All results<\/a>/, `${slug}: All results is current`);
+    assert.match(html, /<a href="\.\.\/\.\.\/experiments\/" data-current-section>All results<\/a>/, `${slug}: All results is the parent section`);
     assert.ok(html.includes('This experiment has no field note yet.'), `${slug}: no built note names it today`);
   }
 });
