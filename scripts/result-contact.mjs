@@ -2,7 +2,7 @@
 // to the BUILT page only. The committed record stays byte-for-byte as published (EXP 021's page is pinned in
 // experiments/failover/results/final-document-hashes.sha256), so this is a build pass like the site chrome.
 //
-// Why (vp-all-lanes-1118 WO-6, measured in ~website-leads): the R&D floor drew 254 views in the week 2026-11-11..17, the
+// Why (measured on the site analytics): the R&D floor drew 254 views in the week 2026-11-11..17, the
 // largest audience of any Odin surface, and the newest result record (journal/failover-results.html) had no way to the
 // contact form; the week brought 1 contact send.
 //
