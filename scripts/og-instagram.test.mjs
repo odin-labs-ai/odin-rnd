@@ -503,7 +503,7 @@ const FILM_JOB = [
 /**
  * The workflow PARSED by a YAML parser (Ruby's Psych, YAML.safe_load: no aliases, no merge keys, no custom tags), as
  * JSON; null when ruby is missing; an object { error } when the file does not parse under those rules. Ruby ships on
- * the GitHub ubuntu runners; FILM_DECODER_REQUIRED=1 makes a missing ruby a failure, like a missing decoder.
+ * the GitHub ubuntu runners and macOS; a missing ruby is a failure of the workflow check, never a fallback to text.
  */
 export function parsedWorkflow(text) {
   const run = spawnSync('ruby', ['-ryaml', '-rjson', '-e', 'print JSON.generate(YAML.safe_load($stdin.read))'], { input: text, encoding: 'utf8' });
@@ -518,7 +518,7 @@ export function ogStepProblems(text) {
   // film-copies entry must be the pinned job, parsed the same way.
   const parsed = parsedWorkflow(text);
   if (parsed === null) {
-    if (required) problems.push('ruby (the YAML parser) is missing but FILM_DECODER_REQUIRED is set');
+    problems.push('ruby (the YAML parser this check binds to) is missing: the workflow check cannot run without it');
   } else if (parsed.error) {
     problems.push(`the workflow does not parse as plain YAML (no aliases or merge keys): ${parsed.error}`);
   } else {
@@ -544,6 +544,21 @@ export function ogStepProblems(text) {
   if (lines.slice(start, end).join('\n') !== FILM_JOB) problems.push('the film-copies job is not byte for byte the pinned job that runs scripts/og-instagram.test.mjs with FILM_DECODER_REQUIRED=1');
   return problems;
 }
+
+test('the parsed binding alone refuses a decoy the text checks are not needed for (refute row c80293e3 #2)', () => {
+  const text = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const lines = text.split('\n');
+  // The real film-copies job is replaced by a one-space-indented, escaped key with no steps, while the pinned job text
+  // survives byte for byte inside a quoted scalar of another job.
+  const decoy = [' decoy:', '  name: "x', ...FILM_JOB.split('\n').map(l => `  ${l}`), '  "', '  runs-on: ubuntu-latest', '  steps: []',
+    ' "film\\u002dcopies":', '  runs-on: ubuntu-latest', '  steps: []'];
+  // (The other jobs are dropped: at one-space indentation they would nest under the decoy.)
+  const attacked = [...lines.slice(0, lines.indexOf('jobs:') + 1), ...decoy, ''].join('\n');
+  const parsed = parsedWorkflow(attacked);
+  assert.ok(parsed && !parsed.error, 'the decoy must be valid YAML for this test to mean anything');
+  assert.deepEqual(parsed.jobs['film-copies'], { 'runs-on': 'ubuntu-latest', steps: [] }, 'the parser reads the escaped key as the real job');
+  assert.ok(ogStepProblems(attacked).includes('the parsed jobs.film-copies is not the pinned job (parsed)'), 'the parsed binding must refuse it');
+});
 
 test('the publish workflow decodes the Instagram images on every run, with a missing decoder a failure', () => {
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
