@@ -9,6 +9,12 @@ import { chromeBinary } from './og-cards-render.mjs';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+export function successfulDocument(result, { url, heading } = {}) {
+  return result?.navigated === true && result.url === url && result.responseStatus === 200
+    && typeof result.bodyText === 'string' && result.bodyText.trim().length > 0
+    && (heading === undefined || result.heading === heading);
+}
+
 /** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value. It may set a viewport.
  * Built pages use the site's loopback server so their ES modules load as they do on Pages. */
 export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, timeoutMs = 30000 } = {}) {
@@ -87,7 +93,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
         const method = matched ? 'Fetch.fulfillRequest' : 'Fetch.continueRequest';
         const args = matched ? {
           requestId: message.params.requestId, responseCode: fixture.status,
-          responseHeaders: [{ name: 'Content-Type', value: 'text/html; charset=utf-8' }],
+          responseHeaders: [{ name: 'Content-Type', value: fixture.contentType ?? 'text/html; charset=utf-8' }],
           body: Buffer.from(fixture.body).toString('base64'),
         } : { requestId: message.params.requestId };
         void send(method, args, message.sessionId).catch(error => responseErrors.push(error));
@@ -125,8 +131,9 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
         await loaded;
         if (job.clickSelector) {
           if (job.responseFixture) {
-            responses.set(sessionId, job.responseFixture);
-            await send('Fetch.enable', { patterns: [{ urlPattern: job.responseFixture.url }] }, sessionId);
+            const fixture = { ...job.responseFixture, url: new URL(job.responseFixture.url, url).href };
+            responses.set(sessionId, fixture);
+            await send('Fetch.enable', { patterns: [{ urlPattern: fixture.url }] }, sessionId);
           }
           if (job.historyPath) {
             const changed = await send('Runtime.evaluate', { expression: `history.replaceState(null, '', location.origin + ${JSON.stringify(job.historyPath)})`, returnByValue: true }, sessionId);
@@ -141,7 +148,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
           if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
           const navigated = await moved;
           if (responseErrors.length) throw responseErrors[0];
-          const at = await send('Runtime.evaluate', { expression: `({ url: location.href, heading: document.querySelector('main h1')?.innerText.trim() ?? '', responseStatus: performance.getEntriesByType('navigation').at(-1)?.responseStatus ?? null })`, returnByValue: true }, sessionId);
+          const at = await send('Runtime.evaluate', { expression: `({ url: location.href, heading: document.querySelector('main h1')?.innerText.trim() ?? '', bodyText: document.body?.innerText.trim() ?? '', responseStatus: performance.getEntriesByType('navigation').at(-1)?.responseStatus ?? null })`, returnByValue: true }, sessionId);
           values.push({ navigated, sourceUrl: from.result.value, fixtureHits: responseHits.get(sessionId) ?? 0, ...at.result.value });
           responses.delete(sessionId);
           responseHits.delete(sessionId);

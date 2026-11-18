@@ -9,7 +9,7 @@ import { builtCopy } from './test-build.mjs';
 import { stripTags } from './test-html-text.mjs';
 import { parse } from './html-source-tree.mjs';
 import { checkSite, format, resolvePointer } from './number-provenance.mjs';
-import { inspectDom } from './chrome-dom-test.mjs';
+import { inspectDom, successfulDocument } from './chrome-dom-test.mjs';
 import { chromeBinary } from './og-cards-render.mjs';
 import { renderLabProof, siteReader } from './lab-pages.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
@@ -313,11 +313,24 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     ...clickLinks.map(({ clickSelector }) => ({ file: join(dist, 'index.html'), clickSelector })),
     { html: canceled, clickSelector: '#proof-review-cost .lab-source a:last-of-type', expectNoNavigation: true },
   ], { chrome, siteRoot: dist });
-  for (const [index, link] of clickLinks.entries()) {
-    assert.equal(activated[index].navigated, true, `${link.id}: activating ${link.label} loads this tab`);
-    assert.equal(activated[index].url, new URL(link.href, activated[index].sourceUrl).href, `${link.id}: activating ${link.label} reaches its authored target`);
-  }
+  for (const [index, link] of clickLinks.entries()) assert.equal(successfulDocument(activated[index], {
+    url: new URL(link.href, activated[index].sourceUrl).href,
+  }), true, `${link.id}: activating ${link.label} loads a successful authored document in this tab`);
   assert.equal(activated.at(-1).navigated, false, 'a canceled click cannot pass the citation navigation proof');
+  const planPath = 'data/review-frontier/preregistration.json';
+  const planJob = { file: join(dist, 'index.html'), clickSelector: '#proof-review-cost .lab-source a:last-of-type' };
+  const planFixture = { url: planPath, contentType: 'application/json', body: readFileSync(join(dist, planPath), 'utf8') };
+  const [planGood, planMissing] = await inspectDom([
+    { ...planJob, responseFixture: { ...planFixture, status: 200 } },
+    { ...planJob, responseFixture: { ...planFixture, status: 404 } },
+  ], { chrome, siteRoot: dist });
+  const planUrl = new URL(planPath, planGood.sourceUrl).href;
+  assert.equal(successfulDocument(planGood, { url: planUrl }), true, 'the written-plan click loads the authored plan response');
+  assert.equal(planGood.fixtureHits, 1, 'one plan document request received the successful fixture');
+  assert.equal(planMissing.fixtureHits, 1, 'one plan document request received the 404 fixture');
+  assert.equal(planMissing.url, planGood.url, 'the 404 plan control keeps the same destination');
+  assert.equal(planMissing.bodyText, planGood.bodyText, 'the 404 plan control keeps the same document body');
+  assert.equal(successfulDocument(planMissing, { url: planUrl }), false, 'changing only the plan response status to 404 fails the citation proof');
   for (const limit of actual.limits) {
     assert.equal(limit.claimVisible, true, `${limit.id}: claim is visible`);
     assert.equal(limit.claimBeforeLimit, true, `${limit.id}: claim precedes its limit`);
