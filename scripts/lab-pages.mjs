@@ -355,8 +355,11 @@ export function renderLabProof(read, up = '../', { plain = false } = {}) {
     const pointer = record?.preregistration;
     const pinned = record?.preregistrationSha256;
     const raw = read.raw?.(planPath);
-    const value = pointer === `experiments/${slug}/preregistration.json` || (typeof pinned === 'string' && /^[a-f0-9]{64}$/.test(pinned) && raw && createHash('sha256').update(raw).digest('hex') === pinned);
-    return !slug || !value || !read(planPath);
+    const hasPointer = Object.hasOwn(record ?? {}, 'preregistration');
+    const hasPin = Object.hasOwn(record ?? {}, 'preregistrationSha256');
+    const pointerValid = !hasPointer || pointer === `experiments/${slug}/preregistration.json`;
+    const pinValid = !hasPin || (typeof pinned === 'string' && /^[a-f0-9]{64}$/.test(pinned) && raw && createHash('sha256').update(raw).digest('hex') === pinned);
+    return !slug || (!hasPointer && !hasPin) || !pointerValid || !pinValid || !read(planPath);
   }).map(c => c.id);
   if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} has no linked pre-registration document`);
   return renderClaims(read, config.claims, up, { plain });

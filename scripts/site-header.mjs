@@ -146,9 +146,10 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
     const retired = RETIRED_LABELS.get(text);
     const href = whole.match(/\bhref="([^"]*)"/)?.[1] ?? '';
-    // A page's link to itself ("./", the updates and partners pages' own) leads to a page the table names, which stays.
-    const self = href === './' && retiredTargets(retired ?? { target: [] }).some(target => target.endsWith('/') && label === `${target}index.html`);
-    if (retired && !self && !retiredTargets(retired).some(target => href.endsWith(target))) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
+    // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
+    const actual = new URL(href, label === 'index.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
+    if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
+    if (retired && !retiredTargets(retired).some(target => actual === new URL(target, SITE_ORIGIN).href)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
   }
   const finds = links.filter(([whole]) => FIND.test(whole)).map(([whole]) => whole);
   if (links.some(([, text]) => text === 'Find') && finds.length !== links.filter(([, text]) => text === 'Find').length) throw new Error(`A Find link in ${label} is not of the form <a href="...find/">Find</a>`);

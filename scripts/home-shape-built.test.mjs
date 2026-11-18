@@ -17,9 +17,10 @@ import { idOf, openAround } from '../site/assets/home-fold.mjs';
 // nina's tools entry, linked from EXP 006's generated field note. Any other target inside a fold is a link the fold has
 // hidden, and is refused here until it is named.
 const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
-// Words a visitor sees on the home without opening anything (main, outside every closed <details> and hidden station).
-// Measured 1,559 on 18 November 2026 after restoring the full correction and counting every visible finding limit.
-// The 1,650 bound leaves room for a short update while keeping unopened content under a quarter of the total.
+// Words a visitor sees on the home without opening anything (main, closed disclosures' summaries, open disclosures'
+// bodies, and no hidden station exhibits).
+// The 1,650 bound includes the full correction, every visible finding limit and closed disclosure summaries.
+// It leaves room for a short update while keeping unopened content under a quarter of the total.
 const VISIBLE_WORDS = 1650;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
@@ -45,6 +46,24 @@ function without(html, open) {
   let out = html;
   for (let m = open.exec(out); m; m = open.exec(out)) out = out.slice(0, m.index) + ' ' + out.slice(elementEnd(out, m.index));
   return out;
+}
+
+/** Keep each closed disclosure's visible summary and each open disclosure's visible body, including nested summaries. */
+function visibleDisclosures(html) {
+  let out = '';
+  for (let m = /<details\b[^>]*>/i.exec(html); m; m = /<details\b[^>]*>/i.exec(html)) {
+    out += html.slice(0, m.index);
+    const end = elementEnd(html, m.index);
+    const body = html.slice(m.index + m[0].length, end - '</details>'.length);
+    if (/\sopen(?:\s|=|>)/i.test(m[0])) out += visibleDisclosures(body);
+    else {
+      const summary = /<summary\b[^>]*>/i.exec(body);
+      if (!summary) throw new Error('A closed disclosure has no visible summary');
+      out += body.slice(summary.index, elementEnd(body, summary.index));
+    }
+    html = html.slice(end);
+  }
+  return out + html;
 }
 
 const root = builtCopy();
@@ -100,10 +119,14 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
 });
 
+test('closed summaries and open bodies count as visible words', () => {
+  const sample = '<details><summary>Closed label</summary><p>Hidden body</p></details><details open><summary>Open label</summary><p>Visible body</p><details><summary>Nested label</summary><p>Hidden nested body</p></details></details>';
+  assert.equal(stripTags(visibleDisclosures(sample)).replace(/\s+/g, ' ').trim(), 'Closed label Open label Visible body Nested label');
+});
+
 test('the home a visitor sees without opening anything is short: under the word bound and under a quarter of its words', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
-  let visible = stripBlocks(main, ['script', 'style', 'svg']);
-  for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
+  let visible = visibleDisclosures(stripBlocks(main, ['script', 'style', 'svg']));
   visible = without(visible, /<article class="station-exhibit"[^>]*\shidden>/);
   // The dated correction and every finding's visible limit remain in this count.
   const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
@@ -183,7 +206,7 @@ test('a height proxy measurable without a browser: four sections, Go further and
   assert.deepEqual(folded, FOLDS.map(f => f.key));
 });
 
-test('the built home keeps its dated correction visible in the hero, every word verbatim in the HTML', () => {
+test('the built home keeps its dated correction visible after findings, every word verbatim in the HTML', () => {
   const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
   const at = source.indexOf('<details class="factory-correction" open>');
   const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
@@ -194,20 +217,22 @@ test('the built home keeps its dated correction visible in the hero, every word 
   const start = home.indexOf('<div class="factory-correction correction-note">');
   assert.ok(start >= 0, 'the visible notice');
   const block = home.slice(start, elementEnd(home, start));
-  // In the hero, before what we found: a reader meets the full correction next to the headline it corrects.
-  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="findings"'), 'in the hero, before what we found');
+  assert.ok(start > home.indexOf('id="findings"') && start > home.indexOf('id="how-we-check"') && start < home.indexOf('id="updates"'), 'visible after what we found, before updates');
   assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'not inside another <details>');
   assert.match(block, /^<div class="factory-correction correction-note"><p class="correction-when">We corrected our earlier headline and wording on <time datetime="2026-11-01">1 November 2026<\/time> and <time datetime="2026-11-02">2 November 2026<\/time>\.<\/p><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
   assert.ok(block.endsWith(`${paragraphs.join('')}</div>`), 'every paragraph of the correction, verbatim, in the HTML');
   assert.doesNotMatch(block, /<details|<summary/, 'the correction cannot be closed');
 });
 
-test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
+test('the built home shows the drawing first and the correction after what we found', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const at = key => main.indexOf(key);
-  const order = ['id="hero-title"', 'See what we found', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  const order = ['id="hero-title"', 'See what we found', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="findings"', 'id="how-we-check"', 'How to read the drawing', 'class="factory-correction correction-note"', 'id="updates"'].map(at);
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
-  // Nothing of the drawing or the station panel sits in the hero any more.
+  // The interactive drawing and stations stay in the hero.
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
-  assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
+  assert.match(hero, /factory-drawing/);
+  assert.match(hero, /station-compartment/);
+  assert.match(hero, /factory-boundary/);
+  assert.doesNotMatch(hero, /factory-correction/);
 });

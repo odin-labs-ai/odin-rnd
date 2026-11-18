@@ -55,8 +55,8 @@ test('the shaped home opens with the hero, what we found, how we check, the upda
   assert.deepEqual(OPEN_ORDER, ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us']);
   assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing']);
   assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal']);
-  // The updates feed moves with its two markers, which stay around it, right after the drawing's section.
-  assert.match(out, /<p class="factory-boundary">[^<]*<\/p>\n {4}<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
+  // The updates feed moves with its two markers, right after the correction section.
+  assert.match(out, /<details class="factory-correction" open>[^]*?<\/details>\n {4}<\/section>\n {4}<!-- updates:[^>]*-->\n {4}<section class="updates-feed[^]*?<\/section>\n {4}<!-- \/updates -->\n {4}<section class="offer/);
   assert.ok(out.indexOf(`id="${CHECK_ID}"`) > out.indexOf('id="findings"') && out.indexOf(`id="${CHECK_ID}"`) < out.indexOf('<!-- updates:'), 'how we check sits between what we found and the updates');
   assert.equal(out.split('<!-- /updates -->').length, 2);
   // The open sections are byte for byte as they were.
@@ -72,14 +72,14 @@ test('the shaped home opens with the hero, what we found, how we check, the upda
   assert.ok(out.includes(`<script type="module" src="assets/motion.mjs"></script>\n  <script type="module" src="${HOME_JS}"></script>`));
 });
 
-test('the hero keeps who we are, See what we found and the correction; the drawing moves under what we found, byte for byte', () => {
+test('the hero keeps the interactive drawing and the full correction stays visible after findings', () => {
   const out = shapeHome(HOME);
   const i = '\n      ';
-  // The hero: its own open tag, the premise, the correction (folded later by labelCorrection), nothing else.
-  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.findings}`), 'hero, then what we found');
-  // The drawing's section: a plain heading and sentence, then the drawing, the stations and the boundary line as they were.
+  // The source drawing and its station panel remain in the first section.
+  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>\n    ${SECTIONS.findings}`), 'visual hero, then what we found');
+  // The correction moves below the findings in an open section.
   const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${CHECK_HEADING}</h2><p>${CHECK_INTRO}</p></div>`;
-  assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
+  assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.correction}\n    </section>`), 'how we check, after what we found');
   assert.match(CHECK_INTRO, /^[A-Z][^.!?]*\.$/, 'one plain sentence');
   // Each part of the committed #floor appears exactly once.
   for (const [name, part] of Object.entries(FLOOR)) assert.equal(out.split(part).length, 2, name);
@@ -226,5 +226,5 @@ test('the home correction stays visible under a plain dated heading, in place, e
   assert.throws(() => assertCorrectionKept(source, out.replace(CORRECTION_BLOCK, '<details class="factory-correction" open>')), /not where the correction was/);
   assert.throws(() => assertCorrectionKept(source, out.replace('<p class="correction-label">', '<details open><summary>x</summary></details><p class="correction-label">')), /notice can be closed/);
   const moved = source.replace(block, '').replace('</main>', `<section class="moved">${block}</section></main>`);
-  assert.throws(() => labelCorrection(moved), /inside the factory hero/);
+  assert.throws(() => labelCorrection(moved), /inside the visible check section/);
 });

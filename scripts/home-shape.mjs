@@ -5,9 +5,8 @@
 //     latest updates (#updates) and the offer (#work-with-us) stay open, in that order (plain-language home,
 //     2026-11-16: the findings moved up, under the hero's "See what we found" button; founder, on the PR 1 screenshot:
 //     the drawing, the station panel and the long correction still came before the plain findings). The committed
-//     #floor section is split in two: the hero keeps its premise (who we are, See what we found) and the dated
-//     correction; the drawing, the station panel and the boundary line move, byte for byte, into a section of their
-//     own under what we've found, with a plain heading and one plain sentence (splitFloor);
+//     #floor section is split in two: the hero keeps its premise, drawing, station panel and boundary line; the dated
+//     correction moves, byte for byte, into a visible section under what we've found (splitFloor);
 //   - a "Go further" navigation follows them, to the lab on a page, the experiments, the labs, the notes, Find and the
 //     tools;
 //   - every other section follows in its source order, its <section> (and id) and its heading block visible, the rest
@@ -29,12 +28,12 @@ export const HOME_CSS = 'assets/home.css';
 export const HOME_JS = 'assets/home-fold.mjs';
 /** The id of the "Go further" heading. */
 export const FURTHER_ID = 'home-further-title';
-/** The section the drawing moves into, under what we've found, and its heading's id. */
+/** The section for the correction under what we've found, and its heading's id. */
 export const CHECK_ID = 'how-we-check';
 export const CHECK_TITLE_ID = 'how-we-check-title';
-/** The plain heading and one plain sentence over the drawing. */
-export const CHECK_HEADING = 'The checks we study, in one drawing';
-export const CHECK_INTRO = 'A concept drawing of the checks we test, each its own experiment and not a stage results pass through; pick one to see a real example and its record.';
+/** The plain heading and one plain sentence connecting the drawing above to its dated correction. */
+export const CHECK_HEADING = 'How to read the drawing';
+export const CHECK_INTRO = 'The drawing above is a concept of separate checks we test; results do not pass through them in sequence.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
 export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
@@ -169,9 +168,8 @@ const FLOOR_PARTS = [
   ['correction', /^<details class="factory-correction"[ >]/],
 ];
 
-/** The committed #floor split in two (see the top of this file): the hero (its own open tag, the premise and the
- *  correction) and the drawing's own section (a plain heading and sentence, then the drawing, the station panel and the
- *  boundary line, each byte for byte). Throws unless #floor holds exactly FLOOR_PARTS, in order, and nothing else. */
+/** The committed #floor split in two: the hero keeps its premise and drawing, while the correction moves to a
+ *  visible section under the findings. Every source part is preserved byte for byte. */
 export function splitFloor(html, section, indent) {
   const parts = {};
   let at = section.openEnd;
@@ -186,10 +184,10 @@ export function splitFloor(html, section, indent) {
   const tail = html.slice(at, section.closeAt);
   if (tail.trim()) throw new Error('Home shape: #floor holds more than its premise, drawing, stations, boundary line and correction');
   const inner = indent + '  ';
-  const hero = html.slice(section.start, section.openEnd) + inner + parts.premise + inner + parts.correction + tail + '</section>';
+  const hero = html.slice(section.start, section.openEnd) + [parts.premise, parts.drawing, parts.stations, parts.boundary].map(p => inner + p).join('') + tail + '</section>';
   const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${escape(CHECK_HEADING)}</h2><p>${escape(CHECK_INTRO)}</p></div>`;
   const check = `<section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">`
-    + [intro, parts.drawing, parts.stations, parts.boundary].map(p => inner + p).join('') + tail + '</section>';
+    + [intro, parts.correction].map(p => inner + p).join('') + tail + '</section>';
   return { hero, check };
 }
 
@@ -304,7 +302,7 @@ function heroOf(html) {
 const escapeRe = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Throws unless `out` is `html` with only its correction rebuilt: the same bytes outside the block; one built block where
- *  the committed one was, inside the hero, one noncollapsible notice that dates the correction in plain words;
+ *  the committed one was, inside the open check section on a shaped page, one noncollapsible notice that dates the correction in plain words;
  *  #168's label line and every byte of its paragraphs after it, which match the pinned hash. */
 export function assertCorrectionKept(html, out) {
   const was = html.indexOf(CORRECTION_SOURCE), now = out.indexOf(CORRECTION_BLOCK);
@@ -313,8 +311,12 @@ export function assertCorrectionKept(html, out) {
   const { block, label, body } = sourceParts(html, was);
   const nowEnd = elementEnd(out, now);
   if (out.slice(0, now) !== html.slice(0, was) || out.slice(nowEnd) !== html.slice(was + block.length)) throw new Error('Home correction: the page changed outside the correction');
-  const [heroStart, heroEnd] = heroOf(out);
-  if (!(heroStart < now && nowEnd < heroEnd)) throw new Error('Home correction: the block is not inside the factory hero');
+  const [sectionStart, sectionEnd] = out.includes(` id="${CHECK_ID}"`) ? (() => {
+    const open = new RegExp(`<section\\b[^>]*\\sid="${CHECK_ID}"[^>]*>`).exec(out);
+    if (!open) throw new Error('Home correction: the page has no check section');
+    return [open.index, elementEnd(out, open.index)];
+  })() : heroOf(out);
+  if (!(sectionStart < now && nowEnd < sectionEnd)) throw new Error('Home correction: the block is not inside the visible check section');
   const after = out.slice(now, nowEnd);
   if (/<details\b|<summary\b/.test(after)) throw new Error('Home correction: the notice can be closed');
   const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<p class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</p><p class="correction-label">`).exec(after);

@@ -121,8 +121,8 @@ test('every retired label is named with its destination and fate; nothing leaves
     assert.ok(pages.length > 0, `${text} is still on a committed page (else drop it from the table)`);
     for (const rel of pages) {
       const before = navOf(read(rel)).match(new RegExp(`<a href="([^"]*)"[^>]*>${text}</a>`))[1];
-      // A page's link to itself ("./") leads to the page the table names.
-      assert.ok(targets.some(target => before.endsWith(target)) || (before === './' && targets.some(target => rel.startsWith(target))), `${rel}: "${text}" led to ${targets.join(' or ')}`);
+      const actual = new URL(before, rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN)).href;
+      assert.ok(targets.some(target => actual === new URL(target, SITE_ORIGIN).href), `${rel}: "${text}" led to ${targets.join(' or ')}`);
       const after = navOf(normalise(read(rel), rel));
       assert.ok(!labels(after).includes(text), `${rel}: "${text}" is replaced`);
       if (to) {
@@ -155,6 +155,9 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), atUpdates), /does not account for/);
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
+  const lab = read('labs/rogue/index.html');
+  assert.match(lab, /href="[^"]*partners\/">Partners<\/a>/);
+  assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'a nested partners/ link is not the root Partners page');
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), atUpdates), /more than links/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), atUpdates), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);

@@ -225,15 +225,24 @@ test('a proof claim refuses a missing or placeholder written plan', () => {
   const plan = 'data/review-frontier/preregistration.json';
   const changed = (record, planExists = true) => {
     const read = path => path === results ? record : path === plan && !planExists ? null : source(path);
+    read.raw = path => path === plan && !planExists ? null : source.raw(path);
     return () => renderLabProof(read, '../');
   };
-  assert.throws(changed({ ...source(results), preregistration: null }), /no linked pre-registration document/);
-  assert.throws(changed({ ...source(results), preregistration: 'none' }), /no linked pre-registration document/);
-  assert.throws(changed(source(results), false), /no linked pre-registration document/);
+  const rejected = /claim proof-review-cost has no linked pre-registration document/;
+  assert.throws(changed({ ...source(results), preregistration: null }), rejected);
+  assert.throws(changed({ ...source(results), preregistration: 'none' }), rejected);
+  assert.throws(changed(source(results), false), rejected);
+  assert.throws(changed({ ...source(results), preregistrationSha256: '0'.repeat(64) }), rejected, 'a correct pointer never excuses a wrong hash');
   const broker = 'data/broker-same-model/results.json';
   const wrongPin = path => path === broker ? { ...source(broker), preregistrationSha256: '0'.repeat(64) } : source(path);
   wrongPin.raw = source.raw;
-  assert.throws(() => renderLabProof(wrongPin, '../'), /no linked pre-registration document/);
+  assert.throws(() => renderLabProof(wrongPin, '../'), /claim proof-brokers has no linked pre-registration document/);
+  const wrongPointer = path => path === broker ? { ...source(broker), preregistration: 'experiments/elsewhere/preregistration.json' } : source(path);
+  wrongPointer.raw = source.raw;
+  assert.throws(() => renderLabProof(wrongPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'a valid pin never excuses a wrong pointer');
+  const emptyPointer = path => path === broker ? { ...source(broker), preregistration: null } : source(path);
+  emptyPointer.raw = source.raw;
+  assert.throws(() => renderLabProof(emptyPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'an explicit empty pointer cannot be excused by a valid pin');
 });
 
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results

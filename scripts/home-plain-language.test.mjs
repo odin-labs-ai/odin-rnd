@@ -24,8 +24,8 @@ export const jargon = [
 /**
  * The plain-language home (2026-11-16; founder: "too technical / jargon", "hard to navigate"; mission rnd-site-human
  * PLAN B3). Words and marks banned from the part of the home a visitor reads first: the header navigation, the hero's
- * premise and its dated correction notice, what we've found (#findings), the plain heading and sentence over the
- * drawing and its toolbar, the "Go further" list and the fold summaries. The lab's
+ * premise and drawing, what we've found (#findings), the plain heading and dated correction notice after it,
+ * the "Go further" list and the fold summaries. The lab's
  * working words stay on the detail pages, in "How we checked" folds and in the records. The station drawing, the
  * latest updates and the folded sections are rewritten in later PRs of the same plan (PR 5, PR 6), so they are not
  * read here yet; their old wording is listed in the plan.
@@ -156,10 +156,8 @@ test('the built home reads plain where a visitor starts, plain first: header, he
     assert.ok(stripTags(html).trim(), `${name}: found on the built home`);
     assert.deepEqual(bannedIn(readable(html)), [], `${name}: say it plainly (PLAN B2/B3), or move the term to a detail page`);
   }
-  // Plain first (founder, on the PR 1 screenshot): who we are, then what we've found, and only then the drawing.
-  const order = [parts['hero premise'], parts['what we found'], parts['how we check intro'], parts['drawing toolbar']].map(part => home.indexOf(part));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, what we found, how we check, the drawing: ${order.join(', ')}`);
-  assert.ok(home.indexOf(parts['correction notice']) < home.indexOf(parts['what we found']), 'the dated correction stays in the hero, by the headline');
+  const order = [parts['hero premise'], parts['drawing toolbar'], parts['what we found'], parts['how we check intro'], parts['correction notice']].map(part => home.indexOf(part));
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, drawing, what we found, how we check, correction: ${order.join(', ')}`);
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Find']);
