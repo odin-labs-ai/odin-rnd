@@ -49,13 +49,15 @@ test('Chrome activates the absolute Find link from a nested missing-page URL', {
 test('Chrome activates Partners in the current tab and rejects a canceled click', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async () => {
   assert.ok(chrome, 'Chrome is required in CI');
   const dist = join(builtCopy(), 'dist');
-  const [real, canceled] = await inspectDom([
+  const [real, canceled, childCanceled] = await inspectDom([
     { file: join(dist, 'index.html'), clickSelector: 'footer.site-footer a[href$="partners/"]' },
     { html: '<footer class="site-footer"><a href="partners/" onclick="return false">Partners</a></footer>', clickSelector: 'footer.site-footer a', expectNoNavigation: true },
+    { html: '<footer class="site-footer"><a href="partners/"><span onclick="event.preventDefault()">Partners</span></a></footer>', clickSelector: 'footer.site-footer a', expectNoNavigation: true },
   ], { chrome, siteRoot: dist });
   assert.equal(successfulDocument(real, { url: new URL('partners/', real.sourceUrl).href }), true, 'the built Partners link loads its site page in this tab');
   assert.match(real.heading, /Partner with/, 'the destination is the Partners page');
   assert.equal(canceled.navigated, false, 'an onclick return false control cannot prove navigation');
+  assert.equal(childCanceled.navigated, false, 'activating the rendered child label catches navigation canceled below the anchor');
 });
 const footerDom = `(() => {
   const paint = document.createElement('canvas').getContext('2d', { willReadFrequently: true });

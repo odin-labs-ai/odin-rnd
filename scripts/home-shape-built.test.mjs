@@ -305,6 +305,34 @@ test('Chrome counts the unopened home below the word bound and one third of all 
         && link.href === expected.links[index][1] && link.resolved === new URL(expected.links[index][1], result.pageUrl).href
         && link.visible && !link.download && !link.target);
   });
+  const featuredMatch = result => result.limits.length === sourceClaimTexts.size && result.limits.every(limit =>
+    limit.claimShape && limit.claimVisible && limit.claimBeforeLimit && limit.claimText === sourceClaimTexts.get(limit.id)
+      && limit.limitVisible && limit.limitText === sourceLimits.get(limit.id)) && citationsMatch(result);
+  assert.equal(featuredMatch(actual), true, 'the built desktop shows every authored claim, limit and citation');
+  const mobileRule = rule => `<style>@media (max-width: 480px) { ${rule} }</style>${proof}`;
+  const dateRule = mobileRule('#proof-review-cost .lab-source time { opacity: 0 }');
+  const [phoneActual, desktopDateControl, phoneDateControl, phoneClaimControl, phoneLimitControl, phoneCitationControl, phoneLinkControl] = await inspectDom([
+    { file: join(dist, 'index.html'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: dateRule, viewport: { width: 1440, height: 900 }, expression: wordsDom },
+    { html: dateRule, viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: mobileRule('#proof-review-cost > p:first-child { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: mobileRule('#proof-review-cost .lab-limit { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: mobileRule('#proof-review-cost .lab-source { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+    { html: mobileRule('#proof-review-cost .lab-source a[href$="preregistration.json"] { opacity: 0 }'), viewport: { width: 390, height: 844 }, expression: wordsDom },
+  ], { chrome, siteRoot: dist });
+  assert.equal(featuredMatch(phoneActual), true, 'the actual built phone shows every authored claim, limit and citation');
+  assert.equal(featuredMatch(desktopDateControl), true, 'the phone-only date rule leaves the desktop proof intact');
+  assert.equal(phoneDateControl.limits[0].citationVisible, true, 'the phone date control leaves its source paragraph visible');
+  assert.equal(phoneDateControl.limits[0].citationDates.every(date => date.visible), false, 'the phone-only rule hides the measurement date');
+  assert.equal(featuredMatch(phoneDateControl), false, 'a hidden phone measurement date fails the same proof');
+  assert.equal(phoneClaimControl.limits[0].claimVisible, false, 'a hidden phone claim is observable');
+  assert.equal(featuredMatch(phoneClaimControl), false, 'a hidden phone claim fails the same proof');
+  assert.equal(phoneLimitControl.limits[0].limitVisible, false, 'a hidden phone limit is observable');
+  assert.equal(featuredMatch(phoneLimitControl), false, 'a hidden phone limit fails the same proof');
+  assert.equal(phoneCitationControl.limits[0].citationVisible, false, 'a hidden phone citation label is observable');
+  assert.equal(featuredMatch(phoneCitationControl), false, 'a hidden phone citation label fails the same proof');
+  assert.equal(phoneLinkControl.limits[0].citationLinks.at(-1).visible, false, 'a hidden phone plan link is observable');
+  assert.equal(featuredMatch(phoneLinkControl), false, 'a hidden phone plan link fails the same proof');
   assert.equal(citationsMatch(actual), true, 'each full citation, date and visible navigation link matches the independently authored source');
   assert.equal(extraCitationProof.limits[0].claimShape, true, 'the added source-paragraph sentence leaves the three-child shape intact');
   assert.equal(citationsMatch(extraCitationProof), false, 'an unsupported ranking after a source link fails the citation comparison');

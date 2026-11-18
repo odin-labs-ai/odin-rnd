@@ -144,7 +144,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, time
             const timer = setTimeout(() => { loads.delete(sessionId); resolve(false); }, job.expectNoNavigation ? 2000 : timeoutMs);
             loads.set(sessionId, () => { clearTimeout(timer); resolve(true); });
           });
-          const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); link.click(); return true; })()`, returnByValue: true }, sessionId);
+          const click = await send('Runtime.evaluate', { expression: `(() => { const link = document.querySelector(${JSON.stringify(job.clickSelector)}); if (!link) throw new Error('Missing citation link'); const label = link.innerText?.trim(); const target = label && [...link.querySelectorAll('*')].filter(node => node.innerText?.trim() === label).at(-1) || link; target.click(); return true; })()`, returnByValue: true }, sessionId);
           if (click.exceptionDetails) throw new Error(click.exceptionDetails.exception?.description ?? click.exceptionDetails.text);
           const navigated = await moved;
           if (responseErrors.length) throw responseErrors[0];
