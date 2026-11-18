@@ -215,6 +215,19 @@ test('the build checks original bytes before navigation normalization discards u
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('a document base inside a recognized nav link is refused before normalization can discard it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-base-'));
+  try {
+    const canonicalHome = normalise(read('index.html'), 'index.html');
+    const poisoned = canonicalHome.replace('<a href="methods/">How we test</a>', '<a href="methods/"><base href="journal/">How we test</a>');
+    assert.notEqual(poisoned, canonicalHome, 'the recognized How we test link was altered');
+    assert.throws(() => normaliseHeader(poisoned, { relPrefix: '', label: 'index.html' }), /Unexpected document base/, 'direct normalization refuses the original parsed base');
+    writeFileSync(join(dir, 'index.html'), poisoned);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /Unexpected document base/, 'the named-page build path refuses the original parsed base');
+    assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), poisoned, 'the rejected page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('Partners moved to the footer: once in the site footer of every committed page, relative to the page, idempotent', () => {
   for (const rel of PAGE_FILES) {
     const src = read(rel);

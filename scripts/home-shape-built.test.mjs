@@ -8,7 +8,7 @@ import { join, posix, relative } from 'node:path';
 import { builtCopy } from './test-build.mjs';
 import { stripTags } from './test-html-text.mjs';
 import { parse } from './html-source-tree.mjs';
-import { checkSite } from './number-provenance.mjs';
+import { checkSite, format, resolvePointer } from './number-provenance.mjs';
 import { inspectDom } from './chrome-dom-test.mjs';
 import { chromeBinary } from './og-cards-render.mjs';
 import { renderLabProof, siteReader } from './lab-pages.mjs';
@@ -144,7 +144,18 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const filtered = `<style>.correction-note { filter: opacity(0) }</style><main>${correctionBlock}</main>`;
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
   const reorderedClaim = '<style>.claim { display: none }</style><main><section id="findings"><li id="proof-fixture"><p class="lab-limit">Limit: a full fixture limit appears first.</p><p class="claim">The real claim is hidden.</p></li></section></main>';
+  const authoredClaims = JSON.parse(readFileSync(join(root, 'site', 'data', 'lab-proof.json'), 'utf8')).claims;
+  const readSource = siteReader(join(root, 'site'), root);
+  const sourceClaimTexts = new Map(authoredClaims.map(claim => [claim.id, claim.text.replace(/\{([a-zA-Z0-9]+)\}/g, (_, name) => {
+    const value = claim.values[name];
+    assert.ok(value, `${claim.id}: ${name} is declared in the authored finding`);
+    const [path, pointer = ''] = value.source.split('#');
+    const measured = resolvePointer(readSource(path), pointer);
+    return value.format === 'code' || value.format === 'word' ? String(measured) : format(measured, value.format);
+  }).replace(/\s+/g, ' ').trim()]));
   const proof = `<main><section id="findings">${renderLabProof(siteReader(join(root, 'site'), root), '', { plain: true })}</section></main>`;
+  const extraConclusion = proof.replace('The uncertainty ranges of all the reviewers overlap.</p>', 'The uncertainty ranges of all the reviewers overlap. The cheaper reviewer is better.</p>');
+  assert.notEqual(extraConclusion, proof, 'the unsupported conclusion control changes only the review-cost claim');
   const proofLimits = [...proof.matchAll(/<p class="lab-limit">[\s\S]*?<\/p>/g)].map(match => match[0]);
   assert.equal(proofLimits.length, 3, 'one generated limit for each featured finding');
   let limitAt = 0;
@@ -160,7 +171,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, expectedProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -176,8 +187,9 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(clippedCorrection.correctionVisible, false, 'a fully clipped correction is caught');
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
-  assert.deepEqual(actual.limits.map(({ id, claimText }) => ({ id, claimText })), expectedProof.limits.map(({ id, claimText }) => ({ id, claimText })), 'each visible finding retains its source claim');
-  const sourceLimits = new Map(JSON.parse(readFileSync(join(root, 'site', 'data', 'lab-proof.json'), 'utf8')).claims.map(({ id, limit }) => [id, `Limit: ${limit}`]));
+  assert.ok(actual.limits.every(({ id, claimText }) => claimText === sourceClaimTexts.get(id)), 'each visible finding retains its independently authored source claim and sourced values');
+  assert.equal(extraClaimProof.limits.every(({ id, claimText }) => claimText === sourceClaimTexts.get(id)), false, 'an unsupported conclusion fails the source claim comparison');
+  const sourceLimits = new Map(authoredClaims.map(({ id, limit }) => [id, `Limit: ${limit}`]));
   assert.ok(actual.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), 'each visible limit stays paired with its own source finding');
   assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
   for (const limit of actual.limits) {

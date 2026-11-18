@@ -142,7 +142,8 @@ export function canonicalHeader(relPrefix, current = null) {
 
 /** The nav span of the single site header: its offsets in `html`. Throws unless there is exactly one of each. */
 export function navSpan(html, label = 'page') {
-  const headers = elements(parse(html, { sourceCodeLocationInfo: true }), 'header').filter(node => hasClass(node, 'site-header'));
+  const document = parse(html, { sourceCodeLocationInfo: true });
+  const headers = elements(document, 'header').filter(node => hasClass(node, 'site-header'));
   if (headers.length !== 1) throw new Error(`Expected exactly one site header in ${label}, found ${headers.length}`);
   const header = headers[0];
   if (!header.sourceCodeLocation?.endTag) throw new Error(`Unclosed site header in ${label}`);
@@ -150,7 +151,12 @@ export function navSpan(html, label = 'page') {
   if (navs.length !== 1) throw new Error(`Expected exactly one navigation in the site header of ${label}, found ${navs.length}`);
   const nav = navs[0];
   if (!nav.sourceCodeLocation?.endTag) throw new Error(`Unclosed header navigation in ${label}`);
-  return { start: nav.sourceCodeLocation.startOffset, end: nav.sourceCodeLocation.endOffset, node: nav };
+  return { start: nav.sourceCodeLocation.startOffset, end: nav.sourceCodeLocation.endOffset, node: nav, document };
+}
+
+function refuseUnexpectedBases(document, label) {
+  const bases = elements(document, 'base');
+  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
 }
 
 /**
@@ -160,7 +166,8 @@ export function navSpan(html, label = 'page') {
  */
 export function normaliseHeader(html, { relPrefix, current = null, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  const { start, end, node } = navSpan(html, label);
+  const { start, end, node, document } = navSpan(html, label);
+  refuseUnexpectedBases(document, label);
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
   const links = [];
@@ -247,8 +254,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
   refuseUnsupportedFooterSource(html);
   const document = parse(html, { sourceCodeLocationInfo: true });
-  const bases = elements(document, 'base');
-  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
+  refuseUnexpectedBases(document, label);
   const tail = label === 'page' ? null : knownFooterTail(html, label);
   const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
   if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
