@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
+import { parse } from './html-source-tree.mjs';
 import { DESTINATIONS, FOOTER_LINKS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, addFooterLinks, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, retiredTargets, sectionFor } from './site-header.mjs';
 import { addFindLink, FIND_EXEMPT } from './site-chrome.mjs';
 import { checkPage, NUMBER_WORDS, PAGES } from './number-provenance.mjs';
@@ -19,6 +20,9 @@ const navOf = html => { const { start, end } = navSpan(html); return html.slice(
 const labels = nav => [...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
 const CANONICAL = DESTINATIONS.map(d => d.label);
 const BACK = '<a class="parent-site-link" href="https://odin-labs.ai/"><span aria-hidden="true">←</span> Back to odin-labs.ai</a>';
+const actualElements = (node, name) => node.tagName === 'template' ? [] : [...(node.tagName === name ? [node] : []), ...(node.childNodes ?? []).flatMap(child => actualElements(child, name))];
+const actualText = node => node.nodeName === '#text' ? node.value : (node.childNodes ?? []).map(actualText).join('');
+const actualAttr = (node, name) => node.attrs?.find(attr => attr.name === name)?.value;
 
 test('the real pages cover the old and new header variants', () => {
   assert.ok(PAGE_FILES.length >= 50, `${PAGE_FILES.length} committed pages`);
@@ -159,6 +163,7 @@ test('fails closed on a page it cannot place', () => {
   assert.match(lab, /href="[^"]*partners\/">Partners<\/a>/);
   assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'a nested partners/ link is not the root Partners page');
   assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'data-href="../../partners/" href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'data-href cannot mask the real retired destination');
+  assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'title=\'old href="../../partners/"\' href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'quoted title content cannot mask the real href');
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), atUpdates), /more than links/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), atUpdates), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
@@ -198,9 +203,13 @@ test('Partners moved to the footer: once in the site footer of every committed p
   for (const rel of PAGE_FILES) {
     const src = read(rel);
     const out = addFooterLinks(normalise(src, rel), { relPrefix: prefixOf(rel), label: rel });
-    const footers = out.match(/<footer class="site-footer[\s\S]*?<\/footer>/g) || [];
+    const footers = actualElements(parse(out), 'footer').filter(node => actualAttr(node, 'class')?.split(/\s+/).includes('site-footer'));
     assert.equal(footers.length, 1, rel);
-    for (const { label, path } of FOOTER_LINKS) assert.equal(footers[0].split(`href="${prefixOf(rel)}${path}">${label}</a>`).length, 2, `${rel}: ${label} once in the footer`);
+    for (const { label, path } of FOOTER_LINKS) {
+      const links = actualElements(footers[0], 'a').filter(node => actualText(node).trim() === label);
+      assert.equal(links.length, 1, `${rel}: ${label} once in the rendered footer`);
+      assert.equal(actualAttr(links[0], 'href'), `${prefixOf(rel)}${path}`, `${rel}: real ${label} href`);
+    }
     assert.equal(addFooterLinks(out, { relPrefix: prefixOf(rel), label: rel }), out, `${rel}: idempotent`);
     // Only the footer changes.
     const at = out.indexOf('<footer class="site-footer');
@@ -209,9 +218,13 @@ test('Partners moved to the footer: once in the site footer of every committed p
   assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<header class="site-header"><nav></nav></header>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> -->', { relPrefix: '' }), /exactly one site footer/, 'a commented footer is absent');
+  assert.throws(() => addFooterLinks('<template><footer class="site-footer"><a href="partners/">Partners</a></footer></template>', { relPrefix: '' }), /exactly one site footer/, 'a template footer is inert');
   assert.equal(addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div></div></footer>', { relPrefix: '' }), '<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div><a href="partners/">Partners</a></div></footer>', 'a commented link cannot suppress insertion into the rendered footer');
+  assert.equal(addFooterLinks('<footer class="site-footer"><div><!-- <a href="partners/">Partners</a> --></div></footer>', { relPrefix: '' }), '<footer class="site-footer"><div><!-- <a href="partners/">Partners</a> --><a href="partners/">Partners</a></div></footer>', 'a commented link inside the real footer cannot suppress insertion');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><a data-href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'data-href is not a usable link');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><a data-href="partners/" href="elsewhere/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'the actual href must lead to Partners');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><a hidden href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'a hidden Partners link is not usable');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><a href="partners/">Partners</a><a href="partners/"><span>Partners</span></a></footer>', { relPrefix: '' }), /invalid Partners link/, 'nested text still counts as a duplicate label');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><a href="partners/">Partners</a><a href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'duplicate Partners links are refused');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
   assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');

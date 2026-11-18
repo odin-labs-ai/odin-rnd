@@ -12,6 +12,7 @@ import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
 import { SITE_ORIGIN } from './site-header.mjs';
+import { parse } from './html-source-tree.mjs';
 
 const schema = JSON.parse(readFileSync('scripts/schemas/site-index.schema.json', 'utf8'));
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
@@ -133,15 +134,15 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
     // Partners is in the footer of every page, no longer in the header.
-    const comments = [...html.matchAll(/<!--[\s\S]*?-->/g)].map(match => [match.index, match.index + match[0].length]);
-    const visible = index => !comments.some(([start, end]) => start <= index && index < end);
-    const footers = [...html.matchAll(/<footer\b[^>]*>/g)].filter(match => visible(match.index) && match[0].match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer'));
+    const rendered = (node, tag) => node.tagName === 'template' ? [] : [...(node.tagName === tag ? [node] : []), ...(node.childNodes ?? []).flatMap(child => rendered(child, tag))];
+    const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
+    const text = node => node.nodeName === '#text' ? node.value : (node.childNodes ?? []).map(text).join('');
+    const footers = rendered(parse(html), 'footer').filter(node => attr(node, 'class')?.split(/\s+/).includes('site-footer'));
     assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
-    const end = [...html.matchAll(/<\/footer>/g)].find(match => match.index > footers[0].index && visible(match.index))?.index;
-    assert.notEqual(end, undefined, `${rel}: rendered footer closes`);
-    const partners = [...html.matchAll(/<a\b([^>]*)>Partners<\/a>/g)].filter(match => match.index > footers[0].index && match.index < end && visible(match.index));
+    const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners');
     assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
-    const actualHref = partners[0][1].match(/(?:^|\s)href="([^"]*)"/)?.[1];
+    for (let at = partners[0]; at; at = at.parentNode) assert.ok(!at.attrs?.some(item => item.name === 'hidden' || item.name === 'inert' || item.name === 'aria-hidden' && item.value === 'true'), `${rel}: Partners link is visible`);
+    const actualHref = attr(partners[0], 'href');
     assert.ok(actualHref, `${rel}: Partners has a real href`);
     const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);
     assert.equal(new URL(actualHref, pageUrl).href, new URL('partners/', SITE_ORIGIN).href, `${rel}: Partners leads to the site page`);

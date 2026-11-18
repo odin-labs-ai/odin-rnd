@@ -15,9 +15,34 @@
 // pass may run on the number-provenance pages (scripts/number-provenance.mjs PAGES) too.
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { parse } from './html-source-tree.mjs';
 
 /** The site's own origin: the only prefix besides a run of ../ that a header may use (the 404 page's absolute links). */
 export const SITE_ORIGIN = 'https://odin-labs-ai.github.io/odin-rnd/';
+
+// Read the rendered HTML tree while retaining source offsets for byte-for-byte replacement. The source tokenizer keeps
+// comments separate and template contents inert, and decodes actual attributes instead of finding href in title/data-href.
+const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
+const hasAttr = (node, name) => node.attrs?.some(item => item.name === name) ?? false;
+const hasClass = (node, name) => (attr(node, 'class') ?? '').split(/\s+/).includes(name);
+const elements = (root, tag) => {
+  const found = [];
+  const visit = node => {
+    if (node.tagName === 'template') return;
+    if (node.tagName === tag) found.push(node);
+    for (const child of node.childNodes ?? []) visit(child);
+  };
+  visit(root);
+  return found;
+};
+const hidden = node => hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
+const textOf = (node, visible = false) => node.nodeName === '#text' ? node.value.replaceAll('&amp;', '&') : node.tagName === 'template' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
+const source = (html, node) => {
+  const { startOffset, endOffset } = node.sourceCodeLocation ?? {};
+  if (!Number.isInteger(startOffset) || !Number.isInteger(endOffset)) throw new Error('A parsed site element has no source location');
+  return html.slice(startOffset, endOffset);
+};
 
 /**
  * The canonical destinations, in plain words (plain-language home, 2026-11-16; the founder found the site "too
@@ -114,18 +139,15 @@ export function canonicalHeader(relPrefix, current = null) {
 
 /** The nav span of the single site header: its offsets in `html`. Throws unless there is exactly one of each. */
 export function navSpan(html, label = 'page') {
-  const opens = html.match(/<header class="site-header[ "]/g) || [];
-  if (opens.length !== 1) throw new Error(`Expected exactly one site header in ${label}, found ${opens.length}`);
-  const start = html.search(/<header class="site-header[ "]/);
-  const end = html.indexOf('</header>', start);
-  if (end < 0) throw new Error(`Unclosed site header in ${label}`);
-  const header = html.slice(start, end);
-  const navs = header.match(/<nav\b/g) || [];
+  const headers = elements(parse(html, { sourceCodeLocationInfo: true }), 'header').filter(node => hasClass(node, 'site-header'));
+  if (headers.length !== 1) throw new Error(`Expected exactly one site header in ${label}, found ${headers.length}`);
+  const header = headers[0];
+  if (!header.sourceCodeLocation?.endTag) throw new Error(`Unclosed site header in ${label}`);
+  const navs = elements(header, 'nav');
   if (navs.length !== 1) throw new Error(`Expected exactly one navigation in the site header of ${label}, found ${navs.length}`);
-  const navStart = start + header.search(/<nav\b/);
-  const close = html.indexOf('</nav>', navStart);
-  if (close < 0 || close > end) throw new Error(`Unclosed header navigation in ${label}`);
-  return { start: navStart, end: close + '</nav>'.length };
+  const nav = navs[0];
+  if (!nav.sourceCodeLocation?.endTag) throw new Error(`Unclosed header navigation in ${label}`);
+  return { start: nav.sourceCodeLocation.startOffset, end: nav.sourceCodeLocation.endOffset, node: nav };
 }
 
 /**
@@ -135,17 +157,19 @@ export function navSpan(html, label = 'page') {
  */
 export function normaliseHeader(html, { relPrefix, current = null, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  const { start, end } = navSpan(html, label);
+  const { start, end, node } = navSpan(html, label);
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
-  const links = [...nav.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)];
-  const rest = nav.slice(NAV_OPEN.length, -'</nav>'.length).replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
-  if (rest.trim()) throw new Error(`The header navigation of ${label} holds more than links: "${rest.trim().slice(0, 60)}"`);
-  for (const [whole, html] of links) {
-    const text = labelText(html);
+  const links = [];
+  for (const child of node.childNodes ?? []) {
+    if (child.nodeName === '#text' && !child.value.trim()) continue;
+    if (child.tagName !== 'a' || !child.sourceCodeLocation?.endTag) throw new Error(`The header navigation of ${label} holds more than links`);
+    links.push([source(html, child), textOf(child), child]);
+  }
+  for (const [whole, text, anchor] of links) {
     if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
     const retired = RETIRED_LABELS.get(text);
-    const href = whole.match(/(?:^|\s)href="([^"]*)"/)?.[1] ?? '';
+    const href = attr(anchor, 'href') ?? '';
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
     const actual = new URL(href, label === 'index.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
     if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
@@ -192,23 +216,20 @@ export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/
 
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  // Blank comments without changing offsets: a commented-out footer is not a rendered footer.
-  const scan = html.replace(/<!--[\s\S]*?-->/g, comment => ' '.repeat(comment.length));
-  const opens = [...scan.matchAll(/<footer\b[^>]*>/g)].filter(m => m[0].match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer'));
-  if (opens.length !== 1) throw new Error(`Expected exactly one site footer in ${label}, found ${opens.length}`);
-  const start = opens[0].index;
-  const end = scan.indexOf('</footer>', start);
-  if (end < 0) throw new Error(`Unclosed site footer in ${label}`);
-  const footer = scan.slice(start, end);
-  const anchors = [...footer.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({ href: m[1].match(/(?:^|\s)href="([^"]*)"/)?.[1], text: m[2] }));
+  const footers = elements(parse(html, { sourceCodeLocationInfo: true }), 'footer').filter(node => hasClass(node, 'site-footer'));
+  if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
+  const footer = footers[0];
+  const end = footer.sourceCodeLocation?.endTag?.startOffset;
+  if (!Number.isInteger(end)) throw new Error(`Unclosed site footer in ${label}`);
+  const anchors = elements(footer, 'a');
   const missing = FOOTER_LINKS.filter(link => {
-    const named = anchors.filter(anchor => anchor.text === labelHtml(link.label));
-    if (named.length > 1 || (named.length === 1 && named[0].href !== `${relPrefix}${link.path}`)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    const named = anchors.filter(anchor => textOf(anchor).trim() === link.label);
+    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     return named.length === 0;
   });
   if (!missing.length) return html;
   const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
-  const div = footer.search(/<div\b/);
-  const at = div >= 0 && footer.indexOf('</div>', div) >= 0 ? start + footer.indexOf('</div>', div) : end;
+  const div = elements(footer, 'div')[0];
+  const at = div?.sourceCodeLocation?.endTag?.startOffset ?? end;
   return html.slice(0, at) + links + html.slice(at);
 }
