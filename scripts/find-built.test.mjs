@@ -11,6 +11,7 @@ import { FIND_MARKER, GROUPS } from './find-build.mjs';
 import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
+import { SITE_ORIGIN } from './site-header.mjs';
 
 const schema = JSON.parse(readFileSync('scripts/schemas/site-index.schema.json', 'utf8'));
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
@@ -132,9 +133,18 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
     // Partners is in the footer of every page, no longer in the header.
-    const footer = html.match(/<footer class="site-footer[\s\S]*?<\/footer>/)?.[0];
-    assert.ok(footer, `${rel}: site footer exists`);
-    assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
+    const rendered = html.replace(/<!--[\s\S]*?-->/g, '');
+    const footers = [...rendered.matchAll(/<footer\b[^>]*>[\s\S]*?<\/footer>/g)].filter(match => {
+      const open = match[0].slice(0, match[0].indexOf('>') + 1);
+      return open.match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer');
+    });
+    assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
+    const partners = [...footers[0][0].matchAll(/<a\b([^>]*)>Partners<\/a>/g)];
+    assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
+    const actualHref = partners[0][1].match(/(?:^|\s)href="([^"]*)"/)?.[1];
+    assert.ok(actualHref, `${rel}: Partners has a real href`);
+    const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);
+    assert.equal(new URL(actualHref, pageUrl).href, new URL('partners/', SITE_ORIGIN).href, `${rel}: Partners leads to the site page`);
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();

@@ -145,7 +145,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     const text = labelText(html);
     if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
     const retired = RETIRED_LABELS.get(text);
-    const href = whole.match(/\bhref="([^"]*)"/)?.[1] ?? '';
+    const href = whole.match(/(?:^|\s)href="([^"]*)"/)?.[1] ?? '';
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
     const actual = new URL(href, label === 'index.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
     if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
@@ -192,13 +192,20 @@ export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/
 
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  const opens = html.match(/<footer class="site-footer[ "]/g) || [];
+  // Blank comments without changing offsets: a commented-out footer is not a rendered footer.
+  const scan = html.replace(/<!--[\s\S]*?-->/g, comment => ' '.repeat(comment.length));
+  const opens = [...scan.matchAll(/<footer\b[^>]*>/g)].filter(m => m[0].match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer'));
   if (opens.length !== 1) throw new Error(`Expected exactly one site footer in ${label}, found ${opens.length}`);
-  const start = html.search(/<footer class="site-footer[ "]/);
-  const end = html.indexOf('</footer>', start);
+  const start = opens[0].index;
+  const end = scan.indexOf('</footer>', start);
   if (end < 0) throw new Error(`Unclosed site footer in ${label}`);
-  const footer = html.slice(start, end);
-  const missing = FOOTER_LINKS.filter(l => !footer.includes(`href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`));
+  const footer = scan.slice(start, end);
+  const anchors = [...footer.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({ href: m[1].match(/(?:^|\s)href="([^"]*)"/)?.[1], text: m[2] }));
+  const missing = FOOTER_LINKS.filter(link => {
+    const named = anchors.filter(anchor => anchor.text === labelHtml(link.label));
+    if (named.length > 1 || (named.length === 1 && named[0].href !== `${relPrefix}${link.path}`)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    return named.length === 0;
+  });
   if (!missing.length) return html;
   const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
   const div = footer.search(/<div\b/);

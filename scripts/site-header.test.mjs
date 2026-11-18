@@ -158,6 +158,7 @@ test('fails closed on a page it cannot place', () => {
   const lab = read('labs/rogue/index.html');
   assert.match(lab, /href="[^"]*partners\/">Partners<\/a>/);
   assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'a nested partners/ link is not the root Partners page');
+  assert.throws(() => normaliseHeader(lab.replace(/href="[^"]*partners\/">Partners<\/a>/, 'data-href="../../partners/" href="partners/">Partners</a>'), { relPrefix: '../../', label: 'labs/rogue/index.html' }), /does not account for/, 'data-href cannot mask the real retired destination');
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), atUpdates), /more than links/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), atUpdates), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
@@ -207,6 +208,11 @@ test('Partners moved to the footer: once in the site footer of every committed p
   }
   assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /exactly one site footer/);
   assert.throws(() => addFooterLinks('<header class="site-header"><nav></nav></header>', { relPrefix: '' }), /exactly one site footer/);
+  assert.throws(() => addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> -->', { relPrefix: '' }), /exactly one site footer/, 'a commented footer is absent');
+  assert.equal(addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div></div></footer>', { relPrefix: '' }), '<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div><a href="partners/">Partners</a></div></footer>', 'a commented link cannot suppress insertion into the rendered footer');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><a data-href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'data-href is not a usable link');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><a data-href="partners/" href="elsewhere/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'the actual href must lead to Partners');
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><a href="partners/">Partners</a><a href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'duplicate Partners links are refused');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
   assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');
 });
