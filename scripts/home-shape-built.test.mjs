@@ -177,7 +177,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.equal(filteredCorrection.correctionVisible, false, 'a fully transparent filter on the correction is caught');
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
   assert.deepEqual(actual.limits.map(({ id, claimText }) => ({ id, claimText })), expectedProof.limits.map(({ id, claimText }) => ({ id, claimText })), 'each visible finding retains its source claim');
-  const sourceLimits = new Map(expectedProof.limits.map(({ id, limitText }) => [id, limitText]));
+  const sourceLimits = new Map(JSON.parse(readFileSync(join(root, 'site', 'data', 'lab-proof.json'), 'utf8')).claims.map(({ id, limit }) => [id, `Limit: ${limit}`]));
   assert.ok(actual.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), 'each visible limit stays paired with its own source finding');
   assert.equal(swappedProof.limits.every(({ id, limitText }) => limitText === sourceLimits.get(id)), false, 'swapped study limits fail their source pairing');
   for (const limit of actual.limits) {

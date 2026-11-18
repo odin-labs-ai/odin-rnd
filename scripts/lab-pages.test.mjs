@@ -237,22 +237,30 @@ test('a proof claim refuses a missing or placeholder written plan', () => {
   const changed = (record, planExists = true) => {
     const read = path => path === results ? record : path === plan && !planExists ? null : source(path);
     read.raw = path => path === plan && !planExists ? null : source.raw(path);
+    read.quoteProblem = source.quoteProblem;
     return () => renderLabProof(read, '../');
   };
   const rejected = /claim proof-review-cost has no linked pre-registration document/;
   assert.throws(changed({ ...source(results), preregistration: null }), rejected);
   assert.throws(changed({ ...source(results), preregistration: 'none' }), rejected);
   assert.throws(changed(source(results), false), rejected);
+  const placeholderPlan = path => path === plan ? 'none' : source(path);
+  placeholderPlan.raw = path => path === plan ? Buffer.from('"none"') : source.raw(path);
+  placeholderPlan.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(placeholderPlan, '../'), rejected, 'the correct pointer cannot turn a placeholder document into a written plan');
   assert.throws(changed({ ...source(results), preregistrationSha256: '0'.repeat(64) }), rejected, 'a correct pointer never excuses a wrong hash');
   const broker = 'data/broker-same-model/results.json';
   const wrongPin = path => path === broker ? { ...source(broker), preregistrationSha256: '0'.repeat(64) } : source(path);
   wrongPin.raw = source.raw;
+  wrongPin.quoteProblem = source.quoteProblem;
   assert.throws(() => renderLabProof(wrongPin, '../'), /claim proof-brokers has no linked pre-registration document/);
   const wrongPointer = path => path === broker ? { ...source(broker), preregistration: 'experiments/elsewhere/preregistration.json' } : source(path);
   wrongPointer.raw = source.raw;
+  wrongPointer.quoteProblem = source.quoteProblem;
   assert.throws(() => renderLabProof(wrongPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'a valid pin never excuses a wrong pointer');
   const emptyPointer = path => path === broker ? { ...source(broker), preregistration: null } : source(path);
   emptyPointer.raw = source.raw;
+  emptyPointer.quoteProblem = source.quoteProblem;
   assert.throws(() => renderLabProof(emptyPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'an explicit empty pointer cannot be excused by a valid pin');
   const nonnumeric = structuredClone(source(broker));
   for (const arm of Object.values(nonnumeric.perArm)) {

@@ -358,11 +358,18 @@ export function renderLabProof(read, up = '../', { plain = false } = {}) {
     const pointer = record?.preregistration;
     const pinned = record?.preregistrationSha256;
     const raw = read.raw?.(planPath);
+    const plan = read(planPath);
+    const planValid = plan?.schemaVersion === 1 && plan.kind === 'odin-rnd.preregistration'
+      && plan.experiment?.slug === slug && /^EXP \d{3}$/.test(plan.experiment?.id ?? '')
+      && plan.experiment?.status === 'pre-registered'
+      && typeof plan.experiment?.title === 'string' && !!plan.experiment.title.trim()
+      && typeof plan.question === 'string' && !!plan.question.trim();
+    const frozenValid = read.quoteProblem?.(planPath) === null;
     const hasPointer = Object.hasOwn(record ?? {}, 'preregistration');
     const hasPin = Object.hasOwn(record ?? {}, 'preregistrationSha256');
     const pointerValid = !hasPointer || pointer === `experiments/${slug}/preregistration.json`;
     const pinValid = !hasPin || (typeof pinned === 'string' && /^[a-f0-9]{64}$/.test(pinned) && raw && createHash('sha256').update(raw).digest('hex') === pinned);
-    return !slug || (!hasPointer && !hasPin) || !pointerValid || !pinValid || !read(planPath);
+    return !slug || (!hasPointer && !hasPin) || !pointerValid || !pinValid || !planValid || !frozenValid;
   }).map(c => c.id);
   if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} has no linked pre-registration document`);
   return renderClaims(read, config.claims, up, { plain, plans: true });
