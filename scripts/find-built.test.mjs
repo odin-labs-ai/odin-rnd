@@ -136,12 +136,14 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     // Partners is in the footer of every page, no longer in the header.
     const rendered = (node, tag) => node.tagName === 'template' ? [] : [...(node.tagName === tag ? [node] : []), ...(node.childNodes ?? []).flatMap(child => rendered(child, tag))];
     const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
-    const text = node => node.nodeName === '#text' ? node.value : (node.childNodes ?? []).map(text).join('');
+    const hidden = node => node.tagName === 'details' && !node.attrs?.some(item => item.name === 'open') || node.attrs?.some(item => item.name === 'hidden' || item.name === 'inert' || item.name === 'aria-hidden' && item.value === 'true') || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'hidden' || name === 'sr-only');
+    const text = (node, visible = false) => node.nodeName === '#text' ? node.value : visible && hidden(node) ? '' : (node.childNodes ?? []).map(child => text(child, visible)).join('');
     const footers = rendered(parse(html), 'footer').filter(node => attr(node, 'class')?.split(/\s+/).includes('site-footer'));
     assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
-    const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners');
+    const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners' || text(node, true).trim() === 'Partners');
     assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
-    for (let at = partners[0]; at; at = at.parentNode) assert.ok(!at.attrs?.some(item => item.name === 'hidden' || item.name === 'inert' || item.name === 'aria-hidden' && item.value === 'true'), `${rel}: Partners link is visible`);
+    for (let at = partners[0]; at; at = at.parentNode) assert.ok(!hidden(at), `${rel}: Partners link is visible`);
+    assert.equal(text(partners[0], true).trim(), 'Partners', `${rel}: Partners has a visible label`);
     const actualHref = attr(partners[0], 'href');
     assert.ok(actualHref, `${rel}: Partners has a real href`);
     const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);

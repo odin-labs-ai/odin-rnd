@@ -35,7 +35,7 @@ const elements = (root, tag) => {
   visit(root);
   return found;
 };
-const hidden = node => hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+const hidden = node => node.tagName === 'details' && !hasAttr(node, 'open') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
 const textOf = (node, visible = false) => node.nodeName === '#text' ? node.value.replaceAll('&amp;', '&') : node.tagName === 'template' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
@@ -223,13 +223,13 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   if (!Number.isInteger(end)) throw new Error(`Unclosed site footer in ${label}`);
   const anchors = elements(footer, 'a');
   const missing = FOOTER_LINKS.filter(link => {
-    const named = anchors.filter(anchor => textOf(anchor).trim() === link.label);
+    const named = anchors.filter(anchor => textOf(anchor).trim() === link.label || textOf(anchor, true).trim() === link.label);
     if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     return named.length === 0;
   });
   if (!missing.length) return html;
   const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
-  const div = elements(footer, 'div')[0];
+  const div = elements(footer, 'div').find(node => !hiddenWithin(node));
   const at = div?.sourceCodeLocation?.endTag?.startOffset ?? end;
   return html.slice(0, at) + links + html.slice(at);
 }

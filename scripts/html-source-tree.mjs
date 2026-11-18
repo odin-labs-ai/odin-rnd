@@ -5,6 +5,7 @@ import { parseAttributes } from './number-provenance.mjs';
 
 const WS = new Set([' ', '\t', '\n', '\f', '\r']);
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+const RAW_TEXT = new Set(['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript']);
 const asciiLower = text => text.replace(/[A-Z]/g, char => String.fromCharCode(char.charCodeAt(0) + 32));
 
 /** Parse source HTML into elements, text and source offsets. Comments are omitted; template descendants stay inert. */
@@ -60,8 +61,10 @@ export function parse(html) {
     const parent = stack.at(-1);
     const node = { nodeName: name, tagName: name, attrs, childNodes: [], parentNode: parent, sourceCodeLocation: { startOffset: at, endOffset: end, startTag: { startOffset: at, endOffset: end } } };
     parent.childNodes.push(node);
-    if (VOID.has(name) || /\/\s*>$/.test(html.slice(at, end))) { i = end; continue; }
-    if (name === 'script' || name === 'style') {
+    // A trailing slash is part of an unquoted HTML attribute value, not a closing marker.
+    // Only void HTML elements close themselves in the browser's HTML parsing mode.
+    if (VOID.has(name)) { i = end; continue; }
+    if (RAW_TEXT.has(name)) {
       let close = lower.indexOf(`</${name}`, end);
       while (close >= 0 && ![...WS, '/', '>'].includes(html[close + name.length + 2])) close = lower.indexOf(`</${name}`, close + 1);
       if (close < 0) throw new Error(`Unclosed raw HTML tag <${name}>`);
