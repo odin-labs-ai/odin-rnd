@@ -133,13 +133,13 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
     // Partners is in the footer of every page, no longer in the header.
-    const rendered = html.replace(/<!--[\s\S]*?-->/g, '');
-    const footers = [...rendered.matchAll(/<footer\b[^>]*>[\s\S]*?<\/footer>/g)].filter(match => {
-      const open = match[0].slice(0, match[0].indexOf('>') + 1);
-      return open.match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer');
-    });
+    const comments = [...html.matchAll(/<!--[\s\S]*?-->/g)].map(match => [match.index, match.index + match[0].length]);
+    const visible = index => !comments.some(([start, end]) => start <= index && index < end);
+    const footers = [...html.matchAll(/<footer\b[^>]*>/g)].filter(match => visible(match.index) && match[0].match(/(?:^|\s)class="([^"]*)"/)?.[1].split(/\s+/).includes('site-footer'));
     assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
-    const partners = [...footers[0][0].matchAll(/<a\b([^>]*)>Partners<\/a>/g)];
+    const end = [...html.matchAll(/<\/footer>/g)].find(match => match.index > footers[0].index && visible(match.index))?.index;
+    assert.notEqual(end, undefined, `${rel}: rendered footer closes`);
+    const partners = [...html.matchAll(/<a\b([^>]*)>Partners<\/a>/g)].filter(match => match.index > footers[0].index && match.index < end && visible(match.index));
     assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
     const actualHref = partners[0][1].match(/(?:^|\s)href="([^"]*)"/)?.[1];
     assert.ok(actualHref, `${rel}: Partners has a real href`);
