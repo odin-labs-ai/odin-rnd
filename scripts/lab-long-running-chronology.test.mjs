@@ -20,7 +20,12 @@ function timeline(slug, dates) {
   for (const [, href] of section.matchAll(/href="([^"]+)"/g)) {
     assert.ok(href.startsWith('#') || href.startsWith('../../'), `${slug} has an unsupported timeline link: ${href}`);
     if (href.startsWith('#')) assert.ok(page.includes(`id="${href.slice(1)}"`), `${slug} resolves ${href}`);
-    else if (href.startsWith('../../')) assert.ok(existsSync(resolve(`site/labs/${slug}`, href.split('#')[0])), `${slug} resolves ${href}`);
+    else if (href.startsWith('../../')) {
+      const [path, fragment] = href.split('#');
+      const target = resolve(`site/labs/${slug}`, path);
+      assert.ok(existsSync(target), `${slug} resolves ${href}`);
+      if (fragment) assert.ok(readFileSync(target, 'utf8').includes(`id="${fragment}"`), `${slug} resolves ${href} fragment`);
+    }
   }
   assert.match(section, /later (?:runs|check run)/i, `${slug} distinguishes record checks from source work`);
   return section;
@@ -28,7 +33,10 @@ function timeline(slug, dates) {
 
 test('Rogue progression binds staged runs, rebuild and second-machine check to its public record', () => {
   const record = read('data/labs/rogue/record.json');
-  const section = timeline('rogue', [sourceDay(record.vendored.cites[0].at), sourceDay(record.vendored.cites[2].at), record.reproductions[0].on]);
+  const cites = record.vendored.cites;
+  const section = timeline('rogue', [sourceDay(cites[0].at), sourceDay(cites[2].at), record.reproductions[0].on]);
+  assert.equal(sourceDay(cites[1].at), sourceDay(cites[0].at), 'the first two cited changes share the first milestone');
+  assert.ok(cites[0].at < cites[1].at && cites[1].at < cites[2].at, 'Rogue source trail is ordered');
   assert.equal(record.governed.acts.length, 4);
   assert.deepEqual([record.reproductions[0].breaches, record.reproductions[0].tests.passed], [0, 12]);
   assert.match(section, /staged attack/);
@@ -55,6 +63,7 @@ test('Red Build progression keeps the two sets separate and the held-out result 
   const section = timeline('red-build', [sourceDay(cites[2].at), sourceDay(cites[0].at), sourceDay(cites[1].at)]);
   assert.equal(record.heldOut.runs.length, 9);
   assert.equal(record.heldOut.score.judgedFix, 0);
+  assert.match(section, /nine held-out red builds/i);
   assert.match(section, /zero judged fixes/);
   assert.match(section, /not new repair attempts/);
 });
@@ -66,6 +75,10 @@ test('Measured Blind progression retains its three sets and the known evaluation
   assert.equal(record.sets.length, 3);
   assert.match(record.setup.blinding, /partial/);
   assert.match(record.setup.restart, /runtime updated/);
+  const milestones = [...section.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(([, html]) => html);
+  assert.match(milestones[0], /frozen before the fixes/);
+  assert.match(milestones[1], /The verdict labels/);
+  assert.match(milestones[2], /runner was last changed/);
   assert.match(section, /partial blinding/);
   assert.match(section, /not outside validation/);
 });
