@@ -1,0 +1,74 @@
+.partner-intro {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .95fr);
+  column-gap: clamp(32px, 7vw, 100px);
+}
+.partner-intro .company-lead {
+  max-width: 43ch;
+}
+.partner-study {
+  align-self: start;
+  padding: clamp(24px, 3vw, 44px);
+  color: #eef5ec;
+  background: #14332c;
+  border-top: 4px solid #db8650;
+}
+.partner-study-meta,
+.partner-study-sources {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.partner-study-meta {
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #55766a;
+  color: #c4d6cc;
+  font: 12px/1.6 var(--mono);
+}
+.partner-study h2 {
+  margin: 24px 0 16px;
+  max-width: 18ch;
+  font-size: clamp(32px, 3.3vw, 50px);
+  line-height: 1.07;
+  letter-spacing: -.04em;
+  color: inherit;
+}
+.partner-study p {
+  max-width: 55ch;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.partner-study .partner-study-limit {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #c4d6cc;
+}
+.partner-study a {
+  min-height: 44px;
+  display: inline-flex;
+  gap: .5em;
+  align-items: center;
+  color: inherit;
+}
+.partner-study-result {
+  margin-top: 20px;
+  font-weight: 700;
+}
+.partner-study-sources {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #55766a;
+  font-size: 14px;
+}
+.partner-study a:focus-visible {
+  outline: 3px solid #ffbd84;
+  outline-offset: 3px;
+}
+@media (max-width: 860px) {
+  .partner-intro {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}

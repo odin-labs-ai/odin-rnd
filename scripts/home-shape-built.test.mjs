@@ -217,3 +217,18 @@ test('the built home reads plain-first: the hero, then what we found, then how w
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
   assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
 });
+
+test('the entrance offers a native research search, topic searches, the recorded film and the failover result', () => {
+  const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="findings"'));
+  assert.match(hero, /<form[^>]*role="search"[^>]*action="find\/"[^>]*method="get"/);
+  assert.match(hero, /<label for="research-query">[^<]+<\/label>/);
+  assert.match(hero, /<input[^>]*id="research-query"[^>]*type="search"[^>]*name="q"/);
+  const topicForm = /<form action="find\/" method="get" aria-label="Browse research topics">([\s\S]*?)<\/form>/.exec(hero);
+  assert.ok(topicForm);
+  for (const query of ['MongoDB', 'review', 'agents']) {
+    assert.ok(topicForm[1].includes(`<button name="q" value="${query}">`));
+  }
+  assert.ok(hero.includes('href="labs/agent-space/#film-agent-space-30s"'));
+  assert.ok(hero.includes('href="journal/failover-results.html"'));
+  assert.ok(!hero.includes('<video'), 'the film only downloads when the visitor chooses to watch');
+});

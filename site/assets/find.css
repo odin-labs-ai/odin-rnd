@@ -1,10 +1,10 @@
 /* /find/: search and filters on the light reading floor. Ruled rows, no cards, no motion. Mobile first. */
-.find-hero{padding-block:46px 30px}
+.find-hero{padding-block:40px 26px}
 .find-hero h1{font-family:var(--display);font-size:clamp(43px,9.5vw,76px);font-weight:600;line-height:1.06;letter-spacing:-.04em;max-width:15ch}
-.find-hero .company-lead{font-size:17px;margin-top:22px;max-width:60ch}
+.find-hero .company-lead{font-size:17px;margin-top:14px;max-width:44ch}
 .find{padding-bottom:80px}
 .find-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.find-form{border-top:1px solid var(--rule);padding-top:26px}
+.find-form{padding:clamp(16px,2.2vw,28px);background:#e9f0e6;border-top:3px solid var(--brand)}
 .find-search label,.find-month label{display:block;font-size:15px;font-weight:600}
 .find-search input,.find-month select{width:100%;min-height:48px;margin-top:8px;padding:11px 14px;border:1px solid #789381;border-radius:8px;background:#fafcf8;color:var(--paper);font:400 17px/1.5 Manrope,sans-serif}
 .find-search input:focus-visible,.find-month select:focus-visible,.find-check input:focus-visible,.find-clear:focus-visible,.find-chip:focus-visible,.find-more:focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
@@ -25,13 +25,13 @@
 .find-clear{min-height:44px;padding:0 16px;border:1px solid var(--rule);border-radius:8px;background:none;font-size:14px}
 .find-clear:hover{border-color:var(--brand);color:var(--brand)}
 .find-results,.find-static ol,.find-static ul{list-style:none;margin:0;padding:0}
-.find-result{padding:24px 0;border-top:1px solid var(--rule)}
+.find-result{padding:22px 0;border-top:1px solid var(--rule);overflow-wrap:anywhere}
 .find-result:last-child{border-bottom:1px solid var(--rule)}
-.find-result h3{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.25}
+.find-result h3{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.2;letter-spacing:-.025em}
 .find-result h3 a{text-decoration:none}
 .find-result h3 a:hover{color:var(--brand);text-decoration:underline;text-decoration-thickness:1px}
-.find-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;font:12px/1.6 var(--mono);color:var(--steel);font-variant-numeric:tabular-nums}
-.find-badge{border:1px solid var(--rule);border-radius:4px;padding:1px 7px;color:var(--paper);letter-spacing:.04em}
+.find-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;margin-bottom:8px;font:12px/1.6 var(--mono);color:var(--steel);font-variant-numeric:tabular-nums}
+.find-badge{color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .find-outcome{color:var(--paper)}
 .find-summary{margin-top:12px;font-size:16px;color:var(--steel);max-width:68ch}
 .find-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:14px 0 0;padding:0}
@@ -46,16 +46,34 @@
 .find-static li a{font-size:16px}
 .find-static time,.find-static li span{font:12px/1.6 var(--mono);color:var(--steel);font-variant-numeric:tabular-nums}
 @media(min-width:761px){
-  .find-hero{padding-block:76px 40px}
+  .find-hero{display:flex;gap:5%;align-items:end;justify-content:space-between;padding-block:58px 32px}
+  .find-hero h1{flex:none}
+  .find-hero .company-lead{max-width:37ch}
   .find-hero .company-lead{font-size:20px}
   .find-facets{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 40px}
   .find-topics{grid-column:1/-1}
   .find-month{max-width:320px}
-  .find-result{display:grid;grid-template-columns:minmax(0,1fr);padding:28px 0}
+  .find-result{padding:24px 0}
   .find-result h3{font-size:26px}
 }
-@media(min-width:1100px){
-  .find-facets{grid-template-columns:repeat(3,minmax(0,1fr))}
+.find-empty{border-block:1px solid var(--rule);padding:30px 0;color:var(--steel)}
+.find-history{margin:12px 0 0;border:0}
+.find-history summary{display:list-item;list-style:disclosure-closed;margin-inline-start:16px;min-height:44px;padding:12px 0;color:var(--brand);font-size:14px}
+.find-history[open]>summary{list-style:disclosure-open}
+.find-history summary::-webkit-details-marker{display:inline}
+.find-history ul{list-style:none;padding:0 0 0 16px;margin:0;border-left:2px solid var(--rule)}
+.find-history li+li{border-top:1px solid var(--rule);margin-top:14px;padding-top:14px}
+.find-history strong{display:block;font-family:var(--display)}
+.find-history li>p:not(.find-meta){font-size:15px;color:var(--steel);margin-top:4px}
+.find-status{padding:14px 0 0}
+.find-form[hidden]~.find-static{grid-column:1/-1}
+@media(min-width:980px){
+  .find{display:grid;grid-template-columns:minmax(270px,.72fr) minmax(0,1.55fr);gap:clamp(28px,4vw,64px);align-items:start}
+  .find-form{position:sticky;top:12px}
+  .find-form:has(.find-filters[open]){position:static}
+  .find-results{border-top:3px solid var(--brand)}
+  .find-result:first-child{border-top:0}
+  .find-facets{grid-template-columns:1fr;gap:18px}
 }
 @media(pointer:coarse){.find-hint{display:none}}
 @media(prefers-reduced-motion:reduce){.find *{transition:none!important;animation:none!important}}

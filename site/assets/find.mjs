@@ -168,9 +168,22 @@ export function resultPage(items, limit = RESULT_PAGE_SIZE) {
   return { visible, remaining: items.length - visible.length };
 }
 
-/** The matching items beyond the first page, for the given params: what "Show more" adds. */
-export function remainingItems(items, params, limit = RESULT_PAGE_SIZE) {
-  return filter(items, params).slice(limit);
+/** Group matching entries by their exact destination, keeping distinct anchors and every dated entry. */
+export function groupResults(matches) {
+  const byDestination = new Map();
+  const groups = [];
+  for (const item of matches) {
+    const href = safeHref(item.href);
+    const existing = byDestination.get(href);
+    if (existing) {
+      existing.push(item);
+    } else {
+      const group = [item];
+      groups.push(group);
+      if (href) byDestination.set(href, group);
+    }
+  }
+  return groups;
 }
 
 // ---------------------------------------------------------------- browser wiring
@@ -244,13 +257,6 @@ function init(doc, win) {
       search.focus();
     });
     results.addEventListener('click', event => {
-      const more = event.target?.closest?.('button[data-more]');
-      if (more) {
-        const rest = remainingItems(items, read()).map(row);
-        more.closest('li').replaceWith(...rest);
-        rest[0]?.querySelector('a,button')?.focus();
-        return;
-      }
       const chip = event.target?.closest?.('button[data-topic]');
       if (!chip) return;
       const next = { ...read(), topic: [chip.dataset.topic] };
@@ -288,24 +294,32 @@ function init(doc, win) {
 
     function render(current) {
       const found = filter(items, current);
-      const { visible, remaining } = resultPage(found);
-      const rows = visible.map(item => row(item));
+      const groups = groupResults(found);
+      const { visible, remaining } = resultPage(groups);
+      const rows = visible.map(row);
       if (remaining) {
         const more = element(doc, 'li', { class: 'find-more-row' });
-        more.append(element(doc, 'button', { type: 'button', class: 'find-more', 'data-more': '' }, `Show ${remaining} more`));
+        const button = element(doc, 'button', { type: 'button', class: 'find-more' },
+          `Show ${remaining} more ${remaining === 1 ? 'page' : 'pages'}`);
+        button.addEventListener('click', () => {
+          const rest = groups.slice(visible.length).map(row);
+          more.replaceWith(...rest);
+          rest[0]?.querySelector('a,button')?.focus();
+        });
+        more.append(button);
         rows.push(more);
       }
+      if (!found.length) {
+        rows.push(element(doc, 'li', { class: 'find-empty' }, 'Try another search term or clear your filters.'));
+      }
       results.replaceChildren(...rows);
-      const total = items.length;
-      count.textContent = found.length === total && isEmpty(current)
-        ? `Showing all ${total} ${total === 1 ? 'entry' : 'entries'}.`
-        : found.length
-          ? `${found.length} of ${total} ${total === 1 ? 'entry' : 'entries'} match.`
-          : 'Nothing matches. Remove a filter or clear them all.';
+      count.textContent = found.length
+        ? `${groups.length} ${groups.length === 1 ? 'page' : 'pages'} · ${found.length} matching ${found.length === 1 ? 'entry' : 'entries'}`
+        : 'No matching pages';
+      doc.getElementById('find-clear').hidden = isEmpty(current);
     }
 
-    function row(item) {
-      const li = element(doc, 'li', { class: 'find-result' });
+    function metadata(item) {
       const meta = element(doc, 'p', { class: 'find-meta' });
       meta.append(element(doc, 'span', { class: 'find-badge', 'data-type': String(item.type ?? '') }, TYPE_LABELS[item.type] ?? humanize(item.type)));
       const label = numberLabel(item);
@@ -313,11 +327,17 @@ function init(doc, win) {
       if (item.date) meta.append(element(doc, 'time', { datetime: String(item.date) }, String(item.date).slice(0, 10)));
       if (item.stage) meta.append(element(doc, 'span', {}, stageLabel(item.stage)));
       if (OUTCOME_LABELS[item.outcome]) meta.append(element(doc, 'span', { class: 'find-outcome' }, OUTCOME_LABELS[item.outcome]));
+      return meta;
+    }
+
+    function row(group) {
+      const item = group.find(entry => entry.type !== 'update') ?? group[0];
+      const li = element(doc, 'li', { class: 'find-result' });
       const heading = element(doc, 'h3');
       const href = safeHref(item.href);
       if (href) heading.append(element(doc, 'a', { href: `../${href}` }, String(item.title ?? '')));
       else heading.textContent = String(item.title ?? '');
-      li.append(heading, meta);
+      li.append(metadata(item), heading);
       if (item.summary) li.append(element(doc, 'p', { class: 'find-summary' }, String(item.summary)));
       const topics = Array.isArray(item.topics) ? item.topics.filter(t => typeof t === 'string' && t) : [];
       if (topics.length) {
@@ -329,6 +349,21 @@ function init(doc, win) {
           list.append(li2);
         }
         li.append(list);
+      }
+      if (group.length > 1) {
+        const details = element(doc, 'details', { class: 'find-history' });
+        const others = group.filter(entry => entry !== item);
+        details.append(element(doc, 'summary', {},
+          `${others.length} more matching ${others.length === 1 ? 'entry' : 'entries'} on this page`));
+        const entries = element(doc, 'ul');
+        for (const entry of others) {
+          const record = element(doc, 'li');
+          record.append(metadata(entry), element(doc, 'strong', {}, entry.title));
+          if (entry.summary) record.append(element(doc, 'p', {}, entry.summary));
+          entries.append(record);
+        }
+        details.append(entries);
+        li.append(details);
       }
       return li;
     }
