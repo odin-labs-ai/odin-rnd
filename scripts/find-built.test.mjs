@@ -28,7 +28,7 @@ const built = () => {
 const chrome = chromeBinary();
 const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
 const footerDom = `(() => {
-  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && el.getClientRects().length > 0;
+  const visible = el => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
   const footers = [...document.querySelectorAll('footer.site-footer')];
   const footer = footers[0];
   const partners = footer ? [...footer.querySelectorAll('a')].filter(visible).filter(a => a.innerText.trim() === 'Partners').map(a => a.href) : [];
@@ -46,6 +46,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     '<footer class="site-footer"><a href="partners/"><template>Partners</template></a></footer>',
     `<!-- first --!><base href="journal/"><!-- second -->${footer}`,
     `<footer class="site-footer" style="display: none /* temporarily hidden */;" ><a href="partners/">Partners</a></footer>`,
+    `<style>.site-footer { transform: scale(0) }</style>${footer}`,
   ];
   const result = await inspectDom([...pages.map(file => ({ file: join(dist, file), expression: footerDom })), ...fixtures.map(html => ({ html, expression: footerDom }))], { chrome });
   const expected = new URL('partners/', pathToFileURL(join(dist, 'index.html'))).href;
@@ -54,7 +55,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].footerVisible, true, `${page}: footer is visible`);
     assert.deepEqual(result[i].partners, [page === '404.html' ? new URL('partners/', SITE_ORIGIN).href : expected], `${page}: one visible Partners link to the real page`);
   });
-  const [closed, open, popover, template, base, style] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -62,6 +63,8 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(template.partners, [], 'template text does not label a link');
   assert.notEqual(base.partners[0], new URL('partners/', base.url).href, 'abrupt comment end exposes a base that changes the destination');
   assert.equal(style.footerVisible, false, 'inline CSS comment still hides the footer');
+  assert.equal(scaled.footerVisible, false, 'a zero-area transformed footer is not visible');
+  assert.deepEqual(scaled.partners, [], 'a zero-area transformed link is not usable');
 });
 
 test('the build writes the site index with every item schema-valid and linking a file of the built site', () => {

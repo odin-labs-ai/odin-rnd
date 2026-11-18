@@ -157,6 +157,8 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page.replace('</nav>', '</nav><nav aria-label="x"></nav>'), { relPrefix: '../' }), /exactly one navigation/);
   assert.throws(() => normaliseHeader(page.replace('>Updates</a>', '>Updates</a><a href="../x/">Something new</a>'), atUpdates), /does not know/);
   assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), atUpdates), /does not account for/);
+  const canonicalHome = normalise(read('index.html'), 'index.html');
+  assert.throws(() => normaliseHeader(canonicalHome.replace('href="methods/">How we test', 'href="evidence/">How we test'), { relPrefix: '', label: 'index.html' }), /does not account for/, 'a canonical label cannot hide an unaccounted destination');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'journal/elsewhere.html' }), /does not account for/, 'a retired self-link is accepted only on its own page');
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', label: 'updates/other.html' }), /does not account for/, 'another page in the same section is not the self-link target');
   const lab = read('labs/rogue/index.html');
@@ -182,7 +184,7 @@ test('no digit or number word enters a number-provenance page through the header
 
 test('canonicalHeader is the header a rendered page gets: one header, one nav, normalising it changes nothing', () => {
   const page = `<body>${canonicalHeader('../', 'notes')}<main></main></body>`;
-  assert.equal(normaliseHeader(page, { relPrefix: '../', current: 'notes' }), page);
+  assert.equal(normaliseHeader(page, { relPrefix: '../', current: 'notes', label: 'journal/index.html' }), page);
   assert.equal(labels(navOf(page)).join('|'), CANONICAL.join('|'));
 });
 

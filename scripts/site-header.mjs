@@ -175,6 +175,8 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
     const href = attr(anchor, 'href') ?? '';
     // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
     const actual = new URL(href, label === 'index.html' ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
+    const canonical = DESTINATIONS.find(destination => destination.label === text);
+    if (canonical && actual !== new URL(canonical.path, SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${canonical.path} as DESTINATIONS records; this pass would drop a destination it does not account for`);
     if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
     if (retired && !retiredTargets(retired).some(target => actual === new URL(target, SITE_ORIGIN).href)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
   }

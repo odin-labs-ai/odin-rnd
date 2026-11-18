@@ -104,16 +104,26 @@ const wordsDom = `(() => {
   const visibleText = main.innerText;
   const copy = main.cloneNode(true);
   copy.querySelectorAll('script,style,svg').forEach(element => element.remove());
-  return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length };
+  const correction = main.querySelector('.factory-correction.correction-note');
+  const correctionVisible = !!correction && correction.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && [...correction.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
+  return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
+    correctionVisible, correctionText: correction?.innerText.replace(/\\s+/g, ' ').trim() ?? '', correctionParagraphs: correction ? [...correction.querySelectorAll('p')].slice(2).map(p => p.innerText.replace(/\\s+/g, ' ').trim()) : [] };
 })()`;
 
 test('Chrome counts the unopened home below the word bound and one third of all words', { skip: !chrome && !chromeRequired ? 'no Chrome on this machine (required on GitHub Actions)' : false, timeout: 120000 }, async t => {
   assert.ok(chrome, 'Chrome is required in CI');
   const sample = '<main><details><summary>Closed label</summary><p>Hidden body</p></details><details open><summary>Open label</summary><p>Visible body</p><details><summary>Nested label</summary><p>Hidden nested body</p></details></details></main>';
   const quoted = `<main><details title="a>b" open><summary>Label</summary><p>${'visible&#32;'.repeat(VISIBLE_WORDS)}</p></details></main>`;
-  const [actual, control, long] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }], { chrome });
+  const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
+  const at = source.indexOf('<details class="factory-correction" open>');
+  const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
+  const [actual, control, long, pinned] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }], { chrome });
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
   assert.ok(long.visible > VISIBLE_WORDS, 'quoted > and encoded spaces cannot hide an over-bound open body');
+  assert.equal(actual.correctionVisible, true, 'the dated correction has visible area in the rendered main');
+  assert.ok(actual.correctionText.includes('Wording clarification · 1 November 2026'), 'the dated label is rendered');
+  assert.deepEqual(actual.correctionParagraphs, pinned, 'every pinned paragraph is rendered verbatim');
+  for (const paragraph of pinned) assert.ok(actual.text.includes(paragraph), 'the rendered main includes the full correction paragraph');
   t.diagnostic(`Chrome reads ${actual.visible} visible words of ${actual.all} total on the built home`);
   assert.ok(actual.visible < VISIBLE_WORDS, `${actual.visible} visible words on the home (bound ${VISIBLE_WORDS})`);
   assert.ok(actual.all > actual.visible * 3, `under a third of the home's words show unopened (${actual.visible} of ${actual.all})`);
