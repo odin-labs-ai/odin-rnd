@@ -106,7 +106,7 @@ test('each built page marks its own section current in the header, and only that
     'labs/rogue/index.html': ['Labs'],
     'labs/index.html': ['Labs'],
     'experiments/index.html': ['All results'],
-    'updates/index.html': ['Notes &amp; updates'],
+    'updates/index.html': [],
     'work-with-us/index.html': ['Work with us'],
     'one-pager/index.html': ['Start here'],
     'methods/index.html': ['How we test'],
