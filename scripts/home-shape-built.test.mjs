@@ -145,7 +145,17 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   const hiddenLimit = '<style>.lab-limit { display: none }</style><main><section id="findings"><li id="proof-fixture"><p>Claim</p><p class="lab-limit">Limit: this fixture is hidden.</p></li></section></main>';
   const reorderedClaim = '<style>.claim { display: none }</style><main><section id="findings"><li id="proof-fixture"><p class="lab-limit">Limit: a full fixture limit appears first.</p><p class="claim">The real claim is hidden.</p></li></section></main>';
   const proof = `<main><section id="findings">${renderLabProof(siteReader(join(root, 'site'), root), '', { plain: true })}</section></main>`;
-  const [actual, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, expectedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }], { chrome });
+  const moduleProbe = `(() => {
+    const fold = document.getElementById('all-experiments')?.closest('details');
+    if (!fold || fold.open) return false;
+    history.replaceState(null, '', '#all-experiments');
+    dispatchEvent(new HashChangeEvent('hashchange'));
+    return fold.open;
+  })()`;
+  const noModule = '<main><details><summary>Closed</summary><p id="all-experiments">Target</p></details></main>';
+  const [actual, moduleLoaded, moduleAbsent, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, expectedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { html: noModule, expression: moduleProbe }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: proof, expression: wordsDom }], { chrome, siteRoot: dist });
+  assert.equal(moduleLoaded, true, 'the generated home module runs and opens an inbound folded target');
+  assert.equal(moduleAbsent, false, 'the module probe stays false without the opener script');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
   assert.ok(long.visible > VISIBLE_WORDS, 'quoted > and encoded spaces cannot hide an over-bound open body');
   assert.equal(actual.correctionVisible, true, 'the dated correction has visible area in the rendered main');

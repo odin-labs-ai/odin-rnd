@@ -217,6 +217,17 @@ test('the home proof strip renders from lab-proof.json with root-relative links 
   assert.ok((home.match(/data-source="/g) ?? []).length >= 8);
   assert.throws(() => placeHomeProof('<p>no marker</p>'), /exactly once/);
   assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
+  const onePager = rendered['one-pager'];
+  for (const claim of siteReader()('data/lab-proof.json').claims) {
+    const plan = claim.record.replace(/results\.json$/, 'preregistration.json');
+    assert.ok(existsSync(join('site', plan)), `${claim.id}: published plan exists`);
+    for (const [page, up] of [[home, ''], [onePager, '../']]) {
+      const start = page.indexOf(`<li id="${claim.id}">`);
+      assert.ok(start >= 0, `${claim.id}: finding is rendered`);
+      const item = page.slice(start, page.indexOf('</li>', start));
+      assert.ok(item.includes(`<a href="${up}${plan}">the written plan</a>`), `${claim.id}: its validated plan is linked`);
+    }
+  }
 });
 
 test('a proof claim refuses a missing or placeholder written plan', () => {

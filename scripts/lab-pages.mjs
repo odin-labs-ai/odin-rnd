@@ -250,7 +250,7 @@ export const ASSERTS = {
 /** Sourced claims as list items: each claim's asserts are checked, its numbers read from and linked to its record. */
 /** `plain` (the home page only): the dated line reads "Read the result · the record" instead of the record's path in <code>;
  *  it still links the same note and record, and the dated line stays beside the claim. */
-export function renderClaims(read, list, up = '../', { plain = false } = {}) {
+export function renderClaims(read, list, up = '../', { plain = false, plans = false } = {}) {
   return list.map(c => {
     const [path] = (c.record ?? '').split('#');
     if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
@@ -261,7 +261,8 @@ export function renderClaims(read, list, up = '../', { plain = false } = {}) {
     }
     if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
     const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p></li>`;
+    const plan = plans ? ` · <a href="${up}${escape(path.replace(/results\.json$/, 'preregistration.json'))}">the written plan</a>` : '';
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}${plan}.</p></li>`;
   }).join('');
 }
 
@@ -362,7 +363,7 @@ export function renderLabProof(read, up = '../', { plain = false } = {}) {
     return !slug || (!hasPointer && !hasPin) || !pointerValid || !pinValid || !read(planPath);
   }).map(c => c.id);
   if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} has no linked pre-registration document`);
-  return renderClaims(read, config.claims, up, { plain });
+  return renderClaims(read, config.claims, up, { plain, plans: true });
 }
 
 /**

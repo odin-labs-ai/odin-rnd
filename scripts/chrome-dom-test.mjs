@@ -3,15 +3,17 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromeBinary } from './og-cards-render.mjs';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-/** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value. */
-export async function inspectDom(jobs, { chrome = chromeBinary(), timeoutMs = 30000 } = {}) {
+/** Each job has `file` or fixture `html`, plus a browser expression whose result is returned by value.
+ * Built pages use the site's loopback server so their ES modules load as they do on Pages. */
+export async function inspectDom(jobs, { chrome = chromeBinary(), siteRoot, timeoutMs = 30000 } = {}) {
   if (!chrome) throw new Error('Chrome is required for rendered-page assertions; set CHROME_BIN');
+  if (jobs.some(job => job.file) && !siteRoot) throw new Error('siteRoot is required for built-page browser checks');
   const dir = mkdtempSync(join(tmpdir(), 'rnd-dom-'));
   const child = spawn(chrome, [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
@@ -21,7 +23,25 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), timeoutMs = 30
   const gone = new Promise(resolve => child.once('exit', () => { exited = true; resolve(); }));
   let socket;
   let closeBrowser;
+  let siteServer;
+  let siteUrl;
   try {
+    if (siteRoot) {
+      siteServer = spawn(process.execPath, [join(dirname(siteRoot), 'scripts', 'serve.mjs')], {
+        cwd: dirname(siteRoot), env: { ...process.env, PORT: '0' }, stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      siteUrl = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Loopback site server did not start')), timeoutMs);
+        let output = '';
+        siteServer.stdout.on('data', data => {
+          output += data;
+          const match = output.match(/http:\/\/127\.0\.0\.1:\d+\/odin-rnd\//);
+          if (match) { clearTimeout(timer); resolve(match[0]); }
+        });
+        siteServer.once('exit', code => { clearTimeout(timer); reject(new Error(`Loopback site server exited ${code}`)); });
+        siteServer.once('error', error => { clearTimeout(timer); reject(error); });
+      });
+    }
     const portFile = join(dir, 'profile', 'DevToolsActivePort');
     const started = Date.now();
     while (!existsSync(portFile) || readFileSync(portFile, 'utf8').split('\n').length < 2) {
@@ -58,7 +78,9 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), timeoutMs = 30
     for (const [index, job] of jobs.entries()) {
       const file = job.file ?? join(dir, `fixture-${index}.html`);
       if (job.html !== undefined) writeFileSync(file, job.html);
-      const url = pathToFileURL(file).href;
+      const rel = job.file ? relative(siteRoot, file).split(sep).join('/') : '';
+      if (job.file && (rel.startsWith('../') || rel === '..')) throw new Error(`Built page outside siteRoot: ${file}`);
+      const url = (job.file ? new URL(rel, siteUrl).href : pathToFileURL(file).href) + (job.hash ?? '');
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       try {
         const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
@@ -94,6 +116,7 @@ export async function inspectDom(jobs, { chrome = chromeBinary(), timeoutMs = 30
       try { process.platform === 'win32' ? child.kill('SIGKILL') : process.kill(-child.pid, 'SIGKILL'); } catch { /* already gone */ }
       await gone;
     }
+    if (siteServer && !siteServer.killed) siteServer.kill();
     try { rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }); }
     catch (error) { console.warn(`Chrome DOM test left ${dir}: ${error.message}`); }
   }

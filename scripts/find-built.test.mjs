@@ -5,7 +5,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { validate } from './json-schema-lite.mjs';
 import { hrefOnSite, experimentIdsInData } from './site-index.mjs';
 import { FIND_MARKER, GROUPS } from './find-build.mjs';
@@ -58,8 +57,8 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
-  const result = await inspectDom([...pages.map(file => ({ file: join(dist, file), expression: footerDom })), ...fixtures.map(html => ({ html, expression: footerDom }))], { chrome });
-  const expected = new URL('partners/', pathToFileURL(join(dist, 'index.html'))).href;
+  const result = await inspectDom([...pages.map(file => ({ file: join(dist, file), expression: footerDom })), ...fixtures.map(html => ({ html, expression: footerDom }))], { chrome, siteRoot: dist });
+  const expected = new URL('partners/', result[pages.indexOf('index.html')].url).href;
   pages.forEach((page, i) => {
     assert.equal(result[i].footers, 1, `${page}: one footer in the browser DOM`);
     assert.equal(result[i].footerVisible, true, `${page}: footer is visible`);
