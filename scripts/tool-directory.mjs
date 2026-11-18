@@ -5,7 +5,6 @@ const entries = {
   '002': { purpose: 'Try ConvAI Innovations’ decision model in your browser after the model downloads.', notes: 'Browser checks and attribution' },
   '003': { purpose: 'Reproduce the blueprint paper’s checks with Odin’s examples and recorded runs.', notes: 'Archive details' },
   '004': { purpose: 'Inspect the study of Jev as a first-pass reviewer for architecture changes.', notes: 'Study scope and results' },
-  '005': { purpose: 'Odin tested the reviewer in Marcos Schulz’s Claude Code harness.', notes: 'Study scope and attribution' },
   '000': { purpose: 'Run the experiments in this public repository or propose a new one.', notes: 'Repository details' },
 };
 
@@ -16,11 +15,11 @@ export function presentTools(section) {
     if (!entry) return row;
     const fields = /^(?<title>[\s\S]*?<\/h3>)(?<intro>[\s\S]*?)(?<actions><div class="project-links">[\s\S]*?<\/div>)(?<notes>[\s\S]*?)<\/div>(?<spec><dl class="project-spec">[\s\S]*?<\/dl>)<\/article>$/.exec(row)?.groups;
     if (!fields) throw new Error('Missing title, actions or specifications in tool ' + number);
-    // Keep study and usage links beside the title. The field note, historical PRs and
+    // Keep study and usage links beside the title. The field note and
     // cross-references belong with the longer account of what happened.
     const references = [];
     const actions = fields.actions.replace(/<a href="([^"]+)"[^>]*>.*?<\/a>/g, (anchor, href) => {
-      if (!/\/pull\/|^#station-|^journal\/system-1-decisions-without-lock-in\.html$|^journal\/jev-as-a-fast-gate\.html#spotlight$/.test(href)) return anchor;
+      if (!/^#station-|^journal\/system-1-decisions-without-lock-in\.html$/.test(href)) return anchor;
       references.push(anchor);
       return '';
     });
