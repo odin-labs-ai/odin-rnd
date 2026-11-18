@@ -27,6 +27,8 @@ export function parse(html) {
       i = end;
       continue;
     }
+    // Foreign-content CDATA has its own `]]>` terminator. Source offsets must not mistake a `>` inside it for markup.
+    if (html.startsWith('<![CDATA[', at)) throw new Error('Unsupported HTML CDATA section');
     const closing = html[at + 1] === '/';
     const nameAt = at + (closing ? 2 : 1);
     if (!/[A-Za-z]/.test(html[nameAt] ?? '')) {
