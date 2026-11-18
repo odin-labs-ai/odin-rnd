@@ -6,7 +6,8 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
 import { builtCopy } from './test-build.mjs';
-import { stripBlocks, stripTags } from './test-html-text.mjs';
+import { stripTags } from './test-html-text.mjs';
+import { parse } from './html-source-tree.mjs';
 import { checkSite } from './number-provenance.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
@@ -28,42 +29,33 @@ const MIN_HOME_LINKS = 70;
 
 const htmlFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? htmlFiles(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
 
-/** The end of the element opening at `at`, matched to its own close tag. */
+const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
+const hasAttr = (node, name) => node.attrs?.some(item => item.name === name) ?? false;
+const rendered = node => node.tagName === 'template' ? [] : [node, ...(node.childNodes ?? []).flatMap(rendered)];
+/** Source-offset tree locations avoid mistaking a quoted `>` for the end of a tag. */
 function elementEnd(html, at) {
-  const name = /^<([a-z][a-z0-9]*)/i.exec(html.slice(at))[1];
-  const tags = new RegExp(`<(/?)${name}\\b[^>]*>`, 'gi');
-  tags.lastIndex = at;
-  let depth = 0;
-  for (let m; (m = tags.exec(html));) { depth += m[1] ? -1 : 1; if (depth === 0) return m.index + m[0].length; }
-  throw new Error(`unclosed <${name}>`);
+  const node = rendered(parse(html)).find(item => item.sourceCodeLocation?.startOffset === at);
+  if (!node?.sourceCodeLocation?.endTag) throw new Error(`unclosed element at ${at}`);
+  return node.sourceCodeLocation.endOffset;
 }
 
-/** Offset ranges of every <details> element, nested ones included. */
-const detailsRanges = html => [...html.matchAll(/<details\b/g)].map(m => [m.index, elementEnd(html, m.index)]);
+/** Offset ranges of every rendered <details> element, nested ones included. */
+const detailsRanges = html => rendered(parse(html)).filter(node => node.tagName === 'details').map(node => [node.sourceCodeLocation.startOffset, node.sourceCodeLocation.endOffset, node]);
 
-/** `html` without every element whose start tag matches `open` (each matched to its own close tag). */
-function without(html, open) {
-  let out = html;
-  for (let m = open.exec(out); m; m = open.exec(out)) out = out.slice(0, m.index) + ' ' + out.slice(elementEnd(out, m.index));
-  return out;
-}
-
-/** Keep each closed disclosure's visible summary and each open disclosure's visible body, including nested summaries. */
-function visibleDisclosures(html) {
-  let out = '';
-  for (let m = /<details\b[^>]*>/i.exec(html); m; m = /<details\b[^>]*>/i.exec(html)) {
-    out += html.slice(0, m.index);
-    const end = elementEnd(html, m.index);
-    const body = html.slice(m.index + m[0].length, end - '</details>'.length);
-    if (/\sopen(?:\s|=|>)/i.test(m[0])) out += visibleDisclosures(body);
-    else {
-      const summary = /<summary\b[^>]*>/i.exec(body);
+/** Text in the page tree, with closed disclosures and hidden station exhibits excluded for the first-view count. */
+function visibleDisclosures(html, firstView = true) {
+  const text = node => {
+    if (node.nodeName === '#text') return node.value;
+    if (['template', 'script', 'style', 'svg'].includes(node.tagName)) return '';
+    if (firstView && node.tagName === 'article' && (attr(node, 'class') ?? '').split(/\s+/).includes('station-exhibit') && hasAttr(node, 'hidden')) return '';
+    if (firstView && node.tagName === 'details' && !hasAttr(node, 'open')) {
+      const summary = node.childNodes.find(child => child.tagName === 'summary');
       if (!summary) throw new Error('A closed disclosure has no visible summary');
-      out += body.slice(summary.index, elementEnd(body, summary.index));
+      return text(summary);
     }
-    html = html.slice(end);
-  }
-  return out + html;
+    return (node.childNodes ?? []).map(text).join(' ');
+  };
+  return text(parse(html));
 }
 
 const root = builtCopy();
@@ -121,16 +113,18 @@ test('every in-site link into the home targets an id that exists and is not hidd
 
 test('closed summaries and open bodies count as visible words', () => {
   const sample = '<details><summary>Closed label</summary><p>Hidden body</p></details><details open><summary>Open label</summary><p>Visible body</p><details><summary>Nested label</summary><p>Hidden nested body</p></details></details>';
-  assert.equal(stripTags(visibleDisclosures(sample)).replace(/\s+/g, ' ').trim(), 'Closed label Open label Visible body Nested label');
+  assert.equal(visibleDisclosures(sample).replace(/\s+/g, ' ').trim(), 'Closed label Open label Visible body Nested label');
+  const quoted = '<details title="a>b" open><summary>Label</summary><p>Visible body</p></details>';
+  assert.equal(visibleDisclosures(quoted).replace(/\s+/g, ' ').trim(), 'Label Visible body', 'a quoted > does not hide an open disclosure body');
+  assert.ok(visibleDisclosures(`<details title="a>b" open><summary>Label</summary><p>${'visible '.repeat(VISIBLE_WORDS)}</p></details>`).split(/\s+/).filter(Boolean).length > VISIBLE_WORDS, 'a long body after a quoted > exceeds the bound');
 });
 
 test('the home a visitor sees without opening anything is short: under the word bound and under a quarter of its words', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
-  let visible = visibleDisclosures(stripBlocks(main, ['script', 'style', 'svg']));
-  visible = without(visible, /<article class="station-exhibit"[^>]*\shidden>/);
+  const visible = visibleDisclosures(main);
   // The dated correction and every finding's visible limit remain in this count.
-  const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
-  const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
+  const words = visible.split(/\s+/).filter(Boolean).length;
+  const all = visibleDisclosures(main, false).split(/\s+/).filter(Boolean).length;
   assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
   assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
 });
@@ -150,7 +144,7 @@ test('the proof strip still passes the number-provenance check, and the new word
 function domAround(html, id) {
   const at = html.indexOf(` id="${id}"`);
   const chain = detailsRanges(html).filter(([a, b]) => a < at && at < b).sort((x, y) => x[0] - y[0])
-    .map(([a]) => ({ tag: 'details', cls: /^<details\b[^>]*\sclass="([^"]*)"/.exec(html.slice(a))?.[1] ?? '', open: /^<details\b[^>]*\sopen\b/.test(html.slice(a)) }));
+    .map(([, , node]) => ({ tag: 'details', cls: attr(node, 'class') ?? '', open: hasAttr(node, 'open') }));
   let parent = null;
   const nodes = [...chain, { tag: 'target' }].map(n => (parent = { ...n, parentElement: parent }));
   for (const n of nodes) n.closest = function (sel) { for (let x = this; x; x = x.parentElement) if (x.tag === sel) return x; return null; };

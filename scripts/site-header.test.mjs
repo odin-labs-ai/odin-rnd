@@ -222,6 +222,9 @@ test('Partners moved to the footer: once in the site footer of every committed p
   assert.throws(() => addFooterLinks('<template data-name=x/><footer class="site-footer"><a href="partners/">Partners</a></footer></template>', { relPrefix: '' }), /exactly one site footer/, 'a slash in an unquoted template attribute does not close the template');
   assert.throws(() => addFooterLinks('<textarea><footer class="site-footer"><a href="partners/">Partners</a></footer></textarea>', { relPrefix: '' }), /exactly one site footer/, 'markup inside textarea is text');
   assert.throws(() => addFooterLinks('<details><footer class="site-footer"><a href="partners/">Partners</a></footer></details>', { relPrefix: '' }), /exactly one site footer/, 'a closed details footer is not visible');
+  assert.throws(() => addFooterLinks('<dialog><footer class="site-footer"><a href="partners/">Partners</a></footer></dialog>', { relPrefix: '' }), /exactly one site footer/, 'a closed dialog footer is not visible');
+  assert.equal(addFooterLinks('<dialog open><footer class="site-footer"><a href="partners/">Partners</a></footer></dialog>', { relPrefix: '' }), '<dialog open><footer class="site-footer"><a href="partners/">Partners</a></footer></dialog>', 'an open dialog footer is visible');
+  assert.throws(() => addFooterLinks('<base href="journal/"><footer class="site-footer"><a href="partners/">Partners</a></footer>', { relPrefix: '', label: 'index.html' }), /Unexpected document base/, 'a conflicting base changes the real destination');
   assert.equal(addFooterLinks('<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div></div></footer>', { relPrefix: '' }), '<!-- <footer class="site-footer"><a href="partners/">Partners</a></footer> --><footer class="site-footer"><div><a href="partners/">Partners</a></div></footer>', 'a commented link cannot suppress insertion into the rendered footer');
   assert.equal(addFooterLinks('<footer class="site-footer"><div><!-- <a href="partners/">Partners</a> --></div></footer>', { relPrefix: '' }), '<footer class="site-footer"><div><!-- <a href="partners/">Partners</a> --><a href="partners/">Partners</a></div></footer>', 'a commented link inside the real footer cannot suppress insertion');
   assert.throws(() => addFooterLinks('<footer class="site-footer"><a data-href="partners/">Partners</a></footer>', { relPrefix: '' }), /invalid Partners link/, 'data-href is not a usable link');
@@ -238,4 +241,8 @@ test('Partners moved to the footer: once in the site footer of every committed p
   const visibleSecond = '<footer class="site-footer"><div hidden></div><div><a href="x">X</a><a href="partners/">Partners</a></div></footer>';
   assert.equal(addFooterLinks(hiddenFirst, { relPrefix: '' }), visibleSecond, 'insert into the visible div');
   assert.equal(addFooterLinks(visibleSecond, { relPrefix: '' }), visibleSecond, 'visible insertion stays idempotent');
+  const hiddenPopover = '<footer class="site-footer"><div popover></div></footer>';
+  const visibleFooter = '<footer class="site-footer"><div popover></div><a href="partners/">Partners</a></footer>';
+  assert.equal(addFooterLinks(hiddenPopover, { relPrefix: '' }), visibleFooter, 'a closed popover is not an insertion group');
+  assert.equal(addFooterLinks(visibleFooter, { relPrefix: '' }), visibleFooter, 'fallback insertion stays idempotent');
 });

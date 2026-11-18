@@ -35,7 +35,7 @@ const elements = (root, tag) => {
   visit(root);
   return found;
 };
-const hidden = node => node.tagName === 'details' && !hasAttr(node, 'open') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
 const textOf = (node, visible = false) => node.nodeName === '#text' ? node.value.replaceAll('&amp;', '&') : node.tagName === 'template' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
 const source = (html, node) => {
@@ -216,7 +216,10 @@ export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/
 
 export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  const footers = elements(parse(html, { sourceCodeLocationInfo: true }), 'footer').filter(node => hasClass(node, 'site-footer'));
+  const document = parse(html, { sourceCodeLocationInfo: true });
+  const bases = elements(document, 'base');
+  if (bases.length && (label !== '404.html' || bases.length !== 1 || attr(bases[0], 'href') !== SITE_ORIGIN)) throw new Error(`Unexpected document base in ${label}`);
+  const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
   if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
   const footer = footers[0];
   const end = footer.sourceCodeLocation?.endTag?.startOffset;

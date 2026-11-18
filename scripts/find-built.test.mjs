@@ -23,6 +23,36 @@ const built = () => {
   const index = JSON.parse(readFileSync(join(dist, 'data/index.json'), 'utf8'));
   return { root, dist, files, index };
 };
+const rendered = (node, tag) => node.tagName === 'template' ? [] : [...(node.tagName === tag ? [node] : []), ...(node.childNodes ?? []).flatMap(child => rendered(child, tag))];
+const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
+const hasAttr = (node, name) => node.attrs?.some(item => item.name === name) ?? false;
+const hidden = node => (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || attr(node, 'aria-hidden') === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'hidden' || name === 'sr-only');
+const text = (node, visible = false) => node.nodeName === '#text' ? node.value : visible && hidden(node) ? '' : (node.childNodes ?? []).map(child => text(child, visible)).join('');
+
+function assertPartnersFooter(html, rel) {
+  const document = parse(html);
+  const footers = rendered(document, 'footer').filter(node => attr(node, 'class')?.split(/\s+/).includes('site-footer'));
+  assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
+  const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners' || text(node, true).trim() === 'Partners');
+  assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
+  for (let at = partners[0]; at; at = at.parentNode) assert.ok(!hidden(at), `${rel}: Partners link is visible`);
+  assert.equal(text(partners[0], true).trim(), 'Partners', `${rel}: Partners has a visible label`);
+  const actualHref = attr(partners[0], 'href');
+  assert.ok(actualHref, `${rel}: Partners has a real href`);
+  const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);
+  const bases = rendered(document, 'base');
+  assert.ok(bases.length <= 1, `${rel}: at most one document base`);
+  const effectiveBase = bases.length ? new URL(attr(bases[0], 'href') ?? '', pageUrl) : pageUrl;
+  assert.equal(new URL(actualHref, effectiveBase).href, new URL('partners/', SITE_ORIGIN).href, `${rel}: Partners leads to the site page`);
+}
+
+test('Partners assertion follows browser visibility and the effective document base', () => {
+  const footer = '<footer class="site-footer"><a href="partners/">Partners</a></footer>';
+  assert.throws(() => assertPartnersFooter(`<dialog>${footer}</dialog>`, 'index.html'), /visible/, 'a closed dialog is hidden');
+  assert.doesNotThrow(() => assertPartnersFooter(`<dialog open>${footer}</dialog>`, 'index.html'), 'an open dialog is visible');
+  assert.throws(() => assertPartnersFooter(`<footer class="site-footer"><div popover><a href="partners/">Partners</a></div></footer>`, 'index.html'), /visible/, 'a closed popover is hidden');
+  assert.throws(() => assertPartnersFooter(`<base href="journal/">${footer}`, 'index.html'), /leads to the site page/, 'a base changes the actual destination');
+});
 
 test('the build writes the site index with every item schema-valid and linking a file of the built site', () => {
   const { dist, files, index } = built();
@@ -134,20 +164,7 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
     // Partners is in the footer of every page, no longer in the header.
-    const rendered = (node, tag) => node.tagName === 'template' ? [] : [...(node.tagName === tag ? [node] : []), ...(node.childNodes ?? []).flatMap(child => rendered(child, tag))];
-    const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
-    const hidden = node => node.tagName === 'details' && !node.attrs?.some(item => item.name === 'open') || node.attrs?.some(item => item.name === 'hidden' || item.name === 'inert' || item.name === 'aria-hidden' && item.value === 'true') || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)(?:\s*[;!]|$)/i.test(attr(node, 'style') ?? '') || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'hidden' || name === 'sr-only');
-    const text = (node, visible = false) => node.nodeName === '#text' ? node.value : visible && hidden(node) ? '' : (node.childNodes ?? []).map(child => text(child, visible)).join('');
-    const footers = rendered(parse(html), 'footer').filter(node => attr(node, 'class')?.split(/\s+/).includes('site-footer'));
-    assert.equal(footers.length, 1, `${rel}: one rendered site footer`);
-    const partners = rendered(footers[0], 'a').filter(node => text(node).trim() === 'Partners' || text(node, true).trim() === 'Partners');
-    assert.equal(partners.length, 1, `${rel}: one Partners anchor in the footer`);
-    for (let at = partners[0]; at; at = at.parentNode) assert.ok(!hidden(at), `${rel}: Partners link is visible`);
-    assert.equal(text(partners[0], true).trim(), 'Partners', `${rel}: Partners has a visible label`);
-    const actualHref = attr(partners[0], 'href');
-    assert.ok(actualHref, `${rel}: Partners has a real href`);
-    const pageUrl = rel === 'index.html' ? SITE_ORIGIN : new URL(rel, SITE_ORIGIN);
-    assert.equal(new URL(actualHref, pageUrl).href, new URL('partners/', SITE_ORIGIN).href, `${rel}: Partners leads to the site page`);
+    assertPartnersFooter(html, rel);
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();
