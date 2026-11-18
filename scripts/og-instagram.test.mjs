@@ -3,10 +3,10 @@
 // media only as <name>.<first 16 hex of its sha256>.jpg on this site. So each file here must be:
 //   - named <slug>.<sha16>.jpg, where sha16 is the first 16 hex of the sha256 of its own bytes;
 //   - ONE complete baseline or progressive JPEG, from SOI to the EOI that ends the file, whose frame header says
-//     1200x630 (the share-card size), carrying no metadata segment other than APP0 (JFIF) and APP2 (ICC profile);
+//     1200x630 (the share-card size), carrying no metadata segment other than one plain JFIF APP0 header;
 //   - a re-encode of its lab's committed share card site/assets/og/labs/<slug>.png (that card must exist), measured
-//     decoded: ffmpeg decodes the JPEG and every card to RGB, and the JPEG must be close to its own card over the whole
-//     image AND in every 16x16 block, and far from every other card (the decoded test below). The publish workflow's "Film copies, decoded" job installs ffmpeg and
+//     decoded: ffmpeg decodes the JPEG and every card to RGB, and the JPEG must score under fixed thresholds against
+//     its own card (whole image and every 16x16 block) and far from every other card (the decoded test below). The publish workflow's "Film copies, decoded" job installs ffmpeg and
 //     runs this file with FILM_DECODER_REQUIRED=1, so in CI a missing decoder fails instead of skipping, and verify
 //     (which publish depends on) fails unless that job succeeded.
 // The folder may be absent or empty; a stray file of any other shape fails.
@@ -38,20 +38,28 @@ const PROVENANCE = {
  *   - every segment's length is at least 2 and stays inside the bytes;
  *   - exactly one frame header, SOF0 or SOF2 (SOF1, SOF3, SOF5-7, SOF9-15 are refused), of length 8 + 3 x Nf with
  *     precision 8, Nf 1, 3 or 4 and a non-zero width and height;
- *   - only these other segments: DHT, DQT, DRI, APP0 (JFIF) and APP2 (ICC profile). Every other APPn (Exif, XMP,
+ *   - only these other segments: DHT, DQT, DRI and at most one APP0 that is exactly a plain JFIF header (16 bytes:
+ *     "JFIF\0", version 1.00-1.02, units 0-2, non-zero densities, no thumbnail). Every other APPn (Exif, ICC, XMP,
  *     Photoshop ...), COM, DAC, DNL and any unknown marker is refused, so the public file carries no metadata;
  *   - each start of scan (SOS) comes after the frame header, is 6 + 2 x Ns bytes for 1 <= Ns <= Nf, and has the
- *     spectral selection its frame allows: baseline Ss 0, Se 63, Ah = Al = 0; progressive either a DC scan (Ss = Se = 0)
- *     or an AC scan of one component (1 <= Ss <= Se <= 63), Ah and Al at most 13;
+ *     spectral selection its frame allows: baseline Ss 0, Se 63, Ah = Al = 0; progressive either a DC scan (Ss = Se = 0,
+ *     every component's AC table selector 0) or an AC scan of one component (1 <= Ss <= Se <= 63, DC selector 0), Ah
+ *     and Al at most 13;
  *   - after each scan header the entropy-coded data is skipped (FF 00 stuffing and RST0-7 stay inside it) to the next
  *     marker; at least one scan;
  *   - the first EOI is the end of the file: a second image after it, or a second SOI anywhere, is refused.
  * The entropy-coded data itself is not decoded here; the decoded test below does that with ffmpeg.
  */
+/** A plain JFIF APP0 payload: "JFIF\0", version 1.00-1.02, units 0-2, non-zero densities, a 0x0 thumbnail. */
+export function isPlainJfif(p) {
+  return p.length === 14 && p.subarray(0, 5).equals(Buffer.from('JFIF\0', 'latin1')) && p[5] === 1 && p[6] <= 2 && p[7] <= 2
+    && p.readUInt16BE(8) > 0 && p.readUInt16BE(10) > 0 && p[12] === 0 && p[13] === 0;
+}
+
 export function jpegSize(bytes) {
   const n = bytes.length;
   if (n < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
-  let size = null, scans = 0, i = 2;
+  let size = null, scans = 0, jfif = 0, i = 2;
   for (;;) {
     if (i + 2 > n || bytes[i] !== 0xff) return null;
     const marker = bytes[i + 1];
@@ -77,6 +85,11 @@ export function jpegSize(bytes) {
       const ss = bytes[i + 5 + 2 * ns], se = bytes[i + 6 + 2 * ns], ah = bytes[i + 7 + 2 * ns] >> 4, al = bytes[i + 7 + 2 * ns] & 15;
       if (!size.progressive && (ss !== 0 || se !== 63 || ah !== 0 || al !== 0)) return null;
       if (size.progressive && (ss === 0 ? se !== 0 : (se < ss || se > 63 || ns !== 1))) return null;
+      for (let k = 0; k < ns; k += 1) {
+        const tables = bytes[i + 6 + 2 * k];
+        if (size.progressive && ss === 0 && (tables & 15) !== 0) return null; // a DC scan selects no AC table
+        if (size.progressive && ss !== 0 && (tables >> 4) !== 0) return null; // an AC scan selects no DC table
+      }
       if (ah > 13 || al > 13) return null;
       scans += 1;
       i += 2 + len;
@@ -92,8 +105,10 @@ export function jpegSize(bytes) {
         i += 1;
       }
       continue;
-    } else if (![0xc4, 0xdb, 0xdd, 0xe0, 0xe2].includes(marker)) {
-      return null; // SOI again, APP1/3-15, COM, DAC, DNL, RSTn outside a scan, or anything unknown
+    } else if (marker === 0xe0) {
+      if (!isPlainJfif(bytes.subarray(i + 4, i + 2 + len)) || ++jfif > 1) return null;
+    } else if (![0xc4, 0xdb, 0xdd].includes(marker)) {
+      return null; // SOI again, APP1-15, COM, DAC, DNL, RSTn outside a scan, or anything unknown
     }
     i += 2 + len;
   }
@@ -121,14 +136,28 @@ test('every Instagram image is named by its own sha256, is a 1200x630 JPEG, and 
 // 3 components of 3 bytes each, a baseline start of scan (FF DA, length 12, Ss 0, Se 63, Ah/Al 0), two bytes of
 // entropy-coded data, then FF D9. A progressive frame gets a DC first scan (Ss 0, Se 0) instead.
 const SOS = [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x11, 3, 0x11, 0x00, 0x3f, 0x00, 0x12, 0x34];
-const SOS_DC = [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x11, 3, 0x11, 0x00, 0x00, 0x00, 0x12, 0x34];
+const SOS_DC = [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x10, 3, 0x10, 0x00, 0x00, 0x00, 0x12, 0x34];
+// A plain JFIF APP0: "JFIF\0", version 1.01, units 0, density 72 x 72, no thumbnail (the committed image's own header).
+const JFIF = [0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00];
 const frame = (marker, h, w, extra = [], scan = marker === 0xc2 ? SOS_DC : SOS) => Buffer.from([0xff, 0xd8, ...extra, 0xff, marker, 0x00, 0x11, 0x08,
   h >> 8, h & 255, w >> 8, w & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1, ...scan, 0xff, 0xd9]);
 
-test('the frame-header reader reads a well-formed frame and skips APP0/APP2 segments', () => {
+test('the frame-header reader reads a well-formed frame and skips one plain JFIF header', () => {
   assert.deepEqual(jpegSize(frame(0xc0, 630, 1200)), { width: 1200, height: 630 });
-  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, [0xff, 0xe0, 0x00, 0x04, 0x00, 0x00])), { width: 32, height: 16 }, 'progressive SOF2 (DC scan) after an APP0 segment');
-  assert.deepEqual(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xe2, 0x00, 0x04, 0x00, 0x00])), { width: 1200, height: 630 }, 'an APP2 (ICC) segment');
+  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, JFIF)), { width: 32, height: 16 }, 'progressive SOF2 (DC scan) after a JFIF APP0');
+});
+
+test('an APP0 must be exactly one plain JFIF header; no APP2 (refute row edee1a29 #10)', () => {
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xe0, 0x00, 0x04, 0x00, 0x00])), null, 'an APP0 of two zero bytes');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [0xff, 0xe2, 0x00, 0x04, 0x00, 0x00])), null, 'an APP2 segment');
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, [...JFIF, ...JFIF])), null, 'two JFIF headers');
+  const bad = (at, v) => { const j = [...JFIF]; j[at] = v; return frame(0xc0, 630, 1200, j); };
+  assert.equal(jpegSize(bad(4, 0x58)), null, 'not "JFIF"');
+  assert.equal(jpegSize(bad(10, 0x05)), null, 'version 1.05');
+  assert.equal(jpegSize(bad(16, 0x02)), null, 'a 2-pixel-wide thumbnail');
+  assert.equal(jpegSize(bad(13, 0x00)), null, 'a zero X density');
+  const longer = [0xff, 0xe0, 0x00, 0x12, ...JFIF.slice(4), 0x41, 0x42];
+  assert.equal(jpegSize(frame(0xc0, 630, 1200, longer)), null, 'a JFIF header with extra bytes');
 });
 
 test('the frame-header reader refuses what is not a well-formed JPEG (refute row 6b09594a item 28)', () => {
@@ -156,7 +185,7 @@ test('only baseline or progressive frames, every segment up to the scan checked 
   assert.equal(jpegSize(Buffer.concat([head, Buffer.from('ffe0ffff', 'hex'), tail])), null, 'APP0 running past the bytes after the frame');
   assert.equal(jpegSize(Buffer.concat([head, Buffer.from('ffd9', 'hex')])), null, 'no start of scan at all');
   assert.equal(jpegSize(Buffer.concat([head, head.subarray(2), tail])), null, 'a second frame header');
-  assert.deepEqual(jpegSize(Buffer.concat([head, Buffer.from('ffe000040000', 'hex'), tail])), { width: 1200, height: 630 }, 'a valid APP0 after the frame is fine');
+  assert.deepEqual(jpegSize(Buffer.concat([head, Buffer.from(JFIF), tail])), { width: 1200, height: 630 }, 'a plain JFIF APP0 after the frame is fine');
 });
 
 test('the start-of-scan header must be well formed (refute row 2fea6878 #1)', () => {
@@ -173,11 +202,13 @@ test('the start-of-scan header must be well formed (refute row 2fea6878 #1)', ()
 test('the scan parameters must fit the frame type (refute row f67ac5a8 #3)', () => {
   const scan = (ss, se, ahal = 0, ns = 3) => [0xff, 0xda, 0x00, 6 + 2 * ns, ns, ...[1, 0x00, 2, 0x11, 3, 0x11].slice(0, 2 * ns), ss, se, ahal, 0x12, 0x34];
   assert.equal(jpegSize(frame(0xc2, 16, 32, [], scan(0, 63))), null, 'a progressive frame with a baseline-shaped scan (Ss 0, Se 63)');
-  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, [], scan(0, 0))), { width: 32, height: 16 }, 'a progressive DC scan');
-  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, [], scan(1, 63, 0, 1))), { width: 32, height: 16 }, 'a progressive AC scan of one component');
+  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, [], SOS_DC)), { width: 32, height: 16 }, 'a progressive DC scan, AC selectors 0');
+  assert.equal(jpegSize(frame(0xc2, 16, 32, [], scan(0, 0))), null, 'a progressive DC scan that selects AC table 1 (refute row edee1a29 #3)');
+  assert.equal(jpegSize(frame(0xc2, 16, 32, [], [0xff, 0xda, 0x00, 0x08, 0x01, 1, 0x10, 1, 63, 0x00, 0x12, 0x34])), null, 'a progressive AC scan that selects DC table 1');
+  assert.deepEqual(jpegSize(frame(0xc2, 16, 32, [], [0xff, 0xda, 0x00, 0x08, 0x01, 1, 0x00, 1, 63, 0x00, 0x12, 0x34])), { width: 32, height: 16 }, 'a progressive AC scan of one component');
   assert.equal(jpegSize(frame(0xc2, 16, 32, [], scan(1, 63, 0, 3))), null, 'a progressive AC scan of three components');
   assert.equal(jpegSize(frame(0xc2, 16, 32, [], scan(5, 4, 0, 1))), null, 'Se below Ss');
-  assert.equal(jpegSize(frame(0xc2, 16, 32, [], scan(0, 0, 0xe0))), null, 'Ah 14');
+  assert.equal(jpegSize(frame(0xc2, 16, 32, [], [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x10, 3, 0x10, 0x00, 0x00, 0xe0, 0x12, 0x34])), null, 'Ah 14');
   assert.equal(jpegSize(frame(0xc0, 16, 32, [], scan(0, 0))), null, 'a baseline frame with Se 0');
   assert.equal(jpegSize(frame(0xc0, 16, 32, [], scan(0, 63, 0x01))), null, 'a baseline frame with Al 1');
 });
@@ -191,7 +222,7 @@ test('one complete image and no metadata segments (refute row f67ac5a8 #1 and th
   const real = readFileSync(join(DIR, name));
   assert.deepEqual(jpegSize(real), { width: 1200, height: 630 }, 'the committed image itself');
   assert.equal(jpegSize(Buffer.concat([real, real])), null, 'the committed image twice');
-  for (const [label, seg] of [['APP1 (Exif)', 'ffe1000645786966'], ['APP13 (Photoshop)', 'ffed00040000'], ['COM', 'ffe0000400ff'.replace('ffe0', 'fffe')], ['DAC', 'ffcc00040000'], ['DNL', 'ffdc00040000']]) {
+  for (const [label, seg] of [['APP1 (Exif)', 'ffe1000645786966'], ['APP2 (ICC)', 'ffe200040000'], ['APP13 (Photoshop)', 'ffed00040000'], ['COM', 'fffe000400ff'], ['DAC', 'ffcc00040000'], ['DNL', 'ffdc00040000']]) {
     assert.equal(jpegSize(frame(0xc0, 630, 1200, [...Buffer.from(seg, 'hex')])), null, `${label} refused`);
   }
   { const b = Buffer.from(one); const at = b.length - 2 - 2; b[at] = 0xff; b[at + 1] = 0xd8; assert.equal(jpegSize(b), null, 'a second SOI inside the data'); }
@@ -200,11 +231,12 @@ test('one complete image and no metadata segments (refute row f67ac5a8 #1 and th
 
 // The decoded comparison. ffmpeg decodes each image to 8-bit RGB (rgb24) at its own size; a score is the mean
 // absolute difference per channel value (0-255). An Instagram image passes only when it is the same size as its own
-// card, scores under OWN_MAX against it over the whole image, scores under OWN_BLOCK_MAX in EVERY 16x16 block (so a
-// local change such as an edited badge or a few characters fails even where the whole-image mean barely moves: any
-// 32x32 change contains a whole 16x16 block), and scores more than OTHER_FACTOR times its own score (and at least
-// OTHER_MIN) against EVERY other committed card. What this measures is decoded similarity at these thresholds; it does
-// not prove which program made the bytes (that is the PROVENANCE line, author-recorded).
+// card, scores under OWN_MAX against it over the whole image and under OWN_BLOCK_MAX in EVERY 16x16 block, and scores
+// more than OTHER_FACTOR times its own whole-image score (and at least OTHER_MIN) against EVERY other committed card.
+// That is all it measures: decoded similarity at these thresholds. A local edit is caught only if it moves some 16x16
+// block's mean past OWN_BLOCK_MAX; a small one (a punctuation mark, a few pixels) can pass. It does not prove which
+// program made the bytes (that is the PROVENANCE line, author-recorded); the founder sees the image itself in the
+// post preview before any Instagram post.
 // Measured (ffmpeg 8, the committed ai-jury image): whole image 0.453 to its card; worst 16x16 block 14.724; nearest
 // other card 7.169.
 const OWN_MAX = 2;
@@ -318,8 +350,9 @@ test('the other-card half and the block half each refuse on their own (refute ro
   const onlyTwin = decodedProblems(image, own, [['twin.png', twin]]);
   assert.equal(onlyTwin.length, 1, onlyTwin.join('; '));
   assert.match(onlyTwin[0], /to twin\.png is not more than/);
-  // A 32x32 patch over the card's own text (copied from a plain area, the way an edit would look), at a place no block
-  // grid line is aligned to: the whole-image mean stays under OWN_MAX, so only the block check can refuse it.
+  // A 32x32 patch over the card's own text (copied from a plain area), at a place no block grid line is aligned to: the
+  // whole-image mean stays under OWN_MAX, so only the block check can refuse it. This pins that the block check runs; it
+  // is not a claim that every local edit is caught.
   const worst = worstBlock(image, own);
   const patched = { ...image, rgb: Buffer.from(image.rgb) };
   const x0 = Math.max(0, worst.x - 7), y0 = Math.max(0, worst.y - 7);
@@ -354,8 +387,9 @@ export function ogStepProblems(text) {
   if (stepEnd < 0) stepEnd = jobLines.length;
   const step = at < 0 ? '' : jobLines.slice(at, stepEnd).filter(l => l.trim() && !/^\s*#/.test(l)).join('\n');
   if (step !== OG_STEP) problems.push('the film-copies job does not run scripts/og-instagram.test.mjs with FILM_DECODER_REQUIRED=1 as exactly this step (no if:, no continue-on-error:)');
-  if (/\n    if:/.test(job)) problems.push('the film-copies job has a condition, so it can be skipped');
-  if (/\n    continue-on-error:/.test(job)) problems.push('the film-copies job may fail without failing the run (continue-on-error)');
+  // Job-level keys, plain or quoted (YAML reads 'if', "if" and if alike).
+  if (/\n    (['"]?)if\1\s*:/.test(job)) problems.push('the film-copies job has a condition, so it can be skipped');
+  if (/\n    (['"]?)continue-on-error\1\s*:/.test(job)) problems.push('the film-copies job may fail without failing the run (continue-on-error)');
   if (!/apt-get install .*\bffmpeg\b/.test(job)) problems.push('the film-copies job does not install ffmpeg');
   return problems;
 }
@@ -368,6 +402,8 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
     [text.replace('run: node --test scripts/og-instagram.test.mjs', 'run: echo skipped'), /does not run/],
     [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /has a condition/],
     [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    continue-on-error: true\n'), /continue-on-error/],
+    [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    'continue-on-error': true\n"), /continue-on-error/],
+    [text.replace('    name: Film copies, decoded\n', '    name: Film copies, decoded\n    "if": false\n'), /has a condition/],
     [text.replace('        run: node --test scripts/og-instagram.test.mjs', '        run: node --test scripts/og-instagram.test.mjs\n        if: false'), /exactly this step/],
     [text.replace('        run: node --test scripts/og-instagram.test.mjs', '        run: node --test scripts/og-instagram.test.mjs\n        continue-on-error: true'), /exactly this step/],
     [text.replace('      - name: Decode every Instagram image and compare it with its share card\n', "      - name: Decode every Instagram image and compare it with its share card\n        if: github.event_name == 'push'\n"), /exactly this step/],
