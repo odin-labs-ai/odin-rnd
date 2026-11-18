@@ -151,8 +151,8 @@ const OTHER_FACTOR = 4;
 const OTHER_MIN = 2;
 const has = tool => { try { execFileSync(tool, ['-version'], { stdio: 'ignore' }); return true; } catch { return false; } };
 const required = process.env.FILM_DECODER_REQUIRED === '1';
-const ffmpeg = has('ffmpeg');
-const decoderSkip = !required && !ffmpeg && 'ffmpeg is not installed';
+const decoders = has('ffmpeg') && has('ffprobe');
+const decoderSkip = !required && !decoders && 'ffmpeg or ffprobe is not installed';
 
 /** Decodes an image file to { width, height, rgb } with ffmpeg; throws when ffmpeg fails or the size is off. */
 export function decodeRgb(file) {
@@ -179,8 +179,11 @@ export function decodedProblems(image, own, others) {
   if (image.width !== own.width || image.height !== own.height) return [`size ${image.width}x${image.height}, its card is ${own.width}x${own.height}`];
   const problems = [], toOwn = meanAbsDiff(image, own);
   if (!(toOwn < OWN_MAX)) problems.push(`mean abs diff ${toOwn.toFixed(3)} to its own card, must be under ${OWN_MAX}`);
-  for (const [name, other] of others) {
-    if (other.width !== image.width || other.height !== image.height) continue; // a card of another size cannot be confused with it
+  // A card of another size cannot be confused with the image, so it is not scored; at least one card of the same size
+  // must be, or the "far from every other card" half proves nothing.
+  const sameSize = others.filter(([, o]) => o.width === image.width && o.height === image.height);
+  if (sameSize.length === 0) problems.push('no other card of the same size to compare against');
+  for (const [name, other] of sameSize) {
     const toOther = meanAbsDiff(image, other);
     if (!(toOther > OTHER_FACTOR * toOwn && toOther >= OTHER_MIN)) problems.push(`mean abs diff ${toOther.toFixed(3)} to ${name} is not more than ${OTHER_FACTOR} x ${toOwn.toFixed(3)} (and at least ${OTHER_MIN})`);
   }
@@ -188,7 +191,7 @@ export function decodedProblems(image, own, others) {
 }
 
 test('a decoder is present wherever one is required', () => {
-  if (required) assert.ok(ffmpeg && has('ffprobe'), 'FILM_DECODER_REQUIRED is set but ffmpeg or ffprobe is missing');
+  if (required) assert.ok(decoders, 'FILM_DECODER_REQUIRED is set but ffmpeg or ffprobe is missing');
 });
 
 const decodedCards = () => new Map(readdirSync(CARDS).filter(n => n.endsWith('.png')).sort().map(n => [n, decodeRgb(join(CARDS, n))]));
@@ -219,6 +222,7 @@ test('the decoded comparison refuses an image of another card, a blank, and a wr
   assert.ok(decodedProblems(blank, own, othersOf(a)).length > 0, 'a black image passed');
   const small = { width: own.width / 2, height: own.height, rgb: own.rgb.subarray(0, own.rgb.length / 2) };
   assert.ok(decodedProblems(small, own, othersOf(a))[0].startsWith('size'), 'a wrong size passed');
+  assert.deepEqual(decodedProblems(own, own, []), ['no other card of the same size to compare against'], 'no control card passed');
 });
 
 // The CI wiring this file's decoded claims rest on: .github/workflows/publish.yml must run this file with
