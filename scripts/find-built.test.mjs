@@ -29,6 +29,8 @@ const chromeRequired = process.env.GITHUB_ACTIONS === 'true';
 const footerDom = `(() => {
   const visible = el => {
     if (!el || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+    const color = getComputedStyle(el).color;
+    if (/^(?:transparent|rgba\\([^)]*,\\s*0(?:\\.0*)?\\))$/i.test(color)) return false;
     for (let node = el; node; node = node.parentElement) {
       if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(getComputedStyle(node).filter)) return false;
     }
@@ -66,6 +68,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<style>.site-footer { transform: scale(0) }</style>${footer}`,
     `<style>.site-footer a { clip-path: inset(50%) }</style>${footer}`,
     `<style>.site-footer a { filter: opacity(0) }</style>${footer}`,
+    `<style>.site-footer a { color: transparent; text-shadow: none }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/" download>Partners</a></footer>',
     '<iframe name="hidden-frame" hidden></iframe><footer class="site-footer"><a href="partners/" target="hidden-frame">Partners</a></footer>',
   ];
@@ -78,7 +81,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, filtered, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -90,6 +93,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(scaled.partners, [], 'a zero-area transformed link is not usable');
   assert.deepEqual(clipped.partners, [], 'a fully clipped Partners link is not usable');
   assert.deepEqual(filtered.partners, [], 'a fully transparent Partners link is not visible');
+  assert.deepEqual(transparentText.partners, [], 'a transparent Partners label without a text shadow is unreadable');
   assert.equal(download.downloads, 1, 'a download link is distinguishable from navigation');
   assert.equal(frame.targets, 1, 'a hidden-frame target is distinguishable from current-page navigation');
 });

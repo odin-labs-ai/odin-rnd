@@ -121,7 +121,8 @@ const wordsDom = `(() => {
     const claim = item.querySelector('p:not(.lab-limit):not(.lab-source)');
     const limit = item.querySelector('p.lab-limit');
     return { id: item.id, claimVisible: visible(claim), claimText: claim?.innerText.replace(/\\s+/g, ' ').trim() ?? '', claimBeforeLimit: !!claim && !!limit && !!(claim.compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING),
-      claimShape: item.children.length === 3 && item.children[0] === claim && item.children[1] === limit && item.children[2].matches('p.lab-source'),
+      claimShape: item.children.length === 3 && item.children[0] === claim && item.children[1] === limit && item.children[2].matches('p.lab-source')
+        && ![...item.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim()),
       limitVisible: visible(limit), limitText: limit?.innerText.replace(/\\s+/g, ' ').trim() ?? '' };
   });
   return { text: visibleText.replace(/\\s+/g, ' ').trim(), visible: visibleText.split(/\\s+/).filter(Boolean).length, all: copy.textContent.split(/\\s+/).filter(Boolean).length,
@@ -159,6 +160,8 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.notEqual(extraConclusion, proof, 'the unsupported conclusion control changes only the review-cost claim');
   const extraSibling = proof.replace('The uncertainty ranges of all the reviewers overlap.</p>', 'The uncertainty ranges of all the reviewers overlap.</p><p>The cheaper reviewer is better.</p>');
   assert.notEqual(extraSibling, proof, 'the sibling conclusion control adds one visible paragraph before the cost limit');
+  const extraText = proof.replace('The uncertainty ranges of all the reviewers overlap.</p>', 'The uncertainty ranges of all the reviewers overlap.</p>The cheaper reviewer is better.');
+  assert.notEqual(extraText, proof, 'the text-node conclusion control adds visible words before the cost limit');
   const proofLimits = [...proof.matchAll(/<p class="lab-limit">[\s\S]*?<\/p>/g)].map(match => match[0]);
   assert.equal(proofLimits.length, 3, 'one generated limit for each featured finding');
   let limitAt = 0;
@@ -174,7 +177,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
     dispatchEvent(new HashChangeEvent('hashchange'));
     return { targetExists, initiallyOpen, afterOpen: fold?.open ?? null };
   })()`;
-  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
+  const [actual, moduleLoaded, moduleBlocked, control, long, pinned, fadedCorrection, clippedCorrection, filteredCorrection, hiddenFinding, reorderedFinding, extraClaimProof, extraSiblingProof, extraTextProof, swappedProof] = await inspectDom([{ file: join(dist, 'index.html'), expression: wordsDom }, { file: join(dist, 'index.html'), expression: moduleProbe }, { file: join(dist, 'index.html'), expression: moduleProbe, blockedUrls: ['*assets/home-fold.mjs'] }, { html: sample, expression: wordsDom }, { html: quoted, expression: wordsDom }, { html: `<main>${paragraphs.join('')}</main>`, expression: `[...document.querySelectorAll('main p')].map(p => p.innerText.replace(/\\s+/g, ' ').trim())` }, { html: faded, expression: wordsDom }, { html: clipped, expression: wordsDom }, { html: filtered, expression: wordsDom }, { html: hiddenLimit, expression: wordsDom }, { html: reorderedClaim, expression: wordsDom }, { html: extraConclusion, expression: wordsDom }, { html: extraSibling, expression: wordsDom }, { html: extraText, expression: wordsDom }, { html: swappedLimits, expression: wordsDom }], { chrome, siteRoot: dist });
   assert.deepEqual(moduleLoaded, { targetExists: true, initiallyOpen: false, afterOpen: true }, 'the served home module opens its folded target');
   assert.deepEqual(moduleBlocked, { targetExists: true, initiallyOpen: false, afterOpen: false }, 'the same served home stays closed when only the opener module is blocked');
   assert.equal(control.text, 'Closed label Open label Visible body Nested label', 'closed summaries and open bodies are counted');
@@ -192,6 +195,7 @@ test('Chrome counts the unopened home below the word bound and one third of all 
   assert.deepEqual(actual.limits.map(limit => limit.id), ['proof-review-cost', 'proof-brokers', 'proof-self-verify'], 'all featured findings are inspected');
   assert.ok(actual.limits.every(({ claimShape }) => claimShape), 'the complete visible claim is one paragraph before its own limit and source');
   assert.equal(extraSiblingProof.limits[0].claimShape, false, 'a second visible conclusion paragraph before the limit is rejected');
+  assert.equal(extraTextProof.limits[0].claimShape, false, 'a visible text node before the limit is rejected');
   assert.ok(actual.limits.every(({ id, claimText }) => claimText === sourceClaimTexts.get(id)), 'each visible finding retains its independently authored source claim and sourced values');
   assert.equal(extraClaimProof.limits.every(({ id, claimText }) => claimText === sourceClaimTexts.get(id)), false, 'an unsupported conclusion fails the source claim comparison');
   const sourceLimits = new Map(authoredClaims.map(({ id, limit }) => [id, `Limit: ${limit}`]));

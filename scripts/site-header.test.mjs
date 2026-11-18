@@ -228,6 +228,22 @@ test('a document base inside a recognized nav link is refused before normalizati
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('the permitted 404 base cannot be discarded with its recognized navigation link', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-header-404-base-'));
+  try {
+    const source = read('404.html');
+    const base = `<base href="${SITE_ORIGIN}">`;
+    const originalLink = `<a href="${SITE_ORIGIN}#floor">Factory</a>`;
+    const moved = source.replace(base, '').replace(originalLink, `<a href="${SITE_ORIGIN}#floor">${base}Factory</a>`);
+    assert.notEqual(moved, source, 'the original permitted base moved into a recognized nav link');
+    assert.equal((moved.match(/<base\b/g) ?? []).length, 1, 'one permitted base remains');
+    assert.throws(() => normaliseHeader(moved, { relPrefix: SITE_ORIGIN, label: '404.html' }), /Document base in replaced navigation/, 'direct normalization refuses to remove the base');
+    writeFileSync(join(dir, '404.html'), moved);
+    assert.throws(() => normaliseHeaders({ distDir: dir }), /Document base in replaced navigation/, 'the named 404 build path refuses to remove the base');
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), moved, 'the rejected 404 page was not rewritten');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('Partners moved to the footer: once in the site footer of every committed page, relative to the page, idempotent', () => {
   for (const rel of PAGE_FILES) {
     const src = read(rel);

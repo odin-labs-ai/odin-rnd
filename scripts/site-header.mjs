@@ -168,6 +168,7 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   checkPrefix(relPrefix);
   const { start, end, node, document } = navSpan(html, label);
   refuseUnexpectedBases(document, label);
+  if (elements(document, 'base').some(base => base.sourceCodeLocation?.startOffset >= start && base.sourceCodeLocation?.endOffset <= end)) throw new Error(`Document base in replaced navigation of ${label}`);
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
   const links = [];
