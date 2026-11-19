@@ -315,6 +315,10 @@ export function decodeRgb(file) {
   const [width, height] = probe.stdout.trim().split(',').map(Number);
   assert.ok(width > 0 && height > 0, `${file}: ffprobe gave no size`);
   const run = spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-xerror', '-i', file, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 64 * 1024 * 1024 });
+  // A spawn error or a signal is a decoder FAULT, never a refusal: only a numeric exit status reaches "ffmpeg exited".
+  assert.ok(!run.error, `ffmpeg could not run on ${file}: ${run.error && run.error.message}`);
+  assert.equal(run.signal, null, `ffmpeg was killed by ${run.signal} decoding ${file}`);
+  assert.equal(typeof run.status, 'number', `ffmpeg gave no exit status decoding ${file}`);
   assert.equal(run.status, 0, `ffmpeg exited ${run.status} decoding ${file}: ${run.stderr}`);
   assert.equal(run.stdout.length, width * height * 3, `${file}: decoded ${run.stdout.length} bytes, expected ${width}x${height}x3`);
   return { width, height, rgb: run.stdout };
@@ -428,7 +432,8 @@ test('a table the shape walk accepts but no decoder can use is refused by the de
   try {
     const file = join(dir, 'oversubscribed.jpg');
     writeFileSync(file, bytes);
-    assert.throws(() => decodeRgb(file), /ffmpeg exited/, 'ffmpeg -xerror must refuse an oversubscribed Huffman table');
+    // A clean refusal: a numeric, nonzero exit status (a crash or a spawn error fails decodeRgb with another message).
+    assert.throws(() => decodeRgb(file), /ffmpeg exited [1-9]\d* decoding/, 'ffmpeg -xerror must refuse an oversubscribed Huffman table with a nonzero exit');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -501,7 +506,7 @@ const FILM_JOB = [
   "        run: node --test scripts/og-instagram.test.mjs",
 ].join('\n');
 /**
- * The workflow PARSED by a YAML parser (Ruby's Psych, YAML.safe_load: no aliases, no merge keys, no custom tags), as
+ * The workflow PARSED by a YAML parser (Ruby's Psych, YAML.safe_load: aliases and custom tags refused), as
  * JSON; null when ruby is missing; an object { error } when the file does not parse under those rules. Ruby ships on
  * the GitHub ubuntu runners and macOS; a missing ruby is a failure of the workflow check, never a fallback to text.
  */
@@ -520,13 +525,16 @@ export function ogStepProblems(text) {
   if (parsed === null) {
     problems.push('ruby (the YAML parser this check binds to) is missing: the workflow check cannot run without it');
   } else if (parsed.error) {
-    problems.push(`the workflow does not parse as plain YAML (no aliases or merge keys): ${parsed.error}`);
+    problems.push(`the workflow does not parse as plain YAML (no aliases or custom tags): ${parsed.error}`);
   } else {
     const pinned = parsedWorkflow(`jobs:\n${FILM_JOB}\n`);
     const job = parsed && typeof parsed.jobs === 'object' && parsed.jobs ? parsed.jobs['film-copies'] : undefined;
     if (JSON.stringify(job) !== JSON.stringify(pinned.jobs['film-copies'])) problems.push('the parsed jobs.film-copies is not the pinned job (parsed)');
   }
   if (/[\r\u0085\u2028\u2029]/.test(text)) problems.push('the workflow holds a line break other than LF (CR, NEL, LS or PS)');
+  // safe_load refuses an alias but still applies a merge key whose value is an inline mapping, so merge keys are
+  // refused here, as text, anywhere in the file (block or flow, plain or quoted key).
+  if (/(^|[\s{,\-])["']?<<["']?\s*:/m.test(text)) problems.push('the workflow uses a YAML merge key (<<)');
   const lines = text.split('\n');
   const jobsAt = lines.reduce((at, l, i) => (/^["']?jobs["']?\s*:/.test(l) ? [...at, i] : at), []);
   if (jobsAt.length !== 1 || lines[jobsAt[0]] !== 'jobs:') return [...problems, 'expected exactly one plain `jobs:` mapping line'];
@@ -541,6 +549,7 @@ export function ogStepProblems(text) {
   const start = starts[0];
   let end = lines.findIndex((l, i) => i > start && /^  \S/.test(l) && !/^  #/.test(l));
   if (end < 0) end = lines.length;
+  while (end > start + 1 && lines[end - 1] === '') end -= 1; // the file's final LF (job last) is not part of the job
   if (lines.slice(start, end).join('\n') !== FILM_JOB) problems.push('the film-copies job is not byte for byte the pinned job that runs scripts/og-instagram.test.mjs with FILM_DECODER_REQUIRED=1');
   return problems;
 }
@@ -549,11 +558,12 @@ test('the parsed binding alone refuses a decoy the text checks are not needed fo
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
   const lines = text.split('\n');
   // The real film-copies job is replaced by a one-space-indented, escaped key with no steps, while the pinned job text
-  // survives byte for byte inside a quoted scalar of another job.
+  // survives line for line (every line indented two more spaces) inside a quoted scalar of another job.
   const decoy = [' decoy:', '  name: "x', ...FILM_JOB.split('\n').map(l => `  ${l}`), '  "', '  runs-on: ubuntu-latest', '  steps: []',
     ' "film\\u002dcopies":', '  runs-on: ubuntu-latest', '  steps: []'];
   // (The other jobs are dropped: at one-space indentation they would nest under the decoy.)
   const attacked = [...lines.slice(0, lines.indexOf('jobs:') + 1), ...decoy, ''].join('\n');
+  assert.ok(attacked.includes(FILM_JOB.split('\n').map(l => `  ${l}`).join('\n')), 'the decoy must carry every pinned line, indented two spaces');
   const parsed = parsedWorkflow(attacked);
   assert.ok(parsed && !parsed.error, 'the decoy must be valid YAML for this test to mean anything');
   assert.deepEqual(parsed.jobs['film-copies'], { 'runs-on': 'ubuntu-latest', steps: [] }, 'the parser reads the escaped key as the real job');
@@ -588,9 +598,26 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
     [text.replace('    timeout-minutes: 10\n    steps:\n      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4', '    timeout-minutes: 10\n    steps: &s\n      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4'), /plain YAML|byte for byte/],
     [text.replace('jobs:\n', 'notes: |\n') + '\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps: []\n', /exactly one film-copies job/],
     [text.replace("        shell: bash\n        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs", "        env:\n          FILM_DECODER_REQUIRED: '1'\n        run: node --test scripts/og-instagram.test.mjs"), /byte for byte/],
+    [text.replace('  verify:\n', '  verify:\n    <<: { continue-on-error: true }\n'), /merge key/],
+    [text.replace('  verify:\n', '  verify:\n    "<<": { continue-on-error: true }\n'), /merge key/],
+    [text.replace('  verify:\n', '  verify:\n    env: { <<: { A: b } }\n'), /merge key/],
   ];
   for (const [changed, pattern] of broken) {
     assert.notEqual(changed, text, String(pattern));
     assert.ok(ogStepProblems(changed).some(p => pattern.test(p)), `${pattern}: ${ogStepProblems(changed).join('; ')}`);
   }
+});
+
+test('the film-copies job may be the last job in the file (refute row e19355e0 #3)', () => {
+  const text = readFileSync('.github/workflows/publish.yml', 'utf8');
+  assert.ok(text.endsWith('\n') && text.includes(`${FILM_JOB}\n`), 'the workflow must end in LF and hold the pinned job');
+  const moved = `${text.replace(`${FILM_JOB}\n`, '')}${FILM_JOB}\n`;
+  assert.ok(moved.endsWith(`${FILM_JOB}\n`) && moved !== text, 'the job must now be last');
+  assert.deepEqual(ogStepProblems(moved), []);
+});
+
+test('the committed ai-jury image is a baseline JPEG: its frame header is SOF0, not SOF2 (refute row e19355e0)', () => {
+  const bytes = readFileSync(join(DIR, 'ai-jury.b9d0adfbcbc140f0.jpg'));
+  assert.ok(segmentAt(bytes, 0xc0) > 0, 'no SOF0 (baseline) frame header before the scan');
+  assert.equal(segmentAt(bytes, 0xc2), -1, 'a SOF2 (progressive) frame header before the scan');
 });
