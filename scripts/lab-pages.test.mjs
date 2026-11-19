@@ -207,7 +207,7 @@ test('page configuration holds no number that is shown: claim texts and not-meas
 // The home proof strip, on the real render path: placed at the marker, its links root-relative (no ../ from the home
 // page), and passing the home strip check against the committed records.
 test('the home proof strip renders from lab-proof.json with root-relative links and passes the strip check', () => {
-  const home = placeHomeProof(`<html><body><section id="lab"><ol>${HOME_MARKER}</ol></section></body></html>`);
+  const home = placeHomeProof(`<html><body><section id="findings"><ol>${HOME_MARKER}</ol></section></body></html>`);
   assert.ok(!home.includes(HOME_MARKER));
   const hrefs = [...home.matchAll(/href="([^"]*)"/g)].map(m => m[1]);
   assert.ok(hrefs.length >= 6, 'the strip links its numbers and sources');
@@ -217,6 +217,79 @@ test('the home proof strip renders from lab-proof.json with root-relative links 
   assert.ok((home.match(/data-source="/g) ?? []).length >= 8);
   assert.throws(() => placeHomeProof('<p>no marker</p>'), /exactly once/);
   assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
+  const onePager = rendered['one-pager'];
+  for (const claim of siteReader()('data/lab-proof.json').claims) {
+    const plan = claim.record.replace(/results\.json$/, 'preregistration.json');
+    assert.ok(existsSync(join('site', plan)), `${claim.id}: published plan exists`);
+    for (const [page, up] of [[home, ''], [onePager, '../']]) {
+      const start = page.indexOf(`<li id="${claim.id}">`);
+      assert.ok(start >= 0, `${claim.id}: finding is rendered`);
+      const item = page.slice(start, page.indexOf('</li>', start));
+      assert.ok(item.includes(`<a href="${up}${plan}">the written plan</a>`), `${claim.id}: its validated plan is linked`);
+    }
+  }
+});
+
+test('a proof claim refuses a missing or placeholder written plan', () => {
+  const source = siteReader();
+  const results = 'data/review-frontier/results.json';
+  const plan = 'data/review-frontier/preregistration.json';
+  const changed = (record, planExists = true) => {
+    const read = path => path === results ? record : path === plan && !planExists ? null : source(path);
+    read.raw = path => path === plan && !planExists ? null : source.raw(path);
+    read.quoteProblem = source.quoteProblem;
+    return () => renderLabProof(read, '../');
+  };
+  const rejected = /claim proof-review-cost has no linked pre-registration document/;
+  assert.throws(changed({ ...source(results), preregistration: null }), rejected);
+  assert.throws(changed({ ...source(results), preregistration: 'none' }), rejected);
+  assert.throws(changed(source(results), false), rejected);
+  const placeholderPlan = path => path === plan ? 'none' : source(path);
+  placeholderPlan.raw = path => path === plan ? Buffer.from('"none"') : source.raw(path);
+  placeholderPlan.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(placeholderPlan, '../'), rejected, 'the correct pointer cannot turn a placeholder document into a written plan');
+  assert.throws(changed({ ...source(results), preregistrationSha256: '0'.repeat(64) }), rejected, 'a correct pointer never excuses a wrong hash');
+  const broker = 'data/broker-same-model/results.json';
+  const wrongPin = path => path === broker ? { ...source(broker), preregistrationSha256: '0'.repeat(64) } : source(path);
+  wrongPin.raw = source.raw;
+  wrongPin.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(wrongPin, '../'), /claim proof-brokers has no linked pre-registration document/);
+  const wrongPointer = path => path === broker ? { ...source(broker), preregistration: 'experiments/elsewhere/preregistration.json' } : source(path);
+  wrongPointer.raw = source.raw;
+  wrongPointer.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(wrongPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'a valid pin never excuses a wrong pointer');
+  const emptyPointer = path => path === broker ? { ...source(broker), preregistration: null } : source(path);
+  emptyPointer.raw = source.raw;
+  emptyPointer.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(emptyPointer, '../'), /claim proof-brokers has no linked pre-registration document/, 'an explicit empty pointer cannot be excused by a valid pin');
+  const nonnumeric = structuredClone(source(broker));
+  for (const arm of Object.values(nonnumeric.perArm)) {
+    arm.perBroker.B.billedToListMedian = [2];
+    arm.perBroker.B.billedToListRange[0] = [2];
+  }
+  const numericRead = path => path === broker ? nonnumeric : source(path);
+  numericRead.raw = source.raw;
+  numericRead.recordProblem = source.recordProblem;
+  numericRead.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(numericRead, '../'), /did not bill above list price/, 'arrays must not prove above-list billing');
+  const reversed = structuredClone(source(broker));
+  for (const arm of Object.values(reversed.perArm)) arm.perBroker.B.billedToListRange[1] = 0.5;
+  const reversedRead = path => path === broker ? reversed : source(path);
+  reversedRead.raw = source.raw;
+  reversedRead.recordProblem = source.recordProblem;
+  reversedRead.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(reversedRead, '../'), /did not bill above list price/, 'an upper endpoint below list cannot prove every priced call was above list');
+  const extraEndpoint = structuredClone(source(broker));
+  Object.values(extraEndpoint.perArm)[0].perBroker.A.billedToListRange = [1, 1, 2];
+  const extraRead = path => path === broker ? extraEndpoint : source(path);
+  extraRead.raw = source.raw;
+  extraRead.recordProblem = source.recordProblem;
+  extraRead.quoteProblem = source.quoteProblem;
+  assert.throws(() => renderLabProof(extraRead, '../'), /did not bill list price/, 'a third endpoint cannot be ignored for an at-list broker');
+  const absentSpreads = structuredClone(source(broker));
+  for (const arm of Object.values(absentSpreads.perArm)) arm.rate.spread = null;
+  const spreadRead = path => path === broker ? absentSpreads : source(path);
+  assert.match(ASSERTS['equal-across'](spreadRead, { source: `${broker}#/perArm`, path: ['rate', 'spread'] }), /not finite/, 'two absent spreads cannot prove an equal measured spread');
 });
 
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results

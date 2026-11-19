@@ -76,12 +76,12 @@ test('a note\'s kind names the experiments whose ledger entry links it, from the
 });
 
 test('the section pages are well formed: one header and nav, the right section current, unique ids, links that resolve', () => {
-  for (const [page, html, current] of [[JOURNAL_PAGE, renderJournalIndex(ITEMS), 'Field notes'], [PROJECTS_PAGE, renderProjectsIndex(ITEMS), null]]) {
+  for (const [page, html, current] of [[JOURNAL_PAGE, renderJournalIndex(ITEMS), 'Notes &amp; updates'], [PROJECTS_PAGE, renderProjectsIndex(ITEMS), null]]) {
     assert.equal((html.match(/<header class="site-header[ "]/g) || []).length, 1, page);
     const { start, end } = navSpan(html, page);
     const nav = html.slice(start, end);
     assert.deepEqual([...nav.matchAll(/aria-current="page">([^<]*)</g)].map(m => m[1]), current ? [current] : [], page);
-    assert.equal(normaliseHeader(html, { relPrefix: '../', current: current ? 'notes' : null }), html, `${page}: already canonical`);
+    assert.equal(normaliseHeader(html, { relPrefix: '../', current: current ? 'notes' : null, label: page }), html, `${page}: already canonical`);
     const all = ids(html);
     assert.equal(all.length, new Set(all).size, `${page}: unique ids`);
     for (const [, href] of html.matchAll(/(?:href|src)="([^"]+)"/g)) assert.ok(resolves(page, href), `${page}: ${href} resolves`);

@@ -1,16 +1,21 @@
 // A shorter home page (mission rnd-site-ux-nav-1101, wave 5). The built home ran to about six thousand words in thirteen
 // sections; a visitor met the factory, the latest updates, the lab's measured results and the offer only after scrolling
 // past most of the rest. This pass reshapes the finished dist/index.html only, after foldJournal and every qualify step:
-//   - the factory hero (#floor), the latest updates (#updates), the lab's results (#lab) and the offer (#work-with-us)
-//     stay open, in that order;
-//   - a "Go further" navigation follows them, to Find, the experiments, the labs, the field notes and the tools;
+//   - the hero (#floor), what we've found (#findings, the lab's results), how we check a result (#how-we-check), the
+//     latest updates (#updates) and the offer (#work-with-us) stay open, in that order (plain-language home,
+//     2026-11-16: the findings moved up, under the hero's "See what we found" button; founder, on the PR 1 screenshot:
+//     the drawing, the station panel and the long correction still came before the plain findings). The committed
+//     #floor section is split in two: the hero keeps its premise, drawing, station panel and boundary line; the dated
+//     correction moves, byte for byte, into a visible section under what we've found (splitFloor);
+//   - a "Go further" navigation follows them, to the lab on a page, the experiments, the labs, the notes, Find and the
+//     tools;
 //   - every other section follows in its source order, its <section> (and id) and its heading block visible, the rest
 //     of its content in a closed <details class="home-fold">. Nothing is removed: the folded content stays on the page
 //     byte for byte, so the experiment ledger, the field-note rows and every reader of the built home find what they
 //     found before. site/index.html is never edited.
 // It stops the build on a page it does not expect: a missing, repeated or unknown top-level section, a heading block
 // that is not where it should be, a page already shaped, or an outcome that changed the field-note rows, the ledger
-// bytes or the page's ids (beyond the one this pass adds).
+// bytes or the page's ids (beyond the three this pass adds).
 // A link into folded content (the experiment list, nina's tools entry) opens the folds around its target
 // (site/assets/home-fold.mjs, linked from the home only).
 // Honest limit: the fold shortens the page a visitor scrolls, not the words the page carries.
@@ -21,11 +26,19 @@ import { journalRows } from './experiment-ledger.mjs';
 export const HOME_CSS = 'assets/home.css';
 /** The script that opens the folds around a linked target (…/#all-experiments), on the shaped home only. */
 export const HOME_JS = 'assets/home-fold.mjs';
-/** The id of the "Go further" heading: the one id this pass adds. */
+/** The id of the "Go further" heading. */
 export const FURTHER_ID = 'home-further-title';
+/** The section for the correction under what we've found, and its heading's id. */
+export const CHECK_ID = 'how-we-check';
+export const CHECK_TITLE_ID = 'how-we-check-title';
+/** The plain heading and one plain sentence connecting the drawing above to its dated correction. */
+export const CHECK_HEADING = 'How to read the drawing';
+export const CHECK_INTRO = 'The drawing above is a concept of separate checks we test; results do not pass through them in sequence.';
+/** The ids this pass adds, in page order; no other id may appear or go. */
+export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
-/** The sections that stay open, in the order they are shown. */
-export const OPEN_ORDER = ['floor', 'updates', 'lab', 'work-with-us'];
+/** The sections that stay open, in the order they are shown (CHECK_ID is split out of #floor, see splitFloor). */
+export const OPEN_ORDER = ['floor', 'findings', CHECK_ID, 'updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and
  *  the words of the fold's summary. */
@@ -40,20 +53,22 @@ export const FOLDS = [
   { key: 'journal', head: 'section-heading', summary: 'Show the latest field notes' },
 ];
 
-/** The "Go further" destinations: site-relative href, link text and one plain line. */
+/** The "Go further" destinations: site-relative href, link text and one plain line. The labels match the header's
+ *  (scripts/site-header.mjs), so a link reads the same wherever it is. */
 export const FURTHER = [
-  { href: 'find/', label: 'Find', text: 'Search the whole site by topic, by kind or by what came out.' },
-  { href: 'experiments/', label: 'Experiments', text: 'Rerun our workbenches yourself, and see where each experiment stands.' },
+  { href: 'one-pager/', label: 'Start here', text: 'The lab on a page: what we do and what we found.' },
+  { href: 'experiments/', label: 'All results', text: 'All our experiments, where each stands, and their data.' },
   { href: 'labs/', label: 'Labs', text: 'Our longer pieces of work, each with the record behind it.' },
-  { href: 'journal/', label: 'Field notes', text: 'What we set out to test, what happened and what is still open.' },
+  { href: 'journal/', label: 'Notes & updates', text: 'What we set out to test, what happened, what is still open.' },
+  { href: 'find/', label: 'Find', text: 'Search the site by topic, by kind or by outcome.' },
   { href: 'projects/', label: 'Tools', text: 'Open-source tools you can take apart and build on.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
-const EXPECTED = ['floor', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
+const EXPECTED = ['floor', 'findings', 'work-with-us', 'partner-tracks', 'agent-space', 'updates', 'how-it-works', 'experiments', 'research-note', 'projects', 'drawing-board', 'journal', 'closing'];
 const CLOSING = 'closing';
 // Every expected section is shown exactly once: open, folded or the closing line.
-if (JSON.stringify([...OPEN_ORDER, ...FOLDS.map(f => f.key), CLOSING].sort()) !== JSON.stringify([...EXPECTED].sort())) throw new Error('Home shape: OPEN_ORDER, FOLDS and the closing line do not cover the expected sections');
+if (JSON.stringify([...OPEN_ORDER.filter(key => key !== CHECK_ID), ...FOLDS.map(f => f.key), CLOSING].sort()) !== JSON.stringify([...EXPECTED].sort())) throw new Error('Home shape: OPEN_ORDER, FOLDS and the closing line do not cover the expected sections');
 const UPDATES_OPEN = /<!-- updates:[^>]*-->\s*$/;
 const UPDATES_CLOSE = /^\s*<!-- \/updates -->/;
 const LEDGER_OPEN = '<div class="experiment-ledger" id="all-experiments">';
@@ -131,21 +146,54 @@ function fold(html, section, { head, summary }) {
 }
 
 /** Throws unless `out` keeps what every reader of the built home `html` relies on: the same field-note rows, the
- *  experiment ledger byte for byte, and the same ids plus only the "Go further" heading's. */
+ *  experiment ledger byte for byte, and the same ids plus only the ones this pass adds (ADDED_IDS). */
 export function assertKept(html, out) {
   if (JSON.stringify(journalRows(out)) !== JSON.stringify(journalRows(html))) throw new Error('Home shape: the field-note rows changed');
   const ledger = ledgerOf(html);
   if (ledger === null || ledgerOf(out) !== ledger) throw new Error('Home shape: the experiment ledger is missing or its bytes changed');
   const was = idsOf(html), now = idsOf(out);
   const added = now.filter(id => !was.includes(id));
-  if (JSON.stringify([...was].sort()) !== JSON.stringify(now.filter(id => id !== FURTHER_ID).sort()) || JSON.stringify(added) !== JSON.stringify([FURTHER_ID])) {
-    throw new Error('Home shape: the page ids changed (only the "Go further" heading id may be added)');
+  if (JSON.stringify([...was].sort()) !== JSON.stringify(now.filter(id => !ADDED_IDS.includes(id)).sort()) || JSON.stringify(added) !== JSON.stringify(ADDED_IDS)) {
+    throw new Error('Home shape: the page ids changed (only the drawing section, its heading and the "Go further" heading ids may be added)');
   }
+}
+
+/** The children of the committed #floor, in order: the premise, the drawing, the station panel, the boundary line and
+ *  the dated correction (each matched by its start tag). */
+const FLOOR_PARTS = [
+  ['premise', /^<div class="factory-premise">/],
+  ['drawing', /^<div class="factory-drawing"[ >]/],
+  ['stations', /^<div class="station-compartment"[ >]/],
+  ['boundary', /^<p class="factory-boundary">/],
+  ['correction', /^<details class="factory-correction"[ >]/],
+];
+
+/** The committed #floor split in two: the hero keeps its premise and drawing, while the correction moves to a
+ *  visible section under the findings. Every source part is preserved byte for byte. */
+export function splitFloor(html, section, indent) {
+  const parts = {};
+  let at = section.openEnd;
+  for (const [name, open] of FLOOR_PARTS) {
+    at += /^\s*/.exec(html.slice(at))[0].length;
+    if (!open.test(html.slice(at, section.closeAt))) throw new Error(`Home shape: #floor does not hold its ${name} where expected`);
+    const end = elementEnd(html, at);
+    if (end > section.closeAt) throw new Error(`Home shape: the ${name} runs past #floor`);
+    parts[name] = html.slice(at, end);
+    at = end;
+  }
+  const tail = html.slice(at, section.closeAt);
+  if (tail.trim()) throw new Error('Home shape: #floor holds more than its premise, drawing, stations, boundary line and correction');
+  const inner = indent + '  ';
+  const hero = html.slice(section.start, section.openEnd) + [parts.premise, parts.drawing, parts.stations, parts.boundary].map(p => inner + p).join('') + tail + '</section>';
+  const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${escape(CHECK_HEADING)}</h2><p>${escape(CHECK_INTRO)}</p></div>`;
+  const check = `<section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">`
+    + [intro, parts.correction].map(p => inner + p).join('') + tail + '</section>';
+  return { hero, check };
 }
 
 /** The built home page, shaped (see the top of this file). Throws on any page it does not expect. */
 export function shapeHome(html) {
-  if (html.includes('class="home-fold"') || html.includes('class="home-further') || html.includes(`href="${HOME_CSS}"`) || html.includes(`src="${HOME_JS}"`)) throw new Error('Home shape: the page is already shaped');
+  if (html.includes('class="home-fold"') || html.includes('class="home-further') || html.includes(` id="${CHECK_ID}"`) || html.includes(`href="${HOME_CSS}"`) || html.includes(`src="${HOME_JS}"`)) throw new Error('Home shape: the page is already shaped');
   const mainOpen = html.match(/<main\b[^>]*>/g) || [], mainClose = html.match(/<\/main>/g) || [];
   if (mainOpen.length !== 1 || mainClose.length !== 1) throw new Error(`Home shape: expected exactly one <main>, found ${mainOpen.length} open and ${mainClose.length} closing`);
   const from = html.indexOf(mainOpen[0]) + mainOpen[0].length, to = html.indexOf('</main>');
@@ -156,7 +204,7 @@ export function shapeHome(html) {
     if (byKey.has(s.key)) throw new Error(`Home shape: section "${s.key}" appears twice`);
     byKey.set(s.key, s);
   }
-  for (const key of EXPECTED) if (!byKey.has(key)) throw new Error(`Home shape: the home has no section "${key}"${key === 'lab' ? ' (the proof strip)' : ''}`);
+  for (const key of EXPECTED) if (!byKey.has(key)) throw new Error(`Home shape: the home has no section "${key}"${key === 'findings' ? ' (the proof strip)' : ''}`);
   // Only whitespace, and the updates feed's two markers around it, may sit between the sections.
   const first = sections[0], last = sections.at(-1);
   if (html.slice(from, first.start).trim() || html.slice(last.end, to).trim()) throw new Error('Home shape: content in <main> outside its sections');
@@ -172,7 +220,8 @@ export function shapeHome(html) {
     if (gap.trim()) throw new Error(`Home shape: content between sections ${sections[i - 1].key} and ${sections[i].key}`);
   }
   const indent = /\n[ \t]*$/.exec(html.slice(from, first.start))?.[0] ?? '\n';
-  const piece = key => key === 'updates' ? html.slice(updatesStart, updatesEnd) : html.slice(byKey.get(key).start, byKey.get(key).end);
+  const floor = splitFloor(html, byKey.get('floor'), indent);
+  const piece = key => key === 'updates' ? html.slice(updatesStart, updatesEnd) : key === 'floor' ? floor.hero : key === CHECK_ID ? floor.check : html.slice(byKey.get(key).start, byKey.get(key).end);
   const parts = [...OPEN_ORDER.map(piece), renderFurther()];
   for (const f of FOLDS) parts.push(fold(html, byKey.get(f.key), f));
   parts.push(piece(CLOSING));
@@ -186,17 +235,14 @@ export function shapeHome(html) {
   return out;
 }
 
-// The home's dated correction (mission rnd-site-ux-nav-1101 wave 6). #168 put a wording correction, open, at the foot of the
-// factory hero in site/index.html (frozen, as a <details open>), and the owner's rerelease keeps it readable there without
-// a click. On the built home it becomes a block that cannot be closed, in place, the same open ruled pattern as the
-// partners, evidence and providers pages: a plain dated label ("Corrected on 1 November 2026 and 2 November 2026", the
-// block's own <time> elements reused as written), then #168's own label line, then its paragraphs byte for byte. No
-// summary, no toggle. Exactly one such block in the hero, its paragraphs as #168 published them, or the build stops: a
-// correction must never drop off the page, change its words or become closable unnoticed.
+// #168's dated correction stays visible on the built home. The source is a frozen <details open> block; the build
+// turns it into a noncollapsible notice in place, preserving the label and pinned paragraphs byte for byte.
 /** The committed block's opening tag (site/index.html, frozen). */
 export const CORRECTION_SOURCE = '<details class="factory-correction" open>';
-/** The built block's opening tag. */
-export const CORRECTION_BLOCK = '<div class="factory-correction" role="note">';
+/** The built block's opening tag: a visible, noncollapsible notice. */
+export const CORRECTION_BLOCK = '<div class="factory-correction correction-note" role="note">';
+/** The words of the notice heading around its dates. */
+export const CORRECTION_LEAD = 'We corrected our earlier headline and wording on ';
 /** sha256 of the correction's paragraphs as #168 published them (213e1f1). A reword stops the build; a new dated
  *  correction is a deliberate change of this pin. */
 export const CORRECTION_PARAGRAPHS_SHA256 = '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29';
@@ -226,20 +272,21 @@ function sourceParts(html, at) {
   return { block, label: head[1], body };
 }
 
-/** The built home with its correction as an open, non-collapsible dated block (see above). Throws on a page it does not
+/** The built home with its correction visible under a dated, plain heading (see above). Throws on a page it does not
  *  expect. */
 export function labelCorrection(html) {
   const count = html.split(CORRECTION_SOURCE).length - 1;
   if (count !== 1) throw new Error(`Home correction: expected exactly one open ${CORRECTION_SOURCE}, found ${count}`);
   if (html.split('<details class="factory-correction"').length !== 2) throw new Error('Home correction: a second, closed correction block is on the page');
-  if (html.includes('class="factory-correction" role="note"')) throw new Error('Home correction: the page already carries the built block');
+  if (html.includes(CORRECTION_BLOCK)) throw new Error('Home correction: the page already carries the built block');
   const at = html.indexOf(CORRECTION_SOURCE);
   const { block, label, body } = sourceParts(html, at);
   const seen = new Map();
   for (const m of block.matchAll(/<time datetime="(\d{4}-\d{2}-\d{2})">[^<]+<\/time>/g)) if (!seen.has(m[1])) seen.set(m[1], m[0]);
   if (!seen.size) throw new Error('Home correction: the block carries no dated <time>');
   const when = listed([...seen.keys()].sort().map(day => seen.get(day)));
-  const built = `${CORRECTION_BLOCK}<p class="correction-when">Corrected on ${when}</p><p class="correction-label">${label}</p>${body}</div>`;
+  const heading = `<h3 class="correction-when">${CORRECTION_LEAD}${when}.</h3>`;
+  const built = `${CORRECTION_BLOCK}${heading}<p class="correction-label">${label}</p>${body}</div>`;
   const out = html.slice(0, at) + built + html.slice(at + block.length);
   assertCorrectionKept(html, out);
   return out;
@@ -252,21 +299,27 @@ function heroOf(html) {
   return [open.index, elementEnd(html, open.index)];
 }
 
+const escapeRe = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** Throws unless `out` is `html` with only its correction rebuilt: the same bytes outside the block; one built block where
- *  the committed one was, inside the factory hero, with no disclosure left; a dated label, #168's label line and every byte
- *  of its paragraphs, which match the pinned hash. */
+ *  the committed one was, inside the open check section on a shaped page, one noncollapsible notice that dates the correction in plain words;
+ *  #168's label line and every byte of its paragraphs after it, which match the pinned hash. */
 export function assertCorrectionKept(html, out) {
   const was = html.indexOf(CORRECTION_SOURCE), now = out.indexOf(CORRECTION_BLOCK);
   if (was < 0 || now !== was || out.split(CORRECTION_BLOCK).length !== 2) throw new Error('Home correction: the built block is not where the correction was');
-  if (out.includes('class="factory-correction"') && out.split('class="factory-correction"').length !== 2) throw new Error('Home correction: a second correction block is on the page');
+  if (out.split('class="factory-correction').length !== 2) throw new Error('Home correction: a second correction block is on the page');
   const { block, label, body } = sourceParts(html, was);
   const nowEnd = elementEnd(out, now);
   if (out.slice(0, now) !== html.slice(0, was) || out.slice(nowEnd) !== html.slice(was + block.length)) throw new Error('Home correction: the page changed outside the correction');
-  const [heroStart, heroEnd] = heroOf(out);
-  if (!(heroStart < now && nowEnd < heroEnd)) throw new Error('Home correction: the block is not inside the factory hero');
+  const [sectionStart, sectionEnd] = out.includes(` id="${CHECK_ID}"`) ? (() => {
+    const open = new RegExp(`<section\\b[^>]*\\sid="${CHECK_ID}"[^>]*>`).exec(out);
+    if (!open) throw new Error('Home correction: the page has no check section');
+    return [open.index, elementEnd(out, open.index)];
+  })() : heroOf(out);
+  if (!(sectionStart < now && nowEnd < sectionEnd)) throw new Error('Home correction: the block is not inside the visible check section');
   const after = out.slice(now, nowEnd);
-  if (/<details|<summary/.test(after)) throw new Error('Home correction: the block can be closed');
-  const dated = /^<div class="factory-correction" role="note"><p class="correction-when">Corrected on (?:<time datetime="\d{4}-\d{2}-\d{2}">[^<]+<\/time>(?:, | and )?)+<\/p><p class="correction-label">/.exec(after);
-  if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</div>`) throw new Error('Home correction: its earlier label or its body changed');
+  if (/<details\b|<summary\b/.test(after)) throw new Error('Home correction: the notice can be closed');
+  const dated = new RegExp(`^${escapeRe(CORRECTION_BLOCK)}<h3 class="correction-when">${escapeRe(CORRECTION_LEAD)}(?:<time datetime="\\d{4}-\\d{2}-\\d{2}">[^<]+</time>(?:, | and )?)+\\.</h3><p class="correction-label">`).exec(after);
+  if (!dated || after.slice(dated[0].length) !== `${label}</p>${body}</div>`) throw new Error('Home correction: its dated heading, its earlier label or its body changed');
   if (createHash('sha256').update(body).digest('hex') !== CORRECTION_PARAGRAPHS_SHA256) throw new Error('Home correction: its paragraphs differ from the text #168 published');
 }

@@ -15,25 +15,65 @@
 // pass may run on the number-provenance pages (scripts/number-provenance.mjs PAGES) too.
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { parse } from './html-source-tree.mjs';
+import { decode } from './lab-kit.mjs';
 
 /** The site's own origin: the only prefix besides a run of ../ that a header may use (the 404 page's absolute links). */
 export const SITE_ORIGIN = 'https://odin-labs-ai.github.io/odin-rnd/';
 
+// Read the rendered HTML tree while retaining source offsets for byte-for-byte replacement. The source tokenizer keeps
+// comments separate and template contents inert, and decodes actual attributes instead of finding href in title/data-href.
+const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
+const hasAttr = (node, name) => node.attrs?.some(item => item.name === name) ?? false;
+const hasClass = (node, name) => (attr(node, 'class') ?? '').split(/\s+/).includes(name);
+const elements = (root, tag) => {
+  const found = [];
+  const visit = node => {
+    if (node.tagName === 'template') return;
+    if (node.tagName === tag) found.push(node);
+    for (const child of node.childNodes ?? []) visit(child);
+  };
+  visit(root);
+  return found;
+};
+// A static source pass cannot compute CSS. Inline style on this visibility path is therefore refused, including
+// declarations with comments such as `display: none /* ... */` that a simple declaration match would miss.
+const hidden = node => node.tagName === 'datalist' || (node.tagName === 'details' || node.tagName === 'dialog') && !hasAttr(node, 'open') || hasAttr(node, 'popover') || hasAttr(node, 'hidden') || hasAttr(node, 'inert') || hasAttr(node, 'style') || attr(node, 'aria-hidden') === 'true' || (attr(node, 'class') ?? '').split(/\s+/).some(name => name === 'sr-only' || name === 'hidden');
+const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
+const hasHandler = node => (node.attrs ?? []).some(item => item.name.startsWith('on'));
+const handlerWithin = node => hasHandler(node) || (node.childNodes ?? []).some(handlerWithin);
+const handlerOnPath = node => {
+  for (let at = node; at; at = at.parentNode) {
+    if (hasHandler(at)) return true;
+  }
+  return false;
+};
+const skippedByTab = node => {
+  const value = attr(node, 'tabindex');
+  return value !== undefined && Number.parseInt(value, 10) < 0;
+};
+const textOf = (node, visible = false) => node.nodeName === '#text' ? decode(node.value) : node.tagName === 'template' || node.tagName === 'script' || node.tagName === 'datalist' || (visible && hidden(node)) ? '' : (node.childNodes ?? []).map(child => textOf(child, visible)).join('');
+const source = (html, node) => {
+  const { startOffset, endOffset } = node.sourceCodeLocation ?? {};
+  if (!Number.isInteger(startOffset) || !Number.isInteger(endOffset)) throw new Error('A parsed site element has no source location');
+  return html.slice(startOffset, endOffset);
+};
+
 /**
- * The canonical destinations, in the order of the newest header (labs/, the home): Factory, Experiments, Labs, Updates,
- * Field notes, Work with us, Partners. Find is not here: scripts/site-chrome.mjs appends it last. `path` is relative to
- * the site root. "Experiments" and "Field notes" lead to their own index pages (experiments/ with every experiment,
- * journal/ with every note), no longer to sections of the home.
+ * The canonical destinations, in plain words (plain-language home, 2026-11-16; the founder found the site "too
+ * technical" and "hard to navigate"): Start here, Findings, Labs, All results, Notes & updates, How we test, Work with
+ * us. Find is not here: scripts/site-chrome.mjs appends it last. `path` is relative to the site root. `label` is the
+ * text a reader sees; it is written HTML-escaped (labelHtml). Partners left the header for the footer (FOOTER_LINKS).
  */
 export const DESTINATIONS = Object.freeze([
-  { key: 'factory', label: 'Factory', path: '#floor' },
-  { key: 'experiments', label: 'Experiments', path: 'experiments/' },
+  { key: 'start', label: 'Start here', path: 'one-pager/' },
+  { key: 'findings', label: 'Findings', path: '#findings' },
   { key: 'labs', label: 'Labs', path: 'labs/' },
-  { key: 'updates', label: 'Updates', path: 'updates/' },
-  { key: 'notes', label: 'Field notes', path: 'journal/' },
+  { key: 'experiments', label: 'All results', path: 'experiments/' },
+  { key: 'notes', label: 'Notes & updates', path: 'journal/' },
+  { key: 'methods', label: 'How we test', path: 'methods/' },
   // data-contact-opened: site/assets/activity.mjs counts a click on it as contact_opened.
   { key: 'work', label: 'Work with us', path: 'work-with-us/', attrs: ' data-contact-opened' },
-  { key: 'partners', label: 'Partners', path: 'partners/' },
 ]);
 
 /**
@@ -43,12 +83,28 @@ export const DESTINATIONS = Object.freeze([
  * href leads anywhere else stops the build: that link would be a destination this table does not account for.
  */
 export const RETIRED_LABELS = new Map([
-  ['The floor', { target: '#floor', to: 'factory', reason: 'renamed: the same home section (#floor) is the "Factory" link' }],
-  ['Open source', { target: '#projects', to: null, reason: 'the home tools list (#projects) keeps no header link; every tool page is listed on projects/, which the tool pages\' breadcrumbs, the Field notes page and Find lead to, and the home still has the list' }],
+  ['The floor', { target: '#floor', to: null, reason: '#floor is still the top of the home (its hero), which the brand link leads to, and the factory drawing sits under what we found (#how-we-check); the header now leads to what we found (#findings) and to how we test (methods/)' }],
+  ['Open source', { target: '#projects', to: null, reason: 'the home tools list (#projects) keeps no header link; every tool page is listed on projects/, which the tool pages\' breadcrumbs, the notes page, the home\'s Go further list and Find lead to, and the home still has the list' }],
+  // Plain-language home, 2026-11-16 (founder: "too technical / jargon", "hard to navigate").
+  ['Factory', { target: '#floor', to: null, reason: '"Factory" hid what the lab found; #floor is still the top of the home (its hero), which the brand link leads to, the factory drawing sits under what we found (#how-we-check), and the header now leads to what we found (#findings) and to how we test (methods/)' }],
+  // Older pages led "Experiments" to the home's list (#experiments); it has led to experiments/ since wave 3.
+  ['Experiments', { target: ['experiments/', '#experiments'], to: 'experiments', reason: 'renamed "All results": the same experiments page, with every experiment and where it stands' }],
+  // Older pages led "Field notes" to the home's notes (#journal); it has led to journal/ since wave 3.
+  ['Field notes', { target: ['journal/', '#journal'], to: 'notes', reason: 'renamed "Notes & updates": the same notes page, which links the updates feed' }],
+  ['Updates', { target: 'updates/', to: 'notes', reason: 'folded into "Notes & updates" (journal/), so two dated feeds no longer sit side by side in the header; updates/ stays live at the same address, linked from the notes page and the home\'s latest updates' }],
+  ['Partners', { target: 'partners/', to: null, reason: 'moved to the site footer of every page (FOOTER_LINKS); partners/ stays at the same address and is still linked from Work with us and the home\'s offer' }],
 ]);
+
+/** A retired label's old targets as a list: a label may have led to a home section on old pages and to a page later. */
+export const retiredTargets = retired => [].concat(retired.target);
 
 /** Labels a nav may carry before this pass: the canonical ones, the retired ones, and Find. Anything else stops the build. */
 export const KNOWN_LABELS = new Set([...DESTINATIONS.map(d => d.label), ...RETIRED_LABELS.keys(), 'Find']);
+
+/** A label as HTML: & is the only character the labels need escaped. */
+export const labelHtml = label => label.replaceAll('&', '&amp;');
+/** A link's text as a reader sees it. */
+const labelText = html => html.replaceAll('&amp;', '&');
 
 /** Pages left as they are, each with its reason. */
 export const HEADER_EXEMPT = new Map();
@@ -60,14 +116,17 @@ const FIND = /^<a href="[^"]*find\/"(?: aria-current="page")?>Find<\/a>$/;
 /** The section a built page (path relative to dist/, posix) belongs to: a DESTINATIONS key, or null (home, others). */
 export function sectionFor(rel) {
   const path = String(rel).replace(/^\/+/, '');
+  if (/^one-pager\//.test(path)) return 'start';
   if (/^experiments\//.test(path)) return 'experiments';
-  // A record page (scripts/site-records.mjs) shows an experiment's published record: it belongs to Experiments.
+  // A record page (scripts/site-records.mjs) shows an experiment's published record: it belongs to All results.
   if (/^records\//.test(path)) return 'experiments';
   if (/^labs\//.test(path)) return 'labs';
-  if (/^updates\//.test(path)) return 'updates';
+  // updates/ is its own page; the header's Notes link leads to journal/.
+  if (/^updates\//.test(path)) return null;
   if (/^journal\//.test(path)) return 'notes';
+  if (/^methods\//.test(path)) return 'methods';
   if (/^work-with-us\//.test(path)) return 'work';
-  if (/^partners\//.test(path)) return 'partners';
+  // partners/ has no header link since 2026-11-16 (it is in the footer), so no header link is marked there.
   return null;
 }
 
@@ -77,36 +136,40 @@ function checkPrefix(relPrefix) {
 }
 
 /** The canonical <nav> for a page whose way to the site root is `relPrefix`, `current` marked aria-current="page". */
-export function canonicalNav(relPrefix, current = null) {
+export function canonicalNav(relPrefix, current = null, { currentPage = true } = {}) {
   checkPrefix(relPrefix);
   if (current !== null && !DESTINATIONS.some(d => d.key === current)) throw new Error(`Unknown header section "${current}"`);
-  const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? ' aria-current="page"' : ''}>${d.label}</a>`).join('');
+  const links = DESTINATIONS.map(d => `<a href="${relPrefix}${d.path}"${d.attrs ?? ''}${d.key === current ? currentPage ? ' aria-current="page"' : ' data-current-section' : ''}>${labelHtml(d.label)}</a>`).join('');
   return `${NAV_OPEN}${links}</nav>`;
 }
 
 /** The whole site header for a page rendered from code (the section index pages), with the canonical nav. */
-export function canonicalHeader(relPrefix, current = null) {
+export function canonicalHeader(relPrefix, current = null, options = {}) {
   return `<header class="site-header dark-surface">
     <a href="${relPrefix || './'}" class="wordmark" aria-label="Odin Labs R&amp;D home"><img src="${relPrefix}assets/odin-logo.svg" width="36" height="40" alt=""><span class="brand-name">Odin<strong>Labs</strong></span><span class="brand-rnd">R&amp;D</span></a>
-    ${canonicalNav(relPrefix, current)}
+    ${canonicalNav(relPrefix, current, options)}
     <a class="source-link" href="https://github.com/odin-labs-ai/odin-rnd">View source <span aria-hidden="true">↗</span></a>
   </header>`;
 }
 
 /** The nav span of the single site header: its offsets in `html`. Throws unless there is exactly one of each. */
 export function navSpan(html, label = 'page') {
-  const opens = html.match(/<header class="site-header[ "]/g) || [];
-  if (opens.length !== 1) throw new Error(`Expected exactly one site header in ${label}, found ${opens.length}`);
-  const start = html.search(/<header class="site-header[ "]/);
-  const end = html.indexOf('</header>', start);
-  if (end < 0) throw new Error(`Unclosed site header in ${label}`);
-  const header = html.slice(start, end);
-  const navs = header.match(/<nav\b/g) || [];
+  const document = parse(html, { sourceCodeLocationInfo: true });
+  const headers = elements(document, 'header').filter(node => hasClass(node, 'site-header'));
+  if (headers.length !== 1) throw new Error(`Expected exactly one site header in ${label}, found ${headers.length}`);
+  const header = headers[0];
+  if (!header.sourceCodeLocation?.endTag) throw new Error(`Unclosed site header in ${label}`);
+  const navs = elements(header, 'nav');
   if (navs.length !== 1) throw new Error(`Expected exactly one navigation in the site header of ${label}, found ${navs.length}`);
-  const navStart = start + header.search(/<nav\b/);
-  const close = html.indexOf('</nav>', navStart);
-  if (close < 0 || close > end) throw new Error(`Unclosed header navigation in ${label}`);
-  return { start: navStart, end: close + '</nav>'.length };
+  const nav = navs[0];
+  if (!nav.sourceCodeLocation?.endTag) throw new Error(`Unclosed header navigation in ${label}`);
+  return { start: nav.sourceCodeLocation.startOffset, end: nav.sourceCodeLocation.endOffset, node: nav, document };
+}
+
+function refuseUnexpectedBases(document, label) {
+  const bases = elements(document, 'base');
+  const inDocumentHead = base => base.parentNode?.tagName === 'head' && base.parentNode.parentNode?.tagName === 'html' && base.parentNode.parentNode.parentNode === document;
+  if (bases.length && (label !== '404.html' || bases.length !== 1 || !inDocumentHead(bases[0]) || attr(bases[0], 'href') !== SITE_ORIGIN || hasAttr(bases[0], 'target'))) throw new Error(`Unexpected document base in ${label}`);
 }
 
 /**
@@ -116,23 +179,46 @@ export function navSpan(html, label = 'page') {
  */
 export function normaliseHeader(html, { relPrefix, current = null, label = 'page' } = {}) {
   checkPrefix(relPrefix);
-  const { start, end } = navSpan(html, label);
+  const { start, end, node, document } = navSpan(html, label);
+  refuseUnexpectedBases(document, label);
+  const bases = elements(document, 'base');
+  if (bases.some(base => base.sourceCodeLocation?.startOffset >= start && base.sourceCodeLocation?.endOffset <= end)) throw new Error(`Document base in replaced navigation of ${label}`);
   const nav = html.slice(start, end);
   if (!nav.startsWith(NAV_OPEN)) throw new Error(`The header navigation of ${label} is not "${NAV_OPEN}"`);
-  const links = [...nav.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)];
-  const rest = nav.slice(NAV_OPEN.length, -'</nav>'.length).replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
-  if (rest.trim()) throw new Error(`The header navigation of ${label} holds more than links: "${rest.trim().slice(0, 60)}"`);
-  for (const [whole, text] of links) {
+  const links = [];
+  for (const child of node.childNodes ?? []) {
+    if (child.nodeName === '#text' && !child.value.trim()) continue;
+    if (child.tagName !== 'a' || !child.sourceCodeLocation?.endTag) throw new Error(`The header navigation of ${label} holds more than links`);
+    if (elements(child, 'a').length !== 1) throw new Error(`The header navigation of ${label} has a nested anchor that this pass would discard`);
+    if ((child.childNodes ?? []).some(node => node.tagName)) throw new Error(`The header navigation of ${label} has child markup that this pass would discard`);
+    links.push([source(html, child), textOf(child), child]);
+  }
+  for (const [whole, text, anchor] of links) {
     if (!KNOWN_LABELS.has(text)) throw new Error(`The header navigation of ${label} has a link "${text}" this pass does not know; add it to DESTINATIONS or RETIRED_LABELS`);
     const retired = RETIRED_LABELS.get(text);
-    const href = whole.match(/\bhref="([^"]*)"/)?.[1] ?? '';
-    if (retired && !href.endsWith(retired.target)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retired.target} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
+    const href = attr(anchor, 'href') ?? '';
+    // A 404 page may be served at any missing nested URL. Without its permitted base, only an absolute site link
+    // has the same destination there as it has when checked at the build filename.
+    if (label === '404.html' && bases.length === 0 && !href.startsWith(SITE_ORIGIN)) throw new Error(`The header navigation of 404.html has a relative "${text}" link without its permitted base`);
+    // Resolve from this page. A suffix alone can conceal journal/partners/ behind a link written as "partners/".
+    const actual = new URL(href, label === 'index.html' || (label === '404.html' && bases.length === 1) ? SITE_ORIGIN : new URL(label, SITE_ORIGIN)).href;
+    const canonical = DESTINATIONS.find(destination => destination.label === text);
+    if (canonical && actual !== new URL(canonical.path, SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${canonical.path} as DESTINATIONS records; this pass would drop a destination it does not account for`);
+    if (text === 'Find' && actual !== new URL('find/', SITE_ORIGIN).href) throw new Error(`The header navigation of ${label} has "Find" leading to "${href}", not the site Find page`);
+    if (retired && href === './' && !retiredTargets(retired).some(target => label === `${target}index.html`)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
+    if (retired && !retiredTargets(retired).some(target => actual === new URL(target, SITE_ORIGIN).href)) throw new Error(`The header navigation of ${label} has "${text}" leading to "${href}", not ${retiredTargets(retired).join(' or ')} as RETIRED_LABELS records; this pass would drop a destination it does not account for`);
   }
   const finds = links.filter(([whole]) => FIND.test(whole)).map(([whole]) => whole);
   if (links.some(([, text]) => text === 'Find') && finds.length !== links.filter(([, text]) => text === 'Find').length) throw new Error(`A Find link in ${label} is not of the form <a href="...find/">Find</a>`);
   if (finds.length > 1) throw new Error(`The header navigation of ${label} has ${finds.length} Find links`);
-  const canonical = canonicalNav(relPrefix, current);
-  const next = finds.length ? canonical.replace('</nav>', `${finds[0]}</nav>`) : canonical;
+  // The committed nav templates use only these attributes. Any other attribute could be an inbound target or behavior
+  // that replacing the whole anchor would silently discard.
+  const knownAttributes = new Set(['href', 'aria-current', 'data-current-section', 'data-contact-opened']);
+  if (links.some(([, , anchor]) => (anchor.attrs ?? []).some(item => !knownAttributes.has(item.name)))) throw new Error(`The header navigation of ${label} has an anchor attribute that this pass would discard`);
+  const destination = DESTINATIONS.find(item => item.key === current);
+  const canonical = canonicalNav(relPrefix, current, { currentPage: !!destination && label === `${destination.path}index.html` });
+  const find = label === '404.html' && finds.length ? finds[0].replace(/^<a href="[^"]*"/, `<a href="${new URL('find/', SITE_ORIGIN).href}"`) : finds[0];
+  const next = finds.length ? canonical.replace('</nav>', `${find}</nav>`) : canonical;
   if (/\d/.test(next)) throw new Error(`The header navigation of ${label} would carry a digit`);
   return html.slice(0, start) + next + html.slice(end);
 }
@@ -153,8 +239,87 @@ export function normaliseHeaders({ distDir }) {
     if (HEADER_EXEMPT.has(rel)) { counts.exempt++; continue; }
     const relPrefix = rel === '404.html' ? SITE_ORIGIN : '../'.repeat(rel.split('/').length - 1);
     const source = readFileSync(file, 'utf8');
-    const html = normaliseHeader(source, { relPrefix, current: sectionFor(rel), label: rel });
+    refuseUnsupportedFooterSource(source);
+    const originalFooters = elements(parse(source), 'footer').filter(node => hasClass(node, 'site-footer'));
+    if (originalFooters.length !== 1) throw new Error(`Expected exactly one original site footer in ${rel}, found ${originalFooters.length}`);
+    const html = addFooterLinks(normaliseHeader(source, { relPrefix, current: sectionFor(rel), label: rel }), { relPrefix, label: rel });
     if (html !== source) { writeFileSync(file, html); counts.changed++; }
   }
   return counts;
+}
+
+/**
+ * Links that left the header for the site footer (plain-language home, 2026-11-16): Partners. Each is added once to the
+ * link group of the page's site footer (its first <div>, or before </footer> when it has none), relative to the page.
+ * A page with no site footer stops the build; one with more than one does too. No label or path holds a digit, so
+ * the number-provenance pages may carry it. Idempotent.
+ */
+export const FOOTER_LINKS = Object.freeze([{ label: 'Partners', path: 'partners/' }]);
+
+function refuseUnsupportedFooterSource(html) {
+  // Run before navigation normalization can discard a hazardous attribute from the original page.
+  if (html.includes('<![CDATA[')) throw new Error('Unsupported HTML CDATA section');
+  if (/<\/(?:script|style|textarea|title|xmp|iframe|noembed|noframes|noscript)(?=[\s/])/i.test(html)) throw new Error('Unsupported raw HTML end tag with attributes');
+}
+
+// The committed templates and all built pages have this one-line footer shape. Five built pages put one known JSON
+// data script after it. Pin that tail before using source offsets: unsupported HTML elsewhere cannot impersonate it.
+function knownFooterTail(html, label, document) {
+  const open = '<footer class="site-footer">';
+  const close = '</footer>';
+  const start = html.indexOf(open);
+  const end = html.indexOf(close, start + open.length);
+  const footer = html.slice(start, end + close.length);
+  const suffix = html.slice(end + close.length);
+  const trailerOpen = /^\s*<script type="application\/json" id="(?:station-data|experiment-data|witness-data)">/.exec(suffix);
+  const trailerAt = trailerOpen ? end + close.length + trailerOpen[0].indexOf('<script') : -1;
+  const trailer = trailerOpen ? elements(document, 'script').find(node => node.sourceCodeLocation?.startOffset === trailerAt) : null;
+  // A permitted data script ends at its first real parsed end tag. Nothing except whitespace and document closing
+  // tags may follow it, so a second script cannot make a wildcard swallow an intervening visible element.
+  const afterTrailer = trailerOpen && trailer?.sourceCodeLocation?.endTag ? html.slice(trailer.sourceCodeLocation.endOffset) : suffix;
+  if (start < 0 || end < 0 || html.indexOf(open, start + 1) >= 0 || html.indexOf(close, end + 1) >= 0
+    || /[\r\n]/.test(footer) || footer.split('<div>').length !== 2 || footer.split('</div>').length !== 2
+    || (trailerOpen && !trailer?.sourceCodeLocation?.endTag)
+    || !/^\s*<\/body>\s*<\/html>\s*$/.test(afterTrailer)) {
+    throw new Error(`Unexpected site footer shape in ${label}`);
+  }
+  return { start, end: end + close.length };
+}
+
+export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
+  checkPrefix(relPrefix);
+  refuseUnsupportedFooterSource(html);
+  const document = parse(html, { sourceCodeLocationInfo: true });
+  refuseUnexpectedBases(document, label);
+  const tail = label === 'page' ? null : knownFooterTail(html, label, document);
+  const footers = elements(document, 'footer').filter(node => hasClass(node, 'site-footer'));
+  if (footers.length !== 1 || hiddenWithin(footers[0])) throw new Error(`Expected exactly one site footer in ${label}, found ${footers.length === 1 ? 0 : footers.length}`);
+  const footer = footers[0];
+  const end = footer.sourceCodeLocation?.endTag?.startOffset;
+  if (!Number.isInteger(end)) throw new Error(`Unclosed site footer in ${label}`);
+  if (tail && (footer.sourceCodeLocation.startOffset !== tail.start || footer.sourceCodeLocation.endOffset !== tail.end)) throw new Error(`Unexpected site footer shape in ${label}`);
+  const anchors = elements(footer, 'a');
+  const missing = FOOTER_LINKS.filter(link => {
+    if (anchors.some(anchor => attr(anchor, 'href') === `${relPrefix}${link.path}` && textOf(anchor, true).trim() !== link.label)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    const named = anchors.filter(anchor => textOf(anchor).trim() === link.label || textOf(anchor, true).trim() === link.label);
+    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || handlerOnPath(named[0].parentNode) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    return named.length === 0;
+  });
+  if (!missing.length) return html;
+  const links = missing.map(l => `<a href="${relPrefix}${l.path}">${labelHtml(l.label)}</a>`).join('');
+  const groups = elements(footer, 'div').filter(node => {
+    if (hiddenWithin(node)) return false;
+    for (let at = node.parentNode; at && at !== footer; at = at.parentNode) if (at.tagName === 'a') return false;
+    return true;
+  });
+  if (groups.length !== 1) throw new Error(`The site footer of ${label} has no unique Partners insertion group`);
+  const div = groups[0];
+  const at = div.sourceCodeLocation?.endTag?.startOffset;
+  if (!Number.isInteger(at) || (div.childNodes ?? []).some(child => {
+    if (child.nodeName === '#comment') return false;
+    if (child.nodeName === '#text') return child.value.trim() !== '';
+    return child.tagName !== 'a' || !child.sourceCodeLocation?.endTag || child.sourceCodeLocation.endOffset > at;
+  })) throw new Error(`The site footer of ${label} has an invalid Partners insertion group`);
+  if (handlerOnPath(div)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
+  return html.slice(0, at) + links + html.slice(at);
 }

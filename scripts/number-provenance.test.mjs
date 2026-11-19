@@ -269,7 +269,7 @@ test('the home proof strip is checked on its own, and fails closed', () => {
   assert.match(checkHomeProof(strip(`<li>Caught ${home}, saving 40 percent.</li>`), io).join('\n'), /unsourced digit/);
   assert.match(checkHomeProof(strip('<li>Every number links to its record.</li>'), io).join('\n'), /no sourced number/);
   assert.match(checkHomeProof(strip(HOME_PROOF.marker), io).join('\n'), /never placed/);
-  assert.match(checkHomeProof('<html><body><p>no strip</p></body></html>', io).join('\n'), /no section with id="lab"/);
+  assert.match(checkHomeProof('<html><body><p>no strip</p></body></html>', io).join('\n'), /no section with id="findings"/);
   assert.equal(sectionById('<section id="a"><p>x</p></section><section id="lab"><p>y</p></section>', 'lab'), '<section id="lab"><p>y</p></section>');
   // A nested section does not cut the strip short: digits after it are still inside the checked section.
   assert.equal(sectionById('<section id="lab"><section><p>a</p></section><p>99</p></section><p>z</p>', 'lab'), '<section id="lab"><section><p>a</p></section><p>99</p></section>');
@@ -286,9 +286,9 @@ test('checkSite checks the home proof strip by default, for any page list', () =
   writeFileSync(join(dist, 'evidence/index.html'), page('<p>none</p>'));
   const run = home => { writeFileSync(join(dist, 'index.html'), home); return checkSite(dist, [...['evidence/index.html']]).join('\n'); };
   try {
-    assert.match(run('<html><body><p>no strip</p></body></html>'), /no section with id="lab"/);
-    assert.match(run(`<html><body><section id="lab">${HOME_PROOF.marker}</section></body></html>`), /never placed/);
-    assert.match(run('<html><body><section id="lab"><p>Saved 40 percent.</p></section></body></html>'), /no sourced number/);
+    assert.match(run('<html><body><p>no strip</p></body></html>'), /no section with id="findings"/);
+    assert.match(run(`<html><body><section id="findings">${HOME_PROOF.marker}</section></body></html>`), /never placed/);
+    assert.match(run('<html><body><section id="findings"><p>Saved 40 percent.</p></section></body></html>'), /no sourced number/);
     rmSync(join(dist, 'index.html'));
     assert.match(checkSite(dist, ['evidence/index.html']).join('\n'), /the home page is not in the build/);
     assert.deepEqual(checkSite(dist, ['evidence/index.html'], '.', { home: false }), []);

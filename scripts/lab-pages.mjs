@@ -8,6 +8,7 @@
 // build. The page configuration files (site/data/provider-economics.json, site/data/evidence.json) hold words and
 // JSON pointers, never a number that is shown.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { format, NUMBER_WORDS, quoteProblem, recordProblem, resolvePointer, SOURCE_FILE } from './number-provenance.mjs';
 import { displayNames, PROBE } from './broker-probe.mjs';
@@ -32,6 +33,7 @@ export function siteReader(root = 'site', repoRoot = join(root, '..')) {
   // The same record check the build gate runs: a number comes only from a measured experiment record.
   read.recordProblem = path => { const full = join(root, path); return existsSync(full) ? recordProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
   read.quoteProblem = path => { const full = join(root, path); return existsSync(full) ? quoteProblem(path, readFileSync(full, 'utf8'), repoRoot) : `${path} does not exist`; };
+  read.raw = path => { const full = join(root, path); return existsSync(full) ? readFileSync(full) : null; };
   return read;
 }
 
@@ -211,6 +213,34 @@ export const ASSERTS = {
     }
     return null;
   },
+  // Brokers by letter (lab-proof.json, plain-language home 2026-11-16): in every arm, exactly the brokers `atList` and
+  // `above` were measured; each in `atList` billed list price (median and whole range 1), and `above` billed above it on
+  // every priced call. "Broker A and Broker C charged the list price; Broker B charged more" stays true or stops the build.
+  'billed-above-list': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const arms = resolvePointer(read(path), pointer);
+    if (!arms || typeof arms !== 'object' || !Object.keys(arms).length) return 'no arms';
+    const want = [...a.atList, a.above].sort();
+    for (const [arm, x] of Object.entries(arms)) {
+      const brokers = x.perBroker ?? {};
+      if (JSON.stringify(Object.keys(brokers).sort()) !== JSON.stringify(want)) return `${arm}: the brokers are ${Object.keys(brokers).join(', ')}, not ${want.join(', ')}`;
+      for (const b of a.atList) { const v = brokers[b]; if (v.billedToListMedian !== 1 || !Array.isArray(v.billedToListRange) || v.billedToListRange.length !== 2 || v.billedToListRange[0] !== 1 || v.billedToListRange[1] !== 1) return `${arm}/${b}: did not bill list price on every priced call`; }
+      const v = brokers[a.above];
+      const range = v?.billedToListRange;
+      if (!Array.isArray(range) || range.length !== 2 || !Number.isFinite(v?.billedToListMedian) || !range.every(Number.isFinite)
+        || !(1 < range[0] && range[0] <= v.billedToListMedian && v.billedToListMedian <= range[1])) return `${arm}/${a.above}: did not bill above list price on every priced call`;
+    }
+    return null;
+  },
+  // The same value at `path` in every entry of an object or list ("a spread of X on each model").
+  'equal-across': (read, a) => {
+    const [path, pointer = ''] = a.source.split('#');
+    const at = resolvePointer(read(path), pointer);
+    const list = at && typeof at === 'object' ? Object.values(at) : [];
+    if (list.length < 2) return 'fewer than two entries to compare';
+    const values = list.map(x => a.path.reduce((v, k) => v?.[k], x));
+    return values.every(Number.isFinite) && values.every(v => v === values[0]) ? null : `${a.path.join('/')} differs or is not finite: ${values.join(', ')}`;
+  },
   'intervals-overlap': (read, a) => {
     const [path, pointer = ''] = a.source.split('#');
     const ivs = resolvePointer(read(path), pointer).map(x => x[a.field]);
@@ -220,7 +250,9 @@ export const ASSERTS = {
 };
 
 /** Sourced claims as list items: each claim's asserts are checked, its numbers read from and linked to its record. */
-export function renderClaims(read, list, up = '../') {
+/** `plain` (the home page only): the dated line reads "Read the result · the record" instead of the record's path in <code>;
+ *  it still links the same note and record, and the dated line stays beside the claim. */
+export function renderClaims(read, list, up = '../', { plain = false, plans = false } = {}) {
   return list.map(c => {
     const [path] = (c.record ?? '').split('#');
     if (!SOURCE_FILE.test(path) || read(path) === null) throw new Error(`claim ${c.id}: record '${c.record}' is not a published experiment record`);
@@ -229,7 +261,10 @@ export function renderClaims(read, list, up = '../') {
       const why = check ? check(read, a) : `unknown assertion '${a.kind}'`;
       if (why) throw new Error(`claim ${c.id}: ${a.kind}: ${why}`);
     }
-    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p><p class="lab-source">${claimWindow(read, c.window)} Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}.</p></li>`;
+    if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
+    const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
+    const plan = plans ? ` · <a href="${up}${escape(path.replace(/results\.json$/, 'preregistration.json'))}">the written plan</a>` : '';
+    return `<li id="${escape(c.id)}"><p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}${plan}.</p></li>`;
   }).join('');
 }
 
@@ -307,11 +342,37 @@ export function renderProviderBrief(read) {
  * claims from data/lab-proof.json, rendered by the evidence page's machinery, so the two never drift. `up` is '' on the
  * home page and '../' on a page one folder down. Like the brief, a claim may not read a record without a decided result.
  */
-export function renderLabProof(read, up = '../') {
+export function renderLabProof(read, up = '../', { plain = false } = {}) {
   const config = read(PAGES['one-pager'].config);
   const problems = briefProblems(config);
   if (problems.length) throw new Error(`site/${PAGES['one-pager'].config} is refused:\n${problems.join('\n')}`);
-  return renderClaims(read, config.claims, up);
+  // Every finding on the home and the lab on a page carries its limit (plain-language home, 2026-11-16).
+  const bare = config.claims.filter(c => typeof c.limit !== 'string' || !c.limit.trim()).map(c => c.id);
+  if (bare.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${bare.join(', ')} has no limit`);
+  // Each finding links a real written plan. A key name or a null/status value is not evidence of one.
+  const unplanned = config.claims.filter(c => {
+    const path = c.record.split('#')[0];
+    const record = read(path);
+    const planPath = path.replace(/results\.json$/, 'preregistration.json');
+    const slug = /data\/([^/]+)\/results\.json$/.exec(path)?.[1];
+    const pointer = record?.preregistration;
+    const pinned = record?.preregistrationSha256;
+    const raw = read.raw?.(planPath);
+    const plan = read(planPath);
+    const planValid = plan?.schemaVersion === 1 && plan.kind === 'odin-rnd.preregistration'
+      && plan.experiment?.slug === slug && /^EXP \d{3}$/.test(plan.experiment?.id ?? '')
+      && plan.experiment?.status === 'pre-registered'
+      && typeof plan.experiment?.title === 'string' && !!plan.experiment.title.trim()
+      && typeof plan.question === 'string' && !!plan.question.trim();
+    const frozenValid = read.quoteProblem?.(planPath) === null;
+    const hasPointer = Object.hasOwn(record ?? {}, 'preregistration');
+    const hasPin = Object.hasOwn(record ?? {}, 'preregistrationSha256');
+    const pointerValid = !hasPointer || pointer === `experiments/${slug}/preregistration.json`;
+    const pinValid = !hasPin || (typeof pinned === 'string' && /^[a-f0-9]{64}$/.test(pinned) && raw && createHash('sha256').update(raw).digest('hex') === pinned);
+    return !slug || (!hasPointer && !hasPin) || !pointerValid || !pinValid || !planValid || !frozenValid;
+  }).map(c => c.id);
+  if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} has no linked pre-registration document`);
+  return renderClaims(read, config.claims, up, { plain, plans: true });
 }
 
 /**
@@ -357,7 +418,7 @@ export const HOME_MARKER = '<!--LAB_PROOF-->';
 export function placeHomeProof(html, read = siteReader()) {
   const parts = html.split(HOME_MARKER);
   if (parts.length !== 2) throw new Error(`site/index.html must hold ${HOME_MARKER} exactly once`);
-  return parts.join(renderLabProof(read, ''));
+  return parts.join(renderLabProof(read, '', { plain: true }));
 }
 
 /** Render the lab pages into `dist` from the templates in `root` (site/). Returns {page: html}. */
