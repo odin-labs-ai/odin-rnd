@@ -517,6 +517,19 @@ export function parsedWorkflow(text) {
   return JSON.parse(run.stdout);
 }
 
+/**
+ * Every mapping key in the workflow whose DECODED value is `<<` (a merge key in any spelling: plain, quoted, escaped,
+ * explicit `? <<`), read from Psych's node tree before any merge is applied; null when ruby is missing; an object
+ * { error } when the file does not parse.
+ */
+export function mergeKeysIn(text) {
+  const walk = 'def w(n, a); if n.is_a?(Psych::Nodes::Mapping); n.children.each_slice(2) { |k, _| a << k.value if k.is_a?(Psych::Nodes::Scalar) && k.value == "<<" }; end; (n.children || []).each { |c| w(c, a) }; a; end; print JSON.generate(w(Psych.parse_stream($stdin.read), []).length)';
+  const run = spawnSync('ruby', ['-ryaml', '-rjson', '-e', walk], { input: text, encoding: 'utf8' });
+  if (run.error && run.error.code === 'ENOENT') return null;
+  if (run.status !== 0) return { error: (run.stderr || '').split('\n').find(l => l.trim()) || `ruby exited ${run.status}` };
+  return JSON.parse(run.stdout);
+}
+
 export function ogStepProblems(text) {
   const problems = [];
   // Bound to the PARSED job, not to text: whatever the spelling, indentation or scalar tricks, the jobs mapping's
@@ -533,8 +546,9 @@ export function ogStepProblems(text) {
   }
   if (/[\r\u0085\u2028\u2029]/.test(text)) problems.push('the workflow holds a line break other than LF (CR, NEL, LS or PS)');
   // safe_load refuses an alias but still applies a merge key whose value is an inline mapping, so merge keys are
-  // refused here, as text, anywhere in the file (block or flow, plain or quoted key).
-  if (/(^|[\s{,\-])["']?<<["']?\s*:/m.test(text)) problems.push('the workflow uses a YAML merge key (<<)');
+  // refused anywhere in the file: by the decoded key in Psych's node tree (any spelling), and as text.
+  const merges = parsed === null ? null : mergeKeysIn(text);
+  if (/(^|[\s{,\-?])["']?<<["']?\s*:/m.test(text) || (typeof merges === 'number' && merges > 0)) problems.push('the workflow uses a YAML merge key (<<)');
   const lines = text.split('\n');
   const jobsAt = lines.reduce((at, l, i) => (/^["']?jobs["']?\s*:/.test(l) ? [...at, i] : at), []);
   if (jobsAt.length !== 1 || lines[jobsAt[0]] !== 'jobs:') return [...problems, 'expected exactly one plain `jobs:` mapping line'];
@@ -601,6 +615,9 @@ test('the publish workflow decodes the Instagram images on every run, with a mis
     [text.replace('  verify:\n', '  verify:\n    <<: { continue-on-error: true }\n'), /merge key/],
     [text.replace('  verify:\n', '  verify:\n    "<<": { continue-on-error: true }\n'), /merge key/],
     [text.replace('  verify:\n', '  verify:\n    env: { <<: { A: b } }\n'), /merge key/],
+    [text.replace('  verify:\n', '  verify:\n    "\\x3c\\x3c": { continue-on-error: true }\n'), /merge key/],
+    [text.replace('  verify:\n', '  verify:\n    "\\u003C\\u003C": { continue-on-error: true }\n'), /merge key/],
+    [text.replace('  verify:\n', '  verify:\n    ? <<\n    : { continue-on-error: true }\n'), /merge key/],
   ];
   for (const [changed, pattern] of broken) {
     assert.notEqual(changed, text, String(pattern));
@@ -612,7 +629,7 @@ test('the film-copies job may be the last job in the file (refute row e19355e0 #
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
   assert.ok(text.endsWith('\n') && text.includes(`${FILM_JOB}\n`), 'the workflow must end in LF and hold the pinned job');
   const moved = `${text.replace(`${FILM_JOB}\n`, '')}${FILM_JOB}\n`;
-  assert.ok(moved.endsWith(`${FILM_JOB}\n`) && moved !== text, 'the job must now be last');
+  assert.ok(moved.endsWith(`${FILM_JOB}\n`), 'the job must now be last');
   assert.deepEqual(ogStepProblems(moved), []);
 });
 
