@@ -86,7 +86,7 @@ const footerDom = `(() => {
     if (!readableForeground(el)) return false;
     for (let node = el; node; node = node.parentElement) {
       const style = getComputedStyle(node);
-      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(style.filter) || style.clipPath !== 'none') return false;
+      if (/\\bopacity\\(0(?:\\.0*)?\\)/.test(style.filter) || style.clipPath !== 'none' || [style.maskImage, style.webkitMaskImage].some(mask => mask && mask !== 'none')) return false;
     }
     return [...el.getClientRects()].some(rect => rect.width > 0 && rect.height > 0);
   };
@@ -151,6 +151,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     `<style>.site-footer a { color: color(srgb 0 0 0 / 0); text-shadow: none }</style>${footer}`,
     `<style>.site-footer a { -webkit-text-fill-color: transparent; text-shadow: none }</style>${footer}`,
     '<footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
+    '<style>.site-footer a span { display: inline-block; mask-image: linear-gradient(transparent, transparent) }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { opacity: 0 }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { clip-path: inset(50%) }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
     '<style>.site-footer a span { display: inline-block; width: 8em; white-space: nowrap; text-indent: 100%; overflow: hidden }</style><footer class="site-footer"><a href="partners/"><span>Partners</span></a></footer>',
@@ -166,7 +167,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
     assert.equal(result[i].downloads, 0, `${page}: Partners navigates without download`);
     assert.equal(result[i].targets, 0, `${page}: Partners navigates the current page`);
   });
-  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, fadedNestedLabel, clippedNestedLabel, overflowNestedLabel, download, frame] = result.slice(pages.length);
+  const [closed, open, popover, template, base, style, scaled, clipped, filtered, transparentText, modernTransparentText, transparentFill, nestedLabel, maskedNestedLabel, fadedNestedLabel, clippedNestedLabel, overflowNestedLabel, download, frame] = result.slice(pages.length);
   assert.equal(closed.footerVisible, false, 'closed dialog hides its footer');
   assert.equal(open.footerVisible, true, 'open dialog shows its footer');
   assert.equal(open.partners.length, 1, 'open dialog shows its link');
@@ -182,6 +183,7 @@ test('Chrome sees one usable Partners footer on every built page and rejects hid
   assert.deepEqual(modernTransparentText.partners, [], 'a color(srgb) transparent Partners label is unreadable');
   assert.deepEqual(transparentFill.partners, [], 'a transparent glyph fill makes the Partners label unreadable');
   assert.deepEqual(nestedLabel.partners, [new URL('partners/', nestedLabel.url).href], 'a visible nested label remains usable');
+  assert.deepEqual(maskedNestedLabel.partners, [], 'a fully masked nested label cannot make the anchor appear usable');
   assert.deepEqual(fadedNestedLabel.partners, [], 'an invisible nested label cannot make the anchor appear usable');
   assert.deepEqual(clippedNestedLabel.partners, [], 'a fully clipped nested label cannot make the anchor appear usable');
   assert.deepEqual(overflowNestedLabel.partners, [], 'text outside a nested overflow clip cannot make the anchor appear usable');

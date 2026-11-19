@@ -42,10 +42,9 @@ const hidden = node => node.tagName === 'datalist' || (node.tagName === 'details
 const hiddenWithin = node => { for (let at = node; at; at = at.parentNode) if (hidden(at)) return true; return false; };
 const hasHandler = node => (node.attrs ?? []).some(item => item.name.startsWith('on'));
 const handlerWithin = node => hasHandler(node) || (node.childNodes ?? []).some(handlerWithin);
-const handlerOnPath = (node, stop) => {
+const handlerOnPath = node => {
   for (let at = node; at; at = at.parentNode) {
     if (hasHandler(at)) return true;
-    if (at === stop) break;
   }
   return false;
 };
@@ -303,7 +302,7 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
   const missing = FOOTER_LINKS.filter(link => {
     if (anchors.some(anchor => attr(anchor, 'href') === `${relPrefix}${link.path}` && textOf(anchor, true).trim() !== link.label)) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     const named = anchors.filter(anchor => textOf(anchor).trim() === link.label || textOf(anchor, true).trim() === link.label);
-    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || handlerOnPath(named[0].parentNode, footer) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
+    if (named.length > 1 || (named.length === 1 && (hiddenWithin(named[0]) || hasAttr(named[0], 'download') || hasAttr(named[0], 'target') || skippedByTab(named[0]) || handlerWithin(named[0]) || handlerOnPath(named[0].parentNode) || textOf(named[0], true).trim() !== link.label || attr(named[0], 'href') !== `${relPrefix}${link.path}`))) throw new Error(`The site footer of ${label} has an invalid ${link.label} link`);
     return named.length === 0;
   });
   if (!missing.length) return html;
@@ -321,6 +320,6 @@ export function addFooterLinks(html, { relPrefix, label = 'page' } = {}) {
     if (child.nodeName === '#text') return child.value.trim() !== '';
     return child.tagName !== 'a' || !child.sourceCodeLocation?.endTag || child.sourceCodeLocation.endOffset > at;
   })) throw new Error(`The site footer of ${label} has an invalid Partners insertion group`);
-  if (handlerOnPath(div, footer)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
+  if (handlerOnPath(div)) throw new Error(`The site footer of ${label} has an invalid Partners insertion site`);
   return html.slice(0, at) + links + html.slice(at);
 }
