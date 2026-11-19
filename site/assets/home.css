@@ -84,6 +84,8 @@
   .factory-svg .station-pick .station-marker text { font-size:28px; }
 }
 @media (max-width:360px) {
+  .home-check .drawing-actions { flex-wrap:wrap; gap:6px; }
+  .home-check .drawing-actions button { padding-inline:8px; gap:5px; }
   .factory-svg .station-pick .station-marker circle { r:28px; }
   .factory-svg .station-pick .station-marker text { font-size:32px; }
 }
