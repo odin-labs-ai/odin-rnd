@@ -156,9 +156,9 @@ test('the built home reads plain where a visitor starts, plain first: header, he
     assert.ok(stripTags(html).trim(), `${name}: found on the built home`);
     assert.deepEqual(bannedIn(readable(html)), [], `${name}: say it plainly (PLAN B2/B3), or move the term to a detail page`);
   }
-  // Plain first (founder, on the PR 1 screenshot): who we are, then what we've found, and only then the drawing.
-  const order = [parts['hero premise'], parts['what we found'], parts['how we check intro'], parts['drawing toolbar']].map(part => home.indexOf(part));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, what we found, how we check, the drawing: ${order.join(', ')}`);
+  // The entrance leads with a result. The interactive drawing follows Tools, before the findings.
+  const order = [parts['hero premise'], parts['how we check intro'], parts['drawing toolbar'], parts['what we found']].map(part => home.indexOf(part));
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, factory introduction, drawing, findings: ${order.join(', ')}`);
   assert.ok(home.indexOf(parts['correction summary']) < home.indexOf(parts['what we found']), 'the dated correction summary stays in the hero, by the headline');
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
