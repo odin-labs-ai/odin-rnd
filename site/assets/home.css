@@ -123,6 +123,8 @@
   flex-wrap:wrap; gap:8px 24px; margin-bottom:20px;
 }
 #projects .section-heading h2 { font-size:clamp(32px,3.4vw,52px); line-height:1.1; }
+#projects .tool-directory-links { display:flex; flex-wrap:wrap; gap:0 20px; }
+#factory-model { grid-column:1/-1; min-width:0; scroll-margin-top:5rem; }
 #projects .section-heading a { display:inline-flex; align-items:center; gap:8px; min-height:44px; color:var(--brand); }
 #projects .project-row { display:block; margin:0; padding:22px 0 16px; border:0; border-top:1px solid var(--rule); }
 #projects .project-number { display:none; }

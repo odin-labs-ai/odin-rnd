@@ -115,7 +115,8 @@ test('the home a visitor sees without opening anything is short: under the word 
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
   let visible = stripBlocks(main, ['script', 'style', 'svg']);
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
-  visible = without(visible, /<article class="station-exhibit"[^>]*\shidden>/);
+  // Only the initially selected station and factory receipt are visible.
+  visible = without(visible, /<article\b[^>]*\shidden>/);
   // The hero's dated correction is a closed fold now (scripts/home-shape.mjs labelCorrection): like every <details>, it
   // is left out above, its dated summary included.
   // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its

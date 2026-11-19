@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { renderFactoryScene } from './factory-scene.mjs';
+
 // Present the existing release and experiment cards after the build has applied its result
 // and attribution checks. The long published wording remains available with each tool.
 const entries = {
@@ -9,7 +12,7 @@ const entries = {
 };
 
 export function presentTools(section) {
-  return section.replace(/<article\b[^>]*>[\s\S]*?<\/article>/g, row => {
+  const directory = section.replace(/<article\b[^>]*>[\s\S]*?<\/article>/g, row => {
     const number = /class="project-number">(\d{3})</.exec(row)?.[1];
     const entry = entries[number];
     if (!entry) return row;
@@ -27,5 +30,9 @@ export function presentTools(section) {
     return fields.title + '<p class="tool-purpose">' + entry.purpose + '</p>' + actions +
       '<details class="tool-notes"><summary>' + entry.notes + '</summary>' +
       fields.intro + fields.notes + related + fields.spec + '</details></div></article>';
+  });
+  return directory.replace('<!--FACTORY_MODEL-->', () => {
+    const record = JSON.parse(readFileSync('site/data/witnesses/test-witness.json', 'utf8'));
+    return renderFactoryScene(record);
   });
 }
