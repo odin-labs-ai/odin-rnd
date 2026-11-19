@@ -50,14 +50,14 @@ const topOrder = html => {
   return out;
 };
 
-test('the homepage leads with the entrance, tools, findings and factory before the research archive', () => {
+test('the homepage leads with the entrance, tools, factory and findings before the research archive', () => {
   const out = shapeHome(HOME);
-  assert.deepEqual(OPEN_ORDER, ['floor', 'projects', 'findings', CHECK_ID]);
+  assert.deepEqual(OPEN_ORDER, ['floor', 'projects', CHECK_ID, 'findings']);
   assert.deepEqual(topOrder(out), [...OPEN_ORDER, 'nav', 'updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'drawing-board', 'journal', 'closing']);
   assert.deepEqual(FOLDS.map(f => f.key), ['partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'research-note', 'drawing-board', 'journal']);
   // The updates feed moves with its two markers, which stay around it, right after the drawing's section.
   assert.match(out, /<details class="home-archive"><summary>Earlier work and project notes<\/summary>\s*<!-- updates:[^>]*-->\s*<section class="updates-feed[^]*?<\/section>\s*<!-- \/updates -->\s*<section class="offer/);
-  assert.ok(out.indexOf(`id="${CHECK_ID}"`) > out.indexOf('id="findings"') && out.indexOf(`id="${CHECK_ID}"`) < out.indexOf('<!-- updates:'), 'how we check sits between what we found and the updates');
+  assert.ok(out.indexOf(`id="${CHECK_ID}"`) > out.indexOf('id="projects"') && out.indexOf(`id="${CHECK_ID}"`) < out.indexOf('id="findings"'), 'the factory sits between the tools and findings');
   assert.equal(out.split('<!-- /updates -->').length, 2);
   // The open sections are byte for byte as they were.
   for (const key of ['projects', 'findings', 'work-with-us', 'closing']) assert.ok(out.includes(SECTIONS[key]), key);
@@ -66,20 +66,20 @@ test('the homepage leads with the entrance, tools, findings and factory before t
   assert.deepEqual([...nav.matchAll(/href="([^"]*)"/g)].map(m => m[1]), ['labs/', 'methods/']);
   assert.deepEqual([...nav.matchAll(/<span class="home-further-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Explore the labs', 'How we test']);
   assert.match(nav, new RegExp(`aria-labelledby="${FURTHER_ID}"><h2 id="${FURTHER_ID}">Inside the lab</h2>`));
-  assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="findings"') && out.indexOf('<nav class="home-further') < out.indexOf('<details class="home-archive">'));
+  assert.ok(out.indexOf('<nav class="home-further') > out.indexOf('id="projects"') && out.indexOf('<nav class="home-further') < out.indexOf('<details class="home-archive">'));
   // Only the home links its stylesheet and opener, once each, after the home's own.
   assert.ok(out.includes(`<link rel="stylesheet" href="assets/launch.css">\n  <link rel="stylesheet" href="${HOME_CSS}">`));
   assert.ok(out.includes(`<script type="module" src="assets/motion.mjs"></script>\n  <script type="module" src="${HOME_JS}"></script>`));
 });
 
-test('the entrance retains its correction, the tools immediately follow, and the factory stays intact below the findings', () => {
+test('the entrance retains its correction, the tools immediately follow, and the factory stays intact before the findings', () => {
   const out = shapeHome(HOME);
   const i = '\n      ';
   // The hero: its own open tag, the premise, the correction (folded later by labelCorrection), nothing else.
-  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.projects}\n    ${SECTIONS.findings}`), 'hero, tools, then findings');
+  assert.ok(out.includes(`${FLOOR.open}${i}${FLOOR.premise}${i}${FLOOR.correction}\n    </section>\n    ${SECTIONS.projects}`), 'hero and tools');
   // The drawing's section: a plain heading and sentence, then the drawing, the stations and the boundary line as they were.
   const intro = `<div class="home-check-intro"><h2 id="${CHECK_TITLE_ID}">${CHECK_HEADING}</h2><p>${CHECK_INTRO}</p></div>`;
-  assert.ok(out.includes(`${SECTIONS.findings}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>`), 'how we check, after what we found');
+  assert.ok(out.includes(`${SECTIONS.projects}\n    <section class="hero cutaway dark-surface home-check" id="${CHECK_ID}" aria-labelledby="${CHECK_TITLE_ID}">${i}${intro}${i}${FLOOR.drawing}${i}${FLOOR.stations}${i}${FLOOR.boundary}\n    </section>\n    ${SECTIONS.findings}`), 'the factory between the tools and findings');
   assert.match(CHECK_INTRO, /^[A-Z][^.!?]*\.$/, 'one plain sentence');
   // Each part of the committed #floor appears exactly once.
   for (const [name, part] of Object.entries(FLOOR)) assert.equal(out.split(part).length, 2, name);

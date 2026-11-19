@@ -65,7 +65,28 @@
 .factory-plate:hover strong { text-decoration: underline; text-underline-offset: 4px; }
 #floor .factory-correction { max-width: none; margin: 0; border: 0; border-top: 1px solid #476653; padding: 0; }
 #floor .correction-open { font: 600 15px/1.45 Manrope, sans-serif; text-transform: none; letter-spacing: normal; }
-#how-we-check.home-check { margin-top: 0; }
+#how-we-check.home-check { margin-top: 0; padding-block:clamp(32px,4vw,64px); }
+.home-check .home-check-intro { max-width:none; margin-bottom:14px; }
+.home-check .home-check-intro h2 { font-size:clamp(34px,3.8vw,58px); letter-spacing:-.045em; }
+.home-check .home-check-intro p { margin-top:8px; font-size:17px; }
+.home-check .drawing-toolbar { justify-content:flex-end; }
+.home-check .station-geometry:not(.active) { opacity:.86; }
+.home-check .station-controls > a { font-size:16px; }
+.home-check .drawing-actions button { min-height:44px; font-size:14px; }
+.home-check .station-exhibit :is(.artifact-label,pre,.record-comparison,.record-comparison strong,.station-source summary,.station-provenance) { font-size:14px; }
+.home-check .station-implication,.home-check .station-full { font-size:16px; }
+.factory-svg .station-pick,.factory-svg a.station-geometry { cursor:pointer; }
+.factory-svg .station-picker-leader { fill:none; stroke:#b3c9b8; stroke-width:1; pointer-events:none; }
+.factory-svg .station-pick:is(:hover,:focus-visible) .station-marker circle { stroke:#f3fff5; stroke-width:3; }
+.factory-svg .station-pick .station-marker text { font-size:14px; }
+@media (max-width:768px) {
+  .factory-svg .station-pick .station-marker circle { r:23px; }
+  .factory-svg .station-pick .station-marker text { font-size:28px; }
+}
+@media (max-width:360px) {
+  .factory-svg .station-pick .station-marker circle { r:28px; }
+  .factory-svg .station-pick .station-marker text { font-size:32px; }
+}
 @media (prefers-reduced-motion: no-preference) {
   .plate-caption > span:last-child { transition: transform 160ms ease-out; }
   .factory-plate:is(:hover, :focus-visible) .plate-caption > span:last-child { transform: translate(2px,-2px); }
@@ -124,7 +145,7 @@
 }
 #projects .section-heading h2 { font-size:clamp(32px,3.4vw,52px); line-height:1.1; }
 #projects .tool-directory-links { display:flex; flex-wrap:wrap; gap:0 20px; }
-#factory-model { grid-column:1/-1; min-width:0; scroll-margin-top:5rem; }
+#factory-model { min-width:0; scroll-margin-top:clamp(5rem,12vh,8rem); }
 #projects .section-heading a { display:inline-flex; align-items:center; gap:8px; min-height:44px; color:var(--brand); }
 #projects .project-row { display:block; margin:0; padding:22px 0 16px; border:0; border-top:1px solid var(--rule); }
 #projects .project-number { display:none; }

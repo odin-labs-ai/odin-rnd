@@ -20,6 +20,34 @@ test('station claims resolve exact observations and reject missing or contradict
     records => {const r=records[2],o=r.observations.find(o=>o.id==='locale-corrected');r.commands.find(c=>c.id===o.commandIds.at(-1)).stdout=r.commands.find(c=>c.id===o.commandIds.at(-1)).stdout.replace('actual=4|expected=4','actual=5|expected=4');},
   ]) { const changed=structuredClone(reports); mutate(changed); assert.throws(()=>validateStationContracts(report,changed)); }
 });
+test('only Gate compares the recorded invoice suites, each with its own exact receipt', () => {
+  const html = renderStations(report, reports);
+  const gate = html.match(/<article[^>]*data-exhibit="gate"[^>]*>([\s\S]*?)<\/article>/)[1];
+  assert.equal((html.match(/class="gate-suites"/g) ?? []).length, 1);
+  assert.ok(gate.includes('<legend>Recorded test suites</legend>'));
+  assert.ok(gate.includes('value="strong" checked'));
+  assert.equal((gate.match(/type="radio"/g) ?? []).length, 3);
+  const witness = reports.find(r => r.project === 'test-witness');
+  for (const suite of ['weak', 'strong', 'always-pass']) {
+    const o = witness.observations.find(o => o.id === `rounding-${suite}`);
+    const checks = o.actual.assertions;
+    const result = gate.match(new RegExp(`data-gate-case="${suite}"[^>]*>(.*?)</div>`, 's'))[1];
+    assert.ok(result.includes(`${checks.filter(check => check.status === 'PASS').length} of ${checks.length} checks passed`));
+    assert.ok(result.includes(`Test evidence <strong>${o.verdict}</strong>`));
+    assert.ok(result.includes(`href="projects/test-witness/#observation-${o.id}"`));
+    if (suite === 'strong') {
+      const rounding = checks.find(check => check.id === 'rounding');
+      assert.ok(result.includes(`returned <strong>${rounding.actual}</strong>. Expected <strong>${rounding.expected}</strong>`));
+    }
+  }
+  const changed = structuredClone(reports);
+  const recorded = changed.find(r => r.project === 'test-witness');
+  const strong = recorded.observations.find(o => o.id === 'rounding-strong');
+  const command = recorded.commands.find(c => c.id === strong.commandIds.at(-1));
+  command.stdout = command.stdout.replace('rounding|FAIL', 'rounding|PASS');
+  assert.throws(() => renderStations(report, changed), /Invalid recorded checks/);
+});
+
 test('static station links reach actual evidence; Blueprint refuses unbound source', () => {
   const links=renderStationLinks();
   for(const station of stations) assert(links.includes(`href="${station.href}"`));
@@ -64,18 +92,19 @@ function fixture({reduced=false,invalid=false,missing=false,hash,observer=false,
   const exhibits=stations.map(s=>new Element({exhibit:s.id}));
   exhibits.forEach((e,i)=>{e.hidden=i!==0});
   const geometry=stations.map(s=>{const group=new Element({floorStation:s.id});group.children.set('.station-assembly',new Element());group.children.set('.station-marker',new Element());return group;});
+  const markers=stations.map(s=>new Element({floorPick:s.id}));
   const layers=['floor','services','conveyor','wayfinding','annotation'].map(factoryLayer=>new Element({factoryLayer}));
   const single=new Map(['#station-data','#station-status','#station-unavailable','.factory-drawing','.station-compartment','.floor-art','.station-trace','.drafting-scan','#blueprint-toggle','#factory-replay'].map(key=>[key,new Element()]));
   single.get('#station-data').textContent=invalid?'{broken':JSON.stringify(stations);
   single.get('#station-unavailable').hidden=true;
-  const document=new Element();document.querySelector=selector=>single.get(selector);document.querySelectorAll=selector=>({'[data-station]':controls,'[data-exhibit]':missing?exhibits.slice(0,3):exhibits,'[data-floor-station]':geometry,'[data-factory-layer]':layers}[selector]??[]);
+  const document=new Element();document.querySelector=selector=>single.get(selector);document.querySelectorAll=selector=>({'[data-station]':controls,'[data-exhibit]':missing?exhibits.slice(0,3):exhibits,'[data-floor-station]':geometry,'[data-floor-pick]':markers,'[data-factory-layer]':layers}[selector]??[]);
   const preference={matches:reduced,addEventListener(key,fn){if(key==='change')this.change=fn;}};
   const environment={matchMedia:()=>preference,location:{hash:hash??''},addEventListener(key,fn){if(key==='hashchange')this.onhash=fn;}};
   if(observer)environment.IntersectionObserver=class{constructor(callback){environment.onIntersection=callback;}observe(element){environment.observed=element;}};
   if(!waapi)for(const element of [...single.values(),...layers,...geometry.flatMap(g=>[g,...g.children.values()]),...exhibits])element.animate=undefined;
   if(waapi==='throw')for(const element of [...single.values(),...layers,...geometry.flatMap(g=>[g,...g.children.values()]),...exhibits])element.animate=()=>{environment.animationAttempts=(environment.animationAttempts??0)+1;throw new TypeError('Unsupported animation frames');};
   const controller=setupFactory(document,environment);
-  return {controls,exhibits,geometry,layers,single,document,controller,environment,preference};
+  return {controls,exhibits,geometry,markers,layers,single,document,controller,environment,preference};
 }
 test('keyboard station selection preserves control focus, chooses exact content and settles rapid motion',()=>{
   const f=fixture(); const event={key:' '};
@@ -196,4 +225,31 @@ test('throwing animation APIs leave assembly, selection, blueprint and replay us
   assert.equal(f.exhibits[3].hidden,false);
   assert.equal(f.single.get('#station-unavailable').hidden,true);
   assert(f.environment.animationAttempts>13,'the failure path was exercised across assembly and later actions');
+});
+
+test('machine faces and overlaid marker links select the same recorded station as its keyboard control', () => {
+  const f=fixture();
+  const svg=factoryFloor();
+  for (const [index, station] of stations.entries()) {
+    for (const attribute of ['data-floor-station','data-floor-pick']) {
+      const link=svg.match(new RegExp('<a '+attribute+'="'+station.id+'"[^>]+>'))?.[0];
+      assert.ok(link?.includes('href="'+station.href+'"'), 'SVG links open the same native evidence page');
+    }
+    f.markers[index].fire('click');
+    assert.equal(f.controls[index].getAttribute('aria-pressed'),'true');
+    assert.equal(f.exhibits[index].hidden,false);
+    assert.deepEqual(f.exhibits.map(e=>e.hidden),stations.map((_,i)=>i!==index));
+    f.controls[(index+1)%stations.length].fire('click');
+    f.geometry[index].fire('click');
+    assert.equal(f.exhibits[index].hidden,false);
+  }
+  assert.ok(svg.lastIndexOf('data-floor-station=') < svg.indexOf('data-floor-pick='));
+  assert.equal((svg.match(/class="station-pick-target"/g) || []).length, stations.length);
+  const modifier = {metaKey:true};
+  f.markers[0].fire('click', modifier);
+  assert.ok(!modifier.prevented, 'A modified marker click follows the native link');
+  const invalid=fixture({invalid:true});
+  const nativeClick={};
+  invalid.geometry[0].fire('click',nativeClick);
+  assert.ok(!nativeClick.prevented, 'An unavailable record enhancer leaves the native evidence link usable');
 });

@@ -6,6 +6,7 @@ export function setupFactory(document, environment = globalThis) {
   if (!controls.length) return;
   const exhibits = [...document.querySelectorAll('[data-exhibit]')];
   const geometry = [...document.querySelectorAll('[data-floor-station]')];
+  const markers = [...document.querySelectorAll('[data-floor-pick]')];
   const layers = [...document.querySelectorAll('[data-factory-layer]')];
   const status = document.querySelector('#station-status');
   const unavailable = document.querySelector('#station-unavailable');
@@ -73,6 +74,7 @@ export function setupFactory(document, environment = globalThis) {
     active = id;
     controls.forEach(control => control.setAttribute('aria-pressed', String(control.dataset.station === id)));
     geometry.forEach(group => group.classList.toggle('active', group.dataset.floorStation === id));
+    markers.forEach(marker => marker.classList.toggle('active', marker.dataset.floorPick === id));
     exhibits.forEach(other => { other.hidden = other !== exhibit; });
     trace?.setAttribute('d', station.trace);
     status.textContent = `${station.label}: ${station.title} ${station.status ? `${station.status}. Selected.` : 'Recorded experiment selected.'}`;
@@ -80,16 +82,22 @@ export function setupFactory(document, environment = globalThis) {
     assembled = true;
     const selected = geometry.find(group => group.dataset.floorStation === id);
     animate(assembly(selected), [{ transform:'translateY(14px)' }, { transform:'none' }], 480);
-    animate(selected?.querySelector?.('.station-marker'), [{ opacity:.4, transform:'scale(.8)' }, { opacity:1, transform:'scale(1)' }], 420);
+    const marker = markers.find(item => item.dataset.floorPick === id);
+    animate(marker?.querySelector?.('.station-marker'), [{ opacity:.4, transform:'scale(.8)' }, { opacity:1, transform:'scale(1)' }], 420);
     drawTrace();
     animate(exhibit, [{ opacity:.55, clipPath:'inset(0 0 12% 0)', transform:'translateY(9px)' }, { opacity:1, clipPath:'inset(0)', transform:'none' }], 460);
   };
-  controls.forEach(control => {
-    control.addEventListener('click', event => {
+  const bindSelection = (link, id) => {
+    link.addEventListener('click', event => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.button && event.button !== 0)) return;
       event.preventDefault();
-      select(control.dataset.station);
+      select(id);
     });
+  };
+  geometry.forEach(group => bindSelection(group, group.dataset.floorStation));
+  markers.forEach(marker => bindSelection(marker, marker.dataset.floorPick));
+  controls.forEach(control => {
+    bindSelection(control, control.dataset.station);
     control.addEventListener('keydown', event => {
       if (event.key !== ' ') return;
       event.preventDefault();

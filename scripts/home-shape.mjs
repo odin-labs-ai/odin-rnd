@@ -1,5 +1,5 @@
 // Assemble the research homepage after records, result links and corrections have been generated.
-// The featured study, tools, measured findings, interactive factory and next reads stay visible. A native
+// The featured study, tools, interactive factory, measured findings and next reads stay visible. A native
 // disclosure holds updates and longer sections. Preserve their fragment links and records, since
 // other pages and published bookmarks still point into this page. The hash opener handles nested folds.
 import { createHash } from 'node:crypto';
@@ -12,17 +12,17 @@ export const HOME_CSS = 'assets/home.css';
 export const HOME_JS = 'assets/home-fold.mjs';
 /** The id of the "Go further" heading. */
 export const FURTHER_ID = 'home-further-title';
-/** The section the drawing moves into, under what we've found, and its heading's id. */
+/** The section the drawing moves into, immediately after Tools, and its heading's id. */
 export const CHECK_ID = 'how-we-check';
 export const CHECK_TITLE_ID = 'how-we-check-title';
 /** The plain heading and one plain sentence over the drawing. */
-export const CHECK_HEADING = 'The checks we study, in one drawing';
-export const CHECK_INTRO = 'A concept drawing of the checks we test, each its own experiment and not a stage results pass through; pick one to see a real example and its record.';
+export const CHECK_HEADING = 'The software factory';
+export const CHECK_INTRO = 'Select a station to inspect its experiment.';
 /** The ids this pass adds, in page order; no other id may appear or go. */
 export const ADDED_IDS = [CHECK_ID, CHECK_TITLE_ID, FURTHER_ID];
 
 /** Sections a visitor can explore immediately, in their reading order. */
-export const OPEN_ORDER = ['floor', 'projects', 'findings', CHECK_ID];
+export const OPEN_ORDER = ['floor', 'projects', CHECK_ID, 'findings'];
 const ARCHIVE_LEAD = ['updates', 'work-with-us'];
 
 /** The folded sections, in source order: the class of the heading block that stays visible ('' for a bare <div>) and

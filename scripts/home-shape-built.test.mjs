@@ -46,14 +46,19 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
-test('the built homepage exposes the featured study, tool directory, findings and factory outside the archive', () => {
+test('the built homepage exposes the featured study, tool directory, factory and findings outside the archive', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'entrance, tools, findings and factory, in that order');
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'entrance, tools, factory and findings, in that order');
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1) && main.indexOf('<nav class="home-further') < main.indexOf('<details class="home-archive">'), 'further reading follows the findings before the archive');
-  const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="findings"'));
+  const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="how-we-check"'));
   const rows = [...projects.matchAll(/<article\b[^>]*class="project-row[^"]*"[^>]*>[\s\S]*?<\/article>/g)];
   assert.ok(rows.length > 0, 'the tools section contains tools');
+  assert.match(projects, /href="#how-we-check"/, 'Tools links to the original factory');
+  const factory = main.slice(main.indexOf('id="how-we-check"'), main.indexOf('id="findings"'));
+  assert.match(factory, /class="factory-drawing" id="factory-model"/, 'the old preview URL now opens the one drawing');
+  assert.equal((main.match(/class="factory-svg"/g) || []).length, 1);
+  assert.doesNotMatch(main, /factory-studio\.webp|class="factory-scene"/, 'the retired illustrated exhibit is absent');
   const disclosures = detailsRanges(projects);
   for (const row of rows) {
     for (const marker of ['<h3', 'class="project-links"']) {
@@ -115,7 +120,7 @@ test('the home a visitor sees without opening anything is short: under the word 
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
   let visible = stripBlocks(main, ['script', 'style', 'svg']);
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
-  // Only the initially selected station and factory receipt are visible.
+  // Only the initially selected station is visible.
   visible = without(visible, /<article\b[^>]*\shidden>/);
   // The hero's dated correction is a closed fold now (scripts/home-shape.mjs labelCorrection): like every <details>, it
   // is left out above, its dated summary included.
@@ -211,10 +216,10 @@ test('the built home folds its dated correction in the hero under a plain dated 
   assert.ok(block.endsWith(`${paragraphs.join('')}</details>`), 'every paragraph of the correction, verbatim, in the HTML');
 });
 
-test('the built home reads plain-first: the hero, then what we found, then how we check a result, then the rest', () => {
+test('the built home reads plain-first: the hero, tools, the factory, measured results, then the archive', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const at = key => main.indexOf(key);
-  const order = ['id="hero-title"', 'Run a closed-door study', 'id="projects"', 'id="findings"', 'id="how-we-check"', 'The checks we study, in one drawing', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="updates"'].map(at);
+  const order = ['id="hero-title"', 'Run a closed-door study', 'id="projects"', 'id="how-we-check"', 'The software factory', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="findings"', 'id="updates"'].map(at);
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
   // Nothing of the drawing or the station panel sits in the hero any more.
   const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
