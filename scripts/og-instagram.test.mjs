@@ -530,7 +530,7 @@ export function mergeKeysIn(text) {
   return JSON.parse(run.stdout);
 }
 
-export function ogStepProblems(text) {
+export function ogStepProblems(text, { mergeKeys = mergeKeysIn } = {}) {
   const problems = [];
   // Bound to the PARSED job, not to text: whatever the spelling, indentation or scalar tricks, the jobs mapping's
   // film-copies entry must be the pinned job, parsed the same way.
@@ -546,9 +546,14 @@ export function ogStepProblems(text) {
   }
   if (/[\r\u0085\u2028\u2029]/.test(text)) problems.push('the workflow holds a line break other than LF (CR, NEL, LS or PS)');
   // safe_load refuses an alias but still applies a merge key whose value is an inline mapping, so merge keys are
-  // refused anywhere in the file: by the decoded key in Psych's node tree (any spelling), and as text.
-  const merges = parsed === null ? null : mergeKeysIn(text);
-  if (/(^|[\s{,\-?])["']?<<["']?\s*:/m.test(text) || (typeof merges === 'number' && merges > 0)) problems.push('the workflow uses a YAML merge key (<<)');
+  // refused anywhere in the file: by the decoded key in Psych's node tree (any spelling), and as text. The walk must
+  // SUCCEED with a count of zero; a missing ruby, a failed or killed walk, or anything but an integer fails closed.
+  if (/(^|[\s{,\-?])["']?<<["']?\s*:/m.test(text)) problems.push('the workflow uses a YAML merge key (<<)');
+  if (parsed !== null && !parsed.error) {
+    const merges = mergeKeys(text);
+    if (!Number.isInteger(merges) || merges < 0) problems.push(`the merge-key walk did not complete (${JSON.stringify(merges)}): the workflow check fails closed`);
+    else if (merges > 0) problems.push('the workflow uses a YAML merge key (<<)');
+  }
   const lines = text.split('\n');
   const jobsAt = lines.reduce((at, l, i) => (/^["']?jobs["']?\s*:/.test(l) ? [...at, i] : at), []);
   if (jobsAt.length !== 1 || lines[jobsAt[0]] !== 'jobs:') return [...problems, 'expected exactly one plain `jobs:` mapping line'];
@@ -637,4 +642,12 @@ test('the committed ai-jury image is a baseline JPEG: its frame header is SOF0, 
   const bytes = readFileSync(join(DIR, 'ai-jury.b9d0adfbcbc140f0.jpg'));
   assert.ok(segmentAt(bytes, 0xc0) > 0, 'no SOF0 (baseline) frame header before the scan');
   assert.equal(segmentAt(bytes, 0xc2), -1, 'a SOF2 (progressive) frame header before the scan');
+});
+
+test('a failed merge-key walk fails the workflow check closed (refute row a57b4b95 #8)', () => {
+  const text = readFileSync('.github/workflows/publish.yml', 'utf8');
+  assert.deepEqual(ogStepProblems(text, { mergeKeys: () => 0 }), [], 'a completed walk with no merge key passes');
+  for (const failed of [null, { error: 'killed' }, 'x', 1.5, -1, undefined]) {
+    assert.ok(ogStepProblems(text, { mergeKeys: () => failed }).some(p => /merge-key walk did not complete/.test(p)), `walk result ${JSON.stringify(failed)} must fail closed`);
+  }
 });
