@@ -127,7 +127,7 @@ test('a follow channel without a page says coming soon and links nowhere; only r
     if (url) assert.match(page, new RegExp(`<a href="${url.replaceAll('.', '\\.')}">${channel} `));
     else assert.match(page, new RegExp(`<li><span class="lab-soon">${channel}</span> <span class="technical">COMING SOON</span></li>`));
   }
-  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://www.instagram.com/odinlabsrnd/']);
+  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://www.reddit.com/user/odinlabsrnd/', 'https://x.com/odinlabsrnd', 'https://github.com/odin-labs-ai/odin-rnd', 'https://www.instagram.com/odinlabsrnd/']);
 });
 
 test('Labs is in the header of the home, the partner pages and both Labs pages, and in the sitemap', () => {
