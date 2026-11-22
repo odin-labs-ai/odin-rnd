@@ -25,6 +25,13 @@ const CARDS = join('site', 'assets', 'og', 'labs');
 // re-rendered card changes its sha256, so a stale Instagram image fails here instead of drifting silently. That the
 // bytes really are that card is the decoded test below, which runs in CI (no recorded measurement is trusted).
 const PROVENANCE = {
+  'agent-space.a65f8072c31c0467.jpg': {
+    source: 'agent-space.png',
+    sha256: 'a65f8072c31c0467d2f261bcfbae913e74675fe68adb9c8fd258d766d8f024b1',
+    sourceSha256: '4d7c332b17b70528839a3495ee6fba8a5d833f24b9ce93f5f0e468caa4be5392',
+    made: 'sips-316 (macOS): sips -s format jpeg -s formatOptions 90 agent-space.png; then its APP1 (Exif) and APP13 '
+      + '(Photoshop) segments were cut out byte for byte, every other byte kept (the decoded pixels are unchanged)',
+  },
   'ai-jury.b9d0adfbcbc140f0.jpg': {
     source: 'ai-jury.png',
     sha256: 'b9d0adfbcbc140f068a80434298a2e02a5e081b71aa7a1c9c1bbecb9e10bc701',
