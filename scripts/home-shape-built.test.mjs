@@ -226,15 +226,17 @@ test('the built home reads plain-first: the hero, tools, the factory, measured r
   assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
 });
 
-test('the entrance puts the figure before the recording poster, with public and private paths', () => {
+test('the entrance opens with the film, then the measured result and private study', () => {
   const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="projects"'));
-  assert.ok(!hero.includes('<form'), 'site navigation supplies the search path');
-  assert.ok(hero.indexOf('class="entry-evidence"') < hero.indexOf('class="factory-plate"'));
-  assert.ok(!hero.includes('name="topic"'));
-  assert.ok(hero.includes('href="labs/agent-space/#film-agent-space-30s"'));
+  assert.ok(!hero.includes('<form role="search"'), 'site navigation supplies the search path');
+  assert.ok(hero.includes('src="assets/home-film/audit-chain.webp"'));
+  assert.ok(hero.includes('class="play-film" href="assets/home-film/inside-odin.mp4"'));
+  assert.ok(hero.includes('href="#featured-study"'));
+  const order = ['class="film-entrance"', 'id="featured-study"', 'class="failover-figure"', 'class="private-study"'].map(token => hero.indexOf(token));
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])));
   assert.ok(hero.includes('href="partners/#closed-door"'));
   assert.ok(hero.includes('href="experiments/"'));
-  assert.ok(hero.includes('src="assets/labs/agent-space/films/agent-space-30s-poster-800.webp"'));
-  assert.ok(!hero.includes('<!--FAILOVER_FIGURE-->'), 'the published entrance renders the result figure');
-  assert.ok(!hero.includes('<video'), 'the film only downloads when the visitor chooses to watch');
+  assert.ok(!hero.includes('<!--FAILOVER_FIGURE-->'), 'the result figure was rendered');
+  assert.match(hero, /<video controls preload="none"[^>]*><\/video>/, 'the film only loads on request');
+  assert.doesNotMatch(hero, /agent-space-30s-poster|\bautoplay\b/);
 });

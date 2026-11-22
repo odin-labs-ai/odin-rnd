@@ -31,6 +31,7 @@
   <link rel="stylesheet" href="assets/gate-suite.css">
   <script type="module" src="assets/app.js"></script>
   <script type="module" src="assets/motion.mjs"></script>
+  <script type="module" src="assets/home-film.mjs"></script>
   <title>Odin Labs R&amp;D — models and tools, tested with stated limits</title>
 </head>
 <body>
@@ -43,19 +44,30 @@
   <main id="main">
     <section class="hero cutaway dark-surface" id="floor" aria-labelledby="hero-title">
       <div class="factory-premise">
-        <div class="factory-intro">
-          <h1 id="hero-title">Experiment results</h1>
-          <a class="all-experiments" href="experiments/">All experiments <span aria-hidden="true">→</span></a>
+        <div class="film-entrance">
+          <img class="film-still" src="assets/home-film/audit-chain.webp" srcset="assets/home-film/audit-chain-800.webp 800w, assets/home-film/audit-chain.webp 1920w" sizes="100vw" width="1920" height="1080" fetchpriority="high" alt="Glowing links in Odin’s rendered audit chain.">
+          <div class="film-intro">
+            <h1 id="hero-title">Inside <span>Odin R&amp;D</span></h1>
+            <div class="film-actions">
+              <a class="play-film" href="assets/home-film/inside-odin.mp4"><span class="play-mark" aria-hidden="true">▶</span> Play film <span class="film-runtime" aria-label="10 seconds">0:10</span></a>
+              <a class="film-results" href="#featured-study">See the results <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
         </div>
-        <aside class="private-study" aria-label="Private studies">
-          <p>Your workflow, tested under NDA. You decide what can be published.</p>
-          <a class="entry-primary" href="partners/#closed-door">Run a closed-door study <span aria-hidden="true">↗</span></a>
-        </aside>
-        <div class="entry-evidence"><!--FAILOVER_FIGURE--></div>
-        <a class="factory-plate" href="labs/agent-space/#film-agent-space-30s">
-          <img src="assets/labs/agent-space/films/agent-space-30s-poster-800.webp" srcset="assets/labs/agent-space/films/agent-space-30s-poster-800.webp 800w, assets/labs/agent-space/films/agent-space-30s-poster-1280.webp 1280w" sizes="(min-width: 801px) 40vw, 90vw" width="800" height="450" alt="An agent answers a visitor in the campus, with its source shown alongside.">
-          <span class="plate-caption"><span><strong>Watch the Agent Space recording</strong><span>Odin and Atlas answer a visitor’s questions.</span></span><span aria-hidden="true">↗</span></span>
-        </a>
+        <dialog class="home-film-player" aria-labelledby="home-film-title" aria-describedby="home-film-description">
+          <header><h2 id="home-film-title">Inside Odin R&amp;D</h2><form method="dialog"><button type="submit" autofocus>Close <span aria-hidden="true">×</span></button></form></header>
+          <video controls preload="none" playsinline width="1920" height="1080" aria-labelledby="home-film-title" aria-describedby="home-film-description"></video>
+          <footer><p id="home-film-description">A silent film. The engineering hall in Unreal Engine, then the core and the audit chain rendered in Blender.</p><a href="assets/home-film/inside-odin.mp4">Open film file</a></footer>
+        </dialog>
+        <div class="home-studies" id="featured-study">
+          <div class="entry-evidence"><!--FAILOVER_FIGURE--></div>
+          <aside class="private-study" aria-labelledby="private-study-title">
+            <h2 id="private-study-title">Private studies</h2>
+            <p>Your workflow, tested under NDA. You decide what can be published.</p>
+            <a class="entry-primary" href="partners/#closed-door">Run a closed-door study <span aria-hidden="true">↗</span></a>
+            <a class="all-experiments" href="experiments/">All public experiments <span aria-hidden="true">→</span></a>
+          </aside>
+        </div>
       </div>
       <div class="factory-drawing" id="factory-model" data-view="floor">
         <div class="drawing-toolbar"><div class="drawing-actions"><button id="factory-replay" hidden>Replay drawing <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5a5 5 0 1 1-1 4M3 1v4h4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button id="blueprint-toggle" aria-pressed="false" hidden>Blueprint view <span class="switch" aria-hidden="true"></span></button></div></div>

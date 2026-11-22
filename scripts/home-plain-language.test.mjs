@@ -156,7 +156,7 @@ test('the built home reads plain where a visitor starts, plain first: header, he
     assert.ok(stripTags(html).trim(), `${name}: found on the built home`);
     assert.deepEqual(bannedIn(readable(html)), [], `${name}: say it plainly (PLAN B2/B3), or move the term to a detail page`);
   }
-  // The entrance leads with a result. The interactive drawing follows Tools, before the findings.
+  // The opening film and featured result share the entrance. The interactive drawing follows Tools, before the findings.
   const order = [parts['hero premise'], parts['how we check intro'], parts['drawing toolbar'], parts['what we found']].map(part => home.indexOf(part));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, factory introduction, drawing, findings: ${order.join(', ')}`);
   assert.ok(home.indexOf(parts['correction summary']) < home.indexOf(parts['what we found']), 'the dated correction summary stays in the hero, by the headline');
@@ -164,7 +164,7 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Tools', 'Find']);
   // Both public research and private evaluation are legible in the entrance.
-  assert.match(parts['hero premise'], /<h1[^>]*>Experiment results<\/h1>/);
+  assert.match(parts['hero premise'], /<h1[^>]*>Inside <span>Odin R&amp;D<\/span><\/h1>/);
   assert.match(parts['hero premise'], /Run a closed-door study/);
   assert.ok(parts['hero premise'].includes('href="partners/#closed-door"'));
   // Every finding has its limit in words and a dated line, and links its result and its record.
