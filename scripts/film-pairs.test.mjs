@@ -96,8 +96,13 @@ test('the generators write every pair the built pages carry, and the ledger coun
 });
 
 test('the home page carries its pinned player exactly once, and the dist pass adds the MP4 source after it and nowhere else', () => {
-  assert.equal(readFileSync('site/index.html', 'utf8').split(HOME.player).length, 2, 'site/index.html carries HOME.player exactly once');
-  assert.ok(!readFileSync('site/index.html', 'utf8').includes('.mp4"'), 'the committed home page names no MP4: the build adds it');
+  const home = readFileSync('site/index.html', 'utf8');
+  assert.equal(home.split(HOME.player).length, 2, 'site/index.html carries HOME.player exactly once');
+  const heroFilm = 'assets/home-film/inside-odin.mp4';
+  const playLink = `<a class="play-film" href="${heroFilm}">`;
+  const fileLink = `<a href="${heroFilm}">Open film file</a>`;
+  assert.ok(home.includes(playLink) && home.includes(fileLink), 'the separate opening film has its play and file links');
+  assert.doesNotMatch(home.replace(playLink, '').replace(fileLink, ''), /\.mp4\b/i, 'only the build adds the archival MP4 source');
   const run = distRun();
   assert.ifError(run.error);
   assert.deepEqual(run.result, { films: 1, pairs: 2 });
