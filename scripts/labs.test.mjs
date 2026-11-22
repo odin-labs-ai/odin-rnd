@@ -121,13 +121,14 @@ test('the lab page says what the lab is, and asks through the ask-the-agents for
   assert.match(page, /<link rel="alternate" type="application\/atom\+xml" title="Lab 01: The agent space" href="feed\.xml">/);
 });
 
-test('a follow channel without a page says coming soon and links nowhere; only real links are links', () => {
+test('all follow channels link to their public profiles without coming-soon markup', () => {
   assert.deepEqual(lab.follow.map(link => link.channel), ['LinkedIn', 'Reddit', 'X', 'GitHub', 'Instagram']);
   for (const { channel, url } of lab.follow) {
-    if (url) assert.match(page, new RegExp(`<a href="${url.replaceAll('.', '\\.')}">${channel} `));
-    else assert.match(page, new RegExp(`<li><span class="lab-soon">${channel}</span> <span class="technical">COMING SOON</span></li>`));
+    assert.ok(url, `${channel} has a public profile URL`);
+    assert.match(page, new RegExp(`<a href="${url.replaceAll('.', '\\.')}">${channel} `));
+    assert.doesNotMatch(page, new RegExp(`<span class="lab-soon">${channel}</span>`));
   }
-  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://github.com/odin-labs-ai/odin-rnd', 'https://www.instagram.com/odinlabsrnd/']);
+  assert.deepEqual(lab.follow.filter(link => link.url).map(link => link.url), ['https://www.linkedin.com/company/odin-labs-ai/', 'https://www.reddit.com/user/odinlabsrnd/', 'https://x.com/odinlabsrnd', 'https://github.com/odin-labs-ai/odin-rnd', 'https://www.instagram.com/odinlabsrnd/']);
 });
 
 test('Labs is in the header of the home, the partner pages and both Labs pages, and in the sitemap', () => {
