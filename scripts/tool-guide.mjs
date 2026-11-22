@@ -1,0 +1,100 @@
+// Editorial copy shared by the homepage directory and project guide.
+// Internal destinations are relative to the site root so both routes use the same sources.
+const researchRepo = 'https://github.com/odin-labs-ai/odin-rnd';
+
+export const toolGuide = {
+  '001': {
+    title: 'Blueprint Conformance Engine',
+    group: 'Odin tools',
+    what: 'Odin’s command-line checker for software architecture rules.',
+    use: 'Catch a code change that imports across a boundary you defined.',
+    startLabel: 'Run your first check',
+    startHref: 'https://blueprint-conformance.github.io/bce/guides/quickstart/',
+    sourceLabel: 'Engine source',
+    sourceHref: 'https://github.com/blueprint-conformance/bce',
+  },
+  'test-witness': {
+    title: 'Test Witness',
+    group: 'Odin tools',
+    what: 'A Java demo for checking whether a test catches a known mistake.',
+    use: 'Compare two test suites on the same invoice rounding error.',
+    startLabel: 'Inspect the invoice tests',
+    startHref: 'projects/test-witness/#recording',
+    sourceLabel: 'Demo source',
+    sourceHref: researchRepo + '/tree/main/demos/test-witness',
+  },
+  'migration-witness': {
+    title: 'Migration Witness',
+    group: 'Odin tools',
+    what: 'A Java demo for checking old and new code against the same expected results.',
+    use: 'Spot a bug that both versions of an invoice formatter share.',
+    startLabel: 'Compare the two versions',
+    startHref: 'projects/migration-witness/#recording',
+    sourceLabel: 'Demo source',
+    sourceHref: researchRepo + '/tree/main/demos/migration-witness',
+  },
+  'ci-witness': {
+    title: 'CI Witness',
+    group: 'Odin tools',
+    what: 'A demo that replays a failed build check under controlled conditions.',
+    use: 'Compare a locale fix with a patch that passes the original check but breaks another.',
+    startLabel: 'Inspect the locale fix',
+    startHref: 'projects/ci-witness/#recording',
+    sourceLabel: 'Demo source',
+    sourceHref: researchRepo + '/tree/main/demos/ci-witness',
+  },
+  '000': {
+    title: 'Odin R&D experiment runner',
+    group: 'Odin tools',
+    what: 'The scripts Odin uses to run its public blueprint experiments.',
+    use: 'Run the clean and rule-breaking examples locally and compare their results.',
+    startLabel: 'Run an experiment locally',
+    startHref: researchRepo + '#run-locally',
+    sourceLabel: 'Runner source',
+    sourceHref: researchRepo + '/blob/main/scripts/run-experiments.mjs',
+  },
+  '002': {
+    title: 'Laya',
+    group: 'Tools we tested',
+    what: 'A small decision model from ConvAI Innovations.',
+    use: 'Describe a situation, then ask for a choice, rating or yes/no answer in your browser.',
+    startLabel: 'Load the model and try it',
+    startHref: 'projects/laya-browser/#bench',
+    sourceLabel: 'Original model',
+    sourceHref: 'https://huggingface.co/convaiinnovations/laya',
+  },
+  '005': {
+    title: 'nina',
+    group: 'Tools we tested',
+    what: 'Marcos Schulz’s command-line tool for setting up agents, hooks and checks in Claude Code.',
+    use: 'Give a project a repeatable code review workflow.',
+    startLabel: 'Set up nina in a project',
+    startHref: 'https://github.com/xhulz/nina#getting-started',
+    sourceLabel: 'nina source',
+    sourceHref: 'https://github.com/xhulz/nina',
+  },
+  '003': {
+    title: 'The evidence workbench',
+    group: 'Research materials',
+    what: 'Odin’s archive of examples and recorded runs from the blueprint paper.',
+    use: 'Verify the chain of recorded evidence without installing the engine.',
+    startLabel: 'Run the evidence verifier',
+    startHref: 'https://github.com/odin-labs-ai/bce-paper-artifacts/tree/main/verify',
+    sourceLabel: 'Paper artifacts',
+    sourceHref: 'https://github.com/odin-labs-ai/bce-paper-artifacts',
+  },
+  '004': {
+    title: 'Jev as a fast gate',
+    group: 'Research materials',
+    what: 'Odin’s study of Jev, TypeSafe’s hosted decision model, as a first reviewer of code changes.',
+    use: 'Compare the changes Jev flags with those caught by a linter using the same rules.',
+    startLabel: 'Read the Jev study',
+    startHref: 'journal/jev-as-a-fast-gate.html',
+    sourceLabel: 'Study source',
+    sourceHref: researchRepo + '/tree/main/experiments/jev-gate',
+  },
+};
+
+export function toolHref(href, up = '') {
+  return href.startsWith('https://') ? href : up + href;
+}

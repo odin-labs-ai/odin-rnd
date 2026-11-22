@@ -140,9 +140,13 @@ test('the live site renders nina\'s entry exactly when the committed records ope
   else if (decision?.held !== false) assert.deepEqual([g.shown, g.reason], [false, 'the gate is closed: bar, manipulation check, eligibility or held']);
   else {
     assert.equal(g.shown, true, g.reason);
-    assert(page.includes(renderNinaEntry(g, upstream)), 'the built home page carries the entry the gate opens, as rendered from the records');
+    const gated = renderNinaEntry(g, upstream);
+    const expectedEvidence = /<details class="tool-notes"><summary>[^<]*<\/summary>([\s\S]*?)<\/details>/.exec(gated)[1];
+    const builtRow = /<article[^>]*id="project-nina"[^>]*>[\s\S]*?<\/article>/.exec(page)?.[0] ?? '';
+    assert(builtRow.includes(expectedEvidence), 'the complete measured result, links, attribution and specifications come verbatim from the gate');
+    for (const [, href] of gated.matchAll(/href="([^"]+)"/g)) assert(builtRow.includes(`href="${href}"`), href);
     const at = s => page.indexOf(s);
-    assert(at('<div class="project-number">002') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('<div class="project-number">003'), 'next after 002 Laya');
+    assert(at('data-tool="002"') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('data-tool="003"'), 'next after Laya in the tested tools group');
     assert.equal(page.split(`id="${entryId}"`).length, 2, 'one nina entry');
     return;
   }

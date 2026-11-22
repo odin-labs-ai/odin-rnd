@@ -2,13 +2,13 @@
 // /journal/ or /projects/ page (both 404), and /experiments/ showed only the first four experiments. This module renders,
 // from the site index items (scripts/site-index.mjs; the same items /find/ lists):
 //   - journal/index.html: every field note, newest first, grouped by month;
-//   - projects/index.html: every tool page, newest first;
+//   - projects/index.html: the tool guide, including every published tool demo;
 //   - an "All experiments" section added to the built experiments/index.html, before the end of its <main> (the
 //     page's workbenches, app.js and committed source stay as they are).
 // The two pages are rendered wholly from code into dist/ (no template under site/, which build.mjs copies to dist/ as
 // is), and site/journal/ gains no file, so every committed note stays exactly its generator's output.
 //
-// Nothing is authored per item: titles, summaries, dates, stages and curated outcomes all come from the index items. A
+// Tool descriptions and first steps are shared with the homepage. For field notes and experiments, all content comes from the index. A
 // note's kind label names the experiment(s) whose ledger entry links that note, else just "Field note". Every function is
 // string in, string out; renderSectionPages is the only one that touches files. Neither page is a number-provenance page
 // (scripts/number-provenance.mjs PAGES), so their dates read as on the updates page ("6 Nov 2026", in a <time> with
@@ -17,6 +17,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SITE_ORIGIN, canonicalHeader } from './site-header.mjs';
 import { escapeHtml } from './site-chrome.mjs';
+import { toolGuide } from './tool-guide.mjs';
+import { renderToolGuideBody, renderToolHeading } from './tool-directory.mjs';
+import { entryId as ninaEntryId } from './nina-changes-spotlight.mjs';
 
 export const JOURNAL_PAGE = 'journal/index.html';
 export const PROJECTS_PAGE = 'projects/index.html';
@@ -113,7 +116,7 @@ function sectionPage({ path, current, crumb, title, heading, description, lead, 
   <link rel="preload" href="${up}assets/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="${up}assets/style.css">
   <link rel="stylesheet" href="${up}assets/company.css">
-  <link rel="stylesheet" href="${up}assets/motion.css">
+  <link rel="stylesheet" href="${up}assets/motion.css">${path === PROJECTS_PAGE ? '\n  <link rel="stylesheet" href="../assets/tool-guide.css">' : ''}
   <script type="module" src="${up}assets/motion.mjs"></script>
 </head>
 <body class="company-page">
@@ -151,17 +154,29 @@ export function renderJournalIndex(items) {
   });
 }
 
-/** projects/index.html: every tool page, newest first. */
-export function renderProjectsIndex(items) {
-  const tools = ofType(items, 'tool').sort(newestFirst);
-  if (!tools.length) throw new Error('Section pages: the site index has no tools');
-  const rows = tools.map(t => ({ href: `../${t.href}`, date: t.date, kind: 'Tool', title: t.title, summary: t.summary, where: t.id }));
+/** Page-backed demos are published by the site index. nina follows the gated decision on the built homepage. */
+export function renderProjectsIndex(items, home = '') {
+  const demos = ofType(items, 'tool');
+  const published = new Set(demos.map(item => pageKey(item.href)));
+  const groups = new Map();
+  for (const [key, entry] of Object.entries(toolGuide)) {
+    if (key === '005' && !home.includes(`id="${ninaEntryId}"`)) continue;
+    if (entry.startHref.startsWith('projects/') && !published.delete(pageKey(entry.startHref))) continue;
+    if (!groups.has(entry.group)) groups.set(entry.group, []);
+    groups.get(entry.group).push(`<article class="tool-guide-card">${renderToolHeading(key)}${renderToolGuideBody(key, '../')}</article>`);
+  }
+  if (published.size) throw new Error(`Section pages: missing tool guide for ${[...published].join(', ')}`);
+
+  const groupId = title => title.toLowerCase().replaceAll(' ', '-');
+  const list = [...groups].map(([title, cards]) =>
+    `<section class="tool-guide-group" id="${groupId(title)}" aria-labelledby="${groupId(title)}-title"><h2 id="${groupId(title)}-title">${escape(title)}</h2><div class="tool-guide-grid">${cards.join('')}</div></section>`).join('');
+  const actions = [...groups.keys()].map((title, i) =>
+    `<a${i === 0 ? ' class="button button-primary"' : ''} href="#${groupId(title)}">${escape(title)}</a>`).join('');
   return sectionPage({
-    path: PROJECTS_PAGE, current: null, crumb: 'Tools', title: 'Tools', heading: 'Tools you <br>can use.',
-    description: 'The Odin R&D tools with a page of their own, each with what it does and how it was checked.',
-    lead: 'The tools with a page of their own on this site, the latest at the top. More, including the engine itself, are in the tools list on the home page.',
-    actions: '<a class="button button-primary" href="../find/">Search everything</a><a href="../#projects">The tools list on the home page</a><a href="../journal/">Field notes</a>',
-    listLabel: 'All tools', list: `<ol class="update-list">${rows.map(row).join('')}</ol>`,
+    path: PROJECTS_PAGE, current: null, crumb: 'Tools', title: 'Tool guide', heading: 'Tool guide',
+    description: 'Odin’s architecture checker, recorded demos and experiment runner, with examples and getting-started guides.',
+    lead: 'Check your code against an architecture rule, inspect a recorded test or run an experiment yourself.',
+    actions, listLabel: 'All tools and research materials', list,
   });
 }
 
@@ -204,7 +219,8 @@ export function renderSectionPages({ distDir, items }) {
     try { readFileSync(file); exists = true; } catch { /* absent, as it should be */ }
     if (exists) throw new Error(`Section pages: ${page} already exists in ${distDir}; it is rendered here, not committed`);
     mkdirSync(join(distDir, page, '..'), { recursive: true });
-    writeFileSync(file, render(items));
+    const html = page === PROJECTS_PAGE ? render(items, readFileSync(join(distDir, 'index.html'), 'utf8')) : render(items);
+    writeFileSync(file, html);
     written.push(page);
   }
   const experiments = join(distDir, EXPERIMENTS_PAGE);

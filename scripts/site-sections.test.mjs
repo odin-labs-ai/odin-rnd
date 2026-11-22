@@ -2,13 +2,14 @@
 // from the site index items, and the All experiments section on a copy of the real experiments page.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
 import { ALL_EXPERIMENTS_ID, EXPERIMENTS_PAGE, JOURNAL_PAGE, PROJECTS_PAGE, addAllExperiments, canonicalUrl, isSiteUrl, experimentKind, noteKind, renderJournalIndex, renderProjectsIndex, renderSectionPages } from './site-sections.mjs';
 import { SITE_ORIGIN, navSpan, normaliseHeader } from './site-header.mjs';
-import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, pageClass, NUMBER_PROVENANCE_DIRS, SECTION_INDEX_PAGES } from './site-chrome.mjs';
+import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, escapeHtml, pageClass, NUMBER_PROVENANCE_DIRS, SECTION_INDEX_PAGES } from './site-chrome.mjs';
 import { PAGES } from './number-provenance.mjs';
+import { toolGuide, toolHref } from './tool-guide.mjs';
 
 // Items in the site index contract, one note per committed field note (site/journal/*.html), dated a day apart so the
 // month grouping spans several months; experiments and tools as the index has them.
@@ -24,6 +25,10 @@ const experiments = [
 const tools = readdirSync('site/projects', { withFileTypes: true }).filter(e => e.isDirectory()).map((e, i) => ({ type: 'tool', id: `tool-${e.name}`, title: `Tool ${e.name}`, date: dayOf(i), stage: 'tool', topics: ['t'], summary: 'A tool.', href: `projects/${e.name}/` }));
 const ITEMS = [...notes, ...experiments, ...tools, { type: 'update', id: 'update-x', title: 'U', date: '2026-10-02', stage: 'note', topics: ['t'], summary: 'U.', href: `journal/${NOTE_SLUGS[1]}.html` }];
 
+const publishedNina = '<article id="project-nina"></article>';
+const cardsIn = html => [...html.matchAll(/<article class="tool-guide-card">([\s\S]*?)<\/article>/g)].map(m => m[1]);
+const demoHrefs = html => cardsIn(html).flatMap(card =>
+  [...card.matchAll(/href="\.\.\/(projects\/[^"#]+)(?:#[^"]+)?"/g)].map(m => m[1]));
 const ids = html => [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 const rowHrefs = html => [...html.matchAll(/<li class="update-item" data-reveal><a href="([^"]+)">/g)].map(m => m[1]);
 // A built page's local links resolve against the committed site (the section pages themselves are rendered here).
@@ -90,10 +95,10 @@ test('the section pages are well formed: one header and nav, the right section c
     assert.ok(isSiteUrl(canonical), `${page}: canonical URL on the site`);
     assert.equal(html.match(/<meta property="og:url" content="([^"]+)">/)[1], canonical, `${page}: og:url`);
     assert.match(html, /<title>[^<]+ — Odin R&amp;D<\/title>/);
-    assert.match(html, /&amp; &lt;co&gt;|Tool /, `${page}: item text escaped`);
+    if (page === JOURNAL_PAGE) assert.match(html, /&amp; &lt;co&gt;/, 'note text escaped');
     assert.doesNotMatch(html, /<co>/, `${page}: no raw markup from an item`);
   }
-  assert.deepEqual([...rowHrefs(renderProjectsIndex(ITEMS))].sort(), tools.map(t => `../${t.href}`).sort(), 'every tool once');
+  assert.deepEqual(demoHrefs(renderProjectsIndex(ITEMS)).sort(), tools.map(t => t.href).sort(), 'every local demo has one direct action');
 });
 
 test('the site chrome leaves the section pages\' own trail alone and adds its Find link once, last', () => {
@@ -155,11 +160,12 @@ test('the real experiments page gains one All experiments section, last in <main
 test('renderSectionPages writes both pages and the section into a built copy, and refuses to overwrite a page', () => {
   const dir = mkdtempSync(join(tmpdir(), 'site-sections-'));
   try {
+    writeFileSync(join(dir, 'index.html'), publishedNina);
     mkdirSync(join(dir, 'experiments'), { recursive: true });
     cpSync(join('site', EXPERIMENTS_PAGE), join(dir, EXPERIMENTS_PAGE));
     assert.deepEqual(renderSectionPages({ distDir: dir, items: ITEMS }), [JOURNAL_PAGE, PROJECTS_PAGE, EXPERIMENTS_PAGE]);
     assert.equal(readFileSync(join(dir, JOURNAL_PAGE), 'utf8'), renderJournalIndex(ITEMS));
-    assert.equal(readFileSync(join(dir, PROJECTS_PAGE), 'utf8'), renderProjectsIndex(ITEMS));
+    assert.equal(readFileSync(join(dir, PROJECTS_PAGE), 'utf8'), renderProjectsIndex(ITEMS, publishedNina));
     assert.equal((readFileSync(join(dir, EXPERIMENTS_PAGE), 'utf8').match(new RegExp(`id="${ALL_EXPERIMENTS_ID}"`, 'g')) || []).length, 1);
     assert.throws(() => renderSectionPages({ distDir: dir, items: ITEMS }), /already exists/);
     assert.ok(!existsSync(join('site', JOURNAL_PAGE)) && !existsSync(join('site', PROJECTS_PAGE)), 'nothing committed under those paths');
@@ -169,7 +175,7 @@ test('renderSectionPages writes both pages and the section into a built copy, an
 test('an item without a date, or no items of a kind, stops the render', () => {
   assert.throws(() => renderJournalIndex([{ ...notes[0], date: 'soon' }]), /no date/);
   assert.throws(() => renderJournalIndex(tools), /no field notes/);
-  assert.throws(() => renderProjectsIndex(notes), /no tools/);
+  assert.throws(() => renderProjectsIndex(undefined), /items/);
   assert.throws(() => renderJournalIndex(undefined), /items/);
 });
 
@@ -187,15 +193,28 @@ test('the experiments page opens with All experiments, which the build adds on t
   assert.equal((addAllExperiments(page, ITEMS, '../').match(new RegExp(`id="${ALL_EXPERIMENTS_ID}"`, 'g')) || []).length, 1);
 });
 
-test('the tools page leads to Find, keeps the home tools list as a plain link, and every action resolves', () => {
-  const html = renderProjectsIndex(ITEMS);
-  const actions = html.slice(html.indexOf('<div class="company-actions">'), html.indexOf('</div>', html.indexOf('<div class="company-actions">')));
-  const primary = [...actions.matchAll(/<a class="button button-primary" href="([^"]+)">([^<]+)<\/a>/g)].map(m => [m[1], m[2]]);
-  assert.deepEqual(primary, [['../find/', 'Search everything']]);
-  assert.ok(existsSync('site/find/index.html') && readFileSync('site/find/index.html', 'utf8').includes('name="type" value="tool"'), 'Find has its Tool filter');
-  assert.match(actions, /<a href="\.\.\/#projects">The tools list on the home page<\/a>/, 'the list the lead names is still one click away');
-  for (const [, href] of actions.matchAll(/href="([^"]+)"/g)) {
-    assert.ok(!href.includes('?'), `${href}: the site check resolves paths without a query`);
-    assert.ok(resolves(PROJECTS_PAGE, href), href);
+test('the tool guide groups the published entries and gives each a first step and a source', () => {
+  const html = renderProjectsIndex(ITEMS, publishedNina);
+  const sections = [...html.matchAll(/<section class="tool-guide-group" id="([^"]+)"[^>]*><h2[^>]*>([^<]+)<\/h2>/g)];
+  assert.deepEqual(sections.map(m => m[2]), ['Odin tools', 'Tools we tested', 'Research materials']);
+  for (const [, id, title] of sections) assert.ok(html.includes(`href="#${id}">${title}</a>`), title);
+  const cards = cardsIn(html);
+  assert.equal(cards.length, Object.keys(toolGuide).length);
+  for (const entry of Object.values(toolGuide)) {
+    const card = cards.find(c => c.includes(`<h3>${escapeHtml(entry.title)}</h3>`));
+    assert.ok(card?.includes(escapeHtml(entry.what)), entry.title);
+    assert.ok(card.includes(escapeHtml(entry.use)), entry.title);
+    for (const href of [entry.startHref, entry.sourceHref]) assert.ok(card.includes(`href="${toolHref(href, '../')}"`), href);
   }
+  assert.match(html, /href="\.\.\/#projects"/, 'homepage tools accessible through navigation');
+});
+
+test('the guide lists only published demos and keeps nina out when its homepage gate is closed', () => {
+  const oneDemo = tools.find(item => item.id === 'tool-ci-witness');
+  const html = renderProjectsIndex([oneDemo], '<main></main>');
+  assert.deepEqual(demoHrefs(html), [oneDemo.href]);
+  assert.doesNotMatch(html, /<h3>nina<\/h3>|<h2[^>]*>Tools we tested<\/h2>/);
+  assert.match(html, /<h3>Blueprint Conformance Engine<\/h3>/);
+  assert.deepEqual(demoHrefs(renderProjectsIndex(notes)), []);
+  assert.throws(() => renderProjectsIndex([{ ...oneDemo, href: 'projects/new-demo/' }]), /missing tool guide for projects\/new-demo/);
 });

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
 import { builtCopy } from './test-build.mjs';
+import { toolGuide } from './tool-guide.mjs';
 import { stripBlocks, stripTags } from './test-html-text.mjs';
 import { checkSite } from './number-provenance.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
@@ -15,7 +16,10 @@ import { idOf, openAround } from '../site/assets/home-fold.mjs';
 // The experiment ledger still lives in the archive. Published tool anchors live in the open tools section.
 const OPENED_BY_SCRIPT = ['all-experiments'];
 // Keep the first read short. Limits and correction text are required disclosures and counted separately below.
-const VISIBLE_WORDS = 720; // The fully built page measured 689, including the six visible tool entries.
+// The former 720-word limit included a measured 158 words in Tools. Retain the remainder
+// for the rest of the homepage and limit each of the nine actionable summaries independently.
+const NON_DIRECTORY_WORDS = 562;
+const WORDS_PER_TOOL = 48;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -53,7 +57,7 @@ test('the built homepage exposes the featured study, tool directory, factory and
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1) && main.indexOf('<nav class="home-further') < main.indexOf('<details class="home-archive">'), 'further reading follows the findings before the archive');
   const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="how-we-check"'));
   const rows = [...projects.matchAll(/<article\b[^>]*class="project-row[^"]*"[^>]*>[\s\S]*?<\/article>/g)];
-  assert.ok(rows.length > 0, 'the tools section contains tools');
+  assert.deepEqual(rows.map(([row]) => /data-tool="([^"]+)"/.exec(row)?.[1]), Object.keys(toolGuide));
   assert.match(projects, /href="#how-we-check"/, 'Tools links to the original factory');
   const factory = main.slice(main.indexOf('id="how-we-check"'), main.indexOf('id="findings"'));
   assert.match(factory, /class="factory-drawing" id="factory-model"/, 'the old preview URL now opens the one drawing');
@@ -61,7 +65,7 @@ test('the built homepage exposes the featured study, tool directory, factory and
   assert.doesNotMatch(main, /factory-studio\.webp|class="factory-scene"/, 'the retired illustrated exhibit is absent');
   const disclosures = detailsRanges(projects);
   for (const row of rows) {
-    for (const marker of ['<h3', 'class="project-links"']) {
+    for (const marker of ['<h3', 'class="tool-definition"', 'class="tool-use"', 'class="tool-start"', 'class="tool-source"']) {
       const offset = row[0].indexOf(marker);
       assert.ok(offset >= 0, `each tool retains its ${marker}`);
       const position = row.index + offset;
@@ -127,9 +131,15 @@ test('the home a visitor sees without opening anything is short: under the word 
   // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its
   // words are not copy the short home may trim (scripts/lab-pages.mjs renderLabProof requires one per finding).
   visible = without(visible, /<p class="lab-limit">/);
-  const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
-  const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
-  assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
+  const count = html => stripTags(html).split(/\s+/).filter(Boolean).length;
+  const words = count(visible);
+  const all = count(stripBlocks(main, ['script', 'style', 'svg']));
+  const directory = /<section class="projects content-section"[^>]*>[\s\S]*?<\/section>/.exec(visible)[0];
+  const rest = count(visible.replace(directory, ' '));
+  assert.ok(rest < NON_DIRECTORY_WORDS, `${rest} visible words outside Tools (bound ${NON_DIRECTORY_WORDS})`);
+  for (const [row, key] of directory.matchAll(/<article[^>]* data-tool="([^"]+)"[^>]*>[\s\S]*?<\/article>/g)) {
+    assert.ok(count(row) <= WORDS_PER_TOOL, `${key} shows ${count(row)} words (bound ${WORDS_PER_TOOL})`);
+  }
   assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
 });
 

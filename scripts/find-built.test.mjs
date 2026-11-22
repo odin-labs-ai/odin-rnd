@@ -138,7 +138,10 @@ test('wave 3, as built: one canonical nav on every page, journal/ and projects/ 
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();
   assert.deepEqual(rows('journal/index.html').sort(), hrefsOf('note'), 'journal/ lists every note once');
-  assert.deepEqual(rows('projects/index.html').sort(), hrefsOf('tool'), 'projects/ lists every tool once');
+  const guide = readFileSync(join(dist, 'projects/index.html'), 'utf8');
+  const cards = [...guide.matchAll(/<article class="tool-guide-card">([\s\S]*?)<\/article>/g)];
+  const demos = cards.flatMap(([, body]) => [...body.matchAll(/href="\.\.\/(projects\/[^"#]+)(?:#[^"]+)?"/g)].map(m => m[1]));
+  assert.deepEqual(demos.sort(), hrefsOf('tool'), 'the guide links every published tool page once');
   const experiments = readFileSync(join(dist, 'experiments/index.html'), 'utf8');
   assert.equal((experiments.match(/id="every-experiment"/g) || []).length, 1, 'experiments/ ends with All experiments');
   // The All experiments list is exactly the experiments the site's own data publishes, read without the index: one row
