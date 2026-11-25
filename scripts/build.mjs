@@ -234,6 +234,10 @@ for (const report of witnesses.reports) { const file = `projects/${report.projec
   // (scripts/site-toc.mjs; never on a number-provenance page).
   const { addTocs } = await import('./site-toc.mjs');
   addTocs({ distDir: 'dist' });
+  // "Talk to us about this result" on the listed result records: a utm-tagged link to the odin-labs.ai contact form,
+  // so a lead from the R&D floor names its record on its Source line (scripts/result-contact.mjs; fails closed).
+  const { addResultContactsToDist } = await import('./result-contact.mjs');
+  await addResultContactsToDist({ distDir: 'dist' });
 }
 const htmlFiles = directory => readdirSync(directory,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? htmlFiles(`${directory}/${entry.name}`) : entry.name.endsWith('.html') ? [`${directory}/${entry.name}`] : []);
 // Every page loads the collector once. The note generators already put it in their <head>; adding a second

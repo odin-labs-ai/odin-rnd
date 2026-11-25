@@ -26,9 +26,9 @@
  },
  "follow": [
   { "channel": "LinkedIn", "url": "https://www.linkedin.com/company/odin-labs-ai/" },
-  { "channel": "Reddit", "url": null },
-  { "channel": "X", "url": null },
+  { "channel": "Reddit", "url": "https://www.reddit.com/user/odinlabsrnd/" },
+  { "channel": "X", "url": "https://x.com/odinlabsrnd" },
   { "channel": "GitHub", "url": "https://github.com/odin-labs-ai/odin-rnd" },
-  { "channel": "Instagram", "url": null }
+  { "channel": "Instagram", "url": "https://www.instagram.com/odinlabsrnd/" }
  ]
 }

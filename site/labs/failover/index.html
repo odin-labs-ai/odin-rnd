@@ -33,6 +33,17 @@
       <div><h2 id="status-title">Where it stands.</h2></div>
       <div class="company-prose"><p><strong><!--FAILOVER_STATUS--></strong>.</p><p><!--FAILOVER_RESULT_STATE--></p></div>
     </section>
+    <section class="company-section company-width company-split" id="timeline" aria-labelledby="timeline-title">
+      <div><h2 id="timeline-title">How this lab progressed.</h2></div>
+      <div class="company-prose">
+        <p>These are dated records from one experiment on one host. They do not establish how either database would behave in a live service.</p>
+        <ol class="lab-steps">
+          <li><time datetime="2026-10-25">25 October 2026</time>. <a href="#plan">The frozen plan</a> set the question and comparison rule. <a href="../../data/failover/amendment-01.json">The first amendment</a> records the runner protocol.</li>
+          <li><time datetime="2026-11-08">8 November 2026</time>. <a href="../../data/failover/amendment-02.json">The second amendment</a> recorded the strict PostgreSQL switch and runner fixes before the counted result.</li>
+          <li><time datetime="2026-11-11">11 November 2026</time>. <a href="../../data/failover/amendment-03.json">The completion amendment</a> records the counted run. <a href="../../journal/failover-results.html">The measured result</a> reports no overall winner; strict acknowledgements and a disturbance window remain unresolved.</li>
+        </ol>
+      </div>
+    </section>
     <section class="company-section company-width company-split" id="plan" aria-labelledby="plan-title">
       <div><h2 id="plan-title">What it tests.</h2></div>
       <div class="company-prose"><p><!--FAILOVER_HOW--></p><p><!--FAILOVER_PREREG_LINK--></p></div>
