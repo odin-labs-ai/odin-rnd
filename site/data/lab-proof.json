@@ -2,14 +2,21 @@
   "schemaVersion": 1,
   "kind": "odin-rnd.page-config",
   "page": "index.html, one-pager/",
-  "note": "Page configuration, not a record. The proof strip on the home page and the lab on a page (lab launch, 2026-10-24). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs renderLabProof) and linked to it, and the build checks the rendered strip with scripts/number-provenance.mjs. A claim's record must be a measured experiment record with a decided verdict (briefProblems refuses the router-arm records). Brokers appear by the letters their published records use; no provider is named.",
+  "note": "Page configuration, not a record. The proof strip on the home page and the lab on a page (lab launch, 2026-10-24). Claim texts hold no digits and no number words; each {name} is a value read from the cited experiment record by a JSON pointer (scripts/lab-pages.mjs renderLabProof) and linked to it, and the build checks the rendered strip with scripts/number-provenance.mjs. A claim's record must be a measured experiment record with a decided verdict (briefProblems refuses the router-arm records). Brokers appear by the letters their published records use; no provider is named. Plain-language home (2026-11-16): each claim also carries a `limit` in words, shown under it as \"Limit:\" on the home and the lab on a page; a limit, like a text, holds no digit and no number word, and every claim on this list must have one.",
   "claims": [
     {
       "id": "proof-review-cost",
+      "headline": "The cheapest reviewer caught {cheapCaught} of {cheapOf} planted defects",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "Price is not quality. On a sealed corpus of private changes, the cheapest reviewer cost {cheapCost} per review and caught {cheapCaught} of {cheapOf} seeded defects; the dearest cost {dearCost} and caught {dearCaught} of {dearOf}. The catch intervals of all reviewers overlap.",
+      "text": "At {cheapCost} per review. At {dearCost}, the most expensive caught {dearCaught}/{dearOf}. Uncertainty ranges overlapped.",
+      "provenance": "False alarms on clean changes: cheapest {cheapFA}/{cheapClean}, most expensive {dearFA}/{dearClean}.",
+      "limit": "Repeat runs on private changes with planted defects. A catch meant flagging the right file.",
       "values": {
+        "cheapFA": { "source": "data/review-frontier/results.json#/seats/1/falseAlarms", "format": "int" },
+        "cheapClean": { "source": "data/review-frontier/results.json#/seats/1/falseAlarmsOf", "format": "int" },
+        "dearFA": { "source": "data/review-frontier/results.json#/seats/3/falseAlarms", "format": "int" },
+        "dearClean": { "source": "data/review-frontier/results.json#/seats/3/falseAlarmsOf", "format": "int" },
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
         "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
         "cheapOf": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" },
@@ -30,30 +37,37 @@
     },
     {
       "id": "proof-brokers",
+      "headline": "Reseller prices differed by {spreadS}",
       "record": "data/broker-same-model/results.json",
       "note": "journal/broker-same-model-results.html",
-      "text": "Brokers served what was asked. {calls} identical requests through the brokers we use, at the same moment: {subS} silent model substitutions for {modelS} and {subM} for {modelM}.",
+      "text": "Across {calls} requests, resellers A and C billed list price and B billed more for the same models. Every successful response reported the requested model.",
+      "limit": "Prices cover billed calls during the test window. Some requests failed.",
       "values": {
         "calls": { "source": "data/broker-same-model/results.json#/window/calls", "format": "int" },
-        "modelS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/family", "format": "code" },
-        "subS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/silentSubstitutions", "format": "int" },
-        "modelM": { "source": "data/broker-same-model/results.json#/perArm/mini/family", "format": "code" },
-        "subM": { "source": "data/broker-same-model/results.json#/perArm/mini/silentSubstitutions", "format": "int" }
+        "spreadS": { "source": "data/broker-same-model/results.json#/perArm/sonnet/rate/spread", "format": "pct" }
       },
       "window": {
         "from": { "source": "data/broker-same-model/results.json#/window/firstCall" },
         "to": { "source": "data/broker-same-model/results.json#/window/lastCall" }
       },
       "asserts": [
-        { "kind": "served-as-asked", "source": "data/broker-same-model/results.json#/perArm" }
+        { "kind": "served-as-asked", "source": "data/broker-same-model/results.json#/perArm" },
+        { "kind": "billed-above-list", "source": "data/broker-same-model/results.json#/perArm", "atList": ["A", "C"], "above": "B" },
+        { "kind": "equal-across", "source": "data/broker-same-model/results.json#/perArm", "path": ["rate", "spread"] }
       ]
     },
     {
       "id": "proof-self-verify",
+      "headline": "Self-check cleared {clearedA} of {flaggedA} flagged reviews",
       "record": "data/self-verify/results.json",
       "note": "journal/self-verify-results.html",
-      "text": "A negative result stays published. Can a reviewer model talk itself out of its own false alarms? The pre-registered answer was {decision}: with a verify pass, its false alarms on clean changes stayed at {faA} and {faB}.",
+      "text": "Repeat: {clearedB} of {flaggedB} cleared. With {faA} and {faB} false alarms remaining, the adoption decision was {decision}.",
+      "limit": "We scored verdicts on private changes. We did not check the model’s explanations.",
       "values": {
+        "clearedA": { "source": "data/self-verify/results.json#/verdictChanges/0/turnedToShipByVerify", "format": "int" },
+        "flaggedA": { "source": "data/self-verify/results.json#/verdictChanges/0/pass1NonShip", "format": "int" },
+        "clearedB": { "source": "data/self-verify/results.json#/verdictChanges/1/turnedToShipByVerify", "format": "int" },
+        "flaggedB": { "source": "data/self-verify/results.json#/verdictChanges/1/pass1NonShip", "format": "int" },
         "decision": { "source": "data/self-verify/results.json#/decision", "format": "word" },
         "faA": { "source": "data/self-verify/results.json#/arms/A1-a/falseAlarms", "format": "int" },
         "faB": { "source": "data/self-verify/results.json#/arms/A1-b/falseAlarms", "format": "int" }

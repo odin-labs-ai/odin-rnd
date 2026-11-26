@@ -3,14 +3,14 @@
   "project": "test-witness",
   "projectVersion": "0.1.0",
   "mode": "authored-fixtures",
-  "startedAt": "2026-10-24T10:58:47.465Z",
-  "completedAt": "2026-10-24T10:58:56.011Z",
+  "startedAt": "2026-11-26T00:09:00.224Z",
+  "completedAt": "2026-11-26T00:09:01.340Z",
   "runtime": {
-    "node": "v22.23.3",
-    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
-    "javac": "javac 21.0.12.1"
+    "node": "v22.22.2",
+    "java": "openjdk version \"21.0.13.0.3\" 2026-10-24\nOpenJDK Runtime Environment Homebrew (build 21.0.13.0.3)\nOpenJDK 64-Bit Server VM Homebrew (build 21.0.13.0.3, mixed mode, sharing)",
+    "javac": "javac 21.0.13.0.3"
   },
-  "sourceRevision": "28e9d5c68eefc35f842c0e16d89e497cac0f3fd5",
+  "sourceRevision": "445cfac3c6a59c3751129c6eb20a9be821226787",
   "logsPathNormalized": true,
   "inputSha256": {
     "demos/CONTRACT.md": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9",
@@ -481,8 +481,8 @@
       "status": "completed",
       "exitCode": 0,
       "stdout": "",
-      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
-      "durationMs": 4658
+      "stderr": "openjdk version \"21.0.13.0.3\" 2026-10-24\nOpenJDK Runtime Environment Homebrew (build 21.0.13.0.3)\nOpenJDK 64-Bit Server VM Homebrew (build 21.0.13.0.3, mixed mode, sharing)\n",
+      "durationMs": 71
     },
     {
       "id": "command-2",
@@ -493,9 +493,9 @@
       "cwd": "<workdir>",
       "status": "completed",
       "exitCode": 0,
-      "stdout": "javac 21.0.12.1\n",
+      "stdout": "javac 21.0.13.0.3\n",
       "stderr": "",
-      "durationMs": 1407
+      "durationMs": 103
     },
     {
       "id": "command-3",
@@ -510,7 +510,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 1835
+      "durationMs": 316
     },
     {
       "id": "command-4",
@@ -527,7 +527,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
       "stderr": "",
-      "durationMs": 57
+      "durationMs": 53
     },
     {
       "id": "command-5",
@@ -544,7 +544,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nSUMMARY|0\n",
       "stderr": "",
-      "durationMs": 55
+      "durationMs": 86
     },
     {
       "id": "command-6",
@@ -561,7 +561,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|FAIL|1.00|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|1\n",
       "stderr": "",
-      "durationMs": 60
+      "durationMs": 53
     },
     {
       "id": "command-7",
@@ -578,7 +578,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nSUMMARY|0\n",
       "stderr": "",
-      "durationMs": 56
+      "durationMs": 45
     },
     {
       "id": "command-8",
@@ -629,7 +629,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|FAIL|allowed|rejected\nSUMMARY|1\n",
       "stderr": "",
-      "durationMs": 62
+      "durationMs": 53
     },
     {
       "id": "command-11",
@@ -646,7 +646,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
       "stderr": "",
-      "durationMs": 49
+      "durationMs": 46
     },
     {
       "id": "command-12",
@@ -663,7 +663,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|ordinary|PASS|4.00|4.00\nASSERT|rounding|PASS|1.01|1.01\nASSERT|below-threshold|PASS|99.00|99.00\nASSERT|threshold|PASS|90.00|90.00\nASSERT|validation|PASS|rejected|rejected\nSUMMARY|0\n",
       "stderr": "",
-      "durationMs": 64
+      "durationMs": 44
     },
     {
       "id": "command-13",
@@ -680,7 +680,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|ordinary|FAIL|unconditional-failure|4.00\nASSERT|rounding|FAIL|unconditional-failure|1.01\nASSERT|below-threshold|FAIL|unconditional-failure|99.00\nASSERT|threshold|FAIL|unconditional-failure|90.00\nASSERT|validation|FAIL|unconditional-failure|rejected\nSUMMARY|5\n",
       "stderr": "",
-      "durationMs": 62
+      "durationMs": 49
     },
     {
       "id": "command-14",
@@ -697,7 +697,7 @@
       "exitCode": 0,
       "stdout": "No assertions executed\n",
       "stderr": "",
-      "durationMs": 31
+      "durationMs": 39
     },
     {
       "id": "command-15",
@@ -714,7 +714,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "Exception in thread \"main\" java.lang.RuntimeException: unknown execution failure\n\tat Witness.main(Witness.java:14)\n",
-      "durationMs": 31
+      "durationMs": 32
     }
   ],
   "metrics": [
@@ -738,8 +738,8 @@
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
   },
-  "runId": "93e05605-75d6-41ea-91b8-bb098016edd4",
-  "environment": "GitHub Actions",
-  "workflowRun": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40088015377",
-  "workflowAttempt": 1
+  "runId": "e1bff1b7-7afa-4f33-99dc-f8d472e3c165",
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null
 }

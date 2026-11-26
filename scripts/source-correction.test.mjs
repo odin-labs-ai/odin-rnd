@@ -1,5 +1,5 @@
 // Dated corrections on the partners, evidence and providers pages (mission rnd-site-ux-nav-1101 wave 6, lane D). #168 put
-// each one as an unstyled paragraph between the page's lead and its opening actions. It stays there, open and readable
+// each one as an unstyled paragraph between the page's lead and its opening actions. Evidence and Providers stay open and readable
 // without a click, now in a ruled block of its own under a plain dated label ("Corrected on …"), so a visitor meets the
 // correction before the buttons. The correction's words are pinned by hash to the text #168 published (213e1f1), so a later
 // edit cannot reword one silently.
@@ -17,7 +17,7 @@ const sha = text => createHash('sha256').update(text).digest('hex');
 const BLOCK = /<div class="source-correction"><p class="correction-when">Corrected on <time datetime="(\d{4}-\d{2}-\d{2})">(\d{4}-\d{2}-\d{2})<\/time><\/p><p>([^]*?)<\/p><\/div>/g;
 
 for (const [page, pinned] of Object.entries(PINNED)) {
-  test(`${page}: the correction is open between the lead and the buttons, under a dated label, its words unchanged`, () => {
+  test(`${page}: the dated correction remains between the lead and actions, with its published wording`, () => {
     const html = readFileSync(`site/${page}/index.html`, 'utf8');
     assert.doesNotMatch(html, /<p class="source-correction">/, 'no longer an unstyled paragraph');
     assert.equal((html.match(/class="source-correction"/g) || []).length, 1, 'one correction block, no second copy');
@@ -34,8 +34,15 @@ for (const [page, pinned] of Object.entries(PINNED)) {
     const leadEnd = html.indexOf('</p>', lead) + '</p>'.length;
     const at = html.indexOf(whole), actions = html.indexOf('<div class="company-actions">');
     assert.ok(lead > 0 && actions > 0, 'the hero has its lead and its actions');
-    assert.equal(html.slice(leadEnd, at).trim(), '', 'directly after the lead');
-    assert.equal(html.slice(at + whole.length, actions).trim(), '', 'directly before the buttons');
+    const before = html.slice(leadEnd, at).trim();
+    const after = html.slice(at + whole.length, actions).trim();
+    if (page === 'partners') {
+      assert.equal(before, '<details class="partner-correction">\n          <summary>Correction of our earlier claims · <time datetime="2026-11-02">2026-11-02</time></summary>');
+      assert.equal(after, '</details>', 'the full published text is the disclosure body');
+    } else {
+      assert.equal(before, '', 'directly after the lead');
+      assert.equal(after, '', 'directly before the buttons');
+    }
     assert.ok(actions < html.indexOf('</section>', lead), 'in the hero');
     assert.doesNotMatch(whole, /\shidden\b|<details|<summary/, 'readable without a click');
   });

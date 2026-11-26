@@ -11,7 +11,7 @@
  "fallbacks": [
   {
    "webm": "assets/labs/agent-space/films/agent-space-30s.webm",
-   "webmSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+   "webmSha256": "88d3115fb49c3ab45db3490dcdb4a2fd23df75bd2305138e4676beb15e2411af",
    "mp4": "assets/labs/agent-space/films/agent-space-30s.mp4",
    "sha256": "fd0afcd0171d80df395120200c5a75e209a538cca6ba9892b397e3745ecc83fa",
    "bytes": 3141258,
@@ -60,7 +60,7 @@
   },
   {
    "webm": "assets/labs/agent-space/films/agent-space-tour.webm",
-   "webmSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+   "webmSha256": "e3a79e0c5633d7c319cce79bae4e794679087459144ee1b1411db172ff301366",
    "mp4": "assets/labs/agent-space/films/agent-space-tour.mp4",
    "sha256": "0eb5072e19709ac9a4333c3d42815df9a6c4ad0019385d3b8ee16a0e7ee73b2f",
    "bytes": 4247932,
@@ -279,7 +279,7 @@
   },
   {
    "webm": "assets/labs/agent-space/session-2026-10-25-b/clip.webm",
-   "webmSha256": "0955535ad0434178f5569576be92a77dc6586052dcd9b564f447b1fec84c60bc",
+   "webmSha256": "edcf978dd0507cab1578b993df14ea2b49b629c6717f704ddeb0deed3159c885",
    "mp4": "assets/labs/agent-space/session-2026-10-25-b/clip.mp4",
    "sha256": "da9d1875bde3c85bbc870c8eacde7f8166b723e73186143d9c7e01749f63e9dc",
    "bytes": 2014907,

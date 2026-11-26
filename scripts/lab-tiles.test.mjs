@@ -15,7 +15,7 @@ const committed = JSON.parse(readFileSync('site/data/labs/failover.json', 'utf8'
 test('Lab 03 renders after Lab 01, carries the measured result and unresolved limits, and preserves its plan and amendments', () => {
   assert.deepEqual(tileProblems(committed), []);
   const page = renderLabs()['labs/index.html'];
-  const lab01 = page.indexOf('<a class="lab-tile" href="agent-space/">'), lab03 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-failover">');
+  const lab01 = page.indexOf('<a class="lab-tile" href="agent-space/">'), lab03 = page.indexOf('<article class="lab-tile" aria-labelledby="lab-tile-failover">');
   assert.ok(lab01 >= 0 && lab03 > lab01, 'Lab 03 follows Lab 01');
   const tile = page.slice(lab03, page.indexOf('</article>', lab03));
   assert.match(tile, /<span class="technical">LAB 03<\/span><h2 id="lab-tile-failover">Failover<\/h2>/);
@@ -29,7 +29,7 @@ test('Lab 03 renders after Lab 01, carries the measured result and unresolved li
   assert.doesNotMatch(tile.replace(/<[^>]*>/g, ' ').replace(/LAB 03|EXP 021|Amendment 0[123]/g, ''), /\d/, 'no number beyond the lab, experiment and amendment names');
   assert.doesNotMatch(tile, /fits|predict|winner|faster|safer/i, 'no prediction or verdict');
   // Lab 02's tile (a results lab) sits between Lab 01 and Lab 03, once.
-  const lab02 = page.indexOf('<article class="lab-tile lab-tile-static" aria-labelledby="lab-tile-brain-bench">');
+  const lab02 = page.indexOf('<article class="lab-tile" aria-labelledby="lab-tile-brain-bench">');
   assert.ok(lab01 < lab02 && lab02 < lab03, 'Lab 02 sits between Lab 01 and Lab 03');
   assert.equal((page.match(/LAB 02/g) ?? []).length, 1);
 });
@@ -76,7 +76,7 @@ test('the build refuses a tile with a number, a missing or outside link, an unsc
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify({ ...committed, status: 'Pre-registered, not yet run' }));
   assert.throws(() => readTiles(root), /status: a results lab has run/);
   writeFileSync(join(root, 'data/labs/failover.json'), JSON.stringify(committed));
-  assert.match(renderTile(committed), /^<article class="lab-tile lab-tile-static"/);
+  assert.match(renderTile(committed), /^<article class="lab-tile"/);
 });
 
 const results = JSON.parse(readFileSync('site/data/labs/brain-bench-tile.json', 'utf8'));

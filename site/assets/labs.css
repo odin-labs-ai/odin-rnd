@@ -11,17 +11,19 @@
 .company-prose h3{margin-top:32px;font-size:20px;letter-spacing:-.01em}
 .lab-boundary{margin-top:28px!important;font-size:14px;color:var(--steel);border-top:1px solid var(--rule);padding-top:16px}
 .lab-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
-.lab-tile{display:block;padding:30px;border:1px solid var(--rule);border-radius:12px;text-decoration:none}
+.lab-tile{position:relative;isolation:isolate;display:block;padding:30px;border:1px solid var(--rule);border-radius:12px;text-decoration:none}
 .lab-tile:hover,.lab-tile:focus-visible{border-color:var(--steel)}
 .lab-tile .technical{color:var(--steel)}
 .lab-tile h2{margin-top:12px;font-size:clamp(28px,2.6vw,38px)}
 .lab-tile p{margin-top:14px;color:var(--steel);line-height:1.65}
 .lab-tile .lab-tile-status{font-size:14px}
-.lab-tile-static:hover{border-color:var(--rule)}
-.lab-tile-static:focus-within{border-color:var(--steel)}
-.lab-tile .lab-tile-open{margin-top:4px;color:var(--brand)}
-.lab-tile-open a{display:inline-flex;min-height:44px;align-items:center;gap:8px;font-weight:700;text-underline-offset:5px}
-.lab-tile-open a:focus-visible{outline:2px solid var(--brand);outline-offset:4px}
+/* Stretch the heading link over the card. Its evidence links stay independently clickable. */
+.lab-tile > a{display:block;color:inherit;text-decoration:none}
+.lab-tile > a::after{content:"";position:absolute;inset:0;border-radius:12px}
+.lab-tile > a:focus-visible{outline:none}
+.lab-tile > a:focus-visible::after{outline:2px solid var(--brand);outline-offset:5px}
+.lab-tile:focus-within{border-color:var(--steel)}
+.lab-tile :is(.lab-provenance,.lab-tile-links) a{position:relative;z-index:1}
 .lab-tile-links{list-style:none;margin:16px 0 0;padding:0}
 .lab-tile-links li{min-height:44px;display:flex;align-items:center}
 .lab-tile-links a{font-weight:600;text-underline-offset:5px}

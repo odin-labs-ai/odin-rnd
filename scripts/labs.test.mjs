@@ -50,6 +50,7 @@ test('the real site: with no dispatch it shows the empty box; with dispatches ev
   }
   assert.doesNotMatch(page, /id="no-dispatch"/);
   assert.match(page, /<video/);
+  assert.match(page, /A re-run of the <a href="#session-2026-10-25-b"><time datetime="2026-10-25">[^<]+<\/time> question set<\/a>/);
   for (const dispatch of realDispatches) {
     assert.ok(page.includes(dispatch.clip.src), dispatch.session);
     for (const q of dispatch.questions) assert.ok(page.includes(q.evidence), `${dispatch.session} ${q.evidence}`);
@@ -66,7 +67,7 @@ test('the real site: with no dispatch it shows the empty box; with dispatches ev
 });
 
 test('the first film is embedded once in progress and linked from the gallery', () => {
-  assert.equal((page.match(/<video\b[^>]*><source src="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-30s\.webm"/g) ?? []).length, 1);
+  assert.equal((page.match(/<video\b[^>]*><source src="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-30s\.mp4"/g) ?? []).length, 1);
   assert.equal((page.match(/id="film-agent-space-30s"/g) ?? []).length, 1);
   assert.match(page, /<li class="lab-film lab-progress-step" id="film-agent-space-30s">/);
   assert.match(page, /<a href="#film-agent-space-30s">Watch the recording and read its screening record\.<\/a>/);
@@ -77,7 +78,7 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
   assert.ok(dispatch);
   assert.ok(page.includes(`poster="../../${webpSibling(dispatch.poster, 1280)}"`));
   const originals = [
-    'films/agent-space-30s-poster.png', 'films/agent-space-tour-poster.png',
+    'outage/dispatch-2-outage-poster.png', 'films/agent-space-30s-poster.png', 'films/agent-space-tour-poster.png',
     'progress/hq-on-duty-poster.jpg', 'progress/hq-engineering-hall.jpg',
     'session-2026-10-25-b/poster.png',
     ...['01-s1-q1.png', '02-s1-q2.png', '03-s1-q3.png', '04-s1-q4.png'].map(name => `session-2026-10-25-b/stills/${name}`),
@@ -103,9 +104,9 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
 
 test('the hash-pinned JSON records retain their committed bytes', () => {
   const expected = new Map([
-    ['films.json', 'f2ade996bcc2090a9028e9226631668605bc02e319a48c22bc5b8f4446a3f819'],
+    ['films.json', '705f7a114f0e37c14557b64340b4dfc79582f8ff82effec4ec4a092701a19558'],
     ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
-    ['dispatches/session-2026-10-25-b.json', '260fe2c03e1e49dc21ccc485056513f3add18b81e5dd7e1ba0b39702bffd87a2'],
+    ['dispatches/session-2026-10-25-b.json', 'fb8c1d650a601fba673d06d7b9bd691772a152374439a7323b1f8df9b307130b'],
     ['dispatches/session-2026-11-08.json', 'd895de15e735853ba6fc41e7281ab87c6ff1c28751e6f3edd23a98b19da2e627'],
     ['milestones.json', JSON.parse(readFileSync('scripts/milestones.pin.json', 'utf8')).fileSha256],
   ]);

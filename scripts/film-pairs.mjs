@@ -1,5 +1,5 @@
 // The dist pass for the films' MP4 copies (mission rnd-nightshift-1112, follow-on #243 to #221): which built files may
-// name a WebM, which WebM-then-MP4 <source> pairs count, and the count of pairs per page against the pairs the build
+// name a WebM, which MP4-then-WebM <source> pairs count, and the count of pairs per page against the pairs the build
 // wrote. The copies and their record are in scripts/film-fallbacks.mjs; filmSources() is in scripts/film-sources.mjs.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -83,11 +83,11 @@ export function inertRanges(html) {
 //
 // Generated pages: every generator that plays a film (lab-films.mjs, lab-progress.mjs, lab-outage.mjs, labs.mjs) writes
 // its <source> elements through filmSources() (scripts/film-sources.mjs), which writes the WebM <source> and, when the
-// record lists a copy, the MP4 <source> right after it, in one call. While the build renders the pages, a ledger
+// record lists a copy, the MP4 <source> immediately before it, in one call. While the build renders the pages, a ledger
 // (startFilmLedger) counts the pairs filmSources() wrote, and pagePairs() binds them to the page they were written on.
 //
 // The home page (site/index.html) is written by hand, stays byte for byte as committed, and carries one player. Its
-// exact text through the end of the WebM <source> is pinned below (HOME). The dist pass inserts the MP4 <source> after
+// exact text through the end of the WebM <source> is pinned below (HOME). The dist pass inserts the MP4 <source> before
 // that text, only when the text is on the page exactly once, and counts it as the home page's one pair. It inserts
 // nowhere else.
 //
@@ -98,7 +98,7 @@ export function inertRanges(html) {
 // needs a real HTML parser (follow-on, odin-labs-ai/odin-rnd#228). Copies, and moves to another page, are caught.
 //
 // Then every file in dist that is not media, a font or an archive (archives download, they do not render) is read.
-// Each WebM-then-MP4 <source> pair of a listed film in an .html page is counted, and for every file and film the pairs
+// Each MP4-then-WebM <source> pair of a listed film in an .html page is counted, and for every file and film the pairs
 // found must equal the pairs the build wrote there (pagePairs, plus the home page's one). A copied player, in a comment,
 // script, template, attribute, svg, another page or any other file, adds a pair the build did not write and stops the
 // build; so does a pair in a file that is not an .html page. What is left after the counted pairs, plain
@@ -113,19 +113,22 @@ export const HOME = {
   player: '<figure class="agent-space-media"><video controls preload="none" playsinline width="1280" height="720" poster="assets/labs/agent-space/progress/hq-on-duty-poster.jpg" aria-label="The HQ on duty: the Odin Labs HQ at dawn, the Engineering floor, the review wall, the trust wall and the outbox that waits for the founder’s click"><source src="assets/labs/agent-space/progress/hq-on-duty.webm" type="video/webm;codecs=vp9,opus">',
 };
 
-/** The home page with the MP4 <source> after its pinned player, or why not (the pin missing or on the page twice). */
+/** The home page with the MP4 <source> before its pinned WebM source, or why not (the pin missing or on the page twice). */
 export function pairHome(html, home, byWebm) {
-  const at = html.indexOf(home.player), entry = byWebm.get(home.webm), where = `${home.page}: the pinned home player (HOME in scripts/film-pairs.mjs)`;
+  const entry = byWebm.get(home.webm), where = `${home.page}: the pinned home player (HOME in scripts/film-pairs.mjs)`;
   if (!entry) return { html, problems: [`${where} plays ${home.webm}, which has no MP4 copy`] };
   const last = home.player.lastIndexOf('<source ');
   if (last < 0) return { html, problems: [`${where} does not end with the WebM source of ${home.webm}`] };
   const tail = home.player.slice(last);
   if (!tail.startsWith(`<source src="${home.webm}" type="`) || !WEBM_TYPE.test(tail.slice(`<source src="${home.webm}" type="`.length, -2)) || !tail.endsWith('">')) return { html, problems: [`${where} does not end with the WebM source of ${home.webm}`] };
+  const paired = home.player.slice(0, last) + `<source src="${entry.mp4}" type="video/mp4">` + tail;
+  const existing = html.includes(paired);
+  const pin = existing ? paired : home.player;
+  const at = html.indexOf(pin);
   if (at < 0) return { html, problems: [`${where} is not on the page; when the player changes, change the pin with it`] };
-  if (html.indexOf(home.player, at + 1) >= 0) return { html, problems: [`${where} is on the page more than once`] };
+  if (html.indexOf(pin, at + 1) >= 0 || (existing && html.includes(home.player))) return { html, problems: [`${where} is on the page more than once`] };
   if (inertRanges(html).some(([a, b]) => at >= a && at < b)) return { html, problems: [`${where} sits inside a comment, raw text or template content`] };
-  const end = at + home.player.length, insert = `<source src="${entry.mp4}" type="video/mp4">`;
-  return { html: html.startsWith(insert, end) ? html : html.slice(0, end) + insert + html.slice(end), problems: [] };
+  return { html: existing ? html : html.slice(0, at) + paired + html.slice(at + pin.length), problems: [] };
 }
 
 // A pair counts only in the one form a film is played in on this site, as main's PLAYED had it: the generators' and the
@@ -133,7 +136,7 @@ export function pairHome(html, home, byWebm) {
 // path and an aria-label), after ">", white space or the page start, followed directly by a WebM <source> and then an
 // MP4 <source>, the form filmSources() and the home pass write. Only the two sources are taken out before the net: the
 // <video> tag itself stays in the searched text, so a src or any other WebM on it is refused.
-const PAIR = /(?<=^|[>\s])(<video(?: class="[a-z0-9 -]*")? controls preload="none" playsinline(?: width="\d+" height="\d+")? poster="[A-Za-z0-9._/-]+" aria-label="[^"<>]*">)<source src="([A-Za-z0-9._/-]+\.webm)" type="(video\/webm[^"<>&]*)"><source src="([A-Za-z0-9._/-]+\.mp4)" type="video\/mp4">/g;
+const PAIR = /(?<=^|[>\s])(<video(?: class="[a-z0-9 -]*")? controls preload="none" playsinline(?: loading="lazy")?(?: width="\d+" height="\d+")? poster="[A-Za-z0-9._/-]+" aria-label="[^"<>]*">)<source src="([A-Za-z0-9._/-]+\.mp4)" type="video\/mp4"><source src="([A-Za-z0-9._/-]+\.webm)" type="(video\/webm[^"<>&]*)">/g;
 const near = (text, at) => text.slice(Math.max(0, at - 50), at + 12).replace(/\s+/g, ' ');
 
 /**
@@ -145,7 +148,7 @@ export function textMentions(text, file, byWebm) {
   // Only an .html page plays; a pair in any other file is left in the text and refused below.
   const page = /\.html$/i.test(file);
   const inert = page && new RegExp(PAIR.source).test(text) ? inertRanges(text) : [];
-  const rest = text.replace(PAIR, (whole, video, webmSrc, type, mp4Src, offset) => {
+  const rest = text.replace(PAIR, (whole, video, mp4Src, webmSrc, type, offset) => {
     const entry = byWebm.get(posix.normalize(posix.join(dir, webmSrc)));
     if (!page || !entry || webmSrc.startsWith('/') || !WEBM_TYPE.test(type) || mp4Src !== `${webmSrc.slice(0, -'.webm'.length)}.mp4`) return whole;
     if (inert.some(([a, b]) => offset >= a && offset < b)) return whole;
@@ -202,7 +205,7 @@ const JSON_FILE = /\.(json|jsonl|webmanifest|map)$/i;
 const allFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? allFiles(join(dir, e.name)) : [join(dir, e.name)]);
 
 /**
- * The dist pass: the MP4 <source> after the home page's pinned player (the one insertion), then every built file read. Fails closed on any WebM
+ * The dist pass: the MP4 <source> before the home page's pinned WebM (the one insertion), then every built file read. Fails closed on any WebM
  * mention outside a counted pair, on a film whose pairs in dist are not the pairs the build wrote, and on a copy no page
  * plays. `written` is pagePairs() of the rendered pages (dist path -> film -> pairs the generators wrote there).
  */
@@ -235,7 +238,7 @@ export function addFilmFallbacks({ distDir = 'dist', root = 'site', written = ne
     const want = expected.get(file) ?? new Map(), got = found.get(file) ?? new Map();
     for (const webm of new Set([...want.keys(), ...got.keys()])) {
       if (want.get(webm)) played.add(webm);
-      if ((want.get(webm) ?? 0) !== (got.get(webm) ?? 0)) problems.push(`${file}: ${got.get(webm) ?? 0} WebM-then-MP4 <source> pairs of ${webm}, but the build wrote ${want.get(webm) ?? 0} there (a copied, moved or hand-written player)`);
+      if ((want.get(webm) ?? 0) !== (got.get(webm) ?? 0)) problems.push(`${file}: ${got.get(webm) ?? 0} MP4-then-WebM <source> pairs of ${webm}, but the build wrote ${want.get(webm) ?? 0} there (a copied, moved or hand-written player)`);
     }
   }
   for (const webm of byWebm.keys()) if (!played.has(webm)) problems.push(`${webm} has an MP4 copy but no page plays it`);

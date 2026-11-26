@@ -1,0 +1,56 @@
+{
+  "apiVersion": "blueprint-conformance/v1alpha1",
+  "approvals": [
+    {
+      "role": "blueprint-steward",
+      "stage": "ratify"
+    }
+  ],
+  "architecture": {
+    "components": [],
+    "relationships": []
+  },
+  "constraints": [
+    {
+      "id": "forbidden-pattern-bfetch-s-s-new-url-s-x27-data-index-json-x27-s-s",
+      "pattern": "\\bfetch\\s*\\((?!\\s*new URL\\(\\s*[\"\\x27]\\.\\./data/index\\.json[\"\\x27]\\s*,\\s*doc\\.baseURI\\s*\\)\\s*[,\\)])|\\b(?:sendBeacon|XMLHttpRequest|WebSocket|EventSource)\\s*\\(",
+      "severity": "high",
+      "type": "forbiddenPattern"
+    }
+  ],
+  "evidenceRequirements": [
+    {
+      "onMissing": "block",
+      "required": true,
+      "type": "staticAst"
+    }
+  ],
+  "extraction": {
+    "minFiles": 1,
+    "paths": [
+      "site/assets/find.mjs"
+    ],
+    "profile": "plugin-surface"
+  },
+  "intentRefs": [
+    "PRODUCT.md",
+    "docs/PUBLISHING.md"
+  ],
+  "kind": "EngineeringBlueprint",
+  "metadata": {
+    "id": "rnd-local-discovery",
+    "name": "Find reads its local catalogue and filters visitor searches in the browser",
+    "ownerRole": "rnd-maintainer",
+    "status": "draft",
+    "stewardRole": "rnd-maintainer",
+    "version": "0.1.0"
+  },
+  "scope": {
+    "paths": [
+      "site/assets/find.mjs"
+    ],
+    "repositories": [
+      "odin-labs-ai/odin-rnd"
+    ]
+  }
+}

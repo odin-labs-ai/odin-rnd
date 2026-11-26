@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, remainingItems, RESULT_PAGE_SIZE,
+  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, groupResults, RESULT_PAGE_SIZE,
 } from '../site/assets/find.mjs';
 import { hrefOnSite } from './site-index.mjs';
 
@@ -93,21 +93,26 @@ test('the stage options omit Kind duplicates while saved stage links still filte
   assert.deepEqual(ids(filter(sameAsKind, paramsFromSearch('?stage=tool'))), ['bce']);
 });
 
-test('interactive results show 30 first and name the full remainder', () => {
-  const many = Array.from({ length: 65 }, (_, index) => ({ id: `item-${index}` }));
-  assert.deepEqual(resultPage(many.slice(0, 30)), { visible: many.slice(0, 30), remaining: 0 });
-  assert.deepEqual(resultPage(many), { visible: many.slice(0, 30), remaining: 35 });
-  assert.match(source, /`Show \$\{remaining\} more`/, 'the reveal control names the remainder');
-  assert.match(source, /const \{ visible, remaining \} = resultPage\(found\)/, 'every render resets the cap');
+test('group matching entries by exact destination and keep every matching amendment', () => {
+  const note = items[2];
+  const amendment = { ...note, id: 'change', type: 'update', stage: 'amendment' };
+  const anchor = { ...note, href: note.href + '#follow-up' };
+  const invalid = { ...note, href: '/off-site' };
+  const source = [amendment, anchor, note, invalid, invalid];
+  assert.deepEqual(groupResults(filter(source, {})), [[amendment, note], [anchor], [invalid], [invalid]]);
+  assert.deepEqual(groupResults(filter(source, { stage: ['amendment'] })), [[amendment]]);
+  assert.deepEqual(groupResults(filter(source, { q: 'absent' })), []);
 });
 
-test('Show more reveals only the current matching remainder', () => {
-  const many = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
-    ({ id: `item-${index}`, type: index < 4 ? 'note' : 'experiment' }));
-  assert.deepEqual(ids(remainingItems(many, {})), ids(many.slice(RESULT_PAGE_SIZE)));
-  assert.deepEqual(remainingItems(many, { type: ['note'] }), []);
-  assert.match(source, /const rest = remainingItems\(items, read\(\)\)\.map\(row\)/, 'the reveal handler reads the live form state');
-  assert.doesNotMatch(source, /const rest = filter\(items, params\)/, 'the reveal handler does not use closure state');
+test('pagination counts destination pages and retains entries beyond the first page', () => {
+  const records = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
+    ({ ...items[2], href: `journal/note-${index}.html` }));
+  const extra = { ...records.at(-1), id: 'amendment', stage: 'amendment' };
+  const groups = groupResults([...records, extra]);
+  const { visible, remaining } = resultPage(groups);
+  assert.equal(visible.length, RESULT_PAGE_SIZE);
+  assert.equal(remaining, 6);
+  assert.deepEqual(groups.slice(visible.length).at(-1), [records.at(-1), extra]);
 });
 
 test('unknown parameters and malformed values are ignored', () => {
@@ -176,7 +181,9 @@ test('the template carries the search UI the module expects', () => {
   for (const name of ['type', 'outcome']) assert.match(html, new RegExp(`<fieldset[\\s\\S]*name="${name}"`));
   assert.equal(html.match(/<fieldset\b/g)?.length, 4);
   assert.match(html, /<form id="find-form"[^>]*\shidden>/, 'the form stays hidden until the index loads');
-  assert.doesNotMatch(html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0], /\shidden/, 'the static list is visible without JavaScript');
+  const fallback = html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0];
+  assert.doesNotMatch(fallback, /\shidden/, 'the static list is visible without JavaScript');
+  assert.match(fallback, /All library entries are shown.*Find on Page/, 'the unfiltered list explains how to search when enhancement is unavailable');
 });
 
 test('the template loads nothing from elsewhere and holds no numbers or index link', () => {

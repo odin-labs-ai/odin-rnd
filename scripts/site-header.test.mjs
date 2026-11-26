@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
-import { DESTINATIONS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, sectionFor } from './site-header.mjs';
+import { DESTINATIONS, FOOTER_LINKS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, addFooterLinks, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, retiredTargets, sectionFor } from './site-header.mjs';
 import { addFindLink, FIND_EXEMPT } from './site-chrome.mjs';
 import { checkPage, NUMBER_WORDS, PAGES } from './number-provenance.mjs';
 
@@ -15,7 +15,8 @@ const read = rel => readFileSync(join('site', rel), 'utf8');
 const prefixOf = rel => (rel === '404.html' ? SITE_ORIGIN : '../'.repeat(rel.split('/').length - 1));
 const normalise = (html, rel) => normaliseHeader(html, { relPrefix: prefixOf(rel), current: sectionFor(rel), label: rel });
 const navOf = html => { const { start, end } = navSpan(html); return html.slice(start, end); };
-const labels = nav => [...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
+// The link texts as a reader sees them (& is written &amp;).
+const labels = nav => [...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
 const CANONICAL = DESTINATIONS.map(d => d.label);
 const BACK = '<a class="parent-site-link" href="https://odin-labs.ai/"><span aria-hidden="true">←</span> Back to odin-labs.ai</a>';
 
@@ -32,6 +33,7 @@ test('every page gets one nav with the canonical destinations in order, the old 
     const header = out.match(/<header class="site-header[\s\S]*?<\/header>/g);
     assert.equal(header.length, 1, `${rel}: one header`);
     assert.equal((header[0].match(/<nav\b/g) || []).length, 1, `${rel}: one nav`);
+    assert.ok(navOf(out).includes(`</details><a href="${prefixOf(rel)}#projects">Tools</a>`), `${rel}: Tools is reachable with Menu closed`);
     const got = labels(navOf(out));
     const want = rel === '404.html' ? [...CANONICAL, 'Find'] : CANONICAL;
     assert.deepEqual(got, want, `${rel}: canonical order`);
@@ -55,7 +57,7 @@ test('only the nav changes: brand, View source and Back to odin-labs.ai stay byt
 });
 
 test('aria-current marks the page\'s own section, and only that', () => {
-  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': 'Labs', 'updates/index.html': 'Updates', 'work-with-us/index.html': 'Work with us', 'partners/index.html': 'Partners', 'experiments/index.html': 'Experiments', 'journal/a-passing-pipeline.html': 'Field notes', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
+  const cases = { 'index.html': null, 'labs/index.html': 'Labs', 'labs/agent-space/story/index.html': 'Labs', 'updates/index.html': 'Notes &amp; updates', 'work-with-us/index.html': 'Work with us', 'partners/index.html': null, 'experiments/index.html': 'All results', 'journal/a-passing-pipeline.html': 'Notes &amp; updates', 'one-pager/index.html': 'Start here', 'methods/index.html': 'How we test', 'projects/ci-witness/index.html': null, 'evidence/index.html': null, 'find/index.html': null };
   for (const [rel, want] of Object.entries(cases)) {
     const nav = navOf(normalise(read(rel), rel));
     const marked = [...nav.matchAll(/<a\b[^>]*aria-current="page"[^>]*>([^<]*)<\/a>/g)].map(m => m[1]);
@@ -66,9 +68,10 @@ test('aria-current marks the page\'s own section, and only that', () => {
 
 test('links lead to the section pages, relative to the page; Work with us keeps its contact marker', () => {
   const nav = navOf(normalise(read('journal/a-passing-pipeline.html'), 'journal/a-passing-pipeline.html'));
-  assert.equal(nav, '<nav aria-label="Main navigation"><a href="../#floor">Factory</a><a href="../experiments/">Experiments</a><a href="../labs/">Labs</a><a href="../updates/">Updates</a><a href="../journal/" aria-current="page">Field notes</a><a href="../work-with-us/" data-contact-opened>Work with us</a><a href="../partners/">Partners</a></nav>');
-  assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><a href="#floor">Factory<\/a><a href="experiments\/">Experiments<\/a>/);
-  assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/journal\/">Field notes<\/a>/);
+  assert.equal(nav, '<nav aria-label="Main navigation"><details class="site-menu"><summary>Menu</summary><div class="site-menu-links"><a href="../one-pager/">Start here</a><a href="../#findings">Findings</a><a href="../labs/">Labs</a><a href="../experiments/">All results</a><a href="../journal/" aria-current="page">Notes &amp; updates</a><a href="../methods/">How we test</a><a href="../work-with-us/" data-contact-opened>Work with us</a></div></details><a href="../#projects">Tools</a></nav>');
+  assert.match(navOf(normalise(read('index.html'), 'index.html')), /^<nav aria-label="Main navigation"><details[^>]*><summary>Menu<\/summary><div[^>]*><a href="one-pager\/">Start here<\/a><a href="#findings">Findings<\/a>/);
+  assert.match(navOf(normalise(read('labs/agent-space/story/index.html'), 'labs/agent-space/story/index.html')), /<a href="\.\.\/\.\.\/\.\.\/journal\/">Notes &amp; updates<\/a>/);
+  assert.doesNotMatch(nav, /partners\//, 'Partners is not in the header');
 });
 
 test('idempotent, alone and with the Find link of scripts/site-chrome.mjs in either order: one Find, last', () => {
@@ -107,26 +110,31 @@ test('the 404 page keeps its absolute links and its own Find, moved last', () =>
 });
 
 test('every retired label is named with its destination and fate; nothing leaves a header unnamed', () => {
-  assert.deepEqual([...RETIRED_LABELS.keys()].sort(), ['Open source', 'The floor']);
+  assert.deepEqual([...RETIRED_LABELS.keys()].sort(), ['Experiments', 'Factory', 'Field notes', 'Open source', 'Partners', 'The floor', 'Updates']);
   // Every label on every committed page is canonical, retired (named here) or Find.
   const seen = new Set(PAGE_FILES.flatMap(rel => labels(navOf(read(rel)))));
   for (const text of seen) assert.ok(KNOWN_LABELS.has(text), text);
-  for (const [text, { target, to, reason }] of RETIRED_LABELS) {
+  for (const [text, retired] of RETIRED_LABELS) {
+    const { to, reason } = retired;
+    const targets = retiredTargets(retired);
     assert.ok(reason.length > 20, `${text} has a reason`);
     const pages = PAGE_FILES.filter(rel => labels(navOf(read(rel))).includes(text));
     assert.ok(pages.length > 0, `${text} is still on a committed page (else drop it from the table)`);
     for (const rel of pages) {
       const before = navOf(read(rel)).match(new RegExp(`<a href="([^"]*)"[^>]*>${text}</a>`))[1];
-      assert.ok(before.endsWith(target), `${rel}: "${text}" led to ${target}`);
+      // A page's link to itself ("./") leads to the page the table names.
+      assert.ok(targets.some(target => before.endsWith(target)) || (before === './' && targets.some(target => rel.startsWith(target))), `${rel}: "${text}" led to ${targets.join(' or ')}`);
       const after = navOf(normalise(read(rel), rel));
       assert.ok(!labels(after).includes(text), `${rel}: "${text}" is replaced`);
       if (to) {
         const dest = DESTINATIONS.find(d => d.key === to);
-        assert.ok(dest.path.endsWith(target), `${text} -> ${dest.label} leads to the same place`);
+        assert.ok(dest, `${text} -> ${to} is a canonical destination`);
+        // The same page, or (Updates) a page that links it: then the reason names the address that stays live.
+        assert.ok(targets.some(target => dest.path.endsWith(target)) || reason.includes(targets[0]), `${text} -> ${dest.label} leads to the same place, or its reason says where ${targets[0]} is reached`);
         assert.ok(after.includes(`href="${prefixOf(rel)}${dest.path}"`) && labels(after).includes(dest.label), `${rel}: "${text}" became "${dest.label}"`);
       } else {
-        assert.equal(DESTINATIONS.some(d => d.path.endsWith(target)), false, `${text}: no canonical link leads to ${target}`);
-        assert.match(reason, /projects\//, `${text}: the reason names where its destination is reached now`);
+        for (const target of targets) assert.equal(DESTINATIONS.some(d => d.path.endsWith(target)), false, `${text}: no canonical link leads to ${target}`);
+        assert.match(reason, /\b(?:projects|methods|partners)\/|#findings/, `${text}: the reason names where its destination is reached now`);
       }
     }
   }
@@ -143,15 +151,16 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page.replace('</header>', '</header><header class="site-header"></header>'), { relPrefix: '../' }), /exactly one site header/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '</nav><nav aria-label="x"></nav>'), { relPrefix: '../' }), /exactly one navigation/);
   assert.throws(() => normaliseHeader(page.replace('>Updates</a>', '>Updates</a><a href="../x/">Something new</a>'), { relPrefix: '../' }), /does not know/);
+  assert.throws(() => normaliseHeader(page.replace(/<a href="[^"]*"([^>]*)>Updates<\/a>/, '<a href="../elsewhere/"$1>Updates</a>'), { relPrefix: '../' }), /does not account for/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<span>x</span></nav>'), { relPrefix: '../' }), /more than links/);
   assert.throws(() => normaliseHeader(page.replace('</nav>', '<a class="x" href="../find/">Find</a></nav>'), { relPrefix: '../' }), /not of the form/);
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
   assert.throws(() => normaliseHeader(page, { relPrefix: 'https://example.com/' }), /prefix/);
-  assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'tools' }), /Unknown header section/);
+  assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'unknown' }), /Unknown header section/);
 });
 
-test('no digit or number word enters a number-provenance page through the header', () => {
-  for (const d of DESTINATIONS) { assert.doesNotMatch(d.label + d.path, /\d/, d.label); assert.doesNotMatch(d.label, NUMBER_WORDS, d.label); }
+test('no digit or number word enters a number-provenance page through the header or the footer links', () => {
+  for (const d of [...DESTINATIONS, ...FOOTER_LINKS]) { assert.doesNotMatch(d.label + d.path, /\d/, d.label); assert.doesNotMatch(d.label, NUMBER_WORDS, d.label); }
   for (const rel of PAGES.filter(p => PAGE_FILES.includes(p))) {
     const header = normalise(read(rel), rel).match(/<header class="site-header[\s\S]*?<\/header>/)[0];
     assert.deepEqual(checkPage(rel, `<body>${header}</body>`, { readData: () => null, exists: () => true }), [], rel);
@@ -176,4 +185,22 @@ test('normaliseHeaders rewrites a built copy only, and leaves the committed fiel
     assert.deepEqual(normaliseHeaders({ distDir: dir }), { pages: 5, changed: 0, exempt: 0 }, 'idempotent on files');
     assert.deepEqual(notes.map(read), before, 'site/journal/*.html unchanged');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('Partners moved to the footer: once in the site footer of every committed page, relative to the page, idempotent', () => {
+  for (const rel of PAGE_FILES) {
+    const src = read(rel);
+    const out = addFooterLinks(normalise(src, rel), { relPrefix: prefixOf(rel), label: rel });
+    const footers = out.match(/<footer class="site-footer[\s\S]*?<\/footer>/g) || [];
+    if (!footers.length) { assert.equal(out, normalise(src, rel), `${rel}: no footer, nothing added`); continue; }
+    assert.equal(footers.length, 1, rel);
+    for (const { label, path } of FOOTER_LINKS) assert.equal(footers[0].split(`href="${prefixOf(rel)}${path}">${label}</a>`).length, 2, `${rel}: ${label} once in the footer`);
+    assert.equal(addFooterLinks(out, { relPrefix: prefixOf(rel), label: rel }), out, `${rel}: idempotent`);
+    // Only the footer changes.
+    const at = out.indexOf('<footer class="site-footer');
+    assert.equal(out.slice(0, at), normalise(src, rel).slice(0, at), `${rel}: nothing before the footer changes`);
+  }
+  assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /at most one site footer/);
+  assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
+  assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');
 });

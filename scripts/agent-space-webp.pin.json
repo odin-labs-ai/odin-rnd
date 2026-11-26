@@ -57,6 +57,24 @@
       ]
     },
     {
+      "original": "assets/labs/agent-space/outage/dispatch-2-outage-poster.png",
+      "originalSha256": "f6532a30fed7adc63681dd663249ce40d843fdb5e04d9dbd445040b0817b8fa4",
+      "variants": [
+        {
+          "path": "assets/labs/agent-space/outage/dispatch-2-outage-poster-1280.webp",
+          "width": 1280,
+          "height": 720,
+          "sha256": "0adb1b43e6c63abf8332d6eb7fda26f223a0110046b01503247255ec8954971e"
+        },
+        {
+          "path": "assets/labs/agent-space/outage/dispatch-2-outage-poster-800.webp",
+          "width": 800,
+          "height": 450,
+          "sha256": "710d12b3b1421c9a452a647fa284143af325e6f0171499951ca02518c8e481eb"
+        }
+      ]
+    },
+    {
       "original": "assets/labs/agent-space/session-2026-10-25-b/poster.png",
       "originalSha256": "2637bec8dcb582a5f5c6b595baa65855244c55978268b2d64b5ac23b70d5124f",
       "variants": [

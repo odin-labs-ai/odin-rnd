@@ -89,7 +89,7 @@ test('PASS with an explicit held:false renders nina\'s entry, every figure from 
   assert.equal(pass.spotlight.verdict, 'PASS'); assert.equal(pass.manipulation.state, 'PASS');
   const entry = renderNinaEntry(data(pass, open), upstream);
   assert.match(entry, /^<article class="project-row project-featured" id="project-nina"><div class="project-number">005<span>HARNESS<\/span><\/div>/);
-  for (const part of ['nina: harness orchestration for Claude Code', 'Marcos Schulz (xhulz)', 'github.com/xhulz/nina', `— ${attributionLine}.`, 'journal/nina-reviews-the-change.html#results', 'journal/jev-as-a-fast-gate.html#spotlight', 'xhulz/nina#39 (merged 2026-09-28)', 'xhulz/nina#41 (open)', 'no local patch to nina', '0 of 180 harness failures', '0 of 90 runs missed drift', '0 of 90 runs falsely rejected', 'the same verdict on 60 of 60 changes', 'in 180 of 180 runs a tool output showed it at least one line of the change', day(REVIEWER.endedAt), '<div class="project-links">', '<p class="project-note">', '<dl class="project-spec">']) assert(entry.includes(part), part);
+  for (const part of ['nina: harness orchestration for Claude Code', 'Marcos Schulz (xhulz)', 'github.com/xhulz/nina', `— ${attributionLine}.`, 'journal/nina-reviews-the-change.html#results', 'journal/nina-reviews-the-change.html#results">EXP 006 results', 'xhulz/nina#39 (merged 2026-09-28)', 'xhulz/nina#41 (open)', 'no local patch to nina', '0 of 180 harness failures', '0 of 90 runs missed drift', '0 of 90 runs falsely rejected', 'the same verdict on 60 of 60 changes', 'in 180 of 180 runs a tool output showed it at least one line of the change', day(REVIEWER.endedAt), '<div class="project-links">', '<p class="project-note">', '<dl class="project-spec">']) assert(entry.includes(part), part);
   assert.equal(attributionLine, 'used with the permission of its author, as confirmed by Odin Labs');
   // A figure changed in the record changes the entry: nothing is typed in the renderer.
   const blind5 = counted(passingResults({ blindRuns: 5 }));
@@ -140,9 +140,13 @@ test('the live site renders nina\'s entry exactly when the committed records ope
   else if (decision?.held !== false) assert.deepEqual([g.shown, g.reason], [false, 'the gate is closed: bar, manipulation check, eligibility or held']);
   else {
     assert.equal(g.shown, true, g.reason);
-    assert(page.includes(renderNinaEntry(g, upstream)), 'the built home page carries the entry the gate opens, as rendered from the records');
+    const gated = renderNinaEntry(g, upstream);
+    const expectedEvidence = /<details class="tool-notes"><summary>[^<]*<\/summary>([\s\S]*?)<\/details>/.exec(gated)[1];
+    const builtRow = /<article[^>]*id="project-nina"[^>]*>[\s\S]*?<\/article>/.exec(page)?.[0] ?? '';
+    assert(builtRow.includes(expectedEvidence), 'the complete measured result, links, attribution and specifications come verbatim from the gate');
+    for (const [, href] of gated.matchAll(/href="([^"]+)"/g)) assert(builtRow.includes(`href="${href}"`), href);
     const at = s => page.indexOf(s);
-    assert(at('<div class="project-number">002') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('<div class="project-number">003'), 'next after 002 Laya');
+    assert(at('data-tool="002"') < at(`id="${entryId}"`) && at(`id="${entryId}"`) < at('data-tool="003"'), 'next after Laya in the tested tools group');
     assert.equal(page.split(`id="${entryId}"`).length, 2, 'one nina entry');
     return;
   }

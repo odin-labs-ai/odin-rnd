@@ -64,6 +64,9 @@ export function weekOf({ delivery, milestones = null, dispatches = [], proofs = 
   const proofIds = [...new Set(sessions.flatMap(d => d.questions.map(q => q.evidence)))];
   return {
     window,
+    latestRecord: [...delivery.records.map(r => r.at), ...(milestones?.records ?? []).map(r => r.at),
+      ...dispatches.map(d => d.date)].filter(iso => dayOf(iso) <= window.to &&
+      (iso.length === 10 || Date.parse(iso) <= Date.parse(window.now))).map(dayOf).sort().at(-1) ?? null,
     coverage: { delivery: delivery.generatedFrom.ghFetchedAt, milestones: milestones?.window.to ?? null },
     // "automated" only when every counted round says so, as the delivery section words it.
     automated: reviews.length > 0 && reviews.every(r => r.reviewer === 'automated'),
@@ -117,6 +120,26 @@ const zeros = keys => keys.map(key => `<span data-count="${key}" hidden>0</span>
 const link = (source, href, body) => `<a href="${escape(href)}" data-source="${escape(source)}">${body}</a>`;
 const group = (title, items) => items.length ? `<details class="week-list"><summary>${escape(title)}</summary><ul>${items.join('')}</ul></details>` : '';
 const n = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+
+export function checkWeekFreshness(page, week) {
+  const current = Boolean(week.latestRecord && week.latestRecord >= week.window.from);
+  if (page.includes('id="this-week-title"') !== current ||
+      (!current && /A quiet week:|data-count="reviewRounds"/.test(page)) ||
+      (week.latestRecord && !page.includes(`Latest record: <time datetime="${week.latestRecord}">`))) {
+    throw new Error('Lab 01 weekly display disagrees with the dated records');
+  }
+}
+
+/** Keep the historical weekly anchor useful after the records stop covering the current week. */
+export function renderWeekSection(week) {
+  if (!week.latestRecord) return '';
+  const date = new Date(week.latestRecord + 'T00:00:00Z');
+  const latest = `Latest record: <time datetime="${week.latestRecord}">${day(date)} ${date.getUTCFullYear()}</time>.`;
+  if (week.latestRecord < week.window.from) {
+    return `<p class="company-width" id="${WEEK_ANCHOR}">${latest}</p>`;
+  }
+  return `<section class="company-section company-width" id="${WEEK_ANCHOR}" aria-labelledby="this-week-title"><div class="company-section-heading"><h2 id="this-week-title">This week in Lab 01.</h2><p>${latest}</p></div>${renderWeek(week)}</section>`;
+}
 
 /** The section body. Throws, listing every reason, when a count, a link or a word does not hold (weekProblems). */
 export function renderWeek(week) {

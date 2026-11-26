@@ -51,7 +51,8 @@
    }
   ],
   "kept": "the question, the rule, the verdict words and, per lab, its stage, its record's commit, status and sha256, and every cell's scenario, verdict and predictions",
-  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication"
+  "leftOut": "Left out: every path into the private repository, and the note on who posted a publication",
+  "failoverResultsSha256": "966b1d8d9e5ff26b94be37039f6d7963493b0bd2148ffdbf3b8f95b5c16fe171"
  },
  "question": "where does each store fit Odin? (per scenario; no overall winner)",
  "rule": "a verdict fills only from the experiment's committed result record; predictions are the frozen ones",
@@ -128,7 +129,7 @@
   {
    "lab": "Lab 03",
    "title": "Failover: kill the database mid-session, does anyone notice?",
-   "stage": "frozen, not yet published",
+   "stage": "Results published 2026-11-11",
    "page": "journal/failover-pre-registration.html",
    "published": null,
    "record": {
@@ -141,8 +142,8 @@
     {
      "scenario": "F1",
      "what": "node death (the primary's container killed)",
-     "verdict": null,
-     "result": null,
+     "verdict": "mongodb-fits",
+     "result": "data/failover/results.json",
      "predictions": {
       "lab": "mongodb-fits (default and tuned)",
       "mongodbAdvocate": "mongodb-fits (default high, tuned moderate-high)",
@@ -152,8 +153,8 @@
     {
      "scenario": "F2a",
      "what": "full isolation of the primary",
-     "verdict": null,
-     "result": null,
+     "verdict": "mongodb-fits",
+     "result": "data/failover/results.json",
      "predictions": {
       "lab": "mongodb-fits",
       "mongodbAdvocate": "as F1",
@@ -163,8 +164,8 @@
     {
      "scenario": "F2b",
      "what": "peer-only partition (the client still reaches the old primary)",
-     "verdict": null,
-     "result": null,
+     "verdict": "postgres-fits",
+     "result": "data/failover/results.json",
      "predictions": {
       "lab": "mongodb-fits",
       "mongodbAdvocate": "as F1",
@@ -174,8 +175,8 @@
     {
      "scenario": "F3",
      "what": "planned switchover (compared: the longest gap between acknowledged writes)",
-     "verdict": null,
-     "result": null,
+     "verdict": "mongodb-fits",
+     "result": "data/failover/results.json",
      "predictions": {
       "lab": "both-fit",
       "mongodbAdvocate": "both-fit, leaning mongodb, low",
@@ -185,8 +186,8 @@
     {
      "scenario": "components",
      "what": "operational component kinds for HA",
-     "verdict": null,
-     "result": null,
+     "verdict": "postgres-fits",
+     "result": "data/failover/results.json",
      "predictions": {
       "lab": "mongodb-fits",
       "mongodbAdvocate": "mongodb-fits (high)",

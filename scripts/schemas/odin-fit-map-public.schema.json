@@ -16,6 +16,7 @@
     "from": {"type": "string", "minLength": 1},
     "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "failoverResultsSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "builtAtCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "transform": {
      "type": "array",

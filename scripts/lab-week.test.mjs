@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { readDelivery } from './lab-delivery.mjs';
 import { readMilestones } from './lab-milestones.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
-import { renderWeek, weekOf, weekProblems, weekWindow } from './lab-week.mjs';
+import { checkWeekFreshness, renderWeek, weekOf, weekProblems, weekWindow } from './lab-week.mjs';
 import { DRAFT_FILES, X_LIMIT, length, siteWeek, weekDrafts, weekUrl, writeWeekDrafts } from './lab-dispatch-drafts.mjs';
 
 // "This week in Lab 01" (founder plan 7). It runs on the records this site publishes, at fixed build times, so the
@@ -78,6 +78,14 @@ test('a record at the build\'s own second counts, and a proof without the explor
   assert.ok(w.proofs.length > 0);
   for (const p of w.proofs) assert.match(p.href, /^#session-/);
   assert.deepEqual(weekProblems(renderWeek(w), w), []);
+});
+
+test('a stale record links to its date without presenting an empty week as recent activity', () => {
+  const page = renderLabs('site', { now: QUIET })['labs/agent-space/index.html'];
+  const latest = week(QUIET).latestRecord;
+  assert.match(page, new RegExp(`id="this-week">Latest record: <time datetime="${latest}">`));
+  assert.doesNotMatch(page, /A quiet week:|id="this-week-title"|class="week-counts"/);
+  assert.throws(() => checkWeekFreshness(page + '<h2 id="this-week-title">This week</h2>', week(QUIET)), /disagrees/);
 });
 
 test('an empty week says so, and still checks every count (as zero)', () => {

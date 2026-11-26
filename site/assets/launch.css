@@ -5,12 +5,25 @@
 .factory-correction{grid-column:1/-1;max-width:100ch;border-top:1px solid #3d5b4e;padding-top:16px;color:#b8cec1;font-size:13px}
 .factory-correction summary{cursor:pointer;font-weight:600}
 .factory-correction p{margin-top:8px}
-/* Built home (scripts/home-shape.mjs labelCorrection): the correction is an open ruled block that cannot be closed, under a
-   dated label in small mono capitals, the same pattern as the partners, evidence and providers pages. */
-.factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:14px 18px 16px;margin-top:4px}
-.factory-correction>p:first-child{margin-top:0}
-.factory-correction>.correction-when{font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#ffb38f}
+/* Built home (scripts/home-shape.mjs labelCorrection, plain-language home 2026-11-16): the correction is a closed ruled fold
+   in the hero. Its summary says in words what was corrected and when, then "Read the correction" with the orange +; the
+   whole summary is a 44px target, focus shown by the site's summary ring; opening it moves nothing else. */
+.factory-correction{border:1px solid #3d5b4e;border-left:3px solid var(--orange);padding:0 18px;margin-top:4px}
+.correction-fold>summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 20px;min-height:44px;padding:10px 0;font-weight:400;list-style:none}
+.correction-fold>summary::-webkit-details-marker{display:none}
+.correction-fold>summary>.correction-when{font:inherit;font-size:15px;line-height:1.5;letter-spacing:normal;text-transform:none;margin:0;color:#dbe7df}
+.correction-fold>summary>.correction-open{display:inline-flex;align-items:center;gap:12px;font:12px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#ffb38f;text-decoration:underline;text-underline-offset:4px}
+.correction-fold>summary>.correction-open>span{font:20px/1 var(--mono);text-decoration:none;color:var(--orange)}
+.correction-fold>summary:hover>.correction-open{color:#ffd2bd}
+.correction-fold[open]>summary{border-bottom:1px solid #3d5b4e}
+.correction-fold[open]{padding-bottom:16px}
 .factory-correction>.correction-label{font-weight:600;color:var(--paper)}
+/* The drawing's own section under what we've found: a plain heading and one sentence across the top. */
+.home-check{margin-top:96px}
+.home-check-intro{grid-column:1/-1;max-width:64ch;margin-bottom:28px}
+.home-check-intro h2{font-size:clamp(30px,3vw,44px);line-height:1.1;color:var(--paper)}
+.home-check-intro p{margin-top:14px;font-size:16px;line-height:1.6;color:#c7d6d1}
+@media(max-width:768px){.home-check{margin-top:64px}.home-check-intro{margin-bottom:22px}}
 .proof-strip{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule)}
 .proof-strip>li{margin:0;padding:28px 28px 30px 0;display:flex;flex-direction:column;justify-content:space-between;gap:20px}
 .proof-strip>li+li{border-left:1px solid var(--rule);padding-left:28px}
@@ -132,6 +145,16 @@
 
 /* Home hero: the premise carries two links side by side. */
 .factory-premise a+a{margin-left:22px}
+/* Plain-language home (2026-11-16): the premise leads with one primary action, "See what we found", then Work with us;
+   both are 44px targets. The primary keeps white on the brand green, its focus ring from the dark surface. */
+.factory-premise a{min-height:44px;align-items:center;vertical-align:middle}
+.factory-premise a:not(.button){display:inline-flex}
+.factory-premise a.premise-primary{display:inline-flex;color:#fff;text-decoration:none;font-weight:600}
+.factory-premise a.premise-primary:hover{color:#fff}
+/* A finding's limit sits between the claim and its dated source line, in words, never by colour alone. */
+.lab-limit{font-size:15px;line-height:1.5;color:var(--steel)}
+.lab-limit strong{color:var(--paper);font-weight:600}
+.proof-strip>li>.lab-limit{margin:0}
 
 /* Home field notes: the latest five open, the rest folded behind one control (build.mjs foldJournal). */
 .journal-more{border-top:1px solid var(--rule)}

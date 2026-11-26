@@ -6,21 +6,20 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
 import { builtCopy } from './test-build.mjs';
+import { toolGuide } from './tool-guide.mjs';
 import { stripBlocks, stripTags } from './test-html-text.mjs';
 import { checkSite } from './number-provenance.mjs';
 import { FOLDS, FURTHER, HOME_CSS, HOME_JS, OPEN_ORDER } from './home-shape.mjs';
 import { jargonIn, readable } from './home-plain-language.test.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
-// The targets a link may reach inside a fold, each opened by site/assets/home-fold.mjs: the home's experiment list, which
-// the site index still links for an experiment whose record lives in another repository (scripts/site-index.mjs), and
-// nina's tools entry, linked from EXP 006's generated field note. Any other target inside a fold is a link the fold has
-// hidden, and is refused here until it is named.
-const OPENED_BY_SCRIPT = ['all-experiments', 'project-nina'];
-// Words a visitor sees on the home without opening anything (main, outside every <details>, every hidden station and the
-// dated correction, which is required to stay visible).
-// Measured 1,158 on 2 November 2026; the bound leaves room for an update or two, not for an unfolded section.
-const VISIBLE_WORDS = 1250;
+// The experiment ledger still lives in the archive. Published tool anchors live in the open tools section.
+const OPENED_BY_SCRIPT = ['all-experiments'];
+// Keep the first read short. Limits and correction text are required disclosures and counted separately below.
+// The former 720-word limit included a measured 158 words in Tools. Retain the remainder
+// for the rest of the homepage and limit each of the nine actionable summaries independently.
+const NON_DIRECTORY_WORDS = 562;
+const WORDS_PER_TOOL = 48;
 // Measured 74 on 3 November 2026: Lane B's /journal/ redirect (PR #173) removed 46 old #journal links,
 // so the former >100 bound no longer describes links into the home.
 const MIN_HOME_LINKS = 70;
@@ -51,11 +50,29 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
-test('the built home is shaped: four open sections, Go further, eight closed folds, its stylesheet and opener', () => {
+test('the built homepage exposes the featured study, tool directory, factory and findings outside the archive', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));
-  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'floor, updates, lab, work with us, in that order');
-  assert.ok(main.indexOf('<nav class="home-further') > order.at(-1), 'Go further follows the offer');
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), 'entrance, tools, factory and findings, in that order');
+  assert.ok(main.indexOf('<nav class="home-further') > order.at(-1) && main.indexOf('<nav class="home-further') < main.indexOf('<details class="home-archive">'), 'further reading follows the findings before the archive');
+  const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="how-we-check"'));
+  const rows = [...projects.matchAll(/<article\b[^>]*class="project-row[^"]*"[^>]*>[\s\S]*?<\/article>/g)];
+  assert.deepEqual(rows.map(([row]) => /data-tool="([^"]+)"/.exec(row)?.[1]), Object.keys(toolGuide));
+  assert.match(projects, /href="#how-we-check"/, 'Tools links to the original factory');
+  const factory = main.slice(main.indexOf('id="how-we-check"'), main.indexOf('id="findings"'));
+  assert.match(factory, /class="factory-drawing" id="factory-model"/, 'the old preview URL now opens the one drawing');
+  assert.equal((main.match(/class="factory-svg"/g) || []).length, 1);
+  assert.doesNotMatch(main, /factory-studio\.webp|class="factory-scene"/, 'the retired illustrated exhibit is absent');
+  const disclosures = detailsRanges(projects);
+  for (const row of rows) {
+    for (const marker of ['<h3', 'class="tool-definition"', 'class="tool-use"', 'class="tool-start"', 'class="tool-source"']) {
+      const offset = row[0].indexOf(marker);
+      assert.ok(offset >= 0, `each tool retains its ${marker}`);
+      const position = row.index + offset;
+      assert.ok(!disclosures.some(([start, end]) => start < position && position < end),
+        `the tool’s ${marker} is available before opening its research notes`);
+    }
+  }
   assert.equal((main.match(/<details class="home-fold">/g) || []).length, FOLDS.length);
   for (const { summary } of FOLDS) assert.ok(main.includes(`<summary>${summary}<span aria-hidden="true">+</span></summary>`), summary);
   for (const { href } of FURTHER) assert.ok(main.includes(`<a href="${href}">`), href);
@@ -92,11 +109,14 @@ test('every in-site link into the home targets an id that exists and is not hidd
   }
   assert.ok(links > MIN_HOME_LINKS, `links into the home were found (${links})`);
   assert.deepEqual(missing, []);
-  assert.deepEqual([...hidden].sort(), OPENED_BY_SCRIPT, 'only the named targets are reached inside a fold (the opener is run on each in the next test)');
-  for (const id of ['floor', 'updates', 'lab', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'projects', 'journal']) {
-    assert.ok(ids.has(id) && !insideFold(id), `#${id} is a visible section`);
-    const fold = home.indexOf('<details class="home-fold">', ids.get(id));
-    assert.match(home.slice(ids.get(id), fold < 0 ? undefined : fold), /<h[12] id="[^"]+">/, `#${id} shows its heading before any fold`);
+  for (const id of hidden) {
+    const { target, folds, document } = domAround(home, id);
+    assert.equal(openAround(document, id), target);
+    assert.ok(folds.every(f => f.open), `#${id} opens through its enclosing disclosures`);
+  }
+  for (const id of ['floor', 'projects', 'project-nina', 'findings', 'how-we-check', 'home-further-title']) assert.ok(ids.has(id) && !insideFold(id), id);
+  for (const id of ['updates', 'work-with-us', 'partner-tracks', 'agent-space', 'how-it-works', 'experiments', 'journal']) {
+    assert.ok(ids.has(id) && insideFold(id), `#${id} remains reachable in the archive`);
   }
 });
 
@@ -104,13 +124,22 @@ test('the home a visitor sees without opening anything is short: under the word 
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>') + '</main>'.length);
   let visible = stripBlocks(main, ['script', 'style', 'svg']);
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
-  visible = without(visible, /<article class="station-exhibit"[^>]*\shidden>/);
-  // The hero's dated correction is left out of the count by name: #168 requires corrections to stay visible, so they are
-  // never folded, and its words are not copy the short home is meant to trim (scripts/home-shape.mjs labelCorrection).
-  visible = without(visible, /<div class="factory-correction" role="note">/);
-  const words = stripTags(visible).split(/\s+/).filter(Boolean).length;
-  const all = stripTags(stripBlocks(main, ['script', 'style', 'svg'])).split(/\s+/).filter(Boolean).length;
-  assert.ok(words < VISIBLE_WORDS, `${words} visible words on the home (bound ${VISIBLE_WORDS})`);
+  // Only the initially selected station is visible.
+  visible = without(visible, /<article\b[^>]*\shidden>/);
+  // The hero's dated correction is a closed fold now (scripts/home-shape.mjs labelCorrection): like every <details>, it
+  // is left out above, its dated summary included.
+  // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its
+  // words are not copy the short home may trim (scripts/lab-pages.mjs renderLabProof requires one per finding).
+  visible = without(visible, /<p class="lab-limit">/);
+  const count = html => stripTags(html).split(/\s+/).filter(Boolean).length;
+  const words = count(visible);
+  const all = count(stripBlocks(main, ['script', 'style', 'svg']));
+  const directory = /<section class="projects content-section"[^>]*>[\s\S]*?<\/section>/.exec(visible)[0];
+  const rest = count(visible.replace(directory, ' '));
+  assert.ok(rest < NON_DIRECTORY_WORDS, `${rest} visible words outside Tools (bound ${NON_DIRECTORY_WORDS})`);
+  for (const [row, key] of directory.matchAll(/<article[^>]* data-tool="([^"]+)"[^>]*>[\s\S]*?<\/article>/g)) {
+    assert.ok(count(row) <= WORDS_PER_TOOL, `${key} shows ${count(row)} words (bound ${WORDS_PER_TOOL})`);
+  }
   assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
 });
 
@@ -145,7 +174,7 @@ test('the opener, run on the built home, opens every fold around each named targ
     assert.equal(openAround(document, idOf(`#${id}`)), target, `#${id} is found`);
     assert.ok(folds.every(f => f.open), `#${id}: every fold around it is open`);
   }
-  for (const id of ['journal', 'experiments', 'lab']) {
+  for (const id of ['floor', 'projects', 'project-nina', 'findings', 'how-we-check', 'home-further-title']) {
     const { folds, document } = domAround(home, id);
     assert.equal(folds.length, 0, `#${id} is outside every fold`);
     assert.ok(openAround(document, id), `#${id} is found and needs nothing opened`);
@@ -170,36 +199,51 @@ test('the methods page: every fragment link resolves in the built site, and its 
   assert.ok(OPENED_BY_SCRIPT.includes('all-experiments'));
 });
 
-test('a height proxy measurable without a browser: four sections, Go further and the closing line open, the other eight folded', () => {
-  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
-  const tops = [];
-  let depth = 0;
-  for (const m of main.matchAll(/<(\/?)(section|nav)\b[^>]*>/g)) {
-    if (m[1]) { depth--; if (depth === 0) tops.at(-1).end = m.index; continue; }
-    if (depth === 0) tops.push({ key: /\sid="([^"]*)"/.exec(m[0])?.[1] ?? /\sclass="([^"\s]*)/.exec(m[0])[1], start: m.index });
-    depth++;
-  }
-  const folded = tops.filter(t => main.slice(t.start, t.end).includes('<details class="home-fold">')).map(t => t.key);
-  const open = tops.filter(t => !folded.includes(t.key)).map(t => t.key);
-  assert.deepEqual(open, [...OPEN_ORDER, 'home-further', 'closing']);
-  assert.deepEqual(folded, FOLDS.map(f => f.key));
+test('the archive rests closed below the findings and the short list of next reads', () => {
+  const at = home.indexOf('<details class="home-archive"><summary>Earlier work and project notes</summary>');
+  const end = elementEnd(home, at);
+  const archive = home.slice(at, end);
+  for (const id of ['journal', 'work-with-us']) assert.ok(archive.includes(`id="${id}"`));
+  assert.ok(!archive.includes('id="findings"'));
+  assert.ok(home.indexOf('id="home-further-title"') < at);
 });
 
-test('the built home shows its dated correction as an open block in the hero that cannot be closed, every word verbatim', () => {
-  const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
-  const at = source.indexOf('<details class="factory-correction" open>');
-  const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
-  assert.ok(paragraphs.length >= 2);
-  // The paragraphs as #168 published them (213e1f1): a reword fails here, in the source and on the built page.
-  assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
-  assert.equal(home.split('class="factory-correction"').length, 2, 'once');
-  assert.ok(!home.includes('<details class="factory-correction"'), 'no longer a disclosure');
-  const start = home.indexOf('<div class="factory-correction" role="note">');
-  assert.ok(start >= 0, 'the open block');
-  const block = home.slice(start, elementEnd(home, start));
-  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="updates"'), 'in the factory hero, before the latest updates');
-  assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'outside every <details> on the built home');
-  assert.doesNotMatch(block, /<details|<summary|aria-hidden="true">\+/, 'no toggle');
-  assert.match(block, /^<div class="factory-correction" role="note"><p class="correction-when">Corrected on <time datetime="2026-11-01">[^<]+<\/time> and <time datetime="2026-11-02">[^<]+<\/time><\/p><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
-  assert.ok(block.endsWith(`${paragraphs.join('')}</div>`), 'every paragraph of the correction, verbatim');
+test('the publication standard retains the original dated homepage correction', () => {
+  const methods = readFileSync(join(dist, 'methods/index.html'), 'utf8');
+  const block = /<details id="homepage-wording">([\s\S]*?)<\/details>/.exec(methods)[1];
+  const paragraphs = block.slice(block.indexOf('</summary>') + '</summary>'.length);
+  // Resolve the moved fragment link back to its original path before checking the historical text.
+  const original = paragraphs.replace('href="#publication-standard"', 'href="methods/#publication-standard"');
+  assert.equal(createHash('sha256').update(original).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
+  assert.doesNotMatch(home, /factory-correction|id="homepage-wording"/);
+});
+
+test('the built home reads plain-first: the hero, tools, the factory, measured results, then the archive', () => {
+  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
+  const at = key => main.indexOf(key);
+  const order = ['id="hero-title"', 'Run a closed-door study', 'id="projects"', 'id="how-we-check"', 'The software factory', 'class="factory-drawing"', 'class="station-compartment"', 'class="factory-boundary"', 'id="findings"', 'id="updates"'].map(at);
+  assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `in order: ${order.join(', ')}`);
+  // Nothing of the drawing or the station panel sits in the hero any more.
+  const hero = main.slice(at('id="floor"'), elementEnd(main, main.lastIndexOf('<section', at('id="floor"'))));
+  assert.doesNotMatch(hero, /factory-drawing|station-compartment|factory-boundary|domain-cannot-import-app/);
+});
+
+test('the entrance opens with the film, then the measured result and private study', () => {
+  const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="projects"'));
+  assert.ok(!hero.includes('<form role="search"'), 'site navigation supplies the search path');
+  assert.ok(hero.includes('src="assets/home-film/audit-chain.webp"'));
+  assert.ok(hero.includes('class="play-film" href="assets/home-film/inside-odin.mp4"'));
+  assert.ok(hero.includes('href="#tool-results"'));
+  const order = ['class="film-entrance"', 'id="tool-results"', 'Blueprint Conformance Engine', 'Test Witness', 'class="private-study"'].map(token => hero.indexOf(token));
+  assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])));
+  assert.ok(home.indexOf('class="failover-figure"') > home.indexOf('id="findings"'));
+  assert.ok(hero.includes('href="partners/#closed-door"'));
+  const { runs } = JSON.parse(readFileSync(join(dist, 'data/experiments.json')));
+  const run = runs.find(r => r.id === 'module-layering');
+  assert.ok(hero.includes(`GREEN ${run.cleanScore} <span>/</span> RED ${run.driftScore}`));
+  const { metrics } = JSON.parse(readFileSync(join(dist, 'data/witnesses/test-witness.json')));
+  const count = metrics.find(m => m.id === 'defects-detected');
+  assert.ok(hero.includes(`${count.numerator} of ${count.denominator} defects caught`));
+  assert.match(hero, /<button class="film-motion" type="button" hidden>/);
+  assert.doesNotMatch(hero, /<video[^>]*autoplay/, 'without JavaScript only the poster loads');
 });

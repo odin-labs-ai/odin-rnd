@@ -15,8 +15,9 @@ test('every published experiment lab has a page reached directly from its index 
     assert.ok(existsSync(join('site', path)), `${tile.label} has a committed page`);
     assert.ok(pages[path], `${tile.label} has a built page`);
     const card = renderTile(tile);
-    assert.match(card, new RegExp(`<a href="\\.\\./${path.replaceAll('.', '\\.')}"><span class="sr-only">`), `${tile.label} has a primary page link`);
-    assert.ok(card.includes(`<span class="sr-only">${tile.title} — </span>`), `${tile.label} names its page to screen readers`);
+    const headingLink = `<a href="../${path}"><span class="technical">${tile.label.toUpperCase()}</span><h2 id="lab-tile-${tile.experiment}">${tile.title}</h2></a>`;
+    assert.ok(card.includes(headingLink), `${tile.label} uses its visible heading as the primary link`);
+    assert.doesNotMatch(card, /Open the lab page/);
     assert.ok(index.includes(card.slice(0, card.indexOf('<ul class="lab-tile-links">'))), `${tile.label} keeps that link on the index`);
     assert.equal(card.split(`href="../${path}"`).length - 1, 1, `${tile.label} does not repeat its page link among source links`);
     const selfLink = renderTile({ ...tile, links: [...tile.links, { label: 'This lab page', href: path }] });

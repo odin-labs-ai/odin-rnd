@@ -7,7 +7,11 @@
 //     --as '<lab>=<EXP nnn|Lab nn>' --title '<lab>=<public title>' [--page '<lab>=<site path>'] \
 //     [--result '<lab>/<scenario>=<site path>']... [--pin-out scripts/fit-map.pin.json] > site/data/labs/fit-map.json
 //
-// What it changes, and nothing else (every lab's mapping is recorded in `vendored.transform`):
+// To refresh only EXP 021 verdicts from the published result, preserving the pinned predictions:
+//   node scripts/vendor-fit-map.mjs --public-map site/data/labs/fit-map.json --failover-results site/data/failover/results.json --pin-out scripts/fit-map.pin.json > /tmp/fit-map.json
+//   mv /tmp/fit-map.json site/data/labs/fit-map.json
+//
+// What it changes (every lab's mapping is recorded in `vendored.transform`):
 // - each lab gets this site's name and a public title (--as, --title): the site numbers its labs itself, so the
 //   source's own lab names are mapped here, never edited by hand;
 // - every path into the private repository is dropped (a lab's dir, its pre-registration or design file); a lab links
@@ -26,7 +30,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { writeFileSync } from 'node:fs';
-import { pinFor, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { FIT_MAP_PIN_FILE, pinFor, pinProblems, VERDICT_WORDS, withFailoverResults } from './lab-fit-map.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const HEX40 = /^[0-9a-f]{40}$/;
@@ -132,7 +136,16 @@ export function vendor({ commit, fileBytes, as = {}, title = {}, page = {}, resu
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = args(process.argv.slice(2));
-  const record = vendor({ commit: a.commit, fileBytes: readFileSync(a.file), as: a.as, title: a.title, page: a.page, result: a.result });
+  // Reapply the public verdicts to the frozen public prediction map without needing the private source.
+  const previous = a['public-map'] && readFileSync(a['public-map']);
+  const predictions = previous ? JSON.parse(previous) :
+    vendor({ commit: a.commit, fileBytes: readFileSync(a.file), as: a.as, title: a.title, page: a.page, result: a.result });
+  if (previous) {
+    if (!a['failover-results']) throw new Error('--public-map requires --failover-results');
+    const problems = pinProblems(previous, predictions, JSON.parse(readFileSync(FIT_MAP_PIN_FILE)));
+    if (problems.length) throw new Error(problems.join('\n'));
+  }
+  const record = a['failover-results'] ? withFailoverResults(predictions, readFileSync(a['failover-results'])) : predictions;
   const out = `${JSON.stringify(record, null, 1)}\n`;
   if (a['pin-out']) writeFileSync(a['pin-out'], `${JSON.stringify(pinFor(Buffer.from(out), record), null, 1)}\n`);
   process.stdout.write(out);
