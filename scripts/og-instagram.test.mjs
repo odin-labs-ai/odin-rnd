@@ -27,7 +27,7 @@ const CARDS = join('site', 'assets', 'og', 'labs');
 const NUMBER_CARDS = new Map([
   ['lab02-brain-bench.73e46bfd9cbf2b31.jpg', '73e46bfd9cbf2b3112c799541a1ca4caaf25be74df47b71ce7dd3389abfcaccd'],
   ['lab05-rogue.d91aad305442fd79.jpg', 'd91aad305442fd79659d0d307bfc1addb5e126d6e302bdfb6bdce841c4a2079a'],
-  ['lab06-review.47ce6d43108374a8.jpg', '47ce6d43108374a8c9befd62dd84039339e6d1811f8cf2f280f5ea1cd26bdd78'],
+  ['lab06-review.05430dcc247fef09.jpg', '05430dcc247fef09a5fe37a4ca8e2483a063f5106cb028d10e76ec28d21cc016'],
   ['lab11-harness.793a649426f642ca.jpg', '793a649426f642cad7f57d615ff9ef45741f0e05ef61deffe82c52fbf77534da'],
   ['lab13-measured-blind.31aa28b52f54422a.jpg', '31aa28b52f54422a16a024d5057749571fdcf6154d44e8f08ded60b52eb517c7'],
 ]);

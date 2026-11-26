@@ -227,6 +227,18 @@ test('the home proof strip renders from lab-proof.json with root-relative links 
   assert.match(renderLabProof(siteReader(), '../'), /href="\.\.\/data\//);
 });
 
+test('a home claim with a fragment checks the plan on its underlying result record', () => {
+  const read = siteReader();
+  const render = () => renderLabProof(read, '', { plain: true });
+  const expected = render();
+  const claim = read('data/lab-proof.json').claims.find(c => c.id === 'proof-review-cost');
+  const result = read(claim.record);
+  claim.record += '#/seats/1/falseAlarms';
+  assert.equal(render(), expected);
+  for (const key of Object.keys(result)) if (key.startsWith('preregistration')) delete result[key];
+  assert.throws(render, /proof-review-cost reads a record with no pre-registration/);
+});
+
 // The home page's descriptions (name, og, twitter) are what a link preview shows. Each that speaks of publishing results
 // must carry the closed-door exception, so no preview claims blanket publication (refute 2026-10-24, PR #70).
 test('home descriptions never claim blanket publication without the closed-door clause', () => {

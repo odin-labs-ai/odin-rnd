@@ -349,7 +349,10 @@ export function renderLabProof(read, up = '../', { plain = false } = {}) {
   const bare = config.claims.filter(c => typeof c.limit !== 'string' || !c.limit.trim()).map(c => c.id);
   if (bare.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${bare.join(', ')} has no limit`);
   // The home says each finding shown was planned in writing before it ran: every claim's record must carry its pre-registration.
-  const unplanned = config.claims.filter(c => !Object.keys(read(c.record) ?? {}).some(k => /^preregistration/.test(k))).map(c => c.id);
+  const unplanned = config.claims.filter(c => {
+    const [path] = (c.record ?? '').split('#');
+    return !Object.keys(read(path) ?? {}).some(k => /^preregistration/.test(k));
+  }).map(c => c.id);
   if (unplanned.length) throw new Error(`site/${PAGES['one-pager'].config}: claim ${unplanned.join(', ')} reads a record with no pre-registration`);
   return renderClaims(read, config.claims, up, { plain });
 }
