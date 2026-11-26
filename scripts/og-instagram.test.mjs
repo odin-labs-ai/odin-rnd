@@ -21,6 +21,23 @@ import { join } from 'node:path';
 const DIR = join('site', 'assets', 'og', 'instagram');
 const CARDS = join('site', 'assets', 'og', 'labs');
 
+// Five portrait number cards from the 26 November 2026 lab results series. Only these exact
+// JPEGs use the portrait branch. Their H1 render's EXIF and Photoshop segments were removed
+// without re-encoding. All other filenames must satisfy the landscape provenance checks.
+const NUMBER_CARDS = new Map([
+  ['lab02-brain-bench.73e46bfd9cbf2b31.jpg', '73e46bfd9cbf2b3112c799541a1ca4caaf25be74df47b71ce7dd3389abfcaccd'],
+  ['lab05-rogue.d91aad305442fd79.jpg', 'd91aad305442fd79659d0d307bfc1addb5e126d6e302bdfb6bdce841c4a2079a'],
+  ['lab06-review.47ce6d43108374a8.jpg', '47ce6d43108374a8c9befd62dd84039339e6d1811f8cf2f280f5ea1cd26bdd78'],
+  ['lab11-harness.793a649426f642ca.jpg', '793a649426f642cad7f57d615ff9ef45741f0e05ef61deffe82c52fbf77534da'],
+  ['lab13-measured-blind.31aa28b52f54422a.jpg', '31aa28b52f54422a16a024d5057749571fdcf6154d44e8f08ded60b52eb517c7'],
+]);
+
+function checkNumberCard(name, bytes) {
+  assert.ok(NUMBER_CARDS.has(name), `${name}: unknown portrait card`);
+  assert.deepEqual(jpegSize(bytes), { width: 1080, height: 1350 }, `${name}: expected a 1080x1350 JPEG`);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), NUMBER_CARDS.get(name), `${name}: portrait SHA-256 differs`);
+}
+
 // Where each image came from: the exact source card bytes (sha256) at conversion time and how it was made. A
 // re-rendered card changes its sha256, so a stale Instagram image fails here instead of drifting silently. That the
 // bytes really are that card is the decoded test below, which runs in CI (no recorded measurement is trusted).
@@ -168,6 +185,10 @@ test('every Instagram image is named by its own sha256, is a 1200x630 JPEG, and 
     assert.ok(m, `${DIR}/${name}: name must be <slug>.<sha16>.jpg`);
     const bytes = readFileSync(join(DIR, name));
     assert.equal(createHash('sha256').update(bytes).digest('hex').slice(0, 16), m[2], `${name}: the sha16 in the name is not the sha256 of its bytes`);
+    if (NUMBER_CARDS.has(name)) {
+      checkNumberCard(name, bytes);
+      continue;
+    }
     assert.deepEqual(jpegSize(bytes), { width: 1200, height: 630 }, `${name}: must be a 1200x630 baseline or progressive JPEG`);
     assert.ok(existsSync(join(CARDS, `${m[1]}.png`)), `${name}: no share card ${CARDS}/${m[1]}.png to have been re-encoded from`);
     const prov = PROVENANCE[name];
@@ -189,6 +210,19 @@ const SOS_DC = [0xff, 0xda, 0x00, 0x0c, 0x03, 1, 0x00, 2, 0x10, 3, 0x10, 0x00, 0
 const JFIF = [0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00];
 const frame = (marker, h, w, extra = [], scan = marker === 0xc2 ? SOS_DC : SOS) => Buffer.from([0xff, 0xd8, ...extra, 0xff, marker, 0x00, 0x11, 0x08,
   h >> 8, h & 255, w >> 8, w & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1, ...scan, 0xff, 0xd9]);
+
+test('the five portrait cards must be present and cannot be substituted or resized', () => {
+  assert.equal(NUMBER_CARDS.size, 5);
+  const names = [...NUMBER_CARDS.keys()];
+  for (const [index, name] of names.entries()) {
+    const bytes = readFileSync(join(DIR, name));
+    checkNumberCard(name, bytes);
+    assert.throws(() => checkNumberCard(names[(index + 1) % names.length], bytes), /portrait SHA-256 differs/);
+    assert.throws(() => checkNumberCard(name, frame(0xc0, 1350, 1079)), /expected a 1080x1350 JPEG/);
+    assert.throws(() => checkNumberCard(name, frame(0xc0, 1349, 1080)), /expected a 1080x1350 JPEG/);
+    assert.throws(() => checkNumberCard('unreviewed.0000000000000000.jpg', bytes), /unknown portrait card/);
+  }
+});
 
 test('the frame-header reader reads a well-formed frame and skips one plain JFIF header', () => {
   assert.deepEqual(jpegSize(frame(0xc0, 630, 1200)), { width: 1200, height: 630 });
@@ -385,6 +419,11 @@ test('every Instagram image decodes to its own share card and not to any other c
   const names = existsSync(DIR) ? readdirSync(DIR).sort() : [];
   const cards = decodedCards();
   for (const name of names) {
+    if (NUMBER_CARDS.has(name)) {
+      const { width, height } = decodeRgb(join(DIR, name));
+      assert.deepEqual({ width, height }, { width: 1080, height: 1350 }, name);
+      continue;
+    }
     const slug = name.split('.')[0];
     const own = cards.get(`${slug}.png`);
     assert.ok(own, `${name}: no card ${slug}.png`);
