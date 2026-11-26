@@ -132,7 +132,7 @@ export function checkWeekFreshness(page, week) {
 
 /** Keep the historical weekly anchor useful after the records stop covering the current week. */
 export function renderWeekSection(week) {
-  if (!week.latestRecord) return '';
+  if (!week.latestRecord) return `<p class="company-width" id="${WEEK_ANCHOR}">No dated record yet.</p>`;
   const date = new Date(week.latestRecord + 'T00:00:00Z');
   const latest = `Latest record: <time datetime="${week.latestRecord}">${day(date)} ${date.getUTCFullYear()}</time>.`;
   if (week.latestRecord < week.window.from) {

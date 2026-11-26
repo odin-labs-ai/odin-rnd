@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { readDelivery } from './lab-delivery.mjs';
 import { readMilestones } from './lab-milestones.mjs';
 import { readDispatches, renderLabs } from './labs.mjs';
-import { checkWeekFreshness, renderWeek, weekOf, weekProblems, weekWindow } from './lab-week.mjs';
+import { checkWeekFreshness, renderWeek, renderWeekSection, WEEK_DAYS, weekOf, weekProblems, weekWindow } from './lab-week.mjs';
 import { DRAFT_FILES, X_LIMIT, length, siteWeek, weekDrafts, weekUrl, writeWeekDrafts } from './lab-dispatch-drafts.mjs';
 
 // "This week in Lab 01" (founder plan 7). It runs on the records this site publishes, at fixed build times, so the
@@ -86,6 +86,17 @@ test('a stale record links to its date without presenting an empty week as recen
   assert.match(page, new RegExp(`id="this-week">Latest record: <time datetime="${latest}">`));
   assert.doesNotMatch(page, /A quiet week:|id="this-week-title"|class="week-counts"/);
   assert.throws(() => checkWeekFreshness(page + '<h2 id="this-week-title">This week</h2>', week(QUIET)), /disagrees/);
+});
+
+test('a record dated on the first day of the window is current, and no record keeps the anchor', () => {
+  const latest = week(QUIET).latestRecord;
+  const onFirstDay = new Date(Date.parse(`${latest}T12:00:00Z`) + (WEEK_DAYS - 1) * 86400000);
+  const w = week(onFirstDay);
+  assert.equal(w.window.from, latest, 'the latest record falls on the window\'s first day');
+  const page = renderLabs('site', { now: onFirstDay })['labs/agent-space/index.html'];
+  assert.match(page, /id="this-week-title"/);
+  assert.doesNotThrow(() => checkWeekFreshness(page, w));
+  assert.equal(renderWeekSection({ ...w, latestRecord: null }), '<p class="company-width" id="this-week">No dated record yet.</p>');
 });
 
 test('an empty week says so, and still checks every count (as zero)', () => {

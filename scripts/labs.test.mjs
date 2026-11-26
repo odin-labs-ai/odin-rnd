@@ -104,7 +104,7 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
 
 test('the hash-pinned JSON records retain their committed bytes', () => {
   const expected = new Map([
-    ['films.json', '705f7a114f0e37c14557b64340b4dfc79582f8ff82effec4ec4a092701a19558'],
+    ['films.json', 'dc0a50908d9593e45fb8d4662531c2e2bfe5f4d501ad5d08b5931d6edb48162d'],
     ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
     ['dispatches/session-2026-10-25-b.json', 'fb8c1d650a601fba673d06d7b9bd691772a152374439a7323b1f8df9b307130b'],
     ['dispatches/session-2026-11-08.json', 'd895de15e735853ba6fc41e7281ab87c6ff1c28751e6f3edd23a98b19da2e627'],

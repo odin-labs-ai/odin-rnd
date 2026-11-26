@@ -26,8 +26,8 @@
     "remuxed": true
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
+    "method": "Decoded the remux at each recorded five-second sample with ffmpeg. Every RGB24 hash matched the original frame screened on 25 October by an AI agent, not by a human",
+    "at": "2026-11-26",
     "srcSha256": "88d3115fb49c3ab45db3490dcdb4a2fd23df75bd2305138e4676beb15e2411af",
     "frames": [
      {
@@ -87,8 +87,8 @@
     "remuxed": true
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
+    "method": "Decoded the remux at each recorded five-second sample with ffmpeg. Every RGB24 hash matched the original frame screened on 25 October by an AI agent, not by a human",
+    "at": "2026-11-26",
     "srcSha256": "e3a79e0c5633d7c319cce79bae4e794679087459144ee1b1411db172ff301366",
     "frames": [
      {
