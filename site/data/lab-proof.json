@@ -9,8 +9,8 @@
       "headline": "The cheapest reviewer caught {cheapCaught} of {cheapOf} planted defects",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
-      "text": "It cost {cheapCost} per review. The most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. Their uncertainty ranges overlapped.",
-      "provenance": "On clean changes, the cheapest reviewer raised {cheapFA} false alarms in {cheapClean} reviews and the most expensive raised {dearFA} in {dearClean}.",
+      "text": "At {cheapCost} per review. At {dearCost}, the most expensive caught {dearCaught}/{dearOf}. Uncertainty ranges overlapped.",
+      "provenance": "False alarms on clean changes: cheapest {cheapFA}/{cheapClean}, most expensive {dearFA}/{dearClean}.",
       "limit": "Repeat runs on private changes with planted defects. A catch meant flagging the right file.",
       "values": {
         "cheapFA": { "source": "data/review-frontier/results.json#/seats/1/falseAlarms", "format": "int" },
@@ -61,7 +61,7 @@
       "headline": "Self-check cleared {clearedA} of {flaggedA} flagged reviews",
       "record": "data/self-verify/results.json",
       "note": "journal/self-verify-results.html",
-      "text": "In the repeat, it cleared {clearedB} of {flaggedB}. With {faA} and {faB} false alarms left, the study’s answer on adopting the extra check was {decision}.",
+      "text": "Repeat: {clearedB} of {flaggedB} cleared. With {faA} and {faB} false alarms remaining, the adoption decision was {decision}.",
       "limit": "We scored verdicts on private changes. We did not check the model’s explanations.",
       "values": {
         "clearedA": { "source": "data/self-verify/results.json#/verdictChanges/0/turnedToShipByVerify", "format": "int" },

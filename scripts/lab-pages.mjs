@@ -260,7 +260,7 @@ export function renderClaims(read, list, up = '../', { plain = false } = {}) {
     }
     if (c.limit !== undefined && (typeof c.limit !== 'string' || !c.limit.trim() || statesNumber(c.limit))) throw new Error(`claim ${c.id}: its limit must be words, with no digit and no number word`);
     const limit = c.limit ? `<p class="lab-limit"><strong>Limit:</strong> ${escape(c.limit)}</p>` : '';
-    const provenance = c.provenance ? `<details class="lab-source"><summary>False alarms on clean changes</summary><p>${fillClaim(read, { ...c, text: c.provenance }, up)}</p></details>` : '';
+    const provenance = c.provenance ? `<p class="lab-source">${fillClaim(read, { ...c, text: c.provenance }, up)}</p>` : '';
     const result = `<p>${fillClaim(read, c, up)}</p>${limit}<p class="lab-source">${claimWindow(read, c.window)} ${plain ? `${c.note ? `<a href="${up}${escape(c.note)}">Read the result</a> · ` : ''}<a href="${up}${escape(path)}">the record</a>` : `Source: <a href="${up}${escape(path)}"><code>${escape(path)}</code></a>${c.note ? ` · <a href="${up}${escape(c.note)}">the field note</a>` : ''}`}.</p>${provenance}`;
     const heading = c.headline ? `<h3 class="lab-finding">${fillClaim(read, { ...c, text: c.headline }, up)}</h3>` : '';
     return `<li id="${escape(c.id)}">${heading}${result}</li>`;
