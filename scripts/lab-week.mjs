@@ -121,6 +121,15 @@ const link = (source, href, body) => `<a href="${escape(href)}" data-source="${e
 const group = (title, items) => items.length ? `<details class="week-list"><summary>${escape(title)}</summary><ul>${items.join('')}</ul></details>` : '';
 const n = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
 
+export function checkWeekFreshness(page, week) {
+  const current = Boolean(week.latestRecord && week.latestRecord >= week.window.from);
+  if (page.includes('id="this-week-title"') !== current ||
+      (!current && /A quiet week:|data-count="reviewRounds"/.test(page)) ||
+      (week.latestRecord && !page.includes(`Latest record: <time datetime="${week.latestRecord}">`))) {
+    throw new Error('Lab 01 weekly display disagrees with the dated records');
+  }
+}
+
 /** Keep the historical weekly anchor useful after the records stop covering the current week. */
 export function renderWeekSection(week) {
   if (!week.latestRecord) return '';
