@@ -38,8 +38,8 @@ export const FOLDS = [
 
 /** Additional research collections and methods. */
 export const FURTHER = [
-  { href: 'labs/', label: 'Explore the labs', text: 'Follow our ongoing work on agents, models and databases.' },
-  { href: 'methods/', label: 'How we test', text: 'How we set a question, measure a result and keep a record of what failed.' },
+  { href: 'labs/', label: 'Explore the labs', text: 'Agents, models and databases.' },
+  { href: 'methods/', label: 'How we test', text: 'Methods, measurements and failures.' },
 ];
 
 /** Every top-level section the home is expected to carry, keyed by id or, without one, by its first class. */
