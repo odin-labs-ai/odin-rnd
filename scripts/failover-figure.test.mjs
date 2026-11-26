@@ -5,13 +5,15 @@ import { failoverFigure } from './failover-figure.mjs';
 
 const record = JSON.parse(readFileSync(new URL('../site/data/failover/results.json', import.meta.url), 'utf8'));
 
-test('EXP 021 shows only the eight compared cells and keeps timing separate from the feed verdict', () => {
+test('EXP 021 shows only the six timed cells and keeps timing separate from the feed verdict', () => {
   const html = failoverFigure(record);
   const rows = [...html.matchAll(/<tr><th scope="row">([^<]+)<\/th>(.*?)<\/tr>/g)];
-  assert.deepEqual(rows.map(row => row[1]), ['Node stopped', 'Node isolated', 'Planned switchover', 'Peers disconnected']);
+  assert.deepEqual(rows.map(row => row[1]), ['Node stopped', 'Node isolated', 'Planned switchover']);
   assert.deepEqual(rows.map(row => [...row[2].matchAll(/class="failover-(?:reading|feed)">([^<]+)</g)].map(cell => cell[1])),
-    [['25.0 s', '11.0 s'], ['9.7 s', '10.2 s'], ['3.1 s', '9.0 s'], ['PostgreSQL', 'PostgreSQL']]);
+    [['25.0 s', '11.0 s'], ['9.7 s', '10.2 s'], ['3.1 s', '9.0 s']]);
   assert.match(html, /href="data\/failover\/results.json"/);
+  assert.match(html, /scope="colgroup" colspan="2">MongoDB faster by \(s\)<\/th><\/tr><tr><th scope="col">Default<\/th><th scope="col">Tuned/);
+  assert.match(html, /only PostgreSQL passed the feed check at both settings/);
   assert.match(html, /datetime="2026-11-11"/);
 });
 

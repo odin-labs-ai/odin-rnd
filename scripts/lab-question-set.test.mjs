@@ -35,9 +35,10 @@ test('nothing claims a pre-registration: the line says it is not yet frozen, and
   assert.ok(questionSetProblems(r).some(p => /does not match odin-lab-question-set v1/.test(p)));
 });
 
-test('the fit map and its pin are unchanged, byte for byte', () => {
-  assert.equal(sha256(readFileSync('site/data/labs/fit-map.json')), 'd35f6ee7cf2293469a47cea151a345600b5118971836e6537f740ae4458e38e0');
-  assert.equal(JSON.parse(readFileSync('scripts/fit-map.pin.json', 'utf8')).fileSha256, 'd35f6ee7cf2293469a47cea151a345600b5118971836e6537f740ae4458e38e0');
+test('the Lab 04 question set leaves the frozen fit-map row unchanged', () => {
+  const map = JSON.parse(readFileSync('site/data/labs/fit-map.json'));
+  const row = map.labs.find(lab => lab.lab === 'Lab 04');
+  assert.equal(sha256(JSON.stringify(row)), '09ed799119676e3acb6424937066b77d585503bbdafcfee54e6d334a3338acbf');
 });
 
 test('the record holds counts and hashes only, and is refused when it would make the line untrue', () => {

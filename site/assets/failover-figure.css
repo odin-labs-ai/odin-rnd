@@ -4,12 +4,11 @@
 #floor .failover-figure p { max-width:61ch; margin:12px 0; color:#deebe2; font:400 17px/1.45 Manrope,sans-serif; }
 #floor .failover-figure table { width:100%; min-width:0; table-layout:fixed; border-collapse:collapse; margin:18px 0 0; font:500 17px/1.32 var(--display); color:inherit; }
 .failover-figure :is(th,td) { padding:8px 6px; text-align:left; border:0; border-top:1px solid #466451; background:transparent; }
-.failover-figure tr>:first-child { width:45%; padding-left:0; }
+.failover-figure :is(tbody tr,thead tr:first-child)>:first-child { width:45%; padding-left:0; }
 .failover-figure thead th { color:#bdd4c6; font:400 15px/1.35 Manrope,sans-serif; }
 .failover-figure tbody th { font-weight:500; color:inherit; }
 .failover-reading { color:#92f1be; font-variant-numeric:tabular-nums; }
 .failover-bar { display:block; height:3px; margin-top:3px; background:#70dba3; }
-.failover-feed { color:#ffbc91; font-size:clamp(13px,1.18vw,17px); }
 #floor p.failover-method { color:#bed2c5; font-size:15px; }
 .failover-links { display:flex; flex-wrap:wrap; gap:0 26px; }
 .failover-links a { display:inline-flex; align-items:center; min-height:44px; color:#aff8cf; font:600 17px/1.4 var(--display); text-decoration:underline; text-underline-offset:5px; }
@@ -17,6 +16,6 @@
 @media (max-width:450px) {
   #floor .failover-figure { padding:16px 12px; }
   #floor .failover-figure table { font-size:16px; }
-  .failover-figure tr>:first-child { width:43%; }
+  .failover-figure :is(tbody tr,thead tr:first-child)>:first-child { width:43%; }
   .failover-figure :is(th,td) { padding-inline:3px; }
 }
