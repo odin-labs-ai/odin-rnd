@@ -208,22 +208,14 @@ test('the archive rests closed below the findings and the short list of next rea
   assert.ok(home.indexOf('id="home-further-title"') < at);
 });
 
-test('the built home folds its dated correction in the hero under a plain dated summary, every word verbatim in the HTML', () => {
-  const source = readFileSync(join(root, 'site', 'index.html'), 'utf8');
-  const at = source.indexOf('<details class="factory-correction" open>');
-  const paragraphs = source.slice(at, source.indexOf('</details>', at)).match(/<p>[^]*?<\/p>/g);
-  assert.ok(paragraphs.length >= 2);
-  // The paragraphs as #168 published them (213e1f1): a reword fails here, in the source and on the built page.
-  assert.equal(createHash('sha256').update(paragraphs.join('')).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
-  assert.equal(home.split('class="factory-correction').length, 2, 'once');
-  const start = home.indexOf('<details class="factory-correction correction-fold">');
-  assert.ok(start >= 0, 'the fold, closed by default (no open attribute)');
-  const block = home.slice(start, elementEnd(home, start));
-  // In the hero, before what we found: a reader meets the dated summary next to the headline it corrects.
-  assert.ok(start > home.indexOf('id="floor"') && start < home.indexOf('id="findings"'), 'in the hero, before what we found');
-  assert.ok(!detailsRanges(home).some(([a, b]) => a < start && start < b), 'not inside another <details>');
-  assert.match(block, /^<details class="factory-correction correction-fold"><summary><span class="correction-when">We corrected our earlier headline and wording on <time datetime="2026-11-01">1 November 2026<\/time> and <time datetime="2026-11-02">2 November 2026<\/time>\.<\/span><span class="correction-open">Read the correction<span aria-hidden="true">\+<\/span><\/span><\/summary><p class="correction-label">Wording clarification · <time datetime="2026-11-01">1 November 2026<\/time><\/p>/);
-  assert.ok(block.endsWith(`${paragraphs.join('')}</details>`), 'every paragraph of the correction, verbatim, in the HTML');
+test('the publication standard retains the original dated homepage correction', () => {
+  const methods = readFileSync(join(dist, 'methods/index.html'), 'utf8');
+  const block = /<details id="homepage-wording">([\s\S]*?)<\/details>/.exec(methods)[1];
+  const paragraphs = block.slice(block.indexOf('</summary>') + '</summary>'.length);
+  // Resolve the moved fragment link back to its original path before checking the historical text.
+  const original = paragraphs.replace('href="#publication-standard"', 'href="methods/#publication-standard"');
+  assert.equal(createHash('sha256').update(original).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
+  assert.doesNotMatch(home, /factory-correction|id="homepage-wording"/);
 });
 
 test('the built home reads plain-first: the hero, tools, the factory, measured results, then the archive', () => {
@@ -241,12 +233,17 @@ test('the entrance opens with the film, then the measured result and private stu
   assert.ok(!hero.includes('<form role="search"'), 'site navigation supplies the search path');
   assert.ok(hero.includes('src="assets/home-film/audit-chain.webp"'));
   assert.ok(hero.includes('class="play-film" href="assets/home-film/inside-odin.mp4"'));
-  assert.ok(hero.includes('href="#featured-study"'));
-  const order = ['class="film-entrance"', 'id="featured-study"', 'class="failover-figure"', 'class="private-study"'].map(token => hero.indexOf(token));
+  assert.ok(hero.includes('href="#tool-results"'));
+  const order = ['class="film-entrance"', 'id="tool-results"', 'Blueprint Conformance Engine', 'Test Witness', 'class="private-study"'].map(token => hero.indexOf(token));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])));
+  assert.ok(home.indexOf('class="failover-figure"') > home.indexOf('id="findings"'));
   assert.ok(hero.includes('href="partners/#closed-door"'));
-  assert.ok(hero.includes('href="experiments/"'));
-  assert.ok(!hero.includes('<!--FAILOVER_FIGURE-->'), 'the result figure was rendered');
-  assert.match(hero, /<video controls preload="none"[^>]*><\/video>/, 'the film only loads on request');
-  assert.doesNotMatch(hero, /agent-space-30s-poster|\bautoplay\b/);
+  const { runs } = JSON.parse(readFileSync(join(dist, 'data/experiments.json')));
+  const run = runs.find(r => r.id === 'module-layering');
+  assert.ok(hero.includes(`GREEN ${run.cleanScore} <span>/</span> RED ${run.driftScore}`));
+  const { metrics } = JSON.parse(readFileSync(join(dist, 'data/witnesses/test-witness.json')));
+  const count = metrics.find(m => m.id === 'defects-detected');
+  assert.ok(hero.includes(`${count.numerator} of ${count.denominator} defects caught`));
+  assert.match(hero, /<button class="film-motion" type="button" hidden>/);
+  assert.doesNotMatch(hero, /<video[^>]*autoplay/, 'without JavaScript only the poster loads');
 });

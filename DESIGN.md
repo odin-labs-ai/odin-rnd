@@ -121,7 +121,7 @@ The private collaboration plates lead with intended customer benefits. Each conc
 
 ## Accessibility and behavior
 
-Use scoped focus colors: dark green on the light floor, light emerald inside dark surfaces. Keep keyboard use, selection, reduced motion, reading without JavaScript and native disclosure. Station and experiment focus stays inset so rounded containers do not clip it. Do not add idle animation or simulated runtime counters.
+Use scoped focus colors: dark green on the light floor, light emerald inside dark surfaces. Keep keyboard use, selection, reduced motion, reading without JavaScript and native disclosure. Station and experiment focus stays inset so rounded containers do not clip it. The founder’s 25 November 2026 decision, “Play the film in the hero”, admits one muted, looping background film with a visible pause control. Reduced motion and JavaScript-free reading use the still poster. Other motion stays interaction-led.
 
 Labels and scores retain explicit GREEN/RED/UNVERIFIED text; color alone never conveys an outcome. The workbench records an experiment; it does not execute agents in the browser. The floor is conceptual geometry, not a map of deployed infrastructure.
 

@@ -48,19 +48,37 @@
           <img class="film-still" src="assets/home-film/audit-chain.webp" srcset="assets/home-film/audit-chain-800.webp 800w, assets/home-film/audit-chain.webp 1920w" sizes="100vw" width="1920" height="1080" fetchpriority="high" alt="Glowing links in Odin’s rendered audit chain.">
           <div class="film-intro">
             <h1 id="hero-title">Inside <span>Odin R&amp;D</span></h1>
+            <p class="film-purpose">Models and tools, tested with stated limits.</p>
             <div class="film-actions">
               <a class="play-film" href="assets/home-film/inside-odin.mp4"><span class="play-mark" aria-hidden="true">▶</span> Play film <span class="film-runtime" aria-label="10 seconds">0:10</span></a>
-              <a class="film-results" href="#featured-study">See the results <span aria-hidden="true">↓</span></a>
+              <a class="film-results" href="#tool-results">See the results <span aria-hidden="true">↓</span></a>
             </div>
           </div>
+          <button class="film-motion" type="button" hidden>Pause background film</button>
         </div>
         <dialog class="home-film-player" aria-labelledby="home-film-title" aria-describedby="home-film-description">
           <header><h2 id="home-film-title">Inside Odin R&amp;D</h2><form method="dialog"><button type="submit" autofocus>Close <span aria-hidden="true">×</span></button></form></header>
           <video controls preload="none" playsinline width="1920" height="1080" aria-labelledby="home-film-title" aria-describedby="home-film-description"></video>
           <footer><p id="home-film-description">A silent film. The engineering hall in Unreal Engine, then the core and the audit chain rendered in Blender.</p><a href="assets/home-film/inside-odin.mp4">Open film file</a></footer>
         </dialog>
-        <div class="home-studies" id="featured-study">
-          <div class="entry-evidence"><!--FAILOVER_FIGURE--></div>
+        <div class="home-studies" id="tool-results">
+          <div class="entry-evidence">
+            <h2>Our tools in a recorded test</h2>
+            <div class="entry-tools">
+              <article>
+                <h3><a href="experiments/">Blueprint Conformance Engine</a></h3>
+                <p class="entry-score"><!--BLUEPRINT_SCORES--></p>
+                <p>A TypeScript module followed its import rule. A second copy crossed the boundary and the engine flagged it.</p>
+                <a href="data/experiments.json">Recorded <!--BLUEPRINT_DATE--></a>
+              </article>
+              <article>
+                <h3><a href="projects/test-witness/">Test Witness</a></h3>
+                <p class="entry-score"><!--WITNESS_SCORE--></p>
+                <p>The invoice tests caught planted errors in rounding, the discount threshold and input validation.</p>
+                <a href="data/witnesses/test-witness.json">Recorded <!--WITNESS_DATE--></a>
+              </article>
+            </div>
+          </div>
           <aside class="private-study" aria-labelledby="private-study-title">
             <h2 id="private-study-title">Private studies</h2>
             <p>Your workflow, tested under NDA. You decide what can be published.</p>
@@ -81,12 +99,12 @@
         <p id="station-status" class="sr-only" role="status" aria-live="polite"></p>
       </div>
       <p class="factory-boundary">Four ways to check a result, one decision model you can run yourself, and one experiment written down before it runs. The machines are a drawing; the records behind them are real: runs on small examples we wrote, one measured model comparison and one pre-registration with no results yet. Opening a station only shows its record. It does not run an agent or a model.</p>
-      <details class="factory-correction" open><summary>Wording clarification · <time datetime="2026-11-01">1 November 2026</time></summary><p>The earlier headline “Every model and vendor, on real work” implied universal coverage that the published experiments do not establish. Earlier offers to “prove the result” and show that “nothing else broke” were too broad: checks cover agreed examples and conditions. The earlier BLUEPRINTS line “checked automatically on every change” did not establish that integration for every repository. The Lab 01 phrase “real answers” did not establish answer correctness; source cards record attribution. The earlier subsidy wording “qualifies for innovation subsidies” was not supported by an eligibility decision on this page. See our <a href="methods/#publication-standard">publication standard</a>.</p><p><time datetime="2026-11-02">2 November 2026</time>: the earlier Evidence links “Everything we have measured, and not” and “what we have measured, and not” implied a complete inventory; the linked page holds selected claims and open questions.</p></details>
     </section>
     <section class="lab-launch content-section" id="findings" aria-labelledby="findings-title">
       <div class="section-heading"><h2 id="findings-title">Measured results</h2><p><a href="evidence/">See the evidence and open questions</a></p></div>
       <ol class="lab-claims proof-strip"><!--LAB_PROOF--></ol>
     </section>
+    <section class="database-study content-section" id="featured-study" aria-labelledby="failover-title"><!--FAILOVER_FIGURE--></section>
     <section class="offer content-section" id="work-with-us" aria-labelledby="offer-title">
       <div class="section-heading"><h2 id="offer-title">Work with us, in the open <br>or behind closed doors.</h2><p>Bring us a hard engineering problem. We agree what success would mean, work on it with you, and test the result against that scope. Engagements run for months and are scoped together, by proposal.</p></div>
       <div class="mode-pair">

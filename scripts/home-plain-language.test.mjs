@@ -82,7 +82,6 @@ export function homeFirstRead(home) {
     'hero premise': elementAt(home, /<div class="factory-premise"/),
     'drawing toolbar': elementAt(home, /<div class="drawing-toolbar"/),
     'how we check intro': elementAt(home, /<div class="home-check-intro"/),
-    'correction summary': elementAt(elementAt(home, /<details class="factory-correction correction-fold"/), /<summary>/),
     'what we found': elementAt(home, /<section\b[^>]*\sid="findings"/),
     'go further': elementAt(home, /<nav class="home-further/),
     'fold summaries': [...home.matchAll(/<details class="home-fold"><summary>([^<]*)</g)].map(m => `<p>${m[1]}</p>`).join(''),
@@ -159,7 +158,6 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   // The opening film and featured result share the entrance. The interactive drawing follows Tools, before the findings.
   const order = [parts['hero premise'], parts['how we check intro'], parts['drawing toolbar'], parts['what we found']].map(part => home.indexOf(part));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, factory introduction, drawing, findings: ${order.join(', ')}`);
-  assert.ok(home.indexOf(parts['correction summary']) < home.indexOf(parts['what we found']), 'the dated correction summary stays in the hero, by the headline');
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
   assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Tools', 'Find']);

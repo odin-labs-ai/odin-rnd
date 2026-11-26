@@ -6,12 +6,17 @@
   "claims": [
     {
       "id": "proof-review-cost",
-      "headline": "The cheapest reviewer caught defects in {cheapCaught} of {cheapOf} reviews",
+      "headline": "The cheapest reviewer caught {cheapCaught} of {cheapOf} planted defects",
       "record": "data/review-frontier/results.json",
       "note": "journal/review-frontier-results.html",
       "text": "It cost {cheapCost} per review. The most expensive cost {dearCost} and caught {dearCaught} of {dearOf}. Their uncertainty ranges overlapped.",
+      "provenance": "On clean changes, the cheapest reviewer raised {cheapFA} false alarms in {cheapClean} reviews and the most expensive raised {dearFA} in {dearClean}.",
       "limit": "Repeat runs on private changes with planted defects. A catch meant flagging the right file.",
       "values": {
+        "cheapFA": { "source": "data/review-frontier/results.json#/seats/1/falseAlarms", "format": "int" },
+        "cheapClean": { "source": "data/review-frontier/results.json#/seats/1/falseAlarmsOf", "format": "int" },
+        "dearFA": { "source": "data/review-frontier/results.json#/seats/3/falseAlarms", "format": "int" },
+        "dearClean": { "source": "data/review-frontier/results.json#/seats/3/falseAlarmsOf", "format": "int" },
         "cheapCost": { "source": "data/review-frontier/results.json#/seats/1/costPerReviewUsd", "format": "usd" },
         "cheapCaught": { "source": "data/review-frontier/results.json#/seats/1/caught", "format": "int" },
         "cheapOf": { "source": "data/review-frontier/results.json#/seats/1/caughtOf", "format": "int" },
