@@ -11,6 +11,7 @@ import { FIND_MARKER, GROUPS } from './find-build.mjs';
 import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
+import { HEADER_LABELS, labelHtml } from './site-header.mjs';
 
 const schema = JSON.parse(readFileSync('scripts/schemas/site-index.schema.json', 'utf8'));
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
@@ -125,15 +126,18 @@ test('the sitemap lists /journal/ and /projects/ directly before /find/, which s
 
 test('wave 3, as built: one canonical nav on every page, journal/ and projects/ listing every note and tool, crumbs to them', () => {
   const { dist, files, index } = built();
-  const CANONICAL = ['Start here', 'Findings', 'Labs', 'All results', 'Notes &amp; updates', 'How we test', 'Work with us', 'Tools', 'Find'];
+  // The one canonical list (scripts/site-header.mjs HEADER_LABELS), as the built HTML writes it (& as &amp;).
+  const CANONICAL = HEADER_LABELS.map(labelHtml);
   for (const rel of files.filter(f => f.endsWith('.html'))) {
     const html = readFileSync(join(dist, rel), 'utf8');
     const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
-    // Partners is in the footer of every page with a site footer, no longer in the header.
+    // Partners left the header for the footer: every built page has a site footer, and Partners is in it once. A page
+    // with no footer fails here rather than skipping the check, so Partners can never vanish from both places.
     const footer = html.match(/<footer class="site-footer[\s\S]*?<\/footer>/)?.[0];
-    if (footer) assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
+    assert.ok(footer, `${rel}: a site footer`);
+    assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();

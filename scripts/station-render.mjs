@@ -16,6 +16,9 @@ const pre = text => `<pre tabindex="0">${escape(text)}</pre>`;
 const row = (label, value, state='') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const receiptLink = (station,id,label) => `<a href="projects/${station.project}/#observation-${escape(id)}">${escape(label)}</a>`;
 // The Gate compares three recorded suites against the same seeded rounding defect.
+// The asserts below are the build-time fail-closed contract: a malformed record stops the build, so a partial page
+// never deploys. parseEvidence (demos/test-witness/run.mjs) is pure: it reads only command.stdout and exitCode
+// against a constant oracle, with no I/O, so the same record always renders or always stops the build.
 function renderGate(station, record) {
   const suites = [
     { key: 'weak', label: 'Ordinary' },

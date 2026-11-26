@@ -9,7 +9,8 @@ let background;
 let stopped = false;
 
 function updateBackground() {
-  if (!trigger || !still || !motion) return;
+  // The poster comes from the still image; without that image, or without the pause button, there is no background film.
+  if (!trigger || !(still instanceof HTMLImageElement) || !motion) return;
   if (reduced.matches) {
     if (background) {
       background.pause();

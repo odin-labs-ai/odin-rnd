@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { builtCopy } from './test-build.mjs';
 import { stripBlocks, stripTags } from './test-html-text.mjs';
+import { HEADER_LABELS } from './site-header.mjs';
 
 export const jargon = [
   ['fixture', /\bfixtures?\b/i],
@@ -45,7 +46,9 @@ export const plainBanned = [
   // A bare "pre-registered" with no gloss: say "we wrote down the question and the pass mark before running it".
   ['pre-registered', /\bpre-?regist(?:ered|ration)\b/i],
   ['sha256', /\bsha-?256\b/i],
-  // A commit id or record hash: seven or more hex characters with a digit and a letter among them.
+  // A commit id or record hash: seven or more hex characters with a digit and a letter among them. Accepted false
+  // positive: any such token in plain copy (e.g. '2026abc') is also caught; letters-only hex words (deadbeef) and pure
+  // digit runs (dates, counts) pass. Only visible text and aria-label/alt/title are read (readable), never a style value.
   ['commit or hash', /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,64}\b/],
   ['results.json', /\bresults\.json\b/i],
   ['Record <hex>', /\bRecord [0-9a-f]{6,}\b/],
@@ -146,6 +149,14 @@ test('the plain-language reader catches each banned word and mark, and leaves pl
   for (const [word, sample] of Object.entries(samples)) assert.equal(bannedIn(readable(`<p>${sample}</p>`)).filter(f => f.startsWith(`${word}:`)).length, 1, word);
   const plain = 'We wrote down the question and the pass mark before running it. Measured 2026-10-23: 29 of 60, $0.000631 per review. Charmed, armour, seated, deadbeef.';
   assert.deepEqual(bannedIn(readable(`<p>${plain}</p>`)), [], 'plain words, dates, counts and prices pass');
+  // The hash boundary: one digit turns a letters-only hex word into a caught token, and a mixed token like '2026abc' is
+  // caught too (the accepted false positive named at the ban).
+  assert.equal(bannedIn(readable('<p>Seen deadbeef0.</p>')).length, 1, 'a hex token with a digit is caught');
+  assert.equal(bannedIn(readable('<p>Seen 2026abc.</p>')).length, 1, 'the accepted false positive is caught, by design');
+  assert.deepEqual(bannedIn(readable('<p style="color:#1a2b3c4">Plain.</p>')), [], 'a style value is not read');
+  // Links are not read: a finding may link its record at data/<x>/results.json while the visible words say "the record".
+  assert.deepEqual(bannedIn(readable('<a href="data/x/results.json">the record</a>')), [], 'hrefs are not read');
+  assert.equal(bannedIn(readable('<a href="data/x/results.json">results.json</a>')).length, 1, 'the same path as visible text is caught');
 });
 
 test('the built home reads plain where a visitor starts, plain first: header, hero, what we found, how we check, Go further and the folds', { timeout: 600_000 }, () => {
@@ -160,7 +171,10 @@ test('the built home reads plain where a visitor starts, plain first: header, he
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `hero, factory introduction, drawing, findings: ${order.join(', ')}`);
   // Labels in words, not lab terms; the old header labels are retired (scripts/site-header.mjs RETIRED_LABELS).
   const labels = [...parts['header nav'].matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1].replaceAll('&amp;', '&'));
-  assert.deepEqual(labels, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Tools', 'Find']);
+  // The one canonical list (scripts/site-header.mjs HEADER_LABELS), shared with find-built.test.mjs, is itself pinned
+  // here once against the literal nine labels, so a rename in DESTINATIONS cannot pass by moving both sides together.
+  assert.deepEqual(HEADER_LABELS, ['Start here', 'Findings', 'Labs', 'All results', 'Notes & updates', 'How we test', 'Work with us', 'Tools', 'Find']);
+  assert.deepEqual(labels, HEADER_LABELS);
   // Both public research and private evaluation are legible in the entrance.
   assert.match(parts['hero premise'], /<h1[^>]*>Inside <span>Odin R&amp;D<\/span><\/h1>/);
   assert.match(parts['hero premise'], /Run a closed-door study/);

@@ -62,10 +62,21 @@ export const retiredTargets = retired => [].concat(retired.target);
 /** Labels a nav may carry before this pass: the canonical ones, the retired ones, and Find. Anything else stops the build. */
 export const KNOWN_LABELS = new Set([...DESTINATIONS.map(d => d.label), ...RETIRED_LABELS.keys(), 'Find']);
 
+/** Every header link a built page shows, in order, as a reader sees them: the canonical destinations, then Find (which
+ *  scripts/site-chrome.mjs appends last). The one list the built-page tests pin the header against. */
+export const HEADER_LABELS = Object.freeze([...DESTINATIONS.map(d => d.label), 'Find']);
+
 /** A label as HTML: & is the only character the labels need escaped. */
 export const labelHtml = label => label.replaceAll('&', '&amp;');
-/** A link's text as a reader sees it. */
-const labelText = html => html.replaceAll('&amp;', '&');
+/** A link's text as a reader sees it: the named entities &amp; &quot; &lt; &gt; &#39; and numeric references (&#38;,
+ *  &#x26;) decoded in one pass, so a decoded "&" never starts a second decode ("&amp;lt;" reads "&lt;", not "<"). Any
+ *  other entity stays as written and so is not a known label: the build stops (normaliseHeader), it never drops a link. */
+const NAMED = { amp: '&', quot: '"', lt: '<', gt: '>', '#39': "'" };
+export const labelText = html => html.replace(/&(amp|quot|lt|gt|#39|#(\d{1,7})|#x([0-9a-f]{1,6}));/gi, (whole, name, dec, hex) => {
+  const code = dec ? Number(dec) : hex ? parseInt(hex, 16) : null;
+  if (code !== null) return code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+  return NAMED[name.toLowerCase()] ?? whole;
+});
 
 /** Pages left as they are, each with its reason. */
 export const HEADER_EXEMPT = new Map();
@@ -146,6 +157,8 @@ export function normaliseHeader(html, { relPrefix, current = null, label = 'page
   const links = [...nav.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)];
   // Accept our own native menu when normalising an already-built page.
   const content = nav.slice(NAV_OPEN.length, -'</nav>'.length);
+  // Only the first MENU_CLOSE is taken out: a second '</div></details>' (a nested or doubled menu) is left in `rest` and
+  // refused just below ("holds more than links"), so a malformed menu stops the build rather than being flattened.
   const flat = content.startsWith(MENU_OPEN) ? content.slice(MENU_OPEN.length).replace(MENU_CLOSE, '') : content;
   const rest = flat.replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '');
   if (rest.trim()) throw new Error(`The header navigation of ${label} holds more than links: "${rest.trim().slice(0, 60)}"`);

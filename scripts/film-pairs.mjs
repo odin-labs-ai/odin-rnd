@@ -219,6 +219,10 @@ export function addFilmFallbacks({ distDir = 'dist', root = 'site', written = ne
   const before = existsSync(homeFile) ? readFileSync(homeFile, 'utf8') : '';
   const paired = pairHome(before, home, byWebm);
   problems.push(...paired.problems);
+  // pairHome accepts an already-paired dist page so a second pass is idempotent; the committed page must still name no
+  // MP4 source of the pinned film, or the one insertion happened outside this pass (review 2bb1b73a item 4).
+  const homeMp4 = byWebm.get(home.webm)?.mp4, committedHome = join(root, home.page);
+  if (homeMp4 && existsSync(committedHome) && readFileSync(committedHome, 'utf8').includes(`<source src="${homeMp4}"`)) problems.push(`${home.page}: the committed page already names ${homeMp4}; only the dist pass adds it`);
   if (!paired.problems.length) {
     if (paired.html !== before) writeFileSync(homeFile, paired.html);
     if (!expected.has(home.page)) expected.set(home.page, new Map());

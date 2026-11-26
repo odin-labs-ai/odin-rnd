@@ -23,7 +23,10 @@ export function factoryFloor() {
     floor: [[310,350,30], [305,409]],
   };
   const drawMarker = station => {
-    const [base, [x, y]] = callouts[station.id];
+    const callout = callouts[station.id];
+    // A station added to the contract without callout coordinates stops the build with its id named.
+    if (!callout) throw new Error('floor.mjs: no callout coordinates for station ' + station.id);
+    const [base, [x, y]] = callout;
     const [fromX, fromY] = p(...base);
     return `<path class="station-picker-leader" d="M${fromX} ${fromY}L${x} ${y}" fill="none" stroke="currentColor" pointer-events="none"/>
       <a data-floor-pick="${station.id}" class="station-pick${station.id === 'blueprint' ? ' active' : ''}" href="${station.href}" tabindex="-1" aria-label="${station.number} ${station.label}" transform="translate(${x} ${y})">
@@ -32,7 +35,7 @@ export function factoryFloor() {
       </a>`;
   };
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Select a machine or one of the '+stationCountWord+' station links to inspect its record.</desc>';
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Select a machine or use the '+stationCountWord+' station links below to inspect its record.</desc>';
   svg += '<g id="factory-geometry"><g data-factory-layer="floor">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');

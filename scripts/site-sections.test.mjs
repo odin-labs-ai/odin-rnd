@@ -10,6 +10,7 @@ import { SITE_ORIGIN, navSpan, normaliseHeader } from './site-header.mjs';
 import { addBreadcrumbs, addChromeStylesheet, addFindLink, addRelated, escapeHtml, pageClass, NUMBER_PROVENANCE_DIRS, SECTION_INDEX_PAGES } from './site-chrome.mjs';
 import { PAGES } from './number-provenance.mjs';
 import { toolGuide, toolHref } from './tool-guide.mjs';
+import { presentTools, renderToolGuideBody } from './tool-directory.mjs';
 
 // Items in the site index contract, one note per committed field note (site/journal/*.html), dated a day apart so the
 // month grouping spans several months; experiments and tools as the index has them.
@@ -217,4 +218,55 @@ test('the guide lists only published demos and keeps nina out when its homepage 
   assert.match(html, /<h3>Blueprint Conformance Engine<\/h3>/);
   assert.deepEqual(demoHrefs(renderProjectsIndex(notes)), []);
   assert.throws(() => renderProjectsIndex([{ ...oneDemo, href: 'projects/new-demo/' }]), /missing tool guide for projects\/new-demo/);
+});
+
+test('tool entries whose first step is off-site (001, 003) render on the projects index with no published page behind them', () => {
+  for (const key of ['001', '003']) assert.match(toolGuide[key].startHref, /^https:\/\//, `${key} starts off-site`);
+  // No tool page is published at all: the off-site entries skip the published-page check and still render.
+  for (const html of [renderProjectsIndex([], '<main></main>'), renderProjectsIndex(ITEMS, publishedNina)]) {
+    for (const key of ['001', '003']) {
+      const card = cardsIn(html).find(c => c.includes(`<h3>${escapeHtml(toolGuide[key].title)}</h3>`));
+      assert.ok(card, `${key}: its card is on the projects index`);
+      assert.ok(card.includes(`<a class="tool-start" href="${escapeHtml(toolGuide[key].startHref)}">`), `${key}: its off-site first step, unprefixed`);
+    }
+  }
+});
+
+test('a published tool page matches its guide entry whatever the form of its address: fragment, index.html, trailing slash', () => {
+  const ci = tools.find(item => item.id === 'tool-ci-witness');
+  assert.equal(toolGuide['ci-witness'].startHref, 'projects/ci-witness/#recording', 'the guide entry carries a fragment');
+  for (const href of ['projects/ci-witness/', 'projects/ci-witness', 'projects/ci-witness/index.html', 'projects/ci-witness/#recording', 'projects/ci-witness/index.html#top']) {
+    const html = renderProjectsIndex([{ ...ci, href }], '<main></main>');
+    assert.ok(cardsIn(html).some(c => c.includes(`<h3>${escapeHtml(toolGuide['ci-witness'].title)}</h3>`)), `${href}: the CI Witness card renders`);
+  }
+  // A different page (not the same address in another form) is still refused, never matched loosely.
+  for (const href of ['projects/ci-witness/extra/', 'projects/ci-witness.html', 'projects/ci-witnesses/']) {
+    assert.throws(() => renderProjectsIndex([{ ...ci, href }], '<main></main>'), /missing tool guide/, href);
+  }
+});
+
+test('a tool link with a query string is written HTML-escaped in its href, which a browser decodes back to the URL', () => {
+  toolGuide['zz-query'] = { ...toolGuide['001'], startHref: 'https://example.invalid/start?a=1&b=2', sourceHref: 'https://example.invalid/src?x=1&y=2' };
+  try {
+    const body = renderToolGuideBody('zz-query');
+    assert.ok(body.includes('href="https://example.invalid/start?a=1&amp;b=2"'), 'start link');
+    assert.ok(body.includes('href="https://example.invalid/src?x=1&amp;y=2"'), 'source link');
+    assert.doesNotMatch(body, /href="[^"]*&(?!amp;)/, 'no bare & inside an href');
+  } finally { delete toolGuide['zz-query']; }
+});
+
+test('a home tool row with a second project-links block keeps that block\'s links in the tool notes', () => {
+  const home = readFileSync('site/index.html', 'utf8');
+  const section = /<section class="projects content-section"[\s\S]*?<\/section>/.exec(home)[0];
+  const row003 = /<article class="project-row"><div class="project-number">003<[\s\S]*?<\/article>/.exec(section)[0];
+  const second = '<div class="project-links"><a href="https://example.invalid/second-block">Second block link</a></div>';
+  const withSecond = row003.replace(/(<div class="project-links">[\s\S]*?<\/div>)/, `$1${second}`);
+  assert.notEqual(withSecond, row003);
+  const out = presentTools(section.replace(row003, withSecond));
+  const card = /<article\b[^>]* data-tool="003">[\s\S]*?<\/article>/.exec(out)[0];
+  const notes = /<details class="tool-notes">[\s\S]*<\/details>/.exec(card)[0];
+  assert.ok(notes.includes(second), 'the second block is kept, whole, in the notes');
+  assert.ok(card.includes(`href="${toolGuide['003'].startHref}"`), 'the first step still leads where the guide says');
+  // A row with no project-links at all is refused, never rendered without its actions.
+  assert.throws(() => presentTools(section.replace(row003, row003.replace(/<div class="project-links">[\s\S]*?<\/div>/, ''))), /Missing title or actions in tool 003/);
 });

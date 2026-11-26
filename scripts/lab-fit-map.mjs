@@ -79,6 +79,9 @@ const FAILOVER_RESULTS = 'data/failover/results.json';
 const FAILOVER_STUDY = 'journal/failover-results.html';
 
 // Keep the original predictions and their provenance. Only these five frozen scenarios have a row in this map.
+// It reads only the parsed result (result.experiment, result.date, result.verdict.scenarios and .components) and the
+// module-level sha256 helper; it never reads a film's source fields (originalSha256, reencoded, remuxed: those are
+// lab-films.mjs, review 2bb1b73a item 22).
 export function withFailoverResults(record, bytes) {
   const result = JSON.parse(bytes);
   if (result.experiment !== 'EXP 021' || !/^\d{4}-\d{2}-\d{2}$/.test(result.date)) throw new Error('Expected dated EXP 021 results');
@@ -95,6 +98,8 @@ export function withFailoverResults(record, bytes) {
       throw new Error('Cannot give a single EXP 021 verdict for ' + cell.scenario);
     }
     cell.verdict = verdict;
+    // One results record per experiment, by contract (resultProblem): every Lab 03 verdict links the same
+    // data/failover/results.json, which has no per-scenario anchors; the study page is the lab title's link (review 2bb1b73a item 32).
     cell.result = FAILOVER_RESULTS;
   }
   next.vendored.failoverResultsSha256 = sha256(bytes);
@@ -215,6 +220,9 @@ export function renderFitMap(record, up = '../', { questions = null } = {}) {
   if (!record) return '';
   const href = path => /^https:/.test(path) ? escape(path) : `${up}${escape(path)}`;
   const tables = record.labs.map((lab, i) => {
+    // A published Lab 03 always carries failoverResultsSha256: fitMapProblems refuses a record that differs from
+    // withFailoverResults() of the published results (which sets it), and a filled cell's link must be that record
+    // (resultProblem). So a verdict never renders here without its feed-check basis (review 2bb1b73a item 39).
     const measured = lab.page === FAILOVER_PAGE && record.vendored.failoverResultsSha256;
     const page = measured ? FAILOVER_STUDY : lab.page;
     const title = page ? `<a href="${href(page)}">${escape(lab.lab)}: ${escape(lab.title)}</a>` : `${escape(lab.lab)}: ${escape(lab.title)}`;

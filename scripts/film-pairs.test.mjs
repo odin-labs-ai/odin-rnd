@@ -28,6 +28,8 @@ const PAIR_AT = up => `<source src="${up}assets/labs/agent-space/session-2026-11
 const HOME_FIXTURE = { page: 'index.html', webm: FILM, player: `<figure class="m">${V}<source src="${FILM}" type="video/webm">` };
 const HOME_PAGE = `<main>${HOME_FIXTURE.player}</video></figure></main>`;
 const LAB_PAGE = `<main>${V}${PAIR_AT('../../')}</video></main>`;
+// The home page as the dist pass leaves it: the MP4 <source> before the pinned WebM one.
+const PAIRED_HOME = HOME_PAGE.replace(`<source src="${FILM}" type="video/webm">`, PAIR_AT(''));
 
 /**
  * A built site for the fixture film: its copy in dist, the pinned home page, a generated page that plays the film once
@@ -109,6 +111,25 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
   assert.equal(run.home, `<main><figure class="m">${V}${PAIR_AT('')}</video></figure></main>`);
   refused(distRun({}, { home: '<main>no film</main>' }), /pinned home player .* is not on the page/, 'pin missing');
   refused(distRun({}, { home: HOME_PAGE + HOME_PAGE }), /pinned home player .* more than once/, 'pin twice');
+  // The paired pin plus a second, unpaired one: the `existing && html.includes(home.player)` clause (review 2bb1b73a item 5).
+  assert.ok(!PAIRED_HOME.includes(HOME_FIXTURE.player), 'the paired form does not contain the unpaired pin');
+  refused(distRun({}, { home: PAIRED_HOME + HOME_PAGE }), /pinned home player .* more than once/, 'paired pin plus unpaired pin');
+  // A committed page that already names the MP4 source is refused, even though the dist page alone would pass as a
+  // second pass (review 2bb1b73a item 4). Its own root: the shared ROOT has no index.html, which every other run needs.
+  {
+    const root = mkdtempSync(join(tmpdir(), 'film-pairs-committed-'));
+    const dist = mkdtempSync(join(tmpdir(), 'film-fallbacks-dist-'));
+    try {
+      for (const file of [REAL.webm, REAL.mp4, FALLBACKS_FILE]) place(join(ROOT, file), join(root, file));
+      writeFileSync(join(root, 'index.html'), PAIRED_HOME);
+      place(join(ROOT, REAL.mp4), join(dist, REAL.mp4));
+      writeFileSync(join(dist, 'index.html'), PAIRED_HOME);
+      mkdirSync(join(dist, 'labs/agent-space'), { recursive: true });
+      writeFileSync(join(dist, LAB), LAB_PAGE);
+      assert.throws(() => addFilmFallbacks({ distDir: dist, root, written: wrote(), home: HOME_FIXTURE }),
+        /index\.html: the committed page already names assets\/labs\/agent-space\/session-2026-11-08\/clip\.mp4; only the dist pass adds it/);
+    } finally { rmSync(root, { recursive: true, force: true }); rmSync(dist, { recursive: true, force: true }); }
+  }
   refused(distRun({}, { home: HOME_PAGE.replace('</video>', `${PAIR_AT('')}</video>`) }), /index\.html: ".*clip\.webm.*" names a WebM outside the paired forms/, 'a second pair beside the pin');
   refused(distRun({}, { home: HOME_PAGE.replace('</main>', `${V}${PAIR_AT('')}</video></main>`) }), /index\.html: 2 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'a second player');
   // The insertion is idempotent: a second pass over the same dist changes nothing and passes.

@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
-import { HARD_PARTS_FILE, readDispatches, readHardParts, readLab, renderLabs } from './labs.mjs';
+import { HARD_PARTS_FILE, readDispatches, readHardParts, readLab, renderDispatches, renderLabs } from './labs.mjs';
 
 // The Labs pages (mission rnd-labs-human-first-1024). `pnpm test` runs before `pnpm build`, so these render in memory
 // from site/. The empty state (no screened session yet) is rendered from a copy of site/ that holds no dispatch.
@@ -231,6 +231,19 @@ test('two dated sessions render newest first on the page and in the feed (order 
       assert.ok(a >= 0 && b >= 0 && a < b, 'the March session comes before the January one');
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// A re-run is matched on its question set (who was asked, the question, follow-up or not), compared as arrays so key
+// order cannot matter; spacing in a question and an absent versus false follow-up do not hide the re-run link.
+test('a re-run is found by its question set, whatever its spacing or an absent versus false follow-up; a new question is not a re-run', () => {
+  if (realDispatches.length < 2) return assert.ok(true, 'needs two committed dispatches with one question set');
+  const [latest, earlier] = realDispatches;
+  const link = `A re-run of the <a href="#${earlier.session}">`;
+  assert.ok(renderDispatches(lab, [latest, earlier]).includes(link), 'the committed sessions share one question set');
+  const respaced = { ...earlier, questions: earlier.questions.map(q => ({ ...q, text: `  ${q.text.split(' ').join('   ')}\n`, followUp: q.followUp ? true : (q.followUp === undefined ? false : undefined) })) };
+  assert.ok(renderDispatches(lab, [latest, respaced]).includes(link), 'spacing and follow-up form are normalised');
+  const changed = { ...earlier, questions: earlier.questions.map((q, i) => (i === 0 ? { ...q, text: `${q.text} And why?` } : q)) };
+  assert.ok(!renderDispatches(lab, [latest, changed]).includes('A re-run of the'), 'a different question is a different set');
 });
 
 test('the lab page shows the films, the measured panels and the hard parts, in that order around the dispatches', () => {

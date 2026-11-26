@@ -9,6 +9,10 @@
 .find-search input,.find-month select{width:100%;border:1px solid #789381;border-radius:8px;background:#fafcf8;color:var(--paper);font:400 18px/1.5 Manrope,sans-serif}
 .find-search input{min-height:58px;padding:12px 48px 12px 18px}
 .find-hint{position:absolute;top:50%;right:14px;transform:translateY(-50%);pointer-events:none;padding:2px 8px;border:1px solid var(--rule);border-radius:4px;color:var(--steel);font:14px var(--mono)}
+/* The visible search label and its hint line share one height (24px line + 8px gap), so the absolutely placed "/"
+   glyph (.find-hint, top:50% of .find-search) stays centred on the input between them. */
+.find-search label{display:block;margin-bottom:8px;font:600 16px/24px Manrope,sans-serif}
+#find-search-hint{margin-top:8px;font:400 14px/24px Manrope,sans-serif;color:var(--steel)}
 .find :is(input,select,button,a,summary):focus-visible,.find-count:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
 .find-filters{margin:0;border:0}
 .find-filters summary,.find-history summary{display:list-item;list-style:disclosure-closed;min-height:44px;margin:0;padding:12px 0;color:var(--brand);font:600 16px/1.5 Manrope,sans-serif}
@@ -60,3 +64,5 @@
   .find-search input{font-size:16px}
 }
 @media(pointer:coarse){.find-hint{display:none}}
+/* On touch screens there is no "/" key to press; the hint line hides with the glyph. */
+@media(pointer:coarse){#find-search-hint{display:none}}

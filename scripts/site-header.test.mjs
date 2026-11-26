@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
-import { DESTINATIONS, FOOTER_LINKS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, addFooterLinks, canonicalHeader, navSpan, normaliseHeader, normaliseHeaders, retiredTargets, sectionFor } from './site-header.mjs';
+import { DESTINATIONS, FOOTER_LINKS, HEADER_LABELS, KNOWN_LABELS, RETIRED_LABELS, SITE_ORIGIN, addFooterLinks, canonicalHeader, canonicalNav, labelText, navSpan, normaliseHeader, normaliseHeaders, retiredTargets, sectionFor } from './site-header.mjs';
 import { addFindLink, FIND_EXEMPT } from './site-chrome.mjs';
 import { checkPage, NUMBER_WORDS, PAGES } from './number-provenance.mjs';
 
@@ -157,6 +157,29 @@ test('fails closed on a page it cannot place', () => {
   assert.throws(() => normaliseHeader(page, { relPrefix: './' }), /prefix/);
   assert.throws(() => normaliseHeader(page, { relPrefix: 'https://example.com/' }), /prefix/);
   assert.throws(() => normaliseHeader(page, { relPrefix: '../', current: 'unknown' }), /Unknown header section/);
+  // A second menu close (a doubled or nested menu) is not flattened away: what it leaves behind stops the build.
+  const doubled = canonicalNav('').replace('</div></details>', '</div></details><span>x</span></div></details>');
+  assert.throws(() => normaliseHeader(`<header class="site-header">${doubled}</header>`, { relPrefix: '' }), /holds more than links/);
+  assert.doesNotThrow(() => normaliseHeader(`<header class="site-header">${canonicalNav('')}</header>`, { relPrefix: '' }), 'one menu close is accepted');
+});
+
+test('a nav label written with another entity for "&" is read as the label it names, and unknown entities still stop the build', () => {
+  assert.equal(labelText('Notes &amp; updates'), 'Notes & updates');
+  assert.equal(labelText('Notes &#38; updates'), 'Notes & updates');
+  assert.equal(labelText('Notes &#x26; updates'), 'Notes & updates');
+  assert.equal(labelText('&quot;&lt;&gt;&#39;'), '"<>\'');
+  assert.equal(labelText('&amp;lt;'), '&lt;', 'decoded once: a decoded "&" does not start a second entity');
+  const nav = labels => `<header class="site-header"><nav aria-label="Main navigation"><a href="journal/">${labels}</a></nav></header>`;
+  for (const written of ['Notes &#38; updates', 'Notes &#x26; updates']) {
+    const out = normaliseHeader(nav(written), { relPrefix: '' });
+    assert.deepEqual(labels(navOf(out)), CANONICAL, `${written}: accepted, then written canonically`);
+  }
+  assert.throws(() => normaliseHeader(nav('Notes &nbsp; updates'), { relPrefix: '' }), /does not know/);
+});
+
+test('HEADER_LABELS is the canonical destinations then Find: the one list built-page tests pin the header to', () => {
+  assert.deepEqual(HEADER_LABELS, [...CANONICAL, 'Find']);
+  assert.ok(Object.isFrozen(HEADER_LABELS));
 });
 
 test('no digit or number word enters a number-provenance page through the header or the footer links', () => {
@@ -203,4 +226,11 @@ test('Partners moved to the footer: once in the site footer of every committed p
   assert.throws(() => addFooterLinks('<footer class="site-footer"></footer><footer class="site-footer"></footer>', { relPrefix: '' }), /at most one site footer/);
   assert.throws(() => addFooterLinks('<footer class="site-footer"><div></div></footer>', { relPrefix: './' }), /prefix/);
   assert.equal(addFooterLinks('<footer class="site-footer"><div><a href="x">X</a></div><span>v</span></footer>', { relPrefix: '../' }), '<footer class="site-footer"><div><a href="x">X</a><a href="../partners/">Partners</a></div><span>v</span></footer>');
+  // `[ "]` after "site-footer" accepts the closing quote (class="site-footer">) and a space before another class
+  // (class="site-footer wide">); a lookalike class name (site-footer-x) is not a site footer and is left alone.
+  for (const open of ['<footer class="site-footer">', '<footer class="site-footer ">', '<footer class="site-footer dark-surface">']) {
+    assert.equal(addFooterLinks(`${open}<div><a href="x">X</a></div></footer>`, { relPrefix: '' }), `${open}<div><a href="x">X</a><a href="partners/">Partners</a></div></footer>`, open);
+  }
+  const lookalike = '<footer class="site-footer-x"><div></div></footer>';
+  assert.equal(addFooterLinks(lookalike, { relPrefix: '' }), lookalike);
 });

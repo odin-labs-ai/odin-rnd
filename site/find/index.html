@@ -34,9 +34,10 @@
       <h2 id="find-results-title" class="find-visually-hidden">Search and results</h2>
       <form id="find-form" class="find-form" role="search" aria-label="Search the site" hidden>
         <div class="find-search">
-          <label class="find-visually-hidden" for="find-search">Search the library</label>
-          <input id="find-search" name="q" type="search" placeholder="Search a topic, model or experiment" autocomplete="off" spellcheck="false" aria-keyshortcuts="/">
+          <label for="find-search">Search the library</label>
+          <input id="find-search" name="q" type="search" placeholder="Search a topic, model or experiment" autocomplete="off" spellcheck="false" aria-keyshortcuts="/" aria-describedby="find-search-hint">
           <kbd aria-hidden="true" class="find-hint">/</kbd>
+          <p id="find-search-hint">Press <kbd>/</kbd> to search.</p>
         </div>
         <details id="find-filters" class="find-filters">
           <summary>Filters</summary>

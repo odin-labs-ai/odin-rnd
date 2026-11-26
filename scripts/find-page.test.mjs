@@ -104,7 +104,17 @@ test('group matching entries by exact destination and keep every matching amendm
   assert.deepEqual(groupResults(filter(source, { q: 'absent' })), []);
 });
 
-test('pagination counts destination pages and retains entries beyond the first page', () => {
+test('an entry whose destination fails safeHref is never grouped with another and never rendered as a link', () => {
+  const note = items[2];
+  const offSite = [{ ...note, id: 'a', href: '/off-site' }, { ...note, id: 'b', href: 'https://example.invalid/x' }, { ...note, id: 'c', href: '../up/' }];
+  for (const entry of offSite) assert.equal(safeHref(entry.href), null, entry.href);
+  // Each unsafe entry stays its own group: no shared key, so it never absorbs or joins a real destination.
+  assert.deepEqual(groupResults([...offSite, note]), [[offSite[0]], [offSite[1]], [offSite[2]], [note]]);
+  // The row renders an unsafe destination as plain heading text, never as a link (site/assets/find.mjs row()).
+  assert.match(source, /const href = safeHref\(item\.href\);\s*if \(href\) heading\.append\(element\(doc, 'a'[^\n]*\n\s*else heading\.textContent = String\(item\.title \?\? ''\);/, 'an unsafe destination renders unlinked');
+});
+
+test('pagination counts destination pages, not entries, and retains entries beyond the first page', () => {
   const records = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
     ({ ...items[2], href: `journal/note-${index}.html` }));
   const extra = { ...records.at(-1), id: 'amendment', stage: 'amendment' };
@@ -113,6 +123,13 @@ test('pagination counts destination pages and retains entries beyond the first p
   assert.equal(visible.length, RESULT_PAGE_SIZE);
   assert.equal(remaining, 6);
   assert.deepEqual(groups.slice(visible.length).at(-1), [records.at(-1), extra]);
+  // Two entries that share a destination collapse into one page: the count and the reveal shrink by one, no entry lost.
+  const shared = records.map((record, index) => (index === 1 ? { ...record, href: records[0].href } : record));
+  const collapsed = groupResults(shared);
+  assert.equal(collapsed.length, shared.length - 1);
+  assert.deepEqual(collapsed[0], [shared[0], shared[1]]);
+  assert.equal(resultPage(collapsed).remaining, 5);
+  assert.equal(collapsed.flat().length, shared.length, 'every entry is still in a group');
 });
 
 test('unknown parameters and malformed values are ignored', () => {
@@ -177,6 +194,20 @@ test('the template carries the search UI the module expects', () => {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   assert.match(html, /<input id="find-search" name="q" type="search"/);
+  // The search box has a visible label and a visible hint: the label names it (not visually hidden), the hint explains
+  // the "/" shortcut and is tied to the box by aria-describedby; aria-keyshortcuts stays for assistive technology.
+  const label = /(<label\b[^>]*\sfor="find-search"[^>]*>)([^<]+)<\/label>/.exec(html);
+  assert.ok(label, 'a label for the search box');
+  assert.doesNotMatch(label[1], /visually-hidden|\shidden\b|aria-hidden/, 'the label is visible (whole start tag checked)');
+  assert.equal(label[2].trim(), 'Search the library', 'the accessible name holds');
+  const input = /<input id="find-search"[^>]*>/.exec(html)[0];
+  assert.match(input, /\saria-keyshortcuts="\/"/);
+  const described = /\saria-describedby="([^"]+)"/.exec(input)?.[1];
+  assert.ok(described, 'the box is described by its hint');
+  const hint = new RegExp(`<(p|span)\\b[^>]*\\bid="${described}"[^>]*>([\\s\\S]*?)</\\1>`).exec(html);
+  assert.ok(hint, 'aria-describedby resolves to an element on the page');
+  assert.doesNotMatch(hint[0], /aria-hidden|hidden\b|visually-hidden/, 'the hint is visible');
+  assert.match(hint[2], /Press <kbd>\/<\/kbd>/, 'the hint names the shortcut key');
   assert.match(html, /id="find-count"[^>]*aria-live="polite"/);
   for (const name of ['type', 'outcome']) assert.match(html, new RegExp(`<fieldset[\\s\\S]*name="${name}"`));
   assert.equal(html.match(/<fieldset\b/g)?.length, 4);

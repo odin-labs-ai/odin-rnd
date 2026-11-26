@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { journalRows } from './experiment-ledger.mjs';
-import { ADDED_IDS, assertKept, CHECK_HEADING, CHECK_ID, CHECK_INTRO, CHECK_TITLE_ID, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, ledgerOf, OPEN_ORDER, shapeHome } from './home-shape.mjs';
+import { ADDED_IDS, assertKept, CHECK_HEADING, CHECK_ID, CHECK_INTRO, CHECK_TITLE_ID, FOLDS, FURTHER, FURTHER_ID, HOME_CSS, HOME_JS, idsOf, ledgerOf, OPEN_ORDER, shapeHome, splitFloor } from './home-shape.mjs';
 import { idOf, openAround } from '../site/assets/home-fold.mjs';
 
 const LEDGER = '<div class="experiment-ledger" id="all-experiments"><h3 id="all-experiments-title">List.</h3><ol aria-labelledby="all-experiments-title"><li><a href="journal/a.html">EXP 004</a></li></ol></div>';
@@ -136,6 +136,29 @@ test('the shaped home refuses a page it does not expect', () => {
     [HOME.replace('<section class="closing">', `<section class="closing" id="${CHECK_ID}">`), /already shaped/],
   ];
   for (const [html, expected] of cases) assert.throws(() => shapeHome(html), expected, String(expected));
+});
+
+test('splitFloor matches each part to its own close tag, through nested same-name elements', () => {
+  // Each part nests its own tag name several levels deep, with a sibling after the nesting, so a first-close or
+  // last-close match would cut the part short or swallow the next one.
+  const parts = {
+    ...FLOOR,
+    premise: '<div class="factory-premise"><div><div><h1 id="hero-title">Who</h1></div><div><p>x</p></div></div><div>after</div><p class="premise-correction"><a href="methods/#homepage-wording">Line</a></p></div>',
+    drawing: '<div class="factory-drawing" data-view="floor"><div><div><div></div></div></div><div class="floor-art"></div></div>',
+    stations: '<div class="station-compartment" aria-label="Selected experiment"><section><section><p>deep</p></section></section><div><div></div></div></div>',
+  };
+  const html = floorOf(parts);
+  const section = { start: 0, openEnd: parts.open.length, closeAt: html.lastIndexOf('</section>') };
+  const { hero, check } = splitFloor(html, section, '    ');
+  assert.equal(hero, `${parts.open}      ${parts.premise}\n    </section>`, 'the hero is the open tag and the whole premise, byte for byte');
+  for (const name of ['drawing', 'stations', 'boundary']) {
+    assert.equal(check.split(parts[name]).length, 2, `${name} is in the factory section once, whole`);
+    assert.ok(!hero.includes(parts[name]), `${name} is not in the hero`);
+  }
+  assert.ok(check.indexOf(parts.drawing) < check.indexOf(parts.stations) && check.indexOf(parts.stations) < check.indexOf(parts.boundary), 'in order');
+  // An extra nested close inside the premise makes it end early, and what is left over is refused, not absorbed.
+  const broken = floorOf({ ...parts, premise: parts.premise.replace('<div>after</div>', '</div><div>after</div>') });
+  assert.throws(() => splitFloor(broken, { start: 0, openEnd: parts.open.length, closeAt: broken.lastIndexOf('</section>') }, '    '), /#floor does not hold its drawing where expected/);
 });
 
 test('the kept-check refuses changed field-note rows, ledger bytes or ids', () => {

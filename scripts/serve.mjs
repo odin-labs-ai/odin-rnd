@@ -31,7 +31,9 @@ const server = http.createServer(async (req,res) => {
       }
     }
     res.writeHead(200, headers);
-    res.end(body);
+    // HEAD: the same headers as GET (Content-Length included) and no body is sent. This local preview still reads
+    // the file from disk, so a missing file is a 404 for HEAD exactly as for GET.
+    res.end(req.method === 'HEAD' ? undefined : body);
   } catch {res.writeHead(404);res.end('Not found');}
 });
 server.listen(Number(process.env.PORT||4173),'127.0.0.1',()=>console.log('Odin R&D: http://127.0.0.1:'+server.address().port+'/odin-rnd/'));

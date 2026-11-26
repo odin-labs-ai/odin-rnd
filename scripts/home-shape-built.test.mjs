@@ -57,6 +57,8 @@ test('the built homepage exposes the featured study, tool directory, factory and
   assert.ok(main.indexOf('<nav class="home-further') > order.at(-1) && main.indexOf('<nav class="home-further') < main.indexOf('<details class="home-archive">'), 'further reading follows the findings before the archive');
   const projects = main.slice(main.indexOf('id="projects"'), main.indexOf('id="how-we-check"'));
   const rows = [...projects.matchAll(/<article\b[^>]*class="project-row[^"]*"[^>]*>[\s\S]*?<\/article>/g)];
+  // An independent count first: a row dropped from both tool-guide.mjs and the page still fails here.
+  assert.equal(rows.length, 9, 'the Tools section renders nine tool rows');
   assert.deepEqual(rows.map(([row]) => /data-tool="([^"]+)"/.exec(row)?.[1]), Object.keys(toolGuide));
   assert.match(projects, /href="#how-we-check"/, 'Tools links to the original factory');
   const factory = main.slice(main.indexOf('id="how-we-check"'), main.indexOf('id="findings"'));
@@ -126,8 +128,8 @@ test('the home a visitor sees without opening anything is short: under the word 
   for (let at = visible.search(/<details\b/); at >= 0; at = visible.search(/<details\b/)) visible = visible.slice(0, at) + ' ' + visible.slice(elementEnd(visible, at));
   // Only the initially selected station is visible.
   visible = without(visible, /<article\b[^>]*\shidden>/);
-  // The hero's dated correction is a closed fold now (scripts/home-shape.mjs labelCorrection): like every <details>, it
-  // is left out above, its dated summary included.
+  // The homepage's dated wording correction stands open on the methods page (methods/#homepage-wording); the hero keeps
+  // one short link line to it (p.premise-correction), whose words are counted here like the rest of the hero.
   // Each finding's limit is left out by name for the same reason: a limit is shortened, never removed (PLAN B4), so its
   // words are not copy the short home may trim (scripts/lab-pages.mjs renderLabProof requires one per finding).
   visible = without(visible, /<p class="lab-limit">/);
@@ -137,9 +139,14 @@ test('the home a visitor sees without opening anything is short: under the word 
   const directory = /<section class="projects content-section"[^>]*>[\s\S]*?<\/section>/.exec(visible)[0];
   const rest = count(visible.replace(directory, ' '));
   assert.ok(rest < NON_DIRECTORY_WORDS, `${rest} visible words outside Tools (bound ${NON_DIRECTORY_WORDS})`);
+  const checked = [];
   for (const [row, key] of directory.matchAll(/<article[^>]* data-tool="([^"]+)"[^>]*>[\s\S]*?<\/article>/g)) {
     assert.ok(count(row) <= WORDS_PER_TOOL, `${key} shows ${count(row)} words (bound ${WORDS_PER_TOOL})`);
+    checked.push(key);
   }
+  // Every tool row was held to its own bound: none skipped, none missing.
+  assert.equal(checked.length, 9, `the per-tool bound checked nine rows (${checked.join(', ')})`);
+  assert.deepEqual(checked, Object.keys(toolGuide));
   assert.ok(all > words * 4, `under a quarter of the home's words show unopened (${words} of ${all})`);
 });
 
@@ -208,14 +215,25 @@ test('the archive rests closed below the findings and the short list of next rea
   assert.ok(home.indexOf('id="home-further-title"') < at);
 });
 
-test('the publication standard retains the original dated homepage correction', () => {
+test('the publication standard retains the original dated homepage correction, open, and the home links it', () => {
   const methods = readFileSync(join(dist, 'methods/index.html'), 'utf8');
-  const block = /<details id="homepage-wording">([\s\S]*?)<\/details>/.exec(methods)[1];
+  // Open by default: the standard asks that a correction stay visible ("Correct an overstatement where it appeared").
+  assert.match(methods, /<details id="homepage-wording" open>/, 'the moved correction stands open');
+  const block = /<details id="homepage-wording"[^>]*>([\s\S]*?)<\/details>/.exec(methods)[1];
   const paragraphs = block.slice(block.indexOf('</summary>') + '</summary>'.length);
   // Resolve the moved fragment link back to its original path before checking the historical text.
   const original = paragraphs.replace('href="#publication-standard"', 'href="methods/#publication-standard"');
   assert.equal(createHash('sha256').update(original).digest('hex'), '254ec433ef524686ad35e8963baaf879b2139eaefc87b4e549fa35f56dd4df29');
+  // The correction text lives once, on the methods page; the homepage hero, which it corrects, links it in one short line,
+  // dated in words and digit-free, visible without opening anything.
   assert.doesNotMatch(home, /factory-correction|id="homepage-wording"/);
+  const hero = home.slice(home.indexOf('id="floor"'), home.indexOf('id="projects"'));
+  const line = /<p class="premise-correction"><a href="methods\/#homepage-wording">([^<]+)<\/a><\/p>/.exec(hero);
+  assert.ok(line, 'the hero links the correction on the methods page');
+  assert.match(line[1], /\bcorrected\b/i);
+  assert.match(line[1], /\bNovember\b/, 'dated in words');
+  assert.doesNotMatch(line[1], /\p{Nd}/u, 'no digit');
+  assert.ok(!detailsRanges(hero).some(([a, b]) => a < line.index && line.index < b), 'the link line is not inside a fold');
 });
 
 test('the built home reads plain-first: the hero, tools, the factory, measured results, then the archive', () => {

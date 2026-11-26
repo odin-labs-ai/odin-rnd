@@ -15,6 +15,8 @@ export function renderToolHeading(key, level = 3) {
 
 export function renderToolGuideBody(key, up = '') {
   const tool = toolGuide[key];
+  // Attribute-escaped on purpose: a query's '&' is written '&amp;' in the href, which the browser decodes back to '&'
+  // before following it, so the URL is unchanged (pinned in scripts/site-sections.test.mjs).
   const start = escapeHtml(toolHref(tool.startHref, up));
   const source = escapeHtml(toolHref(tool.sourceHref, up));
   const links = `<a class="tool-start" href="${start}">${escapeHtml(tool.startLabel)} <span aria-hidden="true">→</span></a>` +
@@ -30,6 +32,9 @@ function homeTool(key, row) {
   let article = '<article class="project-row">';
   if (row) {
     article = row.slice(0, row.indexOf('>') + 1);
+    // `actions` is the FIRST project-links block only; any later block stays in `tail` and is carried whole into the
+    // tool notes below, never dropped. A row with no title or no project-links block fails closed (the throw stops the
+    // build). Both pinned in scripts/site-sections.test.mjs.
     const fields = /<h3>(?<title>[\s\S]*?)<\/h3>(?<intro>[\s\S]*?)(?<actions><div class="project-links">[\s\S]*?<\/div>)(?<tail>[\s\S]*)<\/article>$/.exec(row)?.groups;
     if (!fields) throw new Error('Missing title or actions in tool ' + key);
     const used = new Set([tool.startHref, tool.sourceHref]);

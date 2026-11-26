@@ -158,7 +158,8 @@ function dispatchBlock(dispatch, up, latest, proofs, previous) {
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
 export function renderDispatches(lab, dispatches, up = '../../', { proofs = false } = {}) {
   if (!dispatches.length) return `<div class="lab-empty" id="no-dispatch"><p class="technical">NO DISPATCH YET</p><p>${escape(lab.comingSoon)}</p></div>`;
-  const questionSets = dispatches.map(d => JSON.stringify(d.questions.map(q => [q.to, q.text, q.followUp])));
+  // Arrays, not objects, so key order cannot matter; spacing and an absent versus false followUp are normalised too.
+  const questionSets = dispatches.map(d => JSON.stringify(d.questions.map(q => [q.to, String(q.text ?? '').replace(/\s+/g, ' ').trim(), Boolean(q.followUp)])));
   const blocks = dispatches.map((d, i) => {
     const previous = dispatches.find((other, j) => other.date < d.date && questionSets[j] === questionSets[i]);
     return dispatchBlock(d, up, i === 0, proofs, previous);

@@ -40,4 +40,19 @@ test('the local Pages preview serves playable films, seek ranges and WebP poster
   const outside = await fetch(base + 'film.mp4', { headers: { range: 'bytes=6-' } });
   assert.equal(outside.status, 416);
   assert.equal(outside.headers.get('content-range'), 'bytes */6');
+  // A range the digits-only pattern does not match (letters, or several ranges) is ignored: the whole file, never NaN.
+  for (const range of ['bytes=abc-', 'bytes=0-1,3-4', 'bytes=-', 'items=0-1']) {
+    const whole = await fetch(base + 'film.mp4', { headers: { range } });
+    assert.equal(whole.status, 200, range);
+    assert.equal(whole.headers.get('content-range'), null, range);
+    assert.equal(await whole.text(), 'abcdef', range);
+  }
+  // HEAD answers with GET's headers and no body; a missing file is still a 404.
+  const head = await fetch(base + 'film.mp4', { method: 'HEAD' });
+  assert.equal(head.status, 200);
+  assert.equal(head.headers.get('content-type'), 'video/mp4');
+  assert.equal(head.headers.get('content-length'), '6');
+  assert.equal(head.headers.get('accept-ranges'), 'bytes');
+  assert.equal(await head.text(), '');
+  assert.equal((await fetch(base + 'missing.mp4', { method: 'HEAD' })).status, 404);
 });

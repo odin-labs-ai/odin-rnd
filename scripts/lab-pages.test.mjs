@@ -178,6 +178,18 @@ test('a comparison sentence is checked against its record', () => {
   assert.match(ASSERTS['spread-greater'](seats, { source: at.source, wide: 'caught', narrow: 'cost' }), /is not more than/);
 });
 
+// renderClaims checks a claim's limit with statesNumber, defined and exported by lab-pages.mjs itself (imported above).
+test('a claim whose limit states a number is refused; a limit in words renders', () => {
+  assert.equal(typeof statesNumber, 'function');
+  const config = JSON.parse(readFileSync('site/data/evidence.json', 'utf8'));
+  const site = siteReader();
+  const withLimit = limit => Object.assign(path => (path === 'data/evidence.json' ? { ...config, claims: [{ ...config.claims[0], limit }] } : site(path)), { recordProblem: site.recordProblem, quoteProblem: site.quoteProblem });
+  assert.throws(() => renderEvidence(withLimit('Only 3 runs were counted.')), /its limit must be words/, 'a digit');
+  assert.throws(() => renderEvidence(withLimit('Only three runs were counted.')), /its limit must be words/, 'a number word');
+  assert.throws(() => renderEvidence(withLimit('  ')), /its limit must be words/, 'a blank limit');
+  assert.match(renderEvidence(withLimit('Only the counted runs.')), /<strong>Limit:<\/strong> Only the counted runs\./);
+});
+
 test('a model name is the key its counts are read under, so a name and its numbers cannot drift apart', () => {
   const read = siteReader();
   assert.equal(fillClaim(read, { id: 'k', text: '{m}', values: { m: { source: 'data/broker-probe/2026-W43.json#/brokers/openrouter/models/gpt-4o-mini', format: 'key' } } }), '<code>gpt-4o-mini</code>');

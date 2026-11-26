@@ -84,7 +84,9 @@ test('the committed record passes, and every WebM film under site/assets/labs ha
     assert.ok(entry.bytes <= limitFor(entry.webm), `${entry.mp4} is within its limit`);
     assert.equal(entry.screening.result, 'pass');
     const { seconds } = webmSeconds(readFileSync(join('site', entry.webm)));
-    assert.ok(Number.isFinite(seconds) && seconds > 0 && Math.abs(seconds - entry.seconds) <= 1, `${entry.webm}: duration in its header`);
+    // The record keeps whole seconds, so the header may differ by rounding only (at most half a second); the bytes
+    // themselves are pinned by webmSha256 (review 2bb1b73a item 7).
+    assert.ok(Number.isFinite(seconds) && seconds > 0 && Math.abs(seconds - entry.seconds) <= 0.5, `${entry.webm}: header duration ${seconds} s within 0.5 s of the recorded whole seconds`);
   }
 });
 

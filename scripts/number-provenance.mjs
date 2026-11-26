@@ -256,6 +256,10 @@ export function isIdentifier(text) {
  * holds its marker fails (fail closed).
  */
 // The section is #findings since the plain-language home (2026-11-16; it was #lab, "Measured, and linked to the record").
+// The strip's claims (site/data/lab-proof.json) are rendered by scripts/lab-pages.mjs renderClaims before this check:
+// every claim's asserts run there (ASSERTS['billed-above-list'], ASSERTS['equal-across'], ...; an unknown kind throws),
+// its limit must hold no digit and no number word, and its text, headline and provenance line all go through fillClaim,
+// which refuses a stated number (statesNumber) and fills each {name} from its record. This check then reads the result.
 export const HOME_PROOF = { page: 'index.html', id: 'findings', marker: '<!--LAB_PROOF-->' };
 
 /** The section with id `id` in `html`, matched to its own closing tag (nested sections included), or null. */
