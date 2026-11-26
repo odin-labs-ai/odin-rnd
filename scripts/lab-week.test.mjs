@@ -80,6 +80,13 @@ test('a record at the build\'s own second counts, and a proof without the explor
   assert.deepEqual(weekProblems(renderWeek(w), w), []);
 });
 
+test('a stale record links to its date without presenting an empty week as recent activity', () => {
+  const page = renderLabs('site', { now: QUIET })['labs/agent-space/index.html'];
+  const latest = week(QUIET).latestRecord;
+  assert.match(page, new RegExp(`id="this-week">Latest record: <time datetime="${latest}">`));
+  assert.doesNotMatch(page, /A quiet week:|id="this-week-title"|class="week-counts"/);
+});
+
 test('an empty week says so, and still checks every count (as zero)', () => {
   const w = week(QUIET);
   assert.deepEqual(Object.values(w.counts), Array(Object.keys(w.counts).length).fill(0));

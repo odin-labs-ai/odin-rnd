@@ -40,7 +40,7 @@ import { renderFlow } from './lab-flow.mjs';
 import { withLabRuns } from './lab-runs.mjs';
 import { PROOFS_PAGE, proofAnchor, proofProblems, renderProofs, SOURCE_KIND, sourceKind } from './lab-proofs.mjs';
 import { NOTES as BENCH_NOTES, renderBench } from './brain-bench.mjs';
-import { renderWeek, weekOf } from './lab-week.mjs';
+import { renderWeekSection, weekOf } from './lab-week.mjs';
 import { DECISIONS_FILE, DECISIONS_PAGE, decisionValues, readDecisions } from './lab-decisions.mjs';
 import { ROGUE_RECORD, renderRogue } from './lab-rogue.mjs';
 import { REVIEW_RECORD, renderReview } from './lab-review.mjs';
@@ -401,7 +401,7 @@ export function renderLabPages(root = 'site', { requireBench = resolve(root) ===
       // "How this site got built": the delivery record (scripts/lab-delivery.mjs gates it; the build fails on a problem).
       '<!--LAB_DELIVERY-->': renderDelivery(delivery),
       // "This week in Lab 01": the seven days ending on the build's date, from the same records (scripts/lab-week.mjs).
-      '<!--LAB_WEEK-->': renderWeek(weekOf({ delivery, milestones: story, dispatches, proofs, now })),
+      '<!--LAB_WEEK-->': renderWeekSection(weekOf({ delivery, milestones: story, dispatches, proofs, now })),
       // "How it was born": a link to the story page, empty while there is no milestones record (scripts/lab-milestones.mjs).
       '<!--LAB_STORY_LINK-->': renderStoryLink(story),
     }),
