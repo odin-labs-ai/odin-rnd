@@ -63,7 +63,10 @@ export function filmsProblems(record, where = FILMS_FILE, root = null) {
       if (bytes !== film.bytes) problems.push(`${at}/bytes: ${src} is ${bytes} bytes on disk, the record says ${film.bytes}`);
       if (bytes > MAX_FILM_BYTES) problems.push(`${at}/bytes: ${src} is ${bytes} bytes, over the ${MAX_FILM_BYTES}-byte limit`);
     }
-    if (film.source.reencoded === (film.source.originalSha256 === sha256.src)) problems.push(`${at}/source: reencoded must be true exactly when the film's bytes differ from the original's`);
+    const { reencoded, remuxed } = film.source;
+    if ((reencoded && remuxed) || Boolean(reencoded || remuxed) !== (originalSha256 !== sha256.src)) {
+      problems.push(`${at}/source: a changed film must record either re-encoding or remuxing`);
+    }
   }
   return problems;
 }
@@ -86,5 +89,5 @@ export function renderFilms(record, up = '../../', embedded = new Set()) {
   if (!record || !record.films.length) return '<p class="lab-none">The first films are being filmed in the live space. They appear here when they have been watched frame by frame.</p>';
   return `<div class="lab-films">${record.films.map(film => embedded.has(film.id)
     ? `<figure class="lab-film"><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p><a href="#film-${escape(film.id)}">Watch the recording and read its screening record.</a></p></figcaption></figure>`
-    : `<figure class="lab-film" id="film-${escape(film.id)}"><video controls preload="none" playsinline poster="${up}${escape(posterWebp(film.poster))}" aria-label="${escape(film.title)}: ${escape(film.line)}">${filmSources(up, film.src, film.mime)}</video><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${escape(film.source.note)} Source commit <code>${escape(film.source.commit.slice(0, 8))}</code>.</p><p class="lab-film-screened">Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the films record), viewed by an AI agent.</p></figcaption></figure>`).join('')}</div>`;
+    : `<figure class="lab-film" id="film-${escape(film.id)}"><video controls preload="none" playsinline loading="lazy" poster="${up}${escape(posterWebp(film.poster))}" aria-label="${escape(film.title)}: ${escape(film.line)}">${filmSources(up, film.src, film.mime)}</video><figcaption><h3>${escape(film.title)}</h3><p>${escape(film.line)}</p><p class="lab-film-meta"><span>${duration(film.seconds)}</span> · <span>no sound</span> · <code title="sha256 of the file">${escape(film.sha256.src.slice(0, 12))}</code></p><p class="lab-film-real"><strong>What is real here:</strong> ${escape(film.real)}</p><p class="lab-film-source">${escape(film.source.note)} Source commit <code>${escape(film.source.commit.slice(0, 8))}</code>.</p><p class="lab-film-screened">Screened: a frame every ${SCREEN_STEP_S} s (${film.screening.frames.length} frames, each listed with its hash in the films record), viewed by an AI agent.</p></figcaption></figure>`).join('')}</div>`;
 }

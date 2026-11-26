@@ -148,18 +148,22 @@ function dispatchCards(dispatch, level, proofs = false) {
   return dispatch.questions.map(q => `<article class="lab-card"><p class="lab-card-to">Asked ${escape(q.to)}${q.followUp ? ', as a follow-up' : ''}</p><h${level} class="lab-card-question">${escape(q.text)}</h${level}><p class="lab-card-answer">${escape(q.answer)}</p>${q.why ? `<p class="lab-card-why"><strong>Why:</strong> ${escape(q.why)}</p>` : ''}<p class="lab-card-source"><span>${escape(sourceKind(q.source))}</span>${evidence(q)}</p><p class="lab-card-why">This card records the answer and its cited source; it does not verify the answer.</p></article>`).join('');
 }
 
-function dispatchBlock(dispatch, up, latest, proofs = false) {
+function dispatchBlock(dispatch, up, latest, proofs, previous) {
   const heading = latest ? 'h3' : 'h4', card = latest ? 4 : 5;
   // The same-directory -1280.webp sibling is used for video posters; <video poster> has no responsive srcset.
   const poster = dispatch.poster.replace(/\.(png|jpe?g)$/i, '-1280.webp');
-  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline poster="${up}${escape(poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below">${filmSources(up, dispatch.clip.src)}</video><figcaption>Recorded during the session, no sound.${dispatch.source.treatment ? ` ${escape(dispatch.source.treatment.note)}` : ''}</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
+  return `<article class="lab-dispatch${latest ? ' lab-dispatch-latest' : ''}" id="${escape(dispatch.session)}"><${heading}>Session of ${time(dispatch.date)}</${heading}><figure class="lab-dispatch-media"><video controls preload="none" playsinline loading="lazy" poster="${up}${escape(poster)}" aria-label="Recorded session of the agent space, ${escape(dispatch.date)}: the agents answer the questions below">${filmSources(up, dispatch.clip.src)}</video><figcaption>Recorded during the session, no sound.${previous ? ` A re-run of the <a href="#${escape(previous.session)}">${time(previous.date)} question set</a>.` : ''}${dispatch.source.treatment ? ` ${escape(dispatch.source.treatment.note)}` : ''}</figcaption></figure><div class="lab-cards">${dispatchCards(dispatch, card, proofs)}</div></article>`;
 }
 
 /** The dispatches section: the latest first with its recording and cards, older ones below; or the first-session note. */
 export function renderDispatches(lab, dispatches, up = '../../', { proofs = false } = {}) {
   if (!dispatches.length) return `<div class="lab-empty" id="no-dispatch"><p class="technical">NO DISPATCH YET</p><p>${escape(lab.comingSoon)}</p></div>`;
-  const [latest, ...older] = dispatches;
-  return dispatchBlock(latest, up, true, proofs) + (older.length ? `<div class="lab-older"><h3>Earlier sessions</h3>${older.map(d => dispatchBlock(d, up, false, proofs)).join('')}</div>` : '');
+  const questionSets = dispatches.map(d => JSON.stringify(d.questions.map(q => [q.to, q.text, q.followUp])));
+  const blocks = dispatches.map((d, i) => {
+    const previous = dispatches.find((other, j) => other.date < d.date && questionSets[j] === questionSets[i]);
+    return dispatchBlock(d, up, i === 0, proofs, previous);
+  });
+  return blocks[0] + (blocks.length > 1 ? `<div class="lab-older"><h3>Earlier sessions</h3>${blocks.slice(1).join('')}</div>` : '');
 }
 
 export function renderFollow(lab) {

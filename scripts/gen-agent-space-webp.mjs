@@ -10,6 +10,7 @@ const originals = [
   'films/agent-space-30s-poster.png',
   'films/agent-space-tour-poster.png',
   'progress/hq-on-duty-poster.jpg',
+  'outage/dispatch-2-outage-poster.png',
   'session-2026-10-25-b/poster.png',
   'session-2026-10-25-b/stills/01-s1-q1.png',
   'session-2026-10-25-b/stills/02-s1-q2.png',

@@ -24,7 +24,7 @@ const fixture = () => ({ root: ROOT });
 
 // The fixture's film, as a generator writes it at '../../' and as a hand-written home page pins it.
 const FILM = 'assets/labs/agent-space/session-2026-11-08/clip.webm';
-const PAIR_AT = up => `<source src="${up}${FILM}" type="video/webm"><source src="${up}assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`;
+const PAIR_AT = up => `<source src="${up}assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="${up}${FILM}" type="video/webm">`;
 const HOME_FIXTURE = { page: 'index.html', webm: FILM, player: `<figure class="m">${V}<source src="${FILM}" type="video/webm">` };
 const HOME_PAGE = `<main>${HOME_FIXTURE.player}</video></figure></main>`;
 const LAB_PAGE = `<main>${V}${PAIR_AT('../../')}</video></main>`;
@@ -61,7 +61,7 @@ test('a generator writes the WebM <source> and its MP4 copy in one call, and the
   const { root } = fixture();
   try {
     assert.equal(filmSources('../../', FILM, 'video/webm', root), PAIR_AT('../../'));
-    assert.equal(filmSources('', FILM, 'video/webm;codecs=vp9', root), `<source src="${FILM}" type="video/webm;codecs=vp9"><source src="assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`);
+    assert.equal(filmSources('', FILM, 'video/webm;codecs=vp9', root), `<source src="assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="${FILM}" type="video/webm;codecs=vp9">`);
     assert.equal(filmSources('../../', 'assets/labs/agent-space/session-2026-11-08/no-copy.webm', 'video/webm', root), '<source src="../../assets/labs/agent-space/session-2026-11-08/no-copy.webm" type="video/webm">', 'no copy: the WebM alone, which the dist pass then refuses');
     const close = startFilmLedger();
     filmSources('../../', FILM, 'video/webm', root); filmSources('', FILM, 'video/webm', root);
@@ -95,7 +95,7 @@ test('the generators write every pair the built pages carry, and the ledger coun
   assert.throws(() => pagePairs(copied, written), /rendered pages carry pairs filmSources\(\) did not write:\n  assets\/labs\/agent-space\/films\/agent-space-30s\.webm: 2 on the pages, 1 written/);
 });
 
-test('the home page carries its pinned player exactly once, and the dist pass adds the MP4 source after it and nowhere else', () => {
+test('the home page carries its pinned player exactly once, and the dist pass adds the MP4 source first and nowhere else', () => {
   const home = readFileSync('site/index.html', 'utf8');
   assert.equal(home.split(HOME.player).length, 2, 'site/index.html carries HOME.player exactly once');
   const heroFilm = 'assets/home-film/inside-odin.mp4';
@@ -106,13 +106,13 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
   const run = distRun();
   assert.ifError(run.error);
   assert.deepEqual(run.result, { films: 1, pairs: 2 });
-  assert.equal(run.home, `<main>${HOME_FIXTURE.player}<source src="${REAL.mp4}" type="video/mp4"></video></figure></main>`);
+  assert.equal(run.home, `<main><figure class="m">${V}${PAIR_AT('')}</video></figure></main>`);
   refused(distRun({}, { home: '<main>no film</main>' }), /pinned home player .* is not on the page/, 'pin missing');
   refused(distRun({}, { home: HOME_PAGE + HOME_PAGE }), /pinned home player .* more than once/, 'pin twice');
   refused(distRun({}, { home: HOME_PAGE.replace('</video>', `${PAIR_AT('')}</video>`) }), /index\.html: ".*clip\.webm.*" names a WebM outside the paired forms/, 'a second pair beside the pin');
-  refused(distRun({}, { home: HOME_PAGE.replace('</main>', `${V}${PAIR_AT('')}</video></main>`) }), /index\.html: 2 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'a second player');
+  refused(distRun({}, { home: HOME_PAGE.replace('</main>', `${V}${PAIR_AT('')}</video></main>`) }), /index\.html: 2 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'a second player');
   // The insertion is idempotent: a second pass over the same dist changes nothing and passes.
-  { const twice = distRun({}, { passes: 2 }); assert.ifError(twice.error); assert.equal(twice.home, `<main>${HOME_FIXTURE.player}<source src="${REAL.mp4}" type="video/mp4"></video></figure></main>`); }
+  { const twice = distRun({}, { passes: 2 }); assert.ifError(twice.error); assert.equal(twice.home, `<main><figure class="m">${V}${PAIR_AT('')}</video></figure></main>`); }
   refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}` }), /does not end with the WebM source/, 'a pin without its WebM source');
   // A pin whose last source is another film's, or not a WebM type (review d788cd8f item 14).
   refused(distRunWith({ ...HOME_FIXTURE, player: `<figure class="m">${V}<source src="assets/other.webm" type="video/webm">` }), /does not end with the WebM source/, 'another film');
@@ -125,7 +125,7 @@ test('the home page carries its pinned player exactly once, and the dist pass ad
     h => `<title>${h}`, h => `<textarea>${h}`, h => `<style>${h}`, h => `<xmp>${h}</xmp>`, h => `<iframe>${h}</iframe>`, h => `<plaintext>${h}`];
   for (const wrap of wraps) {
     refused(distRun({}, { home: wrap(HOME_PAGE) }), /pinned home player .* sits inside a comment, raw text or template content/, `home: ${wrap('PIN')}`);
-    refused(distRun({}, { lab: `<main>${wrap(`${V}${PAIR_AT('../../')}</video>`)}</main>` }), /labs\/agent-space\/index\.html: (0 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there|.*names a WebM outside the paired forms)/, `generated: ${wrap('PIN')}`);
+    refused(distRun({}, { lab: `<main>${wrap(`${V}${PAIR_AT('../../')}</video>`)}</main>` }), /labs\/agent-space\/index\.html: (0 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 1 there|.*names a WebM outside the paired forms)/, `generated: ${wrap('PIN')}`);
   }
   // The stated limit (OUT in #243, follow-on in #228): beyond that scan, where hand-written markup puts the player is not
   // judged. Under an svg parent or a non-rendering element it is still paired once and passes (as on main). This keeps
@@ -144,12 +144,12 @@ test('a copy no page plays, and a WebM with no copy, are refused', () => {
   for (const html of [`${V}</video>${pair}`, `<p>${pair}</p>`, `<picture>${pair}</picture>`, `<audio controls>${pair}</audio>`, `<object>${pair}</object>`,
     `<video controls src="../../${FILM}">${pair}</video>`, `<video controls>${pair}</video>`, `${V}<track kind="captions">${pair}</video>`,
     V.replace('<video ', '<video data-x="1" ') + pair + '</video>', `${V.replace('poster="p.webp"', 'poster="p.webm"')}${pair}</video>`, `<div${V.slice('<video'.length)}${pair}</div>`])
-    refused(distRun({}, { lab: `<main>${html}</main>` }), /labs\/agent-space\/index\.html: (0 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there|.*names a WebM outside the paired forms)/, html);
+    refused(distRun({}, { lab: `<main>${html}</main>` }), /labs\/agent-space\/index\.html: (0 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 1 there|.*names a WebM outside the paired forms)/, html);
   refused(distRun({}, { written: new Map(), lab: '<main>no film</main>', home: HOME_PAGE.replace(FILM, 'assets/other.webm') }), /clip\.webm has an MP4 copy but no page plays it/, 'unplayed copy');
   // The count is bound to the page (fb705fa9 item 3): a pair the build wrote on one page that turns up on another is refused.
-  refused(distRun({ 'labs/agent-space/notes/index.html': `<main>${V}${PAIR_AT('../../../')}</video></main>` }, { lab: '<main>no film</main>' }), /labs\/agent-space\/index\.html: 0 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'moved to another page');
+  refused(distRun({ 'labs/agent-space/notes/index.html': `<main>${V}${PAIR_AT('../../../')}</video></main>` }, { lab: '<main>no film</main>' }), /labs\/agent-space\/index\.html: 0 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 1 there/, 'moved to another page');
   refused(distRun({ 'labs/x/index.html': `${V}<source src="../../assets/labs/agent-space/session-2026-11-08/no-copy.webm" type="video/webm"></video>` }), /labs\/x\/index\.html: ".*no-copy\.webm.*" names a WebM outside the paired forms/, 'no copy');
-  refused(distRun({}, { written: wrote(2) }), /labs\/agent-space\/index\.html: 1 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 2 there/, 'a written pair that never reached dist');
+  refused(distRun({}, { written: wrote(2) }), /labs\/agent-space\/index\.html: 1 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 2 there/, 'a written pair that never reached dist');
 });
 
 // #228 item 1: a hand copy of the exact player text into an inert place, on a generated page, on another page or in
@@ -167,13 +167,13 @@ test('a copy of the exact player, in any inert place or any other file, is a pai
     'select option': `<select><option>${player}</option></select>`,
   };
   for (const [label, html] of Object.entries(inert)) {
-    refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote|names a WebM outside the paired forms/, `${label}, on the generated page`);
-    refused(distRun({ 'labs/agent-space/notes/index.html': `<main>${html.replaceAll('../../', '../../../')}</main>` }), /labs\/agent-space\/notes\/index\.html: (1 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 0 there|.*names a WebM outside the paired forms)/, `${label}, on another page`);
+    refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote|names a WebM outside the paired forms/, `${label}, on the generated page`);
+    refused(distRun({ 'labs/agent-space/notes/index.html': `<main>${html.replaceAll('../../', '../../../')}</main>` }), /labs\/agent-space\/notes\/index\.html: (1 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 0 there|.*names a WebM outside the paired forms)/, `${label}, on another page`);
   }
-  const home = `<source src="${FILM}" type="video/webm"><source src="assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`;
+  const home = `<source src="assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="${FILM}" type="video/webm">`;
   for (const [file, text] of Object.entries({ 'assets/labs/agent-space/session-2026-11-08/frame.svg': `<svg xmlns="http://www.w3.org/2000/svg"><foreignObject>${home.replaceAll('assets/labs/agent-space/session-2026-11-08/', '')}</foreignObject></svg>`,
     'feed.xml': `<feed><content type="html">${home}</content></feed>`, 'player.js': `document.body.insertAdjacentHTML('beforeend', '${home}');`, 'notes.txt': home, 'readme.md': home }))
-    refused(distRun({ [file]: text }), /: 1 WebM-then-MP4 <source> pairs of .*clip\.webm, but the build wrote 0 there|names a WebM outside the paired forms/, file);
+    refused(distRun({ [file]: text }), /: 1 MP4-then-WebM <source> pairs of .*clip\.webm, but the build wrote 0 there|names a WebM outside the paired forms/, file);
   // The WebM half alone, copied anywhere, is a WebM mention outside a pair.
   for (const html of Object.values(inert)) refused(distRun({ 'x/index.html': html.replace(/<source src="[^"]+\.mp4" type="video\/mp4">/, '') }), /names a WebM outside the paired forms/, html);
 });
@@ -189,7 +189,7 @@ test('hand-built tokenizer cases are refused, with or without a full pair (#228 
     `<!--- <i a=' --><video title="it's>" src="../../${FILM}" controls></video>`, `<!--- ${V}${pair}</video> --->`,
     `<script><!-- x='<script>'; y='</script>'; ${pair} </script>`, `<script><!-- x='<script>'; y='</script>'; document.querySelector('video').src = '../../${FILM}';</script>`,
     `<!-->${V}${pair}</video>`, `<!--!>${pair}--!>`, `<?php ${pair} ?>`, `<![CDATA[${pair}]]>`, `</ ${pair}>`];
-  for (const html of cases) refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /WebM-then-MP4 <source> pairs of .*, but the build wrote|names a WebM outside the paired forms/, html);
+  for (const html of cases) refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /MP4-then-WebM <source> pairs of .*, but the build wrote|names a WebM outside the paired forms/, html);
 });
 
 // #228 item 3: spellings. A pair is counted only in its one plain form; any other spelling of a WebM path is read
@@ -197,19 +197,19 @@ test('hand-built tokenizer cases are refused, with or without a full pair (#228 
 test('fragment and query aliases, escapes, references and their compositions are refused (#228 item 3)', () => {
   const spellings = [
     `<source src="other.webm#/../../../${FILM}" type="video/webm">`, `<source src="other.webm?/../../../${FILM}" type="video/webm">`,
-    `<source src="../../${FILM}#t=0" type="video/webm"><source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4#t=0" type="video/mp4">`,
-    `<source src="../../assets/labs/agent-space/session-2026-11-08/clip&#46;webm" type="video/webm"><source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`,
+    `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4#t=0" type="video/mp4"><source src="../../${FILM}#t=0" type="video/webm">`,
+    `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="../../assets/labs/agent-space/session-2026-11-08/clip&#46;webm" type="video/webm">`,
     `<source src="../../assets/labs/agent-space/session-2026-11-08/clip&period;webm" type="video/webm">`, `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.&#x77;ebm">`,
     `<source src="../../assets/labs/agent-space/session-2026-11-08/clip%2e%77ebm">`, `<source src="../../assets/labs/agent-space/session-2026-11-08/clip&percnt;2ewebm">`,
     `<source src="../../assets/labs/agent-space/session-2026-11-08/clip%2e\nWebM">`, `<source src="../../assets/labs/agent-space/session-2026-11-08/clip%2E&NewLine;WebM">`,
     `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.we&Tab;bm">`, `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.WEBM" type="video/mp4">`,
     `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.web&#109" type="video/mp4">`, `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.web&#X6D;">`,
-    `<source src="/odin-rnd/${FILM}" type="video/webm"><source src="/odin-rnd/assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`,
-    `<source src="../../assets/labs/agent-space/session-2026-11-08/./clip.webm" type="video/webm"><source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`,
-    `<source src="../../assets/x/../labs/agent-space/session-2026-11-08/clip.webm" type="video/webm"><source src="../../assets/x/../labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`,
-    `<source src="../../${FILM}" type="video/webm"><source src="../../assets/labs/agent-space/session-2026-11-08/other.mp4" type="video/mp4">`,
-    `<source src="../../${FILM}" type="video/webm;x=&quot;"><source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4">`];
-  for (const html of spellings) refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /WebM-then-MP4 <source> pairs of .*, but the build wrote|names a WebM outside the paired forms/, html);
+    `<source src="/odin-rnd/assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="/odin-rnd/${FILM}" type="video/webm">`,
+    `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="../../assets/labs/agent-space/session-2026-11-08/./clip.webm" type="video/webm">`,
+    `<source src="../../assets/x/../labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="../../assets/x/../labs/agent-space/session-2026-11-08/clip.webm" type="video/webm">`,
+    `<source src="../../assets/labs/agent-space/session-2026-11-08/other.mp4" type="video/mp4"><source src="../../${FILM}" type="video/webm">`,
+    `<source src="../../assets/labs/agent-space/session-2026-11-08/clip.mp4" type="video/mp4"><source src="../../${FILM}" type="video/webm;x=&quot;">`];
+  for (const html of spellings) refused(distRun({ 'labs/agent-space/index.html': LAB_PAGE.replace('</main>', `${html}</main>`) }), /MP4-then-WebM <source> pairs of .*, but the build wrote|names a WebM outside the paired forms/, html);
   // Letters that only look like "webm" (fullwidth, Cyrillic) name no file a browser fetches; the English word and plain links pass.
   for (const html of ['<p>The ｗｅｂｍ letters are fullwidth.</p>', '<p>The w\u0435bm letters hold a Cyrillic e.</p>', '<p>The web makes this easy, a web model.</p>', '<p>The films are recorded as WebM, with an MP4 copy.</p>', '<p>MP4 and WebM.</p>',
     `<a href="../../${FILM}">download the film</a>`, '<p>The films are WebM files: <a href="https://example.org/f.webm">https://example.org/f.webm</a></p>', '<p title="&#99999999;">x</p>'])
