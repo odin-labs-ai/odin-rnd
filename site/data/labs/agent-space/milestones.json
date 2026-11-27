@@ -488,7 +488,7 @@
       "kind": "moment",
       "at": "2026-10-25T08:41:23Z",
       "title": "Lab 01's first dispatch goes live",
-      "body": "Four questions, answered live in the agent space, each with its proof card. Every published file is pinned by its hash, and the site build refuses a changed byte.",
+      "body": "Four questions, answered in a recorded session in the agent space, each with its proof card. Every published file is pinned by its hash, and the site build refuses a changed byte.",
       "quote": "every published asset is now pinned by sha256 in the dispatch, and the site build refuses a changed byte",
       "evidence": [
         {
@@ -581,7 +581,7 @@
       "kind": "beat",
       "at": "2026-10-25T13:51:50Z",
       "title": "The tour is re-filmed for the public",
-      "body": "A 78-second walk through the agent space: three agents answer live, each with its proof card, re-filmed with today's labels and no machine details.",
+      "body": "A 78-second walk through the agent space: three agents answer in a recorded session, each with its proof card, re-filmed with today's labels and no machine details.",
       "quote": "A visitor walks in through the arch",
       "evidence": [
         {

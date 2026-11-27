@@ -50,6 +50,13 @@ const root = builtCopy();
 const dist = join(root, 'dist');
 const home = readFileSync(join(dist, 'index.html'), 'utf8');
 
+test('both recorded links leave space between the label and date', () => {
+  const tools = home.match(/<div class="entry-tools">([\s\S]*?)<\/div>/)[1];
+  assert.equal([...tools.matchAll(/>Recorded\s*<time\b/g)].length, 2);
+  const css = readFileSync(join(dist, HOME_CSS), 'utf8');
+  assert.match(css, /#floor \.entry-tools a\s*\{[^}]*\bgap:\s*\.35em\s*[;}]/);
+});
+
 test('the built homepage exposes the featured study, tool directory, factory and findings outside the archive', () => {
   const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
   const order = OPEN_ORDER.map(id => main.indexOf(`id="${id}"`));

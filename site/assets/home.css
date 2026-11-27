@@ -210,7 +210,7 @@
 .entry-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .entry-tools article { border-top: 1px solid #638373; padding-top: 16px; }
 #floor .entry-tools h3 { margin: 0; font: 600 clamp(19px, 1.6vw, 25px)/1.25 var(--display); }
-#floor .entry-tools a { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; margin: 0; color: #d0f1df; text-underline-offset: 4px; }
+#floor .entry-tools a { display: inline-flex; align-items: center; gap: .35em; min-height: 44px; width: fit-content; margin: 0; color: #d0f1df; text-underline-offset: 4px; }
 #floor .entry-tools p { font-size: 17px; line-height: 1.45; color: #d7e7da; margin: 8px 0; }
 #floor .entry-tools .entry-score { margin: 12px 0; font: 600 clamp(20px, 2.2vw, 32px)/1.12 var(--display); color: #efffee; letter-spacing: -.035em; }
 .entry-score span { color: #90af9e; }

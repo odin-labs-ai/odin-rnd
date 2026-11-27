@@ -285,6 +285,8 @@ function init(doc, win) {
     }
 
     function update(next) {
+      // A search-field blur can fire change during mousedown on a result. Keep the clicked link in the DOM.
+      if (JSON.stringify(next) === JSON.stringify(params)) return;
       params = next;
       if (typeof win.history?.replaceState === 'function') {
         win.history.replaceState(null, '', `${win.location.pathname}${searchFromParams(next)}${win.location.hash}`);
