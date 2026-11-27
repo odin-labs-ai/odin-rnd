@@ -116,7 +116,7 @@ export function renderRecordPage({ entry, slug, record, bytes, links, notes = []
 </head>
 <body class="company-page">
   <a class="skip" href="#main">Skip to content</a>
-  ${canonicalHeader(up, 'experiments')}
+  ${canonicalHeader(up, 'experiments', { currentPage: false })}
   <main id="main"><nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="${up}">Home</a></li><li><a href="${up}experiments/">Experiments</a></li><li aria-current="page">${escape(entry.id)} record</li></ol></nav>
     <section class="company-hero company-width record-hero" aria-labelledby="record-title">
       <div>

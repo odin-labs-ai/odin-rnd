@@ -3,16 +3,16 @@
   "project": "ci-witness",
   "projectVersion": "0.1.0",
   "mode": "authored-fixtures",
-  "startedAt": "2026-10-24T10:58:59.970Z",
-  "completedAt": "2026-10-24T10:59:02.490Z",
+  "startedAt": "2026-11-18T09:46:10.458Z",
+  "completedAt": "2026-11-18T09:46:17.776Z",
   "runtime": {
-    "node": "v22.23.3",
-    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
-    "javac": "javac 21.0.12.1"
+    "node": "v22.22.2",
+    "java": "openjdk version \"21.0.13.0.3\" 2026-10-24\nOpenJDK Runtime Environment Homebrew (build 21.0.13.0.3)\nOpenJDK 64-Bit Server VM Homebrew (build 21.0.13.0.3, mixed mode, sharing)",
+    "javac": "javac 21.0.13.0.3"
   },
   "inputSha256": {
     "demos/CONTRACT.md": "06a8f401aba0d714ac76be35658b0ee038e8124364abe2e7b1c952eb39e775c9",
-    "demos/ci-witness/README.md": "2babc83fe3d0c1c699bac22cd801d504fbaca326841488b193452760350d72cc",
+    "demos/ci-witness/README.md": "32eca922bde9c634c5beae68eac9b912ae0f97f8ce6d039f8bfa898bcd85968c",
     "demos/ci-witness/fixtures/Witness.java": "e975a931b8cc6bc4d5e7fa43874f47443d77c839e8dcaa13010cd804286187df",
     "demos/ci-witness/fixtures/cases.json": "5020bbf8473c2740aa4e77288ef7e6e57cc41012f02efa7ee1ecca05eb70bf87",
     "demos/ci-witness/run.mjs": "e2f74d49a2b7af759cbe2111dba7fc03598a9c3383b5560c233061cc67aa22f8",
@@ -488,8 +488,8 @@
       "status": "completed",
       "exitCode": 0,
       "stdout": "",
-      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
-      "durationMs": 32
+      "stderr": "openjdk version \"21.0.13.0.3\" 2026-10-24\nOpenJDK Runtime Environment Homebrew (build 21.0.13.0.3)\nOpenJDK 64-Bit Server VM Homebrew (build 21.0.13.0.3, mixed mode, sharing)\n",
+      "durationMs": 60
     },
     {
       "id": "command-2",
@@ -500,9 +500,9 @@
       "cwd": "<workdir>",
       "status": "completed",
       "exitCode": 0,
-      "stdout": "javac 21.0.12.1\n",
+      "stdout": "javac 21.0.13.0.3\n",
       "stderr": "",
-      "durationMs": 128
+      "durationMs": 148
     },
     {
       "id": "command-3",
@@ -519,7 +519,7 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "durationMs": 593
+      "durationMs": 1129
     },
     {
       "id": "command-4",
@@ -540,7 +540,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.timezone|FAIL|actual=2026-01-02|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 158
+      "durationMs": 197
     },
     {
       "id": "command-5",
@@ -561,7 +561,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.timezone|FAIL|actual=2026-01-02|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 100
+      "durationMs": 273
     },
     {
       "id": "command-6",
@@ -582,7 +582,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|target.timezone|PASS|actual=2026-01-01|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 65
+      "durationMs": 187
     },
     {
       "id": "command-7",
@@ -603,7 +603,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 62
+      "durationMs": 98
     },
     {
       "id": "command-8",
@@ -624,7 +624,7 @@
       "exitCode": 0,
       "stdout": "CHECKS|0|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 45
+      "durationMs": 202
     },
     {
       "id": "command-9",
@@ -645,7 +645,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.timezone|PASS|actual=2026-01-01|expected=2026-01-01\nASSERT|boundary.timezone|PASS|actual=2024-02-29|expected=2024-02-29\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 78
+      "durationMs": 254
     },
     {
       "id": "command-10",
@@ -666,7 +666,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
-      "durationMs": 31
+      "durationMs": 472
     },
     {
       "id": "command-11",
@@ -687,7 +687,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.locale|FAIL|actual=tıtle|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 169
+      "durationMs": 241
     },
     {
       "id": "command-12",
@@ -708,7 +708,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.locale|FAIL|actual=tıtle|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 62
+      "durationMs": 288
     },
     {
       "id": "command-13",
@@ -729,7 +729,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|target.locale|PASS|actual=title|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 58
+      "durationMs": 222
     },
     {
       "id": "command-14",
@@ -750,7 +750,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 60
+      "durationMs": 218
     },
     {
       "id": "command-15",
@@ -771,7 +771,7 @@
       "exitCode": 0,
       "stdout": "CHECKS|0|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 45
+      "durationMs": 178
     },
     {
       "id": "command-16",
@@ -792,7 +792,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.locale|PASS|actual=title|expected=title\nASSERT|boundary.locale|PASS|actual=straße|expected=straße\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 63
+      "durationMs": 146
     },
     {
       "id": "command-17",
@@ -813,7 +813,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
-      "durationMs": 32
+      "durationMs": 200
     },
     {
       "id": "command-18",
@@ -835,7 +835,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.order|FAIL|actual=beta,alpha|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 64
+      "durationMs": 374
     },
     {
       "id": "command-19",
@@ -857,7 +857,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.order|FAIL|actual=beta,alpha|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 62
+      "durationMs": 160
     },
     {
       "id": "command-20",
@@ -879,7 +879,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|target.order|PASS|actual=alpha,beta|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 64
+      "durationMs": 263
     },
     {
       "id": "command-21",
@@ -901,7 +901,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 53
+      "durationMs": 182
     },
     {
       "id": "command-22",
@@ -923,7 +923,7 @@
       "exitCode": 0,
       "stdout": "CHECKS|0|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 43
+      "durationMs": 279
     },
     {
       "id": "command-23",
@@ -945,7 +945,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.order|PASS|actual=alpha,beta|expected=alpha,beta\nASSERT|boundary.order|PASS|actual=alpha,beta,gamma|expected=alpha,beta,gamma\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 56
+      "durationMs": 346
     },
     {
       "id": "command-24",
@@ -967,7 +967,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
-      "durationMs": 32
+      "durationMs": 114
     },
     {
       "id": "command-25",
@@ -989,7 +989,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.config|FAIL|actual=legacy|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 59
+      "durationMs": 202
     },
     {
       "id": "command-26",
@@ -1011,7 +1011,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.config|FAIL|actual=legacy|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 53
+      "durationMs": 138
     },
     {
       "id": "command-27",
@@ -1033,7 +1033,7 @@
       "exitCode": 0,
       "stdout": "ASSERT|target.config|PASS|actual=strict|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|PASS|actual=4|expected=4\nCHECKS|4|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 53
+      "durationMs": 105
     },
     {
       "id": "command-28",
@@ -1055,7 +1055,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|unrelated|FAIL|actual=crash|expected=ready\nCHECKS|1|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 59
+      "durationMs": 153
     },
     {
       "id": "command-29",
@@ -1077,7 +1077,7 @@
       "exitCode": 0,
       "stdout": "CHECKS|0|FAILURES|0\n",
       "stderr": "",
-      "durationMs": 45
+      "durationMs": 162
     },
     {
       "id": "command-30",
@@ -1099,7 +1099,7 @@
       "exitCode": 1,
       "stdout": "ASSERT|target.config|PASS|actual=strict|expected=strict\nASSERT|boundary.config|PASS|actual=relaxed|expected=relaxed\nASSERT|regression.empty|PASS|actual=|expected=\nASSERT|regression.total|FAIL|actual=5|expected=4\nCHECKS|4|FAILURES|1\n",
       "stderr": "",
-      "durationMs": 60
+      "durationMs": 225
     },
     {
       "id": "command-31",
@@ -1121,7 +1121,7 @@
       "exitCode": 1,
       "stdout": "",
       "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: UNCLASSIFIED_CONTROL\n\tat Witness.main(Witness.java:31)\n",
-      "durationMs": 31
+      "durationMs": 91
     }
   ],
   "metrics": [
@@ -1148,13 +1148,13 @@
     }
   ],
   "experimentVerdict": "passed",
-  "sourceRevision": "28e9d5c68eefc35f842c0e16d89e497cac0f3fd5",
+  "sourceRevision": "2057dc763e69fce54c08be156fc44aca04926fe2",
   "workingTree": {
     "dirty": true,
     "description": "Uncommitted working tree; base revision does not identify these edits. Input hashes identify executed sources."
   },
-  "runId": "93e05605-75d6-41ea-91b8-bb098016edd4",
-  "environment": "GitHub Actions",
-  "workflowRun": "https://github.com/odin-labs-ai/odin-rnd/actions/runs/40088015377",
-  "workflowAttempt": 1
+  "runId": "691e2e28-a8b5-4ee3-ae45-1d9b745dd9d0",
+  "environment": "local reproduction",
+  "workflowRun": null,
+  "workflowAttempt": null
 }
