@@ -99,17 +99,24 @@ test('group matching entries by exact destination and keep every matching amendm
   const anchor = { ...note, href: note.href + '#follow-up' };
   const invalid = { ...note, href: '/off-site' };
   const source = [amendment, anchor, note, invalid, invalid];
-  assert.deepEqual(groupResults(filter(source, {})), [[amendment, note], [anchor], [invalid], [invalid]]);
+  assert.deepEqual(groupResults(filter(source, {})), [[amendment, note], [anchor]]);
   assert.deepEqual(groupResults(filter(source, { stage: ['amendment'] })), [[amendment]]);
   assert.deepEqual(groupResults(filter(source, { q: 'absent' })), []);
 });
 
-test('an entry whose destination fails safeHref is never grouped with another and never rendered as a link', () => {
+test('an entry whose destination fails safeHref is left out of the results and never rendered as a link', () => {
   const note = items[2];
-  const offSite = [{ ...note, id: 'a', href: '/off-site' }, { ...note, id: 'b', href: 'https://example.invalid/x' }, { ...note, id: 'c', href: '../up/' }];
-  for (const entry of offSite) assert.equal(safeHref(entry.href), null, entry.href);
-  // Each unsafe entry stays its own group: no shared key, so it never absorbs or joins a real destination.
-  assert.deepEqual(groupResults([...offSite, note]), [[offSite[0]], [offSite[1]], [offSite[2]], [note]]);
+  const offSite = [{ ...note, id: 'a', href: '/off-site' }, { ...note, id: 'b', href: 'https://example.invalid/x' }, { ...note, id: 'c', href: '../up/' },
+    { ...note, id: 'd', href: '' }, { ...note, id: 'e', href: undefined }, { ...note, id: 'f', href: '#only-anchor' }];
+  for (const entry of offSite) assert.equal(safeHref(entry.href), null, String(entry.href));
+  // An unsafe entry is excluded: it never becomes a result, never joins a real destination and never counts as a page.
+  assert.deepEqual(groupResults([...offSite, note]), [[note]]);
+  assert.deepEqual(groupResults([offSite[0], note, offSite[1], note]), [[note, note]]);
+  assert.deepEqual(groupResults(offSite), []);
+  assert.equal(resultPage(groupResults([...offSite, note])).remaining, 0);
+  // The count line and the empty state are derived from the grouped entries, so excluded entries are not counted.
+  assert.match(source, /const groups = groupResults\(filter\(items, current\)\);\s*const shown = groups\.reduce\(\(total, group\) => total \+ group\.length, 0\);/, 'render counts only shown entries');
+  assert.doesNotMatch(source.slice(source.indexOf('function render('), source.indexOf('function metadata(')), /found\.length/, 'render never counts unfiltered matches');
   // The row renders an unsafe destination as plain heading text, never as a link (site/assets/find.mjs row()).
   assert.match(source, /const href = safeHref\(item\.href\);\s*if \(href\) heading\.append\(element\(doc, 'a'[^\n]*\n\s*else heading\.textContent = String\(item\.title \?\? ''\);/, 'an unsafe destination renders unlinked');
 });

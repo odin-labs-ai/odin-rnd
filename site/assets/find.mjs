@@ -168,19 +168,23 @@ export function resultPage(items, limit = RESULT_PAGE_SIZE) {
   return { visible, remaining: items.length - visible.length };
 }
 
-/** Group matching entries by their exact destination, keeping distinct anchors and every dated entry. */
+/**
+ * Group matching entries by their exact destination, keeping distinct anchors and every dated entry. An entry whose
+ * destination fails safeHref is left out: it is not a page of this site, so it never becomes a result of its own.
+ */
 export function groupResults(matches) {
   const byDestination = new Map();
   const groups = [];
   for (const item of matches) {
     const href = safeHref(item.href);
+    if (!href) continue;
     const existing = byDestination.get(href);
     if (existing) {
       existing.push(item);
     } else {
       const group = [item];
       groups.push(group);
-      if (href) byDestination.set(href, group);
+      byDestination.set(href, group);
     }
   }
   return groups;
@@ -295,8 +299,8 @@ function init(doc, win) {
     }
 
     function render(current) {
-      const found = filter(items, current);
-      const groups = groupResults(found);
+      const groups = groupResults(filter(items, current));
+      const shown = groups.reduce((total, group) => total + group.length, 0);
       const { visible, remaining } = resultPage(groups);
       const rows = visible.map(row);
       if (remaining) {
@@ -311,12 +315,12 @@ function init(doc, win) {
         more.append(button);
         rows.push(more);
       }
-      if (!found.length) {
+      if (!shown) {
         rows.push(element(doc, 'li', { class: 'find-empty' }, 'Try another search term or clear your filters.'));
       }
       results.replaceChildren(...rows);
-      count.textContent = found.length
-        ? `${groups.length} ${groups.length === 1 ? 'page' : 'pages'} · ${found.length} matching ${found.length === 1 ? 'entry' : 'entries'}`
+      count.textContent = shown
+        ? `${groups.length} ${groups.length === 1 ? 'page' : 'pages'} · ${shown} matching ${shown === 1 ? 'entry' : 'entries'}`
         : 'No matching pages';
       doc.getElementById('find-clear').hidden = isEmpty(current);
     }
