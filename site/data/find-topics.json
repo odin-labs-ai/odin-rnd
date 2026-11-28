@@ -74,6 +74,7 @@
   "router-arm-results": ["routing", "models", "cost"],
   "self-verify-results": ["reviewers", "models"],
   "system-1-decisions-without-lock-in": ["models", "gates"],
+  "telemetry-truth-results": ["cost", "models"],
   "where-a-model-reviewer-earns-its-keep": ["reviewers", "cost"],
   "which-rules-need-a-model": ["gates", "models", "architecture"],
   "why-open-the-floor": ["evaluation", "agents"]
