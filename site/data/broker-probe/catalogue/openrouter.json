@@ -1,6 +1,6 @@
 {
  "broker": "openrouter",
- "week": "2026-W47",
+ "week": "2026-W48",
  "models": {
   "~anthropic/claude-fable-latest": {
    "in": 8,
@@ -28,8 +28,8 @@
    "currency": "USD"
   },
   "~deepseek/deepseek-pro-latest": {
-   "in": 0.0999,
-   "out": 8,
+   "in": 0.1188,
+   "out": 5,
    "currency": "USD"
   },
   "~deepseek/deepseek-v4-flash-latest": {
@@ -53,8 +53,8 @@
    "currency": "USD"
   },
   "~openai/gpt-astra-latest": {
-   "in": 10,
-   "out": 50,
+   "in": 8,
+   "out": 40,
    "currency": "USD"
   },
   "~openai/gpt-luna-latest": {
@@ -327,19 +327,14 @@
    "out": 0.15,
    "currency": "USD"
   },
-  "cohere/north-mini-code:free": {
-   "in": 0,
-   "out": 0,
-   "currency": "USD"
-  },
   "deepseek/deepseek-chat": {
    "in": 0.2574,
    "out": 1.0287,
    "currency": "USD"
   },
   "deepseek/deepseek-chat-v3-0324": {
-   "in": 0.29,
-   "out": 1.14,
+   "in": 0.25,
+   "out": 1,
    "currency": "USD"
   },
   "deepseek/deepseek-chat-v3.1": {
@@ -348,8 +343,8 @@
    "currency": "USD"
   },
   "deepseek/deepseek-r1-0528": {
-   "in": 0.5,
-   "out": 2.15,
+   "in": 0.571,
+   "out": 2.286,
    "currency": "USD"
   },
   "deepseek/deepseek-v3.1-terminus": {
@@ -373,8 +368,8 @@
    "currency": "USD"
   },
   "deepseek/deepseek-v4-flash-0731": {
-   "in": 0.06,
-   "out": 0.18,
+   "in": 0.0434,
+   "out": 0.3,
    "currency": "USD"
   },
   "deepseek/deepseek-v4-flash-0731:batch": {
@@ -383,8 +378,8 @@
    "currency": "USD"
   },
   "deepseek/deepseek-v4-flash-vision-exp": {
-   "in": 0.44,
-   "out": 1.32,
+   "in": 0.2156,
+   "out": 0.6468,
    "currency": "USD"
   },
   "deepseek/deepseek-v4-pro": {
@@ -393,13 +388,13 @@
    "currency": "USD"
   },
   "deepseek/deepseek-v4-pro-0813": {
-   "in": 0.111,
-   "out": 4.44,
+   "in": 1.32,
+   "out": 3.96,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash": {
-   "in": 0.14,
-   "out": 0.42,
+   "in": 0.0498,
+   "out": 0.1992,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash-1017": {
@@ -408,13 +403,13 @@
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash-1017:batch": {
-   "in": 0.043,
-   "out": 0.384,
+   "in": 0.035,
+   "out": 0.149,
    "currency": "USD"
   },
   "deepseek/deepseek-v4.1-flash:batch": {
-   "in": 0.112,
-   "out": 0.336,
+   "in": 0.05,
+   "out": 0.15,
    "currency": "USD"
   },
   "dots-studio/dots-3-note-preview:free": {
@@ -602,6 +597,16 @@
    "out": 3.75,
    "currency": "USD"
   },
+  "google/gemini-4-neon": {
+   "in": 3,
+   "out": 15,
+   "currency": "USD"
+  },
+  "google/gemini-4-neon:batch": {
+   "in": 1.5,
+   "out": 7.5,
+   "currency": "USD"
+  },
   "google/gemini-nano-banana-2.1": {
    "in": 1.5,
    "out": 7.5,
@@ -629,12 +634,12 @@
   },
   "google/gemma-3-27b-it": {
    "in": 0.08,
-   "out": 0.35,
+   "out": 0.16,
    "currency": "USD"
   },
   "google/gemma-3-4b-it": {
-   "in": 0.05,
-   "out": 0.1,
+   "in": 0.04,
+   "out": 0.05,
    "currency": "USD"
   },
   "google/gemma-4-26b-a4b-it": {
@@ -668,8 +673,8 @@
    "currency": "USD"
   },
   "gryphe/mythomax-l2-13b": {
-   "in": 0.08,
-   "out": 0.11,
+   "in": 0.3,
+   "out": 0.5,
    "currency": "USD"
   },
   "ibm-granite/granite-4.2-8b": {
@@ -693,8 +698,8 @@
    "currency": "USD"
   },
   "inclusionai/ling-3.1-flash": {
-   "in": 0.045,
-   "out": 0.135,
+   "in": 0.06,
+   "out": 0.18,
    "currency": "USD"
   },
   "inclusionai/ling-3.2-flash:free": {
@@ -737,11 +742,6 @@
    "out": 0.5,
    "currency": "USD"
   },
-  "meituan/longcat-2.0": {
-   "in": 0.3,
-   "out": 1.2,
-   "currency": "USD"
-  },
   "meta-llama/llama-3.1-70b-instruct": {
    "in": 0.72,
    "out": 0.72,
@@ -752,14 +752,9 @@
    "out": 0.04,
    "currency": "USD"
   },
-  "meta-llama/llama-3.2-1b-instruct": {
-   "in": 0.027,
-   "out": 0.201,
-   "currency": "USD"
-  },
   "meta-llama/llama-3.2-3b-instruct": {
-   "in": 0.0509,
-   "out": 0.335,
+   "in": 0.05,
+   "out": 0.33,
    "currency": "USD"
   },
   "meta-llama/llama-3.3-70b-instruct": {
@@ -788,8 +783,8 @@
    "currency": "USD"
   },
   "meta/muse-glimmer-30b": {
-   "in": 0.3,
-   "out": 1.2,
+   "in": 0.35,
+   "out": 1.5,
    "currency": "USD"
   },
   "meta/muse-glimmer-30b:batch": {
@@ -828,18 +823,18 @@
    "currency": "USD"
   },
   "minimax/minimax-m2.5": {
-   "in": 0.295,
-   "out": 1.2,
+   "in": 0.27,
+   "out": 0.95,
    "currency": "USD"
   },
   "minimax/minimax-m2.7": {
-   "in": 0.21,
-   "out": 0.84,
+   "in": 0.6,
+   "out": 1.8,
    "currency": "USD"
   },
   "minimax/minimax-m3": {
-   "in": 0.3,
-   "out": 1.2,
+   "in": 0.23,
+   "out": 0.96,
    "currency": "USD"
   },
   "minimax/minimax-m3:batch": {
@@ -848,8 +843,8 @@
    "currency": "USD"
   },
   "minimax/minimax-m3.1-flash": {
-   "in": 0.15,
-   "out": 0.6,
+   "in": 0.135,
+   "out": 0.54,
    "currency": "USD"
   },
   "mistralai/codestral-2508": {
@@ -898,8 +893,8 @@
    "currency": "USD"
   },
   "mistralai/mistral-medium-3": {
-   "in": 0.4,
-   "out": 2,
+   "in": 0.44,
+   "out": 2.2,
    "currency": "USD"
   },
   "mistralai/mistral-medium-3-5": {
@@ -913,8 +908,8 @@
    "currency": "USD"
   },
   "mistralai/mistral-medium-3.1": {
-   "in": 0.4,
-   "out": 2,
+   "in": 0.44,
+   "out": 2.2,
    "currency": "USD"
   },
   "mistralai/mistral-nemo": {
@@ -943,11 +938,16 @@
    "currency": "USD"
   },
   "mistralai/mistral-small-3.2-24b-instruct": {
-   "in": 0.1,
-   "out": 0.3,
+   "in": 0.075,
+   "out": 0.2,
    "currency": "USD"
   },
   "mistralai/mixtral-8x22b-instruct": {
+   "in": 2,
+   "out": 6,
+   "currency": "USD"
+  },
+  "mistralai/pixtral-large-2502": {
    "in": 2,
    "out": 6,
    "currency": "USD"
@@ -994,7 +994,7 @@
   },
   "moonshotai/kimi-k2.7-code": {
    "in": 0.6,
-   "out": 3.5,
+   "out": 3,
    "currency": "USD"
   },
   "moonshotai/kimi-k3": {
@@ -1013,8 +1013,8 @@
    "currency": "USD"
   },
   "moonshotai/kimi-k3.1-pro:batch": {
-   "in": 0.7,
-   "out": 6,
+   "in": 0.372,
+   "out": 5.583,
    "currency": "USD"
   },
   "morph/morph-v3-fast": {
@@ -1078,8 +1078,8 @@
    "currency": "USD"
   },
   "nvidia/nemotron-3-ultra-550b-a55b": {
-   "in": 0.6,
-   "out": 2.4,
+   "in": 0.5,
+   "out": 2.2,
    "currency": "USD"
   },
   "nvidia/nemotron-3-ultra-550b-a55b:free": {
@@ -1104,7 +1104,7 @@
   },
   "nvidia/nemotron-3.5-super-vl": {
    "in": 0.15,
-   "out": 0.5,
+   "out": 0.47,
    "currency": "USD"
   },
   "nvidia/nemotron-3.5-super-vl:free": {
@@ -1447,6 +1447,46 @@
    "out": 2.5,
    "currency": "USD"
   },
+  "openai/gpt-6.2-astra": {
+   "in": 8,
+   "out": 40,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-astra-pro": {
+   "in": 8,
+   "out": 40,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-astra-pro:batch": {
+   "in": 4,
+   "out": 20,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-astra:batch": {
+   "in": 4,
+   "out": 20,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-sol": {
+   "in": 2,
+   "out": 10,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-sol-pro": {
+   "in": 2,
+   "out": 10,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-sol-pro:batch": {
+   "in": 1,
+   "out": 5,
+   "currency": "USD"
+  },
+  "openai/gpt-6.2-sol:batch": {
+   "in": 1,
+   "out": 5,
+   "currency": "USD"
+  },
   "openai/gpt-audio": {
    "in": 2.5,
    "out": 10,
@@ -1463,8 +1503,8 @@
    "currency": "USD"
   },
   "openai/gpt-oss-120b": {
-   "in": 0.15,
-   "out": 0.6,
+   "in": 0.05,
+   "out": 0.25,
    "currency": "USD"
   },
   "openai/gpt-oss-120b:batch": {
@@ -1473,8 +1513,8 @@
    "currency": "USD"
   },
   "openai/gpt-oss-20b": {
-   "in": 0.075,
-   "out": 0.3,
+   "in": 0.03,
+   "out": 0.13,
    "currency": "USD"
   },
   "openai/gpt-oss-20b:batch": {
@@ -1533,7 +1573,7 @@
    "currency": "USD"
   },
   "particle-ai/particle-1": {
-   "in": 0.06,
+   "in": 0.07,
    "out": 0.5,
    "currency": "USD"
   },
@@ -1643,8 +1683,8 @@
    "currency": "USD"
   },
   "qwen/qwen3-coder-30b-a3b-instruct": {
-   "in": 0.15,
-   "out": 0.6,
+   "in": 0.07,
+   "out": 0.28,
    "currency": "USD"
   },
   "qwen/qwen3-coder-flash": {
@@ -1658,7 +1698,7 @@
    "currency": "USD"
   },
   "qwen/qwen3-next-80b-a3b-instruct": {
-   "in": 0.09,
+   "in": 0.1,
    "out": 1.1,
    "currency": "USD"
   },
@@ -1698,8 +1738,8 @@
    "currency": "USD"
   },
   "qwen/qwen3.5-9b": {
-   "in": 0.048,
-   "out": 0.071,
+   "in": 0.17,
+   "out": 0.25,
    "currency": "USD"
   },
   "qwen/qwen3.5-flash-02-23": {
@@ -1723,8 +1763,8 @@
    "currency": "USD"
   },
   "qwen/qwen3.6-35b-a3b": {
-   "in": 0.1,
-   "out": 0.9,
+   "in": 0.05,
+   "out": 0.7,
    "currency": "USD"
   },
   "qwen/qwen3.6-flash": {
@@ -1763,8 +1803,8 @@
    "currency": "USD"
   },
   "qwen/qwen3.8-27b": {
-   "in": 0.15,
-   "out": 1.875,
+   "in": 0.035,
+   "out": 1.5,
    "currency": "USD"
   },
   "qwen/qwen3.8-27b:batch": {
@@ -1798,8 +1838,13 @@
    "currency": "USD"
   },
   "qwen/qwen4-max": {
-   "in": 1.5,
-   "out": 4.5,
+   "in": 1.425,
+   "out": 4.275,
+   "currency": "USD"
+  },
+  "radixark/daisyrose-27b": {
+   "in": 0.15,
+   "out": 1.875,
    "currency": "USD"
   },
   "recursive/flint-v1.0:free": {
@@ -1808,7 +1853,7 @@
    "currency": "USD"
   },
   "reflection/beam-1.0-501b-a23b": {
-   "in": 0.3,
+   "in": 0.25,
    "out": 1,
    "currency": "USD"
   },
@@ -1898,18 +1943,18 @@
    "currency": "USD"
   },
   "tencent/hy3": {
-   "in": 0.132,
-   "out": 0.528,
-   "currency": "USD"
-  },
-  "tencent/hy3-preview": {
-   "in": 0.18,
-   "out": 0.6,
+   "in": 0.14,
+   "out": 0.58,
    "currency": "USD"
   },
   "tencent/hy4": {
    "in": 0.417,
    "out": 1.2505,
+   "currency": "USD"
+  },
+  "tencent/hy4-flash": {
+   "in": 0.035,
+   "out": 0.1405,
    "currency": "USD"
   },
   "tencent/hy4-preview": {
@@ -1937,14 +1982,14 @@
    "out": 4.05,
    "currency": "USD"
   },
+  "thinkingmachines/inkling-2-mini": {
+   "in": 0.075,
+   "out": 0.3,
+   "currency": "USD"
+  },
   "thinkingmachines/inkling-2-small": {
    "in": 0.3,
    "out": 1,
-   "currency": "USD"
-  },
-  "thinkingmachines/inkling-2-small:free": {
-   "in": 0,
-   "out": 0,
    "currency": "USD"
   },
   "thinkingmachines/inkling-small": {
@@ -2042,19 +2087,14 @@
    "out": 4.8,
    "currency": "USD"
   },
-  "x-ai/grok-build-0.1": {
-   "in": 1,
-   "out": 2,
-   "currency": "USD"
-  },
   "xiaomi/mimo-v2.5": {
    "in": 0.4,
    "out": 2,
    "currency": "USD"
   },
   "xiaomi/mimo-v2.5-pro": {
-   "in": 0.435,
-   "out": 0.87,
+   "in": 0.48,
+   "out": 1.8,
    "currency": "USD"
   },
   "xiaomi/mimo-v2.6-flash": {
@@ -2098,8 +2138,8 @@
    "currency": "USD"
   },
   "z-ai/glm-4.7": {
-   "in": 0.4,
-   "out": 1.75,
+   "in": 0.6,
+   "out": 2.2,
    "currency": "USD"
   },
   "z-ai/glm-4.7-flash": {
@@ -2123,8 +2163,13 @@
    "currency": "USD"
   },
   "z-ai/glm-5.2": {
-   "in": 0.007,
-   "out": 6.8,
+   "in": 0.62,
+   "out": 2.42,
+   "currency": "USD"
+  },
+  "z-ai/glm-5.2:batch": {
+   "in": 0.322,
+   "out": 0.989,
    "currency": "USD"
   },
   "z-ai/glm-5.3": {
@@ -2138,8 +2183,8 @@
    "currency": "USD"
   },
   "z-ai/glm-5.3-flash:batch": {
-   "in": 0.05,
-   "out": 0.18,
+   "in": 0.023,
+   "out": 0.068,
    "currency": "USD"
   },
   "z-ai/glm-5.3-flashx": {
@@ -2153,13 +2198,13 @@
    "currency": "USD"
   },
   "z-ai/glm-5.3-prime": {
-   "in": 2.8,
-   "out": 8.8,
+   "in": 1.68,
+   "out": 5.28,
    "currency": "USD"
   },
   "z-ai/glm-5.3:batch": {
-   "in": 0.45,
-   "out": 2,
+   "in": 0.28,
+   "out": 1.249,
    "currency": "USD"
   },
   "z-ai/glm-5v-turbo": {
