@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -41,6 +41,14 @@ test('laneCites never descends into a string or a number', () => {
   assert.deepEqual(laneCites(null), []);
 });
 
+test('laneCites escapes ~ and / in an object key per RFC 6901 (a literal / or ~ in a key must not corrupt the pointer)', () => {
+  const found = laneCites({ 'weird/key~x': laneCite() });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].at, '/weird~1key~0x');
+  // Order matters: escaping '/' before '~' would turn a literal '/' into '~01' instead of '~1'.
+  assert.equal(laneCites({ 'a/~/b': laneCite() })[0].at, '/a~1~0~1b');
+});
+
 function withFixture(fn) {
   const root = mkdtempSync(join(tmpdir(), 'lab-waiting-'));
   try {
@@ -68,6 +76,56 @@ test('list() walks a fixture tree and reports exactly the valid laneCite, by fil
   });
 });
 
+test('list() fails loudly on a record it cannot read, never as "nothing is waiting for main"', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'locked'), { recursive: true });
+    const file = join(labsDir, 'locked', 'secret.json');
+    writeFileSync(file, JSON.stringify({ source: laneCite() }));
+    chmodSync(file, 0o000);
+    try {
+      assert.throws(() => list(labsDir), /could not check.*locked\/secret\.json/);
+    } finally {
+      chmodSync(file, 0o600); // restore before withFixture's rmSync cleans up
+    }
+  });
+});
+
+test('list() still skips a record it can read but cannot parse, rather than throwing (the two failures are not the same)', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'rogue'), { recursive: true });
+    writeFileSync(join(labsDir, 'rogue', 'broken.json'), '{ not json');
+    assert.deepEqual(list(labsDir).items, []);
+  });
+});
+
+test('list() never follows a symlink that escapes the lab tree, even one that points at a valid laneCite', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'agent-space'), { recursive: true });
+    const outside = join(root, 'outside');
+    mkdirSync(outside, { recursive: true });
+    writeFileSync(join(outside, 'secret.json'), JSON.stringify({ source: laneCite() }));
+    symlinkSync(join(outside, 'secret.json'), join(labsDir, 'agent-space', 'escape.json'));
+    assert.deepEqual(list(labsDir).items, [], 'the escaping symlink must never be read, let alone cited');
+  });
+});
+
+test('list() still follows a symlink whose target stays inside the lab tree', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'agent-space'), { recursive: true });
+    writeFileSync(join(labsDir, 'agent-space', 'real.json'), JSON.stringify({ source: laneCite() }));
+    symlinkSync(join(labsDir, 'agent-space', 'real.json'), join(labsDir, 'agent-space', 'alias.json'));
+    assert.equal(list(labsDir).items.length, 2, 'both the real file and the in-tree alias are read');
+  });
+});
+
+test('list() skips a dangling symlink (its target does not exist) instead of throwing', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'agent-space'), { recursive: true });
+    symlinkSync(join(labsDir, 'agent-space', 'does-not-exist.json'), join(labsDir, 'agent-space', 'dangling.json'));
+    assert.deepEqual(list(labsDir).items, []);
+  });
+});
+
 test('list() reports one row per cite and sorts by file then pointer', () => {
   withFixture((root, labsDir) => {
     mkdirSync(join(labsDir, 'b-lab'), { recursive: true });
@@ -83,14 +141,13 @@ test('list() reports one row per cite and sorts by file then pointer', () => {
   });
 });
 
-test('list() against this repository\'s own committed records finds the known live cite and nothing malformed', () => {
+// A specific item's exact shape is asserted only against a fixture (above); the live registry can change the day
+// the lane actually flips, and this test must not break the day it does. It only checks the shared contract every
+// item must meet, over whatever the real tree holds right now.
+test('list() against this repository\'s own committed records: every item meets the shared contract, whatever it holds today', () => {
   const registry = list();
   assert.equal(registry.format, 'odin-lab-waiting');
   assert.equal(registry.version, 1);
-  const outage = registry.items.find(i => i.file === 'data/labs/agent-space/outage.json');
-  assert.ok(outage, 'agent-space/outage.json is cited by lane (source.onMain is false there today)');
-  assert.equal(outage.at, '/source');
-  assert.equal(outage.commit, COMMIT);
   // The same contract odin-labs' lane_watch.py enforces (ITEM_KEYS, HEX40, DAY), mirrored here so this registry can
   // never commit an item the daily check would refuse.
   const HEX40 = /^[0-9a-f]{40}$/, DAY = /^\d{4}-\d{2}-\d{2}$/, FILE = /^data\/labs\/[a-z0-9][a-z0-9._/-]*\.json$/;
@@ -105,23 +162,48 @@ test('list() against this repository\'s own committed records finds the known li
   }
 });
 
-test('CLI: list --json prints the odin-lab-waiting registry', () => {
-  const out = execFileSync('node', ['scripts/lab-waiting.mjs', 'list', '--json'], { encoding: 'utf8' });
-  const registry = JSON.parse(out);
-  assert.equal(registry.format, 'odin-lab-waiting');
-  assert.ok(registry.items.some(i => i.file === 'data/labs/agent-space/outage.json'));
+// The CLI tests below run the real binary as a subprocess (exercising argv parsing, stdout formatting and exit
+// codes exactly as a real invocation would), but against LAB_WAITING_LABS_DIR, a fixture -- not this repository's
+// own live, mutable records. A test tied to "today's" live cite would break the day the lane actually flips.
+test('CLI: list --json prints the odin-lab-waiting registry, against a fixture', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'agent-space'), { recursive: true });
+    writeFileSync(join(labsDir, 'agent-space', 'outage.json'), JSON.stringify({ source: laneCite() }));
+    const out = execFileSync('node', ['scripts/lab-waiting.mjs', 'list', '--json'], { encoding: 'utf8', env: { ...process.env, LAB_WAITING_LABS_DIR: labsDir } });
+    const registry = JSON.parse(out);
+    assert.equal(registry.format, 'odin-lab-waiting');
+    assert.ok(registry.items.some(i => i.file === 'data/labs/agent-space/outage.json' && i.commit === COMMIT));
+  });
 });
 
-test('CLI: list without --json prints a human line per item', () => {
-  const out = execFileSync('node', ['scripts/lab-waiting.mjs', 'list'], { encoding: 'utf8' });
-  assert.match(out, new RegExp(`${COMMIT.slice(0, 12)} agent-space data/labs/agent-space/outage\\.json/source`));
+test('CLI: list without --json prints a human line per item, against a fixture', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(join(labsDir, 'agent-space'), { recursive: true });
+    writeFileSync(join(labsDir, 'agent-space', 'outage.json'), JSON.stringify({ source: laneCite() }));
+    const out = execFileSync('node', ['scripts/lab-waiting.mjs', 'list'], { encoding: 'utf8', env: { ...process.env, LAB_WAITING_LABS_DIR: labsDir } });
+    assert.match(out, new RegExp(`${COMMIT.slice(0, 12)} agent-space data/labs/agent-space/outage\\.json/source`));
+  });
 });
 
-test('CLI: flip refuses (not yet built) instead of touching a record, with every argument present', () => {
-  assert.throws(
-    () => execFileSync('node', ['scripts/lab-waiting.mjs', 'flip', '--commit', COMMIT, '--main', '1'.repeat(40), '--checked', '2026-11-28', '--compare', 'diverged'], { stdio: 'pipe' }),
-    e => e.status === 1 && /not yet implemented/.test(e.stderr.toString()),
-  );
+test('CLI: list says nothing is waiting when the fixture has no cite', () => {
+  withFixture((root, labsDir) => {
+    mkdirSync(labsDir, { recursive: true });
+    const out = execFileSync('node', ['scripts/lab-waiting.mjs', 'list'], { encoding: 'utf8', env: { ...process.env, LAB_WAITING_LABS_DIR: labsDir } });
+    assert.match(out, /nothing is waiting for main/);
+  });
+});
+
+test('CLI: flip refuses (not yet built) and leaves every real record byte-for-byte unchanged, with every argument present', () => {
+  const RECORD = 'site/data/labs/agent-space/outage.json';
+  const before = readFileSync(RECORD);
+  try {
+    assert.throws(
+      () => execFileSync('node', ['scripts/lab-waiting.mjs', 'flip', '--commit', COMMIT, '--main', '1'.repeat(40), '--checked', '2026-11-28', '--compare', 'diverged'], { stdio: 'pipe' }),
+      e => e.status === 1 && /not yet implemented/.test(e.stderr.toString()),
+    );
+  } finally {
+    assert.deepEqual(readFileSync(RECORD), before, 'flip must not touch the real record even on its refused path');
+  }
 });
 
 test('CLI: flip with a missing argument refuses before trying anything', () => {
