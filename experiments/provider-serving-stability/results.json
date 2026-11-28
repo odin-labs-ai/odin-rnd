@@ -1,0 +1,76 @@
+{
+  "experiment": "EXP 022",
+  "window": {
+    "from": "2026-11-11T00:00:00Z",
+    "to": "2026-11-18T00:00:00Z"
+  },
+  "preregistrationSha256": "83f981a7b6c3b2e5f2b8260231b5eed9517b5035903b30c2092ca2020c055a0c",
+  "perPair": {
+    "openrouter": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "anthropic/claude-haiku-4.5"
+        ],
+        "servedModelCounts": {
+          "anthropic/claude-haiku-4.5": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "openai/gpt-4o-mini"
+        ],
+        "servedModelCounts": {
+          "openai/gpt-4o-mini": 55
+        },
+        "verdict": "stable"
+      }
+    },
+    "eurouter": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "aws-bedrock/claude-haiku-4.5"
+        ],
+        "servedModelCounts": {
+          "aws-bedrock/claude-haiku-4.5": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "microsoft-foundry/gpt-4o-mini"
+        ],
+        "servedModelCounts": {
+          "microsoft-foundry/gpt-4o-mini": 55
+        },
+        "verdict": "stable"
+      }
+    },
+    "requesty": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "anthropic/claude-haiku-4-5"
+        ],
+        "servedModelCounts": {
+          "anthropic/claude-haiku-4-5": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "openai/gpt-4o-mini"
+        ],
+        "servedModelCounts": {
+          "openai/gpt-4o-mini": 55
+        },
+        "verdict": "stable"
+      }
+    }
+  }
+}

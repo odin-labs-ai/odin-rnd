@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 022",
+    "slug": "provider-serving-stability",
+    "title": "Within one window, does a broker serve a fixed model request from a single stable provider?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Written, hashed and committed before any row of this record's own window is downloaded or read. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Odin's cost and routing claims assume a broker's reported model id maps to one stable serving backend for the life of a measurement window. Does it? For a fixed (broker, requested model) pair, does the broker's own per-call servedModel identifier stay a single value across every counted call in one 7-day window, or does it switch between two or more values?",
+  "calibration": {
+    "disclosed": "This question was not chosen by looking at this record's own window. It was motivated by comparing two ALREADY-PUBLISHED, already-computed results, neither of which is this record's counted window: EXP 015's results.json (window 2026-10-28..2026-11-04, odin-labs-ai/odin-rnd PR #301) reports eurouter's servedModels for that week as exactly 2 distinct values (one per requested model: 'aws-bedrock/claude-haiku-4.5', 'microsoft-foundry/gpt-4o-mini') — stable. EXP 015's amendment-01 results.json (window 2026-11-18..2026-11-25, PR #307) reports eurouter's servedModels for ITS week as 3 distinct values across the same 2 requested models ('aws-bedrock/claude-haiku-4.5', 'microsoft-foundry/gpt-4o-mini', 'microsoft-foundry-2/gpt-4o-mini') — the gpt-4o-mini request was served from two different provider identifiers within that one week. openrouter and requesty showed no such split in either window (their servedModel values track the requested model 1:1, with no provider-id prefix variance observed).",
+    "prediction": "Unknown which way this record's own window will go — that is the point of measuring a THIRD, not-yet-examined window rather than re-describing either already-known one. Written down before this record's window is downloaded: if eurouter is unstable again, that is evidence of an ongoing, not one-off, serving-path split; if it is stable this time, the amendment-01 split looks more like a one-off blip. Either result is reportable and useful.",
+    "excludedFromCounting": "Neither EXP 015's window (2026-10-28..2026-11-04) nor amendment-01's window (2026-11-18..2026-11-25) is counted by this record — both are cited only as already-public background, not re-measured here."
+  },
+  "window": {
+    "from": "2026-11-11T00:00:00Z",
+    "to": "2026-11-18T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "rationale": "The gap between EXP 015's window (ending 2026-11-04) and amendment-01's window (starting 2026-11-18) is 14 days, i.e. two untouched 7-day weeks (2026-11-04..2026-11-11 and 2026-11-11..2026-11-18), neither downloaded or analysed by this lane before this commit. This record picks the SECOND of those two weeks, adjacent to amendment-01's own window, so a future dated follow-up (see stoppingRule) has the option of covering the first week (2026-11-04..2026-11-11) next without re-touching this one. Chosen by date arithmetic alone (the gap's own boundaries), before any row in it was read.",
+    "integrityNote": "This window's rows were already collected by the ongoing capture cron (see capture.mechanism) before this record was authored — unlike EXP 015's own preregistration, where the window had not opened yet at freeze time. The freeze here is this record's commit, and the claim is narrower but just as load-bearing: neither this lane nor this record's calibration section has read a single row from 2026-11-11..2026-11-18 before this commit. The calibration section above discloses exactly which OTHER windows were already known and why; this window is not one of them."
+  },
+  "brokers": ["openrouter", "eurouter", "requesty"],
+  "models": ["anthropic/claude-haiku-4.5", "openai/gpt-4o-mini"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled GitHub Actions workflow EXP 015 and its amendment-01 use (odin-labs-ai/odin-labs, 'R&D telemetry-truth capture', cron 41 */3 * * *, private repo, GitHub-hosted runner). No new capture code, no new key, no new spend; this record only adds a new analysis of rows the existing cron already produces for a window not yet analysed for this question.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256 — not re-pinned here since nothing about the capture code changed for this record.",
+    "fields used": "broker, canonicalModel, servedModel, ok, ts — the same per-call rows EXP 015 reads, read for a different field (servedModel identity) than EXP 015's own question (cost gap). canonicalModel, not requestedModel, is the matching key: each broker's own requestedModel string uses that broker's own spelling (eurouter drops the provider prefix; requesty writes 'claude-haiku-4-5' with a dash), but canonicalModel is normalised to the same string by every broker's row for the same requested model."
+  },
+  "metric": {
+    "perPair": "For each (broker, canonicalModel) pair: n = count of counted calls (inside the window, ok === true, servedModel present and non-empty); distinctServedModels = the sorted set of distinct servedModel values among those calls.",
+    "counted call": "Inside [window.from, window.to), ok === true, servedModel is a non-empty string. Failed calls are excluded from n, never imputed, same convention as EXP 015."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 20,
+      "note": "Far below EXP 015's minCalls of 50: that rule bounds a statistical confidence interval on a continuous gap; this one only needs enough calls to say a single value is genuinely the only one seen, not an artifact of a near-empty sample. 20 of a possible ~56 (56 capture runs/week x 1 call per model) tolerates real key/outage gaps without inflating false 'stable' calls on thin data."
+    },
+    "perPair": {
+      "notEnoughCalls": "n below 20: reported as 'not enough calls', never classified either way.",
+      "stable": "Exactly 1 distinct servedModel value across all counted calls.",
+      "unstable": "2 or more distinct servedModel values across counted calls; every distinct value is listed, with its own count, in the result."
+    }
+  },
+  "stoppingRule": "A single pre-registered 7-day window, not a cadence. Report each (broker, canonicalModel) pair's classification exactly as computed by the frozen analyse.mjs in this directory, whatever it shows. No additional counted window is triggered by an 'unstable' result here; if this result motivates a periodic recheck (the same cadence shape as EXP 015's amendment-01), that would be proposed as its own, separately pre-registered follow-up, not silently added to this record.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this record; this record only adds one analysis pass over already-collected rows. No new broker calls, no new keys, no new spend.",
+  "analysis": {
+    "script": "experiments/provider-serving-stability/analyse.mjs",
+    "sha256": "bab05b50d12c82716ce30eb98b083c8f11bd8748dc93363d87dfbda9d5367276",
+    "inputs": "capture/*.jsonl (the uploaded rows, copied unchanged).",
+    "check": "node experiments/provider-serving-stability/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
+  },
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repo (EXP 015, EXP 015 amendment-01, EXP 020's S1/S3 protocols), before this record's PR is called ready.",
+  "boxBriefNote": "This record's mechanics (download already-collected capture artifacts for a fixed, pre-registered window from the existing cron; run a small frozen node script against them; commit the result; open a PR) are the same shape as amendment-01's, already run end-to-end once by a lane. That makes this an easy template for a bounded, low-autonomy automated task definition targeting odin-rnd once it is a reachable automated target (a separate, already-flagged blocker, not this record's). No internal automation system is named here; see WIN-RNDF-BLUEPRINT's own ledger (internal, not public) for that detail.",
+  "limits": [
+    "Two models, three brokers, one 7-day window. A broker's serving-path choices can change for reasons this record cannot see (load balancing, a provider outage, a planned migration) — 'unstable' describes what was observed, not why.",
+    "servedModel is each broker's own self-reported identifier; this record trusts it at face value, the same trust EXP 015 places in actualCostUsd and generationCostUsd.",
+    "A one-window snapshot cannot say whether an 'unstable' or 'stable' classification is itself stable over time — that is exactly the kind of question a follow-up periodic recheck (see stoppingRule) would exist to answer, not this record."
+  ]
+}
