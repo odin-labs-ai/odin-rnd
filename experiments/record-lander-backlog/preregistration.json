@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 023",
+    "slug": "record-lander-backlog",
+    "title": "Once the record lander's admission cap defers a lab's day, how long does the backlog actually take to clear?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Written, hashed and committed before the raw PR-list capture for this record's own window is fetched. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "odin-labs' lab runner opens one record-only PR to this repository per lab per day. Four labs share one landing path: at most 2 open automated record PRs at once, and at most one per lab (odin-labs .github/lab-runner/record-pr.sh, 'ci-admission'). A day a lab cannot publish waits for 'the next run's backlog', which bundles every unpublished day into its next attempt. For each lab, across a fixed trailing window: what share of days that occurred in the window has a record actually landed on main for, and for the days that did land, how many days elapsed between the day itself and the PR's merge?",
+  "calibration": {
+    "disclosed": "This question was not chosen by downloading this record's own window and looking for an answer; it was motivated by an operational root-cause already found and fixed this session (odin-labs#11996, a lab-runner-legs.yml CI-signal fix, unrelated code change to this record). While scoping whether a backlog-latency study was even feasible -- confirming public PR history exists and is shaped for it, not yet computing this record's own metric or window -- the following already-public facts were read directly from this repository's own merged/open pull request list (gh pr list, no private-repo data, no new spend): odin-rnd PR #225 (merged 2026-11-13) is headed records/red-build-20261105-20261106-20261107-20261108-20261109-20261110-20261111-20261112-20261113-071918 -- nine distinct days bundled into one PR; PR #213 (merged 2026-11-11) bundles six measured-blind days; and as of this record's authoring, no open or merged records/red-build-* or records/measured-blind-* pull request exists for any day from 2026-11-13 onward. Lab 05 (rogue) and Lab 06 (review) show no such pattern in the same history: each recent day has its own same-day PR, merged within about an hour of opening.",
+    "prediction": "Unknown how far the Lab 08/13 backlog will have grown by the time this record's own window is analysed, and unknown whether Lab 05/06 are as clean as they look across the FULL window (not just the few most recent days glanced at above) -- that is the point of measuring the whole frozen window with one script, not re-describing the glance. Written down before the raw capture is fetched: Lab 05/06 predicted 'current' (low median latency, near-full coverage) on both metrics below; Lab 08/13 predicted 'backlogged' on at least one metric. Either lab landing 'current' would contradict this prediction and is reportable as such.",
+    "excludedFromCounting": "The specific PRs named above (#225, #213, and the current open/merged listing checked at authoring time) are cited only as already-public background motivating the question; this record's own counted window (below) is read fresh, from a single raw capture fetched after this commit, by the frozen analysis script, not by re-using the numbers glanced at here."
+  },
+  "window": {
+    "from": "2026-10-29T00:00:00Z",
+    "to": "2026-11-28T00:00:00Z",
+    "unit": "30 whole UTC days, half-open [from, to), ending the day this record is authored (today itself excluded: a day in progress is not yet a day a lab could have failed to publish).",
+    "rationale": "30 days gives each of the 4 labs roughly 30 possible run-days (barring an outage), long enough to show a multi-day or multi-week backlog if one exists, short enough that the raw PR-list capture (one gh pr list call, all states, all time) stays small and reviewable in full."
+  },
+  "labs": ["rogue", "review", "red-build", "measured-blind"],
+  "capture": {
+    "what": "The full output of one read-only GitHub API call: every odin-rnd pull request, any state, whose head ref matches ^records/(rogue|review|red-build|measured-blind)-[0-9-]+-[0-9]{6}$ (odin-labs .github/lab-runner/record-pr.sh's own branch-naming contract), with its head ref, state, createdAt and mergedAt. No PR title, body or diff content is read or published -- only these 4 structural fields the branch name and GitHub's own PR metadata already make public.",
+    "where": "gh pr list -R odin-labs-ai/odin-rnd --state all --search \"head:records/\" --json number,headRefName,state,createdAt,mergedAt, paginated to completion. Entirely public data on a public repository; no private-repo read, no App token, no secret.",
+    "frozenAs": "capture/records-prs.json, fetched once after this preregistration is committed and never edited by hand afterward; the analysis script re-derives every date and every lab's latency/coverage numbers from exactly this file.",
+    "branchDateParsing": "A branch records/<lab>-<d1>[-<d2>...]-<HHMMSS> encodes one or more YYYYMMDD calendar days (the days that PR's content covers) and the UTC time-of-day the branch was cut. A PR's days are exactly the YYYYMMDD groups in its head ref; the final 6-digit group is always the HHMMSS suffix, never a day, and is excluded from the day list."
+  },
+  "metric": {
+    "coverage": "For each lab: the count of distinct in-window calendar days (from window.from up to but excluding window.to) that appear in the day-list of at least one MERGED records/<lab>-* PR, divided by the number of calendar days in the window (30). A day appearing in a CLOSED-without-merging PR does not count as covered (that day was turned down, not published, by record-pr.sh's own 'closed as superseded/published on main' convention -- unless a LATER PR's merged day-list also names it, which does count).",
+    "latencyDays": "For each in-window day that is covered (per the definition above): the real-valued number of days between that day's own 00:00:00Z and the mergedAt of the (first, if more than one somehow names it) MERGED PR whose day-list contains it. A day named in more than one merged PR (should not happen under record-pr.sh's own admission rules, but checked for) is flagged as an anomaly, not silently averaged.",
+    "stillOutstanding": "Any in-window day, strictly more than 3 calendar days before this record's own authoredOn date, that appears in NEITHER a merged nor a currently-OPEN records/<lab>-* PR's day-list as of the capture fetch: listed by lab and date, with its age in days as of the capture fetch (right-censored -- it may still land later; this record reports its age at THIS record's own snapshot, not a final outcome)."
+  },
+  "decision": {
+    "rule": {
+      "currentMedianLatencyMaxDays": 2,
+      "currentMinCoverage": 0.8,
+      "backloggedMaxLatencyMinDays": 7,
+      "backloggedMaxCoverage": 0.5
+    },
+    "perLab": {
+      "current": "medianLatencyDays <= 2 AND coverage >= 0.8 -- most days publish within about the next scheduled lander tick, and nearly every in-window day eventually lands.",
+      "backlogged": "maxLatencyDays > 7 OR coverage < 0.5 -- at least one day waited more than a week, or fewer than half the window's days have landed at all.",
+      "mixed": "Neither of the above -- some slippage exists but neither threshold above is crossed."
+    }
+  },
+  "stoppingRule": "A single pre-registered 30-day window, not a cadence. Report each lab's coverage, median and max latencyDays, and every stillOutstanding day, exactly as computed by the frozen analyse.mjs in this directory, whatever it shows. No additional counted window is triggered by a 'backlogged' result here; a periodic recheck (same shape as EXP 015's amendment-01) would be its own, separately pre-registered follow-up.",
+  "cost": "$0. One read-only GitHub API call against a public repository's own PR list; no private-repo read, no broker call, no new spend, no code changed in odin-labs or odin-rnd beyond this record's own experiment directory.",
+  "analysis": {
+    "script": "experiments/record-lander-backlog/analyse.mjs",
+    "sha256": "PENDING-FILLED-IN-WHEN-FROZEN",
+    "inputs": "capture/records-prs.json (the raw gh pr list output, copied unchanged).",
+    "check": "node experiments/record-lander-backlog/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed input."
+  },
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository (EXP 015, its amendment-01, EXP 020's S1/S3 protocols, EXP 022), before this record's PR is called ready. WIN-RNDF-EXP is the agreed reciprocal reviewer for this record (coordinator instruction); this lane reviews EXP 022 in return.",
+  "limits": [
+    "Branch-name dates are a proxy for 'the day a record covers', not a proof the underlying lab run itself completed cleanly that day (a run that failed outright writes no record and leaves no trace in this capture at all, which this record cannot distinguish from 'genuinely nothing happened that day' without reading odin-labs' own, private, Actions run history -- out of scope here, since this record is public-data-only by design).",
+    "A day's true 'should have landed by' expectation is read from record-pr.sh's own prose ('the next run's backlog carries the rest'), not from a separately pre-registered SLA; the decision rule's thresholds are this record's own reasonable reading of that prose, stated as numbers so the classification is reproducible, not a number odin-labs itself commits to.",
+    "30 days, 4 labs. A shorter or longer window could classify differently; this is one snapshot, not a trend line.",
+    "This record does not change, weaken or even touch record-pr.sh's actual admission cap -- it only measures the public PR-landing timeline the cap (and the lander's own cadence) already produces."
+  ]
+}
