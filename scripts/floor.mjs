@@ -35,7 +35,11 @@ export function factoryFloor() {
       </a>`;
   };
   const screenText = (x,y,text,cls='') => '<text class="'+cls+'" x="'+x+'" y="'+y+'">'+text+'</text>';
-  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" role="img" aria-labelledby="floor-title floor-description"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Select a machine or use the '+stationCountWord+' station links below to inspect its record.</desc>';
+  // The drawing's own <a> targets are mouse/pointer shortcuts (tabindex="-1", never a tab stop); the real
+  // keyboard- and screen-reader-reachable navigation is renderStationLinks() below it. A role="img" (or any)
+  // container must not hold focusable descendants at all (axe nested-interactive: a negative tabindex does not
+  // stop assistive tech from focusing them), so the whole drawing is aria-hidden instead.
+  let svg = '<svg class="factory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 865 540" aria-hidden="true"><title id="floor-title">Odin software factory, conceptual assembly drawing</title><desc id="floor-description">An isometric factory connects a blueprint drafting table, robotic workcell, conformance gate, evidence records, a decision console, a triage bench and a floor inspection bench. Select a machine or use the '+stationCountWord+' station links below to inspect its record.</desc>';
   svg += '<g id="factory-geometry"><g data-factory-layer="floor">';
   svg += poly([[-12,-12,-8],[512,-12,-8],[512,392,-8],[-12,392,-8]], 'floor');
   for(let x=0;x<=500;x+=25) svg+=line([x,0,-7],[x,380,-7],'gridline');
