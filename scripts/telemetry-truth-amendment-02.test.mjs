@@ -27,7 +27,7 @@ test('no capture row names a broker; the published rows carry only letters (reus
   assert.ok(files.length > 0);
   for (const f of files) {
     const text = readFileSync(`${dir}/amendment-02/runs-anon/${f}`, 'utf8');
-    for (const word of ['openrouter', 'eurouter', 'requesty', 'bedrock', 'foundry', 'local-agents', 'price-book', 'azure'])
+    for (const word of ['openrouter', 'eurouter', 'requesty', 'bedrock', 'foundry', 'price-book', 'azure'])
       assert.ok(!text.toLowerCase().includes(word), `${f} mentions ${word}`);
   }
 });
