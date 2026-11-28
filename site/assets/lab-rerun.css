@@ -4,4 +4,4 @@
 .lab-rerun li>p{margin-top:6px;font-size:14px;color:var(--steel)}
 .lab-rerun pre{margin:6px 0 0;padding:12px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--ground);font-size:12px;line-height:1.7;overflow-x:auto}
 .lab-rerun-command code{color:var(--paper)}
-.lab-rerun-output samp{font-family:var(--mono);color:var(--cyan)}
+.lab-rerun-output samp{font-family:var(--mono);color:var(--brand)}

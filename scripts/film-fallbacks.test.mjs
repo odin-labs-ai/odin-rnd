@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { fallbacksProblems, FALLBACKS_FILE, limitFor, mp4Facts, progressiveProblems, readFallbacks, trackProblems } from './film-fallbacks.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { MAX_FILM_BYTES } from './lab-films.mjs';
+import { webmSeconds } from './lab-outage.mjs';
 import { MAX_CLIP_BYTES } from './lab-dispatch-publish.mjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
@@ -82,6 +83,10 @@ test('the committed record passes, and every WebM film under site/assets/labs ha
   for (const entry of record.fallbacks) {
     assert.ok(entry.bytes <= limitFor(entry.webm), `${entry.mp4} is within its limit`);
     assert.equal(entry.screening.result, 'pass');
+    const { seconds } = webmSeconds(readFileSync(join('site', entry.webm)));
+    // The record keeps whole seconds, so the header may differ by rounding only (at most half a second); the bytes
+    // themselves are pinned by webmSha256 (review 2bb1b73a item 7).
+    assert.ok(Number.isFinite(seconds) && seconds > 0 && Math.abs(seconds - entry.seconds) <= 0.5, `${entry.webm}: header duration ${seconds} s within 0.5 s of the recorded whole seconds`);
   }
 });
 

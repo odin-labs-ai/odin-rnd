@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
-import { HARD_PARTS_FILE, readDispatches, readHardParts, readLab, renderLabs } from './labs.mjs';
+import { HARD_PARTS_FILE, readDispatches, readHardParts, readLab, renderDispatches, renderLabs } from './labs.mjs';
 
 // The Labs pages (mission rnd-labs-human-first-1024). `pnpm test` runs before `pnpm build`, so these render in memory
 // from site/. The empty state (no screened session yet) is rendered from a copy of site/ that holds no dispatch.
@@ -50,6 +50,7 @@ test('the real site: with no dispatch it shows the empty box; with dispatches ev
   }
   assert.doesNotMatch(page, /id="no-dispatch"/);
   assert.match(page, /<video/);
+  assert.match(page, /A re-run of the <a href="#session-2026-10-25-b"><time datetime="2026-10-25">[^<]+<\/time> question set<\/a>/);
   for (const dispatch of realDispatches) {
     assert.ok(page.includes(dispatch.clip.src), dispatch.session);
     for (const q of dispatch.questions) assert.ok(page.includes(q.evidence), `${dispatch.session} ${q.evidence}`);
@@ -66,7 +67,7 @@ test('the real site: with no dispatch it shows the empty box; with dispatches ev
 });
 
 test('the first film is embedded once in progress and linked from the gallery', () => {
-  assert.equal((page.match(/<video\b[^>]*><source src="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-30s\.webm"/g) ?? []).length, 1);
+  assert.equal((page.match(/<video\b[^>]*><source src="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-30s\.mp4"/g) ?? []).length, 1);
   assert.equal((page.match(/id="film-agent-space-30s"/g) ?? []).length, 1);
   assert.match(page, /<li class="lab-film lab-progress-step" id="film-agent-space-30s">/);
   assert.match(page, /<a href="#film-agent-space-30s">Watch the recording and read its screening record\.<\/a>/);
@@ -77,7 +78,7 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
   assert.ok(dispatch);
   assert.ok(page.includes(`poster="../../${webpSibling(dispatch.poster, 1280)}"`));
   const originals = [
-    'films/agent-space-30s-poster.png', 'films/agent-space-tour-poster.png',
+    'outage/dispatch-2-outage-poster.png', 'films/agent-space-30s-poster.png', 'films/agent-space-tour-poster.png',
     'progress/hq-on-duty-poster.jpg', 'progress/hq-engineering-hall.jpg',
     'session-2026-10-25-b/poster.png',
     ...['01-s1-q1.png', '02-s1-q2.png', '03-s1-q3.png', '04-s1-q4.png'].map(name => `session-2026-10-25-b/stills/${name}`),
@@ -103,9 +104,9 @@ test('the published dispatch poster and every referenced Lab 01 WebP exist', () 
 
 test('the hash-pinned JSON records retain their committed bytes', () => {
   const expected = new Map([
-    ['films.json', 'f2ade996bcc2090a9028e9226631668605bc02e319a48c22bc5b8f4446a3f819'],
+    ['films.json', 'dc0a50908d9593e45fb8d4662531c2e2bfe5f4d501ad5d08b5931d6edb48162d'],
     ['progress.json', 'c77cd5b4622f8847f220bd661f5d5af715931928e953ff0f535d5feb32833f82'],
-    ['dispatches/session-2026-10-25-b.json', '260fe2c03e1e49dc21ccc485056513f3add18b81e5dd7e1ba0b39702bffd87a2'],
+    ['dispatches/session-2026-10-25-b.json', 'fb8c1d650a601fba673d06d7b9bd691772a152374439a7323b1f8df9b307130b'],
     ['dispatches/session-2026-11-08.json', 'd895de15e735853ba6fc41e7281ab87c6ff1c28751e6f3edd23a98b19da2e627'],
     ['milestones.json', JSON.parse(readFileSync('scripts/milestones.pin.json', 'utf8')).fileSha256],
   ]);
@@ -230,6 +231,19 @@ test('two dated sessions render newest first on the page and in the feed (order 
       assert.ok(a >= 0 && b >= 0 && a < b, 'the March session comes before the January one');
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// A re-run is matched on its question set (who was asked, the question, follow-up or not), compared as arrays so key
+// order cannot matter; spacing in a question and an absent versus false follow-up do not hide the re-run link.
+test('a re-run is found by its question set, whatever its spacing or an absent versus false follow-up; a new question is not a re-run', () => {
+  if (realDispatches.length < 2) return assert.ok(true, 'needs two committed dispatches with one question set');
+  const [latest, earlier] = realDispatches;
+  const link = `A re-run of the <a href="#${earlier.session}">`;
+  assert.ok(renderDispatches(lab, [latest, earlier]).includes(link), 'the committed sessions share one question set');
+  const respaced = { ...earlier, questions: earlier.questions.map(q => ({ ...q, text: `  ${q.text.split(' ').join('   ')}\n`, followUp: q.followUp ? true : (q.followUp === undefined ? false : undefined) })) };
+  assert.ok(renderDispatches(lab, [latest, respaced]).includes(link), 'spacing and follow-up form are normalised');
+  const changed = { ...earlier, questions: earlier.questions.map((q, i) => (i === 0 ? { ...q, text: `${q.text} And why?` } : q)) };
+  assert.ok(!renderDispatches(lab, [latest, changed]).includes('A re-run of the'), 'a different question is a different set');
 });
 
 test('the lab page shows the films, the measured panels and the hard parts, in that order around the dispatches', () => {

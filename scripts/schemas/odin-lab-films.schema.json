@@ -126,6 +126,9 @@
         "type": "integer",
         "minimum": 1
        },
+       "remuxed": {
+        "const": true
+       },
        "reencoded": {
         "type": "boolean"
        }

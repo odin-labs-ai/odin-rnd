@@ -11,6 +11,7 @@ import { FIND_MARKER, GROUPS } from './find-build.mjs';
 import { FIND_EXEMPT, escapeHtml, pageTitle } from './site-chrome.mjs';
 import { journalRows } from './experiment-ledger.mjs';
 import { builtCopy } from './test-build.mjs';
+import { HEADER_LABELS, labelHtml } from './site-header.mjs';
 
 const schema = JSON.parse(readFileSync('scripts/schemas/site-index.schema.json', 'utf8'));
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
@@ -101,14 +102,17 @@ test('each built page marks its own section current in the header, and only that
   };
   const expected = {
     'index.html': [],
-    'journal/a-passing-pipeline.html': ['Field notes'],
-    'journal/index.html': ['Field notes'],
+    'journal/a-passing-pipeline.html': ['Notes &amp; updates'],
+    'journal/index.html': ['Notes &amp; updates'],
     'labs/rogue/index.html': ['Labs'],
     'labs/index.html': ['Labs'],
-    'experiments/index.html': ['Experiments'],
-    'updates/index.html': ['Updates'],
+    'experiments/index.html': ['All results'],
+    'updates/index.html': ['Notes &amp; updates'],
     'work-with-us/index.html': ['Work with us'],
-    'partners/index.html': ['Partners'],
+    'one-pager/index.html': ['Start here'],
+    'methods/index.html': ['How we test'],
+    // Partners left the header for the footer (plain-language home, 2026-11-16).
+    'partners/index.html': [],
     'projects/index.html': [],
     'projects/ci-witness/index.html': [],
     'find/index.html': ['Find'],
@@ -122,17 +126,26 @@ test('the sitemap lists /journal/ and /projects/ directly before /find/, which s
 
 test('wave 3, as built: one canonical nav on every page, journal/ and projects/ listing every note and tool, crumbs to them', () => {
   const { dist, files, index } = built();
-  const CANONICAL = ['Factory', 'Experiments', 'Labs', 'Updates', 'Field notes', 'Work with us', 'Partners', 'Find'];
+  // The one canonical list (scripts/site-header.mjs HEADER_LABELS), as the built HTML writes it (& as &amp;).
+  const CANONICAL = HEADER_LABELS.map(labelHtml);
   for (const rel of files.filter(f => f.endsWith('.html'))) {
     const html = readFileSync(join(dist, rel), 'utf8');
     const nav = html.match(/<header class="site-header[\s\S]*?<\/header>/)[0].match(/<nav\b[\s\S]*?<\/nav>/)[0];
     assert.deepEqual([...nav.matchAll(/<a\b[^>]*>([^<]*)<\/a>/g)].map(m => m[1]), CANONICAL, `${rel}: the canonical nav`);
     assert.equal(/<a href="[^"]*find\/" aria-current="page">Find<\/a>/.test(nav), rel === 'find/index.html', `${rel}: Find is current on /find/ only`);
+    // Partners left the header for the footer: every built page has a site footer, and Partners is in it once. A page
+    // with no footer fails here rather than skipping the check, so Partners can never vanish from both places.
+    const footer = html.match(/<footer class="site-footer[\s\S]*?<\/footer>/)?.[0];
+    assert.ok(footer, `${rel}: a site footer`);
+    assert.equal((footer.match(/href="[^"]*partners\/">Partners<\/a>/g) || []).length, 1, `${rel}: Partners once in the footer`);
   }
   const rows = page => [...readFileSync(join(dist, page), 'utf8').matchAll(/<li class="update-item" data-reveal><a href="\.\.\/([^"]+)">/g)].map(m => m[1]);
   const hrefsOf = type => index.items.filter(i => i.type === type).map(i => i.href).sort();
   assert.deepEqual(rows('journal/index.html').sort(), hrefsOf('note'), 'journal/ lists every note once');
-  assert.deepEqual(rows('projects/index.html').sort(), hrefsOf('tool'), 'projects/ lists every tool once');
+  const guide = readFileSync(join(dist, 'projects/index.html'), 'utf8');
+  const cards = [...guide.matchAll(/<article class="tool-guide-card">([\s\S]*?)<\/article>/g)];
+  const demos = cards.flatMap(([, body]) => [...body.matchAll(/href="\.\.\/(projects\/[^"#]+)(?:#[^"]+)?"/g)].map(m => m[1]));
+  assert.deepEqual(demos.sort(), hrefsOf('tool'), 'the guide links every published tool page once');
   const experiments = readFileSync(join(dist, 'experiments/index.html'), 'utf8');
   assert.equal((experiments.match(/id="every-experiment"/g) || []).length, 1, 'experiments/ ends with All experiments');
   // The All experiments list is exactly the experiments the site's own data publishes, read without the index: one row

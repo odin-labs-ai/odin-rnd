@@ -31,7 +31,7 @@
 // the screened frames show was viewed by an AI agent; no machine judges that.
 //
 // The committed pages are not edited for this. The generators write each MP4 <source> beside its WebM one
-// (scripts/film-sources.mjs); the dist pass (scripts/film-pairs.mjs) adds it after the home page's one pinned player and
+// (scripts/film-sources.mjs); the dist pass (scripts/film-pairs.mjs) adds it before the home page's pinned WebM source and
 // reads every built file: per page the pairs must be exactly the pairs the build wrote, and any other WebM mention stops
 // the build. The Film copies job in .github/workflows/publish.yml runs the decoder tests, and verify needs it, so
 // nothing publishes without them.

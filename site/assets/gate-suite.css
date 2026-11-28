@@ -1,0 +1,45 @@
+/* The radio group works natively. Older browsers can read every recorded case. */
+.gate-suites {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.gate-suites legend {
+  padding: 0;
+  font: 600 16px/1.4 var(--display);
+}
+.gate-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  margin: 4px 0 8px;
+}
+.gate-choices label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.gate-choices input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #79d8a7;
+}
+.gate-case {
+  padding: 12px 0 0;
+  border-top: 1px solid #507161;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.gate-case p { margin: 0 0 4px; }
+.gate-case a { display: inline-flex; align-items: center; min-height: 44px; }
+@supports selector(:has(*)) {
+  .gate-suites:has(input:checked) .gate-case { display: none; }
+  .gate-suites:has([value=weak]:checked) [data-gate-case=weak],
+  .gate-suites:has([value=strong]:checked) [data-gate-case=strong],
+  .gate-suites:has([value=always-pass]:checked) [data-gate-case=always-pass] { display: block; }
+}

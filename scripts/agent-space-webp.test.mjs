@@ -11,8 +11,8 @@ const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('h
 test('every Lab 01 WebP is a pinned, correctly sized sibling of a pinned original', () => {
   assert.equal(pin.format, 'odin-agent-space-webp-pin');
   assert.equal(pin.version, 1);
-  assert.equal(pin.images.length, 14, 'all fourteen original pictures are pinned');
-  assert.equal(new Set(pin.images.map(image => image.original)).size, 14);
+  assert.equal(pin.images.length, 15, 'all fifteen original pictures are pinned');
+  assert.equal(new Set(pin.images.map(image => image.original)).size, 15);
   for (const image of pin.images) {
     assert.match(image.original, /^assets\/labs\/agent-space\/(?!.*\.\.)[\w/-]+\.(?:png|jpe?g)$/);
     assert.equal(sha256(join('site', image.original)), image.originalSha256, image.original);

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, remainingItems, RESULT_PAGE_SIZE,
+  filter, paramsFromSearch, searchFromParams, cleanParams, isEmpty, normalize, numberLabel, safeHref, facetValues, monthLabel, KEYS, topicLabels, resultPage, groupResults, RESULT_PAGE_SIZE,
 } from '../site/assets/find.mjs';
 import { hrefOnSite } from './site-index.mjs';
 
@@ -93,21 +93,50 @@ test('the stage options omit Kind duplicates while saved stage links still filte
   assert.deepEqual(ids(filter(sameAsKind, paramsFromSearch('?stage=tool'))), ['bce']);
 });
 
-test('interactive results show 30 first and name the full remainder', () => {
-  const many = Array.from({ length: 65 }, (_, index) => ({ id: `item-${index}` }));
-  assert.deepEqual(resultPage(many.slice(0, 30)), { visible: many.slice(0, 30), remaining: 0 });
-  assert.deepEqual(resultPage(many), { visible: many.slice(0, 30), remaining: 35 });
-  assert.match(source, /`Show \$\{remaining\} more`/, 'the reveal control names the remainder');
-  assert.match(source, /const \{ visible, remaining \} = resultPage\(found\)/, 'every render resets the cap');
+test('group matching entries by exact destination and keep every matching amendment', () => {
+  const note = items[2];
+  const amendment = { ...note, id: 'change', type: 'update', stage: 'amendment' };
+  const anchor = { ...note, href: note.href + '#follow-up' };
+  const invalid = { ...note, href: '/off-site' };
+  const source = [amendment, anchor, note, invalid, invalid];
+  assert.deepEqual(groupResults(filter(source, {})), [[amendment, note], [anchor]]);
+  assert.deepEqual(groupResults(filter(source, { stage: ['amendment'] })), [[amendment]]);
+  assert.deepEqual(groupResults(filter(source, { q: 'absent' })), []);
 });
 
-test('Show more reveals only the current matching remainder', () => {
-  const many = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
-    ({ id: `item-${index}`, type: index < 4 ? 'note' : 'experiment' }));
-  assert.deepEqual(ids(remainingItems(many, {})), ids(many.slice(RESULT_PAGE_SIZE)));
-  assert.deepEqual(remainingItems(many, { type: ['note'] }), []);
-  assert.match(source, /const rest = remainingItems\(items, read\(\)\)\.map\(row\)/, 'the reveal handler reads the live form state');
-  assert.doesNotMatch(source, /const rest = filter\(items, params\)/, 'the reveal handler does not use closure state');
+test('an entry whose destination fails safeHref is left out of the results and never rendered as a link', () => {
+  const note = items[2];
+  const offSite = [{ ...note, id: 'a', href: '/off-site' }, { ...note, id: 'b', href: 'https://example.invalid/x' }, { ...note, id: 'c', href: '../up/' },
+    { ...note, id: 'd', href: '' }, { ...note, id: 'e', href: undefined }, { ...note, id: 'f', href: '#only-anchor' }];
+  for (const entry of offSite) assert.equal(safeHref(entry.href), null, String(entry.href));
+  // An unsafe entry is excluded: it never becomes a result, never joins a real destination and never counts as a page.
+  assert.deepEqual(groupResults([...offSite, note]), [[note]]);
+  assert.deepEqual(groupResults([offSite[0], note, offSite[1], note]), [[note, note]]);
+  assert.deepEqual(groupResults(offSite), []);
+  assert.equal(resultPage(groupResults([...offSite, note])).remaining, 0);
+  // The count line and the empty state are derived from the grouped entries, so excluded entries are not counted.
+  assert.match(source, /const groups = groupResults\(filter\(items, current\)\);\s*const shown = groups\.reduce\(\(total, group\) => total \+ group\.length, 0\);/, 'render counts only shown entries');
+  assert.doesNotMatch(source.slice(source.indexOf('function render('), source.indexOf('function metadata(')), /found\.length/, 'render never counts unfiltered matches');
+  // The row renders an unsafe destination as plain heading text, never as a link (site/assets/find.mjs row()).
+  assert.match(source, /const href = safeHref\(item\.href\);\s*if \(href\) heading\.append\(element\(doc, 'a'[^\n]*\n\s*else heading\.textContent = String\(item\.title \?\? ''\);/, 'an unsafe destination renders unlinked');
+});
+
+test('pagination counts destination pages, not entries, and retains entries beyond the first page', () => {
+  const records = Array.from({ length: RESULT_PAGE_SIZE + 6 }, (_, index) =>
+    ({ ...items[2], href: `journal/note-${index}.html` }));
+  const extra = { ...records.at(-1), id: 'amendment', stage: 'amendment' };
+  const groups = groupResults([...records, extra]);
+  const { visible, remaining } = resultPage(groups);
+  assert.equal(visible.length, RESULT_PAGE_SIZE);
+  assert.equal(remaining, 6);
+  assert.deepEqual(groups.slice(visible.length).at(-1), [records.at(-1), extra]);
+  // Two entries that share a destination collapse into one page: the count and the reveal shrink by one, no entry lost.
+  const shared = records.map((record, index) => (index === 1 ? { ...record, href: records[0].href } : record));
+  const collapsed = groupResults(shared);
+  assert.equal(collapsed.length, shared.length - 1);
+  assert.deepEqual(collapsed[0], [shared[0], shared[1]]);
+  assert.equal(resultPage(collapsed).remaining, 5);
+  assert.equal(collapsed.flat().length, shared.length, 'every entry is still in a group');
 });
 
 test('unknown parameters and malformed values are ignored', () => {
@@ -172,11 +201,27 @@ test('the template carries the search UI the module expects', () => {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   assert.match(html, /<input id="find-search" name="q" type="search"/);
+  // The search box has a visible label and a visible hint: the label names it (not visually hidden), the hint explains
+  // the "/" shortcut and is tied to the box by aria-describedby; aria-keyshortcuts stays for assistive technology.
+  const label = /(<label\b[^>]*\sfor="find-search"[^>]*>)([^<]+)<\/label>/.exec(html);
+  assert.ok(label, 'a label for the search box');
+  assert.doesNotMatch(label[1], /visually-hidden|\shidden\b|aria-hidden/, 'the label is visible (whole start tag checked)');
+  assert.equal(label[2].trim(), 'Search the library', 'the accessible name holds');
+  const input = /<input id="find-search"[^>]*>/.exec(html)[0];
+  assert.match(input, /\saria-keyshortcuts="\/"/);
+  const described = /\saria-describedby="([^"]+)"/.exec(input)?.[1];
+  assert.ok(described, 'the box is described by its hint');
+  const hint = new RegExp(`<(p|span)\\b[^>]*\\bid="${described}"[^>]*>([\\s\\S]*?)</\\1>`).exec(html);
+  assert.ok(hint, 'aria-describedby resolves to an element on the page');
+  assert.doesNotMatch(hint[0], /aria-hidden|hidden\b|visually-hidden/, 'the hint is visible');
+  assert.match(hint[2], /Press <kbd>\/<\/kbd>/, 'the hint names the shortcut key');
   assert.match(html, /id="find-count"[^>]*aria-live="polite"/);
   for (const name of ['type', 'outcome']) assert.match(html, new RegExp(`<fieldset[\\s\\S]*name="${name}"`));
   assert.equal(html.match(/<fieldset\b/g)?.length, 4);
   assert.match(html, /<form id="find-form"[^>]*\shidden>/, 'the form stays hidden until the index loads');
-  assert.doesNotMatch(html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0], /\shidden/, 'the static list is visible without JavaScript');
+  const fallback = html.match(/<div id="find-static"[\s\S]*?<\/div>/)[0];
+  assert.doesNotMatch(fallback, /\shidden/, 'the static list is visible without JavaScript');
+  assert.match(fallback, /All library entries are shown.*Find on Page/, 'the unfiltered list explains how to search when enhancement is unavailable');
 });
 
 test('the template loads nothing from elsewhere and holds no numbers or index link', () => {

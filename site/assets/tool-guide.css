@@ -1,0 +1,73 @@
+.tool-guide-group {
+  margin: clamp(32px, 4vw, 64px) 0 0;
+}
+.tool-guide-group > :is(h2, .tool-group-label) {
+  margin: 0 0 12px;
+  color: var(--brand);
+  font: 600 18px/1.35 Manrope, sans-serif;
+  letter-spacing: -.015em;
+}
+.tool-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  column-gap: clamp(24px, 3vw, 48px);
+}
+@media (min-width: 1080px) {
+  .tool-guide-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.tool-guide-grid > :is(.tool-guide-card, .project-row) {
+  min-width: 0;
+  display: block;
+  padding: 22px 0 24px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+.tool-guide-grid :is(.tool-guide-card, .project-description) > h3 {
+  margin: 0 0 12px;
+  color: var(--paper);
+  font: 600 clamp(23px, 2.1vw, 32px)/1.17 var(--display);
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.tool-guide-body > :is(.tool-definition, .tool-use) {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--paper);
+  font: 400 17px/1.55 Manrope, sans-serif;
+}
+.tool-guide-body > .tool-use { color: var(--steel); margin-top: 6px; }
+.tool-guide-body > .project-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 18px;
+  margin: 8px 0 0;
+}
+.tool-guide-body .project-links > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 6px;
+  color: var(--brand);
+  font: 600 16px/1.4 Manrope, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.tool-guide-body .project-links > .tool-source {
+  color: var(--steel);
+  font-weight: 500;
+  text-decoration-color: var(--rule);
+}
+.tool-guide-body a:hover { text-decoration-thickness: 2px; }
+.tool-guide-body a:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+
+/* The dedicated guide opens directly into its first group. */
+.company-hero:has(+ .company-section .tool-guide-group) {
+  display: block;
+  padding-block: clamp(24px, 4vw, 52px) 24px;
+}
+.company-hero:has(+ .company-section .tool-guide-group) :is(.company-lead, .company-actions) {
+  margin-top: 14px;
+}
+.company-section:has(> .tool-guide-group) { padding-top: 24px; }
+.company-section > .tool-guide-group:first-child { margin-top: 0; }

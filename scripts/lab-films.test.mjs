@@ -100,7 +100,7 @@ test('the schema is closed: an extra field, a file outside the films folder or a
     const noReal = clone(record); delete noReal.films[0].real;
     assert.match(filmsProblems(noReal, FILMS_FILE, root).join('\n'), /films\/0: missing real/);
     const honest = clone(record); honest.films[0].source.reencoded = false;
-    assert.match(filmsProblems(honest, FILMS_FILE, root).join('\n'), /reencoded must be true exactly when/);
+    assert.match(filmsProblems(honest, FILMS_FILE, root).join('\n'), /a changed film must record either re-encoding or remuxing/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -130,7 +130,7 @@ test('the committed films pass, stay under the limit, and load lazily on the lab
   for (const film of films.films) {
     assert.ok(statSync(join('site', film.src)).size <= MAX_FILM_BYTES, film.id);
     const poster = film.poster.replace(/\.png$/, '-1280.webp');
-    assert.ok(page.includes(`<video controls preload="none" playsinline poster="../../${poster}"`), film.id);
+    assert.ok(page.includes(`<video controls preload="none" playsinline loading="lazy" poster="../../${poster}"`), film.id);
     assert.ok(page.includes(`<source src="../../${film.src}" type="${film.mime}">`), film.id);
   }
   assert.match(renderFilms(null), /The first films are being filmed/);
@@ -143,7 +143,7 @@ test('a film already embedded in progress becomes a gallery link, while the tour
   assert.match(gallery, /Thirty seconds in the agent space/);
   assert.match(gallery, /<a href="#film-agent-space-30s">Watch the recording and read its screening record\.<\/a>/);
   assert.doesNotMatch(gallery, /agent-space-30s\.webm|id="film-agent-space-30s"/);
-  assert.match(gallery, /<figure class="lab-film" id="film-agent-space-tour"><video controls preload="none" playsinline poster="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-tour-poster-1280\.webp"/);
+  assert.match(gallery, /<figure class="lab-film" id="film-agent-space-tour"><video controls preload="none" playsinline loading="lazy" poster="\.\.\/\.\.\/assets\/labs\/agent-space\/films\/agent-space-tour-poster-1280\.webp"/);
 });
 
 // The screening record (odin-rnd #81 review): bound to the film's bytes and covering the whole film, or refused.

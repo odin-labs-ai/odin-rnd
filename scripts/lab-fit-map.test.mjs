@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { fitMapProblems, pinFor, pinProblems, readFitMap, renderFitMap, VERDICT_WORDS } from './lab-fit-map.mjs';
+import { fitMapProblems, pinFor, pinProblems, readFitMap, renderFitMap, VERDICT_WORDS, withFailoverResults } from './lab-fit-map.mjs';
 import { vendor } from './vendor-fit-map.mjs';
 import { renderLabs } from './labs.mjs';
 
@@ -39,7 +39,7 @@ const mapping = { as: { 'EXP 020': 'EXP 020', 'Lab 02 (v1.1)': 'Lab 03', 'Lab 03
 const bytes = obj => Buffer.from(JSON.stringify(obj, null, 1));
 const COMMIT = hex(40, '9');
 
-test('the committed fit map passes the build gate and shows every cell pending, its predictions labelled as predictions', () => {
+test('the committed fit map passes the build gate and shows the five published failover verdicts beside the frozen predictions', () => {
   assert.deepEqual(fitMapProblems(committed), []);
   assert.equal(committed.vendored.sourceSha256, '89870a85f42f025a79b01129a0ccae8c4292a4ab42920323ac109466199df1e5');
   assert.equal(committed.vendored.commit, '14a29c9dedc4b1d0c7edd6d3da78a55f5dadde61');
@@ -47,17 +47,34 @@ test('the committed fit map passes the build gate and shows every cell pending, 
   assert.deepEqual(committed.vendored.transform.map(t => [t.lab, t.as]), [['EXP 020', 'EXP 020'], ['Lab 02 (v1.1)', 'Lab 03'], ['Lab 03', 'Lab 04']]);
   const cells = committed.labs.flatMap(lab => lab.cells);
   assert.equal(cells.length, 10);
-  assert.ok(cells.every(cell => cell.verdict === null && cell.result === null));
+  assert.deepEqual(committed.labs[1].cells.map(c => c.verdict), ['mongodb-fits', 'mongodb-fits', 'postgres-fits', 'mongodb-fits', 'postgres-fits']);
+  assert.deepEqual(withFailoverResults(committed, readFileSync('site/data/failover/results.json')), committed);
+  assert.equal(cells.filter(c => c.result === 'data/failover/results.json').length, 5);
   const html = renderFitMap(committed);
-  assert.equal((html.match(/class="fit-pending">Pending</g) ?? []).length, 10);
-  assert.match(html, /0 of 10 scenarios have a verdict so far\./);
+  assert.equal((html.match(/class="fit-pending">Pending</g) ?? []).length, 5);
+  // The feed-check basis shows on exactly the two feed-decided verdicts (F2b and components) of the published Lab 03,
+  // and a record without its results digest is refused before it can render (review 2bb1b73a item 39; see the next test).
+  assert.equal((html.match(/<span class="fit-none">On the feed check<\/span>/g) ?? []).length, 2);
+  assert.match(html, /5 of 10 scenarios have a verdict so far\./);
   assert.match(html, /<th scope="col">Predictions, frozen before the run<\/th>/);
-  assert.match(html, /<li><span>PostgreSQL’s advocate:<\/span> both-fit, leaning postgres-fits<\/li>/);
+  assert.match(html, /<li><span>PostgreSQL advocate \(an AI model\):<\/span> both-fit, leaning postgres-fits<\/li>/);
   assert.match(html, /<a href="\.\.\/journal\/mongodb-home-ground-pre-registration\.html">EXP 020: /);
-  assert.match(html, /<a href="\.\.\/journal\/failover-pre-registration\.html">Lab 03: /, 'Lab 03 links its public pre-registration (EXP 021)');
+  assert.match(html, /<a href="\.\.\/journal\/failover-results\.html">Lab 03: /, 'Lab 03 links its published results (EXP 021)');
   assert.match(html, /<h3 id="fit-2">Lab 04: [^<]+<\/h3>/, 'a lab without a public page is a plain label');
   const raw = readFileSync('site/data/labs/fit-map.json', 'utf8');
   for (const leak of ['.ai/', 'PREREG', 'DESIGN.md', 'RESULT.json', 'lab02-', '"dir"', 'odin_rnd', 'this_pc', 'Mac']) assert.ok(!raw.includes(leak) && !html.includes(leak), leak);
+});
+
+test('EXP 021 publication rejects a stale stage, substituted verdict or stale result digest', () => {
+  for (const edit of [
+    map => { map.labs[1].stage = 'frozen, not yet published'; },
+    map => { map.labs[1].cells[2].verdict = 'mongodb-fits'; },
+    map => { delete map.vendored.failoverResultsSha256; },
+  ]) {
+    const map = structuredClone(committed);
+    edit(map);
+    assert.match(fitMapProblems(map).join('\n'), /published failover results differ/);
+  }
 });
 
 test('the Labs page carries the matrix, and the build reads it through renderLabs', () => {

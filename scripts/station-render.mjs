@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import { parseEvidence } from '../demos/test-witness/run.mjs';
 import { stations, validateStationContracts, recordedAssertions } from './station-contract.mjs';
 import { escape } from './witness-render.mjs';
 import { readFileSync } from 'node:fs';
@@ -13,6 +15,45 @@ import { censusPublication, floorLink, measuredStatus as floorStatus, renderFloo
 const pre = text => `<pre tabindex="0">${escape(text)}</pre>`;
 const row = (label, value, state='') => `<div class="record-comparison ${state}"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;
 const receiptLink = (station,id,label) => `<a href="projects/${station.project}/#observation-${escape(id)}">${escape(label)}</a>`;
+// The Gate compares three recorded suites against the same seeded rounding defect.
+// The asserts below are the build-time fail-closed contract: a malformed record stops the build, so a partial page
+// never deploys. parseEvidence (demos/test-witness/run.mjs) is pure: it reads only command.stdout and exitCode
+// against a constant oracle, with no I/O, so the same record always renders or always stops the build.
+function renderGate(station, record) {
+  const suites = [
+    { key: 'weak', label: 'Ordinary' },
+    { key: 'strong', label: 'Boundary' },
+    { key: 'always-pass', label: 'Always pass' },
+  ];
+  const options = suites.map(({ key, label }) =>
+    `<label><input type="radio" name="gate-suite" value="${key}"${key === 'strong' ? ' checked' : ''}>${label}</label>`).join('');
+  const results = suites.map(({ key, label }) => {
+    const observation = record.observations.find(o => o.id === `rounding-${key}`);
+    const command = record.commands.find(c => c.id === observation.commandIds.at(-1));
+    assert.equal(observation.caseId, 'rounding');
+    assert.equal(command?.status, 'completed', `Missing completed receipt for ${observation.id}`);
+    assert.deepEqual(command.args.slice(-3), ['Witness', 'rounding', key]);
+    const expectedIds = key === 'weak' ? ['ordinary'] : ['ordinary', 'rounding', 'below-threshold', 'threshold', 'validation'];
+    const { valid, complete, markers, failures } = parseEvidence(command, expectedIds);
+    assert(valid && complete, `Invalid recorded checks for ${observation.id}`);
+    assert.deepEqual(failures, key === 'strong' ? ['rounding'] : []);
+    const checks = markers.map(([, id, status, actual, expected]) => ({ id, status, actual, expected }));
+    assert.deepEqual(observation.actual, { assertions: checks, assertionCount: checks.length, exitCode: command.exitCode });
+
+    const rounding = checks.find(check => check.id === 'rounding');
+    const note = {
+      weak: 'The ordinary total passed. This suite skipped the rounding case.',
+      strong: `The invoice returned <strong>${escape(rounding?.actual ?? '')}</strong>. Expected <strong>${escape(rounding?.expected ?? '')}</strong>.`,
+      'always-pass': 'This suite returned the expected answers without calling the invoice code.',
+    }[key];
+    return `<div data-gate-case="${key}" class="gate-case">
+      <p class="gate-case-summary"><strong>${checks.length - failures.length} of ${checks.length} checks passed.</strong> ${note}</p>
+      <p>Test evidence <strong>${escape(observation.verdict)}</strong>.</p>
+      ${receiptLink(station, observation.id, `${label} receipt`)}
+    </div>`;
+  }).join('');
+  return `<fieldset class="gate-suites"><legend>Recorded test suites</legend><div class="gate-choices">${options}</div>${results}</fieldset>`;
+}
 export function renderStations(report, reports, laya = loadLaya(), page = readFileSync(pagePath, 'utf8'), preregistration = loadPreregistration(), amendment = loadAmendment(), amendment02 = checkAmendment02().record, results = checkResults(), census = censusPublication()) {
   validateStationContracts(report,reports);
   assertBenchCurrent(page, laya);
@@ -48,8 +89,7 @@ export function renderStations(report, reports, laya = loadLaya(), page = readFi
       if(index===1){
         body=`<p class="artifact-label">One half-cent invoice. Two implementations.</p><div class="record-comparisons">${row('Before',obs[0].actual)}${row('After',obs[1].actual)}${row('Independent expectation',obs[0].expected,'accepted')}</div><p class="station-implication">Equality preserves this bug. Both versions are rejected by the declared expectation.</p><div class="station-receipts">${receiptLink(station,obs[0].id,'Inspect before')}${receiptLink(station,obs[1].id,'Inspect after')}</div>`;
       }else if(index===2){
-        const assertion=obs[1].actual.assertions.find(a=>a.id==='rounding');
-        body=`<p class="artifact-label">The assertion that changes the answer</p>${pre(`rounding: expected ${assertion.expected}\n          actual ${assertion.actual} → ${assertion.status}`)}<div class="record-comparisons">${row('Weak suite','PASS · defect missed','rejected')}${row('Strong suite','FAIL · defect detected','accepted')}${row('Always-pass suite','REJECTED · ignores behavior','rejected')}</div><p class="station-implication">Here, a failing assertion is the useful result. A green test alone cannot qualify the suite.</p><div class="station-receipts">${obs.map(o=>receiptLink(station,o.id,o.id.replace('rounding-','')+' receipt')).join('')}</div>`;
+        body=renderGate(station,record);
       }else{
         const outputs=obs.map(o=>recordedAssertions(record,o).assertions);
         const extract=(assertions,id)=>{const a=assertions.find(a=>a.id===id);return `${a.status} · ${a.actual} / expected ${a.expected}`};

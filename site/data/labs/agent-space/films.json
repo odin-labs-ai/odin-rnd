@@ -6,28 +6,29 @@
   {
    "id": "agent-space-30s",
    "title": "Thirty seconds in the agent space",
-   "line": "A visitor asks Odin what is going on and Atlas how to plug in an agent. Each answer comes with its proof card: the question, the answer, why, and the source.",
-   "real": "A live session, recorded unedited.",
+   "line": "A visitor asks Odin what is going on and Atlas how to plug in an agent. The cards show each question, the answer and its cited source.",
+   "real": "A dated recording of a session, unedited. Atlas gives scripted replies.",
    "src": "assets/labs/agent-space/films/agent-space-30s.webm",
    "poster": "assets/labs/agent-space/films/agent-space-30s-poster.png",
    "mime": "video/webm;codecs=vp9",
-   "bytes": 1613667,
+   "bytes": 1613711,
    "seconds": 27,
    "sha256": {
-    "src": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "src": "88d3115fb49c3ab45db3490dcdb4a2fd23df75bd2305138e4676beb15e2411af",
     "poster": "c4831eca46f8d32f4f751229cfea960af612ca8145b6fa66443bb9d98d9bbc91"
    },
    "source": {
     "commit": "4b8935dd8007d60f25c1eefab5a2b668cf0a47f3",
-    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "note": "Recorded in the agent space viewer. The original was screened on 25 October. The container now includes the duration; every video packet and timestamp is unchanged.",
     "originalSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
     "originalBytes": 1613667,
-    "reencoded": false
+    "reencoded": false,
+    "remuxed": true
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
-    "srcSha256": "70c98e1097d75cdee099b7f9f8b6906c4556263d080372b17ab3b3918d7b89aa",
+    "method": "Decoded the remux at each recorded five-second sample with ffmpeg. Every RGB24 hash matched the original frame screened on 25 October by an AI agent, not by a human",
+    "at": "2026-11-26",
+    "srcSha256": "88d3115fb49c3ab45db3490dcdb4a2fd23df75bd2305138e4676beb15e2411af",
     "frames": [
      {
       "t": 0,
@@ -66,28 +67,29 @@
   {
    "id": "agent-space-tour",
    "title": "A tour of the agent space",
-   "line": "A visitor walks in through the arch and asks three agents a question: Odin what is going on and how he knows, Atlas how to plug in an agent, Pulse how long it has been running. Every answer comes with its proof card.",
-   "real": "A live session, recorded unedited; Pulse is a separate HTTP service answering from its own process.",
+   "line": "A visitor walks in through the arch and asks three agents a question: Odin what is going on and how he knows, Atlas how to plug in an agent, Pulse how long it has been running. The cards identify the cited sources.",
+   "real": "A dated recording of a session, unedited. Atlas gives scripted replies. Pulse answers from its own HTTP service.",
    "src": "assets/labs/agent-space/films/agent-space-tour.webm",
    "poster": "assets/labs/agent-space/films/agent-space-tour-poster.png",
    "mime": "video/webm;codecs=vp9",
-   "bytes": 5765850,
+   "bytes": 5763795,
    "seconds": 78,
    "sha256": {
-    "src": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "src": "e3a79e0c5633d7c319cce79bae4e794679087459144ee1b1411db172ff301366",
     "poster": "1864b04d670fcab5ba760f6fe2216d2d5e191453a67474557242df9955da06af"
    },
    "source": {
     "commit": "ae5816089c95aa98f165c3c887a3cefc6510c691",
-    "note": "Recorded in the agent space's own viewer and copied here unchanged, with its poster frame.",
+    "note": "Recorded in the agent space viewer. The original was screened on 25 October. The container now includes the duration; every video packet and timestamp is unchanged.",
     "originalSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
     "originalBytes": 5765850,
-    "reencoded": false
+    "reencoded": false,
+    "remuxed": true
    },
    "screening": {
-    "method": "one frame every 5 s, decoded with ffmpeg as raw rgb24 and viewed by an AI agent (the worker), not by a human",
-    "at": "2026-10-25",
-    "srcSha256": "90de50de2f8c4f391122d8305b8c30ba8be6c5bf16675eef8a97866db11c37ef",
+    "method": "Decoded the remux at each recorded five-second sample with ffmpeg. Every RGB24 hash matched the original frame screened on 25 October by an AI agent, not by a human",
+    "at": "2026-11-26",
+    "srcSha256": "e3a79e0c5633d7c319cce79bae4e794679087459144ee1b1411db172ff301366",
     "frames": [
      {
       "t": 0,
