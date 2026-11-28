@@ -51,7 +51,7 @@
   "cost": "$0. One read-only GitHub API call against a public repository's own PR list; no private-repo read, no broker call, no new spend, no code changed in odin-labs or odin-rnd beyond this record's own experiment directory.",
   "analysis": {
     "script": "experiments/record-lander-backlog/analyse.mjs",
-    "sha256": "PENDING-FILLED-IN-WHEN-FROZEN",
+    "sha256": "15cd36d82af8c0d62b9bf138b172decca6168b7de07467d8b22338ff8cc91c41",
     "inputs": "capture/records-prs.json (the raw gh pr list output, copied unchanged).",
     "check": "node experiments/record-lander-backlog/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed input."
   },
