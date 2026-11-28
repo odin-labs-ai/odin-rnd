@@ -24,6 +24,16 @@
       "date": "2026-11-28"
     },
     {
+      "key": "exp-015-amendment-02",
+      "experiment": "EXP 015",
+      "title": "Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Amendment",
+      "text": "A periodic recheck of EXP 015, one cycle (one window) later: is each broker's verdict class (estimate holds / off by a stable factor / unreliable) still the correct read? This amendment republishes a recheck already completed, counted and analysed on a now-superseded branch before this one existed -- it does not freeze a new hypothesis ahead of new data; the window below closed, and its rows were pulled and analysed, before this record was written. What is new here is (a) publishing by letter, the same decision amendment-01 records, which this amendment inherits unchanged, and (b) three corrections a review found in the superseded branch's own version of this record, listed under corrections below.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "data/telemetry-truth/amendment-02.json",
+      "date": "2026-11-28"
+    },
+    {
       "key": "exp-021-results",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",

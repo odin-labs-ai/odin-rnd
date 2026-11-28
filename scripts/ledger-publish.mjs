@@ -25,6 +25,8 @@ export const copies = [
   { id: 'EXP 015', record: 'experiments/telemetry-truth/preregistration.json', pin: 'experiments/telemetry-truth/preregistration.sha256', site: 'site/data/telemetry-truth/preregistration.json' },
   { id: 'EXP 015', record: 'experiments/telemetry-truth/amendment-01/amendment.json', pin: 'experiments/telemetry-truth/amendment-01/amendment.sha256', site: 'site/data/telemetry-truth/amendment-01.json' },
   { id: 'EXP 015', record: 'experiments/telemetry-truth/results.json', pin: null, site: 'site/data/telemetry-truth/results.json' },
+  { id: 'EXP 015', record: 'experiments/telemetry-truth/amendment-02/amendment.json', pin: 'experiments/telemetry-truth/amendment-02/amendment.sha256', site: 'site/data/telemetry-truth/amendment-02.json' },
+  { id: 'EXP 015', record: 'experiments/telemetry-truth/amendment-02/results.json', pin: null, site: 'site/data/telemetry-truth/amendment-02-results.json' },
   { id: 'EXP 016', record: 'experiments/broker-same-model/preregistration.json', pin: 'experiments/broker-same-model/preregistration.sha256', site: 'site/data/broker-same-model/preregistration.json' },
   { id: 'EXP 016', record: 'experiments/broker-same-model/amendment-01/amendment.json', pin: 'experiments/broker-same-model/amendment-01/amendment.sha256', site: 'site/data/broker-same-model/amendment-01.json' },
   { id: 'EXP 016', record: 'experiments/broker-same-model/results.json', pin: null, site: 'site/data/broker-same-model/results.json' },

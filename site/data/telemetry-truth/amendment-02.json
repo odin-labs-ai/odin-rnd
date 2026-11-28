@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 015",
+  "amendment": "02",
+  "authoredOn": "2026-11-28",
+  "amends": {
+    "preregistration": "experiments/telemetry-truth/preregistration.json",
+    "preregistrationSha256": "914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe",
+    "frozenCommit": "acdf8a2"
+  },
+  "why": "A periodic recheck of EXP 015, one cycle (one window) later: is each broker's verdict class (estimate holds / off by a stable factor / unreliable) still the correct read? This amendment republishes a recheck already completed, counted and analysed on a now-superseded branch before this one existed -- it does not freeze a new hypothesis ahead of new data; the window below closed, and its rows were pulled and analysed, before this record was written. What is new here is (a) publishing by letter, the same decision amendment-01 records, which this amendment inherits unchanged, and (b) three corrections a review found in the superseded branch's own version of this record, listed under corrections below.",
+  "question": "Is each broker's EXP 015 verdict class (estimate holds / off by a stable factor / unreliable) still the correct read this cycle?",
+  "calibration": {
+    "disclosed": "EXP 015's own amendment-01 (experiments/telemetry-truth/amendment-01/, this same pull request's own earlier commits, not yet merged to main as this is written) reports two brokers holding and one off by a stable factor of 1.10, for its window 2026-10-28..2026-11-04.",
+    "prediction": "Each broker's verdict class is unchanged from amendment-01's result.",
+    "baselineCaveat": "Amendment-01 is open on this same pull request, not yet merged to main, as this amendment is authored. Its computation is deterministic and already complete, but by this repository's own standard ('the freeze is the merge', experiments/telemetry-truth/preregistration.json#/notBefore) it is not yet formally frozen. If amendment-01's committed results change before it merges, this amendment's comparison must be re-verified against the merged version before this amendment's own review is called ready."
+  },
+  "window": {
+    "from": "2026-11-18T00:00:00Z",
+    "to": "2026-11-25T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "settlement": "Billing is read no earlier than 2026-11-26T00:00:00Z, same 24h settlement margin as EXP 015.",
+    "rationale": "The gap between EXP 015's own window (ending 2026-11-04) and this window is 14 days -- two untouched weeks, not one. This amendment covers the second of them, adjacent to EXP 015's own window's far side, leaving the first (2026-11-04..2026-11-11) available for a future checkpoint."
+  },
+  "brokers": ["X", "Y", "Z"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled capture workflow EXP 015 and amendment-01 use. No new capture code, no new key, no new spend.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256.",
+    "anonymisation": "The capture's own rows are published only after the reduction amendment-01/anonymise.mjs applies -- broker to its letter, keyName's broker name to the same letter, and the same five fields dropped (requestedModel, servedModel, servedProvider, estimateSource, and the one broker's generation-record cross-check fields). This amendment adds no new anonymisation code; it reuses amendment-01's unchanged."
+  },
+  "metric": {
+    "reference": "Identical to experiments/telemetry-truth/preregistration.json#/metric. Reused verbatim by experiments/telemetry-truth/amendment-02/analyse-anon.mjs, which imports analyse() and readCapture() unchanged from ../analyse.mjs and supplies only this amendment's window/brokers/decision.rule, the same way amendment-01/analyse-anon.mjs does."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 50,
+      "holdsWithin": 0.05,
+      "stableFactorMaxWidth": 0.02,
+      "fleet": { "ratioMin": 0.9, "ratioMax": 1.1, "maxZeroEstimateShare": 0.1 }
+    },
+    "ruleNote": "Copied verbatim from experiments/telemetry-truth/preregistration.json#/decision/rule. Intentionally identical, not reinvented.",
+    "fleetNote": "This lane still lacks the private routing-log / account reconciliation fleet-cost-reconcile.mjs needs. The fleet half reports 'not measurable', honestly, not guessed."
+  },
+  "stoppingRule": "Publish each checkpoint as a further-dated amendment to EXP 015 (amendment-03, amendment-04, ...), not a new experiment number, as long as every broker's verdict class is unchanged from the prior checkpoint. The FIRST checkpoint where any broker's class changes is a kill-the-cadence event: stop the periodic schedule, publish the drifted result as its own dated amendment, and flag that any routing/cost claim built on the old verdict needs re-checking before further reuse.",
+  "cadence": "One checkpoint roughly every 90 days, reusing analyse.mjs unchanged each time. The next candidate window (amendment-03, pending an unchanged verdict here) is roughly 2027-02-16T00:00:00Z to 2027-02-23T00:00:00Z -- stated here for coordination, not frozen; amendment-03 freezes its own window when it is authored.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this amendment; this amendment only adds a periodic re-analysis + review cadence. No new broker calls, no new keys, no new spend.",
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository, before this amendment's PR is called ready.",
+  "corrections": [
+    "A superseded branch of this amendment (herd/exp015b-recheck-win, PR #307, closed) named the uncleared brokers directly in its results.json keys, every capture row, and one commit's /coordination field -- this record never does.",
+    "That superseded branch's own window.rationale overclaimed 'the only untouched gap' when the real gap is two weeks, not one -- fixed here from the first commit, not by a later edit to a record already called frozen.",
+    "That superseded branch edited its own amendment.json twice after its run commit, against its own 'nothing may change afterwards' rule. This record is written once, complete, before being committed; any future correction is a new, dated amendment (amendment-03), never an edit in place."
+  ],
+  "limits": [
+    "A reader who already knows amendment-01's own calibration numbers, and who also reads EXP 015's and EXP 016's frozen, already-public pre-registrations (which name all three brokers), can probably match at least one letter to a broker across this repository's own records. The letters keep this amendment's rows and results from naming a broker next to a number; they do not make the brokers secret.",
+    "A single window, repeated once. Whether 'stable' or 'unstable' class-membership is itself stable over more than two checkpoints is not yet measured."
+  ],
+  "notBefore": "The anonymised results are published only after this amendment is merged to main of odin-labs-ai/odin-rnd."
+}
