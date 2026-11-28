@@ -9,6 +9,7 @@
 // Not configured at all (no webhook): the run skips with a clear line instead of failing the schedule.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { health, renderLines } from './rnd-factory-health.mjs';
 
 export const SITE = 'https://odin-labs-ai.github.io/odin-rnd/';
 // Self-contained on purpose: the workflow checks out scripts/ without installing dependencies.
@@ -50,6 +51,13 @@ export function absolute(href) {
   return url.href.replace(/[()\s]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
 }
 
+/** The factory-health section (CRITIC: "no single place where a failure such as lab-waiting shows up, and open
+ * records PRs pile up unnoticed"): a fenced block so GitHub's emoji and `#`/`@` in a PR's head ref are never parsed
+ * as Mattermost markup. `report` is scripts/rnd-factory-health.mjs's own `health()` output. */
+export function formatFactoryHealth(report) {
+  return ['#### R&D factory health', '```', ...renderLines(report), '```'].join('\n');
+}
+
 export function formatWeek({ start, end, entries }) {
   const lines = [`#### R&D floor this week (${humanDay(start)} to ${humanDay(end)})`];
   if (!entries.length) lines.push('', 'Nothing new was published on the R&D floor this week.');
@@ -76,7 +84,11 @@ async function main(argv) {
   const end = process.env.RND_WEEK_END || yesterday();
   if (!isCalendarDay(end)) throw new Error('RND_WEEK_END must be a real calendar day, YYYY-MM-DD');
   const feed = JSON.parse(readFileSync('site/data/updates.json', 'utf8'));
-  const text = formatWeek(weekOf(feed, end));
+  let text = formatWeek(weekOf(feed, end));
+  // Read-only, additive: a token to read Actions runs on odin-labs' private repo too is minted by the workflow
+  // (rnd-weekly.yml); a run with none (a local dry run, say) says so instead of silently leaving the section out.
+  const healthToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  text += `\n\n${healthToken ? formatFactoryHealth(await health(healthToken)) : '#### R&D factory health\nnot available this run (no token to read Actions runs with)'}`;
   if (dryRun) { console.log(text); return; }
   let response;
   // A fetch or URL-parse error can quote the webhook URL, whole or in part; never let one reach the log.
