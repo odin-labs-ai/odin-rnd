@@ -1,0 +1,105 @@
+{
+  "experiment": "EXP 015 telemetry-truth-recheck-01",
+  "window": {
+    "from": "2026-11-18T00:00:00Z",
+    "to": "2026-11-25T00:00:00Z"
+  },
+  "preregistrationSha256": "914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe",
+  "perBroker": {
+    "openrouter": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0,
+        "2026-11-19": 0,
+        "2026-11-20": 0,
+        "2026-11-21": 0,
+        "2026-11-22": 0,
+        "2026-11-23": 0,
+        "2026-11-24": 0
+      },
+      "meanOfDailyMeans": 0,
+      "ci95": [
+        0,
+        0
+      ],
+      "factor": null,
+      "servedModels": [
+        "anthropic/claude-haiku-4.5",
+        "openai/gpt-4o-mini"
+      ],
+      "verdict": "estimate holds"
+    },
+    "eurouter": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0.1,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0.1,
+        "2026-11-19": 0.1,
+        "2026-11-20": 0.1,
+        "2026-11-21": 0.1,
+        "2026-11-22": 0.1,
+        "2026-11-23": 0.1,
+        "2026-11-24": 0.1
+      },
+      "meanOfDailyMeans": 0.1,
+      "ci95": [
+        0.1,
+        0.1
+      ],
+      "factor": 1.1,
+      "servedModels": [
+        "aws-bedrock/claude-haiku-4.5",
+        "microsoft-foundry-2/gpt-4o-mini",
+        "microsoft-foundry/gpt-4o-mini"
+      ],
+      "verdict": "estimate off by a stable factor"
+    },
+    "requesty": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0,
+        "2026-11-19": 0,
+        "2026-11-20": 0,
+        "2026-11-21": 0,
+        "2026-11-22": 0,
+        "2026-11-23": 0,
+        "2026-11-24": 0
+      },
+      "meanOfDailyMeans": 0,
+      "ci95": [
+        0,
+        0
+      ],
+      "factor": null,
+      "servedModels": [
+        "anthropic/claude-haiku-4-5",
+        "openai/gpt-4o-mini"
+      ],
+      "verdict": "estimate holds"
+    }
+  },
+  "openrouterInBandVsGenerationRecord": {
+    "n": 109,
+    "agreeWithin1Pct": 109
+  },
+  "fleet": {
+    "verdict": "not measurable"
+  },
+  "amends": "EXP 015",
+  "amendmentNumber": 1,
+  "amendmentSha256": "02183506b916f8d1805afcba1fe1c21884288237c0f5a408581f58e4aa5a3d8a"
+}
