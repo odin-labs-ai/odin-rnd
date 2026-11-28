@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "kind": "erratum",
+  "id": "erratum-01",
+  "experiment": "EXP 023",
+  "title": "Erratum 01: a wrong published count, an undisclosed post-capture edit, and an overclaim about the backlog's age",
+  "date": "2026-11-28",
+  "statusText": "Erratum 28 Nov 2026",
+  "parent": {
+    "file": "results.json",
+    "sha256": "7c13a8c9936f49310a00a28e547483021e1b8fbcade0485a6bc9c926c7effe16",
+    "published": "results.json stays byte-identical and is not recomputed by this erratum. Every correction below is to prose (the PR body, a commit message) or to a disclosure the preregistration's own freeze rule required and did not get at the time; no window, metric, decision rule or counted row changes."
+  },
+  "scope": "This erratum corrects published wording and discloses a process fact. It changes no method, analysis, data, decision or result. All three items were found by an independent exact-head review (the landing-rules review), not by this lane's own re-reading.",
+  "corrections": [
+    {
+      "where": "PR body (Result table, measured-blind row) and commit bf472e3's message ('18 days still outstanding')",
+      "field": "measured-blind stillOutstanding count",
+      "was": "18 (oldest 30.4d)",
+      "now": "19 (oldest 30.4d)",
+      "evidence": "results.json#/perLab/measured-blind/stillOutstanding has 19 entries (20261029..20261105: 8 days, plus 20261114..20261124: 11 days = 19). The data file was always correct; only the prose that restated it was wrong. Independently recounted from the committed results.json, not re-derived."
+    },
+    {
+      "where": "preregistration.json#/analysis/sha256 and preregistration.sha256",
+      "field": "process disclosure (the freeze rule says 'nothing in this record may change afterwards')",
+      "was": "PENDING-FILLED-IN-WHEN-FROZEN (preregistration.sha256: f15a54f3c2f9cb4afe97617e532c50ae7042e4ae961494a86d8885ef8ddac07d), committed in the freeze commit b2e0c44, before the capture was fetched",
+      "now": "15cd36d82af8c0d62b9bf138b172decca6168b7de07467d8b22338ff8cc91c41 (preregistration.sha256: 7327a45162def084cc2aef6328ed7bd9ef1e2652d0ce45ad9f8fe21da5714609), changed in commit 17bdcc0 at 09:08:18Z, after the capture's own fetchedAt of 09:06:04Z",
+      "evidence": "The edited field is a deterministic sha256 of analyse.mjs's own bytes, added in the freeze commit and never touched since (recomputed directly: sha256sum experiments/record-lander-backlog/analyse.mjs matches 15cd36d8... at every commit from b2e0c44 onward). There is no result-dependent degree of freedom in this field. The disclosure that should have lived in this tree at the time lived only in the PR body and a commit message instead; this entry is that disclosure, with both hashes and the exact timeline, now in the tree."
+    },
+    {
+      "where": "PR body (Result table) and preregistration.json#/window (line 23, '30 possible run-days')",
+      "field": "red-build and measured-blind coverage, stillOutstanding count and the 'oldest' day's framing",
+      "was": "10/30 (33.3%), 17 outstanding (oldest 30.4d) for red-build; 8/30 (26.7%), 19 outstanding (oldest 30.4d) for measured-blind -- stated without noting that some of those outstanding days precede either lab's first-ever record",
+      "now": "Counting only from each lab's own first record day (red-build: 2026-11-04, PR #182; measured-blind: 2026-11-06, PR #213 -- both independently confirmed against site/data/labs/<lab>/record.json's own first run timestamp on main, not just the capture): red-build 10/24 (41.7%), 11 outstanding, oldest 14.4d; measured-blind 8/22 (36.4%), 11 outstanding, oldest 14.4d. Both verdicts stay 'backlogged' under the frozen decision rule either way (coverage well under the 0.5 threshold on both denominators).",
+      "evidence": "Recomputed independently from capture/records-prs.json (grouping by lab, taking the earliest day any merged PR names) and cross-checked against site/data/labs/red-build/record.json and site/data/labs/measured-blind/record.json on main (runs[0].ranAt: 2026-11-04T19:32:06Z and 2026-11-06T06:08:21Z respectively). The 30-day window and its 'possible run-days' framing in the frozen preregistration assumed every lab had already been running for the full window, which was not true for these two labs."
+    },
+    {
+      "where": "PR body ('no open or merged ... pull request exists for any day from 2026-11-13 onward')",
+      "field": "interpretation of the gap since 2026-11-13",
+      "was": "implied the admission cap specifically deferred those days",
+      "now": "the capture shows 0 OPEN record PRs for either lab and no MERGED one covering any day since 2026-11-13 -- that is what this record's public-data-only design can see. Whether the underlying lab run was deferred by the cap, failed outright, or did not run at all for some other reason is not visible from public PR history alone (odin-labs' own private Actions history would show it, and is out of scope here).",
+      "evidence": "Re-read the preregistration's own stated limits (#1: 'a run that failed outright writes no record and leaves no trace in this capture at all, which this record cannot distinguish from genuinely nothing happened'). This limit was already written down; the PR body's own prose did not carry it through consistently when describing the gap."
+    }
+  ],
+  "statement": "measured-blind's published stillOutstanding count was 18; the correct count, already in results.json, is 19. The preregistration's analysis.sha256 field was edited after the capture was fetched, disclosed here with both hashes and the exact timeline; the edit is a deterministic hash of unchanged script bytes with no result-dependent freedom. Both labs' coverage and stillOutstanding figures hold a verdict of 'backlogged' whether counted from the window's own start or from each lab's first-ever record; counting from the window start overstates the backlog's age for days that predate either lab's existence. The record's window, metric, decision rule and every counted row are unchanged."
+}
