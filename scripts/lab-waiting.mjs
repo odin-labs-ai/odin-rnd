@@ -17,7 +17,7 @@
 //       the safe outcome here: odin-labs' lane-flip-pr.sh treats any non-zero exit as "flip refused; no PR opened,
 //       the records are unchanged" (its own REFUSED path), never a silent no-op and never a corrupted record. Build
 //       this before the first real flip is due (today: the one live cite, agent-space/outage.json's lane commit, is
-//       still `diverged` from oac main, checked 2026-11-28).
+//       still `diverged` from the private main, checked 2026-11-28).
 //
 // Runs wherever the records are checked out (locally, or in odin-labs' hosted lab-waiting.yml); it never touches a
 // private repository or a credential.
