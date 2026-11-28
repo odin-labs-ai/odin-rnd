@@ -1,0 +1,230 @@
+{
+  "experiment": "EXP 023",
+  "window": {
+    "from": "2026-10-29T00:00:00Z",
+    "to": "2026-11-28T00:00:00Z"
+  },
+  "preregistrationSha256": "7327a45162def084cc2aef6328ed7bd9ef1e2652d0ce45ad9f8fe21da5714609",
+  "capturedAt": "2026-11-28T09:06:04Z",
+  "perLab": {
+    "rogue": {
+      "daysInWindow": 30,
+      "daysLanded": 30,
+      "coverage": 1,
+      "medianLatencyDays": 0.25,
+      "maxLatencyDays": 7.83,
+      "stillOutstanding": [],
+      "verdict": "current"
+    },
+    "review": {
+      "daysInWindow": 30,
+      "daysLanded": 30,
+      "coverage": 1,
+      "medianLatencyDays": 0.28,
+      "maxLatencyDays": 3.47,
+      "stillOutstanding": [],
+      "verdict": "current"
+    },
+    "red-build": {
+      "daysInWindow": 30,
+      "daysLanded": 10,
+      "coverage": 0.333,
+      "medianLatencyDays": 3.82,
+      "maxLatencyDays": 8.32,
+      "stillOutstanding": [
+        {
+          "day": "20261029",
+          "open": false,
+          "ageDaysAtCapture": 30.4
+        },
+        {
+          "day": "20261030",
+          "open": false,
+          "ageDaysAtCapture": 29.4
+        },
+        {
+          "day": "20261031",
+          "open": false,
+          "ageDaysAtCapture": 28.4
+        },
+        {
+          "day": "20261101",
+          "open": false,
+          "ageDaysAtCapture": 27.4
+        },
+        {
+          "day": "20261102",
+          "open": false,
+          "ageDaysAtCapture": 26.4
+        },
+        {
+          "day": "20261103",
+          "open": false,
+          "ageDaysAtCapture": 25.4
+        },
+        {
+          "day": "20261114",
+          "open": false,
+          "ageDaysAtCapture": 14.4
+        },
+        {
+          "day": "20261115",
+          "open": false,
+          "ageDaysAtCapture": 13.4
+        },
+        {
+          "day": "20261116",
+          "open": false,
+          "ageDaysAtCapture": 12.4
+        },
+        {
+          "day": "20261117",
+          "open": false,
+          "ageDaysAtCapture": 11.4
+        },
+        {
+          "day": "20261118",
+          "open": false,
+          "ageDaysAtCapture": 10.4
+        },
+        {
+          "day": "20261119",
+          "open": false,
+          "ageDaysAtCapture": 9.4
+        },
+        {
+          "day": "20261120",
+          "open": false,
+          "ageDaysAtCapture": 8.4
+        },
+        {
+          "day": "20261121",
+          "open": false,
+          "ageDaysAtCapture": 7.4
+        },
+        {
+          "day": "20261122",
+          "open": false,
+          "ageDaysAtCapture": 6.4
+        },
+        {
+          "day": "20261123",
+          "open": false,
+          "ageDaysAtCapture": 5.4
+        },
+        {
+          "day": "20261124",
+          "open": false,
+          "ageDaysAtCapture": 4.4
+        }
+      ],
+      "verdict": "backlogged"
+    },
+    "measured-blind": {
+      "daysInWindow": 30,
+      "daysLanded": 8,
+      "coverage": 0.267,
+      "medianLatencyDays": 1.81,
+      "maxLatencyDays": 5.27,
+      "stillOutstanding": [
+        {
+          "day": "20261029",
+          "open": false,
+          "ageDaysAtCapture": 30.4
+        },
+        {
+          "day": "20261030",
+          "open": false,
+          "ageDaysAtCapture": 29.4
+        },
+        {
+          "day": "20261031",
+          "open": false,
+          "ageDaysAtCapture": 28.4
+        },
+        {
+          "day": "20261101",
+          "open": false,
+          "ageDaysAtCapture": 27.4
+        },
+        {
+          "day": "20261102",
+          "open": false,
+          "ageDaysAtCapture": 26.4
+        },
+        {
+          "day": "20261103",
+          "open": false,
+          "ageDaysAtCapture": 25.4
+        },
+        {
+          "day": "20261104",
+          "open": false,
+          "ageDaysAtCapture": 24.4
+        },
+        {
+          "day": "20261105",
+          "open": false,
+          "ageDaysAtCapture": 23.4
+        },
+        {
+          "day": "20261114",
+          "open": false,
+          "ageDaysAtCapture": 14.4
+        },
+        {
+          "day": "20261115",
+          "open": false,
+          "ageDaysAtCapture": 13.4
+        },
+        {
+          "day": "20261116",
+          "open": false,
+          "ageDaysAtCapture": 12.4
+        },
+        {
+          "day": "20261117",
+          "open": false,
+          "ageDaysAtCapture": 11.4
+        },
+        {
+          "day": "20261118",
+          "open": false,
+          "ageDaysAtCapture": 10.4
+        },
+        {
+          "day": "20261119",
+          "open": false,
+          "ageDaysAtCapture": 9.4
+        },
+        {
+          "day": "20261120",
+          "open": false,
+          "ageDaysAtCapture": 8.4
+        },
+        {
+          "day": "20261121",
+          "open": false,
+          "ageDaysAtCapture": 7.4
+        },
+        {
+          "day": "20261122",
+          "open": false,
+          "ageDaysAtCapture": 6.4
+        },
+        {
+          "day": "20261123",
+          "open": false,
+          "ageDaysAtCapture": 5.4
+        },
+        {
+          "day": "20261124",
+          "open": false,
+          "ageDaysAtCapture": 4.4
+        }
+      ],
+      "verdict": "backlogged"
+    }
+  },
+  "anomalies": []
+}
