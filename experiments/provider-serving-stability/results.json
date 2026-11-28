@@ -4,7 +4,7 @@
     "from": "2026-11-11T00:00:00Z",
     "to": "2026-11-18T00:00:00Z"
   },
-  "preregistrationSha256": "35a409049582155c2ac36496d1de53d4f7e4176b2d4f4d0f9ea43595b260ae26",
+  "preregistrationSha256": "83f981a7b6c3b2e5f2b8260231b5eed9517b5035903b30c2092ca2020c055a0c",
   "perPair": {
     "openrouter": {
       "anthropic/claude-haiku-4.5": {

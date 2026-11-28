@@ -20,7 +20,7 @@
     "from": "2026-11-11T00:00:00Z",
     "to": "2026-11-18T00:00:00Z",
     "unit": "7 whole UTC days, half-open [from, to)",
-    "rationale": "The only untouched 7-day gap between EXP 015's window (ending 2026-11-04) and amendment-01's window (starting 2026-11-18) that neither this lane nor (to this lane's knowledge) any prior public record has downloaded or analysed. Chosen by date arithmetic alone (the gap's own boundaries), before any row in it was read.",
+    "rationale": "The gap between EXP 015's window (ending 2026-11-04) and amendment-01's window (starting 2026-11-18) is 14 days, i.e. two untouched 7-day weeks (2026-11-04..2026-11-11 and 2026-11-11..2026-11-18), neither downloaded or analysed by this lane before this commit. This record picks the SECOND of those two weeks, adjacent to amendment-01's own window, so a future dated follow-up (see stoppingRule) has the option of covering the first week (2026-11-04..2026-11-11) next without re-touching this one. Chosen by date arithmetic alone (the gap's own boundaries), before any row in it was read.",
     "integrityNote": "This window's rows were already collected by the ongoing capture cron (see capture.mechanism) before this record was authored — unlike EXP 015's own preregistration, where the window had not opened yet at freeze time. The freeze here is this record's commit, and the claim is narrower but just as load-bearing: neither this lane nor this record's calibration section has read a single row from 2026-11-11..2026-11-18 before this commit. The calibration section above discloses exactly which OTHER windows were already known and why; this window is not one of them."
   },
   "brokers": ["openrouter", "eurouter", "requesty"],
