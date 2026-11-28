@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "amendment": {
+    "amends": "EXP 015",
+    "number": 1,
+    "slug": "telemetry-truth-recheck-01",
+    "title": "Does EXP 015's per-broker verdict still hold, one cycle later?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Nothing in this record may change afterwards; a later change is a new, dated amendment (amendment-02), published first. This file and amendment.sha256 are committed before any row of this amendment's own window is downloaded or read, exactly as EXP 015's own preregistration.json was frozen before its window opened."
+  },
+  "background": "EXP 015 (experiments/telemetry-truth/preregistration.json, sha256 914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe) measured one 7-day window (2026-10-28 to 2026-11-04): openrouter and requesty 'estimate holds', eurouter 'estimate off by a stable factor' (~1.10), fleet 'not measurable'. A single week is a point-in-time snapshot; broker catalogue prices and routing behavior can drift. This amendment proposes a periodic recheck using the same frozen analysis, not a new experiment.",
+  "question": "Is each broker's EXP 015 verdict class (estimate holds / off by a stable factor / unreliable) still the correct read this cycle?",
+  "window": {
+    "from": "2026-11-18T00:00:00Z",
+    "to": "2026-11-25T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "settlement": "Billing is read no earlier than 2026-11-26T00:00:00Z, same 24h settlement margin as EXP 015.",
+    "rationale": "The most recent complete, settled 7-day window as of this record's authoredOn date (2026-11-28) that does not overlap EXP 015's own window (2026-10-28 to 2026-11-04). Chosen by date arithmetic alone, before any row in it was read: today (2026-11-28) minus 3 days of settlement margin minus 7 days of window = 2026-11-18."
+  },
+  "brokers": ["openrouter", "eurouter", "requesty"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled GitHub Actions workflow as EXP 015 (odin-labs-ai/odin-labs, 'R&D telemetry-truth capture', cron 41 */3 * * *, private repo, GitHub-hosted runner). No new capture code, no new key, no new spend; this amendment only adds a periodic re-analysis + review cadence over rows the existing cron already produces.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256 — not re-pinned here since nothing about the capture code changed for this amendment."
+  },
+  "metric": {
+    "reference": "Identical to experiments/telemetry-truth/preregistration.json#/metric (perCall relative gap, perBroker n/median/mean-of-daily-means/CI95, inBand share, OpenRouter cross-check). Not restated; reused verbatim by experiments/telemetry-truth/amendment-01/recheck.mjs, which imports analyse() and readCapture() unchanged from ../analyse.mjs (sha256 72194455990c86294b29e6e05b9a665c50e7024b077552ab47816770e0b707e0, same as EXP 015) and supplies only this amendment's window/brokers/decision.rule."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 50,
+      "holdsWithin": 0.05,
+      "stableFactorMaxWidth": 0.02,
+      "fleet": { "ratioMin": 0.9, "ratioMax": 1.1, "maxZeroEstimateShare": 0.1 }
+    },
+    "ruleNote": "Copied verbatim from experiments/telemetry-truth/preregistration.json#/decision/rule. Intentionally identical, not reinvented — a periodic recheck that changed its own bar would not be checking the same claim.",
+    "fleetNote": "This lane still lacks the private routing-log / OpenRouter account reconciliation that fleet-cost-reconcile.mjs needs (same limitation EXP 015 hit). fleet.json is omitted; the fleet half will report 'not measurable', honestly, not guessed."
+  },
+  "hypothesis": {
+    "prediction": "Each broker's verdict class is unchanged from EXP 015 (experiments/telemetry-truth/results.json as computed on branch herd/exp015-telemetry-truth-win, PR odin-labs-ai/odin-rnd#301, not yet merged but its computation is already frozen and deterministic): openrouter 'estimate holds', eurouter 'estimate off by a stable factor' near 1.10, requesty 'estimate holds'.",
+    "writtenBefore": "This prediction is written down before experiments/telemetry-truth/amendment-01/capture/ holds any row from this amendment's window, and before recheck.mjs has been run — so the result can contradict it."
+  },
+  "stoppingRule": "Publish each checkpoint as a further-dated amendment to EXP 015 (amendment-02, amendment-03, ...), not a new experiment number, as long as every broker's verdict class is unchanged from the prior checkpoint. The FIRST checkpoint where any broker's class changes is a kill-the-cadence event: stop the periodic schedule, publish the drifted result as its own dated amendment, and flag that any routing/cost claim built on the old verdict needs re-checking before further reuse.",
+  "cadence": "One checkpoint roughly every 90 days, same capture mechanism and decision rule, reusing analyse.mjs unchanged each time. The next candidate window (amendment-02, pending an unchanged verdict here) is roughly 2027-02-16T00:00:00Z to 2027-02-23T00:00:00Z — stated here for coordination, not frozen; amendment-02 freezes its own window when it is authored.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this amendment; this amendment only adds a periodic re-analysis + PR cadence, with zero new broker calls and zero new spend.",
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other amendment in this repo, before this amendment's PR is called ready. A lane authored and ran this checkpoint; a lane does not unilaterally declare the cadence's result final.",
+  "coordination": {
+    "gantryBoxBrief": "odin-labs-ai/gantry PR #222 drafted a box BRIEF (lanes/rnd-exp-telemetry-recheck-01/BRIEF.md) proposing this same amendment-01 slot as a 'proposed', draft-only recheck with a firstWindow roughly 90 days out and status never auto-promoted past 'proposed'. This lane ran amendment-01 directly instead, today, per an explicit coordinator instruction that waiting is not a wall. Once gantry #222 lands and odin-rnd becomes a reachable gantry target (still blocked on a separate, real issue: odin-rnd's main has no required status checks yet, a repo-admin decision, not this lane's or gantry's), a future box BRIEF should target amendment-02 and later, never re-propose amendment-01."
+  }
+}
