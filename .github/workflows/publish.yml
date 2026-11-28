@@ -123,13 +123,13 @@ jobs:
         env:
           FILM_DECODER_REQUIRED: '1'
         run: node --test scripts/og-instagram.test.mjs
-  # pnpm test (node --test scripts/*.test.mjs) never reaches a test file placed under experiments/<slug>/: that glob
-  # cannot and does not expand into experiments/ at all. Several record PRs have shipped
-  # experiments/<slug>/analyse.test.mjs expecting it to run on every push and pull request, and it silently never
-  # did, anywhere. This job closes that gap on its own, rather than widening scripts/*.test.mjs's own glob: the
-  # package.json test script is bound by experiments/blueprint-floor/preregistration.json's runners.sha256 and
-  # checked live by scripts/harness-frozen.test.mjs, so it is not this job's file to edit.
   experiment-tests:
+    # pnpm test (node --test scripts/*.test.mjs) never reaches a test file placed under experiments/<slug>/: that
+    # glob cannot and does not expand into experiments/ at all. Open PRs #308 and #309 each add one such file
+    # expecting it to run on every push and pull request, and it never has; #307 reuses analyse() via recheck.mjs
+    # with no test file of its own. This job closes the gap on its own, rather than widening scripts/*.test.mjs's
+    # own glob: the package.json test script is bound by experiments/blueprint-floor/preregistration.json#files
+    # and checked live by scripts/harness-frozen.test.mjs, so it is not this job's file to edit.
     name: experiment tests
     runs-on: ubuntu-latest
     timeout-minutes: 7

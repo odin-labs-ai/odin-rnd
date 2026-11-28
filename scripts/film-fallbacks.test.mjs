@@ -244,7 +244,7 @@ const PUBLISH_GATE_TEXT = [
 ].join('\n'),
   [
   "  verify:",
-  "    needs: [test, windows-paths, film-copies]",
+  "    needs: [test, windows-paths, film-copies, experiment-tests]",
 ].join('\n'),
   [
   "      - name: The film copies decoded",
@@ -260,7 +260,7 @@ test('the publish workflow runs the decoder tests on every pull request and push
   assert.deepEqual(publishGateProblems(text), []);
   for (const part of PUBLISH_GATE_TEXT) assert.ok(text.includes(part), `.github/workflows/publish.yml no longer contains, byte for byte:\n${part}`);
   const broken = [
-    [text.replace('needs: [test, windows-paths, film-copies]', 'needs: [test, windows-paths]'), /verify does not need film-copies/],
+    [text.replace('needs: [test, windows-paths, film-copies, experiment-tests]', 'needs: [test, windows-paths, experiment-tests]'), /verify does not need film-copies/],
     [text.replace('[ "${{ needs.film-copies.result }}" = success ]', '[ "${{ needs.film-copies.result }}" != cancelled ]'), /verify does not fail unless/],
     [text.replace("          FILM_DECODER_REQUIRED: '1'\n", ''), /FILM_DECODER_REQUIRED=1/],
     [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /has a condition/],
