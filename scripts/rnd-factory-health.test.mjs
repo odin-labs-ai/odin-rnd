@@ -23,19 +23,37 @@ const run = (overrides = {}) => ({
   conclusion: 'success', status: 'completed', html_url: 'https://example.invalid/run', created_at: '2026-11-01T00:00:00Z', ...overrides,
 });
 
-test('workflowRuns reads the right path, reverses to oldest-first, and maps the fields', async t => {
-  const calls = withFetch(t, () => new Response(JSON.stringify({
-    workflow_runs: [run({ created_at: '2026-11-03T00:00:00Z' }), run({ created_at: '2026-11-02T00:00:00Z', conclusion: 'failure' }), run({ created_at: '2026-11-01T00:00:00Z' })],
-  }), { status: 200 }));
+// A mock split by event query param, so the fixture can tell a 'schedule' fetch from a 'workflow_run' fetch (and,
+// in the filtering test, from a 'pull_request' one the real code never requests).
+const byEvent = (t, perEvent) => withFetch(t, url => {
+  const event = new URL(url).searchParams.get('event');
+  return new Response(JSON.stringify({ workflow_runs: perEvent[event] ?? [] }), { status: 200 });
+});
+
+test('workflowRuns reads one path per cron event, merges, reverses to oldest-first, and maps the fields', async t => {
+  const calls = byEvent(t, {
+    schedule: [run({ created_at: '2026-11-03T00:00:00Z' }), run({ created_at: '2026-11-01T00:00:00Z' })],
+    workflow_run: [run({ created_at: '2026-11-02T00:00:00Z', conclusion: 'failure' })],
+  });
   const runs = await workflowRuns({ repo: 'odin-labs-ai/odin-labs', file: 'lab-waiting.yml' }, 'tok', 3);
-  assert.equal(calls[0].url, 'https://api.github.com/repos/odin-labs-ai/odin-labs/actions/workflows/lab-waiting.yml/runs?per_page=3');
+  assert.deepEqual(calls.map(c => c.url).sort(), [
+    'https://api.github.com/repos/odin-labs-ai/odin-labs/actions/workflows/lab-waiting.yml/runs?event=schedule&per_page=3',
+    'https://api.github.com/repos/odin-labs-ai/odin-labs/actions/workflows/lab-waiting.yml/runs?event=workflow_run&per_page=3',
+  ]);
   assert.equal(calls[0].init.headers.authorization, 'bearer tok');
   assert.deepEqual(runs.map(r => r.createdAt), ['2026-11-01T00:00:00Z', '2026-11-02T00:00:00Z', '2026-11-03T00:00:00Z']);
   assert.deepEqual(runs.map(r => r.conclusion), ['success', 'failure', 'success']);
 });
 
-test('workflowRuns caps at n even when GitHub answers more', async t => {
-  withFetch(t, () => new Response(JSON.stringify({ workflow_runs: [run(), run(), run(), run()] }), { status: 200 }));
+test('workflowRuns never asks for, and would ignore, a pull_request or push run: only schedule and workflow_run are requested', async t => {
+  const calls = byEvent(t, { schedule: [run()], workflow_run: [run()], pull_request: [run(), run(), run()], push: [run(), run(), run()] });
+  await workflowRuns({ repo: 'r', file: 'f.yml' }, 'tok', 7);
+  const events = calls.map(c => new URL(c.url).searchParams.get('event')).sort();
+  assert.deepEqual(events, ['schedule', 'workflow_run']);
+});
+
+test('workflowRuns caps at n even when GitHub answers more across both events', async t => {
+  byEvent(t, { schedule: [run(), run()], workflow_run: [run(), run()] });
   const runs = await workflowRuns({ repo: 'r', file: 'f.yml' }, 'tok', 2);
   assert.equal(runs.length, 2);
 });
@@ -108,6 +126,14 @@ test('renderLines draws a green/red/pending grid and the open-PR line', () => {
   assert.equal(lines[0], 'r/a.yml: 🟢🔴⏳');
   assert.equal(lines[1], 'r/b.yml: (no runs) ERROR: unreachable');
   assert.equal(lines[2], '1 open records/data PR(s): #261 (data/broker-probe-2026-W47-x)');
+});
+
+test('renderLines gives a by-design skip, a cancellation and a neutral conclusion their own glyph, never red: a healthy skip must not read as an outage', () => {
+  const report = {
+    workflows: [{ repo: 'r', file: 'a.yml', runs: [run({ conclusion: 'skipped' }), run({ conclusion: 'cancelled' }), run({ conclusion: 'neutral' }), run({ conclusion: 'failure' })] }],
+    openRecordsPRs: [],
+  };
+  assert.equal(renderLines(report)[0], 'r/a.yml: ⚪⚪⚪🔴');
 });
 
 // Built from numeric code points only (never a literal escape or glyph in source) to avoid any ambiguity about which

@@ -2,9 +2,13 @@
 //
 // CRITIC finding (rndf-1128): "the factory already has about 10 crons spread over two repos ... There is no single
 // place where a failure such as lab-waiting shows up, and open records PRs pile up unnoticed." This is a read-only
-// report of (a) each factory workflow's last few runs and (b) every open odin-rnd PR the record lander is supposed
-// to land (records/* and data/broker-probe-*), so a stuck pipeline or a pile of unlanded data shows up in one place
-// instead of needing a person to go look. It never opens, comments on, labels, closes or merges anything.
+// report of (a) each factory workflow's last few runs and (b) every open odin-rnd PR from this factory's own
+// automation, oldest first: head ref "records/*" (the lab runner's record-class PRs, landed automatically by
+// .github/workflows/rnd-record-lander.yml on odin-labs, which selects only that one prefix) alongside head ref
+// "data/broker-probe-*" (the weekly probe's data PRs, which land by human review, not the lander -- a stuck records/*
+// PR is a lander problem; a stuck data/broker-probe-* PR is a review backlog, not the same kind of stuck). So a
+// stuck pipeline or a pile of unreviewed data shows up in one place instead of needing a person to go look. It never
+// opens, comments on, labels, closes or merges anything.
 //
 //   node scripts/rnd-factory-health.mjs [--json] [--runs N]
 //       GH_TOKEN (or GITHUB_TOKEN) must be able to read Actions runs on odin-labs-ai/odin-labs (private) and
@@ -37,15 +41,29 @@ async function get(path, token) {
   return json;
 }
 
-/** The last `n` runs of one workflow file, oldest to newest: [{conclusion, status, htmlUrl, createdAt}]. */
+// A cron health grid should count the cron's own runs: "schedule" (the cron firing) and "workflow_run" (a chained
+// invocation, including one that legitimately skips a leg by design -- lab-runner-legs.yml's own pull_request-fetch
+// skip is this shape). It should NOT count a "pull_request" or "push" run on a feature branch, which this workflow
+// file may also run for reasons that have nothing to do with the cron's health.
+const CRON_EVENTS = ['schedule', 'workflow_run'];
+
+/** The last `n` cron-relevant runs of one workflow file (event schedule or workflow_run only), oldest to newest:
+ * [{conclusion, status, htmlUrl, createdAt}]. */
 export async function workflowRuns({ repo, file }, token, n = 7) {
-  const json = await get(`/repos/${repo}/actions/workflows/${encodeURIComponent(file)}/runs?per_page=${n}`, token);
-  return (json.workflow_runs ?? []).slice(0, n).reverse().map(r => ({ conclusion: r.conclusion, status: r.status, htmlUrl: r.html_url, createdAt: r.created_at }));
+  const perEvent = await Promise.all(CRON_EVENTS.map(event =>
+    get(`/repos/${repo}/actions/workflows/${encodeURIComponent(file)}/runs?event=${event}&per_page=${n}`, token)
+      .then(json => json.workflow_runs ?? [])));
+  return perEvent.flat()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .slice(-n)
+    .map(r => ({ conclusion: r.conclusion, status: r.status, htmlUrl: r.html_url, createdAt: r.created_at }));
 }
 
-/** Every open odin-rnd PR the record lander is meant to land, oldest first: head ref starts with "records/" (the
- * lab runner's record-class PRs) or "data/broker-probe-" (the weekly probe's data PRs) -- the same two selectors
- * .github/workflows/rnd-record-lander.yml (odin-labs) reads. [{number, title, headRefName, createdAt, htmlUrl}]. */
+/** Every open odin-rnd PR from this factory's own automation, oldest first: head ref starts with "records/" (the
+ * lab runner's record-class PRs, landed automatically -- .github/workflows/rnd-record-lander.yml on odin-labs
+ * selects only this one prefix, "every open records/ PR") or "data/broker-probe-" (the weekly probe's data PRs,
+ * which land by human review, not the lander: the two groups wait on different things, so a reader should not
+ * read either one as "stuck in the lander"). [{number, title, headRefName, createdAt, htmlUrl}]. */
 export async function openRecordsPRs(token) {
   const out = [];
   for (let page = 1; ; page++) {
@@ -76,7 +94,11 @@ export async function health(token, { runs = 7 } = {}) {
   return report;
 }
 
-const emoji = r => (r.status !== 'completed' ? '⏳' : r.conclusion === 'success' ? '🟢' : '🔴');
+// A skip (a leg that by design does nothing this run, e.g. lab-runner-legs.yml's own pull_request-fetch skip) or a
+// cancellation is not a failure: drawing it red would make a healthy, by-design skip look exactly like a real
+// outage. 'neutral' (a GitHub Actions conclusion for some composite/manual outcomes) gets the same treatment.
+const BENIGN_NON_SUCCESS = new Set(['skipped', 'cancelled', 'neutral']);
+const emoji = r => (r.status !== 'completed' ? '⏳' : r.conclusion === 'success' ? '🟢' : BENIGN_NON_SUCCESS.has(r.conclusion) ? '⚪' : '🔴');
 
 // `headRefName` comes from an open PR's branch name, and on this PUBLIC repo that is attacker-controlled (anyone can
 // open a PR, including from a fork, with a head ref matching records/* or data/broker-probe-*). A git ref may legally
