@@ -212,6 +212,8 @@ function publishGateProblems(text) {
   const verify = jobs.verify ?? [];
   if (!needsOf(verify).includes('film-copies')) problems.push('verify does not need film-copies');
   if (!verify.some(l => l.includes('[ "${{ needs.film-copies.result }}" = success ] ||') && /exit 1; }$/.test(l))) problems.push('verify does not fail unless film-copies succeeded');
+  if (!needsOf(verify).includes('experiment-tests')) problems.push('verify does not need experiment-tests');
+  if (!verify.some(l => l.includes('[ "${{ needs.experiment-tests.result }}" = success ] ||') && /exit 1; }$/.test(l))) problems.push('verify does not fail unless experiment-tests succeeded');
   if (!needsOf(jobs.gate ?? []).includes('verify')) problems.push('gate does not need verify');
   if (!needsOf(jobs.publish ?? []).includes('gate')) problems.push('publish does not need gate');
   return problems;
@@ -251,17 +253,24 @@ const PUBLISH_GATE_TEXT = [
   "        run: |",
   "          [ \"${{ needs.film-copies.result }}\" = success ] || { echo \"::error::the film copies job concluded '${{ needs.film-copies.result }}', not success\"; exit 1; }",
 ].join('\n'),
+  [
+  "      - name: The experiment tests succeeded",
+  "        run: |",
+  "          [ \"${{ needs.experiment-tests.result }}\" = success ] || { echo \"::error::the experiment tests job concluded '${{ needs.experiment-tests.result }}', not success\"; exit 1; }",
+].join('\n'),
   ["  gate:", "    # The leak gate for a push to main (the deploy): main's code is trusted, so it runs inline here with the term set,", "    # which only the leak-screen environment holds and only main may use.", "    if: github.event_name != 'pull_request'", "    needs: verify"].join('\n'),
   ["  publish:", "    if: github.event_name != 'pull_request'", "    needs: gate"].join('\n'),
   ["on:", "  push:", "    branches: [main]", "  pull_request:"].join('\n'),
 ];
-test('the publish workflow runs the decoder tests on every pull request and push, and nothing deploys unless they pass', () => {
+test('the publish workflow runs the decoder tests and the experiment tests on every pull request and push, and nothing deploys unless they all pass', () => {
   const text = readFileSync('.github/workflows/publish.yml', 'utf8');
   assert.deepEqual(publishGateProblems(text), []);
   for (const part of PUBLISH_GATE_TEXT) assert.ok(text.includes(part), `.github/workflows/publish.yml no longer contains, byte for byte:\n${part}`);
   const broken = [
     [text.replace('needs: [test, windows-paths, film-copies, experiment-tests]', 'needs: [test, windows-paths, experiment-tests]'), /verify does not need film-copies/],
-    [text.replace('[ "${{ needs.film-copies.result }}" = success ]', '[ "${{ needs.film-copies.result }}" != cancelled ]'), /verify does not fail unless/],
+    [text.replace('[ "${{ needs.film-copies.result }}" = success ]', '[ "${{ needs.film-copies.result }}" != cancelled ]'), /verify does not fail unless film-copies/],
+    [text.replace('needs: [test, windows-paths, film-copies, experiment-tests]', 'needs: [test, windows-paths, film-copies]'), /verify does not need experiment-tests/],
+    [text.replace('[ "${{ needs.experiment-tests.result }}" = success ]', '[ "${{ needs.experiment-tests.result }}" != cancelled ]'), /verify does not fail unless experiment-tests/],
     [text.replace("          FILM_DECODER_REQUIRED: '1'\n", ''), /FILM_DECODER_REQUIRED=1/],
     [text.replace('    name: Film copies, decoded\n', "    name: Film copies, decoded\n    if: github.event_name == 'push'\n"), /has a condition/],
     [text.replace(/(  gate:[\s\S]*?\n    needs: )verify/, '$1test'), /gate does not need verify/],
