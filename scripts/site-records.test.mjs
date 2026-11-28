@@ -76,7 +76,7 @@ test('as built: a record page for every ledger entry that links a raw record; Fi
   const files = new Set(walk(dist).map(file => relative(dist, file).split('\\').join('/')));
   const ledger = ledgerEntries(readFileSync(join(dist, 'index.html'), 'utf8'), JSON.parse(readFileSync(join(dist, 'data/experiments.json'), 'utf8')), dist);
   const raw = ledger.filter(e => isRecordHref(e.href));
-  assert.deepEqual(raw.map(e => e.id).sort(), ['EXP 010', 'EXP 015'], 'the two ledger rows that link a raw record today');
+  assert.deepEqual(raw.map(e => e.id).sort(), ['EXP 010'], 'the one ledger row that still links a raw record today (EXP 015 gained a field note, so it links that note now, not a raw record)');
   const index = JSON.parse(readFileSync(join(dist, 'data/index.json'), 'utf8')).items;
   const find = readFileSync(join(dist, 'find/index.html'), 'utf8');
   for (const e of raw) {
@@ -92,7 +92,8 @@ test('as built: a record page for every ledger entry that links a raw record; Fi
     assert.doesNotMatch(item.href, /\.json(#|$)/, `${item.id} does not lead to raw JSON`);
     assert.ok(hrefOnSite(item.href, files), `${item.id}: ${item.href} resolves to a file of the built site`);
   }
-  assert.match(readFileSync(join(root, 'site/sitemap.xml'), 'utf8'), /records\/document-store\/<\/loc><\/url><url><loc>https:\/\/odin-labs-ai\.github\.io\/odin-rnd\/records\/telemetry-truth\//);
+  assert.match(readFileSync(join(root, 'site/sitemap.xml'), 'utf8'), /records\/document-store\/<\/loc><\/url>/);
+  assert.match(readFileSync(join(root, 'site/sitemap.xml'), 'utf8'), /journal\/telemetry-truth-results\.html<\/loc>/, 'EXP 015 is listed by its field note now, not a record page');
 });
 
 test('"no field note yet" only when no field note names the experiment; otherwise the page links the note', () => {
@@ -137,17 +138,17 @@ test('a JSON record link without its record page stops the index: no fallback fo
 test('as built: removing a rendered record page makes the site index refuse to build, naming the page', () => {
   const root = builtCopy();
   const dist = join(root, 'dist');
-  for (const slug of ['document-store', 'telemetry-truth']) {
+  for (const slug of ['document-store']) {
     const page = join(dist, 'records', slug, 'index.html');
     renameSync(page, `${page}.aside`);
     try { assert.throws(() => loadIndex({ root, dist }), new RegExp(`its record page records/${slug}/ was not rendered`)); } finally { renameSync(`${page}.aside`, page); }
   }
-  assert.ok(loadIndex({ root, dist }).length > 0, 'both pages back: the index builds');
+  assert.ok(loadIndex({ root, dist }).length > 0, 'the page back: the index builds');
 });
 
 test('as built: each record page links the chrome stylesheet exactly once, after its own, and marks All results current', () => {
   const dist = join(builtCopy(), 'dist');
-  for (const slug of ['document-store', 'telemetry-truth']) {
+  for (const slug of ['document-store']) {
     const html = readFileSync(join(dist, 'records', slug, 'index.html'), 'utf8');
     const sheets = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)].map(m => m[1]);
     assert.deepEqual(sheets, ['../../assets/style.css', '../../assets/company.css', '../../assets/chrome.css'], `${slug}: chrome.css once, last`);
