@@ -1,0 +1,37 @@
+{
+  "experiment": "EXP 024",
+  "window": {
+    "from": "2026-11-04T00:00:00Z",
+    "to": "2026-11-11T00:00:00Z"
+  },
+  "preregistrationSha256": "c8e99c1f918003c3566bb97e665b0040d1b1a2eb0e701d270deea9d29a6a9c5f",
+  "perBroker": {
+    "X": {
+      "callsAttempted": 112,
+      "callsFailed": 1,
+      "failureRate": 0.0089,
+      "failureDetail": [
+        {
+          "ts": "2026-11-05T09:44:06Z",
+          "httpStatus": 503,
+          "error": null
+        }
+      ],
+      "verdict": "marginal"
+    },
+    "Y": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "failureRate": 0,
+      "failureDetail": [],
+      "verdict": "reliable"
+    },
+    "Z": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "failureRate": 0,
+      "failureDetail": [],
+      "verdict": "reliable"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 024",
+    "slug": "broker-call-reliability",
+    "title": "Within one window, does a broker's probe calls actually complete, or does a meaningful share fail?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "A broker that cannot be reached, or that errors out on a meaningful share of calls, cannot be routed to safely without a fallback -- regardless of what it would have billed or which provider it would have served from. Within one 7-day window, what fraction of identical, tiny probe calls to each broker complete successfully (an HTTP 200 response with a usable completion), and does any broker's failure rate cross a bar where a customer relying on that broker alone, with no fallback, would be taking on real, noticeable risk?",
+  "republication": "This record republishes, by letter, a measurement already completed on a now-superseded branch (herd/exp024-broker-call-reliability-win, PR #310, closed) before this record existed: same window, same question, same decision rule, same result. It does not freeze a new hypothesis ahead of new data -- the window closed and was analysed before this record was written. What is new here is publishing by letter (the same decision EXP 015's own amendment-01 records) and a corrected arithmetic error a review found in the superseded branch, listed under corrections below.",
+  "window": {
+    "from": "2026-11-04T00:00:00Z",
+    "to": "2026-11-11T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "rationale": "The one remaining untouched week between EXP 015's window (ending 2026-11-04) and EXP 022's window (2026-11-11..2026-11-18)."
+  },
+  "brokers": ["X", "Y", "Z"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled capture workflow EXP 015 uses. No new capture code, no new key, no new spend.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256.",
+    "anonymisation": "Published rows are reduced by this record's own anonymise.mjs, the same reduction amendment-01 applies: broker to its letter (the same assignment EXP 015's amendment-01 uses), keyName's broker name to the same letter, and requestedModel/servedModel/servedProvider/estimateSource/the generation-record cross-check fields dropped -- this record's own metric never reads any of them.",
+    "fieldsUsed": "broker, ok, httpStatus, ts."
+  },
+  "metric": {
+    "attempted": "A row is 'attempted' for a broker if it is inside [window.from, window.to), has a broker field matching, and has a boolean ok field (this excludes the capture's own _header and _trailer summary rows, neither of which carries an ok field at all).",
+    "failed": "An attempted row with ok !== true. Its httpStatus (if present and not 200) and any error-shaped text field found on the row are recorded for transparency, but are descriptive only -- not part of the decision rule below.",
+    "perBroker": "callsAttempted (count), callsFailed (count), failureRate = callsFailed / callsAttempted."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 20,
+      "reliableMaxFailureRate": 0,
+      "marginalMaxFailureRate": 0.05
+    },
+    "ruleNote": "On the full 112 calls/broker/week (56 runs x 2 models) this window actually has, a 5% ceiling is 5.6 calls -- 'marginal' covers 1 to 5 failures, not 1 to 2. (A superseded branch of this record stated 'roughly 56 calls/broker/week, that is 1-2 failed calls', confusing the per-model run count with the per-broker call count; corrected here, see corrections below. Broker X's verdict in the result is unaffected either way: 1 failure is marginal under both readings.)",
+    "perBroker": {
+      "notEnoughCalls": "callsAttempted below minCalls: reported as 'not enough calls', never classified either way.",
+      "reliable": "failureRate === 0. Every attempted call in-window completed.",
+      "marginal": "0 < failureRate <= 0.05. At least one failure, but not enough to call the broker unreliable on this window alone.",
+      "unreliable": "failureRate > 0.05. A customer routing to this broker alone, with no fallback, would have noticed real failures this week."
+    }
+  },
+  "stoppingRule": "A single pre-registered 7-day window, not a cadence. No additional counted window is triggered by an 'unreliable' or 'marginal' result; a periodic recheck would be its own, separately pre-registered follow-up.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this record; this record only adds one analysis pass over already-collected rows. No new broker calls, no new keys, no new spend.",
+  "analysis": {
+    "script": "experiments/broker-call-reliability/analyse.mjs",
+    "sha256": "54ee5fb8aca1650806571d07d25d5908bb1ae46352b3522ef777872df785cf21",
+    "inputs": "runs-anon/*.jsonl (the published, anonymised rows).",
+    "check": "node experiments/broker-call-reliability/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
+  },
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository, before this record's PR is called ready.",
+  "corrections": [
+    "A superseded branch of this record (herd/exp024-broker-call-reliability-win, PR #310, closed) named all three brokers directly in results.json and every capture row -- this record never does.",
+    "That superseded branch's decision.ruleNote said 'roughly 56 calls/broker/week, that is 1-2 failed calls' for the 5% marginal ceiling. The real per-broker volume is 112 calls/week (56 runs x 2 models), which the same record's own calibration already stated; 5% of 112 is 5.6, so 'marginal' covers 1 to 5 failures, not 1 to 2. Corrected in decision.ruleNote above. The one broker that failed once in this window is marginal under either reading, so the result is unaffected.",
+    "That superseded branch's commit message named an internal lane; this one does not."
+  ],
+  "limits": [
+    "Tiny, uncached, list-priced calls on two models, three brokers, one week.",
+    "A revoked or missing key produces fewer rows, not a row with ok:false -- this record's callsAttempted counts only what is actually present in the capture.",
+    "One week is a snapshot, not a trend."
+  ]
+}
