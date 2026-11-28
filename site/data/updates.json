@@ -24,6 +24,16 @@
       "date": "2026-11-28"
     },
     {
+      "key": "note-telemetry-truth-results",
+      "experiment": null,
+      "title": "EXP 015: Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Field note",
+      "text": "Over 336 counted calls across 7 days, the price-book estimate held exactly for two of three brokers and was off by a stable 10% for the third. None of the three is named next to a number in this note.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "journal/telemetry-truth-results.html",
+      "date": "2026-11-28"
+    },
+    {
       "key": "exp-021-results",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",
