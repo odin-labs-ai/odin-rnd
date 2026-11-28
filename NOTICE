@@ -12,7 +12,7 @@ Sources: https://github.com/google/fonts/tree/main/ofl/manrope
          https://github.com/google/fonts/tree/main/ofl/jetbrainsmono
 Latin WOFF2 variable subsets are served locally. Download URLs and SHA-256 digests are recorded in docs/asset-provenance.json.
 
-The experiment runner consumes bce-engine 0.3.0, Apache-2.0, from its public npm release.
+The experiment runner consumes bce-engine 0.3.1, Apache-2.0, from its public npm release.
 Source: https://github.com/blueprint-conformance/bce
 Full emitted demo transcripts are retained with package and source provenance.
 The upstream engine is a dependency, not copied into the browser or implemented here.
