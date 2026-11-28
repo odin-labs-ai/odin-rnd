@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 024",
+    "slug": "broker-call-reliability",
+    "title": "Within one window, does a broker's probe calls actually complete, or does a meaningful share fail?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Written, hashed and committed before any row of this record's own window is downloaded or read. Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "A broker that cannot be reached, or that errors out on a meaningful share of calls, cannot be routed to safely without a fallback -- regardless of what it would have billed or which provider it would have served from. Within one 7-day window, what fraction of identical, tiny probe calls to each broker complete successfully (an HTTP 200 response with a usable completion), and does any broker's failure rate cross a bar where a customer relying on that broker alone, with no fallback, would be taking on real, noticeable risk?",
+  "calibration": {
+    "disclosed": "Reliability was never this repo's own pre-registered question before -- EXP 015's and its amendment-01's preregistrations only ever report callsFailed/callsAttempted as a side metric of the cost-gap question. Both of their own already-published results.json files report a clean record: openrouter, eurouter and requesty each 0 callsFailed of 112 callsAttempted, in both EXP 015's window (2026-10-28..2026-11-04) and amendment-01's window (2026-11-18..2026-11-25). Separately, EXP 022 (provider-serving-stability)'s own window (2026-11-11..2026-11-18) showed every 'stable' pair's n matching its full attempted count, implying 0 failures there too, though that was never the question EXP 022 asked or scored.",
+    "prediction": "Unknown whether this record's own window continues that clean streak or not -- that is the point of measuring a window none of those three already looked at, rather than re-describing a fourth zero. Written down before this window's rows are read: given 3 of the 4 weeks since EXP 015's own window opened already show a perfect record, the most likely single outcome is 'reliable' for every broker again, but this record exists precisely so a less-clean week would be caught and reported, not assumed away.",
+    "excludedFromCounting": "None of the three windows named above (EXP 015's, amendment-01's, EXP 022's) is read or re-measured by this record."
+  },
+  "window": {
+    "from": "2026-11-04T00:00:00Z",
+    "to": "2026-11-11T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "rationale": "The one remaining untouched week between EXP 015's window (ending 2026-11-04) and amendment-01's window (starting 2026-11-18) -- EXP 022 already used the other (2026-11-11..2026-11-18, per that record's own window.rationale, which named this earlier week as available for a future follow-up). Chosen by elimination alone, before any row in it was read: it is the only one of the four weeks in this stretch that no prior record in this repository has downloaded or analysed for any purpose."
+  },
+  "brokers": ["openrouter", "eurouter", "requesty"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled GitHub Actions workflow EXP 015, its amendment-01, and EXP 022 all use (odin-labs-ai/odin-labs, 'R&D telemetry-truth capture', cron 41 */3 * * *, private repo, GitHub-hosted runner). No new capture code, no new key, no new spend; this record only adds a new analysis of rows the existing cron already produces for a window not yet analysed for this question.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256 — not re-pinned here since nothing about the capture code changed for this record.",
+    "fieldsUsed": "broker, ok, httpStatus, ts — the same per-call rows EXP 015 reads, read for a different field (whether the call succeeded at all) than EXP 015's own question (the cost gap, conditional on success) or EXP 022's (which provider served a successful call)."
+  },
+  "metric": {
+    "attempted": "A row is 'attempted' for a broker if it is inside [window.from, window.to), has a broker field matching, and has a boolean ok field (this excludes the capture's own _header and _trailer summary rows, neither of which carries an ok field at all).",
+    "failed": "An attempted row with ok !== true. Its httpStatus (if present and not 200) and any error-shaped text field found on the row are recorded for transparency, but are descriptive only -- not part of the decision rule below.",
+    "perBroker": "callsAttempted (count), callsFailed (count), failureRate = callsFailed / callsAttempted."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 20,
+      "reliableMaxFailureRate": 0,
+      "marginalMaxFailureRate": 0.05
+    },
+    "ruleNote": "minCalls matches EXP 022's own choice (far below EXP 015's 50 -- that threshold bounds a statistical confidence interval on a continuous gap; this one only needs enough attempted calls that one or two failures are not noise). The 5% marginal ceiling is this record's own reasoning, not reused from elsewhere: on roughly 56 calls/broker/week, that is 1-2 failed calls -- few enough that a human might not notice without counting, but real; a rate above that is the kind of thing a customer without a fallback would actually hit.",
+    "perBroker": {
+      "notEnoughCalls": "callsAttempted below minCalls: reported as 'not enough calls', never classified either way.",
+      "reliable": "failureRate === 0. Every attempted call in-window completed.",
+      "marginal": "0 < failureRate <= 0.05. At least one failure, but not enough to call the broker unreliable on this window alone.",
+      "unreliable": "failureRate > 0.05. A customer routing to this broker alone, with no fallback, would have noticed real failures this week."
+    }
+  },
+  "stoppingRule": "A single pre-registered 7-day window, not a cadence. Report each broker's classification exactly as computed by the frozen analyse.mjs in this directory, whatever it shows. No additional counted window is triggered by an 'unreliable' or 'marginal' result here; a periodic recheck (the same cadence shape as EXP 015's amendment-01) would be its own, separately pre-registered follow-up, not silently added to this record.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this record; this record only adds one analysis pass over already-collected rows. No new broker calls, no new keys, no new spend.",
+  "analysis": {
+    "script": "experiments/broker-call-reliability/analyse.mjs",
+    "sha256": "43a8414eeb74b76720d6f7bf1d48d1f00a3d8adf673541832846f9c4b7f12823",
+    "inputs": "capture/*.jsonl (the uploaded rows, copied unchanged).",
+    "check": "node experiments/broker-call-reliability/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
+  },
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository (EXP 015, its amendment-01, EXP 020, EXP 022, EXP 023), before this record's PR is called ready.",
+  "boxBriefNote": "Same mechanical shape as EXP 022 and EXP 023's own records (download a fixed pre-registered window's already-collected artifacts from the existing cron; run a small frozen script; commit; open a PR) -- a candidate template for a future bounded automated task once odin-rnd is a reachable target for one (a separate, already-flagged blocker, not this record's). No internal automation system is named here.",
+  "limits": [
+    "Tiny, uncached, list-priced calls on two models, three brokers, one week. A broker's reliability can vary by model, region, load, or time of day in ways this single window and these two tiny test models cannot speak to.",
+    "A revoked or missing key (EXP 015's preregistration already documents this happened once, 2026-10-23) produces fewer rows, not a row with ok:false -- this record's callsAttempted counts only what is actually present in the capture, which is a lower bound on calls the probe script tried to make if a key failure suppressed rows entirely before any response was recorded.",
+    "One week is a snapshot, not a trend; this record does not claim a broker's reliability this week predicts its reliability next week."
+  ]
+}
