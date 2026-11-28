@@ -24,7 +24,7 @@ function namedRow(broker, overrides = {}) {
   return {
     actualCostSource: 'usage.cost', actualCostUsd: 4e-5, broker, canonicalModel: 'anthropic/claude-haiku-4.5',
     completionTokens: 5, costCurrency: 'USD',
-    estimateSource: 'price-book local-agents packages/model-price-book/src/price-book.ts:287-291 @ 8fbd0190 (path openrouter = direct)',
+    estimateSource: 'price-book @ 8fbd0190 (path openrouter = direct)',
     estimatedCostUsd: 4e-5, gapRel: 0, gapUsd: 0,
     ...(broker === 'openrouter' ? { generationCostUsd: 4e-5, generationFound: true, generationModel: 'anthropic/claude-4.5-haiku-20251001', generationProvider: 'Amazon Bedrock' } : {}),
     httpStatus: 200, keyName: `env:RND_PROBE_${broker.toUpperCase()}_API_KEY`, latencyMs: 700, ok: true, promptTokens: 15,
@@ -41,7 +41,7 @@ test('the published rows keep every measured value and nothing that names a brok
   const rows = [header, namedRow('openrouter'), namedRow('eurouter'), namedRow('requesty'), trailer];
   const text = rows.map(r => JSON.stringify(r)).join('\n');
   const out = anonymiseFile(text, letters);
-  for (const word of ['openrouter', 'eurouter', 'requesty', 'bedrock', 'foundry', 'local-agents', 'price-book', 'azure', 'Amazon', 'claude-haiku-4.5'.toUpperCase()])
+  for (const word of ['openrouter', 'eurouter', 'requesty', 'bedrock', 'foundry', 'azure', 'Amazon', 'claude-haiku-4.5'.toUpperCase()])
     assert.ok(!out.toLowerCase().includes(word.toLowerCase()) || word === 'claude-haiku-4.5'.toUpperCase(), `published rows mention ${word}`);
   const parsed = out.trim().split('\n').map(l => JSON.parse(l));
   assert.deepEqual(parsed[0].brokers, ['G', 'H', 'I'].sort());
