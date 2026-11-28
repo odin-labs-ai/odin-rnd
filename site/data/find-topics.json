@@ -73,6 +73,7 @@
   "router-arm-fresh-results": ["routing", "models", "cost"],
   "router-arm-results": ["routing", "models", "cost"],
   "self-verify-results": ["reviewers", "models"],
+  "telemetry-truth-results": ["cost", "models"],
   "system-1-decisions-without-lock-in": ["models", "gates"],
   "where-a-model-reviewer-earns-its-keep": ["reviewers", "cost"],
   "which-rules-need-a-model": ["gates", "models", "architecture"],
