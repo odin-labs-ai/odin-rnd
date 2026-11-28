@@ -1,0 +1,201 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { WORKFLOWS, health, main, openRecordsPRs, renderLines, workflowRuns } from './rnd-factory-health.mjs';
+
+function withFetch(t, handler) {
+  const real = globalThis.fetch;
+  t.after(() => { globalThis.fetch = real; });
+  const calls = [];
+  globalThis.fetch = async (url, init) => { calls.push({ url: String(url), init }); return handler(String(url), calls.length); };
+  return calls;
+}
+
+function withConsole(t) {
+  const real = { log: console.log, error: console.error };
+  t.after(() => { console.log = real.log; console.error = real.error; });
+  const out = [], err = [];
+  console.log = (...a) => out.push(a.join(' '));
+  console.error = (...a) => err.push(a.join(' '));
+  return { out, err };
+}
+
+const run = (overrides = {}) => ({
+  conclusion: 'success', status: 'completed', html_url: 'https://example.invalid/run', created_at: '2026-11-01T00:00:00Z', ...overrides,
+});
+
+// A mock split by event query param, so the fixture can tell a 'schedule' fetch from a 'workflow_run' fetch (and,
+// in the filtering test, from a 'pull_request' one the real code never requests).
+const byEvent = (t, perEvent) => withFetch(t, url => {
+  const event = new URL(url).searchParams.get('event');
+  return new Response(JSON.stringify({ workflow_runs: perEvent[event] ?? [] }), { status: 200 });
+});
+
+test('workflowRuns reads one path per cron event, merges, reverses to oldest-first, and maps the fields', async t => {
+  const calls = byEvent(t, {
+    schedule: [run({ created_at: '2026-11-03T00:00:00Z' }), run({ created_at: '2026-11-01T00:00:00Z' })],
+    workflow_run: [run({ created_at: '2026-11-02T00:00:00Z', conclusion: 'failure' })],
+  });
+  const runs = await workflowRuns({ repo: 'odin-labs-ai/odin-labs', file: 'lab-waiting.yml' }, 'tok', 3);
+  assert.deepEqual(calls.map(c => c.url).sort(), [
+    'https://api.github.com/repos/odin-labs-ai/odin-labs/actions/workflows/lab-waiting.yml/runs?event=schedule&per_page=3',
+    'https://api.github.com/repos/odin-labs-ai/odin-labs/actions/workflows/lab-waiting.yml/runs?event=workflow_run&per_page=3',
+  ]);
+  assert.equal(calls[0].init.headers.authorization, 'bearer tok');
+  assert.deepEqual(runs.map(r => r.createdAt), ['2026-11-01T00:00:00Z', '2026-11-02T00:00:00Z', '2026-11-03T00:00:00Z']);
+  assert.deepEqual(runs.map(r => r.conclusion), ['success', 'failure', 'success']);
+});
+
+test('workflowRuns never asks for, and would ignore, a pull_request or push run: only schedule and workflow_run are requested', async t => {
+  const calls = byEvent(t, { schedule: [run()], workflow_run: [run()], pull_request: [run(), run(), run()], push: [run(), run(), run()] });
+  await workflowRuns({ repo: 'r', file: 'f.yml' }, 'tok', 7);
+  const events = calls.map(c => new URL(c.url).searchParams.get('event')).sort();
+  assert.deepEqual(events, ['schedule', 'workflow_run']);
+});
+
+test('workflowRuns caps at n even when GitHub answers more across both events', async t => {
+  byEvent(t, { schedule: [run(), run()], workflow_run: [run(), run()] });
+  const runs = await workflowRuns({ repo: 'r', file: 'f.yml' }, 'tok', 2);
+  assert.equal(runs.length, 2);
+});
+
+test('workflowRuns throws a readable error on a non-200 answer, naming the path', async t => {
+  withFetch(t, () => new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }));
+  await assert.rejects(workflowRuns({ repo: 'odin-labs-ai/x', file: 'y.yml' }, 'tok'), /y\.yml.*404.*Not Found/s);
+});
+
+test('openRecordsPRs keeps only records/* and data/broker-probe-* heads, drops everything else, sorted oldest first', async t => {
+  withFetch(t, () => new Response(JSON.stringify([
+    { number: 1, title: 'a', head: { ref: 'records/rogue-20261101-010000' }, created_at: '2026-11-02T00:00:00Z', html_url: 'u1' },
+    { number: 2, title: 'b', head: { ref: 'feature/unrelated' }, created_at: '2026-11-01T00:00:00Z', html_url: 'u2' },
+    { number: 3, title: 'c', head: { ref: 'data/broker-probe-2026-W47-43824588528' }, created_at: '2026-11-01T00:00:00Z', html_url: 'u3' },
+  ]), { status: 200 }));
+  const prs = await openRecordsPRs('tok');
+  assert.deepEqual(prs.map(p => p.number), [3, 1]);
+  assert.equal(prs[0].headRefName, 'data/broker-probe-2026-W47-43824588528');
+});
+
+test('openRecordsPRs pages until a short page, then stops', async t => {
+  const calls = withFetch(t, (url, n) => {
+    const page = n === 1
+      ? Array.from({ length: 100 }, (_, i) => ({ number: i, title: 't', head: { ref: 'records/x' }, created_at: '2026-11-01T00:00:00Z', html_url: 'u' }))
+      : [{ number: 999, title: 't', head: { ref: 'records/y' }, created_at: '2026-11-02T00:00:00Z', html_url: 'u' }];
+    return new Response(JSON.stringify(page), { status: 200 });
+  });
+  const prs = await openRecordsPRs('tok');
+  assert.equal(calls.length, 2); // page=1 (100, full -> continue), page=2 (1, short -> stop)
+  assert.equal(prs.length, 101);
+});
+
+test('health() captures a per-workflow error without failing the other workflows', async t => {
+  withFetch(t, url => (url.includes('lab-waiting.yml')
+    ? new Response(JSON.stringify({ message: 'boom' }), { status: 500 })
+    : url.includes('/pulls')
+      ? new Response(JSON.stringify([]), { status: 200 })
+      : new Response(JSON.stringify({ workflow_runs: [run()] }), { status: 200 })));
+  const report = await health('tok', { runs: 1 });
+  assert.equal(report.format, 'odin-rnd-factory-health');
+  assert.equal(report.version, 1);
+  assert.equal(report.workflows.length, WORKFLOWS.length);
+  const waiting = report.workflows.find(w => w.file === 'lab-waiting.yml');
+  assert.equal(waiting.runs.length, 0);
+  assert.match(waiting.error, /500/);
+  const others = report.workflows.filter(w => w.file !== 'lab-waiting.yml');
+  assert.ok(others.every(w => w.runs.length === 1 && !w.error));
+  assert.deepEqual(report.openRecordsPRs, []);
+});
+
+test('health() records an openRecordsPRs error separately and still reports every workflow', async t => {
+  withFetch(t, url => (url.includes('/pulls')
+    ? new Response(JSON.stringify({ message: 'nope' }), { status: 403 })
+    : new Response(JSON.stringify({ workflow_runs: [] }), { status: 200 })));
+  const report = await health('tok');
+  assert.deepEqual(report.openRecordsPRs, []);
+  assert.match(report.openRecordsPRsError, /403/);
+  assert.equal(report.workflows.length, WORKFLOWS.length);
+});
+
+test('renderLines draws a green/red/pending grid and the open-PR line', () => {
+  const report = {
+    workflows: [
+      { repo: 'r', file: 'a.yml', runs: [run(), run({ conclusion: 'failure' }), run({ status: 'in_progress', conclusion: null })] },
+      { repo: 'r', file: 'b.yml', runs: [], error: 'unreachable' },
+    ],
+    openRecordsPRs: [{ number: 261, headRefName: 'data/broker-probe-2026-W47-x' }],
+  };
+  const lines = renderLines(report);
+  assert.equal(lines[0], 'r/a.yml: 🟢🔴⏳');
+  assert.equal(lines[1], 'r/b.yml: (no runs) ERROR: unreachable');
+  assert.equal(lines[2], '1 open records/data PR(s): #261 (data/broker-probe-2026-W47-x)');
+});
+
+test('renderLines gives a by-design skip, a cancellation and a neutral conclusion their own glyph, never red: a healthy skip must not read as an outage', () => {
+  const report = {
+    workflows: [{ repo: 'r', file: 'a.yml', runs: [run({ conclusion: 'skipped' }), run({ conclusion: 'cancelled' }), run({ conclusion: 'neutral' }), run({ conclusion: 'failure' })] }],
+    openRecordsPRs: [],
+  };
+  assert.equal(renderLines(report)[0], 'r/a.yml: ⚪⚪⚪🔴');
+});
+
+// Built from numeric code points only (never a literal escape or glyph in source) to avoid any ambiguity about which
+// character is actually under test: 0x2424 SYMBOL FOR NEWLINE, 0x2028 LINE SEPARATOR, 0x2029 PARAGRAPH SEPARATOR,
+// 0x0085 NEXT LINE. All four are legal in a git ref (git check-ref-format only refuses ASCII control characters and
+// a small punctuation set) and Mattermost's own parser turns them into real newlines before it looks for a closing
+// fence -- the same class of bug rnd-weekly.mjs's inert() exists for (its own "refute pr39 final-8" test).
+const NEWLINE_LOOKALIKES = [0x2424, 0x2028, 0x2029, 0x0085].map(cp => String.fromCodePoint(cp));
+const TRIPLE_BACKTICK = String.fromCharCode(96, 96, 96);
+
+test('renderLines neutralizes an attacker-controlled head ref: no Unicode newline look-alike or backtick survives into the fenced block (a PR branch name is not sanitized by git)', () => {
+  for (const sep of NEWLINE_LOOKALIKES) {
+    const ref = ['records/x', sep, TRIPLE_BACKTICK, sep, 'evil markdown', sep, TRIPLE_BACKTICK].join('');
+    const report = { workflows: [], openRecordsPRs: [{ number: 1, headRefName: ref }] };
+    const line = renderLines(report)[0];
+    for (const bad of NEWLINE_LOOKALIKES) assert.ok(!line.includes(bad), `separator U+${bad.codePointAt(0).toString(16)} must not survive`);
+    assert.ok(!line.includes(String.fromCharCode(96)), 'a backtick must not survive (it could close the surrounding fence)');
+  }
+});
+
+test('renderLines also neutralizes an attacker-controlled workflow-read error message the same way', () => {
+  const sep = NEWLINE_LOOKALIKES[0];
+  const error = ['boom', sep, TRIPLE_BACKTICK, sep, 'evil', sep, TRIPLE_BACKTICK].join('');
+  const report = { workflows: [{ repo: 'r', file: 'a.yml', runs: [], error }], openRecordsPRs: [] };
+  const line = renderLines(report)[0];
+  for (const bad of NEWLINE_LOOKALIKES) assert.ok(!line.includes(bad));
+  assert.ok(!line.includes(String.fromCharCode(96)));
+});
+
+test('renderLines says so when nothing is open', () => {
+  assert.equal(renderLines({ workflows: [], openRecordsPRs: [] })[0], '0 open records/data PR(s)');
+});
+
+test('main() refuses cleanly with no token, before any network call', async t => {
+  const { err } = withConsole(t);
+  delete process.env.GH_TOKEN; delete process.env.GITHUB_TOKEN;
+  const code = await main([]);
+  assert.equal(code, 1);
+  assert.match(err.join('\n'), /GH_TOKEN/);
+});
+
+test('main() --json prints exactly health()\'s report', async t => {
+  withFetch(t, url => (url.includes('/pulls') ? new Response(JSON.stringify([]), { status: 200 }) : new Response(JSON.stringify({ workflow_runs: [] }), { status: 200 })));
+  const { out } = withConsole(t);
+  const writes = [];
+  const realWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = chunk => { writes.push(chunk); return true; };
+  t.after(() => { process.stdout.write = realWrite; });
+  process.env.GH_TOKEN = 'tok';
+  const code = await main(['--json', '--runs', '2']);
+  delete process.env.GH_TOKEN;
+  assert.equal(code, 0);
+  assert.equal(out.length, 0);
+  const report = JSON.parse(writes.join(''));
+  assert.equal(report.format, 'odin-rnd-factory-health');
+});
+
+test('main() rejects a bad --runs value before making any call', async t => {
+  const { err } = withConsole(t);
+  process.env.GH_TOKEN = 'tok';
+  const code = await main(['--runs', '0']);
+  delete process.env.GH_TOKEN;
+  assert.equal(code, 2);
+  assert.match(err.join('\n'), /--runs/);
+});

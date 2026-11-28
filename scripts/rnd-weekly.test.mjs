@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { KINDS, absolute, formatWeek, inert, isCalendarDay, weekOf, yesterday } from './rnd-weekly.mjs';
+import { KINDS, absolute, formatFactoryHealth, formatWeek, inert, isCalendarDay, weekOf, yesterday } from './rnd-weekly.mjs';
 import { KIND_ORDER } from './updates.mjs';
 
 const feed = { updates: [
@@ -95,6 +95,19 @@ test('unconfigured, even a bad manual date skips instead of failing (refute pr39
   const env = { ...process.env, RND_WEEK_END: '2026-02-30' };
   delete env.ODIN_MM_RND_WEBHOOK_URL;
   assert.match(execFileSync(process.execPath, ['scripts/rnd-weekly.mjs'], { env, encoding: 'utf8' }), /not configured .* skipping/);
+});
+
+test('the factory-health section is a fenced block so emoji and a PR head ref are never parsed as Mattermost markup', () => {
+  const report = { workflows: [{ repo: 'odin-labs-ai/odin-labs', file: 'lab-waiting.yml', runs: [{ status: 'completed', conclusion: 'failure' }] }], openRecordsPRs: [{ number: 261, headRefName: 'data/broker-probe-2026-W47-x' }] };
+  const text = formatFactoryHealth(report);
+  assert.match(text, /^#### R&D factory health\n```\nodin-labs-ai\/odin-labs\/lab-waiting\.yml: 🔴\n1 open records\/data PR\(s\): #261 \(data\/broker-probe-2026-W47-x\)\n```$/);
+});
+
+test('without GH_TOKEN the weekly post still runs, and says the factory-health section is not available (not silently dropped)', () => {
+  const env = { ...process.env, ODIN_MM_RND_WEBHOOK_URL: 'https://example.invalid/hooks/unused' };
+  delete env.GH_TOKEN; delete env.GITHUB_TOKEN;
+  const out = execFileSync(process.execPath, ['scripts/rnd-weekly.mjs', '--dry-run'], { env, encoding: 'utf8' });
+  assert.match(out, /#### R&D factory health\nnot available this run \(no token to read Actions runs with\)/);
 });
 
 test('no newline look-alike can break the code span: U+2424 and Unicode separators become spaces (refute pr39 final-8 #1)', () => {

@@ -2,8 +2,15 @@
 # (never on an operator laptop). Reads the committed updates feed and posts through an incoming webhook; see
 # scripts/rnd-weekly.mjs.
 #
+# The post also carries a read-only factory-health section (scripts/rnd-factory-health.mjs): the last few runs of
+# every R&D cron and the open records/data PRs nobody has landed yet, so a stuck pipeline shows up here instead of
+# needing a person to go look. That needs a token that can read Actions runs on odin-labs-ai/odin-labs, which is
+# PRIVATE -- this job's own GITHUB_TOKEN cannot see it. The minted token never opens, comments on or merges anything;
+# only actions:read and pull-requests:read, on odin-labs and odin-rnd only.
+#
 # Repository configuration (name only; the value is never committed):
 #   secrets.ODIN_MM_RND_WEBHOOK_URL   incoming webhook of the internal channel that receives the summary
+#   secrets.ODIN_BOT_APP_ID / ODIN_BOT_APP_PRIVATE_KEY   org-level; the odin-ci-packages-bot App (rule 03 bus-factor)
 name: rnd-weekly
 
 on:
@@ -40,8 +47,19 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Mint a read-only App token for the factory-health section (odin-labs is private; actions:read only)
+        id: health-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.ODIN_BOT_APP_ID }}
+          private-key: ${{ secrets.ODIN_BOT_APP_PRIVATE_KEY }}
+          owner: odin-labs-ai
+          repositories: odin-labs,odin-rnd
+          permission-actions: read
+          permission-pull-requests: read
       - name: Post the weekly summary
         env:
           ODIN_MM_RND_WEBHOOK_URL: ${{ secrets.ODIN_MM_RND_WEBHOOK_URL }}
           RND_WEEK_END: ${{ inputs.week_end }}
+          GH_TOKEN: ${{ steps.health-token.outputs.token }}
         run: node scripts/rnd-weekly.mjs
