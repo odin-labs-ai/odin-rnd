@@ -1,17 +1,15 @@
 {
   "schemaVersion": 1,
   "kind": "odin-rnd.amendment",
-  "amendment": {
-    "amends": "EXP 015",
-    "number": 2,
-    "slug": "telemetry-truth-recheck-01",
-    "title": "Does each broker's EXP 015 verdict class still hold, one cycle later?",
-    "status": "pre-registered",
-    "statusText": "Pre-registered, not yet run",
-    "authoredOn": "2026-11-28",
-    "note": "Nothing in this record may change afterwards; a later change is a new, dated amendment (amendment-03), published first."
+  "experiment": "EXP 015",
+  "amendment": "02",
+  "authoredOn": "2026-11-28",
+  "amends": {
+    "preregistration": "experiments/telemetry-truth/preregistration.json",
+    "preregistrationSha256": "914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe",
+    "frozenCommit": "acdf8a2"
   },
-  "republication": "This amendment republishes a periodic recheck of EXP 015 that was already completed, counted and analysed on a now-superseded branch before this one existed. It does not freeze a new hypothesis ahead of new data: the window named below closed, and its rows were pulled and analysed, before this record was written. What is new in this amendment is (a) publishing by letter, the same amendment-01 decision this record inherits, and (b) three corrections a review found in the superseded branch's own version of this record, listed under corrections below. The hypothesis, window, decision rule and result are otherwise unchanged from that earlier work.",
+  "why": "A periodic recheck of EXP 015, one cycle (one window) later: is each broker's verdict class (estimate holds / off by a stable factor / unreliable) still the correct read? This amendment republishes a recheck already completed, counted and analysed on a now-superseded branch before this one existed -- it does not freeze a new hypothesis ahead of new data; the window below closed, and its rows were pulled and analysed, before this record was written. What is new here is (a) publishing by letter, the same decision amendment-01 records, which this amendment inherits unchanged, and (b) three corrections a review found in the superseded branch's own version of this record, listed under corrections below.",
   "question": "Is each broker's EXP 015 verdict class (estimate holds / off by a stable factor / unreliable) still the correct read this cycle?",
   "calibration": {
     "disclosed": "EXP 015's own amendment-01 (experiments/telemetry-truth/amendment-01/, this same pull request's own earlier commits, not yet merged to main as this is written) reports two brokers holding and one off by a stable factor of 1.10, for its window 2026-10-28..2026-11-04.",
@@ -50,12 +48,13 @@
   "needsReview": true,
   "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository, before this amendment's PR is called ready.",
   "corrections": [
-    "A superseded branch of this amendment (herd/exp015b-recheck-win, PR #307, closed) named the uncleared brokers directly in its results.json keys, every capture row, and one commit's /coordination field -- this record never does; see the republication note above.",
+    "A superseded branch of this amendment (herd/exp015b-recheck-win, PR #307, closed) named the uncleared brokers directly in its results.json keys, every capture row, and one commit's /coordination field -- this record never does.",
     "That superseded branch's own window.rationale overclaimed 'the only untouched gap' when the real gap is two weeks, not one -- fixed here from the first commit, not by a later edit to a record already called frozen.",
     "That superseded branch edited its own amendment.json twice after its run commit, against its own 'nothing may change afterwards' rule. This record is written once, complete, before being committed; any future correction is a new, dated amendment (amendment-03), never an edit in place."
   ],
   "limits": [
     "A reader who already knows amendment-01's own calibration numbers, and who also reads EXP 015's and EXP 016's frozen, already-public pre-registrations (which name all three brokers), can probably match at least one letter to a broker across this repository's own records. The letters keep this amendment's rows and results from naming a broker next to a number; they do not make the brokers secret.",
     "A single window, repeated once. Whether 'stable' or 'unstable' class-membership is itself stable over more than two checkpoints is not yet measured."
-  ]
+  ],
+  "notBefore": "The anonymised results are published only after this amendment is merged to main of odin-labs-ai/odin-rnd."
 }

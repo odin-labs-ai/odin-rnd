@@ -12,8 +12,8 @@ test('EXP 015 amendment 02 is pinned, and copies amendment-01\'s decision.rule v
   assert.equal(readFileSync(`${dir}/amendment-02/amendment.sha256`, 'utf8').trim().split(/\s+/)[0], sha(`${dir}/amendment-02/amendment.json`));
   const prereg = JSON.parse(readFileSync(`${dir}/preregistration.json`, 'utf8'));
   assert.deepEqual(amendment.decision.rule, prereg.decision.rule, 'copied verbatim, not reinvented');
-  assert.equal(amendment.amendment.number, 2);
-  assert.equal(amendment.amendment.amends, 'EXP 015');
+  assert.equal(amendment.amendment, '02');
+  assert.equal(amendment.experiment, 'EXP 015');
 });
 
 test('amendment-02\'s window is the second untouched week after EXP 015\'s own, not overlapping either', () => {

@@ -28,12 +28,12 @@ export function outputs() {
   const pinned = readFileSync(join(HERE, 'amendment.sha256'), 'utf8').trim().split(/\s+/)[0];
   const actual = createHash('sha256').update(readFileSync(join(HERE, 'amendment.json'))).digest('hex');
   if (pinned !== actual) throw new Error('EXP 015 amendment 02: amendment.json no longer matches amendment.sha256');
-  const record = { experiment: { id: `EXP 015 ${amendment.amendment.slug}` }, window: amendment.window, brokers: letters, decision: { rule: amendment.decision.rule }, sha256: preregSha256 };
+  const record = { experiment: { id: `${amendment.experiment} amendment ${amendment.amendment}` }, window: amendment.window, brokers: letters, decision: { rule: amendment.decision.rule }, sha256: preregSha256 };
   const results = analyse(rows, null, record);
   const { openrouterInBandVsGenerationRecord: droppedCrossCheck, ...rest } = results;
   rest.crossCheckOfOneBroker = { ...droppedCrossCheck, note: 'dropped by amendment-01; always 0/0 here' };
-  rest.amends = amendment.amendment.amends;
-  rest.amendmentNumber = amendment.amendment.number;
+  rest.amends = amendment.experiment;
+  rest.amendmentNumber = amendment.amendment;
   rest.amendmentSha256 = amendmentSha256;
   return JSON.stringify(rest, null, 2) + '\n';
 }
