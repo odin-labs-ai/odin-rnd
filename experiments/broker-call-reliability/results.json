@@ -1,0 +1,37 @@
+{
+  "experiment": "EXP 024",
+  "window": {
+    "from": "2026-11-04T00:00:00Z",
+    "to": "2026-11-11T00:00:00Z"
+  },
+  "preregistrationSha256": "861ed576aed641c94a6268b992622f3dce05462516d59947fe92d4aa34a69257",
+  "perBroker": {
+    "openrouter": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "failureRate": 0,
+      "failureDetail": [],
+      "verdict": "reliable"
+    },
+    "eurouter": {
+      "callsAttempted": 112,
+      "callsFailed": 1,
+      "failureRate": 0.0089,
+      "failureDetail": [
+        {
+          "ts": "2026-11-05T09:44:06Z",
+          "httpStatus": 503,
+          "error": null
+        }
+      ],
+      "verdict": "marginal"
+    },
+    "requesty": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "failureRate": 0,
+      "failureDetail": [],
+      "verdict": "reliable"
+    }
+  }
+}
