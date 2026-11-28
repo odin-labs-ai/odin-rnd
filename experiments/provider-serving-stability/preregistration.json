@@ -28,10 +28,10 @@
   "capture": {
     "mechanism": "Unchanged: the same scheduled GitHub Actions workflow EXP 015 and its amendment-01 use (odin-labs-ai/odin-labs, 'R&D telemetry-truth capture', cron 41 */3 * * *, private repo, GitHub-hosted runner). No new capture code, no new key, no new spend; this record only adds a new analysis of rows the existing cron already produces for a window not yet analysed for this question.",
     "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256 — not re-pinned here since nothing about the capture code changed for this record.",
-    "fields used": "broker, requestedModel, servedModel, ok, ts — the same per-call rows EXP 015 reads, read for a different field (servedModel identity) than EXP 015's own question (cost gap)."
+    "fields used": "broker, canonicalModel, servedModel, ok, ts — the same per-call rows EXP 015 reads, read for a different field (servedModel identity) than EXP 015's own question (cost gap). canonicalModel, not requestedModel, is the matching key: each broker's own requestedModel string uses that broker's own spelling (eurouter drops the provider prefix; requesty writes 'claude-haiku-4-5' with a dash), but canonicalModel is normalised to the same string by every broker's row for the same requested model."
   },
   "metric": {
-    "perPair": "For each (broker, requestedModel) pair: n = count of counted calls (inside the window, ok === true, servedModel present and non-empty); distinctServedModels = the sorted set of distinct servedModel values among those calls.",
+    "perPair": "For each (broker, canonicalModel) pair: n = count of counted calls (inside the window, ok === true, servedModel present and non-empty); distinctServedModels = the sorted set of distinct servedModel values among those calls.",
     "counted call": "Inside [window.from, window.to), ok === true, servedModel is a non-empty string. Failed calls are excluded from n, never imputed, same convention as EXP 015."
   },
   "decision": {
@@ -45,11 +45,11 @@
       "unstable": "2 or more distinct servedModel values across counted calls; every distinct value is listed, with its own count, in the result."
     }
   },
-  "stoppingRule": "A single pre-registered 7-day window, not a cadence. Report each (broker, requestedModel) pair's classification exactly as computed by the frozen analyse.mjs in this directory, whatever it shows. No additional counted window is triggered by an 'unstable' result here; if this result motivates a periodic recheck (the same cadence shape as EXP 015's amendment-01), that would be proposed as its own, separately pre-registered follow-up, not silently added to this record.",
+  "stoppingRule": "A single pre-registered 7-day window, not a cadence. Report each (broker, canonicalModel) pair's classification exactly as computed by the frozen analyse.mjs in this directory, whatever it shows. No additional counted window is triggered by an 'unstable' result here; if this result motivates a periodic recheck (the same cadence shape as EXP 015's amendment-01), that would be proposed as its own, separately pre-registered follow-up, not silently added to this record.",
   "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this record; this record only adds one analysis pass over already-collected rows. No new broker calls, no new keys, no new spend.",
   "analysis": {
     "script": "experiments/provider-serving-stability/analyse.mjs",
-    "sha256": "3636c5ff4be960b87a03ec2e22f526640ddefed5c5196e4d63ee0feed6ef4142",
+    "sha256": "bab05b50d12c82716ce30eb98b083c8f11bd8748dc93363d87dfbda9d5367276",
     "inputs": "capture/*.jsonl (the uploaded rows, copied unchanged).",
     "check": "node experiments/provider-serving-stability/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
   },

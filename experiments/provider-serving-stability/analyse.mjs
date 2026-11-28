@@ -45,7 +45,10 @@ export function analyse(rows, prereg) {
   for (const broker of prereg.brokers) {
     perPair[broker] = {};
     for (const model of prereg.models) {
-      const calls = rows.filter(r => r.broker === broker && r.requestedModel === model && counted(r, fromMs, toMs));
+      // Matched by canonicalModel, not requestedModel: each broker encodes requestedModel in its own spelling
+      // (e.g. eurouter drops the provider prefix, requesty uses a dash in "claude-haiku-4-5"), but canonicalModel
+      // is the one field every broker's row normalises to the same string for the same requested model.
+      const calls = rows.filter(r => r.broker === broker && r.canonicalModel === model && counted(r, fromMs, toMs));
       const counts = {};
       for (const r of calls) counts[r.servedModel] = (counts[r.servedModel] ?? 0) + 1;
       const distinct = Object.keys(counts).sort();
