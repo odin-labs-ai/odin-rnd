@@ -60,7 +60,7 @@ Open `http://127.0.0.1:4173/odin-rnd/`. The development server mirrors the GitHu
 
 CI builds and tests on Linux (ubuntu-latest). A Windows job checks path handling only; macOS is not tested.
 
-`pnpm test` (`node --test scripts/*.test.mjs`) also needs Python 3 on `PATH` as `python3`, and `bash`; several tests call them directly. The test suite needs a POSIX system (Linux, or macOS, which CI does not test): some tests use `#!/bin/sh` stub binaries, `chmod` and `tar`. On Windows, run `pnpm test` inside WSL, or skip it and run the other steps.
+`pnpm test` (`node --test scripts/*.test.mjs`) also needs Python 3 on `PATH` as `python3`, and `bash`; several tests call them directly. The test suite needs a POSIX system (Linux, or macOS, which CI does not test): some tests use `#!/bin/sh` stub binaries, `chmod` and `tar`. On Windows, run `pnpm test` inside WSL, or skip it and run the other steps. A record's own `experiments/<slug>/analyse.test.mjs`, if it has one, is outside that glob; CI runs those separately (the `experiment tests` job), and locally that's `node --test $(find experiments -name 'analyse.test.mjs')`.
 
 The site uses static HTML, self-hosted fonts, CSS, native JavaScript and authored SVG. There is no visitor account, third-party tracker, model API or hosted experiment execution. Engine logic comes from the released `bce-engine@0.3.1` package; this repository does not implement its own conformance engine.
 
