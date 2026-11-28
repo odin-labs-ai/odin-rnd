@@ -1,0 +1,390 @@
+{
+  "fetchedAt": "2026-11-28T09:06:04Z",
+  "pullRequests": [
+    {
+      "createdAt": "2026-11-28T05:58:35Z",
+      "headRefName": "records/review-20261128-055546",
+      "mergedAt": "2026-11-28T06:34:05Z",
+      "number": 306,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-28T05:42:42Z",
+      "headRefName": "records/rogue-20261128-054052",
+      "mergedAt": "2026-11-28T06:35:13Z",
+      "number": 304,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-27T05:49:13Z",
+      "headRefName": "records/review-20261127-054613",
+      "mergedAt": "2026-11-27T06:37:36Z",
+      "number": 300,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-27T05:35:14Z",
+      "headRefName": "records/rogue-20261127-053337",
+      "mergedAt": "2026-11-27T06:04:40Z",
+      "number": 299,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-26T05:47:13Z",
+      "headRefName": "records/review-20261126-054424",
+      "mergedAt": "2026-11-26T06:37:10Z",
+      "number": 298,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-26T05:35:43Z",
+      "headRefName": "records/rogue-20261126-053302",
+      "mergedAt": "2026-11-26T06:02:44Z",
+      "number": 297,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-25T05:49:50Z",
+      "headRefName": "records/review-20261125-054708",
+      "mergedAt": "2026-11-25T06:37:40Z",
+      "number": 295,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-25T05:35:34Z",
+      "headRefName": "records/rogue-20261125-053354",
+      "mergedAt": "2026-11-25T06:02:40Z",
+      "number": 294,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-24T05:47:56Z",
+      "headRefName": "records/review-20261124-054515",
+      "mergedAt": "2026-11-24T06:36:56Z",
+      "number": 293,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-24T05:35:02Z",
+      "headRefName": "records/rogue-20261124-053220",
+      "mergedAt": "2026-11-24T06:02:51Z",
+      "number": 292,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-23T05:48:09Z",
+      "headRefName": "records/review-20261123-054516",
+      "mergedAt": "2026-11-23T06:46:58Z",
+      "number": 290,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-23T05:37:04Z",
+      "headRefName": "records/rogue-20261123-053524",
+      "mergedAt": "2026-11-23T06:02:26Z",
+      "number": 289,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-22T05:46:24Z",
+      "headRefName": "records/review-20261122-054341",
+      "mergedAt": "2026-11-22T06:34:10Z",
+      "number": 286,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-22T05:35:03Z",
+      "headRefName": "records/rogue-20261122-053226",
+      "mergedAt": "2026-11-22T06:01:51Z",
+      "number": 285,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-21T05:46:21Z",
+      "headRefName": "records/review-20261121-054340",
+      "mergedAt": "2026-11-21T06:33:52Z",
+      "number": 284,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-21T05:34:29Z",
+      "headRefName": "records/rogue-20261121-053151",
+      "mergedAt": "2026-11-21T06:02:13Z",
+      "number": 283,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-20T05:45:50Z",
+      "headRefName": "records/review-20261120-054412",
+      "mergedAt": "2026-11-20T06:02:57Z",
+      "number": 282,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-20T05:35:02Z",
+      "headRefName": "records/rogue-20261120-053328",
+      "mergedAt": "2026-11-20T06:04:04Z",
+      "number": 281,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-19T05:48:10Z",
+      "headRefName": "records/review-20261119-054529",
+      "mergedAt": "2026-11-19T06:36:49Z",
+      "number": 280,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-19T05:34:14Z",
+      "headRefName": "records/rogue-20261119-053242",
+      "mergedAt": "2026-11-19T06:02:43Z",
+      "number": 279,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-18T05:48:02Z",
+      "headRefName": "records/review-20261118-054603",
+      "mergedAt": "2026-11-18T06:35:01Z",
+      "number": 272,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-18T05:36:51Z",
+      "headRefName": "records/rogue-20261118-053407",
+      "mergedAt": "2026-11-18T09:19:51Z",
+      "number": 271,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-17T05:47:45Z",
+      "headRefName": "records/review-20261117-054546",
+      "mergedAt": "2026-11-17T06:02:50Z",
+      "number": 267,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-17T05:34:34Z",
+      "headRefName": "records/rogue-20261117-053206",
+      "mergedAt": "2026-11-17T06:03:49Z",
+      "number": 266,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-16T05:46:51Z",
+      "headRefName": "records/review-20261116-054450",
+      "mergedAt": "2026-11-16T06:51:44Z",
+      "number": 252,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-16T05:36:16Z",
+      "headRefName": "records/rogue-20261116-053352",
+      "mergedAt": "2026-11-16T06:02:13Z",
+      "number": 251,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-15T05:44:45Z",
+      "headRefName": "records/review-20261115-054314",
+      "mergedAt": "2026-11-15T06:02:06Z",
+      "number": 246,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-15T05:33:43Z",
+      "headRefName": "records/rogue-20261115-053120",
+      "mergedAt": "2026-11-15T06:03:03Z",
+      "number": 245,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-14T05:47:23Z",
+      "headRefName": "records/review-20261114-054440",
+      "mergedAt": "2026-11-14T06:32:24Z",
+      "number": 241,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-14T05:33:50Z",
+      "headRefName": "records/rogue-20261114-053127",
+      "mergedAt": "2026-11-14T06:01:54Z",
+      "number": 240,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-13T19:39:54Z",
+      "headRefName": "records/rogue-20261106-20261107-20261108-20261109-20261110-20261111-20261112-20261113-193810",
+      "mergedAt": "2026-11-13T19:59:10Z",
+      "number": 231,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-13T07:50:53Z",
+      "headRefName": "records/measured-blind-20261112-20261113-074936",
+      "mergedAt": "2026-11-13T08:08:43Z",
+      "number": 226,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-13T07:21:35Z",
+      "headRefName": "records/red-build-20261105-20261106-20261107-20261108-20261109-20261110-20261111-20261112-20261113-071918",
+      "mergedAt": "2026-11-13T07:38:16Z",
+      "number": 225,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-13T05:46:21Z",
+      "headRefName": "records/review-20261113-054420",
+      "mergedAt": "2026-11-13T06:35:08Z",
+      "number": 223,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-12T05:44:14Z",
+      "headRefName": "records/review-20261112-054239",
+      "mergedAt": "2026-11-12T21:54:22Z",
+      "number": 216,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-11T06:03:29Z",
+      "headRefName": "records/measured-blind-20261106-20261107-20261108-20261109-20261110-20261111-060200",
+      "mergedAt": "2026-11-11T06:34:55Z",
+      "number": 213,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-11T05:47:03Z",
+      "headRefName": "records/review-20261111-054542",
+      "mergedAt": "2026-11-11T06:01:55Z",
+      "number": 212,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-10T05:45:08Z",
+      "headRefName": "records/review-20261110-054312",
+      "mergedAt": "2026-11-10T06:02:42Z",
+      "number": 207,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-09T05:45:50Z",
+      "headRefName": "records/review-20261109-054427",
+      "mergedAt": "2026-11-09T06:01:56Z",
+      "number": 205,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-08T05:44:56Z",
+      "headRefName": "records/review-20261108-054348",
+      "mergedAt": "2026-11-08T06:01:43Z",
+      "number": 188,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-07T05:45:29Z",
+      "headRefName": "records/review-20261107-054347",
+      "mergedAt": "2026-11-07T06:01:50Z",
+      "number": 187,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-06T06:08:46Z",
+      "headRefName": "records/review-20261105-20261106-060741",
+      "mergedAt": "2026-11-06T11:17:14Z",
+      "number": 185,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-06T06:02:30Z",
+      "headRefName": "records/rogue-20261106-060101",
+      "mergedAt": null,
+      "number": 184,
+      "state": "CLOSED"
+    },
+    {
+      "createdAt": "2026-11-05T05:30:59Z",
+      "headRefName": "records/rogue-20261105-052946",
+      "mergedAt": "2026-11-05T06:02:14Z",
+      "number": 183,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-04T19:38:59Z",
+      "headRefName": "records/red-build-20261104-193723",
+      "mergedAt": "2026-11-05T06:03:17Z",
+      "number": 182,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-04T05:44:47Z",
+      "headRefName": "records/review-20261103-20261104-054313",
+      "mergedAt": "2026-11-04T06:02:01Z",
+      "number": 179,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-04T05:31:35Z",
+      "headRefName": "records/rogue-20261104-053003",
+      "mergedAt": "2026-11-04T06:02:59Z",
+      "number": 178,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-03T05:30:08Z",
+      "headRefName": "records/rogue-20261103-052909",
+      "mergedAt": "2026-11-03T06:03:09Z",
+      "number": 175,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-02T05:43:50Z",
+      "headRefName": "records/review-20261031-20261101-20261102-054253",
+      "mergedAt": "2026-11-03T11:20:29Z",
+      "number": 167,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-11-02T05:29:57Z",
+      "headRefName": "records/rogue-20261031-20261101-20261102-052909",
+      "mergedAt": "2026-11-03T03:07:52Z",
+      "number": 166,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-10-30T05:43:50Z",
+      "headRefName": "records/review-20261030-054250",
+      "mergedAt": "2026-11-01T12:11:33Z",
+      "number": 162,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-10-30T05:31:47Z",
+      "headRefName": "records/rogue-20261030-053035",
+      "mergedAt": "2026-11-01T12:58:37Z",
+      "number": 161,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-10-29T22:50:41Z",
+      "headRefName": "records/review-20261029-224926",
+      "mergedAt": "2026-10-29T23:37:29Z",
+      "number": 160,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-10-29T05:31:07Z",
+      "headRefName": "records/rogue-20261029-053022",
+      "mergedAt": "2026-10-29T23:36:27Z",
+      "number": 155,
+      "state": "MERGED"
+    },
+    {
+      "createdAt": "2026-10-28T07:27:12Z",
+      "headRefName": "records/rogue-2026-10-28-072611",
+      "mergedAt": "2026-10-28T07:53:37Z",
+      "number": 138,
+      "state": "MERGED"
+    }
+  ]
+}

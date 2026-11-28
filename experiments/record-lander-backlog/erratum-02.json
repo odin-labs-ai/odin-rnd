@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "kind": "erratum",
+  "id": "erratum-02",
+  "experiment": "EXP 023",
+  "title": "Erratum 02: ten defects from a second independent review -- three real code fixes (all verified to leave results.json unchanged), one metric's text corrected to match the frozen script it was always inconsistent with, and six disclosures",
+  "date": "2026-11-28",
+  "statusText": "Erratum 28 Nov 2026",
+  "parent": {
+    "file": "results.json",
+    "sha256": "f42583d6ebc6042f0767072538bb2de7e1fb0f75bc40ac23d491407d9c834563",
+    "published": "Every published number in results.json is byte-for-byte unchanged by this erratum (diffed directly: the only line that differs anywhere in the file is preregistrationSha256 itself, which must change because preregistration.json's own text changed). analyse.mjs's bytes did change -- three real defects fixed -- and its own sha256 pin in preregistration.json changed with it, disclosed here with both hashes."
+  },
+  "scope": "Ten findings from a second independent review (row 71ae1d65, whole-diff). Three are code defects in analyse.mjs, fixed and verified to leave every counted number unchanged against this record's own committed capture. One is a metric whose registered text disagreed with the frozen script and its own test; the text is corrected to match the script, which is unchanged. The remaining six are disclosures: a verification performed after the fact, two prose corrections to this directory's own prior erratum-01.json, and three facts that were already true and are now stated plainly rather than left for a reader to derive.",
+  "corrections": [
+    {
+      "where": "analyse.mjs lines 59-61 (now 63-81 after this erratum) -- the latency computed for a day two merged PRs both name",
+      "field": "code defect: which merge's mergedAt sets a day's latency",
+      "was": "The FIRST merged PR encountered in capture.pullRequests' own array order set the day's latency; a second merged PR naming the same day was recorded only as an anomaly, never considered for latency even if it merged earlier.",
+      "now": "The EARLIEST mergedAt of the merged PRs naming a day sets that day's latency, regardless of array order; the anomaly is still recorded with both PR numbers.",
+      "evidence": "Reviewer's own reproduction: reversing the two rows in the existing test (analyse.test.mjs, the anomaly test) changed the measured latency from the earlier PR's to the later PR's with identical PR evidence, because the capture's array order (not merge time) decided. Fixed and locked in with a new test that runs both orderings of the same two rows and asserts an identical result. This record's own real capture has zero days named by more than one merged PR (results.json#/anomalies is []), so this fix changes no published number here -- confirmed by diffing results.json before and after the fix, byte for byte identical apart from preregistrationSha256."
+    },
+    {
+      "where": "analyse.mjs lines 16, 25-27 (now 29-36) -- parseBranch's day-list extraction",
+      "field": "code defect: a malformed branch name with an empty day group",
+      "was": "dayDigits.split('-').filter(Boolean) silently dropped an empty string produced by a doubled dash (e.g. the head ref records/rogue-20261101--120000), so the branch was accepted as a valid single-day branch instead of being refused as outside the lander's own naming contract.",
+      "now": "The empty-group filter is removed; an empty string fails the per-group /^\\d{8}$/ check like any other malformed group, so the whole branch is refused (parseBranch returns null).",
+      "evidence": "Reviewer's own example, reproduced: parseBranch('records/rogue-20261101--120000') returned {lab:'rogue', days:['20261101']} before this fix (confirmed by running the pre-fix function directly against this exact input) and returns null after. No PR in this record's own captured 55 rows has a doubled dash in its head ref (checked by regex against every headRefName in capture/records-prs.json: zero matches), so this fix changes no published number here either -- same before/after results.json diff as above."
+    },
+    {
+      "where": "analyse.mjs (new exports sha256Hex and checkPins; main())",
+      "field": "code defect: --check never verified either committed pin against the live bytes",
+      "was": "main() read preregistration.sha256's own text and used it directly as the reported preregistrationSha256, without ever hashing preregistration.json itself; analysis.sha256 (the field inside preregistration.json naming analyse.mjs's own hash) was never compared against analyse.mjs's real bytes at all. Editing either file's content without updating its pin left --check passing.",
+      "now": "main() reads preregistration.json's raw text and analyse.mjs's own raw bytes, hashes both, and refuses (exit 1, naming which pin failed) before computing anything if either does not match its committed pin.",
+      "evidence": "Reproduced the gap directly: changing preregistration.json's title field alone, without touching preregistration.sha256, left the old --check's output byte-identical (confirmed by running the pre-fix script against a scratch copy with the title changed). New checkPins() is a pure function, tested directly with four cases (both pins matching; preregistration-only mismatch; analyse.mjs-only mismatch; both at once) -- no result-dependent change, since both pins in the real committed tree do match (verified: node analyse.mjs --check passes at this erratum's own head)."
+    },
+    {
+      "where": "preregistration.json#/metric/stillOutstanding (text only; the frozen analyse.mjs and analyse.test.mjs are unchanged by this entry)",
+      "field": "registered text disagreed with the frozen script and its own test",
+      "was": "\"...that appears in NEITHER a merged nor a currently-OPEN records/<lab>-* PR's day-list...\" -- read literally, a day named by a currently-open PR should be excluded from stillOutstanding entirely.",
+      "now": "\"...that does not appear in any MERGED records/<lab>-* PR's day-list... and whether a currently-OPEN PR already names it. A day an open PR names is still counted here and flagged open: true, not excluded...\"",
+      "evidence": "analyse.mjs itself (unchanged by this erratum) has always filtered stillOutstanding on absence of a MERGED PR only (!landedBy.has(d)), and separately flags open: openDays.has(d) -- never excluding an open-covered day. analyse.test.mjs's own 'an open PR naming an outstanding day is flagged open:true, not silently hidden' test (unchanged, already committed) requires exactly this behavior. The registered text was the one thing out of step; corrected to match the script and test, which this record keeps as the more informative choice (an open PR has not landed, so hiding the day behind it would understate the backlog). This record's own capture has zero currently-open records/* PRs (checked directly: gh pr list --state open --search \"head:records/\" returns []), so no published stillOutstanding entry is actually flagged open: true today, and this correction changes no number."
+    },
+    {
+      "where": "preregistration.json#/decision/perLab (new field: precedence)",
+      "field": "disclosed: the frozen script's own tie-breaker, not stated anywhere in the registered rule",
+      "was": "current, backlogged and mixed were defined as if mutually exclusive; no tie-breaker was named for a lab that satisfies both current's and backlogged's conditions at once.",
+      "now": "A new precedence field states plainly that the frozen analyse.mjs checks current first and returns it immediately when it holds, so current takes precedence over a simultaneously-true backlogged condition -- and names rogue's own result in this record as the exact case.",
+      "evidence": "Rogue's own published result: coverage 1.0 (>= 0.8), medianLatencyDays 0.25 (<= 2) -- satisfies 'current' -- and maxLatencyDays 7.83 (> 7) -- also satisfies 'backlogged'. The frozen script's own verdict expression (an if/else-if chain, unchanged by this erratum) evaluates the current clause first and short-circuits; a new test (analyse.test.mjs) constructs a synthetic lab with this same overlap and asserts 'current' wins, locking the precedence in rather than leaving it implicit in the script alone."
+    },
+    {
+      "where": "preregistration.json#/capture/where",
+      "field": "the documented capture command could not reproduce the committed capture",
+      "was": "gh pr list -R odin-labs-ai/odin-rnd --state all --search \"head:records/\" --json number,headRefName,state,createdAt,mergedAt, paginated to completion. -- no --limit flag; gh's own default page size is 30, below this capture's 55 rows, and the committed file's {fetchedAt, pullRequests: [...]} wrapper was not mentioned at all.",
+      "now": "The same command with --limit 500 added, and a sentence stating gh's bare-array output was wrapped as {fetchedAt, pullRequests: <array>} before being committed.",
+      "evidence": "Ran the corrected command directly, read-only, just now: it returns every records/* PR in one call (56 at the time of this erratum, one more than this record's own frozen 55 since a new record PR has landed since the original capture -- expected, and irrelevant to this record's own frozen capture/records-prs.json, which is unchanged). The original, undocumented --limit was used but never written down; this corrects the written command to match what was actually run."
+    },
+    {
+      "where": "preregistration.json#/question and #/metric/coverage (unchanged text; this entry is a verification, not a wording change)",
+      "field": "disclosed: independent confirmation that every counted merge actually landed on main, not some other branch",
+      "was": "\"...actually landed on main...\" and \"...MERGED records/<lab>-* PR...\" were published without checking each PR's base branch; the capture schema itself (number, headRefName, state, createdAt, mergedAt) has no baseRefName field, so the claim was not verifiable from the committed capture alone.",
+      "now": "No change to the published text (it is independently confirmed true, not merely softened). This entry records the check: a fresh, separate gh pr list -R odin-labs-ai/odin-rnd --state all --search \"head:records/\" --json number,baseRefName call, cross-referenced against this record's own 55 captured PR numbers, found every one based against main. The capture file itself is not re-opened or amended; this is independent corroborating evidence, not part of the frozen input.",
+      "evidence": "Checked directly, read-only, just now (not re-run as part of analyse.mjs, which has no network access by design): all 55 PR numbers in capture/records-prs.json appear in the live base-branch listing with baseRefName == \"main\", zero exceptions."
+    },
+    {
+      "where": "erratum-01.json's own correction 3 (\"red-build 10/24 (41.7%)... measured-blind 8/22 (36.4%)\") and its evidentiary framing",
+      "field": "a factual error inside erratum-01 itself: the gap's start date",
+      "was": "erratum-01.json's correction 3, and this record's own preregistration.json calibration text (\"no open or merged records/red-build-* or records/measured-blind-* pull request exists for any day from 2026-11-13 onward\"), both place the first uncovered day at 2026-11-13.",
+      "now": "The first uncovered day for both labs is 2026-11-14, not 2026-11-13. PR #225 (red-build) and PR #226 (measured-blind) both merged the morning of 2026-11-13 and both name 2026-11-13 in their own day-lists, so that day is covered, not the start of the gap.",
+      "evidence": "Checked directly against capture/records-prs.json: PR #225's headRefName ends ...-20261112-20261113-071918 (covers through 11-13); PR #226's headRefName is records/measured-blind-20261112-20261113-074936 (also covers 11-13); both have state MERGED. results.json's own stillOutstanding lists (unaffected by this erratum) already start at 20261114 for both labs, not 20261113 -- the data was always right; only erratum-01's and the preregistration's prose said the wrong date. This does not change either lab's verdict (still 'backlogged' either way) or any number in results.json."
+    },
+    {
+      "where": "preregistration.json#/calibration/disclosed",
+      "field": "disclosed: part of the eventual result was already a logical certainty before the capture was fetched",
+      "was": "The calibration section named PR #225's day range and merge date as already-known background, but did not state the direct consequence: that this alone already guaranteed red-build's maximum latency would exceed the backlogged threshold.",
+      "now": "No field was edited (the disclosed text already names #225's shape); this correction is recorded here because the second review asked for it explicitly stated rather than left for a reader to derive: 2026-11-13 (merge) minus 2026-11-05 (the earliest day #225 names) is 8 days, already past the frozen backloggedMaxLatencyMinDays of 7, before this record's own capture was fetched. Re-fetching #225's metadata inside the frozen capture preserves reproducibility (the same number is independently recomputed, not merely assumed) but is not a fresh discovery.",
+      "evidence": "Arithmetic on already-public facts named in calibration.disclosed (PR #225, merged 2026-11-13, days 2026-11-05 through 2026-11-13) and the frozen decision.rule.backloggedMaxLatencyMinDays (7), both already committed before this erratum."
+    },
+    {
+      "where": "analyse.mjs's own header comment (top of file)",
+      "field": "disclosed: a comment's own inaccurate freeze claim",
+      "was": "\"analyse.mjs -- frozen by sha256 in experiments/record-lander-backlog/preregistration.json before the raw capture (capture/records-prs.json) was fetched.\" -- true of the window/metric/decision-rule text, but analysis.sha256 (the specific field the comment is about) was not filled in until after the capture, per erratum-01.json.",
+      "now": "The header now points to erratum-01.json and this erratum before repeating any \"frozen before capture\" claim, so a reader of the script alone is not misled the way the old comment misled this record's own second reviewer into treating the freeze-order question as closed.",
+      "evidence": "erratum-01.json correction 2 already disclosed the pre-capture/post-capture hash timeline (f15a54f3... then 15cd36d8...); this entry's own further analyse.mjs fix adds a third hash (8daaf1d6..., after the three code fixes above), all three now readable directly from the header comment pointing at both erratum files instead of only from a prose paragraph in the PR."
+    }
+  ],
+  "statement": "Three real defects in analyse.mjs (the latency tie-break, the malformed-branch parser, and --check's missing pin verification) are fixed, each with a new discriminating test, and each independently confirmed to leave every number in results.json unchanged against this record's own committed capture -- the only line that differs anywhere in results.json is preregistrationSha256 itself. One metric's registered text (stillOutstanding) is corrected to match the frozen script and its own test, which were always consistent with each other and are unchanged. Six further items are disclosures: an independent verification that every counted merge really did land on main (not merely assumed), a corrected gap-start date inside erratum-01 itself (2026-11-14, not 2026-11-13 -- results.json was always right, only the prose was wrong), an explicit precedence rule for a lab meeting both verdict definitions at once (rogue's own case), a corrected and tested capture command, an explicit statement that part of this record's own prediction was a logical certainty before the capture, and a corrected header comment. The record's window, decision rule, labs and every counted row are unchanged."
+}
