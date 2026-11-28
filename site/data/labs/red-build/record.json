@@ -1498,6 +1498,1566 @@
    },
    "runner": "github-hosted",
    "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-14T05:48:38Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-14T05:49:10Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-15T05:48:35Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-15T05:49:11Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-16T05:48:46Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-16T05:49:11Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-17T05:47:59Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-17T05:48:26Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-18T05:48:22Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-18T05:48:53Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-19T05:48:41Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-19T05:49:12Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-20T05:48:02Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-20T05:48:28Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-21T05:48:41Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-21T05:49:09Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-22T05:48:33Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-22T05:49:08Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-23T05:48:48Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-23T05:49:12Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-24T05:48:35Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-24T05:48:58Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-25T05:48:44Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-25T05:49:12Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-26T05:49:18Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "c169ad9bc84296867a85e148f287ae2ed4e8692f",
+    "onMain": true,
+    "sha": "c169ad9bc84296867a85e148f287ae2ed4e8692f"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-26T05:49:20Z",
+   "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9e1467d6b2c8ee72ba76d70afd90b2e4110dd695f1671c92d1133ee9f182d7c5"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "9ffcbb6ebd70c626bb8b35c373382d7506ff6b0b",
+    "onMain": true,
+    "sha": "9ffcbb6ebd70c626bb8b35c373382d7506ff6b0b"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-27T05:48:40Z",
+   "recordHash": "9ff90e9fef5a6b2f578331385e26df7638a36244352620db6f422ca12675b972",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "9ff90e9fef5a6b2f578331385e26df7638a36244352620db6f422ca12675b972"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "9ffcbb6ebd70c626bb8b35c373382d7506ff6b0b",
+    "onMain": true,
+    "sha": "9ffcbb6ebd70c626bb8b35c373382d7506ff6b0b"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-27T05:49:04Z",
+   "recordHash": "9ff90e9fef5a6b2f578331385e26df7638a36244352620db6f422ca12675b972",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "9ff90e9fef5a6b2f578331385e26df7638a36244352620db6f422ca12675b972"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "770a6f47453fa19cbea73cc0c483b76eede430cd",
+    "onMain": true,
+    "sha": "770a6f47453fa19cbea73cc0c483b76eede430cd"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "org-ci-heavy",
+   "ranAt": "2026-11-28T16:58:10Z",
+   "recordHash": "c0506fe9ac7dc1b86ffb97174c77500440f6c3dfee0fdd414ac74eb1992a70d7",
+   "replicatedOn": [
+    {
+     "machineClass": "ubuntu-latest",
+     "recordHash": "c0506fe9ac7dc1b86ffb97174c77500440f6c3dfee0fdd414ac74eb1992a70d7"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "org-hosted",
+   "version": 1
+  },
+  {
+   "command": "the lab's own recount",
+   "commit": {
+    "compare": "identical",
+    "mainHead": "770a6f47453fa19cbea73cc0c483b76eede430cd",
+    "onMain": true,
+    "sha": "770a6f47453fa19cbea73cc0c483b76eede430cd"
+   },
+   "differedOn": [],
+   "format": "odin-lab-record",
+   "image": "node:22-bookworm@sha256:94c973596a8581a87ba42746ceb0b0e0b5246d098de45b1ce04dcc967cfc5dfb",
+   "inputs": [
+    {
+     "role": "earlier",
+     "sha256": "d18cb552d2c78eb7851ee02a7fb0f177c2da5c3cde599eca4677c8cee320d05d"
+    },
+    {
+     "role": "heldout",
+     "sha256": "fe23e1e80ae2ef2a2491745dc85a0169a8e0ce69e296c5f846ffea4191012338"
+    },
+    {
+     "role": "score",
+     "sha256": "1ac7a1ba6910ac9b3465666cc7b1200b5aca346c2b7f851a1d97e0b826cd03f2"
+    },
+    {
+     "role": "verdicts-a",
+     "sha256": "16943c1528c5ea89465aac63877b129737a50187c996a0742e29356c4aae1999"
+    },
+    {
+     "role": "verdicts-b",
+     "sha256": "f6c9f8650090f9ef658ecaff6c9f3e514b70e58e8e92eb02f09a9bae98b26ac4"
+    }
+   ],
+   "lab": "red-build",
+   "machineClass": "ubuntu-latest",
+   "ranAt": "2026-11-28T16:58:46Z",
+   "recordHash": "c0506fe9ac7dc1b86ffb97174c77500440f6c3dfee0fdd414ac74eb1992a70d7",
+   "replicatedOn": [
+    {
+     "machineClass": "org-ci-heavy",
+     "recordHash": "c0506fe9ac7dc1b86ffb97174c77500440f6c3dfee0fdd414ac74eb1992a70d7"
+    }
+   ],
+   "result": {
+    "breaches": 0,
+    "committed": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "now": "24d90a3fe509c653508a0826301c187fd43c835b00283e4899d94f966886320d",
+    "verdict": "SAME"
+   },
+   "runner": "github-hosted",
+   "version": 1
   }
  ]
 }
