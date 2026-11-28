@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.broker-probe",
+  "week": "2026-W48",
+  "startedAt": "2026-11-23T07:23:20.962Z",
+  "probe": {
+    "callsPerModel": 20,
+    "prompt": "Reply with the single word: pong",
+    "maxTokens": 16,
+    "models": [
+      "claude-haiku-4-5",
+      "gpt-4o-mini"
+    ]
+  },
+  "brokers": {
+    "openrouter": {
+      "keyed": true,
+      "models": {
+        "claude-haiku-4-5": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "anthropic/claude-haiku-4.5"
+          ],
+          "latencyMsP50": 712,
+          "latencyMsP95": 969,
+          "costUsdTotal": 0.0008,
+          "costReported": 20
+        },
+        "gpt-4o-mini": {
+          "attempted": 20,
+          "ok": 20,
+          "status5xx": 0,
+          "otherErrors": 0,
+          "servedMismatch": 0,
+          "servedModels": [
+            "openai/gpt-4o-mini"
+          ],
+          "latencyMsP50": 485,
+          "latencyMsP95": 564,
+          "costUsdTotal": 0.000066,
+          "costReported": 20
+        }
+      },
+      "catalogue": {
+        "status": 200,
+        "models": 442,
+        "sha256": "64e0c72d775d46c445d7f146d521cb5188054b0b8b2f13b881c9a2974b3bed79",
+        "diff": {
+          "added": 15,
+          "removed": 6,
+          "repriced": 44,
+          "addedIds": [
+            "google/gemini-4-neon",
+            "google/gemini-4-neon:batch",
+            "mistralai/pixtral-large-2502",
+            "openai/gpt-6.2-astra",
+            "openai/gpt-6.2-astra-pro",
+            "openai/gpt-6.2-astra-pro:batch",
+            "openai/gpt-6.2-astra:batch",
+            "openai/gpt-6.2-sol",
+            "openai/gpt-6.2-sol-pro",
+            "openai/gpt-6.2-sol-pro:batch",
+            "openai/gpt-6.2-sol:batch",
+            "radixark/daisyrose-27b",
+            "tencent/hy4-flash",
+            "thinkingmachines/inkling-2-mini",
+            "z-ai/glm-5.2:batch"
+          ],
+          "removedIds": [
+            "cohere/north-mini-code:free",
+            "meituan/longcat-2.0",
+            "meta-llama/llama-3.2-1b-instruct",
+            "tencent/hy3-preview",
+            "thinkingmachines/inkling-2-small:free",
+            "x-ai/grok-build-0.1"
+          ],
+          "repricedIds": [
+            "~deepseek/deepseek-pro-latest",
+            "~openai/gpt-astra-latest",
+            "deepseek/deepseek-chat-v3-0324",
+            "deepseek/deepseek-r1-0528",
+            "deepseek/deepseek-v4-flash-0731",
+            "deepseek/deepseek-v4-flash-vision-exp",
+            "deepseek/deepseek-v4-pro-0813",
+            "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017:batch",
+            "deepseek/deepseek-v4.1-flash:batch",
+            "google/gemma-3-27b-it",
+            "google/gemma-3-4b-it",
+            "gryphe/mythomax-l2-13b",
+            "inclusionai/ling-3.1-flash",
+            "meta-llama/llama-3.2-3b-instruct",
+            "meta/muse-glimmer-30b",
+            "minimax/minimax-m2.5",
+            "minimax/minimax-m2.7",
+            "minimax/minimax-m3",
+            "minimax/minimax-m3.1-flash",
+            "mistralai/mistral-medium-3",
+            "mistralai/mistral-medium-3.1",
+            "mistralai/mistral-small-3.2-24b-instruct",
+            "moonshotai/kimi-k2.7-code",
+            "moonshotai/kimi-k3.1-pro:batch",
+            "nvidia/nemotron-3-ultra-550b-a55b",
+            "nvidia/nemotron-3.5-super-vl",
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "particle-ai/particle-1",
+            "qwen/qwen3-coder-30b-a3b-instruct",
+            "qwen/qwen3-next-80b-a3b-instruct",
+            "qwen/qwen3.5-9b",
+            "qwen/qwen3.6-35b-a3b",
+            "qwen/qwen3.8-27b",
+            "qwen/qwen4-max",
+            "reflection/beam-1.0-501b-a23b",
+            "tencent/hy3",
+            "xiaomi/mimo-v2.5-pro",
+            "z-ai/glm-4.7",
+            "z-ai/glm-5.2",
+            "z-ai/glm-5.3-flash:batch",
+            "z-ai/glm-5.3-prime",
+            "z-ai/glm-5.3:batch"
+          ]
+        },
+        "probeModelPrices": {
+          "claude-haiku-4-5": {
+            "in": 1,
+            "out": 5,
+            "currency": "USD"
+          },
+          "gpt-4o-mini": {
+            "in": 0.15,
+            "out": 0.6,
+            "currency": "USD"
+          }
+        }
+      }
+    },
+    "eurouter": {
+      "keyed": false,
+      "held": "the terms are waiting on the lab owner's review (The clause names 'trade names' as well as trademarks and branding. Whether a factual mention of the name next to a measurement needs consent is left to the lab owner.)"
+    },
+    "requesty": {
+      "keyed": true,
+      "held": "the terms are waiting on the lab owner's review (Section 13.1 bars systematically collecting Requesty's 'model performance data, benchmarks, or routing intelligence for competitive purposes'. Measuring our own calls is not obviously that, but a recurring public broker comparison could be read as it. Left to the lab owner.)"
+    }
+  },
+  "catalogueAgreement": {
+    "claude-haiku-4-5": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    },
+    "gpt-4o-mini": {
+      "listed": 1,
+      "usdListed": 1,
+      "agree": null
+    }
+  },
+  "endedAt": "2026-11-23T07:23:46.570Z"
+}
