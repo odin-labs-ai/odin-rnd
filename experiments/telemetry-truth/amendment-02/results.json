@@ -1,0 +1,96 @@
+{
+  "experiment": "EXP 015 telemetry-truth-recheck-01",
+  "window": {
+    "from": "2026-11-18T00:00:00Z",
+    "to": "2026-11-25T00:00:00Z"
+  },
+  "preregistrationSha256": "914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe",
+  "perBroker": {
+    "X": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0.1,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0.1,
+        "2026-11-19": 0.1,
+        "2026-11-20": 0.1,
+        "2026-11-21": 0.1,
+        "2026-11-22": 0.1,
+        "2026-11-23": 0.1,
+        "2026-11-24": 0.1
+      },
+      "meanOfDailyMeans": 0.1,
+      "ci95": [
+        0.1,
+        0.1
+      ],
+      "factor": 1.1,
+      "servedModels": [],
+      "verdict": "estimate off by a stable factor"
+    },
+    "Y": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0,
+        "2026-11-19": 0,
+        "2026-11-20": 0,
+        "2026-11-21": 0,
+        "2026-11-22": 0,
+        "2026-11-23": 0,
+        "2026-11-24": 0
+      },
+      "meanOfDailyMeans": 0,
+      "ci95": [
+        0,
+        0
+      ],
+      "factor": null,
+      "servedModels": [],
+      "verdict": "estimate holds"
+    },
+    "Z": {
+      "callsAttempted": 112,
+      "callsFailed": 0,
+      "n": 112,
+      "inBandCostShare": 1,
+      "medianRelativeGap": 0,
+      "days": 7,
+      "dailyMeanRelativeGap": {
+        "2026-11-18": 0,
+        "2026-11-19": 0,
+        "2026-11-20": 0,
+        "2026-11-21": 0,
+        "2026-11-22": 0,
+        "2026-11-23": 0,
+        "2026-11-24": 0
+      },
+      "meanOfDailyMeans": 0,
+      "ci95": [
+        0,
+        0
+      ],
+      "factor": null,
+      "servedModels": [],
+      "verdict": "estimate holds"
+    }
+  },
+  "fleet": {
+    "verdict": "not measurable"
+  },
+  "crossCheckOfOneBroker": {
+    "n": 0,
+    "agreeWithin1Pct": 0,
+    "note": "dropped by amendment-01; always 0/0 here"
+  },
+  "amends": "EXP 015",
+  "amendmentNumber": 2,
+  "amendmentSha256": "8245cdba29de947d6d4209a24b6db89293d00151597dc0321fcefdbdaaa4fb7f"
+}
