@@ -72,7 +72,9 @@
     },
     {
       "claim": "Whether Odin's per-call cost estimates match what the brokers bill.",
-      "slug": "telemetry-truth"
+      "slug": "telemetry-truth",
+      "published": "not summarised",
+      "note": "journal/telemetry-truth-results.html"
     },
     {
       "claim": "That Odin's routing saves money against a fixed-model baseline.",
