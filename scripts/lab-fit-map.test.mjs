@@ -55,7 +55,7 @@ test('the committed fit map passes the build gate and shows the five published f
   // The feed-check basis shows on exactly the two feed-decided verdicts (F2b and components) of the published Lab 03,
   // and a record without its results digest is refused before it can render (review 2bb1b73a item 39; see the next test).
   assert.equal((html.match(/<span class="fit-none">On the feed check<\/span>/g) ?? []).length, 2);
-  assert.match(html, /5 of 10 scenarios have a verdict so far\./);
+  assert.match(html, /5 of 10 scenarios, across the 3 comparisons below, have a verdict so far\./);
   assert.match(html, /<th scope="col">Predictions, frozen before the run<\/th>/);
   assert.match(html, /<li><span>PostgreSQL advocate \(an AI model\):<\/span> both-fit, leaning postgres-fits<\/li>/);
   assert.match(html, /<a href="\.\.\/journal\/mongodb-home-ground-pre-registration\.html">EXP 020: /);
