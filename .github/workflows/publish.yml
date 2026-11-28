@@ -123,8 +123,31 @@ jobs:
         env:
           FILM_DECODER_REQUIRED: '1'
         run: node --test scripts/og-instagram.test.mjs
+  experiment-tests:
+    # pnpm test (node --test scripts/*.test.mjs) never reaches a test file placed under experiments/<slug>/: that
+    # glob cannot and does not expand into experiments/ at all. Open PRs #308 and #309 each add one such file
+    # expecting it to run on every push and pull request, and it never has; #307 reuses analyse() via recheck.mjs
+    # with no test file of its own. This job closes the gap on its own, rather than widening scripts/*.test.mjs's
+    # own glob: the package.json test script is bound by experiments/blueprint-floor/preregistration.json#files
+    # and checked live by scripts/harness-frozen.test.mjs, so it is not this job's file to edit.
+    name: experiment tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Every experiments/<slug>/analyse.test.mjs (the only place these run; scripts/*.test.mjs's job never reaches here)
+        run: |
+          mapfile -t files < <(find experiments -name 'analyse.test.mjs' | LC_ALL=C sort)
+          echo "found ${#files[@]} experiment test file(s): ${files[*]:-<none>}"
+          if [ "${#files[@]}" -eq 0 ]; then echo "::notice::no experiments/<slug>/analyse.test.mjs exists yet; nothing to run"; exit 0; fi
+          node --test "${files[@]}"
   verify:
-    needs: [test, windows-paths, film-copies]
+    needs: [test, windows-paths, film-copies, experiment-tests]
     # Runs whatever the shards did, and fails unless every one succeeded: a skipped, cancelled or failed shard can
     # never read as a pass.
     if: always()
@@ -145,6 +168,9 @@ jobs:
       - name: The film copies decoded
         run: |
           [ "${{ needs.film-copies.result }}" = success ] || { echo "::error::the film copies job concluded '${{ needs.film-copies.result }}', not success"; exit 1; }
+      - name: The experiment tests succeeded
+        run: |
+          [ "${{ needs.experiment-tests.result }}" = success ] || { echo "::error::the experiment tests job concluded '${{ needs.experiment-tests.result }}', not success"; exit 1; }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # On pull_request the checkout is the merge commit: depth 2 brings its parents, so the base the
