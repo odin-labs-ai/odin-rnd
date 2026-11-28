@@ -4,6 +4,26 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-015-results",
+      "experiment": "EXP 015",
+      "title": "Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Results",
+      "text": "Measured over 336 counted calls across 7 days: the estimate held for OpenRouter and one other broker, and was off by a stable 10% factor for a third — two of the three brokers' naming terms are still pending the lab owner's review, so this note pairs only OpenRouter's name with a number; the fleet-wide half was not measurable from this lane, which lacks the private routing log fleet.json needs.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "data/telemetry-truth/results.json",
+      "date": "2026-11-28"
+    },
+    {
+      "key": "note-telemetry-truth-results",
+      "experiment": null,
+      "title": "EXP 015: Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Field note",
+      "text": "Measured over 336 counted calls across 7 days: the estimate held for OpenRouter and one other broker, and was off by a stable 10% factor for a third — two of the three brokers' naming terms are still pending the lab owner's review, so this note pairs only OpenRouter's name with a number; the fleet-wide half was not measurable from this lane, which lacks the private routing log fleet.json needs.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "journal/telemetry-truth-results.html",
+      "date": "2026-11-28"
+    },
+    {
       "key": "exp-021-results",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",
@@ -229,7 +249,7 @@
       "title": "Does Odin's cost estimate match what the brokers bill?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/telemetry-truth/preregistration.json",
+      "href": "journal/telemetry-truth-results.html",
       "source": "data/telemetry-truth/preregistration.json",
       "date": "2026-10-23"
     },
