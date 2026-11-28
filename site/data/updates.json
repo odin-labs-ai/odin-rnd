@@ -4,6 +4,36 @@
   "about": "Every record this site publishes, newest first. A date is the record's own date, or the day it was first published in this repository.",
   "updates": [
     {
+      "key": "exp-015-results",
+      "experiment": "EXP 015",
+      "title": "Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Results",
+      "text": "Over 336 counted calls across 7 days, the price-book estimate held exactly for two of three brokers and was off by a stable 10% for the third. None of the three is named next to a number in this note.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "data/telemetry-truth/results.json",
+      "date": "2026-11-28"
+    },
+    {
+      "key": "exp-015-amendment-01",
+      "experiment": "EXP 015",
+      "title": "Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Amendment",
+      "text": "EXP 015's own pre-registration says the capture rows are published in full with the results. Separately, the lab recorded each broker's published terms (site/data/provider-terms.json): one broker is clear to be named next to a measured figure; the other two carry a clause the lab owner has not yet ruled on (one bars use of its trade names without consent, the other bars systematically collecting competitive benchmarks). This amendment follows the same decision EXP 016's own amendment-01 recorded on 2026-10-23 for the same two brokers: publish the results and rows without saying which broker is which, by letter, until the lab owner clears the names or rules otherwise. Nothing measured, counted or decided changes.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "data/telemetry-truth/amendment-01.json",
+      "date": "2026-11-28"
+    },
+    {
+      "key": "note-telemetry-truth-results",
+      "experiment": null,
+      "title": "EXP 015: Does Odin's cost estimate match what the brokers bill?",
+      "kind": "Field note",
+      "text": "Over 336 counted calls across 7 days, the price-book estimate held exactly for two of three brokers and was off by a stable 10% for the third. None of the three is named next to a number in this note.",
+      "href": "journal/telemetry-truth-results.html",
+      "source": "journal/telemetry-truth-results.html",
+      "date": "2026-11-28"
+    },
+    {
       "key": "exp-021-results",
       "experiment": "EXP 021",
       "title": "Kill the database mid-session, does anyone notice?",
@@ -229,7 +259,7 @@
       "title": "Does Odin's cost estimate match what the brokers bill?",
       "kind": "Pre-registered",
       "text": "The question and how it will be scored were published before any counted run.",
-      "href": "data/telemetry-truth/preregistration.json",
+      "href": "journal/telemetry-truth-results.html",
       "source": "data/telemetry-truth/preregistration.json",
       "date": "2026-10-23"
     },

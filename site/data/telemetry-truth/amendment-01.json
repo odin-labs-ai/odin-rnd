@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.amendment",
+  "experiment": "EXP 015",
+  "amendment": "01",
+  "authoredOn": "2026-11-28",
+  "amends": {
+    "preregistration": "experiments/telemetry-truth/preregistration.json",
+    "preregistrationSha256": "914e969c5b0693774a5ef2760a0f4d570b98aa7d5690c8091f9a1efac9e60bfe",
+    "frozenCommit": "acdf8a2"
+  },
+  "why": "EXP 015's own pre-registration says the capture rows are published in full with the results. Separately, the lab recorded each broker's published terms (site/data/provider-terms.json): one broker is clear to be named next to a measured figure; the other two carry a clause the lab owner has not yet ruled on (one bars use of its trade names without consent, the other bars systematically collecting competitive benchmarks). This amendment follows the same decision EXP 016's own amendment-01 recorded on 2026-10-23 for the same two brokers: publish the results and rows without saying which broker is which, by letter, until the lab owner clears the names or rules otherwise. Nothing measured, counted or decided changes.",
+  "timing": "Written after the counted window closed and after the capture rows were pulled from the 90-day-retained Actions artifacts, and before any row or result was published under a real broker name. Earlier public branches of this record named the brokers directly; those branches stay public as a record of that mistake (per house instruction, no branch is deleted) and are superseded by this one.",
+  "changes": [
+    {
+      "what": "Brokers are shown as letters, everywhere",
+      "rule": "Each broker is given one of three letters by a fixed assignment that is not the order the pre-registration lists the brokers in. The assignment is kept privately and is not published, not even as a hash: with three brokers there are only six possible assignments, so a hash would reveal it.",
+      "file": "experiments/telemetry-truth/amendment-01/anonymise.mjs",
+      "sha256": "eb83471e80b692a3889f377d50a35d0868f81cfa46dddaa46403051d383942c2"
+    },
+    {
+      "what": "The published rows drop what would say which broker, by its own spelling, a row belongs to",
+      "rule": "The published rows are the capture's own rows with broker replaced by its letter, keyName's broker name replaced by the same letter, and five fields dropped: requestedModel and servedModel and servedProvider (each broker spells or serves these differently), estimateSource (names the private price-book repository and, for one broker, the broker itself by name), and the four generation-record cross-check fields (generationFound, generationCostUsd, generationModel, generationProvider), present only on the one broker whose API offers that cross-check -- their mere presence on a row would say which letter that broker is, even lettered. Every measured cost, gap, latency, token and status value is copied unchanged. canonicalModel is kept: every broker's row already normalises it to the same string for the same requested model, so it names no broker.",
+      "file": "experiments/telemetry-truth/amendment-01/anonymise.mjs",
+      "sha256": "eb83471e80b692a3889f377d50a35d0868f81cfa46dddaa46403051d383942c2"
+    },
+    {
+      "what": "The frozen analysis scores the published rows",
+      "rule": "amendment-01/analyse-anon.mjs imports analyse() and readCapture() from the frozen analyse.mjs unchanged, reads runs-anon/*.jsonl, and gives analyse() the frozen pre-registration with its broker list replaced by whichever letters the published header row names. Every metric and decision rule is the frozen record's.",
+      "file": "experiments/telemetry-truth/amendment-01/analyse-anon.mjs",
+      "sha256": "e3b24d796c04b9ff79340b2301fd01fda88ce86334c8dc11d7d27ad33a65b234"
+    }
+  ],
+  "unchanged": "The question, the window, the two models, the capture cadence, the per-call metric and the per-broker and fleet decision rules are unchanged, and the frozen preregistration.json and analyse.mjs stay byte-identical.",
+  "corrections": [
+    "An earlier public branch of this record said its results.json is 'recomputed in CI by the frozen analysis script'. No CI step did that. This amendment adds scripts/telemetry-truth-anon.test.mjs, which runs analyse-anon.mjs --check, so the claim is now true; the sibling scripts/telemetry-truth-analyse.test.mjs already pins and checks the frozen (named) analyse.mjs the same way.",
+    "An earlier public branch said 'no absolute dollar figures are published or were computed here'. That was false: every published row carries actualCostUsd, estimatedCostUsd, gapUsd and usageCostUsd, and this amendment's trailer rows carry a broker's own key-usage counters in USD. The note and results.json state ratios only; the rows carry per-call USD, by the pre-registration's own design ('rows published in full')."
+  ],
+  "limits": [
+    "The pre-registration was published, and merged to main, before the brokers' terms were reviewed, and it names the three brokers and each one's model ids. Its calibration section also states which broker billed 10% above list. A reader who compares that already-public, frozen text with this amendment's results can probably match at least one letter to a broker. The letters keep this amendment's own rows and results from naming a broker next to a number; they do not make the brokers secret, and they do not and cannot reach back and anonymise the pre-registration itself, which is frozen and already public.",
+    "Dropping servedModel and the generation-record cross-check removes two per-broker details this record's own metric section lists (servedModels per broker; the in-band-vs-generation-record check, available for only one of the three brokers). Neither is a decision-rule input; both stay in the private, named record.",
+    "Earlier, now-superseded public branches of this record (herd/exp015-telemetry-truth-win) named the brokers directly in their tree, their commit messages and their PR title and body. Per house instruction those branches are not deleted. Anyone who reads that history, rather than this one, sees the names; this amendment does not and cannot undo that."
+  ],
+  "notBefore": "The anonymised results are published only after this amendment is merged to main of odin-labs-ai/odin-rnd."
+}
