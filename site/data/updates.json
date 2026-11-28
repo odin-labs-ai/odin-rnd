@@ -8,7 +8,7 @@
       "experiment": "EXP 015",
       "title": "Does Odin's cost estimate match what the brokers bill?",
       "kind": "Results",
-      "text": "Two of three brokers' estimate holds exactly; the third needs a known, stable 10% correction.",
+      "text": "Over 336 counted calls across 7 days, the price-book estimate held exactly for two of three brokers and was off by a stable 10% for the third. None of the three is named next to a number in this note.",
       "href": "journal/telemetry-truth-results.html",
       "source": "data/telemetry-truth/results.json",
       "date": "2026-11-28"
@@ -18,7 +18,7 @@
       "experiment": "EXP 015",
       "title": "Does Odin's cost estimate match what the brokers bill?",
       "kind": "Amendment",
-      "text": "A dated amendment: results are published by letter, not by name, until the brokers' terms are cleared.",
+      "text": "EXP 015's own pre-registration says the capture rows are published in full with the results. Separately, the lab recorded each broker's published terms (site/data/provider-terms.json): one broker is clear to be named next to a measured figure; the other two carry a clause the lab owner has not yet ruled on (one bars use of its trade names without consent, the other bars systematically collecting competitive benchmarks). This amendment follows the same decision EXP 016's own amendment-01 recorded on 2026-10-23 for the same two brokers: publish the results and rows without saying which broker is which, by letter, until the lab owner clears the names or rules otherwise. Nothing measured, counted or decided changes.",
       "href": "journal/telemetry-truth-results.html",
       "source": "data/telemetry-truth/amendment-01.json",
       "date": "2026-11-28"
