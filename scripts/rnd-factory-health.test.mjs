@@ -110,6 +110,33 @@ test('renderLines draws a green/red/pending grid and the open-PR line', () => {
   assert.equal(lines[2], '1 open records/data PR(s): #261 (data/broker-probe-2026-W47-x)');
 });
 
+// Built from numeric code points only (never a literal escape or glyph in source) to avoid any ambiguity about which
+// character is actually under test: 0x2424 SYMBOL FOR NEWLINE, 0x2028 LINE SEPARATOR, 0x2029 PARAGRAPH SEPARATOR,
+// 0x0085 NEXT LINE. All four are legal in a git ref (git check-ref-format only refuses ASCII control characters and
+// a small punctuation set) and Mattermost's own parser turns them into real newlines before it looks for a closing
+// fence -- the same class of bug rnd-weekly.mjs's inert() exists for (its own "refute pr39 final-8" test).
+const NEWLINE_LOOKALIKES = [0x2424, 0x2028, 0x2029, 0x0085].map(cp => String.fromCodePoint(cp));
+const TRIPLE_BACKTICK = String.fromCharCode(96, 96, 96);
+
+test('renderLines neutralizes an attacker-controlled head ref: no Unicode newline look-alike or backtick survives into the fenced block (a PR branch name is not sanitized by git)', () => {
+  for (const sep of NEWLINE_LOOKALIKES) {
+    const ref = ['records/x', sep, TRIPLE_BACKTICK, sep, 'evil markdown', sep, TRIPLE_BACKTICK].join('');
+    const report = { workflows: [], openRecordsPRs: [{ number: 1, headRefName: ref }] };
+    const line = renderLines(report)[0];
+    for (const bad of NEWLINE_LOOKALIKES) assert.ok(!line.includes(bad), `separator U+${bad.codePointAt(0).toString(16)} must not survive`);
+    assert.ok(!line.includes(String.fromCharCode(96)), 'a backtick must not survive (it could close the surrounding fence)');
+  }
+});
+
+test('renderLines also neutralizes an attacker-controlled workflow-read error message the same way', () => {
+  const sep = NEWLINE_LOOKALIKES[0];
+  const error = ['boom', sep, TRIPLE_BACKTICK, sep, 'evil', sep, TRIPLE_BACKTICK].join('');
+  const report = { workflows: [{ repo: 'r', file: 'a.yml', runs: [], error }], openRecordsPRs: [] };
+  const line = renderLines(report)[0];
+  for (const bad of NEWLINE_LOOKALIKES) assert.ok(!line.includes(bad));
+  assert.ok(!line.includes(String.fromCharCode(96)));
+});
+
 test('renderLines says so when nothing is open', () => {
   assert.equal(renderLines({ workflows: [], openRecordsPRs: [] })[0], '0 open records/data PR(s)');
 });

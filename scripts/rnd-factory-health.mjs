@@ -78,12 +78,27 @@ export async function health(token, { runs = 7 } = {}) {
 
 const emoji = r => (r.status !== 'completed' ? '⏳' : r.conclusion === 'success' ? '🟢' : '🔴');
 
+// `headRefName` comes from an open PR's branch name, and on this PUBLIC repo that is attacker-controlled (anyone can
+// open a PR, including from a fork, with a head ref matching records/* or data/broker-probe-*). A git ref may legally
+// contain Unicode line-separator look-alikes that are not ASCII control characters, so `git check-ref-format` never
+// refuses them -- and Mattermost's own parser turns those into real newlines before it looks for a closing fence,
+// which a crafted branch name could use to break out of renderLines()'s fenced block (rnd-weekly.mjs's inert()
+// exists for exactly this class of bug, "refute pr39 final-8 #1"). Listed by numeric code point, never as a literal
+// escape or glyph in source, to leave no room for one of them to end up copied into this file by mistake: 0x2424
+// SYMBOL FOR NEWLINE, 0x2028 LINE SEPARATOR, 0x2029 PARAGRAPH SEPARATOR, 0x0085 NEXT LINE (NEL). This mirrors
+// inert()'s normalisation without its inline-code-span wrapping (unnecessary inside an existing fence): strip every
+// line-like character to a space and any backtick to a quote, so neither a fence-breaking backtick run nor a
+// disguised newline can survive into the rendered line.
+const LINE_LIKE_CODE_POINTS = new Set([0x2424, 0x2028, 0x2029, 0x0085]);
+const isLineLike = ch => LINE_LIKE_CODE_POINTS.has(ch.codePointAt(0)) || /\s|\p{Cc}|\p{Cf}/u.test(ch);
+const plain = text => Array.from(String(text), ch => (isLineLike(ch) ? ' ' : ch)).join('').replaceAll('`', "'").trim();
+
 /** A human-readable line per workflow (the grid) plus the open-PR count, for the CLI and the weekly post alike. */
 export function renderLines(report) {
-  const lines = report.workflows.map(w => `${w.repo}/${w.file}: ${w.runs.length ? w.runs.map(emoji).join('') : '(no runs)'}${w.error ? ` ERROR: ${w.error}` : ''}`);
+  const lines = report.workflows.map(w => `${w.repo}/${w.file}: ${w.runs.length ? w.runs.map(emoji).join('') : '(no runs)'}${w.error ? ` ERROR: ${plain(w.error)}` : ''}`);
   lines.push(report.openRecordsPRsError
-    ? `open records/data PRs: ERROR: ${report.openRecordsPRsError}`
-    : `${report.openRecordsPRs.length} open records/data PR(s)${report.openRecordsPRs.length ? ': ' + report.openRecordsPRs.map(pr => `#${pr.number} (${pr.headRefName})`).join(', ') : ''}`);
+    ? `open records/data PRs: ERROR: ${plain(report.openRecordsPRsError)}`
+    : `${report.openRecordsPRs.length} open records/data PR(s)${report.openRecordsPRs.length ? ': ' + report.openRecordsPRs.map(pr => `#${pr.number} (${plain(pr.headRefName)})`).join(', ') : ''}`);
   return lines;
 }
 
