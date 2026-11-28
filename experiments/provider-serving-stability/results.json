@@ -1,0 +1,76 @@
+{
+  "experiment": "EXP 022",
+  "window": {
+    "from": "2026-11-11T00:00:00Z",
+    "to": "2026-11-18T00:00:00Z"
+  },
+  "preregistrationSha256": "f077ffab210f184285c0327e8caebd656d03998aeb8b2765cdd5e31564980539",
+  "perPair": {
+    "X": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      }
+    },
+    "Y": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      }
+    },
+    "Z": {
+      "anthropic/claude-haiku-4.5": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      },
+      "openai/gpt-4o-mini": {
+        "n": 55,
+        "distinctServedModels": [
+          "identity-1"
+        ],
+        "servedModelCounts": {
+          "identity-1": 55
+        },
+        "verdict": "stable"
+      }
+    }
+  }
+}

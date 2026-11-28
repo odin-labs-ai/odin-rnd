@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "odin-rnd.preregistration",
+  "experiment": {
+    "id": "EXP 022",
+    "slug": "provider-serving-stability",
+    "title": "Within one window, does a broker serve a fixed model request from a single stable provider?",
+    "status": "pre-registered",
+    "statusText": "Pre-registered, not yet run",
+    "authoredOn": "2026-11-28",
+    "note": "Nothing in this record may change afterwards; a later change is a new, dated amendment, published first."
+  },
+  "question": "Odin's cost and routing claims assume a broker's reported model id maps to one stable serving backend for the life of a measurement window. Does it? For a fixed (broker, requested model) pair, does the broker's own per-call servedModel identifier stay a single value across every counted call in one 7-day window, or does it switch between two or more values?",
+  "republication": "This record republishes, by letter, a measurement already completed on a now-superseded branch (herd/exp022-provider-serving-stability-win, PR #308, closed) before this record existed: same window, same question, same decision rule, same result. It does not freeze a new hypothesis ahead of new data -- the window named below closed, and its rows were pulled and analysed, before this record was written. What is new here is publishing by letter (the same decision EXP 015's own amendment-01 records) and a wording correction a review found in the superseded branch, listed under corrections below.",
+  "calibration": {
+    "disclosed": "This question was originally motivated by comparing two results from this repository's telemetry-truth family: one broker's servedModel count across two different windows (2 distinct values in one week, 3 in a later week). Those two prior windows are not this record's own counted window and are not re-measured here.",
+    "prediction": "Unknown, at the time this question was first asked, which way this record's own window would go -- that was the point of measuring a window neither of those two prior ones covered, rather than re-describing either. The result (below) answers it."
+  },
+  "window": {
+    "from": "2026-11-11T00:00:00Z",
+    "to": "2026-11-18T00:00:00Z",
+    "unit": "7 whole UTC days, half-open [from, to)",
+    "rationale": "The gap between EXP 015's own window (ending 2026-11-04) and EXP 015 amendment-02's window (starting 2026-11-18) is 14 days -- two untouched weeks. This record covers the first of them, leaving the second (2026-11-04..2026-11-11, note: the OTHER untouched week relative to this one -- the two do not overlap) available for a future record."
+  },
+  "brokers": ["X", "Y", "Z"],
+  "models": ["anthropic/claude-haiku-4.5", "openai/gpt-4o-mini"],
+  "capture": {
+    "mechanism": "Unchanged: the same scheduled capture workflow EXP 015 uses. No new capture code, no new key, no new spend.",
+    "codeSha256Reference": "Same files, same hashes as pinned in experiments/telemetry-truth/preregistration.json#/capture/sha256.",
+    "anonymisation": "Published rows are reduced by this record's own anonymise.mjs: broker to its letter (the same assignment EXP 015's amendment-01 uses), keyName's broker name to the same letter, requestedModel/servedProvider/estimateSource/the generation-record cross-check fields dropped (same reasons amendment-01 drops them), and servedModel's raw value replaced by a per-(broker, canonicalModel) token assigned in order of first appearance within this window (identity-1, identity-2, ...) -- this preserves exactly the distinctness and grouping this record's metric needs (how many distinct served identities, and which calls share one) without publishing the literal provider string.",
+    "fieldsUsed": "broker, canonicalModel, servedModel (tokenised), ok, ts."
+  },
+  "metric": {
+    "perPair": "For each (broker, canonicalModel) pair: n = count of counted calls (inside the window, ok === true, servedModel present and non-empty); distinctServedModels = the sorted set of distinct tokens among those calls.",
+    "countedCall": "Inside [window.from, window.to), ok === true, servedModel is a non-empty string. Failed calls are excluded from n, never imputed, same convention as EXP 015."
+  },
+  "decision": {
+    "rule": {
+      "minCalls": 20,
+      "note": "Far below EXP 015's minCalls of 50: that rule bounds a statistical confidence interval on a continuous gap; this one only needs enough calls to say a single value is genuinely the only one seen, not an artifact of a near-empty sample."
+    },
+    "perPair": {
+      "notEnoughCalls": "n below 20: reported as 'not enough calls', never classified either way.",
+      "stable": "Exactly 1 distinct served-identity token across all counted calls.",
+      "unstable": "2 or more distinct tokens across counted calls; every distinct token is listed, with its own count, in the result."
+    }
+  },
+  "stoppingRule": "A single pre-registered 7-day window, not a cadence. No additional counted window is triggered by an 'unstable' result; a periodic recheck would be its own, separately pre-registered follow-up.",
+  "cost": "$0 marginal. The capture workflow already runs every 3 hours regardless of this record; this record only adds one analysis pass over already-collected rows. No new broker calls, no new keys, no new spend.",
+  "analysis": {
+    "script": "experiments/provider-serving-stability/analyse.mjs",
+    "sha256": "b854f0d94cba0c70db0f9878573e886c1018da3897655cdf48172bbfb0ebf39c",
+    "inputs": "runs-anon/*.jsonl (the published, anonymised rows).",
+    "check": "node experiments/provider-serving-stability/analyse.mjs --check exits 0 only if results.json is exactly what the frozen script computes from the committed inputs."
+  },
+  "needsReview": true,
+  "reviewNote": "Two adversarial reviews with distinct lenses, same discipline as every other record in this repository, before this record's PR is called ready.",
+  "corrections": [
+    "A superseded branch of this record (herd/exp022-provider-serving-stability-win, PR #308, closed) named all three brokers directly in results.json, every capture row, and its own calibration prose -- this record never does.",
+    "That superseded branch's own PR body and a prior review both described the window's 'all stable' result as 'transient' or a 'one-off blip' relative to a later split seen in a different window. That is stronger than the data supports: this window simply precedes the window where the split was seen; whether the split persists, recurs or was itself a one-off is not measured by any record to date. Reworded in this record's own result field above."
+  ],
+  "limits": [
+    "Two models, three brokers, one 7-day window. A broker's serving-path choices can change for reasons this record cannot see.",
+    "servedModel is each broker's own self-reported identifier, tokenised for publication; this record trusts the underlying value at face value, the same trust EXP 015 places in actualCostUsd.",
+    "A one-window snapshot cannot say whether a 'stable' or 'unstable' classification is itself stable over time."
+  ]
+}
