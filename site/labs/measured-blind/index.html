@@ -32,6 +32,18 @@
       <div class="company-section-heading"><h2 id="about-title">What it is.</h2><p>The lab in plain words, and how it runs.</p></div>
       <div class="company-prose"><!--BLIND_ABOUT--></div>
     </section>
+    <section class="company-section company-width company-split" id="timeline" aria-labelledby="timeline-title">
+      <div><h2 id="timeline-title">How this lab progressed.</h2></div>
+      <div class="company-prose">
+        <p>These are the dates of the original before-and-after evaluation, not fresh trials on each later check run. A separate AI session judged the answers with partial blinding; a machine restart changed the local model runtime during held-out set two.</p>
+        <ol class="lab-steps">
+          <li><time datetime="2026-10-24">24 October 2026</time>. <a href="../../data/labs/measured-blind/record.json">The public record</a> cites the tuning set and first held-out set frozen before the fixes, then a second held-out set frozen for v3.</li>
+          <li><time datetime="2026-10-24">24 October 2026</time>. The verdict labels, counts and summary for all three sets were added; <a href="#numbers">the page keeps each set's before and after counts separate</a>.</li>
+          <li><time datetime="2026-10-25">25 October 2026</time>. The evaluation runner was last changed after the write-up, as the record's source trail states.</li>
+        </ol>
+        <p><a href="#lab-runs">See the dated record checks</a> below. Matching hashes show repeatability within Odin, not outside validation.</p>
+      </div>
+    </section>
     <section class="company-section company-width" id="judge-section" aria-labelledby="judge-section-title">
       <div class="company-section-heading"><h2 id="judge-section-title">Who judged.</h2><p>An AI reviewer, not a person.</p></div>
       <!--BLIND_JUDGE-->
